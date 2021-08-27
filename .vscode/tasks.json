@@ -1,0 +1,38 @@
+{
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "type": "npm",
+            "script": "dev",
+            "group": "build",
+            "presentation": {
+                "group": "build"
+            },
+            "isBackground": true,
+            "problemMatcher": [],
+            "label": "Build and watch debug bundles"
+        },
+        {
+            "type": "npm",
+            "script": "test",
+            "group": {
+                "kind": "test",
+                "isDefault": true
+            },
+            "problemMatcher": [],
+            "label": "Run tests"
+        },
+        {
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            },
+            "label": "Build and watch all",
+            "problemMatcher": [],
+            // "runOptions": {
+            //     "runOn": "folderOpen"
+            // },
+            "dependsOn": ["Build and watch debug bundles"]
+        }
+    ]
+}

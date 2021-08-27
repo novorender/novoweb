@@ -1,0 +1,83 @@
+{
+    "name": "novoweb",
+    "version": "0.0.1",
+    "description": "Novorender frontend",
+    "main": "index.js",
+    "scripts": {
+        "build": "craco build",
+        "dev": "craco start",
+        "start": "node server.js",
+        "test": "cypress run",
+        "cypress:open": "cypress open",
+        "build:docs": "node scripts/build_docs.js",
+        "build:ts": "tsc",
+        "prepare": "node scripts/prepare.js"
+    },
+    "repository": {
+        "type": "git",
+        "url": "git+https://github.com/novorender/novoweb.git"
+    },
+    "license": "UNLICENCED",
+    "bugs": {
+        "url": "https://github.com/novorender/novoweb/issues"
+    },
+    "devDependencies": {
+        "@types/node": "^14.11.2",
+        "@types/react-color": "^3.0.4",
+        "@types/react-dom": "^17.0.5",
+        "@types/react-redux": "^7.1.16",
+        "@types/react-virtualized-auto-sizer": "^1.0.1",
+        "@types/react-window": "^1.8.3",
+        "cypress": "^8.3.0",
+        "eslint-config-prettier": "^8.3.0",
+        "eslint-plugin-cypress": "^2.11.3",
+        "fs-extra": "^9.1.0",
+        "husky": "^7.0.2",
+        "lint-staged": "^11.1.2",
+        "prettier": "^2.3.2",
+        "react-scripts": "^4.0.3",
+        "typedoc": "^0.20.36",
+        "typescript": "^4.2.4"
+    },
+    "dependencies": {
+        "@craco/craco": "^6.2.0",
+        "@material-ui/core": "^4.11.4",
+        "@material-ui/icons": "^4.11.2",
+        "@material-ui/lab": "^4.0.0-alpha.58",
+        "@novorender/data-js-api": "^0.2.1",
+        "@novorender/webgl-api": "^0.3.2",
+        "@reduxjs/toolkit": "^1.5.1",
+        "express": "^4.17.1",
+        "express-static-gzip": "^2.1.1",
+        "gl-matrix": "^3.3.0",
+        "react": "^17.0.2",
+        "react-color": "^2.19.3",
+        "react-dom": "^17.0.2",
+        "react-redux": "^7.2.4",
+        "react-virtualized-auto-sizer": "^1.0.6",
+        "react-window": "^1.8.6"
+    },
+    "lint-staged": {
+        "src/**/*.{js,jsx,ts,tsx,json,css,scss,md,html}": [
+            "prettier --write"
+        ],
+        "src/**/*.{js,jsx,ts,tsx}": [
+            "eslint --max-warnings=0"
+        ]
+    },
+    "browserslist": {
+        "production": [
+            ">0.2%",
+            "not dead",
+            "not op_mini all"
+        ],
+        "development": [
+            "last 1 chrome version",
+            "last 1 firefox version",
+            "last 1 safari version"
+        ]
+    },
+    "eslintConfig": {
+        "extends": "./eslintrc.json"
+    }
+}
