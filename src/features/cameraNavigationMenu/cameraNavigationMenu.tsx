@@ -29,6 +29,8 @@ export function CameraNavigationMenu({ view }: Props) {
         toggle();
     };
 
+    const pos = isSmall ? positions.small : positions.large;
+
     return (
         <SpeedDial
             open={open}
@@ -45,11 +47,58 @@ export function CameraNavigationMenu({ view }: Props) {
             icon={<SpeedDialIcon open={false} icon={<AddIcon />} openIcon={<CloseIcon />} />}
             style={{ position: "relative" }}
         >
-            <Home view={view} position={{ bottom: 0, left: -75 }} />
-            <CameraSpeed position={{ bottom: 49, left: -52 }} />
-            <Fullscreen position={{ bottom: 72, left: 0 }} />
-            <StepBack position={{ bottom: 49, right: -52 }} view={view} />
-            <StepForwards position={{ bottom: 0, right: -75 }} view={view} />
+            <Home view={view} position={pos[0]} />
+            <CameraSpeed position={pos[1]} />
+            <Fullscreen position={pos[2]} />
+            <StepBack position={pos[3]} view={view} />
+            <StepForwards position={pos[4]} view={view} />
         </SpeedDial>
     );
 }
+
+const positions = {
+    small: [
+        {
+            bottom: 0,
+            left: -64,
+        },
+        {
+            bottom: 42,
+            left: -50,
+        },
+        {
+            bottom: 56,
+            left: -8,
+        },
+        {
+            bottom: 42,
+            right: -50,
+        },
+        {
+            bottom: 0,
+            right: -64,
+        },
+    ],
+    large: [
+        {
+            bottom: 0,
+            left: -75,
+        },
+        {
+            bottom: 49,
+            left: -52,
+        },
+        {
+            bottom: 72,
+            left: 0,
+        },
+        {
+            bottom: 49,
+            right: -52,
+        },
+        {
+            bottom: 0,
+            right: -75,
+        },
+    ],
+};

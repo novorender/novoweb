@@ -8,6 +8,12 @@ type Props = SpeedDialActionProps & {
 
 const useStyles = makeStyles((theme) =>
     createStyles({
+        base: {
+            [theme.breakpoints.down("sm")]: {
+                margin: theme.spacing(1),
+                marginBottom: 0,
+            },
+        },
         fabActive: {
             backgroundColor: theme.palette.brand.main,
             "&:hover": {
@@ -29,6 +35,7 @@ export const SpeedDialAction = forwardRef(({ active, ...speedDialActionProps }: 
     return (
         <BaseSpeedDialAction
             ref={ref}
+            className={classes.base}
             classes={{ fab: active ? classes.fabActive : classes.fab }}
             {...speedDialActionProps}
         />

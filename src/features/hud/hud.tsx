@@ -22,6 +22,7 @@ export function Hud({ view, scene }: Props) {
                 position="absolute"
                 bottom={0}
                 width={isSmall ? "100%" : `calc(50% + ${largeFabButtonDiameter / 2}px)`}
+                height={1}
                 padding={{ xs: 1, sm: 3 }}
                 pr={{ xs: 1, sm: 3, md: 0 }}
                 pt={{ xs: 1, sm: 3, md: 0 }}

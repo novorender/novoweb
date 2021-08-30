@@ -11,12 +11,22 @@ declare module "@material-ui/core/styles/createPalette" {
 
 declare module "@material-ui/core/styles/createTheme" {
     interface Theme {
+        customBreakPoints: {
+            height: {
+                sm: number;
+            };
+        };
         customShadows: {
             widgetHeader: string;
         };
     }
     // allow configuration using `createTheme`
     interface ThemeOptions {
+        customBreakPoints?: {
+            height?: {
+                sm?: number;
+            };
+        };
         customShadows?: {
             widgetHeader?: string;
         };
@@ -24,6 +34,15 @@ declare module "@material-ui/core/styles/createTheme" {
 }
 
 export const theme = createTheme({
+    breakpoints: {
+        values: {
+            xs: 0,
+            sm: 767,
+            md: 1100,
+            lg: 1280,
+            xl: 1920,
+        },
+    },
     palette: {
         primary: {
             // light: will be calculated from palette.primary.main,
@@ -71,5 +90,10 @@ export const theme = createTheme({
     },
     customShadows: {
         widgetHeader: "0px 5px 5px rgba(0, 0, 0, 0.05)",
+    },
+    customBreakPoints: {
+        height: {
+            sm: 949.95,
+        },
     },
 });

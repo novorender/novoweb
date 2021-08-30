@@ -26,7 +26,6 @@ import { useToggle } from "hooks/useToggle";
 import CloseIcon from "@material-ui/icons/Close";
 import { ReactComponent as NovorenderIcon } from "media/icons/novorender-small.svg";
 
-const smallFabButtonDiameter = 40;
 const useStyles = makeStyles((theme) =>
     createStyles({
         fabClosed: {
@@ -45,11 +44,11 @@ const useStyles = makeStyles((theme) =>
             position: "absolute",
             pointerEvents: "auto",
             borderRadius: `${theme.shape.borderRadius}px`,
-            maxHeight: `min(calc(70vh - ${theme.spacing(1) + smallFabButtonDiameter + theme.spacing(1)}px), 400px)`,
+            maxHeight: `min(50vh, 400px)`,
             height: "100%",
             left: theme.spacing(1),
             right: theme.spacing(1),
-            bottom: theme.spacing(1) + smallFabButtonDiameter + theme.spacing(1),
+            top: theme.spacing(1),
             background: theme.palette.primary.main,
             [theme.breakpoints.up("sm")]: {
                 width: 384,
