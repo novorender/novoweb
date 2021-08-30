@@ -13,7 +13,6 @@ import { OpenReason, CloseReason, SpeedDial, SpeedDialIcon } from "@material-ui/
 import type { Scene, View } from "@novorender/webgl-api";
 
 import type { WidgetKey } from "config/features";
-import { Divider } from "components";
 import { WidgetMenu } from "features/widgetMenu";
 import { Properties } from "features/properties";
 import { Bookmarks } from "features/bookmarks";
@@ -26,7 +25,6 @@ import { useToggle } from "hooks/useToggle";
 import CloseIcon from "@material-ui/icons/Close";
 import { ReactComponent as NovorenderIcon } from "media/icons/novorender-small.svg";
 
-const smallFabButtonDiameter = 40;
 const useStyles = makeStyles((theme) =>
     createStyles({
         fabClosed: {
@@ -45,11 +43,11 @@ const useStyles = makeStyles((theme) =>
             position: "absolute",
             pointerEvents: "auto",
             borderRadius: `${theme.shape.borderRadius}px`,
-            maxHeight: `min(calc(70vh - ${theme.spacing(1) + smallFabButtonDiameter + theme.spacing(1)}px), 400px)`,
+            maxHeight: `min(50vh, 400px)`,
             height: "100%",
             left: theme.spacing(1),
             right: theme.spacing(1),
-            bottom: theme.spacing(1) + smallFabButtonDiameter + theme.spacing(1),
+            top: theme.spacing(1),
             background: theme.palette.primary.main,
             [theme.breakpoints.up("sm")]: {
                 width: 384,
@@ -101,12 +99,11 @@ export function Widget({ widgetKey, scene, view }: Props) {
 
     const { name, Icon, key } = config;
 
-    const titleBoxShadow = menuOpen || key !== "modelTree";
     return (
         <>
             <Paper elevation={4} className={classes.menuContainer} data-test={widgetKey}>
                 <Box height="100%" display="flex" flexDirection="column">
-                    <Box display="flex" p={1} boxShadow={titleBoxShadow ? theme.customShadows.widgetHeader : ""}>
+                    <Box display="flex" p={1} boxShadow={theme.customShadows.widgetHeader}>
                         <Box display="flex" alignItems="center">
                             <Icon style={{ marginRight: theme.spacing(1) }} />
                             <Typography variant="h6" component="h2">
@@ -119,11 +116,6 @@ export function Widget({ widgetKey, scene, view }: Props) {
                             </IconButton>
                         </Box>
                     </Box>
-                    {!titleBoxShadow ? (
-                        <Box px={1}>
-                            <Divider />
-                        </Box>
-                    ) : null}
                     <Box
                         display={menuOpen ? "none" : "block"}
                         flexGrow={1}
