@@ -13,7 +13,6 @@ import { OpenReason, CloseReason, SpeedDial, SpeedDialIcon } from "@material-ui/
 import type { Scene, View } from "@novorender/webgl-api";
 
 import type { WidgetKey } from "config/features";
-import { Divider } from "components";
 import { WidgetMenu } from "features/widgetMenu";
 import { Properties } from "features/properties";
 import { Bookmarks } from "features/bookmarks";
@@ -100,12 +99,11 @@ export function Widget({ widgetKey, scene, view }: Props) {
 
     const { name, Icon, key } = config;
 
-    const titleBoxShadow = menuOpen || key !== "modelTree";
     return (
         <>
             <Paper elevation={4} className={classes.menuContainer} data-test={widgetKey}>
                 <Box height="100%" display="flex" flexDirection="column">
-                    <Box display="flex" p={1} boxShadow={titleBoxShadow ? theme.customShadows.widgetHeader : ""}>
+                    <Box display="flex" p={1} boxShadow={theme.customShadows.widgetHeader}>
                         <Box display="flex" alignItems="center">
                             <Icon style={{ marginRight: theme.spacing(1) }} />
                             <Typography variant="h6" component="h2">
@@ -118,11 +116,6 @@ export function Widget({ widgetKey, scene, view }: Props) {
                             </IconButton>
                         </Box>
                     </Box>
-                    {!titleBoxShadow ? (
-                        <Box px={1}>
-                            <Divider />
-                        </Box>
-                    ) : null}
                     <Box
                         display={menuOpen ? "none" : "block"}
                         flexGrow={1}
