@@ -63,19 +63,19 @@ export async function searchByPatterns({
         callback(result);
 
         if (deep) {
-            await Promise.all(
-                result.map(async (obj) => {
-                    if (obj.type === NodeType.Internal) {
-                        return searchByParentPath({
-                            scene,
-                            abortSignal,
-                            callback,
-                            callbackInterval: callbackInterval / 2,
-                            parentPath: obj.path,
-                        });
-                    }
-                })
-            );
+            for (let i = 0; i < result.length; i++) {
+                const obj = result[i];
+
+                if (obj.type === NodeType.Internal) {
+                    await searchByParentPath({
+                        scene,
+                        abortSignal,
+                        callback,
+                        callbackInterval: callbackInterval / 2,
+                        parentPath: obj.path,
+                    });
+                }
+            }
         }
     }
 }
