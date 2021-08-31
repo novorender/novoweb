@@ -95,7 +95,7 @@ function enabledFeaturesToFeatureKeys(enabledFeatures: Record<string, boolean>):
         multiselectionButton: featuresConfig.multipleSelection.key,
         selectionButtons: [featuresConfig.clearSelection.key, featuresConfig.viewOnlySelected.key],
         showHideButtons: featuresConfig.hideSelected.key,
-        tree: [featuresConfig.modelTree.key, featuresConfig.groups.key],
+        tree: [featuresConfig.modelTree.key, featuresConfig.groups.key, featuresConfig.search.key],
     };
 
     return Object.keys(enabledFeatures)

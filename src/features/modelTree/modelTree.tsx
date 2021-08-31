@@ -1,35 +1,19 @@
-import {
-    useTheme,
-    Box,
-    ListItemProps,
-    ListItem,
-    Typography,
-    Checkbox,
-    createStyles,
-    makeStyles,
-} from "@material-ui/core";
-import { useRef, useEffect, ChangeEvent, ChangeEventHandler, MouseEventHandler } from "react";
+import { Box } from "@material-ui/core";
+import { useRef, useEffect, ChangeEvent } from "react";
 import { useDispatch } from "react-redux";
-import AutoSizer from "react-virtualized-auto-sizer";
-import { FixedSizeList, ListOnScrollProps } from "react-window";
-import {
-    HierarcicalObjectReference,
-    Scene,
-    HierarcicalObjectReference as HierarchicalObjectReference,
-} from "@novorender/webgl-api";
+import { ListOnScrollProps } from "react-window";
+import { HierarcicalObjectReference, Scene } from "@novorender/webgl-api";
 
-import { Divider, LinearProgress, Tooltip, useScrollBoxStyles } from "components";
+import { Divider, LinearProgress } from "components";
 import { Breadcrumbs } from "features/breadcrumbs";
+import { NodeList } from "features/nodeList";
 import { useAppSelector } from "app/store";
-import { renderActions, selectHiddenObjects, selectMainObject, selectDefaultHighlighted } from "slices/renderSlice";
+import { renderActions, selectMainObject } from "slices/renderSlice";
 import { useAbortController } from "hooks/useAbortController";
 import { useMountedState } from "hooks/useMountedState";
 import { getObjectData, iterateAsync, searchByParentPath, searchFirstObjectAtPath } from "utils/search";
 
-import FolderIcon from "@material-ui/icons/Folder";
-import EcoIcon from "@material-ui/icons/Eco";
-import VisibilityIcon from "@material-ui/icons/Visibility";
-import { extractObjectIds, getObjectNameFromPath, getParentPath } from "utils/objectData";
+import { extractObjectIds, getParentPath } from "utils/objectData";
 
 enum Status {
     Initial,
@@ -47,42 +31,23 @@ type Props = {
     scene: Scene;
 };
 
-const useStyles = makeStyles((theme) =>
-    createStyles({
-        listItemIcon: {
-            minWidth: "auto",
-            margin: `0 ${theme.spacing(1)}px 0 0`,
-        },
-        searchButton: {
-            textTransform: "none",
-            fontWeight: 400,
-        },
-    })
-);
-
 export function ModelTree({ scene }: Props) {
-    const scrollBoxStyles = useScrollBoxStyles().box;
-    const theme = useTheme();
-
-    const selected = useAppSelector(selectDefaultHighlighted);
-    const hidden = useAppSelector(selectHiddenObjects);
     const mainObject = useAppSelector(selectMainObject);
     const dispatch = useDispatch();
 
     const [status, setStatus] = useMountedState(Status.Initial);
     const [currentDepth, setCurrentDepth] = useMountedState<
         | {
-              nodes: HierarchicalObjectReference[];
+              nodes: HierarcicalObjectReference[];
               path: string;
-              iterator: AsyncIterableIterator<HierarchicalObjectReference> | undefined;
+              iterator: AsyncIterableIterator<HierarcicalObjectReference> | undefined;
           }
         | undefined
     >(undefined);
-    const [node, setNode] = useMountedState<HierarchicalObjectReference | undefined>(undefined);
+    const [node, setNode] = useMountedState<HierarcicalObjectReference | undefined>(undefined);
 
     const [abortController, abort] = useAbortController();
     const listElRef = useRef<HTMLElement | null>(null);
-    const listRef = useRef<FixedSizeList | null>(null);
 
     useEffect(() => {
         abort();
@@ -149,13 +114,11 @@ export function ModelTree({ scene }: Props) {
         }
     }, [node, currentDepth, scene, setCurrentDepth, setStatus]);
 
-    const setCurrentDepthIterator = (
-        iterator: AsyncIterableIterator<HierarchicalObjectReference> | undefined
-    ): void => {
+    const setCurrentDepthIterator = (iterator: AsyncIterableIterator<HierarcicalObjectReference> | undefined): void => {
         setCurrentDepth((state) => (state ? { ...state, iterator } : undefined));
     };
 
-    const setCurrentDepthNodes = (nodes: HierarchicalObjectReference[]) => {
+    const setCurrentDepthNodes = (nodes: HierarcicalObjectReference[]) => {
         setCurrentDepth((state) => (state ? { ...state, nodes } : undefined));
     };
 
@@ -217,7 +180,7 @@ export function ModelTree({ scene }: Props) {
         setStatus(Status.Ready);
     };
 
-    const handleNodeClick = async (node: HierarchicalObjectReference, isSelected: boolean) => {
+    const handleNodeClick = async (node: HierarcicalObjectReference, isSelected: boolean) => {
         if (node.type === NodeType.Internal) {
             dispatch(renderActions.setMainObject(node.id));
         } else if (node.type === NodeType.Leaf) {
@@ -226,7 +189,7 @@ export function ModelTree({ scene }: Props) {
     };
 
     const handleChange =
-        (type: "select" | "hide", node: HierarcicalObjectReference) => (e: ChangeEvent<HTMLInputElement>) => {
+        (type: "select" | "hide") => (e: ChangeEvent<HTMLInputElement>, node: HierarcicalObjectReference) => {
             if (status === Status.Loading) {
                 return;
             }
@@ -238,7 +201,7 @@ export function ModelTree({ scene }: Props) {
             return e.target.checked ? hide(node) : show(node);
         };
 
-    const select = async (node: HierarchicalObjectReference) => {
+    const select = async (node: HierarcicalObjectReference) => {
         if (node.type === NodeType.Leaf) {
             dispatch(renderActions.selectObjects([node.id]));
             dispatch(renderActions.setMainObject(node.id));
@@ -268,7 +231,7 @@ export function ModelTree({ scene }: Props) {
         }
     };
 
-    const unSelect = async (node: HierarchicalObjectReference) => {
+    const unSelect = async (node: HierarcicalObjectReference) => {
         if (node.type === NodeType.Leaf) {
             return dispatch(renderActions.unSelectObjects([node.id]));
         }
@@ -295,7 +258,7 @@ export function ModelTree({ scene }: Props) {
         }
     };
 
-    const hide = async (node: HierarchicalObjectReference) => {
+    const hide = async (node: HierarcicalObjectReference) => {
         if (node.type === NodeType.Leaf) {
             return dispatch(renderActions.hideObjects([node.id]));
         }
@@ -323,7 +286,7 @@ export function ModelTree({ scene }: Props) {
         }
     };
 
-    const show = async (node: HierarchicalObjectReference) => {
+    const show = async (node: HierarcicalObjectReference) => {
         if (node.type === NodeType.Leaf) {
             return dispatch(renderActions.showObjects([node.id]));
         }
@@ -365,113 +328,19 @@ export function ModelTree({ scene }: Props) {
                         <Divider />
                     </Box>
                     <Box flex={"1 1 100%"}>
-                        <AutoSizer>
-                            {({ height, width }) => (
-                                <FixedSizeList
-                                    style={{ paddingLeft: theme.spacing(1), paddingRight: theme.spacing(1) }}
-                                    className={scrollBoxStyles}
-                                    onScroll={handleScroll}
-                                    height={height}
-                                    width={width}
-                                    itemSize={32}
-                                    overscanCount={3}
-                                    itemCount={currentDepth.nodes ? currentDepth.nodes.length : 0}
-                                    ref={listRef}
-                                    outerRef={listElRef}
-                                >
-                                    {({ index, style }) => {
-                                        const node = currentDepth.nodes[index];
-
-                                        if (!node) {
-                                            return null;
-                                        }
-
-                                        const isSelected = selected.includes(node.id);
-                                        const isHidden = hidden.includes(node.id);
-
-                                        return (
-                                            <Node
-                                                style={style}
-                                                node={node}
-                                                selected={isSelected}
-                                                hidden={isHidden}
-                                                onToggleSelect={handleChange("select", node)}
-                                                onToggleHide={handleChange("hide", node)}
-                                                onNodeClick={handleNodeClick}
-                                            />
-                                        );
-                                    }}
-                                </FixedSizeList>
-                            )}
-                        </AutoSizer>
+                        {currentDepth?.nodes ? (
+                            <NodeList
+                                nodes={currentDepth.nodes}
+                                onNodeClick={handleNodeClick}
+                                onToggleHide={handleChange("hide")}
+                                onToggleSelect={handleChange("select")}
+                                onScroll={handleScroll}
+                                outerRef={listElRef}
+                            />
+                        ) : null}
                     </Box>
                 </>
             ) : null}
         </Box>
-    );
-}
-
-function Node({
-    node,
-    selected,
-    hidden,
-    onToggleSelect,
-    onToggleHide,
-    onNodeClick,
-    ...props
-}: {
-    node: HierarchicalObjectReference;
-    selected: boolean;
-    hidden: boolean;
-    onToggleSelect: ChangeEventHandler<HTMLInputElement>;
-    onToggleHide: ChangeEventHandler<HTMLInputElement>;
-    onNodeClick: (node: HierarchicalObjectReference, isSelected: boolean) => void;
-} & ListItemProps) {
-    const theme = useTheme();
-    const classes = useStyles();
-
-    const stopPropagation: MouseEventHandler = (e) => {
-        e.stopPropagation();
-    };
-
-    const pathName = getObjectNameFromPath(node.path);
-
-    return (
-        <ListItem
-            disableGutters
-            button
-            key={node.id}
-            style={{ ...props.style, paddingLeft: theme.spacing(1), paddingRight: theme.spacing(1) }}
-            onClick={() => onNodeClick(node, selected)}
-        >
-            <Box display="flex" width={1} alignItems="center">
-                <Box display="flex" alignItems="center" width={0} flex={"1 1 100%"}>
-                    {node.type === NodeType.Internal ? (
-                        <FolderIcon className={classes.listItemIcon} fontSize="small" />
-                    ) : (
-                        <EcoIcon className={classes.listItemIcon} fontSize="small" />
-                    )}
-                    <Tooltip title={pathName} interactive>
-                        <Typography noWrap={true}>{pathName}</Typography>
-                    </Tooltip>
-                </Box>
-                <Checkbox
-                    aria-label="Select node"
-                    size="small"
-                    checked={selected}
-                    onChange={onToggleSelect}
-                    onClick={stopPropagation}
-                />
-                <Checkbox
-                    aria-label="Toggle node visibility"
-                    size="small"
-                    icon={<VisibilityIcon />}
-                    checkedIcon={<VisibilityIcon color="disabled" />}
-                    checked={hidden}
-                    onChange={onToggleHide}
-                    onClick={stopPropagation}
-                />
-            </Box>
-        </ListItem>
     );
 }
