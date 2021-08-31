@@ -24,6 +24,7 @@ import { useToggle } from "hooks/useToggle";
 
 import CloseIcon from "@material-ui/icons/Close";
 import { ReactComponent as NovorenderIcon } from "media/icons/novorender-small.svg";
+import { Search } from "features/search";
 
 const useStyles = makeStyles((theme) =>
     createStyles({
@@ -208,6 +209,8 @@ function getWidgetByKey({ key, scene, view }: { key: WidgetKey; scene: Scene; vi
             return <Groups />;
         case "modelTree":
             return <ModelTree scene={scene} />;
+        case "search":
+            return <Search scene={scene} />;
         default:
             return key;
     }

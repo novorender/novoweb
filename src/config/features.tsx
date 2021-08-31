@@ -14,6 +14,7 @@ import CheckBoxIcon from "@material-ui/icons/CheckBox";
 // import StraightenIcon from "@material-ui/icons/Straighten";
 import CategoryIcon from "@material-ui/icons/Category";
 import FolderIcon from "@material-ui/icons/Folder";
+import SearchIcon from "@material-ui/icons/Search";
 
 // import ClippingIcon from "media/icons/clipping.svg";
 
@@ -46,6 +47,12 @@ export const config = {
         key: "groups",
         name: "Groups",
         Icon: FolderIcon,
+        type: FeatureType.Widget,
+    },
+    search: {
+        key: "search",
+        name: "Search",
+        Icon: SearchIcon,
         type: FeatureType.Widget,
     },
     /*     clipping: {
