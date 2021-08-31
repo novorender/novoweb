@@ -35,6 +35,16 @@ Cypress.Commands.add("getBySelLike", (selector, ...args) => {
 Cypress.Commands.add("loadViewerScene", (id: string) => {
     cy.visit(id);
     cy.intercept("GET", "https://novorenderblobs.blob.core.windows.net/*/**").as("blobs");
+
     cy.wait("@blobs");
-    cy.window().its("appFullyRendered").should("eq", true);
+    cy.wait("@blobs");
+    cy.wait("@blobs");
+    cy.wait("@blobs");
+    cy.wait("@blobs");
+    cy.wait("@blobs");
+    cy.wait("@blobs");
+    cy.wait("@blobs");
+    cy.wait("@blobs");
+
+    cy.window().its("appFullyRendered", { timeout: 10000 }).should("eq", true);
 });

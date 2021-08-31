@@ -3,7 +3,7 @@ const activeBtnColor = "rgb(214, 30, 92)";
 
 context("Unauthenticated viewer functionality", () => {
     it("Selection modifiers", () => {
-        cy.loadViewerScene("d8b71054c84d4c8088b5b92f2c7839f0");
+        cy.loadViewerScene("ba3ba63e6f634e458a7e23c85088cad8");
 
         // Open automatically the first time an object is selected
         cy.get("#selectionmodifiers-actions").find("button").as("selectionModifierButtons").should("not.be.visible");
@@ -29,7 +29,7 @@ context("Unauthenticated viewer functionality", () => {
             .should("have.css", "background-color", defaultBtnColor)
             .click()
             .should("have.css", "background-color", activeBtnColor)
-            .then($btn => {
+            .then(($btn) => {
                 cy.getBySel("selection-color-picker");
                 cy.wrap($btn).click();
                 cy.getBySel("selection-color-picker").should("not.exist");
@@ -55,7 +55,7 @@ context("Unauthenticated viewer functionality", () => {
     });
 
     it("Canvas navigation", () => {
-        cy.loadViewerScene("d8b71054c84d4c8088b5b92f2c7839f0");
+        cy.loadViewerScene("ba3ba63e6f634e458a7e23c85088cad8");
 
         // cant interact properly with the 3d canvas so these tests doesn't do a whole lot
 
@@ -76,29 +76,29 @@ context("Unauthenticated viewer functionality", () => {
 
     context("Widgets", () => {
         it("Properties", () => {
-            cy.loadViewerScene("d8b71054c84d4c8088b5b92f2c7839f0");
+            cy.loadViewerScene("ba3ba63e6f634e458a7e23c85088cad8");
 
             cy.get("canvas").click("center");
             cy.getBySel("widget-menu-fab").click();
             cy.contains("Properties").click();
-            cy.getBySel("properties").as("propertiesWidget").contains("Pset_BeamCommon").click();
-            cy.get("@propertiesWidget").contains("Span").click();
+            cy.getBySel("properties").as("propertiesWidget").contains("Pset_RoofCommon").click();
+            cy.get("@propertiesWidget").contains("TotalArea").click();
             cy.get("@propertiesWidget").getBySel("loading-bar").should("exist");
             cy.get("@propertiesWidget").getBySel("loading-bar").should("not.exist");
             cy.get("@propertiesWidget").getBySel("close-widget").click();
         });
 
         it("Groups", () => {
-            cy.loadViewerScene("d8b71054c84d4c8088b5b92f2c7839f0");
+            cy.loadViewerScene("ba3ba63e6f634e458a7e23c85088cad8");
 
             cy.getBySel("widget-menu-fab").click();
             cy.contains("Groups").click();
-            cy.getBySel("groups").as("groupsWidget").contains("SHEATHING").click();
+            cy.getBySel("groups").as("groupsWidget").contains("IfcClass IfcSpace").click();
             cy.get("@groupsWidget").getBySel("close-widget").click();
         });
 
         it("Model Tree", () => {
-            cy.loadViewerScene("d8b71054c84d4c8088b5b92f2c7839f0");
+            cy.loadViewerScene("ba3ba63e6f634e458a7e23c85088cad8");
             cy.get("canvas").click("center");
             cy.getBySel("widget-menu-fab").click();
             cy.contains("Model Tree").click();
