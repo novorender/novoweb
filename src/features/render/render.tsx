@@ -26,6 +26,7 @@ import {
 } from "slices/renderSlice";
 import { sleep } from "utils/timers";
 import { useAppDispatch } from "app/store";
+import { PerformanceStats } from "features/performanceStats";
 
 const useStyles = makeStyles({
     canvas: {
@@ -36,13 +37,18 @@ const useStyles = makeStyles({
     },
 });
 
+const showPerformance = localStorage.getItem("show-performance-stats") !== null;
+const taaEnabled = localStorage.getItem("disable-taa") === null;
+const ssaoEnabled = localStorage.getItem("disable-ssao") === null;
+
+glMatrix.setMatrixArrayType(Array);
+addConsoleDebugUtils();
+
 type Props = {
     api: API;
     dataApi: DataAPI;
     onInit?: (params: { view: View; customProperties: unknown; title: string }) => void;
 };
-
-glMatrix.setMatrixArrayType(Array);
 
 export function Render3D({ api, onInit, dataApi }: Props) {
     const classes = useStyles();
@@ -83,7 +89,7 @@ export function Render3D({ api, onInit, dataApi }: Props) {
 
                 const settings = sceneData.settings ?? ({} as Partial<RenderSettings>);
                 const { display: _display, ...customSettings } = settings ?? {};
-                const _view = await api.createView(customSettings);
+                const _view = await api.createView(customSettings, canvas);
                 _view.scene = await api.loadScene(url, db);
                 const controller = api.createCameraController(
                     (camera as Required<FlightControllerParams>) ?? { kind: "flight" },
@@ -114,7 +120,7 @@ export function Render3D({ api, onInit, dataApi }: Props) {
                 );
 
                 setView(_view);
-                run(canvas, _view);
+                run(canvas, _view, api);
                 window.document.title = `${title} - ${window.document.title}`;
                 window.addEventListener("blur", blur);
                 canvas.focus();
@@ -246,8 +252,13 @@ export function Render3D({ api, onInit, dataApi }: Props) {
         };
     }, []);
 
-    const run = async (canvas: HTMLCanvasElement, view: View) => {
-        const ctx = canvas.getContext("2d", { alpha: true, desynchronized: false })!;
+    const run = async (canvas: HTMLCanvasElement, view: View, api: API) => {
+        const ctx =
+            "OffscreenCanvas" in window ? canvas.getContext("2d", { alpha: true, desynchronized: false }) : undefined;
+
+        if (!ctx) {
+            return;
+        }
 
         const resizeObserver = new ResizeObserver((entries) => {
             for (const entry of entries) {
@@ -260,23 +271,45 @@ export function Render3D({ api, onInit, dataApi }: Props) {
         await sleep(500);
         resizeObserver.observe(canvas);
 
+        const fpsTable: number[] = [];
+        let noBlankFrame = true;
+        function blankCallback() {
+            noBlankFrame = false;
+        }
+
         while (running.current) {
-            const output = await view.render();
+            noBlankFrame = true;
+            const startRender = performance.now();
+            const output = await view.render(blankCallback);
             const { width, height } = canvas;
-            const ssaoEnabled = false;
-            const taaEnabled = false;
-            const badPerf = view.performanceStatistics.weakDevice || view.settings.quality.resolution.value < 1;
-            {
-                if (ssaoEnabled && !badPerf) {
-                    output.applyPostEffect({ kind: "ssao", samples: 64, radius: 1, reset: true });
-                }
-                const image = await output.getImage();
-                if (image) {
-                    ctx.clearRect(0, 0, width, height);
-                    ctx.drawImage(image, 0, 0, width, height); // display in canvas (work on all platforms, but might be less performant)
-                    // ctx.transferFromImageBitmap(image); // display in canvas
-                }
+            const badPerf = view.performanceStatistics.weakDevice; // || view.settings.quality.resolution.value < 1;
+
+            if (ssaoEnabled && !badPerf) {
+                output.applyPostEffect({ kind: "ssao", samples: 64, radius: 1, reset: true });
             }
+
+            const image = await output.getImage();
+
+            if (image) {
+                ctx.clearRect(0, 0, width, height);
+                ctx.drawImage(image, 0, 0, width, height); // display in canvas (work on all platforms, but might be less performant)
+                // ctx.transferFromImageBitmap(image); // display in canvas
+            }
+
+            if (noBlankFrame) {
+                const dt = performance.now() - startRender;
+                fpsTable.splice(0, 0, 1000 / dt);
+                if (fpsTable.length > 200) {
+                    fpsTable.length = 200;
+                }
+                let fps = 0;
+                for (let f of fpsTable) {
+                    fps += f;
+                }
+                fps /= fpsTable.length;
+                (view.performanceStatistics as any).fps = fps;
+            }
+
             let run = taaEnabled;
             let reset = true;
             const start = performance.now();
@@ -284,14 +317,19 @@ export function Render3D({ api, onInit, dataApi }: Props) {
                 if (output.hasViewChanged) {
                     break;
                 }
+
+                await (api as any).waitFrame();
+
                 if (performance.now() - start < 500) {
-                    await sleep(1);
                     continue;
                 }
+
                 run = (await output.applyPostEffect({ kind: "taa", reset })) || false;
+
                 if (ssaoEnabled) {
                     output.applyPostEffect({ kind: "ssao", samples: 64, radius: 1, reset: reset && badPerf });
                 }
+
                 reset = false;
                 const image = await output.getImage();
                 if (image) {
@@ -345,6 +383,7 @@ export function Render3D({ api, onInit, dataApi }: Props) {
 
     return (
         <Box position="relative" width="100%" height="100%">
+            {showPerformance && view && canvas ? <PerformanceStats view={view} canvas={canvas} /> : null}
             <canvas className={classes.canvas} tabIndex={1} ref={setCanvas} onClick={click} />
         </Box>
     );
@@ -402,4 +441,17 @@ function refillObjects({
 
 function getEnvironmentDescription(name: string, environments: EnvironmentDescription[]): EnvironmentDescription {
     return environments.find((env) => env.name === name) ?? environments[0];
+}
+
+function addConsoleDebugUtils() {
+    (window as any).showStats = (val: boolean) =>
+        val !== false
+            ? localStorage.setItem("show-performance-stats", "true")
+            : localStorage.removeItem("show-performance-stats");
+
+    (window as any).disableTaa = (val: boolean) =>
+        val !== false ? localStorage.setItem("disable-taa", "true") : localStorage.removeItem("disable-taa");
+
+    (window as any).disableSsao = (val: boolean) =>
+        val !== false ? localStorage.setItem("disable-ssao", "true") : localStorage.removeItem("disable-ssao");
 }

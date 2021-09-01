@@ -13,7 +13,8 @@ import { appActions, FullscreenStatus, selectFullscreen } from "slices/appSlice"
 import { theme } from "./theme";
 import { FeatureKey, config as featuresConfig } from "../config/features";
 
-const api = createAPI();
+const noOffscreenCanvas = !("OffscreenCanvas" in window);
+const api = createAPI({ webGL1Only: noOffscreenCanvas, noOffscreenCanvas });
 const dataApi = createDataAPI({ serviceUrl: "https://data.novorender.com/api" });
 store.dispatch(fetchEnvironments(api));
 
