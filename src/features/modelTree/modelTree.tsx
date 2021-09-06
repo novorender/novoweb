@@ -1,13 +1,12 @@
 import { Box } from "@material-ui/core";
 import { useRef, useEffect, ChangeEvent } from "react";
-import { useDispatch } from "react-redux";
 import { ListOnScrollProps } from "react-window";
 import { HierarcicalObjectReference, Scene } from "@novorender/webgl-api";
 
 import { Divider, LinearProgress } from "components";
 import { Breadcrumbs } from "features/breadcrumbs";
 import { NodeList } from "features/nodeList";
-import { useAppSelector } from "app/store";
+import { useAppDispatch, useAppSelector } from "app/store";
 import { renderActions, selectMainObject } from "slices/renderSlice";
 import { useAbortController } from "hooks/useAbortController";
 import { useMountedState } from "hooks/useMountedState";
@@ -33,7 +32,7 @@ type Props = {
 
 export function ModelTree({ scene }: Props) {
     const mainObject = useAppSelector(selectMainObject);
-    const dispatch = useDispatch();
+    const dispatch = useAppDispatch();
 
     const [status, setStatus] = useMountedState(Status.Initial);
     const [currentDepth, setCurrentDepth] = useMountedState<

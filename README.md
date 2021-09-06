@@ -8,7 +8,6 @@
 
 The default scene is Condos.\
 Create an environment variable `REACT_APP_SCENE_ID={SCENEID}` to set a different scene as the default.\
-There is no authentication in the current state of the app, so scenes has to be public.
 
 Install dependencies  
 `npm install`
@@ -44,7 +43,7 @@ We have the option to toggle features on/off upon viewer scene creation.\
 You have to add your new widget to the list of enabled features for it to appear in the widget menu.
 
 ```ts
-// src/app/app.tsx
+// src/pages/explorer.tsx
 
 // Always enabled
 function enabledFeaturesToFeatureKeys(enabledFeatures: Record<string, boolean>): FeatureKey[] {

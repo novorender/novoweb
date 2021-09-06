@@ -8,13 +8,13 @@ type Props = {
 };
 
 export function PerformanceStats({ view, canvas }: Props) {
-    const fpsRef = useRef<HTMLTableDataCellElement | null>(null);
-    const activeQualityRef = useRef<HTMLTableDataCellElement | null>(null);
-    const trianglesRef = useRef<HTMLTableDataCellElement | null>(null);
-    const pointsRef = useRef<HTMLTableDataCellElement | null>(null);
-    const renderCallsRef = useRef<HTMLTableDataCellElement | null>(null);
-    const resolutionRef = useRef<HTMLTableDataCellElement | null>(null);
-    const jsMemoryRef = useRef<HTMLTableDataCellElement | null>(null);
+    const fpsRef = useRef<HTMLTableCellElement | null>(null);
+    const activeQualityRef = useRef<HTMLTableCellElement | null>(null);
+    const trianglesRef = useRef<HTMLTableCellElement | null>(null);
+    const pointsRef = useRef<HTMLTableCellElement | null>(null);
+    const renderCallsRef = useRef<HTMLTableCellElement | null>(null);
+    const resolutionRef = useRef<HTMLTableCellElement | null>(null);
+    const jsMemoryRef = useRef<HTMLTableCellElement | null>(null);
 
     useEffect(
         function startPerformanceStats() {

@@ -24,24 +24,26 @@ type DeepWritable<T> = { -readonly [P in keyof T]: DeepWritable<T[P]> };
 type WritableObjectGroups = DeepWritable<ObjectGroups>;
 type WritableBookmark = DeepWritable<Bookmark>;
 
+const initialState = {
+    environments: [] as EnvironmentDescription[],
+    currentEnvironment: undefined as EnvironmentDescription | undefined,
+    mainObject: undefined as ObjectId | undefined,
+    objectGroups: {
+        default: { name: "default", ids: [], selected: true, hidden: false, color: [1, 0, 0], id: "" },
+        defaultHidden: { name: "defaultHidden", ids: [], selected: false, hidden: true, color: [1, 0, 0], id: "" },
+        custom: [],
+    } as WritableObjectGroups,
+    bookmarks: [] as WritableBookmark[],
+    viewOnlySelected: false,
+    selectMultiple: false,
+    baseCameraSpeed: 0.03,
+    cameraSpeedMultiplier: CameraSpeedMultiplier.Normal,
+    savedCameraPositions: { currentIndex: -1, positions: [] as CameraPosition[] },
+};
+
 export const renderSlice = createSlice({
     name: "render",
-    initialState: {
-        environments: [] as EnvironmentDescription[],
-        currentEnvironment: undefined as EnvironmentDescription | undefined,
-        mainObject: undefined as ObjectId | undefined,
-        objectGroups: {
-            default: { name: "default", ids: [], selected: true, hidden: false, color: [1, 0, 0], id: "" },
-            defaultHidden: { name: "defaultHidden", ids: [], selected: false, hidden: true, color: [1, 0, 0], id: "" },
-            custom: [],
-        } as WritableObjectGroups,
-        bookmarks: [] as WritableBookmark[],
-        viewOnlySelected: false,
-        selectMultiple: false,
-        baseCameraSpeed: 0.03,
-        cameraSpeedMultiplier: CameraSpeedMultiplier.Normal,
-        savedCameraPositions: { currentIndex: -1, positions: [] as CameraPosition[] },
-    },
+    initialState: initialState,
     reducers: {
         setMainObject: (state, action: PayloadAction<ObjectId | undefined>) => {
             state.mainObject = action.payload;
@@ -85,12 +87,12 @@ export const renderSlice = createSlice({
             state.objectGroups.default.color = action.payload;
         },
         toggleCameraSpeed: (state) => {
-            // prettier-ignore
-            state.cameraSpeedMultiplier = state.cameraSpeedMultiplier === CameraSpeedMultiplier.Slow
-                ? CameraSpeedMultiplier.Normal
-                : state.cameraSpeedMultiplier === CameraSpeedMultiplier.Normal
-                ? CameraSpeedMultiplier.Fast
-                : CameraSpeedMultiplier.Slow;
+            state.cameraSpeedMultiplier =
+                state.cameraSpeedMultiplier === CameraSpeedMultiplier.Slow
+                    ? CameraSpeedMultiplier.Normal
+                    : state.cameraSpeedMultiplier === CameraSpeedMultiplier.Normal
+                    ? CameraSpeedMultiplier.Fast
+                    : CameraSpeedMultiplier.Slow;
         },
         /**
          * Save camera position at current index.
@@ -119,6 +121,9 @@ export const renderSlice = createSlice({
         },
         setBookmarks: (state, action: PayloadAction<Bookmark[]>) => {
             state.bookmarks = action.payload as WritableBookmark[];
+        },
+        resetState: (state) => {
+            return { ...initialState, environments: state.environments };
         },
     },
     extraReducers: (builder) => {
