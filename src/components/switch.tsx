@@ -16,8 +16,8 @@ export const Switch = withStyles((theme: Theme) =>
                 color: theme.palette.common.white,
                 "& + $track": {
                     opacity: 1,
-                    backgroundColor: theme.palette.brand.main,
-                    borderColor: theme.palette.brand.main,
+                    backgroundColor: theme.palette.primary.main,
+                    borderColor: theme.palette.primary.main,
                 },
             },
         },

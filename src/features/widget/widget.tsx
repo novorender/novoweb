@@ -29,9 +29,9 @@ import { Search } from "features/search";
 const useStyles = makeStyles((theme) =>
     createStyles({
         fabClosed: {
-            backgroundColor: theme.palette.brand.main,
+            backgroundColor: theme.palette.primary.main,
             "&:hover": {
-                backgroundColor: theme.palette.brand.dark,
+                backgroundColor: theme.palette.primary.dark,
             },
         },
         fabOpen: {
@@ -49,7 +49,7 @@ const useStyles = makeStyles((theme) =>
             left: theme.spacing(1),
             right: theme.spacing(1),
             top: theme.spacing(1),
-            background: theme.palette.primary.main,
+            background: theme.palette.common.white,
             [theme.breakpoints.up("sm")]: {
                 width: 384,
                 height: 400,
@@ -138,7 +138,7 @@ export function Widget({ widgetKey, scene, view }: Props) {
                     size: isSmall ? "small" : "large",
                 }}
                 ariaLabel="widgets"
-                icon={<SpeedDialIcon icon={<NovorenderIcon />} openIcon={<CloseIcon color="primary" />} />}
+                icon={<SpeedDialIcon icon={<NovorenderIcon />} openIcon={<CloseIcon />} />}
             />
         </>
     );
@@ -165,7 +165,9 @@ export function MenuWidget() {
                 <Paper elevation={4} className={classes.menuContainer}>
                     <Box display="flex" p={1} boxShadow={theme.customShadows.widgetHeader}>
                         <Box display="flex" alignItems="center">
-                            <NovorenderIcon style={{ fill: theme.palette.brand.main, marginRight: theme.spacing(1) }} />
+                            <NovorenderIcon
+                                style={{ fill: theme.palette.primary.main, marginRight: theme.spacing(1) }}
+                            />
                             <Typography variant="body1" component="h2">
                                 Functions
                             </Typography>
@@ -193,7 +195,7 @@ export function MenuWidget() {
                     } as Partial<FabProps<"button", { "data-test": string }>>
                 }
                 ariaLabel="widgets"
-                icon={<SpeedDialIcon icon={<NovorenderIcon />} openIcon={<CloseIcon color="primary" />} />}
+                icon={<SpeedDialIcon icon={<NovorenderIcon />} openIcon={<CloseIcon />} />}
             />
         </>
     );

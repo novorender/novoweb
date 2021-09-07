@@ -21,7 +21,7 @@ export function ClearSelection(props: Props) {
             FabProps={{ disabled: !selectedIds.length, ...props.FabProps }}
             onClick={() => dispatch(renderActions.clearSelectedObjects())}
             title={name}
-            icon={<Icon color="primary" />}
+            icon={<Icon />}
         />
     );
 }

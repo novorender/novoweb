@@ -19,7 +19,7 @@ export function MultipleSelection(props: Props) {
             active={active}
             onClick={() => dispatch(renderActions.toggleSelectMultiple())}
             title={name}
-            icon={<Icon color="primary" />}
+            icon={<Icon />}
         />
     );
 }

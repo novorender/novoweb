@@ -41,7 +41,7 @@ export function SelectionColor(props: Props) {
                 }}
                 onClick={toggle}
                 title={name}
-                icon={<Icon color="primary" />}
+                icon={<Icon />}
             />
             {open ? (
                 <ColorPicker

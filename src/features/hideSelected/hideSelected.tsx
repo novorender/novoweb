@@ -31,7 +31,7 @@ export function HideSelected(props: Props) {
             FabProps={{ disabled, ...props.FabProps }}
             onClick={toggleHideSelected}
             title={name}
-            icon={<Icon color="primary" />}
+            icon={<Icon />}
         />
     );
 }

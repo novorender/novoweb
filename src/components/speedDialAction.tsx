@@ -15,12 +15,18 @@ const useStyles = makeStyles((theme) =>
             },
         },
         fabActive: {
-            backgroundColor: theme.palette.brand.main,
+            "& svg": {
+                color: theme.palette.common.white,
+            },
+            backgroundColor: theme.palette.primary.main,
             "&:hover": {
-                backgroundColor: theme.palette.brand.dark,
+                backgroundColor: theme.palette.primary.dark,
             },
         },
         fab: {
+            "& svg": {
+                color: theme.palette.common.white,
+            },
             backgroundColor: theme.palette.secondary.main,
             "&:hover": {
                 backgroundColor: theme.palette.secondary.dark,
@@ -29,7 +35,7 @@ const useStyles = makeStyles((theme) =>
     })
 );
 
-export const SpeedDialAction = forwardRef(({ active, ...speedDialActionProps }: Props, ref) => {
+export const SpeedDialAction = forwardRef(({ active, FabProps, ...speedDialActionProps }: Props, ref) => {
     const classes = useStyles();
 
     return (
@@ -37,6 +43,7 @@ export const SpeedDialAction = forwardRef(({ active, ...speedDialActionProps }: 
             ref={ref}
             className={classes.base}
             classes={{ fab: active ? classes.fabActive : classes.fab }}
+            FabProps={{ color: "inherit", ...FabProps }}
             {...speedDialActionProps}
         />
     );

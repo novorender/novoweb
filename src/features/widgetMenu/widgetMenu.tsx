@@ -14,14 +14,14 @@ const useStyles = makeStyles((theme) =>
             },
 
             "&:hover $activeCurrentButton:not(:disabled)": {
-                background: theme.palette.brand.dark,
+                background: theme.palette.primary.dark,
             },
         },
         activeElsewhere: {
             opacity: 0.3,
         },
         activeCurrentButton: {
-            background: theme.palette.brand.main,
+            background: theme.palette.primary.main,
             "& svg": {
                 fill: "#FFF",
             },
