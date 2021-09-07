@@ -88,8 +88,10 @@ export function Render3D({ id, api, onInit, dataApi }: Props) {
     const scene = view?.scene;
 
     useEffect(() => {
-        dispatch(fetchEnvironments(api));
-    }, [api, dispatch]);
+        if (!environments.length) {
+            dispatch(fetchEnvironments(api));
+        }
+    }, [api, dispatch, environments]);
 
     useEffect(() => {
         initView();
@@ -262,16 +264,10 @@ export function Render3D({ id, api, onInit, dataApi }: Props) {
         [env, api, view]
     );
 
-    useEffect(function handleUnmount() {
-        return () => {
-            window.removeEventListener("blur", blur);
-            running.current = false;
-        };
-    }, []);
-
     useEffect(
         function cleanUpPreviousScene() {
             return () => {
+                window.removeEventListener("blur", blur);
                 running.current = false;
                 dispatch(renderActions.resetState());
                 setStatus(Status.Initial);
