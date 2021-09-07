@@ -1,4 +1,5 @@
 import { Box, BoxProps, createStyles, makeStyles } from "@material-ui/core";
+import { forwardRef } from "react";
 
 export const useScrollBoxStyles = makeStyles((theme) =>
     createStyles({
@@ -24,8 +25,16 @@ export const useScrollBoxStyles = makeStyles((theme) =>
     })
 );
 
-export function ScrollBox(props: BoxProps) {
+export const ScrollBox = forwardRef<HTMLDivElement, BoxProps>((props, ref) => {
     const classes = useScrollBoxStyles();
 
-    return <Box {...props} className={`${classes.box} ${props.className ?? ""}`} />;
-}
+    // prettier-ignore
+    return (
+        <Box
+            {...props}
+            // @ts-ignore mis-typing in library
+            ref={ref}
+            className={`${classes.box} ${props.className ?? ""}`}
+        />
+    );
+});

@@ -32,6 +32,7 @@ import { useMountedState } from "hooks/useMountedState";
 import { authActions } from "slices/authSlice";
 import { deleteStoredToken } from "utils/auth";
 import { offscreenCanvas } from "config";
+import { Loading } from "components";
 
 const useStyles = makeStyles({
     canvas: {
@@ -416,6 +417,7 @@ export function Render3D({ id, api, onInit, dataApi }: Props) {
                 <>
                     {showPerformance && view && canvas ? <PerformanceStats view={view} canvas={canvas} /> : null}
                     <canvas className={classes.canvas} tabIndex={1} ref={setCanvas} onClick={click} />
+                    {!view ? <Loading /> : null}
                 </>
             )}
         </Box>
