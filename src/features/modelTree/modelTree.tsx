@@ -329,6 +329,7 @@ export function ModelTree({ scene }: Props) {
                     <Box flex={"1 1 100%"}>
                         {currentDepth?.nodes ? (
                             <NodeList
+                                parentNode={node}
                                 nodes={currentDepth.nodes}
                                 onNodeClick={handleNodeClick}
                                 onToggleHide={handleChange("hide")}

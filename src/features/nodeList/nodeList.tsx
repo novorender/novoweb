@@ -24,6 +24,7 @@ import VisibilityIcon from "@material-ui/icons/Visibility";
 
 type Props = {
     nodes: HierarcicalObjectReference[];
+    parentNode?: HierarcicalObjectReference;
     onScroll?: (props: ListOnScrollProps) => void;
     onNodeClick: (node: HierarcicalObjectReference, isSelected: boolean) => void;
     onToggleSelect?: (event: ChangeEvent<HTMLInputElement>, node: HierarcicalObjectReference) => void;
@@ -32,7 +33,7 @@ type Props = {
 };
 
 export const NodeList = forwardRef<any, Props>(
-    ({ nodes, onScroll, onNodeClick, onToggleSelect, onToggleHide, outerRef }, ref) => {
+    ({ nodes, onScroll, onNodeClick, onToggleSelect, onToggleHide, outerRef, parentNode }, ref) => {
         const theme = useTheme();
         const scrollBoxStyles = useScrollBoxStyles().box;
 
@@ -56,24 +57,56 @@ export const NodeList = forwardRef<any, Props>(
                     >
                         {({ index, style }) => {
                             const node = nodes[index];
+                            const nodeStyles =
+                                parentNode && style.top !== undefined && style.height !== undefined
+                                    ? { ...style, top: Number(style.top) + Number(style.height) }
+                                    : style;
 
                             if (!node) {
                                 return null;
+                            }
+
+                            let parent: JSX.Element | null = null;
+
+                            if (index === 0 && parentNode) {
+                                const parentStyles = style;
+                                const parentIsSelected = selected.includes(parentNode.id);
+                                const parentIsHidden = hidden.includes(parentNode.id);
+
+                                parent = (
+                                    <Node
+                                        parent
+                                        style={parentStyles}
+                                        node={parentNode}
+                                        selected={parentIsSelected}
+                                        hidden={parentIsHidden}
+                                        onToggleSelect={
+                                            onToggleSelect ? (e) => onToggleSelect(e, parentNode) : undefined
+                                        }
+                                        onToggleHide={onToggleHide ? (e) => onToggleHide(e, parentNode) : undefined}
+                                        onNodeClick={
+                                            onNodeClick ? () => onNodeClick(parentNode, isSelected) : onNodeClick
+                                        }
+                                    />
+                                );
                             }
 
                             const isSelected = selected.includes(node.id);
                             const isHidden = hidden.includes(node.id);
 
                             return (
-                                <Node
-                                    style={style}
-                                    node={node}
-                                    selected={isSelected}
-                                    hidden={isHidden}
-                                    onToggleSelect={onToggleSelect ? (e) => onToggleSelect(e, node) : undefined}
-                                    onToggleHide={onToggleHide ? (e) => onToggleHide(e, node) : undefined}
-                                    onNodeClick={onNodeClick ? () => onNodeClick(node, isSelected) : onNodeClick}
-                                />
+                                <>
+                                    {parent}
+                                    <Node
+                                        style={nodeStyles}
+                                        node={node}
+                                        selected={isSelected}
+                                        hidden={isHidden}
+                                        onToggleSelect={onToggleSelect ? (e) => onToggleSelect(e, node) : undefined}
+                                        onToggleHide={onToggleHide ? (e) => onToggleHide(e, node) : undefined}
+                                        onNodeClick={onNodeClick ? () => onNodeClick(node, isSelected) : onNodeClick}
+                                    />
+                                </>
                             );
                         }}
                     </FixedSizeList>
@@ -88,6 +121,7 @@ const useStyles = makeStyles((theme) =>
         listItemIcon: {
             minWidth: "auto",
             margin: `0 ${theme.spacing(1)}px 0 0`,
+            color: theme.palette.grey[700],
         },
     })
 );
@@ -96,6 +130,7 @@ function Node({
     node,
     selected,
     hidden,
+    parent,
     onToggleSelect,
     onToggleHide,
     onNodeClick,
@@ -104,6 +139,7 @@ function Node({
     node: HierarcicalObjectReference;
     selected: boolean;
     hidden: boolean;
+    parent?: boolean;
     onToggleSelect?: ChangeEventHandler<HTMLInputElement>;
     onToggleHide?: ChangeEventHandler<HTMLInputElement>;
     onNodeClick?: (node: HierarcicalObjectReference, isSelected: boolean) => void;
@@ -127,13 +163,17 @@ function Node({
         >
             <Box display="flex" width={1} alignItems="center">
                 <Box display="flex" alignItems="center" width={0} flex={"1 1 100%"}>
-                    {node.type === NodeType.Internal ? (
-                        <FolderIcon className={classes.listItemIcon} fontSize="small" />
-                    ) : (
-                        <EcoIcon className={classes.listItemIcon} fontSize="small" />
-                    )}
-                    <Tooltip title={pathName} interactive>
-                        <Typography noWrap={true}>{pathName}</Typography>
+                    {!parent ? (
+                        node.type === NodeType.Internal ? (
+                            <FolderIcon className={classes.listItemIcon} fontSize="small" />
+                        ) : (
+                            <EcoIcon className={classes.listItemIcon} fontSize="small" />
+                        )
+                    ) : null}
+                    <Tooltip title={parent ? "Folder" : pathName} interactive>
+                        <Typography color={parent ? "textSecondary" : "textPrimary"} noWrap={true}>
+                            {parent ? "Folder" : pathName}
+                        </Typography>
                     </Tooltip>
                 </Box>
                 {onToggleSelect ? (
