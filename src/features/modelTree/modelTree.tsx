@@ -38,6 +38,7 @@ export function ModelTree({ scene }: Props) {
     const [currentDepth, setCurrentDepth] = useMountedState<
         | {
               nodes: HierarcicalObjectReference[];
+              parentNode?: HierarcicalObjectReference;
               path: string;
               iterator: AsyncIterableIterator<HierarcicalObjectReference> | undefined;
           }
@@ -95,6 +96,12 @@ export function ModelTree({ scene }: Props) {
         async function getCurrentDepth() {
             setStatus(Status.Loading);
             const parentPath = node ? (node.type === NodeType.Internal ? node.path : getParentPath(node.path)) : "";
+            const parentNode =
+                node && node.type === NodeType.Internal
+                    ? node
+                    : parentPath
+                    ? await searchFirstObjectAtPath({ scene, path: parentPath })
+                    : undefined;
 
             try {
                 const iterator = scene.search({ parentPath, descentDepth: 1 });
@@ -102,6 +109,7 @@ export function ModelTree({ scene }: Props) {
 
                 setCurrentDepth({
                     nodes,
+                    parentNode,
                     iterator,
                     path: parentPath,
                 });
@@ -329,7 +337,7 @@ export function ModelTree({ scene }: Props) {
                     <Box flex={"1 1 100%"}>
                         {currentDepth?.nodes ? (
                             <NodeList
-                                parentNode={node}
+                                parentNode={currentDepth.parentNode}
                                 nodes={currentDepth.nodes}
                                 onNodeClick={handleNodeClick}
                                 onToggleHide={handleChange("hide")}
