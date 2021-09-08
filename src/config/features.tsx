@@ -15,6 +15,7 @@ import CheckBoxIcon from "@material-ui/icons/CheckBox";
 import CategoryIcon from "@material-ui/icons/Category";
 import FolderIcon from "@material-ui/icons/Folder";
 import SearchIcon from "@material-ui/icons/Search";
+import GradientIcon from "@material-ui/icons/Gradient";
 
 // import ClippingIcon from "media/icons/clipping.svg";
 
@@ -27,7 +28,7 @@ export enum FeatureType {
 export const config = {
     modelTree: {
         key: "modelTree",
-        name: "Model Tree",
+        name: "Model tree",
         Icon: CategoryIcon,
         type: FeatureType.Widget,
     },
@@ -69,7 +70,7 @@ export const config = {
     }, */
     shareLink: {
         key: "shareLink",
-        name: "Share Link",
+        name: "Share link",
         Icon: ShareIcon,
         type: FeatureType.Widget,
     },
@@ -81,19 +82,19 @@ export const config = {
     },
     stepBack: {
         key: "stepBack",
-        name: "Step Back",
+        name: "Step back",
         Icon: UndoIcon,
         type: FeatureType.CameraNavigation,
     },
     stepForwards: {
         key: "stepForwards",
-        name: "Step Forwards",
+        name: "Step forwards",
         Icon: RedoIcon,
         type: FeatureType.CameraNavigation,
     },
     cameraSpeed: {
         key: "cameraSpeed",
-        name: "Camera Speed",
+        name: "Camera speed",
         Icon: DirectionsRunIcon,
         type: FeatureType.CameraNavigation,
     },
@@ -105,13 +106,13 @@ export const config = {
     },
     multipleSelection: {
         key: "multipleSelection",
-        name: "Multiple Selection",
+        name: "Multiple selection",
         Icon: LayersIcon,
         type: FeatureType.SelectionModifier,
     },
     selectionColor: {
         key: "selectionColor",
-        name: "Selection Color",
+        name: "Selection color",
         Icon: ColorLensIcon,
         type: FeatureType.SelectionModifier,
     },
@@ -129,8 +130,14 @@ export const config = {
     },
     clearSelection: {
         key: "clearSelection",
-        name: "Clear Selection",
+        name: "Clear selection",
         Icon: CheckBoxIcon,
+        type: FeatureType.SelectionModifier,
+    },
+    toggleRenderType: {
+        key: "toggleRenderType",
+        name: "Render type",
+        Icon: GradientIcon,
         type: FeatureType.SelectionModifier,
     },
 } as const;

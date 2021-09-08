@@ -8,6 +8,7 @@ import {
     Scene,
     RenderSettings,
     EnvironmentDescription,
+    Internal,
 } from "@novorender/webgl-api";
 import type { API as DataAPI, ObjectGroup } from "@novorender/data-js-api";
 import { Box, Button, makeStyles, Paper, Typography, useTheme } from "@material-ui/core";
@@ -15,12 +16,14 @@ import { Box, Button, makeStyles, Paper, Typography, useTheme } from "@material-
 import {
     fetchEnvironments,
     renderActions,
+    RenderType,
     selectBaseCameraSpeed,
     selectCameraSpeedMultiplier,
     selectCurrentEnvironment,
     selectEnvironments,
     selectMainObject,
     selectObjectGroups,
+    selectRenderType,
     selectSavedCameraPositions,
     selectSelectMultiple,
     selectViewOnlySelected,
@@ -74,6 +77,7 @@ export function Render3D({ id, api, onInit, dataApi }: Props) {
     const baseCameraSpeed = useSelector(selectBaseCameraSpeed);
     const savedCameraPositions = useSelector(selectSavedCameraPositions);
     const selectMultiple = useSelector(selectSelectMultiple);
+    const renderType = useSelector(selectRenderType);
     const dispatch = useAppDispatch();
 
     const running = useRef(false);
@@ -153,6 +157,19 @@ export function Render3D({ id, api, onInit, dataApi }: Props) {
             }
         }
     }, [canvas, view, api, dataApi, dispatch, onInit, environments, id, setView, setStatus]);
+
+    useEffect(() => {
+        if (!view) {
+            return;
+        }
+
+        dispatchRenderType(view);
+
+        async function dispatchRenderType(view: View) {
+            const type = await getRenderType(view);
+            dispatch(renderActions.setRenderType(type));
+        }
+    }, [view, dispatch]);
 
     useEffect(
         function initCameraMovedTracker() {
@@ -235,6 +252,20 @@ export function Render3D({ id, api, onInit, dataApi }: Props) {
             }
         },
         [scene, view, api, objectGroups, viewOnlySelected, mainObject]
+    );
+
+    useEffect(
+        function handleRenderTypeChanges() {
+            if (!view || !("advanced" in view.settings)) {
+                return;
+            }
+
+            const settings = view.settings as Internal.RenderSettingsExt;
+
+            settings.advanced.hidePoints = renderType === RenderType.Triangles;
+            settings.advanced.hideTriangles = renderType === RenderType.Points;
+        },
+        [renderType, view]
     );
 
     useEffect(
@@ -508,6 +539,33 @@ function refillObjects({
 
 function getEnvironmentDescription(name: string, environments: EnvironmentDescription[]): EnvironmentDescription {
     return environments.find((env) => env.name === name) ?? environments[0];
+}
+
+async function waitForSceneToRender(view: View): Promise<void> {
+    while (!view.performanceStatistics.renderResolved) {
+        await sleep(100);
+    }
+}
+
+async function getRenderType(view: View): Promise<RenderType> {
+    if (!("advanced" in view.settings)) {
+        return RenderType.UnChangeable;
+    }
+
+    await waitForSceneToRender(view);
+
+    const advancedSettings = (view.settings as Internal.RenderSettingsExt).advanced;
+    const points = advancedSettings.hidePoints || view.performanceStatistics.points > 0;
+    const triangles = advancedSettings.hideTriangles || view.performanceStatistics.triangles > 1000;
+    const canChange = points && triangles;
+
+    return !canChange
+        ? RenderType.UnChangeable
+        : advancedSettings.hidePoints
+        ? RenderType.Triangles
+        : advancedSettings.hideTriangles
+        ? RenderType.Points
+        : RenderType.All;
 }
 
 function addConsoleDebugUtils() {
