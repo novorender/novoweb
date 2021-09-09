@@ -1,6 +1,6 @@
 import ListIcon from "@material-ui/icons/List";
 import StarIcon from "@material-ui/icons/Star";
-import ShareIcon from "@material-ui/icons/Share";
+// import ShareIcon from "@material-ui/icons/Share";
 import HomeIcon from "@material-ui/icons/Home";
 import UndoIcon from "@material-ui/icons/Undo";
 import RedoIcon from "@material-ui/icons/Redo";
@@ -67,13 +67,14 @@ export const config = {
         name: "Measure",
         Icon: StraightenIcon,
         type: FeatureType.Widget,
-    }, */
+    }, 
     shareLink: {
         key: "shareLink",
         name: "Share link",
         Icon: ShareIcon,
         type: FeatureType.Widget,
     },
+    */
     home: {
         key: "home",
         name: "Home",

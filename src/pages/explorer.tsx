@@ -71,7 +71,7 @@ export function Explorer() {
         setView(view);
 
         if (enabledFeatures) {
-            dispatch(appActions.setAvailableFeatures(enabledFeaturesToFeatureKeys(enabledFeatures)));
+            dispatch(appActions.setEnabledFeatures(enabledFeaturesToFeatureKeys(enabledFeatures)));
         }
     };
 

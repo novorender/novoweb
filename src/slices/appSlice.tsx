@@ -11,7 +11,7 @@ export enum FullscreenStatus {
 
 const initialState = {
     fullscreen: FullscreenStatus.Initial,
-    enabledFeatures: [] as FeatureKey[],
+    enabledFeatures: Object.values(featuresConfig).map((feature) => feature.key) as FeatureKey[],
     widgets: [] as WidgetKey[],
 };
 
@@ -27,7 +27,7 @@ export const appSlice = createSlice({
         setFullscreen: (state, action: PayloadAction<FullscreenStatus>) => {
             state.fullscreen = action.payload;
         },
-        setAvailableFeatures: (state, action: PayloadAction<FeatureKey[]>) => {
+        setEnabledFeatures: (state, action: PayloadAction<FeatureKey[]>) => {
             state.enabledFeatures = action.payload;
         },
         addWidgetSlot: (state, action: PayloadAction<WidgetKey>) => {
