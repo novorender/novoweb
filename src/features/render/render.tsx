@@ -311,10 +311,6 @@ export function Render3D({ id, api, onInit, dataApi }: Props) {
         running.current = true;
         const ctx = offscreenCanvas ? canvas.getContext("2d", { alpha: true, desynchronized: false }) : undefined;
 
-        if (!ctx) {
-            return;
-        }
-
         const resizeObserver = new ResizeObserver((entries) => {
             for (const entry of entries) {
                 canvas.width = entry.contentRect.width;
@@ -345,7 +341,7 @@ export function Render3D({ id, api, onInit, dataApi }: Props) {
 
             const image = await output.getImage();
 
-            if (image) {
+            if (ctx && image) {
                 ctx.clearRect(0, 0, width, height);
                 ctx.drawImage(image, 0, 0, width, height); // display in canvas (work on all platforms, but might be less performant)
                 // ctx.transferFromImageBitmap(image); // display in canvas
@@ -387,7 +383,7 @@ export function Render3D({ id, api, onInit, dataApi }: Props) {
 
                 reset = false;
                 const image = await output.getImage();
-                if (image) {
+                if (ctx && image) {
                     ctx.clearRect(0, 0, width, height);
                     ctx.drawImage(image, 0, 0, width, height); // display in canvas (work on all platforms, but might be less performant)
                     // ctx.transferFromImageBitmap(image); // display in canvas
