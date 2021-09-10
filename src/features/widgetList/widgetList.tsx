@@ -1,7 +1,7 @@
 import { Box, createStyles, Grid, IconButton, makeStyles, Typography } from "@material-ui/core";
 
 import { useAppDispatch, useAppSelector } from "app/store";
-import { appActions, selectEnabledWidgets, selectWidgets } from "slices/appSlice";
+import { explorerActions, selectEnabledWidgets, selectWidgets } from "slices/explorerSlice";
 import type { WidgetKey } from "config/features";
 
 const useStyles = makeStyles((theme) =>
@@ -56,11 +56,11 @@ export function WidgetList({ widgetKey, onSelect }: Props) {
 
         if (!widgetKey) {
             onSelect();
-            return dispatch(appActions.addWidgetSlot(key));
+            return dispatch(explorerActions.addWidgetSlot(key));
         }
 
         onSelect();
-        dispatch(appActions.replaceWidgetSlot({ replace: widgetKey, key }));
+        dispatch(explorerActions.replaceWidgetSlot({ replace: widgetKey, key }));
     };
 
     return (

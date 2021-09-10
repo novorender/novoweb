@@ -1,7 +1,7 @@
 import { Box, useMediaQuery, useTheme } from "@material-ui/core";
 import type { Scene, View } from "@novorender/webgl-api";
 
-import { appActions, selectWidgets } from "slices/appSlice";
+import { explorerActions, selectWidgets } from "slices/explorerSlice";
 import { useAppDispatch, useAppSelector } from "app/store";
 import { MenuWidget, Widget } from "features/widget";
 import { useEffect } from "react";
@@ -20,7 +20,7 @@ export function Widgets({ scene, view }: Props) {
     useEffect(
         function handleScreenSizeChange() {
             if (isSmall && slots.length > 1) {
-                dispatch(appActions.removeWidgetSlot(slots[1]));
+                dispatch(explorerActions.removeWidgetSlot(slots[1]));
             }
         },
         [isSmall, slots, dispatch]

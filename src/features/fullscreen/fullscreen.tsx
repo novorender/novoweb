@@ -2,7 +2,7 @@ import type { SpeedDialActionProps } from "@material-ui/lab";
 
 import { SpeedDialAction } from "components/speedDialAction";
 import { config as featuresConfig } from "config/features";
-import { appActions } from "slices/appSlice";
+import { explorerActions } from "slices/explorerSlice";
 import { useAppDispatch } from "app/store";
 
 type Props = SpeedDialActionProps & {
@@ -13,7 +13,7 @@ export function Fullscreen({ position, ...speedDialProps }: Props) {
     const { name, Icon } = featuresConfig["fullscreen"];
 
     const dispatch = useAppDispatch();
-    const handleClick = () => dispatch(appActions.toggleFullscreen());
+    const handleClick = () => dispatch(explorerActions.toggleFullscreen());
 
     return (
         <SpeedDialAction

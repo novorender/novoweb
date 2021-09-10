@@ -9,11 +9,11 @@ import { Hud } from "features/hud";
 import { Render3D } from "features/render";
 import { Protected } from "features/protectedRoute";
 import { FeatureKey, config as featuresConfig } from "config/features";
-import { appActions, FullscreenStatus, selectFullscreen } from "slices/appSlice";
+import { explorerActions, FullscreenStatus, selectFullscreen } from "slices/explorerSlice";
 import { selectAccessToken } from "slices/authSlice";
 
 export function Explorer() {
-    const { id = process.env.REACT_APP_SCENE_ID ?? "" } = useParams<{ id?: string }>();
+    const { id = process.env.REACT_APP_SCENE_ID ?? "95a89d20dd084d9486e383e131242c4c" } = useParams<{ id?: string }>();
     const fullscreen = useAppSelector(selectFullscreen);
 
     const [view, setView] = useState<View>();
@@ -35,9 +35,9 @@ export function Explorer() {
                 const exiting = document.fullscreenElement === null;
 
                 if (exiting) {
-                    dispatch(appActions.setFullscreen(FullscreenStatus.Windowed));
+                    dispatch(explorerActions.setFullscreen(FullscreenStatus.Windowed));
                 } else {
-                    dispatch(appActions.setFullscreen(FullscreenStatus.Fullscreen));
+                    dispatch(explorerActions.setFullscreen(FullscreenStatus.Fullscreen));
                 }
             };
 
@@ -71,7 +71,7 @@ export function Explorer() {
         setView(view);
 
         if (enabledFeatures) {
-            dispatch(appActions.setEnabledFeatures(enabledFeaturesToFeatureKeys(enabledFeatures)));
+            dispatch(explorerActions.setEnabledFeatures(enabledFeaturesToFeatureKeys(enabledFeatures)));
         }
     };
 

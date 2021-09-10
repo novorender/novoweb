@@ -19,7 +19,7 @@ import { Bookmarks } from "features/bookmarks";
 import { ModelTree } from "features/modelTree";
 import { Groups } from "features/groups";
 import { useAppSelector, useAppDispatch } from "app/store";
-import { selectEnabledWidgets, appActions } from "slices/appSlice";
+import { selectEnabledWidgets, explorerActions } from "slices/explorerSlice";
 import { useToggle } from "hooks/useToggle";
 
 import CloseIcon from "@material-ui/icons/Close";
@@ -91,7 +91,7 @@ export function Widget({ widgetKey, scene, view }: Props) {
     };
 
     const handleClose = () => {
-        dispatch(appActions.removeWidgetSlot(widgetKey));
+        dispatch(explorerActions.removeWidgetSlot(widgetKey));
     };
 
     if (!config) {

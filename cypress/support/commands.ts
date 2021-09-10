@@ -72,7 +72,7 @@ Cypress.Commands.add("setMainObject", (payload: number) => {
 });
 
 Cypress.Commands.add("openWidgets", (payload: string[]) => {
-    cy.dispatch({ type: "app/addWidgetSlot", payload });
+    cy.dispatch({ type: "explorer/addWidgetSlot", payload });
 });
 
 Cypress.Commands.add("waitForWidgetToUpdate", (selector, ...args) => {
