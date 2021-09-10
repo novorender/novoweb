@@ -1,13 +1,12 @@
 import { Box } from "@material-ui/core";
 import { useRef, useEffect, ChangeEvent } from "react";
-import { useDispatch } from "react-redux";
 import { ListOnScrollProps } from "react-window";
 import { HierarcicalObjectReference, Scene } from "@novorender/webgl-api";
 
 import { Divider, LinearProgress } from "components";
 import { Breadcrumbs } from "features/breadcrumbs";
 import { NodeList } from "features/nodeList";
-import { useAppSelector } from "app/store";
+import { useAppDispatch, useAppSelector } from "app/store";
 import { renderActions, selectMainObject } from "slices/renderSlice";
 import { useAbortController } from "hooks/useAbortController";
 import { useMountedState } from "hooks/useMountedState";
@@ -16,37 +15,47 @@ import { getObjectData, iterateAsync, searchByParentPath, searchFirstObjectAtPat
 import { extractObjectIds, getParentPath } from "utils/objectData";
 
 enum Status {
-    Initial,
     Ready,
     Loading,
 }
 
 // the NodeType in api does not work with --isolatedModules
 export const NodeType = {
-    Internal: 0 as any,
-    Leaf: 1 as any,
+    Internal: 0,
+    Leaf: 1,
 };
 
 type Props = {
     scene: Scene;
 };
 
+type TreeLevel = {
+    nodes: HierarcicalObjectReference[];
+    path: string;
+    parentNode: HierarcicalObjectReference | undefined;
+    iterator: AsyncIterableIterator<HierarcicalObjectReference> | undefined;
+};
+
+const rootNode = {
+    type: "root",
+    name: "Scene",
+    path: "",
+    id: "root",
+} as const;
+
+type RootNode = typeof rootNode;
+
 export function ModelTree({ scene }: Props) {
     const mainObject = useAppSelector(selectMainObject);
-    const dispatch = useDispatch();
+    const dispatch = useAppDispatch();
 
-    const [status, setStatus] = useMountedState(Status.Initial);
-    const [currentDepth, setCurrentDepth] = useMountedState<
-        | {
-              nodes: HierarcicalObjectReference[];
-              path: string;
-              iterator: AsyncIterableIterator<HierarcicalObjectReference> | undefined;
-          }
-        | undefined
-    >(undefined);
-    const [node, setNode] = useMountedState<HierarcicalObjectReference | undefined>(undefined);
+    const [status, setStatus] = useMountedState(Status.Loading);
+    const [currentDepth, setCurrentDepth] = useMountedState<TreeLevel | undefined>(undefined);
+    const [currentNode, setCurrentNode] = useMountedState<HierarcicalObjectReference | RootNode | undefined>(undefined);
 
     const [abortController, abort] = useAbortController();
+    const isLoadingMore = useRef(false);
+    const listRef = useRef<any>(null);
     const listElRef = useRef<HTMLElement | null>(null);
 
     useEffect(() => {
@@ -58,7 +67,7 @@ export function ModelTree({ scene }: Props) {
 
         async function init() {
             if (mainObject === undefined) {
-                setNode(undefined);
+                setCurrentNode(rootNode);
                 return setStatus(Status.Ready);
             }
 
@@ -71,38 +80,71 @@ export function ModelTree({ scene }: Props) {
                     return setStatus(Status.Ready);
                 }
 
-                setNode(obj);
+                setCurrentNode(obj);
             } catch {
                 setStatus(Status.Ready);
             }
         }
-    }, [mainObject, scene, setStatus, setNode]);
+    }, [mainObject, scene, setStatus, setCurrentNode]);
 
     useEffect(() => {
+        if (!currentNode) {
+            return;
+        }
+
         const isSamePath = !currentDepth
             ? false
-            : node
-            ? node.type === NodeType.Internal
-                ? node.path === currentDepth.path
-                : getParentPath(node.path) === currentDepth.path
-            : currentDepth.path === "";
+            : currentNode.type === NodeType.Internal || currentNode.type === "root"
+            ? currentNode.path === currentDepth.path
+            : getParentPath(currentNode.path) === currentDepth.path;
 
         if (isSamePath) {
+            if (currentNode.type === NodeType.Leaf && currentDepth) {
+                const indexInCurrentList = currentDepth.nodes.findIndex((_node) => _node.id === currentNode.id);
+                const shouldPreprendCurrentList = indexInCurrentList === -1 && currentNode.type === NodeType.Leaf;
+
+                if (shouldPreprendCurrentList) {
+                    setCurrentDepth((state) =>
+                        state
+                            ? {
+                                  ...state,
+                                  nodes: [currentNode, ...state.nodes],
+                              }
+                            : state
+                    );
+                } else if (!isLoadingMore.current) {
+                    listRef.current?.scrollToItem(indexInCurrentList);
+                }
+            }
             return setStatus(Status.Ready);
         }
 
-        getCurrentDepth();
+        getCurrentDepth(currentNode);
 
-        async function getCurrentDepth() {
+        async function getCurrentDepth(node: HierarcicalObjectReference | RootNode) {
             setStatus(Status.Loading);
-            const parentPath = node ? (node.type === NodeType.Internal ? node.path : getParentPath(node.path)) : "";
+
+            const parentPath =
+                node.type === NodeType.Internal || node.type === rootNode.type ? node.path : getParentPath(node.path);
+            const parentNode =
+                node.type === NodeType.Internal
+                    ? node
+                    : node.type === rootNode.type
+                    ? undefined
+                    : await searchFirstObjectAtPath({ scene, path: parentPath });
 
             try {
                 const iterator = scene.search({ parentPath, descentDepth: 1 });
                 const [nodes] = await iterateAsync({ iterator, count: 25 });
 
                 setCurrentDepth({
-                    nodes,
+                    parentNode,
+                    nodes:
+                        node.type === NodeType.Leaf
+                            ? nodes.find((_node) => _node.id === node.id)
+                                ? nodes
+                                : [node, ...nodes]
+                            : nodes,
                     iterator,
                     path: parentPath,
                 });
@@ -112,18 +154,10 @@ export function ModelTree({ scene }: Props) {
                 setStatus(Status.Ready);
             }
         }
-    }, [node, currentDepth, scene, setCurrentDepth, setStatus]);
-
-    const setCurrentDepthIterator = (iterator: AsyncIterableIterator<HierarcicalObjectReference> | undefined): void => {
-        setCurrentDepth((state) => (state ? { ...state, iterator } : undefined));
-    };
-
-    const setCurrentDepthNodes = (nodes: HierarcicalObjectReference[]) => {
-        setCurrentDepth((state) => (state ? { ...state, nodes } : undefined));
-    };
+    }, [currentNode, currentDepth, scene, setCurrentDepth, setStatus]);
 
     const loadMore = async () => {
-        if (!currentDepth?.iterator || status !== Status.Ready) {
+        if (!currentDepth || !currentDepth.iterator || status !== Status.Ready) {
             return;
         }
 
@@ -131,11 +165,20 @@ export function ModelTree({ scene }: Props) {
             setStatus(Status.Loading);
             const [nodesToAdd, done] = await iterateAsync({ iterator: currentDepth.iterator, count: 25 });
 
-            setCurrentDepthNodes(currentDepth ? [...currentDepth.nodes, ...nodesToAdd] : []);
-
-            if (done) {
-                setCurrentDepthIterator(undefined);
-            }
+            setCurrentDepth((state) =>
+                state
+                    ? {
+                          ...state,
+                          nodes: [
+                              ...state.nodes,
+                              ...nodesToAdd.filter(
+                                  (newNode) => currentDepth.nodes.find((_node) => _node.id === newNode.id) === undefined
+                              ),
+                          ],
+                          iterator: done ? undefined : state.iterator,
+                      }
+                    : state
+            );
         } catch {
             // nada
         } finally {
@@ -143,7 +186,7 @@ export function ModelTree({ scene }: Props) {
         }
     };
 
-    const handleScroll = (event: ListOnScrollProps) => {
+    const handleScroll = async (event: ListOnScrollProps) => {
         const list = listElRef.current;
 
         if (!list || event.scrollDirection !== "forward") {
@@ -152,7 +195,13 @@ export function ModelTree({ scene }: Props) {
 
         const isCloseToBottom = list.scrollHeight - event.scrollOffset - list.clientHeight < list.clientHeight / 5;
         if (isCloseToBottom) {
-            loadMore();
+            isLoadingMore.current = true;
+
+            await loadMore();
+
+            setTimeout(() => {
+                isLoadingMore.current = false;
+            }, 150);
         }
     };
 
@@ -161,23 +210,22 @@ export function ModelTree({ scene }: Props) {
             return;
         }
 
-        setStatus(Status.Loading);
-
         if (crumbPath) {
             try {
+                setStatus(Status.Loading);
                 const node = await searchFirstObjectAtPath({ scene, path: crumbPath });
 
                 if (node) {
                     dispatch(renderActions.setMainObject(node.id));
                 }
+
+                setStatus(Status.Ready);
             } catch {
                 // nada
             }
         } else {
             dispatch(renderActions.setMainObject(undefined));
         }
-
-        setStatus(Status.Ready);
     };
 
     const handleNodeClick = async (node: HierarcicalObjectReference, isSelected: boolean) => {
@@ -330,11 +378,13 @@ export function ModelTree({ scene }: Props) {
                     <Box flex={"1 1 100%"}>
                         {currentDepth?.nodes ? (
                             <NodeList
+                                parentNode={currentDepth.parentNode}
                                 nodes={currentDepth.nodes}
                                 onNodeClick={handleNodeClick}
                                 onToggleHide={handleChange("hide")}
                                 onToggleSelect={handleChange("select")}
                                 onScroll={handleScroll}
+                                ref={listRef}
                                 outerRef={listElRef}
                             />
                         ) : null}

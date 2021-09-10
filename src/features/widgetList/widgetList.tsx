@@ -1,7 +1,7 @@
 import { Box, createStyles, Grid, IconButton, makeStyles, Typography } from "@material-ui/core";
 
 import { useAppDispatch, useAppSelector } from "app/store";
-import { appActions, selectEnabledWidgets, selectWidgets } from "slices/appSlice";
+import { explorerActions, selectEnabledWidgets, selectWidgets } from "slices/explorerSlice";
 import type { WidgetKey } from "config/features";
 
 const useStyles = makeStyles((theme) =>
@@ -14,14 +14,14 @@ const useStyles = makeStyles((theme) =>
             },
 
             "&:hover $activeCurrentButton:not(:disabled)": {
-                background: theme.palette.brand.dark,
+                background: theme.palette.primary.dark,
             },
         },
         activeElsewhere: {
             opacity: 0.3,
         },
         activeCurrentButton: {
-            background: theme.palette.brand.main,
+            background: theme.palette.primary.main,
             "& svg": {
                 fill: "#FFF",
             },
@@ -40,7 +40,7 @@ const useStyles = makeStyles((theme) =>
 
 type Props = { widgetKey?: WidgetKey; onSelect: () => void };
 
-export function WidgetMenu({ widgetKey, onSelect }: Props) {
+export function WidgetList({ widgetKey, onSelect }: Props) {
     const classes = useStyles();
     const enabledWidgets = useAppSelector(selectEnabledWidgets);
     const activeWidgets = useAppSelector(selectWidgets);
@@ -56,15 +56,15 @@ export function WidgetMenu({ widgetKey, onSelect }: Props) {
 
         if (!widgetKey) {
             onSelect();
-            return dispatch(appActions.addWidgetSlot(key));
+            return dispatch(explorerActions.addWidgetSlot(key));
         }
 
         onSelect();
-        dispatch(appActions.replaceWidgetSlot({ replace: widgetKey, key }));
+        dispatch(explorerActions.replaceWidgetSlot({ replace: widgetKey, key }));
     };
 
     return (
-        <Grid container wrap="wrap" spacing={1}>
+        <Grid container wrap="wrap" spacing={1} data-test="widget-list">
             {enabledWidgets.map(({ Icon, name, key }) => {
                 const activeCurrent = key === widgetKey;
                 const activeElsewhere = !activeCurrent && activeWidgets.includes(key);

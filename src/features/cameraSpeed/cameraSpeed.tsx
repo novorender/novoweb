@@ -31,7 +31,7 @@ export function CameraSpeed({ position, ...speedDialProps }: Props) {
             FabProps={{ ...speedDialProps.FabProps, style: { ...position, position: "absolute" } }}
             onClick={handleClick}
             title={`${name} - ${speed}`}
-            icon={<Icon color="primary" />}
+            icon={<Icon />}
         />
     );
 }

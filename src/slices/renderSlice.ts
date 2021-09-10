@@ -15,6 +15,13 @@ export enum CameraSpeedMultiplier {
     Fast = 5,
 }
 
+export enum RenderType {
+    Triangles,
+    Points,
+    All,
+    UnChangeable,
+}
+
 type CameraPosition = Pick<Camera, "position" | "rotation">;
 export type ObjectGroups = { default: ObjectGroup; defaultHidden: ObjectGroup; custom: ObjectGroup[] };
 
@@ -24,24 +31,27 @@ type DeepWritable<T> = { -readonly [P in keyof T]: DeepWritable<T[P]> };
 type WritableObjectGroups = DeepWritable<ObjectGroups>;
 type WritableBookmark = DeepWritable<Bookmark>;
 
+const initialState = {
+    environments: [] as EnvironmentDescription[],
+    currentEnvironment: undefined as EnvironmentDescription | undefined,
+    mainObject: undefined as ObjectId | undefined,
+    objectGroups: {
+        default: { name: "default", ids: [], selected: true, hidden: false, color: [1, 0, 0], id: "" },
+        defaultHidden: { name: "defaultHidden", ids: [], selected: false, hidden: true, color: [1, 0, 0], id: "" },
+        custom: [],
+    } as WritableObjectGroups,
+    bookmarks: [] as WritableBookmark[],
+    viewOnlySelected: false,
+    selectMultiple: false,
+    baseCameraSpeed: 0.03,
+    cameraSpeedMultiplier: CameraSpeedMultiplier.Normal,
+    savedCameraPositions: { currentIndex: -1, positions: [] as CameraPosition[] },
+    renderType: RenderType.UnChangeable,
+};
+
 export const renderSlice = createSlice({
     name: "render",
-    initialState: {
-        environments: [] as EnvironmentDescription[],
-        currentEnvironment: undefined as EnvironmentDescription | undefined,
-        mainObject: undefined as ObjectId | undefined,
-        objectGroups: {
-            default: { name: "default", ids: [], selected: true, hidden: false, color: [1, 0, 0], id: "" },
-            defaultHidden: { name: "defaultHidden", ids: [], selected: false, hidden: true, color: [1, 0, 0], id: "" },
-            custom: [],
-        } as WritableObjectGroups,
-        bookmarks: [] as WritableBookmark[],
-        viewOnlySelected: false,
-        selectMultiple: false,
-        baseCameraSpeed: 0.03,
-        cameraSpeedMultiplier: CameraSpeedMultiplier.Normal,
-        savedCameraPositions: { currentIndex: -1, positions: [] as CameraPosition[] },
-    },
+    initialState: initialState,
     reducers: {
         setMainObject: (state, action: PayloadAction<ObjectId | undefined>) => {
             state.mainObject = action.payload;
@@ -85,12 +95,12 @@ export const renderSlice = createSlice({
             state.objectGroups.default.color = action.payload;
         },
         toggleCameraSpeed: (state) => {
-            // prettier-ignore
-            state.cameraSpeedMultiplier = state.cameraSpeedMultiplier === CameraSpeedMultiplier.Slow
-                ? CameraSpeedMultiplier.Normal
-                : state.cameraSpeedMultiplier === CameraSpeedMultiplier.Normal
-                ? CameraSpeedMultiplier.Fast
-                : CameraSpeedMultiplier.Slow;
+            state.cameraSpeedMultiplier =
+                state.cameraSpeedMultiplier === CameraSpeedMultiplier.Slow
+                    ? CameraSpeedMultiplier.Normal
+                    : state.cameraSpeedMultiplier === CameraSpeedMultiplier.Normal
+                    ? CameraSpeedMultiplier.Fast
+                    : CameraSpeedMultiplier.Slow;
         },
         /**
          * Save camera position at current index.
@@ -120,6 +130,12 @@ export const renderSlice = createSlice({
         setBookmarks: (state, action: PayloadAction<Bookmark[]>) => {
             state.bookmarks = action.payload as WritableBookmark[];
         },
+        setRenderType: (state, action: PayloadAction<RenderType>) => {
+            state.renderType = action.payload;
+        },
+        resetState: (state) => {
+            return { ...initialState, environments: state.environments };
+        },
     },
     extraReducers: (builder) => {
         builder.addCase(fetchEnvironments.fulfilled, (state, action) => {
@@ -147,6 +163,7 @@ export const selectBaseCameraSpeed = (state: RootState) => state.render.baseCame
 export const selectSavedCameraPositions = (state: RootState) => state.render.savedCameraPositions;
 export const selectHomeCameraPosition = (state: RootState) => state.render.savedCameraPositions.positions[0];
 export const selectBookmarks = (state: RootState) => state.render.bookmarks as Bookmark[];
+export const selectRenderType = (state: RootState) => state.render.renderType;
 
 const { reducer, actions } = renderSlice;
 export { reducer as renderReducer, actions as renderActions };

@@ -1,25 +1,29 @@
 import { glMatrix, quat, vec2, vec3 } from "gl-matrix";
 import { useEffect, useState, useRef } from "react";
 import { useSelector } from "react-redux";
-import type {
+import {
     View,
     API,
     FlightControllerParams,
     Scene,
     RenderSettings,
     EnvironmentDescription,
+    Internal,
 } from "@novorender/webgl-api";
 import type { API as DataAPI, ObjectGroup } from "@novorender/data-js-api";
-import { Box, makeStyles } from "@material-ui/core";
+import { Box, Button, makeStyles, Paper, Typography, useTheme } from "@material-ui/core";
 
 import {
+    fetchEnvironments,
     renderActions,
+    RenderType,
     selectBaseCameraSpeed,
     selectCameraSpeedMultiplier,
     selectCurrentEnvironment,
     selectEnvironments,
     selectMainObject,
     selectObjectGroups,
+    selectRenderType,
     selectSavedCameraPositions,
     selectSelectMultiple,
     selectViewOnlySelected,
@@ -27,6 +31,11 @@ import {
 import { sleep } from "utils/timers";
 import { useAppDispatch } from "app/store";
 import { PerformanceStats } from "features/performanceStats";
+import { useMountedState } from "hooks/useMountedState";
+import { authActions } from "slices/authSlice";
+import { deleteStoredToken } from "utils/auth";
+import { offscreenCanvas } from "config";
+import { Loading } from "components";
 
 const useStyles = makeStyles({
     canvas: {
@@ -44,14 +53,21 @@ const ssaoEnabled = localStorage.getItem("disable-ssao") === null;
 glMatrix.setMatrixArrayType(Array);
 addConsoleDebugUtils();
 
+enum Status {
+    Initial,
+    Error,
+}
+
 type Props = {
+    id: string;
     api: API;
     dataApi: DataAPI;
     onInit?: (params: { view: View; customProperties: unknown; title: string }) => void;
 };
 
-export function Render3D({ api, onInit, dataApi }: Props) {
+export function Render3D({ id, api, onInit, dataApi }: Props) {
     const classes = useStyles();
+
     const env = useSelector(selectCurrentEnvironment);
     const environments = useSelector(selectEnvironments);
     const mainObject = useSelector(selectMainObject);
@@ -61,31 +77,39 @@ export function Render3D({ api, onInit, dataApi }: Props) {
     const baseCameraSpeed = useSelector(selectBaseCameraSpeed);
     const savedCameraPositions = useSelector(selectSavedCameraPositions);
     const selectMultiple = useSelector(selectSelectMultiple);
+    const renderType = useSelector(selectRenderType);
+    const dispatch = useAppDispatch();
 
-    const running = useRef(true);
+    const running = useRef(false);
     const movementTimer = useRef<ReturnType<typeof setTimeout>>();
     const cameraGeneration = useRef<number>();
     const cameraMoveRef = useRef<ReturnType<typeof requestAnimationFrame>>();
+    const previousId = useRef("");
 
     const [canvas, setCanvas] = useState<null | HTMLCanvasElement>(null);
-    const [view, setView] = useState<View>();
+    const [status, setStatus] = useMountedState(Status.Initial);
+    const [view, setView] = useMountedState<View | undefined>(undefined);
     const scene = view?.scene;
 
-    const dispatch = useAppDispatch();
+    useEffect(() => {
+        if (!environments.length) {
+            dispatch(fetchEnvironments(api));
+        }
+    }, [api, dispatch, environments]);
 
-    useEffect(
-        function init() {
-            async function initView() {
-                if (!canvas || !environments.length || view) {
-                    return;
-                }
+    useEffect(() => {
+        initView();
 
+        async function initView() {
+            if (previousId.current === id || !canvas || !environments.length) {
+                return;
+            }
+
+            previousId.current = id;
+
+            try {
                 const { url, db, camera, objectGroups, bookmarks, customProperties, title, ...sceneData } =
-                    await dataApi.loadScene(
-                        window.location.pathname.slice(1)
-                            ? window.location.pathname.slice(1)
-                            : process.env.REACT_APP_SCENE_ID ?? "95a89d20dd084d9486e383e131242c4c"
-                    );
+                    await dataApi.loadScene(id);
 
                 const settings = sceneData.settings ?? ({} as Partial<RenderSettings>);
                 const { display: _display, ...customSettings } = settings ?? {};
@@ -121,19 +145,31 @@ export function Render3D({ api, onInit, dataApi }: Props) {
 
                 setView(_view);
                 run(canvas, _view, api);
-                window.document.title = `${title} - ${window.document.title}`;
+                window.document.title = `${title} - Novorender`;
                 window.addEventListener("blur", blur);
                 canvas.focus();
 
                 if (onInit) {
                     onInit({ view: _view, customProperties, title });
                 }
+            } catch {
+                setStatus(Status.Error);
             }
+        }
+    }, [canvas, view, api, dataApi, dispatch, onInit, environments, id, setView, setStatus]);
 
-            initView();
-        },
-        [canvas, view, api, dataApi, dispatch, onInit, environments]
-    );
+    useEffect(() => {
+        if (!view) {
+            return;
+        }
+
+        dispatchRenderType(view);
+
+        async function dispatchRenderType(view: View) {
+            const type = await getRenderType(view);
+            dispatch(renderActions.setRenderType(type));
+        }
+    }, [view, dispatch]);
 
     useEffect(
         function initCameraMovedTracker() {
@@ -148,10 +184,10 @@ export function Render3D({ api, onInit, dataApi }: Props) {
             cameraMoved(view);
 
             function cameraMoved(view: View) {
-                // For cypress
-                // eslint-disable-next-line
-                (window as any).appFullyRendered =
-                    view.performanceStatistics.sceneResolved && view.performanceStatistics.renderResolved;
+                if ((window as any).Cypress) {
+                    (window as any).appFullyRendered =
+                        view.performanceStatistics.sceneResolved && view.performanceStatistics.renderResolved;
+                }
 
                 if (cameraGeneration.current !== view.performanceStatistics.cameraGeneration) {
                     cameraGeneration.current = view.performanceStatistics.cameraGeneration ?? 0;
@@ -219,6 +255,20 @@ export function Render3D({ api, onInit, dataApi }: Props) {
     );
 
     useEffect(
+        function handleRenderTypeChanges() {
+            if (!view || !("advanced" in view.settings)) {
+                return;
+            }
+
+            const settings = view.settings as Internal.RenderSettingsExt;
+
+            settings.advanced.hidePoints = renderType === RenderType.Triangles;
+            settings.advanced.hideTriangles = renderType === RenderType.Points;
+        },
+        [renderType, view]
+    );
+
+    useEffect(
         function handleCameraSpeedChanges() {
             if (!view || view.camera.controller.params.kind !== "flight") {
                 return;
@@ -245,20 +295,21 @@ export function Render3D({ api, onInit, dataApi }: Props) {
         [env, api, view]
     );
 
-    useEffect(function cleanUp() {
-        return () => {
-            window.removeEventListener("blur", blur);
-            running.current = false;
-        };
-    }, []);
+    useEffect(
+        function cleanUpPreviousScene() {
+            return () => {
+                window.removeEventListener("blur", blur);
+                running.current = false;
+                dispatch(renderActions.resetState());
+                setStatus(Status.Initial);
+            };
+        },
+        [id, dispatch, setStatus]
+    );
 
     const run = async (canvas: HTMLCanvasElement, view: View, api: API) => {
-        const ctx =
-            "OffscreenCanvas" in window ? canvas.getContext("2d", { alpha: true, desynchronized: false }) : undefined;
-
-        if (!ctx) {
-            return;
-        }
+        running.current = true;
+        const ctx = offscreenCanvas ? canvas.getContext("2d", { alpha: true, desynchronized: false }) : undefined;
 
         const resizeObserver = new ResizeObserver((entries) => {
             for (const entry of entries) {
@@ -290,7 +341,7 @@ export function Render3D({ api, onInit, dataApi }: Props) {
 
             const image = await output.getImage();
 
-            if (image) {
+            if (ctx && image) {
                 ctx.clearRect(0, 0, width, height);
                 ctx.drawImage(image, 0, 0, width, height); // display in canvas (work on all platforms, but might be less performant)
                 // ctx.transferFromImageBitmap(image); // display in canvas
@@ -332,7 +383,7 @@ export function Render3D({ api, onInit, dataApi }: Props) {
 
                 reset = false;
                 const image = await output.getImage();
-                if (image) {
+                if (ctx && image) {
                     ctx.clearRect(0, 0, width, height);
                     ctx.drawImage(image, 0, 0, width, height); // display in canvas (work on all platforms, but might be less performant)
                     // ctx.transferFromImageBitmap(image); // display in canvas
@@ -383,8 +434,51 @@ export function Render3D({ api, onInit, dataApi }: Props) {
 
     return (
         <Box position="relative" width="100%" height="100%">
-            {showPerformance && view && canvas ? <PerformanceStats view={view} canvas={canvas} /> : null}
-            <canvas className={classes.canvas} tabIndex={1} ref={setCanvas} onClick={click} />
+            {status === Status.Error ? (
+                <NoScene id={id} />
+            ) : (
+                <>
+                    {showPerformance && view && canvas ? <PerformanceStats view={view} canvas={canvas} /> : null}
+                    <canvas className={classes.canvas} tabIndex={1} ref={setCanvas} onClick={click} />
+                    {!view ? <Loading /> : null}
+                </>
+            )}
+        </Box>
+    );
+}
+
+function NoScene({ id }: { id: string }) {
+    const theme = useTheme();
+    const dispatch = useAppDispatch();
+
+    const logout = async () => {
+        deleteStoredToken();
+        dispatch(authActions.logout());
+    };
+
+    return (
+        <Box
+            bgcolor={theme.palette.secondary.main}
+            display="flex"
+            justifyContent="center"
+            alignItems="center"
+            height={"100vh"}
+        >
+            <Paper>
+                <Box minWidth={320} p={2}>
+                    <Typography paragraph variant="h4" component="h1" align="center">
+                        Unable to load scene
+                    </Typography>
+                    <Typography paragraph>
+                        The scene with id <em>{id}</em> is not available.
+                    </Typography>
+                    <Box textAlign="center">
+                        <Button onClick={logout} variant="contained" color="secondary">
+                            Log in with a different account
+                        </Button>
+                    </Box>
+                </Box>
+            </Paper>
         </Box>
     );
 }
@@ -441,6 +535,33 @@ function refillObjects({
 
 function getEnvironmentDescription(name: string, environments: EnvironmentDescription[]): EnvironmentDescription {
     return environments.find((env) => env.name === name) ?? environments[0];
+}
+
+async function waitForSceneToRender(view: View): Promise<void> {
+    while (!view.performanceStatistics.renderResolved) {
+        await sleep(100);
+    }
+}
+
+async function getRenderType(view: View): Promise<RenderType> {
+    if (!("advanced" in view.settings)) {
+        return RenderType.UnChangeable;
+    }
+
+    await waitForSceneToRender(view);
+
+    const advancedSettings = (view.settings as Internal.RenderSettingsExt).advanced;
+    const points = advancedSettings.hidePoints || view.performanceStatistics.points > 0;
+    const triangles = advancedSettings.hideTriangles || view.performanceStatistics.triangles > 1000;
+    const canChange = points && triangles;
+
+    return !canChange
+        ? RenderType.UnChangeable
+        : advancedSettings.hidePoints
+        ? RenderType.Triangles
+        : advancedSettings.hideTriangles
+        ? RenderType.Points
+        : RenderType.All;
 }
 
 function addConsoleDebugUtils() {

@@ -40,7 +40,7 @@ export function StepBack({ view, position, ...speedDialProps }: Props) {
             }}
             onClick={handleClick}
             title={name}
-            icon={<Icon color="primary" />}
+            icon={<Icon />}
         />
     );
 }

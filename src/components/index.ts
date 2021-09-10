@@ -8,3 +8,4 @@ export * from "./switch";
 export * from "./textField";
 export * from "./tooltip";
 export * from "./speedDialAction";
+export * from "./loading";

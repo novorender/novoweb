@@ -45,7 +45,7 @@ const useStyles = makeStyles((theme) =>
         },
         tooltip: {
             maxWidth: "none",
-            background: theme.palette.primary.main,
+            background: theme.palette.common.white,
             padding: theme.spacing(1),
             borderRadius: "4px",
             border: `1px solid ${theme.palette.grey.A100}`,

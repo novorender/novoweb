@@ -13,6 +13,7 @@ import { selectMainObject } from "slices/renderSlice";
 
 import ArrowUpwardIcon from "@material-ui/icons/ArrowUpward";
 import ArrowDownwardIcon from "@material-ui/icons/ArrowDownward";
+import { ToggleRenderType } from "features/toggleRenderType";
 
 export function SelectionModifierMenu() {
     const [interacted, toggleInteracted] = useToggle();
@@ -60,6 +61,7 @@ export function SelectionModifierMenu() {
             <ViewOnlySelected />
             <SelectionColor />
             <MultipleSelection />
+            <ToggleRenderType />
         </SpeedDial>
     );
 }

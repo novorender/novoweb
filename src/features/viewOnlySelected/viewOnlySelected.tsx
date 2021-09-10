@@ -20,7 +20,7 @@ export function ViewOnlySelected(props: Props) {
             active={active}
             onClick={() => dispatch(renderActions.toggleViewOnlySelected())}
             title={name}
-            icon={<Icon color="primary" />}
+            icon={<Icon />}
         />
     );
 }

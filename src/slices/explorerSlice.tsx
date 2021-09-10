@@ -11,12 +11,12 @@ export enum FullscreenStatus {
 
 const initialState = {
     fullscreen: FullscreenStatus.Initial,
-    enabledFeatures: [] as FeatureKey[],
+    enabledFeatures: Object.values(featuresConfig).map((feature) => feature.key) as FeatureKey[],
     widgets: [] as WidgetKey[],
 };
 
-export const appSlice = createSlice({
-    name: "app",
+export const explorerSlice = createSlice({
+    name: "explorer",
     initialState: initialState,
     reducers: {
         toggleFullscreen: (state) => {
@@ -27,7 +27,7 @@ export const appSlice = createSlice({
         setFullscreen: (state, action: PayloadAction<FullscreenStatus>) => {
             state.fullscreen = action.payload;
         },
-        setAvailableFeatures: (state, action: PayloadAction<FeatureKey[]>) => {
+        setEnabledFeatures: (state, action: PayloadAction<FeatureKey[]>) => {
             state.enabledFeatures = action.payload;
         },
         addWidgetSlot: (state, action: PayloadAction<WidgetKey>) => {
@@ -49,11 +49,11 @@ export const appSlice = createSlice({
     },
 });
 
-export const selectFullscreen = (state: RootState) => state.app.fullscreen;
-export const selectWidgets = (state: RootState) => state.app.widgets;
+export const selectFullscreen = (state: RootState) => state.explorer.fullscreen;
+export const selectWidgets = (state: RootState) => state.explorer.widgets;
 
 export const selectEnabledWidgets = createSelector(
-    (state: RootState) => state.app.enabledFeatures,
+    (state: RootState) => state.explorer.enabledFeatures,
     (widgets) =>
         widgets
             .map((widget) => featuresConfig[widget])
@@ -61,5 +61,5 @@ export const selectEnabledWidgets = createSelector(
 );
 
 // Action creators are generated for each case reducer function
-const { actions, reducer } = appSlice;
-export { actions as appActions, reducer as appReducer };
+const { actions, reducer } = explorerSlice;
+export { actions as explorerActions, reducer as explorerReducer };

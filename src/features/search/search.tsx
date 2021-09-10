@@ -36,27 +36,22 @@ const useSearchStyles = makeStyles((theme) =>
             minWidth: 0,
             flex: "0 0 auto",
             padding: theme.spacing(1),
+            color: theme.palette.common.white,
             background: theme.palette.secondary.light,
             "&:hover": {
                 background: theme.palette.secondary.main,
 
                 "&.active": {
-                    background: theme.palette.brand.dark,
+                    background: theme.palette.primary.dark,
                 },
             },
 
             "&.active": {
-                background: theme.palette.brand.main,
+                background: theme.palette.primary.main,
             },
         },
         searchButton: {
-            background: theme.palette.brand.main,
-            color: "#fff",
             textTransform: "none",
-
-            "&:hover": {
-                background: theme.palette.brand.dark,
-            },
         },
         cancelButton: {
             marginRight: theme.spacing(1),
@@ -225,7 +220,7 @@ export function Search({ scene }: Props) {
                                         className={`${classes.advancedSearchModifier} ${exact ? "active" : ""}`}
                                         size="small"
                                     >
-                                        <DragHandleIcon fontSize="small" color="primary" />
+                                        <DragHandleIcon fontSize="small" />
                                     </Button>
                                 </Box>
                                 <Button
@@ -243,7 +238,7 @@ export function Search({ scene }: Props) {
                                     className={`${classes.advancedSearchModifier}`}
                                     size="small"
                                 >
-                                    <CancelIcon fontSize="small" color="primary" />
+                                    <CancelIcon fontSize="small" />
                                 </Button>
                             </Box>
                         ))
@@ -294,6 +289,8 @@ export function Search({ scene }: Props) {
                         fullWidth
                         disabled={status === Status.Loading}
                         className={classes.searchButton}
+                        color="primary"
+                        variant="contained"
                     >
                         Search
                     </Button>

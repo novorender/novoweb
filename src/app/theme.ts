@@ -1,14 +1,5 @@
 import { createTheme } from "@material-ui/core/styles";
 
-declare module "@material-ui/core/styles/createPalette" {
-    interface Palette {
-        brand: Palette["primary"];
-    }
-    interface PaletteOptions {
-        brand: PaletteOptions["primary"];
-    }
-}
-
 declare module "@material-ui/core/styles/createTheme" {
     interface Theme {
         customBreakPoints: {
@@ -46,7 +37,7 @@ export const theme = createTheme({
     palette: {
         primary: {
             // light: will be calculated from palette.primary.main,
-            main: "#fff",
+            main: "#D61E5C",
             // dark: will be calculated from palette.primary.main,
             // contrastText: will be calculated to contrast with palette.primary.main
         },
@@ -55,11 +46,6 @@ export const theme = createTheme({
             main: "#253746",
             // dark: will be calculated from palette.secondary.main,
             // contrastText: 'white',
-        },
-        brand: {
-            light: "#F63E7C",
-            main: "#D61E5C",
-            dark: "#B6053C",
         },
         text: {
             primary: "#253746",

@@ -8,7 +8,7 @@ const useStyles = makeStyles((theme) =>
             zIndex: 1,
         },
         bar: {
-            backgroundColor: theme.palette.brand?.main ?? theme.palette.primary.main,
+            backgroundColor: theme.palette.primary.main,
         },
     })
 );
