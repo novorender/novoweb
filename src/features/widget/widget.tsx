@@ -13,7 +13,7 @@ import { OpenReason, CloseReason, SpeedDial, SpeedDialIcon } from "@material-ui/
 import type { Scene, View } from "@novorender/webgl-api";
 
 import type { WidgetKey } from "config/features";
-import { WidgetMenu } from "features/widgetMenu";
+import { WidgetList } from "features/widgetList";
 import { Properties } from "features/properties";
 import { Bookmarks } from "features/bookmarks";
 import { ModelTree } from "features/modelTree";
@@ -102,7 +102,7 @@ export function Widget({ widgetKey, scene, view }: Props) {
 
     return (
         <>
-            <Paper elevation={4} className={classes.menuContainer} data-test={widgetKey}>
+            <Paper elevation={4} className={classes.menuContainer} data-test={`${widgetKey}-widget`}>
                 <Box height="100%" display="flex" flexDirection="column">
                     <Box display="flex" p={1} boxShadow={theme.customShadows.widgetHeader}>
                         <Box display="flex" alignItems="center">
@@ -125,7 +125,7 @@ export function Widget({ widgetKey, scene, view }: Props) {
                         {getWidgetByKey({ key, scene, view })}
                     </Box>
                     <Box display={menuOpen ? "block" : "none"} flexGrow={1} mt={2} mb={2} px={1}>
-                        <WidgetMenu widgetKey={widgetKey} onSelect={toggleMenu} />
+                        <WidgetList widgetKey={widgetKey} onSelect={toggleMenu} />
                     </Box>
                 </Box>
             </Paper>
@@ -133,10 +133,13 @@ export function Widget({ widgetKey, scene, view }: Props) {
                 open={menuOpen}
                 onOpen={(_event, reason) => handleToggle(reason)}
                 onClose={(_event, reason) => handleToggle(reason)}
-                FabProps={{
-                    className: menuOpen ? classes.fabOpen : classes.fabClosed,
-                    size: isSmall ? "small" : "large",
-                }}
+                FabProps={
+                    {
+                        className: menuOpen ? classes.fabOpen : classes.fabClosed,
+                        size: isSmall ? "small" : "large",
+                        "data-test": `${widgetKey}-widget-menu-fab`,
+                    } as Partial<FabProps<"button", { "data-test": string }>>
+                }
                 ariaLabel="widgets"
                 icon={<SpeedDialIcon icon={<NovorenderIcon />} openIcon={<CloseIcon />} />}
             />
@@ -162,7 +165,7 @@ export function MenuWidget() {
     return (
         <>
             {open ? (
-                <Paper elevation={4} className={classes.menuContainer}>
+                <Paper elevation={4} className={classes.menuContainer} data-test="menu-widget">
                     <Box display="flex" p={1} boxShadow={theme.customShadows.widgetHeader}>
                         <Box display="flex" alignItems="center">
                             <NovorenderIcon
@@ -179,7 +182,7 @@ export function MenuWidget() {
                         </Box>
                     </Box>
                     <Box p={1} mt={1}>
-                        <WidgetMenu onSelect={toggle} />
+                        <WidgetList onSelect={toggle} />
                     </Box>
                 </Paper>
             ) : null}

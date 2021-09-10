@@ -40,7 +40,7 @@ const useStyles = makeStyles((theme) =>
 
 type Props = { widgetKey?: WidgetKey; onSelect: () => void };
 
-export function WidgetMenu({ widgetKey, onSelect }: Props) {
+export function WidgetList({ widgetKey, onSelect }: Props) {
     const classes = useStyles();
     const enabledWidgets = useAppSelector(selectEnabledWidgets);
     const activeWidgets = useAppSelector(selectWidgets);
@@ -64,7 +64,7 @@ export function WidgetMenu({ widgetKey, onSelect }: Props) {
     };
 
     return (
-        <Grid container wrap="wrap" spacing={1}>
+        <Grid container wrap="wrap" spacing={1} data-test="widget-list">
             {enabledWidgets.map(({ Icon, name, key }) => {
                 const activeCurrent = key === widgetKey;
                 const activeElsewhere = !activeCurrent && activeWidgets.includes(key);

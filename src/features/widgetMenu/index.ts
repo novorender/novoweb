@@ -1,1 +1,0 @@
-export { WidgetMenu } from "./widgetMenu";

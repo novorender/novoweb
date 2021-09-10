@@ -184,10 +184,10 @@ export function Render3D({ id, api, onInit, dataApi }: Props) {
             cameraMoved(view);
 
             function cameraMoved(view: View) {
-                // For cypress
-                // eslint-disable-next-line
-                (window as any).appFullyRendered =
-                    view.performanceStatistics.sceneResolved && view.performanceStatistics.renderResolved;
+                if ((window as any).Cypress) {
+                    (window as any).appFullyRendered =
+                        view.performanceStatistics.sceneResolved && view.performanceStatistics.renderResolved;
+                }
 
                 if (cameraGeneration.current !== view.performanceStatistics.cameraGeneration) {
                     cameraGeneration.current = view.performanceStatistics.cameraGeneration ?? 0;
