@@ -17,7 +17,7 @@ import FolderIcon from "@material-ui/icons/Folder";
 import SearchIcon from "@material-ui/icons/Search";
 import GradientIcon from "@material-ui/icons/Gradient";
 
-// import ClippingIcon from "media/icons/clipping.svg";
+import { ReactComponent as ClippingIcon } from "media/icons/clipping.svg";
 
 export enum FeatureType {
     SelectionModifier,
@@ -56,12 +56,13 @@ export const config = {
         Icon: SearchIcon,
         type: FeatureType.Widget,
     },
-    /*     clipping: {
+    clipping: {
         key: "clipping",
         name: "Clipping",
         Icon: ClippingIcon,
         type: FeatureType.Widget,
     },
+    /*
     measure: {
         key: "measure",
         name: "Measure",

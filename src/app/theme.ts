@@ -82,4 +82,11 @@ export const theme = createTheme({
             sm: 949.95,
         },
     },
+    overrides: {
+        MuiButton: {
+            root: {
+                textTransform: "none",
+            },
+        },
+    },
 });
