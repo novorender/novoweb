@@ -1,7 +1,7 @@
 import type { SpeedDialActionProps } from "@material-ui/lab";
 import type { View } from "@novorender/webgl-api";
 
-import { SpeedDialAction } from "components/speedDialAction";
+import { SpeedDialAction } from "components";
 import { config as featuresConfig } from "config/features";
 import { selectSavedCameraPositions, renderActions } from "slices/renderSlice";
 import { useAppDispatch, useAppSelector } from "app/store";

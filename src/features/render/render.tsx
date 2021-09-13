@@ -573,14 +573,8 @@ function serializeableObjectGroups(groups: Partial<ObjectGroups>): Partial<Objec
             .filter(([_, value]) => value !== undefined)
             .map(([key, value]) => {
                 const serializableValue = Array.isArray(value)
-                    ? value.map((group) =>
-                          group.color instanceof Float32Array
-                              ? { ...group, color: [group.color[0], group.color[1], group.color[2]] }
-                              : group
-                      )
-                    : value.color instanceof Float32Array
-                    ? { ...value, color: [value.color[0], value.color[1], value.color[2]] }
-                    : value;
+                    ? value.map((group) => ({ ...group, color: Array.from(group.color) }))
+                    : { ...value, color: Array.from(value.color) };
 
                 return [key, serializableValue];
             })
