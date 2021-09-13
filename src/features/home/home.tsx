@@ -2,7 +2,7 @@ import type { SpeedDialActionProps } from "@material-ui/lab";
 import type { View } from "@novorender/webgl-api";
 import { quat, vec3 } from "gl-matrix";
 
-import { SpeedDialAction } from "components/speedDialAction";
+import { SpeedDialAction } from "components";
 import { config as featuresConfig } from "config/features";
 import { useAppSelector } from "app/store";
 import { selectHomeCameraPosition } from "slices/renderSlice";

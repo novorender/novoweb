@@ -2,7 +2,7 @@ import { useRef } from "react";
 import type { ColorResult } from "react-color";
 import type { SpeedDialActionProps } from "@material-ui/lab";
 
-import { SpeedDialAction } from "components/speedDialAction";
+import { SpeedDialAction } from "components";
 import { config as featuresConfig } from "config/features";
 import { useAppDispatch, useAppSelector } from "app/store";
 import { useToggle } from "hooks/useToggle";

@@ -1,6 +1,6 @@
 import type { SpeedDialActionProps } from "@material-ui/lab";
 
-import { SpeedDialAction } from "components/speedDialAction";
+import { SpeedDialAction } from "components";
 import { config as featuresConfig } from "config/features";
 import { renderActions, selectSelectedObjects, selectHiddenObjects } from "slices/renderSlice";
 import { useAppDispatch, useAppSelector } from "app/store";
