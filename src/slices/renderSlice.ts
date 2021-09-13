@@ -121,11 +121,7 @@ export const renderSlice = createSlice({
             state.savedCameraPositions.currentIndex = state.savedCameraPositions.currentIndex + 1;
         },
         setObjectGroups: (state, action: PayloadAction<Partial<ObjectGroups>>) => {
-            const withoutUndefinedProps = Object.fromEntries(
-                Object.entries(action.payload).filter(([_, value]) => value !== undefined)
-            );
-
-            state.objectGroups = { ...state.objectGroups, ...withoutUndefinedProps } as WritableObjectGroups;
+            state.objectGroups = { ...state.objectGroups, ...action.payload } as WritableObjectGroups;
         },
         setBookmarks: (state, action: PayloadAction<Bookmark[]>) => {
             state.bookmarks = action.payload as WritableBookmark[];

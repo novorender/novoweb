@@ -15,6 +15,7 @@ import { Box, Button, makeStyles, Paper, Typography, useTheme } from "@material-
 
 import {
     fetchEnvironments,
+    ObjectGroups,
     renderActions,
     RenderType,
     selectBaseCameraSpeed,
@@ -136,11 +137,13 @@ export function Render3D({ id, api, onInit, dataApi }: Props) {
                 dispatch(renderActions.setEnvironment(initialEnvironment));
                 dispatch(renderActions.setBookmarks(bookmarks));
                 dispatch(
-                    renderActions.setObjectGroups({
-                        default: objectGroups.find((group) => group.name === "default"),
-                        defaultHidden: objectGroups.find((group) => group.name === "defaultHidden"),
-                        custom: objectGroups.filter((group) => !["default", "defaultHidden"].includes(group.name)),
-                    })
+                    renderActions.setObjectGroups(
+                        serializeableObjectGroups({
+                            default: objectGroups.find((group) => group.name === "default"),
+                            defaultHidden: objectGroups.find((group) => group.name === "defaultHidden"),
+                            custom: objectGroups.filter((group) => !["default", "defaultHidden"].includes(group.name)),
+                        })
+                    )
                 );
 
                 setView(_view);
@@ -562,6 +565,26 @@ async function getRenderType(view: View): Promise<RenderType> {
         : advancedSettings.hideTriangles
         ? RenderType.Points
         : RenderType.All;
+}
+
+function serializeableObjectGroups(groups: Partial<ObjectGroups>): Partial<ObjectGroups> {
+    return Object.fromEntries(
+        Object.entries(groups)
+            .filter(([_, value]) => value !== undefined)
+            .map(([key, value]) => {
+                const serializableValue = Array.isArray(value)
+                    ? value.map((group) =>
+                          group.color instanceof Float32Array
+                              ? { ...group, color: [group.color[0], group.color[1], group.color[2]] }
+                              : group
+                      )
+                    : value.color instanceof Float32Array
+                    ? { ...value, color: [value.color[0], value.color[1], value.color[2]] }
+                    : value;
+
+                return [key, serializableValue];
+            })
+    );
 }
 
 function addConsoleDebugUtils() {
