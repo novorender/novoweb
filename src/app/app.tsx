@@ -69,6 +69,9 @@ export function App() {
                     ) : (
                         <BrowserRouter>
                             <Switch>
+                                <Route path="/explorer/:id?">
+                                    <Explorer />
+                                </Route>
                                 <Route path="/:id?">
                                     <Explorer />
                                 </Route>
