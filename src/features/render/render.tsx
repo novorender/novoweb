@@ -1,5 +1,5 @@
 import { glMatrix, quat, vec2, vec3 } from "gl-matrix";
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState, useRef, MouseEvent } from "react";
 import { useSelector } from "react-redux";
 import {
     View,
@@ -20,6 +20,7 @@ import {
     RenderType,
     selectBaseCameraSpeed,
     selectCameraSpeedMultiplier,
+    selectClippingPlanes,
     selectCurrentEnvironment,
     selectEnvironments,
     selectMainObject,
@@ -47,11 +48,22 @@ const useStyles = makeStyles({
     },
 });
 
+glMatrix.setMatrixArrayType(Array);
+
 const showPerformance = localStorage.getItem("show-performance-stats") !== null;
 const taaEnabled = localStorage.getItem("disable-taa") === null;
 const ssaoEnabled = localStorage.getItem("disable-ssao") === null;
+const axis = [
+    vec3.fromValues(1, 0, 0),
+    vec3.fromValues(0, 1, 0),
+    vec3.fromValues(0, 0, 1),
+    vec3.fromValues(1, 0, 0),
+    vec3.fromValues(0, 1, 0),
+    vec3.fromValues(0, 0, 1),
+];
+const xAxis = vec3.fromValues(1, 0, 0);
+const yAxis = vec3.fromValues(0, 1, 0);
 
-glMatrix.setMatrixArrayType(Array);
 addConsoleDebugUtils();
 
 enum Status {
@@ -79,6 +91,7 @@ export function Render3D({ id, api, onInit, dataApi }: Props) {
     const savedCameraPositions = useSelector(selectSavedCameraPositions);
     const selectMultiple = useSelector(selectSelectMultiple);
     const renderType = useSelector(selectRenderType);
+    const clippingPlanes = useSelector(selectClippingPlanes);
     const dispatch = useAppDispatch();
 
     const running = useRef(false);
@@ -86,6 +99,10 @@ export function Render3D({ id, api, onInit, dataApi }: Props) {
     const cameraGeneration = useRef<number>();
     const cameraMoveRef = useRef<ReturnType<typeof requestAnimationFrame>>();
     const previousId = useRef("");
+    const camera2pointDistance = useRef(0);
+    const pointerMoved = useRef(false);
+    const camX = useRef(vec3.create());
+    const camY = useRef(vec3.create());
 
     const [canvas, setCanvas] = useState<null | HTMLCanvasElement>(null);
     const [status, setStatus] = useMountedState(Status.Initial);
@@ -149,7 +166,7 @@ export function Render3D({ id, api, onInit, dataApi }: Props) {
                 setView(_view);
                 run(canvas, _view, api);
                 window.document.title = `${title} - Novorender`;
-                window.addEventListener("blur", blur);
+                window.addEventListener("blur", exitPointerLock);
                 canvas.focus();
 
                 if (onInit) {
@@ -299,9 +316,20 @@ export function Render3D({ id, api, onInit, dataApi }: Props) {
     );
 
     useEffect(
+        function handleClippingChanges() {
+            if (!view) {
+                return;
+            }
+
+            view.applySettings({ clippingPlanes: { ...clippingPlanes, bounds: view.settings.clippingPlanes.bounds } });
+        },
+        [view, clippingPlanes]
+    );
+
+    useEffect(
         function cleanUpPreviousScene() {
             return () => {
-                window.removeEventListener("blur", blur);
+                window.removeEventListener("blur", exitPointerLock);
                 running.current = false;
                 dispatch(renderActions.resetState());
                 setStatus(Status.Initial);
@@ -396,12 +424,15 @@ export function Render3D({ id, api, onInit, dataApi }: Props) {
         }
     };
 
-    const blur = () => {
+    const exitPointerLock = () => {
         window.document.exitPointerLock();
     };
 
-    const click = (e: React.MouseEvent) => {
-        selectObject(vec2.fromValues(e.nativeEvent.offsetX, e.nativeEvent.offsetY));
+    const handleClick = (e: React.MouseEvent) => {
+        if (!pointerMoved.current) {
+            selectObject(vec2.fromValues(e.nativeEvent.offsetX, e.nativeEvent.offsetY));
+            pointerMoved.current = true;
+        }
     };
 
     const selectObject = async (point: vec2) => {
@@ -435,6 +466,132 @@ export function Render3D({ id, api, onInit, dataApi }: Props) {
         }
     };
 
+    const handleMouseDown = async (e: MouseEvent) => {
+        pointerMoved.current = false;
+
+        if (!view || e.button !== 0) {
+            return;
+        }
+
+        const result = await view.pick(e.nativeEvent.offsetX, e.nativeEvent.offsetY);
+
+        if (!result) {
+            return;
+        }
+
+        const { position: point } = result;
+        const { position, rotation, fieldOfView } = view.camera;
+        camera2pointDistance.current = vec3.dist(point, position);
+        vec3.transformQuat(camX.current, xAxis, rotation);
+        vec3.transformQuat(camY.current, yAxis, rotation);
+
+        if (clippingPlanes.defining) {
+            view.camera.controller.enabled = false;
+            const tan = Math.tan(0.5 * glMatrix.toRadian(fieldOfView));
+            const size = 0.25 * tan * camera2pointDistance.current;
+            const bounds = {
+                min: vec3.fromValues(point[0] - size, point[1] - size, point[2] - size),
+                max: vec3.fromValues(point[0] + size, point[1] + size, point[2] + size),
+            };
+
+            view.applySettings({ clippingPlanes: { ...clippingPlanes, bounds } });
+        } else if (result.objectId > 0xfffffffe || result.objectId < 0xfffffff9) {
+            camera2pointDistance.current = 0;
+        } else if (clippingPlanes.enabled && clippingPlanes.showBox) {
+            view.camera.controller.enabled = false;
+
+            const highlight = 0xfffffffe - result.objectId;
+
+            dispatch(renderActions.setClippingPlanes({ ...clippingPlanes, highlight }));
+        }
+    };
+
+    const handleMouseUp = () => {
+        if (!view) {
+            return;
+        }
+
+        if (camera2pointDistance.current > 0 && clippingPlanes.defining) {
+            dispatch(renderActions.setClippingPlanes({ ...clippingPlanes, defining: false }));
+        }
+
+        camera2pointDistance.current = 0;
+        exitPointerLock();
+        view.camera.controller.enabled = true;
+    };
+
+    const handleMouseMoveNative = (e: MouseEvent) => {
+        if (e.movementX === 0 && e.movementY === 0) {
+            return;
+        }
+
+        handleMove(e);
+    };
+
+    const handleMove = (e: MouseEvent) => {
+        pointerMoved.current = true;
+
+        if (
+            !view ||
+            !canvas ||
+            !clippingPlanes.enabled ||
+            !clippingPlanes.showBox ||
+            camera2pointDistance.current === 0
+        ) {
+            return;
+        }
+
+        const activeSide = clippingPlanes.highlight;
+
+        if (activeSide === -1 && !clippingPlanes.defining) {
+            return;
+        }
+
+        e.stopPropagation();
+
+        const { clientHeight } = canvas;
+        const min = vec3.clone(view.settings.clippingPlanes.bounds.min);
+        const max = vec3.clone(view.settings.clippingPlanes.bounds.max);
+        const tan = Math.tan(0.5 * glMatrix.toRadian(view.camera.fieldOfView));
+        const scale = (2 * tan * camera2pointDistance.current) / clientHeight;
+        let x = e.movementX;
+        let y = e.movementY;
+        x *= scale;
+        y *= scale;
+
+        if (clippingPlanes.defining) {
+            const dist = x + y;
+            const delta = vec3.fromValues(dist, dist, dist);
+            vec3.add(max, max, delta);
+            vec3.sub(min, min, delta);
+        } else {
+            const dir = vec3.scale(vec3.create(), camX.current, x);
+            vec3.sub(dir, dir, vec3.scale(vec3.create(), camY.current, y));
+            const axisIdx = activeSide % 3;
+            const currentAxis = axis[axisIdx];
+            const dist = vec3.len(dir) * Math.sign(vec3.dot(currentAxis, dir));
+
+            if (activeSide > 2) {
+                max[activeSide - 3] += dist;
+            } else {
+                min[activeSide] += dist;
+            }
+            if (min[activeSide % 3] > max[activeSide % 3]) {
+                const tmp = min[axisIdx];
+                min[axisIdx] = max[axisIdx];
+                max[axisIdx] = tmp;
+                dispatch(
+                    renderActions.setClippingPlanes({
+                        ...clippingPlanes,
+                        highlight: activeSide > 2 ? axisIdx : axisIdx + 3,
+                    })
+                );
+            }
+        }
+
+        view.applySettings({ clippingPlanes: { ...clippingPlanes, bounds: { min, max } } });
+    };
+
     return (
         <Box position="relative" width="100%" height="100%">
             {status === Status.Error ? (
@@ -442,7 +599,15 @@ export function Render3D({ id, api, onInit, dataApi }: Props) {
             ) : (
                 <>
                     {showPerformance && view && canvas ? <PerformanceStats view={view} canvas={canvas} /> : null}
-                    <canvas className={classes.canvas} tabIndex={1} ref={setCanvas} onClick={click} />
+                    <canvas
+                        className={classes.canvas}
+                        tabIndex={1}
+                        ref={setCanvas}
+                        onClick={handleClick}
+                        onMouseDown={handleMouseDown}
+                        onMouseMove={handleMouseMoveNative}
+                        onMouseUp={handleMouseUp}
+                    />
                     {!view ? <Loading /> : null}
                 </>
             )}

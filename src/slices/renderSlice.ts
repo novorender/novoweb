@@ -24,7 +24,7 @@ export enum RenderType {
 
 type CameraPosition = Pick<Camera, "position" | "rotation">;
 export type ObjectGroups = { default: ObjectGroup; defaultHidden: ObjectGroup; custom: ObjectGroup[] };
-export type ClippingPlanes = RenderSettings["clippingPlanes"];
+export type ClippingPlanes = Omit<RenderSettings["clippingPlanes"], "bounds"> & { defining: boolean };
 
 // Redux toolkit with immer removes readonly modifier of state in the reducer so we get ts errors
 // unless we cast the types to writable ones.
@@ -49,11 +49,11 @@ const initialState = {
     savedCameraPositions: { currentIndex: -1, positions: [] as CameraPosition[] },
     renderType: RenderType.UnChangeable,
     clippingPlanes: {
+        defining: false,
         enabled: false,
-        inside: false,
+        inside: true,
         showBox: false,
-        bounds: { min: [0, 0, 0], max: [0, 0, 0] },
-        highlight: 0,
+        highlight: -1,
     } as ClippingPlanes,
 };
 
@@ -137,14 +137,11 @@ export const renderSlice = createSlice({
         setRenderType: (state, action: PayloadAction<RenderType>) => {
             state.renderType = action.payload;
         },
-        setClippingPLanes: (state, action: PayloadAction<ClippingPlanes>) => {
-            state.clippingPlanes = {
-                ...action.payload,
-                bounds: {
-                    min: Array.from(action.payload.bounds.min) as [number, number, number],
-                    max: Array.from(action.payload.bounds.max) as [number, number, number],
-                },
-            };
+        setClippingPlanes: (state, action: PayloadAction<ClippingPlanes>) => {
+            state.clippingPlanes = action.payload;
+        },
+        resetClippingPlanes: (state) => {
+            state.clippingPlanes = initialState.clippingPlanes;
         },
         resetState: (state) => {
             return { ...initialState, environments: state.environments };

@@ -12,7 +12,8 @@ export enum FullscreenStatus {
 const initialState = {
     fullscreen: FullscreenStatus.Initial,
     enabledFeatures: Object.values(featuresConfig).map((feature) => feature.key) as FeatureKey[],
-    widgets: [] as WidgetKey[],
+    // NOTE(OLA): temp dev util
+    widgets: ["clipping"] as WidgetKey[],
 };
 
 export const explorerSlice = createSlice({

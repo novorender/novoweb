@@ -3,7 +3,7 @@ import { AddCircle } from "@material-ui/icons";
 import { useAppDispatch, useAppSelector } from "app/store";
 
 import { Divider, Switch } from "components";
-import { useToggle } from "hooks/useToggle";
+import { useEffect, useState } from "react";
 import { renderActions, selectClippingPlanes } from "slices/renderSlice";
 
 const useStyles = makeStyles((_theme) => ({
@@ -18,21 +18,37 @@ const useStyles = makeStyles((_theme) => ({
 export function Clipping() {
     const classes = useStyles();
 
+    const [addClippingBox, setAddClippingBox] = useState(false);
+
     const clippingPlanes = useAppSelector(selectClippingPlanes);
-    const { enabled, showBox, inside } = clippingPlanes;
+    const { defining, enabled, showBox, inside } = clippingPlanes;
     const dispatch = useAppDispatch();
 
-    const [addBox, toggleAddBox] = useToggle(false);
+    // NOTE(OLA): temp dev util
+    useEffect(() => {
+        showSettings();
+        // eslint-disable-next-line
+    }, []);
 
-    const toggle = (func: "enabled" | "showBox" | "inside") => () => {
-        return dispatch(renderActions.setClippingPLanes({ ...clippingPlanes, [func]: !clippingPlanes[func] }));
+    const toggle = (func: "enabled" | "showBox" | "inside" | "defining") => () => {
+        return dispatch(renderActions.setClippingPlanes({ ...clippingPlanes, [func]: !clippingPlanes[func] }));
+    };
+
+    const showSettings = () => {
+        setAddClippingBox(true);
+        dispatch(renderActions.setClippingPlanes({ ...clippingPlanes, defining: true, showBox: true, enabled: true }));
+    };
+
+    const hideSettings = () => {
+        setAddClippingBox(false);
+        dispatch(renderActions.resetClippingPlanes());
     };
 
     return (
         <>
             <Box p={1}>
-                {!addBox ? (
-                    <Box display="flex" alignItems="center" className={classes.addButton} onClick={toggleAddBox}>
+                {!addClippingBox ? (
+                    <Box display="flex" alignItems="center" className={classes.addButton} onClick={showSettings}>
                         <IconButton size="small">
                             <AddCircle color="secondary" />
                         </IconButton>
@@ -56,6 +72,11 @@ export function Clipping() {
                                 control={<Switch checked={inside} onChange={toggle("inside")} />}
                                 label={<Box ml={0.5}>Inside</Box>}
                             />
+                            <FormControlLabel
+                                className={classes.formControlLabel}
+                                control={<Switch checked={defining} onChange={toggle("defining")} />}
+                                label={<Box ml={0.5}>Defining</Box>}
+                            />
                         </Box>
                         <Box display="flex">
                             <Box mr={1} width={1}>
@@ -64,7 +85,7 @@ export function Clipping() {
                                     variant="outlined"
                                     color="secondary"
                                     size="large"
-                                    onClick={toggleAddBox}
+                                    onClick={hideSettings}
                                 >
                                     Cancel
                                 </Button>
