@@ -15,6 +15,8 @@ const useStyles = makeStyles((_theme) => ({
     },
 }));
 
+const axisNames = ["-X", "-Y", "-Z", "+X", "+Y", "+Z"];
+
 export function Clipping() {
     const classes = useStyles();
 
@@ -65,7 +67,14 @@ export function Clipping() {
                             <FormControlLabel
                                 className={classes.formControlLabel}
                                 control={<Switch checked={showBox} onChange={toggle("showBox")} />}
-                                label={<Box ml={0.5}>Show (-z)</Box>}
+                                label={
+                                    <Box ml={0.5}>
+                                        Show{" "}
+                                        {showBox && clippingPlanes.highlight !== -1
+                                            ? `(${axisNames[clippingPlanes.highlight]})`
+                                            : ""}
+                                    </Box>
+                                }
                             />
                             <FormControlLabel
                                 className={classes.formControlLabel}
