@@ -1,21 +1,19 @@
-import { glMatrix, quat, vec2, vec3 } from "gl-matrix";
+import { glMatrix, quat, vec3 } from "gl-matrix";
 import { useEffect, useState, useRef, MouseEvent, PointerEvent } from "react";
 import { useSelector } from "react-redux";
 import {
     View,
     API,
     FlightControllerParams,
-    Scene,
     RenderSettings,
     EnvironmentDescription,
     Internal,
 } from "@novorender/webgl-api";
-import type { API as DataAPI, ObjectGroup } from "@novorender/data-js-api";
+import type { API as DataAPI } from "@novorender/data-js-api";
 import { Box, Button, makeStyles, Paper, Typography, useTheme } from "@material-ui/core";
 
 import {
     fetchEnvironments,
-    ObjectGroups,
     renderActions,
     RenderType,
     selectBaseCameraSpeed,
@@ -30,14 +28,25 @@ import {
     selectSelectMultiple,
     selectViewOnlySelected,
 } from "slices/renderSlice";
-import { sleep } from "utils/timers";
 import { useAppDispatch } from "app/store";
 import { PerformanceStats } from "features/performanceStats";
 import { useMountedState } from "hooks/useMountedState";
 import { authActions } from "slices/authSlice";
 import { deleteStoredToken } from "utils/auth";
-import { offscreenCanvas } from "config";
 import { Loading } from "components";
+
+import {
+    addConsoleDebugUtils,
+    getEnvironmentDescription,
+    serializeableObjectGroups,
+    getRenderType,
+    refillObjects,
+    createRendering,
+} from "./utils";
+import { xAxis, yAxis, axis, showPerformance } from "./consts";
+
+glMatrix.setMatrixArrayType(Array);
+addConsoleDebugUtils();
 
 const useStyles = makeStyles({
     canvas: {
@@ -47,24 +56,6 @@ const useStyles = makeStyles({
         width: "100vw",
     },
 });
-
-glMatrix.setMatrixArrayType(Array);
-
-const showPerformance = localStorage.getItem("show-performance-stats") !== null;
-const taaEnabled = localStorage.getItem("disable-taa") === null;
-const ssaoEnabled = localStorage.getItem("disable-ssao") === null;
-const axis = [
-    vec3.fromValues(1, 0, 0),
-    vec3.fromValues(0, 1, 0),
-    vec3.fromValues(0, 0, 1),
-    vec3.fromValues(1, 0, 0),
-    vec3.fromValues(0, 1, 0),
-    vec3.fromValues(0, 0, 1),
-];
-const xAxis = vec3.fromValues(1, 0, 0);
-const yAxis = vec3.fromValues(0, 1, 0);
-
-addConsoleDebugUtils();
 
 enum Status {
     Initial,
@@ -94,15 +85,13 @@ export function Render3D({ id, api, onInit, dataApi }: Props) {
     const clippingPlanes = useSelector(selectClippingPlanes);
     const dispatch = useAppDispatch();
 
-    const running = useRef(false);
+    const rendering = useRef({ start: () => Promise.resolve(), stop: () => {} });
     const movementTimer = useRef<ReturnType<typeof setTimeout>>();
     const cameraGeneration = useRef<number>();
     const cameraMoveRef = useRef<ReturnType<typeof requestAnimationFrame>>();
     const previousId = useRef("");
     const camera2pointDistance = useRef(0);
-    const lastPointerX = useRef(0);
-    const lastPointerY = useRef(0);
-    const pointerMoved = useRef(false);
+    const pointerDown = useRef(false);
     const camX = useRef(vec3.create());
     const camY = useRef(vec3.create());
 
@@ -166,7 +155,8 @@ export function Render3D({ id, api, onInit, dataApi }: Props) {
                 );
 
                 setView(_view);
-                run(canvas, _view, api);
+                rendering.current = createRendering(canvas, _view, api);
+                rendering.current.start();
                 window.document.title = `${title} - Novorender`;
                 window.addEventListener("blur", exitPointerLock);
                 canvas.focus();
@@ -331,118 +321,27 @@ export function Render3D({ id, api, onInit, dataApi }: Props) {
     useEffect(
         function cleanUpPreviousScene() {
             return () => {
+                rendering.current.stop();
                 window.removeEventListener("blur", exitPointerLock);
-                running.current = false;
+                setView(undefined);
                 dispatch(renderActions.resetState());
                 setStatus(Status.Initial);
             };
         },
-        [id, dispatch, setStatus]
+        [id, dispatch, setStatus, setView]
     );
-
-    const run = async (canvas: HTMLCanvasElement, view: View, api: API) => {
-        running.current = true;
-        const ctx = offscreenCanvas ? canvas.getContext("2d", { alpha: true, desynchronized: false }) : undefined;
-
-        const resizeObserver = new ResizeObserver((entries) => {
-            for (const entry of entries) {
-                canvas.width = entry.contentRect.width;
-                canvas.height = entry.contentRect.height;
-                view.applySettings({ display: { width: canvas.width, height: canvas.height } });
-            }
-        });
-
-        await sleep(500);
-        resizeObserver.observe(canvas);
-
-        const fpsTable: number[] = [];
-        let noBlankFrame = true;
-        function blankCallback() {
-            noBlankFrame = false;
-        }
-
-        while (running.current) {
-            noBlankFrame = true;
-            const startRender = performance.now();
-            const output = await view.render(blankCallback);
-            const { width, height } = canvas;
-            const badPerf = view.performanceStatistics.weakDevice; // || view.settings.quality.resolution.value < 1;
-
-            if (ssaoEnabled && !badPerf) {
-                output.applyPostEffect({ kind: "ssao", samples: 64, radius: 1, reset: true });
-            }
-
-            const image = await output.getImage();
-
-            if (ctx && image) {
-                ctx.clearRect(0, 0, width, height);
-                ctx.drawImage(image, 0, 0, width, height); // display in canvas (work on all platforms, but might be less performant)
-                // ctx.transferFromImageBitmap(image); // display in canvas
-            }
-
-            if (noBlankFrame) {
-                const dt = performance.now() - startRender;
-                fpsTable.splice(0, 0, 1000 / dt);
-                if (fpsTable.length > 200) {
-                    fpsTable.length = 200;
-                }
-                let fps = 0;
-                for (let f of fpsTable) {
-                    fps += f;
-                }
-                fps /= fpsTable.length;
-                (view.performanceStatistics as any).fps = fps;
-            }
-
-            let run = taaEnabled;
-            let reset = true;
-            const start = performance.now();
-            while (run) {
-                if (output.hasViewChanged) {
-                    break;
-                }
-
-                await (api as any).waitFrame();
-
-                if (performance.now() - start < 500) {
-                    continue;
-                }
-
-                run = (await output.applyPostEffect({ kind: "taa", reset })) || false;
-
-                if (ssaoEnabled) {
-                    output.applyPostEffect({ kind: "ssao", samples: 64, radius: 1, reset: reset && badPerf });
-                }
-
-                reset = false;
-                const image = await output.getImage();
-                if (ctx && image) {
-                    ctx.clearRect(0, 0, width, height);
-                    ctx.drawImage(image, 0, 0, width, height); // display in canvas (work on all platforms, but might be less performant)
-                    // ctx.transferFromImageBitmap(image); // display in canvas
-                }
-            }
-            (output as any).dispose();
-        }
-    };
 
     const exitPointerLock = () => {
         window.document.exitPointerLock();
     };
 
-    const handleClick = (e: React.MouseEvent) => {
-        if (!pointerMoved.current) {
-            selectObject(vec2.fromValues(e.nativeEvent.offsetX, e.nativeEvent.offsetY));
-            pointerMoved.current = true;
-        }
-    };
-
-    const selectObject = async (point: vec2) => {
+    const handleClick = async (e: React.MouseEvent) => {
         if (!view) {
             return;
         }
 
-        const result = await view.pick(point[0], point[1]);
+        const result = await view.pick(e.nativeEvent.offsetX, e.nativeEvent.offsetY);
+
         if (!result || result.objectId > 0x1000000) {
             return;
         }
@@ -468,24 +367,15 @@ export function Render3D({ id, api, onInit, dataApi }: Props) {
         }
     };
 
-    const handleMouseDown = (e: MouseEvent) => {
-        if (e.button !== 0) {
-            return;
-        }
-
-        handleDown(e.nativeEvent.offsetX, e.nativeEvent.offsetY);
-    };
-
     const handleDown = async (x: number, y: number) => {
-        pointerMoved.current = false;
-
         if (!view) {
             return;
         }
 
+        pointerDown.current = true;
         const result = await view.pick(x, y);
 
-        if (!result) {
+        if (!result || !pointerDown.current) {
             return;
         }
 
@@ -516,8 +406,20 @@ export function Render3D({ id, api, onInit, dataApi }: Props) {
         }
     };
 
-    const handleMouseUp = () => {
-        handleUp();
+    const handlePointerDown = (e: PointerEvent) => {
+        if (e.pointerType === "mouse") {
+            return;
+        }
+
+        handleDown(e.nativeEvent.offsetX, e.nativeEvent.offsetY);
+    };
+
+    const handleMouseDown = (e: MouseEvent) => {
+        if (e.button !== 0) {
+            return;
+        }
+
+        handleDown(e.nativeEvent.offsetX, e.nativeEvent.offsetY);
     };
 
     const handleUp = () => {
@@ -529,28 +431,21 @@ export function Render3D({ id, api, onInit, dataApi }: Props) {
             dispatch(renderActions.setClippingPlanes({ ...clippingPlanes, defining: false }));
         }
 
+        pointerDown.current = false;
         camera2pointDistance.current = 0;
         exitPointerLock();
         view.camera.controller.enabled = true;
     };
 
-    const handleMouseMoveNative = (e: MouseEvent) => {
-        if (e.movementX === 0 && e.movementY === 0) {
-            return;
-        }
-
-        handleMove(e);
-    };
-
     const handleMove = (e: MouseEvent | PointerEvent) => {
-        pointerMoved.current = true;
-
         if (
             !view ||
             !canvas ||
             !clippingPlanes.enabled ||
             !clippingPlanes.showBox ||
-            camera2pointDistance.current === 0
+            !pointerDown.current ||
+            camera2pointDistance.current === 0 ||
+            (!e.movementY && !e.movementX)
         ) {
             return;
         }
@@ -606,46 +501,6 @@ export function Render3D({ id, api, onInit, dataApi }: Props) {
         view.applySettings({ clippingPlanes: { ...clippingPlanes, bounds: { min, max } } });
     };
 
-    const handlePointerDown = (e: PointerEvent) => {
-        if (e.pointerType === "mouse") {
-            return;
-        }
-
-        lastPointerX.current = e.nativeEvent.offsetX;
-        lastPointerY.current = e.nativeEvent.offsetY;
-        handleDown(e.nativeEvent.offsetX, e.nativeEvent.offsetY);
-    };
-
-    const handlePointerMove = (e: PointerEvent) => {
-        if (e.pointerType === "mouse") {
-            return;
-        }
-
-        if (e.movementX === undefined) {
-            (e as any).movementX = e.nativeEvent.offsetX - lastPointerX.current;
-            (e as any).movementY = e.nativeEvent.offsetY - lastPointerY.current;
-        }
-
-        if (
-            (!e.movementX && !e.movementY) ||
-            (!pointerMoved && e.movementX * e.movementX + e.movementY * e.movementY < 3)
-        ) {
-            return;
-        }
-
-        lastPointerX.current = e.nativeEvent.offsetX;
-        lastPointerY.current = e.nativeEvent.offsetY;
-        handleMove(e);
-    };
-
-    const handlePointerUp = (e: PointerEvent) => {
-        if (e.pointerType === "mouse") {
-            return;
-        }
-
-        handleUp();
-    };
-
     return (
         <Box position="relative" width="100%" height="100%">
             {status === Status.Error ? (
@@ -659,11 +514,9 @@ export function Render3D({ id, api, onInit, dataApi }: Props) {
                         ref={setCanvas}
                         onClick={handleClick}
                         onMouseDown={handleMouseDown}
-                        onMouseMove={handleMouseMoveNative}
-                        onMouseUp={handleMouseUp}
                         onPointerEnter={handlePointerDown}
-                        onPointerMove={handlePointerMove}
-                        onPointerUp={handlePointerUp}
+                        onPointerMove={handleMove}
+                        onPointerUp={handleUp}
                     />
                     {!view ? <Loading /> : null}
                 </>
@@ -706,118 +559,4 @@ function NoScene({ id }: { id: string }) {
             </Paper>
         </Box>
     );
-}
-
-/**
- * Applies highlights and hides objects in the 3d view based on the object groups provided
- */
-function refillObjects({
-    api,
-    scene,
-    view,
-    objectGroups,
-    viewOnlySelected,
-}: {
-    api: API;
-    scene: Scene;
-    view: View;
-    objectGroups: ObjectGroup[];
-    viewOnlySelected: boolean;
-}) {
-    if (!view || !scene) {
-        return;
-    }
-
-    const { objectHighlighter } = scene;
-
-    view.settings.objectHighlights = [
-        viewOnlySelected
-            ? api.createHighlight({ kind: "transparent", opacity: 0.2 })
-            : api.createHighlight({ kind: "neutral" }),
-        ...objectGroups.map((group) => api.createHighlight({ kind: "color", color: group.color })),
-    ];
-
-    objectHighlighter.objectHighlightIndices.fill(0);
-
-    objectGroups.forEach((group, index) => {
-        if (group.selected) {
-            for (const id of group.ids) {
-                objectHighlighter.objectHighlightIndices[id] = index + 1;
-            }
-        }
-    });
-
-    objectGroups
-        .filter((group) => group.hidden)
-        .forEach((group) => {
-            for (const id of group.ids) {
-                objectHighlighter.objectHighlightIndices[id] = 255;
-            }
-        });
-
-    objectHighlighter.commit();
-}
-
-function getEnvironmentDescription(name: string, environments: EnvironmentDescription[]): EnvironmentDescription {
-    return environments.find((env) => env.name === name) ?? environments[0];
-}
-
-async function waitForSceneToRender(view: View): Promise<void> {
-    while (!view.performanceStatistics.renderResolved) {
-        await sleep(100);
-    }
-}
-
-async function getRenderType(view: View): Promise<RenderType> {
-    if (!("advanced" in view.settings)) {
-        return RenderType.UnChangeable;
-    }
-
-    await waitForSceneToRender(view);
-
-    const advancedSettings = (view.settings as Internal.RenderSettingsExt).advanced;
-    const points = advancedSettings.hidePoints || view.performanceStatistics.points > 0;
-    const triangles = advancedSettings.hideTriangles || view.performanceStatistics.triangles > 1000;
-    const canChange = points && triangles;
-
-    return !canChange
-        ? RenderType.UnChangeable
-        : advancedSettings.hidePoints
-        ? RenderType.Triangles
-        : advancedSettings.hideTriangles
-        ? RenderType.Points
-        : RenderType.All;
-}
-
-function serializeableObjectGroups(groups: Partial<ObjectGroups>): Partial<ObjectGroups> {
-    return Object.fromEntries(
-        Object.entries(groups)
-            .filter(([_, value]) => value !== undefined)
-            .map(([key, value]) => {
-                const serializableValue = Array.isArray(value)
-                    ? value.map((group) =>
-                          group.color instanceof Float32Array
-                              ? { ...group, color: [group.color[0], group.color[1], group.color[2]] }
-                              : group
-                      )
-                    : value.color instanceof Float32Array
-                    ? { ...value, color: [value.color[0], value.color[1], value.color[2]] }
-                    : value;
-
-                return [key, serializableValue];
-            })
-    );
-}
-
-function addConsoleDebugUtils() {
-    (window as any).showStats = (val: boolean) =>
-        val !== false
-            ? localStorage.setItem("show-performance-stats", "true")
-            : localStorage.removeItem("show-performance-stats");
-
-    (window as any).disableTaa = (val: boolean) =>
-        val !== false ? localStorage.setItem("disable-taa", "true") : localStorage.removeItem("disable-taa");
-
-    (window as any).disableSsao = (val: boolean) =>
-        val !== false ? localStorage.setItem("disable-ssao", "true") : localStorage.removeItem("disable-ssao");
 }

@@ -1,5 +1,6 @@
 import { Switch, Box, FormControlLabel } from "@material-ui/core";
 import { useAppDispatch, useAppSelector } from "app/store";
+import { Divider } from "components";
 
 import { renderActions, selectClippingPlanes } from "slices/renderSlice";
 
@@ -19,7 +20,15 @@ export function Clipping() {
             return dispatch(renderActions.setClippingPlanes({ ...clippingPlanes, defining: false }));
         }
 
-        dispatch(renderActions.setClippingPlanes({ ...clippingPlanes, enabled: true, showBox: true, defining: true }));
+        dispatch(
+            renderActions.setClippingPlanes({
+                ...clippingPlanes,
+                enabled: true,
+                showBox: true,
+                defining: true,
+                highlight: -1,
+            })
+        );
     };
 
     return (
@@ -45,6 +54,9 @@ export function Clipping() {
                     label={<Box ml={0.5}>Clip inside box</Box>}
                 />
                 <Box mt={2}>
+                    <Box px={2} mb={2}>
+                        <Divider />
+                    </Box>
                     <FormControlLabel
                         control={<Switch size="medium" color="primary" checked={defining} onChange={toggleDefineNew} />}
                         label={<Box ml={0.5}>Define new box</Box>}
