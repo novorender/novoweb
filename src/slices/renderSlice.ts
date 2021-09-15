@@ -1,4 +1,4 @@
-import type { API, Camera, EnvironmentDescription, ObjectId } from "@novorender/webgl-api";
+import type { API, Camera, EnvironmentDescription, ObjectId, RenderSettings } from "@novorender/webgl-api";
 import type { Bookmark, ObjectGroup } from "@novorender/data-js-api";
 import { createSlice, createAsyncThunk, PayloadAction } from "@reduxjs/toolkit";
 
@@ -24,6 +24,7 @@ export enum RenderType {
 
 type CameraPosition = Pick<Camera, "position" | "rotation">;
 export type ObjectGroups = { default: ObjectGroup; defaultHidden: ObjectGroup; custom: ObjectGroup[] };
+export type ClippingPlanes = Omit<RenderSettings["clippingPlanes"], "bounds"> & { defining: boolean };
 
 // Redux toolkit with immer removes readonly modifier of state in the reducer so we get ts errors
 // unless we cast the types to writable ones.
@@ -47,6 +48,13 @@ const initialState = {
     cameraSpeedMultiplier: CameraSpeedMultiplier.Normal,
     savedCameraPositions: { currentIndex: -1, positions: [] as CameraPosition[] },
     renderType: RenderType.UnChangeable,
+    clippingPlanes: {
+        defining: false,
+        enabled: false,
+        inside: true,
+        showBox: false,
+        highlight: -1,
+    } as ClippingPlanes,
 };
 
 export const renderSlice = createSlice({
@@ -129,6 +137,12 @@ export const renderSlice = createSlice({
         setRenderType: (state, action: PayloadAction<RenderType>) => {
             state.renderType = action.payload;
         },
+        setClippingPlanes: (state, action: PayloadAction<ClippingPlanes>) => {
+            state.clippingPlanes = action.payload;
+        },
+        resetClippingPlanes: (state) => {
+            state.clippingPlanes = initialState.clippingPlanes;
+        },
         resetState: (state) => {
             return { ...initialState, environments: state.environments };
         },
@@ -160,6 +174,7 @@ export const selectSavedCameraPositions = (state: RootState) => state.render.sav
 export const selectHomeCameraPosition = (state: RootState) => state.render.savedCameraPositions.positions[0];
 export const selectBookmarks = (state: RootState) => state.render.bookmarks as Bookmark[];
 export const selectRenderType = (state: RootState) => state.render.renderType;
+export const selectClippingPlanes = (state: RootState) => state.render.clippingPlanes;
 
 const { reducer, actions } = renderSlice;
 export { reducer as renderReducer, actions as renderActions };

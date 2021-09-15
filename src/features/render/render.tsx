@@ -1,25 +1,24 @@
-import { glMatrix, quat, vec2, vec3 } from "gl-matrix";
-import { useEffect, useState, useRef } from "react";
+import { glMatrix, quat, vec3 } from "gl-matrix";
+import { useEffect, useState, useRef, MouseEvent, PointerEvent } from "react";
 import { useSelector } from "react-redux";
 import {
     View,
     API,
     FlightControllerParams,
-    Scene,
     RenderSettings,
     EnvironmentDescription,
     Internal,
 } from "@novorender/webgl-api";
-import type { API as DataAPI, ObjectGroup } from "@novorender/data-js-api";
+import type { API as DataAPI } from "@novorender/data-js-api";
 import { Box, Button, makeStyles, Paper, Typography, useTheme } from "@material-ui/core";
 
 import {
     fetchEnvironments,
-    ObjectGroups,
     renderActions,
     RenderType,
     selectBaseCameraSpeed,
     selectCameraSpeedMultiplier,
+    selectClippingPlanes,
     selectCurrentEnvironment,
     selectEnvironments,
     selectMainObject,
@@ -29,14 +28,25 @@ import {
     selectSelectMultiple,
     selectViewOnlySelected,
 } from "slices/renderSlice";
-import { sleep } from "utils/timers";
 import { useAppDispatch } from "app/store";
 import { PerformanceStats } from "features/performanceStats";
 import { useMountedState } from "hooks/useMountedState";
 import { authActions } from "slices/authSlice";
 import { deleteStoredToken } from "utils/auth";
-import { offscreenCanvas } from "config";
 import { Loading } from "components";
+
+import {
+    addConsoleDebugUtils,
+    getEnvironmentDescription,
+    serializeableObjectGroups,
+    getRenderType,
+    refillObjects,
+    createRendering,
+} from "./utils";
+import { xAxis, yAxis, axis, showPerformance } from "./consts";
+
+glMatrix.setMatrixArrayType(Array);
+addConsoleDebugUtils();
 
 const useStyles = makeStyles({
     canvas: {
@@ -46,13 +56,6 @@ const useStyles = makeStyles({
         width: "100vw",
     },
 });
-
-const showPerformance = localStorage.getItem("show-performance-stats") !== null;
-const taaEnabled = localStorage.getItem("disable-taa") === null;
-const ssaoEnabled = localStorage.getItem("disable-ssao") === null;
-
-glMatrix.setMatrixArrayType(Array);
-addConsoleDebugUtils();
 
 enum Status {
     Initial,
@@ -79,13 +82,18 @@ export function Render3D({ id, api, onInit, dataApi }: Props) {
     const savedCameraPositions = useSelector(selectSavedCameraPositions);
     const selectMultiple = useSelector(selectSelectMultiple);
     const renderType = useSelector(selectRenderType);
+    const clippingPlanes = useSelector(selectClippingPlanes);
     const dispatch = useAppDispatch();
 
-    const running = useRef(false);
+    const rendering = useRef({ start: () => Promise.resolve(), stop: () => {} });
     const movementTimer = useRef<ReturnType<typeof setTimeout>>();
     const cameraGeneration = useRef<number>();
     const cameraMoveRef = useRef<ReturnType<typeof requestAnimationFrame>>();
     const previousId = useRef("");
+    const camera2pointDistance = useRef(0);
+    const pointerDown = useRef(false);
+    const camX = useRef(vec3.create());
+    const camY = useRef(vec3.create());
 
     const [canvas, setCanvas] = useState<null | HTMLCanvasElement>(null);
     const [status, setStatus] = useMountedState(Status.Initial);
@@ -147,9 +155,10 @@ export function Render3D({ id, api, onInit, dataApi }: Props) {
                 );
 
                 setView(_view);
-                run(canvas, _view, api);
+                rendering.current = createRendering(canvas, _view, api);
+                rendering.current.start();
                 window.document.title = `${title} - Novorender`;
-                window.addEventListener("blur", blur);
+                window.addEventListener("blur", exitPointerLock);
                 canvas.focus();
 
                 if (onInit) {
@@ -299,117 +308,40 @@ export function Render3D({ id, api, onInit, dataApi }: Props) {
     );
 
     useEffect(
+        function handleClippingChanges() {
+            if (!view) {
+                return;
+            }
+
+            view.applySettings({ clippingPlanes: { ...clippingPlanes, bounds: view.settings.clippingPlanes.bounds } });
+        },
+        [view, clippingPlanes]
+    );
+
+    useEffect(
         function cleanUpPreviousScene() {
             return () => {
-                window.removeEventListener("blur", blur);
-                running.current = false;
+                rendering.current.stop();
+                window.removeEventListener("blur", exitPointerLock);
+                setView(undefined);
                 dispatch(renderActions.resetState());
                 setStatus(Status.Initial);
             };
         },
-        [id, dispatch, setStatus]
+        [id, dispatch, setStatus, setView]
     );
 
-    const run = async (canvas: HTMLCanvasElement, view: View, api: API) => {
-        running.current = true;
-        const ctx = offscreenCanvas ? canvas.getContext("2d", { alpha: true, desynchronized: false }) : undefined;
-
-        const resizeObserver = new ResizeObserver((entries) => {
-            for (const entry of entries) {
-                canvas.width = entry.contentRect.width;
-                canvas.height = entry.contentRect.height;
-                view.applySettings({ display: { width: canvas.width, height: canvas.height } });
-            }
-        });
-
-        await sleep(500);
-        resizeObserver.observe(canvas);
-
-        const fpsTable: number[] = [];
-        let noBlankFrame = true;
-        function blankCallback() {
-            noBlankFrame = false;
-        }
-
-        while (running.current) {
-            noBlankFrame = true;
-            const startRender = performance.now();
-            const output = await view.render(blankCallback);
-            const { width, height } = canvas;
-            const badPerf = view.performanceStatistics.weakDevice; // || view.settings.quality.resolution.value < 1;
-
-            if (ssaoEnabled && !badPerf) {
-                output.applyPostEffect({ kind: "ssao", samples: 64, radius: 1, reset: true });
-            }
-
-            const image = await output.getImage();
-
-            if (ctx && image) {
-                ctx.clearRect(0, 0, width, height);
-                ctx.drawImage(image, 0, 0, width, height); // display in canvas (work on all platforms, but might be less performant)
-                // ctx.transferFromImageBitmap(image); // display in canvas
-            }
-
-            if (noBlankFrame) {
-                const dt = performance.now() - startRender;
-                fpsTable.splice(0, 0, 1000 / dt);
-                if (fpsTable.length > 200) {
-                    fpsTable.length = 200;
-                }
-                let fps = 0;
-                for (let f of fpsTable) {
-                    fps += f;
-                }
-                fps /= fpsTable.length;
-                (view.performanceStatistics as any).fps = fps;
-            }
-
-            let run = taaEnabled;
-            let reset = true;
-            const start = performance.now();
-            while (run) {
-                if (output.hasViewChanged) {
-                    break;
-                }
-
-                await (api as any).waitFrame();
-
-                if (performance.now() - start < 500) {
-                    continue;
-                }
-
-                run = (await output.applyPostEffect({ kind: "taa", reset })) || false;
-
-                if (ssaoEnabled) {
-                    output.applyPostEffect({ kind: "ssao", samples: 64, radius: 1, reset: reset && badPerf });
-                }
-
-                reset = false;
-                const image = await output.getImage();
-                if (ctx && image) {
-                    ctx.clearRect(0, 0, width, height);
-                    ctx.drawImage(image, 0, 0, width, height); // display in canvas (work on all platforms, but might be less performant)
-                    // ctx.transferFromImageBitmap(image); // display in canvas
-                }
-            }
-            (output as any).dispose();
-        }
-    };
-
-    const blur = () => {
+    const exitPointerLock = () => {
         window.document.exitPointerLock();
     };
 
-    const click = (e: React.MouseEvent) => {
-        selectObject(vec2.fromValues(e.nativeEvent.offsetX, e.nativeEvent.offsetY));
-    };
-
-    const selectObject = async (point: vec2) => {
+    const handleClick = async (e: React.MouseEvent) => {
         if (!view) {
             return;
         }
 
-        const result = await view.pick(point[0], point[1]);
+        const result = await view.pick(e.nativeEvent.offsetX, e.nativeEvent.offsetY);
+
         if (!result || result.objectId > 0x1000000) {
             return;
         }
@@ -435,6 +367,140 @@ export function Render3D({ id, api, onInit, dataApi }: Props) {
         }
     };
 
+    const handleDown = async (x: number, y: number) => {
+        if (!view) {
+            return;
+        }
+
+        pointerDown.current = true;
+        const result = await view.pick(x, y);
+
+        if (!result || !pointerDown.current) {
+            return;
+        }
+
+        const { position: point } = result;
+        const { position, rotation, fieldOfView } = view.camera;
+        camera2pointDistance.current = vec3.dist(point, position);
+        vec3.transformQuat(camX.current, xAxis, rotation);
+        vec3.transformQuat(camY.current, yAxis, rotation);
+
+        if (clippingPlanes.defining) {
+            view.camera.controller.enabled = false;
+            const tan = Math.tan(0.5 * glMatrix.toRadian(fieldOfView));
+            const size = 0.25 * tan * camera2pointDistance.current;
+            const bounds = {
+                min: vec3.fromValues(point[0] - size, point[1] - size, point[2] - size),
+                max: vec3.fromValues(point[0] + size, point[1] + size, point[2] + size),
+            };
+
+            view.applySettings({ clippingPlanes: { ...clippingPlanes, bounds } });
+        } else if (result.objectId > 0xfffffffe || result.objectId < 0xfffffff9) {
+            camera2pointDistance.current = 0;
+        } else if (clippingPlanes.enabled && clippingPlanes.showBox) {
+            view.camera.controller.enabled = false;
+
+            const highlight = 0xfffffffe - result.objectId;
+
+            dispatch(renderActions.setClippingPlanes({ ...clippingPlanes, highlight }));
+        }
+    };
+
+    const handlePointerDown = (e: PointerEvent) => {
+        if (e.pointerType === "mouse") {
+            return;
+        }
+
+        handleDown(e.nativeEvent.offsetX, e.nativeEvent.offsetY);
+    };
+
+    const handleMouseDown = (e: MouseEvent) => {
+        if (e.button !== 0) {
+            return;
+        }
+
+        handleDown(e.nativeEvent.offsetX, e.nativeEvent.offsetY);
+    };
+
+    const handleUp = () => {
+        if (!view) {
+            return;
+        }
+
+        if (camera2pointDistance.current > 0 && clippingPlanes.defining) {
+            dispatch(renderActions.setClippingPlanes({ ...clippingPlanes, defining: false }));
+        }
+
+        pointerDown.current = false;
+        camera2pointDistance.current = 0;
+        exitPointerLock();
+        view.camera.controller.enabled = true;
+    };
+
+    const handleMove = (e: MouseEvent | PointerEvent) => {
+        if (
+            !view ||
+            !canvas ||
+            !clippingPlanes.enabled ||
+            !clippingPlanes.showBox ||
+            !pointerDown.current ||
+            camera2pointDistance.current === 0 ||
+            (!e.movementY && !e.movementX)
+        ) {
+            return;
+        }
+
+        const activeSide = clippingPlanes.highlight;
+
+        if (activeSide === -1 && !clippingPlanes.defining) {
+            return;
+        }
+
+        e.stopPropagation();
+
+        const { clientHeight } = canvas;
+        const min = vec3.clone(view.settings.clippingPlanes.bounds.min);
+        const max = vec3.clone(view.settings.clippingPlanes.bounds.max);
+        const tan = Math.tan(0.5 * glMatrix.toRadian(view.camera.fieldOfView));
+        const scale = (2 * tan * camera2pointDistance.current) / clientHeight;
+        let x = e.movementX;
+        let y = e.movementY;
+        x *= scale;
+        y *= scale;
+
+        if (clippingPlanes.defining) {
+            const dist = x + y;
+            const delta = vec3.fromValues(dist, dist, dist);
+            vec3.add(max, max, delta);
+            vec3.sub(min, min, delta);
+        } else {
+            const dir = vec3.scale(vec3.create(), camX.current, x);
+            vec3.sub(dir, dir, vec3.scale(vec3.create(), camY.current, y));
+            const axisIdx = activeSide % 3;
+            const currentAxis = axis[axisIdx];
+            const dist = vec3.len(dir) * Math.sign(vec3.dot(currentAxis, dir));
+
+            if (activeSide > 2) {
+                max[activeSide - 3] += dist;
+            } else {
+                min[activeSide] += dist;
+            }
+            if (min[activeSide % 3] > max[activeSide % 3]) {
+                const tmp = min[axisIdx];
+                min[axisIdx] = max[axisIdx];
+                max[axisIdx] = tmp;
+                dispatch(
+                    renderActions.setClippingPlanes({
+                        ...clippingPlanes,
+                        highlight: activeSide > 2 ? axisIdx : axisIdx + 3,
+                    })
+                );
+            }
+        }
+
+        view.applySettings({ clippingPlanes: { ...clippingPlanes, bounds: { min, max } } });
+    };
+
     return (
         <Box position="relative" width="100%" height="100%">
             {status === Status.Error ? (
@@ -442,7 +508,16 @@ export function Render3D({ id, api, onInit, dataApi }: Props) {
             ) : (
                 <>
                     {showPerformance && view && canvas ? <PerformanceStats view={view} canvas={canvas} /> : null}
-                    <canvas className={classes.canvas} tabIndex={1} ref={setCanvas} onClick={click} />
+                    <canvas
+                        className={classes.canvas}
+                        tabIndex={1}
+                        ref={setCanvas}
+                        onClick={handleClick}
+                        onMouseDown={handleMouseDown}
+                        onPointerEnter={handlePointerDown}
+                        onPointerMove={handleMove}
+                        onPointerUp={handleUp}
+                    />
                     {!view ? <Loading /> : null}
                 </>
             )}
@@ -484,112 +559,4 @@ function NoScene({ id }: { id: string }) {
             </Paper>
         </Box>
     );
-}
-
-/**
- * Applies highlights and hides objects in the 3d view based on the object groups provided
- */
-function refillObjects({
-    api,
-    scene,
-    view,
-    objectGroups,
-    viewOnlySelected,
-}: {
-    api: API;
-    scene: Scene;
-    view: View;
-    objectGroups: ObjectGroup[];
-    viewOnlySelected: boolean;
-}) {
-    if (!view || !scene) {
-        return;
-    }
-
-    const { objectHighlighter } = scene;
-
-    view.settings.objectHighlights = [
-        viewOnlySelected
-            ? api.createHighlight({ kind: "transparent", opacity: 0.2 })
-            : api.createHighlight({ kind: "neutral" }),
-        ...objectGroups.map((group) => api.createHighlight({ kind: "color", color: group.color })),
-    ];
-
-    objectHighlighter.objectHighlightIndices.fill(0);
-
-    objectGroups.forEach((group, index) => {
-        if (group.selected) {
-            for (const id of group.ids) {
-                objectHighlighter.objectHighlightIndices[id] = index + 1;
-            }
-        }
-    });
-
-    objectGroups
-        .filter((group) => group.hidden)
-        .forEach((group) => {
-            for (const id of group.ids) {
-                objectHighlighter.objectHighlightIndices[id] = 255;
-            }
-        });
-
-    objectHighlighter.commit();
-}
-
-function getEnvironmentDescription(name: string, environments: EnvironmentDescription[]): EnvironmentDescription {
-    return environments.find((env) => env.name === name) ?? environments[0];
-}
-
-async function waitForSceneToRender(view: View): Promise<void> {
-    while (!view.performanceStatistics.renderResolved) {
-        await sleep(100);
-    }
-}
-
-async function getRenderType(view: View): Promise<RenderType> {
-    if (!("advanced" in view.settings)) {
-        return RenderType.UnChangeable;
-    }
-
-    await waitForSceneToRender(view);
-
-    const advancedSettings = (view.settings as Internal.RenderSettingsExt).advanced;
-    const points = advancedSettings.hidePoints || view.performanceStatistics.points > 0;
-    const triangles = advancedSettings.hideTriangles || view.performanceStatistics.triangles > 1000;
-    const canChange = points && triangles;
-
-    return !canChange
-        ? RenderType.UnChangeable
-        : advancedSettings.hidePoints
-        ? RenderType.Triangles
-        : advancedSettings.hideTriangles
-        ? RenderType.Points
-        : RenderType.All;
-}
-
-function serializeableObjectGroups(groups: Partial<ObjectGroups>): Partial<ObjectGroups> {
-    return Object.fromEntries(
-        Object.entries(groups)
-            .filter(([_, value]) => value !== undefined)
-            .map(([key, value]) => {
-                const serializableValue = Array.isArray(value)
-                    ? value.map((group) => ({ ...group, color: Array.from(group.color) }))
-                    : { ...value, color: Array.from(value.color) };
-
-                return [key, serializableValue];
-            })
-    );
-}
-
-function addConsoleDebugUtils() {
-    (window as any).showStats = (val: boolean) =>
-        val !== false
-            ? localStorage.setItem("show-performance-stats", "true")
-            : localStorage.removeItem("show-performance-stats");
-
-    (window as any).disableTaa = (val: boolean) =>
-        val !== false ? localStorage.setItem("disable-taa", "true") : localStorage.removeItem("disable-taa");
-
-    (window as any).disableSsao = (val: boolean) =>
-        val !== false ? localStorage.setItem("disable-ssao", "true") : localStorage.removeItem("disable-ssao");
 }

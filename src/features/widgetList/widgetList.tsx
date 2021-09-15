@@ -22,8 +22,8 @@ const useStyles = makeStyles((theme) =>
         },
         activeCurrentButton: {
             background: theme.palette.primary.main,
-            "& svg": {
-                fill: "#FFF",
+            "& svg, & svg path": {
+                fill: theme.palette.common.white,
             },
         },
         button: {

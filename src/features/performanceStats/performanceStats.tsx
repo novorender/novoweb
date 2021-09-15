@@ -18,10 +18,10 @@ export function PerformanceStats({ view, canvas }: Props) {
 
     useEffect(
         function startPerformanceStats() {
-            let timeout = update();
+            const interval = setInterval(update, 200);
 
             return () => {
-                clearTimeout(timeout);
+                clearInterval(interval);
             };
 
             function update() {
@@ -61,8 +61,6 @@ export function PerformanceStats({ view, canvas }: Props) {
                         (1024 * 1024)
                     ).toFixed(0)}/${((performance as any).memory.jsHeapSizeLimit / (1024 * 1024)).toFixed(0)} MB`;
                 }
-
-                return setTimeout(update, 200);
             }
         },
         [view, canvas]
