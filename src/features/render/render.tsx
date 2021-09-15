@@ -1,5 +1,5 @@
 import { glMatrix, quat, vec2, vec3 } from "gl-matrix";
-import { useEffect, useState, useRef, MouseEvent } from "react";
+import { useEffect, useState, useRef, MouseEvent, PointerEvent } from "react";
 import { useSelector } from "react-redux";
 import {
     View,
@@ -100,6 +100,8 @@ export function Render3D({ id, api, onInit, dataApi }: Props) {
     const cameraMoveRef = useRef<ReturnType<typeof requestAnimationFrame>>();
     const previousId = useRef("");
     const camera2pointDistance = useRef(0);
+    const lastPointerX = useRef(0);
+    const lastPointerY = useRef(0);
     const pointerMoved = useRef(false);
     const camX = useRef(vec3.create());
     const camY = useRef(vec3.create());
@@ -466,14 +468,22 @@ export function Render3D({ id, api, onInit, dataApi }: Props) {
         }
     };
 
-    const handleMouseDown = async (e: MouseEvent) => {
-        pointerMoved.current = false;
-
-        if (!view || e.button !== 0) {
+    const handleMouseDown = (e: MouseEvent) => {
+        if (e.button !== 0) {
             return;
         }
 
-        const result = await view.pick(e.nativeEvent.offsetX, e.nativeEvent.offsetY);
+        handleDown(e.nativeEvent.offsetX, e.nativeEvent.offsetY);
+    };
+
+    const handleDown = async (x: number, y: number) => {
+        pointerMoved.current = false;
+
+        if (!view) {
+            return;
+        }
+
+        const result = await view.pick(x, y);
 
         if (!result) {
             return;
@@ -507,6 +517,10 @@ export function Render3D({ id, api, onInit, dataApi }: Props) {
     };
 
     const handleMouseUp = () => {
+        handleUp();
+    };
+
+    const handleUp = () => {
         if (!view) {
             return;
         }
@@ -528,7 +542,7 @@ export function Render3D({ id, api, onInit, dataApi }: Props) {
         handleMove(e);
     };
 
-    const handleMove = (e: MouseEvent) => {
+    const handleMove = (e: MouseEvent | PointerEvent) => {
         pointerMoved.current = true;
 
         if (
@@ -592,6 +606,46 @@ export function Render3D({ id, api, onInit, dataApi }: Props) {
         view.applySettings({ clippingPlanes: { ...clippingPlanes, bounds: { min, max } } });
     };
 
+    const handlePointerDown = (e: PointerEvent) => {
+        if (e.pointerType === "mouse") {
+            return;
+        }
+
+        lastPointerX.current = e.nativeEvent.offsetX;
+        lastPointerY.current = e.nativeEvent.offsetY;
+        handleDown(e.nativeEvent.offsetX, e.nativeEvent.offsetY);
+    };
+
+    const handlePointerMove = (e: PointerEvent) => {
+        if (e.pointerType === "mouse") {
+            return;
+        }
+
+        if (e.movementX === undefined) {
+            (e as any).movementX = e.nativeEvent.offsetX - lastPointerX.current;
+            (e as any).movementY = e.nativeEvent.offsetY - lastPointerY.current;
+        }
+
+        if (
+            (!e.movementX && !e.movementY) ||
+            (!pointerMoved && e.movementX * e.movementX + e.movementY * e.movementY < 3)
+        ) {
+            return;
+        }
+
+        lastPointerX.current = e.nativeEvent.offsetX;
+        lastPointerY.current = e.nativeEvent.offsetY;
+        handleMove(e);
+    };
+
+    const handlePointerUp = (e: PointerEvent) => {
+        if (e.pointerType === "mouse") {
+            return;
+        }
+
+        handleUp();
+    };
+
     return (
         <Box position="relative" width="100%" height="100%">
             {status === Status.Error ? (
@@ -607,6 +661,9 @@ export function Render3D({ id, api, onInit, dataApi }: Props) {
                         onMouseDown={handleMouseDown}
                         onMouseMove={handleMouseMoveNative}
                         onMouseUp={handleMouseUp}
+                        onPointerEnter={handlePointerDown}
+                        onPointerMove={handlePointerMove}
+                        onPointerUp={handlePointerUp}
                     />
                     {!view ? <Loading /> : null}
                 </>
