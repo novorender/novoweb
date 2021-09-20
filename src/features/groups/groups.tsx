@@ -52,17 +52,9 @@ export function Groups() {
     const colorPickerPosition = getPickerPosition(containerEl);
     const hasGrouping = objectGroups.some((group) => group.grouping);
 
-    const handleChange = (updatedGroups: ExtendedObjectGroup[]) => {
-        const _updatedGroups = objectGroups.map((group, index) => {
-            const updatedGroup = updatedGroups.find((updated) => updated.index === index);
-
-            if (updatedGroup) {
-                const { index: _index, ...updated } = updatedGroup;
-
-                return updated;
-            }
-
-            return group;
+    const handleChange = (updatedGroups: ObjectGroup[]) => {
+        const _updatedGroups = objectGroups.map((group) => {
+            return updatedGroups.find((updated) => updated.id === group.id) ?? group;
         });
 
         dispatch(renderActions.setObjectGroups({ custom: _updatedGroups }));
@@ -90,7 +82,7 @@ export function Groups() {
                             </Typography>
                         </Box>
                         <Checkbox
-                            aria-label="toggle all groups coloring"
+                            aria-label="toggle all groups highlighting"
                             className={classes.groupFunctionIcon}
                             size="small"
                             checked={allGroupsSelected}
@@ -106,6 +98,7 @@ export function Groups() {
                             }
                         />
                         <Checkbox
+                            data-test="toggle-visibility"
                             aria-label="toggle group visibility"
                             className={classes.groupFunctionIcon}
                             size="small"
@@ -150,6 +143,8 @@ export function Groups() {
                             </Box>
                             <Box flex="0 0 auto">
                                 <Checkbox
+                                    data-test="toggle-highlighting"
+                                    aria-label="toggle group highlighting"
                                     className={classes.accordionSummaryCheckbox}
                                     size="small"
                                     onChange={() =>
@@ -167,6 +162,7 @@ export function Groups() {
                             </Box>
                             <Box flex="0 0 auto">
                                 <Checkbox
+                                    data-test="toggle-visibility"
                                     aria-label="toggle group visibility"
                                     size="small"
                                     icon={<Visibility />}
@@ -212,10 +208,10 @@ function Group({
     handleChange,
     colorPickerPosition,
 }: {
-    group: ExtendedObjectGroup;
+    group: ObjectGroup;
     inset?: boolean;
     colorPickerPosition: { top: number; left: number } | undefined;
-    handleChange: (updated: ExtendedObjectGroup[]) => void;
+    handleChange: (updated: ObjectGroup[]) => void;
 }) {
     const classes = useStyles();
 
@@ -250,7 +246,7 @@ function Group({
                     </Box>
                     <Box flex="0 0 auto">
                         <Checkbox
-                            aria-label="toggle group coloring"
+                            aria-label="toggle group highlighting"
                             size="small"
                             checked={group.selected}
                             onChange={() => handleChange([toggleSelected(group)])}
@@ -259,6 +255,7 @@ function Group({
                     </Box>
                     <Box flex="0 0 auto">
                         <Checkbox
+                            data-test="toggle-visibility"
                             aria-label="toggle group visibility"
                             size="small"
                             icon={<Visibility />}
@@ -282,21 +279,21 @@ function Group({
     );
 }
 
-function changeColor<Group extends ObjectGroup | ExtendedObjectGroup>(group: Group, color: VecRGB): Group {
+function changeColor(group: ObjectGroup, color: VecRGB): ObjectGroup {
     return {
         ...group,
         color,
     };
 }
 
-function toggleSelected<Group extends ObjectGroup | ExtendedObjectGroup>(group: Group): Group {
+function toggleSelected(group: ObjectGroup): ObjectGroup {
     return {
         ...group,
         selected: !group.selected,
     };
 }
 
-function toggleVisibility<Group extends ObjectGroup | ExtendedObjectGroup>(group: Group): Group {
+function toggleVisibility(group: ObjectGroup): ObjectGroup {
     return {
         ...group,
         hidden: !group.hidden,
@@ -312,36 +309,39 @@ function getPickerPosition(el: HTMLElement | null) {
     return { top: top + 24, left: left + 24 }; // use picker width
 }
 
-type ExtendedObjectGroup = ObjectGroup & { index: number };
-
 type OrganisedGroups = {
-    singles: ExtendedObjectGroup[];
-    grouped: Record<string, { name: string; groups: ExtendedObjectGroup[] }>;
+    singles: ObjectGroup[];
+    grouped: Record<string, { name: string; groups: ObjectGroup[] }>;
 };
 
 function organiseGroups(objectGroups: ObjectGroup[]): OrganisedGroups {
-    let singles: ExtendedObjectGroup[] = [];
-    let grouped: Record<string, { name: string; groups: ExtendedObjectGroup[] }> = {};
+    let singles: ObjectGroup[] = [];
+    let grouped: Record<string, { name: string; groups: ObjectGroup[] }> = {};
 
-    objectGroups.forEach((group, index) => {
+    objectGroups.forEach((group) => {
         if (!group.grouping) {
-            return (singles = [...singles, { ...group, index }]);
+            singles = [...singles, group];
+            return;
         }
 
         if (!grouped[group.grouping]) {
-            return (grouped = {
+            grouped = {
                 ...grouped,
-                [group.grouping]: { name: group.grouping, groups: [{ ...group, index }] },
-            });
+                [group.grouping]: { name: group.grouping, groups: [group] },
+            };
+
+            return;
         }
 
-        return (grouped = {
+        grouped = {
             ...grouped,
             [group.grouping]: {
                 ...grouped[group.grouping],
-                groups: [...grouped[group.grouping].groups, { ...group, index }],
+                groups: [...grouped[group.grouping].groups, group],
             },
-        });
+        };
+
+        return;
     });
 
     return { singles, grouped };

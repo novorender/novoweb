@@ -59,8 +59,9 @@ export const theme = createTheme({
         tonalOffset: 0.2,
     },
     props: {
-        MuiPaper: {
-            elevation: 1,
+        MuiListItem: {
+            // @ts-ignore
+            component: "li",
         },
     },
     typography: {

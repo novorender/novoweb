@@ -4,5 +4,5 @@ export const colors = {
     primary: "rgb(214, 30, 92)",
     secondary: "rgb(37, 55, 70)",
 };
-export const defaultBtnColor = colors.secondary;
-export const activeBtnColor = colors.primary;
+export const defaultToggleableBtnColor = colors.secondary;
+export const activeToggleableBtnColor = colors.primary;

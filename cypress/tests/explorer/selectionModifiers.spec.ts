@@ -1,4 +1,4 @@
-import { defaultBtnColor, activeBtnColor } from "support/constants";
+import { defaultToggleableBtnColor, activeToggleableBtnColor } from "support/constants";
 
 context("Selection modifier menu", () => {
     it("Selection modifiers", () => {
@@ -17,32 +17,32 @@ context("Selection modifier menu", () => {
 
         // Multiple selection on/off
         cy.getBySel("multiple-selection")
-            .should("have.css", "background-color", defaultBtnColor)
+            .should("have.css", "background-color", defaultToggleableBtnColor)
             .click()
-            .should("have.css", "background-color", activeBtnColor)
+            .should("have.css", "background-color", activeToggleableBtnColor)
             .click()
-            .should("have.css", "background-color", defaultBtnColor);
+            .should("have.css", "background-color", defaultToggleableBtnColor);
 
         // Selection color on/off and picker window open/close
         cy.getBySel("selection-color")
-            .should("have.css", "background-color", defaultBtnColor)
+            .should("have.css", "background-color", defaultToggleableBtnColor)
             .click()
-            .should("have.css", "background-color", activeBtnColor)
+            .should("have.css", "background-color", activeToggleableBtnColor)
             .then(($btn) => {
                 cy.getBySel("selection-color-picker");
                 cy.wrap($btn).click();
                 cy.getBySel("selection-color-picker").should("not.exist");
                 cy.wrap($btn);
             })
-            .should("have.css", "background-color", defaultBtnColor);
+            .should("have.css", "background-color", defaultToggleableBtnColor);
 
         // View only selected on/off
         cy.getBySel("view-only-selected")
-            .should("have.css", "background-color", defaultBtnColor)
+            .should("have.css", "background-color", defaultToggleableBtnColor)
             .click()
-            .should("have.css", "background-color", activeBtnColor)
+            .should("have.css", "background-color", activeToggleableBtnColor)
             .click()
-            .should("have.css", "background-color", defaultBtnColor);
+            .should("have.css", "background-color", defaultToggleableBtnColor);
 
         // Hide and clear selected disabled when none selected
         cy.getBySel("hide-selected").should("not.be.disabled");

@@ -1,4 +1,5 @@
-import { activeBtnColor } from "support/constants";
+import { customGroups } from "fixtures/groups";
+import { activeToggleableBtnColor } from "support/constants";
 
 context("Widgets", () => {
     it("Widget menu", () => {
@@ -21,7 +22,7 @@ context("Widgets", () => {
             .contains("Model tree")
             .siblings("button")
             .should("not.be.disabled")
-            .should("have.css", "background-color", activeBtnColor)
+            .should("have.css", "background-color", activeToggleableBtnColor)
             .click();
 
         // The menu should be closed and the model tree visible again
@@ -62,9 +63,10 @@ context("Widgets", () => {
                 ]
             );
 
-        cy.contains("IsExternal").click("center");
-        cy.contains("ExtendToStructure").click("center");
-        cy.getState().its("render.objectGroups.default.ids").should("be.empty");
+        // Force as the button may be half covered by tooltip
+        cy.contains("IsExternal").click({ force: true });
+        cy.contains("ExtendToStructure").click({ force: true });
+        cy.getState("render.objectGroups.default.ids").should("be.empty");
 
         // Checking a property on the parent object should highlight all children of parents with matching property
         cy.get("@propertiesWidget").contains("±0.00 Level").click();
@@ -88,19 +90,92 @@ context("Widgets", () => {
 
     it("Groups", () => {
         cy.loadScene();
+        cy.dispatch({ type: "render/setObjectGroups", payload: { custom: customGroups } });
+        cy.openWidgets(["groups"]);
+        cy.getBySel("groups-widget");
 
-        cy.getBySel("widget-menu-fab").click();
-        cy.contains("Groups").click();
-        cy.getBySel("groups-widget").as("groupsWidget").contains("IfcClass IfcSpace").click();
-        cy.get("@groupsWidget").getBySel("close-widget").click();
+        // Toggle all selected
+        const allGroupsItemName = "Groups: 9";
+        cy.contains(allGroupsItemName).click();
+        cy.getState("render.objectGroups.custom").should((groups) =>
+            groups.forEach((group) => expect(group.selected).to.be.true)
+        );
+        cy.contains(allGroupsItemName).click();
+        cy.getState("render.objectGroups.custom").should((groups) =>
+            groups.forEach((group) => expect(group.selected).to.be.false)
+        );
+
+        // Toggle all visibility
+        cy.contains(allGroupsItemName).closest("li").findBySel("toggle-visibility").click();
+        cy.getState("render.objectGroups.custom").should((groups) =>
+            groups.forEach((group) => expect(group.hidden).to.be.true)
+        );
+        cy.contains(allGroupsItemName).closest("li").findBySel("toggle-visibility").click();
+        cy.getState("render.objectGroups.custom").should((groups) =>
+            groups.forEach((group) => expect(group.hidden).to.be.false)
+        );
+
+        // Toggle single selected
+        const name = customGroups[3].name;
+        cy.contains(name).click();
+        cy.getState("render.objectGroups.custom").should(
+            (groups) => expect(groups.find((group) => group.name === name)?.selected).to.be.true
+        );
+        cy.contains(name).click();
+        cy.getState("render.objectGroups.custom").should(
+            (groups) => expect(groups.find((group) => group.name === name)?.selected).to.be.false
+        );
+
+        // Toggle single visibility
+        cy.contains(name).closest("li").findBySel("toggle-visibility").click();
+        cy.getState("render.objectGroups.custom").should(
+            (groups) => expect(groups.find((group) => group.name === name)?.hidden).to.be.true
+        );
+        cy.contains(name).closest("li").findBySel("toggle-visibility").click();
+        cy.getState("render.objectGroups.custom").should(
+            (groups) => expect(groups.find((group) => group.name === name)?.hidden).to.be.false
+        );
+
+        // Toggle grouped accordion
+        const groupedName = customGroups[4].grouping;
+        const subGroup = customGroups[4].name;
+        cy.contains(subGroup).should("not.be.visible");
+        cy.contains(groupedName).click();
+        cy.contains(subGroup).should("be.visible");
+
+        // Toggle grouped selected
+        cy.contains(groupedName)
+            .closest(".MuiAccordionSummary-root")
+            .as("accordion")
+            .findBySel("toggle-highlighting")
+            .click();
+        cy.getState("render.objectGroups.custom").should((groups) =>
+            groups
+                .filter((group) => group.grouping === groupedName)
+                .forEach((group) => expect(group.selected).to.be.true)
+        );
+        cy.get("@accordion").findBySel("toggle-highlighting").click();
+        cy.getState("render.objectGroups.custom").should((groups) =>
+            groups
+                .filter((group) => group.grouping === groupedName)
+                .forEach((group) => expect(group.selected).to.be.false)
+        );
+
+        // Toggle grouped visibility
+        cy.get("@accordion").findBySel("toggle-visibility").click();
+        cy.getState("render.objectGroups.custom").should((groups) =>
+            groups.filter((group) => group.grouping === groupedName).forEach((group) => expect(group.hidden).to.be.true)
+        );
+        cy.get("@accordion").findBySel("toggle-visibility").click();
+        cy.getState("render.objectGroups.custom").should((groups) =>
+            groups
+                .filter((group) => group.grouping === groupedName)
+                .forEach((group) => expect(group.hidden).to.be.false)
+        );
     });
 
     it("Model tree", () => {
         cy.loadScene();
-        cy.get("canvas").click("center");
-        cy.getBySel("widget-menu-fab").click();
-        cy.contains("Model tree").click();
-        cy.getBySel("modelTree-widget").as("modelTreeWidget");
-        cy.get("@modelTreeWidget").getBySel("close-widget").click();
+        cy.openWidgets(["modelTree"]);
     });
 });

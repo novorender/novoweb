@@ -42,6 +42,14 @@ Cypress.Commands.add("findBySelLike", { prevSubject: true }, (subject, selector,
     return subject.find(`[data-test*=${selector}]`, ...args);
 });
 
+Cypress.Commands.add("closestBySel", { prevSubject: true }, (subject, selector, ...args) => {
+    return subject.closest(`[data-test=${selector}]`, ...args);
+});
+
+Cypress.Commands.add("closestBySelLike", { prevSubject: true }, (subject, selector, ...args) => {
+    return subject.closest(`[data-test*=${selector}]`, ...args);
+});
+
 Cypress.Commands.add("loadScene", (id: string = defaultScene) => {
     cy.visit(id);
     cy.intercept("GET", "https://novorenderblobs.blob.core.windows.net/*/**").as("blobs");
@@ -56,11 +64,15 @@ Cypress.Commands.add("loadScene", (id: string = defaultScene) => {
     cy.wait("@blobs");
     cy.wait("@blobs");
 
-    cy.window().its("appFullyRendered", { timeout: 10000 }).should("eq", true);
+    cy.window().its("appFullyRendered", { timeout: 30000 }).should("eq", true);
 });
 
-Cypress.Commands.add("getState", () => {
-    return cy.window().its("store").invoke("getState");
+Cypress.Commands.add("getState", (path?: string) => {
+    return cy
+        .window()
+        .its("store")
+        .invoke("getState")
+        .then((state) => (path ? cy.wrap(state).its(path) : state));
 });
 
 Cypress.Commands.add("dispatch", <T>(action: { type: string; payload?: T }) => {
