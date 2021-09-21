@@ -89,10 +89,11 @@ export function Breadcrumbs({
     }, [hiddenCrumbCount]);
 
     return (
-        <Box display="flex" alignItems="center" width={1}>
+        <Box display="flex" alignItems="center" width={1} data-test="breadcrumbs">
             {hiddenCrumbCount ? (
                 <>
                     <Button
+                        data-test="expand-breadcrumbs"
                         className={classes.breadcrumbExpandButton}
                         aria-controls={id}
                         aria-haspopup="true"
@@ -102,6 +103,7 @@ export function Breadcrumbs({
                         <MoreHorizIcon fontSize="small" />
                     </Button>
                     <Menu
+                        data-test="expanded-breadcrumbs"
                         className={classes.expandedBreadcrumbs}
                         id={id}
                         anchorEl={anchorEl}

@@ -375,7 +375,7 @@ export function ModelTree({ scene }: Props) {
                         />
                         <Divider />
                     </Box>
-                    <Box flex={"1 1 100%"}>
+                    <Box flex={"1 1 100%"} data-test="model-tree-list-container">
                         {currentDepth?.nodes ? (
                             <NodeList
                                 parentNode={currentDepth.parentNode}
