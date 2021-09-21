@@ -6,11 +6,13 @@ declare namespace Cypress {
         getBySelLike(dataTestPrefixAttribute: string, args?: any): Chainable<Element>;
         findBySel(dataTestAttribute: string, args?: any): Chainable<Element>;
         findBySelLike(dataTestPrefixAttribute: string, args?: any): Chainable<Element>;
+        closestBySel(dataTestAttribute: string, args?: any): Chainable<Element>;
+        closestBySelLike(dataTestPrefixAttribute: string, args?: any): Chainable<Element>;
 
         loadScene(id?: string): Chainable<void>;
         waitForWidgetToUpdate(selector: string, args?: any): Chainable<void>;
 
-        getState(): Chainable;
+        getState(path?: string): Chainable;
         dispatch<T>(action: { type: string; payload: T }): Chainable<void>;
         setMainObject(id: number): Chainable<void>;
         openWidgets(features: string[]): Chainable<void>;

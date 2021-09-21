@@ -4,6 +4,8 @@
     "integrationFolder": "cypress/tests",
     "viewportHeight": 1000,
     "viewportWidth": 1280,
+    "defaultCommandTimeout": 8000,
+    "requestTimeout": 10000,
     "retries": {
         "runMode": 2,
         "openMode": 1
