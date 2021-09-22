@@ -9,14 +9,14 @@ import {
     makeStyles,
 } from "@material-ui/core";
 import { HierarcicalObjectReference } from "@novorender/webgl-api";
-import { useAppSelector } from "app/store";
 import { Tooltip, useScrollBoxStyles } from "components";
 import { NodeType } from "features/modelTree/modelTree";
-import { ChangeEvent, ChangeEventHandler, forwardRef, MouseEventHandler } from "react";
+import { ChangeEvent, forwardRef, MouseEventHandler } from "react";
 import AutoSizer from "react-virtualized-auto-sizer";
 import { FixedSizeList, FixedSizeListProps, ListOnScrollProps } from "react-window";
-import { selectDefaultHighlighted, selectHiddenObjects } from "slices/renderSlice";
 import { getObjectNameFromPath } from "utils/objectData";
+import { useIsHighlighted } from "contexts/highlightedGroup";
+import { useIsHidden } from "contexts/hiddenGroup";
 
 import FolderIcon from "@material-ui/icons/Folder";
 import EcoIcon from "@material-ui/icons/Eco";
@@ -36,9 +36,6 @@ export const NodeList = forwardRef<any, Props>(
     ({ nodes, onScroll, onNodeClick, onToggleSelect, onToggleHide, outerRef, parentNode }, ref) => {
         const theme = useTheme();
         const scrollBoxStyles = useScrollBoxStyles().box;
-
-        const selected = useAppSelector(selectDefaultHighlighted);
-        const hidden = useAppSelector(selectHiddenObjects);
 
         return (
             <AutoSizer>
@@ -70,29 +67,18 @@ export const NodeList = forwardRef<any, Props>(
 
                             if (index === 0 && parentNode) {
                                 const parentStyles = style;
-                                const parentIsSelected = selected.includes(parentNode.id);
-                                const parentIsHidden = hidden.includes(parentNode.id);
 
                                 parent = (
                                     <Node
                                         parent
                                         style={parentStyles}
                                         node={parentNode}
-                                        selected={parentIsSelected}
-                                        hidden={parentIsHidden}
-                                        onToggleSelect={
-                                            onToggleSelect ? (e) => onToggleSelect(e, parentNode) : undefined
-                                        }
-                                        onToggleHide={onToggleHide ? (e) => onToggleHide(e, parentNode) : undefined}
-                                        onNodeClick={
-                                            onNodeClick ? () => onNodeClick(parentNode, isSelected) : onNodeClick
-                                        }
+                                        onToggleSelect={onToggleSelect}
+                                        onToggleHide={onToggleHide}
+                                        onNodeClick={onNodeClick}
                                     />
                                 );
                             }
-
-                            const isSelected = selected.includes(node.id);
-                            const isHidden = hidden.includes(node.id);
 
                             return (
                                 <>
@@ -100,11 +86,9 @@ export const NodeList = forwardRef<any, Props>(
                                     <Node
                                         style={nodeStyles}
                                         node={node}
-                                        selected={isSelected}
-                                        hidden={isHidden}
-                                        onToggleSelect={onToggleSelect ? (e) => onToggleSelect(e, node) : undefined}
-                                        onToggleHide={onToggleHide ? (e) => onToggleHide(e, node) : undefined}
-                                        onNodeClick={onNodeClick ? () => onNodeClick(node, isSelected) : onNodeClick}
+                                        onToggleSelect={onToggleSelect}
+                                        onToggleHide={onToggleHide}
+                                        onNodeClick={onNodeClick}
                                     />
                                 </>
                             );
@@ -128,8 +112,6 @@ const useStyles = makeStyles((theme) =>
 
 function Node({
     node,
-    selected,
-    hidden,
     parent,
     onToggleSelect,
     onToggleHide,
@@ -137,15 +119,16 @@ function Node({
     ...props
 }: {
     node: HierarcicalObjectReference;
-    selected: boolean;
-    hidden: boolean;
     parent?: boolean;
-    onToggleSelect?: ChangeEventHandler<HTMLInputElement>;
-    onToggleHide?: ChangeEventHandler<HTMLInputElement>;
+    onToggleSelect?: (event: ChangeEvent<HTMLInputElement>, node: HierarcicalObjectReference) => void;
+    onToggleHide?: (event: ChangeEvent<HTMLInputElement>, node: HierarcicalObjectReference) => void;
     onNodeClick?: (node: HierarcicalObjectReference, isSelected: boolean) => void;
 } & ListItemProps) {
     const theme = useTheme();
     const classes = useStyles();
+
+    const selected = useIsHighlighted(node.id);
+    const hidden = useIsHidden(node.id);
 
     const stopPropagation: MouseEventHandler = (e) => {
         e.stopPropagation();
@@ -181,7 +164,7 @@ function Node({
                         aria-label="Select node"
                         size="small"
                         checked={selected}
-                        onChange={onToggleSelect}
+                        onChange={(e) => onToggleSelect(e, node)}
                         onClick={stopPropagation}
                     />
                 ) : null}
@@ -192,7 +175,7 @@ function Node({
                         icon={<VisibilityIcon />}
                         checkedIcon={<VisibilityIcon color="disabled" />}
                         checked={hidden}
-                        onChange={onToggleHide}
+                        onChange={(e) => onToggleHide(e, node)}
                         onClick={stopPropagation}
                     />
                 ) : null}

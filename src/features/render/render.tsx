@@ -1,6 +1,5 @@
 import { glMatrix, quat, vec3 } from "gl-matrix";
 import { useEffect, useState, useRef, MouseEvent, PointerEvent } from "react";
-import { useSelector } from "react-redux";
 import {
     View,
     API,
@@ -22,13 +21,12 @@ import {
     selectCurrentEnvironment,
     selectEnvironments,
     selectMainObject,
-    selectObjectGroups,
     selectRenderType,
     selectSavedCameraPositions,
     selectSelectMultiple,
     selectViewOnlySelected,
 } from "slices/renderSlice";
-import { useAppDispatch } from "app/store";
+import { useAppDispatch, useAppSelector } from "app/store";
 import { PerformanceStats } from "features/performanceStats";
 import { useMountedState } from "hooks/useMountedState";
 import { authActions } from "slices/authSlice";
@@ -44,6 +42,9 @@ import {
     createRendering,
 } from "./utils";
 import { xAxis, yAxis, axis, showPerformance } from "./consts";
+import { useHighlighted, highlightActions, useDispatchHighlighted } from "contexts/highlightedGroup";
+import { useHidden, hiddenGroupActions, useDispatchHidden } from "contexts/hiddenGroup";
+import { useCustomGroups, customGroupsActions, CustomGroup } from "contexts/customGroups";
 
 glMatrix.setMatrixArrayType(Array);
 addConsoleDebugUtils();
@@ -72,17 +73,23 @@ type Props = {
 export function Render3D({ id, api, onInit, dataApi }: Props) {
     const classes = useStyles();
 
-    const env = useSelector(selectCurrentEnvironment);
-    const environments = useSelector(selectEnvironments);
-    const mainObject = useSelector(selectMainObject);
-    const objectGroups = useSelector(selectObjectGroups);
-    const viewOnlySelected = useSelector(selectViewOnlySelected);
-    const cameraSpeedMultiplier = useSelector(selectCameraSpeedMultiplier);
-    const baseCameraSpeed = useSelector(selectBaseCameraSpeed);
-    const savedCameraPositions = useSelector(selectSavedCameraPositions);
-    const selectMultiple = useSelector(selectSelectMultiple);
-    const renderType = useSelector(selectRenderType);
-    const clippingPlanes = useSelector(selectClippingPlanes);
+    const highlightedObjects = useHighlighted();
+    const dispatchHighlighted = useDispatchHighlighted();
+    const hiddenObjects = useHidden();
+    const dispatchHidden = useDispatchHidden();
+    const { state: customGroups, dispatch: dispatchCustomGroups } = useCustomGroups();
+
+    const env = useAppSelector(selectCurrentEnvironment);
+    const environments = useAppSelector(selectEnvironments);
+    const mainObject = useAppSelector(selectMainObject);
+
+    const viewOnlySelected = useAppSelector(selectViewOnlySelected);
+    const cameraSpeedMultiplier = useAppSelector(selectCameraSpeedMultiplier);
+    const baseCameraSpeed = useAppSelector(selectBaseCameraSpeed);
+    const savedCameraPositions = useAppSelector(selectSavedCameraPositions);
+    const selectMultiple = useAppSelector(selectSelectMultiple);
+    const renderType = useAppSelector(selectRenderType);
+    const clippingPlanes = useAppSelector(selectClippingPlanes);
     const dispatch = useAppDispatch();
 
     const rendering = useRef({ start: () => Promise.resolve(), stop: () => {} });
@@ -144,15 +151,33 @@ export function Render3D({ id, api, onInit, dataApi }: Props) {
 
                 dispatch(renderActions.setEnvironment(initialEnvironment));
                 dispatch(renderActions.setBookmarks(bookmarks));
-                dispatch(
-                    renderActions.setObjectGroups(
-                        serializeableObjectGroups({
-                            default: objectGroups.find((group) => group.name === "default"),
-                            defaultHidden: objectGroups.find((group) => group.name === "defaultHidden"),
-                            custom: objectGroups.filter((group) => !["default", "defaultHidden"].includes(group.name)),
+
+                const defaultGroup = objectGroups.find((group) => !group.id && group.selected);
+                if (defaultGroup) {
+                    dispatchHighlighted(
+                        highlightActions.setGroup({
+                            ids: defaultGroup.ids as number[],
+                            color: [defaultGroup.color[0], defaultGroup.color[1], defaultGroup.color[2]],
                         })
-                    )
-                );
+                    );
+                }
+
+                const defaultHiddenGroup = objectGroups.find((group) => !group.id && group.hidden);
+                if (defaultHiddenGroup) {
+                    dispatchHidden(hiddenGroupActions.overwriteIds(defaultHiddenGroup.ids as number[]));
+                }
+
+                const customGroups = objectGroups.filter((group) => group.id);
+                if (customGroups.length) {
+                    dispatchCustomGroups(
+                        customGroupsActions.overwriteGroups(
+                            serializeableObjectGroups(customGroups).reduce((groups, group) => {
+                                groups[group.id] = group;
+                                return groups;
+                            }, {} as Record<string, CustomGroup>)
+                        )
+                    );
+                }
 
                 setView(_view);
                 rendering.current = createRendering(canvas, _view, api);
@@ -168,7 +193,21 @@ export function Render3D({ id, api, onInit, dataApi }: Props) {
                 setStatus(Status.Error);
             }
         }
-    }, [canvas, view, api, dataApi, dispatch, onInit, environments, id, setView, setStatus]);
+    }, [
+        canvas,
+        view,
+        api,
+        dataApi,
+        dispatch,
+        onInit,
+        environments,
+        id,
+        setView,
+        setStatus,
+        dispatchCustomGroups,
+        dispatchHidden,
+        dispatchHighlighted,
+    ]);
 
     useEffect(() => {
         if (!view) {
@@ -247,23 +286,15 @@ export function Render3D({ id, api, onInit, dataApi }: Props) {
                     view,
                     api,
                     objectGroups: [
-                        objectGroups.defaultHidden,
-                        ...objectGroups.custom,
-                        objectGroups.default,
-                        {
-                            name: "",
-                            ids: mainObject !== undefined ? [mainObject] : [],
-                            id: "",
-                            color: objectGroups.default.color,
-                            selected: true,
-                            hidden: false,
-                        },
+                        { ...hiddenObjects, hidden: true, selected: false, color: [0, 0, 0] },
+                        ...Object.values(customGroups),
+                        { ...highlightedObjects, hidden: false, selected: true },
                     ],
                     viewOnlySelected,
                 });
             }
         },
-        [scene, view, api, objectGroups, viewOnlySelected, mainObject]
+        [scene, view, api, viewOnlySelected, mainObject, customGroups, highlightedObjects, hiddenObjects]
     );
 
     useEffect(
@@ -346,23 +377,23 @@ export function Render3D({ id, api, onInit, dataApi }: Props) {
             return;
         }
 
-        const alreadySelected = result.objectId === mainObject || objectGroups.default.ids.includes(result.objectId);
+        const alreadySelected = result.objectId === mainObject || highlightedObjects.ids.includes(result.objectId);
 
         if (selectMultiple) {
             if (alreadySelected) {
                 dispatch(renderActions.setMainObject(undefined));
-                dispatch(renderActions.unSelectObjects([result.objectId]));
+                dispatchHighlighted(highlightActions.removeFromGroup([result.objectId]));
             } else {
                 dispatch(renderActions.setMainObject(result.objectId));
-                dispatch(renderActions.selectObjects([result.objectId]));
+                dispatchHighlighted(highlightActions.addToGroup([result.objectId]));
             }
         } else {
             if (alreadySelected) {
                 dispatch(renderActions.setMainObject(undefined));
-                dispatch(renderActions.setSelectedObjects([]));
+                dispatchHighlighted(highlightActions.overwriteIds([]));
             } else {
                 dispatch(renderActions.setMainObject(result.objectId));
-                dispatch(renderActions.setSelectedObjects([result.objectId]));
+                dispatchHighlighted(highlightActions.overwriteIds([result.objectId]));
             }
         }
     };

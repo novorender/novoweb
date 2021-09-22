@@ -4,25 +4,23 @@ import type { SpeedDialActionProps } from "@material-ui/lab";
 
 import { SpeedDialAction } from "components";
 import { config as featuresConfig } from "config/features";
-import { useAppDispatch, useAppSelector } from "app/store";
 import { useToggle } from "hooks/useToggle";
-import { selectSelectionColor, renderActions } from "slices/renderSlice";
 import { rgbToVec } from "utils/color";
 import { ColorPicker } from "features/colorPicker";
+import { highlightActions, useDispatchHighlighted, useHighlighted } from "contexts/highlightedGroup";
 
 type Props = SpeedDialActionProps;
 
 export function SelectionColor(props: Props) {
     const { name, Icon } = featuresConfig["selectionColor"];
     const [open, toggle] = useToggle();
-    const color = useAppSelector(selectSelectionColor);
+    const { color } = useHighlighted();
+    const dispatch = useDispatchHighlighted();
 
     const buttonRef = useRef<HTMLButtonElement | null>(null);
 
-    const dispatch = useAppDispatch();
-
     const handleChangeComplete = ({ rgb }: ColorResult) =>
-        dispatch(renderActions.setDefaultSelectionColor(rgbToVec([rgb.r, rgb.g, rgb.b])));
+        dispatch(highlightActions.setColor(rgbToVec([rgb.r, rgb.g, rgb.b])));
 
     return (
         <>

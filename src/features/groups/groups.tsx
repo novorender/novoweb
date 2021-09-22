@@ -1,14 +1,12 @@
 import { useState, useCallback, RefCallback } from "react";
 import { makeStyles, createStyles, List, ListItem, Box, Typography, Checkbox, IconButton } from "@material-ui/core";
 import { Visibility, ColorLens } from "@material-ui/icons";
-import type { ObjectGroup } from "@novorender/data-js-api";
 
 import { ScrollBox, Accordion, AccordionSummary, AccordionDetails, Tooltip } from "components";
 import { useToggle } from "hooks/useToggle";
-import { renderActions, selectObjectGroups } from "slices/renderSlice";
-import { useAppDispatch, useAppSelector } from "app/store";
 import { vecToRgb, rgbToVec, VecRGB } from "utils/color";
 import { ColorPicker } from "features/colorPicker";
+import { CustomGroup, customGroupsActions, useCustomGroups } from "contexts/customGroups";
 
 const useStyles = makeStyles((theme) =>
     createStyles({
@@ -37,27 +35,29 @@ const useStyles = makeStyles((theme) =>
 
 export function Groups() {
     const classes = useStyles();
-    const objectGroups = useAppSelector(selectObjectGroups).custom;
-
-    const dispatch = useAppDispatch();
+    const { state: customGroupsObj, dispatch: dispatchCustom } = useCustomGroups();
+    const customGroups = Object.values(customGroupsObj);
 
     const [containerEl, setContainerEl] = useState<HTMLDivElement | null>(null);
     const containerRef = useCallback<RefCallback<HTMLDivElement>>((el) => {
         setContainerEl(el);
     }, []);
 
-    const organisedGroups = organiseGroups(objectGroups);
-    const allGroupsSelected = !objectGroups.some((group) => !group.selected);
-    const allGroupsHidden = !objectGroups.some((group) => !group.hidden);
+    const organisedGroups = organiseGroups(customGroups);
+    const allGroupsSelected = !customGroups.some((group) => !group.selected);
+    const allGroupsHidden = !customGroups.some((group) => !group.hidden);
     const colorPickerPosition = getPickerPosition(containerEl);
-    const hasGrouping = objectGroups.some((group) => group.grouping);
+    const hasGrouping = customGroups.some((group) => group.grouping);
 
-    const handleChange = (updatedGroups: ObjectGroup[]) => {
-        const _updatedGroups = objectGroups.map((group) => {
-            return updatedGroups.find((updated) => updated.id === group.id) ?? group;
-        });
+    const handleChange = (updatedGroups: CustomGroup[]) => {
+        const updatedGroupsObj = updatedGroups.reduce((groups, group) => {
+            return {
+                ...groups,
+                [group.id]: group,
+            };
+        }, customGroupsObj);
 
-        dispatch(renderActions.setObjectGroups({ custom: _updatedGroups }));
+        dispatchCustom(customGroupsActions.overwriteGroups(updatedGroupsObj));
     };
 
     return (
@@ -68,11 +68,7 @@ export function Groups() {
                     button
                     disableRipple
                     onClick={() =>
-                        dispatch(
-                            renderActions.setObjectGroups({
-                                custom: objectGroups.map((group) => ({ ...group, selected: !allGroupsSelected })),
-                            })
-                        )
+                        handleChange(customGroups.map((group) => ({ ...group, selected: !allGroupsSelected })))
                     }
                 >
                     <Box display="flex" width={1} alignItems="center">
@@ -87,13 +83,11 @@ export function Groups() {
                             size="small"
                             checked={allGroupsSelected}
                             onChange={() =>
-                                dispatch(
-                                    renderActions.setObjectGroups({
-                                        custom: objectGroups.map((group) => ({
-                                            ...group,
-                                            selected: !allGroupsSelected,
-                                        })),
-                                    })
+                                handleChange(
+                                    customGroups.map((group) => ({
+                                        ...group,
+                                        selected: !allGroupsSelected,
+                                    }))
                                 )
                             }
                         />
@@ -106,13 +100,11 @@ export function Groups() {
                             checkedIcon={<Visibility color="disabled" />}
                             checked={allGroupsHidden}
                             onChange={() =>
-                                dispatch(
-                                    renderActions.setObjectGroups({
-                                        custom: objectGroups.map((group) => ({
-                                            ...group,
-                                            hidden: !allGroupsHidden,
-                                        })),
-                                    })
+                                handleChange(
+                                    customGroups.map((group) => ({
+                                        ...group,
+                                        hidden: !allGroupsHidden,
+                                    }))
                                 )
                             }
                         />
@@ -208,10 +200,10 @@ function Group({
     handleChange,
     colorPickerPosition,
 }: {
-    group: ObjectGroup;
+    group: CustomGroup;
     inset?: boolean;
     colorPickerPosition: { top: number; left: number } | undefined;
-    handleChange: (updated: ObjectGroup[]) => void;
+    handleChange: (updated: CustomGroup[]) => void;
 }) {
     const classes = useStyles();
 
@@ -279,21 +271,21 @@ function Group({
     );
 }
 
-function changeColor(group: ObjectGroup, color: VecRGB): ObjectGroup {
+function changeColor(group: CustomGroup, color: VecRGB): CustomGroup {
     return {
         ...group,
         color,
     };
 }
 
-function toggleSelected(group: ObjectGroup): ObjectGroup {
+function toggleSelected(group: CustomGroup): CustomGroup {
     return {
         ...group,
         selected: !group.selected,
     };
 }
 
-function toggleVisibility(group: ObjectGroup): ObjectGroup {
+function toggleVisibility(group: CustomGroup): CustomGroup {
     return {
         ...group,
         hidden: !group.hidden,
@@ -310,13 +302,13 @@ function getPickerPosition(el: HTMLElement | null) {
 }
 
 type OrganisedGroups = {
-    singles: ObjectGroup[];
-    grouped: Record<string, { name: string; groups: ObjectGroup[] }>;
+    singles: CustomGroup[];
+    grouped: Record<string, { name: string; groups: CustomGroup[] }>;
 };
 
-function organiseGroups(objectGroups: ObjectGroup[]): OrganisedGroups {
-    let singles: ObjectGroup[] = [];
-    let grouped: Record<string, { name: string; groups: ObjectGroup[] }> = {};
+function organiseGroups(objectGroups: CustomGroup[]): OrganisedGroups {
+    let singles: CustomGroup[] = [];
+    let grouped: Record<string, { name: string; groups: CustomGroup[] }> = {};
 
     objectGroups.forEach((group) => {
         if (!group.grouping) {
