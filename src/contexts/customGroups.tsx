@@ -6,26 +6,31 @@ export interface CustomGroup extends ObjectGroup {
     color: [number, number, number];
 }
 
-const initialState = {} as Record<string, CustomGroup>;
+const initialState = [] as CustomGroup[];
 
 type State = typeof initialState;
 
+enum ActionTypes {
+    UpdateGroup,
+    Set,
+}
+
 function updateGroup(groupId: string, updates: Partial<CustomGroup>) {
     return {
-        type: "updateGroup" as const,
+        type: ActionTypes.UpdateGroup as const,
         groupId,
         updates,
     };
 }
 
-function overwriteGroups(state: State) {
+function set(state: State) {
     return {
-        type: "overwriteGroups" as const,
+        type: ActionTypes.Set as const,
         state,
     };
 }
 
-const actions = { updateGroup, overwriteGroups };
+const actions = { updateGroup, set };
 
 type Actions = ReturnType<typeof actions[keyof typeof actions]>;
 type ContextType = { state: State; dispatch: Dispatch<Actions> };
@@ -34,23 +39,11 @@ const Context = createContext<ContextType>(undefined as any);
 
 function reducer(state: State, action: Actions) {
     switch (action.type) {
-        case "updateGroup": {
-            const toUpdate = state[action.groupId];
-
-            if (!toUpdate) {
-                throw new Error(`Found no group with id: ${action.groupId}`);
-            }
-
-            return {
-                ...state,
-                [action.groupId]: {
-                    ...toUpdate,
-                    ...action.updates,
-                },
-            };
+        case ActionTypes.UpdateGroup: {
+            return state.map((group) => (group.id === action.groupId ? { ...group, ...action.updates } : group));
         }
-        case "overwriteGroups": {
-            return { ...action.state };
+        case ActionTypes.Set: {
+            return action.state;
         }
         default: {
             throw new Error(`Unhandled action type`);
@@ -62,6 +55,10 @@ function CustomGroupsProvider({ children }: { children: ReactNode }) {
     const [state, dispatch] = useReducer(reducer, initialState);
 
     const value = { state, dispatch };
+
+    if (window.Cypress) {
+        window.contexts = { ...window.contexts, customGroups: value };
+    }
 
     return <Context.Provider value={value}>{children}</Context.Provider>;
 }

@@ -11,9 +11,9 @@ import { Protected } from "features/protectedRoute";
 import { FeatureKey, config as featuresConfig } from "config/features";
 import { explorerActions, FullscreenStatus, selectFullscreen } from "slices/explorerSlice";
 import { selectAccessToken } from "slices/authSlice";
-import { HiddenProvider } from "contexts/hiddenGroup";
+import { HiddenProvider } from "contexts/hidden";
 import { CustomGroupsProvider } from "contexts/customGroups";
-import { HighlightedProvider } from "contexts/highlightedGroup";
+import { HighlightedProvider } from "contexts/highlighted";
 
 export function Explorer() {
     const { id = process.env.REACT_APP_SCENE_ID ?? "95a89d20dd084d9486e383e131242c4c" } = useParams<{ id?: string }>();

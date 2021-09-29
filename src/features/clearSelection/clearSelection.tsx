@@ -4,7 +4,7 @@ import { SpeedDialAction } from "components";
 import { config as featuresConfig } from "config/features";
 import { renderActions, selectMainObject } from "slices/renderSlice";
 import { useAppDispatch, useAppSelector } from "app/store";
-import { highlightActions, useDispatchHighlighted, useHighlighted } from "contexts/highlightedGroup";
+import { highlightActions, useDispatchHighlighted, useHighlighted } from "contexts/highlighted";
 
 type Props = SpeedDialActionProps;
 
@@ -19,7 +19,7 @@ export function ClearSelection(props: Props) {
     const dispatch = useAppDispatch();
 
     const clear = () => {
-        dispatchHighlighted(highlightActions.overwriteIds([]));
+        dispatchHighlighted(highlightActions.setIds([]));
         dispatch(renderActions.setMainObject(undefined));
     };
 

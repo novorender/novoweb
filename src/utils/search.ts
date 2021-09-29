@@ -110,8 +110,8 @@ export async function searchByParentPath({
     while (!done && !abortSignal?.aborted) {
         const [result, _done] = await iterateAsync({ iterator: allChildren, count: callbackInterval, abortSignal });
         done = _done;
-
         callback(result);
+        await sleep(1);
     }
 }
 

@@ -9,7 +9,7 @@ import { useAbortController } from "hooks/useAbortController";
 import { useMountedState } from "hooks/useMountedState";
 import { getObjectData as getObjectDataUtil, searchFirstObjectAtPath, searchByPatterns } from "utils/search";
 import { extractObjectIds, getParentPath } from "utils/objectData";
-import { highlightActions, useDispatchHighlighted } from "contexts/highlightedGroup";
+import { highlightActions, useDispatchHighlighted } from "contexts/highlighted";
 
 const useStyles = makeStyles({
     checkbox: {
@@ -88,7 +88,7 @@ export function Properties({ scene }: Props) {
     }, [mainObject, scene, object, setObject, setStatus]);
 
     const search = async (searchPatterns: SearchPattern[]) => {
-        dispatchHighlighted(highlightActions.overwriteIds(mainObject ? [mainObject] : []));
+        dispatchHighlighted(highlightActions.setIds(mainObject ? [mainObject] : []));
 
         if (!searchPatterns.length) {
             return;
@@ -104,7 +104,10 @@ export function Properties({ scene }: Props) {
                 searchPatterns,
                 deep: true,
                 callbackInterval: 1000,
-                callback: (refs) => dispatchHighlighted(highlightActions.addToGroup(extractObjectIds(refs))),
+                callback: (refs) => {
+                    console.log("cb", refs.length);
+                    dispatchHighlighted(highlightActions.add(extractObjectIds(refs)));
+                },
             });
         } catch {
             // ignore for now

@@ -7,33 +7,33 @@ const initialState = {
 type State = typeof initialState;
 
 enum ActionTypes {
-    AddToGroup,
-    RemoveFromGroup,
-    OverwriteIds,
+    Add,
+    Remove,
+    SetIds,
 }
 
-function addToGroup(ids: State["ids"]) {
+function add(ids: State["ids"]) {
     return {
-        type: ActionTypes.AddToGroup as const,
+        type: ActionTypes.Add as const,
         ids,
     };
 }
 
-function removeFromGroup(ids: State["ids"]) {
+function remove(ids: State["ids"]) {
     return {
-        type: ActionTypes.RemoveFromGroup as const,
+        type: ActionTypes.Remove as const,
         ids,
     };
 }
 
-function overwriteIds(ids: State["ids"]) {
+function setIds(ids: State["ids"]) {
     return {
-        type: ActionTypes.OverwriteIds as const,
+        type: ActionTypes.SetIds as const,
         ids,
     };
 }
 
-const actions = { addToGroup, removeFromGroup, overwriteIds };
+const actions = { add, remove, setIds };
 
 type Actions = ReturnType<typeof actions[keyof typeof actions]>;
 
@@ -42,17 +42,17 @@ const DispatchContext = createContext<Dispatch<Actions>>(undefined as any);
 
 function reducer(state: State, action: Actions) {
     switch (action.type) {
-        case ActionTypes.AddToGroup: {
+        case ActionTypes.Add: {
             return {
                 ids: state.ids.concat(action.ids),
             };
         }
-        case ActionTypes.RemoveFromGroup: {
+        case ActionTypes.Remove: {
             return {
                 ids: state.ids.filter((id) => !action.ids.includes(id)),
             };
         }
-        case ActionTypes.OverwriteIds: {
+        case ActionTypes.SetIds: {
             return {
                 ids: action.ids,
             };
@@ -65,6 +65,10 @@ function reducer(state: State, action: Actions) {
 
 function HiddenProvider({ children }: { children: ReactNode }) {
     const [state, dispatch] = useReducer(reducer, initialState);
+
+    if (window.Cypress) {
+        window.contexts = { ...window.contexts, hidden: { state, dispatch } };
+    }
 
     return (
         <StateContext.Provider value={state}>

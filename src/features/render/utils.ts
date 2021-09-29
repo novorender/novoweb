@@ -217,14 +217,14 @@ export function serializeableObjectGroups(groups: ObjectGroup[]): CustomGroup[] 
 }
 
 export function addConsoleDebugUtils(): void {
-    (window as any).showStats = (val: boolean) =>
+    window.showStats = (val?: boolean) =>
         val !== false
             ? localStorage.setItem("show-performance-stats", "true")
             : localStorage.removeItem("show-performance-stats");
 
-    (window as any).disableTaa = (val: boolean) =>
+    window.disableTaa = (val?: boolean) =>
         val !== false ? localStorage.setItem("disable-taa", "true") : localStorage.removeItem("disable-taa");
 
-    (window as any).disableSsao = (val: boolean) =>
+    window.disableSsao = (val?: boolean) =>
         val !== false ? localStorage.setItem("disable-ssao", "true") : localStorage.removeItem("disable-ssao");
 }

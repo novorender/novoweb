@@ -16,5 +16,11 @@ declare namespace Cypress {
         dispatch<T>(action: { type: string; payload: T }): Chainable<void>;
         setMainObject(id: number): Chainable<void>;
         openWidgets(features: string[]): Chainable<void>;
+
+        getHidden(): Chainable<number[]>;
+        getHighlighted(): Chainable<number[]>;
+        getHighlightColor(): Chainable<[number, number, number]>;
+        setCustomGroups(groups: any[]): Chainable<void>;
+        getCustomGroups(): Chainable<any[]>;
     }
 }

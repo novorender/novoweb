@@ -1,5 +1,8 @@
 import { createContext, Dispatch, ReactNode, useContext, useEffect, useReducer, useState } from "react";
 
+// Highlighted/hidden/objectgroups may end up having huge (1M+) collections of objectIds and receive a lot of back-to-back state updates.
+// Keeping this state in the redux store ended up slowing down the app too much so we keep it in React contexts instead for now.
+
 const initialState = {
     ids: [] as number[],
     color: [1, 0, 0] as [number, number, number],
@@ -8,30 +11,30 @@ const initialState = {
 type State = typeof initialState;
 
 enum ActionTypes {
-    AddToGroup,
-    RemoveFromGroup,
-    OverwriteIds,
+    Add,
+    Remove,
+    SetIds,
     SetColor,
-    SetGroup,
+    Set,
 }
 
-function addToGroup(ids: State["ids"]) {
+function add(ids: State["ids"]) {
     return {
-        type: ActionTypes.AddToGroup as const,
+        type: ActionTypes.Add as const,
         ids,
     };
 }
 
-function removeFromGroup(ids: State["ids"]) {
+function remove(ids: State["ids"]) {
     return {
-        type: ActionTypes.RemoveFromGroup as const,
+        type: ActionTypes.Remove as const,
         ids,
     };
 }
 
-function overwriteIds(ids: State["ids"]) {
+function setIds(ids: State["ids"]) {
     return {
-        type: ActionTypes.OverwriteIds as const,
+        type: ActionTypes.SetIds as const,
         ids,
     };
 }
@@ -43,14 +46,14 @@ function setColor(color: State["color"]) {
     };
 }
 
-function setGroup(state: State) {
+function set(state: State) {
     return {
-        type: ActionTypes.SetGroup as const,
+        type: ActionTypes.Set as const,
         state,
     };
 }
 
-const actions = { addToGroup, removeFromGroup, overwriteIds, setColor, setGroup };
+const actions = { add, remove, setIds, setColor, set };
 
 type Actions = ReturnType<typeof actions[keyof typeof actions]>;
 
@@ -59,19 +62,19 @@ const DispatchContext = createContext<Dispatch<Actions>>(undefined as any);
 
 function reducer(state: State, action: Actions) {
     switch (action.type) {
-        case ActionTypes.AddToGroup: {
+        case ActionTypes.Add: {
             return {
                 color: state.color,
                 ids: state.ids.concat(action.ids),
             };
         }
-        case ActionTypes.RemoveFromGroup: {
+        case ActionTypes.Remove: {
             return {
                 color: state.color,
                 ids: state.ids.filter((id) => !action.ids.includes(id)),
             };
         }
-        case ActionTypes.OverwriteIds: {
+        case ActionTypes.SetIds: {
             return {
                 color: state.color,
                 ids: action.ids,
@@ -83,7 +86,7 @@ function reducer(state: State, action: Actions) {
                 ids: state.ids,
             };
         }
-        case ActionTypes.SetGroup: {
+        case ActionTypes.Set: {
             return { ...action.state };
         }
         default: {
@@ -94,6 +97,10 @@ function reducer(state: State, action: Actions) {
 
 function HighlightedProvider({ children }: { children: ReactNode }) {
     const [state, dispatch] = useReducer(reducer, initialState);
+
+    if (window.Cypress) {
+        window.contexts = { ...window.contexts, highlighted: { state, dispatch } };
+    }
 
     return (
         <StateContext.Provider value={state}>

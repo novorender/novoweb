@@ -7,7 +7,7 @@ import { config as featuresConfig } from "config/features";
 import { useToggle } from "hooks/useToggle";
 import { rgbToVec } from "utils/color";
 import { ColorPicker } from "features/colorPicker";
-import { highlightActions, useDispatchHighlighted, useHighlighted } from "contexts/highlightedGroup";
+import { highlightActions, useDispatchHighlighted, useHighlighted } from "contexts/highlighted";
 
 type Props = SpeedDialActionProps;
 

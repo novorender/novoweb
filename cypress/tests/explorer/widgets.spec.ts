@@ -50,89 +50,75 @@ context("Widgets", () => {
         cy.contains("ExtendToStructure").click();
         cy.waitForWidgetToUpdate("@propertiesWidget");
 
-        cy.getState()
-            .its("render.objectGroups.default.ids")
-            .should(
-                "deep.equal",
-                [
-                    1755, 1750, 1751, 1752, 1753, 1754, 1756, 1771, 1776, 1779, 1894, 2111, 1765, 1848, 1849, 1854,
-                    1859, 1860, 1865, 1888, 1889, 1891, 1746, 1748, 1749, 1757, 1761, 1762, 1764, 1766, 304, 305, 309,
-                    310, 311, 313, 314, 315, 324, 325, 326, 345, 367, 371, 372, 373, 346, 347, 348, 349, 363, 364, 365,
-                    366, 334, 335, 336, 337, 339, 340, 341, 342, 343, 344, 383, 384, 385, 386, 387, 388, 390, 391, 393,
-                    394, 396, 397, 1720, 1721, 1722,
-                ]
-            );
+        cy.getHighlighted().should(
+            "deep.equal",
+            [
+                1721, 1755, 1750, 1751, 1752, 1753, 1754, 1756, 1771, 1776, 1779, 1894, 2111, 1765, 1848, 1849, 1854,
+                1859, 1860, 1865, 1888, 1889, 1891, 1746, 1748, 1749, 1757, 1761, 1762, 1764, 1766, 304, 305, 309, 310,
+                311, 313, 314, 315, 324, 325, 326, 345, 367, 371, 372, 373, 346, 347, 348, 349, 363, 364, 365, 366, 334,
+                335, 336, 337, 339, 340, 341, 342, 343, 344, 383, 384, 385, 386, 387, 388, 390, 391, 393, 394, 396, 397,
+                1720, 1721, 1722,
+            ]
+        );
 
         // Force as the button may be half covered by tooltip
         cy.contains("IsExternal").click({ force: true });
         cy.contains("ExtendToStructure").click({ force: true });
-        cy.getState("render.objectGroups.default.ids").should("be.empty");
+        cy.getHighlighted().should("deep.equal", [1721]);
 
         // Checking a property on the parent object should highlight all children of parents with matching property
         cy.get("@propertiesWidget").contains("±0.00 Level").click();
         cy.get("@propertiesWidget").contains("1nq75ccsD05RaIaWZXWcl4").as("parentGuid").click();
         cy.waitForWidgetToUpdate("@propertiesWidget");
 
-        cy.getState()
-            .its("render.objectGroups.default.ids")
-            .should(
-                "deep.equal",
-                [
-                    1719, 558, 1723, 1724, 1725, 1726, 1727, 1728, 1729, 1730, 1731, 1732, 1733, 1734, 1735, 1736, 1737,
-                    1738, 1739, 1740, 1741, 1742, 1743, 1744, 1720, 1721, 1722,
-                ]
-            );
+        cy.getHighlighted().should(
+            "deep.equal",
+            [
+                1721, 1719, 558, 1723, 1724, 1725, 1726, 1727, 1728, 1729, 1730, 1731, 1732, 1733, 1734, 1735, 1736,
+                1737, 1738, 1739, 1740, 1741, 1742, 1743, 1744, 1720, 1721, 1722,
+            ]
+        );
 
-        // Unchecking should clear highlights
+        // Unchecking should clear highlights, except for main object itself
         cy.get("@parentGuid").click();
-        cy.getState().its("render.objectGroups.default.ids").should("be.empty");
+        cy.getHighlighted().should("deep.equal", [1721]);
     });
 
     it("Groups", () => {
         cy.loadScene();
-        cy.dispatch({ type: "render/setObjectGroups", payload: { custom: customGroups } });
+        cy.setCustomGroups(customGroups);
         cy.openWidgets(["groups"]);
         cy.getBySel("groups-widget");
 
         // Toggle all selected
         const allGroupsItemName = "Groups: 9";
         cy.contains(allGroupsItemName).click();
-        cy.getState("render.objectGroups.custom").should((groups) =>
-            groups.forEach((group) => expect(group.selected).to.be.true)
-        );
+        cy.getCustomGroups().should((groups) => groups.forEach((group) => expect(group.selected).to.be.true));
         cy.contains(allGroupsItemName).click();
-        cy.getState("render.objectGroups.custom").should((groups) =>
-            groups.forEach((group) => expect(group.selected).to.be.false)
-        );
+        cy.getCustomGroups().should((groups) => groups.forEach((group) => expect(group.selected).to.be.false));
 
         // Toggle all visibility
         cy.contains(allGroupsItemName).closest("li").findBySel("toggle-visibility").click();
-        cy.getState("render.objectGroups.custom").should((groups) =>
-            groups.forEach((group) => expect(group.hidden).to.be.true)
-        );
+        cy.getCustomGroups().should((groups) => groups.forEach((group) => expect(group.hidden).to.be.true));
         cy.contains(allGroupsItemName).closest("li").findBySel("toggle-visibility").click();
-        cy.getState("render.objectGroups.custom").should((groups) =>
-            groups.forEach((group) => expect(group.hidden).to.be.false)
-        );
+        cy.getCustomGroups().should((groups) => groups.forEach((group) => expect(group.hidden).to.be.false));
 
         // Toggle single selected
         const name = customGroups[3].name;
         cy.contains(name).click();
-        cy.getState("render.objectGroups.custom").should(
+        cy.getCustomGroups().should(
             (groups) => expect(groups.find((group) => group.name === name)?.selected).to.be.true
         );
         cy.contains(name).click();
-        cy.getState("render.objectGroups.custom").should(
+        cy.getCustomGroups().should(
             (groups) => expect(groups.find((group) => group.name === name)?.selected).to.be.false
         );
 
         // Toggle single visibility
         cy.contains(name).closest("li").findBySel("toggle-visibility").click();
-        cy.getState("render.objectGroups.custom").should(
-            (groups) => expect(groups.find((group) => group.name === name)?.hidden).to.be.true
-        );
+        cy.getCustomGroups().should((groups) => expect(groups.find((group) => group.name === name)?.hidden).to.be.true);
         cy.contains(name).closest("li").findBySel("toggle-visibility").click();
-        cy.getState("render.objectGroups.custom").should(
+        cy.getCustomGroups().should(
             (groups) => expect(groups.find((group) => group.name === name)?.hidden).to.be.false
         );
 
@@ -149,13 +135,13 @@ context("Widgets", () => {
             .as("accordion")
             .findBySel("toggle-highlighting")
             .click();
-        cy.getState("render.objectGroups.custom").should((groups) =>
+        cy.getCustomGroups().should((groups) =>
             groups
                 .filter((group) => group.grouping === groupedName)
                 .forEach((group) => expect(group.selected).to.be.true)
         );
         cy.get("@accordion").findBySel("toggle-highlighting").click();
-        cy.getState("render.objectGroups.custom").should((groups) =>
+        cy.getCustomGroups().should((groups) =>
             groups
                 .filter((group) => group.grouping === groupedName)
                 .forEach((group) => expect(group.selected).to.be.false)
@@ -163,11 +149,11 @@ context("Widgets", () => {
 
         // Toggle grouped visibility
         cy.get("@accordion").findBySel("toggle-visibility").click();
-        cy.getState("render.objectGroups.custom").should((groups) =>
+        cy.getCustomGroups().should((groups) =>
             groups.filter((group) => group.grouping === groupedName).forEach((group) => expect(group.hidden).to.be.true)
         );
         cy.get("@accordion").findBySel("toggle-visibility").click();
-        cy.getState("render.objectGroups.custom").should((groups) =>
+        cy.getCustomGroups().should((groups) =>
             groups
                 .filter((group) => group.grouping === groupedName)
                 .forEach((group) => expect(group.hidden).to.be.false)
@@ -211,7 +197,7 @@ context("Widgets", () => {
         cy.getBySel("model-tree-list-container").find("li").first().parent().parent().as("nodeList").scrollTo("top");
         cy.contains("Folder").closest("li").find("input").as("currentDepthInputs").first().click();
         cy.waitForWidgetToUpdate("@modelTreeWidget");
-        cy.getState("render.objectGroups.default.ids").should(
+        cy.getHighlighted().should(
             "deep.equal",
             [
                 1723, 1724, 1725, 1726, 1727, 1728, 1729, 1730, 1731, 1732, 1733, 1734, 1735, 1736, 1737, 1738, 1739,
@@ -220,12 +206,12 @@ context("Widgets", () => {
         );
         cy.get("@currentDepthInputs").first().click();
         cy.waitForWidgetToUpdate("@modelTreeWidget");
-        cy.getState("render.objectGroups.default.ids").should("be.empty");
+        cy.getHighlighted().should("be.empty");
 
         // hide all at current depth
         cy.get("@currentDepthInputs").last().click();
         cy.waitForWidgetToUpdate("@modelTreeWidget");
-        cy.getState("render.objectGroups.defaultHidden.ids").should(
+        cy.getHidden().should(
             "deep.equal",
             [
                 1723, 1724, 1725, 1726, 1727, 1728, 1729, 1730, 1731, 1732, 1733, 1734, 1735, 1736, 1737, 1738, 1739,
@@ -234,27 +220,27 @@ context("Widgets", () => {
         );
         cy.get("@currentDepthInputs").last().click();
         cy.waitForWidgetToUpdate("@modelTreeWidget");
-        cy.getState("render.objectGroups.defaultHidden.ids").should("be.empty");
+        cy.getHidden().should("be.empty");
 
         // highlight leaves
         cy.get("@nodeList").contains("Basic Wall").parents("li").as("firstLeafItem").click();
         cy.waitForWidgetToUpdate("@modelTreeWidget");
-        cy.getState("render.objectGroups.default.ids").should("deep.equal", [1723]);
+        cy.getHighlighted().should("deep.equal", [1723]);
         cy.get("@firstLeafItem").next().as("secondLeafItem").click();
         cy.waitForWidgetToUpdate("@modelTreeWidget");
-        cy.getState("render.objectGroups.default.ids").should("deep.equal", [1723, 1724]);
+        cy.getHighlighted().should("deep.equal", [1723, 1724]);
         cy.get("@firstLeafItem").click();
         cy.get("@secondLeafItem").click();
-        cy.getState("render.objectGroups.default.ids").should("be.empty");
+        cy.getHighlighted().should("be.empty");
 
         // hide leaves
         cy.get("@firstLeafItem").find("input").last().as("firstLeafVisibility").click();
-        cy.getState("render.objectGroups.defaultHidden.ids").should("deep.equal", [1723]);
+        cy.getHidden().should("deep.equal", [1723]);
         cy.get("@secondLeafItem").find("input").last().as("secondLeafVisibility").click();
-        cy.getState("render.objectGroups.defaultHidden.ids").should("deep.equal", [1723, 1724]);
+        cy.getHidden().should("deep.equal", [1723, 1724]);
         cy.get("@firstLeafVisibility").click();
         cy.get("@secondLeafVisibility").click();
-        cy.getState("render.objectGroups.defaultHidden.ids").should("be.empty");
+        cy.getHidden().should("be.empty");
 
         cy.setMainObject(1677);
         cy.waitForWidgetToUpdate("@modelTreeWidget");
@@ -272,7 +258,7 @@ context("Widgets", () => {
         // highlight folder node
         cy.get("@highlightFolderButton").click();
         cy.waitForWidgetToUpdate("@modelTreeWidget");
-        cy.getState("render.objectGroups.default.ids").should(
+        cy.getHighlighted().should(
             "deep.equal",
             [
                 1723, 1724, 1725, 1726, 1727, 1728, 1729, 1730, 1731, 1732, 1733, 1734, 1735, 1736, 1737, 1738, 1739,
@@ -281,12 +267,12 @@ context("Widgets", () => {
         );
         cy.get("@highlightFolderButton").click();
         cy.waitForWidgetToUpdate("@modelTreeWidget");
-        cy.getState("render.objectGroups.default.ids").should("be.empty");
+        cy.getHighlighted().should("be.empty");
 
         // hide folder node
         cy.get("@hideFolderButton").click();
         cy.waitForWidgetToUpdate("@modelTreeWidget");
-        cy.getState("render.objectGroups.defaultHidden.ids").should(
+        cy.getHidden().should(
             "deep.equal",
             [
                 1723, 1724, 1725, 1726, 1727, 1728, 1729, 1730, 1731, 1732, 1733, 1734, 1735, 1736, 1737, 1738, 1739,
@@ -295,7 +281,7 @@ context("Widgets", () => {
         );
         cy.get("@hideFolderButton").click();
         cy.waitForWidgetToUpdate("@modelTreeWidget");
-        cy.getState("render.objectGroups.defaultHidden.ids").should("be.empty");
+        cy.getHidden().should("be.empty");
 
         // pop selected node to top if not already in list
         const objName = "Basic Wall:BIMS İÇ - 200mm:2477377";

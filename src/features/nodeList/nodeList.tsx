@@ -15,8 +15,8 @@ import { ChangeEvent, forwardRef, MouseEventHandler } from "react";
 import AutoSizer from "react-virtualized-auto-sizer";
 import { FixedSizeList, FixedSizeListProps, ListOnScrollProps } from "react-window";
 import { getObjectNameFromPath } from "utils/objectData";
-import { useIsHighlighted } from "contexts/highlightedGroup";
-import { useIsHidden } from "contexts/hiddenGroup";
+import { useIsHighlighted } from "contexts/highlighted";
+import { useIsHidden } from "contexts/hidden";
 
 import FolderIcon from "@material-ui/icons/Folder";
 import EcoIcon from "@material-ui/icons/Eco";

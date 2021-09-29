@@ -4,8 +4,8 @@ import { SpeedDialAction } from "components";
 import { config as featuresConfig } from "config/features";
 import { renderActions, selectMainObject } from "slices/renderSlice";
 import { useAppDispatch, useAppSelector } from "app/store";
-import { highlightActions, useDispatchHighlighted, useHighlighted } from "contexts/highlightedGroup";
-import { hiddenGroupActions, useDispatchHidden, useHidden } from "contexts/hiddenGroup";
+import { highlightActions, useDispatchHighlighted, useHighlighted } from "contexts/highlighted";
+import { hiddenGroupActions, useDispatchHidden, useHidden } from "contexts/hidden";
 
 type Props = SpeedDialActionProps;
 
@@ -25,12 +25,12 @@ export function HideSelected(props: Props) {
 
     const toggleHideSelected = () => {
         if (selected.length) {
-            dispatchHidden(hiddenGroupActions.addToGroup(selected));
+            dispatchHidden(hiddenGroupActions.add(selected));
 
             dispatch(renderActions.setMainObject(undefined));
-            dispatchHighlighted(highlightActions.overwriteIds([]));
+            dispatchHighlighted(highlightActions.setIds([]));
         } else if (hidden.length) {
-            dispatchHidden(hiddenGroupActions.overwriteIds([]));
+            dispatchHidden(hiddenGroupActions.setIds([]));
         }
     };
 

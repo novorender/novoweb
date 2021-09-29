@@ -35,8 +35,7 @@ const useStyles = makeStyles((theme) =>
 
 export function Groups() {
     const classes = useStyles();
-    const { state: customGroupsObj, dispatch: dispatchCustom } = useCustomGroups();
-    const customGroups = Object.values(customGroupsObj);
+    const { state: customGroups, dispatch: dispatchCustom } = useCustomGroups();
 
     const [containerEl, setContainerEl] = useState<HTMLDivElement | null>(null);
     const containerRef = useCallback<RefCallback<HTMLDivElement>>((el) => {
@@ -50,14 +49,11 @@ export function Groups() {
     const hasGrouping = customGroups.some((group) => group.grouping);
 
     const handleChange = (updatedGroups: CustomGroup[]) => {
-        const updatedGroupsObj = updatedGroups.reduce((groups, group) => {
-            return {
-                ...groups,
-                [group.id]: group,
-            };
-        }, customGroupsObj);
-
-        dispatchCustom(customGroupsActions.overwriteGroups(updatedGroupsObj));
+        dispatchCustom(
+            customGroupsActions.set(
+                customGroups.map((group) => updatedGroups.find((updated) => updated.id === group.id) ?? group)
+            )
+        );
     };
 
     return (

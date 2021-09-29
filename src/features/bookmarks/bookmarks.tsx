@@ -16,9 +16,9 @@ import type { View } from "@novorender/webgl-api";
 import { ScrollBox, Tooltip, Divider } from "components";
 import { renderActions, selectBookmarks, selectViewOnlySelected } from "slices/renderSlice";
 import { useAppDispatch, useAppSelector } from "app/store";
-import { highlightActions, useDispatchHighlighted } from "contexts/highlightedGroup";
-import { hiddenGroupActions, useDispatchHidden } from "contexts/hiddenGroup";
-import { CustomGroup, customGroupsActions, useCustomGroups } from "contexts/customGroups";
+import { highlightActions, useDispatchHighlighted } from "contexts/highlighted";
+import { hiddenGroupActions, useDispatchHidden } from "contexts/hidden";
+import { customGroupsActions, useCustomGroups } from "contexts/customGroups";
 
 const useStyles = makeStyles((theme) =>
     createStyles({
@@ -80,28 +80,25 @@ export function Bookmarks({ view }: Props) {
         if (bookmark.objectGroups) {
             const bmDefaultGroup = bookmark.objectGroups.find((group) => !group.id && group.selected);
             if (bmDefaultGroup?.ids) {
-                dispatchHighlighted(highlightActions.overwriteIds(bmDefaultGroup.ids as number[]));
+                dispatchHighlighted(highlightActions.setIds(bmDefaultGroup.ids as number[]));
             }
 
             const bmHiddenGroup = bookmark.objectGroups.find((group) => !group.id && group.hidden);
             if (bmHiddenGroup?.ids) {
-                dispatchHidden(hiddenGroupActions.overwriteIds(bmHiddenGroup.ids as number[]));
+                dispatchHidden(hiddenGroupActions.setIds(bmHiddenGroup.ids as number[]));
             }
 
-            const updatedCustomGroups = Object.values(customGroups).reduce((groups, group) => {
+            const updatedCustomGroups = customGroups.map((group) => {
                 const bookmarked = bookmark.objectGroups!.find((bmGroup) => bmGroup.id === group.id);
 
                 return {
-                    ...groups,
-                    [group.id]: {
-                        ...group,
-                        selected: bookmarked ? bookmarked.selected : false,
-                        hidden: bookmarked ? bookmarked.hidden : false,
-                    },
+                    ...group,
+                    selected: bookmarked ? bookmarked.selected : false,
+                    hidden: bookmarked ? bookmarked.hidden : false,
                 };
-            }, {} as Record<string, CustomGroup>);
+            });
 
-            dispatchCustom(customGroupsActions.overwriteGroups(updatedCustomGroups));
+            dispatchCustom(customGroupsActions.set(updatedCustomGroups));
 
             const main = bmDefaultGroup && bmDefaultGroup.ids?.length ? bmDefaultGroup.ids.slice(-1)[0] : undefined;
             renderActions.setMainObject(main);

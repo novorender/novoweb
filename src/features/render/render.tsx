@@ -42,9 +42,9 @@ import {
     createRendering,
 } from "./utils";
 import { xAxis, yAxis, axis, showPerformance } from "./consts";
-import { useHighlighted, highlightActions, useDispatchHighlighted } from "contexts/highlightedGroup";
-import { useHidden, hiddenGroupActions, useDispatchHidden } from "contexts/hiddenGroup";
-import { useCustomGroups, customGroupsActions, CustomGroup } from "contexts/customGroups";
+import { useHighlighted, highlightActions, useDispatchHighlighted } from "contexts/highlighted";
+import { useHidden, hiddenGroupActions, useDispatchHidden } from "contexts/hidden";
+import { useCustomGroups, customGroupsActions } from "contexts/customGroups";
 
 glMatrix.setMatrixArrayType(Array);
 addConsoleDebugUtils();
@@ -155,7 +155,7 @@ export function Render3D({ id, api, onInit, dataApi }: Props) {
                 const defaultGroup = objectGroups.find((group) => !group.id && group.selected);
                 if (defaultGroup) {
                     dispatchHighlighted(
-                        highlightActions.setGroup({
+                        highlightActions.set({
                             ids: defaultGroup.ids as number[],
                             color: [defaultGroup.color[0], defaultGroup.color[1], defaultGroup.color[2]],
                         })
@@ -164,19 +164,12 @@ export function Render3D({ id, api, onInit, dataApi }: Props) {
 
                 const defaultHiddenGroup = objectGroups.find((group) => !group.id && group.hidden);
                 if (defaultHiddenGroup) {
-                    dispatchHidden(hiddenGroupActions.overwriteIds(defaultHiddenGroup.ids as number[]));
+                    dispatchHidden(hiddenGroupActions.setIds(defaultHiddenGroup.ids as number[]));
                 }
 
                 const customGroups = objectGroups.filter((group) => group.id);
                 if (customGroups.length) {
-                    dispatchCustomGroups(
-                        customGroupsActions.overwriteGroups(
-                            serializeableObjectGroups(customGroups).reduce((groups, group) => {
-                                groups[group.id] = group;
-                                return groups;
-                            }, {} as Record<string, CustomGroup>)
-                        )
-                    );
+                    dispatchCustomGroups(customGroupsActions.set(serializeableObjectGroups(customGroups)));
                 }
 
                 setView(_view);
@@ -287,7 +280,7 @@ export function Render3D({ id, api, onInit, dataApi }: Props) {
                     api,
                     objectGroups: [
                         { ...hiddenObjects, hidden: true, selected: false, color: [0, 0, 0] },
-                        ...Object.values(customGroups),
+                        ...customGroups,
                         { ...highlightedObjects, hidden: false, selected: true },
                     ],
                     viewOnlySelected,
@@ -382,18 +375,18 @@ export function Render3D({ id, api, onInit, dataApi }: Props) {
         if (selectMultiple) {
             if (alreadySelected) {
                 dispatch(renderActions.setMainObject(undefined));
-                dispatchHighlighted(highlightActions.removeFromGroup([result.objectId]));
+                dispatchHighlighted(highlightActions.remove([result.objectId]));
             } else {
                 dispatch(renderActions.setMainObject(result.objectId));
-                dispatchHighlighted(highlightActions.addToGroup([result.objectId]));
+                dispatchHighlighted(highlightActions.add([result.objectId]));
             }
         } else {
             if (alreadySelected) {
                 dispatch(renderActions.setMainObject(undefined));
-                dispatchHighlighted(highlightActions.overwriteIds([]));
+                dispatchHighlighted(highlightActions.setIds([]));
             } else {
                 dispatch(renderActions.setMainObject(result.objectId));
-                dispatchHighlighted(highlightActions.overwriteIds([result.objectId]));
+                dispatchHighlighted(highlightActions.setIds([result.objectId]));
             }
         }
     };
