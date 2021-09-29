@@ -20,6 +20,7 @@ import { Bookmarks } from "features/bookmarks";
 import { ModelTree } from "features/modelTree";
 import { Search } from "features/search";
 import { Clipping } from "features/clipping";
+import { Measure } from "features/measure";
 import { Groups } from "features/groups";
 import { useAppSelector, useAppDispatch } from "app/store";
 import { selectEnabledWidgets, explorerActions } from "slices/explorerSlice";
@@ -228,7 +229,7 @@ function getWidgetByKey({ key, scene, view }: { key: WidgetKey; scene: Scene; vi
             return <Search scene={scene} />;
         case featuresConfig.clipping.key:
             return <Clipping />;
-        case "measure":
+        case featuresConfig.measure.key:
             return <Measure />;
         default:
             return key;
