@@ -104,10 +104,7 @@ export function Properties({ scene }: Props) {
                 searchPatterns,
                 deep: true,
                 callbackInterval: 1000,
-                callback: (refs) => {
-                    console.log("cb", refs.length);
-                    dispatchHighlighted(highlightActions.add(extractObjectIds(refs)));
-                },
+                callback: (refs) => dispatchHighlighted(highlightActions.add(extractObjectIds(refs))),
             });
         } catch {
             // ignore for now
