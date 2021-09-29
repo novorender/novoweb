@@ -1,8 +1,9 @@
 import { ObjectGroup } from "@novorender/data-js-api";
 import { API, EnvironmentDescription, Internal, Scene, View } from "@novorender/webgl-api";
-import { offscreenCanvas } from "config";
 
-import { ObjectGroups, RenderType } from "slices/renderSlice";
+import { offscreenCanvas } from "config";
+import { CustomGroup } from "contexts/customGroups";
+import { RenderType } from "slices/renderSlice";
 import { sleep } from "utils/timers";
 import { ssaoEnabled, taaEnabled } from "./consts";
 
@@ -136,7 +137,7 @@ export function refillObjects({
     api: API;
     scene: Scene;
     view: View;
-    objectGroups: ObjectGroup[];
+    objectGroups: { ids: number[]; color: [number, number, number]; selected: boolean; hidden: boolean }[];
     viewOnlySelected: boolean;
 }): void {
     if (!view || !scene) {
@@ -207,35 +208,23 @@ export async function getRenderType(view: View): Promise<RenderType> {
         : RenderType.All;
 }
 
-export function serializeableObjectGroups(groups: Partial<ObjectGroups>): Partial<ObjectGroups> {
-    return Object.fromEntries(
-        Object.entries(groups)
-            .filter(([_, value]) => value !== undefined)
-            .map(([key, value]) => {
-                const serializableValue = Array.isArray(value)
-                    ? value.map((group) =>
-                          group.color instanceof Float32Array
-                              ? { ...group, color: [group.color[0], group.color[1], group.color[2]] }
-                              : group
-                      )
-                    : value.color instanceof Float32Array
-                    ? { ...value, color: [value.color[0], value.color[1], value.color[2]] }
-                    : value;
-
-                return [key, serializableValue];
-            })
-    );
+export function serializeableObjectGroups(groups: ObjectGroup[]): CustomGroup[] {
+    return groups.map((group) =>
+        group.color instanceof Float32Array
+            ? { ...group, color: [group.color[0], group.color[1], group.color[2]] }
+            : group
+    ) as CustomGroup[];
 }
 
 export function addConsoleDebugUtils(): void {
-    (window as any).showStats = (val: boolean) =>
+    window.showStats = (val?: boolean) =>
         val !== false
             ? localStorage.setItem("show-performance-stats", "true")
             : localStorage.removeItem("show-performance-stats");
 
-    (window as any).disableTaa = (val: boolean) =>
+    window.disableTaa = (val?: boolean) =>
         val !== false ? localStorage.setItem("disable-taa", "true") : localStorage.removeItem("disable-taa");
 
-    (window as any).disableSsao = (val: boolean) =>
+    window.disableSsao = (val?: boolean) =>
         val !== false ? localStorage.setItem("disable-ssao", "true") : localStorage.removeItem("disable-ssao");
 }

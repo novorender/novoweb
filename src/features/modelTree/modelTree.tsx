@@ -13,6 +13,8 @@ import { useMountedState } from "hooks/useMountedState";
 import { getObjectData, iterateAsync, searchByParentPath, searchFirstObjectAtPath } from "utils/search";
 
 import { extractObjectIds, getParentPath } from "utils/objectData";
+import { highlightActions, useDispatchHighlighted } from "contexts/highlighted";
+import { hiddenGroupActions, useDispatchHidden } from "contexts/hidden";
 
 enum Status {
     Ready,
@@ -47,6 +49,8 @@ type RootNode = typeof rootNode;
 
 export function ModelTree({ scene }: Props) {
     const mainObject = useAppSelector(selectMainObject);
+    const dispatchHighlighted = useDispatchHighlighted();
+    const dispatchHidden = useDispatchHidden();
     const dispatch = useAppDispatch();
 
     const [status, setStatus] = useMountedState(Status.Loading);
@@ -251,7 +255,7 @@ export function ModelTree({ scene }: Props) {
 
     const select = async (node: HierarcicalObjectReference) => {
         if (node.type === NodeType.Leaf) {
-            dispatch(renderActions.selectObjects([node.id]));
+            dispatchHighlighted(highlightActions.add([node.id]));
             dispatch(renderActions.setMainObject(node.id));
             return;
         }
@@ -264,12 +268,12 @@ export function ModelTree({ scene }: Props) {
                 scene,
                 abortSignal,
                 parentPath: node.path,
-                callback: (refs) => dispatch(renderActions.selectObjects(extractObjectIds(refs))),
+                callback: (refs) => dispatchHighlighted(highlightActions.add(extractObjectIds(refs))),
                 callbackInterval: 1000,
             });
 
             if (!abortSignal.aborted) {
-                dispatch(renderActions.selectObjects([node.id]));
+                dispatchHighlighted(highlightActions.add([node.id]));
                 setStatus(Status.Ready);
             }
         } catch {
@@ -281,10 +285,10 @@ export function ModelTree({ scene }: Props) {
 
     const unSelect = async (node: HierarcicalObjectReference) => {
         if (node.type === NodeType.Leaf) {
-            return dispatch(renderActions.unSelectObjects([node.id]));
+            return dispatchHighlighted(highlightActions.remove([node.id]));
         }
 
-        dispatch(renderActions.unSelectObjects([node.id]));
+        dispatchHighlighted(highlightActions.remove([node.id]));
 
         setStatus(Status.Loading);
         const abortSignal = abortController.current.signal;
@@ -294,7 +298,7 @@ export function ModelTree({ scene }: Props) {
                 scene,
                 abortSignal,
                 parentPath: node.path,
-                callback: (refs) => dispatch(renderActions.unSelectObjects(extractObjectIds(refs))),
+                callback: (refs) => dispatchHighlighted(highlightActions.remove(extractObjectIds(refs))),
                 callbackInterval: 1000,
             });
         } catch {
@@ -308,7 +312,7 @@ export function ModelTree({ scene }: Props) {
 
     const hide = async (node: HierarcicalObjectReference) => {
         if (node.type === NodeType.Leaf) {
-            return dispatch(renderActions.hideObjects([node.id]));
+            return dispatchHidden(hiddenGroupActions.add([node.id]));
         }
 
         setStatus(Status.Loading);
@@ -319,12 +323,12 @@ export function ModelTree({ scene }: Props) {
                 scene,
                 abortSignal,
                 parentPath: node.path,
-                callback: (refs) => dispatch(renderActions.hideObjects(extractObjectIds(refs))),
+                callback: (refs) => dispatchHidden(hiddenGroupActions.add(extractObjectIds(refs))),
                 callbackInterval: 1000,
             });
 
             if (!abortSignal.aborted) {
-                dispatch(renderActions.hideObjects([node.id]));
+                dispatchHidden(hiddenGroupActions.add([node.id]));
                 setStatus(Status.Ready);
             }
         } catch {
@@ -336,10 +340,10 @@ export function ModelTree({ scene }: Props) {
 
     const show = async (node: HierarcicalObjectReference) => {
         if (node.type === NodeType.Leaf) {
-            return dispatch(renderActions.showObjects([node.id]));
+            return dispatchHidden(hiddenGroupActions.remove([node.id]));
         }
 
-        dispatch(renderActions.showObjects([node.id]));
+        dispatchHidden(hiddenGroupActions.remove([node.id]));
 
         setStatus(Status.Loading);
         const abortSignal = abortController.current.signal;
@@ -349,7 +353,7 @@ export function ModelTree({ scene }: Props) {
                 scene,
                 abortSignal,
                 parentPath: node.path,
-                callback: (refs) => dispatch(renderActions.showObjects(extractObjectIds(refs))),
+                callback: (refs) => dispatchHidden(hiddenGroupActions.remove(extractObjectIds(refs))),
                 callbackInterval: 1000,
             });
         } catch {

@@ -11,6 +11,6 @@ ReactDOM.render(
     document.body.children[0]
 );
 
-if ((window as any).Cypress) {
-    (window as any).store = store;
-}
+/* if ((window as any).Cypress) {
+} */
+(window as any).store = store;

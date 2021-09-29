@@ -1,5 +1,6 @@
 import { HierarcicalObjectReference, ObjectData, ObjectId, Scene, SearchPattern } from "@novorender/webgl-api";
 import { NodeType } from "features/modelTree/modelTree";
+import { sleep } from "./timers";
 
 export async function iterateAsync<T = HierarcicalObjectReference>({
     iterator,
@@ -61,6 +62,7 @@ export async function searchByPatterns({
         const [result, _done] = await iterateAsync({ iterator, abortSignal, count: callbackInterval });
         done = _done;
         callback(result);
+        await sleep(1);
 
         if (deep) {
             for (let i = 0; i < result.length; i++) {
@@ -71,7 +73,7 @@ export async function searchByPatterns({
                         scene,
                         abortSignal,
                         callback,
-                        callbackInterval: callbackInterval / 2,
+                        callbackInterval: callbackInterval,
                         parentPath: obj.path,
                     });
                 }
@@ -108,8 +110,8 @@ export async function searchByParentPath({
     while (!done && !abortSignal?.aborted) {
         const [result, _done] = await iterateAsync({ iterator: allChildren, count: callbackInterval, abortSignal });
         done = _done;
-
         callback(result);
+        await sleep(1);
     }
 }
 

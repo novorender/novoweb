@@ -11,6 +11,9 @@ import { Protected } from "features/protectedRoute";
 import { FeatureKey, config as featuresConfig } from "config/features";
 import { explorerActions, FullscreenStatus, selectFullscreen } from "slices/explorerSlice";
 import { selectAccessToken } from "slices/authSlice";
+import { HiddenProvider } from "contexts/hidden";
+import { CustomGroupsProvider } from "contexts/customGroups";
+import { HighlightedProvider } from "contexts/highlighted";
 
 export function Explorer() {
     const { id = process.env.REACT_APP_SCENE_ID ?? "95a89d20dd084d9486e383e131242c4c" } = useParams<{ id?: string }>();
@@ -76,12 +79,14 @@ export function Explorer() {
     };
 
     return (
-        <AuthCheck id={id}>
-            <div ref={fullscreenWrapperRef}>
-                <Render3D id={id} api={api} dataApi={dataApi} onInit={handleInit} />
-                {view && scene ? <Hud view={view} scene={scene} /> : null}
-            </div>
-        </AuthCheck>
+        <ContextProviders>
+            <AuthCheck id={id}>
+                <div ref={fullscreenWrapperRef}>
+                    <Render3D id={id} api={api} dataApi={dataApi} onInit={handleInit} />
+                    {view && scene ? <Hud view={view} scene={scene} /> : null}
+                </div>
+            </AuthCheck>
+        </ContextProviders>
     );
 }
 
@@ -152,4 +157,14 @@ function getEnabledFeatures(customProperties: unknown): Record<string, boolean> 
     return customProperties && typeof customProperties === "object" && "enabledFeatures" in customProperties
         ? (customProperties as { enabledFeatures?: Record<string, boolean> }).enabledFeatures
         : undefined;
+}
+
+function ContextProviders({ children }: { children: ReactNode }) {
+    return (
+        <HighlightedProvider>
+            <HiddenProvider>
+                <CustomGroupsProvider>{children}</CustomGroupsProvider>
+            </HiddenProvider>
+        </HighlightedProvider>
+    );
 }

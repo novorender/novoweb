@@ -1,3 +1,4 @@
+import { ObjectGroup } from "@novorender/data-js-api";
 import { defaultScene } from "support/constants";
 
 // ***********************************************
@@ -73,6 +74,26 @@ Cypress.Commands.add("getState", (path?: string) => {
         .its("store")
         .invoke("getState")
         .then((state) => (path ? cy.wrap(state).its(path) : state));
+});
+
+Cypress.Commands.add("getHidden", () => {
+    return cy.window().its("contexts.hidden.state.ids");
+});
+
+Cypress.Commands.add("getHighlighted", () => {
+    return cy.window().its("contexts.highlighted.state.ids");
+});
+
+Cypress.Commands.add("getHighlightColor", () => {
+    return cy.window().its("contexts.highlighted.state.color");
+});
+
+Cypress.Commands.add("getCustomGroups", () => {
+    return cy.window().its("contexts.customGroups.state");
+});
+
+Cypress.Commands.add("setCustomGroups", (groups: ObjectGroup[]) => {
+    return cy.window().its("contexts.customGroups").invoke("dispatch", { type: 1, state: groups });
 });
 
 Cypress.Commands.add("dispatch", <T>(action: { type: string; payload?: T }) => {

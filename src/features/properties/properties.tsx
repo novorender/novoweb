@@ -3,12 +3,13 @@ import { useTheme, Box, List, ListItem, Grid, Typography, Checkbox, makeStyles }
 import type { ObjectData, ObjectId, Scene, SearchPattern } from "@novorender/webgl-api";
 
 import { LinearProgress, ScrollBox, Accordion, AccordionSummary, AccordionDetails, Tooltip } from "components";
-import { renderActions, selectMainObject } from "slices/renderSlice";
-import { useAppDispatch, useAppSelector } from "app/store";
+import { selectMainObject } from "slices/renderSlice";
+import { useAppSelector } from "app/store";
 import { useAbortController } from "hooks/useAbortController";
 import { useMountedState } from "hooks/useMountedState";
 import { getObjectData as getObjectDataUtil, searchFirstObjectAtPath, searchByPatterns } from "utils/search";
 import { extractObjectIds, getParentPath } from "utils/objectData";
+import { highlightActions, useDispatchHighlighted } from "contexts/highlighted";
 
 const useStyles = makeStyles({
     checkbox: {
@@ -34,7 +35,7 @@ type Props = {
 
 export function Properties({ scene }: Props) {
     const mainObject = useAppSelector(selectMainObject);
-    const dispatch = useAppDispatch();
+    const dispatchHighlighted = useDispatchHighlighted();
 
     const [searches, setSearches] = useState<Record<string, SearchPattern>>({});
     const [status, setStatus] = useMountedState(Status.Initial);
@@ -87,11 +88,11 @@ export function Properties({ scene }: Props) {
     }, [mainObject, scene, object, setObject, setStatus]);
 
     const search = async (searchPatterns: SearchPattern[]) => {
-        if (!searchPatterns.length) {
-            return dispatch(renderActions.setSelectedObjects([]));
-        }
+        dispatchHighlighted(highlightActions.setIds(mainObject ? [mainObject] : []));
 
-        dispatch(renderActions.setSelectedObjects([]));
+        if (!searchPatterns.length) {
+            return;
+        }
 
         setStatus(Status.Loading);
         const abortSignal = abortController.current.signal;
@@ -103,7 +104,10 @@ export function Properties({ scene }: Props) {
                 searchPatterns,
                 deep: true,
                 callbackInterval: 1000,
-                callback: (refs) => dispatch(renderActions.selectObjects(extractObjectIds(refs))),
+                callback: (refs) => {
+                    console.log("cb", refs.length);
+                    dispatchHighlighted(highlightActions.add(extractObjectIds(refs)));
+                },
             });
         } catch {
             // ignore for now

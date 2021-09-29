@@ -11,7 +11,7 @@ const rootReducer = combineReducers({
     auth: authReducer,
 });
 
-export const store = configureStore({ reducer: rootReducer });
+export const store = configureStore({ reducer: rootReducer, devTools: process.env.NODE_ENV === "development" });
 
 export type RootState = ReturnType<typeof rootReducer>;
 export type AppDispatch = typeof store.dispatch;

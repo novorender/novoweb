@@ -14,14 +14,11 @@ import type { Bookmark } from "@novorender/data-js-api";
 import type { View } from "@novorender/webgl-api";
 
 import { ScrollBox, Tooltip, Divider } from "components";
-import {
-    renderActions,
-    selectObjectGroups,
-    selectBookmarks,
-    ObjectGroups,
-    selectViewOnlySelected,
-} from "slices/renderSlice";
+import { renderActions, selectBookmarks, selectViewOnlySelected } from "slices/renderSlice";
 import { useAppDispatch, useAppSelector } from "app/store";
+import { highlightActions, useDispatchHighlighted } from "contexts/highlighted";
+import { hiddenGroupActions, useDispatchHidden } from "contexts/hidden";
+import { customGroupsActions, useCustomGroups } from "contexts/customGroups";
 
 const useStyles = makeStyles((theme) =>
     createStyles({
@@ -61,7 +58,10 @@ export function Bookmarks({ view }: Props) {
     const classes = useStyles();
     const theme = useTheme();
 
-    const objectGroups = useAppSelector(selectObjectGroups);
+    const dispatchHighlighted = useDispatchHighlighted();
+    const dispatchHidden = useDispatchHidden();
+    const { state: customGroups, dispatch: dispatchCustom } = useCustomGroups();
+
     const bookmarks = useAppSelector(selectBookmarks);
     const viewOnlySelected = useAppSelector(selectViewOnlySelected);
     const dispatch = useAppDispatch();
@@ -78,15 +78,30 @@ export function Bookmarks({ view }: Props) {
         }
 
         if (bookmark.objectGroups) {
-            dispatch(renderActions.setObjectGroups(applyBookmarkStateToGroups(objectGroups, bookmark.objectGroups)));
-
-            const defaultSelected = bookmark.objectGroups.find((group) => !group.id && group.selected)?.ids;
-
-            if (defaultSelected?.length) {
-                dispatch(renderActions.setMainObject(defaultSelected[defaultSelected.length - 1]));
-            } else {
-                dispatch(renderActions.setMainObject(undefined));
+            const bmDefaultGroup = bookmark.objectGroups.find((group) => !group.id && group.selected);
+            if (bmDefaultGroup?.ids) {
+                dispatchHighlighted(highlightActions.setIds(bmDefaultGroup.ids as number[]));
             }
+
+            const bmHiddenGroup = bookmark.objectGroups.find((group) => !group.id && group.hidden);
+            if (bmHiddenGroup?.ids) {
+                dispatchHidden(hiddenGroupActions.setIds(bmHiddenGroup.ids as number[]));
+            }
+
+            const updatedCustomGroups = customGroups.map((group) => {
+                const bookmarked = bookmark.objectGroups!.find((bmGroup) => bmGroup.id === group.id);
+
+                return {
+                    ...group,
+                    selected: bookmarked ? bookmarked.selected : false,
+                    hidden: bookmarked ? bookmarked.hidden : false,
+                };
+            });
+
+            dispatchCustom(customGroupsActions.set(updatedCustomGroups));
+
+            const main = bmDefaultGroup && bmDefaultGroup.ids?.length ? bmDefaultGroup.ids.slice(-1)[0] : undefined;
+            renderActions.setMainObject(main);
         }
 
         if (bookmark.selectedOnly !== undefined && viewOnlySelected !== bookmark.selectedOnly) {
@@ -155,38 +170,4 @@ export function Bookmarks({ view }: Props) {
             </List>
         </ScrollBox>
     );
-}
-
-function applyBookmarkStateToGroups(
-    objectGroups: ObjectGroups,
-    bookmarkedGroups: Bookmark.ObjectGroup[]
-): ObjectGroups {
-    const bookmarkDefaultSelected = bookmarkedGroups.find((group) => !group.id && group.selected);
-    const bookmarkDefaultHidden = bookmarkedGroups.find((group) => !group.id && group.hidden);
-
-    return {
-        default: bookmarkDefaultSelected
-            ? { ...objectGroups.default, ids: [...(bookmarkDefaultSelected.ids ?? [])] }
-            : objectGroups.default,
-        defaultHidden: bookmarkDefaultHidden
-            ? { ...objectGroups.defaultHidden, ids: [...(bookmarkDefaultHidden.ids ?? [])] }
-            : objectGroups.defaultHidden,
-        custom: objectGroups.custom?.map((objectGroup) => {
-            const bookmarked = bookmarkedGroups.find((bookmarkedGroup) => bookmarkedGroup.id === objectGroup.id);
-
-            if (bookmarked) {
-                return {
-                    ...objectGroup,
-                    hidden: bookmarked.hidden,
-                    selected: bookmarked.selected,
-                };
-            } else {
-                return {
-                    ...objectGroup,
-                    hidden: false,
-                    selected: false,
-                };
-            }
-        }),
-    };
 }
