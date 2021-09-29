@@ -49,7 +49,12 @@ const initialState = {
         showBox: false,
         highlight: -1,
     } as ClippingPlanes,
+    measure: {
+        addingPoint: false,
+    },
 };
+
+type State = typeof initialState;
 
 export const renderSlice = createSlice({
     name: "render",
@@ -105,6 +110,9 @@ export const renderSlice = createSlice({
         resetClippingPlanes: (state) => {
             state.clippingPlanes = initialState.clippingPlanes;
         },
+        setMeasure: (state, action: PayloadAction<State["measure"]>) => {
+            state.measure = action.payload;
+        },
         resetState: (state) => {
             return { ...initialState, environments: state.environments };
         },
@@ -128,6 +136,7 @@ export const selectHomeCameraPosition = (state: RootState) => state.render.saved
 export const selectBookmarks = (state: RootState) => state.render.bookmarks as Bookmark[];
 export const selectRenderType = (state: RootState) => state.render.renderType;
 export const selectClippingPlanes = (state: RootState) => state.render.clippingPlanes;
+export const selectMeasure = (state: RootState) => state.render.measure;
 
 const { reducer, actions } = renderSlice;
 export { reducer as renderReducer, actions as renderActions };

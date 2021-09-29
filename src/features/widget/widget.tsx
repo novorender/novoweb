@@ -228,6 +228,8 @@ function getWidgetByKey({ key, scene, view }: { key: WidgetKey; scene: Scene; vi
             return <Search scene={scene} />;
         case featuresConfig.clipping.key:
             return <Clipping />;
+        case "measure":
+            return <Measure />;
         default:
             return key;
     }
