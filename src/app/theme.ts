@@ -80,7 +80,7 @@ export const theme = createTheme({
     },
     customBreakPoints: {
         height: {
-            sm: 949.95,
+            sm: 849.95,
         },
     },
     overrides: {

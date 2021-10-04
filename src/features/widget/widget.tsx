@@ -41,7 +41,7 @@ const useStyles = makeStyles((theme) =>
                 backgroundColor: theme.palette.secondary.dark,
             },
         },
-        menuContainer: {
+        widgetContainer: {
             position: "absolute",
             pointerEvents: "auto",
             borderRadius: `${theme.shape.borderRadius}px`,
@@ -52,10 +52,11 @@ const useStyles = makeStyles((theme) =>
             top: theme.spacing(1),
             background: theme.palette.common.white,
             [theme.breakpoints.up("sm")]: {
-                width: 384,
-                height: 400,
-                maxWidth: 384,
-                maxHeight: 400,
+                minWidth: 384,
+                maxWidth: "20vw",
+                width: "100%",
+                minHeight: 350,
+                maxHeight: "44vh",
                 position: "static",
                 transform: "translateX(-20px) translateY(40px);",
             },
@@ -103,7 +104,7 @@ export function Widget({ widgetKey, scene, view }: Props) {
 
     return (
         <>
-            <Paper elevation={4} className={classes.menuContainer} data-test={`${widgetKey}-widget`}>
+            <Paper elevation={4} className={classes.widgetContainer} data-test={`${widgetKey}-widget`}>
                 <Box height="100%" display="flex" flexDirection="column">
                     <Box display="flex" p={1} boxShadow={theme.customShadows.widgetHeader}>
                         <Box display="flex" alignItems="center">
@@ -166,7 +167,7 @@ export function MenuWidget() {
     return (
         <>
             {open ? (
-                <Paper elevation={4} className={classes.menuContainer} data-test="menu-widget">
+                <Paper elevation={4} className={classes.widgetContainer} data-test="menu-widget">
                     <Box display="flex" p={1} boxShadow={theme.customShadows.widgetHeader}>
                         <Box display="flex" alignItems="center">
                             <NovorenderIcon
