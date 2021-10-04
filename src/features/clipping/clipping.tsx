@@ -1,21 +1,30 @@
-import { Switch, Box, FormControlLabel } from "@material-ui/core";
-import { useAppDispatch, useAppSelector } from "app/store";
-import { Divider } from "components";
+import { Box, FormControlLabel, useTheme, Checkbox } from "@material-ui/core";
+import { useState } from "react";
 
+import { useAppDispatch, useAppSelector } from "app/store";
+import { IosSwitch } from "components/iosSwitch";
 import { renderActions, selectClippingPlanes } from "slices/renderSlice";
 
 const axisNames = ["-X", "-Y", "-Z", "+X", "+Y", "+Z"];
 
 export function Clipping() {
+    const theme = useTheme();
+
     const clippingPlanes = useAppSelector(selectClippingPlanes);
     const { defining, enabled, showBox, inside } = clippingPlanes;
     const dispatch = useAppDispatch();
+
+    const [enableOptions, setEnableOptions] = useState(enabled || showBox || defining);
 
     const toggle = (func: "enabled" | "showBox" | "inside") => () => {
         return dispatch(renderActions.setClippingPlanes({ ...clippingPlanes, [func]: !clippingPlanes[func] }));
     };
 
     const toggleDefineNew = () => {
+        if (!enableOptions) {
+            setEnableOptions(true);
+        }
+
         if (clippingPlanes.defining) {
             return dispatch(renderActions.setClippingPlanes({ ...clippingPlanes, defining: false }));
         }
@@ -32,17 +41,19 @@ export function Clipping() {
     };
 
     return (
-        <Box p={1}>
-            <Box mt={1} mb={2} display="flex" flexDirection="column">
+        <Box p={1} boxShadow={theme.customShadows.widgetHeader}>
+            <Box mt={1} mb={1} display="flex" justifyContent="space-between">
                 <FormControlLabel
-                    control={<Switch size="medium" color="primary" checked={enabled} onChange={toggle("enabled")} />}
-                    label={<Box ml={0.5}>Enable clipping</Box>}
+                    disabled={!enableOptions}
+                    control={<Checkbox size="small" color="primary" checked={enabled} onChange={toggle("enabled")} />}
+                    label={<Box mr={0.5}>Enable</Box>}
                 />
                 <FormControlLabel
-                    control={<Switch size="medium" color="primary" checked={showBox} onChange={toggle("showBox")} />}
+                    disabled={!enableOptions}
+                    control={<Checkbox size="small" color="primary" checked={showBox} onChange={toggle("showBox")} />}
                     label={
-                        <Box ml={0.5}>
-                            Show clipping box{" "}
+                        <Box mr={0.5}>
+                            Show box{" "}
                             {showBox && clippingPlanes.highlight !== -1
                                 ? `(${axisNames[clippingPlanes.highlight]})`
                                 : ""}
@@ -50,19 +61,17 @@ export function Clipping() {
                     }
                 />
                 <FormControlLabel
-                    control={<Switch size="medium" color="primary" checked={inside} onChange={toggle("inside")} />}
-                    label={<Box ml={0.5}>Clip inside box</Box>}
+                    disabled={!enableOptions}
+                    control={<Checkbox size="small" color="primary" checked={inside} onChange={toggle("inside")} />}
+                    label={<Box>Inside</Box>}
                 />
-                <Box mt={2}>
-                    <Box px={2} mb={2}>
-                        <Divider />
-                    </Box>
-                    <FormControlLabel
-                        control={<Switch size="medium" color="primary" checked={defining} onChange={toggleDefineNew} />}
-                        label={<Box ml={0.5}>Define new box</Box>}
-                    />
-                </Box>
             </Box>
+            <FormControlLabel
+                style={{ marginLeft: 0 }}
+                control={<IosSwitch checked={defining} color="primary" onChange={toggleDefineNew} />}
+                labelPlacement="start"
+                label={<Box>Create clipping box</Box>}
+            />
         </Box>
     );
 }
