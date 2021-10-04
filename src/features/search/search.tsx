@@ -2,7 +2,7 @@ import { FormEvent, useRef, useState } from "react";
 import { makeStyles, createStyles, Box, Button, FormControlLabel } from "@material-ui/core";
 import { HierarcicalObjectReference, Scene } from "@novorender/webgl-api";
 
-import { TextField, Switch, LinearProgress, Divider, ScrollBox } from "components";
+import { TextField, Switch, LinearProgress, ScrollBox } from "components";
 import { NodeList } from "features/nodeList";
 import { useToggle } from "hooks/useToggle";
 import { useMountedState } from "hooks/useMountedState";
@@ -15,6 +15,8 @@ import CancelIcon from "@material-ui/icons/Cancel";
 import { ListOnScrollProps } from "react-window";
 import { useAppDispatch } from "app/store";
 import { renderActions } from "slices/renderSlice";
+import { highlightActions, useDispatchHighlighted } from "contexts/highlighted";
+import { NodeType } from "features/modelTree/modelTree";
 
 enum Status {
     Initial,
@@ -26,6 +28,8 @@ const useSearchStyles = makeStyles((theme) =>
     createStyles({
         form: {
             margin: `${theme.spacing(1)}px 0`,
+            boxShadow: theme.customShadows.widgetHeader,
+            paddingBottom: theme.spacing(1),
         },
         switchFormControl: {
             marginLeft: 0,
@@ -80,6 +84,7 @@ type Props = {
 export function Search({ scene }: Props) {
     const classes = useSearchStyles();
     const dispatch = useAppDispatch();
+    const dispatchHighlighted = useDispatchHighlighted();
 
     const [advanced, toggleAdvanced] = useToggle();
     const [simpleInput, setSimpleInput] = useState("");
@@ -166,6 +171,12 @@ export function Search({ scene }: Props) {
 
     const handleNodeClick = async (node: HierarcicalObjectReference) => {
         dispatch(renderActions.setMainObject(node.id));
+
+        if (node.type === NodeType.Leaf) {
+            dispatchHighlighted(highlightActions.setIds([node.id]));
+        } else {
+            dispatchHighlighted(highlightActions.setIds([]));
+        }
     };
 
     return (
@@ -296,7 +307,6 @@ export function Search({ scene }: Props) {
                     </Button>
                 </Box>
             </form>
-            <Divider />
             <ScrollBox flex={"1 1 100%"}>
                 {status === Status.Error ? (
                     <Box px={1} pt={1}>

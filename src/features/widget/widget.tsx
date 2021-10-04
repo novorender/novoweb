@@ -12,11 +12,14 @@ import {
 import { OpenReason, CloseReason, SpeedDial, SpeedDialIcon } from "@material-ui/lab";
 import type { Scene, View } from "@novorender/webgl-api";
 
-import type { WidgetKey } from "config/features";
+import { Divider } from "components";
+import { config as featuresConfig, WidgetKey } from "config/features";
 import { WidgetList } from "features/widgetList";
 import { Properties } from "features/properties";
 import { Bookmarks } from "features/bookmarks";
 import { ModelTree } from "features/modelTree";
+import { Search } from "features/search";
+import { Clipping } from "features/clipping";
 import { Groups } from "features/groups";
 import { useAppSelector, useAppDispatch } from "app/store";
 import { selectEnabledWidgets, explorerActions } from "slices/explorerSlice";
@@ -24,8 +27,6 @@ import { useToggle } from "hooks/useToggle";
 
 import CloseIcon from "@material-ui/icons/Close";
 import { ReactComponent as NovorenderIcon } from "media/icons/novorender-small.svg";
-import { Search } from "features/search";
-import { Clipping } from "features/clipping";
 
 const useStyles = makeStyles((theme) =>
     createStyles({
@@ -101,12 +102,13 @@ export function Widget({ widgetKey, scene, view }: Props) {
     }
 
     const { name, Icon, key } = config;
+    const headerShadow = menuOpen || ![featuresConfig.search.key as string].includes(key);
 
     return (
         <>
             <Paper elevation={4} className={classes.widgetContainer} data-test={`${widgetKey}-widget`}>
                 <Box height="100%" display="flex" flexDirection="column">
-                    <Box display="flex" p={1} boxShadow={theme.customShadows.widgetHeader}>
+                    <Box display="flex" p={1} boxShadow={headerShadow ? theme.customShadows.widgetHeader : "none"}>
                         <Box display="flex" alignItems="center">
                             <Icon style={{ marginRight: theme.spacing(1) }} />
                             <Typography variant="h6" component="h2">
@@ -119,6 +121,11 @@ export function Widget({ widgetKey, scene, view }: Props) {
                             </IconButton>
                         </Box>
                     </Box>
+                    {!headerShadow ? (
+                        <Box px={1}>
+                            <Divider />
+                        </Box>
+                    ) : null}
                     <Box
                         display={menuOpen ? "none" : "block"}
                         flexGrow={1}
@@ -208,17 +215,17 @@ export function MenuWidget() {
 
 function getWidgetByKey({ key, scene, view }: { key: WidgetKey; scene: Scene; view: View }): JSX.Element | string {
     switch (key) {
-        case "properties":
+        case featuresConfig.properties.key:
             return <Properties scene={scene} />;
-        case "bookmarks":
+        case featuresConfig.bookmarks.key:
             return <Bookmarks view={view} />;
-        case "groups":
+        case featuresConfig.groups.key:
             return <Groups />;
-        case "modelTree":
+        case featuresConfig.modelTree.key:
             return <ModelTree scene={scene} />;
-        case "search":
+        case featuresConfig.search.key:
             return <Search scene={scene} />;
-        case "clipping":
+        case featuresConfig.clipping.key:
             return <Clipping />;
         default:
             return key;
