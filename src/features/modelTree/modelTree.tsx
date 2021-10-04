@@ -139,7 +139,7 @@ export function ModelTree({ scene }: Props) {
 
             try {
                 const iterator = scene.search({ parentPath, descentDepth: 1 });
-                const [nodes] = await iterateAsync({ iterator, count: 25 });
+                const [nodes] = await iterateAsync({ iterator, count: 100 });
 
                 setCurrentDepth({
                     parentNode,
@@ -167,7 +167,7 @@ export function ModelTree({ scene }: Props) {
 
         try {
             setStatus(Status.Loading);
-            const [nodesToAdd, done] = await iterateAsync({ iterator: currentDepth.iterator, count: 25 });
+            const [nodesToAdd, done] = await iterateAsync({ iterator: currentDepth.iterator, count: 50 });
 
             setCurrentDepth((state) =>
                 state

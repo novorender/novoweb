@@ -36,7 +36,14 @@ export function Hud({ view, scene }: Props) {
                 {isSmall ? <Widgets scene={scene} view={view} /> : null}
             </Box>
             {!isSmall ? (
-                <Box position="absolute" bottom={theme.spacing(3)} right={theme.spacing(3)}>
+                <Box
+                    position="absolute"
+                    bottom={theme.spacing(3)}
+                    right={theme.spacing(3)}
+                    height={1}
+                    width={1}
+                    style={{ pointerEvents: "none" }}
+                >
                     <Widgets scene={scene} view={view} />
                 </Box>
             ) : null}

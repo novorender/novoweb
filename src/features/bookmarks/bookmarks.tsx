@@ -101,7 +101,7 @@ export function Bookmarks({ view }: Props) {
             dispatchCustom(customGroupsActions.set(updatedCustomGroups));
 
             const main = bmDefaultGroup && bmDefaultGroup.ids?.length ? bmDefaultGroup.ids.slice(-1)[0] : undefined;
-            renderActions.setMainObject(main);
+            dispatch(renderActions.setMainObject(main));
         }
 
         if (bookmark.selectedOnly !== undefined && viewOnlySelected !== bookmark.selectedOnly) {
