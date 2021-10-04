@@ -103,7 +103,7 @@ export function Widget({ widgetKey, scene, view }: Props) {
 
     const { name, Icon, key } = config;
     const headerShadow =
-        menuOpen || !([featuresConfig.clipping.key, featuresConfig.search.key] as string[]).includes(key);
+        menuOpen || !([featuresConfig.search.key, featuresConfig.measure.key] as string[]).includes(key);
 
     return (
         <>
