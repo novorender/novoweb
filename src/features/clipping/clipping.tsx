@@ -44,12 +44,12 @@ export function Clipping() {
         <Box p={1} boxShadow={theme.customShadows.widgetHeader}>
             <Box mt={1} mb={1} display="flex" justifyContent="space-between">
                 <FormControlLabel
-                    disabled={!enableOptions}
+                    disabled={!enableOptions || defining}
                     control={<Checkbox size="small" color="primary" checked={enabled} onChange={toggle("enabled")} />}
                     label={<Box mr={0.5}>Enable</Box>}
                 />
                 <FormControlLabel
-                    disabled={!enableOptions}
+                    disabled={!enableOptions || defining}
                     control={<Checkbox size="small" color="primary" checked={showBox} onChange={toggle("showBox")} />}
                     label={
                         <Box mr={0.5}>

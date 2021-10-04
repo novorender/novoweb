@@ -360,7 +360,7 @@ export function Render3D({ id, api, onInit, dataApi }: Props) {
     };
 
     const handleClick = async (e: React.MouseEvent) => {
-        if (!view) {
+        if (!view || clippingPlanes.defining) {
             return;
         }
 
