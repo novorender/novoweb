@@ -10,6 +10,7 @@ import { useMountedState } from "hooks/useMountedState";
 import { getObjectData as getObjectDataUtil, searchFirstObjectAtPath, searchByPatterns } from "utils/search";
 import { extractObjectIds, getParentPath } from "utils/objectData";
 import { highlightActions, useDispatchHighlighted } from "contexts/highlighted";
+import { NodeType } from "features/modelTree/modelTree";
 
 const useStyles = makeStyles({
     checkbox: {
@@ -88,7 +89,17 @@ export function Properties({ scene }: Props) {
     }, [mainObject, scene, object, setObject, setStatus]);
 
     const search = async (searchPatterns: SearchPattern[]) => {
-        dispatchHighlighted(highlightActions.setIds(mainObject ? [mainObject] : []));
+        if (mainObject !== undefined) {
+            const objData = await getObjectDataUtil({ scene, id: mainObject });
+
+            if (objData?.type === NodeType.Leaf) {
+                dispatchHighlighted(highlightActions.setIds([mainObject]));
+            } else {
+                dispatchHighlighted(highlightActions.setIds([]));
+            }
+        } else {
+            dispatchHighlighted(highlightActions.setIds([]));
+        }
 
         if (!searchPatterns.length) {
             return;
