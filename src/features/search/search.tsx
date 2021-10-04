@@ -1,4 +1,5 @@
 import { FormEvent, useRef, useState } from "react";
+import { ListOnScrollProps } from "react-window";
 import { makeStyles, createStyles, Box, Button, FormControlLabel } from "@material-ui/core";
 import { HierarcicalObjectReference, Scene } from "@novorender/webgl-api";
 
@@ -8,15 +9,14 @@ import { useToggle } from "hooks/useToggle";
 import { useMountedState } from "hooks/useMountedState";
 import { useAbortController } from "hooks/useAbortController";
 import { iterateAsync } from "utils/search";
-
-import AddCircleIcon from "@material-ui/icons/AddCircle";
-import DragHandleIcon from "@material-ui/icons/DragHandle";
-import CancelIcon from "@material-ui/icons/Cancel";
-import { ListOnScrollProps } from "react-window";
 import { useAppDispatch } from "app/store";
 import { renderActions } from "slices/renderSlice";
 import { highlightActions, useDispatchHighlighted } from "contexts/highlighted";
 import { NodeType } from "features/modelTree/modelTree";
+
+import AddCircleIcon from "@material-ui/icons/AddCircle";
+import DragHandleIcon from "@material-ui/icons/DragHandle";
+import CancelIcon from "@material-ui/icons/Cancel";
 
 enum Status {
     Initial,
@@ -33,6 +33,7 @@ const useSearchStyles = makeStyles((theme) =>
         },
         switchFormControl: {
             marginLeft: 0,
+            marginRight: theme.spacing(4),
         },
         advancedSearchModifier: {
             width: 24,
@@ -270,18 +271,21 @@ export function Search({ scene }: Props) {
                     <FormControlLabel
                         className={classes.switchFormControl}
                         control={<Switch checked={advanced} onChange={toggleAdvanced} />}
-                        label={<Box ml={0.5}>Advanced</Box>}
+                        label={
+                            <Box ml={0.5} fontSize={14}>
+                                Advanced
+                            </Box>
+                        }
                     />
                     {advanced ? (
                         <Button
                             className={classes.addCriteria}
-                            size="small"
                             onClick={() =>
                                 setAdvancedInputs((inputs) => [...inputs, { property: "", value: "", exact: true }])
                             }
                         >
                             <AddCircleIcon />
-                            Add criteria
+                            <Box ml={0.5}>Add criteria</Box>
                         </Button>
                     ) : null}
                 </Box>
