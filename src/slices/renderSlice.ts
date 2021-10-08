@@ -3,6 +3,7 @@ import type { Bookmark, ObjectGroup } from "@novorender/data-js-api";
 import { createSlice, createAsyncThunk, PayloadAction } from "@reduxjs/toolkit";
 
 import type { RootState } from "app/store";
+import { vec3 } from "gl-matrix";
 
 export const fetchEnvironments = createAsyncThunk("novorender/fetchEnvironments", async (api: API) => {
     const envs = await api.availableEnvironments("https://api.novorender.com/assets/env/index.json");
@@ -51,6 +52,11 @@ const initialState = {
     } as ClippingPlanes,
     measure: {
         addingPoint: false,
+        selected: -1,
+        points: [] as vec3[],
+        distance: 0,
+        distances: [] as number[],
+        angles: [] as number[],
     },
 };
 

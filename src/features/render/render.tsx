@@ -1,5 +1,5 @@
-import { glMatrix, quat, vec3 } from "gl-matrix";
-import { useEffect, useState, useRef, MouseEvent, PointerEvent } from "react";
+import { glMatrix, mat4, quat, vec2, vec3, vec4 } from "gl-matrix";
+import { useEffect, useState, useRef, MouseEvent, PointerEvent, useCallback } from "react";
 import {
     View,
     API,
@@ -7,6 +7,7 @@ import {
     RenderSettings,
     EnvironmentDescription,
     Internal,
+    MeasureInfo,
 } from "@novorender/webgl-api";
 import type { API as DataAPI } from "@novorender/data-js-api";
 import { Box, Button, makeStyles, Paper, Typography, useTheme } from "@material-ui/core";
@@ -21,6 +22,7 @@ import {
     selectCurrentEnvironment,
     selectEnvironments,
     selectMainObject,
+    selectMeasure,
     selectRenderType,
     selectSavedCameraPositions,
     selectSelectMultiple,
@@ -56,6 +58,34 @@ const useStyles = makeStyles({
         height: "100vh",
         width: "100vw",
     },
+    svg: {
+        position: "absolute",
+        left: 0,
+        top: 0,
+        width: "100%",
+        height: "100%",
+        overflow: "visible",
+        pointerEvents: "none",
+    },
+    circle: {
+        pointerEvents: "all",
+        cursor: "pointer",
+        stroke: "none",
+        fill: "green",
+    },
+    text: {
+        textAnchor: "middle",
+        fill: "white",
+        fontSize: 16,
+        fontWeight: "bold",
+        userSelect: "none",
+    },
+    axisText: {
+        alignmentBaseline: "middle",
+        fill: "white",
+        fontSize: 14,
+        userSelect: "none",
+    },
 });
 
 enum Status {
@@ -90,22 +120,321 @@ export function Render3D({ id, api, onInit, dataApi }: Props) {
     const selectMultiple = useAppSelector(selectSelectMultiple);
     const renderType = useAppSelector(selectRenderType);
     const clippingPlanes = useAppSelector(selectClippingPlanes);
+    const measure = useAppSelector(selectMeasure);
+    const { addingPoint, angles, points, distances, selected: selectedPoint } = measure;
     const dispatch = useAppDispatch();
 
     const rendering = useRef({ start: () => Promise.resolve(), stop: () => {} });
     const movementTimer = useRef<ReturnType<typeof setTimeout>>();
     const cameraGeneration = useRef<number>();
-    const cameraMoveRef = useRef<ReturnType<typeof requestAnimationFrame>>();
     const previousId = useRef("");
     const camera2pointDistance = useRef(0);
     const pointerDown = useRef(false);
     const camX = useRef(vec3.create());
     const camY = useRef(vec3.create());
+    const [size, setSize] = useState({ width: 0, height: 0 });
 
     const [canvas, setCanvas] = useState<null | HTMLCanvasElement>(null);
+    const [svg, setSvg] = useState<null | SVGSVGElement>(null);
     const [status, setStatus] = useMountedState(Status.Initial);
     const [view, setView] = useMountedState<View | undefined>(undefined);
     const scene = view?.scene;
+
+    const moveSvg = useCallback(() => {
+        if (!svg || !view) {
+            return;
+        }
+        const numP = points.length;
+        if (numP < 1) {
+            // svg.innerHTML = "";
+            return;
+        }
+        const { width, height } = size;
+        const { camera } = view;
+        const proj = mat4.perspective(
+            mat4.create(),
+            glMatrix.toRadian(camera.fieldOfView),
+            width / height,
+            camera.near,
+            camera.far
+        );
+        const camMatrix = mat4.fromRotationTranslation(mat4.create(), camera.rotation, camera.position);
+        mat4.invert(camMatrix, camMatrix);
+        const toScreen = (p: vec3) => {
+            const _p = vec4.transformMat4(vec4.create(), vec4.fromValues(p[0], p[1], p[2], 1), proj);
+            return vec2.fromValues(((_p[0] * 0.5) / _p[3] + 0.5) * width, (0.5 - (_p[1] * 0.5) / _p[3]) * height);
+        };
+        const clip = (p: vec3, p0: vec3) => {
+            const d = vec3.sub(vec3.create(), p0, p);
+            vec3.scale(d, d, (-camera.near - p[2]) / d[2]);
+            return vec3.add(d, d, p);
+        };
+        const vsPoints = points.map((p) => {
+            return vec3.transformMat4(vec3.create(), p, camMatrix);
+        });
+        const lastP = vsPoints[numP - 1];
+        const lastPs = toScreen(lastP);
+
+        angles.forEach((a, i) => {
+            const g = svg.children.namedItem(`angle ${i}`);
+            if (!g) {
+                return;
+            }
+            const _p = vsPoints[i + 1];
+            if (_p[2] > 0) {
+                g.innerHTML = "";
+                return;
+            }
+            let _p0 = vsPoints[i];
+            let _p1 = vsPoints[i + 2];
+            if (_p0[2] > 0) {
+                _p0 = clip(_p, _p0);
+            }
+            if (_p1[2] > 0) {
+                _p1 = clip(_p, _p1);
+            }
+            const p = toScreen(_p);
+            const p0 = toScreen(_p0);
+            const p1 = toScreen(_p1);
+            const d0 = vec2.sub(vec2.create(), p0, p);
+            const d1 = vec2.sub(vec2.create(), p1, p);
+            const l0 = vec2.len(d0);
+            const l1 = vec2.len(d1);
+            if (l0 < 40 || l1 < 40) {
+                g.innerHTML = "";
+                return;
+            }
+            vec2.scale(d0, d0, 1 / l0);
+            vec2.scale(d1, d1, 1 / l1);
+            const sw = d0[0] * d1[1] - d0[1] * d1[0] > 0 ? 1 : 0;
+            const text = +a.toFixed(1) + "°";
+            const dir = vec2.add(vec2.create(), d1, d0);
+            const dirLen = vec2.len(dir);
+            if (dirLen < 0.001) {
+                vec2.set(dir, 0, 1);
+            } else {
+                vec2.scale(dir, dir, 1 / dirLen);
+            }
+            const angle = (Math.asin(dir[1]) * 180) / Math.PI;
+            g.innerHTML = `<path d="M ${p[0] + d0[0] * 20} ${p[1] + d0[1] * 20} A 20 20, 0, 0, ${sw}, ${
+                p[0] + d1[0] * 20
+            } ${p[1] + d1[1] * 20}" stroke="blue" fill="transparent" stroke-width="2" stroke-linecap="square" />
+                        <text text-anchor=${
+                            dir[0] < 0 ? "end" : "start"
+                        } alignment-baseline="central" fill="white" x="${p[0] + dir[0] * 25}" y="${
+                p[1] + dir[1] * 25
+            }" transform="rotate(${dir[0] < 0 ? -angle : angle} ${p[0] + dir[0] * 25},${
+                p[1] + dir[1] * 25
+            })">${text}</text>`;
+        });
+        if (vsPoints.length > 1) {
+            const path = svg.children.namedItem("path");
+            if (path) {
+                path.setAttribute(
+                    "d",
+                    vsPoints
+                        .map((p, i) => {
+                            if (p[2] > 0) {
+                                if (i === 0 || vsPoints[i - 1][2] > 0) {
+                                    return "";
+                                }
+                                const p0 = clip(vsPoints[i - 1], p);
+                                const _p = toScreen(p0);
+                                return `L${_p[0]},${_p[1]}`;
+                            }
+                            const _p = toScreen(p);
+                            if (i === 0) {
+                                return `M${_p[0]},${_p[1]}`;
+                            }
+                            if (vsPoints[i - 1][2] > 0) {
+                                const p0 = clip(p, vsPoints[i - 1]);
+                                const _p0 = toScreen(p0);
+                                return `M${_p0[0]},${_p0[1]}L${_p[0]},${_p[1]}`;
+                            }
+                            return `L${_p[0]},${_p[1]}`;
+                        })
+                        .join(" ")
+                );
+            }
+            if (vsPoints.length === 2) {
+                const pathX = svg.children.namedItem("pathX");
+                const pathY = svg.children.namedItem("pathY");
+                const pathZ = svg.children.namedItem("pathZ");
+                const textX = svg.children.namedItem("textX") as HTMLElement;
+                const textY = svg.children.namedItem("textY") as HTMLElement;
+                const textZ = svg.children.namedItem("textZ") as HTMLElement;
+                if (pathX && pathY && pathZ && textX && textY && textZ) {
+                    let pts = points[0][1] < points[1][1] ? [points[0], points[1]] : [points[1], points[0]];
+                    const diff = vec3.sub(vec3.create(), pts[0], pts[1]);
+                    pts = [
+                        pts[0],
+                        vec3.fromValues(pts[1][0], pts[0][1], pts[0][2]),
+                        vec3.fromValues(pts[1][0], pts[0][1], pts[1][2]),
+                        pts[1],
+                    ];
+                    pts = pts.map((p) => {
+                        return vec3.transformMat4(vec3.create(), p, camMatrix);
+                    });
+                    const getD = (p0: vec3, p1: vec3, o: vec3, text: HTMLElement, d: number) => {
+                        if (p0[2] > 0 && p1[2] > 0) {
+                            text.innerHTML = "";
+                            return "";
+                        }
+                        if (p0[2] > 0) {
+                            p0 = clip(p1, p0);
+                        } else if (p1[2] > 0) {
+                            p1 = clip(p0, p1);
+                        }
+                        const _p0 = toScreen(p0);
+                        const _p1 = toScreen(p1);
+                        const _o = toScreen(o);
+                        const _text = `${+d.toFixed(3)} m`;
+                        let dir =
+                            _p0[1] > _p1[1] ? vec2.sub(vec2.create(), _p0, _p1) : vec2.sub(vec2.create(), _p1, _p0);
+                        const pixLen = /*_text.length * 12 +*/ 20;
+                        if (vec2.sqrLen(dir) > pixLen * pixLen) {
+                            const off = vec3.fromValues(0, 0, -1);
+                            vec3.scale(
+                                off,
+                                vec3.normalize(off, vec3.cross(off, off, vec3.fromValues(dir[0], dir[1], 0))),
+                                5
+                            );
+                            if (vec2.dot(vec2.fromValues(off[0], off[1]), vec2.sub(_o, _o, _p0)) > 0) {
+                                vec3.scale(off, off, -1);
+                            }
+                            const sign = Math.sign(off[0]);
+                            const angle = (Math.asin(off[1] / vec3.len(off)) * 180 * sign) / Math.PI;
+                            const center = vec2.lerp(vec2.create(), _p0, _p1, 0.5);
+                            text.setAttribute("x", (center[0] + off[0]).toFixed(1));
+                            text.setAttribute("y", (center[1] + off[1]).toFixed(1));
+                            text.setAttribute(
+                                "transform",
+                                `rotate(${angle} ${center[0] + off[0]},${center[1] + off[1]})`
+                            );
+                            text.innerHTML = _text;
+                            text.style.textAnchor = sign < 0 ? "end" : "start";
+                        } else {
+                            text.innerHTML = "";
+                        }
+                        return `M${_p0[0]},${_p0[1]}L${_p1[0]},${_p1[1]}`;
+                    };
+                    pathX.setAttribute("d", getD(pts[0], pts[1], pts[3], textX, Math.abs(diff[0])));
+                    pathY.setAttribute(
+                        "d",
+                        getD(pts[1], pts[2], vec3.lerp(vec3.create(), pts[0], pts[3], 0.5), textY, Math.abs(diff[2]))
+                    );
+                    pathZ.setAttribute("d", getD(pts[2], pts[3], pts[0], textZ, Math.abs(diff[1])));
+                }
+            }
+        }
+        vsPoints.forEach((_p, i) => {
+            const circle = svg.children.namedItem(i.toString());
+            // const circle = svg.children.namedItem(`dot ${i}`);
+            if (!circle) {
+                return;
+            }
+            if (_p[2] > 0) {
+                circle.setAttribute("cx", "-10");
+                return;
+            }
+            const p = toScreen(_p);
+            circle.id = i.toString();
+            circle.setAttribute("cx", p[0].toFixed(1));
+            circle.setAttribute("cy", p[1].toFixed(1));
+        });
+        {
+            const circle = svg.children.namedItem("lastDot");
+            if (circle) {
+                if (lastP[2] <= 0) {
+                    circle.setAttribute("cx", lastPs[0].toFixed(1));
+                    circle.setAttribute("cy", lastPs[1].toFixed(1));
+                } else {
+                    circle.setAttribute("cx", "-10");
+                }
+            }
+        }
+        distances.forEach((d, i) => {
+            const text = svg.children.namedItem(`text ${i}`);
+            if (!text) {
+                return;
+            }
+            const _p0 = vsPoints[i];
+            const _p1 = vsPoints[i + 1];
+            if (_p0[2] > 0 && _p1[2] > 0) {
+                text.innerHTML = "";
+                return;
+            }
+            const p0 = toScreen(_p0[2] > 0 ? clip(_p1, _p0) : _p0);
+            const p1 = toScreen(_p1[2] > 0 ? clip(_p0, _p1) : _p1);
+            const _text = `${+d.toFixed(3)} m`;
+            let dir = p0[0] > p1[0] ? vec2.sub(vec2.create(), p0, p1) : vec2.sub(vec2.create(), p1, p0);
+            const pixLen = _text.length * 12 + 20;
+            if (vec2.sqrLen(dir) > pixLen * pixLen) {
+                const angle = (Math.asin(dir[1] / vec2.len(dir)) * 180) / Math.PI;
+                const off = vec3.fromValues(0, 0, -1);
+                vec3.scale(off, vec3.normalize(off, vec3.cross(off, off, vec3.fromValues(dir[0], dir[1], 0))), 5);
+                const center = vec2.create();
+                vec2.lerp(center, p0, p1, 0.5);
+                text.setAttribute("x", (center[0] + off[0]).toFixed(1));
+                text.setAttribute("y", (center[1] + off[1]).toFixed(1));
+                text.setAttribute("transform", `rotate(${angle} ${center[0] + off[0]},${center[1] + off[1]})`);
+                text.innerHTML = _text;
+            } else {
+                text.innerHTML = "";
+            }
+        });
+    }, [svg, view, points, distances, angles, size]);
+
+    const moveSvgCursor = useCallback(
+        (x: number, y: number, measurement: MeasureInfo | undefined) => {
+            if (!svg || !view) {
+                return;
+            }
+            const g = svg.children.namedItem("cursor");
+            if (!g) {
+                return;
+            }
+            if (x < 0) {
+                g.innerHTML = "";
+                return;
+            }
+            const normal = measurement?.normalVS;
+            if (normal) {
+                const { width, height } = size;
+                const { camera } = view;
+
+                // const camMatrix = mat4.fromRotationTranslation(mat4.create(), camera.rotation, camera.position);
+                // mat4.invert(camMatrix, camMatrix);
+                // const camDir = vec3.transformMat4(vec3.create(), measurement.position, camMatrix);
+                // vec3.normalize(camDir, camDir);
+                // const _angleX = (Math.asin(camDir[1]) * -180) / Math.PI;
+                // const _angleY = (Math.asin(camDir[0]) * 180) / Math.PI;
+
+                const angleX = (y / height - 0.5) * camera.fieldOfView;
+                const angleY = ((x - width * 0.5) / height) * camera.fieldOfView;
+                // const n = vec3.transformQuat(vec3.create(), normal, quat.fromEuler(quat.create(), _angleX, _angleY, 0));
+                vec3.transformQuat(normal, normal, quat.fromEuler(quat.create(), angleX, angleY, 0));
+                let style = "";
+                if (normal[2] < 1) {
+                    const rot = vec3.cross(vec3.create(), normal, vec3.fromValues(0, 0, 1));
+                    vec3.normalize(rot, rot);
+                    const angle = (Math.acos(normal[2]) * 180) / Math.PI;
+                    style = `style="transform:rotate3d(${rot[0]},${-rot[1]},${rot[2]},${angle}deg)"`;
+                }
+                g.innerHTML = `<circle r="20" fill="rgba(255,255,255,0.25)" ${style}/><line x2="${(
+                    normal[0] * 20
+                ).toFixed(1)}" y2="${(normal[1] * -20).toFixed(
+                    1
+                )}" stroke="lightblue" stroke-width="2" stroke-linecap="round" />`;
+            } else {
+                g.innerHTML = `<path d="M-10,-10L10,10M-10,10L10,-10" stroke-width="2" stroke-linecap="round" stroke="${
+                    measurement ? "lightgreen" : "red"
+                }"/>`;
+            }
+            g.setAttribute("transform", `translate(${x},${y})`);
+        },
+        [svg, view, size]
+    );
 
     useEffect(() => {
         if (!environments.length) {
@@ -178,6 +507,16 @@ export function Render3D({ id, api, onInit, dataApi }: Props) {
                 window.document.title = `${title} - Novorender`;
                 window.addEventListener("blur", exitPointerLock);
                 canvas.focus();
+                const resizeObserver = new ResizeObserver((entries) => {
+                    for (const entry of entries) {
+                        canvas.width = entry.contentRect.width;
+                        canvas.height = entry.contentRect.height;
+                        _view.applySettings({ display: { width: canvas.width, height: canvas.height } });
+                    }
+                    setSize({ width: canvas.width, height: canvas.height });
+                });
+
+                resizeObserver.observe(canvas);
 
                 if (onInit) {
                     onInit({ view: _view, customProperties, title });
@@ -200,6 +539,7 @@ export function Render3D({ id, api, onInit, dataApi }: Props) {
         dispatchCustomGroups,
         dispatchHidden,
         dispatchHighlighted,
+        setSize,
     ]);
 
     useEffect(() => {
@@ -221,10 +561,6 @@ export function Render3D({ id, api, onInit, dataApi }: Props) {
                 return;
             }
 
-            if (cameraMoveRef.current) {
-                cancelAnimationFrame(cameraMoveRef.current);
-            }
-
             cameraMoved(view);
 
             function cameraMoved(view: View) {
@@ -235,6 +571,8 @@ export function Render3D({ id, api, onInit, dataApi }: Props) {
 
                 if (cameraGeneration.current !== view.performanceStatistics.cameraGeneration) {
                     cameraGeneration.current = view.performanceStatistics.cameraGeneration ?? 0;
+
+                    moveSvg();
 
                     if (movementTimer.current) {
                         clearTimeout(movementTimer.current);
@@ -264,11 +602,11 @@ export function Render3D({ id, api, onInit, dataApi }: Props) {
                         );
                     }, 500);
                 }
-
-                cameraMoveRef.current = requestAnimationFrame(() => cameraMoved(view));
             }
+
+            api.animate = () => cameraMoved(view);
         },
-        [view, dispatch, savedCameraPositions]
+        [api, view, moveSvg, dispatch, savedCameraPositions]
     );
 
     useEffect(
@@ -370,6 +708,29 @@ export function Render3D({ id, api, onInit, dataApi }: Props) {
             return;
         }
 
+        if (addingPoint) {
+            let { points, distance, distances, angles } = measure;
+            const num = points.length;
+            if (num > 0) {
+                const dist = vec3.distance(points[num - 1], result.position);
+                if (dist < 0.000001) {
+                    return;
+                }
+                distance += dist;
+                distances = distances.concat([dist]);
+            }
+            if (num > 1) {
+                const v0 = vec3.sub(vec3.create(), result.position, points[num - 1]);
+                const v1 = vec3.sub(vec3.create(), points[num - 2], points[num - 1]);
+                const angle = (Math.acos(vec3.dot(vec3.normalize(v0, v0), vec3.normalize(v1, v1))) * 180) / Math.PI;
+                angles = angles.concat([angle]);
+            }
+            points = points.concat([result.position]);
+            moveSvgCursor(-100, -100, undefined);
+            dispatch(renderActions.setMeasure({ ...measure, points, distances, angles, distance }));
+            return;
+        }
+
         const alreadySelected = result.objectId === mainObject || highlightedObjects.ids.includes(result.objectId);
 
         if (selectMultiple) {
@@ -447,6 +808,8 @@ export function Render3D({ id, api, onInit, dataApi }: Props) {
     };
 
     const handleUp = () => {
+        dispatch(renderActions.setMeasure({ ...measure, selected: -1 }));
+
         if (!view) {
             return;
         }
@@ -461,15 +824,47 @@ export function Render3D({ id, api, onInit, dataApi }: Props) {
         view.camera.controller.enabled = true;
     };
 
-    const handleMove = (e: MouseEvent | PointerEvent) => {
+    const handleMove = async (e: PointerEvent) => {
+        if (!view || !canvas || (!e.movementY && !e.movementX)) {
+            return;
+        }
+        if ((addingPoint && e.buttons === 0) || selectedPoint > -1) {
+            const measurement = await view.measure(e.nativeEvent.offsetX, e.nativeEvent.offsetY);
+
+            canvas.style.cursor = "none";
+
+            if (selectedPoint > -1) {
+                moveSvgCursor(-100, -100, undefined);
+                if (measurement) {
+                    let { points, distance, distances, angles } = measure;
+                    points = points.map((_, i) => (i !== selectedPoint ? _ : measurement.position));
+                    distance = 0;
+                    distances = distances.map((_, i) => {
+                        const dist = vec3.distance(points[i + 1], points[i]);
+                        distance += dist;
+                        return dist;
+                    });
+                    angles = angles.map((_, i) => {
+                        const v0 = vec3.sub(vec3.create(), points[i + 2], points[i + 1]);
+                        const v1 = vec3.sub(vec3.create(), points[i], points[i + 1]);
+                        const angle =
+                            (Math.acos(vec3.dot(vec3.normalize(v0, v0), vec3.normalize(v1, v1))) * 180) / Math.PI;
+                        return angle;
+                    });
+                    dispatch(renderActions.setMeasure({ ...measure, points, distances, angles, distance }));
+                }
+            } else {
+                moveSvgCursor(e.nativeEvent.offsetX, e.nativeEvent.offsetY, measurement);
+            }
+            return;
+        }
+        moveSvgCursor(-100, -100, undefined);
+        canvas.style.cursor = "default";
         if (
-            !view ||
-            !canvas ||
+            !pointerDown.current ||
             !clippingPlanes.enabled ||
             !clippingPlanes.showBox ||
-            !pointerDown.current ||
-            camera2pointDistance.current === 0 ||
-            (!e.movementY && !e.movementX)
+            camera2pointDistance.current === 0
         ) {
             return;
         }
@@ -524,6 +919,19 @@ export function Render3D({ id, api, onInit, dataApi }: Props) {
 
         view.applySettings({ clippingPlanes: { ...clippingPlanes, bounds: { min, max } } });
     };
+    const numP = points.length;
+
+    const selectPoint = (ev: React.MouseEvent<SVGCircleElement>) => {
+        ev.stopPropagation();
+        const selected = parseInt(ev.currentTarget.id);
+        if (canvas && svg) {
+            canvas.focus();
+            view!.camera.controller.enabled = false;
+        }
+        dispatch(renderActions.setMeasure({ ...measure, selected }));
+    };
+
+    setTimeout(moveSvg, 1);
 
     return (
         <Box position="relative" width="100%" height="100%">
@@ -541,7 +949,44 @@ export function Render3D({ id, api, onInit, dataApi }: Props) {
                         onPointerEnter={handlePointerDown}
                         onPointerMove={handleMove}
                         onPointerUp={handleUp}
+                        onPointerOut={() => moveSvgCursor(-100, -100, undefined)}
                     />
+                    {canvas !== null && (
+                        <svg className={classes.svg} width={canvas.width} height={canvas.height} ref={setSvg}>
+                            {angles.map((_, i) => {
+                                return <g key={i} id={`angle ${i}`}></g>;
+                            })}
+                            {numP === 2 && (
+                                <>
+                                    <path id="pathX" d="" stroke="red" strokeWidth={1} fill="none" />
+                                    <path id="pathY" d="" stroke="lightgreen" strokeWidth={1} fill="none" />
+                                    <path id="pathZ" d="" stroke="blue" strokeWidth={1} fill="none" />
+                                    <text className={classes.axisText} id="textX"></text>
+                                    <text className={classes.axisText} id="textY"></text>
+                                    <text className={classes.axisText} id="textZ"></text>
+                                </>
+                            )}
+                            {numP > 1 && <path id="path" d="" stroke="green" strokeWidth={2} fill="none" />}
+                            {points.map((_, i) => (
+                                <circle
+                                    className={classes.circle}
+                                    name={`dot ${i}`}
+                                    id={i.toString()}
+                                    r={5}
+                                    key={i}
+                                    onMouseDown={selectPoint}
+                                    style={selectedPoint < 0 ? undefined : { pointerEvents: "none" }}
+                                />
+                            ))}
+                            {numP > 0 && (
+                                <circle id="lastDot" r={3} stroke="none" fill="red" style={{ pointerEvents: "none" }} />
+                            )}
+                            {distances.map((_, i) => (
+                                <text className={classes.text} id={`text ${i}`} key={i}></text>
+                            ))}
+                            <g id="cursor" />
+                        </svg>
+                    )}
                     {!view ? <Loading /> : null}
                 </>
             )}
