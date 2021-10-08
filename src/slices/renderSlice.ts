@@ -3,6 +3,7 @@ import type { Bookmark, ObjectGroup } from "@novorender/data-js-api";
 import { createSlice, createAsyncThunk, PayloadAction } from "@reduxjs/toolkit";
 
 import type { RootState } from "app/store";
+import { vec3 } from "gl-matrix";
 
 export const fetchEnvironments = createAsyncThunk("novorender/fetchEnvironments", async (api: API) => {
     const envs = await api.availableEnvironments("https://api.novorender.com/assets/env/index.json");
@@ -49,7 +50,17 @@ const initialState = {
         showBox: false,
         highlight: -1,
     } as ClippingPlanes,
+    measure: {
+        addingPoint: false,
+        selected: -1,
+        points: [] as vec3[],
+        distance: 0,
+        distances: [] as number[],
+        angles: [] as number[],
+    },
 };
+
+type State = typeof initialState;
 
 export const renderSlice = createSlice({
     name: "render",
@@ -105,6 +116,9 @@ export const renderSlice = createSlice({
         resetClippingPlanes: (state) => {
             state.clippingPlanes = initialState.clippingPlanes;
         },
+        setMeasure: (state, action: PayloadAction<State["measure"]>) => {
+            state.measure = action.payload;
+        },
         resetState: (state) => {
             return { ...initialState, environments: state.environments };
         },
@@ -128,6 +142,7 @@ export const selectHomeCameraPosition = (state: RootState) => state.render.saved
 export const selectBookmarks = (state: RootState) => state.render.bookmarks as Bookmark[];
 export const selectRenderType = (state: RootState) => state.render.renderType;
 export const selectClippingPlanes = (state: RootState) => state.render.clippingPlanes;
+export const selectMeasure = (state: RootState) => state.render.measure;
 
 const { reducer, actions } = renderSlice;
 export { reducer as renderReducer, actions as renderActions };

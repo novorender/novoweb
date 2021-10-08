@@ -11,7 +11,7 @@ import ColorLensIcon from "@material-ui/icons/ColorLens";
 import VisibilityIcon from "@material-ui/icons/Visibility";
 import VisibilityOffIcon from "@material-ui/icons/VisibilityOff";
 import CheckBoxIcon from "@material-ui/icons/CheckBox";
-// import StraightenIcon from "@material-ui/icons/Straighten";
+import StraightenIcon from "@material-ui/icons/Straighten";
 import CategoryIcon from "@material-ui/icons/Category";
 import FolderIcon from "@material-ui/icons/Folder";
 import SearchIcon from "@material-ui/icons/Search";
@@ -62,13 +62,13 @@ export const config = {
         Icon: ClippingIcon,
         type: FeatureType.Widget,
     },
-    /*
     measure: {
         key: "measure",
         name: "Measure",
         Icon: StraightenIcon,
         type: FeatureType.Widget,
-    }, 
+    },
+    /*
     shareLink: {
         key: "shareLink",
         name: "Share link",
