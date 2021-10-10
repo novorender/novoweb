@@ -13,12 +13,12 @@ import { Loading } from "components";
 import { Explorer } from "pages/explorer";
 import { authActions } from "slices/authSlice";
 import { msalConfig } from "config/auth";
-import { dataServerBaseUrl, offscreenCanvas } from "config";
+import { dataServerBaseUrl, offscreenCanvas, hasCreateImageBitmap } from "config";
 import { CustomNavigationClient } from "utils/auth";
 import { getAuthHeader } from "utils/auth";
 import { useMountedState } from "hooks/useMountedState";
 
-export const api = createAPI({ webGL1Only: !offscreenCanvas, noOffscreenCanvas: !offscreenCanvas });
+export const api = createAPI({ webGL1Only: !hasCreateImageBitmap, noOffscreenCanvas: !offscreenCanvas });
 export const dataApi = createDataAPI({ authHeader: getAuthHeader, serviceUrl: dataServerBaseUrl });
 export const msalInstance = new PublicClientApplication(msalConfig);
 

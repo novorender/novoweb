@@ -521,7 +521,8 @@ export function Render3D({ id, api, onInit, dataApi }: Props) {
                 if (onInit) {
                     onInit({ view: _view, customProperties, title });
                 }
-            } catch {
+            } catch (e) {
+                alert(JSON.stringify(e, undefined, "  "));
                 setStatus(Status.Error);
             }
         }
@@ -694,7 +695,9 @@ export function Render3D({ id, api, onInit, dataApi }: Props) {
     );
 
     const exitPointerLock = () => {
-        window.document.exitPointerLock();
+        if ("exitPointerLock" in window.document) {
+            window.document.exitPointerLock();
+        }
     };
 
     const handleClick = async (e: React.MouseEvent) => {
