@@ -28,16 +28,6 @@ export function createRendering(
         running.current = true;
 
         const ctx = offscreenCanvas ? canvas.getContext("2d", { alpha: true, desynchronized: false }) : undefined;
-        // const resizeObserver = new ResizeObserver((entries) => {
-        //     for (const entry of entries) {
-        //         canvas.width = entry.contentRect.width;
-        //         canvas.height = entry.contentRect.height;
-        //         view.applySettings({ display: { width: canvas.width, height: canvas.height } });
-        //     }
-        // });
-
-        // await sleep(500);
-        // resizeObserver.observe(canvas);
 
         const fpsTable: number[] = [];
         let noBlankFrame = true;

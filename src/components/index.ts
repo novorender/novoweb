@@ -9,3 +9,4 @@ export * from "./textField";
 export * from "./tooltip";
 export * from "./speedDialAction";
 export * from "./loading";
+export * from "./iosSwitch";

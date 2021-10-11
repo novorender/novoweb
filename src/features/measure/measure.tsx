@@ -1,15 +1,44 @@
-import { Box, Button, FormControlLabel, useTheme } from "@material-ui/core";
+import {
+    Box,
+    Button,
+    FormControlLabel,
+    makeStyles,
+    Table,
+    TableBody,
+    TableCell,
+    TableHead,
+    TableRow,
+    useTheme,
+} from "@material-ui/core";
+import { vec3 } from "gl-matrix";
 
+import { IosSwitch } from "components";
 import { useAppDispatch, useAppSelector } from "app/store";
-import { IosSwitch } from "components/iosSwitch";
 import { renderActions, selectMeasure } from "slices/renderSlice";
 
 import DeleteSweepIcon from "@material-ui/icons/DeleteSweep";
-import { vec3 } from "gl-matrix";
-import { TextField } from "components";
+
+const useStyles = makeStyles({
+    table: {
+        tableLayout: "fixed",
+    },
+    tableCell: {
+        fontWeight: 400,
+        padding: "4px 8px",
+        lineHeight: "1.6em",
+
+        "&:first-child": {
+            paddingLeft: 0,
+        },
+    },
+    bold: {
+        fontWeight: 600,
+    },
+});
 
 export function Measure() {
     const theme = useTheme();
+    const classes = useStyles();
     const dispatch = useAppDispatch();
     const measure = useAppSelector(selectMeasure);
     let { addingPoint, points, distance, distances, angles } = measure;
@@ -50,69 +79,76 @@ export function Measure() {
                 </Button>
             </Box>
             {points.length > 0 && points.length < 3 && (
-                <>
-                    <Box display="flex" alignItems="center" ml={1} mb={1}>
-                        <Box mr={1}>
-                            <TextField label="Start (m) X" variant="outlined" fullWidth value={v0[0].toFixed(3)} />
-                        </Box>
-                        <Box mr={1}>
-                            <TextField label="Y" variant="outlined" fullWidth value={(-v0[2]).toFixed(3)} />
-                        </Box>
-                        <Box mr={1}>
-                            <TextField label="Z" variant="outlined" fullWidth value={v0[1].toFixed(3)} />
-                        </Box>
-                    </Box>
-                    {v1 !== undefined && (
-                        <Box display="flex" alignItems="center" ml={1} mb={1}>
-                            <Box mr={1}>
-                                <TextField label="End (m) X" variant="outlined" fullWidth value={v1[0].toFixed(3)} />
-                            </Box>
-                            <Box mr={1}>
-                                <TextField label="Y" variant="outlined" fullWidth value={(-v1[2]).toFixed(3)} />
-                            </Box>
-                            <Box mr={1}>
-                                <TextField label="Z" variant="outlined" fullWidth value={v1[1].toFixed(3)} />
-                            </Box>
-                        </Box>
-                    )}
-                    {delta !== undefined && (
-                        <Box display="flex" alignItems="center" ml={1} mb={1}>
-                            <Box mr={1}>
-                                <TextField
-                                    label="Delta (m) X"
-                                    variant="outlined"
-                                    fullWidth
-                                    value={Math.abs(delta[0]).toFixed(3)}
-                                />
-                            </Box>
-                            <Box mr={1}>
-                                <TextField
-                                    label="Y"
-                                    variant="outlined"
-                                    fullWidth
-                                    value={Math.abs(delta[2]).toFixed(3)}
-                                />
-                            </Box>
-                            <Box mr={1}>
-                                <TextField
-                                    label="Z"
-                                    variant="outlined"
-                                    fullWidth
-                                    value={Math.abs(delta[1]).toFixed(3)}
-                                />
-                            </Box>
-                        </Box>
-                    )}
-                </>
+                <Box p={1} mt={1}>
+                    <Table size="small" padding="none">
+                        <TableHead>
+                            <TableCell></TableCell>
+                            <TableCell className={classes.tableCell} align="center">
+                                <Box display="inline-block" ml={1}>
+                                    X
+                                </Box>
+                            </TableCell>
+                            <TableCell className={classes.tableCell} align="center">
+                                <Box display="inline-block" ml={1}>
+                                    Y
+                                </Box>
+                            </TableCell>
+                            <TableCell className={classes.tableCell} align="center">
+                                <Box display="inline-block" ml={1}>
+                                    Z
+                                </Box>
+                            </TableCell>
+                        </TableHead>
+                        <TableBody>
+                            <TableRow>
+                                <TableCell className={classes.tableCell}>Start (m)</TableCell>
+                                <TableCell className={classes.tableCell} align="right">
+                                    {v0[0].toFixed(3)}
+                                </TableCell>
+                                <TableCell className={classes.tableCell} align="right">
+                                    {(-v0[2]).toFixed(3)}
+                                </TableCell>
+                                <TableCell className={classes.tableCell} align="right">
+                                    {v0[1].toFixed(3)}
+                                </TableCell>
+                            </TableRow>
+                            {v1 ? (
+                                <TableRow>
+                                    <TableCell className={classes.tableCell}>End (m)</TableCell>
+                                    <TableCell className={classes.tableCell} align="right">
+                                        {v1[0].toFixed(3)}
+                                    </TableCell>
+                                    <TableCell className={classes.tableCell} align="right">
+                                        {(-v1[2]).toFixed(3)}
+                                    </TableCell>
+                                    <TableCell className={classes.tableCell} align="right">
+                                        {v1[1].toFixed(3)}
+                                    </TableCell>
+                                </TableRow>
+                            ) : null}
+                            {delta ? (
+                                <TableRow>
+                                    <TableCell className={`${classes.tableCell} ${classes.bold}`}>
+                                        Difference (m)
+                                    </TableCell>
+                                    <TableCell className={`${classes.tableCell} ${classes.bold}`} align="right">
+                                        {Math.abs(delta[0]).toFixed(3)}
+                                    </TableCell>
+                                    <TableCell className={`${classes.tableCell} ${classes.bold}`} align="right">
+                                        {Math.abs(delta[2]).toFixed(3)}
+                                    </TableCell>
+                                    <TableCell className={`${classes.tableCell} ${classes.bold}`} align="right">
+                                        {Math.abs(delta[1]).toFixed(3)}
+                                    </TableCell>
+                                </TableRow>
+                            ) : null}
+                        </TableBody>
+                    </Table>
+                </Box>
             )}
             {distance > 0 && (
-                <Box display="flex" alignItems="center" ml={1} mr={1}>
-                    <TextField
-                        label={points.length > 2 ? "Total Distance (m)" : "Distance (m)"}
-                        variant="outlined"
-                        fullWidth
-                        value={distance.toFixed(3)}
-                    />
+                <Box p={1} display="flex" alignItems="center">
+                    {points.length > 2 ? "Total Distance" : "Distance"}: {distance.toFixed(3)}m
                 </Box>
             )}
         </>
