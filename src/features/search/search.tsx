@@ -157,8 +157,8 @@ export function Search({ scene, view }: Props) {
         }
 
         async function handleUrlSearch() {
-            dispatch(explorerActions.setUrlSearchQuery(undefined));
             const result = await search();
+            dispatch(explorerActions.setUrlSearchQuery(undefined));
 
             if (result && result.length === 1) {
                 const node = result[0];
