@@ -1,6 +1,6 @@
 import { ReactNode, useEffect, RefCallback, useCallback, useState } from "react";
 import { useParams } from "react-router-dom";
-import { View } from "@novorender/webgl-api";
+import { SearchPattern, View } from "@novorender/webgl-api";
 
 import { api, dataApi } from "app";
 import { useAppSelector, useAppDispatch } from "app/store";
@@ -14,6 +14,7 @@ import { selectAccessToken } from "slices/authSlice";
 import { HiddenProvider } from "contexts/hidden";
 import { CustomGroupsProvider } from "contexts/customGroups";
 import { HighlightedProvider } from "contexts/highlighted";
+import { uniqueArray } from "utils/misc";
 
 export function Explorer() {
     const { id = process.env.REACT_APP_SCENE_ID ?? "95a89d20dd084d9486e383e131242c4c" } = useParams<{ id?: string }>();
@@ -71,11 +72,12 @@ export function Explorer() {
     const handleInit = ({ view, customProperties }: { view: View; customProperties: unknown }) => {
         const enabledFeatures = getEnabledFeatures(customProperties);
 
-        setView(view);
-
         if (enabledFeatures) {
             dispatch(explorerActions.setEnabledFeatures(enabledFeaturesToFeatureKeys(enabledFeatures)));
         }
+
+        dispatch(explorerActions.setUrlSearchQuery(getUrlSearchQuery()));
+        setView(view);
     };
 
     return (
@@ -139,17 +141,16 @@ function enabledFeaturesToFeatureKeys(enabledFeatures: Record<string, boolean>):
         bookmarks: featuresConfig.bookmarks.key,
         measurement: [featuresConfig.measure.key, featuresConfig.clipping.key],
         properties: featuresConfig.properties.key,
-        multiselectionButton: featuresConfig.multipleSelection.key,
-        selectionButtons: [featuresConfig.clearSelection.key, featuresConfig.viewOnlySelected.key],
-        showHideButtons: featuresConfig.hideSelected.key,
         tree: [featuresConfig.modelTree.key, featuresConfig.groups.key, featuresConfig.search.key],
     };
 
-    return Object.keys(enabledFeatures)
-        .map((key) => ({ key, enabled: enabledFeatures[key] }))
-        .filter((feature) => feature.enabled)
-        .map((feature) => (dictionary[feature.key] ? dictionary[feature.key]! : feature.key))
-        .flat() as FeatureKey[];
+    return uniqueArray(
+        Object.keys(enabledFeatures)
+            .map((key) => ({ key, enabled: enabledFeatures[key] }))
+            .filter((feature) => feature.enabled)
+            .map((feature) => (dictionary[feature.key] ? dictionary[feature.key]! : feature.key))
+            .flat() as FeatureKey[]
+    );
 }
 
 function getEnabledFeatures(customProperties: unknown): Record<string, boolean> | undefined {
@@ -166,4 +167,31 @@ function ContextProviders({ children }: { children: ReactNode }) {
             </HiddenProvider>
         </HighlightedProvider>
     );
+}
+
+function getUrlSearchQuery(): undefined | string | SearchPattern[] {
+    const searchQuery = new URLSearchParams(window.location.search).get("search");
+
+    if (!searchQuery) {
+        return;
+    }
+
+    try {
+        const patterns = JSON.parse(searchQuery) as unknown;
+        const patternArray = Array.isArray(patterns) ? patterns : [patterns];
+        const validPatterns = patternArray.filter(
+            (pattern): pattern is SearchPattern =>
+                typeof pattern === "object" &&
+                "property" in pattern &&
+                Boolean(pattern.property) &&
+                "value" in pattern &&
+                Boolean(pattern.value)
+        );
+
+        if (validPatterns.length) {
+            return validPatterns;
+        }
+    } catch {
+        return searchQuery;
+    }
 }
