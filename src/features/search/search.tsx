@@ -1,7 +1,7 @@
-import { FormEvent, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { ListOnScrollProps } from "react-window";
 import { makeStyles, createStyles, Box, Button, FormControlLabel } from "@material-ui/core";
-import { HierarcicalObjectReference, Scene } from "@novorender/webgl-api";
+import { HierarcicalObjectReference, Scene, View } from "@novorender/webgl-api";
 
 import { TextField, Switch, LinearProgress, ScrollBox } from "components";
 import { NodeList } from "features/nodeList";
@@ -9,7 +9,7 @@ import { useToggle } from "hooks/useToggle";
 import { useMountedState } from "hooks/useMountedState";
 import { useAbortController } from "hooks/useAbortController";
 import { iterateAsync } from "utils/search";
-import { useAppDispatch } from "app/store";
+import { useAppDispatch, useAppSelector } from "app/store";
 import { renderActions } from "slices/renderSlice";
 import { highlightActions, useDispatchHighlighted } from "contexts/highlighted";
 import { NodeType } from "features/modelTree/modelTree";
@@ -17,6 +17,7 @@ import { NodeType } from "features/modelTree/modelTree";
 import AddCircleIcon from "@material-ui/icons/AddCircle";
 import DragHandleIcon from "@material-ui/icons/DragHandle";
 import CancelIcon from "@material-ui/icons/Cancel";
+import { explorerActions, selectUrlSearchQuery } from "slices/explorerSlice";
 
 enum Status {
     Initial,
@@ -80,16 +81,21 @@ const useSearchStyles = makeStyles((theme) =>
 
 type Props = {
     scene: Scene;
+    view: View;
 };
 
-export function Search({ scene }: Props) {
+export function Search({ scene, view }: Props) {
     const classes = useSearchStyles();
     const dispatch = useAppDispatch();
     const dispatchHighlighted = useDispatchHighlighted();
 
-    const [advanced, toggleAdvanced] = useToggle();
-    const [simpleInput, setSimpleInput] = useState("");
-    const [advancedInputs, setAdvancedInputs] = useState([{ property: "", value: "", exact: true }]);
+    const urlSearchQuery = useAppSelector(selectUrlSearchQuery);
+
+    const [advanced, toggleAdvanced] = useToggle(Array.isArray(urlSearchQuery));
+    const [simpleInput, setSimpleInput] = useState(typeof urlSearchQuery === "string" ? urlSearchQuery : "");
+    const [advancedInputs, setAdvancedInputs] = useState(
+        Array.isArray(urlSearchQuery) ? urlSearchQuery : [{ property: "", value: "", exact: true }]
+    );
 
     const [status, setStatus] = useMountedState(Status.Initial);
     const [searchResults, setSearchResults] = useMountedState<
@@ -103,9 +109,7 @@ export function Search({ scene }: Props) {
     const [abortController, abort] = useAbortController();
     const listElRef = useRef<HTMLElement | null>(null);
 
-    const handleSubmit = async (e: FormEvent) => {
-        e.preventDefault();
-
+    const search = useCallback(async (): Promise<HierarcicalObjectReference[] | undefined> => {
         const abortSignal = abortController.current.signal;
         const searchPattern = advanced
             ? advancedInputs.filter(({ property, value }) => property || value)
@@ -126,10 +130,46 @@ export function Search({ scene }: Props) {
 
             setSearchResults({ nodes, iterator: !done ? iterator : undefined });
             setStatus(Status.Initial);
+            return nodes;
         } catch {
-            setStatus(Status.Error);
+            if (!abortSignal.aborted) {
+                setStatus(Status.Error);
+            }
         }
-    };
+    }, [advancedInputs, simpleInput, abortController, setSearchResults, setStatus, advanced, scene]);
+
+    const handleNodeClick = useCallback(
+        async (node: HierarcicalObjectReference) => {
+            dispatch(renderActions.setMainObject(node.id));
+
+            if (node.type === NodeType.Leaf) {
+                dispatchHighlighted(highlightActions.setIds([node.id]));
+            } else {
+                dispatchHighlighted(highlightActions.setIds([]));
+            }
+        },
+        [dispatch, dispatchHighlighted]
+    );
+
+    useEffect(() => {
+        if (urlSearchQuery && status === Status.Initial) {
+            handleUrlSearch();
+        }
+
+        async function handleUrlSearch() {
+            dispatch(explorerActions.setUrlSearchQuery(undefined));
+            const result = await search();
+
+            if (result && result.length === 1) {
+                const node = result[0];
+                handleNodeClick(node);
+
+                if (node.bounds) {
+                    view.camera.controller.zoomTo(node.bounds.sphere);
+                }
+            }
+        }
+    }, [urlSearchQuery, status, search, dispatch, view, handleNodeClick]);
 
     const handleCancel = () => {
         abort();
@@ -170,21 +210,17 @@ export function Search({ scene }: Props) {
         }
     };
 
-    const handleNodeClick = async (node: HierarcicalObjectReference) => {
-        dispatch(renderActions.setMainObject(node.id));
-
-        if (node.type === NodeType.Leaf) {
-            dispatchHighlighted(highlightActions.setIds([node.id]));
-        } else {
-            dispatchHighlighted(highlightActions.setIds([]));
-        }
-    };
-
     return (
         <Box display="flex" flexDirection="column" height={1}>
             {status === Status.Loading ? <LinearProgress /> : null}
-            <form className={classes.form} onSubmit={handleSubmit}>
-                <ScrollBox maxHeight={91} mb={2} pt={1} px={1}>
+            <form
+                className={classes.form}
+                onSubmit={(e) => {
+                    e.preventDefault();
+                    search();
+                }}
+            >
+                <ScrollBox maxHeight={92} mb={2} pt={1} px={1}>
                     {advanced ? (
                         advancedInputs.map(({ property, value, exact }, index, array) => (
                             <Box key={index} display="flex" alignItems="center" mb={index === array.length - 1 ? 0 : 1}>
