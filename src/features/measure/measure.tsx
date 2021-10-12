@@ -89,22 +89,24 @@ export function Measure() {
                 <Box p={1} mt={1}>
                     <Table size="small" padding="none">
                         <TableHead>
-                            <TableCell></TableCell>
-                            <TableCell className={classes.tableCell} align="center">
-                                <Box display="inline-block" ml={1}>
-                                    X
-                                </Box>
-                            </TableCell>
-                            <TableCell className={classes.tableCell} align="center">
-                                <Box display="inline-block" ml={1}>
-                                    Y
-                                </Box>
-                            </TableCell>
-                            <TableCell className={classes.tableCell} align="center">
-                                <Box display="inline-block" ml={1}>
-                                    Z
-                                </Box>
-                            </TableCell>
+                            <TableRow>
+                                <TableCell></TableCell>
+                                <TableCell className={classes.tableCell} align="center">
+                                    <Box display="inline-block" ml={1}>
+                                        X
+                                    </Box>
+                                </TableCell>
+                                <TableCell className={classes.tableCell} align="center">
+                                    <Box display="inline-block" ml={1}>
+                                        Y
+                                    </Box>
+                                </TableCell>
+                                <TableCell className={classes.tableCell} align="center">
+                                    <Box display="inline-block" ml={1}>
+                                        Z
+                                    </Box>
+                                </TableCell>
+                            </TableRow>
                         </TableHead>
                         <TableBody>
                             <TableRow>
