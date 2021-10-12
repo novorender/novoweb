@@ -453,8 +453,16 @@ export function Render3D({ id, api, onInit, dataApi }: Props) {
             previousId.current = id;
 
             try {
-                const { url, db, camera, objectGroups, bookmarks, customProperties, title, ...sceneData } =
-                    await dataApi.loadScene(id);
+                const {
+                    url,
+                    db,
+                    camera,
+                    objectGroups = [],
+                    bookmarks = [],
+                    customProperties,
+                    title,
+                    ...sceneData
+                } = await dataApi.loadScene(id);
 
                 const settings = sceneData.settings ?? ({} as Partial<RenderSettings>);
                 const { display: _display, ...customSettings } = settings ?? {};
@@ -479,6 +487,7 @@ export function Render3D({ id, api, onInit, dataApi }: Props) {
                           getEnvironmentDescription("", environments);
 
                 dispatch(renderActions.setEnvironment(initialEnvironment));
+
                 dispatch(renderActions.setBookmarks(bookmarks));
 
                 const defaultGroup = objectGroups.find((group) => !group.id && group.selected);
@@ -520,7 +529,6 @@ export function Render3D({ id, api, onInit, dataApi }: Props) {
 
                 onInit({ view: _view, customProperties });
             } catch (e) {
-                alert(JSON.stringify(e, undefined, "  "));
                 setStatus(Status.Error);
             }
         }
