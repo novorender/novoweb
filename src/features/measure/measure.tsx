@@ -11,6 +11,7 @@ import {
     useTheme,
 } from "@material-ui/core";
 import { vec3 } from "gl-matrix";
+import { useEffect } from "react";
 
 import { IosSwitch } from "components";
 import { useAppDispatch, useAppSelector } from "app/store";
@@ -43,8 +44,14 @@ export function Measure() {
     const measure = useAppSelector(selectMeasure);
     let { addingPoint, points, distance, distances, angles } = measure;
 
+    useEffect(() => {
+        return () => {
+            dispatch(renderActions.setMeasure({ addingPoint: false }));
+        };
+    }, [dispatch]);
+
     const toggleAddPoint = () => {
-        dispatch(renderActions.setMeasure({ ...measure, addingPoint: !addingPoint }));
+        dispatch(renderActions.setMeasure({ addingPoint: !addingPoint }));
     };
 
     const removeLastPoint = () => {
@@ -57,7 +64,7 @@ export function Measure() {
             angles = angles.slice(0, -1);
         }
         points = points.slice(0, -1);
-        dispatch(renderActions.setMeasure({ ...measure, points, distances, angles, distance }));
+        dispatch(renderActions.setMeasure({ points, distances, angles, distance }));
     };
 
     const v0 = points[0];
