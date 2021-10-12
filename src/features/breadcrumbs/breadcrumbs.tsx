@@ -3,6 +3,7 @@ import { useState, useEffect, forwardRef } from "react";
 
 import NavigateNextIcon from "@material-ui/icons/NavigateNext";
 import MoreHorizIcon from "@material-ui/icons/MoreHoriz";
+import { replaceEncodedSlash } from "utils/misc";
 
 const useStyles = makeStyles({
     breadcrumbExpandButton: {
@@ -56,7 +57,7 @@ export function Breadcrumbs({
                 fullPath={crumb ? array.slice(1, index + 1).join("/") : crumb}
                 onClick={onClick}
                 isLast={array.length > crumbsToShow && index === array.length - 1}
-                name={crumb ? crumb : rootName}
+                name={crumb ? replaceEncodedSlash(crumb) : rootName}
             />
         );
     });
