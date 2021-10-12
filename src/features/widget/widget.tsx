@@ -226,7 +226,7 @@ function getWidgetByKey({ key, scene, view }: { key: WidgetKey; scene: Scene; vi
         case featuresConfig.modelTree.key:
             return <ModelTree scene={scene} />;
         case featuresConfig.search.key:
-            return <Search scene={scene} />;
+            return <Search view={view} scene={scene} />;
         case featuresConfig.clipping.key:
             return <Clipping />;
         case featuresConfig.measure.key:

@@ -27,7 +27,14 @@ export function Widgets({ scene, view }: Props) {
     );
 
     return (
-        <Box display="flex" flexDirection="column" alignItems="flex-end" justifyContent="flex-end" height={1} width={1}>
+        <Box
+            display="flex"
+            flexDirection="column"
+            alignItems="flex-end"
+            justifyContent="flex-end"
+            height={1}
+            width={{ xs: "auto", md: "100%" }}
+        >
             {(isSmall && slots.length < 1) || (!isSmall && slots.length < 2) ? <MenuWidget /> : null}
             {slots
                 .slice(0)

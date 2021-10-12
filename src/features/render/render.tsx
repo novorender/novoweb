@@ -97,7 +97,7 @@ type Props = {
     id: string;
     api: API;
     dataApi: DataAPI;
-    onInit?: (params: { view: View; customProperties: unknown; title: string }) => void;
+    onInit: (params: { view: View; customProperties: unknown }) => void;
 };
 
 export function Render3D({ id, api, onInit, dataApi }: Props) {
@@ -518,9 +518,7 @@ export function Render3D({ id, api, onInit, dataApi }: Props) {
 
                 resizeObserver.observe(canvas);
 
-                if (onInit) {
-                    onInit({ view: _view, customProperties, title });
-                }
+                onInit({ view: _view, customProperties });
             } catch (e) {
                 alert(JSON.stringify(e, undefined, "  "));
                 setStatus(Status.Error);
