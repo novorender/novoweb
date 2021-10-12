@@ -712,25 +712,9 @@ export function Render3D({ id, api, onInit, dataApi }: Props) {
         }
 
         if (addingPoint) {
-            let { points, distance, distances, angles } = measure;
-            const num = points.length;
-            if (num > 0) {
-                const dist = vec3.distance(points[num - 1], result.position);
-                if (dist < 0.000001) {
-                    return;
-                }
-                distance += dist;
-                distances = distances.concat([dist]);
-            }
-            if (num > 1) {
-                const v0 = vec3.sub(vec3.create(), result.position, points[num - 1]);
-                const v1 = vec3.sub(vec3.create(), points[num - 2], points[num - 1]);
-                const angle = (Math.acos(vec3.dot(vec3.normalize(v0, v0), vec3.normalize(v1, v1))) * 180) / Math.PI;
-                angles = angles.concat([angle]);
-            }
-            points = points.concat([result.position]);
+            const points = measure.points.concat([result.position]);
             moveSvgCursor(-100, -100, undefined);
-            dispatch(renderActions.setMeasure({ ...measure, points, distances, angles, distance }));
+            dispatch(renderActions.setMeasurePoints(points));
             return;
         }
 
@@ -839,22 +823,8 @@ export function Render3D({ id, api, onInit, dataApi }: Props) {
             if (selectedPoint > -1) {
                 moveSvgCursor(-100, -100, undefined);
                 if (measurement) {
-                    let { points, distance, distances, angles } = measure;
-                    points = points.map((_, i) => (i !== selectedPoint ? _ : measurement.position));
-                    distance = 0;
-                    distances = distances.map((_, i) => {
-                        const dist = vec3.distance(points[i + 1], points[i]);
-                        distance += dist;
-                        return dist;
-                    });
-                    angles = angles.map((_, i) => {
-                        const v0 = vec3.sub(vec3.create(), points[i + 2], points[i + 1]);
-                        const v1 = vec3.sub(vec3.create(), points[i], points[i + 1]);
-                        const angle =
-                            (Math.acos(vec3.dot(vec3.normalize(v0, v0), vec3.normalize(v1, v1))) * 180) / Math.PI;
-                        return angle;
-                    });
-                    dispatch(renderActions.setMeasure({ ...measure, points, distances, angles, distance }));
+                    const points = measure.points.map((_, i) => (i !== selectedPoint ? _ : measurement.position));
+                    dispatch(renderActions.setMeasurePoints(points));
                 }
             } else {
                 moveSvgCursor(e.nativeEvent.offsetX, e.nativeEvent.offsetY, measurement);

@@ -137,12 +137,15 @@ function AuthCheck({ id, children }: { id: string; children: ReactNode }) {
 function enabledFeaturesToFeatureKeys(enabledFeatures: Record<string, boolean>): FeatureKey[] {
     const dictionary: Record<string, string | string[] | undefined> = {
         bookmarks: featuresConfig.bookmarks.key,
-        measurement: [featuresConfig.measure.key, featuresConfig.clipping.key],
+        measurement: featuresConfig.measure.key,
+        clipping: featuresConfig.clipping.key,
         properties: featuresConfig.properties.key,
         multiselectionButton: featuresConfig.multipleSelection.key,
         selectionButtons: [featuresConfig.clearSelection.key, featuresConfig.viewOnlySelected.key],
         showHideButtons: featuresConfig.hideSelected.key,
-        tree: [featuresConfig.modelTree.key, featuresConfig.groups.key, featuresConfig.search.key],
+        tree: featuresConfig.modelTree.key,
+        groups: featuresConfig.groups.key,
+        search: featuresConfig.search.key,
     };
 
     return Object.keys(enabledFeatures)

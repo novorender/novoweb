@@ -119,6 +119,26 @@ export const renderSlice = createSlice({
         setMeasure: (state, action: PayloadAction<State["measure"]>) => {
             state.measure = action.payload;
         },
+        setMeasurePoints: (state, action: PayloadAction<vec3[]>) => {
+            const points = action.payload;
+            const num = points.length;
+            let distance = 0;
+            let distances: number[] = [];
+            let angles: number[] = [];
+
+            for (let i = 1; i < num; i++) {
+                const dist = vec3.distance(points[i - 1], points[i]);
+                distance += dist;
+                distances.push(dist);
+            }
+            for (let i = 2; i < num; i++) {
+                const v0 = vec3.sub(vec3.create(), points[i], points[i - 1]);
+                const v1 = vec3.sub(vec3.create(), points[i - 2], points[i - 1]);
+                const angle = (Math.acos(vec3.dot(vec3.normalize(v0, v0), vec3.normalize(v1, v1))) * 180) / Math.PI;
+                angles.push(angle);
+            }
+            state.measure = { ...state.measure, points, distance, distances, angles };
+        },
         resetState: (state) => {
             return { ...initialState, environments: state.environments };
         },

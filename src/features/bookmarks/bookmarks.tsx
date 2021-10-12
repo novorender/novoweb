@@ -107,6 +107,15 @@ export function Bookmarks({ view }: Props) {
         if (bookmark.selectedOnly !== undefined && viewOnlySelected !== bookmark.selectedOnly) {
             dispatch(renderActions.toggleViewOnlySelected());
         }
+
+        if (bookmark.measurement) {
+            dispatch(renderActions.setMeasurePoints(bookmark.measurement));
+        }
+
+        if (bookmark.clippingPlanes) {
+            view.applySettings({ clippingPlanes: { ...bookmark.clippingPlanes, highlight: -1 } });
+            dispatch(renderActions.setClippingPlanes({ ...bookmark.clippingPlanes, highlight: -1, defining: false }));
+        }
     }
 
     return (
