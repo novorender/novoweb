@@ -116,8 +116,11 @@ export const renderSlice = createSlice({
         resetClippingPlanes: (state) => {
             state.clippingPlanes = initialState.clippingPlanes;
         },
-        setMeasure: (state, action: PayloadAction<State["measure"]>) => {
-            state.measure = action.payload;
+        setMeasure: (state, action: PayloadAction<Partial<State["measure"]>>) => {
+            state.measure = {
+                ...state.measure,
+                ...action.payload,
+            };
         },
         resetState: (state) => {
             return { ...initialState, environments: state.environments };
