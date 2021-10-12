@@ -3,3 +3,7 @@ export function uniqueArray<T>(arr: T[]): T[] {
         return self.indexOf(val) === idx;
     });
 }
+
+export function replaceEncodedSlash(str: String) {
+    return str.replace(/%2f/g, "/");
+}
