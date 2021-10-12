@@ -84,10 +84,21 @@ export const theme = createTheme(
                 sm: 849.95,
             },
         },
-        overrides: {
+        // TODO(OLA): Fix
+        components: {
             MuiButton: {
-                root: {
-                    textTransform: "none",
+                styleOverrides: {
+                    root: {
+                        textTransform: "none",
+                    },
+                },
+            },
+            MuiCssBaseline: {
+                styleOverrides: {
+                    body: {
+                        overscrollBehavior: "contain",
+                        overflow: "hidden",
+                    },
                 },
             },
         },
