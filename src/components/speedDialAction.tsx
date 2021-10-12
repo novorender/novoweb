@@ -1,5 +1,6 @@
-import { createStyles, makeStyles } from "@material-ui/core";
-import { SpeedDialAction as BaseSpeedDialAction, SpeedDialActionProps } from "@material-ui/lab";
+import createStyles from "@mui/styles/createStyles";
+import makeStyles from "@mui/styles/makeStyles";
+import { SpeedDialAction as BaseSpeedDialAction, SpeedDialActionProps } from "@mui/material";
 import { forwardRef } from "react";
 
 type Props = SpeedDialActionProps & {
@@ -9,7 +10,7 @@ type Props = SpeedDialActionProps & {
 const useStyles = makeStyles((theme) =>
     createStyles({
         base: {
-            [theme.breakpoints.down("sm")]: {
+            [theme.breakpoints.down("md")]: {
                 margin: theme.spacing(1),
                 marginBottom: 0,
             },

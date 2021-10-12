@@ -1,6 +1,7 @@
 import { useEffect } from "react";
-import { useTheme, useMediaQuery, FabProps } from "@material-ui/core";
-import { CloseReason, OpenReason, SpeedDial, SpeedDialIcon } from "@material-ui/lab";
+import { useTheme, useMediaQuery, FabProps } from "@mui/material";
+import { SpeedDial, SpeedDialIcon } from "@mui/material";
+import { CloseReason, OpenReason } from "@mui/lab";
 
 import { MultipleSelection } from "features/multipleSelection";
 import { ClearSelection } from "features/clearSelection";
@@ -11,8 +12,8 @@ import { useAppSelector } from "app/store";
 import { useToggle } from "hooks/useToggle";
 import { selectMainObject } from "slices/renderSlice";
 
-import ArrowUpwardIcon from "@material-ui/icons/ArrowUpward";
-import ArrowDownwardIcon from "@material-ui/icons/ArrowDownward";
+import ArrowUpwardIcon from "@mui/icons-material/ArrowUpward";
+import ArrowDownwardIcon from "@mui/icons-material/ArrowDownward";
 import { ToggleRenderType } from "features/toggleRenderType";
 
 export function SelectionModifierMenu() {
@@ -20,7 +21,7 @@ export function SelectionModifierMenu() {
     const mainObject = useAppSelector(selectMainObject);
     const [open, toggle] = useToggle();
     const theme = useTheme();
-    const isSmall = useMediaQuery(theme.breakpoints.down("sm"));
+    const isSmall = useMediaQuery(theme.breakpoints.down("md"));
 
     useEffect(() => {
         if (!interacted && mainObject !== undefined && !open) {

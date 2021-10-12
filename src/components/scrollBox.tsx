@@ -1,4 +1,6 @@
-import { Box, BoxProps, createStyles, makeStyles } from "@material-ui/core";
+import { Box, BoxProps } from "@mui/material";
+import createStyles from "@mui/styles/createStyles";
+import makeStyles from "@mui/styles/makeStyles";
 import { forwardRef } from "react";
 
 export const useScrollBoxStyles = makeStyles((theme) =>

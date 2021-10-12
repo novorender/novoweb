@@ -1,15 +1,8 @@
 import { Fragment } from "react";
 import { quat, vec3 } from "gl-matrix";
-import {
-    makeStyles,
-    createStyles,
-    useTheme,
-    List,
-    ListItem,
-    Box,
-    Typography,
-    Tooltip as MuiTooltip,
-} from "@material-ui/core";
+import { useTheme, List, ListItem, Box, Typography, Tooltip as MuiTooltip } from "@mui/material";
+import makeStyles from "@mui/styles/makeStyles";
+import createStyles from "@mui/styles/createStyles";
 import type { Bookmark } from "@novorender/data-js-api";
 import type { View } from "@novorender/webgl-api";
 
@@ -29,7 +22,7 @@ const useStyles = makeStyles((theme) =>
             display: "block",
         },
         listItem: {
-            padding: `${theme.spacing(0.5)}px ${theme.spacing(1)}px`,
+            padding: `${theme.spacing(0.5)} ${theme.spacing(1)}`,
         },
         name: {
             fontWeight: 600,
@@ -125,7 +118,6 @@ export function Bookmarks({ view }: Props) {
                                 >
                                     {bookmark.img ? (
                                         <MuiTooltip
-                                            interactive
                                             placement="bottom-end"
                                             classes={{ tooltip: classes.tooltip }}
                                             title={
@@ -145,13 +137,13 @@ export function Bookmarks({ view }: Props) {
                                     ) : null}
                                 </Box>
                                 <Box ml={1} flexDirection="column" flexGrow={1} width={0}>
-                                    <Tooltip interactive={false} title={bookmark.name}>
+                                    <Tooltip disableInteractive title={bookmark.name}>
                                         <Typography noWrap variant="body1" className={classes.name}>
                                             {bookmark.name}
                                         </Typography>
                                     </Tooltip>
                                     {bookmark.description ? (
-                                        <Tooltip interactive={false} title={bookmark.description}>
+                                        <Tooltip disableInteractive title={bookmark.description}>
                                             <Typography className={classes.description}>
                                                 {bookmark.description}
                                             </Typography>

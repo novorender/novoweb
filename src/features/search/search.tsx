@@ -1,6 +1,8 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { ListOnScrollProps } from "react-window";
-import { makeStyles, createStyles, Box, Button, FormControlLabel } from "@material-ui/core";
+import { Box, Button, FormControlLabel } from "@mui/material";
+import makeStyles from "@mui/styles/makeStyles";
+import createStyles from "@mui/styles/createStyles";
 import { HierarcicalObjectReference, Scene, View } from "@novorender/webgl-api";
 
 import { TextField, Switch, LinearProgress, ScrollBox } from "components";
@@ -14,9 +16,9 @@ import { renderActions } from "slices/renderSlice";
 import { highlightActions, useDispatchHighlighted } from "contexts/highlighted";
 import { NodeType } from "features/modelTree/modelTree";
 
-import AddCircleIcon from "@material-ui/icons/AddCircle";
-import DragHandleIcon from "@material-ui/icons/DragHandle";
-import CancelIcon from "@material-ui/icons/Cancel";
+import AddCircleIcon from "@mui/icons-material/AddCircle";
+import DragHandleIcon from "@mui/icons-material/DragHandle";
+import CancelIcon from "@mui/icons-material/Cancel";
 import { explorerActions, selectUrlSearchQuery } from "slices/explorerSlice";
 
 enum Status {
@@ -28,7 +30,7 @@ enum Status {
 const useSearchStyles = makeStyles((theme) =>
     createStyles({
         form: {
-            margin: `${theme.spacing(1)}px 0`,
+            margin: `${theme.spacing(1)} 0`,
             boxShadow: theme.customShadows.widgetHeader,
             paddingBottom: theme.spacing(1),
         },

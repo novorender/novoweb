@@ -1,14 +1,12 @@
-import {
-    AccordionDetails as MuiAccordionDetails,
-    AccordionDetailsProps,
-    createStyles,
-    makeStyles,
-} from "@material-ui/core";
+import { AccordionDetails as MuiAccordionDetails, AccordionDetailsProps } from "@mui/material";
+
+import createStyles from "@mui/styles/createStyles";
+import makeStyles from "@mui/styles/makeStyles";
 
 const useStyles = makeStyles((theme) =>
     createStyles({
         accordionDetails: {
-            padding: `0 0 ${theme.spacing(1)}px 0`,
+            padding: `0 0 ${theme.spacing(1)} 0`,
             display: "block",
         },
     })

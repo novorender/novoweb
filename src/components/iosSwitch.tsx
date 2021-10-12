@@ -1,4 +1,7 @@
-import { withStyles, Theme, createStyles, Switch } from "@material-ui/core";
+import { Theme, Switch } from "@mui/material";
+
+import withStyles from "@mui/styles/withStyles";
+import createStyles from "@mui/styles/createStyles";
 
 export const IosSwitch = withStyles((theme: Theme) =>
     createStyles({

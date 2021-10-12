@@ -1,7 +1,7 @@
 import type { ReadonlyVec3, vec3 } from "gl-matrix";
 import { useState } from "react";
 import { ChromePicker, ColorChangeHandler } from "react-color";
-import { Box, Portal, ClickAwayListener } from "@material-ui/core";
+import { Box, Portal, ClickAwayListener } from "@mui/material";
 
 import { vecToRgb } from "utils/color";
 

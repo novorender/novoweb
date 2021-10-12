@@ -1,13 +1,6 @@
-import {
-    ListItemProps,
-    useTheme,
-    ListItem,
-    Box,
-    Typography,
-    Checkbox,
-    createStyles,
-    makeStyles,
-} from "@material-ui/core";
+import { ListItemProps, useTheme, ListItem, Box, Typography, Checkbox } from "@mui/material";
+import createStyles from "@mui/styles/createStyles";
+import makeStyles from "@mui/styles/makeStyles";
 import { HierarcicalObjectReference } from "@novorender/webgl-api";
 import { Tooltip, useScrollBoxStyles } from "components";
 import { NodeType } from "features/modelTree/modelTree";
@@ -18,9 +11,8 @@ import { getObjectNameFromPath } from "utils/objectData";
 import { useIsHighlighted } from "contexts/highlighted";
 import { useIsHidden } from "contexts/hidden";
 
-import FolderIcon from "@material-ui/icons/Folder";
-import EcoIcon from "@material-ui/icons/Eco";
-import VisibilityIcon from "@material-ui/icons/Visibility";
+import FolderIcon from "@mui/icons-material/Folder";
+import VisibilityIcon from "@mui/icons-material/Visibility";
 
 type Props = {
     nodes: HierarcicalObjectReference[];
@@ -104,7 +96,7 @@ const useStyles = makeStyles((theme) =>
     createStyles({
         listItemIcon: {
             minWidth: "auto",
-            margin: `0 ${theme.spacing(1)}px 0 0`,
+            margin: `0 ${theme.spacing(1)} 0 0`,
             color: theme.palette.grey[700],
         },
     })
@@ -149,11 +141,9 @@ function Node({
                     {!parent ? (
                         node.type === NodeType.Internal ? (
                             <FolderIcon className={classes.listItemIcon} fontSize="small" />
-                        ) : (
-                            <EcoIcon className={classes.listItemIcon} fontSize="small" />
-                        )
+                        ) : null
                     ) : null}
-                    <Tooltip title={parent ? "Folder" : pathName} interactive>
+                    <Tooltip title={parent ? "Folder" : pathName}>
                         <Typography color={parent ? "textSecondary" : "textPrimary"} noWrap={true}>
                             {parent ? "Folder" : pathName}
                         </Typography>

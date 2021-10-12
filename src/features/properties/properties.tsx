@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect, ChangeEvent, ChangeEventHandler } from "react";
-import { useTheme, Box, List, ListItem, Grid, Typography, Checkbox, makeStyles } from "@material-ui/core";
+import { useTheme, Box, List, ListItem, Grid, Typography, Checkbox } from "@mui/material";
+import makeStyles from "@mui/styles/makeStyles";
 import type { ObjectData, ObjectId, Scene, SearchPattern } from "@novorender/webgl-api";
 
 import { LinearProgress, ScrollBox, Accordion, AccordionSummary, AccordionDetails, Tooltip } from "components";
@@ -263,12 +264,12 @@ function PropertyItem({ checked, onChange, property, value }: PropertyItemProps)
             <Box px={1} width={1}>
                 <Grid container alignItems="center" spacing={1} key={property}>
                     <Grid item xs={3}>
-                        <Tooltip title={property} interactive>
+                        <Tooltip title={property}>
                             <Typography noWrap={true}>{property}</Typography>
                         </Tooltip>
                     </Grid>
                     <Grid item xs={8}>
-                        <Tooltip title={value} interactive>
+                        <Tooltip title={value}>
                             <Typography noWrap={true}>{value}</Typography>
                         </Tooltip>
                     </Grid>

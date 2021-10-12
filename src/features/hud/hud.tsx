@@ -1,5 +1,5 @@
 import type { Scene, View } from "@novorender/webgl-api";
-import { Box, useMediaQuery, useTheme } from "@material-ui/core";
+import { Box, useMediaQuery, useTheme } from "@mui/material";
 
 import { SelectionModifierMenu } from "features/selectionModifierMenu";
 import { CameraNavigationMenu } from "features/cameraNavigationMenu";
@@ -14,7 +14,7 @@ const largeFabButtonDiameter = 40;
 
 export function Hud({ view, scene }: Props) {
     const theme = useTheme();
-    const isSmall = useMediaQuery(theme.breakpoints.down("sm"));
+    const isSmall = useMediaQuery(theme.breakpoints.down("md"));
 
     return (
         <>

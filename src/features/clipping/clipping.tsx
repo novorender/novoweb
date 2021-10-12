@@ -1,4 +1,4 @@
-import { Box, FormControlLabel, useTheme, Checkbox } from "@material-ui/core";
+import { Box, FormControlLabel, useTheme, Checkbox } from "@mui/material";
 import { useState } from "react";
 
 import { useAppDispatch, useAppSelector } from "app/store";

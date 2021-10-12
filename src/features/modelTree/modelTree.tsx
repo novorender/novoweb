@@ -1,4 +1,4 @@
-import { Box } from "@material-ui/core";
+import { Box } from "@mui/material";
 import { useRef, useEffect, ChangeEvent } from "react";
 import { ListOnScrollProps } from "react-window";
 import { HierarcicalObjectReference, Scene } from "@novorender/webgl-api";

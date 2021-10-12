@@ -1,4 +1,7 @@
-import { Box, createStyles, Grid, IconButton, makeStyles, Typography } from "@material-ui/core";
+import { Box, Grid, IconButton, Typography } from "@mui/material";
+
+import createStyles from "@mui/styles/createStyles";
+import makeStyles from "@mui/styles/makeStyles";
 
 import { useAppDispatch, useAppSelector } from "app/store";
 import { explorerActions, selectEnabledWidgets, selectWidgets } from "slices/explorerSlice";
@@ -86,6 +89,7 @@ export function WidgetList({ widgetKey, onSelect }: Props) {
                                 disabled={activeElsewhere}
                                 classes={{ root: classes.buttonRoot }}
                                 className={activeCurrent ? classes.activeCurrentButton : classes.button}
+                                size="large"
                             >
                                 <Icon />
                             </IconButton>

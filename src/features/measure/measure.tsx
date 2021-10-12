@@ -2,21 +2,21 @@ import {
     Box,
     Button,
     FormControlLabel,
-    makeStyles,
     Table,
     TableBody,
     TableCell,
     TableHead,
     TableRow,
     useTheme,
-} from "@material-ui/core";
+} from "@mui/material";
+import makeStyles from "@mui/styles/makeStyles";
 import { vec3 } from "gl-matrix";
 
 import { IosSwitch } from "components";
 import { useAppDispatch, useAppSelector } from "app/store";
 import { renderActions, selectMeasure } from "slices/renderSlice";
 
-import DeleteSweepIcon from "@material-ui/icons/DeleteSweep";
+import DeleteSweepIcon from "@mui/icons-material/DeleteSweep";
 
 const useStyles = makeStyles({
     table: {

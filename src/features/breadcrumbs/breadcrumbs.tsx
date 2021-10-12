@@ -1,8 +1,9 @@
-import { Box, Button, makeStyles, Menu } from "@material-ui/core";
+import { Box, Button, Menu } from "@mui/material";
+import makeStyles from "@mui/styles/makeStyles";
 import { useState, useEffect, forwardRef } from "react";
 
-import NavigateNextIcon from "@material-ui/icons/NavigateNext";
-import MoreHorizIcon from "@material-ui/icons/MoreHoriz";
+import NavigateNextIcon from "@mui/icons-material/NavigateNext";
+import MoreHorizIcon from "@mui/icons-material/MoreHoriz";
 
 const useStyles = makeStyles({
     breadcrumbExpandButton: {

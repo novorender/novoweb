@@ -1,6 +1,8 @@
 import { useState, useCallback, RefCallback } from "react";
-import { makeStyles, createStyles, List, ListItem, Box, Typography, Checkbox, IconButton } from "@material-ui/core";
-import { Visibility, ColorLens } from "@material-ui/icons";
+import { List, ListItem, Box, Typography, Checkbox, IconButton } from "@mui/material";
+import makeStyles from "@mui/styles/makeStyles";
+import createStyles from "@mui/styles/createStyles";
+import { Visibility, ColorLens } from "@mui/icons-material";
 
 import { ScrollBox, Accordion, AccordionSummary, AccordionDetails, Tooltip } from "components";
 import { useToggle } from "hooks/useToggle";
@@ -24,7 +26,7 @@ const useStyles = makeStyles((theme) =>
             paddingBottom: 0,
         },
         listItem: {
-            padding: `${theme.spacing(0.5)}px ${theme.spacing(1)}px`,
+            padding: `${theme.spacing(0.5)} ${theme.spacing(1)}`,
             margin: 0,
         },
         listItemInset: {
@@ -216,7 +218,7 @@ function Group({
             >
                 <Box display="flex" width={1} alignItems="center">
                     <Box flex="1 1 auto" overflow="hidden">
-                        <Tooltip title={group.name} interactive>
+                        <Tooltip title={group.name}>
                             <Typography noWrap={true}>{group.name}</Typography>
                         </Tooltip>
                     </Box>

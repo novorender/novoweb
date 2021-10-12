@@ -1,10 +1,12 @@
-import { AccordionSummary as MuiAccordionSummary, AccordionSummaryProps, makeStyles } from "@material-ui/core";
+import { AccordionSummary as MuiAccordionSummary, AccordionSummaryProps } from "@mui/material";
 
-import ExpandMoreIcon from "@material-ui/icons/ExpandMore";
+import makeStyles from "@mui/styles/makeStyles";
+
+import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 
 const useStyles = makeStyles((theme) => ({
     accordionSummaryRoot: {
-        padding: `0 ${theme.spacing(1)}px`,
+        padding: `0 ${theme.spacing(1)}`,
         borderBottom: `1px solid ${theme.palette.grey[200]}`,
 
         "&:hover": {
@@ -49,7 +51,7 @@ export function AccordionSummary(props: AccordionSummaryProps) {
                 root: classes.accordionSummaryRoot,
                 content: classes.accordionSummaryContent,
                 expanded: classes.accordionSummaryExpanded,
-                expandIcon: classes.expandIcon,
+                expandIconWrapper: classes.expandIcon,
                 ...props.classes,
             }}
         />

@@ -1,4 +1,7 @@
-import { Accordion as MuiAccordion, AccordionProps, createStyles, makeStyles } from "@material-ui/core";
+import { Accordion as MuiAccordion, AccordionProps } from "@mui/material";
+
+import createStyles from "@mui/styles/createStyles";
+import makeStyles from "@mui/styles/makeStyles";
 
 const useStyles = makeStyles((theme) =>
     createStyles({
@@ -8,7 +11,7 @@ const useStyles = makeStyles((theme) =>
                 display: "none",
             },
             "&.Mui-expanded": {
-                margin: `0 0 ${theme.spacing(1)}px`,
+                margin: `0 0 ${theme.spacing(1)}`,
             },
             "&.MuiPaper-elevation1": {
                 boxShadow: "none",

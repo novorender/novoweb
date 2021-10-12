@@ -1,15 +1,8 @@
-import {
-    useTheme,
-    useMediaQuery,
-    Paper,
-    Box,
-    Typography,
-    IconButton,
-    createStyles,
-    makeStyles,
-    FabProps,
-} from "@material-ui/core";
-import { OpenReason, CloseReason, SpeedDial, SpeedDialIcon } from "@material-ui/lab";
+import { useTheme, useMediaQuery, Paper, Box, Typography, IconButton, FabProps } from "@mui/material";
+import createStyles from "@mui/styles/createStyles";
+import makeStyles from "@mui/styles/makeStyles";
+import { SpeedDial, SpeedDialIcon } from "@mui/material";
+import { OpenReason, CloseReason } from "@mui/lab";
 import type { Scene, View } from "@novorender/webgl-api";
 
 import { Divider } from "components";
@@ -26,7 +19,7 @@ import { useAppSelector, useAppDispatch } from "app/store";
 import { selectEnabledWidgets, explorerActions } from "slices/explorerSlice";
 import { useToggle } from "hooks/useToggle";
 
-import CloseIcon from "@material-ui/icons/Close";
+import CloseIcon from "@mui/icons-material/Close";
 import { ReactComponent as NovorenderIcon } from "media/icons/novorender-small.svg";
 
 const useStyles = makeStyles((theme) =>
@@ -78,7 +71,7 @@ type Props = {
 export function Widget({ widgetKey, scene, view }: Props) {
     const classes = useStyles();
     const theme = useTheme();
-    const isSmall = useMediaQuery(theme.breakpoints.down("sm"));
+    const isSmall = useMediaQuery(theme.breakpoints.down("md"));
     const [menuOpen, toggleMenu] = useToggle(false);
 
     const enabledWidgets = useAppSelector(selectEnabledWidgets);
@@ -161,7 +154,7 @@ export function Widget({ widgetKey, scene, view }: Props) {
 export function MenuWidget() {
     const classes = useStyles();
     const theme = useTheme();
-    const isSmall = useMediaQuery(theme.breakpoints.down("sm"));
+    const isSmall = useMediaQuery(theme.breakpoints.down("md"));
 
     const [open, toggle] = useToggle(false);
 

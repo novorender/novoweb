@@ -10,7 +10,9 @@ import {
     MeasureInfo,
 } from "@novorender/webgl-api";
 import type { API as DataAPI } from "@novorender/data-js-api";
-import { Box, Button, makeStyles, Paper, Typography, useTheme } from "@material-ui/core";
+import { Box, Button, Paper, Typography, useTheme } from "@mui/material";
+
+import makeStyles from "@mui/styles/makeStyles";
 
 import {
     fetchEnvironments,

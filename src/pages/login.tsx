@@ -1,22 +1,15 @@
 import { useState, FormEvent } from "react";
 import { useMsal } from "@azure/msal-react";
-import {
-    useTheme,
-    Box,
-    Button,
-    OutlinedInput,
-    IconButton,
-    InputAdornment,
-    FormControl,
-    makeStyles,
-} from "@material-ui/core";
+import { useTheme, Box, Button, OutlinedInput, IconButton, InputAdornment, FormControl } from "@mui/material";
+
+import makeStyles from "@mui/styles/makeStyles";
 
 import { loginRequest } from "config/auth";
 import { useAppDispatch } from "app/store";
 import { authActions } from "slices/authSlice";
 import { login, storeToken } from "utils/auth";
 
-import { Lock, Visibility, VisibilityOff, AccountCircle } from "@material-ui/icons";
+import { Lock, Visibility, VisibilityOff, AccountCircle } from "@mui/icons-material";
 import { ReactComponent as NovorenderLogo } from "media/img/novorender_logo_RGB_2021.svg";
 import { useToggle } from "hooks/useToggle";
 
@@ -69,7 +62,7 @@ export function Login() {
                 maxHeight={{ xs: "auto", sm: 512 }}
                 width={1}
                 height={1}
-                borderRadius={4}
+                borderRadius="4px"
                 bgcolor={theme.palette.common.white}
                 py={{ xs: 2, sm: 8.5 }}
                 px={{ xs: 2, sm: 8 }}
@@ -114,6 +107,7 @@ export function Login() {
                                         <IconButton
                                             aria-label="toggle password visibility"
                                             onClick={toggleShowPassword}
+                                            size="large"
                                         >
                                             {showPassword ? <VisibilityOff /> : <Visibility />}
                                         </IconButton>
