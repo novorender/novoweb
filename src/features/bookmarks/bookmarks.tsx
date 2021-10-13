@@ -113,11 +113,15 @@ export function Bookmarks({ view }: Props) {
 
         if (bookmark.measurement) {
             dispatch(renderActions.setMeasurePoints(bookmark.measurement));
+        } else {
+            dispatch(renderActions.setMeasurePoints([]));
         }
 
         if (bookmark.clippingPlanes) {
             view.applySettings({ clippingPlanes: { ...bookmark.clippingPlanes, highlight: -1 } });
             dispatch(renderActions.setClippingPlanes({ ...bookmark.clippingPlanes, highlight: -1, defining: false }));
+        } else {
+            dispatch(renderActions.resetClippingPlanes());
         }
     }
 
