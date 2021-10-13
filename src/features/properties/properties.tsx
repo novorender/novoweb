@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect, ChangeEvent, ChangeEventHandler } from "react";
 import { useTheme, Box, List, ListItem, Grid, Typography, Checkbox } from "@mui/material";
 import makeStyles from "@mui/styles/makeStyles";
-import type { ObjectData, ObjectId, Scene, SearchPattern } from "@novorender/webgl-api";
+import type { ObjectData, ObjectId, Scene } from "@novorender/webgl-api";
 
 import { LinearProgress, ScrollBox, Accordion, AccordionSummary, AccordionDetails, Tooltip } from "components";
 import { selectMainObject } from "slices/renderSlice";
@@ -25,10 +25,18 @@ enum Status {
 }
 
 type PropertiesObject = {
+    type: ObjectData["type"];
     id: ObjectId;
     base: [string, string][];
     grouped: Record<string, { name: string; properties: [string, string][] }>;
     parent?: PropertiesObject;
+};
+
+type SearchPattern = {
+    property: string;
+    value: string;
+    deep: boolean;
+    exact?: boolean;
 };
 
 type Props = {
@@ -113,8 +121,8 @@ export function Properties({ scene }: Props) {
             await searchByPatterns({
                 scene,
                 abortSignal,
-                searchPatterns,
-                deep: true,
+                searchPatterns: searchPatterns.map(({ deep: _deep, ...pattern }) => pattern),
+                deep: searchPatterns.some((pattern) => pattern.deep),
                 callbackInterval: 1000,
                 callback: (refs) => dispatchHighlighted(highlightActions.add(extractObjectIds(refs))),
             });
@@ -126,12 +134,13 @@ export function Properties({ scene }: Props) {
         }
     };
 
-    const handleCheck = (property: string, value: string) => {
+    const handleCheck = ({ property, value, deep }: Omit<SearchPattern, "exact">) => {
         const newSearches = {
             ...searches,
             [property]: {
                 property,
                 value,
+                deep,
                 exact: true,
             },
         };
@@ -152,12 +161,12 @@ export function Properties({ scene }: Props) {
     };
 
     const handleChange =
-        (property: string, value: string) =>
+        ({ property, value, deep }: Omit<SearchPattern, "exact">) =>
         (event: ChangeEvent<HTMLInputElement>): void => {
             abort();
             setStatus(Status.Initial);
 
-            event.target.checked ? handleCheck(property, value) : handleUncheck(property);
+            event.target.checked ? handleCheck({ property, value, deep }) : handleUncheck(property);
         };
 
     if (mainObject === undefined || !object) {
@@ -186,7 +195,7 @@ export function Properties({ scene }: Props) {
 
 type PropertyListProps = {
     object: PropertiesObject;
-    handleChange: (property: string, value: string) => (event: ChangeEvent<HTMLInputElement>) => void;
+    handleChange: (params: SearchPattern) => (event: ChangeEvent<HTMLInputElement>) => void;
     searches: Record<string, SearchPattern>;
 };
 
@@ -205,7 +214,7 @@ function PropertyList({ object, handleChange, searches }: PropertyListProps) {
                                 property={property}
                                 value={value}
                                 checked={searches[property] !== undefined && searches[property].value === value}
-                                onChange={handleChange(property, value)}
+                                onChange={handleChange({ property, value, deep: object.type === NodeType.Internal })}
                             />
                         ))}
                 </List>
@@ -229,7 +238,11 @@ function PropertyList({ object, handleChange, searches }: PropertyListProps) {
                                         searches[`${group.name}/${property}`] !== undefined &&
                                         searches[`${group.name}/${property}`].value === value
                                     }
-                                    onChange={handleChange(`${group.name}/${property}`, value)}
+                                    onChange={handleChange({
+                                        value,
+                                        property: `${group.name}/${property}`,
+                                        deep: object.type === NodeType.Internal,
+                                    })}
                                 />
                             ))}
                     </AccordionDetails>
@@ -328,6 +341,7 @@ function createPropertiesObject(object: ObjectData): PropertiesObject {
             };
         },
         {
+            type: object.type,
             id: object.id,
             base: [
                 ["Name", object.name],

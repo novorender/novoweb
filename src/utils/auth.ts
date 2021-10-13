@@ -1,10 +1,10 @@
 import { AuthenticationHeader } from "@novorender/data-js-api";
-import { NavigationClient, NavigationOptions } from "@azure/msal-browser";
+import { AccountInfo, NavigationClient, NavigationOptions } from "@azure/msal-browser";
 import { History } from "history";
 
 import { msalInstance } from "app";
 import { store } from "app/store";
-import { loginRequest, tokenStorageKey } from "config/auth";
+import { accountStorageKey, loginRequest, tokenStorageKey } from "config/auth";
 import { authActions } from "slices/authSlice";
 
 export async function getAuthHeader(): Promise<AuthenticationHeader> {
@@ -80,4 +80,20 @@ export class CustomNavigationClient extends NavigationClient {
 
         return false;
     }
+}
+
+export function storeActiveAccount(account: AccountInfo | null): void {
+    if (account) {
+        localStorage[accountStorageKey] = JSON.stringify(account);
+    }
+}
+
+export function getStoredActiveAccount(): AccountInfo | undefined {
+    try {
+        const storedAccount = localStorage[accountStorageKey] ? JSON.parse(localStorage[accountStorageKey]) : undefined;
+
+        if (storedAccount && "localAccountId" in storedAccount) {
+            return storedAccount as AccountInfo;
+        }
+    } catch {}
 }

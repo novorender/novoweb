@@ -8,6 +8,7 @@ import { Loading } from "components";
 import { loginRequest } from "config/auth";
 import { authActions, selectAccessToken, selectMsalAccount } from "slices/authSlice";
 import { useMountedState } from "hooks/useMountedState";
+import { getStoredActiveAccount } from "utils/auth";
 
 export function ProtectedRoute({ children, ...props }: RouteProps) {
     return (
@@ -34,7 +35,11 @@ export function Protected({ children }: { children: ReactNode }) {
         async function getAccessToken() {
             await msalInstance.handleRedirectPromise();
 
-            const account = msalAccount ?? accounts[0];
+            const storedAccount = getStoredActiveAccount();
+            const account =
+                msalAccount ?? storedAccount
+                    ? accounts.find((account) => account.localAccountId === storedAccount?.localAccountId)
+                    : accounts[0];
 
             if (accessToken || !account) {
                 return setLoading(false);

@@ -1,16 +1,16 @@
 import { ObjectGroup } from "@novorender/data-js-api";
-import { API, EnvironmentDescription, Internal, Scene, View } from "@novorender/webgl-api";
+import { EnvironmentDescription, Highlight, Internal, Scene, View } from "@novorender/webgl-api";
 
+import { api } from "app";
 import { offscreenCanvas } from "config";
 import { CustomGroup } from "contexts/customGroups";
-import { RenderType } from "slices/renderSlice";
+import { ObjectVisibility, RenderType } from "slices/renderSlice";
 import { sleep } from "utils/timers";
 import { ssaoEnabled, taaEnabled } from "./consts";
 
 export function createRendering(
     canvas: HTMLCanvasElement,
-    view: View,
-    api: API
+    view: View
 ): {
     start: () => Promise<void>;
     stop: () => void;
@@ -118,17 +118,15 @@ export function createRendering(
  * Applies highlights and hides objects in the 3d view based on the object groups provided
  */
 export function refillObjects({
-    api,
     scene,
     view,
     objectGroups,
-    viewOnlySelected,
+    defaultVisibility,
 }: {
-    api: API;
     scene: Scene;
     view: View;
     objectGroups: { ids: number[]; color: [number, number, number]; selected: boolean; hidden: boolean }[];
-    viewOnlySelected: boolean;
+    defaultVisibility: ObjectVisibility;
 }): void {
     if (!view || !scene) {
         return;
@@ -137,13 +135,11 @@ export function refillObjects({
     const { objectHighlighter } = scene;
 
     view.settings.objectHighlights = [
-        viewOnlySelected
-            ? api.createHighlight({ kind: "transparent", opacity: 0.2 })
-            : api.createHighlight({ kind: "neutral" }),
+        getHighlightByObjectVisibility(defaultVisibility),
         ...objectGroups.map((group) => api.createHighlight({ kind: "color", color: group.color })),
     ];
 
-    objectHighlighter.objectHighlightIndices.fill(0);
+    objectHighlighter.objectHighlightIndices.fill(defaultVisibility === ObjectVisibility.Transparent ? 255 : 0);
 
     objectGroups.forEach((group, index) => {
         if (group.selected) {
@@ -217,4 +213,15 @@ export function addConsoleDebugUtils(): void {
 
     window.disableSsao = (val?: boolean) =>
         val !== false ? localStorage.setItem("disable-ssao", "true") : localStorage.removeItem("disable-ssao");
+}
+
+function getHighlightByObjectVisibility(visibility: ObjectVisibility): Highlight {
+    switch (visibility) {
+        case ObjectVisibility.Neutral:
+            return api.createHighlight({ kind: "neutral" });
+        case ObjectVisibility.SemiTransparent:
+            return api.createHighlight({ kind: "transparent", opacity: 0.2 });
+        case ObjectVisibility.Transparent:
+            return api.createHighlight({ kind: "transparent", opacity: 0 });
+    }
 }

@@ -15,6 +15,7 @@ import { HiddenProvider } from "contexts/hidden";
 import { CustomGroupsProvider } from "contexts/customGroups";
 import { HighlightedProvider } from "contexts/highlighted";
 import { uniqueArray } from "utils/misc";
+import { SetPreloadedScene } from "features/render/render";
 
 export function Explorer() {
     const { id = process.env.REACT_APP_SCENE_ID ?? "95a89d20dd084d9486e383e131242c4c" } = useParams<{ id?: string }>();
@@ -121,7 +122,12 @@ function AuthCheck({ id, children }: { id: string; children: ReactNode }) {
             }
 
             const scene = await dataApi.loadScene(id).catch(() => undefined);
-            setStatus(scene === undefined ? AuthCheckStatus.RequireAuth : AuthCheckStatus.Public);
+            if (scene) {
+                SetPreloadedScene(scene);
+                setStatus(AuthCheckStatus.Public);
+            } else {
+                setStatus(AuthCheckStatus.RequireAuth);
+            }
         }
     }, [status, dispatch, id, accessToken]);
 
@@ -139,9 +145,12 @@ function AuthCheck({ id, children }: { id: string; children: ReactNode }) {
 function enabledFeaturesToFeatureKeys(enabledFeatures: Record<string, boolean>): FeatureKey[] {
     const dictionary: Record<string, string | string[] | undefined> = {
         bookmarks: featuresConfig.bookmarks.key,
-        measurement: [featuresConfig.measure.key, featuresConfig.clipping.key],
+        measurement: featuresConfig.measure.key,
+        clipping: featuresConfig.clipping.key,
         properties: featuresConfig.properties.key,
-        tree: [featuresConfig.modelTree.key, featuresConfig.groups.key, featuresConfig.search.key],
+        tree: featuresConfig.modelTree.key,
+        groups: featuresConfig.groups.key,
+        search: featuresConfig.search.key,
     };
 
     return uniqueArray(

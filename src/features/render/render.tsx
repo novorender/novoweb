@@ -9,6 +9,7 @@ import {
     Internal,
     MeasureInfo,
 } from "@novorender/webgl-api";
+import { SceneData } from "@novorender/data-js-api";
 import type { API as DataAPI } from "@novorender/data-js-api";
 import { Box, Button, Paper, Typography, useTheme } from "@mui/material";
 
@@ -28,7 +29,7 @@ import {
     selectRenderType,
     selectSavedCameraPositions,
     selectSelectMultiple,
-    selectViewOnlySelected,
+    selectDefaultVisibility,
 } from "slices/renderSlice";
 import { useAppDispatch, useAppSelector } from "app/store";
 import { PerformanceStats } from "features/performanceStats";
@@ -102,6 +103,12 @@ type Props = {
     onInit: (params: { view: View; customProperties: unknown }) => void;
 };
 
+let preloadedScene: SceneData | undefined;
+
+export function SetPreloadedScene(scene: SceneData) {
+    preloadedScene = scene;
+}
+
 export function Render3D({ id, api, onInit, dataApi }: Props) {
     const classes = useStyles();
 
@@ -115,7 +122,7 @@ export function Render3D({ id, api, onInit, dataApi }: Props) {
     const environments = useAppSelector(selectEnvironments);
     const mainObject = useAppSelector(selectMainObject);
 
-    const viewOnlySelected = useAppSelector(selectViewOnlySelected);
+    const defaultVisibility = useAppSelector(selectDefaultVisibility);
     const cameraSpeedMultiplier = useAppSelector(selectCameraSpeedMultiplier);
     const baseCameraSpeed = useAppSelector(selectBaseCameraSpeed);
     const savedCameraPositions = useAppSelector(selectSavedCameraPositions);
@@ -455,8 +462,16 @@ export function Render3D({ id, api, onInit, dataApi }: Props) {
             previousId.current = id;
 
             try {
-                const { url, db, camera, objectGroups, bookmarks, customProperties, title, ...sceneData } =
-                    await dataApi.loadScene(id);
+                const {
+                    url,
+                    db,
+                    camera,
+                    objectGroups = [],
+                    bookmarks = [],
+                    customProperties,
+                    title,
+                    ...sceneData
+                } = preloadedScene ?? (await dataApi.loadScene(id));
 
                 const settings = sceneData.settings ?? ({} as Partial<RenderSettings>);
                 const { display: _display, ...customSettings } = settings ?? {};
@@ -481,6 +496,7 @@ export function Render3D({ id, api, onInit, dataApi }: Props) {
                           getEnvironmentDescription("", environments);
 
                 dispatch(renderActions.setEnvironment(initialEnvironment));
+
                 dispatch(renderActions.setBookmarks(bookmarks));
 
                 const defaultGroup = objectGroups.find((group) => !group.id && group.selected);
@@ -504,7 +520,7 @@ export function Render3D({ id, api, onInit, dataApi }: Props) {
                 }
 
                 setView(_view);
-                rendering.current = createRendering(canvas, _view, api);
+                rendering.current = createRendering(canvas, _view);
                 rendering.current.start();
                 window.document.title = `${title} - Novorender`;
                 window.addEventListener("blur", exitPointerLock);
@@ -521,8 +537,8 @@ export function Render3D({ id, api, onInit, dataApi }: Props) {
                 resizeObserver.observe(canvas);
 
                 onInit({ view: _view, customProperties });
+                preloadedScene = undefined;
             } catch (e) {
-                alert(JSON.stringify(e, undefined, "  "));
                 setStatus(Status.Error);
             }
         }
@@ -616,17 +632,16 @@ export function Render3D({ id, api, onInit, dataApi }: Props) {
                 refillObjects({
                     scene,
                     view,
-                    api,
                     objectGroups: [
                         { ...hiddenObjects, hidden: true, selected: false, color: [0, 0, 0] },
                         ...customGroups,
                         { ...highlightedObjects, hidden: false, selected: true },
                     ],
-                    viewOnlySelected,
+                    defaultVisibility,
                 });
             }
         },
-        [scene, view, api, viewOnlySelected, mainObject, customGroups, highlightedObjects, hiddenObjects]
+        [scene, view, api, defaultVisibility, mainObject, customGroups, highlightedObjects, hiddenObjects]
     );
 
     useEffect(
@@ -712,40 +727,26 @@ export function Render3D({ id, api, onInit, dataApi }: Props) {
         }
 
         if (addingPoint) {
-            let { points, distance, distances, angles } = measure;
-            const num = points.length;
-            if (num > 0) {
-                const dist = vec3.distance(points[num - 1], result.position);
-                if (dist < 0.000001) {
-                    return;
-                }
-                distance += dist;
-                distances = distances.concat([dist]);
-            }
-            if (num > 1) {
-                const v0 = vec3.sub(vec3.create(), result.position, points[num - 1]);
-                const v1 = vec3.sub(vec3.create(), points[num - 2], points[num - 1]);
-                const angle = (Math.acos(vec3.dot(vec3.normalize(v0, v0), vec3.normalize(v1, v1))) * 180) / Math.PI;
-                angles = angles.concat([angle]);
-            }
-            points = points.concat([result.position]);
+            const points = measure.points.concat([result.position]);
             moveSvgCursor(-100, -100, undefined);
-            dispatch(renderActions.setMeasure({ ...measure, points, distances, angles, distance }));
+            dispatch(renderActions.setMeasurePoints(points));
             return;
         }
 
-        const alreadySelected = result.objectId === mainObject || highlightedObjects.ids.includes(result.objectId);
+        const alreadySelected = highlightedObjects.ids.includes(result.objectId);
 
         if (selectMultiple) {
             if (alreadySelected) {
-                dispatch(renderActions.setMainObject(undefined));
+                if (result.objectId === mainObject) {
+                    dispatch(renderActions.setMainObject(undefined));
+                }
                 dispatchHighlighted(highlightActions.remove([result.objectId]));
             } else {
                 dispatch(renderActions.setMainObject(result.objectId));
                 dispatchHighlighted(highlightActions.add([result.objectId]));
             }
         } else {
-            if (alreadySelected) {
+            if (alreadySelected && highlightedObjects.ids.length === 1) {
                 dispatch(renderActions.setMainObject(undefined));
                 dispatchHighlighted(highlightActions.setIds([]));
             } else {
@@ -839,22 +840,8 @@ export function Render3D({ id, api, onInit, dataApi }: Props) {
             if (selectedPoint > -1) {
                 moveSvgCursor(-100, -100, undefined);
                 if (measurement) {
-                    let { points, distance, distances, angles } = measure;
-                    points = points.map((_, i) => (i !== selectedPoint ? _ : measurement.position));
-                    distance = 0;
-                    distances = distances.map((_, i) => {
-                        const dist = vec3.distance(points[i + 1], points[i]);
-                        distance += dist;
-                        return dist;
-                    });
-                    angles = angles.map((_, i) => {
-                        const v0 = vec3.sub(vec3.create(), points[i + 2], points[i + 1]);
-                        const v1 = vec3.sub(vec3.create(), points[i], points[i + 1]);
-                        const angle =
-                            (Math.acos(vec3.dot(vec3.normalize(v0, v0), vec3.normalize(v1, v1))) * 180) / Math.PI;
-                        return angle;
-                    });
-                    dispatch(renderActions.setMeasure({ ...measure, points, distances, angles, distance }));
+                    const points = measure.points.map((_, i) => (i !== selectedPoint ? _ : measurement.position));
+                    dispatch(renderActions.setMeasurePoints(points));
                 }
             } else {
                 moveSvgCursor(e.nativeEvent.offsetX, e.nativeEvent.offsetY, measurement);
