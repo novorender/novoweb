@@ -14,7 +14,7 @@ import { Explorer } from "pages/explorer";
 import { authActions } from "slices/authSlice";
 import { msalConfig } from "config/auth";
 import { dataServerBaseUrl, offscreenCanvas, hasCreateImageBitmap } from "config";
-import { CustomNavigationClient } from "utils/auth";
+import { CustomNavigationClient, storeActiveAccount } from "utils/auth";
 import { getAuthHeader } from "utils/auth";
 import { useMountedState } from "hooks/useMountedState";
 
@@ -49,6 +49,7 @@ export function App() {
 
                 if (res) {
                     msalInstance.setActiveAccount(res.account);
+                    storeActiveAccount(res.account);
                     dispatch(authActions.login({ accessToken: res.accessToken, msalAccount: res.account }));
                 }
             } catch (e) {
