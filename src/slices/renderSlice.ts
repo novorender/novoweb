@@ -23,6 +23,12 @@ export enum RenderType {
     UnChangeable,
 }
 
+export enum ObjectVisibility {
+    Neutral,
+    SemiTransparent,
+    Transparent,
+}
+
 type CameraPosition = Pick<Camera, "position" | "rotation">;
 export type ObjectGroups = { default: ObjectGroup; defaultHidden: ObjectGroup; custom: ObjectGroup[] };
 export type ClippingPlanes = Omit<RenderSettings["clippingPlanes"], "bounds"> & { defining: boolean };
@@ -37,7 +43,7 @@ const initialState = {
     currentEnvironment: undefined as EnvironmentDescription | undefined,
     mainObject: undefined as ObjectId | undefined,
     bookmarks: [] as WritableBookmark[],
-    viewOnlySelected: false,
+    defaultVisibility: ObjectVisibility.Neutral,
     selectMultiple: false,
     baseCameraSpeed: 0.03,
     cameraSpeedMultiplier: CameraSpeedMultiplier.Normal,
@@ -72,19 +78,36 @@ export const renderSlice = createSlice({
         setEnvironment: (state, action: PayloadAction<EnvironmentDescription | undefined>) => {
             state.currentEnvironment = action.payload;
         },
-        toggleViewOnlySelected: (state) => {
-            state.viewOnlySelected = !state.viewOnlySelected;
+        toggleDefaultVisibility: (state) => {
+            switch (state.defaultVisibility) {
+                case ObjectVisibility.Neutral:
+                    state.defaultVisibility = ObjectVisibility.SemiTransparent;
+                    break;
+                case ObjectVisibility.SemiTransparent:
+                    state.defaultVisibility = ObjectVisibility.Transparent;
+                    break;
+                case ObjectVisibility.Transparent:
+                    state.defaultVisibility = ObjectVisibility.Neutral;
+            }
+        },
+        setDefaultVisibility: (state, action: PayloadAction<ObjectVisibility>) => {
+            state.defaultVisibility = action.payload;
         },
         toggleSelectMultiple: (state) => {
             state.selectMultiple = !state.selectMultiple;
         },
         toggleCameraSpeed: (state) => {
-            state.cameraSpeedMultiplier =
-                state.cameraSpeedMultiplier === CameraSpeedMultiplier.Slow
-                    ? CameraSpeedMultiplier.Normal
-                    : state.cameraSpeedMultiplier === CameraSpeedMultiplier.Normal
-                    ? CameraSpeedMultiplier.Fast
-                    : CameraSpeedMultiplier.Slow;
+            switch (state.cameraSpeedMultiplier) {
+                case CameraSpeedMultiplier.Slow:
+                    state.cameraSpeedMultiplier = CameraSpeedMultiplier.Normal;
+                    break;
+                case CameraSpeedMultiplier.Normal:
+                    state.cameraSpeedMultiplier = CameraSpeedMultiplier.Fast;
+                    break;
+                case CameraSpeedMultiplier.Fast:
+                    state.cameraSpeedMultiplier = CameraSpeedMultiplier.Slow;
+                    break;
+            }
         },
         /**
          * Save camera position at current index.
@@ -156,7 +179,7 @@ export const renderSlice = createSlice({
 export const selectMainObject = (state: RootState) => state.render.mainObject;
 export const selectEnvironments = (state: RootState) => state.render.environments;
 export const selectCurrentEnvironment = (state: RootState) => state.render.currentEnvironment;
-export const selectViewOnlySelected = (state: RootState) => state.render.viewOnlySelected;
+export const selectDefaultVisibility = (state: RootState) => state.render.defaultVisibility;
 export const selectSelectMultiple = (state: RootState) => state.render.selectMultiple;
 export const selectCameraSpeedMultiplier = (state: RootState) => state.render.cameraSpeedMultiplier;
 export const selectBaseCameraSpeed = (state: RootState) => state.render.baseCameraSpeed;

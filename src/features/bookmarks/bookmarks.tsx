@@ -14,7 +14,7 @@ import type { Bookmark } from "@novorender/data-js-api";
 import type { View } from "@novorender/webgl-api";
 
 import { ScrollBox, Tooltip, Divider } from "components";
-import { renderActions, selectBookmarks, selectViewOnlySelected } from "slices/renderSlice";
+import { ObjectVisibility, renderActions, selectBookmarks } from "slices/renderSlice";
 import { useAppDispatch, useAppSelector } from "app/store";
 import { highlightActions, useDispatchHighlighted } from "contexts/highlighted";
 import { hiddenGroupActions, useDispatchHidden } from "contexts/hidden";
@@ -63,7 +63,6 @@ export function Bookmarks({ view }: Props) {
     const { state: customGroups, dispatch: dispatchCustom } = useCustomGroups();
 
     const bookmarks = useAppSelector(selectBookmarks);
-    const viewOnlySelected = useAppSelector(selectViewOnlySelected);
     const dispatch = useAppDispatch();
 
     function handleSelect(bookmark: Bookmark) {
@@ -104,8 +103,12 @@ export function Bookmarks({ view }: Props) {
             dispatch(renderActions.setMainObject(main));
         }
 
-        if (bookmark.selectedOnly !== undefined && viewOnlySelected !== bookmark.selectedOnly) {
-            dispatch(renderActions.toggleViewOnlySelected());
+        if (bookmark.selectedOnly !== undefined) {
+            dispatch(
+                renderActions.setDefaultVisibility(
+                    bookmark.selectedOnly ? ObjectVisibility.SemiTransparent : ObjectVisibility.Neutral
+                )
+            );
         }
 
         if (bookmark.measurement) {

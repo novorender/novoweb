@@ -27,7 +27,7 @@ import {
     selectRenderType,
     selectSavedCameraPositions,
     selectSelectMultiple,
-    selectViewOnlySelected,
+    selectDefaultVisibility,
 } from "slices/renderSlice";
 import { useAppDispatch, useAppSelector } from "app/store";
 import { PerformanceStats } from "features/performanceStats";
@@ -120,7 +120,7 @@ export function Render3D({ id, api, onInit, dataApi }: Props) {
     const environments = useAppSelector(selectEnvironments);
     const mainObject = useAppSelector(selectMainObject);
 
-    const viewOnlySelected = useAppSelector(selectViewOnlySelected);
+    const defaultVisibility = useAppSelector(selectDefaultVisibility);
     const cameraSpeedMultiplier = useAppSelector(selectCameraSpeedMultiplier);
     const baseCameraSpeed = useAppSelector(selectBaseCameraSpeed);
     const savedCameraPositions = useAppSelector(selectSavedCameraPositions);
@@ -518,7 +518,7 @@ export function Render3D({ id, api, onInit, dataApi }: Props) {
                 }
 
                 setView(_view);
-                rendering.current = createRendering(canvas, _view, api);
+                rendering.current = createRendering(canvas, _view);
                 rendering.current.start();
                 window.document.title = `${title} - Novorender`;
                 window.addEventListener("blur", exitPointerLock);
@@ -630,17 +630,16 @@ export function Render3D({ id, api, onInit, dataApi }: Props) {
                 refillObjects({
                     scene,
                     view,
-                    api,
                     objectGroups: [
                         { ...hiddenObjects, hidden: true, selected: false, color: [0, 0, 0] },
                         ...customGroups,
                         { ...highlightedObjects, hidden: false, selected: true },
                     ],
-                    viewOnlySelected,
+                    defaultVisibility,
                 });
             }
         },
-        [scene, view, api, viewOnlySelected, mainObject, customGroups, highlightedObjects, hiddenObjects]
+        [scene, view, api, defaultVisibility, mainObject, customGroups, highlightedObjects, hiddenObjects]
     );
 
     useEffect(
@@ -732,18 +731,20 @@ export function Render3D({ id, api, onInit, dataApi }: Props) {
             return;
         }
 
-        const alreadySelected = result.objectId === mainObject || highlightedObjects.ids.includes(result.objectId);
+        const alreadySelected = highlightedObjects.ids.includes(result.objectId);
 
         if (selectMultiple) {
             if (alreadySelected) {
-                dispatch(renderActions.setMainObject(undefined));
+                if (result.objectId === mainObject) {
+                    dispatch(renderActions.setMainObject(undefined));
+                }
                 dispatchHighlighted(highlightActions.remove([result.objectId]));
             } else {
                 dispatch(renderActions.setMainObject(result.objectId));
                 dispatchHighlighted(highlightActions.add([result.objectId]));
             }
         } else {
-            if (alreadySelected) {
+            if (alreadySelected && highlightedObjects.ids.length === 1) {
                 dispatch(renderActions.setMainObject(undefined));
                 dispatchHighlighted(highlightActions.setIds([]));
             } else {
