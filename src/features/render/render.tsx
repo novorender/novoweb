@@ -9,6 +9,7 @@ import {
     Internal,
     MeasureInfo,
 } from "@novorender/webgl-api";
+import { SceneData } from "@novorender/data-js-api";
 import type { API as DataAPI } from "@novorender/data-js-api";
 import { Box, Button, makeStyles, Paper, Typography, useTheme } from "@material-ui/core";
 
@@ -99,6 +100,12 @@ type Props = {
     dataApi: DataAPI;
     onInit: (params: { view: View; customProperties: unknown }) => void;
 };
+
+let preloadedScene: SceneData | undefined;
+
+export function SetPreloadedScene(scene: SceneData) {
+    preloadedScene = scene;
+}
 
 export function Render3D({ id, api, onInit, dataApi }: Props) {
     const classes = useStyles();
@@ -462,7 +469,7 @@ export function Render3D({ id, api, onInit, dataApi }: Props) {
                     customProperties,
                     title,
                     ...sceneData
-                } = await dataApi.loadScene(id);
+                } = preloadedScene ?? (await dataApi.loadScene(id));
 
                 const settings = sceneData.settings ?? ({} as Partial<RenderSettings>);
                 const { display: _display, ...customSettings } = settings ?? {};
@@ -528,6 +535,7 @@ export function Render3D({ id, api, onInit, dataApi }: Props) {
                 resizeObserver.observe(canvas);
 
                 onInit({ view: _view, customProperties });
+                preloadedScene = undefined;
             } catch (e) {
                 setStatus(Status.Error);
             }

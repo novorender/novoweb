@@ -15,6 +15,7 @@ import { HiddenProvider } from "contexts/hidden";
 import { CustomGroupsProvider } from "contexts/customGroups";
 import { HighlightedProvider } from "contexts/highlighted";
 import { uniqueArray } from "utils/misc";
+import { SetPreloadedScene } from "features/render/render";
 
 export function Explorer() {
     const { id = process.env.REACT_APP_SCENE_ID ?? "95a89d20dd084d9486e383e131242c4c" } = useParams<{ id?: string }>();
@@ -121,7 +122,12 @@ function AuthCheck({ id, children }: { id: string; children: ReactNode }) {
             }
 
             const scene = await dataApi.loadScene(id).catch(() => undefined);
-            setStatus(scene === undefined ? AuthCheckStatus.RequireAuth : AuthCheckStatus.Public);
+            if (scene) {
+                SetPreloadedScene(scene);
+                setStatus(AuthCheckStatus.Public);
+            } else {
+                setStatus(AuthCheckStatus.RequireAuth);
+            }
         }
     }, [status, dispatch, id, accessToken]);
 
