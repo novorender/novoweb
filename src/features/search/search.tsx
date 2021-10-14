@@ -355,9 +355,12 @@ export function Search({ scene, view }: Props) {
                 ) : searchResults ? (
                     <NodeList
                         nodes={searchResults.nodes}
-                        onNodeClick={handleNodeClick}
                         onScroll={handleScroll}
                         outerRef={listElRef}
+                        loading={status === Status.Loading}
+                        setLoading={(loading: boolean) => setStatus(loading ? Status.Loading : Status.Initial)}
+                        abortController={abortController}
+                        scene={scene}
                     />
                 ) : null}
             </ScrollBox>
