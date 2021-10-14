@@ -1,4 +1,4 @@
-import { ReactNode, useEffect, RefCallback, useCallback, useState } from "react";
+import { ReactNode, useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import { SearchPattern, View } from "@novorender/webgl-api";
 
@@ -9,7 +9,7 @@ import { Hud } from "features/hud";
 import { Render3D } from "features/render";
 import { Protected } from "features/protectedRoute";
 import { FeatureKey, config as featuresConfig } from "config/features";
-import { explorerActions, FullscreenStatus, selectFullscreen } from "slices/explorerSlice";
+import { explorerActions } from "slices/explorerSlice";
 import { selectAccessToken } from "slices/authSlice";
 import { HiddenProvider } from "contexts/hidden";
 import { CustomGroupsProvider } from "contexts/customGroups";
@@ -19,80 +19,13 @@ import { SetPreloadedScene } from "features/render/render";
 
 export function Explorer() {
     const { id = process.env.REACT_APP_SCENE_ID ?? "95a89d20dd084d9486e383e131242c4c" } = useParams<{ id?: string }>();
-    const fullscreen = useAppSelector(selectFullscreen);
-
-    const [view, setView] = useState<View>();
-    const [fullscreenWrapper, setFullScreenWrapper] = useState<HTMLDivElement | null>(null);
-    const fullscreenWrapperRef = useCallback<RefCallback<HTMLDivElement>>((el) => setFullScreenWrapper(el), []);
-
     const dispatch = useAppDispatch();
-
+    const [view, setView] = useState<View>();
     const scene = view?.scene;
 
     useEffect(() => {
         setView(undefined);
     }, [id]);
-
-    // sync app state with browser in case user leaves fullscreen by other methods than through our UI
-    useEffect(
-        function setupFullScreenListeners() {
-            function onFullscreenChange() {
-                const exiting = !getFullscreenElement();
-
-                if (exiting) {
-                    dispatch(explorerActions.setFullscreen(FullscreenStatus.Windowed));
-                } else {
-                    dispatch(explorerActions.setFullscreen(FullscreenStatus.Fullscreen));
-                }
-            }
-
-            if ("onfullscreenchange" in document) {
-                document.onfullscreenchange = onFullscreenChange;
-            } else if ("onwebkitfullscreenchange" in document) {
-                document.onwebkitfullscreenchange = onFullscreenChange;
-            }
-
-            return () => {
-                if ("onfullscreenchange" in document) {
-                    document.onfullscreenchange = null;
-                } else if ("onwebkitfullscreenchange" in document) {
-                    document.onwebkitfullscreenchange = null;
-                }
-            };
-        },
-        [dispatch]
-    );
-
-    useEffect(
-        function handleFullScreenRequests() {
-            if (!fullscreenWrapper) {
-                return;
-            }
-
-            const fullscreenElement = getFullscreenElement();
-
-            try {
-                if (!fullscreenElement && fullscreen === FullscreenStatus.Fullscreen) {
-                    if (fullscreenWrapper.requestFullscreen) {
-                        fullscreenWrapper.requestFullscreen();
-                    } else if (fullscreenWrapper.webkitRequestFullscreen) {
-                        fullscreenWrapper.webkitRequestFullscreen();
-                    }
-                }
-
-                if (fullscreenElement && fullscreen === FullscreenStatus.Windowed) {
-                    if (document.exitFullscreen) {
-                        document.exitFullscreen();
-                    } else if (document.webkitExitFullscreen) {
-                        document.webkitExitFullscreen();
-                    }
-                }
-            } catch {
-                // ignore fullscreen errors
-            }
-        },
-        [fullscreen, fullscreenWrapper, dispatch]
-    );
 
     const handleInit = ({ view, customProperties }: { view: View; customProperties: unknown }) => {
         const enabledFeatures = getEnabledFeatures(customProperties);
@@ -108,10 +41,8 @@ export function Explorer() {
     return (
         <ContextProviders>
             <AuthCheck id={id}>
-                <div ref={fullscreenWrapperRef}>
-                    <Render3D id={id} api={api} dataApi={dataApi} onInit={handleInit} />
-                    {view && scene ? <Hud view={view} scene={scene} /> : null}
-                </div>
+                <Render3D id={id} api={api} dataApi={dataApi} onInit={handleInit} />
+                {view && scene ? <Hud view={view} scene={scene} /> : null}
             </AuthCheck>
         </ContextProviders>
     );
@@ -227,8 +158,4 @@ function getUrlSearchQuery(): undefined | string | SearchPattern[] {
     } catch {
         return searchQuery;
     }
-}
-
-function getFullscreenElement(): Element | null | undefined {
-    return document.fullscreenElement ?? document.webkitFullscreenElement;
 }

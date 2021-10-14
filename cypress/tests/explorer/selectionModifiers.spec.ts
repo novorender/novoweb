@@ -36,9 +36,11 @@ context("Selection modifier menu", () => {
             })
             .should("have.css", "background-color", defaultToggleableBtnColor);
 
-        // View only selected on/off
+        // View only selected has 2 active states
         cy.getBySel("view-only-selected")
             .should("have.css", "background-color", defaultToggleableBtnColor)
+            .click()
+            .should("have.css", "background-color", activeToggleableBtnColor)
             .click()
             .should("have.css", "background-color", activeToggleableBtnColor)
             .click()

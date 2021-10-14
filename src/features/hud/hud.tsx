@@ -32,7 +32,7 @@ export function Hud({ view, scene }: Props) {
                 style={{ pointerEvents: "none" }}
             >
                 <SelectionModifierMenu />
-                <CameraNavigationMenu view={view} />
+                <CameraNavigationMenu scene={scene} view={view} />
                 {isSmall ? <Widgets scene={scene} view={view} /> : null}
             </Box>
             {!isSmall ? (
