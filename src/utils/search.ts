@@ -49,7 +49,7 @@ export async function searchByPatterns({
     abortSignal,
 }: {
     scene: Scene;
-    searchPatterns: SearchPattern[];
+    searchPatterns: SearchPattern[] | string;
     callback: (result: HierarcicalObjectReference[]) => void;
     callbackInterval: number;
     deep?: boolean;

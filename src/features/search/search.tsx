@@ -1,23 +1,24 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { FormEvent, useCallback, useEffect, useRef, useState } from "react";
 import { ListOnScrollProps } from "react-window";
 import { makeStyles, createStyles, Box, Button, FormControlLabel } from "@material-ui/core";
 import { HierarcicalObjectReference, Scene, View } from "@novorender/webgl-api";
 
 import { TextField, Switch, LinearProgress, ScrollBox } from "components";
 import { NodeList } from "features/nodeList";
+import { NodeType } from "features/modelTree/modelTree";
 import { useToggle } from "hooks/useToggle";
 import { useMountedState } from "hooks/useMountedState";
 import { useAbortController } from "hooks/useAbortController";
-import { iterateAsync } from "utils/search";
 import { useAppDispatch, useAppSelector } from "app/store";
-import { renderActions } from "slices/renderSlice";
 import { highlightActions, useDispatchHighlighted } from "contexts/highlighted";
-import { NodeType } from "features/modelTree/modelTree";
+import { ObjectVisibility, renderActions } from "slices/renderSlice";
+import { explorerActions, selectUrlSearchQuery } from "slices/explorerSlice";
+import { iterateAsync, searchByPatterns } from "utils/search";
+import { extractObjectIds, getTotalBoundingSphere } from "utils/objectData";
 
 import AddCircleIcon from "@material-ui/icons/AddCircle";
 import DragHandleIcon from "@material-ui/icons/DragHandle";
 import CancelIcon from "@material-ui/icons/Cancel";
-import { explorerActions, selectUrlSearchQuery } from "slices/explorerSlice";
 
 enum Status {
     Initial,
@@ -109,8 +110,7 @@ export function Search({ scene, view }: Props) {
     const [abortController, abort] = useAbortController();
     const listElRef = useRef<HTMLElement | null>(null);
 
-    const search = useCallback(async (): Promise<HierarcicalObjectReference[] | undefined> => {
-        const abortSignal = abortController.current.signal;
+    const getSearchPattern = useCallback(() => {
         const searchPattern = advanced
             ? advancedInputs.filter(({ property, value }) => property || value)
             : simpleInput;
@@ -122,21 +122,29 @@ export function Search({ scene, view }: Props) {
             return;
         }
 
-        setStatus(Status.Loading);
+        return searchPattern;
+    }, [advanced, advancedInputs, simpleInput]);
+
+    const search = useCallback(async (): Promise<HierarcicalObjectReference[] | undefined> => {
+        const abortSignal = abortController.current.signal;
+        const searchPattern = getSearchPattern();
+
+        if (!searchPattern) {
+            return;
+        }
 
         try {
             const iterator = scene.search({ searchPattern }, abortSignal);
             const [nodes, done] = await iterateAsync({ iterator, abortSignal, count: 25 });
 
             setSearchResults({ nodes, iterator: !done ? iterator : undefined });
-            setStatus(Status.Initial);
             return nodes;
-        } catch {
+        } catch (e) {
             if (!abortSignal.aborted) {
-                setStatus(Status.Error);
+                throw e;
             }
         }
-    }, [advancedInputs, simpleInput, abortController, setSearchResults, setStatus, advanced, scene]);
+    }, [abortController, setSearchResults, scene, getSearchPattern]);
 
     const handleNodeClick = useCallback(
         async (node: HierarcicalObjectReference) => {
@@ -157,19 +165,86 @@ export function Search({ scene, view }: Props) {
         }
 
         async function handleUrlSearch() {
-            const result = await search();
             dispatch(explorerActions.setUrlSearchQuery(undefined));
 
-            if (result && result.length === 1) {
-                const node = result[0];
-                handleNodeClick(node);
+            const abortSignal = abortController.current.signal;
+            const searchPatterns = getSearchPattern();
 
-                if (node.bounds) {
-                    view.camera.controller.zoomTo(node.bounds.sphere);
+            if (!searchPatterns) {
+                return;
+            }
+
+            let result = [] as HierarcicalObjectReference[];
+
+            setStatus(Status.Loading);
+
+            try {
+                // Shallow, limited search to display results in widget
+                search();
+
+                // Deep search to highlight and fly to
+                await searchByPatterns({
+                    scene,
+                    searchPatterns,
+                    abortSignal,
+                    callbackInterval: 1000,
+                    deep: true,
+                    callback: (refs) => {
+                        result = result.concat(refs);
+                        dispatchHighlighted(highlightActions.add(extractObjectIds(refs)));
+                    },
+                });
+            } catch (e) {
+                if (abortSignal.aborted) {
+                    return setStatus(Status.Initial);
+                } else {
+                    return setStatus(Status.Error);
                 }
             }
+
+            const boundingSphere = getTotalBoundingSphere(result);
+            if (boundingSphere) {
+                view.camera.controller.zoomTo(boundingSphere);
+            }
+
+            const selectionOnly = new URLSearchParams(window.location.search).get("selectionOnly");
+            if (selectionOnly === "1") {
+                dispatch(renderActions.setDefaultVisibility(ObjectVisibility.SemiTransparent));
+            } else if (selectionOnly === "2") {
+                dispatch(renderActions.setDefaultVisibility(ObjectVisibility.Transparent));
+            } else {
+                dispatch(renderActions.setDefaultVisibility(ObjectVisibility.Neutral));
+            }
+
+            setStatus(Status.Initial);
+            dispatch(renderActions.setMainObject(result[0].id));
         }
-    }, [urlSearchQuery, status, search, dispatch, view, handleNodeClick]);
+    }, [
+        urlSearchQuery,
+        status,
+        search,
+        dispatch,
+        view,
+        handleNodeClick,
+        abortController,
+        dispatchHighlighted,
+        scene,
+        getSearchPattern,
+        setStatus,
+    ]);
+
+    const handleSubmit = async (e: FormEvent) => {
+        e.preventDefault();
+
+        setStatus(Status.Loading);
+
+        try {
+            await search();
+            setStatus(Status.Initial);
+        } catch {
+            setStatus(Status.Error);
+        }
+    };
 
     const handleCancel = () => {
         abort();
@@ -213,13 +288,7 @@ export function Search({ scene, view }: Props) {
     return (
         <Box display="flex" flexDirection="column" height={1}>
             {status === Status.Loading ? <LinearProgress /> : null}
-            <form
-                className={classes.form}
-                onSubmit={(e) => {
-                    e.preventDefault();
-                    search();
-                }}
-            >
+            <form className={classes.form} onSubmit={handleSubmit}>
                 <ScrollBox maxHeight={92} mb={2} pt={1} px={1}>
                     {advanced ? (
                         advancedInputs.map(({ property, value, exact }, index, array) => (

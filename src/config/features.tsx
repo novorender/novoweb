@@ -5,7 +5,7 @@ import HomeIcon from "@material-ui/icons/Home";
 import UndoIcon from "@material-ui/icons/Undo";
 import RedoIcon from "@material-ui/icons/Redo";
 import DirectionsRunIcon from "@material-ui/icons/DirectionsRun";
-import FullscreenIcon from "@material-ui/icons/Fullscreen";
+import FlightTakeoffIcon from "@material-ui/icons/FlightTakeoff";
 import LayersIcon from "@material-ui/icons/Layers";
 import ColorLensIcon from "@material-ui/icons/ColorLens";
 import VisibilityIcon from "@material-ui/icons/Visibility";
@@ -100,10 +100,10 @@ export const config = {
         Icon: DirectionsRunIcon,
         type: FeatureType.CameraNavigation,
     },
-    fullscreen: {
-        key: "fullscreen",
-        name: "Fullscreen",
-        Icon: FullscreenIcon,
+    flyToSelected: {
+        key: "flyToSelected",
+        name: "Fly to selected",
+        Icon: FlightTakeoffIcon,
         type: FeatureType.CameraNavigation,
     },
     multipleSelection: {
