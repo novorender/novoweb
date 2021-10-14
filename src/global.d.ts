@@ -9,3 +9,13 @@ interface Window {
     disableTaa?: (state?: boolean) => void;
     disableSsao?: (state?: boolean) => void;
 }
+
+interface Document {
+    webkitFullscreenElement?: Element | null;
+    webkitExitFullscreen?: () => void;
+    onwebkitfullscreenchange?: (() => void) | null;
+}
+
+interface Element {
+    webkitRequestFullscreen?: () => void;
+}

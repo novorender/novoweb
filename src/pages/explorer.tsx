@@ -36,18 +36,28 @@ export function Explorer() {
     // sync app state with browser in case user leaves fullscreen by other methods than through our UI
     useEffect(
         function setupFullScreenListeners() {
-            document.onfullscreenchange = () => {
-                const exiting = document.fullscreenElement === null;
+            function onFullscreenChange() {
+                const exiting = !getFullscreenElement();
 
                 if (exiting) {
                     dispatch(explorerActions.setFullscreen(FullscreenStatus.Windowed));
                 } else {
                     dispatch(explorerActions.setFullscreen(FullscreenStatus.Fullscreen));
                 }
-            };
+            }
+
+            if ("onfullscreenchange" in document) {
+                document.onfullscreenchange = onFullscreenChange;
+            } else if ("onwebkitfullscreenchange" in document) {
+                document.onwebkitfullscreenchange = onFullscreenChange;
+            }
 
             return () => {
-                document.onfullscreenchange = null;
+                if ("onfullscreenchange" in document) {
+                    document.onfullscreenchange = null;
+                } else if ("onwebkitfullscreenchange" in document) {
+                    document.onwebkitfullscreenchange = null;
+                }
             };
         },
         [dispatch]
@@ -59,12 +69,26 @@ export function Explorer() {
                 return;
             }
 
-            if (!document.fullscreenElement && fullscreen === FullscreenStatus.Fullscreen) {
-                fullscreenWrapper.requestFullscreen().catch();
-            }
+            const fullscreenElement = getFullscreenElement();
 
-            if (document.fullscreenElement && fullscreen === FullscreenStatus.Windowed) {
-                document.exitFullscreen().catch();
+            try {
+                if (!fullscreenElement && fullscreen === FullscreenStatus.Fullscreen) {
+                    if (fullscreenWrapper.requestFullscreen) {
+                        fullscreenWrapper.requestFullscreen();
+                    } else if (fullscreenWrapper.webkitRequestFullscreen) {
+                        fullscreenWrapper.webkitRequestFullscreen();
+                    }
+                }
+
+                if (fullscreenElement && fullscreen === FullscreenStatus.Windowed) {
+                    if (document.exitFullscreen) {
+                        document.exitFullscreen();
+                    } else if (document.webkitExitFullscreen) {
+                        document.webkitExitFullscreen();
+                    }
+                }
+            } catch {
+                // ignore fullscreen errors
             }
         },
         [fullscreen, fullscreenWrapper, dispatch]
@@ -203,4 +227,8 @@ function getUrlSearchQuery(): undefined | string | SearchPattern[] {
     } catch {
         return searchQuery;
     }
+}
+
+function getFullscreenElement(): Element | null | undefined {
+    return document.fullscreenElement ?? document.webkitFullscreenElement;
 }
