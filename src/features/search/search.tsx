@@ -171,8 +171,6 @@ export function Search({ scene, view }: Props) {
         }
 
         async function handleUrlSearch() {
-            dispatch(explorerActions.setUrlSearchQuery(undefined));
-
             const abortSignal = abortController.current.signal;
             const searchPatterns = getSearchPattern();
 
@@ -201,12 +199,15 @@ export function Search({ scene, view }: Props) {
                     },
                 });
             } catch (e) {
+                dispatch(explorerActions.setUrlSearchQuery(undefined));
                 if (abortSignal.aborted) {
                     return setStatus(Status.Initial);
                 } else {
                     return setStatus(Status.Error);
                 }
             }
+
+            dispatch(explorerActions.setUrlSearchQuery(undefined));
 
             const boundingSphere = getTotalBoundingSphere(result);
             if (boundingSphere) {
