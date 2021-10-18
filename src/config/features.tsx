@@ -4,7 +4,6 @@ import StarIcon from "@material-ui/icons/Star";
 import HomeIcon from "@material-ui/icons/Home";
 import UndoIcon from "@material-ui/icons/Undo";
 import RedoIcon from "@material-ui/icons/Redo";
-import DirectionsRunIcon from "@material-ui/icons/DirectionsRun";
 import FlightTakeoffIcon from "@material-ui/icons/FlightTakeoff";
 import LayersIcon from "@material-ui/icons/Layers";
 import ColorLensIcon from "@material-ui/icons/ColorLens";
@@ -18,6 +17,7 @@ import SearchIcon from "@material-ui/icons/Search";
 import GradientIcon from "@material-ui/icons/Gradient";
 
 import { ReactComponent as ClippingIcon } from "media/icons/clipping.svg";
+import { ReactComponent as RunIcon } from "media/icons/run.svg";
 
 export enum FeatureType {
     SelectionModifier,
@@ -97,7 +97,7 @@ export const config = {
     cameraSpeed: {
         key: "cameraSpeed",
         name: "Camera speed",
-        Icon: DirectionsRunIcon,
+        Icon: RunIcon,
         type: FeatureType.CameraNavigation,
     },
     flyToSelected: {
