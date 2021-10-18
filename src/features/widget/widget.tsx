@@ -132,6 +132,7 @@ export function Widget({ widgetKey, scene, view }: Props) {
                         display={menuOpen ? "none" : "block"}
                         flexGrow={1}
                         style={{ overflow: "hidden", overflowY: "hidden" }}
+                        height={1}
                     >
                         {getWidgetByKey({ key, scene, view })}
                     </Box>
