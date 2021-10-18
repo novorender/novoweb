@@ -1,3 +1,4 @@
+import { CSSProperties } from "react";
 import {
     ListItemProps,
     useTheme,
@@ -9,25 +10,29 @@ import {
     makeStyles,
 } from "@material-ui/core";
 import { HierarcicalObjectReference, Scene } from "@novorender/webgl-api";
+import AutoSizer from "react-virtualized-auto-sizer";
+import { ChangeEvent, forwardRef, MouseEventHandler, MutableRefObject } from "react";
+import { FixedSizeList, FixedSizeListProps, ListOnScrollProps } from "react-window";
+
+import { useAppDispatch } from "app/store";
 import { Tooltip, useScrollBoxStyles } from "components";
 import { NodeType } from "features/modelTree/modelTree";
-import { ChangeEvent, forwardRef, MouseEventHandler, MutableRefObject } from "react";
-import AutoSizer from "react-virtualized-auto-sizer";
-import { FixedSizeList, FixedSizeListProps, ListOnScrollProps } from "react-window";
+
+import { searchByParentPath } from "utils/search";
 import { extractObjectIds, getObjectNameFromPath } from "utils/objectData";
+
 import { highlightActions, useDispatchHighlighted, useIsHighlighted } from "contexts/highlighted";
 import { hiddenGroupActions, useDispatchHidden, useIsHidden } from "contexts/hidden";
+import { renderActions } from "slices/renderSlice";
 
 import FolderIcon from "@material-ui/icons/Folder";
 import EcoIcon from "@material-ui/icons/Eco";
 import VisibilityIcon from "@material-ui/icons/Visibility";
-import { renderActions } from "slices/renderSlice";
-import { searchByParentPath } from "utils/search";
-import { useAppDispatch } from "app/store";
 
 type Props = {
     nodes: HierarcicalObjectReference[];
     parentNode?: HierarcicalObjectReference & { displayName?: string };
+    CustomParent?: (props: { style: CSSProperties }) => JSX.Element;
     onScroll?: (props: ListOnScrollProps) => void;
     outerRef?: FixedSizeListProps["outerRef"];
     loading?: boolean;
@@ -36,56 +41,62 @@ type Props = {
     scene: Scene;
 };
 
-export const NodeList = forwardRef<any, Props>(({ nodes, onScroll, outerRef, parentNode, ...nodeProps }, ref) => {
-    const theme = useTheme();
-    const scrollBoxStyles = useScrollBoxStyles().box;
+export const NodeList = forwardRef<any, Props>(
+    ({ nodes, onScroll, outerRef, CustomParent, parentNode, ...nodeProps }, ref) => {
+        const theme = useTheme();
+        const scrollBoxStyles = useScrollBoxStyles().box;
 
-    return (
-        <AutoSizer>
-            {({ height, width }) => (
-                <FixedSizeList
-                    style={{ paddingLeft: theme.spacing(1), paddingRight: theme.spacing(1) }}
-                    className={scrollBoxStyles}
-                    onScroll={onScroll}
-                    height={height}
-                    width={width}
-                    itemSize={32}
-                    overscanCount={3}
-                    itemCount={nodes.length}
-                    ref={ref}
-                    outerRef={outerRef}
-                >
-                    {({ index, style }) => {
-                        const node = nodes[index];
-                        const nodeStyles =
-                            parentNode && style.top !== undefined && style.height !== undefined
-                                ? { ...style, top: Number(style.top) + Number(style.height) }
-                                : style;
+        return (
+            <AutoSizer>
+                {({ height, width }) => (
+                    <FixedSizeList
+                        style={{ paddingLeft: theme.spacing(1), paddingRight: theme.spacing(1) }}
+                        className={scrollBoxStyles}
+                        onScroll={onScroll}
+                        height={height}
+                        width={width}
+                        itemSize={32}
+                        overscanCount={3}
+                        itemCount={nodes.length}
+                        ref={ref}
+                        outerRef={outerRef}
+                    >
+                        {({ index, style }) => {
+                            const node = nodes[index];
+                            const nodeStyles =
+                                (parentNode || CustomParent) && style.top !== undefined && style.height !== undefined
+                                    ? { ...style, top: Number(style.top) + Number(style.height) }
+                                    : style;
 
-                        if (!node) {
-                            return null;
-                        }
+                            if (!node) {
+                                return null;
+                            }
 
-                        let parent: JSX.Element | null = null;
+                            let parent: JSX.Element | null = null;
 
-                        if (index === 0 && parentNode) {
-                            const parentStyles = style;
+                            if (index === 0 && (parentNode || CustomParent)) {
+                                const parentStyles = style;
 
-                            parent = <Node parent style={parentStyles} node={parentNode} {...nodeProps} />;
-                        }
+                                parent = CustomParent ? (
+                                    <CustomParent style={parentStyles} />
+                                ) : (
+                                    <Node parent style={parentStyles} node={parentNode!} {...nodeProps} />
+                                );
+                            }
 
-                        return (
-                            <>
-                                {parent}
-                                <Node style={nodeStyles} node={node} {...nodeProps} />
-                            </>
-                        );
-                    }}
-                </FixedSizeList>
-            )}
-        </AutoSizer>
-    );
-});
+                            return (
+                                <>
+                                    {parent}
+                                    <Node style={nodeStyles} node={node} {...nodeProps} />
+                                </>
+                            );
+                        }}
+                    </FixedSizeList>
+                )}
+            </AutoSizer>
+        );
+    }
+);
 
 const useStyles = makeStyles((theme) =>
     createStyles({
@@ -97,22 +108,16 @@ const useStyles = makeStyles((theme) =>
     })
 );
 
-function Node({
-    node,
-    parent,
-    loading,
-    setLoading,
-    abortController,
-    scene,
-    ...props
-}: {
+type NodeProps = {
     node: HierarcicalObjectReference & { displayName?: string };
     parent?: boolean;
     loading?: boolean;
     setLoading: (state: boolean) => void;
     abortController: MutableRefObject<AbortController>;
     scene: Scene;
-} & ListItemProps) {
+} & ListItemProps;
+
+function Node({ node, parent, loading, setLoading, abortController, scene, ...props }: NodeProps) {
     const theme = useTheme();
     const classes = useStyles();
 
