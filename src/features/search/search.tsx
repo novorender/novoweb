@@ -1,24 +1,38 @@
-import { FormEvent, useCallback, useEffect, useRef, useState } from "react";
+import { ChangeEvent, CSSProperties, FormEvent, useCallback, useEffect, useRef, useState } from "react";
 import { ListOnScrollProps } from "react-window";
-import { makeStyles, createStyles, Box, Button, FormControlLabel } from "@material-ui/core";
-import { HierarcicalObjectReference, Scene, View } from "@novorender/webgl-api";
+import {
+    makeStyles,
+    createStyles,
+    Box,
+    Button,
+    FormControlLabel,
+    Checkbox,
+    ListItem,
+    Typography,
+    useTheme,
+} from "@material-ui/core";
+import { HierarcicalObjectReference, Scene, SearchPattern, View } from "@novorender/webgl-api";
 
-import { TextField, Switch, LinearProgress, ScrollBox } from "components";
+import { useAppDispatch, useAppSelector } from "app/store";
+import { TextField, Switch, LinearProgress, ScrollBox, Tooltip } from "components";
 import { NodeList } from "features/nodeList";
-import { NodeType } from "features/modelTree/modelTree";
+
 import { useToggle } from "hooks/useToggle";
 import { useMountedState } from "hooks/useMountedState";
 import { useAbortController } from "hooks/useAbortController";
-import { useAppDispatch, useAppSelector } from "app/store";
+
+import { hiddenGroupActions, useDispatchHidden } from "contexts/hidden";
 import { highlightActions, useDispatchHighlighted } from "contexts/highlighted";
 import { ObjectVisibility, renderActions } from "slices/renderSlice";
 import { explorerActions, selectUrlSearchQuery } from "slices/explorerSlice";
+
 import { iterateAsync, searchByPatterns } from "utils/search";
 import { extractObjectIds, getTotalBoundingSphere } from "utils/objectData";
 
 import AddCircleIcon from "@material-ui/icons/AddCircle";
 import DragHandleIcon from "@material-ui/icons/DragHandle";
 import CancelIcon from "@material-ui/icons/Cancel";
+import VisibilityIcon from "@material-ui/icons/Visibility";
 
 enum Status {
     Initial,
@@ -98,6 +112,8 @@ export function Search({ scene, view }: Props) {
         Array.isArray(urlSearchQuery) ? urlSearchQuery : [{ property: "", value: "", exact: true }]
     );
 
+    const [allSelected, setAllSelected] = useMountedState(false);
+    const [allHidden, setAllHidden] = useMountedState(false);
     const [status, setStatus] = useMountedState(Status.Initial);
     const [searchResults, setSearchResults] = useMountedState<
         | {
@@ -109,6 +125,7 @@ export function Search({ scene, view }: Props) {
 
     const [abortController, abort] = useAbortController();
     const listElRef = useRef<HTMLElement | null>(null);
+    const previousSearchPattern = useRef<SearchPattern[] | string>();
 
     const getSearchPattern = useCallback(() => {
         const searchPattern = advanced
@@ -133,6 +150,8 @@ export function Search({ scene, view }: Props) {
             return;
         }
 
+        previousSearchPattern.current = searchPattern;
+
         try {
             const iterator = scene.search({ searchPattern }, abortSignal);
             const [nodes, done] = await iterateAsync({ iterator, abortSignal, count: 25 });
@@ -145,19 +164,6 @@ export function Search({ scene, view }: Props) {
             }
         }
     }, [abortController, setSearchResults, scene, getSearchPattern]);
-
-    const handleNodeClick = useCallback(
-        async (node: HierarcicalObjectReference) => {
-            dispatch(renderActions.setMainObject(node.id));
-
-            if (node.type === NodeType.Leaf) {
-                dispatchHighlighted(highlightActions.setIds([node.id]));
-            } else {
-                dispatchHighlighted(highlightActions.setIds([]));
-            }
-        },
-        [dispatch, dispatchHighlighted]
-    );
 
     useEffect(() => {
         if (urlSearchQuery && status === Status.Initial) {
@@ -217,7 +223,8 @@ export function Search({ scene, view }: Props) {
             }
 
             setStatus(Status.Initial);
-            dispatch(renderActions.setMainObject(result[0].id));
+            setAllSelected(true);
+            dispatch(renderActions.setMainObject(result[0]?.id));
         }
     }, [
         urlSearchQuery,
@@ -225,12 +232,12 @@ export function Search({ scene, view }: Props) {
         search,
         dispatch,
         view,
-        handleNodeClick,
         abortController,
         dispatchHighlighted,
         scene,
         getSearchPattern,
         setStatus,
+        setAllSelected,
     ]);
 
     const handleSubmit = async (e: FormEvent) => {
@@ -240,6 +247,8 @@ export function Search({ scene, view }: Props) {
 
         try {
             await search();
+            setAllHidden(false);
+            setAllSelected(false);
             setStatus(Status.Initial);
         } catch {
             setStatus(Status.Error);
@@ -422,14 +431,154 @@ export function Search({ scene, view }: Props) {
                         Something went wrong with the search.
                     </Box>
                 ) : searchResults ? (
-                    <NodeList
-                        nodes={searchResults.nodes}
-                        onNodeClick={handleNodeClick}
-                        onScroll={handleScroll}
-                        outerRef={listElRef}
-                    />
+                    <>
+                        <NodeList
+                            CustomParent={({ style }: { style: CSSProperties }) => (
+                                <CustomParentNode
+                                    scene={scene}
+                                    style={style}
+                                    abortController={abortController}
+                                    searchPatterns={previousSearchPattern.current}
+                                    loading={status === Status.Loading}
+                                    setLoading={(loading: boolean) =>
+                                        setStatus(loading ? Status.Loading : Status.Initial)
+                                    }
+                                    allSelected={allSelected}
+                                    setAllSelected={setAllSelected}
+                                    allHidden={allHidden}
+                                    setAllHidden={setAllHidden}
+                                />
+                            )}
+                            nodes={searchResults.nodes}
+                            onScroll={handleScroll}
+                            outerRef={listElRef}
+                            loading={status === Status.Loading}
+                            setLoading={(loading: boolean) => setStatus(loading ? Status.Loading : Status.Initial)}
+                            abortController={abortController}
+                            scene={scene}
+                        />
+                    </>
                 ) : null}
             </ScrollBox>
         </Box>
+    );
+}
+
+// checked minstekrav? sjekk results.length <= highlighted/hidden.length
+
+function CustomParentNode({
+    scene,
+    style,
+    abortController,
+    searchPatterns,
+    loading,
+    setLoading,
+    allSelected,
+    setAllSelected,
+    allHidden,
+    setAllHidden,
+}: {
+    scene: Scene;
+    style: CSSProperties;
+    abortController: React.MutableRefObject<AbortController>;
+    searchPatterns: string | SearchPattern[] | undefined;
+    loading: boolean;
+    setLoading: (loading: boolean) => void;
+    allSelected: boolean;
+    setAllSelected: (state: boolean) => void;
+    allHidden: boolean;
+    setAllHidden: (state: boolean) => void;
+}) {
+    const theme = useTheme();
+    const dispatchHighlighted = useDispatchHighlighted();
+    const dispatchHidden = useDispatchHidden();
+
+    const search = async (callback: (result: HierarcicalObjectReference[]) => void) => {
+        if (!searchPatterns) {
+            return;
+        }
+
+        const abortSignal = abortController.current.signal;
+
+        setLoading(true);
+
+        try {
+            await searchByPatterns({
+                scene,
+                searchPatterns,
+                abortSignal,
+                callback,
+                callbackInterval: 1000,
+                deep: true,
+            });
+        } catch {}
+
+        setLoading(false);
+    };
+
+    const select = async () => {
+        await search((refs) => dispatchHighlighted(highlightActions.add(extractObjectIds(refs))));
+        setAllSelected(true);
+    };
+
+    const unSelect = async () => {
+        await search((refs) => dispatchHighlighted(highlightActions.remove(extractObjectIds(refs))));
+        setAllSelected(false);
+    };
+
+    const hide = async () => {
+        await search((refs) => dispatchHidden(hiddenGroupActions.add(extractObjectIds(refs))));
+        setAllHidden(true);
+    };
+
+    const show = async () => {
+        await search((refs) => dispatchHidden(hiddenGroupActions.remove(extractObjectIds(refs))));
+        setAllHidden(false);
+    };
+
+    const handleChange = (type: "select" | "hide") => (e: ChangeEvent<HTMLInputElement>) => {
+        if (loading) {
+            return;
+        }
+
+        if (type === "select") {
+            return e.target.checked ? select() : unSelect();
+        }
+
+        return e.target.checked ? hide() : show();
+    };
+
+    return (
+        <ListItem
+            disableGutters
+            button
+            style={{ ...style, paddingLeft: theme.spacing(1), paddingRight: theme.spacing(1) }}
+        >
+            <Box display="flex" width={1} alignItems="center">
+                <Box display="flex" alignItems="center" width={0} flex={"1 1 100%"}>
+                    <Tooltip title={"All results"} interactive>
+                        <Typography color={"textSecondary"} noWrap={true}>
+                            All results
+                        </Typography>
+                    </Tooltip>
+                </Box>
+                <Checkbox
+                    aria-label="Highlight all results"
+                    size="small"
+                    onChange={handleChange("select")}
+                    checked={allSelected}
+                    onClick={(e) => e.stopPropagation()}
+                />
+                <Checkbox
+                    aria-label="Toggle visibility of all results"
+                    size="small"
+                    icon={<VisibilityIcon />}
+                    checkedIcon={<VisibilityIcon color="disabled" />}
+                    onChange={handleChange("hide")}
+                    checked={allHidden}
+                    onClick={(e) => e.stopPropagation()}
+                />
+            </Box>
+        </ListItem>
     );
 }
