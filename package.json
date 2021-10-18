@@ -17,7 +17,7 @@
         "type": "git",
         "url": "git+https://github.com/novorender/novoweb.git"
     },
-    "license": "UNLICENCED",
+    "license": "BSD 4-Clause",
     "bugs": {
         "url": "https://github.com/novorender/novoweb/issues"
     },
