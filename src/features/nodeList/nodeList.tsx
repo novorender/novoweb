@@ -31,7 +31,7 @@ import VisibilityIcon from "@material-ui/icons/Visibility";
 
 type Props = {
     nodes: HierarcicalObjectReference[];
-    parentNode?: HierarcicalObjectReference & { displayName?: string };
+    parentNode?: HierarcicalObjectReference;
     CustomParent?: (props: { style: CSSProperties }) => JSX.Element;
     onScroll?: (props: ListOnScrollProps) => void;
     outerRef?: FixedSizeListProps["outerRef"];
@@ -109,7 +109,7 @@ const useStyles = makeStyles((theme) =>
 );
 
 type NodeProps = {
-    node: HierarcicalObjectReference & { displayName?: string };
+    node: HierarcicalObjectReference;
     parent?: boolean;
     loading?: boolean;
     setLoading: (state: boolean) => void;
@@ -284,9 +284,9 @@ function Node({ node, parent, loading, setLoading, abortController, scene, ...pr
                             <EcoIcon className={classes.listItemIcon} fontSize="small" />
                         )
                     ) : null}
-                    <Tooltip title={node.displayName ?? pathName} interactive>
+                    <Tooltip title={parent ? "Folder" : pathName} interactive>
                         <Typography color={parent ? "textSecondary" : "textPrimary"} noWrap={true}>
-                            {node.displayName ?? pathName}
+                            {parent ? "Folder" : pathName}
                         </Typography>
                     </Tooltip>
                 </Box>
