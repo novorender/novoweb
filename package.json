@@ -17,7 +17,7 @@
         "type": "git",
         "url": "git+https://github.com/novorender/novoweb.git"
     },
-    "license": "UNLICENCED",
+    "license": "BSD 4-Clause",
     "bugs": {
         "url": "https://github.com/novorender/novoweb/issues"
     },
@@ -54,7 +54,7 @@
         "@mui/material": "^5.0.3",
         "@mui/styles": "^5.0.1",
         "@novorender/data-js-api": "^0.2.3",
-        "@novorender/webgl-api": "^0.3.8",
+        "@novorender/webgl-api": "^0.3.10",
         "@reduxjs/toolkit": "^1.5.1",
         "express": "^4.17.1",
         "express-static-gzip": "^2.1.1",

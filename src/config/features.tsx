@@ -4,8 +4,6 @@ import StarIcon from "@mui/icons-material/Star";
 import HomeIcon from "@mui/icons-material/Home";
 import UndoIcon from "@mui/icons-material/Undo";
 import RedoIcon from "@mui/icons-material/Redo";
-import DirectionsRunIcon from "@mui/icons-material/DirectionsRun";
-import FullscreenIcon from "@mui/icons-material/Fullscreen";
 import LayersIcon from "@mui/icons-material/Layers";
 import ColorLensIcon from "@mui/icons-material/ColorLens";
 import VisibilityIcon from "@mui/icons-material/Visibility";
@@ -16,8 +14,10 @@ import CategoryIcon from "@mui/icons-material/Category";
 import FolderIcon from "@mui/icons-material/Folder";
 import SearchIcon from "@mui/icons-material/Search";
 import GradientIcon from "@mui/icons-material/Gradient";
+import FlightTakeoffIcon from "@mui/icons-material/FlightTakeoff";
 
 import { ReactComponent as ClippingIcon } from "media/icons/clipping.svg";
+import { ReactComponent as RunIcon } from "media/icons/run.svg";
 
 export enum FeatureType {
     SelectionModifier,
@@ -97,13 +97,13 @@ export const config = {
     cameraSpeed: {
         key: "cameraSpeed",
         name: "Camera speed",
-        Icon: DirectionsRunIcon,
+        Icon: RunIcon,
         type: FeatureType.CameraNavigation,
     },
-    fullscreen: {
-        key: "fullscreen",
-        name: "Fullscreen",
-        Icon: FullscreenIcon,
+    flyToSelected: {
+        key: "flyToSelected",
+        name: "Fly to selected",
+        Icon: FlightTakeoffIcon,
         type: FeatureType.CameraNavigation,
     },
     multipleSelection: {

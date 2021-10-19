@@ -1,15 +1,21 @@
+import { ChangeEvent, forwardRef, MouseEventHandler, CSSProperties, MutableRefObject } from "react";
+import { HierarcicalObjectReference, Scene } from "@novorender/webgl-api";
+import { FixedSizeList, FixedSizeListProps, ListOnScrollProps } from "react-window";
+import AutoSizer from "react-virtualized-auto-sizer";
 import { ListItemProps, useTheme, ListItem, Box, Typography, Checkbox } from "@mui/material";
 import createStyles from "@mui/styles/createStyles";
 import makeStyles from "@mui/styles/makeStyles";
-import { HierarcicalObjectReference } from "@novorender/webgl-api";
+
+import { useAppDispatch } from "app/store";
 import { Tooltip, useScrollBoxStyles } from "components";
 import { NodeType } from "features/modelTree/modelTree";
-import { ChangeEvent, forwardRef, MouseEventHandler } from "react";
-import AutoSizer from "react-virtualized-auto-sizer";
-import { FixedSizeList, FixedSizeListProps, ListOnScrollProps } from "react-window";
-import { getObjectNameFromPath } from "utils/objectData";
-import { useIsHighlighted } from "contexts/highlighted";
-import { useIsHidden } from "contexts/hidden";
+
+import { searchByParentPath } from "utils/search";
+import { extractObjectIds, getObjectNameFromPath } from "utils/objectData";
+
+import { highlightActions, useDispatchHighlighted, useIsHighlighted } from "contexts/highlighted";
+import { hiddenGroupActions, useDispatchHidden, useIsHidden } from "contexts/hidden";
+import { renderActions } from "slices/renderSlice";
 
 import FolderIcon from "@mui/icons-material/Folder";
 import VisibilityIcon from "@mui/icons-material/Visibility";
@@ -17,15 +23,17 @@ import VisibilityIcon from "@mui/icons-material/Visibility";
 type Props = {
     nodes: HierarcicalObjectReference[];
     parentNode?: HierarcicalObjectReference;
+    CustomParent?: (props: { style: CSSProperties }) => JSX.Element;
     onScroll?: (props: ListOnScrollProps) => void;
-    onNodeClick: (node: HierarcicalObjectReference, isSelected: boolean) => void;
-    onToggleSelect?: (event: ChangeEvent<HTMLInputElement>, node: HierarcicalObjectReference) => void;
-    onToggleHide?: (event: ChangeEvent<HTMLInputElement>, node: HierarcicalObjectReference) => void;
     outerRef?: FixedSizeListProps["outerRef"];
+    loading?: boolean;
+    setLoading: (state: boolean) => void;
+    abortController: MutableRefObject<AbortController>;
+    scene: Scene;
 };
 
 export const NodeList = forwardRef<any, Props>(
-    ({ nodes, onScroll, onNodeClick, onToggleSelect, onToggleHide, outerRef, parentNode }, ref) => {
+    ({ nodes, onScroll, outerRef, CustomParent, parentNode, ...nodeProps }, ref) => {
         const theme = useTheme();
         const scrollBoxStyles = useScrollBoxStyles().box;
 
@@ -47,7 +55,7 @@ export const NodeList = forwardRef<any, Props>(
                         {({ index, style }) => {
                             const node = nodes[index];
                             const nodeStyles =
-                                parentNode && style.top !== undefined && style.height !== undefined
+                                (parentNode || CustomParent) && style.top !== undefined && style.height !== undefined
                                     ? { ...style, top: Number(style.top) + Number(style.height) }
                                     : style;
 
@@ -57,31 +65,20 @@ export const NodeList = forwardRef<any, Props>(
 
                             let parent: JSX.Element | null = null;
 
-                            if (index === 0 && parentNode) {
+                            if (index === 0 && (parentNode || CustomParent)) {
                                 const parentStyles = style;
 
-                                parent = (
-                                    <Node
-                                        parent
-                                        style={parentStyles}
-                                        node={parentNode}
-                                        onToggleSelect={onToggleSelect}
-                                        onToggleHide={onToggleHide}
-                                        onNodeClick={onNodeClick}
-                                    />
+                                parent = CustomParent ? (
+                                    <CustomParent style={parentStyles} />
+                                ) : (
+                                    <Node parent style={parentStyles} node={parentNode!} {...nodeProps} />
                                 );
                             }
 
                             return (
                                 <>
                                     {parent}
-                                    <Node
-                                        style={nodeStyles}
-                                        node={node}
-                                        onToggleSelect={onToggleSelect}
-                                        onToggleHide={onToggleHide}
-                                        onNodeClick={onNodeClick}
-                                    />
+                                    <Node style={nodeStyles} node={node} {...nodeProps} />
                                 </>
                             );
                         }}
@@ -102,22 +99,22 @@ const useStyles = makeStyles((theme) =>
     })
 );
 
-function Node({
-    node,
-    parent,
-    onToggleSelect,
-    onToggleHide,
-    onNodeClick,
-    ...props
-}: {
+type NodeProps = {
     node: HierarcicalObjectReference;
     parent?: boolean;
-    onToggleSelect?: (event: ChangeEvent<HTMLInputElement>, node: HierarcicalObjectReference) => void;
-    onToggleHide?: (event: ChangeEvent<HTMLInputElement>, node: HierarcicalObjectReference) => void;
-    onNodeClick?: (node: HierarcicalObjectReference, isSelected: boolean) => void;
-} & ListItemProps) {
+    loading?: boolean;
+    setLoading: (state: boolean) => void;
+    abortController: MutableRefObject<AbortController>;
+    scene: Scene;
+} & ListItemProps;
+
+function Node({ node, parent, loading, setLoading, abortController, scene, ...props }: NodeProps) {
     const theme = useTheme();
     const classes = useStyles();
+
+    const dispatch = useAppDispatch();
+    const dispatchHighlighted = useDispatchHighlighted();
+    const dispatchHidden = useDispatchHidden();
 
     const selected = useIsHighlighted(node.id);
     const hidden = useIsHidden(node.id);
@@ -127,6 +124,139 @@ function Node({
     };
 
     const pathName = getObjectNameFromPath(node.path);
+
+    const onNodeClick = async (node: HierarcicalObjectReference, isSelected: boolean) => {
+        if (node.type === NodeType.Internal) {
+            dispatch(renderActions.setMainObject(node.id));
+        } else if (node.type === NodeType.Leaf) {
+            isSelected ? unSelect(node) : select(node);
+        }
+    };
+
+    const handleChange =
+        (type: "select" | "hide") => (e: ChangeEvent<HTMLInputElement>, node: HierarcicalObjectReference) => {
+            if (loading) {
+                return;
+            }
+
+            if (type === "select") {
+                return e.target.checked ? select(node) : unSelect(node);
+            }
+
+            return e.target.checked ? hide(node) : show(node);
+        };
+
+    const select = async (node: HierarcicalObjectReference) => {
+        if (node.type === NodeType.Leaf) {
+            dispatchHighlighted(highlightActions.add([node.id]));
+            dispatch(renderActions.setMainObject(node.id));
+            return;
+        }
+
+        setLoading(true);
+        const abortSignal = abortController.current.signal;
+
+        try {
+            await searchByParentPath({
+                scene,
+                abortSignal,
+                parentPath: node.path,
+                callback: (refs) => dispatchHighlighted(highlightActions.add(extractObjectIds(refs))),
+                callbackInterval: 1000,
+            });
+
+            if (!abortSignal.aborted) {
+                dispatchHighlighted(highlightActions.add([node.id]));
+                setLoading(false);
+            }
+        } catch {
+            if (!abortSignal.aborted) {
+                setLoading(false);
+            }
+        }
+    };
+
+    const unSelect = async (node: HierarcicalObjectReference) => {
+        if (node.type === NodeType.Leaf) {
+            return dispatchHighlighted(highlightActions.remove([node.id]));
+        }
+
+        dispatchHighlighted(highlightActions.remove([node.id]));
+
+        setLoading(true);
+        const abortSignal = abortController.current.signal;
+
+        try {
+            await searchByParentPath({
+                scene,
+                abortSignal,
+                parentPath: node.path,
+                callback: (refs) => dispatchHighlighted(highlightActions.remove(extractObjectIds(refs))),
+                callbackInterval: 1000,
+            });
+        } catch {
+            // nada
+        } finally {
+            if (!abortSignal.aborted) {
+                setLoading(false);
+            }
+        }
+    };
+
+    const hide = async (node: HierarcicalObjectReference) => {
+        if (node.type === NodeType.Leaf) {
+            return dispatchHidden(hiddenGroupActions.add([node.id]));
+        }
+
+        setLoading(true);
+        const abortSignal = abortController.current.signal;
+
+        try {
+            await searchByParentPath({
+                scene,
+                abortSignal,
+                parentPath: node.path,
+                callback: (refs) => dispatchHidden(hiddenGroupActions.add(extractObjectIds(refs))),
+                callbackInterval: 1000,
+            });
+
+            if (!abortSignal.aborted) {
+                dispatchHidden(hiddenGroupActions.add([node.id]));
+                setLoading(false);
+            }
+        } catch {
+            if (!abortSignal.aborted) {
+                setLoading(false);
+            }
+        }
+    };
+
+    const show = async (node: HierarcicalObjectReference) => {
+        if (node.type === NodeType.Leaf) {
+            return dispatchHidden(hiddenGroupActions.remove([node.id]));
+        }
+
+        dispatchHidden(hiddenGroupActions.remove([node.id]));
+
+        setLoading(true);
+        const abortSignal = abortController.current.signal;
+
+        try {
+            await searchByParentPath({
+                scene,
+                abortSignal,
+                parentPath: node.path,
+                callback: (refs) => dispatchHidden(hiddenGroupActions.remove(extractObjectIds(refs))),
+                callbackInterval: 1000,
+            });
+        } catch {
+            // nada
+        } finally {
+            if (!abortSignal.aborted) {
+                setLoading(false);
+            }
+        }
+    };
 
     return (
         <ListItem
@@ -149,26 +279,22 @@ function Node({
                         </Typography>
                     </Tooltip>
                 </Box>
-                {onToggleSelect ? (
-                    <Checkbox
-                        aria-label="Select node"
-                        size="small"
-                        checked={selected}
-                        onChange={(e) => onToggleSelect(e, node)}
-                        onClick={stopPropagation}
-                    />
-                ) : null}
-                {onToggleHide ? (
-                    <Checkbox
-                        aria-label="Toggle node visibility"
-                        size="small"
-                        icon={<VisibilityIcon />}
-                        checkedIcon={<VisibilityIcon color="disabled" />}
-                        checked={hidden}
-                        onChange={(e) => onToggleHide(e, node)}
-                        onClick={stopPropagation}
-                    />
-                ) : null}
+                <Checkbox
+                    aria-label="Select node"
+                    size="small"
+                    checked={selected}
+                    onChange={(e) => handleChange("select")(e, node)}
+                    onClick={stopPropagation}
+                />
+                <Checkbox
+                    aria-label="Toggle node visibility"
+                    size="small"
+                    icon={<VisibilityIcon />}
+                    checkedIcon={<VisibilityIcon color="disabled" />}
+                    checked={hidden}
+                    onChange={(e) => handleChange("hide")(e, node)}
+                    onClick={stopPropagation}
+                />
             </Box>
         </ListItem>
     );

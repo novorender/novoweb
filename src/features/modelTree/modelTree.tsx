@@ -1,5 +1,5 @@
 import { Box } from "@mui/material";
-import { useRef, useEffect, ChangeEvent } from "react";
+import { useRef, useEffect } from "react";
 import { ListOnScrollProps } from "react-window";
 import { HierarcicalObjectReference, Scene } from "@novorender/webgl-api";
 
@@ -10,11 +10,9 @@ import { useAppDispatch, useAppSelector } from "app/store";
 import { renderActions, selectMainObject } from "slices/renderSlice";
 import { useAbortController } from "hooks/useAbortController";
 import { useMountedState } from "hooks/useMountedState";
-import { getObjectData, iterateAsync, searchByParentPath, searchFirstObjectAtPath } from "utils/search";
+import { getObjectData, iterateAsync, searchFirstObjectAtPath } from "utils/search";
 
-import { extractObjectIds, getParentPath } from "utils/objectData";
-import { highlightActions, useDispatchHighlighted } from "contexts/highlighted";
-import { hiddenGroupActions, useDispatchHidden } from "contexts/hidden";
+import { getParentPath } from "utils/objectData";
 
 enum Status {
     Ready,
@@ -49,8 +47,6 @@ type RootNode = typeof rootNode;
 
 export function ModelTree({ scene }: Props) {
     const mainObject = useAppSelector(selectMainObject);
-    const dispatchHighlighted = useDispatchHighlighted();
-    const dispatchHidden = useDispatchHidden();
     const dispatch = useAppDispatch();
 
     const [status, setStatus] = useMountedState(Status.Loading);
@@ -232,139 +228,6 @@ export function ModelTree({ scene }: Props) {
         }
     };
 
-    const handleNodeClick = async (node: HierarcicalObjectReference, isSelected: boolean) => {
-        if (node.type === NodeType.Internal) {
-            dispatch(renderActions.setMainObject(node.id));
-        } else if (node.type === NodeType.Leaf) {
-            isSelected ? unSelect(node) : select(node);
-        }
-    };
-
-    const handleChange =
-        (type: "select" | "hide") => (e: ChangeEvent<HTMLInputElement>, node: HierarcicalObjectReference) => {
-            if (status === Status.Loading) {
-                return;
-            }
-
-            if (type === "select") {
-                return e.target.checked ? select(node) : unSelect(node);
-            }
-
-            return e.target.checked ? hide(node) : show(node);
-        };
-
-    const select = async (node: HierarcicalObjectReference) => {
-        if (node.type === NodeType.Leaf) {
-            dispatchHighlighted(highlightActions.add([node.id]));
-            dispatch(renderActions.setMainObject(node.id));
-            return;
-        }
-
-        setStatus(Status.Loading);
-        const abortSignal = abortController.current.signal;
-
-        try {
-            await searchByParentPath({
-                scene,
-                abortSignal,
-                parentPath: node.path,
-                callback: (refs) => dispatchHighlighted(highlightActions.add(extractObjectIds(refs))),
-                callbackInterval: 1000,
-            });
-
-            if (!abortSignal.aborted) {
-                dispatchHighlighted(highlightActions.add([node.id]));
-                setStatus(Status.Ready);
-            }
-        } catch {
-            if (!abortSignal.aborted) {
-                setStatus(Status.Ready);
-            }
-        }
-    };
-
-    const unSelect = async (node: HierarcicalObjectReference) => {
-        if (node.type === NodeType.Leaf) {
-            return dispatchHighlighted(highlightActions.remove([node.id]));
-        }
-
-        dispatchHighlighted(highlightActions.remove([node.id]));
-
-        setStatus(Status.Loading);
-        const abortSignal = abortController.current.signal;
-
-        try {
-            await searchByParentPath({
-                scene,
-                abortSignal,
-                parentPath: node.path,
-                callback: (refs) => dispatchHighlighted(highlightActions.remove(extractObjectIds(refs))),
-                callbackInterval: 1000,
-            });
-        } catch {
-            // nada
-        } finally {
-            if (!abortSignal.aborted) {
-                setStatus(Status.Ready);
-            }
-        }
-    };
-
-    const hide = async (node: HierarcicalObjectReference) => {
-        if (node.type === NodeType.Leaf) {
-            return dispatchHidden(hiddenGroupActions.add([node.id]));
-        }
-
-        setStatus(Status.Loading);
-        const abortSignal = abortController.current.signal;
-
-        try {
-            await searchByParentPath({
-                scene,
-                abortSignal,
-                parentPath: node.path,
-                callback: (refs) => dispatchHidden(hiddenGroupActions.add(extractObjectIds(refs))),
-                callbackInterval: 1000,
-            });
-
-            if (!abortSignal.aborted) {
-                dispatchHidden(hiddenGroupActions.add([node.id]));
-                setStatus(Status.Ready);
-            }
-        } catch {
-            if (!abortSignal.aborted) {
-                setStatus(Status.Ready);
-            }
-        }
-    };
-
-    const show = async (node: HierarcicalObjectReference) => {
-        if (node.type === NodeType.Leaf) {
-            return dispatchHidden(hiddenGroupActions.remove([node.id]));
-        }
-
-        dispatchHidden(hiddenGroupActions.remove([node.id]));
-
-        setStatus(Status.Loading);
-        const abortSignal = abortController.current.signal;
-
-        try {
-            await searchByParentPath({
-                scene,
-                abortSignal,
-                parentPath: node.path,
-                callback: (refs) => dispatchHidden(hiddenGroupActions.remove(extractObjectIds(refs))),
-                callbackInterval: 1000,
-            });
-        } catch {
-            // nada
-        } finally {
-            if (!abortSignal.aborted) {
-                setStatus(Status.Ready);
-            }
-        }
-    };
-
     return (
         <Box display="flex" flexDirection="column" height={1}>
             {status === Status.Loading ? <LinearProgress /> : null}
@@ -384,12 +247,13 @@ export function ModelTree({ scene }: Props) {
                             <NodeList
                                 parentNode={currentDepth.parentNode}
                                 nodes={currentDepth.nodes}
-                                onNodeClick={handleNodeClick}
-                                onToggleHide={handleChange("hide")}
-                                onToggleSelect={handleChange("select")}
                                 onScroll={handleScroll}
                                 ref={listRef}
                                 outerRef={listElRef}
+                                loading={status === Status.Loading}
+                                setLoading={(loading: boolean) => setStatus(loading ? Status.Loading : Status.Ready)}
+                                abortController={abortController}
+                                scene={scene}
                             />
                         ) : null}
                     </Box>

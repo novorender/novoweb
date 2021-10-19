@@ -45,8 +45,8 @@ export function Groups() {
     }, []);
 
     const organisedGroups = organiseGroups(customGroups);
-    const allGroupsSelected = !customGroups.some((group) => !group.selected);
-    const allGroupsHidden = !customGroups.some((group) => !group.hidden);
+    const allGroupsSelected = customGroups.length > 0 && !customGroups.some((group) => !group.selected);
+    const allGroupsHidden = customGroups.length > 0 && !customGroups.some((group) => !group.hidden);
     const colorPickerPosition = getPickerPosition(containerEl);
     const hasGrouping = customGroups.some((group) => group.grouping);
 
@@ -80,6 +80,7 @@ export function Groups() {
                             className={classes.groupFunctionIcon}
                             size="small"
                             checked={allGroupsSelected}
+                            onClick={(event) => event.stopPropagation()}
                             onChange={() =>
                                 handleChange(
                                     customGroups.map((group) => ({
@@ -97,6 +98,7 @@ export function Groups() {
                             icon={<Visibility />}
                             checkedIcon={<Visibility color="disabled" />}
                             checked={allGroupsHidden}
+                            onClick={(event) => event.stopPropagation()}
                             onChange={() =>
                                 handleChange(
                                     customGroups.map((group) => ({
@@ -239,6 +241,7 @@ function Group({
                             aria-label="toggle group highlighting"
                             size="small"
                             checked={group.selected}
+                            onClick={(event) => event.stopPropagation()}
                             onChange={() => handleChange([toggleSelected(group)])}
                             className={classes.groupFunctionIcon}
                         />
@@ -251,6 +254,7 @@ function Group({
                             icon={<Visibility />}
                             checkedIcon={<Visibility color="disabled" />}
                             checked={group.hidden}
+                            onClick={(event) => event.stopPropagation()}
                             onChange={() => handleChange([toggleVisibility(group)])}
                             className={classes.groupFunctionIcon}
                         />

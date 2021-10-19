@@ -51,7 +51,7 @@ const useStyles = makeStyles((theme) =>
                 maxWidth: "20vw",
                 width: "100%",
                 minHeight: 350,
-                maxHeight: "44vh",
+                maxHeight: "calc(50% - 80px)",
                 position: "static",
                 transform: "translateX(-20px) translateY(40px);",
             },
@@ -125,6 +125,7 @@ export function Widget({ widgetKey, scene, view }: Props) {
                         display={menuOpen ? "none" : "block"}
                         flexGrow={1}
                         style={{ overflow: "hidden", overflowY: "hidden" }}
+                        height={1}
                     >
                         {getWidgetByKey({ key, scene, view })}
                     </Box>

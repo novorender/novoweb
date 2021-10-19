@@ -4,14 +4,7 @@ import { SearchPattern } from "@novorender/webgl-api";
 import { config as featuresConfig, FeatureType, WidgetKey, FeatureKey, Widget } from "config/features";
 import type { RootState } from "app/store";
 
-export enum FullscreenStatus {
-    Initial,
-    Fullscreen,
-    Windowed,
-}
-
 const initialState = {
-    fullscreen: FullscreenStatus.Initial,
     enabledFeatures: Object.values(featuresConfig).map((feature) => feature.key) as FeatureKey[],
     widgets: [] as WidgetKey[],
     urlSearchQuery: undefined as undefined | string | SearchPattern[],
@@ -23,14 +16,6 @@ export const explorerSlice = createSlice({
     name: "explorer",
     initialState: initialState,
     reducers: {
-        toggleFullscreen: (state) => {
-            state.fullscreen = [FullscreenStatus.Initial, FullscreenStatus.Windowed].includes(state.fullscreen)
-                ? FullscreenStatus.Fullscreen
-                : FullscreenStatus.Windowed;
-        },
-        setFullscreen: (state, action: PayloadAction<FullscreenStatus>) => {
-            state.fullscreen = action.payload;
-        },
         setEnabledFeatures: (state, action: PayloadAction<FeatureKey[]>) => {
             state.enabledFeatures = action.payload;
         },
@@ -65,7 +50,6 @@ export const explorerSlice = createSlice({
     },
 });
 
-export const selectFullscreen = (state: RootState) => state.explorer.fullscreen;
 export const selectWidgets = (state: RootState) => state.explorer.widgets;
 export const selectUrlSearchQuery = (state: RootState) => state.explorer.urlSearchQuery;
 
