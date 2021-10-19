@@ -1,7 +1,6 @@
 import { useEffect, useRef } from "react";
 import { BoundingSphere, HierarcicalObjectReference, Scene, View } from "@novorender/webgl-api";
-import { Box, CircularProgress } from "@material-ui/core";
-import type { SpeedDialActionProps } from "@material-ui/lab";
+import { Box, CircularProgress, SpeedDialActionProps } from "@mui/material";
 
 import { SpeedDialAction } from "components";
 import { config as featuresConfig } from "config/features";
