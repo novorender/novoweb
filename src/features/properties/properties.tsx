@@ -174,22 +174,24 @@ export function Properties({ scene }: Props) {
     }
 
     return (
-        <ScrollBox height={1} pb={2}>
+        <>
             {status === Status.Loading ? <LinearProgress /> : null}
-            <PropertyList object={object} handleChange={handleChange} searches={searches} />
-            {parentObject ? (
-                <Accordion>
-                    <AccordionSummary>
-                        <Box fontWeight={600} overflow="hidden" whiteSpace="nowrap" textOverflow="ellipsis">
-                            {parentObjectName || "Parent object"}
-                        </Box>
-                    </AccordionSummary>
-                    <AccordionDetails>
-                        <PropertyList object={parentObject} handleChange={handleChange} searches={searches} />
-                    </AccordionDetails>
-                </Accordion>
-            ) : null}
-        </ScrollBox>
+            <ScrollBox height={1} pb={2} pt={1}>
+                <PropertyList object={object} handleChange={handleChange} searches={searches} />
+                {parentObject ? (
+                    <Accordion>
+                        <AccordionSummary>
+                            <Box fontWeight={600} overflow="hidden" whiteSpace="nowrap" textOverflow="ellipsis">
+                                {parentObjectName || "Parent object"}
+                            </Box>
+                        </AccordionSummary>
+                        <AccordionDetails>
+                            <PropertyList object={parentObject} handleChange={handleChange} searches={searches} />
+                        </AccordionDetails>
+                    </Accordion>
+                ) : null}
+            </ScrollBox>
+        </>
     );
 }
 
@@ -205,7 +207,7 @@ function PropertyList({ object, handleChange, searches }: PropertyListProps) {
     return (
         <>
             <Box borderBottom={`1px solid ${theme.palette.grey[200]}`}>
-                <List>
+                <List sx={{ padding: `0 0 ${theme.spacing(1)}` }}>
                     {object.base
                         .filter((property) => property[1])
                         .map(([property, value]) => (
@@ -227,24 +229,26 @@ function PropertyList({ object, handleChange, searches }: PropertyListProps) {
                         </Box>
                     </AccordionSummary>
                     <AccordionDetails>
-                        {group.properties
-                            .filter((property) => property[1])
-                            .map(([property, value]) => (
-                                <PropertyItem
-                                    key={property}
-                                    property={property}
-                                    value={value}
-                                    checked={
-                                        searches[`${group.name}/${property}`] !== undefined &&
-                                        searches[`${group.name}/${property}`].value === value
-                                    }
-                                    onChange={handleChange({
-                                        value,
-                                        property: `${group.name}/${property}`,
-                                        deep: object.type === NodeType.Internal,
-                                    })}
-                                />
-                            ))}
+                        <List sx={{ padding: 0 }} className="WTF">
+                            {group.properties
+                                .filter((property) => property[1])
+                                .map(([property, value]) => (
+                                    <PropertyItem
+                                        key={property}
+                                        property={property}
+                                        value={value}
+                                        checked={
+                                            searches[`${group.name}/${property}`] !== undefined &&
+                                            searches[`${group.name}/${property}`].value === value
+                                        }
+                                        onChange={handleChange({
+                                            value,
+                                            property: `${group.name}/${property}`,
+                                            deep: object.type === NodeType.Internal,
+                                        })}
+                                    />
+                                ))}
+                        </List>
                     </AccordionDetails>
                 </Accordion>
             ))}

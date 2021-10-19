@@ -129,9 +129,9 @@ export function Groups() {
                     <Accordion key={grouping.name + index}>
                         <AccordionSummary>
                             <Box width={0} flex="1 1 auto" overflow="hidden">
-                                <Typography variant="body2" style={{ fontWeight: "bold" }} noWrap>
+                                <Box fontWeight={600} overflow="hidden" whiteSpace="nowrap" textOverflow="ellipsis">
                                     {grouping.name}
-                                </Typography>
+                                </Box>
                             </Box>
                             <Box flex="0 0 auto">
                                 <Checkbox
@@ -174,8 +174,8 @@ export function Groups() {
                             </Box>
                         </AccordionSummary>
                         <AccordionDetails>
-                            <Box pl={2} pr={3}>
-                                <List>
+                            <Box pr={3}>
+                                <List sx={{ padding: 0 }}>
                                     {grouping.groups.map((group, index) => (
                                         <Group
                                             key={group.name + index}

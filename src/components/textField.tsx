@@ -1,40 +1,31 @@
-import { TextField as MuiTextField, Theme, TextFieldProps } from "@mui/material";
+import {
+    TextField as MuiTextField,
+    TextFieldProps,
+    styled,
+    textFieldClasses,
+    outlinedInputClasses,
+    inputLabelClasses,
+} from "@mui/material";
+import { css } from "@mui/styled-engine";
 
-import createStyles from "@mui/styles/createStyles";
-import makeStyles from "@mui/styles/makeStyles";
+export const TextField = styled((props: TextFieldProps) => <MuiTextField size="small" variant="outlined" {...props} />)(
+    ({ theme }) => css`
+        &.${textFieldClasses.root} {
+            & label.${inputLabelClasses.focused} {
+                color: ${theme.palette.info.main};
+            }
 
-const useStyles = makeStyles((theme: Theme) =>
-    createStyles({
-        root: {
-            "& label.Mui-focused": {
-                color: theme.palette.info.main,
-            },
-            "& .MuiOutlinedInput-root": {
-                "&:hover fieldset": {
-                    borderColor: theme.palette.info.light,
-                },
-                "&.Mui-focused fieldset": {
-                    borderColor: theme.palette.info.main,
-                },
-            },
-        },
-        InputRoot: {
-            fontSize: 14,
-        },
-    })
+            & .${outlinedInputClasses.root} {
+                font-size: 14px;
+
+                &:hover fieldset {
+                    border-color: ${theme.palette.info.light};
+                }
+
+                &.${outlinedInputClasses.focused} fieldset {
+                    border-color: ${theme.palette.info.main};
+                }
+            }
+        }
+    `
 );
-
-export function TextField(props: TextFieldProps) {
-    const classes = useStyles();
-
-    return (
-        <MuiTextField
-            size="small"
-            {...props}
-            classes={{
-                root: classes.root,
-            }}
-            InputProps={{ ...props.InputProps, classes: { ...props.InputProps?.classes, root: classes.InputRoot } }}
-        />
-    );
-}

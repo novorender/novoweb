@@ -1,59 +1,44 @@
-import { AccordionSummary as MuiAccordionSummary, AccordionSummaryProps } from "@mui/material";
-
-import makeStyles from "@mui/styles/makeStyles";
+import {
+    AccordionSummary as MuiAccordionSummary,
+    AccordionSummaryProps,
+    styled,
+    accordionSummaryClasses,
+} from "@mui/material";
+import { css } from "@mui/styled-engine";
 
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 
-const useStyles = makeStyles((theme) => ({
-    accordionSummaryRoot: {
-        padding: `0 ${theme.spacing(1)}`,
-        borderBottom: `1px solid ${theme.palette.grey[200]}`,
+export const AccordionSummary = styled((props: AccordionSummaryProps) => (
+    <MuiAccordionSummary expandIcon={<ExpandMoreIcon />} {...props} />
+))(
+    ({ theme }) => css`
+        padding: ${theme.spacing(1)};
+        border-bottom: 1px solid ${theme.palette.grey[200]};
+        min-height: 0;
 
-        "&:hover": {
-            background: theme.palette.grey[200],
-        },
+        &:hover {
+            background: ${theme.palette.grey[200]};
+        }
 
-        "&.Mui-expanded": {
-            minHeight: 0,
-            borderBottom: 0,
+        &.${accordionSummaryClasses.expanded} {
+            min-height: 0;
+            border-bottom: 0;
 
-            "&:hover": {
-                background: theme.palette.grey[300],
-            },
-        },
-    },
-    accordionSummaryContent: {
-        display: "flex",
-        alignItems: "center",
-        margin: 0,
-        overflow: "hidden",
-    },
-    accordionSummaryExpanded: {
-        "& .MuiAccordionSummary-content": {
-            margin: 0,
-        },
-    },
-    expandIcon: {
-        paddingLeft: 0,
-        paddingRight: 0,
-        marginRight: 0,
-    },
-}));
+            &:hover {
+                background: ${theme.palette.grey[300]};
+            }
+        }
 
-export function AccordionSummary(props: AccordionSummaryProps) {
-    const classes = useStyles();
+        & .${accordionSummaryClasses.content} {
+            min-height: 38px;
+            margin: 0;
+            display: flex;
+            align-items: center;
+            overflow: hidden;
 
-    return (
-        <MuiAccordionSummary
-            expandIcon={<ExpandMoreIcon />}
-            {...props}
-            classes={{
-                root: classes.accordionSummaryRoot,
-                content: classes.accordionSummaryContent,
-                expanded: classes.accordionSummaryExpanded,
-                expandIconWrapper: classes.expandIcon,
-                ...props.classes,
-            }}
-        />
-    );
-}
+            &.${accordionSummaryClasses.expanded} {
+                margin: 0;
+            }
+        }
+    `
+);
