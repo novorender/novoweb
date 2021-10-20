@@ -58,7 +58,7 @@ const useStyles = makeStyles((theme) =>
                 maxWidth: "20vw",
                 width: "100%",
                 minHeight: 350,
-                maxHeight: "44vh",
+                maxHeight: "calc(50% - 80px)",
                 position: "static",
                 transform: "translateX(-20px) translateY(40px);",
             },
