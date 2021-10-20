@@ -279,10 +279,42 @@ export function Render3D({ id, api, onInit, dataApi }: Props) {
                         vec3.fromValues(pts[1][0], pts[0][1], pts[1][2]),
                         pts[1],
                     ];
+                    let centers: vec3[] = [];
+                    for (let i = 0; i < 3; i++) {
+                        const v = vec3.add(vec3.create(), pts[i], pts[i + 1]);
+                        centers.push(vec3.scale(v, v, 0.5));
+                    }
+                    const getOut = (center: vec3, d0: vec3, d1: vec3, up: vec3) => {
+                        const out = vec3.subtract(vec3.create(), d0, d1);
+                        vec3.cross(out, out, up);
+                        vec3.normalize(out, out);
+                        return vec3.add(out, out, center);
+                    };
+                    const cam2Z = vec3.subtract(vec3.create(), centers[2], camera.position);
+                    vec3.normalize(cam2Z, cam2Z);
+                    let outs = [
+                        getOut(centers[0], pts[0], pts[1], vec3.fromValues(0, 1, 0)),
+                        getOut(centers[1], pts[1], pts[2], vec3.fromValues(0, 1, 0)),
+                        getOut(centers[2], pts[2], pts[3], cam2Z),
+                    ];
                     pts = pts.map((p) => {
                         return vec3.transformMat4(vec3.create(), p, camMatrix);
                     });
-                    const getD = (p0: vec3, p1: vec3, o: vec3, text: HTMLElement, d: number) => {
+                    centers = centers.map((p) => {
+                        return vec3.transformMat4(vec3.create(), p, camMatrix);
+                    });
+                    outs = outs.map((p) => {
+                        return vec3.transformMat4(vec3.create(), p, camMatrix);
+                    });
+                    const getD = (
+                        p0: vec3,
+                        p1: vec3,
+                        o: vec3,
+                        center: vec3,
+                        out: vec3,
+                        text: HTMLElement,
+                        d: number
+                    ) => {
                         if (p0[2] > 0 && p1[2] > 0) {
                             text.innerHTML = "";
                             return "";
@@ -300,23 +332,38 @@ export function Render3D({ id, api, onInit, dataApi }: Props) {
                             _p0[1] > _p1[1] ? vec2.sub(vec2.create(), _p0, _p1) : vec2.sub(vec2.create(), _p1, _p0);
                         const pixLen = /*_text.length * 12 +*/ 20;
                         if (vec2.sqrLen(dir) > pixLen * pixLen) {
-                            const off = vec3.fromValues(0, 0, -1);
-                            vec3.scale(
-                                off,
-                                vec3.normalize(off, vec3.cross(off, off, vec3.fromValues(dir[0], dir[1], 0))),
-                                5
-                            );
-                            if (vec2.dot(vec2.fromValues(off[0], off[1]), vec2.sub(_o, _o, _p0)) > 0) {
-                                vec3.scale(off, off, -1);
+                            const _center = toScreen(center);
+                            const _out = toScreen(out);
+                            const off = vec2.create();
+                            vec2.normalize(dir, dir);
+                            vec2.normalize(off, vec2.sub(off, _out, _center));
+                            const perp = vec3.fromValues(0, 0, -1);
+                            vec3.normalize(perp, vec3.cross(perp, perp, vec3.fromValues(dir[0], dir[1], 0)));
+                            if (vec2.dot(vec2.fromValues(perp[0], perp[1]), vec2.sub(_o, _o, _p0)) > 0) {
+                                vec3.scale(perp, perp, -1);
                             }
+                            // vec2.set(off, perp[0], perp[1]);
+                            let dot = vec2.dot(vec2.fromValues(perp[0], perp[1]), off);
+                            if (dot < 0) {
+                                vec2.scale(off, off, -1);
+                                dot = -dot;
+                            }
+                            dot = Math.acos(dot) - Math.PI * 0.25;
+                            if (dot > 0) {
+                                vec2.normalize(
+                                    off,
+                                    vec2.lerp(off, off, vec2.fromValues(perp[0], perp[1]), (dot * 4) / Math.PI)
+                                );
+                            }
+                            const skew = (Math.asin(vec2.dot(dir, off)) * 180 * Math.sign(perp[0])) / Math.PI;
                             const sign = Math.sign(off[0]);
-                            const angle = (Math.asin(off[1] / vec3.len(off)) * 180 * sign) / Math.PI;
-                            const center = vec2.lerp(vec2.create(), _p0, _p1, 0.5);
-                            text.setAttribute("x", (center[0] + off[0]).toFixed(1));
-                            text.setAttribute("y", (center[1] + off[1]).toFixed(1));
+                            const angle = (Math.asin(off[1]) * 180 * sign) / Math.PI;
+                            vec2.scale(off, off, 5);
                             text.setAttribute(
                                 "transform",
-                                `rotate(${angle} ${center[0] + off[0]},${center[1] + off[1]})`
+                                `translate(${(_center[0] + off[0]).toFixed(1)},${(_center[1] + off[1]).toFixed(
+                                    1
+                                )}) rotate(${angle.toFixed(1)}) skewX(${skew.toFixed(1)})`
                             );
                             text.innerHTML = _text;
                             text.style.textAnchor = sign < 0 ? "end" : "start";
@@ -325,12 +372,26 @@ export function Render3D({ id, api, onInit, dataApi }: Props) {
                         }
                         return `M${_p0[0]},${_p0[1]}L${_p1[0]},${_p1[1]}`;
                     };
-                    pathX.setAttribute("d", getD(pts[0], pts[1], pts[3], textX, Math.abs(diff[0])));
+                    pathX.setAttribute(
+                        "d",
+                        getD(pts[0], pts[1], pts[3], centers[0], outs[0], textX, Math.abs(diff[0]))
+                    );
                     pathY.setAttribute(
                         "d",
-                        getD(pts[1], pts[2], vec3.lerp(vec3.create(), pts[0], pts[3], 0.5), textY, Math.abs(diff[2]))
+                        getD(
+                            pts[1],
+                            pts[2],
+                            pts[0], //vec3.lerp(vec3.create(), pts[0], pts[3], 0.5),
+                            centers[1],
+                            outs[1],
+                            textY,
+                            Math.abs(diff[2])
+                        )
                     );
-                    pathZ.setAttribute("d", getD(pts[2], pts[3], pts[0], textZ, Math.abs(diff[1])));
+                    pathZ.setAttribute(
+                        "d",
+                        getD(pts[2], pts[3], pts[0], centers[2], outs[2], textZ, Math.abs(diff[1]))
+                    );
                 }
             }
         }
