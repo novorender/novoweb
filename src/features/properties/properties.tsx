@@ -1,6 +1,5 @@
 import { useState, useRef, useEffect, ChangeEvent, ChangeEventHandler } from "react";
 import { useTheme, Box, List, ListItem, Grid, Typography, Checkbox } from "@mui/material";
-import makeStyles from "@mui/styles/makeStyles";
 import type { ObjectData, ObjectId, Scene } from "@novorender/webgl-api";
 
 import { LinearProgress, ScrollBox, Accordion, AccordionSummary, AccordionDetails, Tooltip } from "components";
@@ -12,12 +11,6 @@ import { getObjectData as getObjectDataUtil, searchFirstObjectAtPath, searchByPa
 import { extractObjectIds, getParentPath } from "utils/objectData";
 import { highlightActions, useDispatchHighlighted } from "contexts/highlighted";
 import { NodeType } from "features/modelTree/modelTree";
-
-const useStyles = makeStyles({
-    checkbox: {
-        padding: 0,
-    },
-});
 
 enum Status {
     Initial,
@@ -264,7 +257,6 @@ type PropertyItemProps = {
 };
 
 function PropertyItem({ checked, onChange, property, value }: PropertyItemProps) {
-    const classes = useStyles();
     const checkboxRef = useRef<HTMLInputElement | null>(null);
 
     const isUrl = value.startsWith("http");
@@ -307,7 +299,7 @@ function PropertyItem({ checked, onChange, property, value }: PropertyItemProps)
                     <Grid item xs={1}>
                         <Checkbox
                             inputRef={checkboxRef}
-                            className={classes.checkbox}
+                            sx={{ padding: 0 }}
                             checked={checked}
                             onChange={onChange}
                             size={"small"}

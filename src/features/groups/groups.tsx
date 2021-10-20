@@ -1,8 +1,9 @@
 import { useState, useCallback, RefCallback } from "react";
-import { List, ListItem, Box, Typography, Checkbox, IconButton } from "@mui/material";
+import { List, ListItem, Box, Typography, Checkbox, IconButton, styled /* ListItemProps */ } from "@mui/material";
 import makeStyles from "@mui/styles/makeStyles";
 import createStyles from "@mui/styles/createStyles";
 import { Visibility, ColorLens } from "@mui/icons-material";
+// import { css } from "@mui/styled-engine";
 
 import { ScrollBox, Accordion, AccordionSummary, AccordionDetails, Tooltip } from "components";
 import { useToggle } from "hooks/useToggle";
@@ -12,19 +13,6 @@ import { CustomGroup, customGroupsActions, useCustomGroups } from "contexts/cust
 
 const useStyles = makeStyles((theme) =>
     createStyles({
-        container: {
-            overflow: "hidden overlay",
-            fallbacks: {
-                overflow: "hidden auto",
-            },
-        },
-        accordionSummaryCheckbox: {
-            marginLeft: "auto",
-        },
-        groupFunctionIcon: {
-            paddingTop: 0,
-            paddingBottom: 0,
-        },
         listItem: {
             padding: `${theme.spacing(0.5)} ${theme.spacing(1)}`,
             margin: 0,
@@ -34,6 +22,15 @@ const useStyles = makeStyles((theme) =>
         },
     })
 );
+
+/* const StyledListItem = styled(ListItem, { shouldForwardProp: (prop) => prop !== "inset" })<
+    ListItemProps & { inset?: boolean }
+>(({ inset, theme }) => css``); */
+
+const StyledCheckbox = styled(Checkbox)`
+    padding-top: 0;
+    padding-bottom: 0;
+`;
 
 export function Groups() {
     const classes = useStyles();
@@ -59,7 +56,7 @@ export function Groups() {
     };
 
     return (
-        <ScrollBox ref={containerRef} height={1} pb={2} className={classes.container}>
+        <ScrollBox ref={containerRef} height={1} pb={2}>
             <List>
                 <ListItem
                     className={`${classes.listItem} ${hasGrouping ? classes.listItemInset : ""}`}
@@ -75,9 +72,8 @@ export function Groups() {
                                 Groups: {organisedGroups.singles.length + Object.values(organisedGroups.grouped).length}
                             </Typography>
                         </Box>
-                        <Checkbox
+                        <StyledCheckbox
                             aria-label="toggle all groups highlighting"
-                            className={classes.groupFunctionIcon}
                             size="small"
                             checked={allGroupsSelected}
                             onClick={(event) => event.stopPropagation()}
@@ -90,10 +86,9 @@ export function Groups() {
                                 )
                             }
                         />
-                        <Checkbox
+                        <StyledCheckbox
                             data-test="toggle-visibility"
                             aria-label="toggle group visibility"
-                            className={classes.groupFunctionIcon}
                             size="small"
                             icon={<Visibility />}
                             checkedIcon={<Visibility color="disabled" />}
@@ -134,10 +129,10 @@ export function Groups() {
                                 </Box>
                             </Box>
                             <Box flex="0 0 auto">
-                                <Checkbox
+                                <StyledCheckbox
                                     data-test="toggle-highlighting"
                                     aria-label="toggle group highlighting"
-                                    className={classes.accordionSummaryCheckbox}
+                                    sx={{ marginLeft: "auto" }}
                                     size="small"
                                     onChange={() =>
                                         handleChange(
@@ -153,7 +148,7 @@ export function Groups() {
                                 />
                             </Box>
                             <Box flex="0 0 auto">
-                                <Checkbox
+                                <StyledCheckbox
                                     data-test="toggle-visibility"
                                     aria-label="toggle group visibility"
                                     size="small"
@@ -226,28 +221,27 @@ function Group({
                     </Box>
                     <Box flex="0 0 auto">
                         <IconButton
+                            sx={{ paddingBottom: 0, paddingTop: 0 }}
                             onClick={(e) => {
                                 e.stopPropagation();
                                 toggleColorPicker();
                             }}
                             size="small"
-                            className={classes.groupFunctionIcon}
                         >
                             <ColorLens style={{ fill: `rgb(${r}, ${g}, ${b})` }} />
                         </IconButton>
                     </Box>
                     <Box flex="0 0 auto">
-                        <Checkbox
+                        <StyledCheckbox
                             aria-label="toggle group highlighting"
                             size="small"
                             checked={group.selected}
                             onClick={(event) => event.stopPropagation()}
                             onChange={() => handleChange([toggleSelected(group)])}
-                            className={classes.groupFunctionIcon}
                         />
                     </Box>
                     <Box flex="0 0 auto">
-                        <Checkbox
+                        <StyledCheckbox
                             data-test="toggle-visibility"
                             aria-label="toggle group visibility"
                             size="small"
@@ -256,7 +250,6 @@ function Group({
                             checked={group.hidden}
                             onClick={(event) => event.stopPropagation()}
                             onChange={() => handleChange([toggleVisibility(group)])}
-                            className={classes.groupFunctionIcon}
                         />
                     </Box>
                 </Box>

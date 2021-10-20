@@ -30,7 +30,7 @@ export const AccordionSummary = styled((props: AccordionSummaryProps) => (
         }
 
         & .${accordionSummaryClasses.content} {
-            min-height: 38px;
+            min-height: 0;
             margin: 0;
             display: flex;
             align-items: center;

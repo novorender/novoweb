@@ -7,7 +7,7 @@ import createStyles from "@mui/styles/createStyles";
 import makeStyles from "@mui/styles/makeStyles";
 
 import { useAppDispatch } from "app/store";
-import { Tooltip, useScrollBoxStyles } from "components";
+import { Tooltip, withCustomScrollbar } from "components";
 import { NodeType } from "features/modelTree/modelTree";
 
 import { searchByParentPath } from "utils/search";
@@ -19,6 +19,8 @@ import { renderActions } from "slices/renderSlice";
 
 import FolderIcon from "@mui/icons-material/Folder";
 import VisibilityIcon from "@mui/icons-material/Visibility";
+
+const StyledFixedSizeList = withCustomScrollbar(FixedSizeList) as typeof FixedSizeList;
 
 type Props = {
     nodes: HierarcicalObjectReference[];
@@ -35,14 +37,12 @@ type Props = {
 export const NodeList = forwardRef<any, Props>(
     ({ nodes, onScroll, outerRef, CustomParent, parentNode, ...nodeProps }, ref) => {
         const theme = useTheme();
-        const scrollBoxStyles = useScrollBoxStyles().box;
 
         return (
             <AutoSizer>
                 {({ height, width }) => (
-                    <FixedSizeList
+                    <StyledFixedSizeList
                         style={{ paddingLeft: theme.spacing(1), paddingRight: theme.spacing(1) }}
-                        className={scrollBoxStyles}
                         onScroll={onScroll}
                         height={height}
                         width={width}
@@ -82,7 +82,7 @@ export const NodeList = forwardRef<any, Props>(
                                 </>
                             );
                         }}
-                    </FixedSizeList>
+                    </StyledFixedSizeList>
                 )}
             </AutoSizer>
         );

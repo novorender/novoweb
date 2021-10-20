@@ -1,10 +1,19 @@
 import { Fragment } from "react";
 import { quat, vec3 } from "gl-matrix";
-import { useTheme, List, ListItem, Box, Typography, Tooltip as MuiTooltip } from "@mui/material";
-import makeStyles from "@mui/styles/makeStyles";
-import createStyles from "@mui/styles/createStyles";
+import {
+    useTheme,
+    List,
+    ListItem,
+    Box,
+    Typography,
+    Tooltip as MuiTooltip,
+    styled,
+    tooltipClasses,
+    TooltipProps,
+} from "@mui/material";
 import type { Bookmark } from "@novorender/data-js-api";
 import type { View } from "@novorender/webgl-api";
+import { css } from "@mui/styled-engine";
 
 import { ScrollBox, Tooltip, Divider } from "components";
 import { ObjectVisibility, renderActions, selectBookmarks } from "slices/renderSlice";
@@ -13,34 +22,36 @@ import { highlightActions, useDispatchHighlighted } from "contexts/highlighted";
 import { hiddenGroupActions, useDispatchHidden } from "contexts/hidden";
 import { customGroupsActions, useCustomGroups } from "contexts/customGroups";
 
-const useStyles = makeStyles((theme) =>
-    createStyles({
-        img: {
-            height: "100%",
-            width: "100%",
-            objectFit: "cover",
-            display: "block",
-        },
-        listItem: {
-            padding: `${theme.spacing(0.5)} ${theme.spacing(1)}`,
-        },
-        name: {
-            fontWeight: 600,
-        },
-        description: {
-            display: "-webkit-box",
-            overflow: "hidden",
-            WebkitLineClamp: 2,
-            WebkitBoxOrient: "vertical",
-        },
-        tooltip: {
-            maxWidth: "none",
-            background: theme.palette.common.white,
-            padding: theme.spacing(1),
-            borderRadius: "4px",
-            border: `1px solid ${theme.palette.grey.A100}`,
-        },
-    })
+const Description = styled(Typography)(
+    () => css`
+        display: --webkit-box;
+        overflow: hidden;
+        --webkit-line-clamp: 2;
+        --webkit-box-orient: vertical;
+    `
+);
+
+const ImgTooltip = styled(({ className, ...props }: TooltipProps) => (
+    <MuiTooltip {...props} classes={{ popper: className }} />
+))(
+    ({ theme }) => css`
+        & .${tooltipClasses.tooltip} {
+            max-width: none;
+            background: ${theme.palette.common.white};
+            padding: ${theme.spacing(1)};
+            border-radius: 4px;
+            border: 1px solid ${theme.palette.grey.A400};
+        }
+    `
+);
+
+const Img = styled("img")(
+    () => css`
+        height: 100%;
+        width: 100%;
+        object-fit: cover;
+        display: block;
+    `
 );
 
 type Props = {
@@ -48,7 +59,6 @@ type Props = {
 };
 
 export function Bookmarks({ view }: Props) {
-    const classes = useStyles();
     const theme = useTheme();
 
     const dispatchHighlighted = useDispatchHighlighted();
@@ -123,7 +133,11 @@ export function Bookmarks({ view }: Props) {
             <List>
                 {bookmarks.map((bookmark, index, array) => (
                     <Fragment key={bookmark.name + index}>
-                        <ListItem className={classes.listItem} button onClick={() => handleSelect(bookmark)}>
+                        <ListItem
+                            sx={{ padding: `${theme.spacing(0.5)} ${theme.spacing(1)}` }}
+                            button
+                            onClick={() => handleSelect(bookmark)}
+                        >
                             <Box width={1} maxHeight={80} display="flex" alignItems="flex-start" overflow="hidden">
                                 <Box
                                     bgcolor={theme.palette.grey[200]}
@@ -133,36 +147,27 @@ export function Bookmarks({ view }: Props) {
                                     flexGrow={0}
                                 >
                                     {bookmark.img ? (
-                                        <MuiTooltip
+                                        <ImgTooltip
                                             placement="bottom-end"
-                                            classes={{ tooltip: classes.tooltip }}
                                             title={
-                                                <Box height={176} width={176} style={{ cursor: "pointer" }}>
-                                                    <img alt="" className={classes.img} src={bookmark.img} />
+                                                <Box sx={{ height: 176, width: 176, cursor: "pointer" }}>
+                                                    <Img alt="" src={bookmark.img} />
                                                 </Box>
                                             }
                                         >
-                                            <img
-                                                alt=""
-                                                height="32px"
-                                                width="32px"
-                                                className={classes.img}
-                                                src={bookmark.img}
-                                            />
-                                        </MuiTooltip>
+                                            <Img alt="" height="32px" width="32px" src={bookmark.img} />
+                                        </ImgTooltip>
                                     ) : null}
                                 </Box>
                                 <Box ml={1} flexDirection="column" flexGrow={1} width={0}>
                                     <Tooltip disableInteractive title={bookmark.name}>
-                                        <Typography noWrap variant="body1" className={classes.name}>
+                                        <Typography noWrap variant="body1" sx={{ fontWeight: 600 }}>
                                             {bookmark.name}
                                         </Typography>
                                     </Tooltip>
                                     {bookmark.description ? (
                                         <Tooltip disableInteractive title={bookmark.description}>
-                                            <Typography className={classes.description}>
-                                                {bookmark.description}
-                                            </Typography>
+                                            <Description>{bookmark.description}</Description>
                                         </Tooltip>
                                     ) : null}
                                 </Box>
