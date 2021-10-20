@@ -566,6 +566,11 @@ export function Render3D({ id, api, onInit, dataApi }: Props) {
                             color: [defaultGroup.color[0], defaultGroup.color[1], defaultGroup.color[2]],
                         })
                     );
+
+                    const lastHighlighted = defaultGroup.ids.slice(-1)[0];
+                    if (lastHighlighted) {
+                        dispatch(renderActions.setMainObject(lastHighlighted));
+                    }
                 }
 
                 const defaultHiddenGroup = objectGroups.find((group) => !group.id && group.hidden);

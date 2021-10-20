@@ -262,6 +262,8 @@ function PropertyItem({ checked, onChange, property, value }: PropertyItemProps)
     const classes = useStyles();
     const checkboxRef = useRef<HTMLInputElement | null>(null);
 
+    const isUrl = value.startsWith("http");
+
     return (
         <ListItem
             button
@@ -269,6 +271,10 @@ function PropertyItem({ checked, onChange, property, value }: PropertyItemProps)
             disableGutters
             onClick={(e) => {
                 if (e.target !== checkboxRef.current) {
+                    if (isUrl) {
+                        return;
+                    }
+
                     checkboxRef.current?.click();
                 }
             }}
@@ -282,7 +288,15 @@ function PropertyItem({ checked, onChange, property, value }: PropertyItemProps)
                     </Grid>
                     <Grid item xs={8}>
                         <Tooltip title={value} interactive>
-                            <Typography noWrap={true}>{value}</Typography>
+                            <Typography noWrap={true}>
+                                {isUrl ? (
+                                    <a href={value} target="_blank" rel="noreferrer">
+                                        {value}
+                                    </a>
+                                ) : (
+                                    value
+                                )}
+                            </Typography>
                         </Tooltip>
                     </Grid>
                     <Grid item xs={1}>
