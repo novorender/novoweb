@@ -48,7 +48,7 @@
         "@material-ui/icons": "^4.11.2",
         "@material-ui/lab": "^4.0.0-alpha.58",
         "@novorender/data-js-api": "^0.2.3",
-        "@novorender/webgl-api": "^0.3.10",
+        "@novorender/webgl-api": "^0.3.11",
         "@reduxjs/toolkit": "^1.5.1",
         "express": "^4.17.1",
         "express-static-gzip": "^2.1.1",

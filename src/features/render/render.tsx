@@ -536,6 +536,18 @@ export function Render3D({ id, api, onInit, dataApi }: Props) {
                 const { display: _display, ...customSettings } = settings ?? {};
                 customSettings.background = { color: vec4.fromValues(0, 0, 0, 0) };
                 const _view = await api.createView(customSettings, canvas);
+                _view.applySettings({
+                    quality: {
+                        ..._view.settings.quality,
+                        resolution: {
+                            value: window.devicePixelRatio,
+                            autoAdjust: {
+                                ..._view.settings.quality.resolution.autoAdjust,
+                                max: window.devicePixelRatio,
+                            },
+                        },
+                    },
+                });
                 _view.scene = await api.loadScene(url, db);
                 const controller = api.createCameraController(
                     (camera as Required<FlightControllerParams>) ?? { kind: "flight" },
@@ -593,11 +605,13 @@ export function Render3D({ id, api, onInit, dataApi }: Props) {
                 canvas.focus();
                 const resizeObserver = new ResizeObserver((entries) => {
                     for (const entry of entries) {
-                        canvas.width = entry.contentRect.width;
-                        canvas.height = entry.contentRect.height;
-                        _view.applySettings({ display: { width: canvas.width, height: canvas.height } });
+                        canvas.width = entry.contentRect.width * window.devicePixelRatio;
+                        canvas.height = entry.contentRect.height * window.devicePixelRatio;
+                        _view.applySettings({
+                            display: { width: entry.contentRect.width, height: entry.contentRect.height },
+                        });
+                        setSize({ width: entry.contentRect.width, height: entry.contentRect.height });
                     }
-                    setSize({ width: canvas.width, height: canvas.height });
                 });
 
                 resizeObserver.observe(canvas);
