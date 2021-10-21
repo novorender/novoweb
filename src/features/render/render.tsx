@@ -540,7 +540,7 @@ export function Render3D({ id, api, onInit, dataApi }: Props) {
                     quality: {
                         ..._view.settings.quality,
                         resolution: {
-                            value: window.devicePixelRatio,
+                            value: 1,
                             autoAdjust: {
                                 ..._view.settings.quality.resolution.autoAdjust,
                                 max: window.devicePixelRatio,
