@@ -68,7 +68,7 @@ export function Search({ scene, view }: Props) {
 
     const urlSearchQuery = useAppSelector(selectUrlSearchQuery);
 
-    const [advanced, toggleAdvanced] = useToggle(Array.isArray(urlSearchQuery));
+    const [advanced, toggleAdvanced] = useToggle(urlSearchQuery ? Array.isArray(urlSearchQuery) : true);
     const [simpleInput, setSimpleInput] = useState(typeof urlSearchQuery === "string" ? urlSearchQuery : "");
     const [advancedInputs, setAdvancedInputs] = useState(
         Array.isArray(urlSearchQuery) ? urlSearchQuery : [{ property: "", value: "", exact: true }]
@@ -116,7 +116,8 @@ export function Search({ scene, view }: Props) {
 
         try {
             const iterator = scene.search({ searchPattern }, abortSignal);
-            const [nodes, done] = await iterateAsync({ iterator, abortSignal, count: 25 });
+
+            const [nodes, done] = await iterateAsync({ iterator, abortSignal, count: 50 });
 
             setSearchResults({ nodes, iterator: !done ? iterator : undefined });
             return nodes;

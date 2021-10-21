@@ -546,6 +546,7 @@ export function Render3D({ id, api, onInit, dataApi }: Props) {
 
                 const settings = sceneData.settings ?? ({} as Partial<RenderSettings>);
                 const { display: _display, ...customSettings } = settings ?? {};
+                customSettings.background = { color: vec4.fromValues(0, 0, 0, 0) };
                 const _view = await api.createView(customSettings, canvas);
                 _view.scene = await api.loadScene(url, db);
                 const controller = api.createCameraController(
@@ -560,13 +561,14 @@ export function Render3D({ id, api, onInit, dataApi }: Props) {
                 _view.camera.controller = controller;
                 cameraGeneration.current = _view.performanceStatistics.cameraGeneration;
 
-                const initialEnvironment =
-                    typeof settings.environment === "string"
-                        ? getEnvironmentDescription(settings.environment, environments)
-                        : (settings.environment as unknown as EnvironmentDescription) ??
-                          getEnvironmentDescription("", environments);
-
-                dispatch(renderActions.setEnvironment(initialEnvironment));
+                if (window.self === window.top || !customProperties?.enabledFeatures?.transparentBackground) {
+                    const initialEnvironment =
+                        typeof settings.environment === "string"
+                            ? getEnvironmentDescription(settings.environment, environments)
+                            : (settings.environment as unknown as EnvironmentDescription) ??
+                              getEnvironmentDescription("", environments);
+                    dispatch(renderActions.setEnvironment(initialEnvironment));
+                }
 
                 dispatch(renderActions.setBookmarks(bookmarks));
 

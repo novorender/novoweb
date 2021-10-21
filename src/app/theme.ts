@@ -90,6 +90,7 @@ let theme = createTheme({
                 body {
                     overscroll-behavior: contain;
                     overflow: hidden;
+                    background: transparent;
                 }
             `,
         },

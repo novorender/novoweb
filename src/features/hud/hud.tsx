@@ -4,6 +4,8 @@ import { Box, useMediaQuery, useTheme } from "@mui/material";
 import { SelectionModifierMenu } from "features/selectionModifierMenu";
 import { CameraNavigationMenu } from "features/cameraNavigationMenu";
 import { Widgets } from "features/widgets";
+import { useAppSelector } from "app/store";
+import { selectEnabledWidgets } from "slices/explorerSlice";
 
 type Props = {
     scene: Scene;
@@ -13,8 +15,13 @@ type Props = {
 const largeFabButtonDiameter = 40;
 
 export function Hud({ view, scene }: Props) {
+    const enabledWidgets = useAppSelector(selectEnabledWidgets);
     const theme = useTheme();
     const isSmall = useMediaQuery(theme.breakpoints.down("md"));
+
+    if (enabledWidgets.length < 1) {
+        return <></>;
+    }
 
     return (
         <>
