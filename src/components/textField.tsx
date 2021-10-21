@@ -1,38 +1,31 @@
-import { createStyles, TextField as MuiTextField, Theme, makeStyles, TextFieldProps } from "@material-ui/core";
+import {
+    TextField as MuiTextField,
+    TextFieldProps,
+    styled,
+    textFieldClasses,
+    outlinedInputClasses,
+    inputLabelClasses,
+} from "@mui/material";
+import { css } from "@mui/styled-engine";
 
-const useStyles = makeStyles((theme: Theme) =>
-    createStyles({
-        root: {
-            "& label.Mui-focused": {
-                color: theme.palette.info.main,
-            },
-            "& .MuiOutlinedInput-root": {
-                "&:hover fieldset": {
-                    borderColor: theme.palette.info.light,
-                },
-                "&.Mui-focused fieldset": {
-                    borderColor: theme.palette.info.main,
-                },
-            },
-        },
-        InputRoot: {
-            fontSize: 14,
-        },
-    })
+export const TextField = styled((props: TextFieldProps) => <MuiTextField size="small" variant="outlined" {...props} />)(
+    ({ theme }) => css`
+        &.${textFieldClasses.root} {
+            & label.${inputLabelClasses.focused} {
+                color: ${theme.palette.info.main};
+            }
+
+            & .${outlinedInputClasses.root} {
+                font-size: 14px;
+
+                &:hover fieldset {
+                    border-color: ${theme.palette.info.light};
+                }
+
+                &.${outlinedInputClasses.focused} fieldset {
+                    border-color: ${theme.palette.info.main};
+                }
+            }
+        }
+    `
 );
-
-export function TextField(props: TextFieldProps) {
-    const classes = useStyles();
-
-    return (
-        <MuiTextField
-            variant="outlined"
-            size="small"
-            {...props}
-            classes={{
-                root: classes.root,
-            }}
-            InputProps={{ ...props.InputProps, classes: { ...props.InputProps?.classes, root: classes.InputRoot } }}
-        />
-    );
-}

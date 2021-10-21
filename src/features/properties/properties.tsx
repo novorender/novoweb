@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect, ChangeEvent, ChangeEventHandler } from "react";
-import { useTheme, Box, List, ListItem, Grid, Typography, Checkbox, makeStyles } from "@material-ui/core";
+import { useTheme, Box, List, ListItem, Grid, Typography, Checkbox } from "@mui/material";
 import type { ObjectData, ObjectId, Scene } from "@novorender/webgl-api";
 
 import { LinearProgress, ScrollBox, Accordion, AccordionSummary, AccordionDetails, Tooltip } from "components";
@@ -11,12 +11,6 @@ import { getObjectData as getObjectDataUtil, searchFirstObjectAtPath, searchByPa
 import { extractObjectIds, getParentPath } from "utils/objectData";
 import { highlightActions, useDispatchHighlighted } from "contexts/highlighted";
 import { NodeType } from "features/modelTree/modelTree";
-
-const useStyles = makeStyles({
-    checkbox: {
-        padding: 0,
-    },
-});
 
 enum Status {
     Initial,
@@ -173,22 +167,24 @@ export function Properties({ scene }: Props) {
     }
 
     return (
-        <ScrollBox height={1} pb={2}>
+        <>
             {status === Status.Loading ? <LinearProgress /> : null}
-            <PropertyList object={object} handleChange={handleChange} searches={searches} />
-            {parentObject ? (
-                <Accordion>
-                    <AccordionSummary>
-                        <Box fontWeight={600} overflow="hidden" whiteSpace="nowrap" textOverflow="ellipsis">
-                            {parentObjectName || "Parent object"}
-                        </Box>
-                    </AccordionSummary>
-                    <AccordionDetails>
-                        <PropertyList object={parentObject} handleChange={handleChange} searches={searches} />
-                    </AccordionDetails>
-                </Accordion>
-            ) : null}
-        </ScrollBox>
+            <ScrollBox height={1} pb={2} pt={1}>
+                <PropertyList object={object} handleChange={handleChange} searches={searches} />
+                {parentObject ? (
+                    <Accordion>
+                        <AccordionSummary>
+                            <Box fontWeight={600} overflow="hidden" whiteSpace="nowrap" textOverflow="ellipsis">
+                                {parentObjectName || "Parent object"}
+                            </Box>
+                        </AccordionSummary>
+                        <AccordionDetails>
+                            <PropertyList object={parentObject} handleChange={handleChange} searches={searches} />
+                        </AccordionDetails>
+                    </Accordion>
+                ) : null}
+            </ScrollBox>
+        </>
     );
 }
 
@@ -204,7 +200,7 @@ function PropertyList({ object, handleChange, searches }: PropertyListProps) {
     return (
         <>
             <Box borderBottom={`1px solid ${theme.palette.grey[200]}`}>
-                <List>
+                <List sx={{ padding: `0 0 ${theme.spacing(1)}` }}>
                     {object.base
                         .filter((property) => property[1])
                         .map(([property, value]) => (
@@ -226,24 +222,26 @@ function PropertyList({ object, handleChange, searches }: PropertyListProps) {
                         </Box>
                     </AccordionSummary>
                     <AccordionDetails>
-                        {group.properties
-                            .filter((property) => property[1])
-                            .map(([property, value]) => (
-                                <PropertyItem
-                                    key={property}
-                                    property={property}
-                                    value={value}
-                                    checked={
-                                        searches[`${group.name}/${property}`] !== undefined &&
-                                        searches[`${group.name}/${property}`].value === value
-                                    }
-                                    onChange={handleChange({
-                                        value,
-                                        property: `${group.name}/${property}`,
-                                        deep: object.type === NodeType.Internal,
-                                    })}
-                                />
-                            ))}
+                        <List sx={{ padding: 0 }} className="WTF">
+                            {group.properties
+                                .filter((property) => property[1])
+                                .map(([property, value]) => (
+                                    <PropertyItem
+                                        key={property}
+                                        property={property}
+                                        value={value}
+                                        checked={
+                                            searches[`${group.name}/${property}`] !== undefined &&
+                                            searches[`${group.name}/${property}`].value === value
+                                        }
+                                        onChange={handleChange({
+                                            value,
+                                            property: `${group.name}/${property}`,
+                                            deep: object.type === NodeType.Internal,
+                                        })}
+                                    />
+                                ))}
+                        </List>
                     </AccordionDetails>
                 </Accordion>
             ))}
@@ -259,7 +257,6 @@ type PropertyItemProps = {
 };
 
 function PropertyItem({ checked, onChange, property, value }: PropertyItemProps) {
-    const classes = useStyles();
     const checkboxRef = useRef<HTMLInputElement | null>(null);
 
     const isUrl = value.startsWith("http");
@@ -282,12 +279,12 @@ function PropertyItem({ checked, onChange, property, value }: PropertyItemProps)
             <Box px={1} width={1}>
                 <Grid container alignItems="center" spacing={1} key={property}>
                     <Grid item xs={3}>
-                        <Tooltip title={property} interactive>
+                        <Tooltip title={property}>
                             <Typography noWrap={true}>{property}</Typography>
                         </Tooltip>
                     </Grid>
                     <Grid item xs={8}>
-                        <Tooltip title={value} interactive>
+                        <Tooltip title={value}>
                             <Typography noWrap={true}>
                                 {isUrl ? (
                                     <a href={value} target="_blank" rel="noreferrer">
@@ -302,7 +299,7 @@ function PropertyItem({ checked, onChange, property, value }: PropertyItemProps)
                     <Grid item xs={1}>
                         <Checkbox
                             inputRef={checkboxRef}
-                            className={classes.checkbox}
+                            sx={{ padding: 0 }}
                             checked={checked}
                             onChange={onChange}
                             size={"small"}

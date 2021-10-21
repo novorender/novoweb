@@ -1,6 +1,20 @@
-import { createTheme } from "@material-ui/core/styles";
+import { grey } from "@mui/material/colors";
+import { alpha, createTheme } from "@mui/material/styles";
 
-declare module "@material-ui/core/styles/createTheme" {
+declare module "@mui/material/Button" {
+    interface ButtonPropsColorOverrides {
+        grey: true;
+    }
+}
+
+declare module "@mui/material" {
+    interface Color {
+        main: string;
+        dark: string;
+    }
+}
+
+declare module "@mui/material/styles/createTheme" {
     interface Theme {
         customBreakPoints: {
             height: {
@@ -11,20 +25,9 @@ declare module "@material-ui/core/styles/createTheme" {
             widgetHeader: string;
         };
     }
-    // allow configuration using `createTheme`
-    interface ThemeOptions {
-        customBreakPoints?: {
-            height?: {
-                sm?: number;
-            };
-        };
-        customShadows?: {
-            widgetHeader?: string;
-        };
-    }
 }
 
-export const theme = createTheme({
+let theme = createTheme({
     breakpoints: {
         values: {
             xs: 0,
@@ -50,6 +53,10 @@ export const theme = createTheme({
         text: {
             primary: "#253746",
         },
+        grey: {
+            main: grey[300],
+            dark: grey[400],
+        },
         // Used by `getContrastText()` to maximize the contrast between
         // the background and the text.
         contrastThreshold: 3,
@@ -57,12 +64,6 @@ export const theme = createTheme({
         // two indexes within its tonal palette.
         // E.g., shift from Red 500 to Red 300 or Red 700.
         tonalOffset: 0.2,
-    },
-    props: {
-        MuiListItem: {
-            // @ts-ignore
-            component: "li",
-        },
     },
     typography: {
         fontFamily: ["Open Sans", "Roboto", "Helvetica", "sans-serif"].join(","),
@@ -83,11 +84,70 @@ export const theme = createTheme({
             sm: 849.95,
         },
     },
-    overrides: {
+    components: {
+        MuiCssBaseline: {
+            styleOverrides: `
+                body {
+                    overscroll-behavior: contain;
+                    overflow: hidden;
+                    background: transparent;
+                }
+            `,
+        },
         MuiButton: {
-            root: {
-                textTransform: "none",
+            styleOverrides: {
+                root: {
+                    textTransform: "none",
+                },
+            },
+        },
+        MuiListItem: {
+            defaultProps: {
+                // @ts-ignore
+                component: "li",
             },
         },
     },
 });
+
+theme = createTheme(theme, {
+    components: {
+        MuiButton: {
+            variants: [
+                {
+                    props: { variant: "contained", color: "grey" },
+                    style: {
+                        color: theme.palette.getContrastText(theme.palette.grey[300]),
+                    },
+                },
+                {
+                    props: { variant: "outlined", color: "grey" },
+                    style: {
+                        color: theme.palette.text.primary,
+                        borderColor:
+                            theme.palette.mode === "light" ? "rgba(0, 0, 0, 0.23)" : "rgba(255, 255, 255, 0.23)",
+                        "&.Mui-disabled": {
+                            border: `1px solid ${theme.palette.action.disabledBackground}`,
+                        },
+                        "&:hover": {
+                            borderColor:
+                                theme.palette.mode === "light" ? "rgba(0, 0, 0, 0.23)" : "rgba(255, 255, 255, 0.23)",
+                            backgroundColor: alpha(theme.palette.text.primary, theme.palette.action.hoverOpacity),
+                        },
+                    },
+                },
+                {
+                    props: { color: "grey", variant: "text" },
+                    style: {
+                        color: theme.palette.text.primary,
+                        "&:hover": {
+                            backgroundColor: alpha(theme.palette.text.primary, theme.palette.action.hoverOpacity),
+                        },
+                    },
+                },
+            ],
+        },
+    },
+});
+
+export { theme };

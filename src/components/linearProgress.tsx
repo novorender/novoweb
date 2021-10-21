@@ -1,26 +1,14 @@
-import { createStyles, LinearProgress as MuiLinearProgress, LinearProgressProps, makeStyles } from "@material-ui/core";
+import { LinearProgress as MuiLinearProgress, linearProgressClasses, LinearProgressProps, styled } from "@mui/material";
+import { css } from "@mui/styled-engine";
 
-const useStyles = makeStyles((theme) =>
-    createStyles({
-        root: {
-            position: "absolute",
-            width: "100%",
-            zIndex: 1,
-        },
-        bar: {
-            backgroundColor: theme.palette.primary.main,
-        },
-    })
+export const LinearProgress = styled((props: LinearProgressProps) => (
+    <MuiLinearProgress data-test="loading-bar" {...props} />
+))(
+    () => css`
+        &.${linearProgressClasses.root} {
+            position: absolute;
+            width: 100%;
+            z-index: 1;
+        }
+    `
 );
-
-export function LinearProgress(props: LinearProgressProps) {
-    const classes = useStyles();
-
-    return (
-        <MuiLinearProgress
-            data-test="loading-bar"
-            {...props}
-            classes={{ bar: classes.bar, root: classes.root, ...props.classes }}
-        />
-    );
-}

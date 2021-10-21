@@ -1,40 +1,27 @@
-import { Box, BoxProps, createStyles, makeStyles } from "@material-ui/core";
-import { forwardRef } from "react";
+import { Box, styled } from "@mui/material";
+import { css } from "@mui/system";
 
-export const useScrollBoxStyles = makeStyles((theme) =>
-    createStyles({
-        box: {
-            scrollbarColor: `${theme.palette.grey[400]} transparent`,
-            scrollbarWidth: "thin",
-            overflow: "hidden overlay",
-            fallbacks: {
-                overflow: "hidden auto",
-            },
+export const withCustomScrollbar = (component: any): unknown =>
+    styled(component)(
+        ({ theme }) => css`
+            scrollbar-color: ${theme.palette.grey[400]} transparent;
+            scrollbar-width: thin;
+            overflow: hidden auto;
+            overflow: hidden overlay;
 
-            "&::-webkit-scrollbar": {
-                width: "6px",
-            },
-            "&::-webkit-scrollbar-track": {
-                "-webkit-box-shadow": "transparent",
-            },
-            "&::-webkit-scrollbar-thumb": {
-                backgroundColor: theme.palette.grey[400],
-                borderRadius: "10px",
-            },
-        },
-    })
-);
+            &::-webkit-scrollbar {
+                width: 6px;
+            }
 
-export const ScrollBox = forwardRef<HTMLDivElement, BoxProps>((props, ref) => {
-    const classes = useScrollBoxStyles();
+            &::-webkit-scrollbar-track {
+                box-shadow: transparent;
+            }
 
-    // prettier-ignore
-    return (
-        <Box
-            {...props}
-            // @ts-ignore mis-typing in library
-            ref={ref}
-            className={`${classes.box} ${props.className ?? ""}`}
-        />
+            &::-webkit-scrollbar-thumb {
+                background-color: ${theme.palette.grey[400]};
+                border-radius: 10px;
+            }
+        `
     );
-});
+
+export const ScrollBox = withCustomScrollbar(Box) as typeof Box;

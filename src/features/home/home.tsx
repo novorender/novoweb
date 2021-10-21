@@ -1,4 +1,4 @@
-import type { SpeedDialActionProps } from "@material-ui/lab";
+import type { SpeedDialActionProps } from "@mui/material";
 import type { View } from "@novorender/webgl-api";
 import { quat, vec3 } from "gl-matrix";
 

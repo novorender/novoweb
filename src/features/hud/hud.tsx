@@ -1,5 +1,5 @@
 import type { Scene, View } from "@novorender/webgl-api";
-import { Box, useMediaQuery, useTheme } from "@material-ui/core";
+import { Box, useMediaQuery, useTheme } from "@mui/material";
 
 import { SelectionModifierMenu } from "features/selectionModifierMenu";
 import { CameraNavigationMenu } from "features/cameraNavigationMenu";
@@ -17,7 +17,7 @@ const largeFabButtonDiameter = 40;
 export function Hud({ view, scene }: Props) {
     const enabledWidgets = useAppSelector(selectEnabledWidgets);
     const theme = useTheme();
-    const isSmall = useMediaQuery(theme.breakpoints.down("sm"));
+    const isSmall = useMediaQuery(theme.breakpoints.down("md"));
 
     if (enabledWidgets.length < 1) {
         return <></>;
@@ -36,7 +36,7 @@ export function Hud({ view, scene }: Props) {
                 display="flex"
                 justifyContent="space-between"
                 alignItems="flex-end"
-                style={{ pointerEvents: "none" }}
+                sx={{ pointerEvents: "none" }}
             >
                 <SelectionModifierMenu />
                 <CameraNavigationMenu scene={scene} view={view} />
@@ -49,7 +49,7 @@ export function Hud({ view, scene }: Props) {
                     right={theme.spacing(3)}
                     height={1}
                     width={1}
-                    style={{ pointerEvents: "none" }}
+                    sx={{ pointerEvents: "none" }}
                 >
                     <Widgets scene={scene} view={view} />
                 </Box>
