@@ -1,17 +1,15 @@
 import type { Scene, View } from "@novorender/webgl-api";
 import { useToggle } from "hooks/useToggle";
-import { useTheme, useMediaQuery, FabProps } from "@mui/material";
-import { SpeedDial, SpeedDialIcon } from "@mui/material";
-import { CloseReason, OpenReason } from "@mui/lab";
-
-import AddIcon from "@mui/icons-material/Add";
-import CloseIcon from "@mui/icons-material/Close";
+import { useTheme, useMediaQuery, FabProps, SpeedDial, SpeedDialIcon, CloseReason, OpenReason } from "@mui/material";
 
 import { CameraSpeed } from "features/cameraSpeed";
 import { StepBack } from "features/stepBack";
 import { StepForwards } from "features/stepForwards";
 import { Home } from "features/home";
 import { FlyToSelected } from "features/flyToSelected";
+
+import AddIcon from "@mui/icons-material/Add";
+import CloseIcon from "@mui/icons-material/Close";
 
 type Props = {
     view: View;
@@ -47,7 +45,7 @@ export function CameraNavigationMenu({ view, scene }: Props) {
                 } as Partial<FabProps<"button", { "data-test": string }>>
             }
             icon={<SpeedDialIcon open={false} icon={<AddIcon />} openIcon={<CloseIcon />} />}
-            style={{ position: "relative" }}
+            sx={{ position: "relative" }}
         >
             <Home view={view} position={pos[0]} />
             <CameraSpeed position={pos[1]} />

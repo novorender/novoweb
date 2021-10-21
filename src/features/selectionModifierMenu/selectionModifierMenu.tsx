@@ -1,20 +1,18 @@
 import { useEffect } from "react";
-import { useTheme, useMediaQuery, FabProps } from "@mui/material";
-import { SpeedDial, SpeedDialIcon } from "@mui/material";
-import { CloseReason, OpenReason } from "@mui/lab";
+import { useTheme, useMediaQuery, FabProps, SpeedDial, SpeedDialIcon, CloseReason, OpenReason } from "@mui/material";
 
 import { MultipleSelection } from "features/multipleSelection";
 import { ClearSelection } from "features/clearSelection";
 import { ViewOnlySelected } from "features/viewOnlySelected";
 import { SelectionColor } from "features/selectionColor";
 import { HideSelected } from "features/hideSelected";
+import { ToggleRenderType } from "features/toggleRenderType";
 import { useAppSelector } from "app/store";
 import { useToggle } from "hooks/useToggle";
 import { selectMainObject } from "slices/renderSlice";
 
 import ArrowUpwardIcon from "@mui/icons-material/ArrowUpward";
 import ArrowDownwardIcon from "@mui/icons-material/ArrowDownward";
-import { ToggleRenderType } from "features/toggleRenderType";
 
 export function SelectionModifierMenu() {
     const [interacted, toggleInteracted] = useToggle();

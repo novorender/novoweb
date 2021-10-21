@@ -3,8 +3,6 @@ import { HierarcicalObjectReference, Scene } from "@novorender/webgl-api";
 import { FixedSizeList, FixedSizeListProps, ListOnScrollProps } from "react-window";
 import AutoSizer from "react-virtualized-auto-sizer";
 import { ListItemProps, useTheme, ListItem, Box, Typography, Checkbox } from "@mui/material";
-import createStyles from "@mui/styles/createStyles";
-import makeStyles from "@mui/styles/makeStyles";
 
 import { useAppDispatch } from "app/store";
 import { Tooltip, withCustomScrollbar } from "components";
@@ -89,16 +87,6 @@ export const NodeList = forwardRef<any, Props>(
     }
 );
 
-const useStyles = makeStyles((theme) =>
-    createStyles({
-        listItemIcon: {
-            minWidth: "auto",
-            margin: `0 ${theme.spacing(1)} 0 0`,
-            color: theme.palette.grey[700],
-        },
-    })
-);
-
 type NodeProps = {
     node: HierarcicalObjectReference;
     parent?: boolean;
@@ -110,7 +98,6 @@ type NodeProps = {
 
 function Node({ node, parent, loading, setLoading, abortController, scene, ...props }: NodeProps) {
     const theme = useTheme();
-    const classes = useStyles();
 
     const dispatch = useAppDispatch();
     const dispatchHighlighted = useDispatchHighlighted();
@@ -263,16 +250,26 @@ function Node({ node, parent, loading, setLoading, abortController, scene, ...pr
             disableGutters
             button
             key={node.id}
-            style={{ ...props.style, paddingLeft: theme.spacing(1), paddingRight: theme.spacing(1) }}
+            style={{ ...props.style }}
+            sx={{ paddingLeft: 1, paddingRight: 1 }}
             onClick={() => (onNodeClick ? onNodeClick(node, selected) : undefined)}
         >
             <Box display="flex" width={1} alignItems="center">
-                <Box display="flex" alignItems="center" width={0} flex={"1 1 100%"}>
-                    {!parent ? (
-                        node.type === NodeType.Internal ? (
-                            <FolderIcon className={classes.listItemIcon} fontSize="small" />
-                        ) : null
-                    ) : null}
+                <Box
+                    sx={{
+                        display: "flex",
+                        alignItems: "center",
+                        width: 0,
+                        flex: "1 1 100%",
+
+                        "& svg": {
+                            minWidth: "auto",
+                            margin: `0 ${theme.spacing(1)} 0 0`,
+                            color: theme.palette.grey[700],
+                        },
+                    }}
+                >
+                    {!parent ? node.type === NodeType.Internal ? <FolderIcon fontSize="small" /> : null : null}
                     <Tooltip title={parent ? "Folder" : pathName}>
                         <Typography color={parent ? "textSecondary" : "textPrimary"} noWrap={true}>
                             {parent ? "Folder" : pathName}

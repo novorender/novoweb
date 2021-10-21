@@ -1,6 +1,6 @@
 import { useEffect } from "react";
 import { CssBaseline } from "@mui/material";
-import { ThemeProvider, Theme, StyledEngineProvider } from "@mui/material/styles";
+import { ThemeProvider, StyledEngineProvider } from "@mui/material/styles";
 import { createAPI } from "@novorender/webgl-api";
 import { createAPI as createDataAPI } from "@novorender/data-js-api";
 import { MsalProvider } from "@azure/msal-react";
@@ -17,11 +17,6 @@ import { dataServerBaseUrl, offscreenCanvas, hasCreateImageBitmap } from "config
 import { CustomNavigationClient, storeActiveAccount } from "utils/auth";
 import { getAuthHeader } from "utils/auth";
 import { useMountedState } from "hooks/useMountedState";
-
-declare module "@mui/styles/defaultTheme" {
-    // eslint-disable-next-line @typescript-eslint/no-empty-interface
-    interface DefaultTheme extends Theme {}
-}
 
 export const api = createAPI({ webGL1Only: !hasCreateImageBitmap, noOffscreenCanvas: !offscreenCanvas });
 export const dataApi = createDataAPI({ authHeader: getAuthHeader, serviceUrl: dataServerBaseUrl });

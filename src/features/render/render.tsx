@@ -1,5 +1,5 @@
 import { glMatrix, mat4, quat, vec2, vec3, vec4 } from "gl-matrix";
-import { useEffect, useState, useRef, MouseEvent, PointerEvent, useCallback } from "react";
+import { useEffect, useState, useRef, MouseEvent, PointerEvent, useCallback, SVGProps } from "react";
 import {
     View,
     API,
@@ -11,9 +11,8 @@ import {
 } from "@novorender/webgl-api";
 import { SceneData } from "@novorender/data-js-api";
 import type { API as DataAPI } from "@novorender/data-js-api";
-import { Box, Button, Paper, Typography, useTheme } from "@mui/material";
-
-import makeStyles from "@mui/styles/makeStyles";
+import { Box, Button, Paper, Typography, useTheme, styled } from "@mui/material";
+import { css } from "@mui/styled-engine";
 
 import {
     fetchEnvironments,
@@ -54,42 +53,55 @@ import { useCustomGroups, customGroupsActions } from "contexts/customGroups";
 glMatrix.setMatrixArrayType(Array);
 addConsoleDebugUtils();
 
-const useStyles = makeStyles({
-    canvas: {
-        outline: 0,
-        touchAction: "none",
-        height: "100vh",
-        width: "100vw",
-    },
-    svg: {
-        position: "absolute",
-        left: 0,
-        top: 0,
-        width: "100%",
-        height: "100%",
-        overflow: "visible",
-        pointerEvents: "none",
-    },
-    circle: {
-        pointerEvents: "all",
-        cursor: "pointer",
-        stroke: "none",
-        fill: "green",
-    },
-    text: {
-        textAnchor: "middle",
-        fill: "white",
-        fontSize: 16,
-        fontWeight: "bold",
-        userSelect: "none",
-    },
-    axisText: {
-        alignmentBaseline: "middle",
-        fill: "white",
-        fontSize: 14,
-        userSelect: "none",
-    },
-});
+const Canvas = styled("canvas")(
+    () => css`
+        outline: 0;
+        touch-action: none;
+        height: 100vh;
+        width: 100vw;
+    `
+);
+
+const Svg = styled("svg")(
+    () => css`
+        position: absolute;
+        left: 0;
+        top: 0;
+        width: 100%;
+        height: 100%;
+        overflow: visible;
+        pointer-events: none;
+    `
+);
+
+const MeasurementPoint = styled("circle", { shouldForwardProp: (prop) => prop !== "disabled" })<
+    SVGProps<SVGCircleElement> & { disabled?: boolean }
+>(
+    ({ disabled, fill }) => css`
+        pointer-events: ${disabled ? "none" : "all"};
+        cursor: pointer;
+        stroke: none;
+        fill: ${fill ?? "green"};
+    `
+);
+
+const DistanceText = styled("text")(
+    () => css`
+        text-anchor: middle;
+        fill: white;
+        font-size: 16px;
+        font-weight: bold;
+        user-select: none;
+    `
+);
+
+const AxisText = styled((props: SVGProps<SVGTextElement>) => <text alignmentBaseline="middle" {...props} />)(
+    () => css`
+        fill: white;
+        font-size: 14px;
+        user-select: none;
+    `
+);
 
 enum Status {
     Initial,
@@ -110,8 +122,6 @@ export function SetPreloadedScene(scene: SceneData) {
 }
 
 export function Render3D({ id, api, onInit, dataApi }: Props) {
-    const classes = useStyles();
-
     const highlightedObjects = useHighlighted();
     const dispatchHighlighted = useDispatchHighlighted();
     const hiddenObjects = useHidden();
@@ -996,8 +1006,7 @@ export function Render3D({ id, api, onInit, dataApi }: Props) {
             ) : (
                 <>
                     {showPerformance && view && canvas ? <PerformanceStats view={view} canvas={canvas} /> : null}
-                    <canvas
-                        className={classes.canvas}
+                    <Canvas
                         tabIndex={1}
                         ref={setCanvas}
                         onClick={handleClick}
@@ -1008,7 +1017,7 @@ export function Render3D({ id, api, onInit, dataApi }: Props) {
                         onPointerOut={() => moveSvgCursor(-100, -100, undefined)}
                     />
                     {canvas !== null && (
-                        <svg className={classes.svg} width={canvas.width} height={canvas.height} ref={setSvg}>
+                        <Svg width={canvas.width} height={canvas.height} ref={setSvg}>
                             {angles.map((_, i) => {
                                 return <g key={i} id={`angle ${i}`}></g>;
                             })}
@@ -1017,31 +1026,28 @@ export function Render3D({ id, api, onInit, dataApi }: Props) {
                                     <path id="pathX" d="" stroke="red" strokeWidth={1} fill="none" />
                                     <path id="pathY" d="" stroke="lightgreen" strokeWidth={1} fill="none" />
                                     <path id="pathZ" d="" stroke="blue" strokeWidth={1} fill="none" />
-                                    <text className={classes.axisText} id="textX"></text>
-                                    <text className={classes.axisText} id="textY"></text>
-                                    <text className={classes.axisText} id="textZ"></text>
+                                    <AxisText id="textX" />
+                                    <AxisText id="textY" />
+                                    <AxisText id="textZ" />
                                 </>
                             )}
                             {numP > 1 && <path id="path" d="" stroke="green" strokeWidth={2} fill="none" />}
                             {points.map((_, i) => (
-                                <circle
-                                    className={classes.circle}
+                                <MeasurementPoint
                                     name={`dot ${i}`}
                                     id={i.toString()}
                                     r={5}
                                     key={i}
                                     onMouseDown={selectPoint}
-                                    style={selectedPoint < 0 ? undefined : { pointerEvents: "none" }}
+                                    disabled={selectedPoint >= 0}
                                 />
                             ))}
-                            {numP > 0 && (
-                                <circle id="lastDot" r={3} stroke="none" fill="red" style={{ pointerEvents: "none" }} />
-                            )}
+                            {numP > 0 && <MeasurementPoint id="lastDot" r={3} stroke="none" fill="red" disabled />}
                             {distances.map((_, i) => (
-                                <text className={classes.text} id={`text ${i}`} key={i}></text>
+                                <DistanceText id={`text ${i}`} key={i} />
                             ))}
                             <g id="cursor" />
-                        </svg>
+                        </Svg>
                     )}
                     {!view ? <Loading /> : null}
                 </>

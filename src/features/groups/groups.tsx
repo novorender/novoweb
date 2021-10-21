@@ -1,9 +1,15 @@
 import { useState, useCallback, RefCallback } from "react";
-import { List, ListItem, Box, Typography, Checkbox, IconButton, styled /* ListItemProps */ } from "@mui/material";
-import makeStyles from "@mui/styles/makeStyles";
-import createStyles from "@mui/styles/createStyles";
-import { Visibility, ColorLens } from "@mui/icons-material";
-// import { css } from "@mui/styled-engine";
+import {
+    List,
+    Box,
+    Typography,
+    Checkbox,
+    IconButton,
+    styled,
+    ListItemButtonProps,
+    ListItemButton,
+} from "@mui/material";
+import { css } from "@mui/styled-engine";
 
 import { ScrollBox, Accordion, AccordionSummary, AccordionDetails, Tooltip } from "components";
 import { useToggle } from "hooks/useToggle";
@@ -11,21 +17,16 @@ import { vecToRgb, rgbToVec, VecRGB } from "utils/color";
 import { ColorPicker } from "features/colorPicker";
 import { CustomGroup, customGroupsActions, useCustomGroups } from "contexts/customGroups";
 
-const useStyles = makeStyles((theme) =>
-    createStyles({
-        listItem: {
-            padding: `${theme.spacing(0.5)} ${theme.spacing(1)}`,
-            margin: 0,
-        },
-        listItemInset: {
-            paddingRight: theme.spacing(4),
-        },
-    })
-);
+import { Visibility, ColorLens } from "@mui/icons-material";
 
-/* const StyledListItem = styled(ListItem, { shouldForwardProp: (prop) => prop !== "inset" })<
-    ListItemProps & { inset?: boolean }
->(({ inset, theme }) => css``); */
+const StyledListItemButton = styled(ListItemButton, { shouldForwardProp: (prop) => prop !== "inset" })<
+    ListItemButtonProps & { inset?: boolean }
+>(
+    ({ inset, theme }) => css`
+        margin: 0;
+        padding: ${theme.spacing(0.5)} ${theme.spacing(inset ? 4 : 1)} ${theme.spacing(0.5)} ${theme.spacing(1)};
+    `
+);
 
 const StyledCheckbox = styled(Checkbox)`
     padding-top: 0;
@@ -33,7 +34,6 @@ const StyledCheckbox = styled(Checkbox)`
 `;
 
 export function Groups() {
-    const classes = useStyles();
     const { state: customGroups, dispatch: dispatchCustom } = useCustomGroups();
 
     const [containerEl, setContainerEl] = useState<HTMLDivElement | null>(null);
@@ -58,9 +58,8 @@ export function Groups() {
     return (
         <ScrollBox ref={containerRef} height={1} pb={2}>
             <List>
-                <ListItem
-                    className={`${classes.listItem} ${hasGrouping ? classes.listItemInset : ""}`}
-                    button
+                <StyledListItemButton
+                    inset={hasGrouping}
                     disableRipple
                     onClick={() =>
                         handleChange(customGroups.map((group) => ({ ...group, selected: !allGroupsSelected })))
@@ -104,7 +103,7 @@ export function Groups() {
                             }
                         />
                     </Box>
-                </ListItem>
+                </StyledListItemButton>
 
                 {organisedGroups.singles.map((group, index) => (
                     <Group
@@ -200,19 +199,12 @@ function Group({
     colorPickerPosition: { top: number; left: number } | undefined;
     handleChange: (updated: CustomGroup[]) => void;
 }) {
-    const classes = useStyles();
-
     const [colorPicker, toggleColorPicker] = useToggle();
     const [r, g, b] = vecToRgb(group.color);
 
     return (
         <>
-            <ListItem
-                className={`${classes.listItem} ${inset ? classes.listItemInset : ""}`}
-                button
-                disableRipple
-                onClick={() => handleChange([toggleSelected(group)])}
-            >
+            <StyledListItemButton inset={inset} disableRipple onClick={() => handleChange([toggleSelected(group)])}>
                 <Box display="flex" width={1} alignItems="center">
                     <Box flex="1 1 auto" overflow="hidden">
                         <Tooltip title={group.name}>
@@ -253,7 +245,7 @@ function Group({
                         />
                     </Box>
                 </Box>
-            </ListItem>
+            </StyledListItemButton>
             {colorPicker ? (
                 <ColorPicker
                     position={colorPickerPosition}

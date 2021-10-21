@@ -67,7 +67,7 @@ export function Clipping() {
                 />
             </Box>
             <FormControlLabel
-                style={{ marginLeft: 0 }}
+                sx={{ marginLeft: 0 }}
                 control={<IosSwitch checked={defining} color="primary" onChange={toggleDefineNew} />}
                 labelPlacement="start"
                 label={<Box>Create clipping box</Box>}

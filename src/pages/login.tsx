@@ -2,26 +2,17 @@ import { useState, FormEvent } from "react";
 import { useMsal } from "@azure/msal-react";
 import { useTheme, Box, Button, OutlinedInput, IconButton, InputAdornment, FormControl } from "@mui/material";
 
-import makeStyles from "@mui/styles/makeStyles";
-
 import { loginRequest } from "config/auth";
 import { useAppDispatch } from "app/store";
 import { authActions } from "slices/authSlice";
 import { login, storeToken } from "utils/auth";
+import { useToggle } from "hooks/useToggle";
 
 import { Lock, Visibility, VisibilityOff, AccountCircle } from "@mui/icons-material";
 import { ReactComponent as NovorenderLogo } from "media/img/novorender_logo_RGB_2021.svg";
-import { useToggle } from "hooks/useToggle";
-
-const useStyles = makeStyles((_theme) => ({
-    button: {
-        textTransform: "none",
-    },
-}));
 
 export function Login() {
     const theme = useTheme();
-    const classes = useStyles();
     const { instance } = useMsal();
     const dispatch = useAppDispatch();
 
@@ -117,19 +108,11 @@ export function Login() {
                         </FormControl>
                     </Box>
                     <Box mb={2}>
-                        <Button
-                            className={classes.button}
-                            type="submit"
-                            variant="contained"
-                            fullWidth
-                            color="primary"
-                            size="large"
-                        >
+                        <Button type="submit" variant="contained" fullWidth color="primary" size="large">
                             Log in
                         </Button>
                     </Box>
                     <Button
-                        className={classes.button}
                         type="button"
                         fullWidth
                         variant="outlined"

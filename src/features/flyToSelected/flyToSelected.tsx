@@ -93,7 +93,7 @@ export function FlyToSelected({ view, scene, position, ...speedDialProps }: Prop
                     alignItems="center"
                 >
                     {status === Status.Loading ? (
-                        <CircularProgress thickness={2.5} style={{ position: "absolute", top: "-7px", left: "-1px" }} />
+                        <CircularProgress thickness={2.5} sx={{ position: "absolute" }} />
                     ) : null}
                     <Icon />
                 </Box>

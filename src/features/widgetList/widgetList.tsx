@@ -1,50 +1,38 @@
-import { Box, Grid, IconButton, Typography } from "@mui/material";
-
-import createStyles from "@mui/styles/createStyles";
-import makeStyles from "@mui/styles/makeStyles";
+import { Box, Grid, IconButton, Typography, styled, BoxProps, iconButtonClasses } from "@mui/material";
+import { css } from "@mui/styled-engine";
 
 import { useAppDispatch, useAppSelector } from "app/store";
 import { explorerActions, selectEnabledWidgets, selectWidgets } from "slices/explorerSlice";
 import type { WidgetKey } from "config/features";
 
-const useStyles = makeStyles((theme) =>
-    createStyles({
-        buttonContainer: {
-            cursor: "pointer",
+const ButtonWrapper = styled(Box, {
+    shouldForwardProp: (prop: string) => !["activeCurrent", "activeElsewhere"].includes(prop),
+})<BoxProps & { activeCurrent?: boolean; activeElsewhere?: boolean }>(
+    ({ activeCurrent, activeElsewhere, theme }) => css`
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        cursor: pointer;
+        opacity: ${activeElsewhere ? 0.3 : 1};
 
-            "&:hover button:not(:disabled)": {
-                background: theme.palette.grey[300],
-            },
+        &:hover .${iconButtonClasses.root}:not(:disabled) {
+            background: ${activeCurrent ? theme.palette.primary.dark : theme.palette.grey[300]};
+        }
 
-            "&:hover $activeCurrentButton:not(:disabled)": {
-                background: theme.palette.primary.dark,
-            },
-        },
-        activeElsewhere: {
-            opacity: 0.3,
-        },
-        activeCurrentButton: {
-            background: theme.palette.primary.main,
-            "& svg, & svg path": {
-                fill: theme.palette.common.white,
-            },
-        },
-        button: {
-            background: theme.palette.grey[100],
-        },
-        buttonRoot: {
-            "&.Mui-disabled": {
-                background: theme.palette.grey[100],
-                color: "inherit",
-            },
-        },
-    })
+        .${iconButtonClasses.root} {
+            background: ${activeCurrent ? theme.palette.primary.main : theme.palette.grey[100]};
+
+            svg,
+            svg path {
+                fill: ${activeCurrent ? theme.palette.common.white : theme.palette.text.primary};
+            }
+        }
+    `
 );
 
 type Props = { widgetKey?: WidgetKey; onSelect: () => void };
 
 export function WidgetList({ widgetKey, onSelect }: Props) {
-    const classes = useStyles();
     const enabledWidgets = useAppSelector(selectEnabledWidgets);
     const activeWidgets = useAppSelector(selectWidgets);
 
@@ -74,27 +62,16 @@ export function WidgetList({ widgetKey, onSelect }: Props) {
 
                 return (
                     <Grid xs={4} sm={3} item key={key}>
-                        <Box
-                            display="flex"
-                            flexDirection="column"
-                            alignItems="center"
+                        <ButtonWrapper
+                            activeCurrent={activeCurrent}
+                            activeElsewhere={activeElsewhere}
                             onClick={handleClick(key)}
-                            className={
-                                activeElsewhere
-                                    ? `${classes.activeElsewhere} ${classes.buttonContainer}`
-                                    : classes.buttonContainer
-                            }
                         >
-                            <IconButton
-                                disabled={activeElsewhere}
-                                classes={{ root: classes.buttonRoot }}
-                                className={activeCurrent ? classes.activeCurrentButton : classes.button}
-                                size="large"
-                            >
+                            <IconButton disabled={activeElsewhere} size="large">
                                 <Icon />
                             </IconButton>
                             <Typography>{name}</Typography>
-                        </Box>
+                        </ButtonWrapper>
                     </Grid>
                 );
             })}

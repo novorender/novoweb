@@ -29,7 +29,7 @@ export function Hud({ view, scene }: Props) {
                 display="flex"
                 justifyContent="space-between"
                 alignItems="flex-end"
-                style={{ pointerEvents: "none" }}
+                sx={{ pointerEvents: "none" }}
             >
                 <SelectionModifierMenu />
                 <CameraNavigationMenu scene={scene} view={view} />
@@ -42,7 +42,7 @@ export function Hud({ view, scene }: Props) {
                     right={theme.spacing(3)}
                     height={1}
                     width={1}
-                    style={{ pointerEvents: "none" }}
+                    sx={{ pointerEvents: "none" }}
                 >
                     <Widgets scene={scene} view={view} />
                 </Box>

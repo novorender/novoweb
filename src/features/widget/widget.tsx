@@ -1,8 +1,19 @@
-import { useTheme, useMediaQuery, Paper, Box, Typography, IconButton, FabProps } from "@mui/material";
-import createStyles from "@mui/styles/createStyles";
-import makeStyles from "@mui/styles/makeStyles";
-import { SpeedDial, SpeedDialIcon } from "@mui/material";
-import { OpenReason, CloseReason } from "@mui/lab";
+import {
+    useTheme,
+    useMediaQuery,
+    Paper,
+    Box,
+    Typography,
+    IconButton,
+    FabProps,
+    styled,
+    SpeedDial,
+    SpeedDialIcon,
+    PaperProps,
+    OpenReason,
+    CloseReason,
+} from "@mui/material";
+import { css } from "@mui/styled-engine";
 import type { Scene, View } from "@novorender/webgl-api";
 
 import { Divider } from "components";
@@ -22,44 +33,31 @@ import { useToggle } from "hooks/useToggle";
 import CloseIcon from "@mui/icons-material/Close";
 import { ReactComponent as NovorenderIcon } from "media/icons/novorender-small.svg";
 
-const useStyles = makeStyles((theme) =>
-    createStyles({
-        fabClosed: {
-            backgroundColor: theme.palette.primary.main,
-            "&:hover": {
-                backgroundColor: theme.palette.primary.dark,
-            },
-        },
-        fabOpen: {
-            backgroundColor: theme.palette.secondary.main,
-            "&:hover": {
-                backgroundColor: theme.palette.secondary.dark,
-            },
-        },
-        widgetContainer: {
-            position: "absolute",
-            pointerEvents: "auto",
-            borderRadius: `${theme.shape.borderRadius}px`,
-            maxHeight: `min(50vh, 400px)`,
-            height: "100%",
-            left: theme.spacing(1),
-            right: theme.spacing(1),
-            top: theme.spacing(1),
-            background: theme.palette.common.white,
-            [theme.breakpoints.up("sm")]: {
-                minWidth: 384,
-                maxWidth: "20vw",
-                width: "100%",
-                minHeight: 350,
-                maxHeight: "calc(50% - 80px)",
-                position: "static",
-                transform: "translateX(-20px) translateY(40px);",
-            },
-            [theme.breakpoints.up("md")]: {
-                transform: "translateX(-30px) translateY(46px);",
-            },
-        },
-    })
+const WidgetContainer = styled((props: PaperProps) => <Paper elevation={4} {...props} />)(
+    ({ theme }) => css`
+        pointer-events: auto;
+        border-radius: ${theme.shape.borderRadius}px;
+        max-height: min(50vh, 400px);
+        height: 100%;
+        position: absolute;
+        left: ${theme.spacing(1)};
+        right: ${theme.spacing(1)};
+        top: ${theme.spacing(1)};
+
+        ${theme.breakpoints.up("sm")} {
+            min-width: 384px;
+            max-width: 20vw;
+            width: 100%;
+            min-height: 350px;
+            max-height: calc(50% - 80px);
+            position: static;
+            transform: translateX(-20px) translateY(40px);
+        }
+
+        ${theme.breakpoints.up("md")} {
+            transform: translateX(-30px) translateY(46px);
+        }
+    `
 );
 
 type Props = {
@@ -69,7 +67,6 @@ type Props = {
 };
 
 export function Widget({ widgetKey, scene, view }: Props) {
-    const classes = useStyles();
     const theme = useTheme();
     const isSmall = useMediaQuery(theme.breakpoints.down("md"));
     const [menuOpen, toggleMenu] = useToggle(false);
@@ -101,7 +98,7 @@ export function Widget({ widgetKey, scene, view }: Props) {
 
     return (
         <>
-            <Paper elevation={4} className={classes.widgetContainer} data-test={`${widgetKey}-widget`}>
+            <WidgetContainer data-test={`${widgetKey}-widget`}>
                 <Box height="100%" display="flex" flexDirection="column">
                     <Box display="flex" p={1} boxShadow={headerShadow ? theme.customShadows.widgetHeader : "none"}>
                         <Box display="flex" alignItems="center">
@@ -133,14 +130,14 @@ export function Widget({ widgetKey, scene, view }: Props) {
                         <WidgetList widgetKey={widgetKey} onSelect={toggleMenu} />
                     </Box>
                 </Box>
-            </Paper>
+            </WidgetContainer>
             <SpeedDial
                 open={menuOpen}
                 onOpen={(_event, reason) => handleToggle(reason)}
                 onClose={(_event, reason) => handleToggle(reason)}
                 FabProps={
                     {
-                        className: menuOpen ? classes.fabOpen : classes.fabClosed,
+                        color: menuOpen ? "secondary" : "primary",
                         size: isSmall ? "small" : "large",
                         "data-test": `${widgetKey}-widget-menu-fab`,
                     } as Partial<FabProps<"button", { "data-test": string }>>
@@ -153,7 +150,6 @@ export function Widget({ widgetKey, scene, view }: Props) {
 }
 
 export function MenuWidget() {
-    const classes = useStyles();
     const theme = useTheme();
     const isSmall = useMediaQuery(theme.breakpoints.down("md"));
 
@@ -170,7 +166,7 @@ export function MenuWidget() {
     return (
         <>
             {open ? (
-                <Paper elevation={4} className={classes.widgetContainer} data-test="menu-widget">
+                <WidgetContainer data-test="menu-widget">
                     <Box display="flex" p={1} boxShadow={theme.customShadows.widgetHeader}>
                         <Box display="flex" alignItems="center">
                             <NovorenderIcon
@@ -189,7 +185,7 @@ export function MenuWidget() {
                     <Box p={1} mt={1}>
                         <WidgetList onSelect={toggle} />
                     </Box>
-                </Paper>
+                </WidgetContainer>
             ) : null}
             <SpeedDial
                 open={open}
@@ -197,7 +193,7 @@ export function MenuWidget() {
                 onClose={(_event, reason) => handleToggle(reason)}
                 FabProps={
                     {
-                        className: open ? classes.fabOpen : classes.fabClosed,
+                        color: open ? "secondary" : "primary",
                         size: isSmall ? "small" : "large",
                         "data-test": "widget-menu-fab",
                     } as Partial<FabProps<"button", { "data-test": string }>>
