@@ -1,37 +1,40 @@
-import { withStyles, Theme, createStyles, Switch } from "@material-ui/core";
+import { Switch, styled, switchClasses } from "@mui/material/";
+import { css } from "@mui/styled-engine";
 
-export const IosSwitch = withStyles((theme: Theme) =>
-    createStyles({
-        root: {
-            width: 48,
-            height: 24,
-            padding: 0,
-            margin: theme.spacing(1),
-        },
-        switchBase: {
-            padding: 1,
-            color: theme.palette.grey[600],
+export const IosSwitch = styled(Switch)(
+    ({ theme }) => css`
+        &.${switchClasses.root} {
+            width: 48px;
+            height: 24px;
+            padding: 0;
+            margin: ${theme.spacing(1)};
+        }
 
-            "&$checked": {
-                transform: "translateX(23px)",
-                color: theme.palette.primary.main,
+        & .${switchClasses.switchBase} {
+            padding: 1px;
+            color: ${theme.palette.grey[600]};
 
-                "& + $track": {
-                    opacity: 0.1,
-                },
-            },
-        },
-        thumb: {
-            marginTop: 2,
-            marginLeft: 3,
-            width: 18,
-            height: 18,
-        },
-        track: {
-            borderRadius: 24 / 2,
-            color: theme.palette.grey[600],
-            opacity: 0.1,
-        },
-        checked: {},
-    })
-)(Switch);
+            &.${switchClasses.checked} {
+                transform: "translateX(23px)";
+                color: ${theme.palette.primary.main};
+
+                & + .${switchClasses.track} {
+                    opacity: 0.1;
+                }
+            }
+        }
+
+        & .${switchClasses.thumb} {
+            margin-top: 2px;
+            margin-left: 3px;
+            width: 18px;
+            height: 18px;
+        }
+
+        & .${switchClasses.track} {
+            border-radius: ${24 / 2}px;
+            color: ${theme.palette.grey[600]};
+            opacity: 0.1;
+        }
+    `
+);

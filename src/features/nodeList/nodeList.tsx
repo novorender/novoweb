@@ -1,21 +1,11 @@
-import { CSSProperties } from "react";
-import {
-    ListItemProps,
-    useTheme,
-    ListItem,
-    Box,
-    Typography,
-    Checkbox,
-    createStyles,
-    makeStyles,
-} from "@material-ui/core";
+import { ChangeEvent, forwardRef, MouseEventHandler, CSSProperties, MutableRefObject } from "react";
 import { HierarcicalObjectReference, Scene } from "@novorender/webgl-api";
-import AutoSizer from "react-virtualized-auto-sizer";
-import { ChangeEvent, forwardRef, MouseEventHandler, MutableRefObject } from "react";
 import { FixedSizeList, FixedSizeListProps, ListOnScrollProps } from "react-window";
+import AutoSizer from "react-virtualized-auto-sizer";
+import { ListItemProps, useTheme, ListItem, Box, Typography, Checkbox } from "@mui/material";
 
 import { useAppDispatch } from "app/store";
-import { Tooltip, useScrollBoxStyles } from "components";
+import { Tooltip, withCustomScrollbar } from "components";
 import { NodeType } from "features/modelTree/modelTree";
 
 import { searchByParentPath } from "utils/search";
@@ -25,9 +15,10 @@ import { highlightActions, useDispatchHighlighted, useIsHighlighted } from "cont
 import { hiddenGroupActions, useDispatchHidden, useIsHidden } from "contexts/hidden";
 import { renderActions } from "slices/renderSlice";
 
-import FolderIcon from "@material-ui/icons/Folder";
-import EcoIcon from "@material-ui/icons/Eco";
-import VisibilityIcon from "@material-ui/icons/Visibility";
+import FolderIcon from "@mui/icons-material/Folder";
+import VisibilityIcon from "@mui/icons-material/Visibility";
+
+const StyledFixedSizeList = withCustomScrollbar(FixedSizeList) as typeof FixedSizeList;
 
 type Props = {
     nodes: HierarcicalObjectReference[];
@@ -44,14 +35,12 @@ type Props = {
 export const NodeList = forwardRef<any, Props>(
     ({ nodes, onScroll, outerRef, CustomParent, parentNode, ...nodeProps }, ref) => {
         const theme = useTheme();
-        const scrollBoxStyles = useScrollBoxStyles().box;
 
         return (
             <AutoSizer>
                 {({ height, width }) => (
-                    <FixedSizeList
+                    <StyledFixedSizeList
                         style={{ paddingLeft: theme.spacing(1), paddingRight: theme.spacing(1) }}
-                        className={scrollBoxStyles}
                         onScroll={onScroll}
                         height={height}
                         width={width}
@@ -91,21 +80,11 @@ export const NodeList = forwardRef<any, Props>(
                                 </>
                             );
                         }}
-                    </FixedSizeList>
+                    </StyledFixedSizeList>
                 )}
             </AutoSizer>
         );
     }
-);
-
-const useStyles = makeStyles((theme) =>
-    createStyles({
-        listItemIcon: {
-            minWidth: "auto",
-            margin: `0 ${theme.spacing(1)}px 0 0`,
-            color: theme.palette.grey[700],
-        },
-    })
 );
 
 type NodeProps = {
@@ -119,7 +98,6 @@ type NodeProps = {
 
 function Node({ node, parent, loading, setLoading, abortController, scene, ...props }: NodeProps) {
     const theme = useTheme();
-    const classes = useStyles();
 
     const dispatch = useAppDispatch();
     const dispatchHighlighted = useDispatchHighlighted();
@@ -272,19 +250,27 @@ function Node({ node, parent, loading, setLoading, abortController, scene, ...pr
             disableGutters
             button
             key={node.id}
-            style={{ ...props.style, paddingLeft: theme.spacing(1), paddingRight: theme.spacing(1) }}
+            style={{ ...props.style }}
+            sx={{ paddingLeft: 1, paddingRight: 1 }}
             onClick={() => (onNodeClick ? onNodeClick(node, selected) : undefined)}
         >
             <Box display="flex" width={1} alignItems="center">
-                <Box display="flex" alignItems="center" width={0} flex={"1 1 100%"}>
-                    {!parent ? (
-                        node.type === NodeType.Internal ? (
-                            <FolderIcon className={classes.listItemIcon} fontSize="small" />
-                        ) : (
-                            <EcoIcon className={classes.listItemIcon} fontSize="small" />
-                        )
-                    ) : null}
-                    <Tooltip title={parent ? "Folder" : pathName} interactive>
+                <Box
+                    sx={{
+                        display: "flex",
+                        alignItems: "center",
+                        width: 0,
+                        flex: "1 1 100%",
+
+                        "& svg": {
+                            minWidth: "auto",
+                            margin: `0 ${theme.spacing(1)} 0 0`,
+                            color: theme.palette.grey[700],
+                        },
+                    }}
+                >
+                    {!parent ? node.type === NodeType.Internal ? <FolderIcon fontSize="small" /> : null : null}
+                    <Tooltip title={parent ? "Folder" : pathName}>
                         <Typography color={parent ? "textSecondary" : "textPrimary"} noWrap={true}>
                             {parent ? "Folder" : pathName}
                         </Typography>

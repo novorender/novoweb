@@ -1,50 +1,27 @@
-import { createStyles, makeStyles } from "@material-ui/core";
-import { SpeedDialAction as BaseSpeedDialAction, SpeedDialActionProps } from "@material-ui/lab";
+import { SpeedDialAction as MuiSpeedDialAction, SpeedDialActionProps, styled } from "@mui/material";
 import { forwardRef } from "react";
+import { css } from "@mui/styled-engine";
 
-type Props = SpeedDialActionProps & {
-    active?: boolean;
-};
+export const SpeedDialAction = styled(
+    forwardRef(({ FabProps, ...speedDialActionProps }: SpeedDialActionProps, ref) => (
+        <MuiSpeedDialAction ref={ref} {...speedDialActionProps} FabProps={{ color: "inherit", ...FabProps }} />
+    )),
+    { shouldForwardProp: (prop) => prop !== "active" }
+)<SpeedDialActionProps & { active?: boolean }>(
+    ({ active, theme }) => css`
+        ${theme.breakpoints.down("md")} {
+            margin: ${theme.spacing(1)} ${theme.spacing(1)} 0;
+        }
 
-const useStyles = makeStyles((theme) =>
-    createStyles({
-        base: {
-            [theme.breakpoints.down("sm")]: {
-                margin: theme.spacing(1),
-                marginBottom: 0,
-            },
-        },
-        fabActive: {
-            "& svg": {
-                color: theme.palette.common.white,
-            },
-            backgroundColor: theme.palette.primary.main,
-            "&:hover": {
-                backgroundColor: theme.palette.primary.dark,
-            },
-        },
-        fab: {
-            "& svg": {
-                color: theme.palette.common.white,
-            },
-            backgroundColor: theme.palette.secondary.main,
-            "&:hover": {
-                backgroundColor: theme.palette.secondary.dark,
-            },
-        },
-    })
+        &,
+        svg {
+            color: ${theme.palette.common.white};
+        }
+
+        background-color: ${active ? theme.palette.primary.main : theme.palette.secondary.main};
+
+        &:hover {
+            background-color: ${active ? theme.palette.primary.dark : theme.palette.secondary.dark};
+        }
+    `
 );
-
-export const SpeedDialAction = forwardRef(({ active, FabProps, ...speedDialActionProps }: Props, ref) => {
-    const classes = useStyles();
-
-    return (
-        <BaseSpeedDialAction
-            ref={ref}
-            className={classes.base}
-            classes={{ fab: active ? classes.fabActive : classes.fab }}
-            FabProps={{ color: "inherit", ...FabProps }}
-            {...speedDialActionProps}
-        />
-    );
-});

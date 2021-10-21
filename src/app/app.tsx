@@ -1,6 +1,6 @@
 import { useEffect } from "react";
-import { CssBaseline } from "@material-ui/core";
-import { ThemeProvider } from "@material-ui/core/styles";
+import { CssBaseline } from "@mui/material";
+import { ThemeProvider, StyledEngineProvider } from "@mui/material/styles";
 import { createAPI } from "@novorender/webgl-api";
 import { createAPI as createDataAPI } from "@novorender/data-js-api";
 import { MsalProvider } from "@azure/msal-react";
@@ -63,23 +63,25 @@ export function App() {
     return (
         <>
             <MsalProvider instance={msalInstance}>
-                <ThemeProvider theme={theme}>
-                    <CssBaseline />
-                    {status === Status.Initial ? (
-                        <Loading />
-                    ) : (
-                        <BrowserRouter>
-                            <Switch>
-                                <Route path="/explorer/:id?">
-                                    <Explorer />
-                                </Route>
-                                <Route path="/:id?">
-                                    <Explorer />
-                                </Route>
-                            </Switch>
-                        </BrowserRouter>
-                    )}
-                </ThemeProvider>
+                <StyledEngineProvider injectFirst>
+                    <ThemeProvider theme={theme}>
+                        <CssBaseline />
+                        {status === Status.Initial ? (
+                            <Loading />
+                        ) : (
+                            <BrowserRouter>
+                                <Switch>
+                                    <Route path="/explorer/:id?">
+                                        <Explorer />
+                                    </Route>
+                                    <Route path="/:id?">
+                                        <Explorer />
+                                    </Route>
+                                </Switch>
+                            </BrowserRouter>
+                        )}
+                    </ThemeProvider>
+                </StyledEngineProvider>
             </MsalProvider>
         </>
     );

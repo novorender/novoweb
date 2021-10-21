@@ -1,6 +1,15 @@
 import { useState, useCallback, RefCallback } from "react";
-import { makeStyles, createStyles, List, ListItem, Box, Typography, Checkbox, IconButton } from "@material-ui/core";
-import { Visibility, ColorLens } from "@material-ui/icons";
+import {
+    List,
+    Box,
+    Typography,
+    Checkbox,
+    IconButton,
+    styled,
+    ListItemButtonProps,
+    ListItemButton,
+} from "@mui/material";
+import { css } from "@mui/styled-engine";
 
 import { ScrollBox, Accordion, AccordionSummary, AccordionDetails, Tooltip } from "components";
 import { useToggle } from "hooks/useToggle";
@@ -8,33 +17,23 @@ import { vecToRgb, rgbToVec, VecRGB } from "utils/color";
 import { ColorPicker } from "features/colorPicker";
 import { CustomGroup, customGroupsActions, useCustomGroups } from "contexts/customGroups";
 
-const useStyles = makeStyles((theme) =>
-    createStyles({
-        container: {
-            overflow: "hidden overlay",
-            fallbacks: {
-                overflow: "hidden auto",
-            },
-        },
-        accordionSummaryCheckbox: {
-            marginLeft: "auto",
-        },
-        groupFunctionIcon: {
-            paddingTop: 0,
-            paddingBottom: 0,
-        },
-        listItem: {
-            padding: `${theme.spacing(0.5)}px ${theme.spacing(1)}px`,
-            margin: 0,
-        },
-        listItemInset: {
-            paddingRight: theme.spacing(4),
-        },
-    })
+import { Visibility, ColorLens } from "@mui/icons-material";
+
+const StyledListItemButton = styled(ListItemButton, { shouldForwardProp: (prop) => prop !== "inset" })<
+    ListItemButtonProps & { inset?: boolean }
+>(
+    ({ inset, theme }) => css`
+        margin: 0;
+        padding: ${theme.spacing(0.5)} ${theme.spacing(inset ? 4 : 1)} ${theme.spacing(0.5)} ${theme.spacing(1)};
+    `
 );
 
+const StyledCheckbox = styled(Checkbox)`
+    padding-top: 0;
+    padding-bottom: 0;
+`;
+
 export function Groups() {
-    const classes = useStyles();
     const { state: customGroups, dispatch: dispatchCustom } = useCustomGroups();
 
     const [containerEl, setContainerEl] = useState<HTMLDivElement | null>(null);
@@ -57,11 +56,10 @@ export function Groups() {
     };
 
     return (
-        <ScrollBox ref={containerRef} height={1} pb={2} className={classes.container}>
+        <ScrollBox ref={containerRef} height={1} pb={2}>
             <List>
-                <ListItem
-                    className={`${classes.listItem} ${hasGrouping ? classes.listItemInset : ""}`}
-                    button
+                <StyledListItemButton
+                    inset={hasGrouping}
                     disableRipple
                     onClick={() =>
                         handleChange(customGroups.map((group) => ({ ...group, selected: !allGroupsSelected })))
@@ -73,9 +71,8 @@ export function Groups() {
                                 Groups: {organisedGroups.singles.length + Object.values(organisedGroups.grouped).length}
                             </Typography>
                         </Box>
-                        <Checkbox
+                        <StyledCheckbox
                             aria-label="toggle all groups highlighting"
-                            className={classes.groupFunctionIcon}
                             size="small"
                             checked={allGroupsSelected}
                             onClick={(event) => event.stopPropagation()}
@@ -88,10 +85,9 @@ export function Groups() {
                                 )
                             }
                         />
-                        <Checkbox
+                        <StyledCheckbox
                             data-test="toggle-visibility"
                             aria-label="toggle group visibility"
-                            className={classes.groupFunctionIcon}
                             size="small"
                             icon={<Visibility />}
                             checkedIcon={<Visibility color="disabled" />}
@@ -107,7 +103,7 @@ export function Groups() {
                             }
                         />
                     </Box>
-                </ListItem>
+                </StyledListItemButton>
 
                 {organisedGroups.singles.map((group, index) => (
                     <Group
@@ -127,15 +123,15 @@ export function Groups() {
                     <Accordion key={grouping.name + index}>
                         <AccordionSummary>
                             <Box width={0} flex="1 1 auto" overflow="hidden">
-                                <Typography variant="body2" style={{ fontWeight: "bold" }} noWrap>
+                                <Box fontWeight={600} overflow="hidden" whiteSpace="nowrap" textOverflow="ellipsis">
                                     {grouping.name}
-                                </Typography>
+                                </Box>
                             </Box>
                             <Box flex="0 0 auto">
-                                <Checkbox
+                                <StyledCheckbox
                                     data-test="toggle-highlighting"
                                     aria-label="toggle group highlighting"
-                                    className={classes.accordionSummaryCheckbox}
+                                    sx={{ marginLeft: "auto" }}
                                     size="small"
                                     onChange={() =>
                                         handleChange(
@@ -151,7 +147,7 @@ export function Groups() {
                                 />
                             </Box>
                             <Box flex="0 0 auto">
-                                <Checkbox
+                                <StyledCheckbox
                                     data-test="toggle-visibility"
                                     aria-label="toggle group visibility"
                                     size="small"
@@ -172,8 +168,8 @@ export function Groups() {
                             </Box>
                         </AccordionSummary>
                         <AccordionDetails>
-                            <Box pl={2} pr={3}>
-                                <List>
+                            <Box pr={3}>
+                                <List sx={{ padding: 0 }}>
                                     {grouping.groups.map((group, index) => (
                                         <Group
                                             key={group.name + index}
@@ -203,49 +199,41 @@ function Group({
     colorPickerPosition: { top: number; left: number } | undefined;
     handleChange: (updated: CustomGroup[]) => void;
 }) {
-    const classes = useStyles();
-
     const [colorPicker, toggleColorPicker] = useToggle();
     const [r, g, b] = vecToRgb(group.color);
 
     return (
         <>
-            <ListItem
-                className={`${classes.listItem} ${inset ? classes.listItemInset : ""}`}
-                button
-                disableRipple
-                onClick={() => handleChange([toggleSelected(group)])}
-            >
+            <StyledListItemButton inset={inset} disableRipple onClick={() => handleChange([toggleSelected(group)])}>
                 <Box display="flex" width={1} alignItems="center">
                     <Box flex="1 1 auto" overflow="hidden">
-                        <Tooltip title={group.name} interactive>
+                        <Tooltip title={group.name}>
                             <Typography noWrap={true}>{group.name}</Typography>
                         </Tooltip>
                     </Box>
                     <Box flex="0 0 auto">
                         <IconButton
+                            sx={{ paddingBottom: 0, paddingTop: 0 }}
                             onClick={(e) => {
                                 e.stopPropagation();
                                 toggleColorPicker();
                             }}
                             size="small"
-                            className={classes.groupFunctionIcon}
                         >
                             <ColorLens style={{ fill: `rgb(${r}, ${g}, ${b})` }} />
                         </IconButton>
                     </Box>
                     <Box flex="0 0 auto">
-                        <Checkbox
+                        <StyledCheckbox
                             aria-label="toggle group highlighting"
                             size="small"
                             checked={group.selected}
                             onClick={(event) => event.stopPropagation()}
                             onChange={() => handleChange([toggleSelected(group)])}
-                            className={classes.groupFunctionIcon}
                         />
                     </Box>
                     <Box flex="0 0 auto">
-                        <Checkbox
+                        <StyledCheckbox
                             data-test="toggle-visibility"
                             aria-label="toggle group visibility"
                             size="small"
@@ -254,11 +242,10 @@ function Group({
                             checked={group.hidden}
                             onClick={(event) => event.stopPropagation()}
                             onChange={() => handleChange([toggleVisibility(group)])}
-                            className={classes.groupFunctionIcon}
                         />
                     </Box>
                 </Box>
-            </ListItem>
+            </StyledListItemButton>
             {colorPicker ? (
                 <ColorPicker
                     position={colorPickerPosition}

@@ -1,7 +1,6 @@
 import { useEffect, useRef } from "react";
 import { BoundingSphere, HierarcicalObjectReference, Scene, View } from "@novorender/webgl-api";
-import { Box, CircularProgress } from "@material-ui/core";
-import type { SpeedDialActionProps } from "@material-ui/lab";
+import { Box, CircularProgress, SpeedDialActionProps } from "@mui/material";
 
 import { SpeedDialAction } from "components";
 import { config as featuresConfig } from "config/features";
@@ -94,7 +93,7 @@ export function FlyToSelected({ view, scene, position, ...speedDialProps }: Prop
                     alignItems="center"
                 >
                     {status === Status.Loading ? (
-                        <CircularProgress thickness={2.5} style={{ position: "absolute", top: "-7px", left: "-1px" }} />
+                        <CircularProgress thickness={2.5} sx={{ position: "absolute" }} />
                     ) : null}
                     <Icon />
                 </Box>

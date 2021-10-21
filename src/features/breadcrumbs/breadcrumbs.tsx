@@ -1,37 +1,28 @@
-import { Box, Button, makeStyles, Menu } from "@material-ui/core";
-import { useState, useEffect, forwardRef } from "react";
+import { Box, Button, Menu, styled, useTheme } from "@mui/material";
+import { css } from "@mui/styled-engine";
+import { useState, useEffect, forwardRef, HTMLProps } from "react";
 
-import NavigateNextIcon from "@material-ui/icons/NavigateNext";
-import MoreHorizIcon from "@material-ui/icons/MoreHoriz";
 import { replaceEncodedSlash } from "utils/misc";
 
-const useStyles = makeStyles({
-    breadcrumbExpandButton: {
-        cursor: "pointer",
-        display: "flex",
-        borderRadius: " 2px",
-        minWidth: 0,
-    },
-    breadcrumbSeparator: {
-        display: "flex",
-        userSelect: "none",
-        marginLeft: 2,
-        marginRight: 2,
+import NavigateNextIcon from "@mui/icons-material/NavigateNext";
+import MoreHorizIcon from "@mui/icons-material/MoreHoriz";
 
-        "& > svg": {
-            fontSize: "0.85rem",
-        },
-    },
-    breadcrumb: {
-        textOverflow: "ellipsis",
-        whiteSpace: "nowrap",
-    },
-    expandedBreadcrumbs: {
-        "& button": {
-            width: "100%",
-        },
-    },
-});
+const BreadcrumbSeparator = styled((props: HTMLProps<HTMLDivElement>) => (
+    <div {...props} aria-hidden>
+        <NavigateNextIcon />
+    </div>
+))(
+    () => css`
+        display: flex;
+        user-select: "none";
+        margin-left: 2px;
+        margin-right: 2px;
+
+        & > svg {
+            font-size: 0.85rem;
+        }
+    `
+);
 
 const crumbsToShow = 2;
 
@@ -46,7 +37,7 @@ export function Breadcrumbs({
     id: string;
     onClick: (path: string) => void;
 }) {
-    const classes = useStyles();
+    const theme = useTheme();
 
     const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
 
@@ -67,13 +58,7 @@ export function Breadcrumbs({
         if (index === 0) {
             return [item];
         } else {
-            return [
-                ...acc,
-                <div key={`separator-${index}`} aria-hidden className={classes.breadcrumbSeparator}>
-                    <NavigateNextIcon />
-                </div>,
-                item,
-            ];
+            return [...acc, <BreadcrumbSeparator key={`separator-${index}`} />, item];
         }
     }, []);
 
@@ -95,7 +80,13 @@ export function Breadcrumbs({
                 <>
                     <Button
                         data-test="expand-breadcrumbs"
-                        className={classes.breadcrumbExpandButton}
+                        sx={{
+                            cursor: "pointer",
+                            display: "flex",
+                            borderRadius: " 2px",
+                            minWidth: 0,
+                        }}
+                        color="grey"
                         aria-controls={id}
                         aria-haspopup="true"
                         onClick={handleClick}
@@ -105,7 +96,12 @@ export function Breadcrumbs({
                     </Button>
                     <Menu
                         data-test="expanded-breadcrumbs"
-                        className={classes.expandedBreadcrumbs}
+                        sx={{
+                            "& button": {
+                                width: 1,
+                                color: theme.palette.text.primary,
+                            },
+                        }}
                         id={id}
                         anchorEl={anchorEl}
                         open={Boolean(anchorEl)}
@@ -113,9 +109,7 @@ export function Breadcrumbs({
                     >
                         {hiddenCrumbs}
                     </Menu>
-                    <div aria-hidden className={classes.breadcrumbSeparator}>
-                        <NavigateNextIcon />
-                    </div>
+                    <BreadcrumbSeparator />
                 </>
             ) : null}
             {visibleCrumbs}
@@ -132,11 +126,15 @@ const Breadcrumb = forwardRef<
         onClick: (fullPath: string) => void;
     }
 >(({ name, fullPath, isLast, onClick }, ref) => {
-    const classes = useStyles();
-
     return (
         <Box display="flex" flex={isLast ? "1 0 auto" : "0 1 auto"} width={isLast ? 0 : "auto"} overflow="hidden">
-            <Button ref={ref} size="small" className={classes.breadcrumb} onClick={() => onClick(fullPath)}>
+            <Button
+                ref={ref}
+                size="small"
+                color="grey"
+                sx={{ textOverflow: "ellipsis", whiteSpace: "nowrap" }}
+                onClick={() => onClick(fullPath)}
+            >
                 <Box overflow="hidden" whiteSpace="nowrap" textOverflow="ellipsis" component="span">
                     {name}
                 </Box>

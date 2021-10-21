@@ -1,4 +1,4 @@
-import type { SpeedDialActionProps } from "@material-ui/lab";
+import type { SpeedDialActionProps } from "@mui/material";
 
 import { SpeedDialAction } from "components";
 import { config as featuresConfig } from "config/features";

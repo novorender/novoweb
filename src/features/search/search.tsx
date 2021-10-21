@@ -1,16 +1,7 @@
 import { ChangeEvent, CSSProperties, FormEvent, useCallback, useEffect, useRef, useState } from "react";
 import { ListOnScrollProps } from "react-window";
-import {
-    makeStyles,
-    createStyles,
-    Box,
-    Button,
-    FormControlLabel,
-    Checkbox,
-    ListItem,
-    Typography,
-    useTheme,
-} from "@material-ui/core";
+import { Box, Button, ButtonProps, Checkbox, FormControlLabel, ListItem, styled, Typography } from "@mui/material";
+import { css } from "@mui/styled-engine";
 import { HierarcicalObjectReference, Scene, SearchPattern, View } from "@novorender/webgl-api";
 
 import { useAppDispatch, useAppSelector } from "app/store";
@@ -29,10 +20,36 @@ import { explorerActions, selectUrlSearchQuery } from "slices/explorerSlice";
 import { iterateAsync, searchByPatterns } from "utils/search";
 import { extractObjectIds, getTotalBoundingSphere } from "utils/objectData";
 
-import AddCircleIcon from "@material-ui/icons/AddCircle";
-import DragHandleIcon from "@material-ui/icons/DragHandle";
-import CancelIcon from "@material-ui/icons/Cancel";
-import VisibilityIcon from "@material-ui/icons/Visibility";
+import AddCircleIcon from "@mui/icons-material/AddCircle";
+import DragHandleIcon from "@mui/icons-material/DragHandle";
+import CancelIcon from "@mui/icons-material/Cancel";
+import VisibilityIcon from "@mui/icons-material/Visibility";
+
+const StyledForm = styled("form")(
+    ({ theme }) => css`
+        margin: ${theme.spacing(1)} 0;
+        box-shadow: ${theme.customShadows.widgetHeader};
+        padding-bottom: ${theme.spacing(1)};
+    `
+);
+
+const AdvancedSearchModifier = styled(Button, {
+    shouldForwardProp: (prop) => prop !== "active",
+})<ButtonProps & { active?: boolean }>(
+    ({ theme, active }) => css`
+        width: 24px;
+        height: 24px;
+        min-width: 0;
+        flex: 0 0 auto;
+        padding: ${theme.spacing(1)};
+        color: ${theme.palette.common.white};
+        background: ${active ? theme.palette.primary.main : theme.palette.secondary.light};
+
+        &:hover {
+            background: ${active ? theme.palette.primary.dark : theme.palette.secondary.main};
+        }
+    `
+);
 
 enum Status {
     Initial,
@@ -40,67 +57,12 @@ enum Status {
     Error,
 }
 
-const useSearchStyles = makeStyles((theme) =>
-    createStyles({
-        form: {
-            margin: `${theme.spacing(1)}px 0`,
-            boxShadow: theme.customShadows.widgetHeader,
-            paddingBottom: theme.spacing(1),
-        },
-        switchFormControl: {
-            marginLeft: 0,
-            marginRight: theme.spacing(4),
-        },
-        advancedSearchModifier: {
-            width: 24,
-            height: 24,
-            minWidth: 0,
-            flex: "0 0 auto",
-            padding: theme.spacing(1),
-            color: theme.palette.common.white,
-            background: theme.palette.secondary.light,
-            "&:hover": {
-                background: theme.palette.secondary.main,
-
-                "&.active": {
-                    background: theme.palette.primary.dark,
-                },
-            },
-
-            "&.active": {
-                background: theme.palette.primary.main,
-            },
-        },
-        searchButton: {
-            textTransform: "none",
-        },
-        cancelButton: {
-            marginRight: theme.spacing(1),
-            textTransform: "none",
-            border: `1px solid ${theme.palette.grey[300]}`,
-
-            "&:not(:disabled)": {
-                border: `1px solid ${theme.palette.grey[600]}`,
-            },
-
-            "&:hover": {
-                background: theme.palette.grey[600],
-                color: theme.palette.common.white,
-            },
-        },
-        addCriteria: {
-            padding: 0,
-        },
-    })
-);
-
 type Props = {
     scene: Scene;
     view: View;
 };
 
 export function Search({ scene, view }: Props) {
-    const classes = useSearchStyles();
     const dispatch = useAppDispatch();
     const dispatchHighlighted = useDispatchHighlighted();
 
@@ -299,7 +261,7 @@ export function Search({ scene, view }: Props) {
     return (
         <Box display="flex" flexDirection="column" height={1}>
             {status === Status.Loading ? <LinearProgress /> : null}
-            <form className={classes.form} onSubmit={handleSubmit}>
+            <StyledForm onSubmit={handleSubmit}>
                 <ScrollBox maxHeight={92} mb={2} pt={1} px={1}>
                     {advanced ? (
                         advancedInputs.map(({ property, value, exact }, index, array) => (
@@ -309,7 +271,6 @@ export function Search({ scene, view }: Props) {
                                     autoFocus={index === array.length - 1}
                                     id={`advanced-search-property-${index}`}
                                     label={"Name"}
-                                    variant="outlined"
                                     fullWidth
                                     value={property}
                                     onChange={(e) =>
@@ -324,7 +285,6 @@ export function Search({ scene, view }: Props) {
                                     autoComplete="novorender-property-value"
                                     id={`advanced-search-value-${index}`}
                                     label={"Value"}
-                                    variant="outlined"
                                     fullWidth
                                     value={value}
                                     onChange={(e) =>
@@ -336,7 +296,7 @@ export function Search({ scene, view }: Props) {
                                     }
                                 />
                                 <Box mx={1}>
-                                    <Button
+                                    <AdvancedSearchModifier
                                         title="Exact"
                                         onClick={() =>
                                             setAdvancedInputs((inputs) =>
@@ -345,13 +305,13 @@ export function Search({ scene, view }: Props) {
                                                 )
                                             )
                                         }
-                                        className={`${classes.advancedSearchModifier} ${exact ? "active" : ""}`}
+                                        active={exact}
                                         size="small"
                                     >
                                         <DragHandleIcon fontSize="small" />
-                                    </Button>
+                                    </AdvancedSearchModifier>
                                 </Box>
-                                <Button
+                                <AdvancedSearchModifier
                                     title="Remove"
                                     onClick={() => {
                                         if (advancedInputs.length > 1) {
@@ -363,11 +323,10 @@ export function Search({ scene, view }: Props) {
                                             toggleAdvanced();
                                         }
                                     }}
-                                    className={`${classes.advancedSearchModifier}`}
                                     size="small"
                                 >
                                     <CancelIcon fontSize="small" />
-                                </Button>
+                                </AdvancedSearchModifier>
                             </Box>
                         ))
                     ) : (
@@ -376,7 +335,6 @@ export function Search({ scene, view }: Props) {
                             autoFocus
                             id="simple-search-field"
                             label={"Search"}
-                            variant="outlined"
                             fullWidth
                             value={simpleInput}
                             onChange={(e) => setSimpleInput(e.target.value)}
@@ -385,7 +343,7 @@ export function Search({ scene, view }: Props) {
                 </ScrollBox>
                 <Box px={1} mb={2}>
                     <FormControlLabel
-                        className={classes.switchFormControl}
+                        sx={{ marginLeft: 0, marginRight: 4, minHeight: 24 }}
                         control={<Switch checked={advanced} onChange={toggleAdvanced} />}
                         label={
                             <Box ml={0.5} fontSize={14}>
@@ -395,7 +353,8 @@ export function Search({ scene, view }: Props) {
                     />
                     {advanced ? (
                         <Button
-                            className={classes.addCriteria}
+                            color="grey"
+                            sx={{ padding: 0 }}
                             onClick={() =>
                                 setAdvancedInputs((inputs) => [...inputs, { property: "", value: "", exact: true }])
                             }
@@ -407,11 +366,13 @@ export function Search({ scene, view }: Props) {
                 </Box>
                 <Box px={1} display="flex">
                     <Button
+                        color="grey"
                         type="button"
+                        variant="outlined"
                         onClick={handleCancel}
                         disabled={status !== Status.Loading}
                         fullWidth
-                        className={classes.cancelButton}
+                        sx={{ marginRight: 1 }}
                     >
                         Cancel
                     </Button>
@@ -419,14 +380,13 @@ export function Search({ scene, view }: Props) {
                         type="submit"
                         fullWidth
                         disabled={status === Status.Loading}
-                        className={classes.searchButton}
                         color="primary"
                         variant="contained"
                     >
                         Search
                     </Button>
                 </Box>
-            </form>
+            </StyledForm>
             <ScrollBox flex={"1 1 100%"}>
                 {status === Status.Error ? (
                     <Box px={1} pt={1}>
@@ -491,7 +451,6 @@ function CustomParentNode({
     allHidden: boolean;
     setAllHidden: (state: boolean) => void;
 }) {
-    const theme = useTheme();
     const dispatchHighlighted = useDispatchHighlighted();
     const dispatchHidden = useDispatchHidden();
 
@@ -551,14 +510,10 @@ function CustomParentNode({
     };
 
     return (
-        <ListItem
-            disableGutters
-            button
-            style={{ ...style, paddingLeft: theme.spacing(1), paddingRight: theme.spacing(1) }}
-        >
+        <ListItem disableGutters button style={{ ...style }} sx={{ paddingLeft: 1, paddingRight: 1 }}>
             <Box display="flex" width={1} alignItems="center">
                 <Box display="flex" alignItems="center" width={0} flex={"1 1 100%"}>
-                    <Tooltip title={"All results"} interactive>
+                    <Tooltip title={"All results"}>
                         <Typography color={"textSecondary"} noWrap={true}>
                             All results
                         </Typography>

@@ -24,7 +24,7 @@
     "devDependencies": {
         "@types/node": "^14.11.2",
         "@types/react-color": "^3.0.4",
-        "@types/react-dom": "^17.0.5",
+        "@types/react-dom": "^17.0.9",
         "@types/react-redux": "^7.1.16",
         "@types/react-router-dom": "^5.1.8",
         "@types/react-virtualized-auto-sizer": "^1.0.1",
@@ -38,15 +38,16 @@
         "prettier": "^2.3.2",
         "react-scripts": "^4.0.3",
         "typedoc": "^0.21.9",
-        "typescript": "^4.4.2"
+        "typescript": "^4.4.3"
     },
     "dependencies": {
         "@azure/msal-browser": "^2.16.1",
         "@azure/msal-react": "^1.0.1",
         "@craco/craco": "^6.2.0",
-        "@material-ui/core": "^4.11.4",
-        "@material-ui/icons": "^4.11.2",
-        "@material-ui/lab": "^4.0.0-alpha.58",
+        "@emotion/react": "^11.4.1",
+        "@emotion/styled": "^11.3.0",
+        "@mui/icons-material": "^5.0.3",
+        "@mui/material": "^5.0.3",
         "@novorender/data-js-api": "^0.2.3",
         "@novorender/webgl-api": "^0.3.13",
         "@reduxjs/toolkit": "^1.5.1",

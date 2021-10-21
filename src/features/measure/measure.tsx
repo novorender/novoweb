@@ -2,44 +2,41 @@ import {
     Box,
     Button,
     FormControlLabel,
-    makeStyles,
+    styled,
     Table,
     TableBody,
     TableCell,
     TableHead,
     TableRow,
     useTheme,
-} from "@material-ui/core";
+    TableCellProps,
+} from "@mui/material";
 import { vec3 } from "gl-matrix";
 import { useEffect } from "react";
+import { css } from "@mui/styled-engine";
 
 import { IosSwitch } from "components";
 import { useAppDispatch, useAppSelector } from "app/store";
 import { renderActions, selectMeasure } from "slices/renderSlice";
 
-import DeleteSweepIcon from "@material-ui/icons/DeleteSweep";
+import DeleteSweepIcon from "@mui/icons-material/DeleteSweep";
 
-const useStyles = makeStyles({
-    table: {
-        tableLayout: "fixed",
-    },
-    tableCell: {
-        fontWeight: 400,
-        padding: "4px 8px",
-        lineHeight: "1.6em",
+const StyledTableCell = styled(TableCell, { shouldForwardProp: (prop) => prop !== "bold" })<
+    TableCellProps & { bold?: boolean }
+>(
+    ({ bold, theme }) => css`
+        font-weight: ${bold ? 600 : 400};
+        line-height: 1.6em;
+        padding: ${theme.spacing(0.5)} ${theme.spacing(1)};
 
-        "&:first-child": {
-            paddingLeft: 0,
-        },
-    },
-    bold: {
-        fontWeight: 600,
-    },
-});
+        &:first-of-type {
+            padding-left: 0;
+        }
+    `
+);
 
 export function Measure() {
     const theme = useTheme();
-    const classes = useStyles();
     const dispatch = useAppDispatch();
     const measure = useAppSelector(selectMeasure);
     let { addingPoint, points, distance, distances, angles } = measure;
@@ -80,9 +77,9 @@ export function Measure() {
                     }
                     label={<Box fontSize={14}>Add point</Box>}
                 />
-                <Button onClick={removeLastPoint} disabled={points.length < 1}>
-                    <DeleteSweepIcon />
-                    <Box ml={1}>Remove last point</Box>
+                <Button onClick={removeLastPoint} color="grey" disabled={points.length < 1}>
+                    <DeleteSweepIcon sx={{ mr: 1 }} />
+                    Remove last point
                 </Button>
             </Box>
             {points.length > 0 && points.length < 3 && (
@@ -91,64 +88,50 @@ export function Measure() {
                         <TableHead>
                             <TableRow>
                                 <TableCell></TableCell>
-                                <TableCell className={classes.tableCell} align="center">
+                                <StyledTableCell align="center">
                                     <Box display="inline-block" ml={1}>
                                         X
                                     </Box>
-                                </TableCell>
-                                <TableCell className={classes.tableCell} align="center">
+                                </StyledTableCell>
+                                <StyledTableCell align="center">
                                     <Box display="inline-block" ml={1}>
                                         Y
                                     </Box>
-                                </TableCell>
-                                <TableCell className={classes.tableCell} align="center">
+                                </StyledTableCell>
+                                <StyledTableCell align="center">
                                     <Box display="inline-block" ml={1}>
                                         Z
                                     </Box>
-                                </TableCell>
+                                </StyledTableCell>
                             </TableRow>
                         </TableHead>
                         <TableBody>
                             <TableRow>
-                                <TableCell className={classes.tableCell}>Start (m)</TableCell>
-                                <TableCell className={classes.tableCell} align="right">
-                                    {v0[0].toFixed(3)}
-                                </TableCell>
-                                <TableCell className={classes.tableCell} align="right">
-                                    {(-v0[2]).toFixed(3)}
-                                </TableCell>
-                                <TableCell className={classes.tableCell} align="right">
-                                    {v0[1].toFixed(3)}
-                                </TableCell>
+                                <StyledTableCell>Start (m)</StyledTableCell>
+                                <StyledTableCell align="right">{v0[0].toFixed(3)}</StyledTableCell>
+                                <StyledTableCell align="right">{(-v0[2]).toFixed(3)}</StyledTableCell>
+                                <StyledTableCell align="right">{v0[1].toFixed(3)}</StyledTableCell>
                             </TableRow>
                             {v1 ? (
                                 <TableRow>
-                                    <TableCell className={classes.tableCell}>End (m)</TableCell>
-                                    <TableCell className={classes.tableCell} align="right">
-                                        {v1[0].toFixed(3)}
-                                    </TableCell>
-                                    <TableCell className={classes.tableCell} align="right">
-                                        {(-v1[2]).toFixed(3)}
-                                    </TableCell>
-                                    <TableCell className={classes.tableCell} align="right">
-                                        {v1[1].toFixed(3)}
-                                    </TableCell>
+                                    <StyledTableCell>End (m)</StyledTableCell>
+                                    <StyledTableCell align="right">{v1[0].toFixed(3)}</StyledTableCell>
+                                    <StyledTableCell align="right">{(-v1[2]).toFixed(3)}</StyledTableCell>
+                                    <StyledTableCell align="right">{v1[1].toFixed(3)}</StyledTableCell>
                                 </TableRow>
                             ) : null}
                             {delta ? (
                                 <TableRow>
-                                    <TableCell className={`${classes.tableCell} ${classes.bold}`}>
-                                        Difference (m)
-                                    </TableCell>
-                                    <TableCell className={`${classes.tableCell} ${classes.bold}`} align="right">
+                                    <StyledTableCell bold>Difference (m)</StyledTableCell>
+                                    <StyledTableCell bold align="right">
                                         {Math.abs(delta[0]).toFixed(3)}
-                                    </TableCell>
-                                    <TableCell className={`${classes.tableCell} ${classes.bold}`} align="right">
+                                    </StyledTableCell>
+                                    <StyledTableCell bold align="right">
                                         {Math.abs(delta[2]).toFixed(3)}
-                                    </TableCell>
-                                    <TableCell className={`${classes.tableCell} ${classes.bold}`} align="right">
+                                    </StyledTableCell>
+                                    <StyledTableCell bold align="right">
                                         {Math.abs(delta[1]).toFixed(3)}
-                                    </TableCell>
+                                    </StyledTableCell>
                                 </TableRow>
                             ) : null}
                         </TableBody>
