@@ -46,7 +46,7 @@ const WidgetContainer = styled((props: PaperProps) => <Paper elevation={4} {...p
 
         ${theme.breakpoints.up("sm")} {
             min-width: 384px;
-            max-width: 20vw;
+            max-width: 20%;
             width: 100%;
             min-height: 350px;
             max-height: calc(50% - 80px);

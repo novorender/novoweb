@@ -13,6 +13,7 @@ import { Loading } from "components";
 import { Explorer } from "pages/explorer";
 import { authActions } from "slices/authSlice";
 import { msalConfig } from "config/auth";
+// @ts-ignore
 import { dataServerBaseUrl, offscreenCanvas, hasCreateImageBitmap } from "config";
 import { CustomNavigationClient, storeActiveAccount } from "utils/auth";
 import { getAuthHeader } from "utils/auth";

@@ -16,6 +16,8 @@ import { CustomGroupsProvider } from "contexts/customGroups";
 import { HighlightedProvider } from "contexts/highlighted";
 import { uniqueArray } from "utils/misc";
 import { SetPreloadedScene } from "features/render/render";
+import { PowerBi } from "features/powerBi";
+import { Box } from "@mui/material";
 
 export function Explorer() {
     const { id = process.env.REACT_APP_SCENE_ID ?? "95a89d20dd084d9486e383e131242c4c" } = useParams<{ id?: string }>();
@@ -41,8 +43,11 @@ export function Explorer() {
     return (
         <ContextProviders>
             <AuthCheck id={id}>
-                <Render3D id={id} api={api} dataApi={dataApi} onInit={handleInit} />
-                {view && scene ? <Hud view={view} scene={scene} /> : null}
+                <Box height="100vh" position="relative">
+                    <Render3D id={id} api={api} dataApi={dataApi} onInit={handleInit} />
+                    {view && scene ? <Hud view={view} scene={scene} /> : null}
+                    {view && scene ? <PowerBi view={view} scene={scene} /> : null}
+                </Box>
             </AuthCheck>
         </ContextProviders>
     );

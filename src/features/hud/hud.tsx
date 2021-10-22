@@ -49,6 +49,7 @@ export function Hud({ view, scene }: Props) {
                     right={theme.spacing(3)}
                     height={1}
                     width={1}
+                    zIndex={1}
                     sx={{ pointerEvents: "none" }}
                 >
                     <Widgets scene={scene} view={view} />

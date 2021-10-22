@@ -2,6 +2,7 @@ import { ObjectGroup } from "@novorender/data-js-api";
 import { EnvironmentDescription, Highlight, Internal, Scene, View } from "@novorender/webgl-api";
 
 import { api } from "app";
+// @ts-ignore
 import { offscreenCanvas } from "config";
 import { CustomGroup } from "contexts/customGroups";
 import { ObjectVisibility, RenderType } from "slices/renderSlice";
