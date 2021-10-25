@@ -15,6 +15,7 @@ import FolderIcon from "@mui/icons-material/Folder";
 import SearchIcon from "@mui/icons-material/Search";
 import GradientIcon from "@mui/icons-material/Gradient";
 import FlightTakeoffIcon from "@mui/icons-material/FlightTakeoff";
+import DomainIcon from "@mui/icons-material/Domain";
 
 import { ReactComponent as ClippingIcon } from "media/icons/clipping.svg";
 import { ReactComponent as RunIcon } from "media/icons/run.svg";
@@ -26,6 +27,12 @@ export enum FeatureType {
 }
 
 export const config = {
+    bimCollab: {
+        key: "bimCollab",
+        name: "BIMcollab",
+        Icon: DomainIcon,
+        type: FeatureType.Widget,
+    },
     modelTree: {
         key: "modelTree",
         name: "Model tree",

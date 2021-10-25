@@ -6,6 +6,7 @@
     "scripts": {
         "build": "craco build",
         "dev": "env HTTPS=true craco start",
+        "dev:bimcollab": "env PORT=5000 craco start",
         "start": "node server.js",
         "test": "cypress run",
         "cypress:open": "cypress open",

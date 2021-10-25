@@ -1023,6 +1023,7 @@ export function Render3D({ id, api, onInit, dataApi }: Props) {
                 <>
                     {showPerformance && view && canvas ? <PerformanceStats view={view} canvas={canvas} /> : null}
                     <Canvas
+                        id="main-canvas"
                         tabIndex={1}
                         ref={setCanvas}
                         onClick={handleClick}

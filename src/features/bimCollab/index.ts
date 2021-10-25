@@ -1,0 +1,1 @@
+export { BimCollab } from "./bimCollab";

@@ -8,7 +8,7 @@ import { Loading } from "components";
 import { Hud } from "features/hud";
 import { Render3D } from "features/render";
 import { Protected } from "features/protectedRoute";
-import { FeatureKey, config as featuresConfig } from "config/features";
+import { FeatureKey, config as featuresConfig, WidgetKey } from "config/features";
 import { explorerActions } from "slices/explorerSlice";
 import { selectAccessToken } from "slices/authSlice";
 import { HiddenProvider } from "contexts/hidden";
@@ -17,7 +17,7 @@ import { HighlightedProvider } from "contexts/highlighted";
 import { uniqueArray } from "utils/misc";
 import { SetPreloadedScene } from "features/render/render";
 
-export function Explorer() {
+export function Explorer({ openWidgets }: { openWidgets?: WidgetKey[] }) {
     const { id = process.env.REACT_APP_SCENE_ID ?? "95a89d20dd084d9486e383e131242c4c" } = useParams<{ id?: string }>();
     const dispatch = useAppDispatch();
     const [view, setView] = useState<View>();
@@ -34,7 +34,12 @@ export function Explorer() {
             dispatch(explorerActions.setEnabledFeatures(enabledFeaturesToFeatureKeys(enabledFeatures)));
         }
 
-        dispatch(explorerActions.setUrlSearchQuery(getUrlSearchQuery()));
+        if (openWidgets) {
+            dispatch(explorerActions.setWidgets(openWidgets));
+        } else {
+            dispatch(explorerActions.setUrlSearchQuery(getUrlSearchQuery()));
+        }
+
         setView(view);
     };
 
@@ -113,6 +118,8 @@ function enabledFeaturesToFeatureKeys(enabledFeatures: Record<string, boolean>):
             .map((key) => ({ key, enabled: enabledFeatures[key] }))
             .filter((feature) => feature.enabled)
             .map((feature) => (dictionary[feature.key] ? dictionary[feature.key]! : feature.key))
+            .concat(featuresConfig.bimCollab.key)
+            .sort()
             .flat() as FeatureKey[]
     );
 }

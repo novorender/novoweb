@@ -32,6 +32,7 @@ import { useToggle } from "hooks/useToggle";
 
 import CloseIcon from "@mui/icons-material/Close";
 import { ReactComponent as NovorenderIcon } from "media/icons/novorender-small.svg";
+import { BimCollab } from "features/bimCollab";
 
 const WidgetContainer = styled((props: PaperProps) => <Paper elevation={4} {...props} />)(
     ({ theme }) => css`
@@ -94,7 +95,10 @@ export function Widget({ widgetKey, scene, view }: Props) {
 
     const { name, Icon, key } = config;
     const headerShadow =
-        menuOpen || !([featuresConfig.search.key, featuresConfig.measure.key] as string[]).includes(key);
+        menuOpen ||
+        !([featuresConfig.search.key, featuresConfig.measure.key, featuresConfig.bimCollab.key] as string[]).includes(
+            key
+        );
 
     return (
         <>
@@ -221,6 +225,8 @@ function getWidgetByKey({ key, scene, view }: { key: WidgetKey; scene: Scene; vi
             return <Clipping />;
         case featuresConfig.measure.key:
             return <Measure />;
+        case featuresConfig.bimCollab.key:
+            return <BimCollab view={view} scene={scene} />;
         default:
             return key;
     }

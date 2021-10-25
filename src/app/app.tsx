@@ -71,6 +71,9 @@ export function App() {
                         ) : (
                             <BrowserRouter>
                                 <Switch>
+                                    <Route path="/callback/:id?">
+                                        <Explorer openWidgets={["bimCollab"]} />
+                                    </Route>
                                     <Route path="/explorer/:id?">
                                         <Explorer />
                                     </Route>
