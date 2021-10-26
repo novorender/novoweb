@@ -12,7 +12,8 @@ type DataSelectedEvent = service.ICustomEvent<models.ISelection>;
 
 const reportConfig: models.IReportEmbedConfiguration = {
     type: "report",
-    id: "6174fd2d-ce49-405d-961a-80543d904e5e",
+    id: "0526af48-a711-4162-98ab-1f983b81c0f2",
+    groupId: "11dae8d9-5916-4b55-9f4e-3871c8ad9444",
     // accessToken expires after approx. an hour
     // @powershell Get-PowerBIAccessToken -asString
     accessToken: process.env.REACT_APP_PBI_ACCESS_TOKEN,
