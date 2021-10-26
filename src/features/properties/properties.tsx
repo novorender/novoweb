@@ -1,6 +1,8 @@
-import { useState, useRef, useEffect, ChangeEvent, ChangeEventHandler } from "react";
-import { useTheme, Box, List, ListItem, Grid, Typography, Checkbox } from "@mui/material";
+import { useState, useRef, useEffect, ChangeEvent, ChangeEventHandler, MouseEvent, MutableRefObject } from "react";
+import { useTheme, Box, List, ListItem, Typography, Checkbox, styled } from "@mui/material";
 import type { ObjectData, ObjectId, Scene } from "@novorender/webgl-api";
+import { css } from "@mui/styled-engine";
+import { useDrag } from "@use-gesture/react";
 
 import { LinearProgress, ScrollBox, Accordion, AccordionSummary, AccordionDetails, Tooltip } from "components";
 import { selectMainObject } from "slices/renderSlice";
@@ -47,6 +49,22 @@ export function Properties({ scene }: Props) {
 
     const parentObject = object?.parent;
     const [_, parentObjectName] = parentObject?.base.find(([key]) => key === "Name") ?? [];
+
+    const resizing = useRef(false);
+    const lastMovementX = useRef(0);
+    const [propertyNameWidth, setPropertyNameWidth] = useState(75);
+    const bindResizeHandlers = useDrag(({ target, dragging, movement: [movementX] }) => {
+        if (!(target instanceof HTMLDivElement) || !target.dataset.resizeHandle) {
+            return;
+        }
+
+        resizing.current = true;
+
+        const toMove = movementX - lastMovementX.current;
+        lastMovementX.current = dragging ? movementX : 0;
+
+        setPropertyNameWidth((state) => (state + toMove < 25 ? 25 : state + toMove > 300 ? 300 : state + toMove));
+    });
 
     useEffect(() => {
         abort();
@@ -169,8 +187,14 @@ export function Properties({ scene }: Props) {
     return (
         <>
             {status === Status.Loading ? <LinearProgress /> : null}
-            <ScrollBox height={1} pb={2} pt={1}>
-                <PropertyList object={object} handleChange={handleChange} searches={searches} />
+            <ScrollBox height={1} pb={2} pt={1} {...bindResizeHandlers()} sx={{ touchAction: "none" }}>
+                <PropertyList
+                    object={object}
+                    handleChange={handleChange}
+                    searches={searches}
+                    nameWidth={propertyNameWidth}
+                    resizing={resizing}
+                />
                 {parentObject ? (
                     <Accordion>
                         <AccordionSummary>
@@ -179,7 +203,13 @@ export function Properties({ scene }: Props) {
                             </Box>
                         </AccordionSummary>
                         <AccordionDetails>
-                            <PropertyList object={parentObject} handleChange={handleChange} searches={searches} />
+                            <PropertyList
+                                object={parentObject}
+                                handleChange={handleChange}
+                                searches={searches}
+                                nameWidth={propertyNameWidth}
+                                resizing={resizing}
+                            />
                         </AccordionDetails>
                     </Accordion>
                 ) : null}
@@ -192,15 +222,17 @@ type PropertyListProps = {
     object: PropertiesObject;
     handleChange: (params: SearchPattern) => (event: ChangeEvent<HTMLInputElement>) => void;
     searches: Record<string, SearchPattern>;
+    nameWidth: number;
+    resizing: MutableRefObject<boolean>;
 };
 
-function PropertyList({ object, handleChange, searches }: PropertyListProps) {
+function PropertyList({ object, handleChange, searches, nameWidth, resizing }: PropertyListProps) {
     const theme = useTheme();
 
     return (
         <>
             <Box borderBottom={`1px solid ${theme.palette.grey[200]}`}>
-                <List sx={{ padding: `0 0 ${theme.spacing(1)}` }}>
+                <List sx={{ padding: `0 0 ${theme.spacing(1)}`, "& .propertyName": { width: nameWidth } }}>
                     {object.base
                         .filter((property) => property[1])
                         .map(([property, value]) => (
@@ -210,6 +242,7 @@ function PropertyList({ object, handleChange, searches }: PropertyListProps) {
                                 value={value}
                                 checked={searches[property] !== undefined && searches[property].value === value}
                                 onChange={handleChange({ property, value, deep: object.type === NodeType.Internal })}
+                                resizing={resizing}
                             />
                         ))}
                 </List>
@@ -222,7 +255,7 @@ function PropertyList({ object, handleChange, searches }: PropertyListProps) {
                         </Box>
                     </AccordionSummary>
                     <AccordionDetails>
-                        <List sx={{ padding: 0 }} className="WTF">
+                        <List sx={{ padding: 0, "& .propertyName": { width: nameWidth } }}>
                             {group.properties
                                 .filter((property) => property[1])
                                 .map(([property, value]) => (
@@ -239,6 +272,7 @@ function PropertyList({ object, handleChange, searches }: PropertyListProps) {
                                             property: `${group.name}/${property}`,
                                             deep: object.type === NodeType.Internal,
                                         })}
+                                        resizing={resizing}
                                     />
                                 ))}
                         </List>
@@ -249,63 +283,73 @@ function PropertyList({ object, handleChange, searches }: PropertyListProps) {
     );
 }
 
+const ResizeHandle = styled("div")(
+    () => css`
+        padding: 0 4px;
+        cursor: col-resize;
+        touch-action: none;
+    `
+);
+
 type PropertyItemProps = {
     checked: boolean;
     onChange: ChangeEventHandler<HTMLInputElement>;
     property: string;
     value: string;
+    resizing: MutableRefObject<boolean>;
 };
 
-function PropertyItem({ checked, onChange, property, value }: PropertyItemProps) {
+function PropertyItem({ checked, onChange, property, value, resizing }: PropertyItemProps) {
+    const isUrl = value.startsWith("http");
     const checkboxRef = useRef<HTMLInputElement | null>(null);
 
-    const isUrl = value.startsWith("http");
+    const handleClick = (e: MouseEvent) => {
+        if (resizing.current) {
+            resizing.current = false;
+
+            return;
+        }
+
+        if (e.target !== checkboxRef.current) {
+            if (isUrl) {
+                return;
+            }
+
+            checkboxRef.current?.click();
+        }
+    };
 
     return (
-        <ListItem
-            button
-            dense
-            disableGutters
-            onClick={(e) => {
-                if (e.target !== checkboxRef.current) {
-                    if (isUrl) {
-                        return;
-                    }
-
-                    checkboxRef.current?.click();
-                }
-            }}
-        >
-            <Box px={1} width={1}>
-                <Grid container alignItems="center" spacing={1} key={property}>
-                    <Grid item xs={3}>
-                        <Tooltip title={property}>
-                            <Typography noWrap={true}>{property}</Typography>
-                        </Tooltip>
-                    </Grid>
-                    <Grid item xs={8}>
-                        <Tooltip title={value}>
-                            <Typography noWrap={true}>
-                                {isUrl ? (
-                                    <a href={value} target="_blank" rel="noreferrer">
-                                        {value}
-                                    </a>
-                                ) : (
-                                    value
-                                )}
-                            </Typography>
-                        </Tooltip>
-                    </Grid>
-                    <Grid item xs={1}>
-                        <Checkbox
-                            inputRef={checkboxRef}
-                            sx={{ padding: 0 }}
-                            checked={checked}
-                            onChange={onChange}
-                            size={"small"}
-                        />
-                    </Grid>
-                </Grid>
+        <ListItem button dense disableGutters onClick={handleClick}>
+            <Box px={1} width={1} display="flex">
+                <Box className="propertyName" flexShrink={0} display="flex" justifyContent="space-between">
+                    <Tooltip title={property}>
+                        <Typography noWrap={true}>{property}</Typography>
+                    </Tooltip>
+                    <ResizeHandle data-resize-handle>|</ResizeHandle>
+                </Box>
+                <Box flex="1 1 100%" width={0}>
+                    <Tooltip title={value}>
+                        <Typography noWrap={true}>
+                            {isUrl ? (
+                                <a href={value} target="_blank" rel="noreferrer">
+                                    {value}
+                                </a>
+                            ) : (
+                                value
+                            )}
+                        </Typography>
+                    </Tooltip>
+                </Box>
+                <Box width={20} flexShrink={0}>
+                    <Checkbox
+                        inputRef={checkboxRef}
+                        sx={{ padding: 0 }}
+                        checked={checked}
+                        onChange={onChange}
+                        size={"small"}
+                    />
+                </Box>
             </Box>
         </ListItem>
     );
