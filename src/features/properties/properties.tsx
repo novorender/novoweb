@@ -202,7 +202,7 @@ export function Properties({ scene }: Props) {
     return (
         <>
             {status === Status.Loading ? <LinearProgress /> : null}
-            <ScrollBox height={1} pb={2} pt={1} {...bindResizeHandlers()} sx={{ touchAction: "none" }}>
+            <ScrollBox height={1} pb={2} pt={1} {...bindResizeHandlers()}>
                 <PropertyList
                     object={object}
                     handleChange={handleChange}
