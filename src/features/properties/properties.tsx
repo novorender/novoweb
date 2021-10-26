@@ -381,7 +381,7 @@ function PropertyItem({ checked, onChange, property, value, resizing }: Property
                         size={"small"}
                     />
                 </Box>
-                <Box sx={{ ml: 1, "& button": { height: 20, width: 20 } }} flexShrink={0}>
+                <Box sx={{ ml: 1, mr: "2px", "& button": { height: 20, width: 20 } }} flexShrink={0}>
                     <Menu
                         onClick={(e) => e.stopPropagation()}
                         anchorEl={menuAnchor}
