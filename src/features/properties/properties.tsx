@@ -1,8 +1,23 @@
 import { useState, useRef, useEffect, ChangeEvent, ChangeEventHandler, MouseEvent, MutableRefObject } from "react";
-import { useTheme, Box, List, ListItem, Typography, Checkbox, styled } from "@mui/material";
+import {
+    useTheme,
+    Box,
+    List,
+    ListItem,
+    Typography,
+    Checkbox,
+    styled,
+    IconButton,
+    Menu,
+    MenuList,
+    MenuItem,
+    ListItemIcon,
+    ListItemText,
+} from "@mui/material";
 import type { ObjectData, ObjectId, Scene } from "@novorender/webgl-api";
 import { css } from "@mui/styled-engine";
 import { useDrag } from "@use-gesture/react";
+import { ContentCopy, MoreVert } from "@mui/icons-material";
 
 import { LinearProgress, ScrollBox, Accordion, AccordionSummary, AccordionDetails, Tooltip } from "components";
 import { selectMainObject } from "slices/renderSlice";
@@ -237,7 +252,7 @@ function PropertyList({ object, handleChange, searches, nameWidth, resizing }: P
                         .filter((property) => property[1])
                         .map(([property, value]) => (
                             <PropertyItem
-                                key={property}
+                                key={property + value}
                                 property={property}
                                 value={value}
                                 checked={searches[property] !== undefined && searches[property].value === value}
@@ -260,7 +275,7 @@ function PropertyList({ object, handleChange, searches, nameWidth, resizing }: P
                                 .filter((property) => property[1])
                                 .map(([property, value]) => (
                                     <PropertyItem
-                                        key={property}
+                                        key={property + value}
                                         property={property}
                                         value={value}
                                         checked={
@@ -301,9 +316,12 @@ type PropertyItemProps = {
 
 function PropertyItem({ checked, onChange, property, value, resizing }: PropertyItemProps) {
     const isUrl = value.startsWith("http");
+
     const checkboxRef = useRef<HTMLInputElement | null>(null);
 
-    const handleClick = (e: MouseEvent) => {
+    const [menuAnchor, setMenuAnchor] = useState<HTMLElement | null>(null);
+
+    const handleItemClick = (e: MouseEvent) => {
         if (resizing.current) {
             resizing.current = false;
 
@@ -319,8 +337,21 @@ function PropertyItem({ checked, onChange, property, value, resizing }: Property
         }
     };
 
+    const openMenu = (e: MouseEvent<HTMLButtonElement>) => {
+        e.stopPropagation();
+
+        console.log({ t: e.currentTarget });
+        setMenuAnchor(e.currentTarget.parentElement);
+    };
+
+    const closeMenu = () => {
+        setMenuAnchor(null);
+    };
+
+    const id = `${property}-${value}`;
+
     return (
-        <ListItem button dense disableGutters onClick={handleClick}>
+        <ListItem button dense disableGutters onClick={handleItemClick}>
             <Box px={1} width={1} display="flex">
                 <Box className="propertyName" flexShrink={0} display="flex" justifyContent="space-between">
                     <Tooltip title={property}>
@@ -341,7 +372,7 @@ function PropertyItem({ checked, onChange, property, value, resizing }: Property
                         </Typography>
                     </Tooltip>
                 </Box>
-                <Box width={20} flexShrink={0}>
+                <Box ml={0.5} width={20} flexShrink={0}>
                     <Checkbox
                         inputRef={checkboxRef}
                         sx={{ padding: 0 }}
@@ -349,6 +380,33 @@ function PropertyItem({ checked, onChange, property, value, resizing }: Property
                         onChange={onChange}
                         size={"small"}
                     />
+                </Box>
+                <Box sx={{ ml: 1, "& button": { height: 20, width: 20 } }} flexShrink={0}>
+                    <Menu
+                        onClick={(e) => e.stopPropagation()}
+                        anchorEl={menuAnchor}
+                        open={Boolean(menuAnchor)}
+                        onClose={closeMenu}
+                        id={id}
+                    >
+                        <MenuList sx={{ maxWidth: "100%" }}>
+                            <MenuItem onClick={() => navigator.clipboard.writeText(property)}>
+                                <ListItemIcon>
+                                    <ContentCopy fontSize="small" />
+                                </ListItemIcon>
+                                <ListItemText>Copy property</ListItemText>
+                            </MenuItem>
+                            <MenuItem onClick={() => navigator.clipboard.writeText(value)}>
+                                <ListItemIcon>
+                                    <ContentCopy fontSize="small" />
+                                </ListItemIcon>
+                                <ListItemText>Copy value</ListItemText>
+                            </MenuItem>
+                        </MenuList>
+                    </Menu>
+                    <IconButton size="small" onClick={openMenu} aria-controls={id} aria-haspopup="true">
+                        <MoreVert />
+                    </IconButton>
                 </Box>
             </Box>
         </ListItem>
