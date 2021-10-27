@@ -422,7 +422,13 @@ function PropertyItem({ checked, onChange, property, value, resizing, groupName 
                             </MenuItem>
                         </MenuList>
                     </Menu>
-                    <IconButton size="small" onClick={openMenu} aria-controls={id} aria-haspopup="true">
+                    <IconButton
+                        size="small"
+                        onClick={openMenu}
+                        aria-controls={id}
+                        color={Boolean(menuAnchor) ? "primary" : "default"}
+                        aria-haspopup="true"
+                    >
                         <MoreVert />
                     </IconButton>
                 </Box>
