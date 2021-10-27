@@ -67,7 +67,7 @@ export function Properties({ scene }: Props) {
 
     const resizing = useRef(false);
     const lastMovementX = useRef(0);
-    const [propertyNameWidth, setPropertyNameWidth] = useState(75);
+    const [propertyNameWidth, setPropertyNameWidth] = useState(95);
     const bindResizeHandlers = useDrag(({ target, dragging, movement: [movementX] }) => {
         if (!(target instanceof HTMLDivElement) || !target.dataset.resizeHandle) {
             return;
@@ -276,6 +276,7 @@ function PropertyList({ object, handleChange, searches, nameWidth, resizing }: P
                                 .map(([property, value]) => (
                                     <PropertyItem
                                         key={property + value}
+                                        groupName={group.name}
                                         property={property}
                                         value={value}
                                         checked={
@@ -311,10 +312,11 @@ type PropertyItemProps = {
     onChange: ChangeEventHandler<HTMLInputElement>;
     property: string;
     value: string;
+    groupName?: string;
     resizing: MutableRefObject<boolean>;
 };
 
-function PropertyItem({ checked, onChange, property, value, resizing }: PropertyItemProps) {
+function PropertyItem({ checked, onChange, property, value, resizing, groupName }: PropertyItemProps) {
     const isUrl = value.startsWith("http");
 
     const checkboxRef = useRef<HTMLInputElement | null>(null);
@@ -390,17 +392,33 @@ function PropertyItem({ checked, onChange, property, value, resizing }: Property
                         id={id}
                     >
                         <MenuList sx={{ maxWidth: "100%" }}>
-                            <MenuItem onClick={() => navigator.clipboard.writeText(property)}>
+                            <MenuItem
+                                onClick={() =>
+                                    navigator.clipboard.writeText(
+                                        `${groupName ? `${groupName}/${property}` : property}: ${value}`
+                                    )
+                                }
+                            >
                                 <ListItemIcon>
                                     <ContentCopy fontSize="small" />
                                 </ListItemIcon>
                                 <ListItemText>Copy property</ListItemText>
                             </MenuItem>
+                            <MenuItem
+                                onClick={() =>
+                                    navigator.clipboard.writeText(groupName ? `${groupName}/${property}` : property)
+                                }
+                            >
+                                <ListItemIcon>
+                                    <ContentCopy fontSize="small" />
+                                </ListItemIcon>
+                                <ListItemText>Copy property name</ListItemText>
+                            </MenuItem>
                             <MenuItem onClick={() => navigator.clipboard.writeText(value)}>
                                 <ListItemIcon>
                                     <ContentCopy fontSize="small" />
                                 </ListItemIcon>
-                                <ListItemText>Copy value</ListItemText>
+                                <ListItemText>Copy property value</ListItemText>
                             </MenuItem>
                         </MenuList>
                     </Menu>
