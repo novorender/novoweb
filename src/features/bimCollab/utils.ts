@@ -11,6 +11,20 @@ export function getStoredRefreshToken(): string {
     return localStorage.getItem(refreshTokenKey) ?? "";
 }
 
+export function deleteStoredRefreshToken() {
+    localStorage.removeItem(refreshTokenKey);
+}
+
+const codeVerifierKey = "BIMcollab_code_verifier";
+
+export function storeCodeVerifier(verifier: string) {
+    sessionStorage.setItem(codeVerifierKey, verifier);
+}
+
+export function getStoredCodeVerifier(): string {
+    return sessionStorage.getItem(codeVerifierKey) ?? "";
+}
+
 type Point = {
     x: number;
     y: number;

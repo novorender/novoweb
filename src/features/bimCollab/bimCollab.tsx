@@ -43,12 +43,13 @@ export function BimCollab({ view, scene }: { view: View; scene: Scene }) {
 
         const { versions } = versionsRes;
         const version =
-            versions.find((ver) => ver.version_id === "bc_2.1") ?? versions.find((ver) => ver.version_id === "bc_2.1");
+            versions.find((ver) => ver.version_id === "2.1") ?? versions.find((ver) => ver.version_id === "bc_2.1");
 
         dispatch(bimCollabActions.setVersion(version?.version_id ?? "2.1"));
     }, [versionsRes, dispatch]);
 
     useEffect(() => {
+        // TODO(OLA): Confirm space på et eller annet vis?
         if (space && authInfoRes && !user) {
             init(authInfoRes.oauth2_token_url, space);
         }
@@ -98,6 +99,7 @@ export function BimCollab({ view, scene }: { view: View; scene: Scene }) {
     );
 }
 
+// TODO(OLA): Legg te en back knapp i widget elns
 function HijackBackButton({ children }: { children: ReactNode }) {
     const history = useHistory();
 

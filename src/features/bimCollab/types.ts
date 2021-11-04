@@ -33,31 +33,31 @@ export type ProjectExtensions = {
     topic_actions: string[];
     comment_actions: string[];
     team_members: {
-        internal_id: 0;
+        internal_id: number;
         email: string;
         name: string;
         role: string;
         is_deleted: true;
         is_assignable: true;
         groups: {
-            internal_id: 0;
+            internal_id: number;
             name: string;
         }[];
         company: {
-            internal_id: 0;
+            internal_id: number;
             name: string;
         };
     }[];
     favorites: string[];
     integrations: string[];
     fields: {
-        index: 0;
+        index: number;
         field: string;
         is_disabled: true;
         label: string;
         mandatory: true;
         values: {
-            internal_id: 0;
+            internal_id: number;
             value: string;
             label: string;
             is_active: true;

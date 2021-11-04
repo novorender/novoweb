@@ -1,6 +1,8 @@
 import { BaseQueryFn, createApi, FetchArgs, fetchBaseQuery, FetchBaseQueryError } from "@reduxjs/toolkit/query/react";
 
 import { RootState } from "app/store";
+import { generateCodeChallenge } from "utils/auth";
+import { generateRandomString } from "utils/misc";
 import {
     AuthInfo,
     Coloring,
@@ -14,7 +16,13 @@ import {
     Viewpoint,
     Visibility,
 } from "./types";
-import { getStoredRefreshToken, storeRefreshToken } from "./utils";
+import {
+    deleteStoredRefreshToken,
+    getStoredCodeVerifier,
+    getStoredRefreshToken,
+    storeCodeVerifier,
+    storeRefreshToken,
+} from "./utils";
 
 const clientId = "PlayGround_Client";
 const clientSecret = process.env.REACT_APP_BIMCOLLAB_CLIENT_SECRET ?? "";
@@ -191,22 +199,34 @@ export const {
 } = bimCollabApi;
 
 // TODO(OLA): Bruk auth url fra AuthInfo
-export function getCode(space: string) {
+export async function getCode(space: string) {
+    const verifier = generateRandomString();
+    const challenge = await generateCodeChallenge(verifier);
+    storeCodeVerifier(verifier);
+
+    console.log({ verifier, challenge });
+
     window.location.href =
         `https://${space}.bimcollab.com/identity/connect/authorize` +
         `?response_type=code` +
         `&client_id=${clientId}` +
-        `&scope=openid ${scope}` +
-        `&redirect_uri=${callbackUrl}`;
+        `&scope=${scope}` +
+        `&redirect_uri=${callbackUrl}` +
+        `&code_challenge=${challenge}` +
+        `&code_challenge_method=S256`;
 }
 
-export async function getToken(oAuthTokenUrl: string, code: string) {
+export async function getToken(
+    oAuthTokenUrl: string,
+    code: string
+): Promise<{ access_token: string; refresh_token: string }> {
     const body = new URLSearchParams();
     body.set("code", code);
     body.set("client_id", clientId);
     body.set("client_secret", clientSecret);
     body.set("grant_type", "authorization_code");
     body.set("redirect_uri", callbackUrl);
+    body.set("code_verifier", getStoredCodeVerifier());
 
     return fetch(oAuthTokenUrl, {
         body,
@@ -215,7 +235,10 @@ export async function getToken(oAuthTokenUrl: string, code: string) {
     }).then((r) => r.json());
 }
 
-export async function refreshTokens(oAuthTokenUrl: string, refreshToken: string) {
+export async function refreshTokens(
+    oAuthTokenUrl: string,
+    refreshToken: string
+): Promise<{ access_token: string; refresh_token: string }> {
     const body = new URLSearchParams();
     body.set("refresh_token", refreshToken);
     body.set("client_id", clientId);
@@ -238,12 +261,29 @@ export async function authenticate(oAuthTokenUrl: string, space: string): Promis
             window.history.replaceState(null, "", window.location.pathname.replace("Callback", ""));
 
             const res = await getToken(oAuthTokenUrl, code);
-            storeRefreshToken(res.refresh_token);
+
+            if (!res) {
+                throw new Error("token request failed");
+            }
+
+            if (res.refresh_token) {
+                storeRefreshToken(res.refresh_token);
+            }
 
             return res.access_token;
         } else if (storedRefreshToken) {
             const res = await refreshTokens(oAuthTokenUrl, storedRefreshToken);
-            storeRefreshToken(res.refresh_token);
+
+            if (!res) {
+                throw new Error("get code");
+            }
+
+            if (res.refresh_token) {
+                storeRefreshToken(res.refresh_token);
+            } else {
+                deleteStoredRefreshToken();
+            }
+
             return res.access_token;
         } else {
             throw new Error("get code");

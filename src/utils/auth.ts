@@ -6,6 +6,7 @@ import { msalInstance } from "app";
 import { store } from "app/store";
 import { accountStorageKey, loginRequest, tokenStorageKey } from "config/auth";
 import { authActions } from "slices/authSlice";
+import { sha256, base64UrlEncode } from "utils/misc";
 
 export async function getAuthHeader(): Promise<AuthenticationHeader> {
     const { auth } = store.getState();
@@ -96,4 +97,9 @@ export function getStoredActiveAccount(): AccountInfo | undefined {
             return storedAccount as AccountInfo;
         }
     } catch {}
+}
+
+export async function generateCodeChallenge(verifier: string): Promise<string> {
+    const hashed = await sha256(verifier);
+    return base64UrlEncode(hashed);
 }
