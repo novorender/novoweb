@@ -149,7 +149,6 @@ export function Properties({ scene }: Props) {
                 abortSignal,
                 searchPatterns: searchPatterns.map(({ deep: _deep, ...pattern }) => pattern),
                 deep: searchPatterns.some((pattern) => pattern.deep),
-                callbackInterval: 1000,
                 callback: (refs) => dispatchHighlighted(highlightActions.add(extractObjectIds(refs))),
             });
         } catch {
@@ -341,8 +340,6 @@ function PropertyItem({ checked, onChange, property, value, resizing, groupName 
 
     const openMenu = (e: MouseEvent<HTMLButtonElement>) => {
         e.stopPropagation();
-
-        console.log({ t: e.currentTarget });
         setMenuAnchor(e.currentTarget.parentElement);
     };
 

@@ -154,7 +154,6 @@ export function Search({ scene, view }: Props) {
                     scene,
                     searchPatterns,
                     abortSignal,
-                    callbackInterval: 1000,
                     deep: true,
                     callback: (refs) => {
                         result = result.concat(refs);
@@ -469,7 +468,6 @@ function CustomParentNode({
                 searchPatterns,
                 abortSignal,
                 callback,
-                callbackInterval: 1000,
                 deep: true,
             });
         } catch {}
