@@ -107,6 +107,12 @@ let theme = createTheme({
                 component: "li",
             },
         },
+        MuiListItemButton: {
+            defaultProps: {
+                // @ts-ignore
+                component: "li",
+            },
+        },
     },
 });
 

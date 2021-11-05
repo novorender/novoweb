@@ -8,9 +8,9 @@ context("Camera navigation menu", () => {
 
         cy.getBySel("home").click();
 
-        cy.getBySel("camera-speed").click().invoke("attr", "title").should("eq", "Camera speed - Fast");
-        cy.getBySel("camera-speed").click().invoke("attr", "title").should("eq", "Camera speed - Slow");
-        cy.getBySel("camera-speed").click().invoke("attr", "title").should("eq", "Camera speed - Normal");
+        cy.getBySel("camera-speed").click().invoke("attr", "aria-label").should("eq", "Camera speed - Fast");
+        cy.getBySel("camera-speed").click().invoke("attr", "aria-label").should("eq", "Camera speed - Slow");
+        cy.getBySel("camera-speed").click().invoke("attr", "aria-label").should("eq", "Camera speed - Normal");
 
         cy.getBySel("step-back").should("be.disabled");
         cy.getBySel("step-forwards").should("be.disabled");
