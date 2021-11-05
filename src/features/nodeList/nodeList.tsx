@@ -8,7 +8,7 @@ import { useAppDispatch } from "app/store";
 import { Tooltip, withCustomScrollbar } from "components";
 import { NodeType } from "features/modelTree/modelTree";
 
-import { searchByParentPath } from "utils/search";
+import { searchAllDescendants, searchByParentPath } from "utils/search";
 import { extractObjectIds, getObjectNameFromPath } from "utils/objectData";
 
 import { highlightActions, useDispatchHighlighted, useIsHighlighted } from "contexts/highlighted";
@@ -142,15 +142,25 @@ function Node({ node, parent, loading, setLoading, abortController, scene, ...pr
 
         setLoading(true);
         const abortSignal = abortController.current.signal;
+        const baseSearchParams = {
+            scene,
+            abortSignal,
+        };
 
         try {
-            await searchByParentPath({
-                scene,
-                abortSignal,
-                parentPath: node.path,
-                callback: (refs) => dispatchHighlighted(highlightActions.add(extractObjectIds(refs))),
-                callbackInterval: 1000,
-            });
+            try {
+                await searchAllDescendants({
+                    ...baseSearchParams,
+                    parentId: node.id,
+                    callback: (ids) => dispatchHighlighted(highlightActions.add(ids)),
+                });
+            } catch {
+                await searchByParentPath({
+                    ...baseSearchParams,
+                    parentPath: node.path,
+                    callback: (refs) => dispatchHighlighted(highlightActions.add(extractObjectIds(refs))),
+                });
+            }
 
             if (!abortSignal.aborted) {
                 dispatchHighlighted(highlightActions.add([node.id]));
@@ -172,15 +182,25 @@ function Node({ node, parent, loading, setLoading, abortController, scene, ...pr
 
         setLoading(true);
         const abortSignal = abortController.current.signal;
+        const baseSearchParams = {
+            scene,
+            abortSignal,
+        };
 
         try {
-            await searchByParentPath({
-                scene,
-                abortSignal,
-                parentPath: node.path,
-                callback: (refs) => dispatchHighlighted(highlightActions.remove(extractObjectIds(refs))),
-                callbackInterval: 1000,
-            });
+            try {
+                await searchAllDescendants({
+                    ...baseSearchParams,
+                    parentId: node.id,
+                    callback: (ids) => dispatchHighlighted(highlightActions.remove(ids)),
+                });
+            } catch {
+                await searchByParentPath({
+                    ...baseSearchParams,
+                    parentPath: node.path,
+                    callback: (refs) => dispatchHighlighted(highlightActions.remove(extractObjectIds(refs))),
+                });
+            }
         } catch {
             // nada
         } finally {
@@ -197,15 +217,25 @@ function Node({ node, parent, loading, setLoading, abortController, scene, ...pr
 
         setLoading(true);
         const abortSignal = abortController.current.signal;
+        const baseSearchParams = {
+            scene,
+            abortSignal,
+        };
 
         try {
-            await searchByParentPath({
-                scene,
-                abortSignal,
-                parentPath: node.path,
-                callback: (refs) => dispatchHidden(hiddenGroupActions.add(extractObjectIds(refs))),
-                callbackInterval: 1000,
-            });
+            try {
+                await searchAllDescendants({
+                    ...baseSearchParams,
+                    parentId: node.id,
+                    callback: (ids) => dispatchHidden(hiddenGroupActions.add(ids)),
+                });
+            } catch {
+                await searchByParentPath({
+                    ...baseSearchParams,
+                    parentPath: node.path,
+                    callback: (refs) => dispatchHidden(hiddenGroupActions.add(extractObjectIds(refs))),
+                });
+            }
 
             if (!abortSignal.aborted) {
                 dispatchHidden(hiddenGroupActions.add([node.id]));
@@ -227,15 +257,25 @@ function Node({ node, parent, loading, setLoading, abortController, scene, ...pr
 
         setLoading(true);
         const abortSignal = abortController.current.signal;
+        const baseSearchParams = {
+            scene,
+            abortSignal,
+        };
 
         try {
-            await searchByParentPath({
-                scene,
-                abortSignal,
-                parentPath: node.path,
-                callback: (refs) => dispatchHidden(hiddenGroupActions.remove(extractObjectIds(refs))),
-                callbackInterval: 1000,
-            });
+            try {
+                await searchAllDescendants({
+                    ...baseSearchParams,
+                    parentId: node.id,
+                    callback: (ids) => dispatchHidden(hiddenGroupActions.remove(ids)),
+                });
+            } catch {
+                await searchByParentPath({
+                    ...baseSearchParams,
+                    parentPath: node.path,
+                    callback: (refs) => dispatchHidden(hiddenGroupActions.remove(extractObjectIds(refs))),
+                });
+            }
         } catch {
             // nada
         } finally {

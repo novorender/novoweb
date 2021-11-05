@@ -56,7 +56,6 @@ export function FlyToSelected({ view, scene, position, ...speedDialProps }: Prop
                 abortSignal,
                 searchPatterns: [{ property: "id", value: highlighted as any as string[] }],
                 callback: (refs) => (nodes = nodes.concat(refs)),
-                callbackInterval: 1000,
             });
         } catch {
             return setStatus(Status.Initial);
