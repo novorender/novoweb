@@ -82,7 +82,7 @@ function reducer(state: State, action: Actions): State {
 
             return {
                 color: state.color,
-                ids: state.ids,
+                ids: { ...state.ids },
                 idArr: toIdArr(state.ids),
             };
         }
