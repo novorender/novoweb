@@ -23,7 +23,7 @@ type Props = SpeedDialActionProps & {
 
 export function FlyToSelected({ view, scene, position, ...speedDialProps }: Props) {
     const { name, Icon } = featuresConfig.flyToSelected;
-    const highlighted = useHighlighted().ids;
+    const highlighted = useHighlighted().idArr;
 
     const [status, setStatus] = useMountedState(Status.Initial);
 
@@ -54,7 +54,7 @@ export function FlyToSelected({ view, scene, position, ...speedDialProps }: Prop
             await searchByPatterns({
                 scene,
                 abortSignal,
-                searchPatterns: [{ property: "id", value: highlighted as any as string[] }],
+                searchPatterns: [{ property: "id", value: highlighted as any as string[], exact: true }],
                 callback: (refs) => (nodes = nodes.concat(refs)),
             });
         } catch {

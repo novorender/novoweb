@@ -8,7 +8,7 @@ import { useAppDispatch } from "app/store";
 import { Tooltip, withCustomScrollbar } from "components";
 import { NodeType } from "features/modelTree/modelTree";
 
-import { searchAllDescendants, searchByParentPath } from "utils/search";
+import { searchByParentPath } from "utils/search";
 import { extractObjectIds, getObjectNameFromPath } from "utils/objectData";
 
 import { highlightActions, useDispatchHighlighted, useIsHighlighted } from "contexts/highlighted";
@@ -142,21 +142,16 @@ function Node({ node, parent, loading, setLoading, abortController, scene, ...pr
 
         setLoading(true);
         const abortSignal = abortController.current.signal;
-        const baseSearchParams = {
-            scene,
-            abortSignal,
-        };
 
         try {
             try {
-                await searchAllDescendants({
-                    ...baseSearchParams,
-                    parentId: node.id,
-                    callback: (ids) => dispatchHighlighted(highlightActions.add(ids)),
-                });
+                await scene
+                    .descendants(node, abortSignal)
+                    .then((ids) => dispatchHighlighted(highlightActions.add(ids)));
             } catch {
                 await searchByParentPath({
-                    ...baseSearchParams,
+                    scene,
+                    abortSignal,
                     parentPath: node.path,
                     callback: (refs) => dispatchHighlighted(highlightActions.add(extractObjectIds(refs))),
                 });
@@ -182,21 +177,16 @@ function Node({ node, parent, loading, setLoading, abortController, scene, ...pr
 
         setLoading(true);
         const abortSignal = abortController.current.signal;
-        const baseSearchParams = {
-            scene,
-            abortSignal,
-        };
 
         try {
             try {
-                await searchAllDescendants({
-                    ...baseSearchParams,
-                    parentId: node.id,
-                    callback: (ids) => dispatchHighlighted(highlightActions.remove(ids)),
-                });
+                await scene
+                    .descendants(node, abortSignal)
+                    .then((ids) => dispatchHighlighted(highlightActions.remove(ids)));
             } catch {
                 await searchByParentPath({
-                    ...baseSearchParams,
+                    scene,
+                    abortSignal,
                     parentPath: node.path,
                     callback: (refs) => dispatchHighlighted(highlightActions.remove(extractObjectIds(refs))),
                 });
@@ -217,21 +207,14 @@ function Node({ node, parent, loading, setLoading, abortController, scene, ...pr
 
         setLoading(true);
         const abortSignal = abortController.current.signal;
-        const baseSearchParams = {
-            scene,
-            abortSignal,
-        };
 
         try {
             try {
-                await searchAllDescendants({
-                    ...baseSearchParams,
-                    parentId: node.id,
-                    callback: (ids) => dispatchHidden(hiddenGroupActions.add(ids)),
-                });
+                await scene.descendants(node, abortSignal).then((ids) => dispatchHidden(hiddenGroupActions.add(ids)));
             } catch {
                 await searchByParentPath({
-                    ...baseSearchParams,
+                    scene,
+                    abortSignal,
                     parentPath: node.path,
                     callback: (refs) => dispatchHidden(hiddenGroupActions.add(extractObjectIds(refs))),
                 });
@@ -257,21 +240,16 @@ function Node({ node, parent, loading, setLoading, abortController, scene, ...pr
 
         setLoading(true);
         const abortSignal = abortController.current.signal;
-        const baseSearchParams = {
-            scene,
-            abortSignal,
-        };
 
         try {
             try {
-                await searchAllDescendants({
-                    ...baseSearchParams,
-                    parentId: node.id,
-                    callback: (ids) => dispatchHidden(hiddenGroupActions.remove(ids)),
-                });
+                await scene
+                    .descendants(node, abortSignal)
+                    .then((ids) => dispatchHidden(hiddenGroupActions.remove(ids)));
             } catch {
                 await searchByParentPath({
-                    ...baseSearchParams,
+                    scene,
+                    abortSignal,
                     parentPath: node.path,
                     callback: (refs) => dispatchHidden(hiddenGroupActions.remove(extractObjectIds(refs))),
                 });

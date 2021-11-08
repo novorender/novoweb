@@ -77,11 +77,11 @@ Cypress.Commands.add("getState", (path?: string) => {
 });
 
 Cypress.Commands.add("getHidden", () => {
-    return cy.window().its("contexts.hidden.state.ids");
+    return cy.window().its("contexts.hidden.state.idArr");
 });
 
 Cypress.Commands.add("getHighlighted", () => {
-    return cy.window().its("contexts.highlighted.state.ids");
+    return cy.window().its("contexts.highlighted.state.idArr");
 });
 
 Cypress.Commands.add("getHighlightColor", () => {
@@ -110,7 +110,8 @@ Cypress.Commands.add("openWidgets", (payload: string[]) => {
 
 Cypress.Commands.add("waitForWidgetToUpdate", (selector, ...args) => {
     cy.get(selector, ...args).within(() => {
-        cy.getBySel("loading-bar").should("exist");
+        // eslint-disable-next-line
+        cy.wait(500);
         cy.getBySel("loading-bar").should("not.exist");
     });
 });

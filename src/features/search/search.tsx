@@ -2,7 +2,7 @@ import { ChangeEvent, CSSProperties, FormEvent, useCallback, useEffect, useRef, 
 import { ListOnScrollProps } from "react-window";
 import { Box, Button, ButtonProps, Checkbox, FormControlLabel, ListItem, styled, Typography } from "@mui/material";
 import { css } from "@mui/styled-engine";
-import { HierarcicalObjectReference, Scene, SearchPattern, View } from "@novorender/webgl-api";
+import { HierarcicalObjectReference, ObjectId, Scene, SearchPattern, View } from "@novorender/webgl-api";
 
 import { useAppDispatch, useAppSelector } from "app/store";
 import { TextField, Switch, LinearProgress, ScrollBox, Tooltip } from "components";
@@ -17,8 +17,8 @@ import { highlightActions, useDispatchHighlighted } from "contexts/highlighted";
 import { ObjectVisibility, renderActions } from "slices/renderSlice";
 import { explorerActions, selectUrlSearchQuery } from "slices/explorerSlice";
 
-import { iterateAsync, searchByPatterns } from "utils/search";
-import { extractObjectIds, getTotalBoundingSphere } from "utils/objectData";
+import { iterateAsync, searchByPatterns, searchDeepByPatterns } from "utils/search";
+import { getTotalBoundingSphere } from "utils/objectData";
 
 import AddCircleIcon from "@mui/icons-material/AddCircle";
 import DragHandleIcon from "@mui/icons-material/DragHandle";
@@ -141,7 +141,8 @@ export function Search({ scene, view }: Props) {
                 return;
             }
 
-            let result = [] as HierarcicalObjectReference[];
+            let foundIds = [] as ObjectId[];
+            let foundRefs = [] as HierarcicalObjectReference[];
 
             setStatus(Status.Loading);
 
@@ -150,14 +151,22 @@ export function Search({ scene, view }: Props) {
                 search();
 
                 // Deep search to highlight and fly to
-                await searchByPatterns({
+                await searchDeepByPatterns({
                     scene,
                     searchPatterns,
                     abortSignal,
-                    deep: true,
+                    callback: (ids) => {
+                        foundIds = foundIds.concat(ids);
+                        dispatchHighlighted(highlightActions.add(ids));
+                    },
+                });
+
+                await searchByPatterns({
+                    scene,
+                    abortSignal,
+                    searchPatterns: [{ property: "id", value: foundIds as unknown as string[], exact: true }],
                     callback: (refs) => {
-                        result = result.concat(refs);
-                        dispatchHighlighted(highlightActions.add(extractObjectIds(refs)));
+                        foundRefs = foundRefs.concat(refs);
                     },
                 });
             } catch (e) {
@@ -171,7 +180,7 @@ export function Search({ scene, view }: Props) {
 
             dispatch(explorerActions.setUrlSearchQuery(undefined));
 
-            const boundingSphere = getTotalBoundingSphere(result);
+            const boundingSphere = getTotalBoundingSphere(foundRefs);
             if (boundingSphere) {
                 view.camera.controller.zoomTo(boundingSphere);
             }
@@ -187,7 +196,7 @@ export function Search({ scene, view }: Props) {
 
             setStatus(Status.Initial);
             setAllSelected(true);
-            dispatch(renderActions.setMainObject(result[0]?.id));
+            dispatch(renderActions.setMainObject(foundIds[0]));
         }
     }, [
         urlSearchQuery,
@@ -453,7 +462,7 @@ function CustomParentNode({
     const dispatchHighlighted = useDispatchHighlighted();
     const dispatchHidden = useDispatchHidden();
 
-    const search = async (callback: (result: HierarcicalObjectReference[]) => void) => {
+    const search = async (callback: (result: ObjectId[]) => void) => {
         if (!searchPatterns) {
             return;
         }
@@ -463,12 +472,11 @@ function CustomParentNode({
         setLoading(true);
 
         try {
-            await searchByPatterns({
+            await searchDeepByPatterns({
                 scene,
                 searchPatterns,
                 abortSignal,
                 callback,
-                deep: true,
             });
         } catch {}
 
@@ -476,22 +484,22 @@ function CustomParentNode({
     };
 
     const select = async () => {
-        await search((refs) => dispatchHighlighted(highlightActions.add(extractObjectIds(refs))));
+        await search((ids) => dispatchHighlighted(highlightActions.add(ids)));
         setAllSelected(true);
     };
 
     const unSelect = async () => {
-        await search((refs) => dispatchHighlighted(highlightActions.remove(extractObjectIds(refs))));
+        await search((ids) => dispatchHighlighted(highlightActions.remove(ids)));
         setAllSelected(false);
     };
 
     const hide = async () => {
-        await search((refs) => dispatchHidden(hiddenGroupActions.add(extractObjectIds(refs))));
+        await search((ids) => dispatchHidden(hiddenGroupActions.add(ids)));
         setAllHidden(true);
     };
 
     const show = async () => {
-        await search((refs) => dispatchHidden(hiddenGroupActions.remove(extractObjectIds(refs))));
+        await search((ids) => dispatchHidden(hiddenGroupActions.remove(ids)));
         setAllHidden(false);
     };
 

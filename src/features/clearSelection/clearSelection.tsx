@@ -10,7 +10,7 @@ type Props = SpeedDialActionProps;
 
 export function ClearSelection(props: Props) {
     const { name, Icon } = featuresConfig["clearSelection"];
-    const { ids: highlighted } = useHighlighted();
+    const { idArr: highlighted } = useHighlighted();
     const dispatchHighlighted = useDispatchHighlighted();
     const mainObject = useAppSelector(selectMainObject);
 

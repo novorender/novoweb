@@ -37,24 +37,21 @@ export async function iterateAsync<T = HierarcicalObjectReference>({
 /**
     Find objects matching the specified patterns.
     The callback gets called at the specified interval with only the new results since the last call.
-    If the deep option is set to true; find all children of any parent object found.
 
     @remarks
-    Some searches may return thousands of objects and take several seconds to complete.\
+    Some searches may return thousands of objects and take several seconds to complete.
 */
 export async function searchByPatterns({
     scene,
     searchPatterns,
     callback,
     callbackInterval = defaultCallbackInterval,
-    deep,
     abortSignal,
 }: {
     scene: Scene;
     searchPatterns: SearchPattern[] | string;
     callback: (result: HierarcicalObjectReference[]) => void;
     callbackInterval?: number;
-    deep?: boolean;
     abortSignal?: AbortSignal;
 }): Promise<void> {
     const iterator = scene.search({ searchPattern: searchPatterns }, abortSignal);
@@ -65,53 +62,95 @@ export async function searchByPatterns({
         done = _done;
         callback(result);
         await sleep(1);
+    }
+}
 
-        if (deep) {
-            const batchSize = 25;
-            const batches = result.reduce(
-                (acc, obj) => {
-                    if (obj.type === NodeType.Leaf) {
-                        return acc;
-                    }
+/**
+    Find objects matching the specified patterns.
+    The callback gets called at the specified interval with only the new results since the last call.
+    Includes the IDs of all children of parent nodes found matching the search pattern.
 
-                    const lastBatch = acc.slice(-1)[0];
+    @remarks
+    Some searches may return thousands of objects and take several seconds to complete.
+*/
+export async function searchDeepByPatterns({
+    scene,
+    searchPatterns,
+    callback,
+    callbackInterval = defaultCallbackInterval,
+    abortSignal,
+}: {
+    scene: Scene;
+    searchPatterns: SearchPattern[] | string;
+    callback: (result: ObjectId[]) => void;
+    callbackInterval?: number;
+    abortSignal?: AbortSignal;
+}): Promise<void> {
+    const iterator = scene.search({ searchPattern: searchPatterns }, abortSignal);
+    let done = false;
 
-                    if (lastBatch.length < batchSize) {
-                        lastBatch.push(obj);
-                    } else {
-                        acc.push([obj]);
-                    }
+    while (!done && !abortSignal?.aborted) {
+        const [result, _done] = await iterateAsync({ iterator, abortSignal, count: callbackInterval });
+        done = _done;
+        callback(result.map((res) => res.id));
+        await sleep(1);
 
+        const [cachedDescendants, unCachedDescendants] = result.reduce(
+            (acc, obj) => {
+                if (obj.descendants) {
+                    acc[0] = acc[0].concat(obj.descendants);
+                } else {
+                    acc[1].push(obj);
+                }
+
+                return acc;
+            },
+            [[], []] as [cached: ObjectId[], uncached: HierarcicalObjectReference[]]
+        );
+
+        callback(cachedDescendants);
+
+        const batchSize = 25;
+        const batches = unCachedDescendants.reduce(
+            (acc, obj) => {
+                if (obj.type === NodeType.Leaf) {
                     return acc;
-                },
-                [[]] as HierarcicalObjectReference[][]
-            );
+                }
 
-            for (let i = 0; i < batches.length; i++) {
-                const batch = batches[i];
+                const lastBatch = acc.slice(-1)[0];
 
-                await Promise.all(
-                    batch.map((obj) => {
-                        return searchAllDescendants({
-                            scene,
-                            abortSignal,
-                            callback: (ids) => callback(ids.map((id) => ({ id } as any))),
-                            callbackInterval: callbackInterval,
-                            parentId: obj.id,
-                        }).catch(() =>
+                if (lastBatch.length < batchSize) {
+                    lastBatch.push(obj);
+                } else {
+                    acc.push([obj]);
+                }
+
+                return acc;
+            },
+            [[]] as HierarcicalObjectReference[][]
+        );
+
+        for (let i = 0; i < batches.length; i++) {
+            const batch = batches[i];
+
+            await Promise.all(
+                batch.map((obj) =>
+                    scene
+                        .descendants(obj, abortSignal)
+                        .then((ids) => callback(ids))
+                        .catch(() =>
                             searchByParentPath({
                                 scene,
                                 abortSignal,
-                                callback,
+                                callback: (results) => callback(results.map((res) => res.id)),
                                 callbackInterval: callbackInterval,
                                 parentPath: obj.path,
                             })
-                        );
-                    })
-                );
+                        )
+                )
+            );
 
-                await sleep(1);
-            }
+            await sleep(1);
         }
     }
 }
@@ -143,38 +182,6 @@ export async function searchByParentPath({
 
     while (!done && !abortSignal?.aborted) {
         const [result, _done] = await iterateAsync({ iterator: allChildren, count: callbackInterval, abortSignal });
-        done = _done;
-        callback(result);
-        await sleep(1);
-    }
-}
-
-/**
-    Find objects by parent id.
-    The callback gets called at the specified interval with only the new results since the last call.
-
-    @remarks
-    This search is likely to be cached on the server and much faster than using parent path to get all childrens
-    It will fail if it has not already been cached, so have a fallback.
-*/
-export async function searchAllDescendants({
-    parentId,
-    abortSignal,
-    scene,
-    callback,
-    callbackInterval = defaultCallbackInterval,
-}: {
-    parentId: number;
-    abortSignal?: AbortSignal;
-    scene: Scene;
-    callback: (result: number[]) => void;
-    callbackInterval?: number;
-}): Promise<void> {
-    const iterator = scene.siblings(parentId, abortSignal);
-    let done = false;
-
-    while (!done && !abortSignal?.aborted) {
-        const [result, _done] = await iterateAsync({ iterator, count: callbackInterval, abortSignal });
         done = _done;
         callback(result);
         await sleep(1);

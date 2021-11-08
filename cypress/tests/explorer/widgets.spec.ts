@@ -50,7 +50,7 @@ context("Widgets", () => {
         cy.contains("ExtendToStructure").click();
         cy.waitForWidgetToUpdate("@propertiesWidget");
 
-        cy.getHighlighted().should("have.length", 80);
+        cy.getHighlighted().should("have.length", 79);
 
         // Force as the button may be half covered by tooltip
         cy.contains("IsExternal").click({ force: true });
@@ -62,7 +62,7 @@ context("Widgets", () => {
         cy.get("@propertiesWidget").contains("1nq75ccsD05RaIaWZXWcl4").as("parentGuid").click();
         cy.waitForWidgetToUpdate("@propertiesWidget");
 
-        cy.getHighlighted().should("have.length", 27);
+        cy.getHighlighted().should("have.length", 26);
 
         // Unchecking should clear highlights, except for main object itself
         cy.get("@parentGuid").click();

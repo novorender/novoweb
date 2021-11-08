@@ -24,7 +24,12 @@ import { selectMainObject } from "slices/renderSlice";
 import { useAppSelector } from "app/store";
 import { useAbortController } from "hooks/useAbortController";
 import { useMountedState } from "hooks/useMountedState";
-import { getObjectData as getObjectDataUtil, searchFirstObjectAtPath, searchByPatterns } from "utils/search";
+import {
+    getObjectData as getObjectDataUtil,
+    searchFirstObjectAtPath,
+    searchByPatterns,
+    searchDeepByPatterns,
+} from "utils/search";
 import { extractObjectIds, getParentPath } from "utils/objectData";
 import { highlightActions, useDispatchHighlighted } from "contexts/highlighted";
 import { NodeType } from "features/modelTree/modelTree";
@@ -144,13 +149,24 @@ export function Properties({ scene }: Props) {
         const abortSignal = abortController.current.signal;
 
         try {
-            await searchByPatterns({
+            const deep = searchPatterns.some((pattern) => pattern.deep);
+            const baseSearchProps = {
                 scene,
                 abortSignal,
                 searchPatterns: searchPatterns.map(({ deep: _deep, ...pattern }) => pattern),
-                deep: searchPatterns.some((pattern) => pattern.deep),
-                callback: (refs) => dispatchHighlighted(highlightActions.add(extractObjectIds(refs))),
-            });
+            };
+
+            if (deep) {
+                await searchDeepByPatterns({
+                    ...baseSearchProps,
+                    callback: (ids) => dispatchHighlighted(highlightActions.add(ids)),
+                });
+            } else {
+                await searchByPatterns({
+                    ...baseSearchProps,
+                    callback: (refs) => dispatchHighlighted(highlightActions.add(extractObjectIds(refs))),
+                });
+            }
         } catch {
             // ignore for now
             // likely to be an aborted search which triggers a new search anyways

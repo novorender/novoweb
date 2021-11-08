@@ -49,7 +49,7 @@
         "@mui/icons-material": "^5.0.3",
         "@mui/material": "^5.0.3",
         "@novorender/data-js-api": "^0.2.3",
-        "@novorender/webgl-api": "^0.3.15",
+        "@novorender/webgl-api": "^0.3.16",
         "@reduxjs/toolkit": "^1.5.1",
         "@use-gesture/react": "^10.1.1",
         "express": "^4.17.1",
