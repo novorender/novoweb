@@ -408,7 +408,7 @@ function PropertyItem({ checked, onChange, property, value, resizing, groupName 
                             <MenuItem
                                 onClick={() =>
                                     navigator.clipboard.writeText(
-                                        `${groupName ? `${groupName}/${property}` : property}: ${value}`
+                                        `${groupName ? `${groupName}/${property}` : property} ${value}`
                                     )
                                 }
                             >
