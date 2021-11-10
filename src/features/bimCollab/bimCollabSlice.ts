@@ -1,7 +1,9 @@
 import { createSlice, PayloadAction } from "@reduxjs/toolkit";
 import { RootState } from "app/store";
+import { StorageKey } from "config/storage";
+import { getFromStorage } from "utils/storage";
 
-import { AuthInfo, Project, Topic } from "./types";
+import { Project, Topic } from "./types";
 
 export enum FilterKey {
     Type = "topic_type",
@@ -13,8 +15,7 @@ export enum FilterKey {
 
 const initialState = {
     accessToken: "",
-    authInfo: undefined as undefined | AuthInfo,
-    space: (localStorage["BIMcollab_space"] ?? "") as string,
+    space: getFromStorage(StorageKey.BimCollabSpace) as string,
     version: "",
     projects: [] as Project[],
     topics: {} as Record<string, Topic>,
@@ -41,20 +42,21 @@ export const bimCollabSlice = createSlice({
         setVersion: (state, action: PayloadAction<string>) => {
             state.version = action.payload;
         },
-        setAuthInfo: (state, action: PayloadAction<AuthInfo>) => {
-            state.authInfo = action.payload;
-        },
         setAccessToken: (state, action: PayloadAction<string>) => {
             state.accessToken = action.payload;
         },
         setFilters: (state, action: PayloadAction<Filters>) => {
             state.filters = action.payload;
         },
+        logOut: (state) => {
+            state.accessToken = "";
+            state.space = "";
+            state.version = "";
+        },
     },
 });
 
 export const selectAccessToken = (state: RootState) => state.bimCollab.accessToken;
-export const selectAuthInfo = (state: RootState) => state.bimCollab.authInfo;
 export const selectSpace = (state: RootState) => state.bimCollab.space;
 export const selectVersion = (state: RootState) => state.bimCollab.version;
 export const selectFilters = (state: RootState) => state.bimCollab.filters;

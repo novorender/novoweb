@@ -1,4 +1,4 @@
-import { useParams, Link } from "react-router-dom";
+import { useParams, Link, useHistory } from "react-router-dom";
 import {
     useTheme,
     Tooltip as MuiTooltip,
@@ -12,7 +12,7 @@ import {
     TooltipProps,
 } from "@mui/material";
 import { css } from "@mui/styled-engine";
-import { Add } from "@mui/icons-material";
+import { Add, ArrowBack } from "@mui/icons-material";
 import { View, Scene } from "@novorender/webgl-api";
 
 import { useAppDispatch } from "app/store";
@@ -36,21 +36,22 @@ import {
     useGetVisibilityQuery,
 } from "../bimCollabApi";
 import type { Comment } from "../types";
-import { translatePerspectiveCamera } from "../utils";
+import { translateBcfClippingPlanes, translatePerspectiveCamera } from "../utils";
 
 export function Topic({ view, scene }: { view: View; scene: Scene }) {
     const theme = useTheme();
+    const history = useHistory();
     const [loading, setLoading] = useMountedState(false);
     const { projectId, topicId } = useParams<{ projectId: string; topicId: string }>();
 
-    const { data: topic } = useGetTopicQuery({ projectId, topicId });
-    const { data: comments } = useGetCommentsQuery({ projectId, topicId });
+    const { data: topic } = useGetTopicQuery({ projectId, topicId }, { refetchOnMountOrArgChange: true });
+    const { data: comments } = useGetCommentsQuery({ projectId, topicId }, { refetchOnMountOrArgChange: true });
     const { data: viewpoints } = useGetViewpointsQuery(
         {
             projectId,
             topicId: topic?.guid ?? "",
         },
-        { skip: !topic || Boolean(topic.default_viewpoint_guid) }
+        { skip: !topic || Boolean(topic.default_viewpoint_guid), refetchOnMountOrArgChange: true }
     );
 
     const defaultViewpointId = topic?.default_viewpoint_guid
@@ -76,11 +77,17 @@ export function Topic({ view, scene }: { view: View; scene: Scene }) {
         <>
             {loading ? <LinearProgress /> : null}
             <Box boxShadow={theme.customShadows.widgetHeader}>
-                {topic.authorization.topic_actions.includes("createComment")}
-                <Button component={Link} to={`/project/${projectId}/topic/${topicId}/new-comment`} color="grey">
-                    <Add sx={{ mr: 1 }} />
-                    Add comment
+                <Button onClick={() => history.goBack()} color="grey">
+                    <ArrowBack sx={{ mr: 1 }} />
+                    Back
                 </Button>
+
+                {topic.authorization.topic_actions.includes("createComment") ? (
+                    <Button component={Link} to={`/project/${projectId}/topic/${topicId}/new-comment`} color="grey">
+                        <Add sx={{ mr: 1 }} />
+                        Add comment
+                    </Button>
+                ) : null}
             </Box>
             <ScrollBox height={1} width={1} horizontal sx={{ mt: 1 }}>
                 <Box p={1} sx={{ "& > img": { width: "100%", maxHeight: 150, objectFit: "none" } }}>
@@ -201,6 +208,15 @@ function CommentListItem({
         if (viewpoint?.perspective_camera) {
             const camera = translatePerspectiveCamera(viewpoint?.perspective_camera);
             view.camera.controller.moveTo(camera.position, camera.rotation);
+        }
+
+        dispatch(renderActions.resetClippingPlanes());
+        if (viewpoint?.clipping_planes?.length) {
+            const planes = translateBcfClippingPlanes(viewpoint.clipping_planes);
+
+            view.applySettings({ clippingVolume: { enabled: true, mode: "union", planes } });
+        } else {
+            view.applySettings({ clippingVolume: { enabled: false, mode: "union", planes: [] } });
         }
 
         setLoading(false);

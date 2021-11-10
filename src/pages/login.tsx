@@ -5,11 +5,13 @@ import { useTheme, Box, Button, OutlinedInput, IconButton, InputAdornment, FormC
 import { loginRequest } from "config/auth";
 import { useAppDispatch } from "app/store";
 import { authActions } from "slices/authSlice";
-import { login, storeToken } from "utils/auth";
+import { login } from "utils/auth";
 import { useToggle } from "hooks/useToggle";
 
 import { Lock, Visibility, VisibilityOff, AccountCircle } from "@mui/icons-material";
 import { ReactComponent as NovorenderLogo } from "media/img/novorender_logo_RGB_2021.svg";
+import { saveToStorage } from "utils/storage";
+import { StorageKey } from "config/storage";
 
 export function Login() {
     const theme = useTheme();
@@ -36,7 +38,7 @@ export function Login() {
         const res = await login(username, password).catch(() => ({ error: "" }));
 
         if ("token" in res) {
-            storeToken(res.token);
+            saveToStorage(StorageKey.NovoToken, res.token);
             dispatch(authActions.login({ accessToken: res.token }));
         }
     };

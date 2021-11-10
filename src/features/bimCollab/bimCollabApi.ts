@@ -1,8 +1,11 @@
 import { BaseQueryFn, createApi, FetchArgs, fetchBaseQuery, FetchBaseQueryError } from "@reduxjs/toolkit/query/react";
 
 import { RootState } from "app/store";
+import { StorageKey } from "config/storage";
 import { generateCodeChallenge } from "utils/auth";
 import { generateRandomString } from "utils/misc";
+import { deleteFromStorage, getFromStorage, saveToStorage } from "utils/storage";
+
 import {
     AuthInfo,
     Coloring,
@@ -16,13 +19,6 @@ import {
     Viewpoint,
     Visibility,
 } from "./types";
-import {
-    deleteStoredRefreshToken,
-    getStoredCodeVerifier,
-    getStoredRefreshToken,
-    storeCodeVerifier,
-    storeRefreshToken,
-} from "./utils";
 
 const clientId = "PlayGround_Client";
 const clientSecret = process.env.REACT_APP_BIMCOLLAB_CLIENT_SECRET ?? "";
@@ -48,7 +44,6 @@ const dynamicBaseQuery: BaseQueryFn<string | FetchArgs, unknown, FetchBaseQueryE
     extraOptions
 ) => {
     const { space, version } = (api.getState() as RootState).bimCollab;
-    // gracefully handle scenarios where data to generate the URL is missing
     if (!space) {
         return {
             error: {
@@ -71,10 +66,8 @@ const dynamicBaseQuery: BaseQueryFn<string | FetchArgs, unknown, FetchBaseQueryE
         };
     }
 
-    // construct a dynamically generated portion of the url
     const adjustedUrl = `https://${space}.bimcollab.com/bcf/${version}/${urlEnd}`;
     const adjustedArgs = typeof args === "string" ? adjustedUrl : { ...args, url: adjustedUrl };
-    // provide the amended url and other params to the raw base query
     return rawBaseQuery(adjustedArgs, api, extraOptions);
 };
 
@@ -154,7 +147,11 @@ export const bimCollabApi = createApi({
         }),
         createViewpoint: builder.mutation<
             Viewpoint,
-            Partial<Viewpoint> & Pick<Viewpoint, "perspective_camera"> & { projectId: string; topicId: string }
+            Partial<Viewpoint> &
+                Pick<Viewpoint, "perspective_camera" | "snapshot"> & {
+                    projectId: string;
+                    topicId: string;
+                }
         >({
             query: ({ projectId, topicId, ...body }) => ({
                 body,
@@ -198,16 +195,13 @@ export const {
     useCreateCommentMutation,
 } = bimCollabApi;
 
-// TODO(OLA): Bruk auth url fra AuthInfo
-export async function getCode(space: string) {
+export async function getCode(authUrl: string) {
     const verifier = generateRandomString();
     const challenge = await generateCodeChallenge(verifier);
-    storeCodeVerifier(verifier);
-
-    console.log({ verifier, challenge });
+    saveToStorage(StorageKey.BimCollabCodeVerifier, verifier);
 
     window.location.href =
-        `https://${space}.bimcollab.com/identity/connect/authorize` +
+        authUrl +
         `?response_type=code` +
         `&client_id=${clientId}` +
         `&scope=${scope}` +
@@ -226,7 +220,7 @@ export async function getToken(
     body.set("client_secret", clientSecret);
     body.set("grant_type", "authorization_code");
     body.set("redirect_uri", callbackUrl);
-    body.set("code_verifier", getStoredCodeVerifier());
+    body.set("code_verifier", getFromStorage(StorageKey.BimCollabCodeVerifier));
 
     return fetch(oAuthTokenUrl, {
         body,
@@ -252,36 +246,36 @@ export async function refreshTokens(
     }).then((r) => r.json());
 }
 
-export async function authenticate(oAuthTokenUrl: string, space: string): Promise<string> {
-    const storedRefreshToken = getStoredRefreshToken();
+export async function authenticate(authInfo: AuthInfo): Promise<string> {
+    const storedRefreshToken = getFromStorage(StorageKey.BimCollabRefreshToken);
     const code = new URLSearchParams(window.location.search).get("code");
 
     try {
         if (code) {
             window.history.replaceState(null, "", window.location.pathname.replace("Callback", ""));
 
-            const res = await getToken(oAuthTokenUrl, code);
+            const res = await getToken(authInfo.oauth2_token_url, code);
 
             if (!res) {
                 throw new Error("token request failed");
             }
 
             if (res.refresh_token) {
-                storeRefreshToken(res.refresh_token);
+                saveToStorage(StorageKey.BimCollabRefreshToken, res.refresh_token);
             }
 
             return res.access_token;
         } else if (storedRefreshToken) {
-            const res = await refreshTokens(oAuthTokenUrl, storedRefreshToken);
+            const res = await refreshTokens(authInfo.oauth2_token_url, storedRefreshToken);
 
             if (!res) {
                 throw new Error("get code");
             }
 
             if (res.refresh_token) {
-                storeRefreshToken(res.refresh_token);
+                saveToStorage(StorageKey.BimCollabRefreshToken, res.refresh_token);
             } else {
-                deleteStoredRefreshToken();
+                deleteFromStorage(StorageKey.BimCollabRefreshToken);
             }
 
             return res.access_token;
@@ -290,7 +284,7 @@ export async function authenticate(oAuthTokenUrl: string, space: string): Promis
         }
     } catch (e) {
         if (e instanceof Error && e.message === "get code") {
-            getCode(space);
+            getCode(authInfo.oauth2_auth_url);
         }
 
         return "";

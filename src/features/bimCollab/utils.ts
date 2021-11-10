@@ -1,29 +1,7 @@
-import { Camera } from "@novorender/webgl-api";
-import { vec3, mat3, quat } from "gl-matrix";
+import { Camera, RenderSettings } from "@novorender/webgl-api";
+import { vec3, mat3, quat, vec4 } from "gl-matrix";
 
-const refreshTokenKey = "BIMcollab_refresh_token";
-
-export function storeRefreshToken(token: string): void {
-    localStorage.setItem(refreshTokenKey, token);
-}
-
-export function getStoredRefreshToken(): string {
-    return localStorage.getItem(refreshTokenKey) ?? "";
-}
-
-export function deleteStoredRefreshToken() {
-    localStorage.removeItem(refreshTokenKey);
-}
-
-const codeVerifierKey = "BIMcollab_code_verifier";
-
-export function storeCodeVerifier(verifier: string) {
-    sessionStorage.setItem(codeVerifierKey, verifier);
-}
-
-export function getStoredCodeVerifier(): string {
-    return sessionStorage.getItem(codeVerifierKey) ?? "";
-}
+import { Viewpoint } from "./types";
 
 type Point = {
     x: number;
@@ -120,4 +98,53 @@ export function createBcfPerspectiveCamera(
         },
         field_of_view: camera.fieldOfView,
     };
+}
+
+export function translateBcfClippingPlanes(
+    planes: Viewpoint["clipping_planes"]
+): RenderSettings["clippingVolume"]["planes"] {
+    return planes.map(({ location, direction }) => {
+        return vec4.fromValues(
+            direction.x,
+            direction.z,
+            -direction.y,
+            -vec3.dot(
+                vec3.fromValues(direction.x, direction.z, -direction.y),
+                vec3.fromValues(location.x, location.z, -location.y)
+            )
+        );
+    });
+}
+
+export function createBcfClippingPlanes(
+    planes: RenderSettings["clippingVolume"]["planes"]
+): Viewpoint["clipping_planes"] {
+    return planes.map((plane) => ({
+        location: {
+            x: plane[0] ? -plane[3] / plane[0] : 0,
+            y: plane[2] ? -plane[3] / -plane[2] : 0,
+            z: plane[1] ? -plane[3] / plane[1] : 0,
+        },
+        direction: {
+            x: plane[0],
+            y: -plane[2],
+            z: plane[1],
+        },
+    }));
+}
+
+export function createBcfSnapshot(): Viewpoint["snapshot"] | undefined {
+    const canvas = document.getElementById("main-canvas") as HTMLCanvasElement;
+
+    if (!canvas) {
+        return;
+    }
+
+    const dist = document.createElement("canvas");
+    const { width, height } = canvas;
+    dist.height = height;
+    dist.width = width;
+    const ctx = dist.getContext("2d", { alpha: false, desynchronized: false })!;
+    ctx.drawImage(canvas, 0, 0, width, height, 0, 0, width, height);
+    return { snapshot_type: "png", snapshot_data: dist.toDataURL("image/png").split(";base64,")[1] };
 }

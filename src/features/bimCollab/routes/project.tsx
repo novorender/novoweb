@@ -1,6 +1,6 @@
 import { Fragment } from "react";
-import { useParams, Link } from "react-router-dom";
-import { Add, FilterAlt } from "@mui/icons-material";
+import { useParams, Link, useHistory } from "react-router-dom";
+import { Add, ArrowBack, FilterAlt } from "@mui/icons-material";
 import {
     Box,
     Button,
@@ -55,6 +55,7 @@ function applyFilters(topics: Topic[], filters: Filters): Topic[] {
 
 export function Project() {
     const theme = useTheme();
+    const history = useHistory();
     const space = useAppSelector(selectSpace);
     const filters = useAppSelector(selectFilters);
 
@@ -73,6 +74,10 @@ export function Project() {
     return (
         <>
             <Box boxShadow={theme.customShadows.widgetHeader}>
+                <Button onClick={() => history.goBack()} color="grey">
+                    <ArrowBack sx={{ mr: 1 }} />
+                    Back
+                </Button>
                 {project.authorization.project_actions.includes("createTopic") ? (
                     <Button component={Link} to={`/project/${projectId}/new-topic`} color="grey">
                         <Add sx={{ mr: 1 }} />

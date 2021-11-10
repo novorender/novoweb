@@ -2,7 +2,8 @@ import { AccountInfo } from "@azure/msal-common";
 import { createSlice, PayloadAction } from "@reduxjs/toolkit";
 
 import { RootState } from "app/store";
-import { getStoredToken } from "utils/auth";
+import { StorageKey } from "config/storage";
+import { getFromStorage } from "utils/storage";
 
 export enum SceneAuthRequirement {
     Unknown,
@@ -11,7 +12,7 @@ export enum SceneAuthRequirement {
 }
 
 const initialState = {
-    accessToken: getStoredToken(),
+    accessToken: getFromStorage(StorageKey.NovoToken),
     msalAccount: null as null | AccountInfo,
 };
 

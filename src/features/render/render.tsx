@@ -34,7 +34,6 @@ import { useAppDispatch, useAppSelector } from "app/store";
 import { PerformanceStats } from "features/performanceStats";
 import { useMountedState } from "hooks/useMountedState";
 import { authActions } from "slices/authSlice";
-import { deleteStoredToken } from "utils/auth";
 import { Loading } from "components";
 
 import {
@@ -49,6 +48,8 @@ import { xAxis, yAxis, axis, showPerformance } from "./consts";
 import { useHighlighted, highlightActions, useDispatchHighlighted } from "contexts/highlighted";
 import { useHidden, hiddenGroupActions, useDispatchHidden } from "contexts/hidden";
 import { useCustomGroups, customGroupsActions } from "contexts/customGroups";
+import { deleteFromStorage } from "utils/storage";
+import { StorageKey } from "config/storage";
 
 glMatrix.setMatrixArrayType(Array);
 addConsoleDebugUtils();
@@ -1078,7 +1079,7 @@ function NoScene({ id }: { id: string }) {
     const dispatch = useAppDispatch();
 
     const logout = async () => {
-        deleteStoredToken();
+        deleteFromStorage(StorageKey.NovoToken);
         dispatch(authActions.logout());
     };
 

@@ -13,7 +13,8 @@ import {
     useCreateCommentMutation,
     useCreateViewpointMutation,
 } from "../bimCollabApi";
-import { createBcfPerspectiveCamera } from "../utils";
+import { createBcfClippingPlanes, createBcfPerspectiveCamera, createBcfSnapshot } from "../utils";
+import { Viewpoint } from "../types";
 
 export function CreateTopic({ view }: { view: View }) {
     const theme = useTheme();
@@ -28,16 +29,9 @@ export function CreateTopic({ view }: { view: View }) {
 
     const [title, setTitle] = useState("");
     const [comment, setComment] = useState("");
-    const [includeViewpoint, toggleIncludeViewpoint] = useToggle(true);
-    const [snapshot, setSnapshot] = useState<string>("");
-
-    useEffect(() => {
-        if (includeViewpoint) {
-            setSnapshot(createSnapshot());
-        } else {
-            setSnapshot("");
-        }
-    }, [includeViewpoint]);
+    const [viewpoint, setViewpoint] = useState<
+        Partial<Viewpoint> & Pick<Viewpoint, "perspective_camera" | "snapshot">
+    >();
 
     const handleSubmit = async (e: FormEvent) => {
         e.preventDefault();
@@ -54,12 +48,11 @@ export function CreateTopic({ view }: { view: View }) {
 
         const topicId = topicRes.data.guid;
 
-        if (includeViewpoint) {
+        if (viewpoint) {
             const viewpointRes = await createViewpoint({
                 projectId,
                 topicId,
-                perspective_camera: createBcfPerspectiveCamera(view.camera),
-                snapshot: { snapshot_type: "png", snapshot_data: snapshot.split(";base64,")[1] ?? "" },
+                ...viewpoint,
             });
 
             const viewpointGuid = "data" in viewpointRes ? viewpointRes.data.guid : undefined;
@@ -107,21 +100,18 @@ export function CreateTopic({ view }: { view: View }) {
                         rows={4}
                     />
 
-                    {snapshot ? (
-                        <Box sx={{ img: { maxWidth: "100%", maxHeight: 150, objectFit: "contain" } }}>
-                            <img alt="" src={snapshot} />
-                        </Box>
-                    ) : null}
+                    <IncludeViewpoint viewpoint={viewpoint} setViewpoint={setViewpoint} view={view} />
 
-                    <FormControlLabel
-                        sx={{ mb: 2 }}
-                        control={
-                            <IosSwitch checked={includeViewpoint} color="primary" onChange={toggleIncludeViewpoint} />
-                        }
-                        label={<Box>Include viewpoint</Box>}
-                    />
-
-                    <Box display="flex" justifyContent="flex-end" mr={2} mb={2}>
+                    <Box display="flex" justifyContent="space-between" mr={2} mb={2}>
+                        <Button
+                            variant="contained"
+                            color="grey"
+                            type="button"
+                            disabled={disabled}
+                            onClick={() => history.goBack()}
+                        >
+                            Cancel
+                        </Button>
                         <Button variant="contained" type="submit" disabled={disabled}>
                             Create issue
                         </Button>
@@ -132,18 +122,45 @@ export function CreateTopic({ view }: { view: View }) {
     );
 }
 
-function createSnapshot(): string {
-    const canvas = document.getElementById("main-canvas") as HTMLCanvasElement;
+export function IncludeViewpoint({
+    viewpoint,
+    setViewpoint,
+    view,
+}: {
+    view: View;
+    viewpoint: any;
+    setViewpoint: (vp: any) => void;
+}) {
+    const [includeViewpoint, toggleIncludeViewpoint] = useToggle(true);
 
-    if (!canvas) {
-        return "";
-    }
+    useEffect(() => {
+        if (includeViewpoint) {
+            setViewpoint({
+                perspective_camera: createBcfPerspectiveCamera(view.camera),
+                snapshot: createBcfSnapshot(),
+                clipping_planes: createBcfClippingPlanes(view.settings.clippingVolume.planes),
+            });
+        } else {
+            setViewpoint(undefined);
+        }
+    }, [includeViewpoint, setViewpoint, view]);
 
-    const dist = document.createElement("canvas");
-    const { width, height } = canvas;
-    dist.height = height;
-    dist.width = width;
-    const ctx = dist.getContext("2d", { alpha: false, desynchronized: false })!;
-    ctx.drawImage(canvas, 0, 0, width, height, 0, 0, width, height);
-    return dist.toDataURL("image/png");
+    return (
+        <>
+            {viewpoint?.snapshot ? (
+                <Box sx={{ img: { maxWidth: "100%", maxHeight: 150, objectFit: "contain" } }}>
+                    <img
+                        alt=""
+                        src={`data:image/${viewpoint.snapshot_type};base64,${viewpoint.snapshot.snapshot_data}`}
+                    />
+                </Box>
+            ) : null}
+
+            <FormControlLabel
+                sx={{ mb: 2 }}
+                control={<IosSwitch checked={includeViewpoint} color="primary" onChange={toggleIncludeViewpoint} />}
+                label={<Box>Include viewpoint</Box>}
+            />
+        </>
+    );
 }

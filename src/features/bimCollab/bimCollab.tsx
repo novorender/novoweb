@@ -2,10 +2,9 @@ import { Box, Typography, useTheme, Button } from "@mui/material";
 import { FormEventHandler, ReactNode, useEffect, useState } from "react";
 import { MemoryRouter, Switch, Route, useHistory } from "react-router-dom";
 import { Scene, View } from "@novorender/webgl-api";
-import { useSelector } from "react-redux";
 
 import { LinearProgress, TextField } from "components";
-import { useAppDispatch } from "app/store";
+import { useAppDispatch, useAppSelector } from "app/store";
 
 import { Filters } from "./routes/filters";
 import { Topic } from "./routes/topic";
@@ -13,28 +12,30 @@ import { Project } from "./routes/project";
 import { Projects } from "./routes/projects";
 
 import { bimCollabActions, selectAccessToken, selectSpace, selectVersion } from "./bimCollabSlice";
-import {
-    authenticate,
-    getCode,
-    useGetAuthInfoQuery,
-    useGetCurrentUserQuery,
-    useGetVersionsQuery,
-} from "./bimCollabApi";
+import { authenticate, useGetAuthInfoQuery, useGetCurrentUserQuery, useGetVersionsQuery } from "./bimCollabApi";
 import { CreateTopic } from "./routes/createTopic";
 import { CreateComment } from "./routes/createComment";
+import { AuthInfo } from "./types";
+import { saveToStorage } from "utils/storage";
+import { StorageKey } from "config/storage";
 
 export function BimCollab({ view, scene }: { view: View; scene: Scene }) {
-    const space = useSelector(selectSpace);
-    const apiVersion = useSelector(selectVersion);
-    const accessToken = useSelector(selectAccessToken);
+    const space = useAppSelector(selectSpace);
+    const apiVersion = useAppSelector(selectVersion);
+    const accessToken = useAppSelector(selectAccessToken);
+    const dispatch = useAppDispatch();
 
-    const { data: versionsRes } = useGetVersionsQuery(undefined, { skip: !space || Boolean(apiVersion) });
+    const {
+        data: versionsRes,
+        isError: apiError,
+        refetch: refetchApiVersions,
+    } = useGetVersionsQuery(undefined, { skip: !space || Boolean(apiVersion) });
+
     const { data: authInfoRes } = useGetAuthInfoQuery(undefined, {
         skip: !Boolean(apiVersion),
     });
-    const { data: user } = useGetCurrentUserQuery(undefined, { skip: !accessToken });
 
-    const dispatch = useAppDispatch();
+    const { data: user } = useGetCurrentUserQuery(undefined, { skip: !accessToken });
 
     useEffect(() => {
         if (!versionsRes) {
@@ -49,13 +50,13 @@ export function BimCollab({ view, scene }: { view: View; scene: Scene }) {
     }, [versionsRes, dispatch]);
 
     useEffect(() => {
-        // TODO(OLA): Confirm space på et eller annet vis?
         if (space && authInfoRes && !user) {
-            init(authInfoRes.oauth2_token_url, space);
+            saveToStorage(StorageKey.BimCollabSpace, space);
+            init(authInfoRes);
         }
 
-        async function init(oAuthTokenUrl: string, bimCollabSpace: string) {
-            const accessToken = await authenticate(oAuthTokenUrl, bimCollabSpace);
+        async function init(authInfo: AuthInfo) {
+            const accessToken = await authenticate(authInfo);
 
             if (!accessToken) {
                 return;
@@ -65,8 +66,8 @@ export function BimCollab({ view, scene }: { view: View; scene: Scene }) {
         }
     }, [space, user, authInfoRes, dispatch]);
 
-    if (!space) {
-        return <EnterBimCollabSpace />;
+    if (!space || apiError) {
+        return <EnterBimCollabSpace error={apiError} refetchApiVersions={refetchApiVersions} />;
     }
 
     return user ? (
@@ -89,7 +90,7 @@ export function BimCollab({ view, scene }: { view: View; scene: Scene }) {
                         <CreateTopic view={view} />
                     </Route>
                     <Route path="/project/:projectId/topic/:topicId/new-comment" exact>
-                        <CreateComment />
+                        <CreateComment view={view} />
                     </Route>
                 </Switch>
             </HijackBackButton>
@@ -99,7 +100,6 @@ export function BimCollab({ view, scene }: { view: View; scene: Scene }) {
     );
 }
 
-// TODO(OLA): Legg te en back knapp i widget elns
 function HijackBackButton({ children }: { children: ReactNode }) {
     const history = useHistory();
 
@@ -120,15 +120,21 @@ function HijackBackButton({ children }: { children: ReactNode }) {
     );
 }
 
-function EnterBimCollabSpace() {
+function EnterBimCollabSpace({ error, refetchApiVersions }: { error?: boolean; refetchApiVersions: () => void }) {
     const theme = useTheme();
+    const dispatch = useAppDispatch();
+    const currentSpace = useAppSelector(selectSpace);
+
     const [space, setSpace] = useState("");
 
     const handleSubmit: FormEventHandler = (e) => {
         e.preventDefault();
 
-        localStorage["BIMcollab_space"] = space;
-        getCode(space);
+        dispatch(bimCollabActions.setSpace(space.toLowerCase().trim()));
+
+        if (error) {
+            refetchApiVersions();
+        }
     };
 
     return (
@@ -140,6 +146,8 @@ function EnterBimCollabSpace() {
             <form onSubmit={handleSubmit}>
                 <Box display="flex" alignItems="center">
                     <TextField
+                        error={error}
+                        helperText={error ? `"${currentSpace}" is not a valid space` : ""}
                         autoComplete="bimcollab-space"
                         id="bimcollab-space"
                         label="BIMcollab space"

@@ -3,8 +3,10 @@ import { EnvironmentDescription, Highlight, Internal, Scene, View } from "@novor
 
 import { api } from "app";
 import { offscreenCanvas } from "config";
+import { StorageKey } from "config/storage";
 import { CustomGroup } from "contexts/customGroups";
 import { ObjectVisibility, RenderType } from "slices/renderSlice";
+import { deleteFromStorage, saveToStorage } from "utils/storage";
 import { sleep } from "utils/timers";
 import { ssaoEnabled, taaEnabled } from "./consts";
 
@@ -205,14 +207,14 @@ export function serializeableObjectGroups(groups: ObjectGroup[]): CustomGroup[] 
 export function addConsoleDebugUtils(): void {
     window.showStats = (val?: boolean) =>
         val !== false
-            ? localStorage.setItem("show-performance-stats", "true")
-            : localStorage.removeItem("show-performance-stats");
+            ? saveToStorage(StorageKey.ShowPerformanceStats, "true")
+            : deleteFromStorage(StorageKey.ShowPerformanceStats);
 
     window.disableTaa = (val?: boolean) =>
-        val !== false ? localStorage.setItem("disable-taa", "true") : localStorage.removeItem("disable-taa");
+        val !== false ? saveToStorage(StorageKey.DisableTaa, "true") : deleteFromStorage(StorageKey.DisableTaa);
 
     window.disableSsao = (val?: boolean) =>
-        val !== false ? localStorage.setItem("disable-ssao", "true") : localStorage.removeItem("disable-ssao");
+        val !== false ? saveToStorage(StorageKey.DisableSssao, "true") : deleteFromStorage(StorageKey.DisableSssao);
 }
 
 function getHighlightByObjectVisibility(visibility: ObjectVisibility): Highlight {
