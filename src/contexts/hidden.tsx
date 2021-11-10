@@ -6,6 +6,8 @@ import { toIdObj, toIdArr } from "utils/objectData";
 const initialState = {
     ids: {} as Record<ObjectId, true | undefined>,
     idArr: [] as ObjectId[],
+    exceptions: {} as Record<ObjectId, true | undefined>,
+    exceptionsArr: [] as ObjectId[],
 };
 
 type State = typeof initialState;
