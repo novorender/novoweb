@@ -13,8 +13,8 @@ export function HideSelected(props: Props) {
     const { name, Icon } = featuresConfig["hideSelected"];
     const mainObject = useAppSelector(selectMainObject);
 
-    const { ids: highlighted } = useHighlighted();
-    const { ids: hidden } = useHidden();
+    const { idArr: highlighted } = useHighlighted();
+    const { idArr: hidden } = useHidden();
     const dispatchHighlighted = useDispatchHighlighted();
     const dispatchHidden = useDispatchHidden();
 

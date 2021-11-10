@@ -726,9 +726,14 @@ export function Render3D({ id, api, onInit, dataApi }: Props) {
                     scene,
                     view,
                     objectGroups: [
-                        { ...hiddenObjects, hidden: true, selected: false, color: [0, 0, 0] },
+                        { ids: hiddenObjects.idArr, hidden: true, selected: false, color: [0, 0, 0] },
                         ...customGroups,
-                        { ...highlightedObjects, hidden: false, selected: true },
+                        {
+                            ids: highlightedObjects.idArr,
+                            color: highlightedObjects.color,
+                            hidden: false,
+                            selected: true,
+                        },
                     ],
                     defaultVisibility,
                 });
@@ -826,7 +831,7 @@ export function Render3D({ id, api, onInit, dataApi }: Props) {
             return;
         }
 
-        const alreadySelected = highlightedObjects.ids.includes(result.objectId);
+        const alreadySelected = highlightedObjects.ids[result.objectId] === true;
 
         if (selectMultiple) {
             if (alreadySelected) {
@@ -839,7 +844,7 @@ export function Render3D({ id, api, onInit, dataApi }: Props) {
                 dispatchHighlighted(highlightActions.add([result.objectId]));
             }
         } else {
-            if (alreadySelected && highlightedObjects.ids.length === 1) {
+            if (alreadySelected && highlightedObjects.idArr.length === 1) {
                 dispatch(renderActions.setMainObject(undefined));
                 dispatchHighlighted(highlightActions.setIds([]));
             } else {

@@ -144,13 +144,18 @@ function Node({ node, parent, loading, setLoading, abortController, scene, ...pr
         const abortSignal = abortController.current.signal;
 
         try {
-            await searchByParentPath({
-                scene,
-                abortSignal,
-                parentPath: node.path,
-                callback: (refs) => dispatchHighlighted(highlightActions.add(extractObjectIds(refs))),
-                callbackInterval: 1000,
-            });
+            try {
+                await scene
+                    .descendants(node, abortSignal)
+                    .then((ids) => dispatchHighlighted(highlightActions.add(ids)));
+            } catch {
+                await searchByParentPath({
+                    scene,
+                    abortSignal,
+                    parentPath: node.path,
+                    callback: (refs) => dispatchHighlighted(highlightActions.add(extractObjectIds(refs))),
+                });
+            }
 
             if (!abortSignal.aborted) {
                 dispatchHighlighted(highlightActions.add([node.id]));
@@ -174,13 +179,18 @@ function Node({ node, parent, loading, setLoading, abortController, scene, ...pr
         const abortSignal = abortController.current.signal;
 
         try {
-            await searchByParentPath({
-                scene,
-                abortSignal,
-                parentPath: node.path,
-                callback: (refs) => dispatchHighlighted(highlightActions.remove(extractObjectIds(refs))),
-                callbackInterval: 1000,
-            });
+            try {
+                await scene
+                    .descendants(node, abortSignal)
+                    .then((ids) => dispatchHighlighted(highlightActions.remove(ids)));
+            } catch {
+                await searchByParentPath({
+                    scene,
+                    abortSignal,
+                    parentPath: node.path,
+                    callback: (refs) => dispatchHighlighted(highlightActions.remove(extractObjectIds(refs))),
+                });
+            }
         } catch {
             // nada
         } finally {
@@ -199,13 +209,16 @@ function Node({ node, parent, loading, setLoading, abortController, scene, ...pr
         const abortSignal = abortController.current.signal;
 
         try {
-            await searchByParentPath({
-                scene,
-                abortSignal,
-                parentPath: node.path,
-                callback: (refs) => dispatchHidden(hiddenGroupActions.add(extractObjectIds(refs))),
-                callbackInterval: 1000,
-            });
+            try {
+                await scene.descendants(node, abortSignal).then((ids) => dispatchHidden(hiddenGroupActions.add(ids)));
+            } catch {
+                await searchByParentPath({
+                    scene,
+                    abortSignal,
+                    parentPath: node.path,
+                    callback: (refs) => dispatchHidden(hiddenGroupActions.add(extractObjectIds(refs))),
+                });
+            }
 
             if (!abortSignal.aborted) {
                 dispatchHidden(hiddenGroupActions.add([node.id]));
@@ -229,13 +242,18 @@ function Node({ node, parent, loading, setLoading, abortController, scene, ...pr
         const abortSignal = abortController.current.signal;
 
         try {
-            await searchByParentPath({
-                scene,
-                abortSignal,
-                parentPath: node.path,
-                callback: (refs) => dispatchHidden(hiddenGroupActions.remove(extractObjectIds(refs))),
-                callbackInterval: 1000,
-            });
+            try {
+                await scene
+                    .descendants(node, abortSignal)
+                    .then((ids) => dispatchHidden(hiddenGroupActions.remove(ids)));
+            } catch {
+                await searchByParentPath({
+                    scene,
+                    abortSignal,
+                    parentPath: node.path,
+                    callback: (refs) => dispatchHidden(hiddenGroupActions.remove(extractObjectIds(refs))),
+                });
+            }
         } catch {
             // nada
         } finally {

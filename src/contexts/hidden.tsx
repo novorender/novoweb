@@ -1,7 +1,11 @@
+import { ObjectId } from "@novorender/webgl-api";
 import { createContext, Dispatch, ReactNode, useContext, useEffect, useReducer, useState } from "react";
 
+import { toIdObj, toIdArr } from "utils/objectData";
+
 const initialState = {
-    ids: [] as number[],
+    ids: {} as Record<ObjectId, true | undefined>,
+    idArr: [] as ObjectId[],
 };
 
 type State = typeof initialState;
@@ -12,21 +16,21 @@ enum ActionTypes {
     SetIds,
 }
 
-function add(ids: State["ids"]) {
+function add(ids: State["idArr"]) {
     return {
         type: ActionTypes.Add as const,
         ids,
     };
 }
 
-function remove(ids: State["ids"]) {
+function remove(ids: State["idArr"]) {
     return {
         type: ActionTypes.Remove as const,
         ids,
     };
 }
 
-function setIds(ids: State["ids"]) {
+function setIds(ids: State["idArr"]) {
     return {
         type: ActionTypes.SetIds as const,
         ids,
@@ -40,21 +44,30 @@ type Actions = ReturnType<typeof actions[keyof typeof actions]>;
 const StateContext = createContext<State>(undefined as any);
 const DispatchContext = createContext<Dispatch<Actions>>(undefined as any);
 
-function reducer(state: State, action: Actions) {
+function reducer(state: State, action: Actions): State {
     switch (action.type) {
         case ActionTypes.Add: {
+            const ids = { ...state.ids, ...toIdObj(action.ids) };
+
             return {
-                ids: state.ids.concat(action.ids),
+                ids,
+                idArr: toIdArr(ids),
             };
         }
         case ActionTypes.Remove: {
+            action.ids.forEach((id) => {
+                delete state.ids[id];
+            });
+
             return {
-                ids: state.ids.filter((id) => !action.ids.includes(id)),
+                ids: { ...state.ids },
+                idArr: toIdArr(state.ids),
             };
         }
         case ActionTypes.SetIds: {
             return {
-                ids: action.ids,
+                ids: toIdObj(action.ids),
+                idArr: action.ids,
             };
         }
         default: {
@@ -102,7 +115,7 @@ function useIsHidden(id: number) {
     const { ids: hidden } = useHidden();
 
     useEffect(() => {
-        setIsHidden(hidden.includes(id));
+        setIsHidden(hidden[id] === true);
     }, [id, hidden]);
 
     return isHidden;

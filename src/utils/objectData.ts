@@ -1,4 +1,4 @@
-import { BoundingSphere, HierarcicalObjectReference } from "@novorender/webgl-api";
+import { BoundingSphere, HierarcicalObjectReference, ObjectId } from "@novorender/webgl-api";
 import { vec3 } from "gl-matrix";
 
 import { replaceEncodedSlash } from "./misc";
@@ -48,4 +48,12 @@ export function getTotalBoundingSphere(nodes: HierarcicalObjectReference[]): Bou
     }
 
     return { center, radius };
+}
+
+export function toIdArr(ids: Record<ObjectId, true | undefined>): ObjectId[] {
+    return Object.keys(ids).map((id) => Number(id));
+}
+
+export function toIdObj(ids: ObjectId[]): Record<ObjectId, true | undefined> {
+    return Object.fromEntries(ids.map((id) => [String(id), true]));
 }

@@ -1,10 +1,14 @@
+import { ObjectId } from "@novorender/webgl-api";
 import { createContext, Dispatch, ReactNode, useContext, useEffect, useReducer, useState } from "react";
+
+import { toIdObj, toIdArr } from "utils/objectData";
 
 // Highlighted/hidden/objectgroups may end up having huge (1M+) collections of objectIds and receive a lot of back-to-back state updates.
 // Keeping this state in the redux store ended up slowing down the app too much so we keep it in React contexts instead for now.
 
 const initialState = {
-    ids: [] as number[],
+    ids: {} as Record<ObjectId, true | undefined>,
+    idArr: [] as ObjectId[],
     color: [1, 0, 0] as [number, number, number],
 };
 
@@ -18,21 +22,21 @@ enum ActionTypes {
     Set,
 }
 
-function add(ids: State["ids"]) {
+function add(ids: ObjectId[]) {
     return {
         type: ActionTypes.Add as const,
         ids,
     };
 }
 
-function remove(ids: State["ids"]) {
+function remove(ids: ObjectId[]) {
     return {
         type: ActionTypes.Remove as const,
         ids,
     };
 }
 
-function setIds(ids: State["ids"]) {
+function setIds(ids: ObjectId[]) {
     return {
         type: ActionTypes.SetIds as const,
         ids,
@@ -46,10 +50,10 @@ function setColor(color: State["color"]) {
     };
 }
 
-function set(state: State) {
+function set(payload: { color: State["color"]; ids: ObjectId[] }) {
     return {
         type: ActionTypes.Set as const,
-        state,
+        payload,
     };
 }
 
@@ -60,34 +64,48 @@ type Actions = ReturnType<typeof actions[keyof typeof actions]>;
 const StateContext = createContext<State>(undefined as any);
 const DispatchContext = createContext<Dispatch<Actions>>(undefined as any);
 
-function reducer(state: State, action: Actions) {
+function reducer(state: State, action: Actions): State {
     switch (action.type) {
         case ActionTypes.Add: {
+            const ids = { ...state.ids, ...toIdObj(action.ids) };
+
             return {
+                ids,
+                idArr: toIdArr(ids),
                 color: state.color,
-                ids: state.ids.concat(action.ids),
             };
         }
         case ActionTypes.Remove: {
+            action.ids.forEach((id) => {
+                delete state.ids[id];
+            });
+
             return {
                 color: state.color,
-                ids: state.ids.filter((id) => !action.ids.includes(id)),
+                ids: { ...state.ids },
+                idArr: toIdArr(state.ids),
             };
         }
         case ActionTypes.SetIds: {
             return {
                 color: state.color,
-                ids: action.ids,
+                ids: toIdObj(action.ids),
+                idArr: action.ids,
             };
         }
         case ActionTypes.SetColor: {
             return {
                 color: action.color,
                 ids: state.ids,
+                idArr: state.idArr,
             };
         }
         case ActionTypes.Set: {
-            return { ...action.state };
+            return {
+                color: action.payload.color,
+                ids: toIdObj(action.payload.ids),
+                idArr: action.payload.ids,
+            };
         }
         default: {
             throw new Error(`Unhandled action type`);
@@ -109,7 +127,7 @@ function HighlightedProvider({ children }: { children: ReactNode }) {
     );
 }
 
-function useHighlighted() {
+function useHighlighted(): State {
     const context = useContext(StateContext);
 
     if (context === undefined) {
@@ -119,7 +137,7 @@ function useHighlighted() {
     return context;
 }
 
-function useDispatchHighlighted() {
+function useDispatchHighlighted(): Dispatch<Actions> {
     const context = useContext(DispatchContext);
 
     if (context === undefined) {
@@ -134,7 +152,7 @@ function useIsHighlighted(id: number) {
     const { ids: highlighted } = useHighlighted();
 
     useEffect(() => {
-        setIsHighlighted(highlighted.includes(id));
+        setIsHighlighted(highlighted[id] === true);
     }, [id, highlighted]);
 
     return isHighlighted;

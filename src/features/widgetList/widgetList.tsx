@@ -56,25 +56,27 @@ export function WidgetList({ widgetKey, onSelect }: Props) {
 
     return (
         <Grid container wrap="wrap" spacing={1} data-test="widget-list">
-            {enabledWidgets.map(({ Icon, name, key }) => {
-                const activeCurrent = key === widgetKey;
-                const activeElsewhere = !activeCurrent && activeWidgets.includes(key);
+            {enabledWidgets
+                .sort((a, b) => a.name.localeCompare(b.name, "en", { sensitivity: "accent" }))
+                .map(({ Icon, name, key }) => {
+                    const activeCurrent = key === widgetKey;
+                    const activeElsewhere = !activeCurrent && activeWidgets.includes(key);
 
-                return (
-                    <Grid xs={4} sm={3} item key={key}>
-                        <ButtonWrapper
-                            activeCurrent={activeCurrent}
-                            activeElsewhere={activeElsewhere}
-                            onClick={handleClick(key)}
-                        >
-                            <IconButton disabled={activeElsewhere} size="large">
-                                <Icon />
-                            </IconButton>
-                            <Typography>{name}</Typography>
-                        </ButtonWrapper>
-                    </Grid>
-                );
-            })}
+                    return (
+                        <Grid xs={4} sm={3} item key={key}>
+                            <ButtonWrapper
+                                activeCurrent={activeCurrent}
+                                activeElsewhere={activeElsewhere}
+                                onClick={handleClick(key)}
+                            >
+                                <IconButton disabled={activeElsewhere} size="large">
+                                    <Icon />
+                                </IconButton>
+                                <Typography>{name}</Typography>
+                            </ButtonWrapper>
+                        </Grid>
+                    );
+                })}
         </Grid>
     );
 }

@@ -52,6 +52,7 @@
         "@novorender/data-js-api": "^0.2.3",
         "@novorender/webgl-api": "^0.3.17",
         "@reduxjs/toolkit": "^1.5.1",
+        "@use-gesture/react": "^10.1.1",
         "express": "^4.17.1",
         "express-static-gzip": "^2.1.1",
         "gl-matrix": "^3.3.0",

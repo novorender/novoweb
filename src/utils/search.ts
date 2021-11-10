@@ -2,6 +2,8 @@ import { HierarcicalObjectReference, ObjectData, ObjectId, Scene, SearchPattern 
 import { NodeType } from "features/modelTree/modelTree";
 import { sleep } from "./timers";
 
+const defaultCallbackInterval = 10000;
+
 export async function iterateAsync<T = HierarcicalObjectReference>({
     iterator,
     count,
@@ -35,24 +37,21 @@ export async function iterateAsync<T = HierarcicalObjectReference>({
 /**
     Find objects matching the specified patterns.
     The callback gets called at the specified interval with only the new results since the last call.
-    If the deep option is set to true; find all children of any parent object found.
 
     @remarks
-    Some searches may return thousands of objects and take several seconds to complete.\
+    Some searches may return thousands of objects and take several seconds to complete.
 */
 export async function searchByPatterns({
     scene,
     searchPatterns,
     callback,
-    callbackInterval,
-    deep,
+    callbackInterval = defaultCallbackInterval,
     abortSignal,
 }: {
     scene: Scene;
     searchPatterns: SearchPattern[] | string;
     callback: (result: HierarcicalObjectReference[]) => void;
-    callbackInterval: number;
-    deep?: boolean;
+    callbackInterval?: number;
     abortSignal?: AbortSignal;
 }): Promise<void> {
     const iterator = scene.search({ searchPattern: searchPatterns }, abortSignal);
@@ -63,21 +62,95 @@ export async function searchByPatterns({
         done = _done;
         callback(result);
         await sleep(1);
+    }
+}
 
-        if (deep) {
-            for (let i = 0; i < result.length; i++) {
-                const obj = result[i];
+/**
+    Find objects matching the specified patterns.
+    The callback gets called at the specified interval with only the new results since the last call.
+    Includes the IDs of all children of parent nodes found matching the search pattern.
 
-                if (obj.type === NodeType.Internal) {
-                    await searchByParentPath({
-                        scene,
-                        abortSignal,
-                        callback,
-                        callbackInterval: callbackInterval,
-                        parentPath: obj.path,
-                    });
+    @remarks
+    Some searches may return thousands of objects and take several seconds to complete.
+*/
+export async function searchDeepByPatterns({
+    scene,
+    searchPatterns,
+    callback,
+    callbackInterval = defaultCallbackInterval,
+    abortSignal,
+}: {
+    scene: Scene;
+    searchPatterns: SearchPattern[] | string;
+    callback: (result: ObjectId[]) => void;
+    callbackInterval?: number;
+    abortSignal?: AbortSignal;
+}): Promise<void> {
+    const iterator = scene.search({ searchPattern: searchPatterns }, abortSignal);
+    let done = false;
+
+    while (!done && !abortSignal?.aborted) {
+        const [result, _done] = await iterateAsync({ iterator, abortSignal, count: callbackInterval });
+        done = _done;
+        callback(result.map((res) => res.id));
+        await sleep(1);
+
+        const [cachedDescendants, unCachedDescendants] = result.reduce(
+            (acc, obj) => {
+                if (obj.descendants) {
+                    acc[0] = acc[0].concat(obj.descendants);
+                } else {
+                    acc[1].push(obj);
                 }
-            }
+
+                return acc;
+            },
+            [[], []] as [cached: ObjectId[], uncached: HierarcicalObjectReference[]]
+        );
+
+        callback(cachedDescendants);
+
+        const batchSize = 25;
+        const batches = unCachedDescendants.reduce(
+            (acc, obj) => {
+                if (obj.type === NodeType.Leaf) {
+                    return acc;
+                }
+
+                const lastBatch = acc.slice(-1)[0];
+
+                if (lastBatch.length < batchSize) {
+                    lastBatch.push(obj);
+                } else {
+                    acc.push([obj]);
+                }
+
+                return acc;
+            },
+            [[]] as HierarcicalObjectReference[][]
+        );
+
+        for (let i = 0; i < batches.length; i++) {
+            const batch = batches[i];
+
+            await Promise.all(
+                batch.map((obj) =>
+                    scene
+                        .descendants(obj, abortSignal)
+                        .then((ids) => callback(ids))
+                        .catch(() =>
+                            searchByParentPath({
+                                scene,
+                                abortSignal,
+                                callback: (results) => callback(results.map((res) => res.id)),
+                                callbackInterval: callbackInterval,
+                                parentPath: obj.path,
+                            })
+                        )
+                )
+            );
+
+            await sleep(1);
         }
     }
 }
@@ -93,14 +166,14 @@ export async function searchByParentPath({
     scene,
     parentPath,
     callback,
-    callbackInterval,
+    callbackInterval = defaultCallbackInterval,
     depth,
     abortSignal,
 }: {
     scene: Scene;
     parentPath: string;
     callback: (result: HierarcicalObjectReference[]) => void;
-    callbackInterval: number;
+    callbackInterval?: number;
     depth?: number;
     abortSignal?: AbortSignal;
 }): Promise<void> {
