@@ -127,7 +127,7 @@ export function Widget({ widgetKey, scene, view }: Props) {
                         {getWidgetByKey({ key, scene, view })}
                     </Box>
                     <Box display={menuOpen ? "block" : "none"} flexGrow={1} mt={2} mb={2} px={1}>
-                        <WidgetList widgetKey={widgetKey} onSelect={toggleMenu} />
+                        <WidgetList view={view} widgetKey={widgetKey} onSelect={toggleMenu} />
                     </Box>
                 </Box>
             </WidgetContainer>
@@ -149,7 +149,7 @@ export function Widget({ widgetKey, scene, view }: Props) {
     );
 }
 
-export function MenuWidget() {
+export function MenuWidget({ view }: { view: View }) {
     const theme = useTheme();
     const isSmall = useMediaQuery(theme.breakpoints.down("md"));
 
@@ -183,7 +183,7 @@ export function MenuWidget() {
                         </Box>
                     </Box>
                     <Box p={1} mt={1}>
-                        <WidgetList onSelect={toggle} />
+                        <WidgetList view={view} onSelect={toggle} />
                     </Box>
                 </WidgetContainer>
             ) : null}

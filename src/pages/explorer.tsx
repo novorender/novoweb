@@ -8,7 +8,7 @@ import { Loading } from "components";
 import { Hud } from "features/hud";
 import { Render3D } from "features/render";
 import { Protected } from "features/protectedRoute";
-import { FeatureKey, config as featuresConfig } from "config/features";
+import { FeatureKey, config as featuresConfig, defaultEnabledWidgets } from "config/features";
 import { explorerActions } from "slices/explorerSlice";
 import { selectAccessToken } from "slices/authSlice";
 import { HiddenProvider } from "contexts/hidden";
@@ -113,6 +113,7 @@ function enabledFeaturesToFeatureKeys(enabledFeatures: Record<string, boolean>):
             .map((key) => ({ key, enabled: enabledFeatures[key] }))
             .filter((feature) => feature.enabled)
             .map((feature) => (dictionary[feature.key] ? dictionary[feature.key]! : feature.key))
+            .concat(defaultEnabledWidgets)
             .flat() as FeatureKey[]
     );
 }

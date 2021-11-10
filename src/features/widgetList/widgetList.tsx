@@ -1,38 +1,15 @@
-import { Box, Grid, IconButton, Typography, styled, BoxProps, iconButtonClasses } from "@mui/material";
-import { css } from "@mui/styled-engine";
+import { Grid, IconButton, Typography } from "@mui/material";
+import { View } from "@novorender/webgl-api";
 
 import { useAppDispatch, useAppSelector } from "app/store";
 import { explorerActions, selectEnabledWidgets, selectWidgets } from "slices/explorerSlice";
-import type { WidgetKey } from "config/features";
+import { WidgetKey, config as featuresConfig } from "config/features";
+import { WidgetMenuButtonWrapper } from "components";
+import { ShareLink } from "features/shareLink";
 
-const ButtonWrapper = styled(Box, {
-    shouldForwardProp: (prop: string) => !["activeCurrent", "activeElsewhere"].includes(prop),
-})<BoxProps & { activeCurrent?: boolean; activeElsewhere?: boolean }>(
-    ({ activeCurrent, activeElsewhere, theme }) => css`
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        cursor: pointer;
-        opacity: ${activeElsewhere ? 0.3 : 1};
+type Props = { widgetKey?: WidgetKey; onSelect: () => void; view: View };
 
-        &:hover .${iconButtonClasses.root}:not(:disabled) {
-            background: ${activeCurrent ? theme.palette.primary.dark : theme.palette.grey[300]};
-        }
-
-        .${iconButtonClasses.root} {
-            background: ${activeCurrent ? theme.palette.primary.main : theme.palette.grey[100]};
-
-            svg,
-            svg path {
-                fill: ${activeCurrent ? theme.palette.common.white : theme.palette.text.primary};
-            }
-        }
-    `
-);
-
-type Props = { widgetKey?: WidgetKey; onSelect: () => void };
-
-export function WidgetList({ widgetKey, onSelect }: Props) {
+export function WidgetList({ widgetKey, onSelect, view }: Props) {
     const enabledWidgets = useAppSelector(selectEnabledWidgets);
     const activeWidgets = useAppSelector(selectWidgets);
 
@@ -64,16 +41,20 @@ export function WidgetList({ widgetKey, onSelect }: Props) {
 
                     return (
                         <Grid xs={4} sm={3} item key={key}>
-                            <ButtonWrapper
-                                activeCurrent={activeCurrent}
-                                activeElsewhere={activeElsewhere}
-                                onClick={handleClick(key)}
-                            >
-                                <IconButton disabled={activeElsewhere} size="large">
-                                    <Icon />
-                                </IconButton>
-                                <Typography>{name}</Typography>
-                            </ButtonWrapper>
+                            {key === featuresConfig.shareLink.key ? (
+                                <ShareLink view={view} />
+                            ) : (
+                                <WidgetMenuButtonWrapper
+                                    activeCurrent={activeCurrent}
+                                    activeElsewhere={activeElsewhere}
+                                    onClick={handleClick(key)}
+                                >
+                                    <IconButton disabled={activeElsewhere} size="large">
+                                        <Icon />
+                                    </IconButton>
+                                    <Typography>{name}</Typography>
+                                </WidgetMenuButtonWrapper>
+                            )}
                         </Grid>
                     );
                 })}
