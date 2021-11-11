@@ -8,7 +8,7 @@ import { useAppDispatch } from "app/store";
 import { Tooltip, withCustomScrollbar } from "components";
 import { NodeType } from "features/modelTree/modelTree";
 
-import { searchByParentPath } from "utils/search";
+import { getDescendants, searchByParentPath } from "utils/search";
 import { extractObjectIds, getObjectNameFromPath } from "utils/objectData";
 
 import { highlightActions, useDispatchHighlighted, useIsHighlighted } from "contexts/highlighted";
@@ -145,9 +145,9 @@ function Node({ node, parent, loading, setLoading, abortController, scene, ...pr
 
         try {
             try {
-                await scene
-                    .descendants(node, abortSignal)
-                    .then((ids) => dispatchHighlighted(highlightActions.add(ids)));
+                await getDescendants({ scene, parentNode: node, abortSignal }).then((ids) =>
+                    dispatchHighlighted(highlightActions.add(ids))
+                );
             } catch {
                 await searchByParentPath({
                     scene,
@@ -180,9 +180,9 @@ function Node({ node, parent, loading, setLoading, abortController, scene, ...pr
 
         try {
             try {
-                await scene
-                    .descendants(node, abortSignal)
-                    .then((ids) => dispatchHighlighted(highlightActions.remove(ids)));
+                await getDescendants({ scene, parentNode: node, abortSignal }).then((ids) =>
+                    dispatchHighlighted(highlightActions.remove(ids))
+                );
             } catch {
                 await searchByParentPath({
                     scene,
@@ -210,7 +210,9 @@ function Node({ node, parent, loading, setLoading, abortController, scene, ...pr
 
         try {
             try {
-                await scene.descendants(node, abortSignal).then((ids) => dispatchHidden(hiddenGroupActions.add(ids)));
+                await getDescendants({ scene, parentNode: node, abortSignal }).then((ids) =>
+                    dispatchHidden(hiddenGroupActions.add(ids))
+                );
             } catch {
                 await searchByParentPath({
                     scene,
@@ -243,9 +245,9 @@ function Node({ node, parent, loading, setLoading, abortController, scene, ...pr
 
         try {
             try {
-                await scene
-                    .descendants(node, abortSignal)
-                    .then((ids) => dispatchHidden(hiddenGroupActions.remove(ids)));
+                await getDescendants({ scene, parentNode: node, abortSignal }).then((ids) =>
+                    dispatchHidden(hiddenGroupActions.remove(ids))
+                );
             } catch {
                 await searchByParentPath({
                     scene,
