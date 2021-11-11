@@ -159,4 +159,4 @@ export type WidgetKey = {
 
 export type Widget = Config[WidgetKey];
 
-export const defaultEnabledWidgets = [config.shareLink.key];
+export const defaultEnabledWidgets = [config.shareLink.key, config.bimCollab.key];

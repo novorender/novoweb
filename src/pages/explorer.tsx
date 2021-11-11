@@ -121,9 +121,7 @@ function enabledFeaturesToFeatureKeys(enabledFeatures: Record<string, boolean>):
             .map((key) => ({ key, enabled: enabledFeatures[key] }))
             .filter((feature) => feature.enabled)
             .map((feature) => (dictionary[feature.key] ? dictionary[feature.key]! : feature.key))
-            .concat(featuresConfig.bimCollab.key)
             .concat(defaultEnabledWidgets)
-            .sort()
             .flat() as FeatureKey[]
     );
 }
