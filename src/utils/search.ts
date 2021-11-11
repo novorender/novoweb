@@ -135,8 +135,7 @@ export async function searchDeepByPatterns({
 
             await Promise.all(
                 batch.map((obj) =>
-                    scene
-                        .descendants(obj, abortSignal)
+                    getDescendants({ scene, parentNode: obj, abortSignal })
                         .then((ids) => callback(ids))
                         .catch(() =>
                             searchByParentPath({
@@ -203,6 +202,28 @@ export async function searchFirstObjectAtPath({
         .next()
         .then((res) => (res.value ? res.value.loadMetaData() : undefined))
         .catch(() => undefined);
+}
+
+export async function getDescendants({
+    scene,
+    parentNode,
+    abortSignal,
+}: {
+    scene: Scene;
+    parentNode: HierarcicalObjectReference;
+    abortSignal?: AbortSignal;
+}): Promise<ObjectId[]> {
+    return (
+        parentNode.descendants ??
+        scene.descendants(parentNode, abortSignal).then((ids) => {
+            if (!ids.length) {
+                // Probably not cached so throw to handle fallback in catch
+                throw new Error("No descendants found");
+            }
+
+            return ids;
+        })
+    );
 }
 
 export function getObjectData({ scene, id }: { scene: Scene; id: ObjectId }): Promise<ObjectData | undefined> {

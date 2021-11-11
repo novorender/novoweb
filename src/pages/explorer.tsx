@@ -3,19 +3,22 @@ import { useParams } from "react-router-dom";
 import { SearchPattern, View } from "@novorender/webgl-api";
 
 import { api, dataApi } from "app";
-import { useAppSelector, useAppDispatch } from "app/store";
+import { uniqueArray } from "utils/misc";
+
+import { FeatureKey, config as featuresConfig, defaultEnabledWidgets } from "config/features";
 import { Loading } from "components";
 import { Hud } from "features/hud";
 import { Render3D } from "features/render";
 import { Protected } from "features/protectedRoute";
-import { FeatureKey, config as featuresConfig, defaultEnabledWidgets } from "config/features";
+import { SetPreloadedScene } from "features/render/render";
+
+import { useAppSelector, useAppDispatch } from "app/store";
 import { explorerActions } from "slices/explorerSlice";
 import { selectAccessToken } from "slices/authSlice";
 import { HiddenProvider } from "contexts/hidden";
 import { CustomGroupsProvider } from "contexts/customGroups";
 import { HighlightedProvider } from "contexts/highlighted";
-import { uniqueArray } from "utils/misc";
-import { SetPreloadedScene } from "features/render/render";
+import { VisibleProvider } from "contexts/visible";
 
 export function Explorer() {
     const { id = process.env.REACT_APP_SCENE_ID ?? "95a89d20dd084d9486e383e131242c4c" } = useParams<{ id?: string }>();
@@ -128,7 +131,9 @@ function ContextProviders({ children }: { children: ReactNode }) {
     return (
         <HighlightedProvider>
             <HiddenProvider>
-                <CustomGroupsProvider>{children}</CustomGroupsProvider>
+                <VisibleProvider>
+                    <CustomGroupsProvider>{children}</CustomGroupsProvider>
+                </VisibleProvider>
             </HiddenProvider>
         </HighlightedProvider>
     );

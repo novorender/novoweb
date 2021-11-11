@@ -29,13 +29,18 @@ import {
     selectSelectMultiple,
     selectDefaultVisibility,
 } from "slices/renderSlice";
+import { authActions } from "slices/authSlice";
 import { useAppDispatch, useAppSelector } from "app/store";
+
 import { PerformanceStats } from "features/performanceStats";
 import { getDataFromUrlHash } from "features/shareLink";
 import { useMountedState } from "hooks/useMountedState";
-import { authActions } from "slices/authSlice";
 import { deleteStoredToken } from "utils/auth";
 import { Loading } from "components";
+
+import { useHighlighted, highlightActions, useDispatchHighlighted } from "contexts/highlighted";
+import { useHidden, hiddenGroupActions, useDispatchHidden } from "contexts/hidden";
+import { useCustomGroups, customGroupsActions } from "contexts/customGroups";
 
 import {
     addConsoleDebugUtils,
@@ -46,9 +51,7 @@ import {
     createRendering,
 } from "./utils";
 import { xAxis, yAxis, axis, showPerformance } from "./consts";
-import { useHighlighted, highlightActions, useDispatchHighlighted } from "contexts/highlighted";
-import { useHidden, hiddenGroupActions, useDispatchHidden } from "contexts/hidden";
-import { useCustomGroups, customGroupsActions } from "contexts/customGroups";
+import { useVisible } from "contexts/visible";
 
 glMatrix.setMatrixArrayType(Array);
 addConsoleDebugUtils();
@@ -126,6 +129,7 @@ export function Render3D({ id, api, onInit, dataApi }: Props) {
     const dispatchHighlighted = useDispatchHighlighted();
     const hiddenObjects = useHidden();
     const dispatchHidden = useDispatchHidden();
+    const visibleObjects = useVisible();
     const { state: customGroups, dispatch: dispatchCustomGroups } = useCustomGroups();
 
     const env = useAppSelector(selectCurrentEnvironment);
@@ -736,6 +740,7 @@ export function Render3D({ id, api, onInit, dataApi }: Props) {
                     view,
                     objectGroups: [
                         { ids: hiddenObjects.idArr, hidden: true, selected: false, color: [0, 0, 0] },
+                        { ids: visibleObjects.idArr, hidden: false, selected: true, neutral: true },
                         ...customGroups,
                         {
                             ids: highlightedObjects.idArr,
@@ -748,7 +753,17 @@ export function Render3D({ id, api, onInit, dataApi }: Props) {
                 });
             }
         },
-        [scene, view, api, defaultVisibility, mainObject, customGroups, highlightedObjects, hiddenObjects]
+        [
+            scene,
+            view,
+            api,
+            defaultVisibility,
+            mainObject,
+            customGroups,
+            highlightedObjects,
+            hiddenObjects,
+            visibleObjects,
+        ]
     );
 
     useEffect(
