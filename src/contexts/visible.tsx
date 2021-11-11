@@ -1,5 +1,5 @@
 import { ObjectId } from "@novorender/webgl-api";
-import { createContext, Dispatch, ReactNode, useContext, useEffect, useReducer, useState } from "react";
+import { createContext, Dispatch, ReactNode, useContext, useReducer } from "react";
 
 import { toIdObj, toIdArr } from "utils/objectData";
 
@@ -13,31 +13,31 @@ type State = typeof initialState;
 enum ActionTypes {
     Add,
     Remove,
-    SetIds,
+    Set,
 }
 
-function add(ids: State["idArr"]) {
+function add(ids: ObjectId[]) {
     return {
         type: ActionTypes.Add as const,
         ids,
     };
 }
 
-function remove(ids: State["idArr"]) {
+function remove(ids: ObjectId[]) {
     return {
         type: ActionTypes.Remove as const,
         ids,
     };
 }
 
-function setIds(ids: State["idArr"]) {
+function set(ids: ObjectId[]) {
     return {
-        type: ActionTypes.SetIds as const,
+        type: ActionTypes.Set as const,
         ids,
     };
 }
 
-const actions = { add, remove, setIds };
+const actions = { add, remove, set };
 
 type Actions = ReturnType<typeof actions[keyof typeof actions]>;
 
@@ -64,7 +64,7 @@ function reducer(state: State, action: Actions): State {
                 idArr: toIdArr(state.ids),
             };
         }
-        case ActionTypes.SetIds: {
+        case ActionTypes.Set: {
             return {
                 ids: toIdObj(action.ids),
                 idArr: action.ids,
@@ -76,11 +76,11 @@ function reducer(state: State, action: Actions): State {
     }
 }
 
-function HiddenProvider({ children }: { children: ReactNode }) {
+function VisibleProvider({ children }: { children: ReactNode }) {
     const [state, dispatch] = useReducer(reducer, initialState);
 
     if (window.Cypress) {
-        window.contexts = { ...window.contexts, hidden: { state, dispatch } };
+        window.contexts = { ...window.contexts, visible: { state, dispatch } };
     }
 
     return (
@@ -90,35 +90,24 @@ function HiddenProvider({ children }: { children: ReactNode }) {
     );
 }
 
-function useHidden() {
+function useVisible(): State {
     const context = useContext(StateContext);
 
     if (context === undefined) {
-        throw new Error("useHidden must be used within a HiddenProvider");
+        throw new Error("useVisible must be used within a VisibleProvider");
     }
 
     return context;
 }
 
-function useDispatchHidden() {
+function useDispatchVisible(): Dispatch<Actions> {
     const context = useContext(DispatchContext);
 
     if (context === undefined) {
-        throw new Error("useDispatchHidden must be used within a HiddenProvider");
+        throw new Error("useDispatchVisible must be used within a VisibleProvider");
     }
 
     return context;
 }
 
-function useIsHidden(id: number) {
-    const [isHidden, setIsHidden] = useState(false);
-    const { ids: hidden } = useHidden();
-
-    useEffect(() => {
-        setIsHidden(hidden[id] === true);
-    }, [id, hidden]);
-
-    return isHidden;
-}
-
-export { HiddenProvider, useHidden, useDispatchHidden, useIsHidden, actions as hiddenGroupActions };
+export { VisibleProvider, useVisible, useDispatchVisible, actions as visibleActions };

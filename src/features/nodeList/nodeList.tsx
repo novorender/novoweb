@@ -145,20 +145,26 @@ function Node({ node, parent, loading, setLoading, abortController, scene, ...pr
 
         try {
             try {
-                await getDescendants({ scene, parentNode: node, abortSignal }).then((ids) =>
-                    dispatchHighlighted(highlightActions.add(ids))
-                );
+                await getDescendants({ scene, parentNode: node, abortSignal }).then((ids) => {
+                    dispatchHighlighted(highlightActions.add(ids));
+                    dispatchHidden(hiddenGroupActions.remove(ids));
+                });
             } catch {
                 await searchByParentPath({
                     scene,
                     abortSignal,
                     parentPath: node.path,
-                    callback: (refs) => dispatchHighlighted(highlightActions.add(extractObjectIds(refs))),
+                    callback: (refs) => {
+                        const ids = extractObjectIds(refs);
+                        dispatchHighlighted(highlightActions.add(ids));
+                        dispatchHidden(hiddenGroupActions.remove(ids));
+                    },
                 });
             }
 
             if (!abortSignal.aborted) {
                 dispatchHighlighted(highlightActions.add([node.id]));
+                dispatchHidden(hiddenGroupActions.remove([node.id]));
                 setLoading(false);
             }
         } catch {
@@ -210,20 +216,26 @@ function Node({ node, parent, loading, setLoading, abortController, scene, ...pr
 
         try {
             try {
-                await getDescendants({ scene, parentNode: node, abortSignal }).then((ids) =>
-                    dispatchHidden(hiddenGroupActions.add(ids))
-                );
+                await getDescendants({ scene, parentNode: node, abortSignal }).then((ids) => {
+                    dispatchHidden(hiddenGroupActions.add(ids));
+                    dispatchHighlighted(highlightActions.remove(ids));
+                });
             } catch {
                 await searchByParentPath({
                     scene,
                     abortSignal,
                     parentPath: node.path,
-                    callback: (refs) => dispatchHidden(hiddenGroupActions.add(extractObjectIds(refs))),
+                    callback: (refs) => {
+                        const ids = extractObjectIds(refs);
+                        dispatchHidden(hiddenGroupActions.add(ids));
+                        dispatchHighlighted(highlightActions.remove(ids));
+                    },
                 });
             }
 
             if (!abortSignal.aborted) {
                 dispatchHidden(hiddenGroupActions.add([node.id]));
+                dispatchHighlighted(highlightActions.remove([node.id]));
                 setLoading(false);
             }
         } catch {
