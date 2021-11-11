@@ -35,7 +35,7 @@ export function Widgets({ scene, view }: Props) {
             height={1}
             width={{ xs: "auto", md: "100%" }}
         >
-            {(isSmall && slots.length < 1) || (!isSmall && slots.length < 2) ? <MenuWidget /> : null}
+            {(isSmall && slots.length < 1) || (!isSmall && slots.length < 2) ? <MenuWidget view={view} /> : null}
             {slots
                 .slice(0)
                 .reverse()

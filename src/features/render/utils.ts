@@ -1,5 +1,5 @@
 import { ObjectGroup } from "@novorender/data-js-api";
-import { EnvironmentDescription, Highlight, Internal, Scene, View } from "@novorender/webgl-api";
+import { EnvironmentDescription, Highlight, Internal, ObjectId, Scene, View } from "@novorender/webgl-api";
 
 import { api } from "app";
 import { offscreenCanvas } from "config";
@@ -127,7 +127,10 @@ export function refillObjects({
 }: {
     scene: Scene;
     view: View;
-    objectGroups: { ids: number[]; color: [number, number, number]; selected: boolean; hidden: boolean }[];
+    objectGroups: (
+        | { ids: ObjectId[]; color: [number, number, number]; selected: boolean; hidden: boolean }
+        | { ids: ObjectId[]; neutral: true; hidden: false; selected: true }
+    )[];
     defaultVisibility: ObjectVisibility;
 }): void {
     if (!view || !scene) {
@@ -138,18 +141,16 @@ export function refillObjects({
 
     view.settings.objectHighlights = [
         getHighlightByObjectVisibility(defaultVisibility),
-        ...objectGroups.map((group) => api.createHighlight({ kind: "color", color: group.color })),
+        ...objectGroups.map((group) => {
+            if ("color" in group) {
+                return api.createHighlight({ kind: "color", color: group.color });
+            }
+
+            return getHighlightByObjectVisibility(ObjectVisibility.Neutral);
+        }),
     ];
 
     objectHighlighter.objectHighlightIndices.fill(defaultVisibility === ObjectVisibility.Transparent ? 255 : 0);
-
-    objectGroups.forEach((group, index) => {
-        if (group.selected) {
-            for (const id of group.ids) {
-                objectHighlighter.objectHighlightIndices[id] = index + 1;
-            }
-        }
-    });
 
     objectGroups
         .filter((group) => group.hidden)
@@ -158,6 +159,14 @@ export function refillObjects({
                 objectHighlighter.objectHighlightIndices[id] = 255;
             }
         });
+
+    objectGroups.forEach((group, index) => {
+        if (group.selected) {
+            for (const id of group.ids) {
+                objectHighlighter.objectHighlightIndices[id] = index + 1;
+            }
+        }
+    });
 
     objectHighlighter.commit();
 }

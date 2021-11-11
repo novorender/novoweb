@@ -4,7 +4,6 @@ import {
     View,
     API,
     FlightControllerParams,
-    RenderSettings,
     EnvironmentDescription,
     Internal,
     MeasureInfo,
@@ -30,11 +29,21 @@ import {
     selectSelectMultiple,
     selectDefaultVisibility,
 } from "slices/renderSlice";
-import { useAppDispatch, useAppSelector } from "app/store";
-import { PerformanceStats } from "features/performanceStats";
-import { useMountedState } from "hooks/useMountedState";
 import { authActions } from "slices/authSlice";
+import { useAppDispatch, useAppSelector } from "app/store";
+
+import { PerformanceStats } from "features/performanceStats";
+import { getDataFromUrlHash } from "features/shareLink";
+import { useMountedState } from "hooks/useMountedState";
 import { Loading } from "components";
+
+import { useHighlighted, highlightActions, useDispatchHighlighted } from "contexts/highlighted";
+import { useHidden, hiddenGroupActions, useDispatchHidden } from "contexts/hidden";
+import { useCustomGroups, customGroupsActions } from "contexts/customGroups";
+import { useVisible } from "contexts/visible";
+
+import { deleteFromStorage } from "utils/storage";
+import { StorageKey } from "config/storage";
 
 import {
     addConsoleDebugUtils,
@@ -45,11 +54,6 @@ import {
     createRendering,
 } from "./utils";
 import { xAxis, yAxis, axis, showPerformance } from "./consts";
-import { useHighlighted, highlightActions, useDispatchHighlighted } from "contexts/highlighted";
-import { useHidden, hiddenGroupActions, useDispatchHidden } from "contexts/hidden";
-import { useCustomGroups, customGroupsActions } from "contexts/customGroups";
-import { deleteFromStorage } from "utils/storage";
-import { StorageKey } from "config/storage";
 
 glMatrix.setMatrixArrayType(Array);
 addConsoleDebugUtils();
@@ -127,6 +131,7 @@ export function Render3D({ id, api, onInit, dataApi }: Props) {
     const dispatchHighlighted = useDispatchHighlighted();
     const hiddenObjects = useHidden();
     const dispatchHidden = useDispatchHidden();
+    const visibleObjects = useVisible();
     const { state: customGroups, dispatch: dispatchCustomGroups } = useCustomGroups();
 
     const env = useAppSelector(selectCurrentEnvironment);
@@ -545,8 +550,9 @@ export function Render3D({ id, api, onInit, dataApi }: Props) {
                     ...sceneData
                 } = preloadedScene ?? (await dataApi.loadScene(id));
 
-                const settings = sceneData.settings ?? ({} as Partial<RenderSettings>);
-                const { display: _display, ...customSettings } = settings ?? {};
+                const urlData = getDataFromUrlHash();
+                const settings = { ...sceneData.settings, ...urlData.settings };
+                const { display: _display, ...customSettings } = settings;
                 customSettings.background = { color: vec4.fromValues(0, 0, 0, 0) };
                 const _view = await api.createView(customSettings, canvas);
                 _view.applySettings({
@@ -563,7 +569,7 @@ export function Render3D({ id, api, onInit, dataApi }: Props) {
                 });
                 _view.scene = await api.loadScene(url, db);
                 const controller = api.createCameraController(
-                    (camera as Required<FlightControllerParams>) ?? { kind: "flight" },
+                    ((urlData.camera ?? camera) as Required<FlightControllerParams>) ?? { kind: "flight" },
                     canvas
                 );
 
@@ -585,11 +591,20 @@ export function Render3D({ id, api, onInit, dataApi }: Props) {
 
                 dispatch(renderActions.setBookmarks(bookmarks));
 
+                if (settings.clippingPlanes) {
+                    dispatch(
+                        renderActions.setClippingPlanes({ ...settings.clippingPlanes, defining: false, showBox: false })
+                    );
+                }
+
                 const defaultGroup = objectGroups.find((group) => !group.id && group.selected);
                 if (defaultGroup) {
                     dispatchHighlighted(
                         highlightActions.set({
-                            ids: defaultGroup.ids as number[],
+                            ids:
+                                urlData.mainObject !== undefined
+                                    ? defaultGroup.ids.concat(urlData.mainObject)
+                                    : (defaultGroup.ids as number[]),
                             color: [defaultGroup.color[0], defaultGroup.color[1], defaultGroup.color[2]],
                         })
                     );
@@ -727,6 +742,7 @@ export function Render3D({ id, api, onInit, dataApi }: Props) {
                     view,
                     objectGroups: [
                         { ids: hiddenObjects.idArr, hidden: true, selected: false, color: [0, 0, 0] },
+                        { ids: visibleObjects.idArr, hidden: false, selected: true, neutral: true },
                         ...customGroups,
                         {
                             ids: highlightedObjects.idArr,
@@ -739,7 +755,17 @@ export function Render3D({ id, api, onInit, dataApi }: Props) {
                 });
             }
         },
-        [scene, view, api, defaultVisibility, mainObject, customGroups, highlightedObjects, hiddenObjects]
+        [
+            scene,
+            view,
+            api,
+            defaultVisibility,
+            mainObject,
+            customGroups,
+            highlightedObjects,
+            hiddenObjects,
+            visibleObjects,
+        ]
     );
 
     useEffect(

@@ -113,7 +113,8 @@ export function ModelTree({ scene }: Props) {
                             : state
                     );
                 } else if (!isLoadingMore.current) {
-                    listRef.current?.scrollToItem(indexInCurrentList);
+                    // add one because we include parent node in list too
+                    listRef.current?.scrollToItem(indexInCurrentList + 1);
                 }
             }
             return setStatus(Status.Ready);

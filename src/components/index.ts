@@ -10,3 +10,4 @@ export * from "./tooltip";
 export * from "./speedDialAction";
 export * from "./loading";
 export * from "./iosSwitch";
+export * from "./widgetMenuButtonWrapper";

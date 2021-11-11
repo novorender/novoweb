@@ -1,6 +1,6 @@
 import ListIcon from "@mui/icons-material/List";
 import StarIcon from "@mui/icons-material/Star";
-// import ShareIcon from "@mui/icons-material/Share";
+import ShareIcon from "@mui/icons-material/Share";
 import HomeIcon from "@mui/icons-material/Home";
 import UndoIcon from "@mui/icons-material/Undo";
 import RedoIcon from "@mui/icons-material/Redo";
@@ -75,14 +75,12 @@ export const config = {
         Icon: StraightenIcon,
         type: FeatureType.Widget,
     },
-    /*
     shareLink: {
         key: "shareLink",
         name: "Share link",
         Icon: ShareIcon,
         type: FeatureType.Widget,
     },
-    */
     home: {
         key: "home",
         name: "Home",
@@ -160,3 +158,5 @@ export type WidgetKey = {
 }[keyof Config];
 
 export type Widget = Config[WidgetKey];
+
+export const defaultEnabledWidgets = [config.shareLink.key];
