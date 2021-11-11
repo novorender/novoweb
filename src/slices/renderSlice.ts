@@ -133,8 +133,8 @@ export const renderSlice = createSlice({
         setRenderType: (state, action: PayloadAction<RenderType>) => {
             state.renderType = action.payload;
         },
-        setClippingPlanes: (state, action: PayloadAction<ClippingPlanes>) => {
-            state.clippingPlanes = action.payload;
+        setClippingPlanes: (state, action: PayloadAction<Partial<ClippingPlanes>>) => {
+            state.clippingPlanes = { ...state.clippingPlanes, ...action.payload };
         },
         resetClippingPlanes: (state) => {
             state.clippingPlanes = initialState.clippingPlanes;

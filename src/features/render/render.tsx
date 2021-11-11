@@ -591,10 +591,8 @@ export function Render3D({ id, api, onInit, dataApi }: Props) {
 
                 dispatch(renderActions.setBookmarks(bookmarks));
 
-                if (settings.clippingPlanes) {
-                    dispatch(
-                        renderActions.setClippingPlanes({ ...settings.clippingPlanes, defining: false, showBox: false })
-                    );
+                if (settings.clippingPlanes?.enabled) {
+                    dispatch(renderActions.setClippingPlanes({ enabled: true }));
                 }
 
                 const defaultGroup = objectGroups.find((group) => !group.id && group.selected);

@@ -37,6 +37,7 @@ import {
 } from "../bimCollabApi";
 import type { Comment } from "../types";
 import { translateBcfClippingPlanes, translatePerspectiveCamera } from "../utils";
+import { useDispatchVisible, visibleActions } from "contexts/visible";
 
 export function Topic({ view, scene }: { view: View; scene: Scene }) {
     const theme = useTheme();
@@ -147,6 +148,7 @@ function CommentListItem({
     const dispatch = useAppDispatch();
     const dispatchHighlighted = useDispatchHighlighted();
     const dispatchHidden = useDispatchHidden();
+    const dispatchVisible = useDispatchVisible();
 
     const viewpointId = comment.viewpoint_guid || defaultViewpointId || "";
 
@@ -196,13 +198,13 @@ function CommentListItem({
                 dispatchHidden(hiddenGroupActions.add(ids));
             } else {
                 dispatch(renderActions.setDefaultVisibility(ObjectVisibility.Transparent));
-                dispatchHighlighted(highlightActions.add(ids));
+                dispatchVisible(visibleActions.set(ids));
             }
         }
 
         if (selection && selection.length) {
             const ids = await createSearch(selection.map((obj) => obj.ifc_guid));
-            dispatchHighlighted(highlightActions.add(ids));
+            dispatchHighlighted(highlightActions.setIds(ids));
         }
 
         if (viewpoint?.perspective_camera) {
