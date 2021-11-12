@@ -141,7 +141,8 @@ export function createBcfSnapshot(): Viewpoint["snapshot"] | undefined {
     }
 
     const dist = document.createElement("canvas");
-    const { width, height } = canvas;
+    const width = Math.min(canvas.width, 1500);
+    const height = Math.min(canvas.height, 1500);
     dist.height = height;
     dist.width = width;
     const ctx = dist.getContext("2d", { alpha: false, desynchronized: false })!;
