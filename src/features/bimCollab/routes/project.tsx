@@ -1,22 +1,10 @@
 import { Fragment } from "react";
 import { useParams, Link, useHistory } from "react-router-dom";
 import { Add, ArrowBack, FilterAlt } from "@mui/icons-material";
-import {
-    Box,
-    Button,
-    Typography,
-    List,
-    ListItem,
-    TooltipProps,
-    tooltipClasses,
-    Tooltip as MuiTooltip,
-    styled,
-    useTheme,
-} from "@mui/material";
-import { css } from "@mui/styled-engine";
+import { Box, Button, Typography, List, ListItem, useTheme } from "@mui/material";
 
 import { useAppSelector } from "app/store";
-import { LinearProgress, ScrollBox, Divider, Tooltip } from "components";
+import { LinearProgress, ScrollBox, Divider, Tooltip, ImgTooltip } from "components";
 
 import { useGetProjectQuery, useGetTopicsQuery, useGetViewpointsQuery, useGetThumbnailQuery } from "../bimCollabApi";
 import { FilterKey, Filters, selectFilters, selectSpace } from "../bimCollabSlice";
@@ -151,18 +139,7 @@ function TopicListItem({ topic, projectId }: { topic: Topic; projectId: string }
                 to={`/project/${projectId}/topic/${topic.guid}`}
             >
                 <Box bgcolor={theme.palette.grey[200]} height={65} width={100} flexShrink={0} flexGrow={0}>
-                    {thumbnail ? (
-                        <ImgTooltip
-                            placement="bottom-end"
-                            title={
-                                <Box sx={{ height: 176, width: 176, cursor: "pointer" }}>
-                                    <Img alt="" src={thumbnail} />
-                                </Box>
-                            }
-                        >
-                            <Img alt="" height="32px" width="32px" src={thumbnail} />
-                        </ImgTooltip>
-                    ) : null}
+                    {thumbnail ? <ImgTooltip src={thumbnail} /> : null}
                 </Box>
                 <Box ml={1} flexDirection="column" flexGrow={1} width={0}>
                     <Tooltip disableInteractive title={topic.title}>
@@ -170,10 +147,17 @@ function TopicListItem({ topic, projectId }: { topic: Topic; projectId: string }
                             <Typography noWrap variant="body1" sx={{ fontWeight: 600 }}>
                                 {topic.title}
                             </Typography>
-                            <Description>
+                            <Typography
+                                sx={{
+                                    display: "--webkit-box",
+                                    overflow: "hidden",
+                                    WebkitLineClamp: 2,
+                                    WebkitBoxOrient: "vertical",
+                                }}
+                            >
                                 Priority: {topic.priority} <br />
                                 Status: {topic.topic_status}
-                            </Description>
+                            </Typography>
                         </div>
                     </Tooltip>
                 </Box>
@@ -181,37 +165,3 @@ function TopicListItem({ topic, projectId }: { topic: Topic; projectId: string }
         </ListItem>
     );
 }
-
-// TODO(OLA): Flytt og gjenbruk disse siden de e bare duplisert nu
-
-const Description = styled(Typography)(
-    () => css`
-        display: --webkit-box;
-        overflow: hidden;
-        --webkit-line-clamp: 2;
-        --webkit-box-orient: vertical;
-    `
-);
-
-const ImgTooltip = styled(({ className, ...props }: TooltipProps) => (
-    <MuiTooltip {...props} classes={{ popper: className }} />
-))(
-    ({ theme }) => css`
-        & .${tooltipClasses.tooltip} {
-            max-width: none;
-            background: ${theme.palette.common.white};
-            padding: ${theme.spacing(1)};
-            border-radius: 4px;
-            border: 1px solid ${theme.palette.grey.A400};
-        }
-    `
-);
-
-const Img = styled("img")(
-    () => css`
-        height: 100%;
-        width: 100%;
-        object-fit: cover;
-        display: block;
-    `
-);

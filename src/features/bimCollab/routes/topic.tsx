@@ -1,22 +1,10 @@
 import { useParams, Link, useHistory } from "react-router-dom";
-import {
-    useTheme,
-    Tooltip as MuiTooltip,
-    Box,
-    Button,
-    Typography,
-    List,
-    ListItem,
-    styled,
-    tooltipClasses,
-    TooltipProps,
-} from "@mui/material";
-import { css } from "@mui/styled-engine";
+import { useTheme, Box, Button, Typography, List, ListItem } from "@mui/material";
 import { Add, ArrowBack } from "@mui/icons-material";
 import { View, Scene } from "@novorender/webgl-api";
 
 import { useAppDispatch } from "app/store";
-import { LinearProgress, ScrollBox, Tooltip } from "components";
+import { ImgTooltip, LinearProgress, ScrollBox, Tooltip } from "components";
 import { useDispatchHidden, hiddenGroupActions } from "contexts/hidden";
 import { useDispatchHighlighted, highlightActions } from "contexts/highlighted";
 import { renderActions, ObjectVisibility } from "slices/renderSlice";
@@ -228,18 +216,7 @@ function CommentListItem({
         <ListItem sx={{ py: 0.5, px: 1 }} button onClick={handleClick} disabled={loading}>
             <Box width={1} maxHeight={80} display="flex" alignItems="flex-start" overflow="hidden">
                 <Box bgcolor={theme.palette.grey[200]} height={65} width={100} flexShrink={0} flexGrow={0}>
-                    {thumbnail ? (
-                        <ImgTooltip
-                            placement="bottom-end"
-                            title={
-                                <Box sx={{ height: 176, width: 176, cursor: "pointer" }}>
-                                    <Img alt="" src={thumbnail} />
-                                </Box>
-                            }
-                        >
-                            <Img alt="" height="32px" width="32px" src={thumbnail} />
-                        </ImgTooltip>
-                    ) : null}
+                    {thumbnail ? <ImgTooltip src={thumbnail} /> : null}
                 </Box>
                 <Box ml={1} flexDirection="column" flexGrow={1} width={0}>
                     <Tooltip disableInteractive title={comment.comment || "No comment"}>
@@ -247,10 +224,17 @@ function CommentListItem({
                             <Typography noWrap variant="body1" sx={{ fontWeight: 600 }}>
                                 {comment.comment || "No comment"}
                             </Typography>
-                            <Description>
+                            <Typography
+                                sx={{
+                                    display: "--webkit-box",
+                                    overflow: "hidden",
+                                    WebkitLineClamp: 2,
+                                    WebkitBoxOrient: "vertical",
+                                }}
+                            >
                                 {new Date(comment.date).toLocaleString("nb")} <br />
                                 {comment.author}
-                            </Description>
+                            </Typography>
                         </div>
                     </Tooltip>
                 </Box>
@@ -258,35 +242,3 @@ function CommentListItem({
         </ListItem>
     );
 }
-
-const Description = styled(Typography)(
-    () => css`
-        display: --webkit-box;
-        overflow: hidden;
-        --webkit-line-clamp: 2;
-        --webkit-box-orient: vertical;
-    `
-);
-
-const ImgTooltip = styled(({ className, ...props }: TooltipProps) => (
-    <MuiTooltip {...props} classes={{ popper: className }} />
-))(
-    ({ theme }) => css`
-        & .${tooltipClasses.tooltip} {
-            max-width: none;
-            background: ${theme.palette.common.white};
-            padding: ${theme.spacing(1)};
-            border-radius: 4px;
-            border: 1px solid ${theme.palette.grey.A400};
-        }
-    `
-);
-
-const Img = styled("img")(
-    () => css`
-        height: 100%;
-        width: 100%;
-        object-fit: cover;
-        display: block;
-    `
-);

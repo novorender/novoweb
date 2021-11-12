@@ -11,3 +11,4 @@ export * from "./speedDialAction";
 export * from "./loading";
 export * from "./iosSwitch";
 export * from "./widgetMenuButtonWrapper";
+export * from "./imgTooltip";
