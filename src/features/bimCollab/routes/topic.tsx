@@ -3,7 +3,7 @@ import { useTheme, Box, Button, Typography, List, ListItem } from "@mui/material
 import { Add, ArrowBack } from "@mui/icons-material";
 import { View, Scene } from "@novorender/webgl-api";
 
-import { ImgTooltip, LinearProgress, ScrollBox, Tooltip } from "components";
+import { ImgModal, ImgTooltip, LinearProgress, ScrollBox, Tooltip } from "components";
 
 import { useAppDispatch } from "app/store";
 import { renderActions, ObjectVisibility } from "slices/renderSlice";
@@ -14,6 +14,7 @@ import { customGroupsActions, TempGroup, useCustomGroups } from "contexts/custom
 
 import { useAbortController } from "hooks/useAbortController";
 import { useMountedState } from "hooks/useMountedState";
+import { useToggle } from "hooks/useToggle";
 import { extractObjectIds } from "utils/objectData";
 import { searchByPatterns } from "utils/search";
 import { hexToVec } from "utils/color";
@@ -27,6 +28,7 @@ import {
     useGetColoringQuery,
     useGetSelectionQuery,
     useGetVisibilityQuery,
+    useGetSnapshotQuery,
 } from "../bimCollabApi";
 import type { Comment } from "../types";
 import { translateBcfClippingPlanes, translatePerspectiveCamera } from "../utils";
@@ -36,6 +38,7 @@ export function Topic({ view, scene }: { view: View; scene: Scene }) {
     const history = useHistory();
     const [loading, setLoading] = useMountedState(false);
     const { projectId, topicId } = useParams<{ projectId: string; topicId: string }>();
+    const [modalOpen, toggleModal] = useToggle();
 
     const { data: topic } = useGetTopicQuery({ projectId, topicId }, { refetchOnMountOrArgChange: true });
     const { data: comments } = useGetCommentsQuery({ projectId, topicId }, { refetchOnMountOrArgChange: true });
@@ -62,6 +65,15 @@ export function Topic({ view, scene }: { view: View; scene: Scene }) {
         { skip: !topic || !defaultViewpointId }
     );
 
+    const { data: snapshot } = useGetSnapshotQuery(
+        {
+            projectId,
+            topicId: topic?.guid ?? "",
+            viewpointId: defaultViewpointId,
+        },
+        { skip: !topic || !defaultViewpointId || !modalOpen }
+    );
+
     if (!topic || !comments) {
         return <LinearProgress />;
     }
@@ -83,8 +95,8 @@ export function Topic({ view, scene }: { view: View; scene: Scene }) {
                 ) : null}
             </Box>
             <ScrollBox height={1} width={1} horizontal sx={{ mt: 1 }}>
-                <Box p={1} sx={{ "& > img": { width: "100%", maxHeight: 150, objectFit: "none" } }}>
-                    {thumbnail ? <img src={thumbnail} alt="" /> : null}
+                <Box p={1} sx={{ "& > img": { width: "100%", maxHeight: 150, objectFit: "none", cursor: "pointer" } }}>
+                    {thumbnail ? <img onClick={toggleModal} src={thumbnail} alt="" /> : null}
                     <Typography variant="h5">{topic.title}</Typography>
                     <Typography variant="h6">{topic.description}</Typography>
                     <br />
@@ -113,6 +125,7 @@ export function Topic({ view, scene }: { view: View; scene: Scene }) {
                     ))}
                 </List>
             </ScrollBox>
+            <ImgModal src={snapshot ?? ""} open={modalOpen} onClose={toggleModal} />
         </>
     );
 }
@@ -143,6 +156,7 @@ function CommentListItem({
     const dispatchVisible = useDispatchVisible();
     const { dispatch: dispatchCustomGroups, state: customGroups } = useCustomGroups();
 
+    const [modalOpen, toggleModal] = useToggle();
     const viewpointId = comment.viewpoint_guid || defaultViewpointId || "";
 
     const { data: thumbnail } = useGetThumbnailQuery({ projectId, topicId, viewpointId }, { skip: !viewpointId });
@@ -150,6 +164,10 @@ function CommentListItem({
     const { data: coloring } = useGetColoringQuery({ projectId, topicId, viewpointId }, { skip: !viewpointId });
     const { data: selection } = useGetSelectionQuery({ projectId, topicId, viewpointId }, { skip: !viewpointId });
     const { data: visibility } = useGetVisibilityQuery({ projectId, topicId, viewpointId }, { skip: !viewpointId });
+    const { data: snapshot } = useGetSnapshotQuery(
+        { projectId, topicId, viewpointId },
+        { skip: !viewpointId || !modalOpen }
+    );
 
     const [abortController] = useAbortController();
 
@@ -258,32 +276,48 @@ function CommentListItem({
     };
 
     return (
-        <ListItem sx={{ py: 0.5, px: 1 }} button onClick={handleClick} disabled={loading}>
-            <Box width={1} maxHeight={80} display="flex" alignItems="flex-start" overflow="hidden">
-                <Box bgcolor={theme.palette.grey[200]} height={65} width={100} flexShrink={0} flexGrow={0}>
-                    {thumbnail ? <ImgTooltip src={thumbnail} /> : null}
-                </Box>
-                <Box ml={1} flexDirection="column" flexGrow={1} width={0}>
-                    <Tooltip disableInteractive title={comment.comment || "No comment"}>
-                        <div>
-                            <Typography noWrap variant="body1" sx={{ fontWeight: 600 }}>
-                                {comment.comment || "No comment"}
-                            </Typography>
-                            <Typography
-                                sx={{
-                                    display: "--webkit-box",
-                                    overflow: "hidden",
-                                    WebkitLineClamp: 2,
-                                    WebkitBoxOrient: "vertical",
+        <>
+            <ListItem sx={{ py: 0.5, px: 1 }} button onClick={handleClick} disabled={loading}>
+                <Box width={1} maxHeight={80} display="flex" alignItems="flex-start" overflow="hidden">
+                    <Box bgcolor={theme.palette.grey[200]} height={65} width={100} flexShrink={0} flexGrow={0}>
+                        {thumbnail ? (
+                            <ImgTooltip
+                                onTooltipClick={(e) => {
+                                    e.stopPropagation();
+                                    toggleModal();
                                 }}
-                            >
-                                {new Date(comment.date).toLocaleString("nb")} <br />
-                                {comment.author}
-                            </Typography>
-                        </div>
-                    </Tooltip>
+                                src={thumbnail}
+                            />
+                        ) : null}
+                    </Box>
+                    <Box ml={1} flexDirection="column" flexGrow={1} width={0}>
+                        <Tooltip disableInteractive title={comment.comment || "No comment"}>
+                            <div>
+                                <Typography noWrap variant="body1" sx={{ fontWeight: 600 }}>
+                                    {comment.comment || "No comment"}
+                                </Typography>
+                                <Typography
+                                    sx={{
+                                        display: "--webkit-box",
+                                        overflow: "hidden",
+                                        WebkitLineClamp: 2,
+                                        WebkitBoxOrient: "vertical",
+                                    }}
+                                >
+                                    {new Date(comment.date).toLocaleString("nb")} <br />
+                                    {comment.author}
+                                </Typography>
+                            </div>
+                        </Tooltip>
+                    </Box>
                 </Box>
-            </Box>
-        </ListItem>
+            </ListItem>
+            <ImgModal
+                open={modalOpen}
+                onClose={toggleModal}
+                sx={{ display: "flex", justifyContent: "center", alignItems: "center" }}
+                src={snapshot ?? ""}
+            />
+        </>
     );
 }

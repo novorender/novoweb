@@ -19,6 +19,7 @@ import {
     Viewpoint,
     Visibility,
 } from "./types";
+import { handleImageResponse } from "./utils";
 
 const clientId = "PlayGround_Client";
 const clientSecret = process.env.REACT_APP_BIMCOLLAB_CLIENT_SECRET ?? "";
@@ -129,13 +130,16 @@ export const bimCollabApi = createApi({
                 `projects/${projectId}/topics/${topicId}/viewpoints/${viewpointId}/visibility`,
             transformResponse: (res: { visibility: Visibility }) => res.visibility,
         }),
+        getSnapshot: builder.query<string, { projectId: string; topicId: string; viewpointId: string }>({
+            query: ({ projectId, topicId, viewpointId }) => ({
+                url: `projects/${projectId}/topics/${topicId}/viewpoints/${viewpointId}/snapshot`,
+                responseHandler: handleImageResponse,
+            }),
+        }),
         getThumbnail: builder.query<string, { projectId: string; topicId: string; viewpointId: string }>({
             query: ({ projectId, topicId, viewpointId }) => ({
                 url: `projects/${projectId}/topics/${topicId}/viewpoints/${viewpointId}/thumbnail`,
-                responseHandler: (res) =>
-                    res
-                        .arrayBuffer()
-                        .then((buffer) => `data:image/png;base64, ${Buffer.from(buffer).toString("base64")}`),
+                responseHandler: handleImageResponse,
             }),
         }),
         createTopic: builder.mutation<Topic, Partial<Topic> & Pick<Topic, "title"> & { projectId: string }>({
@@ -189,6 +193,7 @@ export const {
     useGetColoringQuery,
     useGetSelectionQuery,
     useGetVisibilityQuery,
+    useGetSnapshotQuery,
     useGetThumbnailQuery,
     useCreateTopicMutation,
     useCreateViewpointMutation,

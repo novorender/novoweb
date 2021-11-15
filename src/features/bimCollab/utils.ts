@@ -181,3 +181,7 @@ export async function createBcfViewpointComponents({
         },
     };
 }
+
+export function handleImageResponse(res: Response): Promise<string> {
+    return res.arrayBuffer().then((buffer) => `data:image/png;base64, ${Buffer.from(buffer).toString("base64")}`);
+}
