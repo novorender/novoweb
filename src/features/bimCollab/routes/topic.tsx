@@ -2,6 +2,7 @@ import { useParams, Link, useHistory } from "react-router-dom";
 import { useTheme, Box, Button, Typography, List, ListItem } from "@mui/material";
 import { Add, ArrowBack } from "@mui/icons-material";
 import { View, Scene } from "@novorender/webgl-api";
+import { vec3, quat } from "gl-matrix";
 
 import { ImgModal, ImgTooltip, LinearProgress, ScrollBox, Tooltip } from "components";
 
@@ -154,7 +155,7 @@ function CommentListItem({
     const dispatchHighlighted = useDispatchHighlighted();
     const dispatchHidden = useDispatchHidden();
     const dispatchVisible = useDispatchVisible();
-    const { dispatch: dispatchCustomGroups, state: customGroups } = useCustomGroups();
+    const { dispatch: dispatchCustomGroups } = useCustomGroups();
 
     const [modalOpen, toggleModal] = useToggle();
     const viewpointId = comment.viewpoint_guid || defaultViewpointId || "";
@@ -172,95 +173,115 @@ function CommentListItem({
     const [abortController] = useAbortController();
 
     const handleClick = async () => {
-        setLoading(true);
-        dispatchHidden(hiddenGroupActions.setIds([]));
-        dispatchHighlighted(highlightActions.setIds([]));
-        dispatchCustomGroups(customGroupsActions.clearTempGroups());
-
         const abortSignal = abortController.current.signal;
         const guidsToIds = async (guids: string[]) => {
             let ids = [] as number[];
 
-            await searchByPatterns({
-                scene,
-                searchPatterns: [
-                    {
-                        property: "guid",
-                        value: guids,
-                        exact: true,
-                    },
-                ],
-                abortSignal,
-                callback: (refs) => (ids = ids.concat(extractObjectIds(refs))),
-                callbackInterval: 1000,
-            });
+            try {
+                await searchByPatterns({
+                    scene,
+                    searchPatterns: [
+                        {
+                            property: "guid",
+                            value: guids,
+                            exact: true,
+                        },
+                    ],
+                    abortSignal,
+                    callback: (refs) => (ids = ids.concat(extractObjectIds(refs))),
+                });
+            } catch {
+                return ids;
+            }
 
             return ids;
         };
 
-        if (visibility) {
-            let ids = [] as number[];
+        const visibilityExceptionGuids = visibility?.exceptions
+            ?.map((exception) => exception.ifc_guid)
+            .filter((exception) => exception !== undefined) as string[];
 
-            if (visibility.exceptions?.length) {
-                ids = await guidsToIds(
-                    visibility.exceptions
-                        .map((exception) => exception.ifc_guid)
-                        .filter((exception) => exception !== undefined) as string[]
-                );
-            }
+        const getVisibilityExceptions = visibilityExceptionGuids.length
+            ? guidsToIds(visibilityExceptionGuids)
+            : Promise.resolve([]);
 
-            if (visibility.default_visibility) {
-                dispatch(renderActions.setDefaultVisibility(ObjectVisibility.Neutral));
-                dispatchHidden(hiddenGroupActions.add(ids));
-            } else {
-                dispatch(renderActions.setDefaultVisibility(ObjectVisibility.Transparent));
-                dispatchVisible(visibleActions.set(ids));
-            }
+        const selectionGuids = selection
+            ?.map((obj) => obj.ifc_guid)
+            .filter((exception) => exception !== undefined) as string[];
+        const getSelection = selectionGuids.length ? guidsToIds(selectionGuids) : Promise.resolve([]);
+
+        const getColorGroups =
+            coloring && coloring.length
+                ? Promise.all(
+                      coloring
+                          .map((item) => ({
+                              ...item,
+                              components: item.components
+                                  .map((component) => component.ifc_guid)
+                                  .filter((guid) => guid !== undefined),
+                          }))
+                          .filter((item) => item.components.length)
+                          .map(async (item) => ({
+                              color: hexToVec(item.color),
+                              ids: await guidsToIds(item.components as string[]),
+                          }))
+                  )
+                : Promise.resolve([]);
+
+        setLoading(true);
+
+        const [visibilityExceptionIds, selectionIds, colorGroups] = await Promise.all([
+            getVisibilityExceptions,
+            getSelection,
+            getColorGroups,
+        ]);
+
+        setLoading(false);
+
+        if (abortSignal.aborted) {
+            return;
         }
 
-        if (selection && selection.length) {
-            const ids = await guidsToIds(
-                selection.map((obj) => obj.ifc_guid).filter((exception) => exception !== undefined) as string[]
-            );
-            dispatchHighlighted(highlightActions.setIds(ids));
+        if (visibility?.default_visibility) {
+            dispatch(renderActions.setDefaultVisibility(ObjectVisibility.Neutral));
+            dispatchHidden(hiddenGroupActions.setIds(visibilityExceptionIds));
+        } else {
+            dispatch(renderActions.setDefaultVisibility(ObjectVisibility.Transparent));
+            dispatchHidden(hiddenGroupActions.setIds([]));
+            dispatchVisible(visibleActions.set(visibilityExceptionIds));
         }
 
-        if (coloring && coloring.length) {
-            const withObjectIds = await Promise.all(
-                coloring
-                    .map((item) => ({
-                        ...item,
-                        components: item.components
-                            .map((component) => component.ifc_guid)
-                            .filter((guid) => guid !== undefined),
-                    }))
-                    .filter((item) => item.components.length)
-                    .map(async (item) => ({
-                        color: hexToVec(item.color),
-                        ids: await guidsToIds(item.components as string[]),
-                    }))
-            );
+        dispatchHighlighted(highlightActions.setIds(selectionIds));
 
+        dispatchCustomGroups(customGroupsActions.clearTempGroups());
+        if (colorGroups.length) {
             dispatchCustomGroups(
-                customGroupsActions.set(
-                    customGroups.concat(
-                        withObjectIds.map((item, index) => ({
-                            id: `Temporary BIMcollab viewpoint group ${index}`,
-                            ids: item.ids,
-                            color: item.color,
-                            selected: true,
-                            hidden: false,
-                            grouping: TempGroup.BIMcollab,
-                            name: `BIMcollab ${index + 1}`,
-                        }))
-                    )
+                customGroupsActions.add(
+                    colorGroups.map((item, index) => ({
+                        id: `Temporary BIMcollab viewpoint group ${index}`,
+                        ids: item.ids,
+                        color: item.color,
+                        selected: true,
+                        hidden: false,
+                        grouping: TempGroup.BIMcollab,
+                        name: `BIMcollab ${index + 1}`,
+                    }))
                 )
             );
         }
 
         if (viewpoint?.perspective_camera) {
             const camera = translatePerspectiveCamera(viewpoint?.perspective_camera);
-            view.camera.controller.moveTo(camera.position, camera.rotation);
+            const currentCamera = view.camera;
+
+            if (
+                !(
+                    vec3.equals(camera.position, currentCamera.position) &&
+                    quat.equals(camera.rotation, currentCamera.rotation)
+                )
+            ) {
+                view.camera.controller.moveTo(camera.position, camera.rotation);
+            }
         }
 
         dispatch(renderActions.resetClippingPlanes());
@@ -271,8 +292,6 @@ function CommentListItem({
         } else {
             view.applySettings({ clippingVolume: { enabled: false, mode: "union", planes: [] } });
         }
-
-        setLoading(false);
     };
 
     return (

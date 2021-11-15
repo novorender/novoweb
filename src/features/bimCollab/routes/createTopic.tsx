@@ -191,7 +191,7 @@ export function IncludeViewpoint({
                 getExceptions,
                 getSelected,
                 Promise.all(getColoring),
-            ]).catch(() => [[], [], []]);
+            ]);
 
             setLoading(false);
             setViewpoint({
@@ -213,16 +213,20 @@ export function IncludeViewpoint({
 
                 let guids = [] as string[];
 
-                await searchByPatterns({
-                    scene,
-                    abortSignal,
-                    full: true,
-                    searchPatterns: [{ property: "id", value: ids as unknown as string[], exact: true }],
-                    callback: async (refs) => {
-                        const _guids = await getGuids(refs);
-                        guids = guids.concat(_guids);
-                    },
-                });
+                try {
+                    await searchByPatterns({
+                        scene,
+                        abortSignal,
+                        full: true,
+                        searchPatterns: [{ property: "id", value: ids as unknown as string[], exact: true }],
+                        callback: async (refs) => {
+                            const _guids = await getGuids(refs);
+                            guids = guids.concat(_guids);
+                        },
+                    });
+                } catch {
+                    return guids;
+                }
 
                 return guids;
             }

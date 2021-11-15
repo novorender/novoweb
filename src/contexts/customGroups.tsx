@@ -18,6 +18,7 @@ enum ActionTypes {
     UpdateGroup,
     Set,
     ClearTempGroups,
+    Add,
 }
 
 function updateGroup(groupId: string, updates: Partial<CustomGroup>) {
@@ -41,7 +42,14 @@ function clearTempGroups() {
     };
 }
 
-const actions = { updateGroup, set, clearTempGroups };
+function add(toAdd: State) {
+    return {
+        type: ActionTypes.Add as const,
+        toAdd,
+    };
+}
+
+const actions = { updateGroup, set, add, clearTempGroups };
 
 type Actions = ReturnType<typeof actions[keyof typeof actions]>;
 type ContextType = { state: State; dispatch: Dispatch<Actions> };
@@ -55,6 +63,9 @@ function reducer(state: State, action: Actions) {
         }
         case ActionTypes.Set: {
             return action.state;
+        }
+        case ActionTypes.Add: {
+            return state.concat(action.toAdd);
         }
         case ActionTypes.ClearTempGroups: {
             return state.filter((group) => group.grouping !== TempGroup.BIMcollab);
