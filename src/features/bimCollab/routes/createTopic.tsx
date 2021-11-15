@@ -1,10 +1,21 @@
-import { View } from "@novorender/webgl-api";
-import { Box, Typography, useTheme, Button, FormControlLabel } from "@mui/material";
+import { useStore } from "react-redux";
+import { ObjectId, Scene, View } from "@novorender/webgl-api";
+import { Box, Typography, useTheme, Button, FormControlLabel, CircularProgress } from "@mui/material";
 import { useParams, useHistory } from "react-router-dom";
 import { FormEvent, useEffect, useState } from "react";
 
+import { ObjectVisibility, selectDefaultVisibility } from "slices/renderSlice";
+import { useLazyHidden } from "contexts/hidden";
+import { useLazyHighlighted } from "contexts/highlighted";
+import { useLazyVisible } from "contexts/visible";
+import { useLazyCustomGroups } from "contexts/customGroups";
+
 import { IosSwitch, LinearProgress, ScrollBox, TextField } from "components";
+import { useAbortController } from "hooks/useAbortController";
 import { useToggle } from "hooks/useToggle";
+import { useMountedState } from "hooks/useMountedState";
+import { searchByPatterns } from "utils/search";
+import { getGuids } from "utils/objectData";
 
 import {
     useGetProjectExtensionsQuery,
@@ -13,10 +24,17 @@ import {
     useCreateCommentMutation,
     useCreateViewpointMutation,
 } from "../bimCollabApi";
-import { createBcfClippingPlanes, createBcfPerspectiveCamera, createBcfSnapshot } from "../utils";
+import {
+    createBcfClippingPlanes,
+    createBcfPerspectiveCamera,
+    createBcfSnapshot,
+    createBcfViewpointComponents,
+} from "../utils";
 import { Viewpoint } from "../types";
 
-export function CreateTopic({ view }: { view: View }) {
+type NewViewpoint = Partial<Viewpoint> & Pick<Viewpoint, "perspective_camera" | "snapshot">;
+
+export function CreateTopic({ view, scene }: { scene: Scene; view: View }) {
     const theme = useTheme();
     const history = useHistory();
 
@@ -29,9 +47,7 @@ export function CreateTopic({ view }: { view: View }) {
 
     const [title, setTitle] = useState("");
     const [comment, setComment] = useState("");
-    const [viewpoint, setViewpoint] = useState<
-        Partial<Viewpoint> & Pick<Viewpoint, "perspective_camera" | "snapshot">
-    >();
+    const [viewpoint, setViewpoint] = useState<NewViewpoint>();
 
     const handleSubmit = async (e: FormEvent) => {
         e.preventDefault();
@@ -100,7 +116,7 @@ export function CreateTopic({ view }: { view: View }) {
                         rows={4}
                     />
 
-                    <IncludeViewpoint viewpoint={viewpoint} setViewpoint={setViewpoint} view={view} />
+                    <IncludeViewpoint viewpoint={viewpoint} setViewpoint={setViewpoint} view={view} scene={scene} />
 
                     <Box display="flex" justifyContent="space-between" mr={2} mb={2}>
                         <Button
@@ -126,24 +142,105 @@ export function IncludeViewpoint({
     viewpoint,
     setViewpoint,
     view,
+    scene,
 }: {
+    scene: Scene;
     view: View;
-    viewpoint: any;
-    setViewpoint: (vp: any) => void;
+    viewpoint: NewViewpoint | undefined;
+    setViewpoint: (vp: NewViewpoint | undefined) => void;
 }) {
+    const hidden = useLazyHidden();
+    const visible = useLazyVisible();
+    const highlighted = useLazyHighlighted();
+    const customGroups = useLazyCustomGroups();
+    const store = useStore();
+
     const [includeViewpoint, toggleIncludeViewpoint] = useToggle(true);
+    const [abortController, abort] = useAbortController();
+    const [loading, setLoading] = useMountedState(false);
 
     useEffect(() => {
         if (includeViewpoint) {
-            setViewpoint({
-                perspective_camera: createBcfPerspectiveCamera(view.camera),
-                snapshot: createBcfSnapshot(),
-                clipping_planes: createBcfClippingPlanes(view.settings.clippingVolume.planes),
-            });
+            createNewViewpoint();
         } else {
+            abort();
             setViewpoint(undefined);
         }
-    }, [includeViewpoint, setViewpoint, view]);
+
+        async function createNewViewpoint() {
+            const snapshot = createBcfSnapshot();
+
+            if (!snapshot) {
+                return;
+            }
+
+            setLoading(true);
+            const abortSignal = abortController.current.signal;
+            const state = store.getState();
+            const defaultVisibility = selectDefaultVisibility(state);
+            const getExceptions = idsToGuids(
+                defaultVisibility === ObjectVisibility.Neutral ? hidden.current.idArr : visible.current.idArr
+            );
+            const getSelected = idsToGuids(highlighted.current.idArr);
+            const getColoring = customGroups.current
+                .filter((group) => group.selected)
+                .map(async (group) => {
+                    return { color: group.color, guids: await idsToGuids(group.ids) };
+                });
+            const [exceptions, selected, coloring] = await Promise.all([
+                getExceptions,
+                getSelected,
+                Promise.all(getColoring),
+            ]).catch(() => [[], [], []]);
+
+            setLoading(false);
+            setViewpoint({
+                snapshot,
+                perspective_camera: createBcfPerspectiveCamera(view.camera),
+                clipping_planes: createBcfClippingPlanes(view.settings.clippingVolume.planes),
+                components: await createBcfViewpointComponents({
+                    coloring,
+                    selected,
+                    defaultVisibility,
+                    exceptions,
+                }),
+            });
+
+            async function idsToGuids(ids: ObjectId[]): Promise<string[]> {
+                if (!ids.length) {
+                    return [];
+                }
+
+                let guids = [] as string[];
+
+                await searchByPatterns({
+                    scene,
+                    abortSignal,
+                    full: true,
+                    searchPatterns: [{ property: "id", value: ids as unknown as string[], exact: true }],
+                    callback: async (refs) => {
+                        const _guids = await getGuids(refs);
+                        guids = guids.concat(_guids);
+                    },
+                });
+
+                return guids;
+            }
+        }
+    }, [
+        includeViewpoint,
+        setViewpoint,
+        view,
+        store,
+        hidden,
+        visible,
+        highlighted,
+        scene,
+        abortController,
+        abort,
+        setLoading,
+        customGroups,
+    ]);
 
     return (
         <>
@@ -151,12 +248,17 @@ export function IncludeViewpoint({
                 <Box sx={{ img: { maxWidth: "100%", maxHeight: 150, objectFit: "contain" } }}>
                     <img
                         alt=""
-                        src={`data:image/${viewpoint.snapshot_type};base64,${viewpoint.snapshot.snapshot_data}`}
+                        src={`data:image/${viewpoint.snapshot.snapshot_type};base64,${viewpoint.snapshot.snapshot_data}`}
                     />
+                </Box>
+            ) : loading ? (
+                <Box width={1} height={150} display="flex" justifyContent="center" alignItems="center">
+                    <CircularProgress />
                 </Box>
             ) : null}
 
             <FormControlLabel
+                disabled={loading}
                 sx={{ mb: 2 }}
                 control={<IosSwitch checked={includeViewpoint} color="primary" onChange={toggleIncludeViewpoint} />}
                 label={<Box>Include viewpoint</Box>}

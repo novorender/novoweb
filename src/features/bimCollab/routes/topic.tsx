@@ -3,15 +3,20 @@ import { useTheme, Box, Button, Typography, List, ListItem } from "@mui/material
 import { Add, ArrowBack } from "@mui/icons-material";
 import { View, Scene } from "@novorender/webgl-api";
 
-import { useAppDispatch } from "app/store";
 import { ImgTooltip, LinearProgress, ScrollBox, Tooltip } from "components";
+
+import { useAppDispatch } from "app/store";
+import { renderActions, ObjectVisibility } from "slices/renderSlice";
 import { useDispatchHidden, hiddenGroupActions } from "contexts/hidden";
 import { useDispatchHighlighted, highlightActions } from "contexts/highlighted";
-import { renderActions, ObjectVisibility } from "slices/renderSlice";
+import { useDispatchVisible, visibleActions } from "contexts/visible";
+import { customGroupsActions, TempGroup, useCustomGroups } from "contexts/customGroups";
+
 import { useAbortController } from "hooks/useAbortController";
 import { useMountedState } from "hooks/useMountedState";
 import { extractObjectIds } from "utils/objectData";
 import { searchByPatterns } from "utils/search";
+import { hexToVec } from "utils/color";
 
 import {
     useGetTopicQuery,
@@ -25,7 +30,6 @@ import {
 } from "../bimCollabApi";
 import type { Comment } from "../types";
 import { translateBcfClippingPlanes, translatePerspectiveCamera } from "../utils";
-import { useDispatchVisible, visibleActions } from "contexts/visible";
 
 export function Topic({ view, scene }: { view: View; scene: Scene }) {
     const theme = useTheme();
@@ -137,12 +141,13 @@ function CommentListItem({
     const dispatchHighlighted = useDispatchHighlighted();
     const dispatchHidden = useDispatchHidden();
     const dispatchVisible = useDispatchVisible();
+    const { dispatch: dispatchCustomGroups, state: customGroups } = useCustomGroups();
 
     const viewpointId = comment.viewpoint_guid || defaultViewpointId || "";
 
     const { data: thumbnail } = useGetThumbnailQuery({ projectId, topicId, viewpointId }, { skip: !viewpointId });
     const { data: viewpoint } = useGetViewpointQuery({ projectId, topicId, viewpointId }, { skip: !viewpointId });
-    const { data: _coloring } = useGetColoringQuery({ projectId, topicId, viewpointId }, { skip: !viewpointId }); // TODO(OLA): fix
+    const { data: coloring } = useGetColoringQuery({ projectId, topicId, viewpointId }, { skip: !viewpointId });
     const { data: selection } = useGetSelectionQuery({ projectId, topicId, viewpointId }, { skip: !viewpointId });
     const { data: visibility } = useGetVisibilityQuery({ projectId, topicId, viewpointId }, { skip: !viewpointId });
 
@@ -152,9 +157,10 @@ function CommentListItem({
         setLoading(true);
         dispatchHidden(hiddenGroupActions.setIds([]));
         dispatchHighlighted(highlightActions.setIds([]));
+        dispatchCustomGroups(customGroupsActions.clearTempGroups());
 
         const abortSignal = abortController.current.signal;
-        const createSearch = async (guids: string[]) => {
+        const guidsToIds = async (guids: string[]) => {
             let ids = [] as number[];
 
             await searchByPatterns({
@@ -177,8 +183,12 @@ function CommentListItem({
         if (visibility) {
             let ids = [] as number[];
 
-            if (visibility.exceptions.length) {
-                ids = await createSearch(visibility.exceptions.map((exception) => exception.ifc_guid));
+            if (visibility.exceptions?.length) {
+                ids = await guidsToIds(
+                    visibility.exceptions
+                        .map((exception) => exception.ifc_guid)
+                        .filter((exception) => exception !== undefined) as string[]
+                );
             }
 
             if (visibility.default_visibility) {
@@ -191,8 +201,43 @@ function CommentListItem({
         }
 
         if (selection && selection.length) {
-            const ids = await createSearch(selection.map((obj) => obj.ifc_guid));
+            const ids = await guidsToIds(
+                selection.map((obj) => obj.ifc_guid).filter((exception) => exception !== undefined) as string[]
+            );
             dispatchHighlighted(highlightActions.setIds(ids));
+        }
+
+        if (coloring && coloring.length) {
+            const withObjectIds = await Promise.all(
+                coloring
+                    .map((item) => ({
+                        ...item,
+                        components: item.components
+                            .map((component) => component.ifc_guid)
+                            .filter((guid) => guid !== undefined),
+                    }))
+                    .filter((item) => item.components.length)
+                    .map(async (item) => ({
+                        color: hexToVec(item.color),
+                        ids: await guidsToIds(item.components as string[]),
+                    }))
+            );
+
+            dispatchCustomGroups(
+                customGroupsActions.set(
+                    customGroups.concat(
+                        withObjectIds.map((item, index) => ({
+                            id: `Temporary BIMcollab viewpoint group ${index}`,
+                            ids: item.ids,
+                            color: item.color,
+                            selected: true,
+                            hidden: false,
+                            grouping: TempGroup.BIMcollab,
+                            name: `BIMcollab ${index + 1}`,
+                        }))
+                    )
+                )
+            );
         }
 
         if (viewpoint?.perspective_camera) {

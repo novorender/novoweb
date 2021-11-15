@@ -1,5 +1,5 @@
 import { ObjectId } from "@novorender/webgl-api";
-import { createContext, Dispatch, ReactNode, useContext, useEffect, useReducer, useState } from "react";
+import { createContext, Dispatch, ReactNode, useContext, useEffect, useReducer, useRef, useState } from "react";
 
 import { toIdObj, toIdArr } from "utils/objectData";
 
@@ -100,6 +100,17 @@ function useHidden() {
     return context;
 }
 
+function useLazyHidden() {
+    const state = useHidden();
+    const ref = useRef(state);
+
+    useEffect(() => {
+        ref.current = state;
+    }, [state]);
+
+    return ref;
+}
+
 function useDispatchHidden() {
     const context = useContext(DispatchContext);
 
@@ -121,4 +132,4 @@ function useIsHidden(id: number) {
     return isHidden;
 }
 
-export { HiddenProvider, useHidden, useDispatchHidden, useIsHidden, actions as hiddenGroupActions };
+export { HiddenProvider, useHidden, useLazyHidden, useDispatchHidden, useIsHidden, actions as hiddenGroupActions };

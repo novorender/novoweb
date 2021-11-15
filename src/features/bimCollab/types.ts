@@ -157,12 +157,12 @@ export type Comment = {
 };
 
 export type Component = {
-    ifc_guid: string;
-    originating_system: string;
-    authoring_tool_id: string;
-    is_selected: boolean;
-    is_visible: boolean;
-    color: string;
+    ifc_guid?: string;
+    originating_system?: string;
+    authoring_tool_id?: string;
+    // is_selected: boolean;
+    // is_visible: boolean;
+    // color: string;
 };
 
 export type Coloring = {
@@ -171,12 +171,12 @@ export type Coloring = {
 };
 
 export type Visibility = {
-    default_visibility: boolean;
-    exceptions: Component[];
-    view_setup_hints: {
-        spaces_visible: boolean;
-        space_boundaries_visible: boolean;
-        openings_visible: boolean;
+    default_visibility?: boolean;
+    exceptions?: Component[];
+    view_setup_hints?: {
+        spaces_visible?: boolean;
+        space_boundaries_visible?: boolean;
+        openings_visible?: boolean;
     };
 };
 
@@ -284,9 +284,9 @@ export type Viewpoint = {
         snapshot_data: string;
     };
     is_default: boolean;
-    components: {
-        selection: Component[];
-        coloring: Coloring[];
+    components?: {
+        selection?: Component[];
+        coloring?: Coloring[];
         visibility: Visibility;
     };
     component_count: number;

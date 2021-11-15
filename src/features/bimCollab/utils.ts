@@ -1,6 +1,9 @@
 import { Camera, RenderSettings } from "@novorender/webgl-api";
 import { vec3, mat3, quat, vec4 } from "gl-matrix";
 
+import { ObjectVisibility } from "slices/renderSlice";
+import { vecToHex } from "utils/color";
+
 import { Viewpoint } from "./types";
 
 type Point = {
@@ -148,4 +151,33 @@ export function createBcfSnapshot(): Viewpoint["snapshot"] | undefined {
     const ctx = dist.getContext("2d", { alpha: false, desynchronized: false })!;
     ctx.drawImage(canvas, 0, 0, width, height, 0, 0, width, height);
     return { snapshot_type: "png", snapshot_data: dist.toDataURL("image/png").split(";base64,")[1] };
+}
+
+export async function createBcfViewpointComponents({
+    selected,
+    defaultVisibility,
+    exceptions,
+    coloring,
+}: {
+    selected: string[];
+    coloring: { color: [number, number, number]; guids: string[] }[];
+    defaultVisibility: ObjectVisibility;
+    exceptions?: string[];
+}): Promise<Viewpoint["components"] | undefined> {
+    return {
+        selection: selected.map((guid) => ({ ifc_guid: guid })),
+        coloring: coloring.map((item) => ({
+            color: vecToHex(item.color),
+            components: item.guids.map((guid) => ({ ifc_guid: guid })),
+        })),
+        visibility: {
+            default_visibility: defaultVisibility === ObjectVisibility.Neutral,
+            exceptions: exceptions?.map((guid) => ({ ifc_guid: guid })),
+            view_setup_hints: {
+                spaces_visible: false,
+                space_boundaries_visible: false,
+                openings_visible: false,
+            },
+        },
+    };
 }

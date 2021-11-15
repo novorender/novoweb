@@ -1,5 +1,5 @@
 import { ObjectId } from "@novorender/webgl-api";
-import { createContext, Dispatch, ReactNode, useContext, useEffect, useReducer, useState } from "react";
+import { createContext, Dispatch, ReactNode, useContext, useEffect, useReducer, useRef, useState } from "react";
 
 import { toIdObj, toIdArr } from "utils/objectData";
 
@@ -137,6 +137,17 @@ function useHighlighted(): State {
     return context;
 }
 
+function useLazyHighlighted() {
+    const state = useHighlighted();
+    const ref = useRef(state);
+
+    useEffect(() => {
+        ref.current = state;
+    }, [state]);
+
+    return ref;
+}
+
 function useDispatchHighlighted(): Dispatch<Actions> {
     const context = useContext(DispatchContext);
 
@@ -158,4 +169,11 @@ function useIsHighlighted(id: number) {
     return isHighlighted;
 }
 
-export { HighlightedProvider, useIsHighlighted, useHighlighted, useDispatchHighlighted, actions as highlightActions };
+export {
+    HighlightedProvider,
+    useIsHighlighted,
+    useHighlighted,
+    useLazyHighlighted,
+    useDispatchHighlighted,
+    actions as highlightActions,
+};

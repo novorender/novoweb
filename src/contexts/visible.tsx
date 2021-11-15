@@ -1,5 +1,5 @@
 import { ObjectId } from "@novorender/webgl-api";
-import { createContext, Dispatch, ReactNode, useContext, useReducer } from "react";
+import { createContext, Dispatch, ReactNode, useContext, useEffect, useReducer, useRef } from "react";
 
 import { toIdObj, toIdArr } from "utils/objectData";
 
@@ -100,6 +100,17 @@ function useVisible(): State {
     return context;
 }
 
+function useLazyVisible() {
+    const state = useVisible();
+    const ref = useRef(state);
+
+    useEffect(() => {
+        ref.current = state;
+    }, [state]);
+
+    return ref;
+}
+
 function useDispatchVisible(): Dispatch<Actions> {
     const context = useContext(DispatchContext);
 
@@ -110,4 +121,4 @@ function useDispatchVisible(): Dispatch<Actions> {
     return context;
 }
 
-export { VisibleProvider, useVisible, useDispatchVisible, actions as visibleActions };
+export { VisibleProvider, useVisible, useLazyVisible, useDispatchVisible, actions as visibleActions };

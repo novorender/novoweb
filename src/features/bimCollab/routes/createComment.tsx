@@ -1,6 +1,6 @@
 import { useState, FormEvent } from "react";
 import { useHistory, useParams } from "react-router-dom";
-import { View } from "@novorender/webgl-api";
+import { Scene, View } from "@novorender/webgl-api";
 import { Box, Typography, Button, useTheme } from "@mui/material";
 
 import { LinearProgress, ScrollBox, TextField } from "components";
@@ -14,7 +14,7 @@ import {
 import { Viewpoint } from "../types";
 import { IncludeViewpoint } from "./createTopic";
 
-export function CreateComment({ view }: { view: View }) {
+export function CreateComment({ view, scene }: { view: View; scene: Scene }) {
     const theme = useTheme();
     const history = useHistory();
 
@@ -74,7 +74,7 @@ export function CreateComment({ view }: { view: View }) {
                         rows={4}
                     />
 
-                    <IncludeViewpoint viewpoint={viewpoint} setViewpoint={setViewpoint} view={view} />
+                    <IncludeViewpoint viewpoint={viewpoint} setViewpoint={setViewpoint} view={view} scene={scene} />
 
                     <Box display="flex" justifyContent="space-between" mr={2} mb={2}>
                         <Button

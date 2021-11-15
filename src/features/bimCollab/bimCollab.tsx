@@ -87,10 +87,10 @@ export function BimCollab({ view, scene }: { view: View; scene: Scene }) {
                         <Filters />
                     </Route>
                     <Route path="/project/:projectId/new-topic" exact>
-                        <CreateTopic view={view} />
+                        <CreateTopic view={view} scene={scene} />
                     </Route>
                     <Route path="/project/:projectId/topic/:topicId/new-comment" exact>
-                        <CreateComment view={view} />
+                        <CreateComment view={view} scene={scene} />
                     </Route>
                 </Switch>
             </HijackBackButton>

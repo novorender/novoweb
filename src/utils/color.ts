@@ -5,6 +5,8 @@ export type VecRGB = [r: number, g: number, b: number]; // 0 - 1
 export type Hex = string;
 
 export function hexToRgb(hex: Hex): RGB {
+    // ignore alpha channel
+    hex = hex.length === 4 ? hex.slice(1) : hex.length === 8 ? hex.slice(2) : hex;
     // Expand shorthand form (e.g. "03F") to full form (e.g. "0033FF")
     const shorthandRegex = /^#?([a-f\d])([a-f\d])([a-f\d])$/i;
     hex = hex.replace(shorthandRegex, (m, r, g, b) => {
