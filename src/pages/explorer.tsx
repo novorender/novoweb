@@ -5,7 +5,7 @@ import { SearchPattern, View } from "@novorender/webgl-api";
 import { api, dataApi } from "app";
 import { uniqueArray } from "utils/misc";
 
-import { FeatureKey, config as featuresConfig, defaultEnabledWidgets, WidgetKey } from "config/features";
+import { FeatureKey, config as featuresConfig, defaultEnabledWidgets } from "config/features";
 import { Loading } from "components";
 import { Hud } from "features/hud";
 import { Render3D } from "features/render";
@@ -19,9 +19,12 @@ import { HiddenProvider } from "contexts/hidden";
 import { CustomGroupsProvider } from "contexts/customGroups";
 import { HighlightedProvider } from "contexts/highlighted";
 import { VisibleProvider } from "contexts/visible";
+import { getOAuthState } from "utils/auth";
 
-export function Explorer({ openWidgets }: { openWidgets?: WidgetKey[] }) {
-    const { id = process.env.REACT_APP_SCENE_ID ?? "95a89d20dd084d9486e383e131242c4c" } = useParams<{ id?: string }>();
+export const defaultSceneId = process.env.REACT_APP_SCENE_ID ?? "95a89d20dd084d9486e383e131242c4c";
+
+export function Explorer() {
+    const { id = defaultSceneId } = useParams<{ id?: string }>();
     const dispatch = useAppDispatch();
     const [view, setView] = useState<View>();
     const scene = view?.scene;
@@ -37,8 +40,10 @@ export function Explorer({ openWidgets }: { openWidgets?: WidgetKey[] }) {
             dispatch(explorerActions.setEnabledFeatures(enabledFeaturesToFeatureKeys(enabledFeatures)));
         }
 
-        if (openWidgets) {
-            dispatch(explorerActions.setWidgets(openWidgets));
+        const oAuthState = getOAuthState();
+
+        if (oAuthState && oAuthState.service === featuresConfig.bimCollab.key) {
+            dispatch(explorerActions.setWidgets([featuresConfig.bimCollab.key]));
         } else {
             dispatch(explorerActions.setUrlSearchQuery(getUrlSearchQuery()));
         }

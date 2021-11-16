@@ -1,126 +1,199 @@
 import { Box, Typography, useTheme, Button } from "@mui/material";
-import { FormEventHandler, ReactNode, useEffect, useState } from "react";
-import { MemoryRouter, Switch, Route, useHistory } from "react-router-dom";
+import { FormEventHandler, useCallback, useEffect, useState } from "react";
+import { MemoryRouter, Switch, Route, useParams } from "react-router-dom";
 import { Scene, View } from "@novorender/webgl-api";
 
 import { LinearProgress, TextField } from "components";
 import { useAppDispatch, useAppSelector } from "app/store";
+import { defaultSceneId } from "pages/explorer";
+import { StorageKey } from "config/storage";
+import { config as featuresConfig } from "config/features";
+import { getFromStorage, saveToStorage, deleteFromStorage } from "utils/storage";
+import { createOAuthStateString, getOAuthState } from "utils/auth";
 
 import { Filters } from "./routes/filters";
 import { Topic } from "./routes/topic";
 import { Project } from "./routes/project";
 import { Projects } from "./routes/projects";
-
-import { bimCollabActions, selectAccessToken, selectSpace, selectVersion } from "./bimCollabSlice";
-import { authenticate, useGetAuthInfoQuery, useGetCurrentUserQuery, useGetVersionsQuery } from "./bimCollabApi";
 import { CreateTopic } from "./routes/createTopic";
 import { CreateComment } from "./routes/createComment";
+
+import { bimCollabActions, selectAccessToken, selectAuthInfo, selectSpace, selectVersion } from "./bimCollabSlice";
+import {
+    getCode,
+    useGetAuthInfoMutation,
+    useGetTokenMutation,
+    useGetVersionsMutation,
+    useRefreshTokenMutation,
+} from "./bimCollabApi";
 import { AuthInfo } from "./types";
-import { saveToStorage } from "utils/storage";
-import { StorageKey } from "config/storage";
 
 export function BimCollab({ view, scene }: { view: View; scene: Scene }) {
+    const { id: sceneId = defaultSceneId } = useParams<{ id?: string }>();
     const space = useAppSelector(selectSpace);
     const apiVersion = useAppSelector(selectVersion);
+    const authInfo = useAppSelector(selectAuthInfo);
     const accessToken = useAppSelector(selectAccessToken);
     const dispatch = useAppDispatch();
 
-    const {
-        data: versionsRes,
-        isError: apiError,
-        refetch: refetchApiVersions,
-    } = useGetVersionsQuery(undefined, { skip: !space || Boolean(apiVersion) });
+    const [getToken] = useGetTokenMutation();
+    const [refreshToken] = useRefreshTokenMutation();
 
-    const { data: authInfoRes } = useGetAuthInfoQuery(undefined, {
-        skip: !Boolean(apiVersion),
-    });
+    const [fetchVersions, { isError: apiError }] = useGetVersionsMutation();
+    const [fetchAuthInfo] = useGetAuthInfoMutation();
 
-    const { data: user } = useGetCurrentUserQuery(undefined, { skip: !accessToken });
+    const authenticate = useCallback(
+        async (authInfo: AuthInfo, space: string): Promise<string> => {
+            const storedRefreshToken = getFromStorage(StorageKey.BimCollabRefreshToken);
+            const code = new URLSearchParams(window.location.search).get("code");
+
+            try {
+                if (code) {
+                    window.history.replaceState(null, "", window.location.pathname.replace("Callback", ""));
+
+                    const res = await getToken({ tokenUrl: authInfo.oauth2_token_url, code });
+
+                    if (!("data" in res)) {
+                        throw new Error("token request failed");
+                    }
+
+                    if (res.data.refresh_token) {
+                        saveToStorage(StorageKey.BimCollabRefreshToken, res.data.refresh_token);
+                    }
+
+                    return res.data.access_token;
+                } else if (storedRefreshToken) {
+                    const res = await refreshToken({
+                        tokenUrl: authInfo.oauth2_token_url,
+                        refreshToken: storedRefreshToken,
+                    });
+
+                    if (!("data" in res)) {
+                        throw new Error("get code");
+                    }
+
+                    if (res.data.refresh_token) {
+                        saveToStorage(StorageKey.BimCollabRefreshToken, res.data.refresh_token);
+                    } else {
+                        deleteFromStorage(StorageKey.BimCollabRefreshToken);
+                    }
+
+                    return res.data.access_token;
+                } else {
+                    throw new Error("get code");
+                }
+            } catch (e) {
+                if (e instanceof Error && e.message === "get code") {
+                    const state = createOAuthStateString({
+                        service: featuresConfig.bimCollab.key,
+                        space: space,
+                        sceneId,
+                    });
+                    getCode(authInfo.oauth2_auth_url, state);
+                }
+
+                return "";
+            }
+        },
+        [getToken, refreshToken, sceneId]
+    );
 
     useEffect(() => {
-        if (!versionsRes) {
-            return;
+        const state = getOAuthState();
+
+        if (state?.space) {
+            dispatch(bimCollabActions.setSpace(state.space));
         }
-
-        const { versions } = versionsRes;
-        const version =
-            versions.find((ver) => ver.version_id === "bc_2.1") ?? versions.find((ver) => ver.version_id === "bc_2.1");
-
-        dispatch(bimCollabActions.setVersion(version?.version_id ?? "2.1"));
-    }, [versionsRes, dispatch]);
+    }, [dispatch]);
 
     useEffect(() => {
-        if (space && authInfoRes && !user) {
-            saveToStorage(StorageKey.BimCollabSpace, space);
-            init(authInfoRes);
+        if (space && apiVersion) {
+            getAuthInfo();
         }
 
-        async function init(authInfo: AuthInfo) {
-            const accessToken = await authenticate(authInfo);
+        async function getAuthInfo() {
+            const authInfoRes = await fetchAuthInfo();
+
+            if (!("data" in authInfoRes)) {
+                return;
+            }
+
+            dispatch(bimCollabActions.setAuthInfo(authInfoRes.data));
+        }
+    }, [space, apiVersion, fetchAuthInfo, dispatch]);
+
+    useEffect(() => {
+        if (space) {
+            getVersion();
+        }
+
+        async function getVersion() {
+            const versionRes = await fetchVersions();
+
+            if (!("data" in versionRes)) {
+                return;
+            }
+
+            const { versions } = versionRes.data;
+
+            const version =
+                versions.find((ver) => ver.version_id === "bc_2.1") ??
+                versions.find((ver) => ver.version_id === "bc_2.1");
+
+            dispatch(bimCollabActions.setVersion(version?.version_id ?? "2.1"));
+        }
+    }, [space, dispatch, fetchVersions]);
+
+    useEffect(() => {
+        if (space && authInfo) {
+            init(authInfo, space);
+        }
+
+        async function init(authInfo: AuthInfo, space: string) {
+            const accessToken = await authenticate(authInfo, space);
 
             if (!accessToken) {
+                dispatch(bimCollabActions.logOut());
                 return;
             }
 
             dispatch(bimCollabActions.setAccessToken(accessToken));
         }
-    }, [space, user, authInfoRes, dispatch]);
+    }, [space, authInfo, dispatch, authenticate]);
 
     if (!space || apiError) {
-        return <EnterBimCollabSpace error={apiError} refetchApiVersions={refetchApiVersions} />;
+        return <EnterBimCollabSpace error={apiError} />;
     }
 
-    return user ? (
+    return accessToken ? (
         <MemoryRouter>
-            <HijackBackButton>
-                <Switch>
-                    <Route path="/" exact>
-                        <Projects />
-                    </Route>
-                    <Route path="/project/:projectId" exact>
-                        {<Project />}
-                    </Route>
-                    <Route path="/project/:projectId/topic/:topicId" exact>
-                        <Topic view={view} scene={scene} />
-                    </Route>
-                    <Route path="/project/:projectId/filter" exact>
-                        <Filters />
-                    </Route>
-                    <Route path="/project/:projectId/new-topic" exact>
-                        <CreateTopic view={view} scene={scene} />
-                    </Route>
-                    <Route path="/project/:projectId/topic/:topicId/new-comment" exact>
-                        <CreateComment view={view} scene={scene} />
-                    </Route>
-                </Switch>
-            </HijackBackButton>
+            <Switch>
+                <Route path="/" exact>
+                    <Projects />
+                </Route>
+                <Route path="/project/:projectId" exact>
+                    {<Project />}
+                </Route>
+                <Route path="/project/:projectId/topic/:topicId" exact>
+                    <Topic view={view} scene={scene} />
+                </Route>
+                <Route path="/project/:projectId/filter" exact>
+                    <Filters />
+                </Route>
+                <Route path="/project/:projectId/new-topic" exact>
+                    <CreateTopic view={view} scene={scene} />
+                </Route>
+                <Route path="/project/:projectId/topic/:topicId/new-comment" exact>
+                    <CreateComment view={view} scene={scene} />
+                </Route>
+            </Switch>
         </MemoryRouter>
     ) : (
         <LinearProgress />
     );
 }
 
-function HijackBackButton({ children }: { children: ReactNode }) {
-    const history = useHistory();
-
-    return (
-        <Box
-            display="flex"
-            flexDirection="column"
-            height={1}
-            onMouseDown={(e) => {
-                if (e.button === 3) {
-                    e.preventDefault();
-                    history.goBack();
-                }
-            }}
-        >
-            {children}
-        </Box>
-    );
-}
-
-function EnterBimCollabSpace({ error, refetchApiVersions }: { error?: boolean; refetchApiVersions: () => void }) {
+function EnterBimCollabSpace({ error }: { error?: boolean }) {
     const theme = useTheme();
     const dispatch = useAppDispatch();
     const currentSpace = useAppSelector(selectSpace);
@@ -130,11 +203,9 @@ function EnterBimCollabSpace({ error, refetchApiVersions }: { error?: boolean; r
     const handleSubmit: FormEventHandler = (e) => {
         e.preventDefault();
 
+        deleteFromStorage(StorageKey.BimCollabRefreshToken);
+        dispatch(bimCollabActions.logOut());
         dispatch(bimCollabActions.setSpace(space.toLowerCase().trim()));
-
-        if (error) {
-            refetchApiVersions();
-        }
     };
 
     return (

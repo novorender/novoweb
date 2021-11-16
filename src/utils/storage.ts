@@ -9,5 +9,5 @@ export function saveToStorage(key: StorageKey, value: string): void {
 }
 
 export function deleteFromStorage(key: StorageKey): void {
-    storageConfig[key].storage.remove(key);
+    storageConfig[key].storage.removeItem(key);
 }

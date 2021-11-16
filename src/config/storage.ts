@@ -3,7 +3,6 @@ export enum StorageKey {
     MsalActiveAccount = "msal_active_account",
     BimCollabRefreshToken = "BIMcollab_refresh_token",
     BimCollabCodeVerifier = "BIMcollab_code_verifier",
-    BimCollabSpace = "BIMcollab_space",
     ShowPerformanceStats = "show-performance-stats",
     DisableTaa = "disable-taa",
     DisableSssao = "disable-ssao",
@@ -11,9 +10,6 @@ export enum StorageKey {
 
 export const storageConfig = {
     [StorageKey.BimCollabRefreshToken]: {
-        storage: localStorage,
-    },
-    [StorageKey.BimCollabSpace]: {
         storage: localStorage,
     },
     [StorageKey.BimCollabCodeVerifier]: {

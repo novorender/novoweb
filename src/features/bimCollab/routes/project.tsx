@@ -51,7 +51,7 @@ export function Project() {
     const { data: project } = useGetProjectQuery({ projectId });
     const { data: topics = [] as Topic[], isLoading: loadingTopics } = useGetTopicsQuery(
         { projectId },
-        { refetchOnMountOrArgChange: true } // TODO(OLA): Sett opp cache invalidation heller
+        { refetchOnFocus: true }
     );
     const filteredTopics = applyFilters(topics, filters);
 

@@ -4,7 +4,7 @@ import { RootState } from "app/store";
 import { StorageKey } from "config/storage";
 import { generateCodeChallenge } from "utils/auth";
 import { generateRandomString } from "utils/misc";
-import { deleteFromStorage, getFromStorage, saveToStorage } from "utils/storage";
+import { getFromStorage, saveToStorage } from "utils/storage";
 
 import {
     AuthInfo,
@@ -76,13 +76,13 @@ export const bimCollabApi = createApi({
     reducerPath: "bimCollabApi",
     baseQuery: dynamicBaseQuery,
     endpoints: (builder) => ({
-        getVersions: builder.query<{ versions: Version[] }, void>({
+        getVersions: builder.mutation<{ versions: Version[] }, void>({
             query: () => "versions",
         }),
-        getAuthInfo: builder.query<AuthInfo, void>({
+        getAuthInfo: builder.mutation<AuthInfo, void>({
             query: () => "auth",
         }),
-        getCurrentUser: builder.query<User, void>({
+        getCurrentUser: builder.query<User, string>({
             query: () => "current-user",
         }),
         getProjects: builder.query<Project[], void>({
@@ -90,10 +90,11 @@ export const bimCollabApi = createApi({
         }),
         getProject: builder.query<Project, { projectId: string }>({
             query: ({ projectId }) => `projects/${projectId}`,
+            keepUnusedDataFor: 60 * 5,
         }),
         getProjectExtensions: builder.query<ProjectExtensions, { projectId: string }>({
             query: ({ projectId }) => `projects/${projectId}/extensions`,
-            keepUnusedDataFor: 3600,
+            keepUnusedDataFor: 60 * 5,
         }),
         getTopics: builder.query<Topic[], { projectId: string }>({
             query: ({ projectId }) => `projects/${projectId}/topics`,
@@ -107,6 +108,7 @@ export const bimCollabApi = createApi({
         getComment: builder.query<Comment, { projectId: string; topicId: string; commentId: string }>({
             query: ({ projectId, topicId, commentId }) =>
                 `projects/${projectId}/topics/${topicId}/comments/${commentId}`,
+            keepUnusedDataFor: 60 * 5,
         }),
         getViewpoints: builder.query<Viewpoint[], { projectId: string; topicId: string }>({
             query: ({ projectId, topicId }) => `projects/${projectId}/topics/${topicId}/viewpoints`,
@@ -114,21 +116,25 @@ export const bimCollabApi = createApi({
         getViewpoint: builder.query<Viewpoint, { projectId: string; topicId: string; viewpointId: string }>({
             query: ({ projectId, topicId, viewpointId }) =>
                 `projects/${projectId}/topics/${topicId}/viewpoints/${viewpointId}`,
+            keepUnusedDataFor: 60 * 5,
         }),
         getColoring: builder.query<Coloring[], { projectId: string; topicId: string; viewpointId: string }>({
             query: ({ projectId, topicId, viewpointId }) =>
                 `projects/${projectId}/topics/${topicId}/viewpoints/${viewpointId}/coloring`,
             transformResponse: (res: { coloring: Coloring[] }) => res.coloring,
+            keepUnusedDataFor: 60 * 5,
         }),
         getSelection: builder.query<Component[], { projectId: string; topicId: string; viewpointId: string }>({
             query: ({ projectId, topicId, viewpointId }) =>
                 `projects/${projectId}/topics/${topicId}/viewpoints/${viewpointId}/selection`,
             transformResponse: (res: { selection: Component[] }) => res.selection,
+            keepUnusedDataFor: 60 * 5,
         }),
         getVisibility: builder.query<Visibility, { projectId: string; topicId: string; viewpointId: string }>({
             query: ({ projectId, topicId, viewpointId }) =>
                 `projects/${projectId}/topics/${topicId}/viewpoints/${viewpointId}/visibility`,
             transformResponse: (res: { visibility: Visibility }) => res.visibility,
+            keepUnusedDataFor: 60 * 5,
         }),
         getSnapshot: builder.query<string, { projectId: string; topicId: string; viewpointId: string }>({
             query: ({ projectId, topicId, viewpointId }) => ({
@@ -141,6 +147,7 @@ export const bimCollabApi = createApi({
                 url: `projects/${projectId}/topics/${topicId}/viewpoints/${viewpointId}/thumbnail`,
                 responseHandler: handleImageResponse,
             }),
+            keepUnusedDataFor: 60 * 5,
         }),
         createTopic: builder.mutation<Topic, Partial<Topic> & Pick<Topic, "title"> & { projectId: string }>({
             query: ({ projectId, ...body }) => ({
@@ -173,14 +180,57 @@ export const bimCollabApi = createApi({
                 method: "POST",
             }),
         }),
+        getToken: builder.mutation<{ access_token: string; refresh_token: string }, { tokenUrl: string; code: string }>(
+            {
+                queryFn: ({ code, tokenUrl }) => {
+                    const body = new URLSearchParams();
+                    body.set("code", code);
+                    body.set("client_id", clientId);
+                    body.set("client_secret", clientSecret);
+                    body.set("grant_type", "authorization_code");
+                    body.set("redirect_uri", callbackUrl);
+                    body.set("code_verifier", getFromStorage(StorageKey.BimCollabCodeVerifier));
+
+                    return fetch(tokenUrl, {
+                        method: "POST",
+                        headers: { "Content-Type": "application/x-www-form-urlencoded" },
+                        body,
+                    })
+                        .then((res) => res.json())
+                        .then((data) => ({ data }))
+                        .catch((error) => ({ error }));
+                },
+            }
+        ),
+        refreshToken: builder.mutation<
+            { access_token: string; refresh_token: string },
+            { tokenUrl: string; refreshToken: string }
+        >({
+            queryFn: ({ refreshToken, tokenUrl }) => {
+                const body = new URLSearchParams();
+                body.set("refresh_token", refreshToken);
+                body.set("client_id", clientId);
+                body.set("client_secret", clientSecret);
+                body.set("grant_type", "refresh_token");
+
+                return fetch(tokenUrl, {
+                    body,
+                    method: "POST",
+                    headers: { "Content-Type": "application/x-www-form-urlencoded" },
+                })
+                    .then((r) => r.json())
+                    .then((data) => ({ data }))
+                    .catch((error) => ({ error }));
+            },
+        }),
     }),
 });
 
 // Export hooks for usage in functional components, which are
 // auto-generated based on the defined endpoints
 export const {
-    useGetVersionsQuery,
-    useGetAuthInfoQuery,
+    useGetVersionsMutation,
+    useGetAuthInfoMutation,
     useGetCurrentUserQuery,
     useGetProjectsQuery,
     useGetProjectQuery,
@@ -198,9 +248,11 @@ export const {
     useCreateTopicMutation,
     useCreateViewpointMutation,
     useCreateCommentMutation,
+    useGetTokenMutation,
+    useRefreshTokenMutation,
 } = bimCollabApi;
 
-export async function getCode(authUrl: string) {
+export async function getCode(authUrl: string, state: string) {
     const verifier = generateRandomString();
     const challenge = await generateCodeChallenge(verifier);
     saveToStorage(StorageKey.BimCollabCodeVerifier, verifier);
@@ -212,86 +264,6 @@ export async function getCode(authUrl: string) {
         `&scope=${scope}` +
         `&redirect_uri=${callbackUrl}` +
         `&code_challenge=${challenge}` +
-        `&code_challenge_method=S256`;
-}
-
-export async function getToken(
-    oAuthTokenUrl: string,
-    code: string
-): Promise<{ access_token: string; refresh_token: string }> {
-    const body = new URLSearchParams();
-    body.set("code", code);
-    body.set("client_id", clientId);
-    body.set("client_secret", clientSecret);
-    body.set("grant_type", "authorization_code");
-    body.set("redirect_uri", callbackUrl);
-    body.set("code_verifier", getFromStorage(StorageKey.BimCollabCodeVerifier));
-
-    return fetch(oAuthTokenUrl, {
-        body,
-        method: "POST",
-        headers: { "Content-Type": "application/x-www-form-urlencoded" },
-    }).then((r) => r.json());
-}
-
-export async function refreshTokens(
-    oAuthTokenUrl: string,
-    refreshToken: string
-): Promise<{ access_token: string; refresh_token: string }> {
-    const body = new URLSearchParams();
-    body.set("refresh_token", refreshToken);
-    body.set("client_id", clientId);
-    body.set("client_secret", clientSecret);
-    body.set("grant_type", "refresh_token");
-
-    return fetch(oAuthTokenUrl, {
-        body,
-        method: "POST",
-        headers: { "Content-Type": "application/x-www-form-urlencoded" },
-    }).then((r) => r.json());
-}
-
-export async function authenticate(authInfo: AuthInfo): Promise<string> {
-    const storedRefreshToken = getFromStorage(StorageKey.BimCollabRefreshToken);
-    const code = new URLSearchParams(window.location.search).get("code");
-
-    try {
-        if (code) {
-            window.history.replaceState(null, "", window.location.pathname.replace("Callback", ""));
-
-            const res = await getToken(authInfo.oauth2_token_url, code);
-
-            if (!res) {
-                throw new Error("token request failed");
-            }
-
-            if (res.refresh_token) {
-                saveToStorage(StorageKey.BimCollabRefreshToken, res.refresh_token);
-            }
-
-            return res.access_token;
-        } else if (storedRefreshToken) {
-            const res = await refreshTokens(authInfo.oauth2_token_url, storedRefreshToken);
-
-            if (!res) {
-                throw new Error("get code");
-            }
-
-            if (res.refresh_token) {
-                saveToStorage(StorageKey.BimCollabRefreshToken, res.refresh_token);
-            } else {
-                deleteFromStorage(StorageKey.BimCollabRefreshToken);
-            }
-
-            return res.access_token;
-        } else {
-            throw new Error("get code");
-        }
-    } catch (e) {
-        if (e instanceof Error && e.message === "get code") {
-            getCode(authInfo.oauth2_auth_url);
-        }
-
-        return "";
-    }
+        `&code_challenge_method=S256` +
+        `&state=${state}`;
 }

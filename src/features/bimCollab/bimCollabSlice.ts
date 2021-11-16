@@ -1,9 +1,7 @@
 import { createSlice, PayloadAction } from "@reduxjs/toolkit";
 import { RootState } from "app/store";
-import { StorageKey } from "config/storage";
-import { getFromStorage } from "utils/storage";
 
-import { Project, Topic } from "./types";
+import { AuthInfo, User } from "./types";
 
 export enum FilterKey {
     Type = "topic_type",
@@ -15,11 +13,10 @@ export enum FilterKey {
 
 const initialState = {
     accessToken: "",
-    space: getFromStorage(StorageKey.BimCollabSpace) as string,
+    space: "",
     version: "",
-    projects: [] as Project[],
-    topics: {} as Record<string, Topic>,
-    viewpoints: {} as Record<string, any>,
+    authInfo: undefined as AuthInfo | undefined,
+    user: undefined as User | undefined,
     filters: {
         [FilterKey.Type]: [] as string[],
         [FilterKey.Label]: [] as string[],
@@ -48,10 +45,14 @@ export const bimCollabSlice = createSlice({
         setFilters: (state, action: PayloadAction<Filters>) => {
             state.filters = action.payload;
         },
-        logOut: (state) => {
-            state.accessToken = "";
-            state.space = "";
-            state.version = "";
+        setUser: (state, action: PayloadAction<User | undefined>) => {
+            state.user = action.payload;
+        },
+        setAuthInfo: (state, action: PayloadAction<AuthInfo | undefined>) => {
+            state.authInfo = action.payload;
+        },
+        logOut: () => {
+            return initialState;
         },
     },
 });
@@ -60,6 +61,8 @@ export const selectAccessToken = (state: RootState) => state.bimCollab.accessTok
 export const selectSpace = (state: RootState) => state.bimCollab.space;
 export const selectVersion = (state: RootState) => state.bimCollab.version;
 export const selectFilters = (state: RootState) => state.bimCollab.filters;
+export const selectUser = (state: RootState) => state.bimCollab.user;
+export const selectAuthInfo = (state: RootState) => state.bimCollab.authInfo;
 
 const { actions, reducer } = bimCollabSlice;
 export { actions as bimCollabActions, reducer as bimCollabReducer };

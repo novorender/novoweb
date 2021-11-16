@@ -95,3 +95,27 @@ export async function generateCodeChallenge(verifier: string): Promise<string> {
     const hashed = await sha256(verifier);
     return base64UrlEncode(hashed);
 }
+
+type OAuthState = {
+    service?: string;
+    sceneId?: string;
+    space?: string;
+};
+
+export function getOAuthState(): OAuthState | undefined {
+    const state = new URLSearchParams(window.location.search).get("state");
+
+    if (!state) {
+        return;
+    }
+
+    try {
+        return JSON.parse(state);
+    } catch {
+        return;
+    }
+}
+
+export function createOAuthStateString(state: OAuthState): string {
+    return JSON.stringify(state);
+}

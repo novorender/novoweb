@@ -6,7 +6,7 @@ import type { RootState } from "app/store";
 
 const initialState = {
     enabledFeatures: Object.values(featuresConfig).map((feature) => feature.key) as FeatureKey[],
-    widgets: ["bimCollab"] as WidgetKey[],
+    widgets: [] as WidgetKey[],
     urlSearchQuery: undefined as undefined | string | SearchPattern[],
 };
 

@@ -41,14 +41,20 @@ export function Topic({ view, scene }: { view: View; scene: Scene }) {
     const { projectId, topicId } = useParams<{ projectId: string; topicId: string }>();
     const [modalOpen, toggleModal] = useToggle();
 
-    const { data: topic } = useGetTopicQuery({ projectId, topicId }, { refetchOnMountOrArgChange: true });
-    const { data: comments } = useGetCommentsQuery({ projectId, topicId }, { refetchOnMountOrArgChange: true });
+    const { data: topic } = useGetTopicQuery(
+        { projectId, topicId },
+        { refetchOnMountOrArgChange: true, refetchOnFocus: true }
+    );
+    const { data: comments } = useGetCommentsQuery(
+        { projectId, topicId },
+        { refetchOnMountOrArgChange: true, refetchOnFocus: true }
+    );
     const { data: viewpoints } = useGetViewpointsQuery(
         {
             projectId,
             topicId: topic?.guid ?? "",
         },
-        { skip: !topic || Boolean(topic.default_viewpoint_guid), refetchOnMountOrArgChange: true }
+        { skip: !topic || Boolean(topic.default_viewpoint_guid), refetchOnMountOrArgChange: true, refetchOnFocus: true }
     );
 
     const defaultViewpointId = topic?.default_viewpoint_guid
