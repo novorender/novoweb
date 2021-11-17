@@ -31,6 +31,7 @@ import { useToggle } from "hooks/useToggle";
 
 import CloseIcon from "@mui/icons-material/Close";
 import { ReactComponent as NovorenderIcon } from "media/icons/novorender-small.svg";
+import { ViewerScenes } from "features/viewerScenes";
 
 const WidgetContainer = styled((props: PaperProps) => <Paper elevation={4} {...props} />)(
     ({ theme }) => css`
@@ -218,6 +219,8 @@ function getWidgetByKey(key: WidgetKey): JSX.Element | string {
             return <Clipping />;
         case featuresConfig.measure.key:
             return <Measure />;
+        case featuresConfig.viewerScenes.key:
+            return <ViewerScenes />;
         default:
             return key;
     }

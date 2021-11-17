@@ -1,11 +1,19 @@
 import { createSelector, createSlice, PayloadAction } from "@reduxjs/toolkit";
 import { SearchPattern } from "@novorender/webgl-api";
 
-import { config as featuresConfig, FeatureType, WidgetKey, FeatureKey, Widget } from "config/features";
+import { config as featuresConfig, WidgetKey, Widget, defaultEnabledWidgets } from "config/features";
 import type { RootState } from "app/store";
+import { ScenePreview } from "@novorender/data-js-api";
+
+export enum SceneType {
+    Viewer,
+    Admin,
+}
 
 const initialState = {
-    enabledFeatures: Object.values(featuresConfig).map((feature) => feature.key) as FeatureKey[],
+    enabledWidgets: defaultEnabledWidgets as WidgetKey[],
+    sceneType: SceneType.Viewer,
+    viewerScenes: [] as ScenePreview[],
     widgets: [] as WidgetKey[],
     urlSearchQuery: undefined as undefined | string | SearchPattern[],
 };
@@ -16,8 +24,14 @@ export const explorerSlice = createSlice({
     name: "explorer",
     initialState: initialState,
     reducers: {
-        setEnabledFeatures: (state, action: PayloadAction<FeatureKey[]>) => {
-            state.enabledFeatures = action.payload;
+        setEnabledWidgets: (state, action: PayloadAction<WidgetKey[]>) => {
+            state.enabledWidgets = action.payload;
+        },
+        setSceneType: (state, action: PayloadAction<SceneType>) => {
+            state.sceneType = action.payload;
+        },
+        setViewerScenes: (state, action: PayloadAction<ScenePreview[]>) => {
+            state.viewerScenes = action.payload;
         },
         setWidgets: (state, action: PayloadAction<WidgetKey[]>) => {
             state.widgets = action.payload;
@@ -52,13 +66,14 @@ export const explorerSlice = createSlice({
 
 export const selectWidgets = (state: RootState) => state.explorer.widgets;
 export const selectUrlSearchQuery = (state: RootState) => state.explorer.urlSearchQuery;
+export const selectSceneType = (state: RootState) => state.explorer.sceneType;
+export const selectViewerScenes = (state: RootState) => state.explorer.viewerScenes;
+
+export const selectIsAdminScene = createSelector(selectSceneType, (type) => type === SceneType.Admin);
 
 export const selectEnabledWidgets = createSelector(
-    (state: RootState) => state.explorer.enabledFeatures,
-    (widgets) =>
-        widgets
-            .map((widget) => featuresConfig[widget])
-            .filter((config) => config && config.type === FeatureType.Widget) as Widget[]
+    (state: RootState) => state.explorer.enabledWidgets,
+    (widgets) => widgets.map((widget) => featuresConfig[widget]).filter((config) => config) as Widget[]
 );
 
 // Action creators are generated for each case reducer function

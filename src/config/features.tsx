@@ -15,6 +15,7 @@ import FolderIcon from "@mui/icons-material/Folder";
 import SearchIcon from "@mui/icons-material/Search";
 import GradientIcon from "@mui/icons-material/Gradient";
 import FlightTakeoffIcon from "@mui/icons-material/FlightTakeoff";
+import MovieIcon from "@mui/icons-material/Movie";
 
 import { ReactComponent as ClippingIcon } from "media/icons/clipping.svg";
 import { ReactComponent as RunIcon } from "media/icons/run.svg";
@@ -23,9 +24,16 @@ export enum FeatureType {
     SelectionModifier,
     CameraNavigation,
     Widget,
+    AdminWidget,
 }
 
 export const config = {
+    viewerScenes: {
+        key: "viewerScenes",
+        name: "Viewer scenes",
+        Icon: MovieIcon,
+        type: FeatureType.AdminWidget,
+    },
     modelTree: {
         key: "modelTree",
         name: "Model tree",
@@ -147,9 +155,12 @@ type Config = typeof config;
 export type FeatureKey = keyof Config;
 
 export type WidgetKey = {
-    [K in keyof Config]: Config[K]["type"] extends FeatureType.Widget ? K : never;
+    [K in keyof Config]: Config[K]["type"] extends FeatureType.Widget | FeatureType.AdminWidget ? K : never;
 }[keyof Config];
 
 export type Widget = Config[WidgetKey];
 
 export const defaultEnabledWidgets = [config.shareLink.key];
+export const defaultEnabledAdminWidgets = Object.values(config)
+    .filter((value) => [FeatureType.AdminWidget, FeatureType.Widget].includes(value.type))
+    .map((widget) => widget.key) as WidgetKey[];

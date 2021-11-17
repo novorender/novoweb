@@ -1,14 +1,6 @@
 import { glMatrix, mat4, quat, vec2, vec3, vec4 } from "gl-matrix";
 import { useEffect, useState, useRef, MouseEvent, PointerEvent, useCallback, SVGProps, RefCallback } from "react";
-import {
-    View,
-    API,
-    FlightControllerParams,
-    EnvironmentDescription,
-    Internal,
-    MeasureInfo,
-} from "@novorender/webgl-api";
-import type { API as DataAPI } from "@novorender/data-js-api";
+import { View, FlightControllerParams, EnvironmentDescription, Internal, MeasureInfo } from "@novorender/webgl-api";
 import { Box, Button, Paper, Typography, useTheme, styled } from "@mui/material";
 import { css } from "@mui/styled-engine";
 
@@ -16,6 +8,7 @@ import { PerformanceStats } from "features/performanceStats";
 import { getDataFromUrlHash } from "features/shareLink";
 import { Loading } from "components";
 
+import { api, dataApi } from "app";
 import { useMountedState } from "hooks/useMountedState";
 import { deleteStoredToken } from "utils/auth";
 
@@ -36,6 +29,7 @@ import {
     selectDefaultVisibility,
 } from "slices/renderSlice";
 import { authActions } from "slices/authSlice";
+import { explorerActions } from "slices/explorerSlice";
 import { useAppDispatch, useAppSelector } from "app/store";
 
 import { useHighlighted, highlightActions, useDispatchHighlighted } from "contexts/highlighted";
@@ -114,12 +108,10 @@ enum Status {
 
 type Props = {
     id: string;
-    api: API;
-    dataApi: DataAPI;
     onInit: (params: { customProperties: unknown }) => void;
 };
 
-export function Render3D({ id, api, onInit, dataApi }: Props) {
+export function Render3D({ id, onInit }: Props) {
     const highlightedObjects = useHighlighted();
     const dispatchHighlighted = useDispatchHighlighted();
     const hiddenObjects = useHidden();
@@ -527,7 +519,7 @@ export function Render3D({ id, api, onInit, dataApi }: Props) {
         if (!environments.length) {
             dispatch(fetchEnvironments(api));
         }
-    }, [api, dispatch, environments]);
+    }, [dispatch, environments]);
 
     useEffect(() => {
         initView();
@@ -548,6 +540,7 @@ export function Render3D({ id, api, onInit, dataApi }: Props) {
                     bookmarks = [],
                     customProperties,
                     title,
+                    viewerScenes,
                     ...sceneData
                 } = preloadedScene ?? (await dataApi.loadScene(id));
 
@@ -624,6 +617,10 @@ export function Render3D({ id, api, onInit, dataApi }: Props) {
                     dispatchCustomGroups(customGroupsActions.set(serializeableObjectGroups(customGroups)));
                 }
 
+                if (viewerScenes) {
+                    dispatch(explorerActions.setViewerScenes(viewerScenes));
+                }
+
                 rendering.current = createRendering(canvas, _view);
                 rendering.current.start();
                 window.document.title = `${title} - Novorender`;
@@ -644,7 +641,11 @@ export function Render3D({ id, api, onInit, dataApi }: Props) {
 
                 onInit({ customProperties });
                 dispatchGlobals(
-                    explorerGlobalsActions.update({ view: _view, scene: _view.scene, preloadedScene: undefined })
+                    explorerGlobalsActions.update({
+                        view: _view,
+                        scene: _view.scene,
+                        preloadedScene: undefined,
+                    })
                 );
             } catch (e) {
                 setStatus(Status.Error);
@@ -653,8 +654,6 @@ export function Render3D({ id, api, onInit, dataApi }: Props) {
     }, [
         canvas,
         view,
-        api,
-        dataApi,
         dispatch,
         onInit,
         environments,
@@ -732,7 +731,7 @@ export function Render3D({ id, api, onInit, dataApi }: Props) {
 
             api.animate = () => cameraMoved(view);
         },
-        [api, view, moveSvg, dispatch, savedCameraPositions]
+        [view, moveSvg, dispatch, savedCameraPositions]
     );
 
     useEffect(
@@ -756,17 +755,7 @@ export function Render3D({ id, api, onInit, dataApi }: Props) {
                 });
             }
         },
-        [
-            scene,
-            view,
-            api,
-            defaultVisibility,
-            mainObject,
-            customGroups,
-            highlightedObjects,
-            hiddenObjects,
-            visibleObjects,
-        ]
+        [scene, view, defaultVisibility, mainObject, customGroups, highlightedObjects, hiddenObjects, visibleObjects]
     );
 
     useEffect(
@@ -807,7 +796,7 @@ export function Render3D({ id, api, onInit, dataApi }: Props) {
                 view.settings.environment = await api.loadEnvironment(env);
             }
         },
-        [env, api, view]
+        [env, view]
     );
 
     useEffect(
