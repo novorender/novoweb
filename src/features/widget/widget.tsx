@@ -223,7 +223,7 @@ function getWidgetByKey(key: WidgetKey): JSX.Element | string {
         case featuresConfig.measure.key:
             return <Measure />;
         case featuresConfig.bimCollab.key:
-            return <BimCollab view={view} scene={scene} />;
+            return <BimCollab />;
         default:
             return key;
     }

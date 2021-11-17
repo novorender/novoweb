@@ -136,20 +136,16 @@ export function createBcfClippingPlanes(
     }));
 }
 
-export function createBcfSnapshot(): Viewpoint["snapshot"] | undefined {
-    const canvas = document.getElementById("main-canvas") as HTMLCanvasElement;
-
-    if (!canvas) {
-        return;
-    }
-
+export function createBcfSnapshot(canvas: HTMLCanvasElement): Viewpoint["snapshot"] | undefined {
     const dist = document.createElement("canvas");
     const width = Math.min(canvas.width, 1500);
     const height = Math.min(canvas.height, 1500);
+
     dist.height = height;
     dist.width = width;
     const ctx = dist.getContext("2d", { alpha: false, desynchronized: false })!;
     ctx.drawImage(canvas, 0, 0, width, height, 0, 0, width, height);
+
     return { snapshot_type: "png", snapshot_data: dist.toDataURL("image/png").split(";base64,")[1] };
 }
 

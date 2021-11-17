@@ -1,7 +1,6 @@
 import { Box, Typography, useTheme, Button } from "@mui/material";
 import { FormEventHandler, useCallback, useEffect, useState } from "react";
 import { MemoryRouter, Switch, Route, useParams } from "react-router-dom";
-import { Scene, View } from "@novorender/webgl-api";
 
 import { LinearProgress, TextField } from "components";
 import { useAppDispatch, useAppSelector } from "app/store";
@@ -28,7 +27,7 @@ import {
 } from "./bimCollabApi";
 import { AuthInfo } from "./types";
 
-export function BimCollab({ view, scene }: { view: View; scene: Scene }) {
+export function BimCollab() {
     const { id: sceneId = defaultSceneId } = useParams<{ id?: string }>();
     const space = useAppSelector(selectSpace);
     const apiVersion = useAppSelector(selectVersion);
@@ -175,16 +174,16 @@ export function BimCollab({ view, scene }: { view: View; scene: Scene }) {
                     {<Project />}
                 </Route>
                 <Route path="/project/:projectId/topic/:topicId" exact>
-                    <Topic view={view} scene={scene} />
+                    <Topic />
                 </Route>
                 <Route path="/project/:projectId/filter" exact>
                     <Filters />
                 </Route>
                 <Route path="/project/:projectId/new-topic" exact>
-                    <CreateTopic view={view} scene={scene} />
+                    <CreateTopic />
                 </Route>
                 <Route path="/project/:projectId/topic/:topicId/new-comment" exact>
-                    <CreateComment view={view} scene={scene} />
+                    <CreateComment />
                 </Route>
             </Switch>
         </MemoryRouter>

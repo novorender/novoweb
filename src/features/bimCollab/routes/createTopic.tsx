@@ -1,5 +1,5 @@
 import { useStore } from "react-redux";
-import { ObjectId, Scene, View } from "@novorender/webgl-api";
+import { ObjectId } from "@novorender/webgl-api";
 import { Box, Typography, useTheme, Button, FormControlLabel, CircularProgress } from "@mui/material";
 import { useParams, useHistory } from "react-router-dom";
 import { FormEvent, useEffect, useState } from "react";
@@ -9,6 +9,7 @@ import { useLazyHidden } from "contexts/hidden";
 import { useLazyHighlighted } from "contexts/highlighted";
 import { useLazyVisible } from "contexts/visible";
 import { useLazyCustomGroups } from "contexts/customGroups";
+import { useExplorerGlobals } from "contexts/explorerGlobals";
 
 import { IosSwitch, LinearProgress, ScrollBox, TextField } from "components";
 import { useAbortController } from "hooks/useAbortController";
@@ -34,7 +35,7 @@ import { Viewpoint } from "../types";
 
 type NewViewpoint = Partial<Viewpoint> & Pick<Viewpoint, "perspective_camera" | "snapshot">;
 
-export function CreateTopic({ view, scene }: { scene: Scene; view: View }) {
+export function CreateTopic() {
     const theme = useTheme();
     const history = useHistory();
 
@@ -116,7 +117,7 @@ export function CreateTopic({ view, scene }: { scene: Scene; view: View }) {
                         rows={4}
                     />
 
-                    <IncludeViewpoint viewpoint={viewpoint} setViewpoint={setViewpoint} view={view} scene={scene} />
+                    <IncludeViewpoint viewpoint={viewpoint} setViewpoint={setViewpoint} />
 
                     <Box display="flex" justifyContent="space-between" mr={2} mb={2}>
                         <Button
@@ -141,11 +142,7 @@ export function CreateTopic({ view, scene }: { scene: Scene; view: View }) {
 export function IncludeViewpoint({
     viewpoint,
     setViewpoint,
-    view,
-    scene,
 }: {
-    scene: Scene;
-    view: View;
     viewpoint: NewViewpoint | undefined;
     setViewpoint: (vp: NewViewpoint | undefined) => void;
 }) {
@@ -153,6 +150,9 @@ export function IncludeViewpoint({
     const visible = useLazyVisible();
     const highlighted = useLazyHighlighted();
     const customGroups = useLazyCustomGroups();
+    const {
+        state: { view, scene, canvas },
+    } = useExplorerGlobals(true);
     const store = useStore();
 
     const [includeViewpoint, toggleIncludeViewpoint] = useToggle(true);
@@ -168,7 +168,7 @@ export function IncludeViewpoint({
         }
 
         async function createNewViewpoint() {
-            const snapshot = createBcfSnapshot();
+            const snapshot = createBcfSnapshot(canvas);
 
             if (!snapshot) {
                 return;
@@ -244,6 +244,7 @@ export function IncludeViewpoint({
         abort,
         setLoading,
         customGroups,
+        canvas,
     ]);
 
     return (

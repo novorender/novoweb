@@ -1,7 +1,6 @@
 import { useParams, Link, useHistory } from "react-router-dom";
 import { useTheme, Box, Button, Typography, List, ListItem } from "@mui/material";
 import { Add, ArrowBack } from "@mui/icons-material";
-import { View, Scene } from "@novorender/webgl-api";
 import { vec3, quat } from "gl-matrix";
 
 import { ImgModal, ImgTooltip, LinearProgress, ScrollBox, Tooltip } from "components";
@@ -12,6 +11,7 @@ import { useDispatchHidden, hiddenGroupActions } from "contexts/hidden";
 import { useDispatchHighlighted, highlightActions } from "contexts/highlighted";
 import { useDispatchVisible, visibleActions } from "contexts/visible";
 import { customGroupsActions, TempGroup, useCustomGroups } from "contexts/customGroups";
+import { useExplorerGlobals } from "contexts/explorerGlobals";
 
 import { useAbortController } from "hooks/useAbortController";
 import { useMountedState } from "hooks/useMountedState";
@@ -34,9 +34,10 @@ import {
 import type { Comment } from "../types";
 import { translateBcfClippingPlanes, translatePerspectiveCamera } from "../utils";
 
-export function Topic({ view, scene }: { view: View; scene: Scene }) {
+export function Topic() {
     const theme = useTheme();
     const history = useHistory();
+
     const [loading, setLoading] = useMountedState(false);
     const { projectId, topicId } = useParams<{ projectId: string; topicId: string }>();
     const [modalOpen, toggleModal] = useToggle();
@@ -124,8 +125,6 @@ export function Topic({ view, scene }: { view: View; scene: Scene }) {
                             projectId={projectId}
                             topicId={topicId}
                             defaultViewpointId={defaultViewpointId}
-                            view={view}
-                            scene={scene}
                             loading={loading}
                             setLoading={setLoading}
                         />
@@ -142,8 +141,6 @@ function CommentListItem({
     projectId,
     topicId,
     defaultViewpointId,
-    view,
-    scene,
     loading,
     setLoading,
 }: {
@@ -151,8 +148,6 @@ function CommentListItem({
     projectId: string;
     topicId: string;
     defaultViewpointId: string;
-    view: View;
-    scene: Scene;
     loading: boolean;
     setLoading: (loading: boolean) => void;
 }) {
@@ -162,6 +157,9 @@ function CommentListItem({
     const dispatchHidden = useDispatchHidden();
     const dispatchVisible = useDispatchVisible();
     const { dispatch: dispatchCustomGroups } = useCustomGroups();
+    const {
+        state: { view, scene },
+    } = useExplorerGlobals(true);
 
     const [modalOpen, toggleModal] = useToggle();
     const viewpointId = comment.viewpoint_guid || defaultViewpointId || "";
