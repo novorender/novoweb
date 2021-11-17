@@ -1,20 +1,22 @@
 import type { SpeedDialActionProps } from "@mui/material";
-import type { View } from "@novorender/webgl-api";
 
 import { SpeedDialAction } from "components";
 import { config as featuresConfig } from "config/features";
 import { selectSavedCameraPositions, renderActions } from "slices/renderSlice";
 import { useAppDispatch, useAppSelector } from "app/store";
+import { useExplorerGlobals } from "contexts/explorerGlobals";
 
 type Props = SpeedDialActionProps & {
-    view: View;
     position?: { top?: number; right?: number; bottom?: number; left?: number };
 };
 
-export function StepBack({ view, position, ...speedDialProps }: Props) {
+export function StepBack({ position, ...speedDialProps }: Props) {
     const { name, Icon } = featuresConfig["stepBack"];
     const savedCameraPositions = useAppSelector(selectSavedCameraPositions);
     const canStepBack = savedCameraPositions.currentIndex >= 1;
+    const {
+        state: { view },
+    } = useExplorerGlobals(true);
 
     const dispatch = useAppDispatch();
 

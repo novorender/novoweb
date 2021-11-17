@@ -14,7 +14,7 @@ import {
     ListItemIcon,
     ListItemText,
 } from "@mui/material";
-import type { ObjectData, ObjectId, Scene } from "@novorender/webgl-api";
+import type { ObjectData, ObjectId } from "@novorender/webgl-api";
 import { css } from "@mui/styled-engine";
 import { useDrag } from "@use-gesture/react";
 import { ContentCopy, MoreVert } from "@mui/icons-material";
@@ -33,6 +33,7 @@ import {
 import { extractObjectIds, getParentPath } from "utils/objectData";
 import { highlightActions, useDispatchHighlighted } from "contexts/highlighted";
 import { NodeType } from "features/modelTree/modelTree";
+import { useExplorerGlobals } from "contexts/explorerGlobals";
 
 enum Status {
     Initial,
@@ -54,13 +55,12 @@ type SearchPattern = {
     exact?: boolean;
 };
 
-type Props = {
-    scene: Scene;
-};
-
-export function Properties({ scene }: Props) {
+export function Properties() {
     const mainObject = useAppSelector(selectMainObject);
     const dispatchHighlighted = useDispatchHighlighted();
+    const {
+        state: { scene },
+    } = useExplorerGlobals(true);
 
     const [searches, setSearches] = useState<Record<string, SearchPattern>>({});
     const [status, setStatus] = useMountedState(Status.Initial);

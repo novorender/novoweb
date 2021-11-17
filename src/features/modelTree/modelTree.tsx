@@ -1,17 +1,19 @@
 import { Box } from "@mui/material";
 import { useRef, useEffect } from "react";
 import { ListOnScrollProps } from "react-window";
-import { HierarcicalObjectReference, Scene } from "@novorender/webgl-api";
+import { HierarcicalObjectReference } from "@novorender/webgl-api";
 
 import { Divider, LinearProgress } from "components";
 import { Breadcrumbs } from "features/breadcrumbs";
 import { NodeList } from "features/nodeList";
+
 import { useAppDispatch, useAppSelector } from "app/store";
 import { renderActions, selectMainObject } from "slices/renderSlice";
+import { useExplorerGlobals } from "contexts/explorerGlobals";
+
 import { useAbortController } from "hooks/useAbortController";
 import { useMountedState } from "hooks/useMountedState";
 import { getObjectData, iterateAsync, searchFirstObjectAtPath } from "utils/search";
-
 import { getParentPath } from "utils/objectData";
 
 enum Status {
@@ -23,10 +25,6 @@ enum Status {
 export const NodeType = {
     Internal: 0,
     Leaf: 1,
-};
-
-type Props = {
-    scene: Scene;
 };
 
 type TreeLevel = {
@@ -45,9 +43,13 @@ const rootNode = {
 
 type RootNode = typeof rootNode;
 
-export function ModelTree({ scene }: Props) {
+export function ModelTree() {
     const mainObject = useAppSelector(selectMainObject);
     const dispatch = useAppDispatch();
+
+    const {
+        state: { scene },
+    } = useExplorerGlobals(true);
 
     const [status, setStatus] = useMountedState(Status.Loading);
     const [currentDepth, setCurrentDepth] = useMountedState<TreeLevel | undefined>(undefined);
@@ -254,7 +256,6 @@ export function ModelTree({ scene }: Props) {
                                 loading={status === Status.Loading}
                                 setLoading={(loading: boolean) => setStatus(loading ? Status.Loading : Status.Ready)}
                                 abortController={abortController}
-                                scene={scene}
                             />
                         ) : null}
                     </Box>

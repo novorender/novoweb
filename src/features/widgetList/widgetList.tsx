@@ -1,5 +1,4 @@
 import { Grid, IconButton, Typography } from "@mui/material";
-import { View } from "@novorender/webgl-api";
 
 import { useAppDispatch, useAppSelector } from "app/store";
 import { explorerActions, selectEnabledWidgets, selectWidgets } from "slices/explorerSlice";
@@ -7,9 +6,9 @@ import { WidgetKey, config as featuresConfig } from "config/features";
 import { WidgetMenuButtonWrapper } from "components";
 import { ShareLink } from "features/shareLink";
 
-type Props = { widgetKey?: WidgetKey; onSelect: () => void; view: View };
+type Props = { widgetKey?: WidgetKey; onSelect: () => void };
 
-export function WidgetList({ widgetKey, onSelect, view }: Props) {
+export function WidgetList({ widgetKey, onSelect }: Props) {
     const enabledWidgets = useAppSelector(selectEnabledWidgets);
     const activeWidgets = useAppSelector(selectWidgets);
 
@@ -42,7 +41,7 @@ export function WidgetList({ widgetKey, onSelect, view }: Props) {
                     return (
                         <Grid xs={4} sm={3} item key={key}>
                             {key === featuresConfig.shareLink.key ? (
-                                <ShareLink view={view} />
+                                <ShareLink />
                             ) : (
                                 <WidgetMenuButtonWrapper
                                     activeCurrent={activeCurrent}

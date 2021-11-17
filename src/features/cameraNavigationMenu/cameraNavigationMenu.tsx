@@ -1,5 +1,3 @@
-import type { Scene, View } from "@novorender/webgl-api";
-import { useToggle } from "hooks/useToggle";
 import { useTheme, useMediaQuery, FabProps, SpeedDial, SpeedDialIcon, CloseReason, OpenReason } from "@mui/material";
 
 import { CameraSpeed } from "features/cameraSpeed";
@@ -7,16 +5,12 @@ import { StepBack } from "features/stepBack";
 import { StepForwards } from "features/stepForwards";
 import { Home } from "features/home";
 import { FlyToSelected } from "features/flyToSelected";
+import { useToggle } from "hooks/useToggle";
 
 import AddIcon from "@mui/icons-material/Add";
 import CloseIcon from "@mui/icons-material/Close";
 
-type Props = {
-    view: View;
-    scene: Scene;
-};
-
-export function CameraNavigationMenu({ view, scene }: Props) {
+export function CameraNavigationMenu() {
     const [open, toggle] = useToggle(true);
     const theme = useTheme();
     const isSmall = useMediaQuery(theme.breakpoints.down("md"));
@@ -47,11 +41,11 @@ export function CameraNavigationMenu({ view, scene }: Props) {
             icon={<SpeedDialIcon open={false} icon={<AddIcon />} openIcon={<CloseIcon />} />}
             sx={{ position: "relative" }}
         >
-            <Home view={view} position={pos[0]} />
+            <Home position={pos[0]} />
             <CameraSpeed position={pos[1]} />
-            <FlyToSelected position={pos[2]} view={view} scene={scene} />
-            <StepBack position={pos[3]} view={view} />
-            <StepForwards position={pos[4]} view={view} />
+            <FlyToSelected position={pos[2]} />
+            <StepBack position={pos[3]} />
+            <StepForwards position={pos[4]} />
         </SpeedDial>
     );
 }

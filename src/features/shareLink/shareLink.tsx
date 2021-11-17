@@ -1,15 +1,19 @@
-import { CameraControllerParams, RenderSettings, View } from "@novorender/webgl-api";
+import { useStore } from "react-redux";
+import { CameraControllerParams, RenderSettings } from "@novorender/webgl-api";
 import { Close } from "@mui/icons-material";
 import { Snackbar, IconButton, Typography } from "@mui/material";
 
 import { WidgetMenuButtonWrapper } from "components";
 import { useToggle } from "hooks/useToggle";
 import { config as featuresConfig } from "config/features";
-import { useStore } from "react-redux";
 import { selectMainObject } from "slices/renderSlice";
+import { useExplorerGlobals } from "contexts/explorerGlobals";
 
-export function ShareLink({ view }: { view: View }) {
+export function ShareLink() {
     const store = useStore();
+    const {
+        state: { view },
+    } = useExplorerGlobals(true);
     const { Icon, name } = featuresConfig.shareLink;
     const [open, toggle] = useToggle();
 

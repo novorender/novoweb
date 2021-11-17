@@ -63,7 +63,7 @@ function CustomGroupsProvider({ children }: { children: ReactNode }) {
     return <Context.Provider value={value}>{children}</Context.Provider>;
 }
 
-function useCustomGroups() {
+function useCustomGroups(): ContextType {
     const context = useContext(Context);
     if (context === undefined) {
         throw new Error("useCustomGroups must be used within a CustomGroupsProvider");

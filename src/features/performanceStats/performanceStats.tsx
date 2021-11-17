@@ -1,13 +1,13 @@
 import { Box } from "@mui/material";
-import { View } from "@novorender/webgl-api";
 import { useEffect, useRef } from "react";
 
-type Props = {
-    view: View;
-    canvas: HTMLCanvasElement;
-};
+import { useExplorerGlobals } from "contexts/explorerGlobals";
 
-export function PerformanceStats({ view, canvas }: Props) {
+export function PerformanceStats() {
+    const {
+        state: { canvas, view },
+    } = useExplorerGlobals(true);
+
     const fpsRef = useRef<HTMLTableCellElement | null>(null);
     const activeQualityRef = useRef<HTMLTableCellElement | null>(null);
     const trianglesRef = useRef<HTMLTableCellElement | null>(null);

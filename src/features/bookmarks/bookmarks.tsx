@@ -12,7 +12,6 @@ import {
     TooltipProps,
 } from "@mui/material";
 import type { Bookmark } from "@novorender/data-js-api";
-import type { View } from "@novorender/webgl-api";
 import { css } from "@mui/styled-engine";
 
 import { ScrollBox, Tooltip, Divider } from "components";
@@ -21,6 +20,7 @@ import { useAppDispatch, useAppSelector } from "app/store";
 import { highlightActions, useDispatchHighlighted } from "contexts/highlighted";
 import { hiddenGroupActions, useDispatchHidden } from "contexts/hidden";
 import { customGroupsActions, useCustomGroups } from "contexts/customGroups";
+import { useExplorerGlobals } from "contexts/explorerGlobals";
 
 const Description = styled(Typography)(
     () => css`
@@ -54,16 +54,15 @@ const Img = styled("img")(
     `
 );
 
-type Props = {
-    view: View;
-};
-
-export function Bookmarks({ view }: Props) {
+export function Bookmarks() {
     const theme = useTheme();
 
     const dispatchHighlighted = useDispatchHighlighted();
     const dispatchHidden = useDispatchHidden();
     const { state: customGroups, dispatch: dispatchCustom } = useCustomGroups();
+    const {
+        state: { view },
+    } = useExplorerGlobals(true);
 
     const bookmarks = useAppSelector(selectBookmarks);
     const dispatch = useAppDispatch();
