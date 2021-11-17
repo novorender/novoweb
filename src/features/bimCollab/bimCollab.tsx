@@ -122,7 +122,7 @@ export function BimCollab() {
     }, [space, apiVersion, fetchAuthInfo, dispatch]);
 
     useEffect(() => {
-        if (space) {
+        if (space && !apiVersion) {
             getVersion();
         }
 
@@ -141,7 +141,7 @@ export function BimCollab() {
 
             dispatch(bimCollabActions.setVersion(version?.version_id ?? "2.1"));
         }
-    }, [space, dispatch, fetchVersions]);
+    }, [space, dispatch, apiVersion, fetchVersions]);
 
     useEffect(() => {
         if (space && authInfo) {

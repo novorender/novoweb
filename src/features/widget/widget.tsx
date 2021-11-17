@@ -120,7 +120,8 @@ export function Widget({ widgetKey }: Props) {
                         </Box>
                     ) : null}
                     <Box
-                        display={menuOpen ? "none" : "block"}
+                        display={menuOpen ? "none" : "flex"}
+                        flexDirection="column"
                         flexGrow={1}
                         style={{ overflow: "hidden", overflowY: "hidden" }}
                         height={1}
