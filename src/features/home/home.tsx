@@ -1,20 +1,22 @@
 import type { SpeedDialActionProps } from "@mui/material";
-import type { View } from "@novorender/webgl-api";
 import { quat, vec3 } from "gl-matrix";
 
 import { SpeedDialAction } from "components";
 import { config as featuresConfig } from "config/features";
 import { useAppSelector } from "app/store";
 import { selectHomeCameraPosition } from "slices/renderSlice";
+import { useExplorerGlobals } from "contexts/explorerGlobals";
 
 type Props = SpeedDialActionProps & {
-    view: View;
     position?: { top?: number; right?: number; bottom?: number; left?: number };
 };
 
-export function Home({ view, position, ...speedDialProps }: Props) {
+export function Home({ position, ...speedDialProps }: Props) {
     const { name, Icon } = featuresConfig["home"];
     const homeCamera = useAppSelector(selectHomeCameraPosition);
+    const {
+        state: { view },
+    } = useExplorerGlobals(true);
 
     const handleClick = () => {
         if (

@@ -2,7 +2,7 @@ import { ChangeEvent, CSSProperties, FormEvent, useCallback, useEffect, useRef, 
 import { ListOnScrollProps } from "react-window";
 import { Box, Button, ButtonProps, Checkbox, FormControlLabel, ListItem, styled, Typography } from "@mui/material";
 import { css } from "@mui/styled-engine";
-import { HierarcicalObjectReference, ObjectId, Scene, SearchPattern, View } from "@novorender/webgl-api";
+import { HierarcicalObjectReference, ObjectId, SearchPattern } from "@novorender/webgl-api";
 
 import { useAppDispatch, useAppSelector } from "app/store";
 import { TextField, Switch, LinearProgress, ScrollBox, Tooltip } from "components";
@@ -24,6 +24,7 @@ import AddCircleIcon from "@mui/icons-material/AddCircle";
 import DragHandleIcon from "@mui/icons-material/DragHandle";
 import CancelIcon from "@mui/icons-material/Cancel";
 import VisibilityIcon from "@mui/icons-material/Visibility";
+import { useExplorerGlobals } from "contexts/explorerGlobals";
 
 const StyledForm = styled("form")(
     ({ theme }) => css`
@@ -57,14 +58,12 @@ enum Status {
     Error,
 }
 
-type Props = {
-    scene: Scene;
-    view: View;
-};
-
-export function Search({ scene, view }: Props) {
+export function Search() {
     const dispatch = useAppDispatch();
     const dispatchHighlighted = useDispatchHighlighted();
+    const {
+        state: { view, scene },
+    } = useExplorerGlobals(true);
 
     const urlSearchQuery = useAppSelector(selectUrlSearchQuery);
 
@@ -405,7 +404,6 @@ export function Search({ scene, view }: Props) {
                         <NodeList
                             CustomParent={({ style }: { style: CSSProperties }) => (
                                 <CustomParentNode
-                                    scene={scene}
                                     style={style}
                                     abortController={abortController}
                                     searchPatterns={previousSearchPattern.current}
@@ -425,7 +423,6 @@ export function Search({ scene, view }: Props) {
                             loading={status === Status.Loading}
                             setLoading={(loading: boolean) => setStatus(loading ? Status.Loading : Status.Initial)}
                             abortController={abortController}
-                            scene={scene}
                         />
                     </>
                 ) : null}
@@ -437,7 +434,6 @@ export function Search({ scene, view }: Props) {
 // checked minstekrav? sjekk results.length <= highlighted/hidden.length
 
 function CustomParentNode({
-    scene,
     style,
     abortController,
     searchPatterns,
@@ -448,7 +444,6 @@ function CustomParentNode({
     allHidden,
     setAllHidden,
 }: {
-    scene: Scene;
     style: CSSProperties;
     abortController: React.MutableRefObject<AbortController>;
     searchPatterns: string | SearchPattern[] | undefined;
@@ -459,6 +454,9 @@ function CustomParentNode({
     allHidden: boolean;
     setAllHidden: (state: boolean) => void;
 }) {
+    const {
+        state: { scene },
+    } = useExplorerGlobals(true);
     const dispatchHighlighted = useDispatchHighlighted();
     const dispatchHidden = useDispatchHidden();
 

@@ -14,7 +14,6 @@ import {
     CloseReason,
 } from "@mui/material";
 import { css } from "@mui/styled-engine";
-import type { Scene, View } from "@novorender/webgl-api";
 
 import { Divider } from "components";
 import { config as featuresConfig, WidgetKey } from "config/features";
@@ -63,11 +62,9 @@ const WidgetContainer = styled((props: PaperProps) => <Paper elevation={4} {...p
 
 type Props = {
     widgetKey: WidgetKey;
-    scene: Scene;
-    view: View;
 };
 
-export function Widget({ widgetKey, scene, view }: Props) {
+export function Widget({ widgetKey }: Props) {
     const theme = useTheme();
     const isSmall = useMediaQuery(theme.breakpoints.down("md"));
     const [menuOpen, toggleMenu] = useToggle(false);
@@ -128,10 +125,10 @@ export function Widget({ widgetKey, scene, view }: Props) {
                         style={{ overflow: "hidden", overflowY: "hidden" }}
                         height={1}
                     >
-                        {getWidgetByKey({ key, scene, view })}
+                        {getWidgetByKey(key)}
                     </Box>
                     <Box display={menuOpen ? "block" : "none"} flexGrow={1} mt={2} mb={2} px={1}>
-                        <WidgetList view={view} widgetKey={widgetKey} onSelect={toggleMenu} />
+                        <WidgetList widgetKey={widgetKey} onSelect={toggleMenu} />
                     </Box>
                 </Box>
             </WidgetContainer>
@@ -153,7 +150,7 @@ export function Widget({ widgetKey, scene, view }: Props) {
     );
 }
 
-export function MenuWidget({ view }: { view: View }) {
+export function MenuWidget() {
     const theme = useTheme();
     const isSmall = useMediaQuery(theme.breakpoints.down("md"));
 
@@ -187,7 +184,7 @@ export function MenuWidget({ view }: { view: View }) {
                         </Box>
                     </Box>
                     <Box p={1} mt={1}>
-                        <WidgetList view={view} onSelect={toggle} />
+                        <WidgetList onSelect={toggle} />
                     </Box>
                 </WidgetContainer>
             ) : null}
@@ -209,18 +206,18 @@ export function MenuWidget({ view }: { view: View }) {
     );
 }
 
-function getWidgetByKey({ key, scene, view }: { key: WidgetKey; scene: Scene; view: View }): JSX.Element | string {
+function getWidgetByKey(key: WidgetKey): JSX.Element | string {
     switch (key) {
         case featuresConfig.properties.key:
-            return <Properties scene={scene} />;
+            return <Properties />;
         case featuresConfig.bookmarks.key:
-            return <Bookmarks view={view} />;
+            return <Bookmarks />;
         case featuresConfig.groups.key:
             return <Groups />;
         case featuresConfig.modelTree.key:
-            return <ModelTree scene={scene} />;
+            return <ModelTree />;
         case featuresConfig.search.key:
-            return <Search view={view} scene={scene} />;
+            return <Search />;
         case featuresConfig.clipping.key:
             return <Clipping />;
         case featuresConfig.measure.key:

@@ -1,5 +1,5 @@
 import { useEffect, useRef } from "react";
-import { BoundingSphere, HierarcicalObjectReference, Scene, View } from "@novorender/webgl-api";
+import { BoundingSphere, HierarcicalObjectReference } from "@novorender/webgl-api";
 import { Box, CircularProgress, SpeedDialActionProps } from "@mui/material";
 
 import { SpeedDialAction } from "components";
@@ -9,6 +9,7 @@ import { useHighlighted } from "contexts/highlighted";
 import { useAbortController } from "hooks/useAbortController";
 import { useMountedState } from "hooks/useMountedState";
 import { getTotalBoundingSphere } from "utils/objectData";
+import { useExplorerGlobals } from "contexts/explorerGlobals";
 
 enum Status {
     Initial,
@@ -17,13 +18,14 @@ enum Status {
 
 type Props = SpeedDialActionProps & {
     position?: { top?: number; right?: number; bottom?: number; left?: number };
-    view: View;
-    scene: Scene;
 };
 
-export function FlyToSelected({ view, scene, position, ...speedDialProps }: Props) {
+export function FlyToSelected({ position, ...speedDialProps }: Props) {
     const { name, Icon } = featuresConfig.flyToSelected;
     const highlighted = useHighlighted().idArr;
+    const {
+        state: { view, scene },
+    } = useExplorerGlobals(true);
 
     const [status, setStatus] = useMountedState(Status.Initial);
 

@@ -1,16 +1,16 @@
 import { ReactNode, useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
-import { SearchPattern, View } from "@novorender/webgl-api";
+import { SearchPattern } from "@novorender/webgl-api";
 
 import { api, dataApi } from "app";
 import { uniqueArray } from "utils/misc";
+import { getOAuthState } from "utils/auth";
 
 import { FeatureKey, config as featuresConfig, defaultEnabledWidgets } from "config/features";
 import { Loading } from "components";
 import { Hud } from "features/hud";
 import { Render3D } from "features/render";
 import { Protected } from "features/protectedRoute";
-import { SetPreloadedScene } from "features/render/render";
 
 import { useAppSelector, useAppDispatch } from "app/store";
 import { explorerActions } from "slices/explorerSlice";
@@ -19,21 +19,31 @@ import { HiddenProvider } from "contexts/hidden";
 import { CustomGroupsProvider } from "contexts/customGroups";
 import { HighlightedProvider } from "contexts/highlighted";
 import { VisibleProvider } from "contexts/visible";
-import { getOAuthState } from "utils/auth";
+import { explorerGlobalsActions, ExplorerGlobalsProvider, useExplorerGlobals } from "contexts/explorerGlobals";
+
+export function Explorer() {
+    return (
+        <ContextProviders>
+            <ExplorerBase />
+        </ContextProviders>
+    );
+}
 
 export const defaultSceneId = process.env.REACT_APP_SCENE_ID ?? "95a89d20dd084d9486e383e131242c4c";
 
-export function Explorer() {
+function ExplorerBase() {
     const { id = defaultSceneId } = useParams<{ id?: string }>();
     const dispatch = useAppDispatch();
-    const [view, setView] = useState<View>();
-    const scene = view?.scene;
+    const {
+        state: { view, scene },
+        dispatch: dispatchGlobals,
+    } = useExplorerGlobals();
 
     useEffect(() => {
-        setView(undefined);
-    }, [id]);
+        dispatchGlobals(explorerGlobalsActions.update({ view: undefined, scene: undefined }));
+    }, [id, dispatchGlobals]);
 
-    const handleInit = ({ view, customProperties }: { view: View; customProperties: unknown }) => {
+    const handleInit = ({ customProperties }: { customProperties: unknown }) => {
         const enabledFeatures = getEnabledFeatures(customProperties);
 
         if (enabledFeatures) {
@@ -47,17 +57,13 @@ export function Explorer() {
         } else {
             dispatch(explorerActions.setUrlSearchQuery(getUrlSearchQuery()));
         }
-
-        setView(view);
     };
 
     return (
-        <ContextProviders>
-            <AuthCheck id={id}>
-                <Render3D id={id} api={api} dataApi={dataApi} onInit={handleInit} />
-                {view && scene ? <Hud view={view} scene={scene} /> : null}
-            </AuthCheck>
-        </ContextProviders>
+        <AuthCheck id={id}>
+            <Render3D id={id} api={api} dataApi={dataApi} onInit={handleInit} />
+            {view && scene ? <Hud /> : null}
+        </AuthCheck>
     );
 }
 
@@ -75,6 +81,7 @@ enum AuthCheckStatus {
 function AuthCheck({ id, children }: { id: string; children: ReactNode }) {
     const accessToken = useAppSelector(selectAccessToken);
     const dispatch = useAppDispatch();
+    const { dispatch: dispatchGlobals } = useExplorerGlobals();
 
     // Skip auth-check if token already exists and handle missing scene in child component
     const [status, setStatus] = useState(accessToken ? AuthCheckStatus.RequireAuth : AuthCheckStatus.Pending);
@@ -91,13 +98,13 @@ function AuthCheck({ id, children }: { id: string; children: ReactNode }) {
 
             const scene = await dataApi.loadScene(id).catch(() => undefined);
             if (scene) {
-                SetPreloadedScene(scene);
+                dispatchGlobals(explorerGlobalsActions.update({ preloadedScene: scene }));
                 setStatus(AuthCheckStatus.Public);
             } else {
                 setStatus(AuthCheckStatus.RequireAuth);
             }
         }
-    }, [status, dispatch, id, accessToken]);
+    }, [status, dispatch, id, accessToken, dispatchGlobals]);
 
     if (status === AuthCheckStatus.Pending) {
         return <Loading />;
@@ -139,13 +146,15 @@ function getEnabledFeatures(customProperties: unknown): Record<string, boolean> 
 
 function ContextProviders({ children }: { children: ReactNode }) {
     return (
-        <HighlightedProvider>
-            <HiddenProvider>
-                <VisibleProvider>
-                    <CustomGroupsProvider>{children}</CustomGroupsProvider>
-                </VisibleProvider>
-            </HiddenProvider>
-        </HighlightedProvider>
+        <ExplorerGlobalsProvider>
+            <HighlightedProvider>
+                <HiddenProvider>
+                    <VisibleProvider>
+                        <CustomGroupsProvider>{children}</CustomGroupsProvider>
+                    </VisibleProvider>
+                </HiddenProvider>
+            </HighlightedProvider>
+        </ExplorerGlobalsProvider>
     );
 }
 

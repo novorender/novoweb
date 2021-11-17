@@ -1,5 +1,5 @@
 import { ChangeEvent, forwardRef, MouseEventHandler, CSSProperties, MutableRefObject } from "react";
-import { HierarcicalObjectReference, Scene } from "@novorender/webgl-api";
+import { HierarcicalObjectReference } from "@novorender/webgl-api";
 import { FixedSizeList, FixedSizeListProps, ListOnScrollProps } from "react-window";
 import AutoSizer from "react-virtualized-auto-sizer";
 import { ListItemProps, useTheme, ListItem, Box, Typography, Checkbox } from "@mui/material";
@@ -13,6 +13,7 @@ import { extractObjectIds, getObjectNameFromPath } from "utils/objectData";
 
 import { highlightActions, useDispatchHighlighted, useIsHighlighted } from "contexts/highlighted";
 import { hiddenGroupActions, useDispatchHidden, useIsHidden } from "contexts/hidden";
+import { useExplorerGlobals } from "contexts/explorerGlobals";
 import { renderActions } from "slices/renderSlice";
 
 import FolderIcon from "@mui/icons-material/Folder";
@@ -29,7 +30,6 @@ type Props = {
     loading?: boolean;
     setLoading: (state: boolean) => void;
     abortController: MutableRefObject<AbortController>;
-    scene: Scene;
 };
 
 export const NodeList = forwardRef<any, Props>(
@@ -93,12 +93,14 @@ type NodeProps = {
     loading?: boolean;
     setLoading: (state: boolean) => void;
     abortController: MutableRefObject<AbortController>;
-    scene: Scene;
 } & ListItemProps;
 
-function Node({ node, parent, loading, setLoading, abortController, scene, ...props }: NodeProps) {
+function Node({ node, parent, loading, setLoading, abortController, ...props }: NodeProps) {
     const theme = useTheme();
 
+    const {
+        state: { scene },
+    } = useExplorerGlobals(true);
     const dispatch = useAppDispatch();
     const dispatchHighlighted = useDispatchHighlighted();
     const dispatchHidden = useDispatchHidden();

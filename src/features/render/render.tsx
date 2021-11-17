@@ -1,5 +1,5 @@
 import { glMatrix, mat4, quat, vec2, vec3, vec4 } from "gl-matrix";
-import { useEffect, useState, useRef, MouseEvent, PointerEvent, useCallback, SVGProps } from "react";
+import { useEffect, useState, useRef, MouseEvent, PointerEvent, useCallback, SVGProps, RefCallback } from "react";
 import {
     View,
     API,
@@ -8,10 +8,13 @@ import {
     Internal,
     MeasureInfo,
 } from "@novorender/webgl-api";
-import { SceneData } from "@novorender/data-js-api";
 import type { API as DataAPI } from "@novorender/data-js-api";
 import { Box, Button, Paper, Typography, useTheme, styled } from "@mui/material";
 import { css } from "@mui/styled-engine";
+
+import { PerformanceStats } from "features/performanceStats";
+import { getDataFromUrlHash } from "features/shareLink";
+import { Loading } from "components";
 
 import {
     fetchEnvironments,
@@ -32,18 +35,15 @@ import {
 import { authActions } from "slices/authSlice";
 import { useAppDispatch, useAppSelector } from "app/store";
 
-import { PerformanceStats } from "features/performanceStats";
-import { getDataFromUrlHash } from "features/shareLink";
-import { useMountedState } from "hooks/useMountedState";
-import { Loading } from "components";
-
 import { useHighlighted, highlightActions, useDispatchHighlighted } from "contexts/highlighted";
 import { useHidden, hiddenGroupActions, useDispatchHidden } from "contexts/hidden";
 import { useCustomGroups, customGroupsActions } from "contexts/customGroups";
 import { useVisible } from "contexts/visible";
+import { explorerGlobalsActions, useExplorerGlobals } from "contexts/explorerGlobals";
 
 import { deleteFromStorage } from "utils/storage";
 import { StorageKey } from "config/storage";
+import { useMountedState } from "hooks/useMountedState";
 
 import {
     addConsoleDebugUtils,
@@ -117,14 +117,8 @@ type Props = {
     id: string;
     api: API;
     dataApi: DataAPI;
-    onInit: (params: { view: View; customProperties: unknown }) => void;
+    onInit: (params: { customProperties: unknown }) => void;
 };
-
-let preloadedScene: SceneData | undefined;
-
-export function SetPreloadedScene(scene: SceneData) {
-    preloadedScene = scene;
-}
 
 export function Render3D({ id, api, onInit, dataApi }: Props) {
     const highlightedObjects = useHighlighted();
@@ -133,6 +127,10 @@ export function Render3D({ id, api, onInit, dataApi }: Props) {
     const dispatchHidden = useDispatchHidden();
     const visibleObjects = useVisible();
     const { state: customGroups, dispatch: dispatchCustomGroups } = useCustomGroups();
+    const {
+        state: { view, scene, canvas, preloadedScene },
+        dispatch: dispatchGlobals,
+    } = useExplorerGlobals();
 
     const env = useAppSelector(selectCurrentEnvironment);
     const environments = useAppSelector(selectEnvironments);
@@ -159,11 +157,15 @@ export function Render3D({ id, api, onInit, dataApi }: Props) {
     const camY = useRef(vec3.create());
     const [size, setSize] = useState({ width: 0, height: 0 });
 
-    const [canvas, setCanvas] = useState<null | HTMLCanvasElement>(null);
     const [svg, setSvg] = useState<null | SVGSVGElement>(null);
     const [status, setStatus] = useMountedState(Status.Initial);
-    const [view, setView] = useMountedState<View | undefined>(undefined);
-    const scene = view?.scene;
+
+    const canvasRef: RefCallback<HTMLCanvasElement> = useCallback(
+        (el) => {
+            dispatchGlobals(explorerGlobalsActions.update({ canvas: el }));
+        },
+        [dispatchGlobals]
+    );
 
     const moveSvg = useCallback(() => {
         if (!svg || !view) {
@@ -623,7 +625,6 @@ export function Render3D({ id, api, onInit, dataApi }: Props) {
                     dispatchCustomGroups(customGroupsActions.set(serializeableObjectGroups(customGroups)));
                 }
 
-                setView(_view);
                 rendering.current = createRendering(canvas, _view);
                 rendering.current.start();
                 window.document.title = `${title} - Novorender`;
@@ -642,8 +643,10 @@ export function Render3D({ id, api, onInit, dataApi }: Props) {
 
                 resizeObserver.observe(canvas);
 
-                onInit({ view: _view, customProperties });
-                preloadedScene = undefined;
+                onInit({ customProperties });
+                dispatchGlobals(
+                    explorerGlobalsActions.update({ view: _view, scene: _view.scene, preloadedScene: undefined })
+                );
             } catch (e) {
                 setStatus(Status.Error);
             }
@@ -657,12 +660,13 @@ export function Render3D({ id, api, onInit, dataApi }: Props) {
         onInit,
         environments,
         id,
-        setView,
+        dispatchGlobals,
         setStatus,
         dispatchCustomGroups,
         dispatchHidden,
         dispatchHighlighted,
         setSize,
+        preloadedScene,
     ]);
 
     useEffect(() => {
@@ -823,12 +827,12 @@ export function Render3D({ id, api, onInit, dataApi }: Props) {
             return () => {
                 rendering.current.stop();
                 window.removeEventListener("blur", exitPointerLock);
-                setView(undefined);
+                dispatchGlobals(explorerGlobalsActions.update({ view: undefined, scene: undefined }));
                 dispatch(renderActions.resetState());
                 setStatus(Status.Initial);
             };
         },
-        [id, dispatch, setStatus, setView]
+        [id, dispatch, setStatus, dispatchGlobals]
     );
 
     const exitPointerLock = () => {
@@ -1051,11 +1055,11 @@ export function Render3D({ id, api, onInit, dataApi }: Props) {
                 <NoScene id={id} />
             ) : (
                 <>
-                    {showPerformance && view && canvas ? <PerformanceStats view={view} canvas={canvas} /> : null}
+                    {showPerformance && view && canvas ? <PerformanceStats /> : null}
                     <Canvas
                         id="main-canvas"
                         tabIndex={1}
-                        ref={setCanvas}
+                        ref={canvasRef}
                         onClick={handleClick}
                         onMouseDown={handleMouseDown}
                         onPointerEnter={handlePointerDown}
