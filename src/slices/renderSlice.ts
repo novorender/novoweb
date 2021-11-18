@@ -29,6 +29,11 @@ export enum ObjectVisibility {
     Transparent,
 }
 
+export enum CameraType {
+    Orthographic,
+    Flight,
+}
+
 type CameraPosition = Pick<Camera, "position" | "rotation">;
 export type ObjectGroups = { default: ObjectGroup; defaultHidden: ObjectGroup; custom: ObjectGroup[] };
 export type ClippingPlanes = Omit<RenderSettings["clippingPlanes"], "bounds"> & { defining: boolean };
@@ -71,6 +76,8 @@ const initialState = {
         distances: [] as number[],
         angles: [] as number[],
     },
+    cameraType: CameraType.Flight,
+    selectingOrthoPoint: false,
 };
 
 type State = typeof initialState;
@@ -181,6 +188,12 @@ export const renderSlice = createSlice({
         resetState: (state) => {
             return { ...initialState, environments: state.environments };
         },
+        setCameraType: (state, action: PayloadAction<CameraType>) => {
+            state.cameraType = action.payload;
+        },
+        setSelectingOrthoPoint: (state, action: PayloadAction<boolean>) => {
+            state.selectingOrthoPoint = action.payload;
+        },
     },
     extraReducers: (builder) => {
         builder.addCase(fetchEnvironments.fulfilled, (state, action) => {
@@ -203,6 +216,8 @@ export const selectRenderType = (state: RootState) => state.render.renderType;
 export const selectClippingBox = (state: RootState) => state.render.clippingBox;
 export const selectMeasure = (state: RootState) => state.render.measure;
 export const selectClippingPlanes = (state: RootState) => state.render.clippingPlanes;
+export const selectCameraType = (state: RootState) => state.render.cameraType;
+export const selectSelectiongOrthoPoint = (state: RootState) => state.render.selectingOrthoPoint;
 
 const { reducer, actions } = renderSlice;
 export { reducer as renderReducer, actions as renderActions };

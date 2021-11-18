@@ -16,7 +16,7 @@ import {
 import { css } from "@mui/styled-engine";
 
 import { config as featuresConfig, WidgetKey } from "config/features";
-import { Divider } from "components";
+import { Divider, ScrollBox } from "components";
 import { WidgetList } from "features/widgetList";
 import { Properties } from "features/properties";
 import { Bookmarks } from "features/bookmarks";
@@ -33,6 +33,7 @@ import { useToggle } from "hooks/useToggle";
 
 import CloseIcon from "@mui/icons-material/Close";
 import { ReactComponent as NovorenderIcon } from "media/icons/novorender-small.svg";
+import { OrthoCam } from "features/orthoCam";
 
 const WidgetContainer = styled((props: PaperProps) => <Paper elevation={4} {...props} />)(
     ({ theme }) => css`
@@ -125,9 +126,9 @@ export function Widget({ widgetKey }: Props) {
                     >
                         {getWidgetByKey(key)}
                     </Box>
-                    <Box display={menuOpen ? "block" : "none"} flexGrow={1} mt={2} mb={2} px={1}>
+                    <ScrollBox display={menuOpen ? "block" : "none"} flexGrow={1} mt={2} mb={2} px={1}>
                         <WidgetList widgetKey={widgetKey} onSelect={toggleMenu} />
-                    </Box>
+                    </ScrollBox>
                 </Box>
             </WidgetContainer>
             <SpeedDial
@@ -166,23 +167,26 @@ export function MenuWidget() {
         <>
             {open ? (
                 <WidgetContainer data-test="menu-widget">
-                    <Box display="flex" p={1} boxShadow={theme.customShadows.widgetHeader}>
-                        <Box display="flex" alignItems="center">
-                            <NovorenderIcon
-                                style={{ fill: theme.palette.primary.main, marginRight: theme.spacing(1) }}
-                            />
-                            <Typography variant="body1" component="h2">
-                                Functions
-                            </Typography>
+                    <Box height="100%" display="flex" flexDirection="column">
+                        <Box display="flex" p={1} boxShadow={theme.customShadows.widgetHeader}>
+                            <Box display="flex" alignItems="center">
+                                <NovorenderIcon
+                                    style={{ fill: theme.palette.primary.main, marginRight: theme.spacing(1) }}
+                                />
+                                <Typography variant="body1" component="h2">
+                                    Functions
+                                </Typography>
+                            </Box>
+                            <Box ml="auto">
+                                <IconButton size="small" onClick={toggle}>
+                                    <CloseIcon />
+                                </IconButton>
+                            </Box>
                         </Box>
-                        <Box ml="auto">
-                            <IconButton size="small" onClick={toggle}>
-                                <CloseIcon />
-                            </IconButton>
-                        </Box>
-                    </Box>
-                    <Box p={1} mt={1}>
-                        <WidgetList onSelect={toggle} />
+
+                        <ScrollBox flexGrow={1} mt={2} mb={2} px={1}>
+                            <WidgetList onSelect={toggle} />
+                        </ScrollBox>
                     </Box>
                 </WidgetContainer>
             ) : null}
@@ -222,6 +226,8 @@ function getWidgetByKey(key: WidgetKey): JSX.Element | string {
             return <Measure />;
         case featuresConfig.clippingPlanes.key:
             return <ClippingPlanes />;
+        case featuresConfig.orthoCam.key:
+            return <OrthoCam />;
         default:
             return key;
     }

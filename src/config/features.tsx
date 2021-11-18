@@ -16,6 +16,7 @@ import SearchIcon from "@mui/icons-material/Search";
 import GradientIcon from "@mui/icons-material/Gradient";
 import FlightTakeoffIcon from "@mui/icons-material/FlightTakeoff";
 import CropLandscapeIcon from "@mui/icons-material/CropLandscape";
+import CameraswitchIcon from "@mui/icons-material/Cameraswitch";
 
 import { ReactComponent as ClippingIcon } from "media/icons/clipping.svg";
 import { ReactComponent as RunIcon } from "media/icons/run.svg";
@@ -79,6 +80,12 @@ export const config = {
         key: "clippingPlanes",
         name: "Clipping plane",
         Icon: CropLandscapeIcon,
+        type: FeatureType.Widget,
+    },
+    orthoCam: {
+        key: "orthoCam",
+        name: "2D",
+        Icon: CameraswitchIcon,
         type: FeatureType.Widget,
     },
     home: {
@@ -159,4 +166,4 @@ export type WidgetKey = {
 
 export type Widget = Config[WidgetKey];
 
-export const defaultEnabledWidgets = [config.shareLink.key];
+export const defaultEnabledWidgets = [config.shareLink.key, config.orthoCam.key];
