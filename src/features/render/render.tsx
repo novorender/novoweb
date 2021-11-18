@@ -714,7 +714,7 @@ export function Render3D({ id, api, onInit, dataApi }: Props) {
                     }
 
                     movementTimer.current = setTimeout(() => {
-                        if (!view) {
+                        if (!view || cameraType === CameraType.Orthographic) {
                             return;
                         }
 
@@ -741,7 +741,7 @@ export function Render3D({ id, api, onInit, dataApi }: Props) {
 
             api.animate = () => cameraMoved(view);
         },
-        [api, view, moveSvg, dispatch, savedCameraPositions]
+        [api, view, moveSvg, dispatch, savedCameraPositions, cameraType]
     );
 
     useEffect(
