@@ -567,7 +567,10 @@ export function Render3D({ id, api, onInit, dataApi }: Props) {
                 const _view = await api.createView(customSettings, canvas);
                 _view.applySettings({
                     quality: {
-                        ..._view.settings.quality,
+                        detail: {
+                            ..._view.settings.quality.detail,
+                            value: 1,
+                        },
                         resolution: {
                             value: 1,
                             autoAdjust: {

@@ -6,6 +6,7 @@ import { offscreenCanvas } from "config";
 import { CustomGroup } from "contexts/customGroups";
 import { ObjectVisibility, RenderType } from "slices/renderSlice";
 import { sleep } from "utils/timers";
+
 import { ssaoEnabled, taaEnabled } from "./consts";
 
 export function createRendering(
@@ -27,24 +28,25 @@ export function createRendering(
     async function start() {
         running.current = true;
 
-        const ctx = offscreenCanvas ? canvas.getContext("2d", { alpha: true, desynchronized: false }) : undefined;
+        const ctx = offscreenCanvas ? canvas.getContext("bitmaprenderer") : undefined;
 
         const fpsTable: number[] = [];
-        let noBlankFrame = true;
+        // let noBlankFrame = true;
+        let startRender = 0;
+        let fps = 0;
         function blankCallback() {
-            noBlankFrame = false;
+            // noBlankFrame = false;
         }
 
         while (running.current) {
-            noBlankFrame = true;
-            const startRender = performance.now();
+            // noBlankFrame = true;
             const output = await view.render(blankCallback);
 
             if (!running.current) {
                 break;
             }
 
-            const { width, height } = canvas;
+            // const { width, height } = canvas;
             const badPerf = view.performanceStatistics.weakDevice; // || view.settings.quality.resolution.value < 1;
 
             if (ssaoEnabled && !badPerf) {
@@ -58,12 +60,12 @@ export function createRendering(
             }
 
             if (ctx && image) {
-                ctx.clearRect(0, 0, width, height);
-                ctx.drawImage(image, 0, 0, width, height); // display in canvas (work on all platforms, but might be less performant)
-                // ctx.transferFromImageBitmap(image); // display in canvas
+                // ctx.clearRect(0, 0, width, height);
+                // ctx.drawImage(image, 0, 0, width, height); // display in canvas (work on all platforms, but might be less performant)
+                ctx.transferFromImageBitmap(image); // display in canvas
             }
 
-            if (noBlankFrame) {
+            /* if (noBlankFrame) {
                 const dt = performance.now() - startRender;
                 fpsTable.splice(0, 0, 1000 / dt);
                 if (fpsTable.length > 200) {
@@ -75,11 +77,27 @@ export function createRendering(
                 }
                 fps /= fpsTable.length;
                 (view.performanceStatistics as any).fps = fps;
-            }
+            } */
 
-            let run = taaEnabled;
+            const now = performance.now();
+            if (startRender > 0) {
+                const dt = now - startRender;
+                fpsTable.splice(0, 0, dt);
+                if (fpsTable.length > 50) {
+                    fpsTable.length = 50;
+                }
+                fps = 0;
+                for (let f of fpsTable) {
+                    fps += f;
+                }
+                fps = (1000 * fpsTable.length) / fps;
+                (view.performanceStatistics as any).fps = fps;
+            }
+            startRender = now;
+
+            let run = taaEnabled && view.camera.controller.params.kind !== "ortho";
             let reset = true;
-            const start = performance.now();
+
             while (run && running.current) {
                 if (output.hasViewChanged) {
                     break;
@@ -87,9 +105,9 @@ export function createRendering(
 
                 await (api as any).waitFrame();
 
-                if (performance.now() - start < 500) {
+                /*  if (performance.now() - start < 500) {
                     continue;
-                }
+                } */
 
                 run = (await output.applyPostEffect({ kind: "taa", reset })) || false;
 
@@ -102,11 +120,12 @@ export function createRendering(
                 }
 
                 reset = false;
+                startRender = 0;
                 const image = await output.getImage();
                 if (ctx && image) {
-                    ctx.clearRect(0, 0, width, height);
-                    ctx.drawImage(image, 0, 0, width, height); // display in canvas (work on all platforms, but might be less performant)
-                    // ctx.transferFromImageBitmap(image); // display in canvas
+                    // ctx.clearRect(0, 0, width, height);
+                    // ctx.drawImage(image, 0, 0, width, height); // display in canvas (work on all platforms, but might be less performant)
+                    ctx.transferFromImageBitmap(image); // display in canvas
                 }
             }
             (output as any).dispose();
