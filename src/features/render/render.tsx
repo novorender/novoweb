@@ -7,6 +7,7 @@ import {
     EnvironmentDescription,
     Internal,
     MeasureInfo,
+    CameraController,
 } from "@novorender/webgl-api";
 import type { API as DataAPI } from "@novorender/data-js-api";
 import { Box, Button, Paper, Typography, useTheme, styled } from "@mui/material";
@@ -35,6 +36,9 @@ import {
     selectSelectMultiple,
     selectDefaultVisibility,
     selectClippingPlanes,
+    selectSelectiongOrthoPoint,
+    selectCameraType,
+    CameraType,
 } from "slices/renderSlice";
 import { authActions } from "slices/authSlice";
 import { useAppDispatch, useAppSelector } from "app/store";
@@ -144,6 +148,8 @@ export function Render3D({ id, api, onInit, dataApi }: Props) {
     const renderType = useAppSelector(selectRenderType);
     const clippingBox = useAppSelector(selectClippingBox);
     const clippingPlanes = useAppSelector(selectClippingPlanes);
+    const cameraType = useAppSelector(selectCameraType);
+    const selectingOrthoPoint = useAppSelector(selectSelectiongOrthoPoint);
     const measure = useAppSelector(selectMeasure);
     const { addingPoint, angles, points, distances, selected: selectedPoint } = measure;
     const dispatch = useAppDispatch();
@@ -153,6 +159,7 @@ export function Render3D({ id, api, onInit, dataApi }: Props) {
     const cameraGeneration = useRef<number>();
     const previousId = useRef("");
     const camera2pointDistance = useRef(0);
+    const flightController = useRef<CameraController>();
     const pointerDown = useRef(false);
     const camX = useRef(vec3.create());
     const camY = useRef(vec3.create());
@@ -560,7 +567,10 @@ export function Render3D({ id, api, onInit, dataApi }: Props) {
                 const _view = await api.createView(customSettings, canvas);
                 _view.applySettings({
                     quality: {
-                        ..._view.settings.quality,
+                        detail: {
+                            ..._view.settings.quality.detail,
+                            value: 1,
+                        },
                         resolution: {
                             value: 1,
                             autoAdjust: {
@@ -707,7 +717,7 @@ export function Render3D({ id, api, onInit, dataApi }: Props) {
                     }
 
                     movementTimer.current = setTimeout(() => {
-                        if (!view) {
+                        if (!view || cameraType === CameraType.Orthographic) {
                             return;
                         }
 
@@ -734,7 +744,7 @@ export function Render3D({ id, api, onInit, dataApi }: Props) {
 
             api.animate = () => cameraMoved(view);
         },
-        [api, view, moveSvg, dispatch, savedCameraPositions]
+        [api, view, moveSvg, dispatch, savedCameraPositions, cameraType]
     );
 
     useEffect(
@@ -840,6 +850,17 @@ export function Render3D({ id, api, onInit, dataApi }: Props) {
         [view, clippingPlanes]
     );
 
+    useEffect(() => {
+        const controller = flightController.current;
+
+        if (view && cameraType === CameraType.Flight && controller) {
+            controller.enabled = true;
+            view.camera.controller = controller;
+        }
+
+        (window as any).camera = view?.camera;
+    }, [cameraType, view]);
+
     useEffect(
         function cleanUpPreviousScene() {
             return () => {
@@ -897,6 +918,23 @@ export function Render3D({ id, api, onInit, dataApi }: Props) {
             return;
         }
 
+        if (selectingOrthoPoint) {
+            if (!canvas) {
+                return;
+            }
+
+            const orthoController = api.createCameraController({ kind: "ortho" }, canvas);
+            (orthoController as any).init(result.position, result.normal, view.camera);
+            flightController.current = view.camera.controller;
+            flightController.current.enabled = false;
+
+            view.camera.controller = orthoController;
+            dispatch(renderActions.setCameraType(CameraType.Orthographic));
+            dispatch(renderActions.setSelectingOrthoPoint(false));
+
+            return;
+        }
+
         const alreadySelected = highlightedObjects.ids[result.objectId] === true;
 
         if (selectMultiple) {
@@ -927,6 +965,7 @@ export function Render3D({ id, api, onInit, dataApi }: Props) {
 
         pointerDown.current = true;
         const result = await view.pick(x, y);
+        console.log({ x, y, result });
 
         if (!result || !pointerDown.current) {
             return;
@@ -996,7 +1035,11 @@ export function Render3D({ id, api, onInit, dataApi }: Props) {
         if (!view || !canvas || (!e.movementY && !e.movementX)) {
             return;
         }
-        if ((addingPoint && e.buttons === 0) || selectedPoint > -1) {
+
+        const useSvgCursor =
+            ((addingPoint || clippingPlanes.defining || selectingOrthoPoint) && e.buttons === 0) || selectedPoint > -1;
+
+        if (useSvgCursor) {
             const measurement = await view.measure(e.nativeEvent.offsetX, e.nativeEvent.offsetY);
 
             canvas.style.cursor = "none";
@@ -1010,13 +1053,6 @@ export function Render3D({ id, api, onInit, dataApi }: Props) {
             } else {
                 moveSvgCursor(e.nativeEvent.offsetX, e.nativeEvent.offsetY, measurement);
             }
-            return;
-        }
-
-        if (clippingPlanes.defining && e.buttons === 0) {
-            canvas.style.cursor = "none";
-            const measurement = await view.measure(e.nativeEvent.offsetX, e.nativeEvent.offsetY);
-            moveSvgCursor(e.nativeEvent.offsetX, e.nativeEvent.offsetY, measurement);
             return;
         }
 
