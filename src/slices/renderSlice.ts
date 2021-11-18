@@ -3,7 +3,7 @@ import type { Bookmark, ObjectGroup } from "@novorender/data-js-api";
 import { createSlice, createAsyncThunk, PayloadAction } from "@reduxjs/toolkit";
 
 import type { RootState } from "app/store";
-import { vec3 } from "gl-matrix";
+import { vec3, vec4 } from "gl-matrix";
 
 export const fetchEnvironments = createAsyncThunk("novorender/fetchEnvironments", async (api: API) => {
     const envs = await api.availableEnvironments("https://api.novorender.com/assets/env/index.json");
@@ -49,13 +49,20 @@ const initialState = {
     cameraSpeedMultiplier: CameraSpeedMultiplier.Normal,
     savedCameraPositions: { currentIndex: -1, positions: [] as CameraPosition[] },
     renderType: RenderType.UnChangeable,
-    clippingPlanes: {
+    clippingBox: {
         defining: false,
         enabled: false,
         inside: true,
         showBox: false,
         highlight: -1,
     } as ClippingPlanes,
+    clippingPlanes: {
+        defining: false,
+        enabled: false,
+        mode: "union" as "union" | "intersection",
+        planes: [] as vec4[],
+        baseW: 0,
+    },
     measure: {
         addingPoint: false,
         selected: -1,
@@ -133,7 +140,13 @@ export const renderSlice = createSlice({
         setRenderType: (state, action: PayloadAction<RenderType>) => {
             state.renderType = action.payload;
         },
-        setClippingPlanes: (state, action: PayloadAction<Partial<ClippingPlanes>>) => {
+        setClippingBox: (state, action: PayloadAction<Partial<ClippingPlanes>>) => {
+            state.clippingBox = { ...state.clippingBox, ...action.payload };
+        },
+        resetClippingBox: (state) => {
+            state.clippingBox = initialState.clippingBox;
+        },
+        setClippingPlanes: (state, action: PayloadAction<Partial<typeof initialState["clippingPlanes"]>>) => {
             state.clippingPlanes = { ...state.clippingPlanes, ...action.payload };
         },
         resetClippingPlanes: (state) => {
@@ -187,8 +200,9 @@ export const selectSavedCameraPositions = (state: RootState) => state.render.sav
 export const selectHomeCameraPosition = (state: RootState) => state.render.savedCameraPositions.positions[0];
 export const selectBookmarks = (state: RootState) => state.render.bookmarks as Bookmark[];
 export const selectRenderType = (state: RootState) => state.render.renderType;
-export const selectClippingPlanes = (state: RootState) => state.render.clippingPlanes;
+export const selectClippingBox = (state: RootState) => state.render.clippingBox;
 export const selectMeasure = (state: RootState) => state.render.measure;
+export const selectClippingPlanes = (state: RootState) => state.render.clippingPlanes;
 
 const { reducer, actions } = renderSlice;
 export { reducer as renderReducer, actions as renderActions };

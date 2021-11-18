@@ -15,16 +15,18 @@ import {
 } from "@mui/material";
 import { css } from "@mui/styled-engine";
 
-import { Divider } from "components";
 import { config as featuresConfig, WidgetKey } from "config/features";
+import { Divider } from "components";
 import { WidgetList } from "features/widgetList";
 import { Properties } from "features/properties";
 import { Bookmarks } from "features/bookmarks";
 import { ModelTree } from "features/modelTree";
 import { Search } from "features/search";
-import { Clipping } from "features/clipping";
+import { ClippingBox } from "features/clippingBox";
 import { Measure } from "features/measure";
 import { Groups } from "features/groups";
+import { ClippingPlanes } from "features/clippingPlanes";
+
 import { useAppSelector, useAppDispatch } from "app/store";
 import { selectEnabledWidgets, explorerActions } from "slices/explorerSlice";
 import { useToggle } from "hooks/useToggle";
@@ -214,10 +216,12 @@ function getWidgetByKey(key: WidgetKey): JSX.Element | string {
             return <ModelTree />;
         case featuresConfig.search.key:
             return <Search />;
-        case featuresConfig.clipping.key:
-            return <Clipping />;
+        case featuresConfig.clippingBox.key:
+            return <ClippingBox />;
         case featuresConfig.measure.key:
             return <Measure />;
+        case featuresConfig.clippingPlanes.key:
+            return <ClippingPlanes />;
         default:
             return key;
     }

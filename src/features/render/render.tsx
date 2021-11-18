@@ -25,7 +25,7 @@ import {
     RenderType,
     selectBaseCameraSpeed,
     selectCameraSpeedMultiplier,
-    selectClippingPlanes,
+    selectClippingBox,
     selectCurrentEnvironment,
     selectEnvironments,
     selectMainObject,
@@ -34,6 +34,7 @@ import {
     selectSavedCameraPositions,
     selectSelectMultiple,
     selectDefaultVisibility,
+    selectClippingPlanes,
 } from "slices/renderSlice";
 import { authActions } from "slices/authSlice";
 import { useAppDispatch, useAppSelector } from "app/store";
@@ -141,6 +142,7 @@ export function Render3D({ id, api, onInit, dataApi }: Props) {
     const savedCameraPositions = useAppSelector(selectSavedCameraPositions);
     const selectMultiple = useAppSelector(selectSelectMultiple);
     const renderType = useAppSelector(selectRenderType);
+    const clippingBox = useAppSelector(selectClippingBox);
     const clippingPlanes = useAppSelector(selectClippingPlanes);
     const measure = useAppSelector(selectMeasure);
     const { addingPoint, angles, points, distances, selected: selectedPoint } = measure;
@@ -593,7 +595,7 @@ export function Render3D({ id, api, onInit, dataApi }: Props) {
                 dispatch(renderActions.setBookmarks(bookmarks));
 
                 if (settings.clippingPlanes?.enabled) {
-                    dispatch(renderActions.setClippingPlanes({ enabled: true }));
+                    dispatch(renderActions.setClippingBox({ enabled: true }));
                 }
 
                 const defaultGroup = objectGroups.find((group) => !group.id && group.selected);
@@ -811,12 +813,29 @@ export function Render3D({ id, api, onInit, dataApi }: Props) {
     );
 
     useEffect(
-        function handleClippingChanges() {
+        function handleClippingBoxChanges() {
             if (!view) {
                 return;
             }
 
-            view.applySettings({ clippingPlanes: { ...clippingPlanes, bounds: view.settings.clippingPlanes.bounds } });
+            view.applySettings({ clippingPlanes: { ...clippingBox, bounds: view.settings.clippingPlanes.bounds } });
+        },
+        [view, clippingBox]
+    );
+
+    useEffect(
+        function handleClippingPlaneChanges() {
+            if (!view) {
+                return;
+            }
+
+            view.applySettings({
+                clippingVolume: {
+                    planes: clippingPlanes.planes,
+                    enabled: clippingPlanes.planes.length ? clippingPlanes.enabled : false,
+                    mode: clippingPlanes.mode,
+                },
+            });
         },
         [view, clippingPlanes]
     );
@@ -841,7 +860,7 @@ export function Render3D({ id, api, onInit, dataApi }: Props) {
     };
 
     const handleClick = async (e: React.MouseEvent) => {
-        if (!view || clippingPlanes.defining) {
+        if (!view || clippingBox.defining) {
             return;
         }
 
@@ -855,6 +874,26 @@ export function Render3D({ id, api, onInit, dataApi }: Props) {
             const points = measure.points.concat([result.position]);
             moveSvgCursor(-100, -100, undefined);
             dispatch(renderActions.setMeasurePoints(points));
+            return;
+        }
+
+        if (clippingPlanes.defining) {
+            const { normal, position } = result;
+
+            if (!normal) {
+                return;
+            }
+
+            const w = -vec3.dot(normal, position);
+
+            dispatch(
+                renderActions.setClippingPlanes({
+                    defining: false,
+                    planes: [vec4.fromValues(normal[0], normal[1], normal[2], w)],
+                    baseW: w,
+                })
+            );
+            moveSvgCursor(-100, -100, undefined);
             return;
         }
 
@@ -899,7 +938,7 @@ export function Render3D({ id, api, onInit, dataApi }: Props) {
         vec3.transformQuat(camX.current, xAxis, rotation);
         vec3.transformQuat(camY.current, yAxis, rotation);
 
-        if (clippingPlanes.defining) {
+        if (clippingBox.defining) {
             view.camera.controller.enabled = false;
             const tan = Math.tan(0.5 * glMatrix.toRadian(fieldOfView));
             const size = 0.25 * tan * camera2pointDistance.current;
@@ -908,15 +947,15 @@ export function Render3D({ id, api, onInit, dataApi }: Props) {
                 max: vec3.fromValues(point[0] + size, point[1] + size, point[2] + size),
             };
 
-            view.applySettings({ clippingPlanes: { ...clippingPlanes, bounds } });
+            view.applySettings({ clippingPlanes: { ...clippingBox, bounds } });
         } else if (result.objectId > 0xfffffffe || result.objectId < 0xfffffff9) {
             camera2pointDistance.current = 0;
-        } else if (clippingPlanes.enabled && clippingPlanes.showBox) {
+        } else if (clippingBox.enabled && clippingBox.showBox) {
             view.camera.controller.enabled = false;
 
             const highlight = 0xfffffffe - result.objectId;
 
-            dispatch(renderActions.setClippingPlanes({ ...clippingPlanes, highlight }));
+            dispatch(renderActions.setClippingBox({ ...clippingBox, highlight }));
         }
     };
 
@@ -943,8 +982,8 @@ export function Render3D({ id, api, onInit, dataApi }: Props) {
             return;
         }
 
-        if (camera2pointDistance.current > 0 && clippingPlanes.defining) {
-            dispatch(renderActions.setClippingPlanes({ ...clippingPlanes, defining: false }));
+        if (camera2pointDistance.current > 0 && clippingBox.defining) {
+            dispatch(renderActions.setClippingBox({ ...clippingBox, defining: false }));
         }
 
         pointerDown.current = false;
@@ -973,20 +1012,28 @@ export function Render3D({ id, api, onInit, dataApi }: Props) {
             }
             return;
         }
+
+        if (clippingPlanes.defining && e.buttons === 0) {
+            canvas.style.cursor = "none";
+            const measurement = await view.measure(e.nativeEvent.offsetX, e.nativeEvent.offsetY);
+            moveSvgCursor(e.nativeEvent.offsetX, e.nativeEvent.offsetY, measurement);
+            return;
+        }
+
         moveSvgCursor(-100, -100, undefined);
         canvas.style.cursor = "default";
         if (
             !pointerDown.current ||
-            !clippingPlanes.enabled ||
-            !clippingPlanes.showBox ||
+            !clippingBox.enabled ||
+            !clippingBox.showBox ||
             camera2pointDistance.current === 0
         ) {
             return;
         }
 
-        const activeSide = clippingPlanes.highlight;
+        const activeSide = clippingBox.highlight;
 
-        if (activeSide === -1 && !clippingPlanes.defining) {
+        if (activeSide === -1 && !clippingBox.defining) {
             return;
         }
 
@@ -1002,7 +1049,7 @@ export function Render3D({ id, api, onInit, dataApi }: Props) {
         x *= scale;
         y *= scale;
 
-        if (clippingPlanes.defining) {
+        if (clippingBox.defining) {
             const dist = x + y;
             const delta = vec3.fromValues(dist, dist, dist);
             vec3.add(max, max, delta);
@@ -1024,15 +1071,15 @@ export function Render3D({ id, api, onInit, dataApi }: Props) {
                 min[axisIdx] = max[axisIdx];
                 max[axisIdx] = tmp;
                 dispatch(
-                    renderActions.setClippingPlanes({
-                        ...clippingPlanes,
+                    renderActions.setClippingBox({
+                        ...clippingBox,
                         highlight: activeSide > 2 ? axisIdx : axisIdx + 3,
                     })
                 );
             }
         }
 
-        view.applySettings({ clippingPlanes: { ...clippingPlanes, bounds: { min, max } } });
+        view.applySettings({ clippingPlanes: { ...clippingBox, bounds: { min, max } } });
     };
     const numP = points.length;
 

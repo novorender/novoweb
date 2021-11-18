@@ -39,7 +39,7 @@ export function WidgetList({ widgetKey, onSelect }: Props) {
                     const activeElsewhere = !activeCurrent && activeWidgets.includes(key);
 
                     return (
-                        <Grid xs={4} sm={3} item key={key}>
+                        <Grid xs={4} sm={4} mb={2} item key={key}>
                             {key === featuresConfig.shareLink.key ? (
                                 <ShareLink />
                             ) : (

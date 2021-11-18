@@ -121,9 +121,9 @@ export function Bookmarks() {
 
         if (bookmark.clippingPlanes) {
             view.applySettings({ clippingPlanes: { ...bookmark.clippingPlanes, highlight: -1 } });
-            dispatch(renderActions.setClippingPlanes({ ...bookmark.clippingPlanes, highlight: -1, defining: false }));
+            dispatch(renderActions.setClippingBox({ ...bookmark.clippingPlanes, highlight: -1, defining: false }));
         } else {
-            dispatch(renderActions.resetClippingPlanes());
+            dispatch(renderActions.resetClippingBox());
         }
     }
 
