@@ -177,4 +177,6 @@ export type Widget = Config[WidgetKey];
 export const defaultEnabledWidgets = [config.shareLink.key, config.orthoCam.key];
 export const defaultEnabledAdminWidgets = Object.values(config)
     .filter((value) => [FeatureType.AdminWidget, FeatureType.Widget].includes(value.type))
-    .map((widget) => widget.key) as WidgetKey[];
+    .map((widget) => widget.key)
+    // NOTE(OLA): viewer scene widget is not ready
+    .filter((key) => key !== config.viewerScenes.key) as WidgetKey[];

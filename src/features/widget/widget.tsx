@@ -94,8 +94,12 @@ export function Widget({ widgetKey }: Props) {
     }
 
     const { name, Icon, key } = config;
+    // TODO(OLA): Fix this. Probably move full widget w/ header to each feature.
     const headerShadow =
-        menuOpen || !([featuresConfig.search.key, featuresConfig.measure.key] as string[]).includes(key);
+        menuOpen ||
+        !([featuresConfig.search.key, featuresConfig.measure.key, featuresConfig.bookmarks.key] as string[]).includes(
+            key
+        );
 
     return (
         <>
