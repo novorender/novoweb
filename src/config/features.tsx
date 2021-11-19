@@ -16,6 +16,8 @@ import SearchIcon from "@mui/icons-material/Search";
 import GradientIcon from "@mui/icons-material/Gradient";
 import FlightTakeoffIcon from "@mui/icons-material/FlightTakeoff";
 import MovieIcon from "@mui/icons-material/Movie";
+import CropLandscapeIcon from "@mui/icons-material/CropLandscape";
+import CameraswitchIcon from "@mui/icons-material/Cameraswitch";
 
 import { ReactComponent as ClippingIcon } from "media/icons/clipping.svg";
 import { ReactComponent as RunIcon } from "media/icons/run.svg";
@@ -64,9 +66,9 @@ export const config = {
         Icon: SearchIcon,
         type: FeatureType.Widget,
     },
-    clipping: {
-        key: "clipping",
-        name: "Clipping",
+    clippingBox: {
+        key: "clippingBox",
+        name: "Clipping box",
         Icon: ClippingIcon,
         type: FeatureType.Widget,
     },
@@ -80,6 +82,18 @@ export const config = {
         key: "shareLink",
         name: "Share link",
         Icon: ShareIcon,
+        type: FeatureType.Widget,
+    },
+    clippingPlanes: {
+        key: "clippingPlanes",
+        name: "Clipping plane",
+        Icon: CropLandscapeIcon,
+        type: FeatureType.Widget,
+    },
+    orthoCam: {
+        key: "orthoCam",
+        name: "2D",
+        Icon: CameraswitchIcon,
         type: FeatureType.Widget,
     },
     home: {
@@ -160,7 +174,7 @@ export type WidgetKey = {
 
 export type Widget = Config[WidgetKey];
 
-export const defaultEnabledWidgets = [config.shareLink.key];
+export const defaultEnabledWidgets = [config.shareLink.key, config.orthoCam.key];
 export const defaultEnabledAdminWidgets = Object.values(config)
     .filter((value) => [FeatureType.AdminWidget, FeatureType.Widget].includes(value.type))
     .map((widget) => widget.key) as WidgetKey[];

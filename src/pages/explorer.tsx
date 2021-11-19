@@ -122,7 +122,7 @@ function enabledFeaturesToFeatureKeys(enabledFeatures: Record<string, boolean>):
     const dictionary: Record<string, string | string[] | undefined> = {
         bookmarks: featuresConfig.bookmarks.key,
         measurement: featuresConfig.measure.key,
-        clipping: featuresConfig.clipping.key,
+        clipping: [featuresConfig.clippingBox.key, featuresConfig.clippingPlanes.key],
         properties: featuresConfig.properties.key,
         tree: featuresConfig.modelTree.key,
         groups: featuresConfig.groups.key,

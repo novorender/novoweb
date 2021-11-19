@@ -1,5 +1,4 @@
 import { Fragment } from "react";
-import { quat, vec3 } from "gl-matrix";
 import {
     useTheme,
     List,
@@ -15,8 +14,8 @@ import type { Bookmark } from "@novorender/data-js-api";
 import { css } from "@mui/styled-engine";
 
 import { ScrollBox, Tooltip, Divider } from "components";
-import { ObjectVisibility, renderActions, selectBookmarks } from "slices/renderSlice";
 import { useAppDispatch, useAppSelector } from "app/store";
+import { CameraType, ObjectVisibility, renderActions, selectBookmarks } from "slices/renderSlice";
 import { highlightActions, useDispatchHighlighted } from "contexts/highlighted";
 import { hiddenGroupActions, useDispatchHidden } from "contexts/hidden";
 import { customGroupsActions, useCustomGroups } from "contexts/customGroups";
@@ -68,16 +67,6 @@ export function Bookmarks() {
     const dispatch = useAppDispatch();
 
     function handleSelect(bookmark: Bookmark) {
-        if (bookmark.camera) {
-            const sameCameraPosition =
-                vec3.equals(view.camera.position, bookmark.camera.position) &&
-                quat.equals(view.camera.rotation, bookmark.camera.rotation);
-
-            if (!sameCameraPosition) {
-                view.camera.controller.moveTo(bookmark.camera.position, bookmark.camera.rotation);
-            }
-        }
-
         if (bookmark.objectGroups) {
             const bmDefaultGroup = bookmark.objectGroups.find((group) => !group.id && group.selected);
             if (bmDefaultGroup?.ids) {
@@ -121,9 +110,16 @@ export function Bookmarks() {
 
         if (bookmark.clippingPlanes) {
             view.applySettings({ clippingPlanes: { ...bookmark.clippingPlanes, highlight: -1 } });
-            dispatch(renderActions.setClippingPlanes({ ...bookmark.clippingPlanes, highlight: -1, defining: false }));
+            dispatch(renderActions.setClippingBox({ ...bookmark.clippingPlanes, highlight: -1, defining: false }));
         } else {
-            dispatch(renderActions.resetClippingPlanes());
+            dispatch(renderActions.resetClippingBox());
+        }
+
+        if (bookmark.ortho) {
+            dispatch(renderActions.setCamera({ type: CameraType.Orthographic, params: bookmark.ortho }));
+        } else if (bookmark.camera) {
+            dispatch(renderActions.setCamera({ type: CameraType.Flight, goTo: bookmark.camera }));
+            dispatch(renderActions.setSelectingOrthoPoint(false));
         }
     }
 

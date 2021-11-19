@@ -1,9 +1,16 @@
-import type { API, Camera, EnvironmentDescription, ObjectId, RenderSettings } from "@novorender/webgl-api";
+import type {
+    API,
+    Camera,
+    EnvironmentDescription,
+    ObjectId,
+    OrthoControllerParams,
+    RenderSettings,
+} from "@novorender/webgl-api";
 import type { Bookmark, ObjectGroup } from "@novorender/data-js-api";
 import { createSlice, createAsyncThunk, PayloadAction } from "@reduxjs/toolkit";
+import { vec3, vec4 } from "gl-matrix";
 
 import type { RootState } from "app/store";
-import { vec3 } from "gl-matrix";
 
 export const fetchEnvironments = createAsyncThunk("novorender/fetchEnvironments", async (api: API) => {
     const envs = await api.availableEnvironments("https://api.novorender.com/assets/env/index.json");
@@ -29,6 +36,11 @@ export enum ObjectVisibility {
     Transparent,
 }
 
+export enum CameraType {
+    Orthographic,
+    Flight,
+}
+
 type CameraPosition = Pick<Camera, "position" | "rotation">;
 export type ObjectGroups = { default: ObjectGroup; defaultHidden: ObjectGroup; custom: ObjectGroup[] };
 export type ClippingPlanes = Omit<RenderSettings["clippingPlanes"], "bounds"> & { defining: boolean };
@@ -37,6 +49,10 @@ export type ClippingPlanes = Omit<RenderSettings["clippingPlanes"], "bounds"> & 
 // unless we cast the types to writable ones.
 type DeepWritable<T> = { -readonly [P in keyof T]: DeepWritable<T[P]> };
 type WritableBookmark = DeepWritable<Bookmark>;
+type CameraState =
+    | { type: CameraType.Orthographic; params?: OrthoControllerParams }
+    | { type: CameraType.Flight; goTo?: { position: Camera["position"]; rotation: Camera["rotation"] } };
+type WritableCameraState = DeepWritable<CameraState>;
 
 const initialState = {
     environments: [] as EnvironmentDescription[],
@@ -49,13 +65,20 @@ const initialState = {
     cameraSpeedMultiplier: CameraSpeedMultiplier.Normal,
     savedCameraPositions: { currentIndex: -1, positions: [] as CameraPosition[] },
     renderType: RenderType.UnChangeable,
-    clippingPlanes: {
+    clippingBox: {
         defining: false,
         enabled: false,
         inside: true,
         showBox: false,
         highlight: -1,
     } as ClippingPlanes,
+    clippingPlanes: {
+        defining: false,
+        enabled: false,
+        mode: "union" as "union" | "intersection",
+        planes: [] as vec4[],
+        baseW: 0,
+    },
     measure: {
         addingPoint: false,
         selected: -1,
@@ -64,6 +87,8 @@ const initialState = {
         distances: [] as number[],
         angles: [] as number[],
     },
+    camera: { type: CameraType.Flight } as WritableCameraState,
+    selectingOrthoPoint: false,
 };
 
 type State = typeof initialState;
@@ -133,7 +158,13 @@ export const renderSlice = createSlice({
         setRenderType: (state, action: PayloadAction<RenderType>) => {
             state.renderType = action.payload;
         },
-        setClippingPlanes: (state, action: PayloadAction<Partial<ClippingPlanes>>) => {
+        setClippingBox: (state, action: PayloadAction<Partial<ClippingPlanes>>) => {
+            state.clippingBox = { ...state.clippingBox, ...action.payload };
+        },
+        resetClippingBox: (state) => {
+            state.clippingBox = initialState.clippingBox;
+        },
+        setClippingPlanes: (state, action: PayloadAction<Partial<typeof initialState["clippingPlanes"]>>) => {
             state.clippingPlanes = { ...state.clippingPlanes, ...action.payload };
         },
         resetClippingPlanes: (state) => {
@@ -168,6 +199,12 @@ export const renderSlice = createSlice({
         resetState: (state) => {
             return { ...initialState, environments: state.environments };
         },
+        setCamera: (state, { payload }: PayloadAction<CameraState>) => {
+            state.camera = payload as WritableCameraState;
+        },
+        setSelectingOrthoPoint: (state, action: PayloadAction<boolean>) => {
+            state.selectingOrthoPoint = action.payload;
+        },
     },
     extraReducers: (builder) => {
         builder.addCase(fetchEnvironments.fulfilled, (state, action) => {
@@ -187,8 +224,12 @@ export const selectSavedCameraPositions = (state: RootState) => state.render.sav
 export const selectHomeCameraPosition = (state: RootState) => state.render.savedCameraPositions.positions[0];
 export const selectBookmarks = (state: RootState) => state.render.bookmarks as Bookmark[];
 export const selectRenderType = (state: RootState) => state.render.renderType;
-export const selectClippingPlanes = (state: RootState) => state.render.clippingPlanes;
+export const selectClippingBox = (state: RootState) => state.render.clippingBox;
 export const selectMeasure = (state: RootState) => state.render.measure;
+export const selectClippingPlanes = (state: RootState) => state.render.clippingPlanes;
+export const selectCamera = (state: RootState) => state.render.camera as CameraState;
+export const selectCameraType = (state: RootState) => state.render.camera.type;
+export const selectSelectiongOrthoPoint = (state: RootState) => state.render.selectingOrthoPoint;
 
 const { reducer, actions } = renderSlice;
 export { reducer as renderReducer, actions as renderActions };
