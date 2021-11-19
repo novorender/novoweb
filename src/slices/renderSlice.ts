@@ -1,9 +1,16 @@
-import type { API, Camera, EnvironmentDescription, ObjectId, RenderSettings } from "@novorender/webgl-api";
+import type {
+    API,
+    Camera,
+    EnvironmentDescription,
+    ObjectId,
+    OrthoControllerParams,
+    RenderSettings,
+} from "@novorender/webgl-api";
 import type { Bookmark, ObjectGroup } from "@novorender/data-js-api";
 import { createSlice, createAsyncThunk, PayloadAction } from "@reduxjs/toolkit";
+import { vec3, vec4 } from "gl-matrix";
 
 import type { RootState } from "app/store";
-import { vec3, vec4 } from "gl-matrix";
 
 export const fetchEnvironments = createAsyncThunk("novorender/fetchEnvironments", async (api: API) => {
     const envs = await api.availableEnvironments("https://api.novorender.com/assets/env/index.json");
@@ -42,6 +49,10 @@ export type ClippingPlanes = Omit<RenderSettings["clippingPlanes"], "bounds"> & 
 // unless we cast the types to writable ones.
 type DeepWritable<T> = { -readonly [P in keyof T]: DeepWritable<T[P]> };
 type WritableBookmark = DeepWritable<Bookmark>;
+type CameraState =
+    | { type: CameraType.Orthographic; params?: OrthoControllerParams }
+    | { type: CameraType.Flight; goTo?: { position: Camera["position"]; rotation: Camera["rotation"] } };
+type WritableCameraState = DeepWritable<CameraState>;
 
 const initialState = {
     environments: [] as EnvironmentDescription[],
@@ -76,7 +87,7 @@ const initialState = {
         distances: [] as number[],
         angles: [] as number[],
     },
-    cameraType: CameraType.Flight,
+    camera: { type: CameraType.Flight } as WritableCameraState,
     selectingOrthoPoint: false,
 };
 
@@ -188,8 +199,8 @@ export const renderSlice = createSlice({
         resetState: (state) => {
             return { ...initialState, environments: state.environments };
         },
-        setCameraType: (state, action: PayloadAction<CameraType>) => {
-            state.cameraType = action.payload;
+        setCamera: (state, { payload }: PayloadAction<CameraState>) => {
+            state.camera = payload as WritableCameraState;
         },
         setSelectingOrthoPoint: (state, action: PayloadAction<boolean>) => {
             state.selectingOrthoPoint = action.payload;
@@ -216,7 +227,8 @@ export const selectRenderType = (state: RootState) => state.render.renderType;
 export const selectClippingBox = (state: RootState) => state.render.clippingBox;
 export const selectMeasure = (state: RootState) => state.render.measure;
 export const selectClippingPlanes = (state: RootState) => state.render.clippingPlanes;
-export const selectCameraType = (state: RootState) => state.render.cameraType;
+export const selectCamera = (state: RootState) => state.render.camera as CameraState;
+export const selectCameraType = (state: RootState) => state.render.camera.type;
 export const selectSelectiongOrthoPoint = (state: RootState) => state.render.selectingOrthoPoint;
 
 const { reducer, actions } = renderSlice;

@@ -8,6 +8,7 @@ import {
     Internal,
     MeasureInfo,
     CameraController,
+    OrthoControllerParams,
 } from "@novorender/webgl-api";
 import type { API as DataAPI } from "@novorender/data-js-api";
 import { Box, Button, Paper, Typography, useTheme, styled } from "@mui/material";
@@ -37,8 +38,8 @@ import {
     selectDefaultVisibility,
     selectClippingPlanes,
     selectSelectiongOrthoPoint,
-    selectCameraType,
     CameraType,
+    selectCamera,
 } from "slices/renderSlice";
 import { authActions } from "slices/authSlice";
 import { useAppDispatch, useAppSelector } from "app/store";
@@ -148,7 +149,7 @@ export function Render3D({ id, api, onInit, dataApi }: Props) {
     const renderType = useAppSelector(selectRenderType);
     const clippingBox = useAppSelector(selectClippingBox);
     const clippingPlanes = useAppSelector(selectClippingPlanes);
-    const cameraType = useAppSelector(selectCameraType);
+    const cameraState = useAppSelector(selectCamera);
     const selectingOrthoPoint = useAppSelector(selectSelectiongOrthoPoint);
     const measure = useAppSelector(selectMeasure);
     const { addingPoint, angles, points, distances, selected: selectedPoint } = measure;
@@ -591,6 +592,7 @@ export function Render3D({ id, api, onInit, dataApi }: Props) {
                 }
 
                 _view.camera.controller = controller;
+                flightController.current = controller;
                 cameraGeneration.current = _view.performanceStatistics.cameraGeneration;
 
                 if (window.self === window.top || !customProperties?.enabledFeatures?.transparentBackground) {
@@ -717,7 +719,7 @@ export function Render3D({ id, api, onInit, dataApi }: Props) {
                     }
 
                     movementTimer.current = setTimeout(() => {
-                        if (!view || cameraType === CameraType.Orthographic) {
+                        if (!view || cameraState.type === CameraType.Orthographic) {
                             return;
                         }
 
@@ -744,7 +746,7 @@ export function Render3D({ id, api, onInit, dataApi }: Props) {
 
             api.animate = () => cameraMoved(view);
         },
-        [api, view, moveSvg, dispatch, savedCameraPositions, cameraType]
+        [api, view, moveSvg, dispatch, savedCameraPositions, cameraState]
     );
 
     useEffect(
@@ -853,13 +855,39 @@ export function Render3D({ id, api, onInit, dataApi }: Props) {
     useEffect(() => {
         const controller = flightController.current;
 
-        if (view && cameraType === CameraType.Flight && controller) {
-            controller.enabled = true;
-            view.camera.controller = controller;
+        if (!controller || !view || !canvas) {
+            return;
         }
 
-        (window as any).camera = view?.camera;
-    }, [cameraType, view]);
+        if (cameraState.type === CameraType.Flight) {
+            controller.enabled = true;
+            view.camera.controller = controller;
+
+            if (cameraState.goTo) {
+                const sameCameraPosition =
+                    vec3.equals(view.camera.position, cameraState.goTo.position) &&
+                    quat.equals(view.camera.rotation, cameraState.goTo.rotation);
+
+                if (!sameCameraPosition) {
+                    view.camera.controller.moveTo(cameraState.goTo.position, cameraState.goTo.rotation);
+                }
+            }
+        } else if (cameraState.type === CameraType.Orthographic && cameraState.params) {
+            // copy non-primitives
+            const orthoController = api.createCameraController(
+                {
+                    ...cameraState.params,
+                    referenceCoordSys: cameraState.params.referenceCoordSys
+                        ? Array.from(cameraState.params.referenceCoordSys)
+                        : undefined,
+                    position: cameraState.params.position ? Array.from(cameraState.params.position) : undefined,
+                } as any as OrthoControllerParams,
+                canvas
+            );
+            controller.enabled = false;
+            view.camera.controller = orthoController;
+        }
+    }, [cameraState, view, canvas, api]);
 
     useEffect(
         function cleanUpPreviousScene() {
@@ -929,7 +957,7 @@ export function Render3D({ id, api, onInit, dataApi }: Props) {
             flightController.current.enabled = false;
 
             view.camera.controller = orthoController;
-            dispatch(renderActions.setCameraType(CameraType.Orthographic));
+            dispatch(renderActions.setCamera({ type: CameraType.Orthographic }));
             dispatch(renderActions.setSelectingOrthoPoint(false));
 
             return;
@@ -965,7 +993,6 @@ export function Render3D({ id, api, onInit, dataApi }: Props) {
 
         pointerDown.current = true;
         const result = await view.pick(x, y);
-        console.log({ x, y, result });
 
         if (!result || !pointerDown.current) {
             return;
