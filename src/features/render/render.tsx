@@ -965,7 +965,6 @@ export function Render3D({ id, api, onInit, dataApi }: Props) {
 
         pointerDown.current = true;
         const result = await view.pick(x, y);
-        console.log({ x, y, result });
 
         if (!result || !pointerDown.current) {
             return;
