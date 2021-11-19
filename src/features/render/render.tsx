@@ -39,6 +39,7 @@ import {
     selectSelectiongOrthoPoint,
     CameraType,
     selectCamera,
+    selectShowPerformance,
 } from "slices/renderSlice";
 import { authActions } from "slices/authSlice";
 import { explorerActions } from "slices/explorerSlice";
@@ -58,7 +59,7 @@ import {
     refillObjects,
     createRendering,
 } from "./utils";
-import { xAxis, yAxis, axis, showPerformance } from "./consts";
+import { xAxis, yAxis, axis } from "./consts";
 
 glMatrix.setMatrixArrayType(Array);
 addConsoleDebugUtils();
@@ -149,6 +150,7 @@ export function Render3D({ id, onInit }: Props) {
     const clippingPlanes = useAppSelector(selectClippingPlanes);
     const cameraState = useAppSelector(selectCamera);
     const selectingOrthoPoint = useAppSelector(selectSelectiongOrthoPoint);
+    const showPerformance = useAppSelector(selectShowPerformance);
     const measure = useAppSelector(selectMeasure);
     const { addingPoint, angles, points, distances, selected: selectedPoint } = measure;
     const dispatch = useAppDispatch();
@@ -660,6 +662,11 @@ export function Render3D({ id, onInit }: Props) {
                 resizeObserver.observe(canvas);
 
                 onInit({ customProperties });
+
+                if (window.location.origin !== "https://explorer.novorender.com" && customProperties?.stats) {
+                    dispatch(renderActions.setShowPerformance(true));
+                }
+
                 dispatchGlobals(
                     explorerGlobalsActions.update({
                         view: _view,

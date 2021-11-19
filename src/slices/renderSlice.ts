@@ -89,6 +89,7 @@ const initialState = {
     },
     camera: { type: CameraType.Flight } as WritableCameraState,
     selectingOrthoPoint: false,
+    showPerformance: false,
 };
 
 type State = typeof initialState;
@@ -205,6 +206,9 @@ export const renderSlice = createSlice({
         setSelectingOrthoPoint: (state, action: PayloadAction<boolean>) => {
             state.selectingOrthoPoint = action.payload;
         },
+        setShowPerformance: (state, action: PayloadAction<boolean>) => {
+            state.showPerformance = action.payload;
+        },
     },
     extraReducers: (builder) => {
         builder.addCase(fetchEnvironments.fulfilled, (state, action) => {
@@ -230,6 +234,7 @@ export const selectClippingPlanes = (state: RootState) => state.render.clippingP
 export const selectCamera = (state: RootState) => state.render.camera as CameraState;
 export const selectCameraType = (state: RootState) => state.render.camera.type;
 export const selectSelectiongOrthoPoint = (state: RootState) => state.render.selectingOrthoPoint;
+export const selectShowPerformance = (state: RootState) => state.render.showPerformance;
 
 const { reducer, actions } = renderSlice;
 export { reducer as renderReducer, actions as renderActions };
