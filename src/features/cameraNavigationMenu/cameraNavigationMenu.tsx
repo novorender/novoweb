@@ -5,6 +5,9 @@ import { StepBack } from "features/stepBack";
 import { StepForwards } from "features/stepForwards";
 import { Home } from "features/home";
 import { FlyToSelected } from "features/flyToSelected";
+
+import { useAppSelector } from "app/store";
+import { CameraType, selectCameraType } from "slices/renderSlice";
 import { useToggle } from "hooks/useToggle";
 
 import AddIcon from "@mui/icons-material/Add";
@@ -14,6 +17,7 @@ export function CameraNavigationMenu() {
     const [open, toggle] = useToggle(true);
     const theme = useTheme();
     const isSmall = useMediaQuery(theme.breakpoints.down("md"));
+    const cameraType = useAppSelector(selectCameraType);
 
     const handleToggle = (reason: OpenReason | CloseReason) => {
         if (!["toggle", "escapeKeyDown"].includes(reason)) {
@@ -27,7 +31,7 @@ export function CameraNavigationMenu() {
 
     return (
         <SpeedDial
-            open={open}
+            open={open && cameraType !== CameraType.Orthographic}
             onOpen={(_event, reason) => handleToggle(reason)}
             onClose={(_event, reason) => handleToggle(reason)}
             ariaLabel="canvas navigation"
