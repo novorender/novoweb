@@ -13,7 +13,7 @@ export function OrthoCam() {
     const toggle = () => {
         if (cameraType === CameraType.Orthographic || selectingOrthoPoint) {
             dispatch(renderActions.setSelectingOrthoPoint(false));
-            dispatch(renderActions.setCameraType(CameraType.Flight));
+            dispatch(renderActions.setCamera({ type: CameraType.Flight }));
         } else {
             dispatch(renderActions.setSelectingOrthoPoint(true));
         }
