@@ -2,6 +2,8 @@ import { SceneData } from "@novorender/data-js-api";
 import { Scene, View } from "@novorender/webgl-api";
 import { createContext, Dispatch, ReactNode, useContext, useReducer } from "react";
 
+// Values that are used all over the place within Explorer, but are unserializable go here instead of redux store.
+
 const initialState = {
     view: undefined as undefined | View,
     scene: undefined as undefined | Scene,

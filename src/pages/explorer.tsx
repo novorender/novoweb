@@ -2,18 +2,23 @@ import { ReactNode, useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import { SearchPattern } from "@novorender/webgl-api";
 
-import { api, dataApi } from "app";
+import { dataApi } from "app";
 import { uniqueArray } from "utils/misc";
 import { getOAuthState } from "utils/auth";
 
-import { FeatureKey, config as featuresConfig, defaultEnabledWidgets } from "config/features";
+import {
+    config as featuresConfig,
+    defaultEnabledWidgets,
+    defaultEnabledAdminWidgets,
+    WidgetKey,
+} from "config/features";
 import { Loading } from "components";
 import { Hud } from "features/hud";
 import { Render3D } from "features/render";
 import { Protected } from "features/protectedRoute";
 
 import { useAppSelector, useAppDispatch } from "app/store";
-import { explorerActions } from "slices/explorerSlice";
+import { explorerActions, SceneType } from "slices/explorerSlice";
 import { selectAccessToken } from "slices/authSlice";
 import { HiddenProvider } from "contexts/hidden";
 import { CustomGroupsProvider } from "contexts/customGroups";
@@ -44,10 +49,15 @@ function ExplorerBase() {
     }, [id, dispatchGlobals]);
 
     const handleInit = ({ customProperties }: { customProperties: unknown }) => {
+        const isAdmin = !getIsViewerScene(customProperties);
+        dispatch(explorerActions.setSceneType(isAdmin ? SceneType.Admin : SceneType.Viewer));
+
         const enabledFeatures = getEnabledFeatures(customProperties);
 
-        if (enabledFeatures) {
-            dispatch(explorerActions.setEnabledFeatures(enabledFeaturesToFeatureKeys(enabledFeatures)));
+        if (isAdmin) {
+            dispatch(explorerActions.setEnabledWidgets(defaultEnabledAdminWidgets));
+        } else if (enabledFeatures) {
+            dispatch(explorerActions.setEnabledWidgets(enabledFeaturesToFeatureKeys(enabledFeatures)));
         }
 
         const oAuthState = getOAuthState();
@@ -61,7 +71,7 @@ function ExplorerBase() {
 
     return (
         <AuthCheck id={id}>
-            <Render3D id={id} api={api} dataApi={dataApi} onInit={handleInit} />
+            <Render3D id={id} onInit={handleInit} />
             {view && scene ? <Hud /> : null}
         </AuthCheck>
     );
@@ -117,11 +127,11 @@ function AuthCheck({ id, children }: { id: string; children: ReactNode }) {
     return <Protected>{children}</Protected>;
 }
 
-function enabledFeaturesToFeatureKeys(enabledFeatures: Record<string, boolean>): FeatureKey[] {
+function enabledFeaturesToFeatureKeys(enabledFeatures: Record<string, boolean>): WidgetKey[] {
     const dictionary: Record<string, string | string[] | undefined> = {
         bookmarks: featuresConfig.bookmarks.key,
         measurement: featuresConfig.measure.key,
-        clipping: featuresConfig.clipping.key,
+        clipping: [featuresConfig.clippingBox.key, featuresConfig.clippingPlanes.key],
         properties: featuresConfig.properties.key,
         tree: featuresConfig.modelTree.key,
         groups: featuresConfig.groups.key,
@@ -134,7 +144,7 @@ function enabledFeaturesToFeatureKeys(enabledFeatures: Record<string, boolean>):
             .filter((feature) => feature.enabled)
             .map((feature) => (dictionary[feature.key] ? dictionary[feature.key]! : feature.key))
             .concat(defaultEnabledWidgets)
-            .flat() as FeatureKey[]
+            .flat() as WidgetKey[]
     );
 }
 
@@ -142,6 +152,12 @@ function getEnabledFeatures(customProperties: unknown): Record<string, boolean> 
     return customProperties && typeof customProperties === "object" && "enabledFeatures" in customProperties
         ? (customProperties as { enabledFeatures?: Record<string, boolean> }).enabledFeatures
         : undefined;
+}
+
+function getIsViewerScene(customProperties: unknown): boolean {
+    return customProperties && typeof customProperties === "object" && "isViewer" in customProperties
+        ? (customProperties as { isViewer: boolean }).isViewer
+        : false;
 }
 
 function ContextProviders({ children }: { children: ReactNode }) {

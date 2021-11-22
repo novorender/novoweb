@@ -2,13 +2,13 @@ import { glMatrix, mat4, quat, vec2, vec3, vec4 } from "gl-matrix";
 import { useEffect, useState, useRef, MouseEvent, PointerEvent, useCallback, SVGProps, RefCallback } from "react";
 import {
     View,
-    API,
     FlightControllerParams,
     EnvironmentDescription,
     Internal,
     MeasureInfo,
+    CameraController,
+    OrthoControllerParams,
 } from "@novorender/webgl-api";
-import type { API as DataAPI } from "@novorender/data-js-api";
 import { Box, Button, Paper, Typography, useTheme, styled } from "@mui/material";
 import { css } from "@mui/styled-engine";
 
@@ -16,13 +16,18 @@ import { PerformanceStats } from "features/performanceStats";
 import { getDataFromUrlHash } from "features/shareLink";
 import { Loading } from "components";
 
+import { api, dataApi } from "app";
+import { useMountedState } from "hooks/useMountedState";
+import { deleteFromStorage } from "utils/storage";
+import { StorageKey } from "config/storage";
+
 import {
     fetchEnvironments,
     renderActions,
     RenderType,
     selectBaseCameraSpeed,
     selectCameraSpeedMultiplier,
-    selectClippingPlanes,
+    selectClippingBox,
     selectCurrentEnvironment,
     selectEnvironments,
     selectMainObject,
@@ -31,8 +36,14 @@ import {
     selectSavedCameraPositions,
     selectSelectMultiple,
     selectDefaultVisibility,
+    selectClippingPlanes,
+    selectSelectiongOrthoPoint,
+    CameraType,
+    selectCamera,
+    selectShowPerformance,
 } from "slices/renderSlice";
 import { authActions } from "slices/authSlice";
+import { explorerActions } from "slices/explorerSlice";
 import { useAppDispatch, useAppSelector } from "app/store";
 
 import { useHighlighted, highlightActions, useDispatchHighlighted } from "contexts/highlighted";
@@ -40,10 +51,6 @@ import { useHidden, hiddenGroupActions, useDispatchHidden } from "contexts/hidde
 import { useCustomGroups, customGroupsActions } from "contexts/customGroups";
 import { useVisible } from "contexts/visible";
 import { explorerGlobalsActions, useExplorerGlobals } from "contexts/explorerGlobals";
-
-import { deleteFromStorage } from "utils/storage";
-import { StorageKey } from "config/storage";
-import { useMountedState } from "hooks/useMountedState";
 
 import {
     addConsoleDebugUtils,
@@ -53,7 +60,7 @@ import {
     refillObjects,
     createRendering,
 } from "./utils";
-import { xAxis, yAxis, axis, showPerformance } from "./consts";
+import { xAxis, yAxis, axis } from "./consts";
 
 glMatrix.setMatrixArrayType(Array);
 addConsoleDebugUtils();
@@ -115,12 +122,10 @@ enum Status {
 
 type Props = {
     id: string;
-    api: API;
-    dataApi: DataAPI;
     onInit: (params: { customProperties: unknown }) => void;
 };
 
-export function Render3D({ id, api, onInit, dataApi }: Props) {
+export function Render3D({ id, onInit }: Props) {
     const highlightedObjects = useHighlighted();
     const dispatchHighlighted = useDispatchHighlighted();
     const hiddenObjects = useHidden();
@@ -142,7 +147,11 @@ export function Render3D({ id, api, onInit, dataApi }: Props) {
     const savedCameraPositions = useAppSelector(selectSavedCameraPositions);
     const selectMultiple = useAppSelector(selectSelectMultiple);
     const renderType = useAppSelector(selectRenderType);
+    const clippingBox = useAppSelector(selectClippingBox);
     const clippingPlanes = useAppSelector(selectClippingPlanes);
+    const cameraState = useAppSelector(selectCamera);
+    const selectingOrthoPoint = useAppSelector(selectSelectiongOrthoPoint);
+    const showPerformance = useAppSelector(selectShowPerformance);
     const measure = useAppSelector(selectMeasure);
     const { addingPoint, angles, points, distances, selected: selectedPoint } = measure;
     const dispatch = useAppDispatch();
@@ -152,6 +161,7 @@ export function Render3D({ id, api, onInit, dataApi }: Props) {
     const cameraGeneration = useRef<number>();
     const previousId = useRef("");
     const camera2pointDistance = useRef(0);
+    const flightController = useRef<CameraController>();
     const pointerDown = useRef(false);
     const camX = useRef(vec3.create());
     const camY = useRef(vec3.create());
@@ -528,7 +538,7 @@ export function Render3D({ id, api, onInit, dataApi }: Props) {
         if (!environments.length) {
             dispatch(fetchEnvironments(api));
         }
-    }, [api, dispatch, environments]);
+    }, [dispatch, environments]);
 
     useEffect(() => {
         initView();
@@ -549,6 +559,7 @@ export function Render3D({ id, api, onInit, dataApi }: Props) {
                     bookmarks = [],
                     customProperties,
                     title,
+                    viewerScenes,
                     ...sceneData
                 } = preloadedScene ?? (await dataApi.loadScene(id));
 
@@ -559,7 +570,10 @@ export function Render3D({ id, api, onInit, dataApi }: Props) {
                 const _view = await api.createView(customSettings, canvas);
                 _view.applySettings({
                     quality: {
-                        ..._view.settings.quality,
+                        detail: {
+                            ..._view.settings.quality.detail,
+                            value: 1,
+                        },
                         resolution: {
                             value: 1,
                             autoAdjust: {
@@ -580,6 +594,7 @@ export function Render3D({ id, api, onInit, dataApi }: Props) {
                 }
 
                 _view.camera.controller = controller;
+                flightController.current = controller;
                 cameraGeneration.current = _view.performanceStatistics.cameraGeneration;
 
                 if (window.self === window.top || !customProperties?.enabledFeatures?.transparentBackground) {
@@ -594,7 +609,7 @@ export function Render3D({ id, api, onInit, dataApi }: Props) {
                 dispatch(renderActions.setBookmarks(bookmarks));
 
                 if (settings.clippingPlanes?.enabled) {
-                    dispatch(renderActions.setClippingPlanes({ enabled: true }));
+                    dispatch(renderActions.setClippingBox({ enabled: true }));
                 }
 
                 const defaultGroup = objectGroups.find((group) => !group.id && group.selected);
@@ -625,6 +640,10 @@ export function Render3D({ id, api, onInit, dataApi }: Props) {
                     dispatchCustomGroups(customGroupsActions.set(serializeableObjectGroups(customGroups)));
                 }
 
+                if (viewerScenes) {
+                    dispatch(explorerActions.setViewerScenes(viewerScenes));
+                }
+
                 rendering.current = createRendering(canvas, _view);
                 rendering.current.start();
                 window.document.title = `${title} - Novorender`;
@@ -644,8 +663,17 @@ export function Render3D({ id, api, onInit, dataApi }: Props) {
                 resizeObserver.observe(canvas);
 
                 onInit({ customProperties });
+
+                if (window.location.origin !== "https://explorer.novorender.com" && customProperties?.stats) {
+                    dispatch(renderActions.setShowPerformance(true));
+                }
+
                 dispatchGlobals(
-                    explorerGlobalsActions.update({ view: _view, scene: _view.scene, preloadedScene: undefined })
+                    explorerGlobalsActions.update({
+                        view: _view,
+                        scene: _view.scene,
+                        preloadedScene: undefined,
+                    })
                 );
             } catch (e) {
                 setStatus(Status.Error);
@@ -654,8 +682,6 @@ export function Render3D({ id, api, onInit, dataApi }: Props) {
     }, [
         canvas,
         view,
-        api,
-        dataApi,
         dispatch,
         onInit,
         environments,
@@ -706,7 +732,7 @@ export function Render3D({ id, api, onInit, dataApi }: Props) {
                     }
 
                     movementTimer.current = setTimeout(() => {
-                        if (!view) {
+                        if (!view || cameraState.type === CameraType.Orthographic) {
                             return;
                         }
 
@@ -733,7 +759,7 @@ export function Render3D({ id, api, onInit, dataApi }: Props) {
 
             api.animate = () => cameraMoved(view);
         },
-        [api, view, moveSvg, dispatch, savedCameraPositions]
+        [view, moveSvg, dispatch, savedCameraPositions, cameraState]
     );
 
     useEffect(
@@ -757,17 +783,7 @@ export function Render3D({ id, api, onInit, dataApi }: Props) {
                 });
             }
         },
-        [
-            scene,
-            view,
-            api,
-            defaultVisibility,
-            mainObject,
-            customGroups,
-            highlightedObjects,
-            hiddenObjects,
-            visibleObjects,
-        ]
+        [scene, view, defaultVisibility, mainObject, customGroups, highlightedObjects, hiddenObjects, visibleObjects]
     );
 
     useEffect(
@@ -808,19 +824,73 @@ export function Render3D({ id, api, onInit, dataApi }: Props) {
                 view.settings.environment = await api.loadEnvironment(env);
             }
         },
-        [env, api, view]
+        [env, view]
     );
 
     useEffect(
-        function handleClippingChanges() {
+        function handleClippingBoxChanges() {
             if (!view) {
                 return;
             }
 
-            view.applySettings({ clippingPlanes: { ...clippingPlanes, bounds: view.settings.clippingPlanes.bounds } });
+            view.applySettings({ clippingPlanes: { ...clippingBox, bounds: view.settings.clippingPlanes.bounds } });
+        },
+        [view, clippingBox]
+    );
+
+    useEffect(
+        function handleClippingPlaneChanges() {
+            if (!view) {
+                return;
+            }
+
+            view.applySettings({
+                clippingVolume: {
+                    planes: clippingPlanes.planes,
+                    enabled: clippingPlanes.planes.length ? clippingPlanes.enabled : false,
+                    mode: clippingPlanes.mode,
+                },
+            });
         },
         [view, clippingPlanes]
     );
+
+    useEffect(() => {
+        const controller = flightController.current;
+
+        if (!controller || !view || !canvas) {
+            return;
+        }
+
+        if (cameraState.type === CameraType.Flight) {
+            controller.enabled = true;
+            view.camera.controller = controller;
+
+            if (cameraState.goTo) {
+                const sameCameraPosition =
+                    vec3.equals(view.camera.position, cameraState.goTo.position) &&
+                    quat.equals(view.camera.rotation, cameraState.goTo.rotation);
+
+                if (!sameCameraPosition) {
+                    view.camera.controller.moveTo(cameraState.goTo.position, cameraState.goTo.rotation);
+                }
+            }
+        } else if (cameraState.type === CameraType.Orthographic && cameraState.params) {
+            // copy non-primitives
+            const orthoController = api.createCameraController(
+                {
+                    ...cameraState.params,
+                    referenceCoordSys: cameraState.params.referenceCoordSys
+                        ? Array.from(cameraState.params.referenceCoordSys)
+                        : undefined,
+                    position: cameraState.params.position ? Array.from(cameraState.params.position) : undefined,
+                } as any as OrthoControllerParams,
+                canvas
+            );
+            controller.enabled = false;
+            view.camera.controller = orthoController;
+        }
+    }, [cameraState, view, canvas]);
 
     useEffect(
         function cleanUpPreviousScene() {
@@ -842,7 +912,7 @@ export function Render3D({ id, api, onInit, dataApi }: Props) {
     };
 
     const handleClick = async (e: React.MouseEvent) => {
-        if (!view || clippingPlanes.defining) {
+        if (!view || clippingBox.defining) {
             return;
         }
 
@@ -856,6 +926,43 @@ export function Render3D({ id, api, onInit, dataApi }: Props) {
             const points = measure.points.concat([result.position]);
             moveSvgCursor(-100, -100, undefined);
             dispatch(renderActions.setMeasurePoints(points));
+            return;
+        }
+
+        if (clippingPlanes.defining) {
+            const { normal, position } = result;
+
+            if (!normal) {
+                return;
+            }
+
+            const w = -vec3.dot(normal, position);
+
+            dispatch(
+                renderActions.setClippingPlanes({
+                    defining: false,
+                    planes: [vec4.fromValues(normal[0], normal[1], normal[2], w)],
+                    baseW: w,
+                })
+            );
+            moveSvgCursor(-100, -100, undefined);
+            return;
+        }
+
+        if (selectingOrthoPoint) {
+            if (!canvas) {
+                return;
+            }
+
+            const orthoController = api.createCameraController({ kind: "ortho" }, canvas);
+            (orthoController as any).init(result.position, result.normal, view.camera);
+            flightController.current = view.camera.controller;
+            flightController.current.enabled = false;
+
+            view.camera.controller = orthoController;
+            dispatch(renderActions.setCamera({ type: CameraType.Orthographic }));
+            dispatch(renderActions.setSelectingOrthoPoint(false));
+
             return;
         }
 
@@ -900,7 +1007,7 @@ export function Render3D({ id, api, onInit, dataApi }: Props) {
         vec3.transformQuat(camX.current, xAxis, rotation);
         vec3.transformQuat(camY.current, yAxis, rotation);
 
-        if (clippingPlanes.defining) {
+        if (clippingBox.defining) {
             view.camera.controller.enabled = false;
             const tan = Math.tan(0.5 * glMatrix.toRadian(fieldOfView));
             const size = 0.25 * tan * camera2pointDistance.current;
@@ -909,15 +1016,15 @@ export function Render3D({ id, api, onInit, dataApi }: Props) {
                 max: vec3.fromValues(point[0] + size, point[1] + size, point[2] + size),
             };
 
-            view.applySettings({ clippingPlanes: { ...clippingPlanes, bounds } });
+            view.applySettings({ clippingPlanes: { ...clippingBox, bounds } });
         } else if (result.objectId > 0xfffffffe || result.objectId < 0xfffffff9) {
             camera2pointDistance.current = 0;
-        } else if (clippingPlanes.enabled && clippingPlanes.showBox) {
+        } else if (clippingBox.enabled && clippingBox.showBox) {
             view.camera.controller.enabled = false;
 
             const highlight = 0xfffffffe - result.objectId;
 
-            dispatch(renderActions.setClippingPlanes({ ...clippingPlanes, highlight }));
+            dispatch(renderActions.setClippingBox({ ...clippingBox, highlight }));
         }
     };
 
@@ -944,8 +1051,8 @@ export function Render3D({ id, api, onInit, dataApi }: Props) {
             return;
         }
 
-        if (camera2pointDistance.current > 0 && clippingPlanes.defining) {
-            dispatch(renderActions.setClippingPlanes({ ...clippingPlanes, defining: false }));
+        if (camera2pointDistance.current > 0 && clippingBox.defining) {
+            dispatch(renderActions.setClippingBox({ ...clippingBox, defining: false }));
         }
 
         pointerDown.current = false;
@@ -958,7 +1065,11 @@ export function Render3D({ id, api, onInit, dataApi }: Props) {
         if (!view || !canvas || (!e.movementY && !e.movementX)) {
             return;
         }
-        if ((addingPoint && e.buttons === 0) || selectedPoint > -1) {
+
+        const useSvgCursor =
+            ((addingPoint || clippingPlanes.defining || selectingOrthoPoint) && e.buttons === 0) || selectedPoint > -1;
+
+        if (useSvgCursor) {
             const measurement = await view.measure(e.nativeEvent.offsetX, e.nativeEvent.offsetY);
 
             canvas.style.cursor = "none";
@@ -974,20 +1085,21 @@ export function Render3D({ id, api, onInit, dataApi }: Props) {
             }
             return;
         }
+
         moveSvgCursor(-100, -100, undefined);
         canvas.style.cursor = "default";
         if (
             !pointerDown.current ||
-            !clippingPlanes.enabled ||
-            !clippingPlanes.showBox ||
+            !clippingBox.enabled ||
+            !clippingBox.showBox ||
             camera2pointDistance.current === 0
         ) {
             return;
         }
 
-        const activeSide = clippingPlanes.highlight;
+        const activeSide = clippingBox.highlight;
 
-        if (activeSide === -1 && !clippingPlanes.defining) {
+        if (activeSide === -1 && !clippingBox.defining) {
             return;
         }
 
@@ -1003,7 +1115,7 @@ export function Render3D({ id, api, onInit, dataApi }: Props) {
         x *= scale;
         y *= scale;
 
-        if (clippingPlanes.defining) {
+        if (clippingBox.defining) {
             const dist = x + y;
             const delta = vec3.fromValues(dist, dist, dist);
             vec3.add(max, max, delta);
@@ -1025,15 +1137,15 @@ export function Render3D({ id, api, onInit, dataApi }: Props) {
                 min[axisIdx] = max[axisIdx];
                 max[axisIdx] = tmp;
                 dispatch(
-                    renderActions.setClippingPlanes({
-                        ...clippingPlanes,
+                    renderActions.setClippingBox({
+                        ...clippingBox,
                         highlight: activeSide > 2 ? axisIdx : axisIdx + 3,
                     })
                 );
             }
         }
 
-        view.applySettings({ clippingPlanes: { ...clippingPlanes, bounds: { min, max } } });
+        view.applySettings({ clippingPlanes: { ...clippingBox, bounds: { min, max } } });
     };
     const numP = points.length;
 

@@ -3,21 +3,21 @@ import { useState } from "react";
 
 import { useAppDispatch, useAppSelector } from "app/store";
 import { IosSwitch } from "components/iosSwitch";
-import { renderActions, selectClippingPlanes } from "slices/renderSlice";
+import { renderActions, selectClippingBox } from "slices/renderSlice";
 
 const axisNames = ["-X", "-Y", "-Z", "+X", "+Y", "+Z"];
 
-export function Clipping() {
+export function ClippingBox() {
     const theme = useTheme();
 
-    const clippingPlanes = useAppSelector(selectClippingPlanes);
-    const { defining, enabled, showBox, inside } = clippingPlanes;
+    const clippingBox = useAppSelector(selectClippingBox);
+    const { defining, enabled, showBox, inside } = clippingBox;
     const dispatch = useAppDispatch();
 
     const [enableOptions, setEnableOptions] = useState(enabled || showBox || defining);
 
     const toggle = (func: "enabled" | "showBox" | "inside") => () => {
-        return dispatch(renderActions.setClippingPlanes({ ...clippingPlanes, [func]: !clippingPlanes[func] }));
+        return dispatch(renderActions.setClippingBox({ ...clippingBox, [func]: !clippingBox[func] }));
     };
 
     const toggleDefineNew = () => {
@@ -25,13 +25,13 @@ export function Clipping() {
             setEnableOptions(true);
         }
 
-        if (clippingPlanes.defining) {
-            return dispatch(renderActions.setClippingPlanes({ ...clippingPlanes, defining: false }));
+        if (clippingBox.defining) {
+            return dispatch(renderActions.setClippingBox({ ...clippingBox, defining: false }));
         }
 
         dispatch(
-            renderActions.setClippingPlanes({
-                ...clippingPlanes,
+            renderActions.setClippingBox({
+                ...clippingBox,
                 enabled: true,
                 showBox: true,
                 defining: true,
@@ -54,9 +54,7 @@ export function Clipping() {
                     label={
                         <Box mr={0.5}>
                             Show box{" "}
-                            {showBox && clippingPlanes.highlight !== -1
-                                ? `(${axisNames[clippingPlanes.highlight]})`
-                                : ""}
+                            {showBox && clippingBox.highlight !== -1 ? `(${axisNames[clippingBox.highlight]})` : ""}
                         </Box>
                     }
                 />
