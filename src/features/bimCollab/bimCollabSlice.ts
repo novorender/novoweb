@@ -20,7 +20,7 @@ const initialState = {
     filters: {
         [FilterKey.Type]: [] as string[],
         [FilterKey.Label]: [] as string[],
-        [FilterKey.Status]: [] as string[],
+        [FilterKey.Status]: ["Active"] as string[],
         [FilterKey.Priority]: [] as string[],
         [FilterKey.Stage]: [] as string[],
     } as Record<FilterKey, string[]>,
