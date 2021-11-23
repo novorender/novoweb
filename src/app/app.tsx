@@ -1,6 +1,9 @@
 import { useEffect } from "react";
 import { CssBaseline } from "@mui/material";
 import { ThemeProvider, StyledEngineProvider } from "@mui/material/styles";
+import { LocalizationProvider } from "@mui/lab";
+import AdapterDateFns from "@mui/lab/AdapterDateFns";
+import enLocale from "date-fns/locale/en-GB";
 import { createAPI } from "@novorender/webgl-api";
 import { createAPI as createDataAPI } from "@novorender/data-js-api";
 import { MsalProvider } from "@azure/msal-react";
@@ -70,30 +73,32 @@ export function App() {
 
     return (
         <>
-            <MsalProvider instance={msalInstance}>
-                <StyledEngineProvider injectFirst>
-                    <ThemeProvider theme={theme}>
-                        <CssBaseline />
-                        {status === Status.Initial ? (
-                            <Loading />
-                        ) : (
-                            <BrowserRouter>
-                                <Switch>
-                                    <Route path="/callback">
-                                        <Loading />
-                                    </Route>
-                                    <Route path="/explorer/:id?">
-                                        <Explorer />
-                                    </Route>
-                                    <Route path="/:id?">
-                                        <Explorer />
-                                    </Route>
-                                </Switch>
-                            </BrowserRouter>
-                        )}
-                    </ThemeProvider>
-                </StyledEngineProvider>
-            </MsalProvider>
+            <LocalizationProvider dateAdapter={AdapterDateFns} locale={enLocale}>
+                <MsalProvider instance={msalInstance}>
+                    <StyledEngineProvider injectFirst>
+                        <ThemeProvider theme={theme}>
+                            <CssBaseline />
+                            {status === Status.Initial ? (
+                                <Loading />
+                            ) : (
+                                <BrowserRouter>
+                                    <Switch>
+                                        <Route path="/callback">
+                                            <Loading />
+                                        </Route>
+                                        <Route path="/explorer/:id?">
+                                            <Explorer />
+                                        </Route>
+                                        <Route path="/:id?">
+                                            <Explorer />
+                                        </Route>
+                                    </Switch>
+                                </BrowserRouter>
+                            )}
+                        </ThemeProvider>
+                    </StyledEngineProvider>
+                </MsalProvider>
+            </LocalizationProvider>
         </>
     );
 }

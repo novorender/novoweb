@@ -11,14 +11,24 @@ import {
     OutlinedInput,
     MenuItem,
     Button,
+    TextField,
 } from "@mui/material";
 import { ArrowBack } from "@mui/icons-material";
+import { DatePicker } from "@mui/lab";
 
 import { LinearProgress } from "components";
 import { useAppDispatch, useAppSelector } from "app/store";
 
 import { useGetProjectExtensionsQuery } from "../bimCollabApi";
-import { bimCollabActions, FilterKey as FilterType, initialFilters, selectFilters } from "../bimCollabSlice";
+import {
+    bimCollabActions,
+    FilterModifier,
+    FilterType,
+    initialFilterModifiers,
+    initialFilters,
+    selectFilterModifiers,
+    selectFilters,
+} from "../bimCollabSlice";
 
 export function Filters() {
     const theme = useTheme();
@@ -31,20 +41,36 @@ export function Filters() {
     const savedFilters = useAppSelector(selectFilters);
     const [filters, setFilters] = useState(savedFilters);
 
+    const savedModifiers = useAppSelector(selectFilterModifiers);
+    const [filterModifiers, setFilterModifiers] = useState(savedModifiers);
+
     const handleSubmit = (e: FormEvent) => {
         e.preventDefault();
         dispatch(bimCollabActions.setFilters(filters));
+        dispatch(bimCollabActions.setFilterModifiers(filterModifiers));
         history.goBack();
     };
 
     const handleReset = (e: FormEvent) => {
         e.preventDefault();
         setFilters(initialFilters);
+        setFilterModifiers(initialFilterModifiers);
     };
 
-    const handleChange = ({ target: { value, name } }: SelectChangeEvent<string[]>) =>
-        // On autofill we get a the stringified value.
-        setFilters((_filters) => ({ ...filters, [name]: typeof value === "string" ? value.split(",") : value }));
+    const handleFilterChange = ({ target: { value, name } }: SelectChangeEvent<string | string[]>) => {
+        // On autofill we get the stringified value.
+        setFilters((_filters) => ({
+            ...filters,
+            [name]: typeof value === "string" ? value.split(",") : value,
+        }));
+    };
+
+    const handleFilterModifierChange = ({ target: { value, name } }: SelectChangeEvent<string>) => {
+        setFilterModifiers((modifiers) => ({
+            ...modifiers,
+            [name]: value,
+        }));
+    };
 
     if (!extensions) {
         return <LinearProgress />;
@@ -71,7 +97,7 @@ export function Filters() {
                             multiple
                             fullWidth
                             value={filters[FilterType.Type]}
-                            onChange={handleChange}
+                            onChange={handleFilterChange}
                             input={<OutlinedInput label="Type" />}
                             name={FilterType.Type}
                         >
@@ -96,7 +122,7 @@ export function Filters() {
                             multiple
                             fullWidth
                             value={filters[FilterType.Label]}
-                            onChange={handleChange}
+                            onChange={handleFilterChange}
                             input={<OutlinedInput label="Label" />}
                             name={FilterType.Label}
                         >
@@ -121,7 +147,7 @@ export function Filters() {
                             multiple
                             fullWidth
                             value={filters[FilterType.Status]}
-                            onChange={handleChange}
+                            onChange={handleFilterChange}
                             input={<OutlinedInput label="Status" />}
                             name={FilterType.Status}
                         >
@@ -148,7 +174,7 @@ export function Filters() {
                             multiple
                             fullWidth
                             value={filters[FilterType.Priority]}
-                            onChange={handleChange}
+                            onChange={handleFilterChange}
                             input={<OutlinedInput label="Priority" />}
                             name={FilterType.Priority}
                         >
@@ -175,7 +201,7 @@ export function Filters() {
                             multiple
                             fullWidth
                             value={filters[FilterType.Stage]}
-                            onChange={handleChange}
+                            onChange={handleFilterChange}
                             input={<OutlinedInput label="Milestone" />}
                             name={FilterType.Stage}
                         >
@@ -198,6 +224,47 @@ export function Filters() {
                             ))}
                         </Select>
                     </FormControl>
+                    <Box display="flex">
+                        <FormControl size="small" sx={{ minWidth: 72, mb: 2, textAlign: "center", mr: 1 }}>
+                            <InputLabel id="bcf-topic-deadline-operator-label">Operator</InputLabel>
+                            <Select
+                                labelId="bcf-topic-deadline-operator-label"
+                                id="bcf-topic-deadline-operator"
+                                value={filterModifiers[FilterModifier.DeadlineOperator]}
+                                onChange={handleFilterModifierChange}
+                                input={<OutlinedInput label="Operator" />}
+                                name={FilterModifier.DeadlineOperator}
+                            >
+                                {["=", ">=", "<="].map((operator) => (
+                                    <MenuItem
+                                        key={operator}
+                                        value={operator}
+                                        sx={{
+                                            fontWeight:
+                                                filterModifiers[FilterModifier.DeadlineOperator] === operator
+                                                    ? "bold"
+                                                    : "regular",
+                                        }}
+                                    >
+                                        {operator}
+                                    </MenuItem>
+                                ))}
+                            </Select>
+                        </FormControl>
+                        <FormControl size="small" sx={{ width: 1, mb: 2 }}>
+                            <DatePicker
+                                label="Deadline"
+                                value={filters[FilterType.Deadline] || null}
+                                onChange={(newDate: Date | null) =>
+                                    setFilters((state) => ({
+                                        ...state,
+                                        [FilterType.Deadline]: newDate?.toISOString() ?? "",
+                                    }))
+                                }
+                                renderInput={(params) => <TextField {...params} size="small" />}
+                            />
+                        </FormControl>
+                    </Box>
                     <Box display="flex" justifyContent="space-between">
                         <Button type="reset" variant="contained" color="grey">
                             Reset filter

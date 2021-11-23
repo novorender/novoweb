@@ -3,12 +3,17 @@ import { RootState } from "app/store";
 
 import { AuthInfo, User } from "./types";
 
-export enum FilterKey {
+export enum FilterType {
     Type = "topic_type",
     Status = "topic_status",
     Label = "labels",
     Priority = "priority",
     Stage = "stage",
+    Deadline = "due_date",
+}
+
+export enum FilterModifier {
+    DeadlineOperator = "deadlineOperator",
 }
 
 const initialState = {
@@ -18,16 +23,22 @@ const initialState = {
     authInfo: undefined as AuthInfo | undefined,
     user: undefined as User | undefined,
     filters: {
-        [FilterKey.Type]: [] as string[],
-        [FilterKey.Label]: [] as string[],
-        [FilterKey.Status]: ["Active"] as string[],
-        [FilterKey.Priority]: [] as string[],
-        [FilterKey.Stage]: [] as string[],
-    } as Record<FilterKey, string[]>,
+        [FilterType.Type]: [] as string[],
+        [FilterType.Label]: [] as string[],
+        [FilterType.Status]: ["Active"] as string[],
+        [FilterType.Priority]: [] as string[],
+        [FilterType.Stage]: [] as string[],
+        [FilterType.Deadline]: "",
+    },
+    filterModifiers: {
+        [FilterModifier.DeadlineOperator]: "=" as "=" | ">=" | "<=",
+    },
 };
 
 export const initialFilters = initialState.filters;
+export const initialFilterModifiers = initialState.filterModifiers;
 export type Filters = typeof initialFilters;
+export type FilterModifiers = typeof initialFilterModifiers;
 
 export const bimCollabSlice = createSlice({
     name: "bimCollab",
@@ -45,6 +56,9 @@ export const bimCollabSlice = createSlice({
         setFilters: (state, action: PayloadAction<Filters>) => {
             state.filters = action.payload;
         },
+        setFilterModifiers: (state, action: PayloadAction<FilterModifiers>) => {
+            state.filterModifiers = action.payload;
+        },
         setUser: (state, action: PayloadAction<User | undefined>) => {
             state.user = action.payload;
         },
@@ -61,6 +75,7 @@ export const selectAccessToken = (state: RootState) => state.bimCollab.accessTok
 export const selectSpace = (state: RootState) => state.bimCollab.space;
 export const selectVersion = (state: RootState) => state.bimCollab.version;
 export const selectFilters = (state: RootState) => state.bimCollab.filters;
+export const selectFilterModifiers = (state: RootState) => state.bimCollab.filterModifiers;
 export const selectUser = (state: RootState) => state.bimCollab.user;
 export const selectAuthInfo = (state: RootState) => state.bimCollab.authInfo;
 

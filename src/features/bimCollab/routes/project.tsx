@@ -7,15 +7,55 @@ import { useAppSelector } from "app/store";
 import { LinearProgress, ScrollBox, Divider, Tooltip, ImgTooltip } from "components";
 
 import { useGetProjectQuery, useGetTopicsQuery, useGetViewpointsQuery, useGetThumbnailQuery } from "../bimCollabApi";
-import { FilterKey, Filters, selectFilters, selectSpace } from "../bimCollabSlice";
+import {
+    FilterType,
+    Filters,
+    selectFilters,
+    selectSpace,
+    FilterModifiers,
+    FilterModifier,
+    selectFilterModifiers,
+} from "../bimCollabSlice";
 import { Topic } from "../types";
+import { isAfter, isSameDay, parseISO } from "date-fns";
 
-function applyFilters(topics: Topic[], filters: Filters): Topic[] {
+function applyFilters(topics: Topic[], filters: Filters, filterModifiers: FilterModifiers): Topic[] {
     return topics.reduce((result, topic) => {
         let include = true;
 
-        (Object.entries(filters) as [FilterKey, string[]][]).forEach(([key, value]) => {
+        (Object.entries(filters) as [FilterType, string | string[]][]).forEach(([key, value]) => {
             if (include === false || !value.length) {
+                return;
+            }
+
+            const filterIsArray = Array.isArray(value);
+
+            if (key === FilterType.Deadline && !filterIsArray) {
+                if (!topic[key]) {
+                    include = false;
+                    return;
+                }
+
+                const filterDeadline = parseISO(value);
+                const topicDeadline = parseISO(topic[key]);
+                const sameDay = isSameDay(filterDeadline, topicDeadline);
+                switch (filterModifiers[FilterModifier.DeadlineOperator]) {
+                    case "=": {
+                        include = sameDay;
+                        return;
+                    }
+                    case ">=": {
+                        include = sameDay || isAfter(filterDeadline, topicDeadline);
+                        return;
+                    }
+                    case "<=": {
+                        include = sameDay || isAfter(topicDeadline, filterDeadline);
+                        return;
+                    }
+                }
+            }
+
+            if (!filterIsArray) {
                 return;
             }
 
@@ -46,6 +86,7 @@ export function Project() {
     const history = useHistory();
     const space = useAppSelector(selectSpace);
     const filters = useAppSelector(selectFilters);
+    const filterModifiers = useAppSelector(selectFilterModifiers);
 
     const { projectId } = useParams<{ projectId: string }>();
     const { data: project } = useGetProjectQuery({ projectId });
@@ -53,7 +94,7 @@ export function Project() {
         { projectId },
         { refetchOnFocus: true }
     );
-    const filteredTopics = applyFilters(topics, filters);
+    const filteredTopics = applyFilters(topics, filters, filterModifiers);
 
     if (!project || loadingTopics) {
         return <LinearProgress />;
