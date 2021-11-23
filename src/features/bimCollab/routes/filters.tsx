@@ -16,7 +16,7 @@ import {
 import { ArrowBack } from "@mui/icons-material";
 import { DatePicker } from "@mui/lab";
 
-import { LinearProgress } from "components";
+import { LinearProgress, ScrollBox } from "components";
 import { useAppDispatch, useAppSelector } from "app/store";
 
 import { useGetProjectExtensionsQuery } from "../bimCollabApi";
@@ -84,7 +84,7 @@ export function Filters() {
                     Back
                 </Button>
             </Box>
-            <Box p={1} height={1} position="relative" sx={{ form: { width: 1 } }}>
+            <ScrollBox p={1} pb={5} height={1} position="relative" sx={{ form: { width: 1 } }}>
                 <Typography variant="h5" sx={{ mt: 1, mb: 2 }}>
                     Filters
                 </Typography>
@@ -224,6 +224,56 @@ export function Filters() {
                             ))}
                         </Select>
                     </FormControl>
+                    <FormControl size="small" sx={{ width: 1, mb: 2 }}>
+                        <InputLabel id="bcf-topic-createdBy-label">Created by</InputLabel>
+                        <Select
+                            labelId="bcf-topic-createdBy-label"
+                            id="bcf-topic-createdBy"
+                            multiple
+                            fullWidth
+                            value={filters[FilterType.CreatedBy]}
+                            onChange={handleFilterChange}
+                            input={<OutlinedInput label="Created by" />}
+                            name={FilterType.CreatedBy}
+                        >
+                            {extensions.user_id_type.map((user) => (
+                                <MenuItem
+                                    key={user}
+                                    value={user}
+                                    sx={{
+                                        fontWeight: filters[FilterType.CreatedBy].includes(user) ? "bold" : "regular",
+                                    }}
+                                >
+                                    {user}
+                                </MenuItem>
+                            ))}
+                        </Select>
+                    </FormControl>
+                    <FormControl size="small" sx={{ width: 1, mb: 2 }}>
+                        <InputLabel id="bcf-topic-assignedTo-label">Assigned To</InputLabel>
+                        <Select
+                            labelId="bcf-topic-assignedTo-label"
+                            id="bcf-topic-assignedTo"
+                            multiple
+                            fullWidth
+                            value={filters[FilterType.AssignedTo]}
+                            onChange={handleFilterChange}
+                            input={<OutlinedInput label="Assigned To" />}
+                            name={FilterType.AssignedTo}
+                        >
+                            {extensions.user_id_type.map((user) => (
+                                <MenuItem
+                                    key={user}
+                                    value={user}
+                                    sx={{
+                                        fontWeight: filters[FilterType.AssignedTo].includes(user) ? "bold" : "regular",
+                                    }}
+                                >
+                                    {user}
+                                </MenuItem>
+                            ))}
+                        </Select>
+                    </FormControl>
                     <Box display="flex">
                         <FormControl size="small" sx={{ minWidth: 72, mb: 2, textAlign: "center", mr: 1 }}>
                             <InputLabel id="bcf-topic-deadline-operator-label">Operator</InputLabel>
@@ -274,7 +324,7 @@ export function Filters() {
                         </Button>
                     </Box>
                 </form>
-            </Box>
+            </ScrollBox>
         </>
     );
 }

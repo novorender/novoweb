@@ -9,6 +9,8 @@ export enum FilterType {
     Label = "labels",
     Priority = "priority",
     Stage = "stage",
+    AssignedTo = "assigned_to",
+    CreatedBy = "creation_author",
     Deadline = "due_date",
 }
 
@@ -28,6 +30,8 @@ const initialState = {
         [FilterType.Status]: ["Active"] as string[],
         [FilterType.Priority]: [] as string[],
         [FilterType.Stage]: [] as string[],
+        [FilterType.CreatedBy]: [] as string[],
+        [FilterType.AssignedTo]: [] as string[],
         [FilterType.Deadline]: "",
     },
     filterModifiers: {

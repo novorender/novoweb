@@ -137,8 +137,7 @@ export function BimCollab() {
             const { versions } = versionRes.data;
 
             const version =
-                versions.find((ver) => ver.version_id === "bc_2.1") ??
-                versions.find((ver) => ver.version_id === "bc_2.1");
+                versions.find((ver) => ver.version_id === "2.1") ?? versions.find((ver) => ver.version_id === "bc_2.1");
 
             dispatch(bimCollabActions.setVersion(version?.version_id ?? "2.1"));
         }
