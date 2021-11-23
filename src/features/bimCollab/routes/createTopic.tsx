@@ -27,13 +27,16 @@ import {
 } from "../bimCollabApi";
 import {
     createBcfClippingPlanes,
-    createBcfPerspectiveCamera,
+    createPerspectiveCamera,
     createBcfSnapshot,
     createBcfViewpointComponents,
+    createOrthogonalCamera,
 } from "../utils";
 import { Viewpoint } from "../types";
 
-type NewViewpoint = Partial<Viewpoint> & Pick<Viewpoint, "perspective_camera" | "snapshot">;
+type BaseViewpoint = Partial<Viewpoint> & Pick<Viewpoint, "snapshot">;
+export type NewViewpoint = BaseViewpoint &
+    (Pick<Viewpoint, "perspective_camera"> | Pick<Viewpoint, "orthogonal_camera">);
 
 export function CreateTopic() {
     const theme = useTheme();
@@ -194,9 +197,9 @@ export function IncludeViewpoint({
             ]);
 
             setLoading(false);
-            setViewpoint({
+
+            const baseVp: BaseViewpoint = {
                 snapshot,
-                perspective_camera: createBcfPerspectiveCamera(view.camera),
                 clipping_planes: createBcfClippingPlanes(view.settings.clippingVolume.planes),
                 components: await createBcfViewpointComponents({
                     coloring,
@@ -204,7 +207,13 @@ export function IncludeViewpoint({
                     defaultVisibility,
                     exceptions,
                 }),
-            });
+            };
+
+            if (view.camera.kind === "orthographic") {
+                setViewpoint({ ...baseVp, orthogonal_camera: createOrthogonalCamera(view.camera) });
+            } else if (view.camera.kind === "pinhole") {
+                setViewpoint({ ...baseVp, perspective_camera: createPerspectiveCamera(view.camera) });
+            }
 
             async function idsToGuids(ids: ObjectId[]): Promise<string[]> {
                 if (!ids.length) {

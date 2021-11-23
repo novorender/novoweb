@@ -7,7 +7,6 @@ import {
     Internal,
     MeasureInfo,
     CameraController,
-    OrthoControllerParams,
 } from "@novorender/webgl-api";
 import { Box, Button, Paper, Typography, useTheme, styled } from "@mui/material";
 import { css } from "@mui/styled-engine";
@@ -717,8 +716,8 @@ export function Render3D({ id, onInit }: Props) {
             cameraMoved(view);
 
             function cameraMoved(view: View) {
-                if ((window as any).Cypress) {
-                    (window as any).appFullyRendered =
+                if (window.Cypress) {
+                    window.appFullyRendered =
                         view.performanceStatistics.sceneResolved && view.performanceStatistics.renderResolved;
                 }
 
@@ -855,42 +854,47 @@ export function Render3D({ id, onInit }: Props) {
         [view, clippingPlanes]
     );
 
-    useEffect(() => {
-        const controller = flightController.current;
+    useEffect(
+        function handleCameraTypeChange() {
+            const controller = flightController.current;
 
-        if (!controller || !view || !canvas) {
-            return;
-        }
-
-        if (cameraState.type === CameraType.Flight) {
-            controller.enabled = true;
-            view.camera.controller = controller;
-
-            if (cameraState.goTo) {
-                const sameCameraPosition =
-                    vec3.equals(view.camera.position, cameraState.goTo.position) &&
-                    quat.equals(view.camera.rotation, cameraState.goTo.rotation);
-
-                if (!sameCameraPosition) {
-                    view.camera.controller.moveTo(cameraState.goTo.position, cameraState.goTo.rotation);
-                }
+            if (!controller || !view || !canvas) {
+                return;
             }
-        } else if (cameraState.type === CameraType.Orthographic && cameraState.params) {
-            // copy non-primitives
-            const orthoController = api.createCameraController(
-                {
+
+            if (cameraState.type === CameraType.Flight) {
+                controller.enabled = true;
+                view.camera.controller = controller;
+                if (cameraState.goTo) {
+                    const sameCameraPosition =
+                        vec3.equals(view.camera.position, cameraState.goTo.position) &&
+                        quat.equals(view.camera.rotation, cameraState.goTo.rotation);
+
+                    if (!sameCameraPosition) {
+                        view.camera.controller.moveTo(cameraState.goTo.position, cameraState.goTo.rotation);
+                    }
+                }
+            } else if (cameraState.type === CameraType.Orthographic && cameraState.params) {
+                const params = {
                     ...cameraState.params,
-                    referenceCoordSys: cameraState.params.referenceCoordSys
-                        ? Array.from(cameraState.params.referenceCoordSys)
-                        : undefined,
-                    position: cameraState.params.position ? Array.from(cameraState.params.position) : undefined,
-                } as any as OrthoControllerParams,
-                canvas
-            );
-            controller.enabled = false;
-            view.camera.controller = orthoController;
-        }
-    }, [cameraState, view, canvas]);
+                };
+
+                // copy non-primitives
+                if (params.position) {
+                    params.position = Array.from(params.position) as vec3;
+                }
+
+                if (params.referenceCoordSys) {
+                    params.referenceCoordSys = Array.from(params.referenceCoordSys) as mat4;
+                }
+
+                const orthoController = api.createCameraController(params, canvas);
+                controller.enabled = false;
+                view.camera.controller = orthoController;
+            }
+        },
+        [cameraState, view, canvas]
+    );
 
     useEffect(
         function cleanUpPreviousScene() {

@@ -1,12 +1,11 @@
 import { useParams, Link, useHistory } from "react-router-dom";
 import { useTheme, Box, Button, Typography, List, ListItem } from "@mui/material";
 import { Add, ArrowBack } from "@mui/icons-material";
-import { vec3, quat } from "gl-matrix";
 
 import { ImgModal, ImgTooltip, LinearProgress, ScrollBox, Tooltip } from "components";
 
 import { useAppDispatch } from "app/store";
-import { renderActions, ObjectVisibility } from "slices/renderSlice";
+import { renderActions, ObjectVisibility, CameraType } from "slices/renderSlice";
 import { useDispatchHidden, hiddenGroupActions } from "contexts/hidden";
 import { useDispatchHighlighted, highlightActions } from "contexts/highlighted";
 import { useDispatchVisible, visibleActions } from "contexts/visible";
@@ -32,7 +31,7 @@ import {
     useGetSnapshotQuery,
 } from "../bimCollabApi";
 import type { Comment } from "../types";
-import { translateBcfClippingPlanes, translatePerspectiveCamera } from "../utils";
+import { translateBcfClippingPlanes, translateOrthogonalCamera, translatePerspectiveCamera } from "../utils";
 
 export function Topic() {
     const theme = useTheme();
@@ -275,17 +274,22 @@ function CommentListItem({
         }
 
         if (viewpoint?.perspective_camera) {
-            const camera = translatePerspectiveCamera(viewpoint?.perspective_camera);
-            const currentCamera = view.camera;
+            const camera = translatePerspectiveCamera(viewpoint.perspective_camera);
 
-            if (
-                !(
-                    vec3.equals(camera.position, currentCamera.position) &&
-                    quat.equals(camera.rotation, currentCamera.rotation)
-                )
-            ) {
-                view.camera.controller.moveTo(camera.position, camera.rotation);
-            }
+            dispatch(renderActions.setCamera({ type: CameraType.Flight, goTo: camera }));
+        }
+
+        if (viewpoint?.orthogonal_camera) {
+            const camera = translateOrthogonalCamera(viewpoint.orthogonal_camera);
+            dispatch(
+                renderActions.setCamera({
+                    type: CameraType.Orthographic,
+                    params: {
+                        kind: "ortho",
+                        ...camera,
+                    },
+                })
+            );
         }
 
         dispatch(renderActions.resetClippingPlanes());

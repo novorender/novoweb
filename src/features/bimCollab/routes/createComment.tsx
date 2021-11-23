@@ -10,8 +10,7 @@ import {
     useCreateCommentMutation,
     useCreateViewpointMutation,
 } from "../bimCollabApi";
-import { Viewpoint } from "../types";
-import { IncludeViewpoint } from "./createTopic";
+import { IncludeViewpoint, NewViewpoint } from "./createTopic";
 
 export function CreateComment() {
     const theme = useTheme();
@@ -24,9 +23,7 @@ export function CreateComment() {
     const [createViewpoint, { isLoading: creatingViewpoint }] = useCreateViewpointMutation();
 
     const [comment, setComment] = useState("");
-    const [viewpoint, setViewpoint] = useState<
-        Partial<Viewpoint> & Pick<Viewpoint, "perspective_camera" | "snapshot">
-    >();
+    const [viewpoint, setViewpoint] = useState<NewViewpoint>();
 
     const handleSubmit = async (e: FormEvent) => {
         e.preventDefault();

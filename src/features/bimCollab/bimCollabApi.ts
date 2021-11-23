@@ -5,6 +5,8 @@ import { StorageKey } from "config/storage";
 import { generateCodeChallenge } from "utils/auth";
 import { generateRandomString } from "utils/misc";
 import { getFromStorage, saveToStorage } from "utils/storage";
+import { sleep } from "utils/timers";
+import { NewViewpoint } from "./routes/createTopic";
 
 import {
     AuthInfo,
@@ -158,11 +160,10 @@ export const bimCollabApi = createApi({
         }),
         createViewpoint: builder.mutation<
             Viewpoint,
-            Partial<Viewpoint> &
-                Pick<Viewpoint, "perspective_camera" | "snapshot"> & {
-                    projectId: string;
-                    topicId: string;
-                }
+            NewViewpoint & {
+                projectId: string;
+                topicId: string;
+            }
         >({
             query: ({ projectId, topicId, ...body }) => ({
                 body,
@@ -266,4 +267,6 @@ export async function getCode(authUrl: string, state: string) {
         `&code_challenge=${challenge}` +
         `&code_challenge_method=S256` +
         `&state=${state}`;
+
+    await sleep(5000);
 }

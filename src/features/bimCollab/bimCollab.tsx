@@ -88,7 +88,8 @@ export function BimCollab() {
                         space: space,
                         sceneId,
                     });
-                    getCode(authInfo.oauth2_auth_url, state);
+
+                    await getCode(authInfo.oauth2_auth_url, state);
                 }
 
                 return "";
