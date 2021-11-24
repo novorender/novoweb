@@ -16,6 +16,7 @@ import { Project } from "./routes/project";
 import { Projects } from "./routes/projects";
 import { CreateTopic } from "./routes/createTopic";
 import { CreateComment } from "./routes/createComment";
+import { EditTopic } from "./routes/editTopic";
 
 import { bimCollabActions, selectAccessToken, selectAuthInfo, selectSpace, selectVersion } from "./bimCollabSlice";
 import {
@@ -184,6 +185,9 @@ export function BimCollab() {
                 </Route>
                 <Route path="/project/:projectId/topic/:topicId/new-comment" exact>
                     <CreateComment />
+                </Route>
+                <Route path="/project/:projectId/topic/:topicId/edit" exact>
+                    <EditTopic />
                 </Route>
             </Switch>
         </MemoryRouter>

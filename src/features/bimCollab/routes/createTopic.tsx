@@ -1,6 +1,18 @@
 import { useStore } from "react-redux";
 import { ObjectId } from "@novorender/webgl-api";
-import { Box, Typography, useTheme, Button, FormControlLabel, CircularProgress } from "@mui/material";
+import {
+    Box,
+    Typography,
+    useTheme,
+    Button,
+    FormControlLabel,
+    CircularProgress,
+    FormControl,
+    InputLabel,
+    MenuItem,
+    OutlinedInput,
+    Select,
+} from "@mui/material";
 import { useParams, useHistory } from "react-router-dom";
 import { FormEvent, useEffect, useState } from "react";
 
@@ -33,10 +45,13 @@ import {
     createOrthogonalCamera,
 } from "../utils";
 import { Viewpoint } from "../types";
+import { DatePicker } from "@mui/lab";
 
 type BaseViewpoint = Partial<Viewpoint> & Pick<Viewpoint, "snapshot">;
 export type NewViewpoint = BaseViewpoint &
     (Pick<Viewpoint, "perspective_camera"> | Pick<Viewpoint, "orthogonal_camera">);
+
+const today = new Date();
 
 export function CreateTopic() {
     const theme = useTheme();
@@ -49,9 +64,24 @@ export function CreateTopic() {
     const [createComment, { isLoading: creatingComment }] = useCreateCommentMutation();
     const [createViewpoint, { isLoading: creatingViewpoint }] = useCreateViewpointMutation();
 
-    const [title, setTitle] = useState("");
-    const [comment, setComment] = useState("");
+    const [fields, setFields] = useState({
+        title: "",
+        comment: "",
+        type: "",
+        area: "",
+        stage: "",
+        status: "",
+        labels: [] as string[],
+        priority: "",
+        deadline: "",
+        assigned: "",
+    });
+    const { title, comment, type, area, stage, status, labels, priority, deadline, assigned } = fields;
     const [viewpoint, setViewpoint] = useState<NewViewpoint>();
+
+    const handleInputChange = ({ name, value }: { name: string; value: string | string[] }) => {
+        setFields((state) => ({ ...state, [name]: value }));
+    };
 
     const handleSubmit = async (e: FormEvent) => {
         e.preventDefault();
@@ -60,7 +90,21 @@ export function CreateTopic() {
             return;
         }
 
-        const topicRes = await createTopic({ projectId, title });
+        let topic = {
+            projectId,
+            title,
+            area,
+            stage,
+            labels,
+            priority,
+            topic_type: type,
+            topic_status: status,
+            due_date: deadline,
+            assigned_to: assigned,
+        };
+        topic = Object.fromEntries(Object.entries(topic).filter(([_, value]) => value.length)) as typeof topic;
+
+        const topicRes = await createTopic(topic);
 
         if (!("data" in topicRes)) {
             return;
@@ -89,6 +133,7 @@ export function CreateTopic() {
     }
 
     const disabled = creatingTopic || creatingComment || creatingViewpoint;
+    const areas = extensions.fields.find((field) => field.field === "area")?.values.filter((field) => field.is_active);
 
     return (
         <ScrollBox py={1} height={1} position="relative">
@@ -100,8 +145,9 @@ export function CreateTopic() {
                 </Typography>
                 <form onSubmit={handleSubmit}>
                     <TextField
+                        name="title"
                         value={title}
-                        onChange={(e) => setTitle(e.target.value)}
+                        onChange={(e) => handleInputChange(e.target)}
                         sx={{ mb: 1 }}
                         id={"topic-title"}
                         label={"Title"}
@@ -110,8 +156,9 @@ export function CreateTopic() {
                     />
 
                     <TextField
+                        name="comment"
                         value={comment}
-                        onChange={(e) => setComment(e.target.value)}
+                        onChange={(e) => handleInputChange(e.target)}
                         sx={{ mb: 1 }}
                         id={"topic-comment"}
                         label={"Comment"}
@@ -119,6 +166,196 @@ export function CreateTopic() {
                         multiline
                         rows={4}
                     />
+
+                    {areas && areas.length ? (
+                        <FormControl size="small" sx={{ width: 1, mb: 2 }}>
+                            <InputLabel id="bcf-topic-area-label">Area</InputLabel>
+                            <Select
+                                labelId="bcf-topic-area-label"
+                                id="bcf-topic-area"
+                                fullWidth
+                                value={area}
+                                onChange={(e) => handleInputChange(e.target)}
+                                input={<OutlinedInput label="Area" />}
+                                name={"area"}
+                            >
+                                {areas.map((topicArea) => (
+                                    <MenuItem
+                                        key={topicArea.value}
+                                        value={topicArea.value}
+                                        sx={{
+                                            fontWeight: area === topicArea.value ? "bold" : "regular",
+                                        }}
+                                    >
+                                        {topicArea.value}
+                                    </MenuItem>
+                                ))}
+                            </Select>
+                        </FormControl>
+                    ) : null}
+
+                    <FormControl size="small" sx={{ width: 1, mb: 2 }}>
+                        <InputLabel id="bcf-topic-type-label">Type</InputLabel>
+                        <Select
+                            labelId="bcf-topic-type-label"
+                            id="bcf-topic-type"
+                            fullWidth
+                            value={type}
+                            onChange={(e) => handleInputChange(e.target)}
+                            input={<OutlinedInput label="Type" />}
+                            name={"type"}
+                        >
+                            {extensions.topic_type.map((topicType) => (
+                                <MenuItem
+                                    key={topicType}
+                                    value={topicType}
+                                    sx={{
+                                        fontWeight: type === topicType ? "bold" : "regular",
+                                    }}
+                                >
+                                    {topicType}
+                                </MenuItem>
+                            ))}
+                        </Select>
+                    </FormControl>
+
+                    <FormControl size="small" sx={{ width: 1, mb: 2 }}>
+                        <InputLabel id="bcf-topic-priority-label">Priority</InputLabel>
+                        <Select
+                            labelId="bcf-topic-priority-label"
+                            id="bcf-topic-priority"
+                            fullWidth
+                            value={priority}
+                            onChange={(e) => handleInputChange(e.target)}
+                            input={<OutlinedInput label="Priority" />}
+                            name={"priority"}
+                        >
+                            {extensions.priority.map((topicPriority) => (
+                                <MenuItem
+                                    key={topicPriority}
+                                    value={topicPriority}
+                                    sx={{
+                                        fontWeight: priority === topicPriority ? "bold" : "regular",
+                                    }}
+                                >
+                                    {topicPriority}
+                                </MenuItem>
+                            ))}
+                        </Select>
+                    </FormControl>
+
+                    <FormControl size="small" sx={{ width: 1, mb: 2 }}>
+                        <InputLabel id="bcf-topic-stage-label">Milestone</InputLabel>
+                        <Select
+                            labelId="bcf-topic-stage-label"
+                            id="bcf-topic-stage"
+                            fullWidth
+                            value={stage}
+                            onChange={(e) => handleInputChange(e.target)}
+                            input={<OutlinedInput label="Milestone" />}
+                            name={"stage"}
+                        >
+                            {extensions.stage.map((topicStage) => (
+                                <MenuItem
+                                    key={topicStage}
+                                    value={topicStage}
+                                    sx={{
+                                        fontWeight: stage === topicStage ? "bold" : "regular",
+                                    }}
+                                >
+                                    {topicStage}
+                                </MenuItem>
+                            ))}
+                        </Select>
+                    </FormControl>
+
+                    <FormControl size="small" sx={{ width: 1, mb: 2 }}>
+                        <InputLabel id="bcf-topic-status-label">Status</InputLabel>
+                        <Select
+                            labelId="bcf-topic-status-label"
+                            id="bcf-topic-status"
+                            fullWidth
+                            value={status}
+                            onChange={(e) => handleInputChange(e.target)}
+                            input={<OutlinedInput label="Status" />}
+                            name={"status"}
+                        >
+                            {extensions.topic_status.map((topicStatus) => (
+                                <MenuItem
+                                    key={topicStatus}
+                                    value={topicStatus}
+                                    sx={{
+                                        fontWeight: status === topicStatus ? "bold" : "regular",
+                                    }}
+                                >
+                                    {topicStatus}
+                                </MenuItem>
+                            ))}
+                        </Select>
+                    </FormControl>
+
+                    <FormControl size="small" sx={{ width: 1, mb: 2 }}>
+                        <InputLabel id="bcf-topic-assigned-label">Assigned to</InputLabel>
+                        <Select
+                            labelId="bcf-topic-assigned-label"
+                            id="bcf-topic-assigned"
+                            fullWidth
+                            value={assigned}
+                            onChange={(e) => handleInputChange(e.target)}
+                            input={<OutlinedInput label="Assigned to" />}
+                            name={"assigned"}
+                        >
+                            {extensions.user_id_type.map((user) => (
+                                <MenuItem
+                                    key={user}
+                                    value={user}
+                                    sx={{
+                                        fontWeight: assigned === user ? "bold" : "regular",
+                                    }}
+                                >
+                                    {user}
+                                </MenuItem>
+                            ))}
+                        </Select>
+                    </FormControl>
+
+                    <FormControl size="small" sx={{ width: 1, mb: 2 }}>
+                        <DatePicker
+                            label="Deadline"
+                            value={deadline || null}
+                            minDate={today}
+                            onChange={(newDate: Date | null) =>
+                                handleInputChange({ name: "deadline", value: newDate?.toISOString() ?? "" })
+                            }
+                            renderInput={(params) => <TextField {...params} size="small" />}
+                        />
+                    </FormControl>
+
+                    <FormControl size="small" sx={{ width: 1, mb: 2 }}>
+                        <InputLabel id="bcf-topic-labels-label">Labels</InputLabel>
+                        <Select
+                            labelId="bcf-topic-labels-label"
+                            id="bcf-topic-labels"
+                            fullWidth
+                            multiple
+                            value={labels}
+                            onChange={(e) => handleInputChange(e.target)}
+                            input={<OutlinedInput label="Label" />}
+                            name={"labels"}
+                        >
+                            {extensions.topic_label.map((topicLabel) => (
+                                <MenuItem
+                                    key={topicLabel}
+                                    value={topicLabel}
+                                    sx={{
+                                        fontWeight: labels.includes(topicLabel) ? "bold" : "regular",
+                                    }}
+                                >
+                                    {topicLabel}
+                                </MenuItem>
+                            ))}
+                        </Select>
+                    </FormControl>
 
                     <IncludeViewpoint viewpoint={viewpoint} setViewpoint={setViewpoint} />
 

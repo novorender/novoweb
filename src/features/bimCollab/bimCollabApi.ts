@@ -158,6 +158,13 @@ export const bimCollabApi = createApi({
                 method: "POST",
             }),
         }),
+        updateTopic: builder.mutation<Topic, Partial<Topic> & { projectId: string; topicId: string }>({
+            query: ({ projectId, topicId, ...body }) => ({
+                body,
+                url: `projects/${projectId}/topics/${topicId}`,
+                method: "PUT",
+            }),
+        }),
         createViewpoint: builder.mutation<
             Viewpoint,
             NewViewpoint & {
@@ -247,6 +254,7 @@ export const {
     useGetSnapshotQuery,
     useGetThumbnailQuery,
     useCreateTopicMutation,
+    useUpdateTopicMutation,
     useCreateViewpointMutation,
     useCreateCommentMutation,
     useGetTokenMutation,
@@ -268,5 +276,5 @@ export async function getCode(authUrl: string, state: string) {
         `&code_challenge_method=S256` +
         `&state=${state}`;
 
-    await sleep(5000);
+    await sleep(10000);
 }

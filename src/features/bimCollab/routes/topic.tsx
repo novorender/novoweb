@@ -1,6 +1,6 @@
 import { useParams, Link, useHistory } from "react-router-dom";
 import { useTheme, Box, Button, Typography, List, ListItem } from "@mui/material";
-import { Add, ArrowBack } from "@mui/icons-material";
+import { Add, ArrowBack, Edit } from "@mui/icons-material";
 
 import { ImgModal, ImgTooltip, LinearProgress, ScrollBox, Tooltip } from "components";
 
@@ -98,6 +98,13 @@ export function Topic() {
                     <Button component={Link} to={`/project/${projectId}/topic/${topicId}/new-comment`} color="grey">
                         <Add sx={{ mr: 1 }} />
                         Add comment
+                    </Button>
+                ) : null}
+
+                {topic.authorization.topic_status.length ? (
+                    <Button component={Link} to={`/project/${projectId}/topic/${topicId}/edit`} color="grey">
+                        <Edit fontSize="small" sx={{ mr: 1 }} />
+                        Edit
                     </Button>
                 ) : null}
             </Box>
