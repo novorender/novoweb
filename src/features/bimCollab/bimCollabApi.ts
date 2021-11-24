@@ -76,6 +76,7 @@ const dynamicBaseQuery: BaseQueryFn<string | FetchArgs, unknown, FetchBaseQueryE
 
 export const bimCollabApi = createApi({
     reducerPath: "bimCollabApi",
+    tagTypes: ["Topics"],
     baseQuery: dynamicBaseQuery,
     endpoints: (builder) => ({
         getVersions: builder.mutation<{ versions: Version[] }, void>({
@@ -100,6 +101,7 @@ export const bimCollabApi = createApi({
         }),
         getTopics: builder.query<Topic[], { projectId: string }>({
             query: ({ projectId }) => `projects/${projectId}/topics`,
+            providesTags: ["Topics"],
         }),
         getTopic: builder.query<Topic, { projectId: string; topicId: string }>({
             query: ({ projectId, topicId }) => `projects/${projectId}/topics/${topicId}`,
@@ -157,6 +159,7 @@ export const bimCollabApi = createApi({
                 url: `projects/${projectId}/topics`,
                 method: "POST",
             }),
+            invalidatesTags: ["Topics"],
         }),
         updateTopic: builder.mutation<Topic, Partial<Topic> & { projectId: string; topicId: string }>({
             query: ({ projectId, topicId, ...body }) => ({
@@ -164,6 +167,7 @@ export const bimCollabApi = createApi({
                 url: `projects/${projectId}/topics/${topicId}`,
                 method: "PUT",
             }),
+            invalidatesTags: ["Topics"],
         }),
         createViewpoint: builder.mutation<
             Viewpoint,
