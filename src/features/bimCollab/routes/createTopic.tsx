@@ -133,7 +133,7 @@ export function CreateTopic() {
     }
 
     const disabled = creatingTopic || creatingComment || creatingViewpoint;
-    const areas = extensions.fields.find((field) => field.field === "area")?.values.filter((field) => field.is_active);
+    const areas = extensions.fields?.find((field) => field.field === "area")?.values.filter((field) => field.is_active);
 
     return (
         <ScrollBox py={1} height={1} position="relative">
@@ -359,7 +359,7 @@ export function CreateTopic() {
 
                     <IncludeViewpoint viewpoint={viewpoint} setViewpoint={setViewpoint} />
 
-                    <Box display="flex" justifyContent="space-between" mr={2} mb={2}>
+                    <Box display="flex" justifyContent="space-between" mb={4}>
                         <Button
                             variant="contained"
                             color="grey"
