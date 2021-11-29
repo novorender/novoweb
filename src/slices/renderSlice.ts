@@ -41,6 +41,12 @@ export enum CameraType {
     Flight,
 }
 
+export enum SceneEditStatus {
+    Init,
+    Loading,
+    Editing,
+}
+
 type CameraPosition = Pick<Camera, "position" | "rotation">;
 export type ObjectGroups = { default: ObjectGroup; defaultHidden: ObjectGroup; custom: ObjectGroup[] };
 export type ClippingPlanes = Omit<RenderSettings["clippingPlanes"], "bounds"> & { defining: boolean };
@@ -92,11 +98,17 @@ const initialState = {
     showPerformance: false,
 };
 
-type State = typeof initialState;
+type State = typeof initialState & {
+    viewerSceneEditing?: {
+        status: SceneEditStatus;
+        id: string;
+        title?: string;
+    };
+};
 
 export const renderSlice = createSlice({
     name: "render",
-    initialState: initialState,
+    initialState: initialState as State,
     reducers: {
         setMainObject: (state, action: PayloadAction<ObjectId | undefined>) => {
             state.mainObject = action.payload;
@@ -209,6 +221,18 @@ export const renderSlice = createSlice({
         setShowPerformance: (state, action: PayloadAction<boolean>) => {
             state.showPerformance = action.payload;
         },
+        initViewerSceneEditing: (state, action: PayloadAction<string>) => {
+            const { environments } = state;
+
+            return {
+                ...initialState,
+                environments,
+                viewerSceneEditing: { status: SceneEditStatus.Init, id: action.payload },
+            };
+        },
+        setViewerSceneEditing: (state, action: PayloadAction<State["viewerSceneEditing"]>) => {
+            state.viewerSceneEditing = action.payload;
+        },
     },
     extraReducers: (builder) => {
         builder.addCase(fetchEnvironments.fulfilled, (state, action) => {
@@ -235,6 +259,7 @@ export const selectCamera = (state: RootState) => state.render.camera as CameraS
 export const selectCameraType = (state: RootState) => state.render.camera.type;
 export const selectSelectiongOrthoPoint = (state: RootState) => state.render.selectingOrthoPoint;
 export const selectShowPerformance = (state: RootState) => state.render.showPerformance;
+export const selectEditingScene = (state: RootState) => state.render.viewerSceneEditing;
 
 const { reducer, actions } = renderSlice;
 export { reducer as renderReducer, actions as renderActions };

@@ -60,9 +60,10 @@ function set(payload: { color: State["color"]; ids: ObjectId[] }) {
 const actions = { add, remove, setIds, setColor, set };
 
 type Actions = ReturnType<typeof actions[keyof typeof actions]>;
+type DispatchHighlighted = Dispatch<Actions>;
 
 const StateContext = createContext<State>(undefined as any);
-const DispatchContext = createContext<Dispatch<Actions>>(undefined as any);
+const DispatchContext = createContext<DispatchHighlighted>(undefined as any);
 
 function reducer(state: State, action: Actions): State {
     switch (action.type) {
@@ -137,7 +138,7 @@ function useHighlighted(): State {
     return context;
 }
 
-function useDispatchHighlighted(): Dispatch<Actions> {
+function useDispatchHighlighted(): DispatchHighlighted {
     const context = useContext(DispatchContext);
 
     if (context === undefined) {
@@ -159,3 +160,4 @@ function useIsHighlighted(id: number) {
 }
 
 export { HighlightedProvider, useIsHighlighted, useHighlighted, useDispatchHighlighted, actions as highlightActions };
+export type { DispatchHighlighted };

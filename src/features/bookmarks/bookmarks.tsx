@@ -27,6 +27,7 @@ import {
     renderActions,
     selectBookmarks,
     selectDefaultVisibility,
+    selectEditingScene,
     selectMeasure,
 } from "slices/renderSlice";
 import { highlightActions, useDispatchHighlighted } from "contexts/highlighted";
@@ -230,6 +231,7 @@ export function Bookmarks() {
 const AddNewBookmark = forwardRef<HTMLDivElement, { onClose: () => void }>(({ onClose }, ref) => {
     const bookmarks = useAppSelector(selectBookmarks);
     const measurement = useAppSelector(selectMeasure);
+    const editingScene = useAppSelector(selectEditingScene);
     const defaultVisibility = useAppSelector(selectDefaultVisibility);
     const dispatch = useAppDispatch();
 
@@ -248,7 +250,7 @@ const AddNewBookmark = forwardRef<HTMLDivElement, { onClose: () => void }>(({ on
         const newBookmarks = bookmarks.concat(createBookmark());
 
         dispatch(renderActions.setBookmarks(newBookmarks));
-        dataApi.saveBookmarks(scene.id, newBookmarks);
+        dataApi.saveBookmarks(editingScene?.id || scene.id, newBookmarks);
 
         onClose();
     };
@@ -256,7 +258,7 @@ const AddNewBookmark = forwardRef<HTMLDivElement, { onClose: () => void }>(({ on
     const createBookmark = (): Bookmark => {
         const camera = view.camera;
         const { highlight: _highlight, ...clippingPlanes } = view.settings.clippingPlanes;
-        const clippingVolume = view.settings.clippingVolume;
+        const { ...clippingVolume } = view.settings.clippingVolume;
         const selectedOnly = defaultVisibility !== ObjectVisibility.Neutral;
         const img = imgRef.current;
         const objectGroups = customGroups.map(({ id, selected, hidden, ids }) => ({
@@ -275,8 +277,14 @@ const AddNewBookmark = forwardRef<HTMLDivElement, { onClose: () => void }>(({ on
                 img,
                 objectGroups,
                 selectedOnly,
-                clippingPlanes,
                 clippingVolume,
+                clippingPlanes: {
+                    ...clippingPlanes,
+                    bounds: {
+                        min: Array.from(clippingPlanes.bounds.min) as [number, number, number],
+                        max: Array.from(clippingPlanes.bounds.max) as [number, number, number],
+                    },
+                },
                 camera: {
                     kind,
                     position: vec3.copy(vec3.create(), position),

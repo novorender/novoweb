@@ -1,10 +1,24 @@
 import { ObjectGroup } from "@novorender/data-js-api";
-import { EnvironmentDescription, Highlight, Internal, ObjectId, Scene, View } from "@novorender/webgl-api";
+import {
+    CameraController,
+    CameraControllerParams,
+    EnvironmentDescription,
+    Highlight,
+    Internal,
+    ObjectId,
+    RenderSettings,
+    Scene,
+    View,
+} from "@novorender/webgl-api";
 
 import { api } from "app";
+import { store } from "app/store";
 import { offscreenCanvas } from "config";
-import { CustomGroup } from "contexts/customGroups";
-import { ObjectVisibility, RenderType } from "slices/renderSlice";
+import { CustomGroup, customGroupsActions, DispatchCustomGroups } from "contexts/customGroups";
+import { hiddenGroupActions, DispatchHidden } from "contexts/hidden";
+import { highlightActions, DispatchHighlighted } from "contexts/highlighted";
+import { MutableRefObject } from "react";
+import { ObjectVisibility, renderActions, RenderType } from "slices/renderSlice";
 import { sleep } from "utils/timers";
 
 import { ssaoEnabled, taaEnabled } from "./consts";
@@ -252,4 +266,101 @@ function getHighlightByObjectVisibility(visibility: ObjectVisibility): Highlight
         case ObjectVisibility.Transparent:
             return api.createHighlight({ kind: "transparent", opacity: 0 });
     }
+}
+
+export function initHighlighted(groups: ObjectGroup[], dispatch: DispatchHighlighted): void {
+    const defaultGroup = groups.find((group) => !group.id && group.selected);
+
+    if (defaultGroup) {
+        dispatch(
+            highlightActions.set({
+                ids: defaultGroup.ids as number[],
+                color: [defaultGroup.color[0], defaultGroup.color[1], defaultGroup.color[2]],
+            })
+        );
+
+        const lastHighlighted = defaultGroup.ids.slice(-1)[0];
+        if (lastHighlighted) {
+            store.dispatch(renderActions.setMainObject(lastHighlighted));
+        }
+    } else {
+        dispatch(highlightActions.setIds([]));
+        store.dispatch(renderActions.setMainObject(undefined));
+    }
+}
+
+export function initHidden(groups: ObjectGroup[], dispatch: DispatchHidden): void {
+    const defaultHiddenGroup = groups.find((group) => !group.id && group.hidden);
+
+    if (defaultHiddenGroup) {
+        dispatch(hiddenGroupActions.setIds(defaultHiddenGroup.ids as number[]));
+    } else {
+        dispatch(hiddenGroupActions.setIds([]));
+    }
+}
+
+export function initCustomGroups(groups: ObjectGroup[], dispatch: DispatchCustomGroups): void {
+    const customGroups = groups.filter((group) => group.id);
+
+    if (customGroups.length) {
+        dispatch(customGroupsActions.set(serializeableObjectGroups(customGroups)));
+    } else {
+        dispatch(customGroupsActions.set([]));
+    }
+}
+
+export async function initEnvironment(
+    env: string | EnvironmentDescription | undefined,
+    environments: EnvironmentDescription[],
+    view: View
+): Promise<void> {
+    const environment = env && typeof env === "object" ? env : getEnvironmentDescription(env ?? "", environments);
+    const loadedEnvironment = await api.loadEnvironment(environment);
+
+    store.dispatch(renderActions.setEnvironment(environment));
+    view.applySettings({ environment: loadedEnvironment });
+}
+
+export function initCamera({
+    camera,
+    canvas,
+    flightControllerRef,
+    view,
+}: {
+    camera: CameraControllerParams | undefined;
+    canvas: HTMLCanvasElement;
+    flightControllerRef: MutableRefObject<CameraController | undefined>;
+    view: View;
+}): CameraController {
+    const controller = api.createCameraController((camera as any) ?? { kind: "flight" }, canvas);
+
+    if (camera) {
+        controller.autoZoomToScene = false;
+    }
+
+    flightControllerRef.current = controller.params.kind === "flight" ? controller : undefined;
+    view.camera.controller = controller;
+
+    return controller;
+}
+
+export function initClippingBox(clipping: RenderSettings["clippingPlanes"]): void {
+    store.dispatch(
+        renderActions.setClippingBox({
+            enabled: clipping.enabled,
+            inside: clipping.inside,
+            showBox: clipping.showBox,
+        })
+    );
+}
+
+export function initClippingPlanes(clipping: RenderSettings["clippingVolume"]): void {
+    store.dispatch(
+        renderActions.setClippingPlanes({
+            enabled: clipping.enabled,
+            mode: clipping.mode,
+            planes: clipping.planes.map((plane) => Array.from(plane) as [number, number, number, number]),
+            baseW: clipping.planes.length ? clipping.planes[0][3] : 0,
+        })
+    );
 }
