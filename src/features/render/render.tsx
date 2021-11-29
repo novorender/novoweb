@@ -563,10 +563,9 @@ export function Render3D({ id, onInit }: Props) {
                 } = preloadedScene ?? (await dataApi.loadScene(id));
 
                 const urlData = getDataFromUrlHash();
-                const settings = { ...sceneData.settings, ...urlData.settings };
-                const { display: _display, ...customSettings } = settings;
-                customSettings.background = { color: vec4.fromValues(0, 0, 0, 0) };
-                const _view = await api.createView(customSettings, canvas);
+                const { display: _display, ...settings } = { ...sceneData.settings, ...urlData.settings };
+                settings.background = { color: vec4.fromValues(0, 0, 0, 0) };
+                const _view = await api.createView(settings, canvas);
                 _view.applySettings({
                     quality: {
                         detail: {
@@ -608,7 +607,26 @@ export function Render3D({ id, onInit }: Props) {
                 dispatch(renderActions.setBookmarks(bookmarks));
 
                 if (settings.clippingPlanes?.enabled) {
-                    dispatch(renderActions.setClippingBox({ enabled: true }));
+                    dispatch(
+                        renderActions.setClippingBox({
+                            enabled: true,
+                            inside: settings.clippingPlanes.inside,
+                            showBox: settings.clippingPlanes.showBox,
+                        })
+                    );
+                }
+
+                if (settings.clippingVolume?.enabled) {
+                    dispatch(
+                        renderActions.setClippingPlanes({
+                            enabled: true,
+                            mode: settings.clippingVolume.mode,
+                            planes: settings.clippingVolume.planes.map(
+                                (plane) => Array.from(plane) as [number, number, number, number]
+                            ),
+                            baseW: settings.clippingVolume.planes.length ? settings.clippingVolume.planes[0][3] : 0,
+                        })
+                    );
                 }
 
                 const defaultGroup = objectGroups.find((group) => !group.id && group.selected);
