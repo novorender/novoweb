@@ -854,42 +854,45 @@ export function Render3D({ id, onInit }: Props) {
         [view, clippingPlanes]
     );
 
-    useEffect(() => {
-        const controller = flightController.current;
+    useEffect(
+        function handleCameraStateChange() {
+            const controller = flightController.current;
 
-        if (!controller || !view || !canvas) {
-            return;
-        }
-
-        if (cameraState.type === CameraType.Flight) {
-            controller.enabled = true;
-            view.camera.controller = controller;
-
-            if (cameraState.goTo) {
-                const sameCameraPosition =
-                    vec3.equals(view.camera.position, cameraState.goTo.position) &&
-                    quat.equals(view.camera.rotation, cameraState.goTo.rotation);
-
-                if (!sameCameraPosition) {
-                    view.camera.controller.moveTo(cameraState.goTo.position, cameraState.goTo.rotation);
-                }
+            if (!controller || !view || !canvas) {
+                return;
             }
-        } else if (cameraState.type === CameraType.Orthographic && cameraState.params) {
-            // copy non-primitives
-            const orthoController = api.createCameraController(
-                {
-                    ...cameraState.params,
-                    referenceCoordSys: cameraState.params.referenceCoordSys
-                        ? Array.from(cameraState.params.referenceCoordSys)
-                        : undefined,
-                    position: cameraState.params.position ? Array.from(cameraState.params.position) : undefined,
-                } as any as OrthoControllerParams,
-                canvas
-            );
-            controller.enabled = false;
-            view.camera.controller = orthoController;
-        }
-    }, [cameraState, view, canvas]);
+
+            if (cameraState.type === CameraType.Flight) {
+                controller.enabled = true;
+                view.camera.controller = controller;
+
+                if (cameraState.goTo) {
+                    const sameCameraPosition =
+                        vec3.equals(view.camera.position, cameraState.goTo.position) &&
+                        quat.equals(view.camera.rotation, cameraState.goTo.rotation);
+
+                    if (!sameCameraPosition) {
+                        view.camera.controller.moveTo(cameraState.goTo.position, cameraState.goTo.rotation);
+                    }
+                }
+            } else if (cameraState.type === CameraType.Orthographic && cameraState.params) {
+                // copy non-primitives
+                const orthoController = api.createCameraController(
+                    {
+                        ...cameraState.params,
+                        referenceCoordSys: cameraState.params.referenceCoordSys
+                            ? Array.from(cameraState.params.referenceCoordSys)
+                            : undefined,
+                        position: cameraState.params.position ? Array.from(cameraState.params.position) : undefined,
+                    } as any as OrthoControllerParams,
+                    canvas
+                );
+                controller.enabled = false;
+                view.camera.controller = orthoController;
+            }
+        },
+        [cameraState, view, canvas]
+    );
 
     useEffect(
         function cleanUpPreviousScene() {
