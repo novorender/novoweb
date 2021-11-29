@@ -1161,7 +1161,7 @@ export function Render3D({ id, onInit }: Props) {
     setTimeout(moveSvg, 1);
 
     return (
-        <Box position="relative" width="100%" height="100%">
+        <Box position="relative" width="100%" height="100%" sx={{ userSelect: "none" }}>
             {status === Status.Error ? (
                 <NoScene id={id} />
             ) : (
