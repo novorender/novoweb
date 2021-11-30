@@ -572,10 +572,7 @@ export function Render3D({ id, onInit }: Props) {
                 } = preloadedScene ?? (await dataApi.loadScene(id));
 
                 const urlData = getDataFromUrlHash();
-                const { display: _display, ...settings } = {
-                    ...sceneData.settings,
-                    ...urlData.settings,
-                };
+                const { display: _display, ...settings } = { ...sceneData.settings, ...urlData.settings };
                 settings.background = { color: vec4.fromValues(0, 0, 0, 0) };
                 const _view = await api.createView(settings, canvas);
                 _view.applySettings({
@@ -837,44 +834,47 @@ export function Render3D({ id, onInit }: Props) {
         [view, clippingPlanes]
     );
 
-    useEffect(() => {
-        if (!view || !canvas) {
-            return;
-        }
-
-        const controller =
-            flightController.current ??
-            initCamera({ camera: { kind: "flight" }, view, canvas, flightControllerRef: flightController });
-
-        if (cameraState.type === CameraType.Flight) {
-            controller.enabled = true;
-            view.camera.controller = controller;
-
-            if (cameraState.goTo) {
-                const sameCameraPosition =
-                    vec3.equals(view.camera.position, cameraState.goTo.position) &&
-                    quat.equals(view.camera.rotation, cameraState.goTo.rotation);
-
-                if (!sameCameraPosition) {
-                    view.camera.controller.moveTo(cameraState.goTo.position, cameraState.goTo.rotation);
-                }
+    useEffect(
+        function handleCameraStateChange() {
+            if (!view || !canvas) {
+                return;
             }
-        } else if (cameraState.type === CameraType.Orthographic && cameraState.params) {
-            // copy non-primitives
-            const orthoController = api.createCameraController(
-                {
-                    ...cameraState.params,
-                    referenceCoordSys: cameraState.params.referenceCoordSys
-                        ? Array.from(cameraState.params.referenceCoordSys)
-                        : undefined,
-                    position: cameraState.params.position ? Array.from(cameraState.params.position) : undefined,
-                } as any as OrthoControllerParams,
-                canvas
-            );
-            controller.enabled = false;
-            view.camera.controller = orthoController;
-        }
-    }, [cameraState, view, canvas]);
+
+            const controller =
+                flightController.current ??
+                initCamera({ camera: { kind: "flight" }, view, canvas, flightControllerRef: flightController });
+
+            if (cameraState.type === CameraType.Flight) {
+                controller.enabled = true;
+                view.camera.controller = controller;
+
+                if (cameraState.goTo) {
+                    const sameCameraPosition =
+                        vec3.equals(view.camera.position, cameraState.goTo.position) &&
+                        quat.equals(view.camera.rotation, cameraState.goTo.rotation);
+
+                    if (!sameCameraPosition) {
+                        view.camera.controller.moveTo(cameraState.goTo.position, cameraState.goTo.rotation);
+                    }
+                }
+            } else if (cameraState.type === CameraType.Orthographic && cameraState.params) {
+                // copy non-primitives
+                const orthoController = api.createCameraController(
+                    {
+                        ...cameraState.params,
+                        referenceCoordSys: cameraState.params.referenceCoordSys
+                            ? Array.from(cameraState.params.referenceCoordSys)
+                            : undefined,
+                        position: cameraState.params.position ? Array.from(cameraState.params.position) : undefined,
+                    } as any as OrthoControllerParams,
+                    canvas
+                );
+                controller.enabled = false;
+                view.camera.controller = orthoController;
+            }
+        },
+        [cameraState, view, canvas]
+    );
 
     useEffect(
         function cleanUpPreviousScene() {
@@ -1211,7 +1211,7 @@ export function Render3D({ id, onInit }: Props) {
     setTimeout(moveSvg, 1);
 
     return (
-        <Box position="relative" width="100%" height="100%">
+        <Box position="relative" width="100%" height="100%" sx={{ userSelect: "none" }}>
             {status === Status.Error ? (
                 <NoScene id={id} />
             ) : (
