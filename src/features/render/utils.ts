@@ -18,7 +18,7 @@ import { CustomGroup, customGroupsActions, DispatchCustomGroups } from "contexts
 import { hiddenGroupActions, DispatchHidden } from "contexts/hidden";
 import { highlightActions, DispatchHighlighted } from "contexts/highlighted";
 import { MutableRefObject } from "react";
-import { ObjectVisibility, renderActions, RenderType } from "slices/renderSlice";
+import { CameraType, ObjectVisibility, renderActions, RenderType } from "slices/renderSlice";
 import { sleep } from "utils/timers";
 
 import { ssaoEnabled, taaEnabled } from "./consts";
@@ -327,19 +327,33 @@ export function initCamera({
     flightControllerRef,
     view,
 }: {
-    camera: CameraControllerParams | undefined;
+    camera: CameraControllerParams;
     canvas: HTMLCanvasElement;
     flightControllerRef: MutableRefObject<CameraController | undefined>;
     view: View;
 }): CameraController {
-    const controller = api.createCameraController((camera as any) ?? { kind: "flight" }, canvas);
+    const controller = api.createCameraController(camera as any, canvas);
 
     if (camera) {
         controller.autoZoomToScene = false;
     }
 
-    flightControllerRef.current = controller.params.kind === "flight" ? controller : undefined;
+    if (controller.params.kind === "flight") {
+        flightControllerRef.current = controller;
+    } else if (!flightControllerRef.current) {
+        flightControllerRef.current = {
+            ...api.createCameraController({ kind: "flight" }, canvas),
+            autoZoomToScene: true,
+            enabled: false,
+        };
+    }
+
     view.camera.controller = controller;
+    store.dispatch(
+        renderActions.setCamera({
+            type: controller.params.kind === "ortho" ? CameraType.Orthographic : CameraType.Flight,
+        })
+    );
 
     return controller;
 }

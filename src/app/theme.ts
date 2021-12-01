@@ -53,6 +53,9 @@ let theme = createTheme({
         text: {
             primary: "#253746",
         },
+        info: {
+            main: "#007DFF",
+        },
         grey: {
             main: grey[300],
             dark: grey[400],

@@ -11,6 +11,7 @@ import { createSlice, createAsyncThunk, PayloadAction } from "@reduxjs/toolkit";
 import { vec3, vec4 } from "gl-matrix";
 
 import type { RootState } from "app/store";
+import type { WidgetKey } from "config/features";
 
 export const fetchEnvironments = createAsyncThunk("novorender/fetchEnvironments", async (api: API) => {
     const envs = await api.availableEnvironments("https://api.novorender.com/assets/env/index.json");
@@ -103,6 +104,9 @@ type State = typeof initialState & {
         status: SceneEditStatus;
         id: string;
         title?: string;
+        enabledFeatures?: WidgetKey[];
+        requireAuth?: boolean;
+        expiration?: string;
     };
 };
 

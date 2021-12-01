@@ -14,8 +14,7 @@ const initialState = {
     enabledWidgets: defaultEnabledWidgets as WidgetKey[],
     sceneType: SceneType.Viewer,
     viewerScenes: [] as ScenePreview[],
-    // TODO(OLA): fix
-    widgets: ["viewerScenes"] as WidgetKey[],
+    widgets: [] as WidgetKey[],
     urlSearchQuery: undefined as undefined | string | SearchPattern[],
 };
 
@@ -33,6 +32,17 @@ export const explorerSlice = createSlice({
         },
         setViewerScenes: (state, action: PayloadAction<ScenePreview[]>) => {
             state.viewerScenes = action.payload;
+        },
+        addViewerScene: (state, action: PayloadAction<ScenePreview>) => {
+            state.viewerScenes = state.viewerScenes.concat(action.payload);
+        },
+        updateViewerScene: (state, action: PayloadAction<ScenePreview>) => {
+            state.viewerScenes = state.viewerScenes.map((scene) =>
+                scene.id === action.payload.id ? action.payload : scene
+            );
+        },
+        deleteViewerScene: (state, action: PayloadAction<ScenePreview["id"]>) => {
+            state.viewerScenes = state.viewerScenes.filter((scene) => scene.id !== action.payload);
         },
         setWidgets: (state, action: PayloadAction<WidgetKey[]>) => {
             state.widgets = action.payload;

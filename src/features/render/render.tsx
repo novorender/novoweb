@@ -7,6 +7,7 @@ import {
     MeasureInfo,
     CameraController,
     OrthoControllerParams,
+    CameraControllerParams,
 } from "@novorender/webgl-api";
 import { Box, Button, Paper, Typography, useTheme, styled } from "@mui/material";
 import { css } from "@mui/styled-engine";
@@ -67,6 +68,8 @@ import {
     initClippingPlanes,
 } from "./utils";
 import { xAxis, yAxis, axis } from "./consts";
+import { SceneData } from "@novorender/data-js-api";
+import { enabledFeaturesToFeatureKeys, getEnabledFeatures } from "utils/misc";
 
 glMatrix.setMatrixArrayType(Array);
 addConsoleDebugUtils();
@@ -562,7 +565,6 @@ export function Render3D({ id, onInit }: Props) {
                 const {
                     url,
                     db,
-                    camera,
                     objectGroups = [],
                     bookmarks = [],
                     customProperties,
@@ -572,6 +574,7 @@ export function Render3D({ id, onInit }: Props) {
                 } = preloadedScene ?? (await dataApi.loadScene(id));
 
                 const urlData = getDataFromUrlHash();
+                const camera = { kind: "flight", ...sceneData.camera, ...urlData.camera } as CameraControllerParams;
                 const { display: _display, ...settings } = { ...sceneData.settings, ...urlData.settings };
                 settings.background = { color: vec4.fromValues(0, 0, 0, 0) };
                 const _view = await api.createView(settings, canvas);
@@ -594,7 +597,7 @@ export function Render3D({ id, onInit }: Props) {
 
                 initCamera({
                     canvas,
-                    camera: urlData.camera ?? camera,
+                    camera,
                     view: _view,
                     flightControllerRef: flightController,
                 });
@@ -836,13 +839,11 @@ export function Render3D({ id, onInit }: Props) {
 
     useEffect(
         function handleCameraStateChange() {
-            if (!view || !canvas) {
+            const controller = flightController.current;
+
+            if (!view || !canvas || !controller) {
                 return;
             }
-
-            const controller =
-                flightController.current ??
-                initCamera({ camera: { kind: "flight" }, view, canvas, flightControllerRef: flightController });
 
             if (cameraState.type === CameraType.Flight) {
                 controller.enabled = true;
@@ -909,12 +910,36 @@ export function Render3D({ id, onInit }: Props) {
             }
 
             async function applyViewerScene(sceneId: string, view: View, canvas: HTMLCanvasElement) {
-                await applyScene(sceneId, view, canvas);
-                dispatch(renderActions.setViewerSceneEditing({ status: SceneEditStatus.Editing, id: sceneId }));
+                const { title, customProperties } = await applyScene(sceneId, view, canvas);
+                const enabledFeatures = getEnabledFeatures(customProperties);
+                const requireAuth = customProperties?.enabledFeatures?.enabledOrgs !== undefined;
+                const expiration = customProperties?.enabledFeatures?.expiration;
+
+                dispatch(
+                    renderActions.setViewerSceneEditing({
+                        title,
+                        requireAuth,
+                        expiration,
+                        status: SceneEditStatus.Editing,
+                        id: sceneId,
+                        enabledFeatures: enabledFeatures ? enabledFeaturesToFeatureKeys(enabledFeatures) : [],
+                    })
+                );
             }
 
-            async function applyScene(sceneId: string, view: View, canvas: HTMLCanvasElement) {
-                const { settings, camera, bookmarks = [], objectGroups = [] } = await dataApi.loadScene(sceneId);
+            async function applyScene(
+                sceneId: string,
+                view: View,
+                canvas: HTMLCanvasElement
+            ): Promise<Pick<SceneData, "title" | "customProperties">> {
+                const {
+                    settings,
+                    title,
+                    customProperties,
+                    camera = { kind: "flight" },
+                    bookmarks = [],
+                    objectGroups = [],
+                } = await dataApi.loadScene(sceneId);
 
                 if (settings) {
                     const { display: _display, light: _light, ...viewerSceneSettings } = settings;
@@ -936,6 +961,8 @@ export function Render3D({ id, onInit }: Props) {
                 initCustomGroups(objectGroups, dispatchCustomGroups);
                 initHighlighted(objectGroups, dispatchHighlighted);
                 dispatch(renderActions.setBookmarks(bookmarks));
+
+                return { title, customProperties };
             }
         },
         [

@@ -1,4 +1,11 @@
-import { AddCircle, CalendarToday, Delete, Edit, MoreVert, PowerSettingsNew } from "@mui/icons-material";
+import {
+    AddCircle,
+    Delete,
+    Edit,
+    MoreVert,
+    // CalendarToday,
+    // PowerSettingsNew
+} from "@mui/icons-material";
 import {
     Button,
     Box,
@@ -12,30 +19,39 @@ import {
     ListItemIcon,
     ListItemText,
     MenuList,
+    Link,
 } from "@mui/material";
 import { ScenePreview } from "@novorender/data-js-api";
 import { useState, MouseEvent } from "react";
 
 import { ScrollBox } from "components";
+import { CreateViewerScene } from "features/createViewerScene";
+import { dataApi } from "app";
+import { useToggle } from "hooks/useToggle";
 import { useAppDispatch, useAppSelector } from "app/store";
-import { selectViewerScenes } from "slices/explorerSlice";
+import { explorerActions, selectViewerScenes } from "slices/explorerSlice";
 import { renderActions, SceneEditStatus, selectEditingScene } from "slices/renderSlice";
 
 export function ViewerScenes() {
     const theme = useTheme();
     const viewerScenes = useAppSelector(selectViewerScenes);
     const editingScene = useAppSelector(selectEditingScene);
+    const [modalOpen, toggleModalOpen] = useToggle();
 
     return (
         <>
             <Box boxShadow={theme.customShadows.widgetHeader} display="flex" justifyContent="space-between">
                 {editingScene === undefined ? (
-                    <Button onClick={() => {}} color="grey">
+                    <Button onClick={toggleModalOpen} color="grey">
                         <AddCircle sx={{ mr: 1 }} />
-                        Generate viewer scene
+                        Create viewer scene
                     </Button>
                 ) : (
-                    <Button disabled={editingScene.status !== SceneEditStatus.Editing} onClick={() => {}} color="grey">
+                    <Button
+                        disabled={editingScene.status !== SceneEditStatus.Editing}
+                        onClick={toggleModalOpen}
+                        color="grey"
+                    >
                         <AddCircle sx={{ mr: 1 }} />
                         Update viewer scene
                     </Button>
@@ -51,11 +67,17 @@ export function ViewerScenes() {
                     ))}
                 </List>
             </ScrollBox>
+            <CreateViewerScene
+                key={editingScene ? `${editingScene.id}${editingScene.status}` : "ADMIN"}
+                open={modalOpen}
+                onClose={toggleModalOpen}
+            />
         </>
     );
 }
 
 function SceneListItem({ viewerScene }: { viewerScene: ScenePreview }) {
+    const theme = useTheme();
     const [menuAnchor, setMenuAnchor] = useState<HTMLElement | null>(null);
     const editingScene = useAppSelector(selectEditingScene);
     const dispatch = useAppDispatch();
@@ -77,10 +99,29 @@ function SceneListItem({ viewerScene }: { viewerScene: ScenePreview }) {
         }
     };
 
+    const deleteScene = async () => {
+        // TODO(OLA): confirmation
+        await dataApi.deleteScene(viewerScene.id);
+
+        dispatch(explorerActions.deleteViewerScene(viewerScene.id));
+
+        if (editingScene?.id === viewerScene.id) {
+            dispatch(renderActions.initViewerSceneEditing(""));
+        }
+    };
+
     return (
         <ListItem disableGutters button sx={{ px: 1, py: 0 }}>
             <Box display="flex" width={1} alignItems="center">
-                <Typography sx={{ flex: "1 1 100%", width: 0 }}>{viewerScene.title}</Typography>
+                <Link
+                    target="_blank"
+                    underline="none"
+                    color="text.primary"
+                    href={`${window.location.origin}/${viewerScene.id}`}
+                    sx={{ flex: "1 1 100%", width: 0, "&:hover": { color: theme.palette.info.main } }}
+                >
+                    {viewerScene.title}
+                </Link>
                 <IconButton
                     size="small"
                     onClick={toggleEditScene}
@@ -97,7 +138,7 @@ function SceneListItem({ viewerScene }: { viewerScene: ScenePreview }) {
                     id={viewerScene.id}
                 >
                     <MenuList sx={{ maxWidth: "100%" }}>
-                        <MenuItem onClick={() => {}}>
+                        {/* <MenuItem onClick={() => {}}>
                             <ListItemIcon>
                                 <PowerSettingsNew fontSize="small" />
                             </ListItemIcon>
@@ -108,8 +149,8 @@ function SceneListItem({ viewerScene }: { viewerScene: ScenePreview }) {
                                 <CalendarToday fontSize="small" />
                             </ListItemIcon>
                             <ListItemText>Date</ListItemText>
-                        </MenuItem>
-                        <MenuItem onClick={() => {}}>
+                        </MenuItem> */}
+                        <MenuItem onClick={deleteScene}>
                             <ListItemIcon>
                                 <Delete fontSize="small" />
                             </ListItemIcon>

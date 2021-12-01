@@ -1,4 +1,4 @@
-import { FormEventHandler, forwardRef, Fragment, useRef, useState } from "react";
+import { FormEventHandler, Fragment, useRef, useState } from "react";
 import {
     useTheme,
     List,
@@ -217,18 +217,12 @@ export function Bookmarks() {
                     ))}
                 </List>
             </ScrollBox>
-            <Modal
-                sx={{ display: "flex", justifyContent: "center", alignItems: "center" }}
-                open={addingBookmark}
-                onClose={toggleAddingBookmark}
-            >
-                <AddNewBookmark onClose={toggleAddingBookmark} />
-            </Modal>
+            <AddNewBookmark open={addingBookmark} onClose={toggleAddingBookmark} />
         </>
     );
 }
 
-const AddNewBookmark = forwardRef<HTMLDivElement, { onClose: () => void }>(({ onClose }, ref) => {
+const AddNewBookmark = ({ onClose, open }: { onClose: () => void; open: boolean }) => {
     const bookmarks = useAppSelector(selectBookmarks);
     const measurement = useAppSelector(selectMeasure);
     const editingScene = useAppSelector(selectEditingScene);
@@ -312,64 +306,66 @@ const AddNewBookmark = forwardRef<HTMLDivElement, { onClose: () => void }>(({ on
     };
 
     return (
-        <Paper ref={ref} sx={{ minWidth: 300, padding: 2 }}>
-            <Typography variant="h5" textAlign="center" sx={{ mb: 2 }}>
-                Add new bookmark
-            </Typography>
-            <Box
-                sx={{
-                    display: "flex",
-                    justifyContent: "center",
-                    img: { height: 176, width: 176, objectFit: "contain" },
-                }}
-            >
-                <img alt="" src={imgRef.current} />
-            </Box>
-            <form onSubmit={handleSubmit}>
-                <Box mb={2}>
-                    <FormControl fullWidth>
-                        <label htmlFor="name">Name</label>
-                        <OutlinedInput
-                            id="name"
-                            value={name}
-                            onChange={(e) => setName(e.target.value)}
-                            type="text"
-                            size="small"
-                            autoFocus
-                        />
-                    </FormControl>
+        <Modal sx={{ display: "flex", justifyContent: "center", alignItems: "center" }} open={open} onClose={onClose}>
+            <Paper sx={{ minWidth: 300, padding: 2 }}>
+                <Typography variant="h5" textAlign="center" sx={{ mb: 2 }}>
+                    Add new bookmark
+                </Typography>
+                <Box
+                    sx={{
+                        display: "flex",
+                        justifyContent: "center",
+                        img: { height: 176, width: 176, objectFit: "contain" },
+                    }}
+                >
+                    <img alt="" src={imgRef.current} />
                 </Box>
-                <Box mb={2}>
-                    <FormControl fullWidth>
-                        <label htmlFor="description">Description</label>
-                        <OutlinedInput
-                            id="description"
-                            value={description}
-                            onChange={(e) => setDescription(e.target.value)}
-                            type="text"
-                            size="small"
-                        />
-                    </FormControl>
-                </Box>
-                <Box display="flex">
-                    <Button
-                        color="grey"
-                        type="button"
-                        variant="outlined"
-                        onClick={onClose}
-                        fullWidth
-                        sx={{ marginRight: 1 }}
-                    >
-                        Cancel
-                    </Button>
-                    <Button type="submit" fullWidth disabled={!name} color="primary" variant="contained">
-                        Save
-                    </Button>
-                </Box>
-            </form>
-        </Paper>
+                <form onSubmit={handleSubmit}>
+                    <Box mb={2}>
+                        <FormControl fullWidth>
+                            <label htmlFor="name">Name</label>
+                            <OutlinedInput
+                                id="name"
+                                value={name}
+                                onChange={(e) => setName(e.target.value)}
+                                type="text"
+                                size="small"
+                                autoFocus
+                            />
+                        </FormControl>
+                    </Box>
+                    <Box mb={2}>
+                        <FormControl fullWidth>
+                            <label htmlFor="description">Description</label>
+                            <OutlinedInput
+                                id="description"
+                                value={description}
+                                onChange={(e) => setDescription(e.target.value)}
+                                type="text"
+                                size="small"
+                            />
+                        </FormControl>
+                    </Box>
+                    <Box display="flex">
+                        <Button
+                            color="grey"
+                            type="button"
+                            variant="outlined"
+                            onClick={onClose}
+                            fullWidth
+                            sx={{ marginRight: 1 }}
+                        >
+                            Cancel
+                        </Button>
+                        <Button type="submit" fullWidth disabled={!name} color="primary" variant="contained">
+                            Save
+                        </Button>
+                    </Box>
+                </form>
+            </Paper>
+        </Modal>
     );
-});
+};
 
 function createBookmarkImg(canvas: HTMLCanvasElement): string {
     const dist = document.createElement("canvas");

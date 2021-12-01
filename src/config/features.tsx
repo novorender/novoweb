@@ -178,3 +178,7 @@ export const defaultEnabledWidgets = [config.shareLink.key, config.orthoCam.key]
 export const defaultEnabledAdminWidgets = Object.values(config)
     .filter((value) => [FeatureType.AdminWidget, FeatureType.Widget].includes(value.type))
     .map((widget) => widget.key as WidgetKey);
+
+export const viewerWidgets = Object.values(config).filter((widget) => widget.type === FeatureType.Widget) as {
+    [K in keyof Config]: Config[K]["type"] extends FeatureType.Widget ? Config[K] : never;
+}[keyof Config][];
