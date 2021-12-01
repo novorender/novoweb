@@ -343,7 +343,7 @@ export function initCamera({
     } else if (!flightControllerRef.current) {
         flightControllerRef.current = {
             ...api.createCameraController({ kind: "flight" }, canvas),
-            autoZoomToScene: true,
+            autoZoomToScene: false,
             enabled: false,
         };
     }

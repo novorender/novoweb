@@ -177,6 +177,8 @@ export type Widget = Config[WidgetKey];
 export const defaultEnabledWidgets = [];
 export const defaultEnabledAdminWidgets = Object.values(config)
     .filter((value) => [FeatureType.AdminWidget, FeatureType.Widget].includes(value.type))
+    // NOTE(OLA: Not ready for prod
+    .filter((widget) => widget.key !== config.viewerScenes.key)
     .map((widget) => widget.key as WidgetKey);
 
 export const viewerWidgets = Object.values(config).filter((widget) => widget.type === FeatureType.Widget) as {
