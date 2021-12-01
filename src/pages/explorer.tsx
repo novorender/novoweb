@@ -129,9 +129,14 @@ function enabledFeaturesToFeatureKeys(enabledFeatures: Record<string, boolean>):
         search: featuresConfig.search.key,
     };
 
+    const features: Record<string, boolean> = {
+        ...enabledFeatures,
+        [featuresConfig.shareLink.key]: !enabledFeatures.disableLink,
+    };
+
     return uniqueArray(
-        Object.keys({ ...enabledFeatures, shareLink: !enabledFeatures.disableLink })
-            .map((key) => ({ key, enabled: enabledFeatures[key] }))
+        Object.keys(features)
+            .map((key) => ({ key, enabled: features[key] }))
             .filter((feature) => feature.enabled)
             .map((feature) => (dictionary[feature.key] ? dictionary[feature.key]! : feature.key))
             .concat(defaultEnabledWidgets)
