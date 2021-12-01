@@ -2,12 +2,12 @@ import { glMatrix, mat4, quat, vec2, vec3, vec4 } from "gl-matrix";
 import { useEffect, useState, useRef, MouseEvent, PointerEvent, useCallback, SVGProps, RefCallback } from "react";
 import {
     View,
-    FlightControllerParams,
     EnvironmentDescription,
     Internal,
     MeasureInfo,
     CameraController,
     OrthoControllerParams,
+    CameraControllerParams,
 } from "@novorender/webgl-api";
 import { Box, Button, Paper, Typography, useTheme, styled } from "@mui/material";
 import { css } from "@mui/styled-engine";
@@ -40,26 +40,36 @@ import {
     CameraType,
     selectCamera,
     selectShowPerformance,
+    selectEditingScene,
+    selectBookmarks,
+    SceneEditStatus,
 } from "slices/renderSlice";
 import { authActions } from "slices/authSlice";
 import { explorerActions } from "slices/explorerSlice";
 import { useAppDispatch, useAppSelector } from "app/store";
 
 import { useHighlighted, highlightActions, useDispatchHighlighted } from "contexts/highlighted";
-import { useHidden, hiddenGroupActions, useDispatchHidden } from "contexts/hidden";
-import { useCustomGroups, customGroupsActions } from "contexts/customGroups";
+import { useHidden, useDispatchHidden } from "contexts/hidden";
+import { useCustomGroups } from "contexts/customGroups";
 import { useVisible } from "contexts/visible";
 import { explorerGlobalsActions, useExplorerGlobals } from "contexts/explorerGlobals";
 
 import {
     addConsoleDebugUtils,
-    getEnvironmentDescription,
-    serializeableObjectGroups,
     getRenderType,
     refillObjects,
     createRendering,
+    initHighlighted,
+    initHidden,
+    initCustomGroups,
+    initEnvironment,
+    initCamera,
+    initClippingBox,
+    initClippingPlanes,
 } from "./utils";
 import { xAxis, yAxis, axis } from "./consts";
+import { SceneData } from "@novorender/data-js-api";
+import { enabledFeaturesToFeatureKeys, getEnabledFeatures } from "utils/misc";
 
 glMatrix.setMatrixArrayType(Array);
 addConsoleDebugUtils();
@@ -140,6 +150,8 @@ export function Render3D({ id, onInit }: Props) {
     const environments = useAppSelector(selectEnvironments);
     const mainObject = useAppSelector(selectMainObject);
 
+    const editingScene = useAppSelector(selectEditingScene);
+    const bookmarks = useAppSelector(selectBookmarks);
     const defaultVisibility = useAppSelector(selectDefaultVisibility);
     const cameraSpeedMultiplier = useAppSelector(selectCameraSpeedMultiplier);
     const baseCameraSpeed = useAppSelector(selectBaseCameraSpeed);
@@ -553,7 +565,6 @@ export function Render3D({ id, onInit }: Props) {
                 const {
                     url,
                     db,
-                    camera,
                     objectGroups = [],
                     bookmarks = [],
                     customProperties,
@@ -563,6 +574,7 @@ export function Render3D({ id, onInit }: Props) {
                 } = preloadedScene ?? (await dataApi.loadScene(id));
 
                 const urlData = getDataFromUrlHash();
+                const camera = { kind: "flight", ...sceneData.camera, ...urlData.camera } as CameraControllerParams;
                 const { display: _display, ...settings } = { ...sceneData.settings, ...urlData.settings };
                 settings.background = { color: vec4.fromValues(0, 0, 0, 0) };
                 const _view = await api.createView(settings, canvas);
@@ -582,79 +594,32 @@ export function Render3D({ id, onInit }: Props) {
                     },
                 });
                 _view.scene = await api.loadScene(url, db);
-                const controller = api.createCameraController(
-                    ((urlData.camera ?? camera) as Required<FlightControllerParams>) ?? { kind: "flight" },
-                    canvas
-                );
 
-                if (camera) {
-                    controller.autoZoomToScene = false;
-                }
+                initCamera({
+                    canvas,
+                    camera,
+                    view: _view,
+                    flightControllerRef: flightController,
+                });
 
-                _view.camera.controller = controller;
-                flightController.current = controller;
                 cameraGeneration.current = _view.performanceStatistics.cameraGeneration;
 
                 if (window.self === window.top || !customProperties?.enabledFeatures?.transparentBackground) {
-                    const initialEnvironment =
-                        typeof settings.environment === "string"
-                            ? getEnvironmentDescription(settings.environment, environments)
-                            : (settings.environment as unknown as EnvironmentDescription) ??
-                              getEnvironmentDescription("", environments);
-                    dispatch(renderActions.setEnvironment(initialEnvironment));
+                    initEnvironment(settings.environment as unknown as EnvironmentDescription, environments, _view);
                 }
 
                 dispatch(renderActions.setBookmarks(bookmarks));
 
-                if (settings.clippingPlanes?.enabled) {
-                    dispatch(
-                        renderActions.setClippingBox({
-                            enabled: true,
-                            inside: settings.clippingPlanes.inside,
-                            showBox: settings.clippingPlanes.showBox,
-                        })
-                    );
-                }
+                initClippingBox(_view.settings.clippingPlanes);
+                initClippingPlanes(_view.settings.clippingVolume);
 
-                if (settings.clippingVolume?.enabled) {
-                    dispatch(
-                        renderActions.setClippingPlanes({
-                            enabled: true,
-                            mode: settings.clippingVolume.mode,
-                            planes: settings.clippingVolume.planes.map(
-                                (plane) => Array.from(plane) as [number, number, number, number]
-                            ),
-                            baseW: settings.clippingVolume.planes.length ? settings.clippingVolume.planes[0][3] : 0,
-                        })
-                    );
-                }
+                initHidden(objectGroups, dispatchHidden);
+                initCustomGroups(objectGroups, dispatchCustomGroups);
+                initHighlighted(objectGroups, dispatchHighlighted);
 
-                const defaultGroup = objectGroups.find((group) => !group.id && group.selected);
-                if (defaultGroup) {
-                    dispatchHighlighted(
-                        highlightActions.set({
-                            ids:
-                                urlData.mainObject !== undefined
-                                    ? defaultGroup.ids.concat(urlData.mainObject)
-                                    : (defaultGroup.ids as number[]),
-                            color: [defaultGroup.color[0], defaultGroup.color[1], defaultGroup.color[2]],
-                        })
-                    );
-
-                    const lastHighlighted = defaultGroup.ids.slice(-1)[0];
-                    if (lastHighlighted) {
-                        dispatch(renderActions.setMainObject(lastHighlighted));
-                    }
-                }
-
-                const defaultHiddenGroup = objectGroups.find((group) => !group.id && group.hidden);
-                if (defaultHiddenGroup) {
-                    dispatchHidden(hiddenGroupActions.setIds(defaultHiddenGroup.ids as number[]));
-                }
-
-                const customGroups = objectGroups.filter((group) => group.id);
-                if (customGroups.length) {
-                    dispatchCustomGroups(customGroupsActions.set(serializeableObjectGroups(customGroups)));
+                if (urlData.mainObject !== undefined) {
+                    dispatchHighlighted(highlightActions.add([urlData.mainObject]));
+                    dispatch(renderActions.setMainObject(urlData.mainObject));
                 }
 
                 if (viewerScenes) {
@@ -876,7 +841,7 @@ export function Render3D({ id, onInit }: Props) {
         function handleCameraStateChange() {
             const controller = flightController.current;
 
-            if (!controller || !view || !canvas) {
+            if (!view || !canvas || !controller) {
                 return;
             }
 
@@ -923,6 +888,97 @@ export function Render3D({ id, onInit }: Props) {
             };
         },
         [id, dispatch, setStatus, dispatchGlobals]
+    );
+
+    useEffect(
+        function handleEditingScene() {
+            if (!view || !canvas || editingScene?.status !== SceneEditStatus.Init) {
+                return;
+            }
+
+            dispatch(renderActions.setViewerSceneEditing({ ...editingScene, status: SceneEditStatus.Loading }));
+
+            if (!editingScene.id) {
+                restoreAdminScene(id, view, canvas);
+            } else {
+                applyViewerScene(editingScene.id, view, canvas);
+            }
+
+            async function restoreAdminScene(sceneId: string, view: View, canvas: HTMLCanvasElement) {
+                await applyScene(sceneId, view, canvas);
+                dispatch(renderActions.setViewerSceneEditing(undefined));
+            }
+
+            async function applyViewerScene(sceneId: string, view: View, canvas: HTMLCanvasElement) {
+                const { title, customProperties } = await applyScene(sceneId, view, canvas);
+                const enabledFeatures = getEnabledFeatures(customProperties);
+                const requireAuth = customProperties?.enabledFeatures?.enabledOrgs !== undefined;
+                const expiration = customProperties?.enabledFeatures?.expiration;
+
+                dispatch(
+                    renderActions.setViewerSceneEditing({
+                        title,
+                        requireAuth,
+                        expiration,
+                        status: SceneEditStatus.Editing,
+                        id: sceneId,
+                        enabledFeatures: enabledFeatures ? enabledFeaturesToFeatureKeys(enabledFeatures) : [],
+                    })
+                );
+            }
+
+            async function applyScene(
+                sceneId: string,
+                view: View,
+                canvas: HTMLCanvasElement
+            ): Promise<Pick<SceneData, "title" | "customProperties">> {
+                const {
+                    settings,
+                    title,
+                    customProperties,
+                    camera = { kind: "flight" },
+                    bookmarks = [],
+                    objectGroups = [],
+                } = await dataApi.loadScene(sceneId);
+
+                if (settings) {
+                    const { display: _display, light: _light, ...viewerSceneSettings } = settings;
+                    view.applySettings({ ...viewerSceneSettings, light: view.settings.light });
+
+                    initClippingBox(settings.clippingPlanes);
+                    initClippingPlanes(settings.clippingVolume);
+                    initEnvironment(settings.environment as unknown as EnvironmentDescription, environments, view);
+                }
+
+                const controller = initCamera({ view, canvas, camera, flightControllerRef: flightController });
+                dispatch(
+                    renderActions.setCamera({
+                        type: controller.params.kind === "ortho" ? CameraType.Orthographic : CameraType.Flight,
+                    })
+                );
+
+                initHidden(objectGroups, dispatchHidden);
+                initCustomGroups(objectGroups, dispatchCustomGroups);
+                initHighlighted(objectGroups, dispatchHighlighted);
+                dispatch(renderActions.setBookmarks(bookmarks));
+
+                return { title, customProperties };
+            }
+        },
+        [
+            id,
+            editingScene,
+            view,
+            environments,
+            canvas,
+            bookmarks,
+            customGroups,
+            dispatch,
+            dispatchHidden,
+            dispatchCustomGroups,
+            dispatchHighlighted,
+            env,
+        ]
     );
 
     const exitPointerLock = () => {
