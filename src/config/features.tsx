@@ -174,7 +174,7 @@ export type WidgetKey = {
 
 export type Widget = Config[WidgetKey];
 
-export const defaultEnabledWidgets = [config.shareLink.key, config.orthoCam.key];
+export const defaultEnabledWidgets = [];
 export const defaultEnabledAdminWidgets = Object.values(config)
     .filter((value) => [FeatureType.AdminWidget, FeatureType.Widget].includes(value.type))
     .map((widget) => widget.key)
