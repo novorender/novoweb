@@ -121,7 +121,7 @@ function AuthCheck({ id, children }: { id: string; children: ReactNode }) {
 function enabledFeaturesToFeatureKeys(enabledFeatures: Record<string, boolean>): WidgetKey[] {
     const dictionary: Record<string, string | string[] | undefined> = {
         bookmarks: featuresConfig.bookmarks.key,
-        measurement: featuresConfig.measure.key,
+        measurement: [featuresConfig.measure.key, featuresConfig.orthoCam.key],
         clipping: [featuresConfig.clippingBox.key, featuresConfig.clippingPlanes.key],
         properties: featuresConfig.properties.key,
         tree: featuresConfig.modelTree.key,
@@ -130,7 +130,7 @@ function enabledFeaturesToFeatureKeys(enabledFeatures: Record<string, boolean>):
     };
 
     return uniqueArray(
-        Object.keys(enabledFeatures)
+        Object.keys({ ...enabledFeatures, shareLink: !enabledFeatures.disableLink })
             .map((key) => ({ key, enabled: enabledFeatures[key] }))
             .filter((feature) => feature.enabled)
             .map((feature) => (dictionary[feature.key] ? dictionary[feature.key]! : feature.key))
