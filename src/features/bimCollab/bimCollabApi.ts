@@ -23,9 +23,11 @@ import {
 } from "./types";
 import { handleImageResponse } from "./utils";
 
+// const clientId = "dc8b9808-c078-4361-a5fd-fe8ed787bfaf";
+// const callbackUrl = window.location.origin + "/";
+const callbackUrl = window.location.origin + "/Callback";
 const clientId = "PlayGround_Client";
 const clientSecret = process.env.REACT_APP_BIMCOLLAB_CLIENT_SECRET ?? "";
-const callbackUrl = "http://localhost:5000/Callback";
 const scope = "openid offline_access bcf";
 
 const rawBaseQuery = fetchBaseQuery({
@@ -69,7 +71,7 @@ const dynamicBaseQuery: BaseQueryFn<string | FetchArgs, unknown, FetchBaseQueryE
         };
     }
 
-    const adjustedUrl = `https://${space}.bimcollab.com/bcf/${version}/${urlEnd}`;
+    const adjustedUrl = `https://${space}.bimcollab.com/bcf/${version ? version + "/" : ""}${urlEnd}`;
     const adjustedArgs = typeof args === "string" ? adjustedUrl : { ...args, url: adjustedUrl };
     return rawBaseQuery(adjustedArgs, api, extraOptions);
 };
