@@ -11,7 +11,7 @@ export const Switch = styled(MuiSwitch)(
         }
 
         & .${switchClasses.switchBase} {
-            padding: 2px;
+            padding: 3px;
             color: ${theme.palette.grey[500]};
 
             &.${switchClasses.checked} {
@@ -27,8 +27,8 @@ export const Switch = styled(MuiSwitch)(
         }
 
         & .${switchClasses.thumb} {
-            width: 12px;
-            height: 12px;
+            width: 10px;
+            height: 10px;
             box-shadow: none;
             color: ${theme.palette.common.white};
         }

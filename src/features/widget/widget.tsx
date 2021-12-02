@@ -28,6 +28,7 @@ import { Groups } from "features/groups";
 import { ClippingPlanes } from "features/clippingPlanes";
 import { ViewerScenes } from "features/viewerScenes";
 import { OrthoCam } from "features/orthoCam";
+import { AdvancedSettings } from "features/advancedSettings";
 
 import { useAppSelector, useAppDispatch } from "app/store";
 import { selectEnabledWidgets, explorerActions } from "slices/explorerSlice";
@@ -243,6 +244,8 @@ function getWidgetByKey(key: WidgetKey): JSX.Element | string {
             return <ClippingPlanes />;
         case featuresConfig.orthoCam.key:
             return <OrthoCam />;
+        case featuresConfig.advancedSettings.key:
+            return <AdvancedSettings />;
         default:
             return key;
     }

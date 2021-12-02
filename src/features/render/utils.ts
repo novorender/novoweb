@@ -3,9 +3,11 @@ import {
     CameraController,
     CameraControllerParams,
     EnvironmentDescription,
+    FlightControllerParams,
     Highlight,
     Internal,
     ObjectId,
+    OrthoControllerParams,
     RenderSettings,
     Scene,
     View,
@@ -21,18 +23,29 @@ import { MutableRefObject } from "react";
 import { CameraType, ObjectVisibility, renderActions, RenderType } from "slices/renderSlice";
 import { sleep } from "utils/timers";
 
-import { ssaoEnabled, taaEnabled } from "./consts";
+type Settings = {
+    taaEnabled: boolean;
+    ssaoEnabled: boolean;
+};
 
 export function createRendering(
     canvas: HTMLCanvasElement,
     view: View
 ): {
     start: () => Promise<void>;
+    update: (updated: Settings) => void;
     stop: () => void;
 } {
     const running = { current: false };
+    const settings = { ssaoEnabled: true, taaEnabled: true };
 
-    return { start, stop };
+    return { start, stop, update };
+
+    function update(updated: Settings) {
+        settings.ssaoEnabled = updated.ssaoEnabled;
+        settings.taaEnabled = updated.taaEnabled;
+        (view as any).settings.generation++;
+    }
 
     function stop() {
         running.current = false;
@@ -63,7 +76,7 @@ export function createRendering(
             // const { width, height } = canvas;
             const badPerf = view.performanceStatistics.weakDevice; // || view.settings.quality.resolution.value < 1;
 
-            if (ssaoEnabled && !badPerf) {
+            if (settings.ssaoEnabled && !badPerf) {
                 output.applyPostEffect({ kind: "ssao", samples: 64, radius: 1, reset: true });
             }
 
@@ -109,7 +122,7 @@ export function createRendering(
             }
             startRender = now;
 
-            let run = taaEnabled && view.camera.controller.params.kind !== "ortho";
+            let run = settings.taaEnabled && view.camera.controller.params.kind !== "ortho";
             let reset = true;
 
             while (run && running.current) {
@@ -129,7 +142,7 @@ export function createRendering(
                     break;
                 }
 
-                if (ssaoEnabled) {
+                if (settings.ssaoEnabled) {
                     output.applyPostEffect({ kind: "ssao", samples: 64, radius: 1, reset: reset && badPerf });
                 }
 
@@ -375,6 +388,26 @@ export function initClippingPlanes(clipping: RenderSettings["clippingVolume"]): 
             mode: clipping.mode,
             planes: clipping.planes.map((plane) => Array.from(plane) as [number, number, number, number]),
             baseW: clipping.planes.length ? clipping.planes[0][3] : 0,
+        })
+    );
+}
+
+export function initAdvancedSettings(view: View, customProperties: any): void {
+    const { diagnostics, advanced } = view.settings as Internal.RenderSettingsExt;
+    const cameraParams = view.camera.controller.params as FlightControllerParams | OrthoControllerParams;
+    const isProd = window.location.origin !== "https://explorer.novorender.com";
+
+    store.dispatch(
+        renderActions.setAdvancedSettings({
+            showPerformance: Boolean(isProd && customProperties?.showStats),
+            autoFps: view.settings.quality.resolution.autoAdjust.enabled,
+            triangleBudget: view.settings.quality.detail.autoAdjust.enabled,
+            showBoundingBoxes: diagnostics.showBoundingBoxes,
+            holdDynamic: diagnostics.holdDynamic,
+            doubleSidedMaterials: advanced.doubleSided.opaque,
+            doubleSidedTransparentMaterials: advanced.doubleSided.transparent,
+            cameraFarClipping: cameraParams.far,
+            cameraNearClipping: cameraParams.near,
         })
     );
 }

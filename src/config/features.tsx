@@ -18,6 +18,7 @@ import FlightTakeoffIcon from "@mui/icons-material/FlightTakeoff";
 import MovieIcon from "@mui/icons-material/Movie";
 import CropLandscapeIcon from "@mui/icons-material/CropLandscape";
 import CameraswitchIcon from "@mui/icons-material/Cameraswitch";
+import SettingsIcon from "@mui/icons-material/Settings";
 
 import { ReactComponent as ClippingIcon } from "media/icons/clipping.svg";
 import { ReactComponent as RunIcon } from "media/icons/run.svg";
@@ -30,6 +31,12 @@ export enum FeatureType {
 }
 
 export const config = {
+    advancedSettings: {
+        key: "advancedSettings",
+        name: "Adv. settings",
+        Icon: SettingsIcon,
+        type: FeatureType.AdminWidget,
+    },
     viewerScenes: {
         key: "viewerScenes",
         name: "Viewer scenes",
