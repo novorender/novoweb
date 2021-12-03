@@ -11,6 +11,7 @@ import { createSlice, createAsyncThunk, PayloadAction } from "@reduxjs/toolkit";
 import { vec3, vec4 } from "gl-matrix";
 
 import type { RootState } from "app/store";
+import type { WidgetKey } from "config/features";
 
 export const fetchEnvironments = createAsyncThunk("novorender/fetchEnvironments", async (api: API) => {
     const envs = await api.availableEnvironments("https://api.novorender.com/assets/env/index.json");
@@ -39,6 +40,12 @@ export enum ObjectVisibility {
 export enum CameraType {
     Orthographic,
     Flight,
+}
+
+export enum SceneEditStatus {
+    Init,
+    Loading,
+    Editing,
 }
 
 type CameraPosition = Pick<Camera, "position" | "rotation">;
@@ -92,11 +99,20 @@ const initialState = {
     showPerformance: false,
 };
 
-type State = typeof initialState;
+type State = typeof initialState & {
+    viewerSceneEditing?: {
+        status: SceneEditStatus;
+        id: string;
+        title?: string;
+        enabledFeatures?: WidgetKey[];
+        requireAuth?: boolean;
+        expiration?: string;
+    };
+};
 
 export const renderSlice = createSlice({
     name: "render",
-    initialState: initialState,
+    initialState: initialState as State,
     reducers: {
         setMainObject: (state, action: PayloadAction<ObjectId | undefined>) => {
             state.mainObject = action.payload;
@@ -209,6 +225,18 @@ export const renderSlice = createSlice({
         setShowPerformance: (state, action: PayloadAction<boolean>) => {
             state.showPerformance = action.payload;
         },
+        initViewerSceneEditing: (state, action: PayloadAction<string>) => {
+            const { environments } = state;
+
+            return {
+                ...initialState,
+                environments,
+                viewerSceneEditing: { status: SceneEditStatus.Init, id: action.payload },
+            };
+        },
+        setViewerSceneEditing: (state, action: PayloadAction<State["viewerSceneEditing"]>) => {
+            state.viewerSceneEditing = action.payload;
+        },
     },
     extraReducers: (builder) => {
         builder.addCase(fetchEnvironments.fulfilled, (state, action) => {
@@ -235,6 +263,7 @@ export const selectCamera = (state: RootState) => state.render.camera as CameraS
 export const selectCameraType = (state: RootState) => state.render.camera.type;
 export const selectSelectiongOrthoPoint = (state: RootState) => state.render.selectingOrthoPoint;
 export const selectShowPerformance = (state: RootState) => state.render.showPerformance;
+export const selectEditingScene = (state: RootState) => state.render.viewerSceneEditing;
 
 const { reducer, actions } = renderSlice;
 export { reducer as renderReducer, actions as renderActions };

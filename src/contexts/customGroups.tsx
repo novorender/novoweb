@@ -52,7 +52,8 @@ function add(toAdd: State) {
 const actions = { updateGroup, set, add, clearTempGroups };
 
 type Actions = ReturnType<typeof actions[keyof typeof actions]>;
-type ContextType = { state: State; dispatch: Dispatch<Actions> };
+type DispatchCustomGroups = Dispatch<Actions>;
+type ContextType = { state: State; dispatch: DispatchCustomGroups };
 
 const Context = createContext<ContextType>(undefined as any);
 
@@ -110,3 +111,4 @@ function useLazyCustomGroups() {
 }
 
 export { CustomGroupsProvider, useCustomGroups, useLazyCustomGroups, actions as customGroupsActions };
+export type { DispatchCustomGroups };

@@ -104,6 +104,9 @@ export function Widget({ widgetKey }: Props) {
                 featuresConfig.measure.key,
                 featuresConfig.bimCollab.key,
                 featuresConfig.bookmarks.key,
+                featuresConfig.viewerScenes.key,
+                featuresConfig.clippingBox.key,
+                featuresConfig.clippingPlanes.key,
             ] as string[]
         ).includes(key);
 
@@ -132,8 +135,8 @@ export function Widget({ widgetKey }: Props) {
                     <Box
                         display={menuOpen ? "none" : "flex"}
                         flexDirection="column"
+                        overflow="hidden"
                         flexGrow={1}
-                        style={{ overflow: "hidden", overflowY: "hidden" }}
                         height={1}
                     >
                         {getWidgetByKey(key)}

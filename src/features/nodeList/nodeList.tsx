@@ -18,6 +18,7 @@ import { renderActions } from "slices/renderSlice";
 
 import FolderIcon from "@mui/icons-material/Folder";
 import VisibilityIcon from "@mui/icons-material/Visibility";
+import { useDispatchVisible, visibleActions } from "contexts/visible";
 
 const StyledFixedSizeList = withCustomScrollbar(FixedSizeList) as typeof FixedSizeList;
 
@@ -104,6 +105,7 @@ function Node({ node, parent, loading, setLoading, abortController, ...props }: 
     const dispatch = useAppDispatch();
     const dispatchHighlighted = useDispatchHighlighted();
     const dispatchHidden = useDispatchHidden();
+    const dispatchVisible = useDispatchVisible();
 
     const selected = useIsHighlighted(node.id);
     const hidden = useIsHidden(node.id);
@@ -138,6 +140,7 @@ function Node({ node, parent, loading, setLoading, abortController, ...props }: 
     const select = async (node: HierarcicalObjectReference) => {
         if (node.type === NodeType.Leaf) {
             dispatchHighlighted(highlightActions.add([node.id]));
+            dispatchHidden(hiddenGroupActions.remove([node.id]));
             dispatch(renderActions.setMainObject(node.id));
             return;
         }
@@ -210,7 +213,10 @@ function Node({ node, parent, loading, setLoading, abortController, ...props }: 
 
     const hide = async (node: HierarcicalObjectReference) => {
         if (node.type === NodeType.Leaf) {
-            return dispatchHidden(hiddenGroupActions.add([node.id]));
+            dispatchHidden(hiddenGroupActions.add([node.id]));
+            dispatchHighlighted(highlightActions.remove([node.id]));
+            dispatchVisible(visibleActions.remove([node.id]));
+            return;
         }
 
         setLoading(true);

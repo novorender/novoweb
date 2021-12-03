@@ -1,5 +1,4 @@
 import { ReactNode, useEffect } from "react";
-import { RouteProps, Route } from "react-router-dom";
 import { useMsal } from "@azure/msal-react";
 
 import { useAppDispatch, useAppSelector } from "app/store";
@@ -9,14 +8,6 @@ import { loginRequest } from "config/auth";
 import { authActions, selectAccessToken, selectMsalAccount } from "slices/authSlice";
 import { useMountedState } from "hooks/useMountedState";
 import { getStoredActiveAccount } from "utils/auth";
-
-export function ProtectedRoute({ children, ...props }: RouteProps) {
-    return (
-        <Route {...props}>
-            <Protected>{children}</Protected>
-        </Route>
-    );
-}
 
 export function Protected({ children }: { children: ReactNode }) {
     const { instance: msalInstance, accounts } = useMsal();

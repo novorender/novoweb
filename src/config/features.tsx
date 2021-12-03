@@ -181,9 +181,13 @@ export type WidgetKey = {
 
 export type Widget = Config[WidgetKey];
 
-export const defaultEnabledWidgets = [config.shareLink.key, config.orthoCam.key, config.bimCollab.key];
+export const defaultEnabledWidgets = [config.bimCollab.key];
 export const defaultEnabledAdminWidgets = Object.values(config)
     .filter((value) => [FeatureType.AdminWidget, FeatureType.Widget].includes(value.type))
-    .map((widget) => widget.key)
-    // NOTE(OLA): viewer scene widget is not ready
-    .filter((key) => key !== config.viewerScenes.key) as WidgetKey[];
+    // NOTE(OLA: Not ready for prod
+    .filter((widget) => widget.key !== config.viewerScenes.key)
+    .map((widget) => widget.key as WidgetKey);
+
+export const viewerWidgets = Object.values(config).filter((widget) => widget.type === FeatureType.Widget) as {
+    [K in keyof Config]: Config[K]["type"] extends FeatureType.Widget ? Config[K] : never;
+}[keyof Config][];

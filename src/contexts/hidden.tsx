@@ -40,9 +40,10 @@ function setIds(ids: State["idArr"]) {
 const actions = { add, remove, setIds };
 
 type Actions = ReturnType<typeof actions[keyof typeof actions]>;
+type DispatchHidden = Dispatch<Actions>;
 
 const StateContext = createContext<State>(undefined as any);
-const DispatchContext = createContext<Dispatch<Actions>>(undefined as any);
+const DispatchContext = createContext<DispatchHidden>(undefined as any);
 
 function reducer(state: State, action: Actions): State {
     switch (action.type) {
@@ -90,7 +91,7 @@ function HiddenProvider({ children }: { children: ReactNode }) {
     );
 }
 
-function useHidden() {
+function useHidden(): State {
     const context = useContext(StateContext);
 
     if (context === undefined) {
@@ -111,7 +112,7 @@ function useLazyHidden() {
     return ref;
 }
 
-function useDispatchHidden() {
+function useDispatchHidden(): DispatchHidden {
     const context = useContext(DispatchContext);
 
     if (context === undefined) {
@@ -133,3 +134,4 @@ function useIsHidden(id: number) {
 }
 
 export { HiddenProvider, useHidden, useLazyHidden, useDispatchHidden, useIsHidden, actions as hiddenGroupActions };
+export type { DispatchHidden };
