@@ -164,7 +164,7 @@ function CommentListItem({
     const dispatchVisible = useDispatchVisible();
     const { dispatch: dispatchCustomGroups } = useCustomGroups();
     const {
-        state: { view, scene },
+        state: { scene },
     } = useExplorerGlobals(true);
 
     const [modalOpen, toggleModal] = useToggle();
@@ -299,13 +299,12 @@ function CommentListItem({
             );
         }
 
-        dispatch(renderActions.resetClippingPlanes());
+        dispatch(renderActions.resetClippingBox());
         if (viewpoint?.clipping_planes?.length) {
             const planes = translateBcfClippingPlanes(viewpoint.clipping_planes);
-
-            view.applySettings({ clippingVolume: { enabled: true, mode: "union", planes } });
+            dispatch(renderActions.setClippingPlanes({ enabled: true, mode: "union", planes, baseW: planes[0][3] }));
         } else {
-            view.applySettings({ clippingVolume: { enabled: false, mode: "union", planes: [] } });
+            dispatch(renderActions.setClippingPlanes({ enabled: false, planes: [] }));
         }
     };
 

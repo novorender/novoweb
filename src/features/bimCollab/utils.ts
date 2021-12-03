@@ -184,9 +184,7 @@ export function createOrthogonalCamera(
     };
 }
 
-export function translateBcfClippingPlanes(
-    planes: Viewpoint["clipping_planes"]
-): RenderSettings["clippingVolume"]["planes"] {
+export function translateBcfClippingPlanes(planes: Viewpoint["clipping_planes"]): [number, number, number, number][] {
     return planes.map(({ location, direction }) => {
         return vec4.fromValues(
             direction.x,
@@ -196,25 +194,30 @@ export function translateBcfClippingPlanes(
                 vec3.fromValues(direction.x, direction.z, -direction.y),
                 vec3.fromValues(location.x, location.z, -location.y)
             )
-        );
+        ) as [number, number, number, number];
     });
 }
 
 export function createBcfClippingPlanes(
     planes: RenderSettings["clippingVolume"]["planes"]
 ): Viewpoint["clipping_planes"] {
-    return planes.map((plane) => ({
-        location: {
-            x: plane[0] ? -plane[3] / plane[0] : 0,
-            y: plane[2] ? -plane[3] / -plane[2] : 0,
-            z: plane[1] ? -plane[3] / plane[1] : 0,
-        },
-        direction: {
-            x: plane[0],
-            y: -plane[2],
-            z: plane[1],
-        },
-    }));
+    return planes.map((plane) => {
+        const normal = vec3.fromValues(plane[0], -plane[2], plane[1]);
+        const pointOnPlane = vec3.scale(vec3.create(), normal, -plane[3]);
+
+        return {
+            location: {
+                x: pointOnPlane[0],
+                y: pointOnPlane[1],
+                z: pointOnPlane[2],
+            },
+            direction: {
+                x: normal[0],
+                y: normal[1],
+                z: normal[2],
+            },
+        };
+    });
 }
 
 export function createBcfSnapshot(canvas: HTMLCanvasElement): Viewpoint["snapshot"] | undefined {
