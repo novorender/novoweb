@@ -5,6 +5,7 @@ import { SpeedDialAction } from "components";
 import { config as featuresConfig } from "config/features";
 import { initClippingBox, initClippingPlanes, initHidden, initHighlighted } from "features/render/utils";
 import { useMountedState } from "hooks/useMountedState";
+import { useSceneId } from "hooks/useSceneId";
 
 import { useAppDispatch, useAppSelector } from "app/store";
 import {
@@ -31,8 +32,9 @@ enum Status {
 }
 
 export function Home({ position, ...speedDialProps }: Props) {
+    const id = useSceneId();
     const {
-        state: { view, scene },
+        state: { view },
     } = useExplorerGlobals(true);
 
     const { name, Icon } = featuresConfig["home"];
@@ -52,11 +54,7 @@ export function Home({ position, ...speedDialProps }: Props) {
     const handleClick = async () => {
         setStatus(Status.Loading);
 
-        const {
-            settings,
-            objectGroups,
-            camera = { kind: "flight" },
-        } = await dataApi.loadScene(editingScene?.id || scene.id);
+        const { settings, objectGroups, camera = { kind: "flight" } } = await dataApi.loadScene(editingScene?.id || id);
 
         dispatch(renderActions.resetState());
 
