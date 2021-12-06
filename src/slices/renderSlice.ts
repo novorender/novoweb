@@ -214,7 +214,7 @@ export const renderSlice = createSlice({
             state.measure = { ...state.measure, points, distance, distances, angles };
         },
         resetState: (state) => {
-            return { ...initialState, environments: state.environments };
+            return { ...initialState, environments: state.environments, viewerSceneEditing: state.viewerSceneEditing };
         },
         setCamera: (state, { payload }: PayloadAction<CameraState>) => {
             state.camera = payload as WritableCameraState;

@@ -330,7 +330,7 @@ export function initCamera({
 }: {
     camera: CameraControllerParams;
     canvas: HTMLCanvasElement;
-    flightControllerRef: MutableRefObject<CameraController | undefined>;
+    flightControllerRef?: MutableRefObject<CameraController | undefined>;
     view: View;
 }): CameraController {
     const controller = api.createCameraController(camera as any, canvas);
@@ -339,14 +339,16 @@ export function initCamera({
         controller.autoZoomToScene = false;
     }
 
-    if (controller.params.kind === "flight") {
-        flightControllerRef.current = controller;
-    } else if (!flightControllerRef.current) {
-        flightControllerRef.current = {
-            ...api.createCameraController({ kind: "flight" }, canvas),
-            autoZoomToScene: false,
-            enabled: false,
-        };
+    if (flightControllerRef) {
+        if (controller.params.kind === "flight") {
+            flightControllerRef.current = controller;
+        } else if (!flightControllerRef.current) {
+            flightControllerRef.current = {
+                ...api.createCameraController({ kind: "flight" }, canvas),
+                autoZoomToScene: false,
+                enabled: false,
+            };
+        }
     }
 
     view.camera.controller = controller;

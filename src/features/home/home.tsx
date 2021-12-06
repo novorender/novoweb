@@ -1,33 +1,102 @@
-import type { SpeedDialActionProps } from "@mui/material";
-import { quat, vec3 } from "gl-matrix";
+import { SpeedDialActionProps, Box, CircularProgress } from "@mui/material";
 
+import { dataApi } from "app";
 import { SpeedDialAction } from "components";
 import { config as featuresConfig } from "config/features";
-import { useAppSelector } from "app/store";
-import { selectHomeCameraPosition } from "slices/renderSlice";
+import { initClippingBox, initClippingPlanes, initHidden, initHighlighted } from "features/render/utils";
+import { useMountedState } from "hooks/useMountedState";
+
+import { useAppDispatch, useAppSelector } from "app/store";
+import {
+    CameraType,
+    renderActions,
+    SceneEditStatus,
+    selectEditingScene,
+    selectHomeCameraPosition,
+} from "slices/renderSlice";
+
 import { useExplorerGlobals } from "contexts/explorerGlobals";
+import { useDispatchHighlighted } from "contexts/highlighted";
+import { useDispatchHidden } from "contexts/hidden";
+import { customGroupsActions, useCustomGroups } from "contexts/customGroups";
+import { useDispatchVisible, visibleActions } from "contexts/visible";
 
 type Props = SpeedDialActionProps & {
     position?: { top?: number; right?: number; bottom?: number; left?: number };
 };
 
+enum Status {
+    Initial,
+    Loading,
+}
+
 export function Home({ position, ...speedDialProps }: Props) {
-    const { name, Icon } = featuresConfig["home"];
-    const homeCamera = useAppSelector(selectHomeCameraPosition);
     const {
-        state: { view },
+        state: { view, scene },
     } = useExplorerGlobals(true);
 
-    const handleClick = () => {
-        if (
-            !homeCamera ||
-            (vec3.equals(homeCamera.position, view.camera.position) &&
-                quat.equals(homeCamera.rotation, view.camera.rotation))
-        ) {
-            return;
+    const { name, Icon } = featuresConfig["home"];
+
+    const editingScene = useAppSelector(selectEditingScene);
+    const homeCameraPos = useAppSelector(selectHomeCameraPosition);
+    const { state: customGroups, dispatch: dispatchCustomGroups } = useCustomGroups();
+    const dispatchVisible = useDispatchVisible();
+    const dispatchHighlighted = useDispatchHighlighted();
+    const dispatchHidden = useDispatchHidden();
+    const dispatch = useAppDispatch();
+
+    const [status, setStatus] = useMountedState(Status.Initial);
+
+    const disabled = status === Status.Loading || (editingScene && editingScene.status !== SceneEditStatus.Editing);
+
+    const handleClick = async () => {
+        setStatus(Status.Loading);
+
+        const {
+            settings,
+            objectGroups,
+            camera = { kind: "flight" },
+        } = await dataApi.loadScene(editingScene?.id || scene.id);
+
+        dispatch(renderActions.resetState());
+
+        if (settings) {
+            const { display: _display, environment: _env, light: _light, ...toApply } = settings;
+
+            view.applySettings(toApply);
+            initClippingBox(toApply.clippingPlanes);
+            initClippingPlanes(toApply.clippingVolume);
         }
 
-        view.camera.controller.moveTo(homeCamera.position, homeCamera.rotation);
+        if (camera.kind === "ortho") {
+            dispatch(renderActions.setCamera({ type: CameraType.Orthographic, params: camera }));
+        } else {
+            dispatch(
+                renderActions.setCamera({
+                    type: CameraType.Flight,
+                    goTo: homeCameraPos,
+                })
+            );
+        }
+
+        initHidden(objectGroups, dispatchHidden);
+        initHighlighted(objectGroups, dispatchHighlighted);
+        dispatchVisible(visibleActions.set([]));
+
+        dispatchCustomGroups(
+            customGroupsActions.set(
+                customGroups.map((group) => {
+                    const originalGrpSettings = objectGroups.find((grp) => group.id === grp.id);
+
+                    group.selected = originalGrpSettings?.selected ?? false;
+                    group.hidden = originalGrpSettings?.hidden ?? false;
+
+                    return group;
+                })
+            )
+        );
+
+        setStatus(Status.Initial);
     };
 
     return (
@@ -35,13 +104,27 @@ export function Home({ position, ...speedDialProps }: Props) {
             {...speedDialProps}
             data-test="home"
             FabProps={{
-                disabled: homeCamera === undefined,
+                disabled,
                 ...speedDialProps.FabProps,
                 style: { ...position, position: "absolute" },
             }}
             onClick={handleClick}
             title={name}
-            icon={<Icon />}
+            icon={
+                <Box
+                    width={1}
+                    height={1}
+                    position="relative"
+                    display="inline-flex"
+                    justifyContent="center"
+                    alignItems="center"
+                >
+                    {status === Status.Loading ? (
+                        <CircularProgress thickness={2.5} sx={{ position: "absolute" }} />
+                    ) : null}
+                    <Icon />
+                </Box>
+            }
         />
     );
 }
