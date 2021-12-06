@@ -1,9 +1,10 @@
 import { ReactNode, useEffect, useState } from "react";
-import { useParams } from "react-router-dom";
+
 import { SearchPattern } from "@novorender/webgl-api";
 
 import { dataApi } from "app";
 import { uniqueArray } from "utils/misc";
+import { useSceneId } from "hooks/useSceneId";
 
 import {
     config as featuresConfig,
@@ -34,7 +35,7 @@ export function Explorer() {
 }
 
 function ExplorerBase() {
-    const { id = process.env.REACT_APP_SCENE_ID ?? "95a89d20dd084d9486e383e131242c4c" } = useParams<{ id?: string }>();
+    const id = useSceneId();
     const dispatch = useAppDispatch();
     const {
         state: { view, scene },
@@ -61,8 +62,8 @@ function ExplorerBase() {
     };
 
     return (
-        <AuthCheck id={id}>
-            <Render3D id={id} onInit={handleInit} />
+        <AuthCheck>
+            <Render3D onInit={handleInit} />
             {view && scene ? <Hud /> : null}
         </AuthCheck>
     );
@@ -79,7 +80,8 @@ enum AuthCheckStatus {
  * Attempt to load the scene unauthenticated to check if it is public. Assume that it requires authentication if it is empty.
  */
 
-function AuthCheck({ id, children }: { id: string; children: ReactNode }) {
+function AuthCheck({ children }: { children: ReactNode }) {
+    const id = useSceneId();
     const accessToken = useAppSelector(selectAccessToken);
     const dispatch = useAppDispatch();
     const { dispatch: dispatchGlobals } = useExplorerGlobals();
@@ -125,7 +127,7 @@ function enabledFeaturesToFeatureKeys(enabledFeatures: Record<string, boolean>):
         clipping: [featuresConfig.clippingBox.key, featuresConfig.clippingPlanes.key],
         properties: featuresConfig.properties.key,
         tree: featuresConfig.modelTree.key,
-        groups: featuresConfig.groups.key,
+        groups: [featuresConfig.groups.key, featuresConfig.layers.key],
         search: featuresConfig.search.key,
     };
 

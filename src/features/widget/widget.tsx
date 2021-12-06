@@ -36,6 +36,7 @@ import { useToggle } from "hooks/useToggle";
 
 import CloseIcon from "@mui/icons-material/Close";
 import { ReactComponent as NovorenderIcon } from "media/icons/novorender-small.svg";
+import { Layers } from "features/layers";
 
 const WidgetContainer = styled((props: PaperProps) => <Paper elevation={4} {...props} />)(
     ({ theme }) => css`
@@ -106,6 +107,7 @@ export function Widget({ widgetKey }: Props) {
                 featuresConfig.viewerScenes.key,
                 featuresConfig.clippingBox.key,
                 featuresConfig.clippingPlanes.key,
+                featuresConfig.layers.key,
             ] as string[]
         ).includes(key);
 
@@ -246,6 +248,8 @@ function getWidgetByKey(key: WidgetKey): JSX.Element | string {
             return <OrthoCam />;
         case featuresConfig.advancedSettings.key:
             return <AdvancedSettings />;
+        case featuresConfig.layers.key:
+            return <Layers />;
         default:
             return key;
     }

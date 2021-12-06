@@ -1,5 +1,6 @@
 import { glMatrix, mat4, quat, vec2, vec3, vec4 } from "gl-matrix";
 import { useEffect, useState, useRef, MouseEvent, PointerEvent, useCallback, SVGProps, RefCallback } from "react";
+import { SceneData } from "@novorender/data-js-api";
 import {
     View,
     EnvironmentDescription,
@@ -18,7 +19,9 @@ import { Loading } from "components";
 
 import { api, dataApi } from "app";
 import { useMountedState } from "hooks/useMountedState";
+import { useSceneId } from "hooks/useSceneId";
 import { deleteStoredToken } from "utils/auth";
+import { enabledFeaturesToFeatureKeys, getEnabledFeatures } from "utils/misc";
 
 import {
     fetchEnvironments,
@@ -69,8 +72,6 @@ import {
     initAdvancedSettings,
 } from "./utils";
 import { xAxis, yAxis, axis } from "./consts";
-import { SceneData } from "@novorender/data-js-api";
-import { enabledFeaturesToFeatureKeys, getEnabledFeatures } from "utils/misc";
 
 glMatrix.setMatrixArrayType(Array);
 addConsoleDebugUtils();
@@ -131,11 +132,11 @@ enum Status {
 }
 
 type Props = {
-    id: string;
     onInit: (params: { customProperties: unknown }) => void;
 };
 
-export function Render3D({ id, onInit }: Props) {
+export function Render3D({ onInit }: Props) {
+    const id = useSceneId();
     const highlightedObjects = useHighlighted();
     const dispatchHighlighted = useDispatchHighlighted();
     const hiddenObjects = useHidden();

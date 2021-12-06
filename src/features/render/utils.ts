@@ -233,7 +233,8 @@ export async function getRenderType(view: View): Promise<RenderType> {
         return RenderType.UnChangeable;
     }
 
-    await waitForSceneToRender(view);
+    // should be waitForSceneToRender(view), but big scenes require a stopped camera for a long time to finish rendering
+    await sleep(1500);
 
     const advancedSettings = (view.settings as Internal.RenderSettingsExt).advanced;
     const points = advancedSettings.hidePoints || view.performanceStatistics.points > 0;
@@ -342,7 +343,7 @@ export function initCamera({
 }: {
     camera: CameraControllerParams;
     canvas: HTMLCanvasElement;
-    flightControllerRef: MutableRefObject<CameraController | undefined>;
+    flightControllerRef?: MutableRefObject<CameraController | undefined>;
     view: View;
 }): CameraController {
     const controller = api.createCameraController(camera as any, canvas);
@@ -351,14 +352,16 @@ export function initCamera({
         controller.autoZoomToScene = false;
     }
 
-    if (controller.params.kind === "flight") {
-        flightControllerRef.current = controller;
-    } else if (!flightControllerRef.current) {
-        flightControllerRef.current = {
-            ...api.createCameraController({ kind: "flight" }, canvas),
-            autoZoomToScene: false,
-            enabled: false,
-        };
+    if (flightControllerRef) {
+        if (controller.params.kind === "flight") {
+            flightControllerRef.current = controller;
+        } else if (!flightControllerRef.current) {
+            flightControllerRef.current = {
+                ...api.createCameraController({ kind: "flight" }, canvas),
+                autoZoomToScene: false,
+                enabled: false,
+            };
+        }
     }
 
     view.camera.controller = controller;

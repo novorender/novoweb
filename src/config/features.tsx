@@ -43,6 +43,12 @@ export const config = {
         Icon: MovieIcon,
         type: FeatureType.AdminWidget,
     },
+    layers: {
+        key: "layers",
+        name: "Layers",
+        Icon: LayersIcon,
+        type: FeatureType.Widget,
+    },
     modelTree: {
         key: "modelTree",
         name: "Model tree",
