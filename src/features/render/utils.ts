@@ -220,7 +220,8 @@ export async function getRenderType(view: View): Promise<RenderType> {
         return RenderType.UnChangeable;
     }
 
-    await waitForSceneToRender(view);
+    // should be waitForSceneToRender(view), but big scenes require a stopped camera for a long time to finish rendering
+    await sleep(1500);
 
     const advancedSettings = (view.settings as Internal.RenderSettingsExt).advanced;
     const points = advancedSettings.hidePoints || view.performanceStatistics.points > 0;

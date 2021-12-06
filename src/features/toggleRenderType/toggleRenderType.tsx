@@ -2,12 +2,14 @@ import type { SpeedDialActionProps } from "@mui/material";
 
 import { SpeedDialAction } from "components";
 import { config as featuresConfig } from "config/features";
-import { selectRenderType, renderActions, RenderType } from "slices/renderSlice";
 import { useAppDispatch, useAppSelector } from "app/store";
+import { selectRenderType, renderActions, RenderType } from "slices/renderSlice";
+import { selectIsAdminScene } from "slices/explorerSlice";
 
 export function ToggleRenderType(speedDialProps: SpeedDialActionProps) {
     const { name, Icon } = featuresConfig["toggleRenderType"];
     const renderType = useAppSelector(selectRenderType);
+    const isAdmin = useAppSelector(selectIsAdminScene);
 
     const dispatch = useAppDispatch();
 
@@ -22,7 +24,7 @@ export function ToggleRenderType(speedDialProps: SpeedDialActionProps) {
             )
         );
 
-    if (renderType === RenderType.UnChangeable) {
+    if (!isAdmin && renderType === RenderType.UnChangeable) {
         return null;
     }
 
