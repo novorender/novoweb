@@ -42,10 +42,10 @@ import {
     selectSelectiongOrthoPoint,
     CameraType,
     selectCamera,
-    selectShowPerformance,
     selectEditingScene,
     selectBookmarks,
     SceneEditStatus,
+    selectAdvancedSettings,
 } from "slices/renderSlice";
 import { authActions } from "slices/authSlice";
 import { explorerActions } from "slices/explorerSlice";
@@ -69,6 +69,7 @@ import {
     initCamera,
     initClippingBox,
     initClippingPlanes,
+    initAdvancedSettings,
 } from "./utils";
 import { xAxis, yAxis, axis } from "./consts";
 
@@ -163,12 +164,14 @@ export function Render3D({ onInit }: Props) {
     const clippingPlanes = useAppSelector(selectClippingPlanes);
     const cameraState = useAppSelector(selectCamera);
     const selectingOrthoPoint = useAppSelector(selectSelectiongOrthoPoint);
-    const showPerformance = useAppSelector(selectShowPerformance);
+    const advancedSettings = useAppSelector(selectAdvancedSettings);
     const measure = useAppSelector(selectMeasure);
     const { addingPoint, angles, points, distances, selected: selectedPoint } = measure;
     const dispatch = useAppDispatch();
 
-    const rendering = useRef({ start: () => Promise.resolve(), stop: () => {} });
+    const rendering = useRef({ start: () => Promise.resolve(), stop: () => {}, update: () => {} } as ReturnType<
+        typeof createRendering
+    >);
     const movementTimer = useRef<ReturnType<typeof setTimeout>>();
     const cameraGeneration = useRef<number>();
     const previousId = useRef("");
@@ -646,10 +649,7 @@ export function Render3D({ onInit }: Props) {
                 resizeObserver.observe(canvas);
 
                 onInit({ customProperties });
-
-                if (window.location.origin !== "https://explorer.novorender.com" && customProperties?.stats) {
-                    dispatch(renderActions.setShowPerformance(true));
-                }
+                initAdvancedSettings(_view, customProperties);
 
                 dispatchGlobals(
                     explorerGlobalsActions.update({
@@ -879,6 +879,13 @@ export function Render3D({ onInit }: Props) {
     );
 
     useEffect(
+        function handlePostEffectsChange() {
+            rendering.current.update({ taaEnabled: advancedSettings.taa, ssaoEnabled: advancedSettings.ssao });
+        },
+        [advancedSettings]
+    );
+
+    useEffect(
         function cleanUpPreviousScene() {
             return () => {
                 rendering.current.stop();
@@ -961,6 +968,7 @@ export function Render3D({ onInit }: Props) {
                 initHidden(objectGroups, dispatchHidden);
                 initCustomGroups(objectGroups, dispatchCustomGroups);
                 initHighlighted(objectGroups, dispatchHighlighted);
+                initAdvancedSettings(view, customProperties);
                 dispatch(renderActions.setBookmarks(bookmarks));
 
                 return { title, customProperties };
@@ -1244,7 +1252,7 @@ export function Render3D({ onInit }: Props) {
                 <NoScene id={id} />
             ) : (
                 <>
-                    {showPerformance && view && canvas ? <PerformanceStats /> : null}
+                    {advancedSettings.showPerformance && view && canvas ? <PerformanceStats /> : null}
                     <Canvas
                         tabIndex={1}
                         ref={canvasRef}
