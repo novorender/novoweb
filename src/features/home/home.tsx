@@ -3,7 +3,13 @@ import { SpeedDialActionProps, Box, CircularProgress } from "@mui/material";
 import { dataApi } from "app";
 import { SpeedDialAction } from "components";
 import { config as featuresConfig } from "config/features";
-import { initClippingBox, initClippingPlanes, initHidden, initHighlighted } from "features/render/utils";
+import {
+    initAdvancedSettings,
+    initClippingBox,
+    initClippingPlanes,
+    initHidden,
+    initHighlighted,
+} from "features/render/utils";
 import { useMountedState } from "hooks/useMountedState";
 import { useSceneId } from "hooks/useSceneId";
 
@@ -54,7 +60,13 @@ export function Home({ position, ...speedDialProps }: Props) {
     const handleClick = async () => {
         setStatus(Status.Loading);
 
-        const { settings, objectGroups, camera = { kind: "flight" } } = await dataApi.loadScene(editingScene?.id || id);
+        const {
+            settings,
+            customProperties,
+            objectGroups = [],
+            bookmarks = [],
+            camera = { kind: "flight" },
+        } = await dataApi.loadScene(editingScene?.id || id);
 
         dispatch(renderActions.resetState());
 
@@ -77,9 +89,11 @@ export function Home({ position, ...speedDialProps }: Props) {
             );
         }
 
+        dispatchVisible(visibleActions.set([]));
         initHidden(objectGroups, dispatchHidden);
         initHighlighted(objectGroups, dispatchHighlighted);
-        dispatchVisible(visibleActions.set([]));
+        initAdvancedSettings(view, customProperties);
+        dispatch(renderActions.setBookmarks(bookmarks));
 
         dispatchCustomGroups(
             customGroupsActions.set(
