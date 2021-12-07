@@ -1,18 +1,32 @@
+import { FlightControllerParams, Internal, OrthoControllerParams, View } from "@novorender/webgl-api";
 import { Divider, FormControlLabel, Slider, Typography } from "@mui/material";
 import { Box } from "@mui/system";
 import { ChangeEvent, SyntheticEvent, useState } from "react";
 
 import { useAppDispatch, useAppSelector } from "app/store";
 import { ScrollBox, Switch } from "components";
-import { AdvancedSetting, renderActions, selectAdvancedSettings } from "slices/renderSlice";
+import {
+    AdvancedSetting,
+    renderActions,
+    RenderType,
+    selectAdvancedSettings,
+    selectRenderType,
+} from "slices/renderSlice";
 import { useExplorerGlobals } from "contexts/explorerGlobals";
-import { FlightControllerParams, Internal, OrthoControllerParams, View } from "@novorender/webgl-api";
+
+type SliderSettings =
+    | AdvancedSetting.PointSize
+    | AdvancedSetting.MaxPointSize
+    | AdvancedSetting.PointToleranceFactor
+    | AdvancedSetting.CameraNearClipping
+    | AdvancedSetting.CameraFarClipping;
 
 export function AdvancedSettings() {
     const {
         state: { view },
     } = useExplorerGlobals(true);
     const dispatch = useAppDispatch();
+    const renderType = useAppSelector(selectRenderType);
     const settings = useAppSelector(selectAdvancedSettings);
     const {
         taa,
@@ -26,8 +40,15 @@ export function AdvancedSettings() {
         cameraNearClipping,
         cameraFarClipping,
         showPerformance,
+        qualityPoints,
+        pointSize,
+        maxPointSize,
+        pointToleranceFactor,
     } = settings;
 
+    const [size, setSize] = useState(pointSize);
+    const [maxSize, setMaxSize] = useState(maxPointSize);
+    const [toleranceFactor, setToleranceFactor] = useState(pointToleranceFactor);
     const [far, setFar] = useState(() => {
         const d = cameraFarClipping.toString();
         const numZero = Math.max(0, d.length - 2);
@@ -55,49 +76,82 @@ export function AdvancedSettings() {
                 return toggleHoldDynamic(view);
             case AdvancedSetting.TriangleBudget:
                 return toggleTriangleBudget(view);
+            case AdvancedSetting.QualityPoints:
+                return toggleQualityPoints(view);
             default:
                 return;
         }
     };
 
     const handleSliderChange =
-        (kind: "far" | "near") =>
+        (kind: SliderSettings) =>
         (_event: Event, value: number | number[]): void => {
             if (Array.isArray(value)) {
                 return;
             }
 
-            if (kind === "far") {
-                setFar(value);
-                (view.camera.controller.params as FlightControllerParams | OrthoControllerParams).far =
-                    scaleFarClipping(value);
-            } else {
-                setNear(value);
-                (view.camera.controller.params as FlightControllerParams | OrthoControllerParams).near =
-                    scaleNearClipping(value);
-            }
+            const { points } = view.settings as Internal.RenderSettingsExt;
 
-            view.performanceStatistics.cameraGeneration++;
+            switch (kind) {
+                case AdvancedSetting.CameraFarClipping:
+                    setFar(value);
+
+                    (view.camera.controller.params as FlightControllerParams | OrthoControllerParams).far =
+                        scaleFarClipping(value);
+                    view.performanceStatistics.cameraGeneration++;
+                    return;
+                case AdvancedSetting.CameraNearClipping:
+                    setNear(value);
+
+                    (view.camera.controller.params as FlightControllerParams | OrthoControllerParams).near =
+                        scaleNearClipping(value);
+                    view.performanceStatistics.cameraGeneration++;
+                    return;
+                case AdvancedSetting.PointSize:
+                    setSize(value);
+                    points.size.pixel = value;
+                    return;
+                case AdvancedSetting.MaxPointSize:
+                    setMaxSize(value);
+                    points.size.maxPixel = value;
+                    return;
+                case AdvancedSetting.PointToleranceFactor:
+                    setToleranceFactor(value);
+                    points.size.toleranceFactor = value;
+                    return;
+            }
         };
 
     const handleSliderCommit =
-        (kind: "far" | "near") => (_event: Event | SyntheticEvent<Element, Event>, value: number | number[]) => {
+        (kind: SliderSettings) => (_event: Event | SyntheticEvent<Element, Event>, value: number | number[]) => {
             if (Array.isArray(value)) {
                 return;
             }
 
-            if (kind === "far") {
-                dispatch(
-                    renderActions.setAdvancedSettings({ [AdvancedSetting.CameraFarClipping]: scaleFarClipping(value) })
-                );
-            } else {
-                dispatch(
-                    renderActions.setAdvancedSettings({
-                        [AdvancedSetting.CameraNearClipping]: scaleNearClipping(value),
-                    })
-                );
+            switch (kind) {
+                case AdvancedSetting.CameraFarClipping:
+                    dispatch(
+                        renderActions.setAdvancedSettings({
+                            [AdvancedSetting.CameraFarClipping]: scaleFarClipping(value),
+                        })
+                    );
+                    return;
+                case AdvancedSetting.CameraNearClipping:
+                    dispatch(
+                        renderActions.setAdvancedSettings({
+                            [AdvancedSetting.CameraNearClipping]: scaleNearClipping(value),
+                        })
+                    );
+                    return;
+                case AdvancedSetting.PointSize:
+                case AdvancedSetting.MaxPointSize:
+                case AdvancedSetting.PointToleranceFactor:
+                    dispatch(renderActions.setAdvancedSettings({ [kind]: value }));
             }
         };
+
+    const showPointSettings =
+        [RenderType.All, RenderType.Points].includes(renderType) || view.performanceStatistics.points > 0;
 
     return (
         <ScrollBox>
@@ -200,7 +254,41 @@ export function AdvancedSettings() {
                         </Box>
                     }
                 />
+                <FormControlLabel
+                    sx={{ ml: 0, mb: 2 }}
+                    control={
+                        <Switch
+                            name={AdvancedSetting.ShowPerformance}
+                            checked={showPerformance}
+                            onChange={handleToggle}
+                        />
+                    }
+                    label={
+                        <Box ml={1} fontSize={16}>
+                            Show stats
+                        </Box>
+                    }
+                />
+                {showPointSettings ? (
+                    <FormControlLabel
+                        sx={{ ml: 0, mb: 2 }}
+                        control={
+                            <Switch
+                                name={AdvancedSetting.QualityPoints}
+                                checked={qualityPoints}
+                                onChange={handleToggle}
+                            />
+                        }
+                        label={
+                            <Box ml={1} fontSize={16}>
+                                Quality points
+                            </Box>
+                        }
+                    />
+                ) : null}
+
                 <Divider />
+
                 <Box display="flex" sx={{ my: 2 }} alignItems="center">
                     <Typography
                         sx={{
@@ -220,8 +308,8 @@ export function AdvancedSettings() {
                         value={near}
                         valueLabelFormat={(value) => value.toFixed(3)}
                         valueLabelDisplay="auto"
-                        onChange={handleSliderChange("near")}
-                        onChangeCommitted={handleSliderCommit("near")}
+                        onChange={handleSliderChange(AdvancedSetting.CameraNearClipping)}
+                        onChangeCommitted={handleSliderCommit(AdvancedSetting.CameraNearClipping)}
                     />
                 </Box>
                 <Box display="flex" sx={{ mb: 2 }} alignItems="center">
@@ -243,26 +331,80 @@ export function AdvancedSettings() {
                         value={far}
                         valueLabelFormat={(value) => value.toFixed(0)}
                         valueLabelDisplay="auto"
-                        onChange={handleSliderChange("far")}
-                        onChangeCommitted={handleSliderCommit("far")}
+                        onChange={handleSliderChange(AdvancedSetting.CameraFarClipping)}
+                        onChangeCommitted={handleSliderCommit(AdvancedSetting.CameraFarClipping)}
                     />
                 </Box>
-                <Divider />
-                <FormControlLabel
-                    sx={{ mt: 2, ml: 0, mb: 2 }}
-                    control={
-                        <Switch
-                            name={AdvancedSetting.ShowPerformance}
-                            checked={showPerformance}
-                            onChange={handleToggle}
-                        />
-                    }
-                    label={
-                        <Box ml={1} fontSize={16}>
-                            Show stats
+
+                {showPointSettings ? (
+                    <>
+                        <Divider />
+
+                        <Box display="flex" sx={{ my: 2 }} alignItems="center">
+                            <Typography
+                                sx={{
+                                    width: 160,
+                                    flexShrink: 0,
+                                }}
+                            >
+                                Point size
+                            </Typography>
+                            <Slider
+                                sx={{ mx: 2, flex: "1 1 100%" }}
+                                min={0}
+                                max={2}
+                                step={0.25}
+                                name={AdvancedSetting.PointSize}
+                                value={size}
+                                valueLabelDisplay="auto"
+                                onChange={handleSliderChange(AdvancedSetting.PointSize)}
+                                onChangeCommitted={handleSliderCommit(AdvancedSetting.PointSize)}
+                            />
                         </Box>
-                    }
-                />
+                        <Box display="flex" sx={{ mb: 2 }} alignItems="center">
+                            <Typography
+                                sx={{
+                                    width: 160,
+                                    flexShrink: 0,
+                                }}
+                            >
+                                Max point size
+                            </Typography>
+                            <Slider
+                                sx={{ mx: 2, flex: "1 1 100%" }}
+                                min={1}
+                                max={100}
+                                step={1}
+                                name={AdvancedSetting.MaxPointSize}
+                                value={maxSize}
+                                valueLabelDisplay="auto"
+                                onChange={handleSliderChange(AdvancedSetting.MaxPointSize)}
+                                onChangeCommitted={handleSliderCommit(AdvancedSetting.MaxPointSize)}
+                            />
+                        </Box>
+                        <Box display="flex" sx={{ mb: 2 }} alignItems="center">
+                            <Typography
+                                sx={{
+                                    width: 160,
+                                    flexShrink: 0,
+                                }}
+                            >
+                                Pt. tolerance factor
+                            </Typography>
+                            <Slider
+                                sx={{ mx: 2, flex: "1 1 100%" }}
+                                min={0}
+                                max={0.2}
+                                step={0.005}
+                                name={AdvancedSetting.PointToleranceFactor}
+                                value={toleranceFactor}
+                                valueLabelDisplay="auto"
+                                onChange={handleSliderChange(AdvancedSetting.PointToleranceFactor)}
+                                onChangeCommitted={handleSliderCommit(AdvancedSetting.PointToleranceFactor)}
+                            />
+                        </Box>
+                    </>
+                ) : null}
             </Box>
         </ScrollBox>
     );
@@ -292,12 +434,12 @@ function toggleAutoFps(view: View): void {
     });
 }
 
-function toggleShowBoundingBox(view: View) {
+function toggleShowBoundingBox(view: View): void {
     const { diagnostics } = view.settings as Internal.RenderSettingsExt;
     diagnostics.showBoundingBoxes = !diagnostics.showBoundingBoxes;
 }
 
-function toggleDoubleSidedMaterials(view: View) {
+function toggleDoubleSidedMaterials(view: View): void {
     const {
         advanced: { doubleSided },
     } = view.settings as Internal.RenderSettingsExt;
@@ -305,7 +447,7 @@ function toggleDoubleSidedMaterials(view: View) {
     doubleSided.opaque = !doubleSided.opaque;
 }
 
-function toggleDoubleSidedTransparentMaterials(view: View) {
+function toggleDoubleSidedTransparentMaterials(view: View): void {
     const {
         advanced: { doubleSided },
     } = view.settings as Internal.RenderSettingsExt;
@@ -313,13 +455,13 @@ function toggleDoubleSidedTransparentMaterials(view: View) {
     doubleSided.transparent = !doubleSided.transparent;
 }
 
-function toggleHoldDynamic(view: View) {
+function toggleHoldDynamic(view: View): void {
     const { diagnostics } = view.settings as Internal.RenderSettingsExt;
 
     diagnostics.holdDynamic = !diagnostics.holdDynamic;
 }
 
-function toggleTriangleBudget(view: View) {
+function toggleTriangleBudget(view: View): void {
     const { detail } = view.settings.quality;
 
     if (detail.autoAdjust) {
@@ -333,4 +475,9 @@ function toggleTriangleBudget(view: View) {
             resolution: view.settings.quality.resolution,
         },
     });
+}
+
+function toggleQualityPoints(view: View): void {
+    const { points } = view.settings as Internal.RenderSettingsExt;
+    points.shape = points.shape === "disc" ? "square" : "disc";
 }

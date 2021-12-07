@@ -14,7 +14,7 @@ const initialState = {
     enabledWidgets: defaultEnabledWidgets as WidgetKey[],
     sceneType: SceneType.Viewer,
     viewerScenes: [] as ScenePreview[],
-    widgets: ["advancedSettings"] as WidgetKey[],
+    widgets: [] as WidgetKey[],
     urlSearchQuery: undefined as undefined | string | SearchPattern[],
 };
 

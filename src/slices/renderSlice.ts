@@ -60,6 +60,10 @@ export enum AdvancedSetting {
     ShowPerformance = "showPerformance",
     CameraNearClipping = "cameraNearClipping",
     CameraFarClipping = "cameraFarClipping",
+    QualityPoints = "qualityPoints",
+    PointSize = "pointSize",
+    MaxPointSize = "maxPointSize",
+    PointToleranceFactor = "pointToleranceFactor",
 }
 
 type CameraPosition = Pick<Camera, "position" | "rotation">;
@@ -123,6 +127,10 @@ const initialState = {
         [AdvancedSetting.ShowPerformance]: false,
         [AdvancedSetting.CameraNearClipping]: 0,
         [AdvancedSetting.CameraFarClipping]: 0,
+        [AdvancedSetting.QualityPoints]: true,
+        [AdvancedSetting.PointSize]: 1,
+        [AdvancedSetting.MaxPointSize]: 20,
+        [AdvancedSetting.PointToleranceFactor]: 0,
     },
 };
 

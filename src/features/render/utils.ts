@@ -20,7 +20,7 @@ import { CustomGroup, customGroupsActions, DispatchCustomGroups } from "contexts
 import { hiddenGroupActions, DispatchHidden } from "contexts/hidden";
 import { highlightActions, DispatchHighlighted } from "contexts/highlighted";
 import { MutableRefObject } from "react";
-import { CameraType, ObjectVisibility, renderActions, RenderType } from "slices/renderSlice";
+import { AdvancedSetting, CameraType, ObjectVisibility, renderActions, RenderType } from "slices/renderSlice";
 import { sleep } from "utils/timers";
 
 type Settings = {
@@ -396,21 +396,25 @@ export function initClippingPlanes(clipping: RenderSettings["clippingVolume"]): 
 }
 
 export function initAdvancedSettings(view: View, customProperties: any): void {
-    const { diagnostics, advanced } = view.settings as Internal.RenderSettingsExt;
+    const { diagnostics, advanced, points } = view.settings as Internal.RenderSettingsExt;
     const cameraParams = view.camera.controller.params as FlightControllerParams | OrthoControllerParams;
     const isProd = window.location.origin !== "https://explorer.novorender.com";
 
     store.dispatch(
         renderActions.setAdvancedSettings({
-            showPerformance: Boolean(isProd && customProperties?.showStats),
-            autoFps: view.settings.quality.resolution.autoAdjust.enabled,
-            triangleBudget: view.settings.quality.detail.autoAdjust.enabled,
-            showBoundingBoxes: diagnostics.showBoundingBoxes,
-            holdDynamic: diagnostics.holdDynamic,
-            doubleSidedMaterials: advanced.doubleSided.opaque,
-            doubleSidedTransparentMaterials: advanced.doubleSided.transparent,
-            cameraFarClipping: cameraParams.far,
-            cameraNearClipping: cameraParams.near,
+            [AdvancedSetting.ShowPerformance]: Boolean(isProd && customProperties?.showStats),
+            [AdvancedSetting.AutoFps]: view.settings.quality.resolution.autoAdjust.enabled,
+            [AdvancedSetting.TriangleBudget]: view.settings.quality.detail.autoAdjust.enabled,
+            [AdvancedSetting.ShowBoundingBoxes]: diagnostics.showBoundingBoxes,
+            [AdvancedSetting.HoldDynamic]: diagnostics.holdDynamic,
+            [AdvancedSetting.DoubleSidedMaterials]: advanced.doubleSided.opaque,
+            [AdvancedSetting.DoubleSidedTransparentMaterials]: advanced.doubleSided.transparent,
+            [AdvancedSetting.CameraFarClipping]: cameraParams.far,
+            [AdvancedSetting.CameraNearClipping]: cameraParams.near,
+            [AdvancedSetting.QualityPoints]: points.shape === "disc",
+            [AdvancedSetting.PointSize]: points.size.pixel ?? 1,
+            [AdvancedSetting.MaxPointSize]: points.size.maxPixel ?? 20,
+            [AdvancedSetting.PointToleranceFactor]: points.size.toleranceFactor ?? 0,
         })
     );
 }
