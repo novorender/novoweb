@@ -1,3 +1,4 @@
+import { vec3, quat } from "gl-matrix";
 import { FormEventHandler, Fragment, useRef, useState } from "react";
 import {
     useTheme,
@@ -17,10 +18,14 @@ import {
 } from "@mui/material";
 import { AddCircle } from "@mui/icons-material";
 import type { Bookmark } from "@novorender/data-js-api";
+import { OrthoControllerParams } from "@novorender/webgl-api";
 import { css } from "@mui/styled-engine";
 
-import { ScrollBox, Tooltip, Divider } from "components";
+import { dataApi } from "app";
+import { useToggle } from "hooks/useToggle";
 import { useAppDispatch, useAppSelector } from "app/store";
+import { ScrollBox, Tooltip, Divider } from "components";
+
 import {
     CameraType,
     ObjectVisibility,
@@ -30,15 +35,12 @@ import {
     selectEditingScene,
     selectMeasure,
 } from "slices/renderSlice";
+import { selectIsAdminScene } from "slices/explorerSlice";
 import { highlightActions, useDispatchHighlighted } from "contexts/highlighted";
 import { hiddenGroupActions, useDispatchHidden } from "contexts/hidden";
 import { customGroupsActions, useCustomGroups } from "contexts/customGroups";
 import { useExplorerGlobals } from "contexts/explorerGlobals";
-import { selectIsAdminScene } from "slices/explorerSlice";
-import { useToggle } from "hooks/useToggle";
-import { dataApi } from "app";
-import { OrthoControllerParams } from "@novorender/webgl-api";
-import { vec3, quat } from "gl-matrix";
+import { useDispatchVisible, visibleActions } from "contexts/visible";
 
 const Description = styled(Typography)(
     () => css`
@@ -75,6 +77,7 @@ const Img = styled("img")(
 export function Bookmarks() {
     const theme = useTheme();
 
+    const dispatchVisible = useDispatchVisible();
     const dispatchHighlighted = useDispatchHighlighted();
     const dispatchHidden = useDispatchHidden();
     const { state: customGroups, dispatch: dispatchCustom } = useCustomGroups();
@@ -89,6 +92,8 @@ export function Bookmarks() {
     const [addingBookmark, toggleAddingBookmark] = useToggle();
 
     function handleSelect(bookmark: Bookmark) {
+        dispatchVisible(visibleActions.set([]));
+
         if (bookmark.objectGroups) {
             const bmDefaultGroup = bookmark.objectGroups.find((group) => !group.id && group.selected);
             if (bmDefaultGroup?.ids) {
