@@ -54,7 +54,7 @@ import { useAppDispatch, useAppSelector } from "app/store";
 import { useHighlighted, highlightActions, useDispatchHighlighted } from "contexts/highlighted";
 import { useHidden, useDispatchHidden } from "contexts/hidden";
 import { useCustomGroups } from "contexts/customGroups";
-import { useVisible } from "contexts/visible";
+import { useDispatchVisible, useVisible, visibleActions } from "contexts/visible";
 import { explorerGlobalsActions, useExplorerGlobals } from "contexts/explorerGlobals";
 
 import {
@@ -141,6 +141,7 @@ export function Render3D({ onInit }: Props) {
     const dispatchHighlighted = useDispatchHighlighted();
     const hiddenObjects = useHidden();
     const dispatchHidden = useDispatchHidden();
+    const dispatchVisible = useDispatchVisible();
     const visibleObjects = useVisible();
     const { state: customGroups, dispatch: dispatchCustomGroups } = useCustomGroups();
     const {
@@ -617,6 +618,7 @@ export function Render3D({ onInit }: Props) {
                 initClippingBox(_view.settings.clippingPlanes);
                 initClippingPlanes(_view.settings.clippingVolume);
 
+                dispatchVisible(visibleActions.set([]));
                 initHidden(objectGroups, dispatchHidden);
                 initCustomGroups(objectGroups, dispatchCustomGroups);
                 initHighlighted(objectGroups, dispatchHighlighted);
@@ -674,6 +676,7 @@ export function Render3D({ onInit }: Props) {
         dispatchCustomGroups,
         dispatchHidden,
         dispatchHighlighted,
+        dispatchVisible,
         setSize,
         preloadedScene,
     ]);
@@ -965,6 +968,7 @@ export function Render3D({ onInit }: Props) {
                     })
                 );
 
+                dispatchVisible(visibleActions.set([]));
                 initHidden(objectGroups, dispatchHidden);
                 initCustomGroups(objectGroups, dispatchCustomGroups);
                 initHighlighted(objectGroups, dispatchHighlighted);
@@ -986,6 +990,7 @@ export function Render3D({ onInit }: Props) {
             dispatchHidden,
             dispatchCustomGroups,
             dispatchHighlighted,
+            dispatchVisible,
             env,
         ]
     );
