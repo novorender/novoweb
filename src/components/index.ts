@@ -11,3 +11,6 @@ export * from "./speedDialAction";
 export * from "./loading";
 export * from "./iosSwitch";
 export * from "./widgetMenuButtonWrapper";
+export * from "./logoSpeedDial";
+export * from "./widgetContainer";
+export * from "./widgetHeader";

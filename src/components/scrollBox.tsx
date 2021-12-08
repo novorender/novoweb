@@ -1,5 +1,5 @@
 import { Box, styled } from "@mui/material";
-import { css } from "@mui/system";
+import { css } from "@mui/styled-engine";
 
 export const withCustomScrollbar = (component: any): unknown =>
     styled(component)(

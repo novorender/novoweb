@@ -1,7 +1,7 @@
 import type { SpeedDialActionProps } from "@mui/material";
 
 import { SpeedDialAction } from "components";
-import { config as featuresConfig } from "config/features";
+import { featuresConfig } from "config/features";
 
 import { useAppDispatch, useAppSelector } from "app/store";
 import { selectDefaultVisibility, renderActions, ObjectVisibility } from "slices/renderSlice";

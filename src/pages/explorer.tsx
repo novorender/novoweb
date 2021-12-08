@@ -6,12 +6,7 @@ import { dataApi } from "app";
 import { uniqueArray } from "utils/misc";
 import { useSceneId } from "hooks/useSceneId";
 
-import {
-    config as featuresConfig,
-    defaultEnabledWidgets,
-    defaultEnabledAdminWidgets,
-    WidgetKey,
-} from "config/features";
+import { featuresConfig, defaultEnabledWidgets, defaultEnabledAdminWidgets, WidgetKey } from "config/features";
 import { Loading } from "components";
 import { Hud } from "features/hud";
 import { Render3D } from "features/render";

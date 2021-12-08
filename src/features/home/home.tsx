@@ -2,7 +2,7 @@ import { SpeedDialActionProps, Box, CircularProgress } from "@mui/material";
 
 import { dataApi } from "app";
 import { SpeedDialAction } from "components";
-import { config as featuresConfig } from "config/features";
+import { featuresConfig } from "config/features";
 import {
     initAdvancedSettings,
     initClippingBox,

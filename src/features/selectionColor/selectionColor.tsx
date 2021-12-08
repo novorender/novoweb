@@ -3,7 +3,7 @@ import type { ColorResult } from "react-color";
 import type { SpeedDialActionProps } from "@mui/material";
 
 import { SpeedDialAction } from "components";
-import { config as featuresConfig } from "config/features";
+import { featuresConfig } from "config/features";
 import { useToggle } from "hooks/useToggle";
 import { rgbToVec } from "utils/color";
 import { ColorPicker } from "features/colorPicker";

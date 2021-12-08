@@ -9,15 +9,25 @@ import {
     ListItemButtonProps,
     ListItemButton,
 } from "@mui/material";
+import { Visibility, ColorLens } from "@mui/icons-material";
 import { css } from "@mui/styled-engine";
 
-import { ScrollBox, Accordion, AccordionSummary, AccordionDetails, Tooltip } from "components";
+import {
+    ScrollBox,
+    Accordion,
+    AccordionSummary,
+    AccordionDetails,
+    Tooltip,
+    WidgetContainer,
+    LogoSpeedDial,
+    WidgetHeader,
+} from "components";
 import { useToggle } from "hooks/useToggle";
 import { vecToRgb, rgbToVec, VecRGB } from "utils/color";
 import { ColorPicker } from "features/colorPicker";
 import { CustomGroup, customGroupsActions, useCustomGroups } from "contexts/customGroups";
-
-import { Visibility, ColorLens } from "@mui/icons-material";
+import { featuresConfig } from "config/features";
+import { WidgetList } from "features/widgetList";
 
 const StyledListItemButton = styled(ListItemButton, { shouldForwardProp: (prop) => prop !== "inset" })<
     ListItemButtonProps & { inset?: boolean }
@@ -34,6 +44,7 @@ const StyledCheckbox = styled(Checkbox)`
 `;
 
 export function Groups() {
+    const [menuOpen, toggleMenu] = useToggle();
     const { state: customGroups, dispatch: dispatchCustom } = useCustomGroups();
 
     const [containerEl, setContainerEl] = useState<HTMLDivElement | null>(null);
@@ -56,135 +67,166 @@ export function Groups() {
     };
 
     return (
-        <ScrollBox ref={containerRef} height={1} pb={2}>
-            <List>
-                <StyledListItemButton
-                    inset={hasGrouping}
-                    disableRipple
-                    onClick={() =>
-                        handleChange(customGroups.map((group) => ({ ...group, selected: !allGroupsSelected })))
-                    }
-                >
-                    <Box display="flex" width={1} alignItems="center">
-                        <Box flex={"1 1 100%"}>
-                            <Typography color="textSecondary" noWrap={true}>
-                                Groups: {organisedGroups.singles.length + Object.values(organisedGroups.grouped).length}
-                            </Typography>
-                        </Box>
-                        <StyledCheckbox
-                            aria-label="toggle all groups highlighting"
-                            size="small"
-                            checked={allGroupsSelected}
-                            onClick={(event) => event.stopPropagation()}
-                            onChange={() =>
-                                handleChange(
-                                    customGroups.map((group) => ({
-                                        ...group,
-                                        selected: !allGroupsSelected,
-                                    }))
-                                )
-                            }
-                        />
-                        <StyledCheckbox
-                            data-test="toggle-visibility"
-                            aria-label="toggle group visibility"
-                            size="small"
-                            icon={<Visibility />}
-                            checkedIcon={<Visibility color="disabled" />}
-                            checked={allGroupsHidden}
-                            onClick={(event) => event.stopPropagation()}
-                            onChange={() =>
-                                handleChange(
-                                    customGroups.map((group) => ({
-                                        ...group,
-                                        hidden: !allGroupsHidden,
-                                    }))
-                                )
-                            }
-                        />
-                    </Box>
-                </StyledListItemButton>
-
-                {organisedGroups.singles.map((group, index) => (
-                    <Group
-                        inset={hasGrouping}
-                        handleChange={handleChange}
-                        group={group}
-                        key={group.name + index}
-                        colorPickerPosition={colorPickerPosition}
-                    />
-                ))}
-            </List>
-            {Object.values(organisedGroups.grouped).map((grouping, index) => {
-                const allGroupedSelected = !grouping.groups.some((group) => !group.selected);
-                const allGroupedHidden = !grouping.groups.some((group) => !group.hidden);
-
-                return (
-                    <Accordion key={grouping.name + index}>
-                        <AccordionSummary>
-                            <Box width={0} flex="1 1 auto" overflow="hidden">
-                                <Box fontWeight={600} overflow="hidden" whiteSpace="nowrap" textOverflow="ellipsis">
-                                    {grouping.name}
+        <>
+            <WidgetContainer>
+                <WidgetHeader widget={featuresConfig.groups} />
+                <Box flexDirection="column" overflow="hidden" flexGrow={1} height={1}>
+                    <ScrollBox display={menuOpen ? "none" : "flex"} ref={containerRef} height={1} pb={2}>
+                        <List sx={{ width: 1 }}>
+                            <StyledListItemButton
+                                inset={hasGrouping}
+                                disableRipple
+                                onClick={() =>
+                                    handleChange(
+                                        customGroups.map((group) => ({ ...group, selected: !allGroupsSelected }))
+                                    )
+                                }
+                            >
+                                <Box display="flex" width={1} alignItems="center">
+                                    <Box flex={"1 1 100%"}>
+                                        <Typography color="textSecondary" noWrap={true}>
+                                            Groups:{" "}
+                                            {organisedGroups.singles.length +
+                                                Object.values(organisedGroups.grouped).length}
+                                        </Typography>
+                                    </Box>
+                                    {customGroups.length ? (
+                                        <>
+                                            <StyledCheckbox
+                                                aria-label="toggle all groups highlighting"
+                                                size="small"
+                                                checked={allGroupsSelected}
+                                                onClick={(event) => event.stopPropagation()}
+                                                onChange={() =>
+                                                    handleChange(
+                                                        customGroups.map((group) => ({
+                                                            ...group,
+                                                            selected: !allGroupsSelected,
+                                                        }))
+                                                    )
+                                                }
+                                            />
+                                            <StyledCheckbox
+                                                data-test="toggle-visibility"
+                                                aria-label="toggle group visibility"
+                                                size="small"
+                                                icon={<Visibility />}
+                                                checkedIcon={<Visibility color="disabled" />}
+                                                checked={allGroupsHidden}
+                                                onClick={(event) => event.stopPropagation()}
+                                                onChange={() =>
+                                                    handleChange(
+                                                        customGroups.map((group) => ({
+                                                            ...group,
+                                                            hidden: !allGroupsHidden,
+                                                        }))
+                                                    )
+                                                }
+                                            />
+                                        </>
+                                    ) : null}
                                 </Box>
-                            </Box>
-                            <Box flex="0 0 auto">
-                                <StyledCheckbox
-                                    data-test="toggle-highlighting"
-                                    aria-label="toggle group highlighting"
-                                    sx={{ marginLeft: "auto" }}
-                                    size="small"
-                                    onChange={() =>
-                                        handleChange(
-                                            grouping.groups.map((group) => ({
-                                                ...group,
-                                                selected: !allGroupedSelected,
-                                            }))
-                                        )
-                                    }
-                                    checked={allGroupedSelected}
-                                    onClick={(event) => event.stopPropagation()}
-                                    onFocus={(event) => event.stopPropagation()}
+                            </StyledListItemButton>
+
+                            {organisedGroups.singles.map((group, index) => (
+                                <Group
+                                    inset={hasGrouping}
+                                    handleChange={handleChange}
+                                    group={group}
+                                    key={group.name + index}
+                                    colorPickerPosition={colorPickerPosition}
                                 />
-                            </Box>
-                            <Box flex="0 0 auto">
-                                <StyledCheckbox
-                                    data-test="toggle-visibility"
-                                    aria-label="toggle group visibility"
-                                    size="small"
-                                    icon={<Visibility />}
-                                    checkedIcon={<Visibility color="disabled" />}
-                                    onChange={() =>
-                                        handleChange(
-                                            grouping.groups.map((group) => ({
-                                                ...group,
-                                                hidden: !allGroupedHidden,
-                                            }))
-                                        )
-                                    }
-                                    checked={allGroupedHidden}
-                                    onClick={(event) => event.stopPropagation()}
-                                    onFocus={(event) => event.stopPropagation()}
-                                />
-                            </Box>
-                        </AccordionSummary>
-                        <AccordionDetails>
-                            <Box pr={3}>
-                                <List sx={{ padding: 0 }}>
-                                    {grouping.groups.map((group, index) => (
-                                        <Group
-                                            key={group.name + index}
-                                            handleChange={handleChange}
-                                            group={group}
-                                            colorPickerPosition={colorPickerPosition}
-                                        />
-                                    ))}
-                                </List>
-                            </Box>
-                        </AccordionDetails>
-                    </Accordion>
-                );
-            })}
-        </ScrollBox>
+                            ))}
+                        </List>
+                        {Object.values(organisedGroups.grouped).map((grouping, index) => {
+                            const allGroupedSelected = !grouping.groups.some((group) => !group.selected);
+                            const allGroupedHidden = !grouping.groups.some((group) => !group.hidden);
+
+                            return (
+                                <Accordion key={grouping.name + index}>
+                                    <AccordionSummary>
+                                        <Box width={0} flex="1 1 auto" overflow="hidden">
+                                            <Box
+                                                fontWeight={600}
+                                                overflow="hidden"
+                                                whiteSpace="nowrap"
+                                                textOverflow="ellipsis"
+                                            >
+                                                {grouping.name}
+                                            </Box>
+                                        </Box>
+                                        <Box flex="0 0 auto">
+                                            <StyledCheckbox
+                                                data-test="toggle-highlighting"
+                                                aria-label="toggle group highlighting"
+                                                sx={{ marginLeft: "auto" }}
+                                                size="small"
+                                                onChange={() =>
+                                                    handleChange(
+                                                        grouping.groups.map((group) => ({
+                                                            ...group,
+                                                            selected: !allGroupedSelected,
+                                                        }))
+                                                    )
+                                                }
+                                                checked={allGroupedSelected}
+                                                onClick={(event) => event.stopPropagation()}
+                                                onFocus={(event) => event.stopPropagation()}
+                                            />
+                                        </Box>
+                                        <Box flex="0 0 auto">
+                                            <StyledCheckbox
+                                                data-test="toggle-visibility"
+                                                aria-label="toggle group visibility"
+                                                size="small"
+                                                icon={<Visibility />}
+                                                checkedIcon={<Visibility color="disabled" />}
+                                                onChange={() =>
+                                                    handleChange(
+                                                        grouping.groups.map((group) => ({
+                                                            ...group,
+                                                            hidden: !allGroupedHidden,
+                                                        }))
+                                                    )
+                                                }
+                                                checked={allGroupedHidden}
+                                                onClick={(event) => event.stopPropagation()}
+                                                onFocus={(event) => event.stopPropagation()}
+                                            />
+                                        </Box>
+                                    </AccordionSummary>
+                                    <AccordionDetails>
+                                        <Box pr={3}>
+                                            <List sx={{ padding: 0 }}>
+                                                {grouping.groups.map((group, index) => (
+                                                    <Group
+                                                        key={group.name + index}
+                                                        handleChange={handleChange}
+                                                        group={group}
+                                                        colorPickerPosition={colorPickerPosition}
+                                                    />
+                                                ))}
+                                            </List>
+                                        </Box>
+                                    </AccordionDetails>
+                                </Accordion>
+                            );
+                        })}
+                    </ScrollBox>
+                    <WidgetList
+                        display={menuOpen ? "block" : "none"}
+                        widgetKey={featuresConfig.groups.key}
+                        onSelect={toggleMenu}
+                    />
+                </Box>
+            </WidgetContainer>
+            <LogoSpeedDial
+                open={menuOpen}
+                toggle={toggleMenu}
+                testId={`${featuresConfig.groups.key}-widget-menu-fab`}
+                ariaLabel="toggle widget menu"
+            />
+        </>
     );
 }
 
@@ -285,7 +327,7 @@ function getPickerPosition(el: HTMLElement | null) {
     }
 
     const { top, left } = el.getBoundingClientRect();
-    return { top: top + 24, left: left + 24 }; // use picker width
+    return { top: top + 24, left: left + 24 };
 }
 
 type OrganisedGroups = {

@@ -1,7 +1,7 @@
 import { createSelector, createSlice, PayloadAction } from "@reduxjs/toolkit";
 import { SearchPattern } from "@novorender/webgl-api";
 
-import { config as featuresConfig, WidgetKey, Widget, defaultEnabledWidgets } from "config/features";
+import { featuresConfig, WidgetKey, Widget, defaultEnabledWidgets } from "config/features";
 import type { RootState } from "app/store";
 import { ScenePreview } from "@novorender/data-js-api";
 

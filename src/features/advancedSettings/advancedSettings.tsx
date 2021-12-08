@@ -1,6 +1,5 @@
 import { FlightControllerParams, Internal, OrthoControllerParams, View } from "@novorender/webgl-api";
-import { Divider, FormControlLabel, Slider, Typography } from "@mui/material";
-import { Box } from "@mui/system";
+import { Divider, FormControlLabel, Slider, Typography, Box } from "@mui/material";
 import { ChangeEvent, SyntheticEvent, useState } from "react";
 
 import { useAppDispatch, useAppSelector } from "app/store";

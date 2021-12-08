@@ -30,7 +30,7 @@ export enum FeatureType {
     AdminWidget,
 }
 
-export const config = {
+export const featuresConfig = {
     advancedSettings: {
         key: "advancedSettings",
         name: "Adv. settings",
@@ -177,7 +177,7 @@ export const config = {
     },
 } as const;
 
-type Config = typeof config;
+type Config = typeof featuresConfig;
 
 export type FeatureKey = keyof Config;
 
@@ -188,12 +188,14 @@ export type WidgetKey = {
 export type Widget = Config[WidgetKey];
 
 export const defaultEnabledWidgets = [];
-export const defaultEnabledAdminWidgets = Object.values(config)
+export const defaultEnabledAdminWidgets = Object.values(featuresConfig)
     .filter((value) => [FeatureType.AdminWidget, FeatureType.Widget].includes(value.type))
     // NOTE(OLA: Not ready for prod
-    .filter((widget) => widget.key !== config.viewerScenes.key && widget.key !== config.advancedSettings.key)
+    .filter(
+        (widget) => widget.key !== featuresConfig.viewerScenes.key && widget.key !== featuresConfig.advancedSettings.key
+    )
     .map((widget) => widget.key as WidgetKey);
 
-export const viewerWidgets = Object.values(config).filter((widget) => widget.type === FeatureType.Widget) as {
+export const viewerWidgets = Object.values(featuresConfig).filter((widget) => widget.type === FeatureType.Widget) as {
     [K in keyof Config]: Config[K]["type"] extends FeatureType.Widget ? Config[K] : never;
 }[keyof Config][];
