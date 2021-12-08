@@ -1,6 +1,7 @@
 import { useParams, Link, useHistory } from "react-router-dom";
 import { useTheme, Box, Button, Typography, List, ListItem } from "@mui/material";
 import { Add, ArrowBack, Edit } from "@mui/icons-material";
+import { HierarcicalObjectReference, Scene } from "@novorender/webgl-api";
 
 import { ImgModal, ImgTooltip, LinearProgress, ScrollBox, Tooltip } from "components";
 
@@ -18,6 +19,7 @@ import { useToggle } from "hooks/useToggle";
 import { extractObjectIds } from "utils/objectData";
 import { searchByPatterns } from "utils/search";
 import { hexToVec } from "utils/color";
+import { sleep } from "utils/timers";
 
 import {
     useGetTopicQuery,
@@ -85,6 +87,24 @@ export function Topic() {
         return <LinearProgress />;
     }
 
+    const floatingViewpoints = viewpoints
+        ?.filter((vp) => !comments.some((comment) => comment.viewpoint_guid === vp.guid))
+        .map((floatingVp) => ({
+            guid: "",
+            date: topic.creation_date,
+            author: topic.creation_author,
+            modified_date: topic.modified_date,
+            modified_author: topic.modified_author,
+            comment: "No comment",
+            topic_guid: topic.guid,
+            viewpoint_guid: floatingVp.guid,
+            reply_to_comment_guid: "",
+            authorization: {
+                comment_actions: [],
+            },
+            extended_data: "",
+            retrieved_on: "",
+        })) as Comment[];
     return (
         <>
             {loading ? <LinearProgress /> : null}
@@ -124,7 +144,7 @@ export function Topic() {
                     <Typography variant="h6">{topic.labels.join(", ")}</Typography>
                 </Box>
                 <List>
-                    {comments.map((comment) => (
+                    {floatingViewpoints.concat(comments).map((comment) => (
                         <CommentListItem
                             key={comment.guid}
                             comment={comment}
@@ -180,45 +200,30 @@ function CommentListItem({
         { skip: !viewpointId || !modalOpen }
     );
 
+    const has3dPos = Boolean(viewpoint?.perspective_camera || viewpoint?.orthogonal_camera);
     const [abortController] = useAbortController();
 
     const handleClick = async () => {
+        if (!has3dPos) {
+            return;
+        }
+
         const abortSignal = abortController.current.signal;
-        const guidsToIds = async (guids: string[]) => {
-            let ids = [] as number[];
-
-            try {
-                await searchByPatterns({
-                    scene,
-                    searchPatterns: [
-                        {
-                            property: "guid",
-                            value: guids,
-                            exact: true,
-                        },
-                    ],
-                    abortSignal,
-                    callback: (refs) => (ids = ids.concat(extractObjectIds(refs))),
-                });
-            } catch {
-                return ids;
-            }
-
-            return ids;
-        };
 
         const visibilityExceptionGuids = visibility?.exceptions
             ?.map((exception) => exception.ifc_guid)
             .filter((exception) => exception !== undefined) as string[];
 
         const getVisibilityExceptions = visibilityExceptionGuids.length
-            ? guidsToIds(visibilityExceptionGuids)
+            ? guidsToIds({ scene, abortSignal, guids: visibilityExceptionGuids })
             : Promise.resolve([]);
 
         const selectionGuids = selection
             ?.map((obj) => obj.ifc_guid)
             .filter((exception) => exception !== undefined) as string[];
-        const getSelection = selectionGuids.length ? guidsToIds(selectionGuids) : Promise.resolve([]);
+        const getSelection = selectionGuids.length
+            ? guidsToIds({ scene, abortSignal, guids: selectionGuids })
+            : Promise.resolve([]);
 
         const getColorGroups =
             coloring && coloring.length
@@ -233,7 +238,7 @@ function CommentListItem({
                           .filter((item) => item.components.length)
                           .map(async (item) => ({
                               color: hexToVec(item.color),
-                              ids: await guidsToIds(item.components as string[]),
+                              ids: await guidsToIds({ scene, abortSignal, guids: item.components as string[] }),
                           }))
                   )
                 : Promise.resolve([]);
@@ -311,7 +316,14 @@ function CommentListItem({
     return (
         <>
             <ListItem sx={{ py: 0.5, px: 1 }} button onClick={handleClick} disabled={loading}>
-                <Box width={1} maxHeight={80} display="flex" alignItems="flex-start" overflow="hidden">
+                <Box
+                    borderLeft={has3dPos ? "3px solid red" : "none"}
+                    width={1}
+                    maxHeight={80}
+                    display="flex"
+                    alignItems="flex-start"
+                    overflow="hidden"
+                >
                     <Box bgcolor={theme.palette.grey[200]} height={65} width={100} flexShrink={0} flexGrow={0}>
                         {thumbnail ? (
                             <ImgTooltip
@@ -353,4 +365,49 @@ function CommentListItem({
             />
         </>
     );
+}
+
+async function guidsToIds({ guids, scene, abortSignal }: { guids: string[]; scene: Scene; abortSignal: AbortSignal }) {
+    let ids = [] as number[];
+
+    const batchSize = 100;
+    const batches = guids.reduce(
+        (acc, guid) => {
+            const lastBatch = acc.slice(-1)[0];
+
+            if (lastBatch.length < batchSize) {
+                lastBatch.push(guid);
+            } else {
+                acc.push([guid]);
+            }
+
+            return acc;
+        },
+        [[]] as string[][]
+    );
+
+    const concurrentRequests = 5;
+    const callback = (refs: HierarcicalObjectReference[]) => (ids = ids.concat(extractObjectIds(refs)));
+    for (let i = 0; i < batches.length / concurrentRequests; i++) {
+        await Promise.all(
+            batches.slice(i * concurrentRequests, i * concurrentRequests + concurrentRequests).map((batch) => {
+                return searchByPatterns({
+                    scene,
+                    callback,
+                    abortSignal,
+                    searchPatterns: [
+                        {
+                            property: "guid",
+                            value: batch,
+                            exact: true,
+                        },
+                    ],
+                }).catch(() => {});
+            })
+        );
+
+        await sleep(1);
+    }
+
+    return ids;
 }

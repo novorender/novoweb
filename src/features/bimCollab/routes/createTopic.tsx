@@ -1,5 +1,5 @@
 import { useStore } from "react-redux";
-import { ObjectId } from "@novorender/webgl-api";
+import { HierarcicalObjectReference, ObjectId, Scene } from "@novorender/webgl-api";
 import {
     Box,
     Typography,
@@ -13,6 +13,7 @@ import {
     OutlinedInput,
     Select,
 } from "@mui/material";
+import { DatePicker } from "@mui/lab";
 import { useParams, useHistory } from "react-router-dom";
 import { FormEvent, useEffect, useState } from "react";
 
@@ -29,6 +30,7 @@ import { useToggle } from "hooks/useToggle";
 import { useMountedState } from "hooks/useMountedState";
 import { searchByPatterns } from "utils/search";
 import { getGuids } from "utils/objectData";
+import { sleep } from "utils/timers";
 
 import {
     useGetProjectExtensionsQuery,
@@ -45,7 +47,6 @@ import {
     createOrthogonalCamera,
 } from "../utils";
 import { Viewpoint } from "../types";
-import { DatePicker } from "@mui/lab";
 
 type BaseViewpoint = Partial<Viewpoint> & Pick<Viewpoint, "snapshot">;
 export type NewViewpoint = BaseViewpoint &
@@ -415,17 +416,20 @@ export function IncludeViewpoint({
             }
 
             setLoading(true);
+
             const abortSignal = abortController.current.signal;
             const state = store.getState();
             const defaultVisibility = selectDefaultVisibility(state);
-            const getExceptions = idsToGuids(
-                defaultVisibility === ObjectVisibility.Neutral ? hidden.current.idArr : visible.current.idArr
-            );
-            const getSelected = idsToGuids(highlighted.current.idArr);
+            const getSelected = idsToGuids({ scene, abortSignal, ids: highlighted.current.idArr });
+            const getExceptions = idsToGuids({
+                scene,
+                abortSignal,
+                ids: defaultVisibility === ObjectVisibility.Neutral ? hidden.current.idArr : visible.current.idArr,
+            });
             const getColoring = customGroups.current
                 .filter((group) => group.selected)
                 .map(async (group) => {
-                    return { color: group.color, guids: await idsToGuids(group.ids) };
+                    return { color: group.color, guids: await idsToGuids({ scene, abortSignal, ids: group.ids }) };
                 });
             const [exceptions, selected, coloring] = await Promise.all([
                 getExceptions,
@@ -450,31 +454,6 @@ export function IncludeViewpoint({
                 setViewpoint({ ...baseVp, orthogonal_camera: createOrthogonalCamera(view.camera) });
             } else if (view.camera.kind === "pinhole") {
                 setViewpoint({ ...baseVp, perspective_camera: createPerspectiveCamera(view.camera) });
-            }
-
-            async function idsToGuids(ids: ObjectId[]): Promise<string[]> {
-                if (!ids.length) {
-                    return [];
-                }
-
-                let guids = [] as string[];
-
-                try {
-                    await searchByPatterns({
-                        scene,
-                        abortSignal,
-                        full: true,
-                        searchPatterns: [{ property: "id", value: ids as unknown as string[], exact: true }],
-                        callback: async (refs) => {
-                            const _guids = await getGuids(refs);
-                            guids = guids.concat(_guids);
-                        },
-                    });
-                } catch {
-                    return guids;
-                }
-
-                return guids;
             }
         }
     }, [
@@ -516,4 +495,59 @@ export function IncludeViewpoint({
             />
         </>
     );
+}
+
+async function idsToGuids({
+    ids,
+    scene,
+    abortSignal,
+}: {
+    ids: ObjectId[];
+    scene: Scene;
+    abortSignal: AbortSignal;
+}): Promise<string[]> {
+    if (!ids.length) {
+        return [];
+    }
+
+    let guids = [] as string[];
+    const batchSize = 100;
+    const batches = ids.reduce(
+        (acc, id) => {
+            const lastBatch = acc.slice(-1)[0];
+
+            if (lastBatch.length < batchSize) {
+                lastBatch.push(String(id));
+            } else {
+                acc.push([String(id)]);
+            }
+
+            return acc;
+        },
+        [[]] as string[][]
+    );
+
+    const concurrentRequests = 5;
+    const callback = async (refs: HierarcicalObjectReference[]) => {
+        const _guids = await getGuids(refs);
+        guids = guids.concat(_guids);
+    };
+
+    for (let i = 0; i < batches.length / concurrentRequests; i++) {
+        await Promise.all(
+            batches.slice(i * concurrentRequests, i * concurrentRequests + concurrentRequests).map((batch) => {
+                return searchByPatterns({
+                    scene,
+                    abortSignal,
+                    callback,
+                    full: true,
+                    searchPatterns: [{ property: "id", value: batch, exact: true }],
+                }).catch(() => {});
+            })
+        );
+
+        await sleep(1);
+    }
+
+    return guids;
 }
