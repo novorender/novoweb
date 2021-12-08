@@ -1,14 +1,14 @@
 import { Box, Typography, useTheme, Button } from "@mui/material";
 import { FormEventHandler, useCallback, useEffect, useState } from "react";
-import { MemoryRouter, Switch, Route, useParams } from "react-router-dom";
+import { MemoryRouter, Switch, Route } from "react-router-dom";
 
 import { LinearProgress, TextField } from "components";
 import { useAppDispatch, useAppSelector } from "app/store";
-import { defaultSceneId } from "pages/explorer";
 import { StorageKey } from "config/storage";
 import { config as featuresConfig } from "config/features";
 import { getFromStorage, saveToStorage, deleteFromStorage } from "utils/storage";
 import { createOAuthStateString, getOAuthState } from "utils/auth";
+import { useSceneId } from "hooks/useSceneId";
 
 import { Filters } from "./routes/filters";
 import { Topic } from "./routes/topic";
@@ -29,7 +29,7 @@ import {
 import { AuthInfo } from "./types";
 
 export function BimCollab() {
-    const { id: sceneId = defaultSceneId } = useParams<{ id?: string }>();
+    const sceneId = useSceneId();
     const space = useAppSelector(selectSpace);
     const apiVersion = useAppSelector(selectVersion);
     const authInfo = useAppSelector(selectAuthInfo);

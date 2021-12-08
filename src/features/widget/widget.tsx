@@ -28,6 +28,9 @@ import { Groups } from "features/groups";
 import { ClippingPlanes } from "features/clippingPlanes";
 import { ViewerScenes } from "features/viewerScenes";
 import { OrthoCam } from "features/orthoCam";
+import { AdvancedSettings } from "features/advancedSettings";
+import { BimCollab } from "features/bimCollab";
+import { Layers } from "features/layers";
 
 import { useAppSelector, useAppDispatch } from "app/store";
 import { selectEnabledWidgets, explorerActions } from "slices/explorerSlice";
@@ -35,7 +38,6 @@ import { useToggle } from "hooks/useToggle";
 
 import CloseIcon from "@mui/icons-material/Close";
 import { ReactComponent as NovorenderIcon } from "media/icons/novorender-small.svg";
-import { BimCollab } from "features/bimCollab";
 
 const WidgetContainer = styled((props: PaperProps) => <Paper elevation={4} {...props} />)(
     ({ theme }) => css`
@@ -107,6 +109,7 @@ export function Widget({ widgetKey }: Props) {
                 featuresConfig.viewerScenes.key,
                 featuresConfig.clippingBox.key,
                 featuresConfig.clippingPlanes.key,
+                featuresConfig.layers.key,
             ] as string[]
         ).includes(key);
 
@@ -247,6 +250,10 @@ function getWidgetByKey(key: WidgetKey): JSX.Element | string {
             return <ClippingPlanes />;
         case featuresConfig.orthoCam.key:
             return <OrthoCam />;
+        case featuresConfig.advancedSettings.key:
+            return <AdvancedSettings />;
+        case featuresConfig.layers.key:
+            return <Layers />;
         default:
             return key;
     }

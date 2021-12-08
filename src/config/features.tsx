@@ -19,6 +19,7 @@ import DomainIcon from "@mui/icons-material/Domain";
 import MovieIcon from "@mui/icons-material/Movie";
 import CropLandscapeIcon from "@mui/icons-material/CropLandscape";
 import CameraswitchIcon from "@mui/icons-material/Cameraswitch";
+import SettingsIcon from "@mui/icons-material/Settings";
 
 import { ReactComponent as ClippingIcon } from "media/icons/clipping.svg";
 import { ReactComponent as RunIcon } from "media/icons/run.svg";
@@ -37,11 +38,23 @@ export const config = {
         Icon: DomainIcon,
         type: FeatureType.Widget,
     },
+    advancedSettings: {
+        key: "advancedSettings",
+        name: "Adv. settings",
+        Icon: SettingsIcon,
+        type: FeatureType.AdminWidget,
+    },
     viewerScenes: {
         key: "viewerScenes",
         name: "Viewer scenes",
         Icon: MovieIcon,
         type: FeatureType.AdminWidget,
+    },
+    layers: {
+        key: "layers",
+        name: "Layers",
+        Icon: LayersIcon,
+        type: FeatureType.Widget,
     },
     modelTree: {
         key: "modelTree",
@@ -185,7 +198,7 @@ export const defaultEnabledWidgets = [config.bimCollab.key];
 export const defaultEnabledAdminWidgets = Object.values(config)
     .filter((value) => [FeatureType.AdminWidget, FeatureType.Widget].includes(value.type))
     // NOTE(OLA: Not ready for prod
-    .filter((widget) => widget.key !== config.viewerScenes.key)
+    .filter((widget) => widget.key !== config.viewerScenes.key && widget.key !== config.advancedSettings.key)
     .map((widget) => widget.key as WidgetKey);
 
 export const viewerWidgets = Object.values(config).filter((widget) => widget.type === FeatureType.Widget) as {

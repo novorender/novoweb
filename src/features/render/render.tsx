@@ -1,5 +1,6 @@
 import { glMatrix, mat4, quat, vec2, vec3, vec4 } from "gl-matrix";
 import { useEffect, useState, useRef, MouseEvent, PointerEvent, useCallback, SVGProps, RefCallback } from "react";
+import { SceneData } from "@novorender/data-js-api";
 import {
     View,
     EnvironmentDescription,
@@ -20,6 +21,8 @@ import { api, dataApi } from "app";
 import { useMountedState } from "hooks/useMountedState";
 import { deleteFromStorage } from "utils/storage";
 import { StorageKey } from "config/storage";
+import { useSceneId } from "hooks/useSceneId";
+import { enabledFeaturesToFeatureKeys, getEnabledFeatures } from "utils/misc";
 
 import {
     fetchEnvironments,
@@ -40,10 +43,10 @@ import {
     selectSelectiongOrthoPoint,
     CameraType,
     selectCamera,
-    selectShowPerformance,
     selectEditingScene,
     selectBookmarks,
     SceneEditStatus,
+    selectAdvancedSettings,
 } from "slices/renderSlice";
 import { authActions } from "slices/authSlice";
 import { explorerActions } from "slices/explorerSlice";
@@ -52,7 +55,7 @@ import { useAppDispatch, useAppSelector } from "app/store";
 import { useHighlighted, highlightActions, useDispatchHighlighted } from "contexts/highlighted";
 import { useHidden, useDispatchHidden } from "contexts/hidden";
 import { useCustomGroups } from "contexts/customGroups";
-import { useVisible } from "contexts/visible";
+import { useDispatchVisible, useVisible, visibleActions } from "contexts/visible";
 import { explorerGlobalsActions, useExplorerGlobals } from "contexts/explorerGlobals";
 
 import {
@@ -67,10 +70,9 @@ import {
     initCamera,
     initClippingBox,
     initClippingPlanes,
+    initAdvancedSettings,
 } from "./utils";
 import { xAxis, yAxis, axis } from "./consts";
-import { SceneData } from "@novorender/data-js-api";
-import { enabledFeaturesToFeatureKeys, getEnabledFeatures } from "utils/misc";
 
 glMatrix.setMatrixArrayType(Array);
 addConsoleDebugUtils();
@@ -131,15 +133,16 @@ enum Status {
 }
 
 type Props = {
-    id: string;
     onInit: (params: { customProperties: unknown }) => void;
 };
 
-export function Render3D({ id, onInit }: Props) {
+export function Render3D({ onInit }: Props) {
+    const id = useSceneId();
     const highlightedObjects = useHighlighted();
     const dispatchHighlighted = useDispatchHighlighted();
     const hiddenObjects = useHidden();
     const dispatchHidden = useDispatchHidden();
+    const dispatchVisible = useDispatchVisible();
     const visibleObjects = useVisible();
     const { state: customGroups, dispatch: dispatchCustomGroups } = useCustomGroups();
     const {
@@ -163,12 +166,14 @@ export function Render3D({ id, onInit }: Props) {
     const clippingPlanes = useAppSelector(selectClippingPlanes);
     const cameraState = useAppSelector(selectCamera);
     const selectingOrthoPoint = useAppSelector(selectSelectiongOrthoPoint);
-    const showPerformance = useAppSelector(selectShowPerformance);
+    const advancedSettings = useAppSelector(selectAdvancedSettings);
     const measure = useAppSelector(selectMeasure);
     const { addingPoint, angles, points, distances, selected: selectedPoint } = measure;
     const dispatch = useAppDispatch();
 
-    const rendering = useRef({ start: () => Promise.resolve(), stop: () => {} });
+    const rendering = useRef({ start: () => Promise.resolve(), stop: () => {}, update: () => {} } as ReturnType<
+        typeof createRendering
+    >);
     const movementTimer = useRef<ReturnType<typeof setTimeout>>();
     const cameraGeneration = useRef<number>();
     const previousId = useRef("");
@@ -614,6 +619,7 @@ export function Render3D({ id, onInit }: Props) {
                 initClippingBox(_view.settings.clippingPlanes);
                 initClippingPlanes(_view.settings.clippingVolume);
 
+                dispatchVisible(visibleActions.set([]));
                 initHidden(objectGroups, dispatchHidden);
                 initCustomGroups(objectGroups, dispatchCustomGroups);
                 initHighlighted(objectGroups, dispatchHighlighted);
@@ -646,10 +652,7 @@ export function Render3D({ id, onInit }: Props) {
                 resizeObserver.observe(canvas);
 
                 onInit({ customProperties });
-
-                if (window.location.origin !== "https://explorer.novorender.com" && customProperties?.stats) {
-                    dispatch(renderActions.setShowPerformance(true));
-                }
+                initAdvancedSettings(_view, customProperties);
 
                 dispatchGlobals(
                     explorerGlobalsActions.update({
@@ -674,6 +677,7 @@ export function Render3D({ id, onInit }: Props) {
         dispatchCustomGroups,
         dispatchHidden,
         dispatchHighlighted,
+        dispatchVisible,
         setSize,
         preloadedScene,
     ]);
@@ -879,6 +883,13 @@ export function Render3D({ id, onInit }: Props) {
     );
 
     useEffect(
+        function handlePostEffectsChange() {
+            rendering.current.update({ taaEnabled: advancedSettings.taa, ssaoEnabled: advancedSettings.ssao });
+        },
+        [advancedSettings]
+    );
+
+    useEffect(
         function cleanUpPreviousScene() {
             return () => {
                 rendering.current.stop();
@@ -958,9 +969,11 @@ export function Render3D({ id, onInit }: Props) {
                     })
                 );
 
+                dispatchVisible(visibleActions.set([]));
                 initHidden(objectGroups, dispatchHidden);
                 initCustomGroups(objectGroups, dispatchCustomGroups);
                 initHighlighted(objectGroups, dispatchHighlighted);
+                initAdvancedSettings(view, customProperties);
                 dispatch(renderActions.setBookmarks(bookmarks));
 
                 return { title, customProperties };
@@ -978,6 +991,7 @@ export function Render3D({ id, onInit }: Props) {
             dispatchHidden,
             dispatchCustomGroups,
             dispatchHighlighted,
+            dispatchVisible,
             env,
         ]
     );
@@ -1244,7 +1258,7 @@ export function Render3D({ id, onInit }: Props) {
                 <NoScene id={id} />
             ) : (
                 <>
-                    {showPerformance && view && canvas ? <PerformanceStats /> : null}
+                    {advancedSettings.showPerformance && view && canvas ? <PerformanceStats /> : null}
                     <Canvas
                         id="main-canvas"
                         tabIndex={1}

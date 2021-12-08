@@ -48,6 +48,24 @@ export enum SceneEditStatus {
     Editing,
 }
 
+export enum AdvancedSetting {
+    Taa = "taa",
+    Ssao = "ssao",
+    AutoFps = "autoFps",
+    ShowBoundingBoxes = "showBoundingBoxes",
+    DoubleSidedMaterials = "doubleSidedMaterials",
+    DoubleSidedTransparentMaterials = "doubleSidedTransparentMaterials",
+    HoldDynamic = "holdDynamic",
+    TriangleBudget = "triangleBudget",
+    ShowPerformance = "showPerformance",
+    CameraNearClipping = "cameraNearClipping",
+    CameraFarClipping = "cameraFarClipping",
+    QualityPoints = "qualityPoints",
+    PointSize = "pointSize",
+    MaxPointSize = "maxPointSize",
+    PointToleranceFactor = "pointToleranceFactor",
+}
+
 type CameraPosition = Pick<Camera, "position" | "rotation">;
 export type ObjectGroups = { default: ObjectGroup; defaultHidden: ObjectGroup; custom: ObjectGroup[] };
 export type ClippingPlanes = Omit<RenderSettings["clippingPlanes"], "bounds"> & { defining: boolean };
@@ -97,6 +115,23 @@ const initialState = {
     camera: { type: CameraType.Flight } as WritableCameraState,
     selectingOrthoPoint: false,
     showPerformance: false,
+    advancedSettings: {
+        [AdvancedSetting.Taa]: true,
+        [AdvancedSetting.Ssao]: true,
+        [AdvancedSetting.AutoFps]: true,
+        [AdvancedSetting.ShowBoundingBoxes]: false,
+        [AdvancedSetting.DoubleSidedMaterials]: false,
+        [AdvancedSetting.DoubleSidedTransparentMaterials]: false,
+        [AdvancedSetting.HoldDynamic]: false,
+        [AdvancedSetting.TriangleBudget]: false,
+        [AdvancedSetting.ShowPerformance]: false,
+        [AdvancedSetting.CameraNearClipping]: 0,
+        [AdvancedSetting.CameraFarClipping]: 0,
+        [AdvancedSetting.QualityPoints]: true,
+        [AdvancedSetting.PointSize]: 1,
+        [AdvancedSetting.MaxPointSize]: 20,
+        [AdvancedSetting.PointToleranceFactor]: 0,
+    },
 };
 
 type State = typeof initialState & {
@@ -214,7 +249,7 @@ export const renderSlice = createSlice({
             state.measure = { ...state.measure, points, distance, distances, angles };
         },
         resetState: (state) => {
-            return { ...initialState, environments: state.environments };
+            return { ...initialState, environments: state.environments, viewerSceneEditing: state.viewerSceneEditing };
         },
         setCamera: (state, { payload }: PayloadAction<CameraState>) => {
             state.camera = payload as WritableCameraState;
@@ -236,6 +271,12 @@ export const renderSlice = createSlice({
         },
         setViewerSceneEditing: (state, action: PayloadAction<State["viewerSceneEditing"]>) => {
             state.viewerSceneEditing = action.payload;
+        },
+        setAdvancedSettings: (state, action: PayloadAction<Partial<State["advancedSettings"]>>) => {
+            state.advancedSettings = {
+                ...state.advancedSettings,
+                ...action.payload,
+            };
         },
     },
     extraReducers: (builder) => {
@@ -264,6 +305,7 @@ export const selectCameraType = (state: RootState) => state.render.camera.type;
 export const selectSelectiongOrthoPoint = (state: RootState) => state.render.selectingOrthoPoint;
 export const selectShowPerformance = (state: RootState) => state.render.showPerformance;
 export const selectEditingScene = (state: RootState) => state.render.viewerSceneEditing;
+export const selectAdvancedSettings = (state: RootState) => state.render.advancedSettings;
 
 const { reducer, actions } = renderSlice;
 export { reducer as renderReducer, actions as renderActions };
