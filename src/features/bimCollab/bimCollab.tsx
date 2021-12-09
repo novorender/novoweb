@@ -108,22 +108,6 @@ export function BimCollab() {
     }, [dispatch]);
 
     useEffect(() => {
-        if (space && apiVersion) {
-            getAuthInfo();
-        }
-
-        async function getAuthInfo() {
-            const authInfoRes = await fetchAuthInfo();
-
-            if (!("data" in authInfoRes)) {
-                return;
-            }
-
-            dispatch(bimCollabActions.setAuthInfo(authInfoRes.data));
-        }
-    }, [space, apiVersion, fetchAuthInfo, dispatch]);
-
-    useEffect(() => {
         if (space && !apiVersion) {
             getVersion();
         }
@@ -136,13 +120,28 @@ export function BimCollab() {
             }
 
             const { versions } = versionRes.data;
-
             const version =
                 versions.find((ver) => ver.version_id === "2.1") ?? versions.find((ver) => ver.version_id === "bc_2.1");
 
             dispatch(bimCollabActions.setVersion(version?.version_id ?? "2.1"));
         }
     }, [space, dispatch, apiVersion, fetchVersions]);
+
+    useEffect(() => {
+        if (space && apiVersion && !authInfo) {
+            getAuthInfo();
+        }
+
+        async function getAuthInfo() {
+            const authInfoRes = await fetchAuthInfo();
+
+            if (!("data" in authInfoRes)) {
+                return;
+            }
+
+            dispatch(bimCollabActions.setAuthInfo(authInfoRes.data));
+        }
+    }, [space, apiVersion, fetchAuthInfo, dispatch, authInfo]);
 
     useEffect(() => {
         if (space && authInfo) {
@@ -157,6 +156,7 @@ export function BimCollab() {
                 return;
             }
 
+            saveToStorage(StorageKey.BimCollabSuggestedSpace, space);
             dispatch(bimCollabActions.setAccessToken(accessToken));
         }
     }, [space, authInfo, dispatch, authenticate]);
@@ -201,12 +201,12 @@ function EnterBimCollabSpace({ error }: { error?: boolean }) {
     const dispatch = useAppDispatch();
     const currentSpace = useAppSelector(selectSpace);
 
-    const [space, setSpace] = useState("");
+    const [space, setSpace] = useState(getFromStorage(StorageKey.BimCollabSuggestedSpace));
 
     const handleSubmit: FormEventHandler = (e) => {
         e.preventDefault();
 
-        deleteFromStorage(StorageKey.BimCollabRefreshToken);
+        deleteFromStorage(StorageKey.BimCollabSuggestedSpace);
         dispatch(bimCollabActions.logOut());
         dispatch(bimCollabActions.setSpace(space.toLowerCase().trim()));
     };
@@ -214,7 +214,7 @@ function EnterBimCollabSpace({ error }: { error?: boolean }) {
     return (
         <Box p={1} height={1} position="relative">
             <Box position="absolute" height={5} top={-5} width={1} boxShadow={theme.customShadows.widgetHeader} />
-            <Typography variant="h5" sx={{ mb: 1 }}>
+            <Typography variant="h5" sx={{ mt: 1, mb: 2 }}>
                 Connect to BIMcollab
             </Typography>
             <form onSubmit={handleSubmit}>
