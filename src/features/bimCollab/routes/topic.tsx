@@ -293,6 +293,7 @@ function CommentListItem({
 
         if (viewpoint?.orthogonal_camera) {
             const camera = translateOrthogonalCamera(viewpoint.orthogonal_camera);
+
             dispatch(
                 renderActions.setCamera({
                     type: CameraType.Orthographic,

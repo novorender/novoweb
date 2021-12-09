@@ -865,16 +865,25 @@ export function Render3D({ onInit }: Props) {
                 }
             } else if (cameraState.type === CameraType.Orthographic && cameraState.params) {
                 // copy non-primitives
-                const orthoController = api.createCameraController(
-                    {
-                        ...cameraState.params,
-                        referenceCoordSys: cameraState.params.referenceCoordSys
-                            ? Array.from(cameraState.params.referenceCoordSys)
-                            : undefined,
-                        position: cameraState.params.position ? Array.from(cameraState.params.position) : undefined,
-                    } as any as OrthoControllerParams,
-                    canvas
-                );
+                const safeParams: OrthoControllerParams = {
+                    ...cameraState.params,
+                    referenceCoordSys: cameraState.params.referenceCoordSys
+                        ? (Array.from(cameraState.params.referenceCoordSys) as mat4)
+                        : undefined,
+                    position: cameraState.params.position
+                        ? (Array.from(cameraState.params.position) as vec3)
+                        : undefined,
+                };
+
+                if (!safeParams.referenceCoordSys) {
+                    delete safeParams.referenceCoordSys;
+                }
+
+                if (!safeParams.position) {
+                    delete safeParams.position;
+                }
+
+                const orthoController = api.createCameraController(safeParams, canvas);
                 controller.enabled = false;
                 view.camera.controller = orthoController;
             }

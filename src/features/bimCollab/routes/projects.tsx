@@ -20,9 +20,9 @@ export function Projects() {
                     {space} - Projects
                 </Typography>
                 {projects.map((project) => (
-                    <Link key={project.project_id} to={`/project/${project.project_id}`}>
-                        {project.name}
-                    </Link>
+                    <Box sx={{ mb: 2 }} key={project.project_id}>
+                        <Link to={`/project/${project.project_id}`}>{project.name}</Link>
+                    </Box>
                 ))}
             </ScrollBox>
         </>
