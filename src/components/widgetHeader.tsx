@@ -3,6 +3,7 @@ import { Box, IconButton, MenuProps, Typography, useTheme } from "@mui/material"
 import { Close, MoreVert } from "@mui/icons-material";
 
 import { Widget } from "config/features";
+import { Divider } from "components";
 import { useAppDispatch } from "app/store";
 import { explorerActions } from "slices/explorerSlice";
 
@@ -59,7 +60,12 @@ export function WidgetHeader({
                     </IconButton>
                 </Box>
             </Box>
-            {children}
+            {children ? (
+                <>
+                    <Divider sx={{ my: 1 }} />
+                    {children}
+                </>
+            ) : null}
         </Box>
     );
 }

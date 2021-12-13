@@ -17,8 +17,9 @@ export function LogoSpeedDial({
     open,
     toggle,
     testId,
+    ariaLabel = "toggle widget menu",
     ...props
-}: SpeedDialProps & { testId: string; toggle: () => void }) {
+}: Omit<SpeedDialProps, "ariaLabel"> & { ariaLabel?: string; testId: string; toggle: () => void }) {
     const theme = useTheme();
     const isSmall = useMediaQuery(theme.breakpoints.down("md"));
 
@@ -33,6 +34,7 @@ export function LogoSpeedDial({
     return (
         <SpeedDial
             {...props}
+            ariaLabel={ariaLabel}
             open={open}
             onOpen={handleToggle}
             onClose={handleToggle}
