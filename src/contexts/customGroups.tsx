@@ -13,6 +13,7 @@ type State = typeof initialState;
 enum ActionTypes {
     UpdateGroup,
     Set,
+    Add,
 }
 
 function updateGroup(groupId: string, updates: Partial<CustomGroup>) {
@@ -30,7 +31,14 @@ function set(state: State) {
     };
 }
 
-const actions = { updateGroup, set };
+function add(group: CustomGroup) {
+    return {
+        type: ActionTypes.Add as const,
+        group,
+    };
+}
+
+const actions = { updateGroup, set, add };
 
 type Actions = ReturnType<typeof actions[keyof typeof actions]>;
 type DispatchCustomGroups = Dispatch<Actions>;
@@ -45,6 +53,9 @@ function reducer(state: State, action: Actions) {
         }
         case ActionTypes.Set: {
             return action.state;
+        }
+        case ActionTypes.Add: {
+            return [...state, action.group];
         }
         default: {
             throw new Error(`Unhandled action type`);

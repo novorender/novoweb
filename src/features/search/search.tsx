@@ -1,7 +1,6 @@
 import { ChangeEvent, CSSProperties, FormEvent, useCallback, useEffect, useRef, useState } from "react";
 import { ListOnScrollProps } from "react-window";
-import { Box, Button, ButtonProps, Checkbox, FormControlLabel, ListItem, styled, Typography } from "@mui/material";
-import { css } from "@mui/styled-engine";
+import { Box, Button, Checkbox, FormControlLabel, ListItem, Typography } from "@mui/material";
 import { HierarcicalObjectReference, ObjectId, SearchPattern } from "@novorender/webgl-api";
 
 import {
@@ -13,6 +12,7 @@ import {
     WidgetContainer,
     WidgetHeader,
     LogoSpeedDial,
+    AdvancedSearchInputs,
 } from "components";
 import { NodeList } from "features/nodeList";
 import { WidgetList } from "features/widgetList";
@@ -33,27 +33,7 @@ import { getTotalBoundingSphere } from "utils/objectData";
 import { featuresConfig } from "config/features";
 
 import AddCircleIcon from "@mui/icons-material/AddCircle";
-import DragHandleIcon from "@mui/icons-material/DragHandle";
-import CancelIcon from "@mui/icons-material/Cancel";
 import VisibilityIcon from "@mui/icons-material/Visibility";
-
-const AdvancedSearchModifier = styled(Button, {
-    shouldForwardProp: (prop) => prop !== "active",
-})<ButtonProps & { active?: boolean }>(
-    ({ theme, active }) => css`
-        width: 24px;
-        height: 24px;
-        min-width: 0;
-        flex: 0 0 auto;
-        padding: ${theme.spacing(1)};
-        color: ${theme.palette.common.white};
-        background: ${active ? theme.palette.primary.main : theme.palette.secondary.light};
-
-        &:hover {
-            background: ${active ? theme.palette.primary.dark : theme.palette.secondary.main};
-        }
-    `
-);
 
 enum Status {
     Initial,
@@ -275,94 +255,20 @@ export function Search() {
                 <WidgetHeader widget={featuresConfig.search}>
                     {!menuOpen ? (
                         <form onSubmit={handleSubmit}>
-                            <ScrollBox maxHeight={92} mb={2} pt={1}>
-                                {advanced ? (
-                                    advancedInputs.map(({ property, value, exact }, index, array) => (
-                                        <Box
-                                            key={index}
-                                            display="flex"
-                                            alignItems="center"
-                                            mb={index === array.length - 1 ? 0 : 1}
-                                        >
-                                            <TextField
-                                                autoComplete="novorender-property-name"
-                                                autoFocus={index === array.length - 1}
-                                                id={`advanced-search-property-${index}`}
-                                                label={"Name"}
-                                                fullWidth
-                                                value={property}
-                                                onChange={(e) =>
-                                                    setAdvancedInputs((inputs) =>
-                                                        inputs.map((input, idx) =>
-                                                            idx === index
-                                                                ? { ...input, property: e.target.value }
-                                                                : input
-                                                        )
-                                                    )
-                                                }
-                                            />
-                                            <TextField
-                                                autoComplete="novorender-property-value"
-                                                id={`advanced-search-value-${index}`}
-                                                label={"Value"}
-                                                fullWidth
-                                                value={value}
-                                                onChange={(e) =>
-                                                    setAdvancedInputs((inputs) =>
-                                                        inputs.map((input, idx) =>
-                                                            idx === index ? { ...input, value: e.target.value } : input
-                                                        )
-                                                    )
-                                                }
-                                            />
-                                            <Box mx={1}>
-                                                <AdvancedSearchModifier
-                                                    title="Exact"
-                                                    onClick={() =>
-                                                        setAdvancedInputs((inputs) =>
-                                                            inputs.map((input, idx) =>
-                                                                idx === index
-                                                                    ? { ...input, exact: !input.exact }
-                                                                    : input
-                                                            )
-                                                        )
-                                                    }
-                                                    active={exact}
-                                                    size="small"
-                                                >
-                                                    <DragHandleIcon fontSize="small" />
-                                                </AdvancedSearchModifier>
-                                            </Box>
-                                            <AdvancedSearchModifier
-                                                title="Remove"
-                                                onClick={() => {
-                                                    if (advancedInputs.length > 1) {
-                                                        setAdvancedInputs((inputs) =>
-                                                            inputs.filter((_input, idx) => idx !== index)
-                                                        );
-                                                    } else {
-                                                        setAdvancedInputs([{ property: "", value: "", exact: true }]);
-                                                        toggleAdvanced();
-                                                    }
-                                                }}
-                                                size="small"
-                                            >
-                                                <CancelIcon fontSize="small" />
-                                            </AdvancedSearchModifier>
-                                        </Box>
-                                    ))
-                                ) : (
-                                    <TextField
-                                        autoComplete="novorender-simple-search"
-                                        autoFocus
-                                        id="simple-search-field"
-                                        label={"Search"}
-                                        fullWidth
-                                        value={simpleInput}
-                                        onChange={(e) => setSimpleInput(e.target.value)}
-                                    />
-                                )}
-                            </ScrollBox>
+                            {advanced ? (
+                                <AdvancedSearchInputs inputs={advancedInputs} setInputs={setAdvancedInputs} />
+                            ) : (
+                                <TextField
+                                    autoComplete="novorender-simple-search"
+                                    autoFocus
+                                    id="simple-search-field"
+                                    label={"Search"}
+                                    fullWidth
+                                    value={simpleInput}
+                                    onChange={(e) => setSimpleInput(e.target.value)}
+                                    sx={{ mb: 2, pt: 1 }}
+                                />
+                            )}
 
                             <Box mb={2}>
                                 <FormControlLabel

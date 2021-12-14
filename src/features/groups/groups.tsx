@@ -1,4 +1,4 @@
-import { useState, useCallback, RefCallback } from "react";
+import { useState, useCallback, RefCallback, FormEventHandler } from "react";
 import {
     List,
     Box,
@@ -8,9 +8,11 @@ import {
     styled,
     ListItemButtonProps,
     ListItemButton,
+    Button,
 } from "@mui/material";
-import { Visibility, ColorLens } from "@mui/icons-material";
+import { Search, Visibility, ColorLens, AddCircle, CheckCircle } from "@mui/icons-material";
 import { css } from "@mui/styled-engine";
+import { v4 as uuidv4 } from "uuid";
 
 import {
     ScrollBox,
@@ -21,6 +23,7 @@ import {
     WidgetContainer,
     LogoSpeedDial,
     WidgetHeader,
+    AdvancedSearchInputs,
 } from "components";
 import { useToggle } from "hooks/useToggle";
 import { vecToRgb, rgbToVec, VecRGB } from "utils/color";
@@ -28,6 +31,14 @@ import { ColorPicker } from "features/colorPicker";
 import { CustomGroup, customGroupsActions, useCustomGroups } from "contexts/customGroups";
 import { featuresConfig } from "config/features";
 import { WidgetList } from "features/widgetList";
+import { useAppSelector } from "app/store";
+import { selectIsAdminScene } from "slices/explorerSlice";
+import { ObjectId, SearchPattern } from "@novorender/webgl-api";
+import { useMountedState } from "hooks/useMountedState";
+import { useAbortController } from "hooks/useAbortController";
+import { searchDeepByPatterns } from "utils/search";
+import { useExplorerGlobals } from "contexts/explorerGlobals";
+import { highlightActions, useDispatchHighlighted, useHighlighted } from "contexts/highlighted";
 
 const StyledListItemButton = styled(ListItemButton, { shouldForwardProp: (prop) => prop !== "inset" })<
     ListItemButtonProps & { inset?: boolean }
@@ -44,9 +55,11 @@ const StyledCheckbox = styled(Checkbox)`
 `;
 
 export function Groups() {
-    const [menuOpen, toggleMenu] = useToggle();
     const { state: customGroups, dispatch: dispatchCustom } = useCustomGroups();
+    const isAdmin = useAppSelector(selectIsAdminScene);
 
+    const [creatingGroup, setCreatingGroup] = useState<boolean | string>(false);
+    const [menuOpen, toggleMenu] = useToggle();
     const [containerEl, setContainerEl] = useState<HTMLDivElement | null>(null);
     const containerRef = useCallback<RefCallback<HTMLDivElement>>((el) => {
         setContainerEl(el);
@@ -69,7 +82,26 @@ export function Groups() {
     return (
         <>
             <WidgetContainer>
-                <WidgetHeader widget={featuresConfig.groups} />
+                <WidgetHeader widget={featuresConfig.groups}>
+                    {menuOpen ? null : creatingGroup !== false ? (
+                        <CreateGroup onClose={() => setCreatingGroup(false)} />
+                    ) : isAdmin ? (
+                        <Box mx={-1}>
+                            <Button color="grey" onClick={() => setCreatingGroup("")}>
+                                <AddCircle sx={{ mr: 1 }} />
+                                Add group
+                            </Button>
+                            <Button color="grey">
+                                <CheckCircle sx={{ mr: 1 }} />
+                                Group selected
+                            </Button>
+                            <Button color="grey">
+                                <Search sx={{ mr: 1 }} />
+                                Search
+                            </Button>
+                        </Box>
+                    ) : null}
+                </WidgetHeader>
                 <Box flexDirection="column" overflow="hidden" flexGrow={1} height={1}>
                     <ScrollBox display={menuOpen ? "none" : "flex"} ref={containerRef} height={1} pb={2}>
                         <List sx={{ width: 1 }}>
@@ -297,6 +329,124 @@ function Group({
                 />
             ) : null}
         </>
+    );
+}
+
+enum Status {
+    Initial,
+    Searching,
+}
+
+//TODO(OLA): FIX?
+// Hvis id => update group
+// Ellers lag ny
+
+function CreateGroup({ onClose, id: _id }: { onClose: () => void; id?: string }) {
+    const {
+        state: { scene },
+    } = useExplorerGlobals(true);
+    const { dispatch: dispatchCustomGroup } = useCustomGroups();
+    const highlighted = useHighlighted();
+    const dispatchHighlighted = useDispatchHighlighted();
+    const [inputs, setInputs] = useState<SearchPattern[]>([{ property: "", value: "", exact: true }]);
+    const [status, setStatus] = useMountedState(Status.Initial);
+    const [ids, setIds] = useMountedState([] as ObjectId[]);
+    const [savedInputs, setSavedInputs] = useState<SearchPattern[]>([]);
+
+    const [abortController, abort] = useAbortController();
+
+    const handleSubmit: FormEventHandler = async (e) => {
+        e.preventDefault();
+
+        const abortSignal = abortController.current.signal;
+
+        setIds([]);
+        setSavedInputs(inputs);
+        setStatus(Status.Searching);
+
+        await searchDeepByPatterns({
+            abortSignal,
+            scene,
+            searchPatterns: inputs,
+            callback: (result) => {
+                setIds((state) => state.concat(result));
+                dispatchHighlighted(highlightActions.add(result));
+            },
+        }).catch(() => {});
+
+        setStatus(Status.Initial);
+    };
+
+    const createGroup = () => {
+        const name = savedInputs.map((input) => `${input.property?.split("/").pop()} ${input.value}`).join(" + ");
+        const newGroup: CustomGroup = {
+            id: uuidv4(),
+            name,
+            ids,
+            selected: true,
+            hidden: false,
+            search: [...savedInputs],
+            color: [...highlighted.color],
+        };
+
+        // TODO(OLA):
+        // this will just add the group to react state, not save
+        // need save button somewhere?
+        dispatchCustomGroup(customGroupsActions.add(newGroup));
+    };
+
+    const disableSearch =
+        status === Status.Searching || !inputs.filter((input) => input.property && input.value).length;
+    return (
+        <Box>
+            <form onSubmit={handleSubmit}>
+                <AdvancedSearchInputs inputs={inputs} setInputs={setInputs} />
+                <Box my={1} display="flex">
+                    <Button
+                        color="grey"
+                        sx={{ padding: 0, mr: 4 }}
+                        onClick={() => setInputs((state) => state.concat([{ property: "", value: "", exact: true }]))}
+                    >
+                        <AddCircle sx={{ mr: 0.5 }} />
+                        Add criteria
+                    </Button>
+                    <Button color="grey" sx={{ padding: 0 }} onClick={createGroup} disabled={!ids.length}>
+                        <AddCircle sx={{ mr: 0.5 }} />
+                        Create group {ids.length ? `(${ids.length})` : ""}
+                    </Button>
+                </Box>
+                <Box display="flex" mb={1}>
+                    {status === Status.Initial ? (
+                        <Button
+                            onClick={onClose}
+                            color="grey"
+                            type="button"
+                            variant="outlined"
+                            fullWidth
+                            sx={{ marginRight: 1 }}
+                        >
+                            Close
+                        </Button>
+                    ) : (
+                        <Button
+                            onClick={() => {
+                                abort();
+                            }}
+                            color="grey"
+                            type="button"
+                            variant="outlined"
+                            fullWidth
+                            sx={{ marginRight: 1 }}
+                        >
+                            Cancel
+                        </Button>
+                    )}
+                    <Button type="submit" fullWidth disabled={disableSearch} color="primary" variant="contained">
+                        Search
+                    </Button>
+                </Box>
+            </form>
+        </Box>
     );
 }
 

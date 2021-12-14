@@ -14,3 +14,4 @@ export * from "./widgetMenuButtonWrapper";
 export * from "./logoSpeedDial";
 export * from "./widgetContainer";
 export * from "./widgetHeader";
+export * from "./advancedSearchInputs";
