@@ -35,8 +35,8 @@ export function WidgetHeader({
     };
 
     return (
-        <Box p={1} boxShadow={theme.customShadows.widgetHeader}>
-            <Box display="flex">
+        <Box boxShadow={theme.customShadows.widgetHeader}>
+            <Box p={1} display="flex">
                 <Box display="flex" alignItems="center">
                     {WidgetMenu ? (
                         <IconButton onClick={openMenu}>
@@ -61,10 +61,10 @@ export function WidgetHeader({
                 </Box>
             </Box>
             {children ? (
-                <>
-                    <Divider sx={{ my: 1 }} />
+                <Box px={1}>
+                    <Divider />
                     {children}
-                </>
+                </Box>
             ) : null}
         </Box>
     );

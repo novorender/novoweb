@@ -17,7 +17,7 @@ import { ViewerScenes } from "features/viewerScenes";
 import { OrthoCam } from "features/orthoCam";
 import { AdvancedSettings } from "features/advancedSettings";
 import { Layers } from "features/layers";
-import { MenuWidget } from "features/widget";
+import { MenuWidget } from "features/menuWidget";
 
 export function Widgets() {
     const theme = useTheme();

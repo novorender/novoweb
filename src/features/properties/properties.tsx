@@ -19,11 +19,22 @@ import { css } from "@mui/styled-engine";
 import { useDrag } from "@use-gesture/react";
 import { ContentCopy, MoreVert } from "@mui/icons-material";
 
-import { LinearProgress, ScrollBox, Accordion, AccordionSummary, AccordionDetails, Tooltip } from "components";
+import {
+    LinearProgress,
+    ScrollBox,
+    Accordion,
+    AccordionSummary,
+    AccordionDetails,
+    Tooltip,
+    WidgetContainer,
+    WidgetHeader,
+    LogoSpeedDial,
+} from "components";
 import { selectMainObject } from "slices/renderSlice";
 import { useAppSelector } from "app/store";
 import { useAbortController } from "hooks/useAbortController";
 import { useMountedState } from "hooks/useMountedState";
+import { useToggle } from "hooks/useToggle";
 import {
     getObjectData as getObjectDataUtil,
     searchFirstObjectAtPath,
@@ -34,6 +45,8 @@ import { extractObjectIds, getParentPath } from "utils/objectData";
 import { highlightActions, useDispatchHighlighted } from "contexts/highlighted";
 import { NodeType } from "features/modelTree/modelTree";
 import { useExplorerGlobals } from "contexts/explorerGlobals";
+import { featuresConfig } from "config/features";
+import { WidgetList } from "features/widgetList";
 
 enum Status {
     Initial,
@@ -62,6 +75,7 @@ export function Properties() {
         state: { scene },
     } = useExplorerGlobals(true);
 
+    const [menuOpen, toggleMenu] = useToggle();
     const [searches, setSearches] = useState<Record<string, SearchPattern>>({});
     const [status, setStatus] = useMountedState(Status.Initial);
     const [object, setObject] = useMountedState<PropertiesObject | undefined>(undefined);
@@ -210,40 +224,64 @@ export function Properties() {
             event.target.checked ? handleCheck({ property, value, deep }) : handleUncheck(property);
         };
 
-    if (mainObject === undefined || !object) {
-        return status === Status.Loading ? <LinearProgress /> : null;
-    }
-
     return (
         <>
-            {status === Status.Loading ? <LinearProgress /> : null}
-            <ScrollBox height={1} pb={2} pt={1} {...bindResizeHandlers()}>
-                <PropertyList
-                    object={object}
-                    handleChange={handleChange}
-                    searches={searches}
-                    nameWidth={propertyNameWidth}
-                    resizing={resizing}
-                />
-                {parentObject ? (
-                    <Accordion>
-                        <AccordionSummary>
-                            <Box fontWeight={600} overflow="hidden" whiteSpace="nowrap" textOverflow="ellipsis">
-                                {parentObjectName || "Parent object"}
-                            </Box>
-                        </AccordionSummary>
-                        <AccordionDetails>
+            <WidgetContainer>
+                <WidgetHeader widget={featuresConfig.properties} />
+                <ScrollBox
+                    display={menuOpen ? "none" : "flex"}
+                    flexDirection={"column"}
+                    height={1}
+                    pb={2}
+                    {...bindResizeHandlers()}
+                >
+                    {status === Status.Loading ? <LinearProgress /> : null}
+                    {mainObject !== undefined && object ? (
+                        <>
                             <PropertyList
-                                object={parentObject}
+                                object={object}
                                 handleChange={handleChange}
                                 searches={searches}
                                 nameWidth={propertyNameWidth}
                                 resizing={resizing}
                             />
-                        </AccordionDetails>
-                    </Accordion>
-                ) : null}
-            </ScrollBox>
+                            {parentObject ? (
+                                <Accordion>
+                                    <AccordionSummary>
+                                        <Box
+                                            fontWeight={600}
+                                            overflow="hidden"
+                                            whiteSpace="nowrap"
+                                            textOverflow="ellipsis"
+                                        >
+                                            {parentObjectName || "Parent object"}
+                                        </Box>
+                                    </AccordionSummary>
+                                    <AccordionDetails>
+                                        <PropertyList
+                                            object={parentObject}
+                                            handleChange={handleChange}
+                                            searches={searches}
+                                            nameWidth={propertyNameWidth}
+                                            resizing={resizing}
+                                        />
+                                    </AccordionDetails>
+                                </Accordion>
+                            ) : null}
+                        </>
+                    ) : null}
+                </ScrollBox>
+                <WidgetList
+                    display={menuOpen ? "block" : "none"}
+                    widgetKey={featuresConfig.properties.key}
+                    onSelect={toggleMenu}
+                />
+            </WidgetContainer>
+            <LogoSpeedDial
+                open={menuOpen}
+                toggle={toggleMenu}
+                testId={`${featuresConfig.properties.key}-widget-menu-fab`}
+            />
         </>
     );
 }
@@ -261,7 +299,7 @@ function PropertyList({ object, handleChange, searches, nameWidth, resizing }: P
 
     return (
         <>
-            <Box borderBottom={`1px solid ${theme.palette.grey[200]}`}>
+            <Box pt={1} borderBottom={`1px solid ${theme.palette.grey[200]}`}>
                 <List sx={{ padding: `0 0 ${theme.spacing(1)}`, "& .propertyName": { width: nameWidth } }}>
                     {object.base
                         .filter((property) => property[1])

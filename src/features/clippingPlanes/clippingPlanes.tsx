@@ -1,12 +1,15 @@
-import { Box, Checkbox, FormControlLabel, Slider, useTheme } from "@mui/material";
+import { Box, Checkbox, FormControlLabel, Slider } from "@mui/material";
 import { useState } from "react";
 
 import { useAppDispatch, useAppSelector } from "app/store";
-import { IosSwitch } from "components";
+import { IosSwitch, LogoSpeedDial, WidgetContainer, WidgetHeader } from "components";
 import { renderActions, selectClippingPlanes } from "slices/renderSlice";
+import { useToggle } from "hooks/useToggle";
+import { featuresConfig } from "config/features";
+import { WidgetList } from "features/widgetList";
 
 export function ClippingPlanes() {
-    const theme = useTheme();
+    const [menuOpen, toggleMenu] = useToggle();
     const { defining, enabled, planes, baseW } = useAppSelector(selectClippingPlanes);
     const [enableOptions, setEnableOptions] = useState(enabled || planes.length > 0 || defining);
     const dispatch = useAppDispatch();
@@ -38,40 +41,58 @@ export function ClippingPlanes() {
 
     return (
         <>
-            <Box p={1} boxShadow={theme.customShadows.widgetHeader}>
-                <Box mt={1} mb={1} display="flex" justifyContent="space-between">
-                    <FormControlLabel
-                        disabled={!enableOptions || defining}
-                        control={
-                            <Checkbox
-                                size="small"
-                                color="primary"
-                                checked={enabled}
-                                onChange={() => dispatch(renderActions.setClippingPlanes({ enabled: !enabled }))}
+            <WidgetContainer>
+                <WidgetHeader widget={featuresConfig.clippingPlanes}>
+                    {!menuOpen ? (
+                        <>
+                            <Box mt={1} mb={1} display="flex" justifyContent="space-between">
+                                <FormControlLabel
+                                    disabled={!enableOptions || defining}
+                                    control={
+                                        <Checkbox
+                                            size="small"
+                                            color="primary"
+                                            checked={enabled}
+                                            onChange={() =>
+                                                dispatch(renderActions.setClippingPlanes({ enabled: !enabled }))
+                                            }
+                                        />
+                                    }
+                                    label={<Box mr={0.5}>Enable</Box>}
+                                />
+                            </Box>
+                            <FormControlLabel
+                                sx={{ marginLeft: 0 }}
+                                control={<IosSwitch checked={defining} color="primary" onChange={toggleDefineNew} />}
+                                labelPlacement="start"
+                                label={<div>Create clipping plane</div>}
                             />
-                        }
-                        label={<Box mr={0.5}>Enable</Box>}
-                    />
-                </Box>
-                <FormControlLabel
-                    sx={{ marginLeft: 0 }}
-                    control={<IosSwitch checked={defining} color="primary" onChange={toggleDefineNew} />}
-                    labelPlacement="start"
-                    label={<div>Create clipping plane</div>}
+                        </>
+                    ) : null}
+                </WidgetHeader>
+                {planes.length && !menuOpen ? (
+                    <Box p={1} mt={2}>
+                        Position:
+                        <Slider
+                            min={baseW - 20}
+                            step={0.1}
+                            max={baseW + 20}
+                            value={planes[0][3]}
+                            onChange={handleSliderChange}
+                        />
+                    </Box>
+                ) : null}
+                <WidgetList
+                    display={menuOpen ? "block" : "none"}
+                    widgetKey={featuresConfig.clippingPlanes.key}
+                    onSelect={toggleMenu}
                 />
-            </Box>
-            {planes.length ? (
-                <Box p={1} mt={2}>
-                    Position:
-                    <Slider
-                        min={baseW - 20}
-                        step={0.1}
-                        max={baseW + 20}
-                        value={planes[0][3]}
-                        onChange={handleSliderChange}
-                    />
-                </Box>
-            ) : null}
+            </WidgetContainer>
+            <LogoSpeedDial
+                open={menuOpen}
+                toggle={toggleMenu}
+                testId={`${featuresConfig.clippingPlanes.key}-widget-menu-fab`}
+            />
         </>
     );
 }
