@@ -1,9 +1,18 @@
 import { useParams, Link, useHistory } from "react-router-dom";
-import { useTheme, Box, Button, Typography, List, ListItem } from "@mui/material";
+import { useTheme, Box, Button, Typography, List, ListItem, Divider } from "@mui/material";
 import { Add, ArrowBack, Edit } from "@mui/icons-material";
 import { HierarcicalObjectReference, Scene } from "@novorender/webgl-api";
 
-import { ImgModal, ImgTooltip, LinearProgress, ScrollBox, Tooltip } from "components";
+import {
+    Accordion,
+    AccordionDetails,
+    AccordionSummary,
+    ImgModal,
+    ImgTooltip,
+    LinearProgress,
+    ScrollBox,
+    Tooltip,
+} from "components";
 
 import { useAppDispatch } from "app/store";
 import { renderActions, ObjectVisibility, CameraType } from "slices/renderSlice";
@@ -129,19 +138,61 @@ export function Topic() {
                 ) : null}
             </Box>
             <ScrollBox height={1} width={1} horizontal sx={{ mt: 1 }}>
-                <Box p={1} sx={{ "& > img": { width: "100%", maxHeight: 150, objectFit: "none", cursor: "pointer" } }}>
+                <Box p={1} sx={{ "& > img": { width: "100%", maxHeight: 150, objectFit: "cover", cursor: "pointer" } }}>
                     {thumbnail ? <img onClick={toggleModal} src={thumbnail} alt="" /> : null}
-                    <Typography variant="h5">{topic.title}</Typography>
-                    <Typography variant="h6">{topic.description}</Typography>
-                    <br />
-                    <Typography variant="h6">{topic.creation_author}</Typography>
-                    <Typography variant="h6">
-                        {topic.topic_status}, {topic.topic_type}, {topic.priority}
-                    </Typography>
-                    <Typography variant="h6">
-                        {topic.due_date ? new Date(topic.due_date).toLocaleString("nb") : "Undecided"}
-                    </Typography>
-                    <Typography variant="h6">{topic.labels.join(", ")}</Typography>
+                    <Accordion>
+                        <AccordionSummary>
+                            <Typography variant="h6" fontWeight={600}>
+                                {topic.title}
+                            </Typography>
+                        </AccordionSummary>
+                        <AccordionDetails sx={{ px: 1, pb: 2 }}>
+                            <Typography sx={{ mb: 2 }} variant="h6">
+                                {topic.description}
+                            </Typography>
+                            <Box display="flex" justifyContent="space-between">
+                                <Typography variant="h6">Creator:</Typography>
+                                <Typography variant="h6" fontWeight={600}>
+                                    {topic.creation_author}
+                                </Typography>
+                            </Box>
+                            <Divider sx={{ mt: 1.5, mb: 1, color: theme.palette.grey[200] }} />
+                            <Box display="flex" justifyContent="space-between">
+                                <Typography variant="h6">Status:</Typography>
+                                <Typography variant="h6" fontWeight={600}>
+                                    {topic.topic_status}
+                                </Typography>
+                            </Box>
+                            <Divider sx={{ mt: 1.5, mb: 1, color: theme.palette.grey[200] }} />
+                            <Box display="flex" justifyContent="space-between">
+                                <Typography variant="h6">Type:</Typography>
+                                <Typography variant="h6" fontWeight={600}>
+                                    {topic.topic_type}
+                                </Typography>
+                            </Box>
+                            <Divider sx={{ mt: 1.5, mb: 1, color: theme.palette.grey[200] }} />
+                            <Box display="flex" justifyContent="space-between">
+                                <Typography variant="h6">Priority:</Typography>
+                                <Typography variant="h6" fontWeight={600}>
+                                    {topic.priority}
+                                </Typography>
+                            </Box>
+                            <Divider sx={{ mt: 1.5, mb: 1, color: theme.palette.grey[200] }} />
+                            <Box display="flex" justifyContent="space-between">
+                                <Typography variant="h6">Deadline:</Typography>
+                                <Typography variant="h6" fontWeight={600}>
+                                    {topic.due_date ? new Date(topic.due_date).toLocaleString("nb") : "Undecided"}
+                                </Typography>
+                            </Box>
+                            <Divider sx={{ mt: 1.5, mb: 1, color: theme.palette.grey[200] }} />
+                            <Box display="flex" justifyContent="space-between">
+                                <Typography variant="h6">Labels:</Typography>
+                                <Typography variant="h6" fontWeight={600}>
+                                    {topic.labels.join(", ")}
+                                </Typography>
+                            </Box>
+                        </AccordionDetails>
+                    </Accordion>
                 </Box>
                 <List>
                     {floatingViewpoints.concat(comments).map((comment) => (
@@ -341,7 +392,7 @@ function CommentListItem({
                                 : undefined
                         }
                         bgcolor={theme.palette.grey[200]}
-                        height={65}
+                        height={70}
                         width={100}
                         flexShrink={0}
                         flexGrow={0}
@@ -370,8 +421,8 @@ function CommentListItem({
                                         WebkitBoxOrient: "vertical",
                                     }}
                                 >
-                                    {new Date(comment.date).toLocaleString("nb")} <br />
-                                    {comment.author}
+                                    Date: {new Date(comment.date).toLocaleString("nb")} <br />
+                                    By: {comment.author}
                                 </Typography>
                             </div>
                         </Tooltip>

@@ -13,11 +13,11 @@ export const AccordionSummary = styled((props: AccordionSummaryProps) => (
 ))(
     ({ theme }) => css`
         padding: ${theme.spacing(1)};
-        border-bottom: 1px solid ${theme.palette.grey[200]};
+        border-bottom: 1px solid ${theme.palette.grey[100]};
         min-height: 0;
 
         &:hover {
-            background: ${theme.palette.grey[200]};
+            background: ${theme.palette.grey[100]};
         }
 
         &.${accordionSummaryClasses.expanded} {
@@ -25,7 +25,7 @@ export const AccordionSummary = styled((props: AccordionSummaryProps) => (
             border-bottom: 0;
 
             &:hover {
-                background: ${theme.palette.grey[300]};
+                background: ${theme.palette.grey[200]};
             }
         }
 

@@ -153,7 +153,7 @@ function TopicListItem({ topic, projectId, style }: { topic: Topic; projectId: s
                             : undefined
                     }
                     bgcolor={theme.palette.grey[200]}
-                    height={65}
+                    height={70}
                     width={100}
                     flexShrink={0}
                     flexGrow={0}
