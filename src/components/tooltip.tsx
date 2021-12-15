@@ -1,13 +1,22 @@
-import { Tooltip as MuiTooltip, TooltipProps } from "@mui/material";
+import { Tooltip as MuiTooltip, TooltipProps, tooltipClasses, styled, css } from "@mui/material";
 
-export function Tooltip(props: TooltipProps) {
-    return (
-        <MuiTooltip
-            placement="bottom-start"
-            enterDelay={800}
-            enterNextDelay={500}
-            {...props}
-            PopperProps={{ onClick: (e) => e.stopPropagation(), ...props.PopperProps }}
-        />
-    );
-}
+export const Tooltip = styled(({ className, ...props }: TooltipProps) => (
+    <MuiTooltip
+        placement="bottom-start"
+        enterDelay={800}
+        enterNextDelay={500}
+        {...props}
+        classes={{ popper: className }}
+    />
+))(
+    ({ theme }) => css`
+        & .${tooltipClasses.tooltip} {
+            background-color: ${theme.palette.common.white};
+            color: ${theme.palette.text.primary};
+            box-shadow: ${theme.shadows[1]};
+            font-size: 16px;
+            padding: ${theme.spacing(2)};
+            max-width: min(100vw, 420px);
+        }
+    `
+);
