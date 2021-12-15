@@ -14,7 +14,6 @@ import {
     FilterType,
     Filters,
     selectFilters,
-    selectSpace,
     FilterModifiers,
     FilterModifier,
     selectFilterModifiers,
@@ -26,7 +25,6 @@ const StyledFixedSizeList = withCustomScrollbar(FixedSizeList) as typeof FixedSi
 export function Project() {
     const theme = useTheme();
     const history = useHistory();
-    const space = useAppSelector(selectSpace);
     const filters = useAppSelector(selectFilters);
     const filterModifiers = useAppSelector(selectFilterModifiers);
 
@@ -62,9 +60,6 @@ export function Project() {
             </Box>
             <Box py={1} height={1} display="flex" flexDirection="column">
                 <Box sx={{ px: 1, my: 1 }}>
-                    <Typography sx={{ mb: 1 }} variant={"h5"}>
-                        {space} - {project.name}
-                    </Typography>
                     <Typography variant="body2">
                         Showing {filteredTopics.length} of {topics.length} issues
                     </Typography>
@@ -126,7 +121,6 @@ function TopicListItem({ topic, projectId, style }: { topic: Topic; projectId: s
     return (
         <ListItem style={style} sx={{ py: 0.5, px: 1 }} button>
             <Box
-                borderLeft={has3dPos ? "3px solid red" : "none"}
                 width={1}
                 maxHeight={80}
                 display="flex"
@@ -136,7 +130,34 @@ function TopicListItem({ topic, projectId, style }: { topic: Topic; projectId: s
                 component={Link}
                 to={`/project/${projectId}/topic/${topic.guid}`}
             >
-                <Box bgcolor={theme.palette.grey[200]} height={65} width={100} flexShrink={0} flexGrow={0}>
+                <Box
+                    sx={
+                        has3dPos
+                            ? {
+                                  position: "relative",
+
+                                  "&::before": {
+                                      position: "absolute",
+                                      top: 4,
+                                      left: 4,
+                                      content: "'3D'",
+                                      borderRadius: "2px",
+                                      px: 1,
+                                      py: 0.5,
+                                      backgroundColor: "primary.main",
+                                      color: "common.white",
+                                      fontSize: "10px",
+                                      fontWeight: 600,
+                                  },
+                              }
+                            : undefined
+                    }
+                    bgcolor={theme.palette.grey[200]}
+                    height={65}
+                    width={100}
+                    flexShrink={0}
+                    flexGrow={0}
+                >
                     {thumbnail ? <ImgTooltip src={thumbnail} /> : null}
                 </Box>
                 <Box ml={1} flexDirection="column" flexGrow={1} width={0}>

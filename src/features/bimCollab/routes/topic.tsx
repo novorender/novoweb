@@ -317,15 +317,35 @@ function CommentListItem({
     return (
         <>
             <ListItem sx={{ py: 0.5, px: 1 }} button onClick={handleClick} disabled={loading}>
-                <Box
-                    borderLeft={has3dPos ? "3px solid red" : "none"}
-                    width={1}
-                    maxHeight={80}
-                    display="flex"
-                    alignItems="flex-start"
-                    overflow="hidden"
-                >
-                    <Box bgcolor={theme.palette.grey[200]} height={65} width={100} flexShrink={0} flexGrow={0}>
+                <Box width={1} maxHeight={80} display="flex" alignItems="flex-start" overflow="hidden">
+                    <Box
+                        sx={
+                            has3dPos
+                                ? {
+                                      position: "relative",
+
+                                      "&::before": {
+                                          position: "absolute",
+                                          top: 4,
+                                          left: 4,
+                                          content: "'3D'",
+                                          borderRadius: "2px",
+                                          px: 1,
+                                          py: 0.5,
+                                          backgroundColor: "primary.main",
+                                          color: "common.white",
+                                          fontSize: "10px",
+                                          fontWeight: 600,
+                                      },
+                                  }
+                                : undefined
+                        }
+                        bgcolor={theme.palette.grey[200]}
+                        height={65}
+                        width={100}
+                        flexShrink={0}
+                        flexGrow={0}
+                    >
                         {thumbnail ? (
                             <ImgTooltip
                                 onTooltipClick={(e) => {
