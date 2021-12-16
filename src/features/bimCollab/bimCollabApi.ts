@@ -23,13 +23,9 @@ import {
 import { handleImageResponse } from "./utils";
 import { NewViewpoint } from "./includeViewpoint";
 
-const clientId = "dc8b9808-c078-4361-a5fd-fe8ed787bfaf";
+const clientId = window.bimCollabClientId || process.env.REACT_APP_BIMCOLLAB_CLIENT_ID || "";
+const clientSecret = window.bimCollabClientSecret || process.env.REACT_APP_BIMCOLLAB_CLIENT_SECRET || "";
 const callbackUrl = window.location.origin + "/";
-const clientSecret = process.env.REACT_APP_BIMCOLLAB_CLIENT_SECRET ?? "";
-
-// const callbackUrl = window.location.origin + "/Callback";
-// const clientId = "PlayGround_Client";
-// const clientSecret = "k!xWcjad!u@L%ZWHc%%yKtMTqR%o1be@qWfWYaDL";
 const scope = "openid offline_access bcf";
 
 const rawBaseQuery = fetchBaseQuery({

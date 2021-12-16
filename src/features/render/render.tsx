@@ -59,7 +59,6 @@ import { useDispatchVisible, useVisible, visibleActions } from "contexts/visible
 import { explorerGlobalsActions, useExplorerGlobals } from "contexts/explorerGlobals";
 
 import {
-    addConsoleDebugUtils,
     getRenderType,
     refillObjects,
     createRendering,
@@ -75,7 +74,6 @@ import {
 import { xAxis, yAxis, axis } from "./consts";
 
 glMatrix.setMatrixArrayType(Array);
-addConsoleDebugUtils();
 
 const Canvas = styled("canvas")(
     () => css`

@@ -16,8 +16,6 @@ import {
 import { api } from "app";
 import { store } from "app/store";
 import { offscreenCanvas } from "config";
-import { StorageKey } from "config/storage";
-import { deleteFromStorage, saveToStorage } from "utils/storage";
 import { CustomGroup, customGroupsActions, DispatchCustomGroups } from "contexts/customGroups";
 import { hiddenGroupActions, DispatchHidden } from "contexts/hidden";
 import { highlightActions, DispatchHighlighted } from "contexts/highlighted";
@@ -258,19 +256,6 @@ export function serializeableObjectGroups(groups: ObjectGroup[]): CustomGroup[] 
             ? { ...group, color: [group.color[0], group.color[1], group.color[2]] }
             : group
     ) as CustomGroup[];
-}
-
-export function addConsoleDebugUtils(): void {
-    window.showStats = (val?: boolean) =>
-        val !== false
-            ? saveToStorage(StorageKey.ShowPerformanceStats, "true")
-            : deleteFromStorage(StorageKey.ShowPerformanceStats);
-
-    window.disableTaa = (val?: boolean) =>
-        val !== false ? saveToStorage(StorageKey.DisableTaa, "true") : deleteFromStorage(StorageKey.DisableTaa);
-
-    window.disableSsao = (val?: boolean) =>
-        val !== false ? saveToStorage(StorageKey.DisableSssao, "true") : deleteFromStorage(StorageKey.DisableSssao);
 }
 
 function getHighlightByObjectVisibility(visibility: ObjectVisibility): Highlight {
