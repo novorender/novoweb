@@ -60,8 +60,8 @@ function ExplorerBase() {
 
         const oAuthState = getOAuthState();
 
-        if (oAuthState && oAuthState.service === featuresConfig.bimCollab.key) {
-            dispatch(explorerActions.setWidgets([featuresConfig.bimCollab.key]));
+        if (oAuthState && oAuthState.service === featuresConfig.bimcollab.key) {
+            dispatch(explorerActions.setWidgets([featuresConfig.bimcollab.key]));
         } else {
             dispatch(explorerActions.setUrlSearchQuery(getUrlSearchQuery()));
         }

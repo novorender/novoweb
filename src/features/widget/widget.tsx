@@ -104,7 +104,7 @@ export function Widget({ widgetKey }: Props) {
             [
                 featuresConfig.search.key,
                 featuresConfig.measure.key,
-                featuresConfig.bimCollab.key,
+                featuresConfig.bimcollab.key,
                 featuresConfig.bookmarks.key,
                 featuresConfig.viewerScenes.key,
                 featuresConfig.clippingBox.key,
@@ -242,7 +242,7 @@ function getWidgetByKey(key: WidgetKey): JSX.Element | string {
             return <ClippingBox />;
         case featuresConfig.measure.key:
             return <Measure />;
-        case featuresConfig.bimCollab.key:
+        case featuresConfig.bimcollab.key:
             return <BimCollab />;
         case featuresConfig.viewerScenes.key:
             return <ViewerScenes />;

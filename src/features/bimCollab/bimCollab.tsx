@@ -94,7 +94,7 @@ export function BimCollab() {
             } catch (e) {
                 if (e instanceof Error && e.message === "get code") {
                     const state = createOAuthStateString({
-                        service: featuresConfig.bimCollab.key,
+                        service: featuresConfig.bimcollab.key,
                         space: space,
                         sceneId,
                     });

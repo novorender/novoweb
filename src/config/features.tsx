@@ -32,8 +32,8 @@ export enum FeatureType {
 }
 
 export const config = {
-    bimCollab: {
-        key: "bimCollab",
+    bimcollab: {
+        key: "bimcollab",
         name: "BIMcollab",
         Icon: DomainIcon,
         type: FeatureType.Widget,
@@ -194,7 +194,7 @@ export type WidgetKey = {
 
 export type Widget = Config[WidgetKey];
 
-export const defaultEnabledWidgets = [config.bimCollab.key];
+export const defaultEnabledWidgets = [];
 export const defaultEnabledAdminWidgets = Object.values(config)
     .filter((value) => [FeatureType.AdminWidget, FeatureType.Widget].includes(value.type))
     // NOTE(OLA: Not ready for prod
