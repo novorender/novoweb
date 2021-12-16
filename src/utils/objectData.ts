@@ -57,3 +57,14 @@ export function toIdArr(ids: Record<ObjectId, true | undefined>): ObjectId[] {
 export function toIdObj(ids: ObjectId[]): Record<ObjectId, true | undefined> {
     return Object.fromEntries(ids.map((id) => [String(id), true]));
 }
+
+export function getGuids(refs: HierarcicalObjectReference[]): Promise<string[]> {
+    return Promise.all(refs.map((ref) => getGuid(ref))).then((guids) => guids.filter((guid) => guid !== ""));
+}
+
+export function getGuid(ref: HierarcicalObjectReference): Promise<string> {
+    return ref.loadMetaData().then((obj) => {
+        const guid = obj.properties.find((prop) => prop[0] === "GUID");
+        return guid ? guid[1] : "";
+    });
+}

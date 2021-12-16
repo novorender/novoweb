@@ -15,6 +15,7 @@ import FolderIcon from "@mui/icons-material/Folder";
 import SearchIcon from "@mui/icons-material/Search";
 import GradientIcon from "@mui/icons-material/Gradient";
 import FlightTakeoffIcon from "@mui/icons-material/FlightTakeoff";
+import DomainIcon from "@mui/icons-material/Domain";
 import MovieIcon from "@mui/icons-material/Movie";
 import CropLandscapeIcon from "@mui/icons-material/CropLandscape";
 import CameraswitchIcon from "@mui/icons-material/Cameraswitch";
@@ -31,6 +32,12 @@ export enum FeatureType {
 }
 
 export const config = {
+    bimcollab: {
+        key: "bimcollab",
+        name: "BIMcollab",
+        Icon: DomainIcon,
+        type: FeatureType.Widget,
+    },
     advancedSettings: {
         key: "advancedSettings",
         name: "Adv. settings",

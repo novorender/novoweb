@@ -1,9 +1,9 @@
 import { ReactNode, useEffect, useState } from "react";
-
 import { SearchPattern } from "@novorender/webgl-api";
 
 import { dataApi } from "app";
 import { uniqueArray } from "utils/misc";
+import { getOAuthState } from "utils/auth";
 import { useSceneId } from "hooks/useSceneId";
 
 import {
@@ -58,7 +58,13 @@ function ExplorerBase() {
             dispatch(explorerActions.setEnabledWidgets(enabledFeaturesToFeatureKeys(enabledFeatures)));
         }
 
-        dispatch(explorerActions.setUrlSearchQuery(getUrlSearchQuery()));
+        const oAuthState = getOAuthState();
+
+        if (oAuthState && oAuthState.service === featuresConfig.bimcollab.key) {
+            dispatch(explorerActions.setWidgets([featuresConfig.bimcollab.key]));
+        } else {
+            dispatch(explorerActions.setUrlSearchQuery(getUrlSearchQuery()));
+        }
     };
 
     return (

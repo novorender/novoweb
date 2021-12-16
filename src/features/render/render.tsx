@@ -19,8 +19,9 @@ import { Loading } from "components";
 
 import { api, dataApi } from "app";
 import { useMountedState } from "hooks/useMountedState";
+import { deleteFromStorage } from "utils/storage";
+import { StorageKey } from "config/storage";
 import { useSceneId } from "hooks/useSceneId";
-import { deleteStoredToken } from "utils/auth";
 import { enabledFeaturesToFeatureKeys, getEnabledFeatures } from "utils/misc";
 
 import {
@@ -58,7 +59,6 @@ import { useDispatchVisible, useVisible, visibleActions } from "contexts/visible
 import { explorerGlobalsActions, useExplorerGlobals } from "contexts/explorerGlobals";
 
 import {
-    addConsoleDebugUtils,
     getRenderType,
     refillObjects,
     createRendering,
@@ -74,7 +74,6 @@ import {
 import { xAxis, yAxis, axis } from "./consts";
 
 glMatrix.setMatrixArrayType(Array);
-addConsoleDebugUtils();
 
 const Canvas = styled("canvas")(
     () => css`
@@ -703,8 +702,8 @@ export function Render3D({ onInit }: Props) {
             cameraMoved(view);
 
             function cameraMoved(view: View) {
-                if ((window as any).Cypress) {
-                    (window as any).appFullyRendered =
+                if (window.Cypress) {
+                    window.appFullyRendered =
                         view.performanceStatistics.sceneResolved && view.performanceStatistics.renderResolved;
                 }
 
@@ -864,16 +863,25 @@ export function Render3D({ onInit }: Props) {
                 }
             } else if (cameraState.type === CameraType.Orthographic && cameraState.params) {
                 // copy non-primitives
-                const orthoController = api.createCameraController(
-                    {
-                        ...cameraState.params,
-                        referenceCoordSys: cameraState.params.referenceCoordSys
-                            ? Array.from(cameraState.params.referenceCoordSys)
-                            : undefined,
-                        position: cameraState.params.position ? Array.from(cameraState.params.position) : undefined,
-                    } as any as OrthoControllerParams,
-                    canvas
-                );
+                const safeParams: OrthoControllerParams = {
+                    ...cameraState.params,
+                    referenceCoordSys: cameraState.params.referenceCoordSys
+                        ? (Array.from(cameraState.params.referenceCoordSys) as mat4)
+                        : undefined,
+                    position: cameraState.params.position
+                        ? (Array.from(cameraState.params.position) as vec3)
+                        : undefined,
+                };
+
+                if (!safeParams.referenceCoordSys) {
+                    delete safeParams.referenceCoordSys;
+                }
+
+                if (!safeParams.position) {
+                    delete safeParams.position;
+                }
+
+                const orthoController = api.createCameraController(safeParams, canvas);
                 controller.enabled = false;
                 view.camera.controller = orthoController;
             }
@@ -1259,6 +1267,7 @@ export function Render3D({ onInit }: Props) {
                 <>
                     {advancedSettings.showPerformance && view && canvas ? <PerformanceStats /> : null}
                     <Canvas
+                        id="main-canvas"
                         tabIndex={1}
                         ref={canvasRef}
                         onClick={handleClick}
@@ -1313,7 +1322,7 @@ function NoScene({ id }: { id: string }) {
     const dispatch = useAppDispatch();
 
     const logout = async () => {
-        deleteStoredToken();
+        deleteFromStorage(StorageKey.NovoToken);
         dispatch(authActions.logout());
     };
 

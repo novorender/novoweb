@@ -1,8 +1,5 @@
 import { Configuration, RedirectRequest, SilentRequest } from "@azure/msal-browser";
 
-export const tokenStorageKey = "novoweb_token";
-export const accountStorageKey = "msal_active_account";
-
 export const msalConfig: Configuration = {
     auth: {
         clientId: "074eb42a-f94a-4a97-b7ad-0a187eb57f96",

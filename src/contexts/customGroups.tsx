@@ -1,5 +1,5 @@
 import { ObjectGroup } from "@novorender/data-js-api";
-import { createContext, Dispatch, ReactNode, useContext, useReducer } from "react";
+import { createContext, Dispatch, ReactNode, useContext, useEffect, useReducer, useRef } from "react";
 
 export interface CustomGroup extends ObjectGroup {
     ids: number[];
@@ -10,9 +10,15 @@ const initialState = [] as CustomGroup[];
 
 type State = typeof initialState;
 
+export enum TempGroup {
+    BIMcollab = "Temporary BIMcollab viewpoint groups",
+}
+
 enum ActionTypes {
     UpdateGroup,
     Set,
+    ClearTempGroups,
+    Add,
 }
 
 function updateGroup(groupId: string, updates: Partial<CustomGroup>) {
@@ -30,7 +36,20 @@ function set(state: State) {
     };
 }
 
-const actions = { updateGroup, set };
+function clearTempGroups() {
+    return {
+        type: ActionTypes.ClearTempGroups as const,
+    };
+}
+
+function add(toAdd: State) {
+    return {
+        type: ActionTypes.Add as const,
+        toAdd,
+    };
+}
+
+const actions = { updateGroup, set, add, clearTempGroups };
 
 type Actions = ReturnType<typeof actions[keyof typeof actions]>;
 type DispatchCustomGroups = Dispatch<Actions>;
@@ -45,6 +64,12 @@ function reducer(state: State, action: Actions) {
         }
         case ActionTypes.Set: {
             return action.state;
+        }
+        case ActionTypes.Add: {
+            return state.concat(action.toAdd);
+        }
+        case ActionTypes.ClearTempGroups: {
+            return state.filter((group) => group.grouping !== TempGroup.BIMcollab);
         }
         default: {
             throw new Error(`Unhandled action type`);
@@ -66,11 +91,24 @@ function CustomGroupsProvider({ children }: { children: ReactNode }) {
 
 function useCustomGroups(): ContextType {
     const context = useContext(Context);
+
     if (context === undefined) {
         throw new Error("useCustomGroups must be used within a CustomGroupsProvider");
     }
+
     return context;
 }
 
-export { CustomGroupsProvider, useCustomGroups, actions as customGroupsActions };
+function useLazyCustomGroups() {
+    const state = useCustomGroups();
+    const ref = useRef(state.state);
+
+    useEffect(() => {
+        ref.current = state.state;
+    }, [state]);
+
+    return ref;
+}
+
+export { CustomGroupsProvider, useCustomGroups, useLazyCustomGroups, actions as customGroupsActions };
 export type { DispatchCustomGroups };

@@ -258,19 +258,6 @@ export function serializeableObjectGroups(groups: ObjectGroup[]): CustomGroup[] 
     ) as CustomGroup[];
 }
 
-export function addConsoleDebugUtils(): void {
-    window.showStats = (val?: boolean) =>
-        val !== false
-            ? localStorage.setItem("show-performance-stats", "true")
-            : localStorage.removeItem("show-performance-stats");
-
-    window.disableTaa = (val?: boolean) =>
-        val !== false ? localStorage.setItem("disable-taa", "true") : localStorage.removeItem("disable-taa");
-
-    window.disableSsao = (val?: boolean) =>
-        val !== false ? localStorage.setItem("disable-ssao", "true") : localStorage.removeItem("disable-ssao");
-}
-
 function getHighlightByObjectVisibility(visibility: ObjectVisibility): Highlight {
     switch (visibility) {
         case ObjectVisibility.Neutral:

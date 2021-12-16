@@ -4,8 +4,11 @@ import { History } from "history";
 
 import { msalInstance } from "app";
 import { store } from "app/store";
-import { accountStorageKey, loginRequest, tokenStorageKey } from "config/auth";
+import { loginRequest } from "config/auth";
 import { authActions } from "slices/authSlice";
+import { sha256, base64UrlEncode } from "utils/misc";
+import { getFromStorage, saveToStorage } from "./storage";
+import { StorageKey } from "config/storage";
 
 export async function getAuthHeader(): Promise<AuthenticationHeader> {
     const { auth } = store.getState();
@@ -25,18 +28,6 @@ export async function getAuthHeader(): Promise<AuthenticationHeader> {
     }
 
     return { header: "Authorization", value: `Bearer ${auth.accessToken}` };
-}
-
-export function getStoredToken(): string {
-    return localStorage.getItem(tokenStorageKey) ?? "";
-}
-
-export function storeToken(token: string): void {
-    localStorage.setItem(tokenStorageKey, token);
-}
-
-export function deleteStoredToken(): void {
-    return localStorage.removeItem(tokenStorageKey);
 }
 
 type SuccessfulLoginResponse = { token: string };
@@ -84,16 +75,47 @@ export class CustomNavigationClient extends NavigationClient {
 
 export function storeActiveAccount(account: AccountInfo | null): void {
     if (account) {
-        localStorage[accountStorageKey] = JSON.stringify(account);
+        saveToStorage(StorageKey.MsalActiveAccount, JSON.stringify(account));
     }
 }
 
 export function getStoredActiveAccount(): AccountInfo | undefined {
     try {
-        const storedAccount = localStorage[accountStorageKey] ? JSON.parse(localStorage[accountStorageKey]) : undefined;
+        const storedAccount = getFromStorage(StorageKey.MsalActiveAccount)
+            ? JSON.parse(getFromStorage(StorageKey.MsalActiveAccount))
+            : undefined;
 
         if (storedAccount && "localAccountId" in storedAccount) {
             return storedAccount as AccountInfo;
         }
     } catch {}
+}
+
+export async function generateCodeChallenge(verifier: string): Promise<string> {
+    const hashed = await sha256(verifier);
+    return base64UrlEncode(hashed);
+}
+
+type OAuthState = {
+    service?: string;
+    sceneId?: string;
+    space?: string;
+};
+
+export function getOAuthState(): OAuthState | undefined {
+    const state = new URLSearchParams(window.location.search).get("state");
+
+    if (!state) {
+        return;
+    }
+
+    try {
+        return JSON.parse(state);
+    } catch {
+        return;
+    }
+}
+
+export function createOAuthStateString(state: OAuthState): string {
+    return JSON.stringify(state);
 }

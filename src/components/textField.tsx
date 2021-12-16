@@ -18,7 +18,11 @@ export const TextField = styled((props: TextFieldProps) => <MuiTextField size="s
             & .${outlinedInputClasses.root} {
                 font-size: 14px;
 
-                &:enabled:hover fieldset {
+                & fieldset {
+                    border-color: ${theme.palette.grey[300]};
+                }
+
+                &:hover fieldset {
                     border-color: ${theme.palette.info.light};
                 }
 
