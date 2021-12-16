@@ -348,15 +348,23 @@ export function initCamera({
                 autoZoomToScene: false,
                 enabled: false,
             };
+
+            store.dispatch(
+                renderActions.setBaseCameraSpeed(
+                    (flightControllerRef.current.params as Required<FlightControllerParams>).linearVelocity
+                )
+            );
         }
     }
 
     view.camera.controller = controller;
-    store.dispatch(
-        renderActions.setCamera({
-            type: controller.params.kind === "ortho" ? CameraType.Orthographic : CameraType.Flight,
-        })
-    );
+
+    if (controller.params.kind === "flight") {
+        store.dispatch(renderActions.setCamera({ type: CameraType.Flight }));
+        store.dispatch(renderActions.setBaseCameraSpeed(controller.params.linearVelocity));
+    } else if (controller.params.kind === "ortho") {
+        store.dispatch(renderActions.setCamera({ type: CameraType.Orthographic }));
+    }
 
     return controller;
 }

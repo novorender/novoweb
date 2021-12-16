@@ -19,7 +19,7 @@ export const fetchEnvironments = createAsyncThunk("novorender/fetchEnvironments"
 });
 
 export enum CameraSpeedMultiplier {
-    Slow = 0.5,
+    Slow = 0.2,
     Normal = 1,
     Fast = 5,
 }
@@ -253,6 +253,9 @@ export const renderSlice = createSlice({
         },
         setCamera: (state, { payload }: PayloadAction<CameraState>) => {
             state.camera = payload as WritableCameraState;
+        },
+        setBaseCameraSpeed: (state, { payload }: PayloadAction<number>) => {
+            state.baseCameraSpeed = payload;
         },
         setSelectingOrthoPoint: (state, action: PayloadAction<boolean>) => {
             state.selectingOrthoPoint = action.payload;
