@@ -6,7 +6,6 @@ import { generateCodeChallenge } from "utils/auth";
 import { generateRandomString } from "utils/misc";
 import { getFromStorage, saveToStorage } from "utils/storage";
 import { sleep } from "utils/timers";
-import { NewViewpoint } from "./routes/createTopic";
 
 import {
     AuthInfo,
@@ -22,6 +21,7 @@ import {
     Visibility,
 } from "./types";
 import { handleImageResponse } from "./utils";
+import { NewViewpoint } from "./includeViewpoint";
 
 const clientId = "dc8b9808-c078-4361-a5fd-fe8ed787bfaf";
 const callbackUrl = window.location.origin + "/";
@@ -89,7 +89,7 @@ export const bimCollabApi = createApi({
         getAuthInfo: builder.mutation<AuthInfo, void>({
             query: () => "auth",
         }),
-        getCurrentUser: builder.query<User, string>({
+        getCurrentUser: builder.query<User, void>({
             query: () => "current-user",
         }),
         getProjects: builder.query<Project[], void>({

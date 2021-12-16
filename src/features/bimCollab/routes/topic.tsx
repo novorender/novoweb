@@ -96,24 +96,26 @@ export function Topic() {
         return <LinearProgress />;
     }
 
-    const floatingViewpoints = viewpoints
-        ?.filter((vp) => !comments.some((comment) => comment.viewpoint_guid === vp.guid))
-        .map((floatingVp) => ({
-            guid: "",
-            date: topic.creation_date,
-            author: topic.creation_author,
-            modified_date: topic.modified_date,
-            modified_author: topic.modified_author,
-            comment: "No comment",
-            topic_guid: topic.guid,
-            viewpoint_guid: floatingVp.guid,
-            reply_to_comment_guid: "",
-            authorization: {
-                comment_actions: [],
-            },
-            extended_data: "",
-            retrieved_on: "",
-        })) as Comment[];
+    const floatingViewpoints: Comment[] =
+        viewpoints
+            ?.filter((vp) => !comments.some((comment) => comment.viewpoint_guid === vp.guid))
+            .map((floatingVp) => ({
+                guid: "",
+                date: topic.creation_date,
+                author: topic.creation_author,
+                modified_date: topic.modified_date,
+                modified_author: topic.modified_author,
+                comment: "No comment",
+                topic_guid: topic.guid,
+                viewpoint_guid: floatingVp.guid,
+                reply_to_comment_guid: "",
+                authorization: {
+                    comment_actions: [],
+                },
+                extended_data: "",
+                retrieved_on: "",
+            })) || [];
+
     return (
         <>
             {loading ? <LinearProgress /> : null}

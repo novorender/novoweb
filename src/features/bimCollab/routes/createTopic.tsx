@@ -1,12 +1,8 @@
-import { useStore } from "react-redux";
-import { HierarcicalObjectReference, ObjectId, Scene } from "@novorender/webgl-api";
 import {
     Box,
-    Typography,
     useTheme,
     Button,
     FormControlLabel,
-    CircularProgress,
     FormControl,
     InputLabel,
     MenuItem,
@@ -15,22 +11,11 @@ import {
 } from "@mui/material";
 import { DatePicker } from "@mui/lab";
 import { useParams, useHistory } from "react-router-dom";
-import { FormEvent, useEffect, useState } from "react";
+import { FormEvent, useState } from "react";
+import { ArrowBack } from "@mui/icons-material";
 
-import { ObjectVisibility, selectDefaultVisibility } from "slices/renderSlice";
-import { useLazyHidden } from "contexts/hidden";
-import { useLazyHighlighted } from "contexts/highlighted";
-import { useLazyVisible } from "contexts/visible";
-import { useLazyCustomGroups } from "contexts/customGroups";
-import { useExplorerGlobals } from "contexts/explorerGlobals";
-
-import { IosSwitch, LinearProgress, ScrollBox, TextField } from "components";
-import { useAbortController } from "hooks/useAbortController";
+import { Divider, IosSwitch, LinearProgress, ScrollBox, TextField, Tooltip } from "components";
 import { useToggle } from "hooks/useToggle";
-import { useMountedState } from "hooks/useMountedState";
-import { searchByPatterns } from "utils/search";
-import { getGuids } from "utils/objectData";
-import { sleep } from "utils/timers";
 
 import {
     useGetProjectExtensionsQuery,
@@ -39,18 +24,7 @@ import {
     useCreateCommentMutation,
     useCreateViewpointMutation,
 } from "../bimCollabApi";
-import {
-    createBcfClippingPlanes,
-    createPerspectiveCamera,
-    createBcfSnapshot,
-    createBcfViewpointComponents,
-    createOrthogonalCamera,
-} from "../utils";
-import { Viewpoint } from "../types";
-
-type BaseViewpoint = Partial<Viewpoint> & Pick<Viewpoint, "snapshot">;
-export type NewViewpoint = BaseViewpoint &
-    (Pick<Viewpoint, "perspective_camera"> | Pick<Viewpoint, "orthogonal_camera">);
+import { NewViewpoint, IncludeViewpoint } from "../includeViewpoint";
 
 const today = new Date();
 
@@ -78,6 +52,7 @@ export function CreateTopic() {
         assigned: "",
     });
     const { title, comment, type, area, stage, status, labels, priority, deadline, assigned } = fields;
+    const [includeViewpoint, toggleIncludeViewpoint] = useToggle(true);
     const [viewpoint, setViewpoint] = useState<NewViewpoint>();
 
     const handleInputChange = ({ name, value }: { name: string; value: string | string[] }) => {
@@ -137,417 +112,265 @@ export function CreateTopic() {
     const areas = extensions.fields?.find((field) => field.field === "area")?.values.filter((field) => field.is_active);
 
     return (
-        <ScrollBox py={1} height={1} position="relative">
-            <Box position="absolute" height={5} top={-5} width={1} boxShadow={theme.customShadows.widgetHeader} />
-            {disabled ? <LinearProgress /> : null}
-            <Box sx={{ px: 1, my: 1 }}>
-                <Typography sx={{ mb: 2 }} variant={"h5"}>
-                    Create new issue
-                </Typography>
-                <form onSubmit={handleSubmit}>
-                    <TextField
-                        name="title"
-                        value={title}
-                        onChange={(e) => handleInputChange(e.target)}
-                        sx={{ mb: 1 }}
-                        id={"topic-title"}
-                        label={"Title"}
-                        fullWidth
-                        required
+        <>
+            <Box display="flex" alignItems="center" boxShadow={theme.customShadows.widgetHeader}>
+                <Button onClick={() => history.goBack()} color="grey">
+                    <ArrowBack sx={{ mr: 1 }} />
+                    Back
+                </Button>
+                <Divider orientation="vertical" sx={{ height: "80%" }} />
+                <Tooltip title="Includes the current view state at the time this is enabled. Toggle to update.">
+                    <FormControlLabel
+                        sx={{ m: 0, pl: 1, display: "flex", alignItems: "center" }}
+                        control={
+                            <IosSwitch checked={includeViewpoint} color="primary" onChange={toggleIncludeViewpoint} />
+                        }
+                        label={
+                            <Box fontSize={14} lineHeight={"24.5px"} fontWeight={500}>
+                                Include viewpoint
+                            </Box>
+                        }
+                        labelPlacement="start"
                     />
+                </Tooltip>
+            </Box>
+            <ScrollBox py={1} height={1} position="relative">
+                {disabled ? <LinearProgress /> : null}
+                <Box sx={{ px: 1, my: 1 }}>
+                    <IncludeViewpoint include={includeViewpoint} viewpoint={viewpoint} setViewpoint={setViewpoint} />
 
-                    <TextField
-                        name="comment"
-                        value={comment}
-                        onChange={(e) => handleInputChange(e.target)}
-                        sx={{ mb: 1 }}
-                        id={"topic-comment"}
-                        label={"Comment"}
-                        fullWidth
-                        multiline
-                        rows={4}
-                    />
+                    <form onSubmit={handleSubmit}>
+                        <TextField
+                            name="title"
+                            value={title}
+                            onChange={(e) => handleInputChange(e.target)}
+                            sx={{ mb: 1, mt: 1 }}
+                            id={"topic-title"}
+                            label={"Title"}
+                            fullWidth
+                            required
+                        />
 
-                    {areas && areas.length ? (
+                        <TextField
+                            name="comment"
+                            value={comment}
+                            onChange={(e) => handleInputChange(e.target)}
+                            sx={{ mb: 1 }}
+                            id={"topic-comment"}
+                            label={"Comment"}
+                            fullWidth
+                            multiline
+                            rows={4}
+                        />
+
+                        {areas && areas.length ? (
+                            <FormControl size="small" sx={{ width: 1, mb: 2 }}>
+                                <InputLabel id="bcf-topic-area-label">Area</InputLabel>
+                                <Select
+                                    labelId="bcf-topic-area-label"
+                                    id="bcf-topic-area"
+                                    fullWidth
+                                    value={area}
+                                    onChange={(e) => handleInputChange(e.target)}
+                                    input={<OutlinedInput label="Area" />}
+                                    name={"area"}
+                                >
+                                    {areas.map((topicArea) => (
+                                        <MenuItem
+                                            key={topicArea.value}
+                                            value={topicArea.value}
+                                            sx={{
+                                                fontWeight: area === topicArea.value ? "bold" : "regular",
+                                            }}
+                                        >
+                                            {topicArea.value}
+                                        </MenuItem>
+                                    ))}
+                                </Select>
+                            </FormControl>
+                        ) : null}
+
                         <FormControl size="small" sx={{ width: 1, mb: 2 }}>
-                            <InputLabel id="bcf-topic-area-label">Area</InputLabel>
+                            <InputLabel id="bcf-topic-type-label">Type</InputLabel>
                             <Select
-                                labelId="bcf-topic-area-label"
-                                id="bcf-topic-area"
+                                labelId="bcf-topic-type-label"
+                                id="bcf-topic-type"
                                 fullWidth
-                                value={area}
+                                value={type}
                                 onChange={(e) => handleInputChange(e.target)}
-                                input={<OutlinedInput label="Area" />}
-                                name={"area"}
+                                input={<OutlinedInput label="Type" />}
+                                name={"type"}
                             >
-                                {areas.map((topicArea) => (
+                                {extensions.topic_type.map((topicType) => (
                                     <MenuItem
-                                        key={topicArea.value}
-                                        value={topicArea.value}
+                                        key={topicType}
+                                        value={topicType}
                                         sx={{
-                                            fontWeight: area === topicArea.value ? "bold" : "regular",
+                                            fontWeight: type === topicType ? "bold" : "regular",
                                         }}
                                     >
-                                        {topicArea.value}
+                                        {topicType}
                                     </MenuItem>
                                 ))}
                             </Select>
                         </FormControl>
-                    ) : null}
 
-                    <FormControl size="small" sx={{ width: 1, mb: 2 }}>
-                        <InputLabel id="bcf-topic-type-label">Type</InputLabel>
-                        <Select
-                            labelId="bcf-topic-type-label"
-                            id="bcf-topic-type"
-                            fullWidth
-                            value={type}
-                            onChange={(e) => handleInputChange(e.target)}
-                            input={<OutlinedInput label="Type" />}
-                            name={"type"}
-                        >
-                            {extensions.topic_type.map((topicType) => (
-                                <MenuItem
-                                    key={topicType}
-                                    value={topicType}
-                                    sx={{
-                                        fontWeight: type === topicType ? "bold" : "regular",
-                                    }}
-                                >
-                                    {topicType}
-                                </MenuItem>
-                            ))}
-                        </Select>
-                    </FormControl>
+                        <FormControl size="small" sx={{ width: 1, mb: 2 }}>
+                            <InputLabel id="bcf-topic-priority-label">Priority</InputLabel>
+                            <Select
+                                labelId="bcf-topic-priority-label"
+                                id="bcf-topic-priority"
+                                fullWidth
+                                value={priority}
+                                onChange={(e) => handleInputChange(e.target)}
+                                input={<OutlinedInput label="Priority" />}
+                                name={"priority"}
+                            >
+                                {extensions.priority.map((topicPriority) => (
+                                    <MenuItem
+                                        key={topicPriority}
+                                        value={topicPriority}
+                                        sx={{
+                                            fontWeight: priority === topicPriority ? "bold" : "regular",
+                                        }}
+                                    >
+                                        {topicPriority}
+                                    </MenuItem>
+                                ))}
+                            </Select>
+                        </FormControl>
 
-                    <FormControl size="small" sx={{ width: 1, mb: 2 }}>
-                        <InputLabel id="bcf-topic-priority-label">Priority</InputLabel>
-                        <Select
-                            labelId="bcf-topic-priority-label"
-                            id="bcf-topic-priority"
-                            fullWidth
-                            value={priority}
-                            onChange={(e) => handleInputChange(e.target)}
-                            input={<OutlinedInput label="Priority" />}
-                            name={"priority"}
-                        >
-                            {extensions.priority.map((topicPriority) => (
-                                <MenuItem
-                                    key={topicPriority}
-                                    value={topicPriority}
-                                    sx={{
-                                        fontWeight: priority === topicPriority ? "bold" : "regular",
-                                    }}
-                                >
-                                    {topicPriority}
-                                </MenuItem>
-                            ))}
-                        </Select>
-                    </FormControl>
+                        <FormControl size="small" sx={{ width: 1, mb: 2 }}>
+                            <InputLabel id="bcf-topic-stage-label">Milestone</InputLabel>
+                            <Select
+                                labelId="bcf-topic-stage-label"
+                                id="bcf-topic-stage"
+                                fullWidth
+                                value={stage}
+                                onChange={(e) => handleInputChange(e.target)}
+                                input={<OutlinedInput label="Milestone" />}
+                                name={"stage"}
+                            >
+                                {extensions.stage.map((topicStage) => (
+                                    <MenuItem
+                                        key={topicStage}
+                                        value={topicStage}
+                                        sx={{
+                                            fontWeight: stage === topicStage ? "bold" : "regular",
+                                        }}
+                                    >
+                                        {topicStage}
+                                    </MenuItem>
+                                ))}
+                            </Select>
+                        </FormControl>
 
-                    <FormControl size="small" sx={{ width: 1, mb: 2 }}>
-                        <InputLabel id="bcf-topic-stage-label">Milestone</InputLabel>
-                        <Select
-                            labelId="bcf-topic-stage-label"
-                            id="bcf-topic-stage"
-                            fullWidth
-                            value={stage}
-                            onChange={(e) => handleInputChange(e.target)}
-                            input={<OutlinedInput label="Milestone" />}
-                            name={"stage"}
-                        >
-                            {extensions.stage.map((topicStage) => (
-                                <MenuItem
-                                    key={topicStage}
-                                    value={topicStage}
-                                    sx={{
-                                        fontWeight: stage === topicStage ? "bold" : "regular",
-                                    }}
-                                >
-                                    {topicStage}
-                                </MenuItem>
-                            ))}
-                        </Select>
-                    </FormControl>
+                        <FormControl size="small" sx={{ width: 1, mb: 2 }}>
+                            <InputLabel id="bcf-topic-status-label">Status</InputLabel>
+                            <Select
+                                labelId="bcf-topic-status-label"
+                                id="bcf-topic-status"
+                                fullWidth
+                                value={status}
+                                onChange={(e) => handleInputChange(e.target)}
+                                input={<OutlinedInput label="Status" />}
+                                name={"status"}
+                            >
+                                {extensions.topic_status.map((topicStatus) => (
+                                    <MenuItem
+                                        key={topicStatus}
+                                        value={topicStatus}
+                                        sx={{
+                                            fontWeight: status === topicStatus ? "bold" : "regular",
+                                        }}
+                                    >
+                                        {topicStatus}
+                                    </MenuItem>
+                                ))}
+                            </Select>
+                        </FormControl>
 
-                    <FormControl size="small" sx={{ width: 1, mb: 2 }}>
-                        <InputLabel id="bcf-topic-status-label">Status</InputLabel>
-                        <Select
-                            labelId="bcf-topic-status-label"
-                            id="bcf-topic-status"
-                            fullWidth
-                            value={status}
-                            onChange={(e) => handleInputChange(e.target)}
-                            input={<OutlinedInput label="Status" />}
-                            name={"status"}
-                        >
-                            {extensions.topic_status.map((topicStatus) => (
-                                <MenuItem
-                                    key={topicStatus}
-                                    value={topicStatus}
-                                    sx={{
-                                        fontWeight: status === topicStatus ? "bold" : "regular",
-                                    }}
-                                >
-                                    {topicStatus}
-                                </MenuItem>
-                            ))}
-                        </Select>
-                    </FormControl>
+                        <FormControl size="small" sx={{ width: 1, mb: 2 }}>
+                            <InputLabel id="bcf-topic-assigned-label">Assigned to</InputLabel>
+                            <Select
+                                labelId="bcf-topic-assigned-label"
+                                id="bcf-topic-assigned"
+                                fullWidth
+                                value={assigned}
+                                onChange={(e) => handleInputChange(e.target)}
+                                input={<OutlinedInput label="Assigned to" />}
+                                name={"assigned"}
+                            >
+                                {extensions.user_id_type.map((user) => (
+                                    <MenuItem
+                                        key={user}
+                                        value={user}
+                                        sx={{
+                                            fontWeight: assigned === user ? "bold" : "regular",
+                                        }}
+                                    >
+                                        {user}
+                                    </MenuItem>
+                                ))}
+                            </Select>
+                        </FormControl>
 
-                    <FormControl size="small" sx={{ width: 1, mb: 2 }}>
-                        <InputLabel id="bcf-topic-assigned-label">Assigned to</InputLabel>
-                        <Select
-                            labelId="bcf-topic-assigned-label"
-                            id="bcf-topic-assigned"
-                            fullWidth
-                            value={assigned}
-                            onChange={(e) => handleInputChange(e.target)}
-                            input={<OutlinedInput label="Assigned to" />}
-                            name={"assigned"}
-                        >
-                            {extensions.user_id_type.map((user) => (
-                                <MenuItem
-                                    key={user}
-                                    value={user}
-                                    sx={{
-                                        fontWeight: assigned === user ? "bold" : "regular",
-                                    }}
-                                >
-                                    {user}
-                                </MenuItem>
-                            ))}
-                        </Select>
-                    </FormControl>
+                        <FormControl size="small" sx={{ width: 1, mb: 2 }}>
+                            <DatePicker
+                                label="Deadline"
+                                value={deadline || null}
+                                minDate={today}
+                                onChange={(newDate: Date | null) =>
+                                    handleInputChange({ name: "deadline", value: newDate?.toISOString() ?? "" })
+                                }
+                                renderInput={(params) => <TextField {...params} size="small" />}
+                            />
+                        </FormControl>
 
-                    <FormControl size="small" sx={{ width: 1, mb: 2 }}>
-                        <DatePicker
-                            label="Deadline"
-                            value={deadline || null}
-                            minDate={today}
-                            onChange={(newDate: Date | null) =>
-                                handleInputChange({ name: "deadline", value: newDate?.toISOString() ?? "" })
-                            }
-                            renderInput={(params) => <TextField {...params} size="small" />}
-                        />
-                    </FormControl>
+                        <FormControl size="small" sx={{ width: 1, mb: 2 }}>
+                            <InputLabel id="bcf-topic-labels-label">Labels</InputLabel>
+                            <Select
+                                labelId="bcf-topic-labels-label"
+                                id="bcf-topic-labels"
+                                fullWidth
+                                multiple
+                                value={labels}
+                                onChange={(e) => handleInputChange(e.target)}
+                                input={<OutlinedInput label="Label" />}
+                                name={"labels"}
+                            >
+                                {extensions.topic_label.map((topicLabel) => (
+                                    <MenuItem
+                                        key={topicLabel}
+                                        value={topicLabel}
+                                        sx={{
+                                            fontWeight: labels.includes(topicLabel) ? "bold" : "regular",
+                                        }}
+                                    >
+                                        {topicLabel}
+                                    </MenuItem>
+                                ))}
+                            </Select>
+                        </FormControl>
 
-                    <FormControl size="small" sx={{ width: 1, mb: 2 }}>
-                        <InputLabel id="bcf-topic-labels-label">Labels</InputLabel>
-                        <Select
-                            labelId="bcf-topic-labels-label"
-                            id="bcf-topic-labels"
-                            fullWidth
-                            multiple
-                            value={labels}
-                            onChange={(e) => handleInputChange(e.target)}
-                            input={<OutlinedInput label="Label" />}
-                            name={"labels"}
-                        >
-                            {extensions.topic_label.map((topicLabel) => (
-                                <MenuItem
-                                    key={topicLabel}
-                                    value={topicLabel}
-                                    sx={{
-                                        fontWeight: labels.includes(topicLabel) ? "bold" : "regular",
-                                    }}
-                                >
-                                    {topicLabel}
-                                </MenuItem>
-                            ))}
-                        </Select>
-                    </FormControl>
-
-                    <IncludeViewpoint viewpoint={viewpoint} setViewpoint={setViewpoint} />
-
-                    <Box display="flex" justifyContent="space-between" mb={4}>
-                        <Button
-                            variant="contained"
-                            color="grey"
-                            type="button"
-                            disabled={disabled}
-                            onClick={() => history.goBack()}
-                        >
-                            Cancel
-                        </Button>
-                        <Button variant="contained" type="submit" disabled={disabled}>
-                            Create issue
-                        </Button>
-                    </Box>
-                </form>
-            </Box>
-        </ScrollBox>
-    );
-}
-
-export function IncludeViewpoint({
-    viewpoint,
-    setViewpoint,
-}: {
-    viewpoint: NewViewpoint | undefined;
-    setViewpoint: (vp: NewViewpoint | undefined) => void;
-}) {
-    const hidden = useLazyHidden();
-    const visible = useLazyVisible();
-    const highlighted = useLazyHighlighted();
-    const customGroups = useLazyCustomGroups();
-    const {
-        state: { view, scene, canvas },
-    } = useExplorerGlobals(true);
-    const store = useStore();
-
-    const [includeViewpoint, toggleIncludeViewpoint] = useToggle(true);
-    const [abortController, abort] = useAbortController();
-    const [loading, setLoading] = useMountedState(false);
-
-    useEffect(() => {
-        if (includeViewpoint) {
-            createNewViewpoint();
-        } else {
-            abort();
-            setViewpoint(undefined);
-        }
-
-        async function createNewViewpoint() {
-            const snapshot = createBcfSnapshot(canvas);
-
-            if (!snapshot) {
-                return;
-            }
-
-            setLoading(true);
-
-            const abortSignal = abortController.current.signal;
-            const state = store.getState();
-            const defaultVisibility = selectDefaultVisibility(state);
-            const getSelected = idsToGuids({ scene, abortSignal, ids: highlighted.current.idArr });
-            const getExceptions = idsToGuids({
-                scene,
-                abortSignal,
-                ids: defaultVisibility === ObjectVisibility.Neutral ? hidden.current.idArr : visible.current.idArr,
-            });
-            const getColoring = customGroups.current
-                .filter((group) => group.selected)
-                .map(async (group) => {
-                    return { color: group.color, guids: await idsToGuids({ scene, abortSignal, ids: group.ids }) };
-                });
-            const [exceptions, selected, coloring] = await Promise.all([
-                getExceptions,
-                getSelected,
-                Promise.all(getColoring),
-            ]);
-
-            setLoading(false);
-
-            const baseVp: BaseViewpoint = {
-                snapshot,
-                clipping_planes: createBcfClippingPlanes(view.settings.clippingVolume.planes),
-                components: await createBcfViewpointComponents({
-                    coloring,
-                    selected,
-                    defaultVisibility,
-                    exceptions,
-                }),
-            };
-
-            if (view.camera.kind === "orthographic") {
-                setViewpoint({ ...baseVp, orthogonal_camera: createOrthogonalCamera(view.camera) });
-            } else if (view.camera.kind === "pinhole") {
-                setViewpoint({ ...baseVp, perspective_camera: createPerspectiveCamera(view.camera) });
-            }
-        }
-    }, [
-        includeViewpoint,
-        setViewpoint,
-        view,
-        store,
-        hidden,
-        visible,
-        highlighted,
-        scene,
-        abortController,
-        abort,
-        setLoading,
-        customGroups,
-        canvas,
-    ]);
-
-    return (
-        <>
-            {viewpoint?.snapshot ? (
-                <Box sx={{ img: { maxWidth: "100%", maxHeight: 150, objectFit: "contain" } }}>
-                    <img
-                        alt=""
-                        src={`data:image/${viewpoint.snapshot.snapshot_type};base64,${viewpoint.snapshot.snapshot_data}`}
-                    />
+                        <Box display="flex" justifyContent="space-between" mb={2}>
+                            <Button
+                                variant="outlined"
+                                color="grey"
+                                type="button"
+                                fullWidth
+                                disabled={disabled}
+                                onClick={() => history.goBack()}
+                            >
+                                Cancel
+                            </Button>
+                            <Button sx={{ ml: 2 }} fullWidth variant="contained" type="submit" disabled={disabled}>
+                                Create issue
+                            </Button>
+                        </Box>
+                    </form>
                 </Box>
-            ) : loading ? (
-                <Box width={1} height={150} display="flex" justifyContent="center" alignItems="center">
-                    <CircularProgress />
-                </Box>
-            ) : null}
-
-            <FormControlLabel
-                disabled={loading}
-                sx={{ mb: 2 }}
-                control={<IosSwitch checked={includeViewpoint} color="primary" onChange={toggleIncludeViewpoint} />}
-                label={<Box>Include viewpoint</Box>}
-            />
+            </ScrollBox>
         </>
     );
-}
-
-async function idsToGuids({
-    ids,
-    scene,
-    abortSignal,
-}: {
-    ids: ObjectId[];
-    scene: Scene;
-    abortSignal: AbortSignal;
-}): Promise<string[]> {
-    if (!ids.length) {
-        return [];
-    }
-
-    let guids = [] as string[];
-    const batchSize = 100;
-    const batches = ids.reduce(
-        (acc, id) => {
-            const lastBatch = acc.slice(-1)[0];
-
-            if (lastBatch.length < batchSize) {
-                lastBatch.push(String(id));
-            } else {
-                acc.push([String(id)]);
-            }
-
-            return acc;
-        },
-        [[]] as string[][]
-    );
-
-    const concurrentRequests = 5;
-    const callback = async (refs: HierarcicalObjectReference[]) => {
-        const _guids = await getGuids(refs);
-        guids = guids.concat(_guids);
-    };
-
-    for (let i = 0; i < batches.length / concurrentRequests; i++) {
-        await Promise.all(
-            batches.slice(i * concurrentRequests, i * concurrentRequests + concurrentRequests).map((batch) => {
-                return searchByPatterns({
-                    scene,
-                    abortSignal,
-                    callback,
-                    full: true,
-                    searchPatterns: [{ property: "id", value: batch, exact: true }],
-                }).catch(() => {});
-            })
-        );
-
-        await sleep(1);
-    }
-
-    return guids;
 }

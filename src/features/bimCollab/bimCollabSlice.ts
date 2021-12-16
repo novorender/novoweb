@@ -57,8 +57,8 @@ export const bimCollabSlice = createSlice({
         setAccessToken: (state, action: PayloadAction<string>) => {
             state.accessToken = action.payload;
         },
-        setFilters: (state, action: PayloadAction<Filters>) => {
-            state.filters = action.payload;
+        setFilters: (state, action: PayloadAction<Partial<Filters>>) => {
+            state.filters = { ...state.filters, ...action.payload };
         },
         setFilterModifiers: (state, action: PayloadAction<FilterModifiers>) => {
             state.filterModifiers = action.payload;

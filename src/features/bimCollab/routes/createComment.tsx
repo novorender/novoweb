@@ -1,8 +1,10 @@
 import { useState, FormEvent } from "react";
 import { useHistory, useParams } from "react-router-dom";
-import { Box, Typography, Button, useTheme } from "@mui/material";
+import { Box, Button, useTheme, FormControlLabel } from "@mui/material";
+import { ArrowBack } from "@mui/icons-material";
 
-import { LinearProgress, ScrollBox, TextField } from "components";
+import { Divider, IosSwitch, LinearProgress, ScrollBox, TextField, Tooltip } from "components";
+import { useToggle } from "hooks/useToggle";
 
 import {
     useGetProjectQuery,
@@ -10,7 +12,7 @@ import {
     useCreateCommentMutation,
     useCreateViewpointMutation,
 } from "../bimCollabApi";
-import { IncludeViewpoint, NewViewpoint } from "./createTopic";
+import { IncludeViewpoint, NewViewpoint } from "../includeViewpoint";
 
 export function CreateComment() {
     const theme = useTheme();
@@ -22,6 +24,7 @@ export function CreateComment() {
     const [createComment, { isLoading: creatingComment }] = useCreateCommentMutation();
     const [createViewpoint, { isLoading: creatingViewpoint }] = useCreateViewpointMutation();
 
+    const [includeViewpoint, toggleIncludeViewpoint] = useToggle(true);
     const [comment, setComment] = useState("");
     const [viewpoint, setViewpoint] = useState<NewViewpoint>();
 
@@ -51,43 +54,62 @@ export function CreateComment() {
     const disabled = creatingComment || creatingViewpoint;
 
     return (
-        <ScrollBox py={1} height={1} position="relative">
-            <Box position="absolute" height={5} top={-5} width={1} boxShadow={theme.customShadows.widgetHeader} />
-            {disabled ? <LinearProgress /> : null}
-            <Box sx={{ px: 1, my: 1 }}>
-                <Typography sx={{ mb: 2 }} variant={"h5"}>
-                    Add comment
-                </Typography>
-                <form onSubmit={handleSubmit}>
-                    <TextField
-                        value={comment}
-                        onChange={(e) => setComment(e.target.value)}
-                        sx={{ mb: 1 }}
-                        id={"topic-comment"}
-                        label={"Comment"}
-                        fullWidth
-                        multiline
-                        rows={4}
+        <>
+            <Box display="flex" alignItems="center" boxShadow={theme.customShadows.widgetHeader}>
+                <Button onClick={() => history.goBack()} color="grey">
+                    <ArrowBack sx={{ mr: 1 }} />
+                    Back
+                </Button>
+                <Divider orientation="vertical" sx={{ height: "80%" }} />
+                <Tooltip title="Includes the current view state at the time this is enabled. Toggle to update.">
+                    <FormControlLabel
+                        sx={{ m: 0, pl: 1, display: "flex", alignItems: "center" }}
+                        control={
+                            <IosSwitch checked={includeViewpoint} color="primary" onChange={toggleIncludeViewpoint} />
+                        }
+                        label={
+                            <Box fontSize={14} lineHeight={"24.5px"} fontWeight={500}>
+                                Include viewpoint
+                            </Box>
+                        }
+                        labelPlacement="start"
                     />
-
-                    <IncludeViewpoint viewpoint={viewpoint} setViewpoint={setViewpoint} />
-
-                    <Box display="flex" justifyContent="space-between" mr={2} mb={2}>
-                        <Button
-                            variant="contained"
-                            color="grey"
-                            type="button"
-                            disabled={disabled}
-                            onClick={() => history.goBack()}
-                        >
-                            Cancel
-                        </Button>
-                        <Button variant="contained" type="submit" disabled={disabled}>
-                            Add comment
-                        </Button>
-                    </Box>
-                </form>
+                </Tooltip>
             </Box>
-        </ScrollBox>
+            <ScrollBox py={1} height={1} position="relative">
+                {disabled ? <LinearProgress /> : null}
+                <Box sx={{ px: 1, my: 1 }}>
+                    <IncludeViewpoint include={includeViewpoint} viewpoint={viewpoint} setViewpoint={setViewpoint} />
+                    <form onSubmit={handleSubmit}>
+                        <TextField
+                            value={comment}
+                            onChange={(e) => setComment(e.target.value)}
+                            sx={{ mt: 1, mb: 2 }}
+                            id={"topic-comment"}
+                            label={"Add comment"}
+                            fullWidth
+                            multiline
+                            rows={4}
+                        />
+
+                        <Box display="flex" justifyContent="space-between" mb={2}>
+                            <Button
+                                variant="outlined"
+                                color="grey"
+                                type="button"
+                                fullWidth
+                                disabled={disabled}
+                                onClick={() => history.goBack()}
+                            >
+                                Cancel
+                            </Button>
+                            <Button sx={{ ml: 2 }} fullWidth variant="contained" type="submit" disabled={disabled}>
+                                Add comment
+                            </Button>
+                        </Box>
+                    </form>
+                </Box>
+            </ScrollBox>
+        </>
     );
 }

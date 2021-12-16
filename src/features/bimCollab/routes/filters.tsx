@@ -4,7 +4,6 @@ import {
     useTheme,
     SelectChangeEvent,
     Box,
-    Typography,
     FormControl,
     InputLabel,
     Select,
@@ -84,10 +83,7 @@ export function Filters() {
                     Back
                 </Button>
             </Box>
-            <ScrollBox p={1} pb={5} height={1} position="relative" sx={{ form: { width: 1 } }}>
-                <Typography variant="h5" sx={{ mt: 1, mb: 2 }}>
-                    Filters
-                </Typography>
+            <ScrollBox p={1} pb={5} height={1} position="relative" sx={{ mt: 1, form: { width: 1 } }}>
                 <form onSubmit={handleSubmit} onReset={handleReset}>
                     <FormControl size="small" sx={{ width: 1, mb: 2 }}>
                         <InputLabel id="bcf-topic-type-label">Type</InputLabel>
@@ -261,6 +257,12 @@ export function Filters() {
                             input={<OutlinedInput label="Assigned To" />}
                             name={FilterType.AssignedTo}
                         >
+                            <MenuItem
+                                value={""}
+                                sx={{ fontWeight: filters[FilterType.AssignedTo].includes("") ? "bold" : "regular" }}
+                            >
+                                Unassigned
+                            </MenuItem>
                             {extensions.user_id_type.map((user) => (
                                 <MenuItem
                                     key={user}
@@ -315,11 +317,12 @@ export function Filters() {
                             />
                         </FormControl>
                     </Box>
-                    <Box display="flex" justifyContent="space-between">
-                        <Button type="reset" variant="contained" color="grey">
+
+                    <Box display="flex" justifyContent="space-between" mb={2}>
+                        <Button variant="outlined" color="grey" type="reset" fullWidth>
                             Reset filter
                         </Button>
-                        <Button type="submit" variant="contained">
+                        <Button sx={{ ml: 2 }} fullWidth variant="contained" type="submit">
                             Save filter
                         </Button>
                     </Box>

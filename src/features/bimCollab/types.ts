@@ -110,7 +110,7 @@ export type Topic = {
     priority: string;
     index: number;
     labels: string[];
-    assigned_to: string;
+    assigned_to: string | null;
     stage: string;
     description: string;
     bim_snippet: {

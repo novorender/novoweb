@@ -226,14 +226,14 @@ function applyFilters(topics: Topic[], filters: Filters, filterModifiers: Filter
             }
 
             if (Array.isArray(topic[key])) {
-                if (!value.some((val) => topic[key].includes(val))) {
+                if (!value.some((val) => topic[key]!.includes(val))) {
                     include = false;
                 }
 
                 return;
             }
 
-            if (!topic[key] && !value.includes("NOT_SET")) {
+            if (!topic[key] && !value.includes("NOT_SET") && !value.includes("")) {
                 include = false;
                 return;
             }

@@ -18,10 +18,18 @@ import { CreateTopic } from "./routes/createTopic";
 import { CreateComment } from "./routes/createComment";
 import { EditTopic } from "./routes/editTopic";
 
-import { bimCollabActions, selectAccessToken, selectAuthInfo, selectSpace, selectVersion } from "./bimCollabSlice";
+import {
+    bimCollabActions,
+    FilterType,
+    selectAccessToken,
+    selectAuthInfo,
+    selectSpace,
+    selectVersion,
+} from "./bimCollabSlice";
 import {
     getCode,
     useGetAuthInfoMutation,
+    useGetCurrentUserQuery,
     useGetTokenMutation,
     useGetVersionsMutation,
     useRefreshTokenMutation,
@@ -36,6 +44,7 @@ export function BimCollab() {
     const accessToken = useAppSelector(selectAccessToken);
     const dispatch = useAppDispatch();
 
+    const { data: user } = useGetCurrentUserQuery(undefined, { skip: !accessToken });
     const [getToken] = useGetTokenMutation();
     const [refreshToken] = useRefreshTokenMutation();
 
@@ -160,6 +169,15 @@ export function BimCollab() {
             dispatch(bimCollabActions.setAccessToken(accessToken));
         }
     }, [space, authInfo, dispatch, authenticate]);
+
+    useEffect(
+        function initFilter() {
+            if (user) {
+                dispatch(bimCollabActions.setFilters({ [FilterType.AssignedTo]: [user.id] }));
+            }
+        },
+        [user, dispatch]
+    );
 
     if (!space || apiError) {
         return <EnterBimCollabSpace error={apiError} />;
