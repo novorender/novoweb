@@ -362,7 +362,13 @@ export function CreateTopic() {
                             >
                                 Cancel
                             </Button>
-                            <Button sx={{ ml: 2 }} fullWidth variant="contained" type="submit" disabled={disabled}>
+                            <Button
+                                sx={{ ml: 2 }}
+                                fullWidth
+                                variant="contained"
+                                type="submit"
+                                disabled={disabled || (includeViewpoint && !viewpoint)}
+                            >
                                 Create issue
                             </Button>
                         </Box>

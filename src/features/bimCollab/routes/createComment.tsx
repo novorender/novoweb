@@ -103,7 +103,13 @@ export function CreateComment() {
                             >
                                 Cancel
                             </Button>
-                            <Button sx={{ ml: 2 }} fullWidth variant="contained" type="submit" disabled={disabled}>
+                            <Button
+                                sx={{ ml: 2 }}
+                                fullWidth
+                                variant="contained"
+                                type="submit"
+                                disabled={disabled || (includeViewpoint && !viewpoint)}
+                            >
                                 Add comment
                             </Button>
                         </Box>

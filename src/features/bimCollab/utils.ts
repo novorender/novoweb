@@ -236,7 +236,7 @@ export function createBcfSnapshot(canvas: HTMLCanvasElement): Viewpoint["snapsho
 export async function createBcfViewpointComponents({
     selected,
     defaultVisibility,
-    exceptions,
+    exceptions = [],
     coloring,
 }: {
     selected: string[];
@@ -252,7 +252,7 @@ export async function createBcfViewpointComponents({
         })),
         visibility: {
             default_visibility: defaultVisibility === ObjectVisibility.Neutral,
-            exceptions: exceptions?.map((guid) => ({ ifc_guid: guid })),
+            exceptions: exceptions.map((guid) => ({ ifc_guid: guid })),
             view_setup_hints: {
                 spaces_visible: false,
                 space_boundaries_visible: false,
