@@ -8,6 +8,8 @@ import {
     MenuItem,
     OutlinedInput,
     Select,
+    Checkbox,
+    ListItemText,
 } from "@mui/material";
 import { DatePicker } from "@mui/lab";
 import { useParams, useHistory } from "react-router-dom";
@@ -335,19 +337,15 @@ export function CreateTopic() {
                                 fullWidth
                                 multiple
                                 value={labels}
+                                renderValue={(selected) => selected.join(", ")}
                                 onChange={(e) => handleInputChange(e.target)}
                                 input={<OutlinedInput label="Label" />}
                                 name={"labels"}
                             >
                                 {extensions.topic_label.map((topicLabel) => (
-                                    <MenuItem
-                                        key={topicLabel}
-                                        value={topicLabel}
-                                        sx={{
-                                            fontWeight: labels.includes(topicLabel) ? "bold" : "regular",
-                                        }}
-                                    >
-                                        {topicLabel}
+                                    <MenuItem key={topicLabel} value={topicLabel}>
+                                        <Checkbox checked={labels.includes(topicLabel)} />
+                                        <ListItemText primary={topicLabel} />
                                     </MenuItem>
                                 ))}
                             </Select>

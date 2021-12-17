@@ -11,6 +11,8 @@ import {
     MenuItem,
     Button,
     TextField,
+    Checkbox,
+    ListItemText,
 } from "@mui/material";
 import { ArrowBack } from "@mui/icons-material";
 import { DatePicker } from "@mui/lab";
@@ -91,6 +93,7 @@ export function Filters() {
                             labelId="bcf-topic-type-label"
                             id="bcf-topic-type"
                             multiple
+                            renderValue={(selected) => selected.join(", ")}
                             fullWidth
                             value={filters[FilterType.Type]}
                             onChange={handleFilterChange}
@@ -98,14 +101,9 @@ export function Filters() {
                             name={FilterType.Type}
                         >
                             {extensions.topic_type.map((topicType) => (
-                                <MenuItem
-                                    key={topicType}
-                                    value={topicType}
-                                    sx={{
-                                        fontWeight: filters[FilterType.Type].includes(topicType) ? "bold" : "regular",
-                                    }}
-                                >
-                                    {topicType}
+                                <MenuItem key={topicType} value={topicType}>
+                                    <Checkbox checked={filters[FilterType.Type].includes(topicType)} />
+                                    <ListItemText primary={topicType} />
                                 </MenuItem>
                             ))}
                         </Select>
@@ -116,6 +114,7 @@ export function Filters() {
                             labelId="bcf-topic-label-label"
                             id="bcf-topic-label"
                             multiple
+                            renderValue={(selected) => selected.join(", ")}
                             fullWidth
                             value={filters[FilterType.Label]}
                             onChange={handleFilterChange}
@@ -123,14 +122,9 @@ export function Filters() {
                             name={FilterType.Label}
                         >
                             {extensions.topic_label.map((topicLabel) => (
-                                <MenuItem
-                                    key={topicLabel}
-                                    value={topicLabel}
-                                    sx={{
-                                        fontWeight: filters[FilterType.Label].includes(topicLabel) ? "bold" : "regular",
-                                    }}
-                                >
-                                    {topicLabel}
+                                <MenuItem key={topicLabel} value={topicLabel}>
+                                    <Checkbox checked={filters[FilterType.Label].includes(topicLabel)} />
+                                    <ListItemText primary={topicLabel} />
                                 </MenuItem>
                             ))}
                         </Select>
@@ -141,6 +135,7 @@ export function Filters() {
                             labelId="bcf-topic-status-label"
                             id="bcf-topic-status"
                             multiple
+                            renderValue={(selected) => selected.join(", ")}
                             fullWidth
                             value={filters[FilterType.Status]}
                             onChange={handleFilterChange}
@@ -148,16 +143,9 @@ export function Filters() {
                             name={FilterType.Status}
                         >
                             {extensions.topic_status.map((topicStatus) => (
-                                <MenuItem
-                                    key={topicStatus}
-                                    value={topicStatus}
-                                    sx={{
-                                        fontWeight: filters[FilterType.Status].includes(topicStatus)
-                                            ? "bold"
-                                            : "regular",
-                                    }}
-                                >
-                                    {topicStatus}
+                                <MenuItem key={topicStatus} value={topicStatus}>
+                                    <Checkbox checked={filters[FilterType.Status].includes(topicStatus)} />
+                                    <ListItemText primary={topicStatus} />
                                 </MenuItem>
                             ))}
                         </Select>
@@ -168,6 +156,7 @@ export function Filters() {
                             labelId="bcf-topic-priority-label"
                             id="bcf-topic-priority"
                             multiple
+                            renderValue={(selected) => selected.join(", ")}
                             fullWidth
                             value={filters[FilterType.Priority]}
                             onChange={handleFilterChange}
@@ -175,16 +164,9 @@ export function Filters() {
                             name={FilterType.Priority}
                         >
                             {extensions.priority.map((topicPriority) => (
-                                <MenuItem
-                                    key={topicPriority}
-                                    value={topicPriority}
-                                    sx={{
-                                        fontWeight: filters[FilterType.Priority].includes(topicPriority)
-                                            ? "bold"
-                                            : "regular",
-                                    }}
-                                >
-                                    {topicPriority}
+                                <MenuItem key={topicPriority} value={topicPriority}>
+                                    <Checkbox checked={filters[FilterType.Priority].includes(topicPriority)} />
+                                    <ListItemText primary={topicPriority} />
                                 </MenuItem>
                             ))}
                         </Select>
@@ -195,27 +177,23 @@ export function Filters() {
                             labelId="bcf-topic-stage-label"
                             id="bcf-topic-stage"
                             multiple
+                            renderValue={(selected) =>
+                                selected.map((val) => (val === "NOT_SET" ? "Undecided" : val)).join(", ")
+                            }
                             fullWidth
                             value={filters[FilterType.Stage]}
                             onChange={handleFilterChange}
                             input={<OutlinedInput label="Milestone" />}
                             name={FilterType.Stage}
                         >
-                            <MenuItem
-                                value={"NOT_SET"}
-                                sx={{ fontWeight: filters[FilterType.Stage].includes("NOT_SET") ? "bold" : "regular" }}
-                            >
-                                Undecided
+                            <MenuItem value={"NOT_SET"}>
+                                <Checkbox checked={filters[FilterType.Stage].includes("NOT_SET")} />
+                                <ListItemText primary={"Undecided"} />
                             </MenuItem>
                             {extensions.stage.map((stage) => (
-                                <MenuItem
-                                    key={stage}
-                                    value={stage}
-                                    sx={{
-                                        fontWeight: filters[FilterType.Stage].includes(stage) ? "bold" : "regular",
-                                    }}
-                                >
-                                    {stage}
+                                <MenuItem key={stage} value={stage}>
+                                    <Checkbox checked={filters[FilterType.Stage].includes(stage)} />
+                                    <ListItemText primary={stage} />
                                 </MenuItem>
                             ))}
                         </Select>
@@ -226,6 +204,7 @@ export function Filters() {
                             labelId="bcf-topic-createdBy-label"
                             id="bcf-topic-createdBy"
                             multiple
+                            renderValue={(selected) => selected.join(", ")}
                             fullWidth
                             value={filters[FilterType.CreatedBy]}
                             onChange={handleFilterChange}
@@ -233,14 +212,9 @@ export function Filters() {
                             name={FilterType.CreatedBy}
                         >
                             {extensions.user_id_type.map((user) => (
-                                <MenuItem
-                                    key={user}
-                                    value={user}
-                                    sx={{
-                                        fontWeight: filters[FilterType.CreatedBy].includes(user) ? "bold" : "regular",
-                                    }}
-                                >
-                                    {user}
+                                <MenuItem key={user} value={user}>
+                                    <Checkbox checked={filters[FilterType.CreatedBy].includes(user)} />
+                                    <ListItemText primary={user} />
                                 </MenuItem>
                             ))}
                         </Select>
@@ -251,27 +225,23 @@ export function Filters() {
                             labelId="bcf-topic-assignedTo-label"
                             id="bcf-topic-assignedTo"
                             multiple
+                            renderValue={(selected) =>
+                                selected.map((val) => (val === "" ? "Unassigned" : val)).join(", ")
+                            }
                             fullWidth
                             value={filters[FilterType.AssignedTo]}
                             onChange={handleFilterChange}
                             input={<OutlinedInput label="Assigned To" />}
                             name={FilterType.AssignedTo}
                         >
-                            <MenuItem
-                                value={""}
-                                sx={{ fontWeight: filters[FilterType.AssignedTo].includes("") ? "bold" : "regular" }}
-                            >
-                                Unassigned
+                            <MenuItem value={""}>
+                                <Checkbox checked={filters[FilterType.AssignedTo].includes("")} />
+                                <ListItemText primary={"Unassigned"} />
                             </MenuItem>
                             {extensions.user_id_type.map((user) => (
-                                <MenuItem
-                                    key={user}
-                                    value={user}
-                                    sx={{
-                                        fontWeight: filters[FilterType.AssignedTo].includes(user) ? "bold" : "regular",
-                                    }}
-                                >
-                                    {user}
+                                <MenuItem key={user} value={user}>
+                                    <Checkbox checked={filters[FilterType.AssignedTo].includes(user)} />
+                                    <ListItemText primary={user} />
                                 </MenuItem>
                             ))}
                         </Select>
