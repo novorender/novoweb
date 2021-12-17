@@ -1,30 +1,84 @@
-import { Box, Typography, useTheme } from "@mui/material";
-import { useAppSelector } from "app/store";
-
-import { ScrollBox } from "components";
+import { Box, List, ListItem, Typography, useTheme } from "@mui/material";
 import { Link } from "react-router-dom";
+import { ReactEventHandler, useState } from "react";
+
+import { useAppSelector } from "app/store";
+import { ImgModal, ImgTooltip, ScrollBox } from "components";
+import { useToggle } from "hooks/useToggle";
 
 import { useGetProjectsQuery } from "../bimCollabApi";
 import { selectSpace } from "../bimCollabSlice";
+import { Project } from "../types";
+
+import fallbackImage from "media/img/bimcollab_fallback.png";
 
 export function Projects() {
     const theme = useTheme();
-    const space = useAppSelector(selectSpace);
     const { data: projects = [] } = useGetProjectsQuery();
 
     return (
         <>
             <ScrollBox p={1} height={1} position="relative">
                 <Box position="absolute" height={5} top={-5} width={1} boxShadow={theme.customShadows.widgetHeader} />
-                <Typography variant={"h5"} sx={{ mt: 1, mb: 2 }}>
-                    {space} - Projects
-                </Typography>
-                {projects.map((project) => (
-                    <Box sx={{ mb: 2 }} key={project.project_id}>
-                        <Link to={`/project/${project.project_id}`}>{project.name}</Link>
-                    </Box>
-                ))}
+                <List>
+                    {projects.map((project) => (
+                        <ProjectListItem project={project} key={project.project_id} />
+                    ))}
+                </List>
             </ScrollBox>
         </>
     );
+}
+
+function ProjectListItem({ project }: { project: Project }) {
+    const theme = useTheme();
+    const space = useAppSelector(selectSpace);
+
+    const imgUrl = getImgUrl(space, project.project_id);
+
+    const [modalOpen, toggleModal] = useToggle();
+    const [src, setSrc] = useState(imgUrl);
+
+    const onImgError: ReactEventHandler<HTMLImageElement> = () => {
+        setSrc(fallbackImage);
+    };
+
+    return (
+        <>
+            <ListItem sx={{ py: 0.5, px: 0 }} button component={Link} to={`/project/${project.project_id}`}>
+                <Box width={1} maxHeight={80} display="flex" alignItems="flex-start" overflow="hidden">
+                    <Box bgcolor={theme.palette.grey[200]} height={70} width={100} flexShrink={0} flexGrow={0}>
+                        <ImgTooltip
+                            onTooltipClick={(e) => {
+                                e.stopPropagation();
+
+                                if (src === fallbackImage) {
+                                    return;
+                                }
+
+                                toggleModal();
+                            }}
+                            imgProps={{ onError: onImgError }}
+                            src={src}
+                        />
+                    </Box>
+                    <Box ml={1} flexDirection="column" flexGrow={1} width={0}>
+                        <Typography noWrap variant="body1" sx={{ fontWeight: 600 }}>
+                            {project.name}
+                        </Typography>
+                    </Box>
+                </Box>
+            </ListItem>
+            <ImgModal
+                open={modalOpen}
+                onClose={toggleModal}
+                sx={{ display: "flex", justifyContent: "center", alignItems: "center" }}
+                src={src}
+            />
+        </>
+    );
+}
+
+function getImgUrl(space: string, id: string): string {
+    return `https://${space}.bimcollab.com/WebApp/Handlers/Public/DisplayProjectImage.ashx?guid=${id}`;
 }

@@ -1,6 +1,6 @@
 import { TooltipProps, Box, tooltipClasses, styled, Tooltip as MuiTooltip } from "@mui/material";
 import { css } from "@mui/styled-engine";
-import { MouseEvent } from "react";
+import { ImgHTMLAttributes, MouseEvent } from "react";
 
 export const ImgTooltip = styled(
     ({
@@ -8,11 +8,13 @@ export const ImgTooltip = styled(
         src,
         title,
         onTooltipClick,
+        imgProps,
         ...props
     }: Omit<TooltipProps, "title" | "children"> & {
         src: string;
         title?: TooltipProps["title"];
         onTooltipClick?: (e: MouseEvent<HTMLImageElement>) => void;
+        imgProps?: ImgHTMLAttributes<unknown>;
     }) => (
         <MuiTooltip
             placement="bottom-end"
@@ -26,7 +28,7 @@ export const ImgTooltip = styled(
             {...props}
             classes={{ popper: className }}
         >
-            <Img alt="" height="32px" width="32px" src={src} />
+            <Img alt="" height="32px" width="32px" {...imgProps} src={src} />
         </MuiTooltip>
     )
 )(
