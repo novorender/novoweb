@@ -24,6 +24,7 @@ import {
     createBcfViewpointComponents,
     createOrthogonalCamera,
 } from "./utils";
+import { uniqueArray } from "utils/misc";
 
 type BaseViewpoint = Partial<Viewpoint> & Pick<Viewpoint, "snapshot">;
 export type NewViewpoint = BaseViewpoint &
@@ -196,5 +197,6 @@ async function idsToGuids({
         await sleep(1);
     }
 
-    return guids;
+    // NOTE(OLA): Apparantly some scenes can have duplicate GUIDS...
+    return uniqueArray(guids);
 }

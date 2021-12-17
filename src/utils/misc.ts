@@ -1,9 +1,7 @@
 import { WidgetKey, config as featuresConfig, defaultEnabledWidgets } from "config/features";
 
 export function uniqueArray<T>(arr: T[]): T[] {
-    return arr.filter((val, idx, self) => {
-        return self.indexOf(val) === idx;
-    });
+    return Array.from(new Set(arr));
 }
 
 export function replaceEncodedSlash(str: String) {

@@ -3,6 +3,7 @@ import { vec3, mat3, quat, vec4, mat4 } from "gl-matrix";
 
 import { ObjectVisibility } from "slices/renderSlice";
 import { vecToHex } from "utils/color";
+import { uniqueArray } from "utils/misc";
 
 import { Viewpoint } from "./types";
 
@@ -252,7 +253,9 @@ export async function createBcfViewpointComponents({
         })),
         visibility: {
             default_visibility: defaultVisibility === ObjectVisibility.Neutral,
-            exceptions: exceptions.map((guid) => ({ ifc_guid: guid })),
+            exceptions: uniqueArray(
+                exceptions.concat(defaultVisibility === ObjectVisibility.Neutral ? [] : selected)
+            ).map((guid) => ({ ifc_guid: guid })),
             view_setup_hints: {
                 spaces_visible: false,
                 space_boundaries_visible: false,
