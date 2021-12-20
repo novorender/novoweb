@@ -9,7 +9,13 @@ import { FixedSizeList } from "react-window";
 import { useAppSelector } from "app/store";
 import { LinearProgress, Tooltip, ImgTooltip, withCustomScrollbar } from "components";
 
-import { useGetProjectQuery, useGetTopicsQuery, useGetViewpointsQuery, useGetThumbnailQuery } from "../bimCollabApi";
+import {
+    useGetProjectQuery,
+    useGetTopicsQuery,
+    useGetViewpointsQuery,
+    useGetThumbnailQuery,
+    useGetProjectExtensionsQuery,
+} from "../bimCollabApi";
 import {
     FilterType,
     Filters,
@@ -30,6 +36,7 @@ export function Project() {
 
     const { projectId } = useParams<{ projectId: string }>();
     const { data: project } = useGetProjectQuery({ projectId });
+    const { data: extensions } = useGetProjectExtensionsQuery({ projectId });
     const { data: topics = [] as Topic[], isLoading: loadingTopics } = useGetTopicsQuery(
         { projectId },
         { refetchOnFocus: true }
@@ -40,6 +47,8 @@ export function Project() {
         return <LinearProgress />;
     }
 
+    const projectActions = project.authorization?.project_actions ?? extensions?.project_actions ?? [];
+
     return (
         <>
             <Box boxShadow={theme.customShadows.widgetHeader}>
@@ -47,7 +56,7 @@ export function Project() {
                     <ArrowBack sx={{ mr: 1 }} />
                     Back
                 </Button>
-                {project.authorization.project_actions.includes("createTopic") ? (
+                {projectActions.includes("createTopic") ? (
                     <Button component={Link} to={`/project/${projectId}/new-topic`} color="grey">
                         <Add sx={{ mr: 1 }} />
                         Create new issue

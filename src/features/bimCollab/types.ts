@@ -71,7 +71,7 @@ export type ProjectExtensions = {
 export type Project = {
     project_id: string;
     name: string;
-    authorization: {
+    authorization?: {
         project_actions: string[];
     };
     owner: string;
@@ -95,7 +95,7 @@ export type Topic = {
     comments_modified_date: string;
     modified_date: string;
     modified_author: string;
-    authorization: {
+    authorization?: {
         topic_actions: string[];
         topic_status: string[];
     };
@@ -149,7 +149,7 @@ export type Comment = {
     topic_guid: string;
     viewpoint_guid: string;
     reply_to_comment_guid: string;
-    authorization: {
+    authorization?: {
         comment_actions: string[];
     };
     extended_data: string;

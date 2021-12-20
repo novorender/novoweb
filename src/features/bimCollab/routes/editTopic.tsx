@@ -52,6 +52,8 @@ export function EditTopic() {
         history.goBack();
     };
 
+    const availableStatuses = topic.authorization?.topic_status ?? extensions.topic_status ?? [];
+
     return (
         <>
             <Box boxShadow={theme.customShadows.widgetHeader}>
@@ -73,7 +75,7 @@ export function EditTopic() {
                             input={<OutlinedInput label="Status" />}
                             name={"status"}
                         >
-                            {!topic.authorization.topic_status.includes(topic.topic_status) ? (
+                            {!availableStatuses.includes(topic.topic_status) ? (
                                 <MenuItem
                                     value={topic.topic_status}
                                     sx={{
@@ -83,7 +85,7 @@ export function EditTopic() {
                                     {topic.topic_status}
                                 </MenuItem>
                             ) : null}
-                            {topic.authorization.topic_status.map((val) => (
+                            {availableStatuses.map((val) => (
                                 <MenuItem
                                     key={val}
                                     value={val}

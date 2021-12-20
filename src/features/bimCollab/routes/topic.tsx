@@ -40,6 +40,7 @@ import {
     useGetSelectionQuery,
     useGetVisibilityQuery,
     useGetSnapshotQuery,
+    useGetProjectExtensionsQuery,
 } from "../bimCollabApi";
 import type { Comment } from "../types";
 import { translateBcfClippingPlanes, translateOrthogonalCamera, translatePerspectiveCamera } from "../utils";
@@ -52,6 +53,7 @@ export function Topic() {
     const { projectId, topicId } = useParams<{ projectId: string; topicId: string }>();
     const [modalOpen, toggleModal] = useToggle();
 
+    const { data: extensions } = useGetProjectExtensionsQuery({ projectId });
     const { data: topic } = useGetTopicQuery(
         { projectId, topicId },
         { refetchOnMountOrArgChange: true, refetchOnFocus: true }
@@ -116,6 +118,9 @@ export function Topic() {
                 retrieved_on: "",
             })) || [];
 
+    const topicActions = topic.authorization?.topic_actions ?? extensions?.topic_actions ?? [];
+    const topicStatuses = topic.authorization?.topic_status ?? extensions?.topic_status ?? [];
+
     return (
         <>
             {loading ? <LinearProgress /> : null}
@@ -125,14 +130,14 @@ export function Topic() {
                     Back
                 </Button>
 
-                {topic.authorization.topic_actions.includes("createComment") ? (
+                {topicActions.includes("createComment") ? (
                     <Button component={Link} to={`/project/${projectId}/topic/${topicId}/new-comment`} color="grey">
                         <Add sx={{ mr: 1 }} />
                         Add comment
                     </Button>
                 ) : null}
 
-                {topic.authorization.topic_status.length ? (
+                {topicStatuses.length ? (
                     <Button component={Link} to={`/project/${projectId}/topic/${topicId}/edit`} color="grey">
                         <Edit fontSize="small" sx={{ mr: 1 }} />
                         Edit
