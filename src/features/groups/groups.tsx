@@ -13,6 +13,7 @@ import {
 import { Search, Visibility, ColorLens, AddCircle, CheckCircle } from "@mui/icons-material";
 import { css } from "@mui/styled-engine";
 import { v4 as uuidv4 } from "uuid";
+import { ObjectId, SearchPattern } from "@novorender/webgl-api";
 
 import {
     ScrollBox,
@@ -24,21 +25,24 @@ import {
     LogoSpeedDial,
     WidgetHeader,
     AdvancedSearchInputs,
+    Divider,
 } from "components";
-import { useToggle } from "hooks/useToggle";
-import { vecToRgb, rgbToVec, VecRGB } from "utils/color";
+
 import { ColorPicker } from "features/colorPicker";
-import { CustomGroup, customGroupsActions, useCustomGroups } from "contexts/customGroups";
-import { featuresConfig } from "config/features";
 import { WidgetList } from "features/widgetList";
+
 import { useAppSelector } from "app/store";
 import { selectIsAdminScene } from "slices/explorerSlice";
-import { ObjectId, SearchPattern } from "@novorender/webgl-api";
+import { useExplorerGlobals } from "contexts/explorerGlobals";
+import { CustomGroup, customGroupsActions, useCustomGroups } from "contexts/customGroups";
+import { highlightActions, useDispatchHighlighted, useHighlighted } from "contexts/highlighted";
+
+import { featuresConfig } from "config/features";
+import { vecToRgb, rgbToVec, VecRGB } from "utils/color";
+import { searchDeepByPatterns } from "utils/search";
+import { useToggle } from "hooks/useToggle";
 import { useMountedState } from "hooks/useMountedState";
 import { useAbortController } from "hooks/useAbortController";
-import { searchDeepByPatterns } from "utils/search";
-import { useExplorerGlobals } from "contexts/explorerGlobals";
-import { highlightActions, useDispatchHighlighted, useHighlighted } from "contexts/highlighted";
 
 const StyledListItemButton = styled(ListItemButton, { shouldForwardProp: (prop) => prop !== "inset" })<
     ListItemButtonProps & { inset?: boolean }
@@ -79,6 +83,19 @@ export function Groups() {
         );
     };
 
+    const handleGroupSelected = () => {
+        let groupingNumber = 1;
+        let name = `Grouping ${groupingNumber}`;
+
+        while (organisedGroups.grouped[name]) {
+            name = `Grouping ${++groupingNumber}`;
+        }
+
+        organisedGroups.singles
+            .filter((group) => group.selected)
+            .forEach((group) => dispatchCustom(customGroupsActions.updateGroup(group.id, { grouping: name })));
+    };
+
     return (
         <>
             <WidgetContainer>
@@ -91,7 +108,11 @@ export function Groups() {
                                 <AddCircle sx={{ mr: 1 }} />
                                 Add group
                             </Button>
-                            <Button color="grey">
+                            <Button
+                                color="grey"
+                                onClick={handleGroupSelected}
+                                disabled={organisedGroups.singles.filter((group) => group.selected).length < 2}
+                            >
                                 <CheckCircle sx={{ mr: 1 }} />
                                 Group selected
                             </Button>
@@ -103,8 +124,14 @@ export function Groups() {
                     ) : null}
                 </WidgetHeader>
                 <Box flexDirection="column" overflow="hidden" flexGrow={1} height={1}>
-                    <ScrollBox display={menuOpen ? "none" : "flex"} ref={containerRef} height={1} pb={2}>
-                        <List sx={{ width: 1 }}>
+                    <ScrollBox
+                        display={menuOpen ? "none" : "flex"}
+                        flexDirection="column"
+                        ref={containerRef}
+                        height={1}
+                        pb={2}
+                    >
+                        <List sx={{ width: 1, pb: 0 }}>
                             <StyledListItemButton
                                 inset={hasGrouping}
                                 disableRipple
@@ -170,6 +197,7 @@ export function Groups() {
                                 />
                             ))}
                         </List>
+                        {Object.values(organisedGroups.grouped).length ? <Divider /> : null}
                         {Object.values(organisedGroups.grouped).map((grouping, index) => {
                             const allGroupedSelected = !grouping.groups.some((group) => !group.selected);
                             const allGroupedHidden = !grouping.groups.some((group) => !group.hidden);
@@ -337,11 +365,7 @@ enum Status {
     Searching,
 }
 
-//TODO(OLA): FIX?
-// Hvis id => update group
-// Ellers lag ny
-
-function CreateGroup({ onClose, id: _id }: { onClose: () => void; id?: string }) {
+function CreateGroup({ onClose, id }: { onClose: () => void; id?: string }) {
     const {
         state: { scene },
     } = useExplorerGlobals(true);
@@ -380,7 +404,7 @@ function CreateGroup({ onClose, id: _id }: { onClose: () => void; id?: string })
     const createGroup = () => {
         const name = savedInputs.map((input) => `${input.property?.split("/").pop()} ${input.value}`).join(" + ");
         const newGroup: CustomGroup = {
-            id: uuidv4(),
+            id: id ?? uuidv4(),
             name,
             ids,
             selected: true,
@@ -397,6 +421,7 @@ function CreateGroup({ onClose, id: _id }: { onClose: () => void; id?: string })
 
     const disableSearch =
         status === Status.Searching || !inputs.filter((input) => input.property && input.value).length;
+
     return (
         <Box>
             <form onSubmit={handleSubmit}>
