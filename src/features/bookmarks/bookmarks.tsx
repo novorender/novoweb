@@ -35,7 +35,7 @@ import {
     selectEditingScene,
     selectMeasure,
 } from "slices/renderSlice";
-import { selectIsAdminScene } from "slices/explorerSlice";
+import { selectHasAdminCapabilities } from "slices/explorerSlice";
 import { highlightActions, useDispatchHighlighted } from "contexts/highlighted";
 import { hiddenGroupActions, useDispatchHidden } from "contexts/hidden";
 import { customGroupsActions, useCustomGroups } from "contexts/customGroups";
@@ -89,7 +89,7 @@ export function Bookmarks() {
     } = useExplorerGlobals(true);
 
     const bookmarks = useAppSelector(selectBookmarks);
-    const isAdmin = useAppSelector(selectIsAdminScene);
+    const isAdmin = useAppSelector(selectHasAdminCapabilities);
     const dispatch = useAppDispatch();
 
     const [addingBookmark, toggleAddingBookmark] = useToggle();

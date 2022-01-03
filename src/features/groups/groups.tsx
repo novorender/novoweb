@@ -37,7 +37,7 @@ import { ColorPicker } from "features/colorPicker";
 import { WidgetList } from "features/widgetList";
 
 import { useAppSelector } from "app/store";
-import { selectIsAdminScene } from "slices/explorerSlice";
+import { selectHasAdminCapabilities } from "slices/explorerSlice";
 import { useExplorerGlobals } from "contexts/explorerGlobals";
 import { CustomGroup, customGroupsActions, useCustomGroups } from "contexts/customGroups";
 import { highlightActions, useDispatchHighlighted, useHighlighted } from "contexts/highlighted";
@@ -65,7 +65,7 @@ const StyledCheckbox = styled(Checkbox)`
 
 export function Groups() {
     const { state: customGroups, dispatch: dispatchCustom } = useCustomGroups();
-    const isAdmin = useAppSelector(selectIsAdminScene);
+    const isAdmin = useAppSelector(selectHasAdminCapabilities);
 
     const [creatingGroup, setCreatingGroup] = useState<boolean | string>(false);
     const [menuOpen, toggleMenu] = useToggle();
@@ -253,7 +253,7 @@ function Group({
     editGroup: () => void;
     colorPickerPosition: { top: number; left: number } | undefined;
 }) {
-    const isAdmin = useAppSelector(selectIsAdminScene);
+    const isAdmin = useAppSelector(selectHasAdminCapabilities);
     const { dispatch: dispatchCustomGroups } = useCustomGroups();
     const [menuAnchor, setMenuAnchor] = useState<HTMLElement | null>(null);
     const [colorPicker, toggleColorPicker] = useToggle();
