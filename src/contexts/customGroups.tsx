@@ -11,16 +11,24 @@ const initialState = [] as CustomGroup[];
 type State = typeof initialState;
 
 enum ActionTypes {
-    UpdateGroup,
+    Update,
     Set,
     Add,
+    Delete,
 }
 
-function updateGroup(groupId: string, updates: Partial<CustomGroup>) {
+function update(groupId: string, updates: Partial<CustomGroup>) {
     return {
-        type: ActionTypes.UpdateGroup as const,
+        type: ActionTypes.Update as const,
         groupId,
         updates,
+    };
+}
+
+function deleteGroup(groupId: string) {
+    return {
+        type: ActionTypes.Delete as const,
+        groupId,
     };
 }
 
@@ -38,7 +46,7 @@ function add(group: CustomGroup) {
     };
 }
 
-const actions = { updateGroup, set, add };
+const actions = { set, add, update, delete: deleteGroup };
 
 type Actions = ReturnType<typeof actions[keyof typeof actions]>;
 type DispatchCustomGroups = Dispatch<Actions>;
@@ -48,7 +56,10 @@ const Context = createContext<ContextType>(undefined as any);
 
 function reducer(state: State, action: Actions) {
     switch (action.type) {
-        case ActionTypes.UpdateGroup: {
+        case ActionTypes.Delete: {
+            return state.filter((group) => group.id !== action.groupId);
+        }
+        case ActionTypes.Update: {
             return state.map((group) => (group.id === action.groupId ? { ...group, ...action.updates } : group));
         }
         case ActionTypes.Set: {

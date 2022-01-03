@@ -1,4 +1,4 @@
-import { useState, useCallback, RefCallback, FormEventHandler } from "react";
+import { useState, useCallback, RefCallback, FormEventHandler, MouseEvent } from "react";
 import {
     List,
     Box,
@@ -9,8 +9,13 @@ import {
     ListItemButtonProps,
     ListItemButton,
     Button,
+    ListItemText,
+    MenuItem,
+    MenuList,
+    Menu,
+    ListItemIcon,
 } from "@mui/material";
-import { Search, Visibility, ColorLens, AddCircle, CheckCircle } from "@mui/icons-material";
+import { Search, Visibility, ColorLens, AddCircle, CheckCircle, MoreVert, Edit, Delete } from "@mui/icons-material";
 import { css } from "@mui/styled-engine";
 import { v4 as uuidv4 } from "uuid";
 import { ObjectId, SearchPattern } from "@novorender/webgl-api";
@@ -93,7 +98,7 @@ export function Groups() {
 
         organisedGroups.singles
             .filter((group) => group.selected)
-            .forEach((group) => dispatchCustom(customGroupsActions.updateGroup(group.id, { grouping: name })));
+            .forEach((group) => dispatchCustom(customGroupsActions.update(group.id, { grouping: name })));
     };
 
     return (
@@ -101,7 +106,11 @@ export function Groups() {
             <WidgetContainer>
                 <WidgetHeader widget={featuresConfig.groups}>
                     {menuOpen ? null : creatingGroup !== false ? (
-                        <CreateGroup onClose={() => setCreatingGroup(false)} />
+                        <CreateGroup
+                            key={typeof creatingGroup === "string" ? creatingGroup : undefined}
+                            id={typeof creatingGroup === "string" ? creatingGroup : undefined}
+                            onClose={() => setCreatingGroup(false)}
+                        />
                     ) : isAdmin ? (
                         <Box mx={-1}>
                             <Button color="grey" onClick={() => setCreatingGroup("")}>
@@ -182,6 +191,11 @@ export function Groups() {
                                                     )
                                                 }
                                             />
+                                            <Box flex="0 0 auto" visibility={"hidden"}>
+                                                <IconButton size="small" sx={{ py: 0 }}>
+                                                    <MoreVert />
+                                                </IconButton>
+                                            </Box>
                                         </>
                                     ) : null}
                                 </Box>
@@ -189,10 +203,11 @@ export function Groups() {
 
                             {organisedGroups.singles.map((group, index) => (
                                 <Group
+                                    key={group.name + index}
                                     inset={hasGrouping}
+                                    editGroup={() => setCreatingGroup(group.id)}
                                     handleChange={handleChange}
                                     group={group}
-                                    key={group.name + index}
                                     colorPickerPosition={colorPickerPosition}
                                 />
                             ))}
@@ -254,6 +269,11 @@ export function Groups() {
                                                 onFocus={(event) => event.stopPropagation()}
                                             />
                                         </Box>
+                                        <Box flex="0 0 auto">
+                                            <IconButton size="small" sx={{ py: 0 }} aria-haspopup="true">
+                                                <MoreVert />
+                                            </IconButton>
+                                        </Box>
                                     </AccordionSummary>
                                     <AccordionDetails>
                                         <Box pr={3}>
@@ -261,6 +281,7 @@ export function Groups() {
                                                 {grouping.groups.map((group, index) => (
                                                     <Group
                                                         key={group.name + index}
+                                                        editGroup={() => setCreatingGroup(group.id)}
                                                         handleChange={handleChange}
                                                         group={group}
                                                         colorPickerPosition={colorPickerPosition}
@@ -294,15 +315,28 @@ function Group({
     group,
     inset,
     handleChange,
+    editGroup,
     colorPickerPosition,
 }: {
     group: CustomGroup;
     inset?: boolean;
+    editGroup: () => void;
     colorPickerPosition: { top: number; left: number } | undefined;
     handleChange: (updated: CustomGroup[]) => void;
 }) {
+    const { dispatch: dispatchCustomGroups } = useCustomGroups();
+    const [menuAnchor, setMenuAnchor] = useState<HTMLElement | null>(null);
     const [colorPicker, toggleColorPicker] = useToggle();
     const [r, g, b] = vecToRgb(group.color);
+
+    const openMenu = (e: MouseEvent<HTMLButtonElement>) => {
+        e.stopPropagation();
+        setMenuAnchor(e.currentTarget.parentElement);
+    };
+
+    const closeMenu = () => {
+        setMenuAnchor(null);
+    };
 
     return (
         <>
@@ -312,18 +346,6 @@ function Group({
                         <Tooltip title={group.name}>
                             <Typography noWrap={true}>{group.name}</Typography>
                         </Tooltip>
-                    </Box>
-                    <Box flex="0 0 auto">
-                        <IconButton
-                            sx={{ paddingBottom: 0, paddingTop: 0 }}
-                            onClick={(e) => {
-                                e.stopPropagation();
-                                toggleColorPicker();
-                            }}
-                            size="small"
-                        >
-                            <ColorLens style={{ fill: `rgb(${r}, ${g}, ${b})` }} />
-                        </IconButton>
                     </Box>
                     <Box flex="0 0 auto">
                         <StyledCheckbox
@@ -346,6 +368,17 @@ function Group({
                             onChange={() => handleChange([toggleVisibility(group)])}
                         />
                     </Box>
+                    <Box flex="0 0 auto">
+                        <IconButton
+                            color={Boolean(menuAnchor) ? "primary" : "default"}
+                            size="small"
+                            sx={{ py: 0 }}
+                            aria-haspopup="true"
+                            onClick={openMenu}
+                        >
+                            <MoreVert />
+                        </IconButton>
+                    </Box>
                 </Box>
             </StyledListItemButton>
             {colorPicker ? (
@@ -356,6 +389,34 @@ function Group({
                     onOutsideClick={toggleColorPicker}
                 />
             ) : null}
+            <Menu
+                onClick={(e) => e.stopPropagation()}
+                anchorEl={menuAnchor}
+                open={Boolean(menuAnchor)}
+                onClose={closeMenu}
+                id={`${group.id} menu`}
+            >
+                <MenuList sx={{ maxWidth: "100%" }}>
+                    <MenuItem onClick={editGroup}>
+                        <ListItemIcon>
+                            <Edit fontSize="small" />
+                        </ListItemIcon>
+                        <ListItemText>Edit</ListItemText>
+                    </MenuItem>
+                    <MenuItem onClick={() => dispatchCustomGroups(customGroupsActions.delete(group.id))}>
+                        <ListItemIcon>
+                            <Delete fontSize="small" />
+                        </ListItemIcon>
+                        <ListItemText>Delete</ListItemText>
+                    </MenuItem>
+                    <MenuItem onClick={toggleColorPicker}>
+                        <ListItemIcon>
+                            <ColorLens sx={{ color: `rgb(${r}, ${g}, ${b})` }} fontSize="small" />
+                        </ListItemIcon>
+                        <ListItemText>Select color</ListItemText>
+                    </MenuItem>
+                </MenuList>
+            </Menu>
         </>
     );
 }
@@ -369,10 +430,14 @@ function CreateGroup({ onClose, id }: { onClose: () => void; id?: string }) {
     const {
         state: { scene },
     } = useExplorerGlobals(true);
-    const { dispatch: dispatchCustomGroup } = useCustomGroups();
+    const { state: customGroups, dispatch: dispatchCustomGroup } = useCustomGroups();
+    const groupToEdit = id ? customGroups.find((group) => group.id === id) : undefined;
+    console.log({ groupToEdit, id });
     const highlighted = useHighlighted();
     const dispatchHighlighted = useDispatchHighlighted();
-    const [inputs, setInputs] = useState<SearchPattern[]>([{ property: "", value: "", exact: true }]);
+    const [inputs, setInputs] = useState<SearchPattern[]>(
+        groupToEdit?.search ?? [{ property: "", value: "", exact: true }]
+    );
     const [status, setStatus] = useMountedState(Status.Initial);
     const [ids, setIds] = useMountedState([] as ObjectId[]);
     const [savedInputs, setSavedInputs] = useState<SearchPattern[]>([]);
@@ -404,7 +469,7 @@ function CreateGroup({ onClose, id }: { onClose: () => void; id?: string }) {
     const createGroup = () => {
         const name = savedInputs.map((input) => `${input.property?.split("/").pop()} ${input.value}`).join(" + ");
         const newGroup: CustomGroup = {
-            id: id ?? uuidv4(),
+            id: uuidv4(),
             name,
             ids,
             selected: true,
@@ -413,10 +478,15 @@ function CreateGroup({ onClose, id }: { onClose: () => void; id?: string }) {
             color: [...highlighted.color],
         };
 
-        // TODO(OLA):
-        // this will just add the group to react state, not save
-        // need save button somewhere?
         dispatchCustomGroup(customGroupsActions.add(newGroup));
+    };
+
+    const updateGroup = () => {
+        if (!groupToEdit) {
+            return;
+        }
+
+        dispatchCustomGroup(customGroupsActions.update(groupToEdit.id, { search: [...savedInputs] }));
     };
 
     const disableSearch =
@@ -435,9 +505,14 @@ function CreateGroup({ onClose, id }: { onClose: () => void; id?: string }) {
                         <AddCircle sx={{ mr: 0.5 }} />
                         Add criteria
                     </Button>
-                    <Button color="grey" sx={{ padding: 0 }} onClick={createGroup} disabled={!ids.length}>
+                    <Button
+                        color="grey"
+                        sx={{ padding: 0 }}
+                        onClick={groupToEdit ? updateGroup : createGroup}
+                        disabled={!ids.length}
+                    >
                         <AddCircle sx={{ mr: 0.5 }} />
-                        Create group {ids.length ? `(${ids.length})` : ""}
+                        {groupToEdit ? "Update" : "Create"} group {ids.length ? `(${ids.length})` : ""}
                     </Button>
                 </Box>
                 <Box display="flex" mb={1}>
