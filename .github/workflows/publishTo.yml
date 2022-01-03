@@ -40,11 +40,11 @@ jobs:
             - name: create publish profile name
               run: |
                   publish_profile=$(echo 'console.log("AZURE_WEBAPP_PUBLISH_PROFILE_${{ github.event.inputs.slot }}".toUpperCase().replace("-","_"))' | node -)
-                  echo "PROFILE=secrets[${publish_profile}]" >>${GITHUB_ENV}
+                  echo "PROFILE=${publish_profile}" >>${GITHUB_ENV}
             - name: "Deploy to Azure WebApp"
               uses: azure/webapps-deploy@v2
               with:
                   app-name: ${{ env.AZURE_WEBAPP_NAME }}
-                  publish-profile: ${PROFILE}
+                  publish-profile: ${{ secrets[${PROFILE}] }}
                   package: ${{ env.AZURE_WEBAPP_PACKAGE_PATH }}
                   slot-name: ${{ github.event.inputs.slot }}
