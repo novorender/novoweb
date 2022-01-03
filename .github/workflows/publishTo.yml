@@ -19,11 +19,11 @@ env:
     AZURE_WEBAPP_NAME: novorender-explorer # set this to your application's name
     AZURE_WEBAPP_PACKAGE_PATH: "." # set this to the path to your web app project, defaults to the repository root
     NODE_VERSION: "12.x" # set this to the node version to use
-    PUBLISH_PROFILE: "AZURE_WEBAPP_PUBLISH_PROFILE_${{ github.event.inputs.slot }}"
+    PUBLISH_PROFILE: $(echo 'console.log("${{ github.event.inputs.slot }}".toUpperCase().replace("-","_"))' | node -)
 
 jobs:
     build-and-deploy:
-        name: => ${{ github.event.inputs.slot }}
+        name: ${{ env.GITHUB_REF_NAME }} => ${{ github.event.inputs.slot }}
         runs-on: ubuntu-latest
         steps:
             - uses: actions/checkout@v2
@@ -42,6 +42,6 @@ jobs:
               uses: azure/webapps-deploy@v2
               with:
                   app-name: ${{ env.AZURE_WEBAPP_NAME }}
-                  publish-profile: ${{ secrets[env.PUBLISH_PROFILE] }}
+                  publish-profile: ${{ secrets["AZURE_WEBAPP_PUBLISH_PROFILE_${{ env.PUBLISH_PROFILE }}"] }}
                   package: ${{ env.AZURE_WEBAPP_PACKAGE_PATH }}
                   slot-name: ${{ github.event.inputs.slot }}
