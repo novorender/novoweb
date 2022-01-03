@@ -14,8 +14,7 @@ const initialState = {
     enabledWidgets: defaultEnabledWidgets as WidgetKey[],
     sceneType: SceneType.Viewer,
     viewerScenes: [] as ScenePreview[],
-    // TODO(OLA)
-    widgets: ["groups"] as WidgetKey[],
+    widgets: [] as WidgetKey[],
     urlSearchQuery: undefined as undefined | string | SearchPattern[],
 };
 
