@@ -106,7 +106,8 @@ function Node({ prop, level, selected, search }: NodeProps) {
             setExpanded(!expanded);
         } else {
             const url = new URL((scene as any).assetUrl);
-            url.pathname += "propcache/" + encodeURIComponent(encodeURIComponent(prop.path)).toLowerCase();
+            url.pathname +=
+                "propcache/" + encodeURIComponent(encodeURIComponent(prop.path).replace("%20", "+")).toLowerCase();
             setExpanded(false);
             try {
                 const resp = await fetch(url.toString());
