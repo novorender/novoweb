@@ -1,4 +1,5 @@
 import ListIcon from "@mui/icons-material/List";
+import TreeIcon from "@mui/icons-material/AccountTreeRounded";
 import StarIcon from "@mui/icons-material/Star";
 import ShareIcon from "@mui/icons-material/Share";
 import HomeIcon from "@mui/icons-material/Home";
@@ -20,6 +21,7 @@ import MovieIcon from "@mui/icons-material/Movie";
 import CropLandscapeIcon from "@mui/icons-material/CropLandscape";
 import CameraswitchIcon from "@mui/icons-material/Cameraswitch";
 import SettingsIcon from "@mui/icons-material/Settings";
+import VrpanoOutlinedIcon from "@mui/icons-material/VrpanoOutlined";
 
 import { ReactComponent as ClippingIcon } from "media/icons/clipping.svg";
 import { ReactComponent as RunIcon } from "media/icons/run.svg";
@@ -68,6 +70,12 @@ export const config = {
         Icon: ListIcon,
         type: FeatureType.Widget,
     },
+    propertiesTree: {
+        key: "propertiesTree",
+        name: "Properties Tree",
+        Icon: TreeIcon,
+        type: FeatureType.Widget,
+    },
     bookmarks: {
         key: "bookmarks",
         name: "Bookmarks",
@@ -114,6 +122,12 @@ export const config = {
         key: "orthoCam",
         name: "2D",
         Icon: CameraswitchIcon,
+        type: FeatureType.Widget,
+    },
+    panoramas: {
+        key: "panoramas",
+        name: "Panoramas",
+        Icon: VrpanoOutlinedIcon,
         type: FeatureType.Widget,
     },
     home: {
