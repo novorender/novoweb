@@ -11,20 +11,18 @@ import {
     tooltipClasses,
     TooltipProps,
     Button,
-    Modal,
-    Paper,
-    FormControl,
-    OutlinedInput,
 } from "@mui/material";
 import { AddCircle } from "@mui/icons-material";
 import type { Bookmark } from "@novorender/data-js-api";
-import { OrthoControllerParams } from "@novorender/webgl-api";
+import { OrthoControllerParams, View } from "@novorender/webgl-api";
 import { css } from "@mui/styled-engine";
 
 import { dataApi } from "app";
+import { featuresConfig } from "config/features";
 import { useToggle } from "hooks/useToggle";
 import { useAppDispatch, useAppSelector } from "app/store";
-import { ScrollBox, Tooltip, Divider, WidgetContainer, LogoSpeedDial, WidgetHeader } from "components";
+import { ScrollBox, Tooltip, Divider, WidgetContainer, LogoSpeedDial, WidgetHeader, TextField } from "components";
+import { WidgetList } from "features/widgetList";
 
 import {
     CameraType,
@@ -33,16 +31,15 @@ import {
     selectBookmarks,
     selectDefaultVisibility,
     selectEditingScene,
+    selectMainObject,
     selectMeasure,
 } from "slices/renderSlice";
 import { selectHasAdminCapabilities } from "slices/explorerSlice";
-import { highlightActions, useDispatchHighlighted } from "contexts/highlighted";
-import { hiddenGroupActions, useDispatchHidden } from "contexts/hidden";
-import { customGroupsActions, useCustomGroups } from "contexts/customGroups";
+import { highlightActions, useDispatchHighlighted, useLazyHighlighted } from "contexts/highlighted";
+import { hiddenGroupActions, useDispatchHidden, useLazyHidden } from "contexts/hidden";
+import { CustomGroup, customGroupsActions, useCustomGroups } from "contexts/customGroups";
 import { useExplorerGlobals } from "contexts/explorerGlobals";
 import { useDispatchVisible, visibleActions } from "contexts/visible";
-import { featuresConfig } from "config/features";
-import { WidgetList } from "features/widgetList";
 
 const Description = styled(Typography)(
     () => css`
@@ -92,37 +89,31 @@ export function Bookmarks() {
     const isAdmin = useAppSelector(selectHasAdminCapabilities);
     const dispatch = useAppDispatch();
 
-    const [addingBookmark, toggleAddingBookmark] = useToggle();
+    const [creatingBookmark, toggleCreatingBookmark] = useToggle();
 
     function handleSelect(bookmark: Bookmark) {
         dispatchVisible(visibleActions.set([]));
 
-        if (bookmark.objectGroups) {
-            const bmDefaultGroup = bookmark.objectGroups.find((group) => !group.id && group.selected);
-            if (bmDefaultGroup?.ids) {
-                dispatchHighlighted(highlightActions.setIds(bmDefaultGroup.ids as number[]));
-            }
+        const bmDefaultGroup = bookmark.objectGroups?.find((group) => !group.id && group.selected);
+        dispatchHighlighted(highlightActions.setIds((bmDefaultGroup?.ids as number[] | undefined) ?? []));
 
-            const bmHiddenGroup = bookmark.objectGroups.find((group) => !group.id && group.hidden);
-            if (bmHiddenGroup?.ids) {
-                dispatchHidden(hiddenGroupActions.setIds(bmHiddenGroup.ids as number[]));
-            }
+        const bmHiddenGroup = bookmark.objectGroups?.find((group) => !group.id && group.hidden);
+        dispatchHidden(hiddenGroupActions.setIds((bmHiddenGroup?.ids as number[] | undefined) ?? []));
 
-            const updatedCustomGroups = customGroups.map((group) => {
-                const bookmarked = bookmark.objectGroups!.find((bmGroup) => bmGroup.id === group.id);
+        const updatedCustomGroups = customGroups.map((group) => {
+            const bookmarked = bookmark.objectGroups?.find((bmGroup) => bmGroup.id === group.id);
 
-                return {
-                    ...group,
-                    selected: bookmarked ? bookmarked.selected : false,
-                    hidden: bookmarked ? bookmarked.hidden : false,
-                };
-            });
+            return {
+                ...group,
+                selected: bookmarked ? bookmarked.selected : false,
+                hidden: bookmarked ? bookmarked.hidden : false,
+            };
+        });
 
-            dispatchCustom(customGroupsActions.set(updatedCustomGroups));
+        dispatchCustom(customGroupsActions.set(updatedCustomGroups));
 
-            const main = bmDefaultGroup && bmDefaultGroup.ids?.length ? bmDefaultGroup.ids.slice(-1)[0] : undefined;
-            dispatch(renderActions.setMainObject(main));
-        }
+        const main = bmDefaultGroup && bmDefaultGroup.ids?.length ? bmDefaultGroup.ids.slice(-1)[0] : undefined;
+        dispatch(renderActions.setMainObject(main));
 
         if (bookmark.selectedOnly !== undefined) {
             dispatch(
@@ -164,71 +155,75 @@ export function Bookmarks() {
         <>
             <WidgetContainer>
                 <WidgetHeader widget={featuresConfig.bookmarks}>
-                    {isAdmin && !menuOpen ? (
-                        <Button color="grey" onClick={toggleAddingBookmark}>
+                    {isAdmin && !menuOpen && !creatingBookmark ? (
+                        <Button color="grey" onClick={toggleCreatingBookmark}>
                             <AddCircle sx={{ mr: 1 }} />
                             Add bookmark
                         </Button>
                     ) : null}
                 </WidgetHeader>
                 <ScrollBox display={menuOpen ? "none" : "flex"} height={1} pb={2}>
-                    <List sx={{ width: 1 }}>
-                        {bookmarks.map((bookmark, index, array) => (
-                            <Fragment key={bookmark.name + index}>
-                                <ListItem
-                                    sx={{ padding: `${theme.spacing(0.5)} ${theme.spacing(1)}` }}
-                                    button
-                                    onClick={() => handleSelect(bookmark)}
-                                >
-                                    <Box
-                                        width={1}
-                                        maxHeight={80}
-                                        display="flex"
-                                        alignItems="flex-start"
-                                        overflow="hidden"
+                    {creatingBookmark ? (
+                        <CreateBookmark onClose={toggleCreatingBookmark} />
+                    ) : (
+                        <List sx={{ width: 1 }}>
+                            {bookmarks.map((bookmark, index, array) => (
+                                <Fragment key={bookmark.name + index}>
+                                    <ListItem
+                                        sx={{ padding: `${theme.spacing(0.5)} ${theme.spacing(1)}` }}
+                                        button
+                                        onClick={() => handleSelect(bookmark)}
                                     >
                                         <Box
-                                            bgcolor={theme.palette.grey[200]}
-                                            height={65}
-                                            width={100}
-                                            flexShrink={0}
-                                            flexGrow={0}
+                                            width={1}
+                                            maxHeight={80}
+                                            display="flex"
+                                            alignItems="flex-start"
+                                            overflow="hidden"
                                         >
-                                            {bookmark.img ? (
-                                                <ImgTooltip
-                                                    placement="bottom-end"
-                                                    title={
-                                                        <Box sx={{ height: 176, width: 176, cursor: "pointer" }}>
-                                                            <Img alt="" src={bookmark.img} />
-                                                        </Box>
-                                                    }
-                                                >
-                                                    <Img alt="" height="32px" width="32px" src={bookmark.img} />
-                                                </ImgTooltip>
-                                            ) : null}
-                                        </Box>
-                                        <Box ml={1} flexDirection="column" flexGrow={1} width={0}>
-                                            <Tooltip disableInteractive title={bookmark.name}>
-                                                <Typography noWrap variant="body1" sx={{ fontWeight: 600 }}>
-                                                    {bookmark.name}
-                                                </Typography>
-                                            </Tooltip>
-                                            {bookmark.description ? (
-                                                <Tooltip disableInteractive title={bookmark.description}>
-                                                    <Description>{bookmark.description}</Description>
+                                            <Box
+                                                bgcolor={theme.palette.grey[200]}
+                                                height={65}
+                                                width={100}
+                                                flexShrink={0}
+                                                flexGrow={0}
+                                            >
+                                                {bookmark.img ? (
+                                                    <ImgTooltip
+                                                        placement="bottom-end"
+                                                        title={
+                                                            <Box sx={{ height: 176, width: 176, cursor: "pointer" }}>
+                                                                <Img alt="" src={bookmark.img} />
+                                                            </Box>
+                                                        }
+                                                    >
+                                                        <Img alt="" height="32px" width="32px" src={bookmark.img} />
+                                                    </ImgTooltip>
+                                                ) : null}
+                                            </Box>
+                                            <Box ml={1} flexDirection="column" flexGrow={1} width={0}>
+                                                <Tooltip disableInteractive title={bookmark.name}>
+                                                    <Typography noWrap variant="body1" sx={{ fontWeight: 600 }}>
+                                                        {bookmark.name}
+                                                    </Typography>
                                                 </Tooltip>
-                                            ) : null}
+                                                {bookmark.description ? (
+                                                    <Tooltip disableInteractive title={bookmark.description}>
+                                                        <Description>{bookmark.description}</Description>
+                                                    </Tooltip>
+                                                ) : null}
+                                            </Box>
                                         </Box>
-                                    </Box>
-                                </ListItem>
-                                {index !== array.length - 1 ? (
-                                    <Box my={0.5} component="li">
-                                        <Divider />
-                                    </Box>
-                                ) : null}
-                            </Fragment>
-                        ))}
-                    </List>
+                                    </ListItem>
+                                    {index !== array.length - 1 ? (
+                                        <Box my={0.5} component="li">
+                                            <Divider />
+                                        </Box>
+                                    ) : null}
+                                </Fragment>
+                            ))}
+                        </List>
+                    )}
                 </ScrollBox>
                 <WidgetList
                     display={menuOpen ? "block" : "none"}
@@ -241,31 +236,45 @@ export function Bookmarks() {
                 toggle={toggleMenu}
                 testId={`${featuresConfig.bookmarks.key}-widget-menu-fab`}
             />
-            <AddNewBookmark open={addingBookmark} onClose={toggleAddingBookmark} />
         </>
     );
 }
 
-const AddNewBookmark = ({ onClose, open }: { onClose: () => void; open: boolean }) => {
+const CreateBookmark = ({ onClose }: { onClose: () => void }) => {
     const bookmarks = useAppSelector(selectBookmarks);
     const measurement = useAppSelector(selectMeasure);
     const editingScene = useAppSelector(selectEditingScene);
     const defaultVisibility = useAppSelector(selectDefaultVisibility);
+    const mainObject = useAppSelector(selectMainObject);
     const dispatch = useAppDispatch();
 
     const {
         state: { canvas, scene, view },
     } = useExplorerGlobals(true);
     const { state: customGroups } = useCustomGroups();
+    const highlighted = useLazyHighlighted();
+    const hidden = useLazyHidden();
 
     const [name, setName] = useState("");
     const [description, setDescription] = useState("");
     const imgRef = useRef(createBookmarkImg(canvas));
+    const bookmarkRef = useRef(
+        createBookmark({
+            view,
+            mainObject,
+            highlighted,
+            hidden,
+            customGroups,
+            defaultVisibility,
+            measurement,
+            img: imgRef.current,
+        })
+    );
 
     const handleSubmit: FormEventHandler = (e) => {
         e.preventDefault();
 
-        const newBookmarks = bookmarks.concat(createBookmark());
+        const newBookmarks = bookmarks.concat({ ...bookmarkRef.current, name, description });
 
         dispatch(renderActions.setBookmarks(newBookmarks));
         dataApi.saveBookmarks(editingScene?.id || scene.id, newBookmarks);
@@ -273,121 +282,50 @@ const AddNewBookmark = ({ onClose, open }: { onClose: () => void; open: boolean 
         onClose();
     };
 
-    const createBookmark = (): Bookmark => {
-        const camera = view.camera;
-        const { highlight: _highlight, ...clippingPlanes } = view.settings.clippingPlanes;
-        const { ...clippingVolume } = view.settings.clippingVolume;
-        const selectedOnly = defaultVisibility !== ObjectVisibility.Neutral;
-        const img = imgRef.current;
-        const objectGroups = customGroups.map(({ id, selected, hidden, ids }) => ({
-            id,
-            selected,
-            hidden,
-            ids: id ? undefined : ids,
-        }));
-
-        if (camera.kind === "pinhole") {
-            const { kind, position, rotation, fieldOfView, near, far } = camera;
-
-            return {
-                name,
-                description,
-                img,
-                objectGroups,
-                selectedOnly,
-                clippingVolume,
-                clippingPlanes: {
-                    ...clippingPlanes,
-                    bounds: {
-                        min: Array.from(clippingPlanes.bounds.min) as [number, number, number],
-                        max: Array.from(clippingPlanes.bounds.max) as [number, number, number],
-                    },
-                },
-                camera: {
-                    kind,
-                    position: vec3.copy(vec3.create(), position),
-                    rotation: quat.copy(quat.create(), rotation),
-                    fieldOfView,
-                    near,
-                    far,
-                },
-                measurement: measurement.points.length > 0 ? measurement.points : undefined,
-            };
-        } else {
-            const ortho = camera.controller.params as OrthoControllerParams;
-            return {
-                name,
-                description,
-                img,
-                ortho,
-                objectGroups,
-                selectedOnly,
-                clippingPlanes,
-                clippingVolume,
-                measurement: measurement.points.length > 0 ? measurement.points : undefined,
-            };
-        }
-    };
-
     return (
-        <Modal sx={{ display: "flex", justifyContent: "center", alignItems: "center" }} open={open} onClose={onClose}>
-            <Paper sx={{ minWidth: 300, padding: 2 }}>
-                <Typography variant="h5" textAlign="center" sx={{ mb: 2 }}>
-                    Add new bookmark
-                </Typography>
-                <Box
-                    sx={{
-                        display: "flex",
-                        justifyContent: "center",
-                        img: { height: 176, width: 176, objectFit: "contain" },
-                    }}
-                >
-                    <img alt="" src={imgRef.current} />
+        <Box width={1} px={1} mt={2}>
+            <Box sx={{ img: { width: "100%", height: 200, objectFit: "cover" } }}>
+                <img alt="" src={imgRef.current} />
+            </Box>
+            <form onSubmit={handleSubmit}>
+                <TextField
+                    name="title"
+                    value={name}
+                    onChange={(e) => setName(e.target.value)}
+                    id={"bookmark-title"}
+                    label={"Title"}
+                    fullWidth
+                    required
+                    sx={{ my: 1 }}
+                />
+                <TextField
+                    value={description}
+                    onChange={(e) => setDescription(e.target.value)}
+                    id={"bookmark-description"}
+                    label={"Description"}
+                    fullWidth
+                    multiline
+                    rows={4}
+                    sx={{ mb: 2 }}
+                />
+                <Box display="flex">
+                    <Button
+                        color="grey"
+                        type="button"
+                        variant="outlined"
+                        onClick={onClose}
+                        fullWidth
+                        size="large"
+                        sx={{ marginRight: 1 }}
+                    >
+                        Cancel
+                    </Button>
+                    <Button type="submit" fullWidth disabled={!name} color="primary" variant="contained" size="large">
+                        Save
+                    </Button>
                 </Box>
-                <form onSubmit={handleSubmit}>
-                    <Box mb={2}>
-                        <FormControl fullWidth>
-                            <label htmlFor="name">Name</label>
-                            <OutlinedInput
-                                id="name"
-                                value={name}
-                                onChange={(e) => setName(e.target.value)}
-                                type="text"
-                                size="small"
-                                autoFocus
-                            />
-                        </FormControl>
-                    </Box>
-                    <Box mb={2}>
-                        <FormControl fullWidth>
-                            <label htmlFor="description">Description</label>
-                            <OutlinedInput
-                                id="description"
-                                value={description}
-                                onChange={(e) => setDescription(e.target.value)}
-                                type="text"
-                                size="small"
-                            />
-                        </FormControl>
-                    </Box>
-                    <Box display="flex">
-                        <Button
-                            color="grey"
-                            type="button"
-                            variant="outlined"
-                            onClick={onClose}
-                            fullWidth
-                            sx={{ marginRight: 1 }}
-                        >
-                            Cancel
-                        </Button>
-                        <Button type="submit" fullWidth disabled={!name} color="primary" variant="contained">
-                            Save
-                        </Button>
-                    </Box>
-                </form>
-            </Paper>
-        </Modal>
+            </form>
+        </Box>
     );
 };
 
@@ -396,10 +334,95 @@ function createBookmarkImg(canvas: HTMLCanvasElement): string {
     const width = canvas.width;
     const height = canvas.height;
 
-    dist.height = 240;
-    dist.width = (240 * height) / width;
+    dist.height = 350;
+    dist.width = (350 * height) / width;
     const ctx = dist.getContext("2d", { alpha: false, desynchronized: false })!;
     ctx.drawImage(canvas, 0, 0, width, height, 0, 0, dist.width, dist.height);
 
     return dist.toDataURL("image/png");
 }
+
+const createBookmark = ({
+    view,
+    highlighted,
+    hidden,
+    customGroups,
+    mainObject,
+    defaultVisibility,
+    measurement,
+    img,
+}: {
+    view: View;
+    highlighted: ReturnType<typeof useLazyHighlighted>;
+    hidden: ReturnType<typeof useLazyHidden>;
+    customGroups: CustomGroup[];
+    mainObject: number | undefined;
+    defaultVisibility: ObjectVisibility;
+    measurement: ReturnType<typeof selectMeasure>;
+    img: string;
+}): Omit<Bookmark, "name" | "description"> => {
+    const camera = view.camera;
+    const { highlight: _highlight, ...clippingPlanes } = view.settings.clippingPlanes;
+    const { ...clippingVolume } = view.settings.clippingVolume;
+    const selectedOnly = defaultVisibility !== ObjectVisibility.Neutral;
+
+    const objectGroups = customGroups
+        .map(({ id, selected, hidden, ids }) => ({
+            id,
+            selected,
+            hidden,
+            ids: id ? undefined : ids,
+        }))
+        .concat({
+            id: "",
+            selected: true,
+            hidden: false,
+            ids: highlighted.current.idArr.concat(
+                mainObject !== undefined && !highlighted.current.ids[mainObject] ? [mainObject] : []
+            ),
+        })
+        .concat({
+            id: "",
+            selected: false,
+            hidden: true,
+            ids: hidden.current.idArr,
+        });
+
+    if (camera.kind === "pinhole") {
+        const { kind, position, rotation, fieldOfView, near, far } = camera;
+
+        return {
+            img,
+            objectGroups,
+            selectedOnly,
+            clippingVolume,
+            clippingPlanes: {
+                ...clippingPlanes,
+                bounds: {
+                    min: Array.from(clippingPlanes.bounds.min) as [number, number, number],
+                    max: Array.from(clippingPlanes.bounds.max) as [number, number, number],
+                },
+            },
+            camera: {
+                kind,
+                position: vec3.copy(vec3.create(), position),
+                rotation: quat.copy(quat.create(), rotation),
+                fieldOfView,
+                near,
+                far,
+            },
+            measurement: measurement.points.length > 0 ? measurement.points : undefined,
+        };
+    } else {
+        const ortho = camera.controller.params as OrthoControllerParams;
+        return {
+            img,
+            ortho,
+            objectGroups,
+            selectedOnly,
+            clippingPlanes,
+            clippingVolume,
+            measurement: measurement.points.length > 0 ? measurement.points : undefined,
+        };
+    }
+};
