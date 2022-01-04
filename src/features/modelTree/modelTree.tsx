@@ -3,9 +3,10 @@ import { useRef, useEffect } from "react";
 import { ListOnScrollProps } from "react-window";
 import { HierarcicalObjectReference } from "@novorender/webgl-api";
 
-import { Divider, LinearProgress } from "components";
+import { Divider, LinearProgress, LogoSpeedDial, WidgetContainer, WidgetHeader } from "components";
 import { Breadcrumbs } from "features/breadcrumbs";
 import { NodeList } from "features/nodeList";
+import { WidgetList } from "features/widgetList";
 
 import { useAppDispatch, useAppSelector } from "app/store";
 import { renderActions, selectMainObject } from "slices/renderSlice";
@@ -13,8 +14,10 @@ import { useExplorerGlobals } from "contexts/explorerGlobals";
 
 import { useAbortController } from "hooks/useAbortController";
 import { useMountedState } from "hooks/useMountedState";
+import { useToggle } from "hooks/useToggle";
 import { getObjectData, iterateAsync, searchFirstObjectAtPath } from "utils/search";
 import { getParentPath } from "utils/objectData";
+import { featuresConfig } from "config/features";
 
 enum Status {
     Ready,
@@ -51,6 +54,7 @@ export function ModelTree() {
         state: { scene },
     } = useExplorerGlobals(true);
 
+    const [menuOpen, toggleMenu] = useToggle();
     const [status, setStatus] = useMountedState(Status.Loading);
     const [currentDepth, setCurrentDepth] = useMountedState<TreeLevel | undefined>(undefined);
     const [currentNode, setCurrentNode] = useMountedState<HierarcicalObjectReference | RootNode | undefined>(undefined);
@@ -232,35 +236,52 @@ export function ModelTree() {
     };
 
     return (
-        <Box display="flex" flexDirection="column" height={1}>
-            {status === Status.Loading ? <LinearProgress /> : null}
-            {currentDepth ? (
-                <>
-                    <Box px={1}>
-                        <Breadcrumbs
-                            id="scene-tree-breadcrumbs"
-                            path={currentDepth.path}
-                            onClick={handleBreadcrumbClick}
-                            rootName="Scene"
-                        />
-                        <Divider />
-                    </Box>
-                    <Box flex={"1 1 100%"} data-test="model-tree-list-container">
-                        {currentDepth?.nodes ? (
-                            <NodeList
-                                parentNode={currentDepth.parentNode}
-                                nodes={currentDepth.nodes}
-                                onScroll={handleScroll}
-                                ref={listRef}
-                                outerRef={listElRef}
-                                loading={status === Status.Loading}
-                                setLoading={(loading: boolean) => setStatus(loading ? Status.Loading : Status.Ready)}
-                                abortController={abortController}
-                            />
-                        ) : null}
-                    </Box>
-                </>
-            ) : null}
-        </Box>
+        <>
+            <WidgetContainer>
+                <WidgetHeader widget={featuresConfig.modelTree} />
+                <Box display={menuOpen ? "none" : "flex"} flexDirection="column" height={1}>
+                    {status === Status.Loading ? <LinearProgress /> : null}
+                    {currentDepth ? (
+                        <>
+                            <Box px={1}>
+                                <Breadcrumbs
+                                    id="scene-tree-breadcrumbs"
+                                    path={currentDepth.path}
+                                    onClick={handleBreadcrumbClick}
+                                    rootName="Scene"
+                                />
+                                <Divider />
+                            </Box>
+                            <Box flex={"1 1 100%"} data-test="model-tree-list-container">
+                                {currentDepth?.nodes ? (
+                                    <NodeList
+                                        parentNode={currentDepth.parentNode}
+                                        nodes={currentDepth.nodes}
+                                        onScroll={handleScroll}
+                                        ref={listRef}
+                                        outerRef={listElRef}
+                                        loading={status === Status.Loading}
+                                        setLoading={(loading: boolean) =>
+                                            setStatus(loading ? Status.Loading : Status.Ready)
+                                        }
+                                        abortController={abortController}
+                                    />
+                                ) : null}
+                            </Box>
+                        </>
+                    ) : null}
+                </Box>
+                <WidgetList
+                    display={menuOpen ? "block" : "none"}
+                    widgetKey={featuresConfig.modelTree.key}
+                    onSelect={toggleMenu}
+                />
+            </WidgetContainer>
+            <LogoSpeedDial
+                open={menuOpen}
+                toggle={toggleMenu}
+                testId={`${featuresConfig.modelTree.key}-widget-menu-fab`}
+            />
+        </>
     );
 }

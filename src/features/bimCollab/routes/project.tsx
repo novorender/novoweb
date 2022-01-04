@@ -7,7 +7,7 @@ import { isAfter, isSameDay, parseISO } from "date-fns";
 import { FixedSizeList } from "react-window";
 
 import { useAppSelector } from "app/store";
-import { LinearProgress, Tooltip, ImgTooltip, withCustomScrollbar } from "components";
+import { LinearProgress, Tooltip, ImgTooltip, withCustomScrollbar, Divider } from "components";
 
 import {
     useGetProjectQuery,
@@ -52,6 +52,9 @@ export function Project() {
     return (
         <>
             <Box boxShadow={theme.customShadows.widgetHeader}>
+                <Box px={1}>
+                    <Divider />
+                </Box>
                 <Button onClick={() => history.goBack()} color="grey">
                     <ArrowBack sx={{ mr: 1 }} />
                     Back

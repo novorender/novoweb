@@ -24,7 +24,7 @@ import { css } from "@mui/styled-engine";
 import { dataApi } from "app";
 import { useToggle } from "hooks/useToggle";
 import { useAppDispatch, useAppSelector } from "app/store";
-import { ScrollBox, Tooltip, Divider } from "components";
+import { ScrollBox, Tooltip, Divider, WidgetContainer, LogoSpeedDial, WidgetHeader } from "components";
 
 import {
     CameraType,
@@ -35,12 +35,14 @@ import {
     selectEditingScene,
     selectMeasure,
 } from "slices/renderSlice";
-import { selectIsAdminScene } from "slices/explorerSlice";
+import { selectHasAdminCapabilities } from "slices/explorerSlice";
 import { highlightActions, useDispatchHighlighted } from "contexts/highlighted";
 import { hiddenGroupActions, useDispatchHidden } from "contexts/hidden";
 import { customGroupsActions, useCustomGroups } from "contexts/customGroups";
 import { useExplorerGlobals } from "contexts/explorerGlobals";
 import { useDispatchVisible, visibleActions } from "contexts/visible";
+import { featuresConfig } from "config/features";
+import { WidgetList } from "features/widgetList";
 
 const Description = styled(Typography)(
     () => css`
@@ -76,6 +78,7 @@ const Img = styled("img")(
 
 export function Bookmarks() {
     const theme = useTheme();
+    const [menuOpen, toggleMenu] = useToggle();
 
     const dispatchVisible = useDispatchVisible();
     const dispatchHighlighted = useDispatchHighlighted();
@@ -86,7 +89,7 @@ export function Bookmarks() {
     } = useExplorerGlobals(true);
 
     const bookmarks = useAppSelector(selectBookmarks);
-    const isAdmin = useAppSelector(selectIsAdminScene);
+    const isAdmin = useAppSelector(selectHasAdminCapabilities);
     const dispatch = useAppDispatch();
 
     const [addingBookmark, toggleAddingBookmark] = useToggle();
@@ -159,69 +162,85 @@ export function Bookmarks() {
 
     return (
         <>
-            {isAdmin ? (
-                <Box boxShadow={theme.customShadows.widgetHeader}>
-                    <Button color="grey" onClick={toggleAddingBookmark}>
-                        <AddCircle sx={{ mr: 1 }} />
-                        Add bookmark
-                    </Button>
-                </Box>
-            ) : (
-                <Box position="absolute" height={5} top={-5} width={1} boxShadow={theme.customShadows.widgetHeader} />
-            )}
-            <ScrollBox height={1} pb={2}>
-                <List>
-                    {bookmarks.map((bookmark, index, array) => (
-                        <Fragment key={bookmark.name + index}>
-                            <ListItem
-                                sx={{ padding: `${theme.spacing(0.5)} ${theme.spacing(1)}` }}
-                                button
-                                onClick={() => handleSelect(bookmark)}
-                            >
-                                <Box width={1} maxHeight={80} display="flex" alignItems="flex-start" overflow="hidden">
+            <WidgetContainer>
+                <WidgetHeader widget={featuresConfig.bookmarks}>
+                    {isAdmin && !menuOpen ? (
+                        <Button color="grey" onClick={toggleAddingBookmark}>
+                            <AddCircle sx={{ mr: 1 }} />
+                            Add bookmark
+                        </Button>
+                    ) : null}
+                </WidgetHeader>
+                <ScrollBox display={menuOpen ? "none" : "flex"} height={1} pb={2}>
+                    <List sx={{ width: 1 }}>
+                        {bookmarks.map((bookmark, index, array) => (
+                            <Fragment key={bookmark.name + index}>
+                                <ListItem
+                                    sx={{ padding: `${theme.spacing(0.5)} ${theme.spacing(1)}` }}
+                                    button
+                                    onClick={() => handleSelect(bookmark)}
+                                >
                                     <Box
-                                        bgcolor={theme.palette.grey[200]}
-                                        height={65}
-                                        width={100}
-                                        flexShrink={0}
-                                        flexGrow={0}
+                                        width={1}
+                                        maxHeight={80}
+                                        display="flex"
+                                        alignItems="flex-start"
+                                        overflow="hidden"
                                     >
-                                        {bookmark.img ? (
-                                            <ImgTooltip
-                                                placement="bottom-end"
-                                                title={
-                                                    <Box sx={{ height: 176, width: 176, cursor: "pointer" }}>
-                                                        <Img alt="" src={bookmark.img} />
-                                                    </Box>
-                                                }
-                                            >
-                                                <Img alt="" height="32px" width="32px" src={bookmark.img} />
-                                            </ImgTooltip>
-                                        ) : null}
-                                    </Box>
-                                    <Box ml={1} flexDirection="column" flexGrow={1} width={0}>
-                                        <Tooltip disableInteractive title={bookmark.name}>
-                                            <Typography noWrap variant="body1" sx={{ fontWeight: 600 }}>
-                                                {bookmark.name}
-                                            </Typography>
-                                        </Tooltip>
-                                        {bookmark.description ? (
-                                            <Tooltip disableInteractive title={bookmark.description}>
-                                                <Description>{bookmark.description}</Description>
+                                        <Box
+                                            bgcolor={theme.palette.grey[200]}
+                                            height={65}
+                                            width={100}
+                                            flexShrink={0}
+                                            flexGrow={0}
+                                        >
+                                            {bookmark.img ? (
+                                                <ImgTooltip
+                                                    placement="bottom-end"
+                                                    title={
+                                                        <Box sx={{ height: 176, width: 176, cursor: "pointer" }}>
+                                                            <Img alt="" src={bookmark.img} />
+                                                        </Box>
+                                                    }
+                                                >
+                                                    <Img alt="" height="32px" width="32px" src={bookmark.img} />
+                                                </ImgTooltip>
+                                            ) : null}
+                                        </Box>
+                                        <Box ml={1} flexDirection="column" flexGrow={1} width={0}>
+                                            <Tooltip disableInteractive title={bookmark.name}>
+                                                <Typography noWrap variant="body1" sx={{ fontWeight: 600 }}>
+                                                    {bookmark.name}
+                                                </Typography>
                                             </Tooltip>
-                                        ) : null}
+                                            {bookmark.description ? (
+                                                <Tooltip disableInteractive title={bookmark.description}>
+                                                    <Description>{bookmark.description}</Description>
+                                                </Tooltip>
+                                            ) : null}
+                                        </Box>
                                     </Box>
-                                </Box>
-                            </ListItem>
-                            {index !== array.length - 1 ? (
-                                <Box my={0.5} component="li">
-                                    <Divider />
-                                </Box>
-                            ) : null}
-                        </Fragment>
-                    ))}
-                </List>
-            </ScrollBox>
+                                </ListItem>
+                                {index !== array.length - 1 ? (
+                                    <Box my={0.5} component="li">
+                                        <Divider />
+                                    </Box>
+                                ) : null}
+                            </Fragment>
+                        ))}
+                    </List>
+                </ScrollBox>
+                <WidgetList
+                    display={menuOpen ? "block" : "none"}
+                    widgetKey={featuresConfig.bookmarks.key}
+                    onSelect={toggleMenu}
+                />
+            </WidgetContainer>
+            <LogoSpeedDial
+                open={menuOpen}
+                toggle={toggleMenu}
+                testId={`${featuresConfig.bookmarks.key}-widget-menu-fab`}
+            />
             <AddNewBookmark open={addingBookmark} onClose={toggleAddingBookmark} />
         </>
     );

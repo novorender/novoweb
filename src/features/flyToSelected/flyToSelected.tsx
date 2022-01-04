@@ -3,7 +3,7 @@ import { BoundingSphere, HierarcicalObjectReference } from "@novorender/webgl-ap
 import { Box, CircularProgress, SpeedDialActionProps } from "@mui/material";
 
 import { SpeedDialAction } from "components";
-import { config as featuresConfig } from "config/features";
+import { featuresConfig } from "config/features";
 import { searchByPatterns } from "utils/search";
 import { useHighlighted } from "contexts/highlighted";
 import { useAbortController } from "hooks/useAbortController";

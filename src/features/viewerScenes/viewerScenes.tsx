@@ -24,53 +24,71 @@ import {
 import { ScenePreview } from "@novorender/data-js-api";
 import { useState, MouseEvent } from "react";
 
-import { ScrollBox } from "components";
+import { LogoSpeedDial, ScrollBox, WidgetContainer, WidgetHeader } from "components";
 import { CreateViewerScene } from "features/createViewerScene";
 import { dataApi } from "app";
 import { useToggle } from "hooks/useToggle";
 import { useAppDispatch, useAppSelector } from "app/store";
 import { explorerActions, selectViewerScenes } from "slices/explorerSlice";
 import { renderActions, SceneEditStatus, selectEditingScene } from "slices/renderSlice";
+import { featuresConfig } from "config/features";
+import { WidgetList } from "features/widgetList";
 
 export function ViewerScenes() {
-    const theme = useTheme();
     const viewerScenes = useAppSelector(selectViewerScenes);
     const editingScene = useAppSelector(selectEditingScene);
+    const [menuOpen, toggleMenu] = useToggle();
     const [modalOpen, toggleModalOpen] = useToggle();
 
     return (
         <>
-            <Box boxShadow={theme.customShadows.widgetHeader} display="flex" justifyContent="space-between">
-                {editingScene === undefined ? (
-                    <Button onClick={toggleModalOpen} color="grey">
-                        <AddCircle sx={{ mr: 1 }} />
-                        Create viewer scene
-                    </Button>
-                ) : (
-                    <Button
-                        disabled={editingScene.status !== SceneEditStatus.Editing}
-                        onClick={toggleModalOpen}
-                        color="grey"
-                    >
-                        <AddCircle sx={{ mr: 1 }} />
-                        Update viewer scene
-                    </Button>
-                )}
-            </Box>
-            <ScrollBox height={1} pb={2} mt={1}>
-                <Typography p={1} color="textSecondary">
-                    Scenes: {viewerScenes.length}
-                </Typography>
-                <List sx={{ p: 0 }}>
-                    {viewerScenes.map((viewerScene) => (
-                        <SceneListItem viewerScene={viewerScene} key={viewerScene.id} />
-                    ))}
-                </List>
-            </ScrollBox>
-            <CreateViewerScene
-                key={editingScene ? `${editingScene.id}${editingScene.status}` : "ADMIN"}
-                open={modalOpen}
-                onClose={toggleModalOpen}
+            <WidgetContainer>
+                <WidgetHeader widget={featuresConfig.viewerScenes}>
+                    {!menuOpen ? (
+                        <Box display="flex" justifyContent="space-between">
+                            {editingScene === undefined ? (
+                                <Button onClick={toggleModalOpen} color="grey">
+                                    <AddCircle sx={{ mr: 1 }} />
+                                    Create viewer scene
+                                </Button>
+                            ) : (
+                                <Button
+                                    disabled={editingScene.status !== SceneEditStatus.Editing}
+                                    onClick={toggleModalOpen}
+                                    color="grey"
+                                >
+                                    <AddCircle sx={{ mr: 1 }} />
+                                    Update viewer scene
+                                </Button>
+                            )}
+                        </Box>
+                    ) : null}
+                </WidgetHeader>
+                <ScrollBox display={menuOpen ? "none" : "block"} height={1} pb={2} mt={1}>
+                    <Typography p={1} color="textSecondary">
+                        Scenes: {viewerScenes.length}
+                    </Typography>
+                    <List sx={{ p: 0 }}>
+                        {viewerScenes.map((viewerScene) => (
+                            <SceneListItem viewerScene={viewerScene} key={viewerScene.id} />
+                        ))}
+                    </List>
+                </ScrollBox>
+                <CreateViewerScene
+                    key={editingScene ? `${editingScene.id}${editingScene.status}` : "ADMIN"}
+                    open={modalOpen}
+                    onClose={toggleModalOpen}
+                />
+                <WidgetList
+                    display={menuOpen ? "block" : "none"}
+                    widgetKey={featuresConfig.viewerScenes.key}
+                    onSelect={toggleMenu}
+                />
+            </WidgetContainer>
+            <LogoSpeedDial
+                open={menuOpen}
+                toggle={toggleMenu}
+                testId={`${featuresConfig.viewerScenes.key}-widget-menu-fab`}
             />
         </>
     );

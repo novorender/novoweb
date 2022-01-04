@@ -17,7 +17,7 @@ import {
 import { ArrowBack } from "@mui/icons-material";
 import { DatePicker } from "@mui/lab";
 
-import { LinearProgress, ScrollBox } from "components";
+import { LinearProgress, ScrollBox, Divider } from "components";
 import { useAppDispatch, useAppSelector } from "app/store";
 
 import { useGetProjectExtensionsQuery } from "../bimCollabApi";
@@ -80,6 +80,9 @@ export function Filters() {
     return (
         <>
             <Box boxShadow={theme.customShadows.widgetHeader}>
+                <Box px={1}>
+                    <Divider />
+                </Box>
                 <Button onClick={() => history.goBack()} color="grey">
                     <ArrowBack sx={{ mr: 1 }} />
                     Back

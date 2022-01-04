@@ -1,4 +1,4 @@
-import { WidgetKey, config as featuresConfig, defaultEnabledWidgets } from "config/features";
+import { WidgetKey, featuresConfig, defaultEnabledWidgets } from "config/features";
 
 export function uniqueArray<T>(arr: T[]): T[] {
     return Array.from(new Set(arr));
