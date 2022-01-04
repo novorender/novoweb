@@ -5,11 +5,14 @@ export enum GroupsStatus {
     Initial,
     Unsaved,
     Saving,
+    Deleting,
     Error,
 }
 
 const initialState = {
-    status: GroupsStatus.Initial,
+    status: GroupsStatus.Initial as
+        | Exclude<GroupsStatus, GroupsStatus.Deleting>
+        | [status: GroupsStatus.Deleting, id: string],
 };
 
 type State = typeof initialState;

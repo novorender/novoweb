@@ -5,7 +5,7 @@ import { Box, IconButton, ListItemIcon, ListItemText, Menu, MenuItem, MenuList, 
 import { Tooltip } from "components";
 import { ColorPicker } from "features/colorPicker";
 
-import { useAppSelector } from "app/store";
+import { useAppDispatch, useAppSelector } from "app/store";
 import { selectHasAdminCapabilities } from "slices/explorerSlice";
 import { CustomGroup, customGroupsActions, useCustomGroups } from "contexts/customGroups";
 
@@ -13,7 +13,7 @@ import { useToggle } from "hooks/useToggle";
 import { rgbToVec, vecToRgb } from "utils/color";
 
 import { StyledCheckbox, StyledListItemButton } from "./groupsWidget";
-import { GroupsStatus, selectGroupsStatus } from "./groupsSlice";
+import { groupsActions, GroupsStatus, selectGroupsStatus } from "./groupsSlice";
 
 export function Group({
     group,
@@ -28,6 +28,7 @@ export function Group({
 }) {
     const isAdmin = useAppSelector(selectHasAdminCapabilities);
     const status = useAppSelector(selectGroupsStatus);
+    const dispatch = useAppDispatch();
     const { dispatch: dispatchCustomGroups } = useCustomGroups();
 
     const [menuAnchor, setMenuAnchor] = useState<HTMLElement | null>(null);
@@ -143,10 +144,7 @@ export function Group({
                                 <ListItemText>Edit</ListItemText>
                             </MenuItem>
                             <MenuItem
-                                onClick={() => {
-                                    // TODO(OLA): confirmation
-                                    dispatchCustomGroups(customGroupsActions.delete(group.id));
-                                }}
+                                onClick={() => dispatch(groupsActions.setStatus([GroupsStatus.Deleting, group.id]))}
                             >
                                 <ListItemIcon>
                                     <Delete fontSize="small" />
