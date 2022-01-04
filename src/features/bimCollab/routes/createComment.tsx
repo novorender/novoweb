@@ -55,6 +55,9 @@ export function CreateComment() {
 
     return (
         <>
+            <Box px={1}>
+                <Divider />
+            </Box>
             <Box display="flex" alignItems="center" boxShadow={theme.customShadows.widgetHeader}>
                 <Button onClick={() => history.goBack()} color="grey">
                     <ArrowBack sx={{ mr: 1 }} />

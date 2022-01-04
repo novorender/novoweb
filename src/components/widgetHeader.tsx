@@ -11,10 +11,12 @@ export function WidgetHeader({
     widget: { name, Icon, key },
     children,
     WidgetMenu,
+    disableShadow,
 }: {
     widget: Widget;
     WidgetMenu?: (props: MenuProps) => JSX.Element;
     children?: ReactNode;
+    disableShadow?: boolean;
 }) {
     const theme = useTheme();
     const dispatch = useAppDispatch();
@@ -35,7 +37,7 @@ export function WidgetHeader({
     };
 
     return (
-        <Box boxShadow={theme.customShadows.widgetHeader}>
+        <Box boxShadow={!disableShadow ? theme.customShadows.widgetHeader : undefined}>
             <Box p={1} display="flex">
                 <Box display="flex" alignItems="center">
                     {WidgetMenu ? (

@@ -1,5 +1,5 @@
 import { useParams, Link, useHistory } from "react-router-dom";
-import { useTheme, Box, Button, Typography, List, ListItem, Divider } from "@mui/material";
+import { useTheme, Box, Button, Typography, List, ListItem } from "@mui/material";
 import { Add, ArrowBack, Edit } from "@mui/icons-material";
 import { HierarcicalObjectReference, Scene } from "@novorender/webgl-api";
 
@@ -12,6 +12,7 @@ import {
     LinearProgress,
     ScrollBox,
     Tooltip,
+    Divider,
 } from "components";
 
 import { useAppDispatch } from "app/store";
@@ -125,6 +126,9 @@ export function Topic() {
         <>
             {loading ? <LinearProgress /> : null}
             <Box boxShadow={theme.customShadows.widgetHeader}>
+                <Box px={1}>
+                    <Divider />
+                </Box>
                 <Button onClick={() => history.goBack()} color="grey">
                     <ArrowBack sx={{ mr: 1 }} />
                     Back

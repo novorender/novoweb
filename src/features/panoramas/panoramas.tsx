@@ -16,11 +16,14 @@ import { Scene } from "@novorender/webgl-api";
 import { quat, vec3 } from "gl-matrix";
 import React, { Fragment, useCallback, useEffect } from "react";
 import { useMountedState } from "hooks/useMountedState";
-import { ScrollBox, Divider } from "components";
+import { ScrollBox, Divider, WidgetContainer, WidgetHeader, LogoSpeedDial } from "components";
 import { DynamicObject, Internal } from "@novorender/webgl-api";
 import { api } from "app";
 import { VrpanoOutlined } from "@mui/icons-material";
 import { sleep } from "utils/timers";
+import { featuresConfig } from "config/features";
+import { WidgetList } from "features/widgetList";
+import { useToggle } from "hooks/useToggle";
 
 interface IPanorama {
     name: string;
@@ -209,6 +212,7 @@ export function Panoramas() {
         state: { scene, view },
     } = useExplorerGlobals(true);
 
+    const [menuOpen, toggleMenu] = useToggle();
     const [panoramas, setPanoramas] = useMountedState<IPanorama[]>([]);
     const [active, setActive] = useMountedState<IPanorama | undefined>(undefined);
 
@@ -251,19 +255,35 @@ export function Panoramas() {
     }, [scene, setPanoramas]);
 
     return (
-        <ScrollBox height={1} pb={2}>
-            <List>
-                {panoramas.map((panorama, index, array) => (
-                    <Fragment key={index}>
-                        <Panorama panorama={panorama} active={active} setActive={setActive} />
-                        {index !== array.length - 1 ? (
-                            <Box my={0.5} component="li">
-                                <Divider />
-                            </Box>
-                        ) : null}
-                    </Fragment>
-                ))}
-            </List>
-        </ScrollBox>
+        <>
+            <WidgetContainer>
+                <WidgetHeader widget={featuresConfig.panoramas} />
+                <ScrollBox display={!menuOpen ? "block" : "none"} height={1} pb={2}>
+                    <List>
+                        {panoramas.map((panorama, index, array) => (
+                            <Fragment key={index}>
+                                <Panorama panorama={panorama} active={active} setActive={setActive} />
+                                {index !== array.length - 1 ? (
+                                    <Box my={0.5} component="li">
+                                        <Divider />
+                                    </Box>
+                                ) : null}
+                            </Fragment>
+                        ))}
+                    </List>
+                </ScrollBox>
+                <WidgetList
+                    display={menuOpen ? "block" : "none"}
+                    widgetKey={featuresConfig.panoramas.key}
+                    onSelect={toggleMenu}
+                />
+            </WidgetContainer>
+            <LogoSpeedDial
+                open={menuOpen}
+                toggle={toggleMenu}
+                testId={`${featuresConfig.panoramas.key}-widget-menu-fab`}
+                ariaLabel="toggle widget menu"
+            />
+        </>
     );
 }

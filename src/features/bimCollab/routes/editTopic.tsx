@@ -3,7 +3,7 @@ import { Button, useTheme, Box, FormControl, InputLabel, MenuItem, OutlinedInput
 import { useHistory, useParams } from "react-router-dom";
 import { FormEventHandler, useEffect, useState } from "react";
 
-import { LinearProgress } from "components";
+import { LinearProgress, Divider } from "components";
 
 import { useGetProjectExtensionsQuery, useGetTopicQuery, useUpdateTopicMutation } from "../bimCollabApi";
 
@@ -57,6 +57,9 @@ export function EditTopic() {
     return (
         <>
             <Box boxShadow={theme.customShadows.widgetHeader}>
+                <Box px={1}>
+                    <Divider />
+                </Box>
                 <Button onClick={() => history.goBack()} color="grey">
                     <ArrowBack sx={{ mr: 1 }} />
                     Back

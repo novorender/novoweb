@@ -55,8 +55,8 @@ export function Groups() {
     const status = useAppSelector(selectGroupsStatus);
     const dispatch = useAppDispatch();
 
-    const [creatingGroup, setCreatingGroup] = useState<boolean | string>(false);
     const [menuOpen, toggleMenu] = useToggle();
+    const [creatingGroup, setCreatingGroup] = useState<boolean | string>(false);
     const [containerEl, setContainerEl] = useState<HTMLDivElement | null>(null);
     const containerRef = useCallback<RefCallback<HTMLDivElement>>((el) => {
         setContainerEl(el);

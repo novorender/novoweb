@@ -2,13 +2,14 @@ import { Box, Typography, useTheme, Button } from "@mui/material";
 import { FormEventHandler, useCallback, useEffect, useState } from "react";
 import { MemoryRouter, Switch, Route } from "react-router-dom";
 
-import { LinearProgress, TextField } from "components";
+import { LinearProgress, LogoSpeedDial, TextField, WidgetContainer, WidgetHeader } from "components";
 import { useAppDispatch, useAppSelector } from "app/store";
 import { StorageKey } from "config/storage";
 import { featuresConfig } from "config/features";
 import { getFromStorage, saveToStorage, deleteFromStorage } from "utils/storage";
 import { createOAuthStateString, getOAuthState } from "utils/auth";
 import { useSceneId } from "hooks/useSceneId";
+import { useToggle } from "hooks/useToggle";
 
 import { Filters } from "./routes/filters";
 import { Topic } from "./routes/topic";
@@ -35,6 +36,7 @@ import {
     useRefreshTokenMutation,
 } from "./bimCollabApi";
 import { AuthInfo } from "./types";
+import { WidgetList } from "features/widgetList";
 
 export function BimCollab() {
     const sceneId = useSceneId();
@@ -43,6 +45,8 @@ export function BimCollab() {
     const authInfo = useAppSelector(selectAuthInfo);
     const accessToken = useAppSelector(selectAccessToken);
     const dispatch = useAppDispatch();
+
+    const [menuOpen, toggleMenu] = useToggle();
 
     const { data: user } = useGetCurrentUserQuery(undefined, { skip: !accessToken });
     const [getToken] = useGetTokenMutation();
@@ -179,38 +183,56 @@ export function BimCollab() {
         [user, dispatch]
     );
 
-    if (!space || apiError) {
-        return <EnterBimCollabSpace error={apiError} />;
-    }
-
-    return accessToken ? (
-        <MemoryRouter>
-            <Switch>
-                <Route path="/" exact>
-                    <Projects />
-                </Route>
-                <Route path="/project/:projectId" exact>
-                    {<Project />}
-                </Route>
-                <Route path="/project/:projectId/topic/:topicId" exact>
-                    <Topic />
-                </Route>
-                <Route path="/project/:projectId/filter" exact>
-                    <Filters />
-                </Route>
-                <Route path="/project/:projectId/new-topic" exact>
-                    <CreateTopic />
-                </Route>
-                <Route path="/project/:projectId/topic/:topicId/new-comment" exact>
-                    <CreateComment />
-                </Route>
-                <Route path="/project/:projectId/topic/:topicId/edit" exact>
-                    <EditTopic />
-                </Route>
-            </Switch>
-        </MemoryRouter>
-    ) : (
-        <LinearProgress />
+    return (
+        <>
+            <WidgetContainer>
+                <WidgetHeader widget={featuresConfig.bimcollab} disableShadow={!menuOpen} />
+                <Box display={menuOpen ? "none" : "flex"} flexGrow={1} overflow="hidden" flexDirection="column">
+                    {!space || apiError ? (
+                        <EnterBimCollabSpace error={apiError} />
+                    ) : accessToken ? (
+                        <MemoryRouter>
+                            <Switch>
+                                <Route path="/" exact>
+                                    <Projects />
+                                </Route>
+                                <Route path="/project/:projectId" exact>
+                                    {<Project />}
+                                </Route>
+                                <Route path="/project/:projectId/topic/:topicId" exact>
+                                    <Topic />
+                                </Route>
+                                <Route path="/project/:projectId/filter" exact>
+                                    <Filters />
+                                </Route>
+                                <Route path="/project/:projectId/new-topic" exact>
+                                    <CreateTopic />
+                                </Route>
+                                <Route path="/project/:projectId/topic/:topicId/new-comment" exact>
+                                    <CreateComment />
+                                </Route>
+                                <Route path="/project/:projectId/topic/:topicId/edit" exact>
+                                    <EditTopic />
+                                </Route>
+                            </Switch>
+                        </MemoryRouter>
+                    ) : (
+                        <LinearProgress />
+                    )}
+                </Box>
+                <WidgetList
+                    display={menuOpen ? "block" : "none"}
+                    widgetKey={featuresConfig.bimcollab.key}
+                    onSelect={toggleMenu}
+                />
+            </WidgetContainer>
+            <LogoSpeedDial
+                open={menuOpen}
+                toggle={toggleMenu}
+                testId={`${featuresConfig.bimcollab.key}-widget-menu-fab`}
+                ariaLabel="toggle widget menu"
+            />
+        </>
     );
 }
 
