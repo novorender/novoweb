@@ -1,7 +1,7 @@
 import { Dispatch, SetStateAction } from "react";
 import { SearchPattern } from "@novorender/webgl-api";
 import { Box, Button, ButtonProps, styled } from "@mui/material";
-import { css } from "@mui/system";
+import { css } from "@mui/styled-engine";
 import { Cancel, DragHandle } from "@mui/icons-material";
 
 import { ScrollBox } from "./scrollBox";

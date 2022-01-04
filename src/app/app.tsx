@@ -17,7 +17,7 @@ import { Explorer } from "pages/explorer";
 import { authActions } from "slices/authSlice";
 import { msalConfig } from "config/auth";
 import { dataServerBaseUrl, offscreenCanvas, hasCreateImageBitmap } from "config";
-import { CustomNavigationClient, storeActiveAccount } from "utils/auth";
+import { CustomNavigationClient, getOAuthState, storeActiveAccount } from "utils/auth";
 import { getAuthHeader } from "utils/auth";
 import { useMountedState } from "hooks/useMountedState";
 
@@ -63,6 +63,14 @@ export function App() {
         }
     }, [status, setStatus, dispatch]);
 
+    useEffect(() => {
+        const state = getOAuthState();
+
+        if (state && state.sceneId) {
+            history.replace(`/${state.sceneId}${window.location.search}`);
+        }
+    }, [history]);
+
     return (
         <>
             <LocalizationProvider dateAdapter={AdapterDateFns} locale={enLocale}>
@@ -75,6 +83,9 @@ export function App() {
                             ) : (
                                 <BrowserRouter>
                                     <Switch>
+                                        <Route path="/callback">
+                                            <Loading />
+                                        </Route>
                                         <Route path="/explorer/:id?">
                                             <Explorer />
                                         </Route>

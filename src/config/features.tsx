@@ -1,4 +1,5 @@
 import ListIcon from "@mui/icons-material/List";
+import TreeIcon from "@mui/icons-material/AccountTreeRounded";
 import StarIcon from "@mui/icons-material/Star";
 import ShareIcon from "@mui/icons-material/Share";
 import HomeIcon from "@mui/icons-material/Home";
@@ -15,10 +16,12 @@ import FolderIcon from "@mui/icons-material/Folder";
 import SearchIcon from "@mui/icons-material/Search";
 import GradientIcon from "@mui/icons-material/Gradient";
 import FlightTakeoffIcon from "@mui/icons-material/FlightTakeoff";
+import DomainIcon from "@mui/icons-material/Domain";
 import MovieIcon from "@mui/icons-material/Movie";
 import CropLandscapeIcon from "@mui/icons-material/CropLandscape";
 import CameraswitchIcon from "@mui/icons-material/Cameraswitch";
 import SettingsIcon from "@mui/icons-material/Settings";
+import VrpanoOutlinedIcon from "@mui/icons-material/VrpanoOutlined";
 
 import { ReactComponent as ClippingIcon } from "media/icons/clipping.svg";
 import { ReactComponent as RunIcon } from "media/icons/run.svg";
@@ -31,6 +34,12 @@ export enum FeatureType {
 }
 
 export const featuresConfig = {
+    bimcollab: {
+        key: "bimcollab",
+        name: "BIMcollab",
+        Icon: DomainIcon,
+        type: FeatureType.Widget,
+    },
     advancedSettings: {
         key: "advancedSettings",
         name: "Adv. settings",
@@ -59,6 +68,12 @@ export const featuresConfig = {
         key: "properties",
         name: "Properties",
         Icon: ListIcon,
+        type: FeatureType.Widget,
+    },
+    propertiesTree: {
+        key: "propertiesTree",
+        name: "Properties Tree",
+        Icon: TreeIcon,
         type: FeatureType.Widget,
     },
     bookmarks: {
@@ -107,6 +122,12 @@ export const featuresConfig = {
         key: "orthoCam",
         name: "2D",
         Icon: CameraswitchIcon,
+        type: FeatureType.Widget,
+    },
+    panoramas: {
+        key: "panoramas",
+        name: "Panoramas",
+        Icon: VrpanoOutlinedIcon,
         type: FeatureType.Widget,
     },
     home: {

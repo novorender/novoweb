@@ -1,16 +1,18 @@
-import { Box, styled } from "@mui/material";
+import { Box, styled, BoxTypeMap } from "@mui/material";
+import { OverridableComponent } from "@mui/material/OverridableComponent";
 import { css } from "@mui/styled-engine";
 
 export const withCustomScrollbar = (component: any): unknown =>
-    styled(component)(
-        ({ theme }) => css`
+    styled(component, { shouldForwardProp: (prop) => prop !== "horizontal" })<{ horizontal?: boolean }>(
+        ({ theme, horizontal }) => css`
             scrollbar-color: ${theme.palette.grey[400]} transparent;
             scrollbar-width: thin;
-            overflow: hidden auto;
-            overflow: hidden overlay;
+            overflow: ${horizontal ? `hidden hidden` : `hidden auto`};
+            overflow: ${horizontal ? `overlay overlay` : `hidden overlay`};
 
             &::-webkit-scrollbar {
                 width: 6px;
+                height: 6px;
             }
 
             &::-webkit-scrollbar-track {
@@ -24,4 +26,4 @@ export const withCustomScrollbar = (component: any): unknown =>
         `
     );
 
-export const ScrollBox = withCustomScrollbar(Box) as typeof Box;
+export const ScrollBox = withCustomScrollbar(Box) as OverridableComponent<BoxTypeMap<{ horizontal?: boolean }, "div">>;

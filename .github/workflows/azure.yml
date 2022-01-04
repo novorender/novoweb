@@ -14,6 +14,8 @@ on:
     push:
         branches:
             - develop
+        paths-ignore:
+            - ".github/workflows/**"
 env:
     AZURE_WEBAPP_NAME: novorender-explorer # set this to your application's name
     AZURE_WEBAPP_SLOT: dev

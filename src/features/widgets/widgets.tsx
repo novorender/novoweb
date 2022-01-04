@@ -6,6 +6,7 @@ import { useAppDispatch, useAppSelector } from "app/store";
 import { featuresConfig, WidgetKey } from "config/features";
 
 import { Properties } from "features/properties";
+import { PropertiesTree } from "features/propertiesTree";
 import { Bookmarks } from "features/bookmarks";
 import { ModelTree } from "features/modelTree";
 import { Search } from "features/search";
@@ -15,7 +16,9 @@ import { Groups } from "features/groups";
 import { ClippingPlanes } from "features/clippingPlanes";
 import { ViewerScenes } from "features/viewerScenes";
 import { OrthoCam } from "features/orthoCam";
+import { Panoramas } from "features/panoramas";
 import { AdvancedSettings } from "features/advancedSettings";
+import { BimCollab } from "features/bimCollab";
 import { Layers } from "features/layers";
 import { MenuWidget } from "features/menuWidget";
 
@@ -61,6 +64,8 @@ function getWidgetByKey(key: WidgetKey): JSX.Element | string {
     switch (key) {
         case featuresConfig.properties.key:
             return <Properties />;
+        case featuresConfig.propertiesTree.key:
+            return <PropertiesTree />;
         case featuresConfig.bookmarks.key:
             return <Bookmarks />;
         case featuresConfig.groups.key:
@@ -73,12 +78,16 @@ function getWidgetByKey(key: WidgetKey): JSX.Element | string {
             return <ClippingBox />;
         case featuresConfig.measure.key:
             return <Measure />;
+        case featuresConfig.bimcollab.key:
+            return <BimCollab />;
         case featuresConfig.viewerScenes.key:
             return <ViewerScenes />;
         case featuresConfig.clippingPlanes.key:
             return <ClippingPlanes />;
         case featuresConfig.orthoCam.key:
             return <OrthoCam />;
+        case featuresConfig.panoramas.key:
+            return <Panoramas />;
         case featuresConfig.advancedSettings.key:
             return <AdvancedSettings />;
         case featuresConfig.layers.key:

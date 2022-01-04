@@ -18,7 +18,7 @@ export const Accordion = styled(MuiAccordion)(
         }
 
         &.${accordionClasses.expanded} {
-            background: ${theme.palette.grey[200]};
+            background: ${theme.palette.grey[100]};
             margin: 0;
         }
     `

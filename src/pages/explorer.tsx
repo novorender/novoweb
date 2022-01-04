@@ -1,9 +1,9 @@
 import { ReactNode, useEffect, useState } from "react";
-
 import { SearchPattern } from "@novorender/webgl-api";
 
 import { dataApi } from "app";
 import { uniqueArray } from "utils/misc";
+import { getOAuthState } from "utils/auth";
 import { useSceneId } from "hooks/useSceneId";
 
 import { featuresConfig, defaultEnabledWidgets, defaultEnabledAdminWidgets, WidgetKey } from "config/features";
@@ -59,7 +59,13 @@ function ExplorerBase() {
             dispatch(explorerActions.setEnabledWidgets(enabledFeaturesToFeatureKeys(enabledFeatures)));
         }
 
-        dispatch(explorerActions.setUrlSearchQuery(getUrlSearchQuery()));
+        const oAuthState = getOAuthState();
+
+        if (oAuthState && oAuthState.service === featuresConfig.bimcollab.key) {
+            dispatch(explorerActions.setWidgets([featuresConfig.bimcollab.key]));
+        } else {
+            dispatch(explorerActions.setUrlSearchQuery(getUrlSearchQuery()));
+        }
     };
 
     return (
@@ -124,9 +130,9 @@ function AuthCheck({ children }: { children: ReactNode }) {
 function enabledFeaturesToFeatureKeys(enabledFeatures: Record<string, boolean>): WidgetKey[] {
     const dictionary: Record<string, string | string[] | undefined> = {
         bookmarks: featuresConfig.bookmarks.key,
-        measurement: [featuresConfig.measure.key, featuresConfig.orthoCam.key],
+        measurement: [featuresConfig.measure.key, featuresConfig.orthoCam.key, featuresConfig.panoramas.key],
         clipping: [featuresConfig.clippingBox.key, featuresConfig.clippingPlanes.key],
-        properties: featuresConfig.properties.key,
+        properties: [featuresConfig.properties.key, featuresConfig.propertiesTree.key],
         tree: featuresConfig.modelTree.key,
         groups: [featuresConfig.groups.key, featuresConfig.layers.key],
         search: featuresConfig.search.key,

@@ -1,0 +1,1 @@
+export { PropertiesTree } from "./propertiesTree";

@@ -15,3 +15,5 @@ export * from "./logoSpeedDial";
 export * from "./widgetContainer";
 export * from "./widgetHeader";
 export * from "./advancedSearchInputs";
+export * from "./imgTooltip";
+export * from "./imgModal";

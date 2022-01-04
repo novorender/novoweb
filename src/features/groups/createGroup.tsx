@@ -70,7 +70,7 @@ export function CreateGroup({ onClose, id }: { onClose: () => void; id?: string 
             color: [...highlighted.color],
         };
 
-        dispatchCustomGroup(customGroupsActions.add(newGroup));
+        dispatchCustomGroup(customGroupsActions.add([newGroup]));
     };
 
     const updateGroup = () => {

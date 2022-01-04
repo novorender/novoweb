@@ -47,14 +47,16 @@ export async function searchByPatterns({
     callback,
     callbackInterval = defaultCallbackInterval,
     abortSignal,
+    full,
 }: {
     scene: Scene;
     searchPatterns: SearchPattern[] | string;
     callback: (result: HierarcicalObjectReference[]) => void;
     callbackInterval?: number;
     abortSignal?: AbortSignal;
+    full?: boolean;
 }): Promise<void> {
-    const iterator = scene.search({ searchPattern: searchPatterns }, abortSignal);
+    const iterator = scene.search({ searchPattern: searchPatterns, full }, abortSignal);
     let done = false;
 
     while (!done && !abortSignal?.aborted) {
