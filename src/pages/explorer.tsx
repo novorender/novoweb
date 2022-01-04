@@ -45,8 +45,11 @@ function ExplorerBase() {
         const isAdminScene = !getIsViewerScene(customProperties);
         dispatch(explorerActions.setSceneType(isAdminScene ? SceneType.Admin : SceneType.Viewer));
 
-        const userRole = getUserRole(customProperties);
-        dispatch(explorerActions.setUserRole(userRole));
+        if (isAdminScene) {
+            dispatch(explorerActions.setUserRole(UserRole.Admin));
+        } else {
+            dispatch(explorerActions.setUserRole(getUserRole(customProperties)));
+        }
 
         const enabledFeatures = getEnabledFeatures(customProperties);
 
