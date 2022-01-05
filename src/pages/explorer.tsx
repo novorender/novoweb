@@ -6,19 +6,14 @@ import { uniqueArray } from "utils/misc";
 import { getOAuthState } from "utils/auth";
 import { useSceneId } from "hooks/useSceneId";
 
-import {
-    config as featuresConfig,
-    defaultEnabledWidgets,
-    defaultEnabledAdminWidgets,
-    WidgetKey,
-} from "config/features";
+import { featuresConfig, defaultEnabledWidgets, defaultEnabledAdminWidgets, WidgetKey } from "config/features";
 import { Loading } from "components";
 import { Hud } from "features/hud";
 import { Render3D } from "features/render";
 import { Protected } from "features/protectedRoute";
 
 import { useAppSelector, useAppDispatch } from "app/store";
-import { explorerActions, SceneType } from "slices/explorerSlice";
+import { explorerActions, SceneType, UserRole } from "slices/explorerSlice";
 import { selectAccessToken } from "slices/authSlice";
 import { HiddenProvider } from "contexts/hidden";
 import { CustomGroupsProvider } from "contexts/customGroups";
@@ -47,12 +42,18 @@ function ExplorerBase() {
     }, [id, dispatchGlobals]);
 
     const handleInit = ({ customProperties }: { customProperties: unknown }) => {
-        const isAdmin = !getIsViewerScene(customProperties);
-        dispatch(explorerActions.setSceneType(isAdmin ? SceneType.Admin : SceneType.Viewer));
+        const isAdminScene = !getIsViewerScene(customProperties);
+        dispatch(explorerActions.setSceneType(isAdminScene ? SceneType.Admin : SceneType.Viewer));
+
+        if (isAdminScene) {
+            dispatch(explorerActions.setUserRole(UserRole.Admin));
+        } else {
+            dispatch(explorerActions.setUserRole(getUserRole(customProperties)));
+        }
 
         const enabledFeatures = getEnabledFeatures(customProperties);
 
-        if (isAdmin) {
+        if (isAdminScene) {
             dispatch(explorerActions.setEnabledWidgets(defaultEnabledAdminWidgets));
         } else if (enabledFeatures) {
             dispatch(explorerActions.setEnabledWidgets(enabledFeaturesToFeatureKeys(enabledFeatures)));
@@ -167,6 +168,15 @@ function getIsViewerScene(customProperties: unknown): boolean {
     return customProperties && typeof customProperties === "object" && "isViewer" in customProperties
         ? (customProperties as { isViewer: boolean }).isViewer
         : false;
+}
+
+function getUserRole(customProperties: unknown): UserRole {
+    const role =
+        customProperties && typeof customProperties === "object" && "role" in customProperties
+            ? (customProperties as { role: string }).role
+            : UserRole.Viewer;
+
+    return role === "owner" ? UserRole.Owner : role === "administrator" ? UserRole.Admin : UserRole.Viewer;
 }
 
 function ContextProviders({ children }: { children: ReactNode }) {

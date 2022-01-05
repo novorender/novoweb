@@ -1,10 +1,10 @@
 import { FlightControllerParams, Internal, OrthoControllerParams, View } from "@novorender/webgl-api";
-import { Divider, FormControlLabel, Slider, Typography } from "@mui/material";
-import { Box } from "@mui/system";
+import { Divider, FormControlLabel, Slider, Typography, Box } from "@mui/material";
 import { ChangeEvent, SyntheticEvent, useState } from "react";
 
 import { useAppDispatch, useAppSelector } from "app/store";
-import { ScrollBox, Switch } from "components";
+import { LogoSpeedDial, ScrollBox, Switch, WidgetContainer, WidgetHeader } from "components";
+import { WidgetList } from "features/widgetList";
 import {
     AdvancedSetting,
     renderActions,
@@ -13,6 +13,8 @@ import {
     selectRenderType,
 } from "slices/renderSlice";
 import { useExplorerGlobals } from "contexts/explorerGlobals";
+import { featuresConfig } from "config/features";
+import { useToggle } from "hooks/useToggle";
 
 type SliderSettings =
     | AdvancedSetting.PointSize
@@ -46,6 +48,7 @@ export function AdvancedSettings() {
         pointToleranceFactor,
     } = settings;
 
+    const [menuOpen, toggleMenu] = useToggle();
     const [size, setSize] = useState(pointSize);
     const [maxSize, setMaxSize] = useState(maxPointSize);
     const [toleranceFactor, setToleranceFactor] = useState(pointToleranceFactor);
@@ -154,190 +157,148 @@ export function AdvancedSettings() {
         [RenderType.All, RenderType.Points].includes(renderType) || view.performanceStatistics.points > 0;
 
     return (
-        <ScrollBox>
-            <Box mt={1} p={1} display="flex" flexDirection="column">
-                <FormControlLabel
-                    sx={{ ml: 0, mb: 2 }}
-                    control={<Switch name={AdvancedSetting.Taa} checked={taa} onChange={handleToggle} />}
-                    label={
-                        <Box ml={1} fontSize={16}>
-                            TAA
-                        </Box>
-                    }
-                />
-                <FormControlLabel
-                    sx={{ ml: 0, mb: 2 }}
-                    control={<Switch name={AdvancedSetting.Ssao} checked={ssao} onChange={handleToggle} />}
-                    label={
-                        <Box ml={1} fontSize={16}>
-                            SSAO
-                        </Box>
-                    }
-                />
-                <FormControlLabel
-                    sx={{ ml: 0, mb: 2 }}
-                    control={<Switch name={AdvancedSetting.AutoFps} checked={autoFps} onChange={handleToggle} />}
-                    label={
-                        <Box ml={1} fontSize={16}>
-                            Auto FPS
-                        </Box>
-                    }
-                />
-                <FormControlLabel
-                    sx={{ ml: 0, mb: 2 }}
-                    control={
-                        <Switch
-                            name={AdvancedSetting.ShowBoundingBoxes}
-                            checked={showBoundingBoxes}
-                            onChange={handleToggle}
+        <>
+            <WidgetContainer>
+                <WidgetHeader widget={featuresConfig.advancedSettings} />
+                <ScrollBox display={menuOpen ? "none" : "block"}>
+                    <Box mt={1} p={1} display="flex" flexDirection="column">
+                        <FormControlLabel
+                            sx={{ ml: 0, mb: 2 }}
+                            control={<Switch name={AdvancedSetting.Taa} checked={taa} onChange={handleToggle} />}
+                            label={
+                                <Box ml={1} fontSize={16}>
+                                    TAA
+                                </Box>
+                            }
                         />
-                    }
-                    label={
-                        <Box ml={1} fontSize={16}>
-                            Show bounding boxes
-                        </Box>
-                    }
-                />
-                <FormControlLabel
-                    sx={{ ml: 0, mb: 2 }}
-                    control={
-                        <Switch
-                            name={AdvancedSetting.DoubleSidedMaterials}
-                            checked={doubleSidedMaterials}
-                            onChange={handleToggle}
+                        <FormControlLabel
+                            sx={{ ml: 0, mb: 2 }}
+                            control={<Switch name={AdvancedSetting.Ssao} checked={ssao} onChange={handleToggle} />}
+                            label={
+                                <Box ml={1} fontSize={16}>
+                                    SSAO
+                                </Box>
+                            }
                         />
-                    }
-                    label={
-                        <Box ml={1} fontSize={16}>
-                            Double sided materials
-                        </Box>
-                    }
-                />
-                <FormControlLabel
-                    sx={{ ml: 0, mb: 2 }}
-                    control={
-                        <Switch
-                            name={AdvancedSetting.DoubleSidedTransparentMaterials}
-                            checked={doubleSidedTransparentMaterials}
-                            onChange={handleToggle}
+                        <FormControlLabel
+                            sx={{ ml: 0, mb: 2 }}
+                            control={
+                                <Switch name={AdvancedSetting.AutoFps} checked={autoFps} onChange={handleToggle} />
+                            }
+                            label={
+                                <Box ml={1} fontSize={16}>
+                                    Auto FPS
+                                </Box>
+                            }
                         />
-                    }
-                    label={
-                        <Box ml={1} fontSize={16}>
-                            Double sided transparent materials
-                        </Box>
-                    }
-                />
-                <FormControlLabel
-                    sx={{ ml: 0, mb: 2 }}
-                    control={
-                        <Switch name={AdvancedSetting.HoldDynamic} checked={holdDynamic} onChange={handleToggle} />
-                    }
-                    label={
-                        <Box ml={1} fontSize={16}>
-                            Hold dynamic
-                        </Box>
-                    }
-                />
-                <FormControlLabel
-                    sx={{ ml: 0, mb: 2 }}
-                    control={
-                        <Switch
-                            name={AdvancedSetting.TriangleBudget}
-                            checked={triangleBudget}
-                            onChange={handleToggle}
+                        <FormControlLabel
+                            sx={{ ml: 0, mb: 2 }}
+                            control={
+                                <Switch
+                                    name={AdvancedSetting.ShowBoundingBoxes}
+                                    checked={showBoundingBoxes}
+                                    onChange={handleToggle}
+                                />
+                            }
+                            label={
+                                <Box ml={1} fontSize={16}>
+                                    Show bounding boxes
+                                </Box>
+                            }
                         />
-                    }
-                    label={
-                        <Box ml={1} fontSize={16}>
-                            Triangle budget
-                        </Box>
-                    }
-                />
-                <FormControlLabel
-                    sx={{ ml: 0, mb: 2 }}
-                    control={
-                        <Switch
-                            name={AdvancedSetting.ShowPerformance}
-                            checked={showPerformance}
-                            onChange={handleToggle}
+                        <FormControlLabel
+                            sx={{ ml: 0, mb: 2 }}
+                            control={
+                                <Switch
+                                    name={AdvancedSetting.DoubleSidedMaterials}
+                                    checked={doubleSidedMaterials}
+                                    onChange={handleToggle}
+                                />
+                            }
+                            label={
+                                <Box ml={1} fontSize={16}>
+                                    Double sided materials
+                                </Box>
+                            }
                         />
-                    }
-                    label={
-                        <Box ml={1} fontSize={16}>
-                            Show stats
-                        </Box>
-                    }
-                />
-                {showPointSettings ? (
-                    <FormControlLabel
-                        sx={{ ml: 0, mb: 2 }}
-                        control={
-                            <Switch
-                                name={AdvancedSetting.QualityPoints}
-                                checked={qualityPoints}
-                                onChange={handleToggle}
+                        <FormControlLabel
+                            sx={{ ml: 0, mb: 2 }}
+                            control={
+                                <Switch
+                                    name={AdvancedSetting.DoubleSidedTransparentMaterials}
+                                    checked={doubleSidedTransparentMaterials}
+                                    onChange={handleToggle}
+                                />
+                            }
+                            label={
+                                <Box ml={1} fontSize={16}>
+                                    Double sided transparent materials
+                                </Box>
+                            }
+                        />
+                        <FormControlLabel
+                            sx={{ ml: 0, mb: 2 }}
+                            control={
+                                <Switch
+                                    name={AdvancedSetting.HoldDynamic}
+                                    checked={holdDynamic}
+                                    onChange={handleToggle}
+                                />
+                            }
+                            label={
+                                <Box ml={1} fontSize={16}>
+                                    Hold dynamic
+                                </Box>
+                            }
+                        />
+                        <FormControlLabel
+                            sx={{ ml: 0, mb: 2 }}
+                            control={
+                                <Switch
+                                    name={AdvancedSetting.TriangleBudget}
+                                    checked={triangleBudget}
+                                    onChange={handleToggle}
+                                />
+                            }
+                            label={
+                                <Box ml={1} fontSize={16}>
+                                    Triangle budget
+                                </Box>
+                            }
+                        />
+                        <FormControlLabel
+                            sx={{ ml: 0, mb: 2 }}
+                            control={
+                                <Switch
+                                    name={AdvancedSetting.ShowPerformance}
+                                    checked={showPerformance}
+                                    onChange={handleToggle}
+                                />
+                            }
+                            label={
+                                <Box ml={1} fontSize={16}>
+                                    Show stats
+                                </Box>
+                            }
+                        />
+                        {showPointSettings ? (
+                            <FormControlLabel
+                                sx={{ ml: 0, mb: 2 }}
+                                control={
+                                    <Switch
+                                        name={AdvancedSetting.QualityPoints}
+                                        checked={qualityPoints}
+                                        onChange={handleToggle}
+                                    />
+                                }
+                                label={
+                                    <Box ml={1} fontSize={16}>
+                                        Quality points
+                                    </Box>
+                                }
                             />
-                        }
-                        label={
-                            <Box ml={1} fontSize={16}>
-                                Quality points
-                            </Box>
-                        }
-                    />
-                ) : null}
+                        ) : null}
 
-                <Divider />
-
-                <Box display="flex" sx={{ my: 2 }} alignItems="center">
-                    <Typography
-                        sx={{
-                            width: 160,
-                            flexShrink: 0,
-                        }}
-                    >
-                        Camera near clipping
-                    </Typography>
-                    <Slider
-                        sx={{ mx: 2, flex: "1 1 100%" }}
-                        min={0}
-                        max={360}
-                        step={1}
-                        scale={scaleNearClipping}
-                        name={AdvancedSetting.CameraNearClipping}
-                        value={near}
-                        valueLabelFormat={(value) => value.toFixed(3)}
-                        valueLabelDisplay="auto"
-                        onChange={handleSliderChange(AdvancedSetting.CameraNearClipping)}
-                        onChangeCommitted={handleSliderCommit(AdvancedSetting.CameraNearClipping)}
-                    />
-                </Box>
-                <Box display="flex" sx={{ mb: 2 }} alignItems="center">
-                    <Typography
-                        sx={{
-                            width: 160,
-                            flexShrink: 0,
-                        }}
-                    >
-                        Camera far clipping
-                    </Typography>
-                    <Slider
-                        sx={{ mx: 2, flex: "1 1 100%" }}
-                        min={180}
-                        max={400}
-                        step={1}
-                        scale={scaleFarClipping}
-                        name={AdvancedSetting.CameraFarClipping}
-                        value={far}
-                        valueLabelFormat={(value) => value.toFixed(0)}
-                        valueLabelDisplay="auto"
-                        onChange={handleSliderChange(AdvancedSetting.CameraFarClipping)}
-                        onChangeCommitted={handleSliderCommit(AdvancedSetting.CameraFarClipping)}
-                    />
-                </Box>
-
-                {showPointSettings ? (
-                    <>
                         <Divider />
 
                         <Box display="flex" sx={{ my: 2 }} alignItems="center">
@@ -347,39 +308,20 @@ export function AdvancedSettings() {
                                     flexShrink: 0,
                                 }}
                             >
-                                Point size
+                                Camera near clipping
                             </Typography>
                             <Slider
                                 sx={{ mx: 2, flex: "1 1 100%" }}
                                 min={0}
-                                max={2}
-                                step={0.25}
-                                name={AdvancedSetting.PointSize}
-                                value={size}
-                                valueLabelDisplay="auto"
-                                onChange={handleSliderChange(AdvancedSetting.PointSize)}
-                                onChangeCommitted={handleSliderCommit(AdvancedSetting.PointSize)}
-                            />
-                        </Box>
-                        <Box display="flex" sx={{ mb: 2 }} alignItems="center">
-                            <Typography
-                                sx={{
-                                    width: 160,
-                                    flexShrink: 0,
-                                }}
-                            >
-                                Max point size
-                            </Typography>
-                            <Slider
-                                sx={{ mx: 2, flex: "1 1 100%" }}
-                                min={1}
-                                max={100}
+                                max={360}
                                 step={1}
-                                name={AdvancedSetting.MaxPointSize}
-                                value={maxSize}
+                                scale={scaleNearClipping}
+                                name={AdvancedSetting.CameraNearClipping}
+                                value={near}
+                                valueLabelFormat={(value) => value.toFixed(3)}
                                 valueLabelDisplay="auto"
-                                onChange={handleSliderChange(AdvancedSetting.MaxPointSize)}
-                                onChangeCommitted={handleSliderCommit(AdvancedSetting.MaxPointSize)}
+                                onChange={handleSliderChange(AdvancedSetting.CameraNearClipping)}
+                                onChangeCommitted={handleSliderCommit(AdvancedSetting.CameraNearClipping)}
                             />
                         </Box>
                         <Box display="flex" sx={{ mb: 2 }} alignItems="center">
@@ -389,24 +331,106 @@ export function AdvancedSettings() {
                                     flexShrink: 0,
                                 }}
                             >
-                                Pt. tolerance factor
+                                Camera far clipping
                             </Typography>
                             <Slider
                                 sx={{ mx: 2, flex: "1 1 100%" }}
-                                min={0}
-                                max={0.2}
-                                step={0.005}
-                                name={AdvancedSetting.PointToleranceFactor}
-                                value={toleranceFactor}
+                                min={180}
+                                max={400}
+                                step={1}
+                                scale={scaleFarClipping}
+                                name={AdvancedSetting.CameraFarClipping}
+                                value={far}
+                                valueLabelFormat={(value) => value.toFixed(0)}
                                 valueLabelDisplay="auto"
-                                onChange={handleSliderChange(AdvancedSetting.PointToleranceFactor)}
-                                onChangeCommitted={handleSliderCommit(AdvancedSetting.PointToleranceFactor)}
+                                onChange={handleSliderChange(AdvancedSetting.CameraFarClipping)}
+                                onChangeCommitted={handleSliderCommit(AdvancedSetting.CameraFarClipping)}
                             />
                         </Box>
-                    </>
-                ) : null}
-            </Box>
-        </ScrollBox>
+
+                        {showPointSettings ? (
+                            <>
+                                <Divider />
+
+                                <Box display="flex" sx={{ my: 2 }} alignItems="center">
+                                    <Typography
+                                        sx={{
+                                            width: 160,
+                                            flexShrink: 0,
+                                        }}
+                                    >
+                                        Point size
+                                    </Typography>
+                                    <Slider
+                                        sx={{ mx: 2, flex: "1 1 100%" }}
+                                        min={0}
+                                        max={2}
+                                        step={0.25}
+                                        name={AdvancedSetting.PointSize}
+                                        value={size}
+                                        valueLabelDisplay="auto"
+                                        onChange={handleSliderChange(AdvancedSetting.PointSize)}
+                                        onChangeCommitted={handleSliderCommit(AdvancedSetting.PointSize)}
+                                    />
+                                </Box>
+                                <Box display="flex" sx={{ mb: 2 }} alignItems="center">
+                                    <Typography
+                                        sx={{
+                                            width: 160,
+                                            flexShrink: 0,
+                                        }}
+                                    >
+                                        Max point size
+                                    </Typography>
+                                    <Slider
+                                        sx={{ mx: 2, flex: "1 1 100%" }}
+                                        min={1}
+                                        max={100}
+                                        step={1}
+                                        name={AdvancedSetting.MaxPointSize}
+                                        value={maxSize}
+                                        valueLabelDisplay="auto"
+                                        onChange={handleSliderChange(AdvancedSetting.MaxPointSize)}
+                                        onChangeCommitted={handleSliderCommit(AdvancedSetting.MaxPointSize)}
+                                    />
+                                </Box>
+                                <Box display="flex" sx={{ mb: 2 }} alignItems="center">
+                                    <Typography
+                                        sx={{
+                                            width: 160,
+                                            flexShrink: 0,
+                                        }}
+                                    >
+                                        Pt. tolerance factor
+                                    </Typography>
+                                    <Slider
+                                        sx={{ mx: 2, flex: "1 1 100%" }}
+                                        min={0}
+                                        max={0.2}
+                                        step={0.005}
+                                        name={AdvancedSetting.PointToleranceFactor}
+                                        value={toleranceFactor}
+                                        valueLabelDisplay="auto"
+                                        onChange={handleSliderChange(AdvancedSetting.PointToleranceFactor)}
+                                        onChangeCommitted={handleSliderCommit(AdvancedSetting.PointToleranceFactor)}
+                                    />
+                                </Box>
+                            </>
+                        ) : null}
+                    </Box>
+                </ScrollBox>
+                <WidgetList
+                    display={menuOpen ? "block" : "none"}
+                    widgetKey={featuresConfig.advancedSettings.key}
+                    onSelect={toggleMenu}
+                />
+            </WidgetContainer>
+            <LogoSpeedDial
+                open={menuOpen}
+                toggle={toggleMenu}
+                testId={`${featuresConfig.advancedSettings.key}-widget-menu-fab`}
+            />
+        </>
     );
 }
 

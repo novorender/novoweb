@@ -5,7 +5,7 @@ import { Snackbar, IconButton, Typography } from "@mui/material";
 
 import { WidgetMenuButtonWrapper } from "components";
 import { useToggle } from "hooks/useToggle";
-import { config as featuresConfig } from "config/features";
+import { featuresConfig } from "config/features";
 import { selectMainObject } from "slices/renderSlice";
 import { useExplorerGlobals } from "contexts/explorerGlobals";
 

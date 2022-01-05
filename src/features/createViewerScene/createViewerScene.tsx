@@ -9,8 +9,8 @@ import {
     Button,
     Snackbar,
     Alert,
+    Box,
 } from "@mui/material";
-import { Box } from "@mui/system";
 import Close from "@mui/icons-material/Close";
 import { DatePicker, LoadingButton } from "@mui/lab";
 import { FormEventHandler, useState } from "react";

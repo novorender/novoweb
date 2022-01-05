@@ -1,17 +1,28 @@
 import { ChangeEvent, CSSProperties, FormEvent, useCallback, useEffect, useRef, useState } from "react";
 import { ListOnScrollProps } from "react-window";
-import { Box, Button, ButtonProps, Checkbox, FormControlLabel, ListItem, styled, Typography } from "@mui/material";
-import { css } from "@mui/styled-engine";
+import { Box, Button, Checkbox, FormControlLabel, ListItem, Typography } from "@mui/material";
 import { HierarcicalObjectReference, ObjectId, SearchPattern } from "@novorender/webgl-api";
 
-import { useAppDispatch, useAppSelector } from "app/store";
-import { TextField, Switch, LinearProgress, ScrollBox, Tooltip } from "components";
+import {
+    TextField,
+    Switch,
+    LinearProgress,
+    ScrollBox,
+    Tooltip,
+    WidgetContainer,
+    WidgetHeader,
+    LogoSpeedDial,
+    AdvancedSearchInputs,
+} from "components";
 import { NodeList } from "features/nodeList";
+import { WidgetList } from "features/widgetList";
 
 import { useToggle } from "hooks/useToggle";
 import { useMountedState } from "hooks/useMountedState";
 import { useAbortController } from "hooks/useAbortController";
 
+import { useAppDispatch, useAppSelector } from "app/store";
+import { useExplorerGlobals } from "contexts/explorerGlobals";
 import { hiddenGroupActions, useDispatchHidden } from "contexts/hidden";
 import { highlightActions, useDispatchHighlighted } from "contexts/highlighted";
 import { ObjectVisibility, renderActions } from "slices/renderSlice";
@@ -19,38 +30,10 @@ import { explorerActions, selectUrlSearchQuery } from "slices/explorerSlice";
 
 import { iterateAsync, searchByPatterns, searchDeepByPatterns } from "utils/search";
 import { getTotalBoundingSphere } from "utils/objectData";
+import { featuresConfig } from "config/features";
 
 import AddCircleIcon from "@mui/icons-material/AddCircle";
-import DragHandleIcon from "@mui/icons-material/DragHandle";
-import CancelIcon from "@mui/icons-material/Cancel";
 import VisibilityIcon from "@mui/icons-material/Visibility";
-import { useExplorerGlobals } from "contexts/explorerGlobals";
-
-const StyledForm = styled("form")(
-    ({ theme }) => css`
-        margin: ${theme.spacing(1)} 0;
-        box-shadow: ${theme.customShadows.widgetHeader};
-        padding-bottom: ${theme.spacing(1)};
-    `
-);
-
-const AdvancedSearchModifier = styled(Button, {
-    shouldForwardProp: (prop) => prop !== "active",
-})<ButtonProps & { active?: boolean }>(
-    ({ theme, active }) => css`
-        width: 24px;
-        height: 24px;
-        min-width: 0;
-        flex: 0 0 auto;
-        padding: ${theme.spacing(1)};
-        color: ${theme.palette.common.white};
-        background: ${active ? theme.palette.primary.main : theme.palette.secondary.light};
-
-        &:hover {
-            background: ${active ? theme.palette.primary.dark : theme.palette.secondary.main};
-        }
-    `
-);
 
 enum Status {
     Initial,
@@ -67,6 +50,7 @@ export function Search() {
 
     const urlSearchQuery = useAppSelector(selectUrlSearchQuery);
 
+    const [menuOpen, toggleMenu] = useToggle();
     const [advanced, toggleAdvanced] = useToggle(urlSearchQuery ? Array.isArray(urlSearchQuery) : true);
     const [simpleInput, setSimpleInput] = useState(typeof urlSearchQuery === "string" ? urlSearchQuery : "");
     const [advancedInputs, setAdvancedInputs] = useState(
@@ -266,172 +250,129 @@ export function Search() {
     };
 
     return (
-        <Box display="flex" flexDirection="column" height={1}>
-            {status === Status.Loading ? <LinearProgress /> : null}
-            <StyledForm onSubmit={handleSubmit}>
-                <ScrollBox maxHeight={92} mb={2} pt={1} px={1}>
-                    {advanced ? (
-                        advancedInputs.map(({ property, value, exact }, index, array) => (
-                            <Box key={index} display="flex" alignItems="center" mb={index === array.length - 1 ? 0 : 1}>
+        <>
+            <WidgetContainer>
+                <WidgetHeader widget={featuresConfig.search}>
+                    {!menuOpen ? (
+                        <form onSubmit={handleSubmit}>
+                            {advanced ? (
+                                <AdvancedSearchInputs inputs={advancedInputs} setInputs={setAdvancedInputs} />
+                            ) : (
                                 <TextField
-                                    autoComplete="novorender-property-name"
-                                    autoFocus={index === array.length - 1}
-                                    id={`advanced-search-property-${index}`}
-                                    label={"Name"}
+                                    autoComplete="novorender-simple-search"
+                                    autoFocus
+                                    id="simple-search-field"
+                                    label={"Search"}
                                     fullWidth
-                                    value={property}
-                                    onChange={(e) =>
-                                        setAdvancedInputs((inputs) =>
-                                            inputs.map((input, idx) =>
-                                                idx === index ? { ...input, property: e.target.value } : input
-                                            )
-                                        )
+                                    value={simpleInput}
+                                    onChange={(e) => setSimpleInput(e.target.value)}
+                                    sx={{ mb: 2, pt: 1 }}
+                                />
+                            )}
+
+                            <Box mb={2}>
+                                <FormControlLabel
+                                    sx={{ marginLeft: 0, marginRight: 4, minHeight: 24 }}
+                                    control={<Switch checked={advanced} onChange={toggleAdvanced} />}
+                                    label={
+                                        <Box ml={0.5} fontSize={14}>
+                                            Advanced
+                                        </Box>
                                     }
                                 />
-                                <TextField
-                                    autoComplete="novorender-property-value"
-                                    id={`advanced-search-value-${index}`}
-                                    label={"Value"}
-                                    fullWidth
-                                    value={value}
-                                    onChange={(e) =>
-                                        setAdvancedInputs((inputs) =>
-                                            inputs.map((input, idx) =>
-                                                idx === index ? { ...input, value: e.target.value } : input
-                                            )
-                                        )
-                                    }
-                                />
-                                <Box mx={1}>
-                                    <AdvancedSearchModifier
-                                        title="Exact"
+                                {advanced ? (
+                                    <Button
+                                        color="grey"
+                                        sx={{ padding: 0 }}
                                         onClick={() =>
-                                            setAdvancedInputs((inputs) =>
-                                                inputs.map((input, idx) =>
-                                                    idx === index ? { ...input, exact: !input.exact } : input
-                                                )
-                                            )
+                                            setAdvancedInputs((inputs) => [
+                                                ...inputs,
+                                                { property: "", value: "", exact: true },
+                                            ])
                                         }
-                                        active={exact}
-                                        size="small"
                                     >
-                                        <DragHandleIcon fontSize="small" />
-                                    </AdvancedSearchModifier>
-                                </Box>
-                                <AdvancedSearchModifier
-                                    title="Remove"
-                                    onClick={() => {
-                                        if (advancedInputs.length > 1) {
-                                            setAdvancedInputs((inputs) =>
-                                                inputs.filter((_input, idx) => idx !== index)
-                                            );
-                                        } else {
-                                            setAdvancedInputs([{ property: "", value: "", exact: true }]);
-                                            toggleAdvanced();
-                                        }
-                                    }}
-                                    size="small"
+                                        <AddCircleIcon />
+                                        <Box ml={0.5}>Add criteria</Box>
+                                    </Button>
+                                ) : null}
+                            </Box>
+                            <Box display="flex" mb={1}>
+                                <Button
+                                    color="grey"
+                                    type="button"
+                                    variant="outlined"
+                                    onClick={handleCancel}
+                                    disabled={status !== Status.Loading}
+                                    fullWidth
+                                    sx={{ marginRight: 1 }}
                                 >
-                                    <CancelIcon fontSize="small" />
-                                </AdvancedSearchModifier>
+                                    Cancel
+                                </Button>
+                                <Button
+                                    type="submit"
+                                    fullWidth
+                                    disabled={status === Status.Loading}
+                                    color="primary"
+                                    variant="contained"
+                                >
+                                    Search
+                                </Button>
                             </Box>
-                        ))
-                    ) : (
-                        <TextField
-                            autoComplete="novorender-simple-search"
-                            autoFocus
-                            id="simple-search-field"
-                            label={"Search"}
-                            fullWidth
-                            value={simpleInput}
-                            onChange={(e) => setSimpleInput(e.target.value)}
-                        />
-                    )}
-                </ScrollBox>
-                <Box px={1} mb={2}>
-                    <FormControlLabel
-                        sx={{ marginLeft: 0, marginRight: 4, minHeight: 24 }}
-                        control={<Switch checked={advanced} onChange={toggleAdvanced} />}
-                        label={
-                            <Box ml={0.5} fontSize={14}>
-                                Advanced
-                            </Box>
-                        }
-                    />
-                    {advanced ? (
-                        <Button
-                            color="grey"
-                            sx={{ padding: 0 }}
-                            onClick={() =>
-                                setAdvancedInputs((inputs) => [...inputs, { property: "", value: "", exact: true }])
-                            }
-                        >
-                            <AddCircleIcon />
-                            <Box ml={0.5}>Add criteria</Box>
-                        </Button>
+                        </form>
                     ) : null}
-                </Box>
-                <Box px={1} display="flex">
-                    <Button
-                        color="grey"
-                        type="button"
-                        variant="outlined"
-                        onClick={handleCancel}
-                        disabled={status !== Status.Loading}
-                        fullWidth
-                        sx={{ marginRight: 1 }}
-                    >
-                        Cancel
-                    </Button>
-                    <Button
-                        type="submit"
-                        fullWidth
-                        disabled={status === Status.Loading}
-                        color="primary"
-                        variant="contained"
-                    >
-                        Search
-                    </Button>
-                </Box>
-            </StyledForm>
-            <ScrollBox flex={"1 1 100%"}>
-                {status === Status.Error ? (
-                    <Box px={1} pt={1}>
-                        Something went wrong with the search.
-                    </Box>
-                ) : searchResults ? (
-                    <>
-                        <NodeList
-                            CustomParent={({ style }: { style: CSSProperties }) => (
-                                <CustomParentNode
-                                    style={style}
-                                    abortController={abortController}
-                                    searchPatterns={previousSearchPattern.current}
+                </WidgetHeader>
+                <Box display={menuOpen ? "none" : "flex"} flexDirection="column" height={1}>
+                    {status === Status.Loading ? <LinearProgress /> : null}
+                    <ScrollBox flex={"1 1 100%"}>
+                        {status === Status.Error ? (
+                            <Box px={1} pt={1}>
+                                Something went wrong with the search.
+                            </Box>
+                        ) : searchResults ? (
+                            <>
+                                <NodeList
+                                    CustomParent={({ style }: { style: CSSProperties }) => (
+                                        <CustomParentNode
+                                            style={style}
+                                            abortController={abortController}
+                                            searchPatterns={previousSearchPattern.current}
+                                            loading={status === Status.Loading}
+                                            setLoading={(loading: boolean) =>
+                                                setStatus(loading ? Status.Loading : Status.Initial)
+                                            }
+                                            allSelected={allSelected}
+                                            setAllSelected={setAllSelected}
+                                            allHidden={allHidden}
+                                            setAllHidden={setAllHidden}
+                                        />
+                                    )}
+                                    nodes={searchResults.nodes}
+                                    onScroll={handleScroll}
+                                    outerRef={listElRef}
                                     loading={status === Status.Loading}
                                     setLoading={(loading: boolean) =>
                                         setStatus(loading ? Status.Loading : Status.Initial)
                                     }
-                                    allSelected={allSelected}
-                                    setAllSelected={setAllSelected}
-                                    allHidden={allHidden}
-                                    setAllHidden={setAllHidden}
+                                    abortController={abortController}
                                 />
-                            )}
-                            nodes={searchResults.nodes}
-                            onScroll={handleScroll}
-                            outerRef={listElRef}
-                            loading={status === Status.Loading}
-                            setLoading={(loading: boolean) => setStatus(loading ? Status.Loading : Status.Initial)}
-                            abortController={abortController}
-                        />
-                    </>
-                ) : null}
-            </ScrollBox>
-        </Box>
+                            </>
+                        ) : null}
+                    </ScrollBox>
+                </Box>
+                <WidgetList
+                    display={menuOpen ? "block" : "none"}
+                    widgetKey={featuresConfig.search.key}
+                    onSelect={toggleMenu}
+                />
+            </WidgetContainer>
+            <LogoSpeedDial
+                open={menuOpen}
+                toggle={toggleMenu}
+                testId={`${featuresConfig.search.key}-widget-menu-fab`}
+            />
+        </>
     );
 }
-
-// checked minstekrav? sjekk results.length <= highlighted/hidden.length
 
 function CustomParentNode({
     style,

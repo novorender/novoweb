@@ -1,6 +1,6 @@
 import { Box, styled, BoxTypeMap } from "@mui/material";
 import { OverridableComponent } from "@mui/material/OverridableComponent";
-import { css } from "@mui/system";
+import { css } from "@mui/styled-engine";
 
 export const withCustomScrollbar = (component: any): unknown =>
     styled(component, { shouldForwardProp: (prop) => prop !== "horizontal" })<{ horizontal?: boolean }>(

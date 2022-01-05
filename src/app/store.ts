@@ -5,6 +5,7 @@ import { setupListeners } from "@reduxjs/toolkit/query";
 import { renderReducer } from "slices/renderSlice";
 import { explorerReducer } from "slices/explorerSlice";
 import { authReducer } from "slices/authSlice";
+import { groupsReducer } from "features/groups";
 import { bimCollabReducer } from "features/bimCollab/bimCollabSlice";
 import { bimCollabApi } from "features/bimCollab/bimCollabApi";
 
@@ -12,6 +13,7 @@ const rootReducer = combineReducers({
     explorer: explorerReducer,
     render: renderReducer,
     auth: authReducer,
+    groups: groupsReducer,
     bimCollab: bimCollabReducer,
     [bimCollabApi.reducerPath]: bimCollabApi.reducer,
 });

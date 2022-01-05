@@ -28,7 +28,7 @@ Add a new property to the features config.
 ```ts
 // src/config/features.tsx
 
-export const config = {
+export const featuresConfig = {
     //...
     myWidget: {
         key: "myWidget",
@@ -71,7 +71,7 @@ function enabledFeaturesToFeatureKeys(enabledFeatures: Record<string, boolean>):
 Render the component inside the widget wrapper when it is open.
 
 ```tsx
-// src/features/widget.tsx
+// src/features/widgets/widgets.tsx
 
 function getWidgetByKey({ key, scene, view }: Params): JSX.Element | string {
     switch (key) {

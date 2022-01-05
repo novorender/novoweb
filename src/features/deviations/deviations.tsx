@@ -11,9 +11,13 @@ import { ColorResult } from "react-color";
 import { RefCallback, useCallback, useState } from "react";
 import { useExplorerGlobals } from "contexts/explorerGlobals";
 import { useMountedState } from "hooks/useMountedState";
+import { featuresConfig } from "config/features";
+import { LogoSpeedDial, WidgetContainer, WidgetHeader } from "components";
+import { WidgetList } from "features/widgetList";
 
 export function Deviations() {
     const theme = useTheme();
+    const [menuOpen, toggleMenu] = useToggle();
     const deviation = useAppSelector(selectDeviation);
     const { mode, colors } = deviation;
     const dispatch = useAppDispatch();
@@ -36,49 +40,67 @@ export function Deviations() {
 
     const subtrees = (scene as any).config.subtrees as string[] | undefined;
     const use = (subtrees?.indexOf("triangles") ?? -1) > -1 && (subtrees?.indexOf("points") ?? -1) > -1;
-    return use ? (
-        <Box p={1}>
-            <Box
-                mt={1}
-                mb={1}
-                display="flex"
-                justifyContent="center"
-                boxShadow={theme.customShadows.widgetHeader}
-                ref={containerRef}
-            >
-                <RadioGroup
-                    row
-                    aria-label="gender"
-                    name="row-radio-buttons-group"
-                    value={mode}
-                    onChange={change}
-                    sx={{ marginBottom: theme.spacing(1) }}
-                >
-                    <FormControlLabel value="off" control={<Radio />} label="Off" />
-                    <FormControlLabel value="on" control={<Radio />} label="On" />
-                    <FormControlLabel value="mix" control={<Radio />} label="Mix" />
-                </RadioGroup>
-            </Box>
-            {mode !== "off"
-                ? colors
-                      .map((c, i) => (
-                          <ColorStop
-                              key={active + "_" + i}
-                              deviation={c.deviation}
-                              color={c.color}
-                              idx={i}
-                              colorPickerPosition={colorPickerPosition}
-                              active={active}
-                              setActive={setActive}
-                          />
-                      ))
-                      .reverse()
-                : undefined}
-        </Box>
-    ) : (
-        <Box p={1}>
-            <Typography>No point clouds and triangles</Typography>
-        </Box>
+    return (
+        <>
+            <WidgetContainer>
+                <WidgetHeader widget={featuresConfig.deviations} />
+                {use ? (
+                    <Box p={1} display={!menuOpen ? "block" : "none"}>
+                        <Box
+                            mt={1}
+                            mb={1}
+                            display="flex"
+                            justifyContent="center"
+                            boxShadow={theme.customShadows.widgetHeader}
+                            ref={containerRef}
+                        >
+                            <RadioGroup
+                                row
+                                aria-label="gender"
+                                name="row-radio-buttons-group"
+                                value={mode}
+                                onChange={change}
+                                sx={{ marginBottom: theme.spacing(1) }}
+                            >
+                                <FormControlLabel value="off" control={<Radio />} label="Off" />
+                                <FormControlLabel value="on" control={<Radio />} label="On" />
+                                <FormControlLabel value="mix" control={<Radio />} label="Mix" />
+                            </RadioGroup>
+                        </Box>
+                        {mode !== "off"
+                            ? colors
+                                  .map((c, i) => (
+                                      <ColorStop
+                                          key={colors.length + "_" + i}
+                                          deviation={c.deviation}
+                                          color={c.color}
+                                          idx={i}
+                                          colorPickerPosition={colorPickerPosition}
+                                          active={active}
+                                          setActive={setActive}
+                                      />
+                                  ))
+                                  .reverse()
+                            : undefined}
+                    </Box>
+                ) : (
+                    <Box p={1} display={!menuOpen ? "block" : "none"}>
+                        <Typography>No point clouds and triangles</Typography>
+                    </Box>
+                )}
+                <WidgetList
+                    display={menuOpen ? "block" : "none"}
+                    widgetKey={featuresConfig.deviations.key}
+                    onSelect={toggleMenu}
+                />
+            </WidgetContainer>
+            <LogoSpeedDial
+                open={menuOpen}
+                toggle={toggleMenu}
+                testId={`${featuresConfig.panoramas.key}-widget-menu-fab`}
+                ariaLabel="toggle widget menu"
+            />
+        </>
     );
 }
 

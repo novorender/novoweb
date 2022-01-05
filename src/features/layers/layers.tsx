@@ -1,8 +1,11 @@
 import { AddCircle, DeleteSweep, RemoveCircle } from "@mui/icons-material";
-import { Box, Button, useTheme, Typography, RadioGroup, FormControlLabel, Radio } from "@mui/material";
+import { Box, Button, Typography, RadioGroup, FormControlLabel, Radio } from "@mui/material";
 
 import { useAppDispatch, useAppSelector } from "app/store";
-import { Divider } from "components";
+import { Divider, LogoSpeedDial, WidgetContainer, WidgetHeader } from "components";
+import { featuresConfig } from "config/features";
+import { useToggle } from "hooks/useToggle";
+import { WidgetList } from "features/widgetList";
 
 import { customGroupsActions, useCustomGroups } from "contexts/customGroups";
 import { highlightActions, useDispatchHighlighted, useHighlighted } from "contexts/highlighted";
@@ -10,7 +13,7 @@ import { useDispatchVisible, useVisible, visibleActions } from "contexts/visible
 import { ObjectVisibility, renderActions, selectDefaultVisibility } from "slices/renderSlice";
 
 export function Layers() {
-    const theme = useTheme();
+    const [menuOpen, toggleMenu] = useToggle();
     const defaultVisibility = useAppSelector(selectDefaultVisibility);
     const { idArr: highlighted } = useHighlighted();
     const { idArr: visible } = useVisible();
@@ -50,43 +53,59 @@ export function Layers() {
 
     return (
         <>
-            <Box p={1} boxShadow={theme.customShadows.widgetHeader} display="flex" justifyContent="space-between">
-                <Button color="grey" disabled={!hasHighlighted} onClick={handleAdd}>
-                    <AddCircle sx={{ mr: 1 }} />
-                    Add
-                </Button>
-                <Button color="grey" disabled={!hasHighlighted || !visible.length} onClick={handleRemove}>
-                    <RemoveCircle sx={{ mr: 1 }} />
-                    Remove
-                </Button>
-                <Button color="grey" disabled={!visible.length} onClick={handleClear}>
-                    <DeleteSweep sx={{ mr: 1 }} />
-                    Clear
-                </Button>
-            </Box>
-            <Box p={1} mt={1}>
-                <Typography sx={{ mb: 2 }}>Objects in layer: {visible.length}</Typography>
-                <Divider sx={{ mb: 2 }} />
-                <Typography fontWeight={600}>View mode</Typography>
-                <RadioGroup
-                    aria-label="View type"
-                    value={defaultVisibility}
-                    onChange={handleViewTypeChange}
-                    name="radio-buttons-group"
-                >
-                    <FormControlLabel value={ObjectVisibility.Neutral} control={<Radio />} label="All" />
-                    <FormControlLabel
-                        value={ObjectVisibility.SemiTransparent}
-                        control={<Radio />}
-                        label="Layer - Semi-transparent"
-                    />
-                    <FormControlLabel
-                        value={ObjectVisibility.Transparent}
-                        control={<Radio />}
-                        label="Layer - Transparent"
-                    />
-                </RadioGroup>
-            </Box>
+            <WidgetContainer>
+                <WidgetHeader widget={featuresConfig.layers}>
+                    {!menuOpen ? (
+                        <Box display="flex" justifyContent="space-between">
+                            <Button color="grey" disabled={!hasHighlighted} onClick={handleAdd}>
+                                <AddCircle sx={{ mr: 1 }} />
+                                Add
+                            </Button>
+                            <Button color="grey" disabled={!hasHighlighted || !visible.length} onClick={handleRemove}>
+                                <RemoveCircle sx={{ mr: 1 }} />
+                                Remove
+                            </Button>
+                            <Button color="grey" disabled={!visible.length} onClick={handleClear}>
+                                <DeleteSweep sx={{ mr: 1 }} />
+                                Clear
+                            </Button>
+                        </Box>
+                    ) : null}
+                </WidgetHeader>
+                <Box display={menuOpen ? "none" : "flex"} flexDirection="column" p={1} mt={1}>
+                    <Typography sx={{ mb: 2 }}>Objects in layer: {visible.length}</Typography>
+                    <Divider sx={{ mb: 2 }} />
+                    <Typography fontWeight={600}>View mode</Typography>
+                    <RadioGroup
+                        aria-label="View type"
+                        value={defaultVisibility}
+                        onChange={handleViewTypeChange}
+                        name="radio-buttons-group"
+                    >
+                        <FormControlLabel value={ObjectVisibility.Neutral} control={<Radio />} label="All" />
+                        <FormControlLabel
+                            value={ObjectVisibility.SemiTransparent}
+                            control={<Radio />}
+                            label="Layer - Semi-transparent"
+                        />
+                        <FormControlLabel
+                            value={ObjectVisibility.Transparent}
+                            control={<Radio />}
+                            label="Layer - Transparent"
+                        />
+                    </RadioGroup>
+                </Box>
+                <WidgetList
+                    display={menuOpen ? "block" : "none"}
+                    widgetKey={featuresConfig.layers.key}
+                    onSelect={toggleMenu}
+                />
+            </WidgetContainer>
+            <LogoSpeedDial
+                open={menuOpen}
+                toggle={toggleMenu}
+                testId={`${featuresConfig.layers.key}-widget-menu-fab`}
+            />
         </>
     );
 }

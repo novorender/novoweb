@@ -2,13 +2,16 @@ import { Box, CircularProgress, IconButton, List, ListItem, Typography, useTheme
 import { AddBoxOutlined, IndeterminateCheckBoxOutlined, LabelOutlined } from "@mui/icons-material";
 import { useEffect, useCallback, Fragment } from "react";
 
-import { LinearProgress, ScrollBox } from "components";
+import { LinearProgress, LogoSpeedDial, ScrollBox, WidgetContainer, WidgetHeader } from "components";
 import { useExplorerGlobals } from "contexts/explorerGlobals";
 
 import { useMountedState } from "hooks/useMountedState";
 import { searchDeepByPatterns } from "utils/search";
 import { highlightActions, useDispatchHighlighted } from "contexts/highlighted";
 import { useAbortController } from "hooks/useAbortController";
+import { useToggle } from "hooks/useToggle";
+import { featuresConfig } from "config/features";
+import { WidgetList } from "features/widgetList";
 
 type TreeLevel = {
     properties?: TreeLevel[];
@@ -206,6 +209,7 @@ export function PropertiesTree() {
     } = useExplorerGlobals(true);
     const dispatchHighlighted = useDispatchHighlighted();
     const [abortController, abort] = useAbortController();
+    const [menuOpen, toggleMenu] = useToggle();
 
     const [root, setRoot] = useMountedState<TreeLevel | undefined>(undefined);
     const [selected, setSelected] = useMountedState<string>("");
@@ -253,16 +257,32 @@ export function PropertiesTree() {
     }, [scene, setRoot]);
 
     return (
-        <ScrollBox height={1} pb={2}>
-            <List>
-                {root === undefined ? (
-                    <LinearProgress />
-                ) : (
-                    root.properties?.map((p) => (
-                        <Node key={p.path} prop={p} level={0} selected={selected} search={search} />
-                    ))
-                )}
-            </List>
-        </ScrollBox>
+        <>
+            <WidgetContainer>
+                <WidgetHeader widget={featuresConfig.propertiesTree} />
+                <ScrollBox display={!menuOpen ? "block" : "none"} height={1} pb={2}>
+                    <List>
+                        {root === undefined ? (
+                            <LinearProgress />
+                        ) : (
+                            root.properties?.map((p) => (
+                                <Node key={p.path} prop={p} level={0} selected={selected} search={search} />
+                            ))
+                        )}
+                    </List>
+                </ScrollBox>
+                <WidgetList
+                    display={menuOpen ? "block" : "none"}
+                    widgetKey={featuresConfig.propertiesTree.key}
+                    onSelect={toggleMenu}
+                />
+            </WidgetContainer>
+            <LogoSpeedDial
+                open={menuOpen}
+                toggle={toggleMenu}
+                testId={`${featuresConfig.propertiesTree.key}-widget-menu-fab`}
+                ariaLabel="toggle widget menu"
+            />
+        </>
     );
 }

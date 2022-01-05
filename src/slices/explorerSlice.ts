@@ -1,7 +1,7 @@
 import { createSelector, createSlice, PayloadAction } from "@reduxjs/toolkit";
 import { SearchPattern } from "@novorender/webgl-api";
 
-import { config as featuresConfig, WidgetKey, Widget, defaultEnabledWidgets } from "config/features";
+import { featuresConfig, WidgetKey, Widget, defaultEnabledWidgets } from "config/features";
 import type { RootState } from "app/store";
 import { ScenePreview } from "@novorender/data-js-api";
 
@@ -10,9 +10,16 @@ export enum SceneType {
     Admin,
 }
 
+export enum UserRole {
+    Viewer,
+    Admin,
+    Owner,
+}
+
 const initialState = {
     enabledWidgets: defaultEnabledWidgets as WidgetKey[],
     sceneType: SceneType.Viewer,
+    userRole: UserRole.Viewer,
     viewerScenes: [] as ScenePreview[],
     widgets: [] as WidgetKey[],
     urlSearchQuery: undefined as undefined | string | SearchPattern[],
@@ -29,6 +36,9 @@ export const explorerSlice = createSlice({
         },
         setSceneType: (state, action: PayloadAction<SceneType>) => {
             state.sceneType = action.payload;
+        },
+        setUserRole: (state, action: PayloadAction<UserRole>) => {
+            state.userRole = action.payload;
         },
         setViewerScenes: (state, action: PayloadAction<ScenePreview[]>) => {
             state.viewerScenes = action.payload;
@@ -78,9 +88,11 @@ export const explorerSlice = createSlice({
 export const selectWidgets = (state: RootState) => state.explorer.widgets;
 export const selectUrlSearchQuery = (state: RootState) => state.explorer.urlSearchQuery;
 export const selectSceneType = (state: RootState) => state.explorer.sceneType;
+export const selectUserRole = (state: RootState) => state.explorer.userRole;
 export const selectViewerScenes = (state: RootState) => state.explorer.viewerScenes;
 
-export const selectIsAdminScene = createSelector(selectSceneType, (type) => type === SceneType.Admin);
+export const selectIsAdminScene = (state: RootState) => state.explorer.sceneType === SceneType.Admin;
+export const selectHasAdminCapabilities = (state: RootState) => state.explorer.userRole !== UserRole.Viewer;
 
 export const selectEnabledWidgets = createSelector(
     (state: RootState) => state.explorer.enabledWidgets,
