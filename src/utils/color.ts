@@ -1,7 +1,9 @@
-import type { ReadonlyVec3, vec3 } from "gl-matrix";
+import type { ReadonlyVec3, ReadonlyVec4, vec3, vec4 } from "gl-matrix";
 
 export type RGB = [r: number, g: number, b: number]; // 0 - 255
 export type VecRGB = [r: number, g: number, b: number]; // 0 - 1
+export type RGBA = [r: number, g: number, b: number, a: number]; // 0 - 255
+export type VecRGBA = [r: number, g: number, b: number, a: number]; // 0 - 1
 export type Hex = string;
 
 export function hexToRgb(hex: Hex): RGB {
@@ -31,6 +33,14 @@ export function vecToRgb(color: VecRGB | ReadonlyVec3 | vec3): RGB {
 
 export function rgbToVec(color: RGB): VecRGB {
     return color.map((num) => num / 255) as VecRGB;
+}
+
+export function vecToRgba(color: VecRGBA | ReadonlyVec4 | vec4): RGBA {
+    return color.map((num: number, i: number) => (i < 3 ? num * 255 : num)) as RGBA;
+}
+
+export function rgbaToVec(color: RGBA): VecRGBA {
+    return color.map((num, i) => (i < 3 ? num / 255 : num)) as VecRGBA;
 }
 
 export function rgbToHex(color: RGB): Hex {

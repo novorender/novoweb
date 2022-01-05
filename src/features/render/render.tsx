@@ -47,6 +47,7 @@ import {
     selectBookmarks,
     SceneEditStatus,
     selectAdvancedSettings,
+    selectDeviation,
 } from "slices/renderSlice";
 import { authActions } from "slices/authSlice";
 import { explorerActions } from "slices/explorerSlice";
@@ -70,6 +71,7 @@ import {
     initClippingBox,
     initClippingPlanes,
     initAdvancedSettings,
+    initDeviation,
 } from "./utils";
 import { xAxis, yAxis, axis } from "./consts";
 
@@ -166,6 +168,7 @@ export function Render3D({ onInit }: Props) {
     const selectingOrthoPoint = useAppSelector(selectSelectiongOrthoPoint);
     const advancedSettings = useAppSelector(selectAdvancedSettings);
     const measure = useAppSelector(selectMeasure);
+    const deviation = useAppSelector(selectDeviation);
     const { addingPoint, angles, points, distances, selected: selectedPoint } = measure;
     const dispatch = useAppDispatch();
 
@@ -616,6 +619,7 @@ export function Render3D({ onInit }: Props) {
 
                 initClippingBox(_view.settings.clippingPlanes);
                 initClippingPlanes(_view.settings.clippingVolume);
+                initDeviation(_view.settings.points.deviation);
 
                 dispatchVisible(visibleActions.set([]));
                 initHidden(objectGroups, dispatchHidden);
@@ -841,6 +845,17 @@ export function Render3D({ onInit }: Props) {
     );
 
     useEffect(
+        function handleDeviationChanges() {
+            if (!view) {
+                return;
+            }
+
+            view.applySettings({ points: { ...view.settings.points, deviation } });
+        },
+        [view, deviation]
+    );
+
+    useEffect(
         function handleCameraStateChange() {
             const controller = flightController.current;
 
@@ -966,6 +981,7 @@ export function Render3D({ onInit }: Props) {
 
                     initClippingBox(settings.clippingPlanes);
                     initClippingPlanes(settings.clippingVolume);
+                    initDeviation(settings.points.deviation);
                     initEnvironment(settings.environment as unknown as EnvironmentDescription, environments, view);
                 }
 

@@ -33,6 +33,7 @@ import { Panoramas } from "features/panoramas";
 import { AdvancedSettings } from "features/advancedSettings";
 import { BimCollab } from "features/bimCollab";
 import { Layers } from "features/layers";
+import { Deviations } from "features/deviations";
 
 import { useAppSelector, useAppDispatch } from "app/store";
 import { selectEnabledWidgets, explorerActions } from "slices/explorerSlice";
@@ -256,6 +257,8 @@ function getWidgetByKey(key: WidgetKey): JSX.Element | string {
             return <OrthoCam />;
         case featuresConfig.panoramas.key:
             return <Panoramas />;
+        case featuresConfig.deviations.key:
+            return <Deviations />;
         case featuresConfig.advancedSettings.key:
             return <AdvancedSettings />;
         case featuresConfig.layers.key:

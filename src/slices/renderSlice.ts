@@ -132,6 +132,13 @@ const initialState = {
         [AdvancedSetting.MaxPointSize]: 20,
         [AdvancedSetting.PointToleranceFactor]: 0,
     },
+    deviation: {
+        mode: "mix" as "on" | "off" | "mix",
+        colors: [] as {
+            deviation: number;
+            color: vec4;
+        }[],
+    },
 };
 
 type State = typeof initialState & {
@@ -281,6 +288,9 @@ export const renderSlice = createSlice({
                 ...action.payload,
             };
         },
+        setDeviation: (state, action: PayloadAction<Partial<State["deviation"]>>) => {
+            state.deviation = { ...state.deviation, ...action.payload };
+        },
     },
     extraReducers: (builder) => {
         builder.addCase(fetchEnvironments.fulfilled, (state, action) => {
@@ -309,6 +319,7 @@ export const selectSelectiongOrthoPoint = (state: RootState) => state.render.sel
 export const selectShowPerformance = (state: RootState) => state.render.showPerformance;
 export const selectEditingScene = (state: RootState) => state.render.viewerSceneEditing;
 export const selectAdvancedSettings = (state: RootState) => state.render.advancedSettings;
+export const selectDeviation = (state: RootState) => state.render.deviation;
 
 const { reducer, actions } = renderSlice;
 export { reducer as renderReducer, actions as renderActions };
