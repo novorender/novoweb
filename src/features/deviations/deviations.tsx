@@ -14,6 +14,7 @@ import { useMountedState } from "hooks/useMountedState";
 import { featuresConfig } from "config/features";
 import { LogoSpeedDial, WidgetContainer, WidgetHeader } from "components";
 import { WidgetList } from "features/widgetList";
+import { rgbaToVec } from "utils/color";
 
 export function Deviations() {
     const theme = useTheme();
@@ -124,7 +125,7 @@ function ColorStop({ deviation, color, idx, colorPickerPosition, active, setActi
             return dispatch(
                 renderActions.setDeviation({
                     colors: colors.map((c, i) =>
-                        i === idx ? { ...c, color: vec4.fromValues(rgb.r, rgb.g, rgb.b, rgb.a ?? 1) } : c
+                        i === idx ? { ...c, color: rgbaToVec([rgb.r, rgb.g, rgb.b, rgb.a ?? 1]) } : c
                     ),
                 })
             );
