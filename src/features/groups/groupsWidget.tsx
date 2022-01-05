@@ -30,6 +30,7 @@ import { CreateGroup } from "./createGroup";
 import { Group } from "./group";
 import { GroupCollection } from "./groupCollection";
 import { groupsActions, GroupsStatus, selectGroupsStatus } from "./groupsSlice";
+import { selectEditingScene } from "slices/renderSlice";
 
 export const StyledListItemButton = styled(ListItemButton, { shouldForwardProp: (prop) => prop !== "inset" })<
     ListItemButtonProps & { inset?: boolean }
@@ -51,6 +52,7 @@ export function Groups() {
     } = useExplorerGlobals(true);
     const { state: customGroups, dispatch: dispatchCustom } = useCustomGroups();
     const sceneId = useSceneId();
+    const editingScene = useAppSelector(selectEditingScene);
     const isAdmin = useAppSelector(selectHasAdminCapabilities);
     const status = useAppSelector(selectGroupsStatus);
     const dispatch = useAppDispatch();
@@ -103,6 +105,7 @@ export function Groups() {
     };
 
     const handleSave = async () => {
+        const id = editingScene && editingScene.id ? editingScene.id : sceneId;
         dispatch(groupsActions.setStatus(GroupsStatus.Saving));
 
         try {
@@ -110,7 +113,7 @@ export function Groups() {
 
             await dataApi.putScene({
                 ...originalScene,
-                url: `${sceneId}:${scene.id}`,
+                url: `${id}:${scene.id}`,
                 objectGroups: originalGroups.filter((grp) => !grp.id).concat(customGroups),
             });
 
