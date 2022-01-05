@@ -17,3 +17,4 @@ export * from "./widgetHeader";
 export * from "./advancedSearchInputs";
 export * from "./imgTooltip";
 export * from "./imgModal";
+export * from "./confirmation";

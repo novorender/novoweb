@@ -1,5 +1,5 @@
 import { vec3, quat } from "gl-matrix";
-import { FormEventHandler, Fragment, useRef, useState } from "react";
+import { FormEventHandler, Fragment, MouseEvent, useRef, useState } from "react";
 import {
     useTheme,
     List,
@@ -11,9 +11,15 @@ import {
     tooltipClasses,
     TooltipProps,
     Button,
+    IconButton,
+    Menu,
+    MenuList,
+    MenuItem,
+    ListItemIcon,
+    ListItemText,
 } from "@mui/material";
-import { AddCircle } from "@mui/icons-material";
-import type { Bookmark } from "@novorender/data-js-api";
+import { AddCircle, Delete, MoreVert } from "@mui/icons-material";
+import type { Bookmark as BookmarkType } from "@novorender/data-js-api";
 import { OrthoControllerParams, View } from "@novorender/webgl-api";
 import { css } from "@mui/styled-engine";
 
@@ -21,7 +27,7 @@ import { dataApi } from "app";
 import { featuresConfig } from "config/features";
 import { useToggle } from "hooks/useToggle";
 import { useAppDispatch, useAppSelector } from "app/store";
-import { ScrollBox, Tooltip, Divider, WidgetContainer, LogoSpeedDial, WidgetHeader, TextField } from "components";
+import { ScrollBox, Tooltip, WidgetContainer, LogoSpeedDial, WidgetHeader, TextField, Confirmation } from "components";
 import { WidgetList } from "features/widgetList";
 
 import {
@@ -43,10 +49,12 @@ import { useDispatchVisible, visibleActions } from "contexts/visible";
 
 const Description = styled(Typography)(
     () => css`
-        display: --webkit-box;
+        display: -webkit-box;
         overflow: hidden;
-        --webkit-line-clamp: 2;
-        --webkit-box-orient: vertical;
+        -webkit-line-clamp: 2;
+        -webkit-box-orient: vertical;
+        flex: 1 1 100%;
+        height: 0;
     `
 );
 
@@ -82,16 +90,18 @@ export function Bookmarks() {
     const dispatchHidden = useDispatchHidden();
     const { state: customGroups, dispatch: dispatchCustom } = useCustomGroups();
     const {
-        state: { view },
+        state: { view, scene },
     } = useExplorerGlobals(true);
 
     const bookmarks = useAppSelector(selectBookmarks);
     const isAdmin = useAppSelector(selectHasAdminCapabilities);
+    const editingScene = useAppSelector(selectEditingScene);
     const dispatch = useAppDispatch();
 
+    const [bookmarkToDelete, setBookmarkToDelete] = useState<BookmarkType>();
     const [creatingBookmark, toggleCreatingBookmark] = useToggle();
 
-    function handleSelect(bookmark: Bookmark) {
+    function handleSelect(bookmark: BookmarkType) {
         dispatchVisible(visibleActions.set([]));
 
         const bmDefaultGroup = bookmark.objectGroups?.find((group) => !group.id && group.selected);
@@ -151,76 +161,46 @@ export function Bookmarks() {
         }
     }
 
+    const handleDelete = () => {
+        const toSave = bookmarks.filter((bm) => bm !== bookmarkToDelete);
+
+        dispatch(renderActions.setBookmarks(toSave));
+        setBookmarkToDelete(undefined);
+        dataApi.saveBookmarks(editingScene?.id ? editingScene.id : scene.id, toSave);
+    };
+
     return (
         <>
             <WidgetContainer>
                 <WidgetHeader widget={featuresConfig.bookmarks}>
-                    {isAdmin && !menuOpen && !creatingBookmark ? (
+                    {isAdmin && !menuOpen && !creatingBookmark && !bookmarkToDelete ? (
                         <Button color="grey" onClick={toggleCreatingBookmark}>
                             <AddCircle sx={{ mr: 1 }} />
                             Add bookmark
                         </Button>
                     ) : null}
                 </WidgetHeader>
-                <ScrollBox display={menuOpen ? "none" : "flex"} height={1} pb={2}>
+                <ScrollBox display={menuOpen ? "none" : "flex"} height={1}>
                     {creatingBookmark ? (
                         <CreateBookmark onClose={toggleCreatingBookmark} />
+                    ) : bookmarkToDelete ? (
+                        <Confirmation
+                            title="Delete bookmark?"
+                            confirmBtnText="Delete"
+                            onCancel={() => setBookmarkToDelete(undefined)}
+                            onConfirm={handleDelete}
+                        />
                     ) : (
                         <List sx={{ width: 1 }}>
-                            {bookmarks.map((bookmark, index, array) => (
-                                <Fragment key={bookmark.name + index}>
-                                    <ListItem
-                                        sx={{ padding: `${theme.spacing(0.5)} ${theme.spacing(1)}` }}
-                                        button
-                                        onClick={() => handleSelect(bookmark)}
-                                    >
-                                        <Box
-                                            width={1}
-                                            maxHeight={80}
-                                            display="flex"
-                                            alignItems="flex-start"
-                                            overflow="hidden"
-                                        >
-                                            <Box
-                                                bgcolor={theme.palette.grey[200]}
-                                                height={65}
-                                                width={100}
-                                                flexShrink={0}
-                                                flexGrow={0}
-                                            >
-                                                {bookmark.img ? (
-                                                    <ImgTooltip
-                                                        placement="bottom-end"
-                                                        title={
-                                                            <Box sx={{ height: 176, width: 176, cursor: "pointer" }}>
-                                                                <Img alt="" src={bookmark.img} />
-                                                            </Box>
-                                                        }
-                                                    >
-                                                        <Img alt="" height="32px" width="32px" src={bookmark.img} />
-                                                    </ImgTooltip>
-                                                ) : null}
-                                            </Box>
-                                            <Box ml={1} flexDirection="column" flexGrow={1} width={0}>
-                                                <Tooltip disableInteractive title={bookmark.name}>
-                                                    <Typography noWrap variant="body1" sx={{ fontWeight: 600 }}>
-                                                        {bookmark.name}
-                                                    </Typography>
-                                                </Tooltip>
-                                                {bookmark.description ? (
-                                                    <Tooltip disableInteractive title={bookmark.description}>
-                                                        <Description>{bookmark.description}</Description>
-                                                    </Tooltip>
-                                                ) : null}
-                                            </Box>
-                                        </Box>
-                                    </ListItem>
-                                    {index !== array.length - 1 ? (
-                                        <Box my={0.5} component="li">
-                                            <Divider />
-                                        </Box>
-                                    ) : null}
-                                </Fragment>
+                            {bookmarks.map((bookmark, index) => (
+                                <ListItem
+                                    key={bookmark.name + index}
+                                    sx={{ padding: `${theme.spacing(0.5)} ${theme.spacing(1)}` }}
+                                    button
+                                    onClick={() => handleSelect(bookmark)}
+                                >
+                                    <Bookmark bookmark={bookmark} onDelete={setBookmarkToDelete} />
+                                </ListItem>
                             ))}
                         </List>
                     )}
@@ -240,7 +220,81 @@ export function Bookmarks() {
     );
 }
 
-const CreateBookmark = ({ onClose }: { onClose: () => void }) => {
+function Bookmark({ bookmark, onDelete }: { bookmark: BookmarkType; onDelete: (bm: BookmarkType) => void }) {
+    const theme = useTheme();
+    const [menuAnchor, setMenuAnchor] = useState<HTMLElement | null>(null);
+
+    const openMenu = (e: MouseEvent<HTMLButtonElement>) => {
+        e.stopPropagation();
+        setMenuAnchor(e.currentTarget);
+    };
+
+    const closeMenu = () => {
+        setMenuAnchor(null);
+    };
+
+    return (
+        <>
+            <Box width={1} maxHeight={70} height={70} display="flex" alignItems="flex-start" overflow="hidden">
+                <Box bgcolor={theme.palette.grey[200]} height={70} width={100} flexShrink={0} flexGrow={0}>
+                    {bookmark.img ? (
+                        <ImgTooltip
+                            placement="bottom-end"
+                            title={
+                                <Box sx={{ height: 176, width: 176, cursor: "pointer" }}>
+                                    <Img alt="" src={bookmark.img} />
+                                </Box>
+                            }
+                        >
+                            <Img alt="" height="70px" width="100px" src={bookmark.img} />
+                        </ImgTooltip>
+                    ) : null}
+                </Box>
+                <Box ml={1} display="flex" flexDirection="column" flexGrow={1} width={0} height={1}>
+                    <Box display="flex" width={1}>
+                        <Tooltip disableInteractive title={bookmark.name}>
+                            <Typography noWrap variant="body1" sx={{ fontWeight: 600 }}>
+                                {bookmark.name}
+                            </Typography>
+                        </Tooltip>
+                        <IconButton
+                            color={Boolean(menuAnchor) ? "primary" : "default"}
+                            size="small"
+                            sx={{ ml: "auto", py: 0 }}
+                            aria-haspopup="true"
+                            onClick={openMenu}
+                        >
+                            <MoreVert />
+                        </IconButton>
+                    </Box>
+                    {bookmark.description ? (
+                        <Tooltip disableInteractive title={bookmark.description}>
+                            <Description>{bookmark.description}</Description>
+                        </Tooltip>
+                    ) : null}
+                </Box>
+            </Box>
+            <Menu
+                onClick={(e) => e.stopPropagation()}
+                anchorEl={menuAnchor}
+                open={Boolean(menuAnchor)}
+                onClose={closeMenu}
+                id={`${bookmark.name}-menu`}
+            >
+                <MenuList sx={{ maxWidth: "100%" }}>
+                    <MenuItem onClick={() => onDelete(bookmark)}>
+                        <ListItemIcon>
+                            <Delete fontSize="small" />
+                        </ListItemIcon>
+                        <ListItemText>Delete</ListItemText>
+                    </MenuItem>
+                </MenuList>
+            </Menu>
+        </>
+    );
+}
+
+function CreateBookmark({ onClose }: { onClose: () => void }) {
     const bookmarks = useAppSelector(selectBookmarks);
     const measurement = useAppSelector(selectMeasure);
     const editingScene = useAppSelector(selectEditingScene);
@@ -274,10 +328,10 @@ const CreateBookmark = ({ onClose }: { onClose: () => void }) => {
     const handleSubmit: FormEventHandler = (e) => {
         e.preventDefault();
 
-        const newBookmarks = bookmarks.concat({ ...bookmarkRef.current, name, description });
+        const toSave = bookmarks.concat({ ...bookmarkRef.current, name, description });
 
-        dispatch(renderActions.setBookmarks(newBookmarks));
-        dataApi.saveBookmarks(editingScene?.id || scene.id, newBookmarks);
+        dispatch(renderActions.setBookmarks(toSave));
+        dataApi.saveBookmarks(editingScene?.id ? editingScene.id : scene.id, toSave);
 
         onClose();
     };
@@ -327,7 +381,7 @@ const CreateBookmark = ({ onClose }: { onClose: () => void }) => {
             </form>
         </Box>
     );
-};
+}
 
 function createBookmarkImg(canvas: HTMLCanvasElement): string {
     const dist = document.createElement("canvas");
@@ -360,7 +414,7 @@ const createBookmark = ({
     defaultVisibility: ObjectVisibility;
     measurement: ReturnType<typeof selectMeasure>;
     img: string;
-}): Omit<Bookmark, "name" | "description"> => {
+}): Omit<BookmarkType, "name" | "description"> => {
     const camera = view.camera;
     const { highlight: _highlight, ...clippingPlanes } = view.settings.clippingPlanes;
     const { ...clippingVolume } = view.settings.clippingVolume;

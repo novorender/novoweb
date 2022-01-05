@@ -13,7 +13,15 @@ import {
 import { Visibility, AddCircle, CheckCircle, MoreVert, Save } from "@mui/icons-material";
 import { css } from "@mui/styled-engine";
 
-import { ScrollBox, WidgetContainer, LogoSpeedDial, WidgetHeader, Divider, LinearProgress } from "components";
+import {
+    ScrollBox,
+    WidgetContainer,
+    LogoSpeedDial,
+    WidgetHeader,
+    Divider,
+    LinearProgress,
+    Confirmation,
+} from "components";
 import { WidgetList } from "features/widgetList";
 
 import { useAppDispatch, useAppSelector } from "app/store";
@@ -24,7 +32,6 @@ import { CustomGroup, customGroupsActions, useCustomGroups } from "contexts/cust
 import { dataApi } from "app";
 import { featuresConfig } from "config/features";
 import { useToggle } from "hooks/useToggle";
-import { useSceneId } from "hooks/useSceneId";
 
 import { CreateGroup } from "./createGroup";
 import { Group } from "./group";
@@ -51,7 +58,7 @@ export function Groups() {
         state: { scene },
     } = useExplorerGlobals(true);
     const { state: customGroups, dispatch: dispatchCustom } = useCustomGroups();
-    const sceneId = useSceneId();
+
     const editingScene = useAppSelector(selectEditingScene);
     const isAdmin = useAppSelector(selectHasAdminCapabilities);
     const status = useAppSelector(selectGroupsStatus);
@@ -105,11 +112,11 @@ export function Groups() {
     };
 
     const handleSave = async () => {
-        const id = editingScene && editingScene.id ? editingScene.id : sceneId;
+        const id = editingScene && editingScene.id ? editingScene.id : scene.id;
         dispatch(groupsActions.setStatus(GroupsStatus.Saving));
 
         try {
-            const { url: _url, objectGroups: originalGroups, ...originalScene } = await dataApi.loadScene(sceneId);
+            const { url: _url, objectGroups: originalGroups, ...originalScene } = await dataApi.loadScene(id);
 
             await dataApi.putScene({
                 ...originalScene,
@@ -163,38 +170,13 @@ export function Groups() {
 
                 <Box flexDirection="column" overflow="hidden" flexGrow={1} height={1}>
                     {Array.isArray(status) && status[0] === GroupsStatus.Deleting ? (
-                        <Box
+                        <Confirmation
                             display={menuOpen ? "none" : "flex"}
-                            flexDirection="column"
-                            height={1}
-                            alignItems="center"
-                            justifyContent="center"
-                        >
-                            <Typography variant="h6" fontWeight="600" sx={{ mb: 2 }}>
-                                Delete group?
-                            </Typography>
-                            <Box px={6} pb={10} display="flex" width={1}>
-                                <Button
-                                    sx={{ mr: 2 }}
-                                    fullWidth
-                                    size="large"
-                                    variant="outlined"
-                                    color="grey"
-                                    onClick={() => dispatch(groupsActions.setStatus(GroupsStatus.Initial))}
-                                >
-                                    Cancel
-                                </Button>
-                                <Button
-                                    fullWidth
-                                    size="large"
-                                    variant="contained"
-                                    color="primary"
-                                    onClick={() => dispatchCustom(customGroupsActions.delete(status[1]))}
-                                >
-                                    Delete
-                                </Button>
-                            </Box>
-                        </Box>
+                            title="Delete group?"
+                            confirmBtnText="Delete"
+                            onCancel={() => dispatch(groupsActions.setStatus(GroupsStatus.Initial))}
+                            onConfirm={() => dispatchCustom(customGroupsActions.delete(status[1]))}
+                        />
                     ) : (
                         <ScrollBox
                             display={menuOpen ? "none" : "flex"}

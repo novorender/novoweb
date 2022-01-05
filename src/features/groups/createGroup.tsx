@@ -71,6 +71,7 @@ export function CreateGroup({ onClose, id }: { onClose: () => void; id?: string 
         };
 
         dispatchCustomGroup(customGroupsActions.add([newGroup]));
+        onClose();
     };
 
     const updateGroup = () => {
@@ -79,6 +80,7 @@ export function CreateGroup({ onClose, id }: { onClose: () => void; id?: string 
         }
 
         dispatchCustomGroup(customGroupsActions.update(groupToEdit.id, { search: [...savedInputs] }));
+        onClose();
     };
 
     const disableSearch =

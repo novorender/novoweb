@@ -132,7 +132,7 @@ export function Group({
                 anchorEl={menuAnchor}
                 open={Boolean(menuAnchor)}
                 onClose={closeMenu}
-                id={`${group.id} menu`}
+                id={`${group.id}-menu`}
             >
                 <MenuList sx={{ maxWidth: "100%" }}>
                     {isAdmin ? (
