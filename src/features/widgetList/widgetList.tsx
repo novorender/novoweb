@@ -34,6 +34,18 @@ export function WidgetList({ display, widgetKey, onSelect }: Props) {
         <ScrollBox display={display} flexGrow={1} mt={2} mb={2} px={1}>
             <Grid container wrap="wrap" spacing={1} data-test="widget-list">
                 {enabledWidgets
+                    // NOTE(OLA): Not ready for prod
+                    .filter(
+                        (widget) =>
+                            !(
+                                [
+                                    featuresConfig.viewerScenes.key,
+                                    featuresConfig.advancedSettings.key,
+                                    featuresConfig.panoramas.key,
+                                    featuresConfig.propertiesTree.key,
+                                ] as string[]
+                            ).includes(widget.key)
+                    )
                     .sort((a, b) => a.name.localeCompare(b.name, "en", { sensitivity: "accent" }))
                     .map(({ Icon, name, key }) => {
                         const activeCurrent = key === widgetKey;
