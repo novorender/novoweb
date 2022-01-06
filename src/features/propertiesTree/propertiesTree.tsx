@@ -95,6 +95,22 @@ type NodeProps = {
     search: (property: string, value: string) => Promise<void>;
 };
 
+const invalidCharacters = [
+    ['"', "%22"],
+    ["<", "%3c"],
+    [">", "%3e"],
+    ["|", "%7c"],
+    [":", "%3a"],
+    ["*", "%2a"],
+    ["?", "%3f"],
+    ["\\", "%5c"],
+    ["/", "%2f"],
+    ["=", "%3d"],
+    ["+", "%2b"],
+    [" ", "+"],
+    ["%", "%25"],
+];
+
 function Node({ prop, level, selected, search }: NodeProps) {
     const theme = useTheme();
 
@@ -109,8 +125,11 @@ function Node({ prop, level, selected, search }: NodeProps) {
             setExpanded(!expanded);
         } else {
             const url = new URL((scene as any).assetUrl);
-            url.pathname +=
-                "propcache/" + encodeURIComponent(encodeURIComponent(prop.path).replace("%20", "+")).toLowerCase();
+            let { path } = prop;
+            for (const ic of invalidCharacters) {
+                path = path.replaceAll(ic[0], ic[1]);
+            }
+            url.pathname += "propcache/" + path.toLowerCase();
             setExpanded(false);
             try {
                 const resp = await fetch(url.toString());
