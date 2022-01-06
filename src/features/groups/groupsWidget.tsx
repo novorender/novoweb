@@ -25,6 +25,7 @@ import {
 import { WidgetList } from "features/widgetList";
 
 import { useAppDispatch, useAppSelector } from "app/store";
+import { selectEditingScene } from "slices/renderSlice";
 import { selectHasAdminCapabilities } from "slices/explorerSlice";
 import { useExplorerGlobals } from "contexts/explorerGlobals";
 import { CustomGroup, customGroupsActions, useCustomGroups } from "contexts/customGroups";
@@ -35,9 +36,9 @@ import { useToggle } from "hooks/useToggle";
 
 import { CreateGroup } from "./createGroup";
 import { Group } from "./group";
+import { Rename } from "./rename";
 import { GroupCollection } from "./groupCollection";
 import { groupsActions, GroupsStatus, selectGroupsStatus } from "./groupsSlice";
-import { selectEditingScene } from "slices/renderSlice";
 
 export const StyledListItemButton = styled(ListItemButton, { shouldForwardProp: (prop) => prop !== "inset" })<
     ListItemButtonProps & { inset?: boolean }
@@ -131,12 +132,13 @@ export function Groups() {
     };
 
     const disableChanges = status === GroupsStatus.Saving;
+    const hideExtendedHeader = menuOpen || Array.isArray(status);
 
     return (
         <>
             <WidgetContainer>
                 <WidgetHeader widget={featuresConfig.groups}>
-                    {menuOpen ? null : creatingGroup !== false ? (
+                    {hideExtendedHeader ? null : creatingGroup !== false ? (
                         <CreateGroup
                             key={typeof creatingGroup === "string" ? creatingGroup : undefined}
                             id={typeof creatingGroup === "string" ? creatingGroup : undefined}
@@ -168,23 +170,26 @@ export function Groups() {
                     ) : null}
                 </WidgetHeader>
 
-                <Box flexDirection="column" overflow="hidden" flexGrow={1} height={1}>
-                    {Array.isArray(status) && status[0] === GroupsStatus.Deleting ? (
-                        <Confirmation
-                            display={menuOpen ? "none" : "flex"}
-                            title="Delete group?"
-                            confirmBtnText="Delete"
-                            onCancel={() => dispatch(groupsActions.setStatus(GroupsStatus.Initial))}
-                            onConfirm={() => dispatchCustom(customGroupsActions.delete(status[1]))}
-                        />
+                <Box
+                    display={menuOpen ? "none" : "flex"}
+                    flexDirection="column"
+                    overflow="hidden"
+                    flexGrow={1}
+                    height={1}
+                >
+                    {Array.isArray(status) ? (
+                        status[0] === GroupsStatus.Deleting ? (
+                            <Confirmation
+                                title="Delete group?"
+                                confirmBtnText="Delete"
+                                onCancel={() => dispatch(groupsActions.setStatus(GroupsStatus.Initial))}
+                                onConfirm={() => dispatchCustom(customGroupsActions.delete(status[1]))}
+                            />
+                        ) : (
+                            <Rename />
+                        )
                     ) : (
-                        <ScrollBox
-                            display={menuOpen ? "none" : "flex"}
-                            flexDirection="column"
-                            ref={containerRef}
-                            height={1}
-                            pb={2}
-                        >
+                        <ScrollBox display="flex" flexDirection="column" ref={containerRef} height={1} pb={2}>
                             {status === GroupsStatus.Saving ? <LinearProgress /> : null}
                             <List sx={{ width: 1, pb: 0 }}>
                                 <StyledListItemButton
@@ -267,11 +272,11 @@ export function Groups() {
                                 ))}
                             </List>
                             {Object.values(organisedGroups.grouped).length ? <Divider /> : null}
-                            {Object.values(organisedGroups.grouped).map((grouping, index) => {
+                            {Object.values(organisedGroups.grouped).map((collection, index) => {
                                 return (
                                     <GroupCollection
-                                        key={grouping.name + index}
-                                        grouping={grouping}
+                                        key={collection.name + index}
+                                        collection={collection}
                                         colorPickerPosition={colorPickerPosition}
                                         editGroup={(id) => setCreatingGroup(id)}
                                     />
@@ -279,12 +284,12 @@ export function Groups() {
                             })}
                         </ScrollBox>
                     )}
-                    <WidgetList
-                        display={menuOpen ? "block" : "none"}
-                        widgetKey={featuresConfig.groups.key}
-                        onSelect={toggleMenu}
-                    />
                 </Box>
+                <WidgetList
+                    display={menuOpen ? "block" : "none"}
+                    widgetKey={featuresConfig.groups.key}
+                    onSelect={toggleMenu}
+                />
             </WidgetContainer>
             <LogoSpeedDial
                 open={menuOpen}

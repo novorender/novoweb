@@ -6,7 +6,7 @@ export function Confirmation({
     onCancel,
     onConfirm,
     ...boxProps
-}: BoxProps & { title: string; confirmBtnText: string; onCancel: () => void; onConfirm: () => void }) {
+}: BoxProps & { title: string; confirmBtnText: string; onCancel?: () => void; onConfirm?: () => void }) {
     return (
         <Box
             display="flex"
@@ -15,13 +15,23 @@ export function Confirmation({
             width={1}
             alignItems="center"
             justifyContent="center"
+            px={2}
             {...boxProps}
         >
-            <Typography variant="h6" fontWeight="600" sx={{ mb: 2 }}>
+            <Typography variant="h6" fontWeight="600" sx={{ mb: 3 }}>
                 {title}
             </Typography>
-            <Box px={6} pb={10} display="flex" width={1}>
-                <Button sx={{ mr: 2 }} fullWidth size="large" variant="outlined" color="grey" onClick={onCancel}>
+            {boxProps.children}
+            <Box pb={10} display="flex" width={1}>
+                <Button
+                    type="button"
+                    sx={{ mr: 2 }}
+                    fullWidth
+                    size="large"
+                    variant="outlined"
+                    color="grey"
+                    onClick={onCancel}
+                >
                     Cancel
                 </Button>
                 <Button fullWidth size="large" variant="contained" color="primary" onClick={onConfirm}>

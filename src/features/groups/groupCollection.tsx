@@ -1,25 +1,26 @@
 import { MouseEvent, useState } from "react";
-import { Clear, MoreVert, Visibility } from "@mui/icons-material";
+import { Clear, Edit, MoreVert, Visibility } from "@mui/icons-material";
 import { Box, IconButton, List, ListItemIcon, ListItemText, Menu, MenuItem } from "@mui/material";
 
-import { useAppSelector } from "app/store";
+import { useAppDispatch, useAppSelector } from "app/store";
 import { Accordion, AccordionDetails, AccordionSummary } from "components";
 import { customGroupsActions, useCustomGroups } from "contexts/customGroups";
 
 import { Group } from "./group";
 import { OrganisedGroups, StyledCheckbox } from "./groupsWidget";
-import { GroupsStatus, selectGroupsStatus } from "./groupsSlice";
+import { groupsActions, GroupsStatus, selectGroupsStatus } from "./groupsSlice";
 
 export const GroupCollection = ({
-    grouping,
+    collection,
     colorPickerPosition,
     editGroup,
 }: {
-    grouping: OrganisedGroups["grouped"][keyof OrganisedGroups["grouped"]];
+    collection: OrganisedGroups["grouped"][keyof OrganisedGroups["grouped"]];
     colorPickerPosition: { top: number; left: number } | undefined;
     editGroup: (id: string) => void;
 }) => {
     const { dispatch: dispatchCustomGroups } = useCustomGroups();
+    const dispatch = useAppDispatch();
     const status = useAppSelector(selectGroupsStatus);
     const [menuAnchor, setMenuAnchor] = useState<HTMLElement | null>(null);
 
@@ -32,8 +33,8 @@ export const GroupCollection = ({
         setMenuAnchor(null);
     };
 
-    const allGroupedSelected = !grouping.groups.some((group) => !group.selected);
-    const allGroupedHidden = !grouping.groups.some((group) => !group.hidden);
+    const allGroupedSelected = !collection.groups.some((group) => !group.selected);
+    const allGroupedHidden = !collection.groups.some((group) => !group.hidden);
     const disableChanges = status === GroupsStatus.Saving;
 
     return (
@@ -41,7 +42,7 @@ export const GroupCollection = ({
             <AccordionSummary>
                 <Box width={0} flex="1 1 auto" overflow="hidden">
                     <Box fontWeight={600} overflow="hidden" whiteSpace="nowrap" textOverflow="ellipsis">
-                        {grouping.name}
+                        {collection.name}
                     </Box>
                 </Box>
                 <Box flex="0 0 auto">
@@ -52,7 +53,7 @@ export const GroupCollection = ({
                         size="small"
                         disabled={disableChanges}
                         onChange={() =>
-                            grouping.groups.forEach((group) =>
+                            collection.groups.forEach((group) =>
                                 dispatchCustomGroups(
                                     customGroupsActions.update(group.id, {
                                         selected: !allGroupedSelected,
@@ -75,7 +76,7 @@ export const GroupCollection = ({
                         checkedIcon={<Visibility color="disabled" />}
                         disabled={disableChanges}
                         onChange={() =>
-                            grouping.groups.forEach((group) =>
+                            collection.groups.forEach((group) =>
                                 dispatchCustomGroups(
                                     customGroupsActions.update(group.id, {
                                         hidden: !allGroupedHidden,
@@ -106,12 +107,22 @@ export const GroupCollection = ({
                     anchorEl={menuAnchor}
                     open={Boolean(menuAnchor)}
                     onClose={closeMenu}
-                    id={`${grouping.name}-menu`}
+                    id={`${collection.name}-menu`}
                     MenuListProps={{ sx: { maxWidth: "100%" } }}
                 >
                     <MenuItem
+                        onClick={() =>
+                            dispatch(groupsActions.setStatus([GroupsStatus.RenamingGroupCollection, collection.name]))
+                        }
+                    >
+                        <ListItemIcon>
+                            <Edit fontSize="small" />
+                        </ListItemIcon>
+                        <ListItemText>Rename</ListItemText>
+                    </MenuItem>
+                    <MenuItem
                         onClick={() => {
-                            grouping.groups.forEach((group) =>
+                            collection.groups.forEach((group) =>
                                 dispatchCustomGroups(customGroupsActions.update(group.id, { grouping: undefined }))
                             );
                         }}
@@ -126,7 +137,7 @@ export const GroupCollection = ({
             <AccordionDetails>
                 <Box pr={3}>
                     <List sx={{ padding: 0 }}>
-                        {grouping.groups.map((group, index) => (
+                        {collection.groups.map((group, index) => (
                             <Group
                                 key={group.name + index}
                                 editGroup={() => editGroup(group.id)}

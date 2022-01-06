@@ -137,6 +137,16 @@ export function Group({
             >
                 {(isAdmin
                     ? [
+                          <MenuItem
+                              onClick={() =>
+                                  dispatch(groupsActions.setStatus([GroupsStatus.RenamingGroup, group.name, group.id]))
+                              }
+                          >
+                              <ListItemIcon>
+                                  <Edit fontSize="small" />
+                              </ListItemIcon>
+                              <ListItemText>Rename</ListItemText>
+                          </MenuItem>,
                           <MenuItem onClick={editGroup}>
                               <ListItemIcon>
                                   <Edit fontSize="small" />
