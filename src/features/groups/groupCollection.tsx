@@ -1,6 +1,6 @@
 import { MouseEvent, useState } from "react";
 import { Clear, MoreVert, Visibility } from "@mui/icons-material";
-import { Box, IconButton, List, ListItemIcon, ListItemText, Menu, MenuItem, MenuList } from "@mui/material";
+import { Box, IconButton, List, ListItemIcon, ListItemText, Menu, MenuItem } from "@mui/material";
 
 import { useAppSelector } from "app/store";
 import { Accordion, AccordionDetails, AccordionSummary } from "components";
@@ -107,21 +107,20 @@ export const GroupCollection = ({
                     open={Boolean(menuAnchor)}
                     onClose={closeMenu}
                     id={`${grouping.name}-menu`}
+                    MenuListProps={{ sx: { maxWidth: "100%" } }}
                 >
-                    <MenuList sx={{ maxWidth: "100%" }}>
-                        <MenuItem
-                            onClick={() => {
-                                grouping.groups.forEach((group) =>
-                                    dispatchCustomGroups(customGroupsActions.update(group.id, { grouping: undefined }))
-                                );
-                            }}
-                        >
-                            <ListItemIcon>
-                                <Clear fontSize="small" />
-                            </ListItemIcon>
-                            <ListItemText>Ungroup</ListItemText>
-                        </MenuItem>
-                    </MenuList>
+                    <MenuItem
+                        onClick={() => {
+                            grouping.groups.forEach((group) =>
+                                dispatchCustomGroups(customGroupsActions.update(group.id, { grouping: undefined }))
+                            );
+                        }}
+                    >
+                        <ListItemIcon>
+                            <Clear fontSize="small" />
+                        </ListItemIcon>
+                        <ListItemText>Ungroup</ListItemText>
+                    </MenuItem>
                 </Menu>
             </AccordionSummary>
             <AccordionDetails>

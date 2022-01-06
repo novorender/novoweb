@@ -9,7 +9,6 @@ import {
     styled,
     IconButton,
     Menu,
-    MenuList,
     MenuItem,
     ListItemIcon,
     ListItemText,
@@ -441,37 +440,36 @@ function PropertyItem({ checked, onChange, property, value, resizing, groupName 
                         open={Boolean(menuAnchor)}
                         onClose={closeMenu}
                         id={id}
+                        MenuListProps={{ sx: { maxWidth: "100%" } }}
                     >
-                        <MenuList sx={{ maxWidth: "100%" }}>
-                            <MenuItem
-                                onClick={() =>
-                                    navigator.clipboard.writeText(
-                                        `${groupName ? `${groupName}/${property}` : property} ${value}`
-                                    )
-                                }
-                            >
-                                <ListItemIcon>
-                                    <ContentCopy fontSize="small" />
-                                </ListItemIcon>
-                                <ListItemText>Copy property</ListItemText>
-                            </MenuItem>
-                            <MenuItem
-                                onClick={() =>
-                                    navigator.clipboard.writeText(groupName ? `${groupName}/${property}` : property)
-                                }
-                            >
-                                <ListItemIcon>
-                                    <ContentCopy fontSize="small" />
-                                </ListItemIcon>
-                                <ListItemText>Copy property name</ListItemText>
-                            </MenuItem>
-                            <MenuItem onClick={() => navigator.clipboard.writeText(value)}>
-                                <ListItemIcon>
-                                    <ContentCopy fontSize="small" />
-                                </ListItemIcon>
-                                <ListItemText>Copy property value</ListItemText>
-                            </MenuItem>
-                        </MenuList>
+                        <MenuItem
+                            onClick={() =>
+                                navigator.clipboard.writeText(
+                                    `${groupName ? `${groupName}/${property}` : property} ${value}`
+                                )
+                            }
+                        >
+                            <ListItemIcon>
+                                <ContentCopy fontSize="small" />
+                            </ListItemIcon>
+                            <ListItemText>Copy property</ListItemText>
+                        </MenuItem>
+                        <MenuItem
+                            onClick={() =>
+                                navigator.clipboard.writeText(groupName ? `${groupName}/${property}` : property)
+                            }
+                        >
+                            <ListItemIcon>
+                                <ContentCopy fontSize="small" />
+                            </ListItemIcon>
+                            <ListItemText>Copy property name</ListItemText>
+                        </MenuItem>
+                        <MenuItem onClick={() => navigator.clipboard.writeText(value)}>
+                            <ListItemIcon>
+                                <ContentCopy fontSize="small" />
+                            </ListItemIcon>
+                            <ListItemText>Copy property value</ListItemText>
+                        </MenuItem>
                     </Menu>
                     <IconButton
                         size="small"

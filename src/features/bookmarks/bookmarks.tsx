@@ -13,7 +13,6 @@ import {
     Button,
     IconButton,
     Menu,
-    MenuList,
     MenuItem,
     ListItemIcon,
     ListItemText,
@@ -89,6 +88,9 @@ type Filters = {
     clipping: boolean;
     groups: boolean;
 };
+
+// TODO(OLA):
+// Bor sikkert rydda her
 
 export function Bookmarks() {
     const theme = useTheme();
@@ -388,15 +390,14 @@ function Bookmark({ bookmark, onDelete }: { bookmark: BookmarkType; onDelete: (b
                 open={Boolean(menuAnchor)}
                 onClose={closeMenu}
                 id={`${bookmark.name}-menu`}
+                MenuListProps={{ sx: { maxWidth: "100%" } }}
             >
-                <MenuList sx={{ maxWidth: "100%" }}>
-                    <MenuItem onClick={() => onDelete(bookmark)}>
-                        <ListItemIcon>
-                            <Delete fontSize="small" />
-                        </ListItemIcon>
-                        <ListItemText>Delete</ListItemText>
-                    </MenuItem>
-                </MenuList>
+                <MenuItem onClick={() => onDelete(bookmark)}>
+                    <ListItemIcon>
+                        <Delete fontSize="small" />
+                    </ListItemIcon>
+                    <ListItemText>Delete</ListItemText>
+                </MenuItem>
             </Menu>
         </>
     );
