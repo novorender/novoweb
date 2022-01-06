@@ -1,5 +1,5 @@
 import { vec3, quat } from "gl-matrix";
-import { FormEventHandler, Fragment, MouseEvent, useRef, useState } from "react";
+import { FormEventHandler, Fragment, MouseEvent, useEffect, useRef, useState } from "react";
 import {
     useTheme,
     List,
@@ -17,8 +17,10 @@ import {
     MenuItem,
     ListItemIcon,
     ListItemText,
+    InputAdornment,
+    Checkbox,
 } from "@mui/material";
-import { AddCircle, Delete, MoreVert } from "@mui/icons-material";
+import { AddCircle, Delete, FilterAlt, MoreVert, Search } from "@mui/icons-material";
 import type { Bookmark as BookmarkType } from "@novorender/data-js-api";
 import { OrthoControllerParams, View } from "@novorender/webgl-api";
 import { css } from "@mui/styled-engine";
@@ -81,6 +83,13 @@ const Img = styled("img")(
     `
 );
 
+type Filters = {
+    title: string;
+    measurements: boolean;
+    clipping: boolean;
+    groups: boolean;
+};
+
 export function Bookmarks() {
     const theme = useTheme();
     const [menuOpen, toggleMenu] = useToggle();
@@ -98,8 +107,27 @@ export function Bookmarks() {
     const editingScene = useAppSelector(selectEditingScene);
     const dispatch = useAppDispatch();
 
+    const [filterMenuAnchor, setFilterMenuAnchor] = useState<HTMLElement | null>(null);
+    const [filters, setFilters] = useState({ title: "", measurements: false, clipping: false, groups: false });
+    const [filteredBookmarks, setFilteredBookmarks] = useState(bookmarks);
     const [bookmarkToDelete, setBookmarkToDelete] = useState<BookmarkType>();
     const [creatingBookmark, toggleCreatingBookmark] = useToggle();
+
+    useEffect(
+        function filterBookmarks() {
+            setFilteredBookmarks(applyFilters(bookmarks, filters));
+        },
+        [bookmarks, filters]
+    );
+
+    const openFilters = (e: MouseEvent<HTMLButtonElement>) => {
+        e.stopPropagation();
+        setFilterMenuAnchor(e.currentTarget);
+    };
+
+    const closeFilters = () => {
+        setFilterMenuAnchor(null);
+    };
 
     function handleSelect(bookmark: BookmarkType) {
         dispatchVisible(visibleActions.set([]));
@@ -169,17 +197,97 @@ export function Bookmarks() {
         dataApi.saveBookmarks(editingScene?.id ? editingScene.id : scene.id, toSave);
     };
 
+    const filtersOpen = Boolean(filterMenuAnchor) && !menuOpen && !creatingBookmark && !bookmarkToDelete;
+    const filterMenuId = "filter-menu";
+    const allFiltersChecked = filters.clipping && filters.groups && filters.measurements;
     return (
         <>
             <WidgetContainer>
                 <WidgetHeader widget={featuresConfig.bookmarks}>
-                    {isAdmin && !menuOpen && !creatingBookmark && !bookmarkToDelete ? (
-                        <Button color="grey" onClick={toggleCreatingBookmark}>
-                            <AddCircle sx={{ mr: 1 }} />
-                            Add bookmark
-                        </Button>
+                    {!menuOpen && !creatingBookmark && !bookmarkToDelete ? (
+                        <>
+                            <Button
+                                color="grey"
+                                onClick={openFilters}
+                                aria-haspopup="true"
+                                aria-controls={filterMenuId}
+                                aria-expanded={filtersOpen ? "true" : undefined}
+                            >
+                                <FilterAlt sx={{ mr: 1 }} />
+                                Filters
+                            </Button>
+                            {isAdmin ? (
+                                <Button color="grey" onClick={toggleCreatingBookmark}>
+                                    <AddCircle sx={{ mr: 1 }} />
+                                    Add bookmark
+                                </Button>
+                            ) : null}
+                        </>
                     ) : null}
                 </WidgetHeader>
+                <Menu
+                    onClick={(e) => e.stopPropagation()}
+                    anchorEl={filterMenuAnchor}
+                    open={filtersOpen}
+                    onClose={closeFilters}
+                    id={filterMenuId}
+                    MenuListProps={{ sx: { maxWidth: "100%", width: 360, pt: 0 } }}
+                >
+                    <MenuItem sx={{ background: theme.palette.grey[100] }}>
+                        <TextField
+                            autoFocus
+                            fullWidth
+                            variant="standard"
+                            placeholder="Search"
+                            value={filters.title}
+                            onChange={(e) => setFilters((state) => ({ ...state, title: e.target.value }))}
+                            InputProps={{
+                                disableUnderline: true,
+                                onKeyDown: (e) => e.stopPropagation(),
+                                endAdornment: (
+                                    <InputAdornment position="end" sx={{ mr: 1.2 }}>
+                                        <Search />
+                                    </InputAdornment>
+                                ),
+                            }}
+                        />
+                    </MenuItem>
+                    <MenuItem
+                        onClick={() =>
+                            setFilters((state) => ({
+                                ...state,
+                                measurements: !allFiltersChecked,
+                                clipping: !allFiltersChecked,
+                                groups: !allFiltersChecked,
+                            }))
+                        }
+                        sx={{ display: "flex", justifyContent: "space-between" }}
+                    >
+                        <Typography>All</Typography>
+                        <Checkbox checked={allFiltersChecked} />
+                    </MenuItem>
+                    <MenuItem
+                        onClick={() => setFilters((state) => ({ ...state, measurements: !state.measurements }))}
+                        sx={{ display: "flex", justifyContent: "space-between" }}
+                    >
+                        <Typography>Measure</Typography>
+                        <Checkbox checked={filters.measurements} />
+                    </MenuItem>
+                    <MenuItem
+                        onClick={() => setFilters((state) => ({ ...state, clipping: !state.clipping }))}
+                        sx={{ display: "flex", justifyContent: "space-between" }}
+                    >
+                        <Typography>Clipping</Typography>
+                        <Checkbox checked={filters.clipping} />
+                    </MenuItem>
+                    <MenuItem
+                        onClick={() => setFilters((state) => ({ ...state, groups: !state.groups }))}
+                        sx={{ display: "flex", justifyContent: "space-between" }}
+                    >
+                        <Typography>Groups</Typography>
+                        <Checkbox checked={filters.groups} />
+                    </MenuItem>
+                </Menu>
                 <ScrollBox display={menuOpen ? "none" : "flex"} height={1}>
                     {creatingBookmark ? (
                         <CreateBookmark onClose={toggleCreatingBookmark} />
@@ -192,7 +300,7 @@ export function Bookmarks() {
                         />
                     ) : (
                         <List sx={{ width: 1 }}>
-                            {bookmarks.map((bookmark, index) => (
+                            {filteredBookmarks.map((bookmark, index) => (
                                 <ListItem
                                     key={bookmark.name + index}
                                     sx={{ padding: `${theme.spacing(0.5)} ${theme.spacing(1)}` }}
@@ -480,3 +588,35 @@ const createBookmark = ({
         };
     }
 };
+
+function applyFilters(bookmarks: BookmarkType[], filters: Filters): BookmarkType[] {
+    const titleMatcher = new RegExp(filters.title, "gi");
+
+    return bookmarks.filter((bm) => {
+        if (filters.title) {
+            if (!titleMatcher.test(bm.name)) {
+                return false;
+            }
+        }
+
+        if (filters.measurements) {
+            if (!(bm.measurement && bm.measurement.length)) {
+                return false;
+            }
+        }
+
+        if (filters.clipping) {
+            if (!(bm.clippingVolume?.enabled && bm.clippingVolume.planes.length) && !bm.clippingPlanes?.enabled) {
+                return false;
+            }
+        }
+
+        if (filters.groups) {
+            if (!bm.objectGroups?.filter((grp) => grp.id && (grp.hidden || grp.selected)).length) {
+                return false;
+            }
+        }
+
+        return true;
+    });
+}

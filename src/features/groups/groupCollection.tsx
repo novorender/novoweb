@@ -106,7 +106,7 @@ export const GroupCollection = ({
                     anchorEl={menuAnchor}
                     open={Boolean(menuAnchor)}
                     onClose={closeMenu}
-                    id={`${grouping.name} menu`}
+                    id={`${grouping.name}-menu`}
                 >
                     <MenuList sx={{ maxWidth: "100%" }}>
                         <MenuItem
