@@ -19,7 +19,7 @@ enum ActionTypes {
     Set,
     Add,
     Delete,
-    ClearTempGroups,
+    Reset,
 }
 
 function update(groupId: string, updates: Partial<CustomGroup>) {
@@ -44,9 +44,9 @@ function set(state: State) {
     };
 }
 
-function clearTempGroups() {
+function reset() {
     return {
-        type: ActionTypes.ClearTempGroups as const,
+        type: ActionTypes.Reset as const,
     };
 }
 
@@ -57,7 +57,7 @@ function add(toAdd: State) {
     };
 }
 
-const actions = { update, set, add, clearTempGroups, delete: deleteGroup };
+const actions = { update, set, add, reset, delete: deleteGroup };
 
 type Actions = ReturnType<typeof actions[keyof typeof actions]>;
 type DispatchCustomGroups = Dispatch<Actions>;
@@ -79,8 +79,10 @@ function reducer(state: State, action: Actions) {
         case ActionTypes.Add: {
             return state.concat(action.toAdd);
         }
-        case ActionTypes.ClearTempGroups: {
-            return state.filter((group) => group.grouping !== TempGroup.BIMcollab);
+        case ActionTypes.Reset: {
+            return state
+                .filter((group) => group.grouping !== TempGroup.BIMcollab)
+                .map((group) => ({ ...group, selected: false, hidden: false }));
         }
         default: {
             throw new Error(`Unhandled action type`);

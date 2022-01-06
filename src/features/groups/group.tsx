@@ -138,6 +138,7 @@ export function Group({
                 {(isAdmin
                     ? [
                           <MenuItem
+                              key="rename"
                               onClick={() =>
                                   dispatch(groupsActions.setStatus([GroupsStatus.RenamingGroup, group.name, group.id]))
                               }
@@ -147,13 +148,14 @@ export function Group({
                               </ListItemIcon>
                               <ListItemText>Rename</ListItemText>
                           </MenuItem>,
-                          <MenuItem onClick={editGroup}>
+                          <MenuItem key="edit" onClick={editGroup}>
                               <ListItemIcon>
                                   <Edit fontSize="small" />
                               </ListItemIcon>
                               <ListItemText>Edit</ListItemText>
                           </MenuItem>,
                           <MenuItem
+                              key="delete"
                               onClick={() => dispatch(groupsActions.setStatus([GroupsStatus.Deleting, group.id]))}
                           >
                               <ListItemIcon>
@@ -164,7 +166,7 @@ export function Group({
                       ]
                     : []
                 ).concat(
-                    <MenuItem onClick={toggleColorPicker}>
+                    <MenuItem key="color" onClick={toggleColorPicker}>
                         <ListItemIcon>
                             <ColorLens sx={{ color: `rgb(${r}, ${g}, ${b})` }} fontSize="small" />
                         </ListItemIcon>

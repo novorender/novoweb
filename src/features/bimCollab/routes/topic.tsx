@@ -330,7 +330,7 @@ function CommentListItem({
 
         dispatchHighlighted(highlightActions.setIds(selectionIds));
 
-        dispatchCustomGroups(customGroupsActions.clearTempGroups());
+        dispatchCustomGroups(customGroupsActions.reset());
         if (colorGroups.length) {
             dispatchCustomGroups(
                 customGroupsActions.add(
