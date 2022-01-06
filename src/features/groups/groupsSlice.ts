@@ -6,13 +6,17 @@ export enum GroupsStatus {
     Unsaved,
     Saving,
     Deleting,
+    RenamingGroup,
+    RenamingGroupCollection,
     Error,
 }
 
 const initialState = {
     status: GroupsStatus.Initial as
         | Exclude<GroupsStatus, GroupsStatus.Deleting>
-        | [status: GroupsStatus.Deleting, id: string],
+        | [status: GroupsStatus.Deleting, id: string]
+        | [status: GroupsStatus.RenamingGroup, currentName: string, id: string]
+        | [status: GroupsStatus.RenamingGroupCollection, currentName: string],
 };
 
 type State = typeof initialState;

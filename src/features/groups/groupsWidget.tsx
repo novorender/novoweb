@@ -13,10 +13,19 @@ import {
 import { Visibility, AddCircle, CheckCircle, MoreVert, Save } from "@mui/icons-material";
 import { css } from "@mui/styled-engine";
 
-import { ScrollBox, WidgetContainer, LogoSpeedDial, WidgetHeader, Divider, LinearProgress } from "components";
+import {
+    ScrollBox,
+    WidgetContainer,
+    LogoSpeedDial,
+    WidgetHeader,
+    Divider,
+    LinearProgress,
+    Confirmation,
+} from "components";
 import { WidgetList } from "features/widgetList";
 
 import { useAppDispatch, useAppSelector } from "app/store";
+import { selectEditingScene } from "slices/renderSlice";
 import { selectHasAdminCapabilities } from "slices/explorerSlice";
 import { useExplorerGlobals } from "contexts/explorerGlobals";
 import { CustomGroup, customGroupsActions, useCustomGroups } from "contexts/customGroups";
@@ -24,13 +33,12 @@ import { CustomGroup, customGroupsActions, useCustomGroups } from "contexts/cust
 import { dataApi } from "app";
 import { featuresConfig } from "config/features";
 import { useToggle } from "hooks/useToggle";
-import { useSceneId } from "hooks/useSceneId";
 
 import { CreateGroup } from "./createGroup";
 import { Group } from "./group";
+import { Rename } from "./rename";
 import { GroupCollection } from "./groupCollection";
 import { groupsActions, GroupsStatus, selectGroupsStatus } from "./groupsSlice";
-import { selectEditingScene } from "slices/renderSlice";
 
 export const StyledListItemButton = styled(ListItemButton, { shouldForwardProp: (prop) => prop !== "inset" })<
     ListItemButtonProps & { inset?: boolean }
@@ -51,7 +59,7 @@ export function Groups() {
         state: { scene },
     } = useExplorerGlobals(true);
     const { state: customGroups, dispatch: dispatchCustom } = useCustomGroups();
-    const sceneId = useSceneId();
+
     const editingScene = useAppSelector(selectEditingScene);
     const isAdmin = useAppSelector(selectHasAdminCapabilities);
     const status = useAppSelector(selectGroupsStatus);
@@ -105,11 +113,11 @@ export function Groups() {
     };
 
     const handleSave = async () => {
-        const id = editingScene && editingScene.id ? editingScene.id : sceneId;
+        const id = editingScene && editingScene.id ? editingScene.id : scene.id;
         dispatch(groupsActions.setStatus(GroupsStatus.Saving));
 
         try {
-            const { url: _url, objectGroups: originalGroups, ...originalScene } = await dataApi.loadScene(sceneId);
+            const { url: _url, objectGroups: originalGroups, ...originalScene } = await dataApi.loadScene(id);
 
             await dataApi.putScene({
                 ...originalScene,
@@ -124,12 +132,13 @@ export function Groups() {
     };
 
     const disableChanges = status === GroupsStatus.Saving;
+    const hideExtendedHeader = menuOpen || Array.isArray(status);
 
     return (
         <>
             <WidgetContainer>
                 <WidgetHeader widget={featuresConfig.groups}>
-                    {menuOpen ? null : creatingGroup !== false ? (
+                    {hideExtendedHeader ? null : creatingGroup !== false ? (
                         <CreateGroup
                             key={typeof creatingGroup === "string" ? creatingGroup : undefined}
                             id={typeof creatingGroup === "string" ? creatingGroup : undefined}
@@ -161,48 +170,26 @@ export function Groups() {
                     ) : null}
                 </WidgetHeader>
 
-                <Box flexDirection="column" overflow="hidden" flexGrow={1} height={1}>
-                    {Array.isArray(status) && status[0] === GroupsStatus.Deleting ? (
-                        <Box
-                            display={menuOpen ? "none" : "flex"}
-                            flexDirection="column"
-                            height={1}
-                            alignItems="center"
-                            justifyContent="center"
-                        >
-                            <Typography variant="h6" fontWeight="600" sx={{ mb: 2 }}>
-                                Delete group?
-                            </Typography>
-                            <Box px={6} pb={10} display="flex" width={1}>
-                                <Button
-                                    sx={{ mr: 2 }}
-                                    fullWidth
-                                    size="large"
-                                    variant="outlined"
-                                    color="grey"
-                                    onClick={() => dispatch(groupsActions.setStatus(GroupsStatus.Initial))}
-                                >
-                                    Cancel
-                                </Button>
-                                <Button
-                                    fullWidth
-                                    size="large"
-                                    variant="contained"
-                                    color="primary"
-                                    onClick={() => dispatchCustom(customGroupsActions.delete(status[1]))}
-                                >
-                                    Delete
-                                </Button>
-                            </Box>
-                        </Box>
+                <Box
+                    display={menuOpen ? "none" : "flex"}
+                    flexDirection="column"
+                    overflow="hidden"
+                    flexGrow={1}
+                    height={1}
+                >
+                    {Array.isArray(status) ? (
+                        status[0] === GroupsStatus.Deleting ? (
+                            <Confirmation
+                                title="Delete group?"
+                                confirmBtnText="Delete"
+                                onCancel={() => dispatch(groupsActions.setStatus(GroupsStatus.Initial))}
+                                onConfirm={() => dispatchCustom(customGroupsActions.delete(status[1]))}
+                            />
+                        ) : (
+                            <Rename />
+                        )
                     ) : (
-                        <ScrollBox
-                            display={menuOpen ? "none" : "flex"}
-                            flexDirection="column"
-                            ref={containerRef}
-                            height={1}
-                            pb={2}
-                        >
+                        <ScrollBox display="flex" flexDirection="column" ref={containerRef} height={1} pb={2}>
                             {status === GroupsStatus.Saving ? <LinearProgress /> : null}
                             <List sx={{ width: 1, pb: 0 }}>
                                 <StyledListItemButton
@@ -285,11 +272,11 @@ export function Groups() {
                                 ))}
                             </List>
                             {Object.values(organisedGroups.grouped).length ? <Divider /> : null}
-                            {Object.values(organisedGroups.grouped).map((grouping, index) => {
+                            {Object.values(organisedGroups.grouped).map((collection, index) => {
                                 return (
                                     <GroupCollection
-                                        key={grouping.name + index}
-                                        grouping={grouping}
+                                        key={collection.name + index}
+                                        collection={collection}
                                         colorPickerPosition={colorPickerPosition}
                                         editGroup={(id) => setCreatingGroup(id)}
                                     />
@@ -297,12 +284,12 @@ export function Groups() {
                             })}
                         </ScrollBox>
                     )}
-                    <WidgetList
-                        display={menuOpen ? "block" : "none"}
-                        widgetKey={featuresConfig.groups.key}
-                        onSelect={toggleMenu}
-                    />
                 </Box>
+                <WidgetList
+                    display={menuOpen ? "block" : "none"}
+                    widgetKey={featuresConfig.groups.key}
+                    onSelect={toggleMenu}
+                />
             </WidgetContainer>
             <LogoSpeedDial
                 open={menuOpen}

@@ -1,6 +1,6 @@
 import { MouseEvent, useState } from "react";
 import { Delete, Edit, MoreVert, Visibility, ColorLens } from "@mui/icons-material";
-import { Box, IconButton, ListItemIcon, ListItemText, Menu, MenuItem, MenuList, Typography } from "@mui/material";
+import { Box, IconButton, ListItemIcon, ListItemText, Menu, MenuItem, Typography } from "@mui/material";
 
 import { Tooltip } from "components";
 import { ColorPicker } from "features/colorPicker";
@@ -132,34 +132,45 @@ export function Group({
                 anchorEl={menuAnchor}
                 open={Boolean(menuAnchor)}
                 onClose={closeMenu}
-                id={`${group.id} menu`}
+                id={`${group.id}-menu`}
+                MenuListProps={{ sx: { maxWidth: "100%" } }}
             >
-                <MenuList sx={{ maxWidth: "100%" }}>
-                    {isAdmin ? (
-                        <>
-                            <MenuItem onClick={editGroup}>
-                                <ListItemIcon>
-                                    <Edit fontSize="small" />
-                                </ListItemIcon>
-                                <ListItemText>Edit</ListItemText>
-                            </MenuItem>
-                            <MenuItem
-                                onClick={() => dispatch(groupsActions.setStatus([GroupsStatus.Deleting, group.id]))}
-                            >
-                                <ListItemIcon>
-                                    <Delete fontSize="small" />
-                                </ListItemIcon>
-                                <ListItemText>Delete</ListItemText>
-                            </MenuItem>
-                        </>
-                    ) : null}
+                {(isAdmin
+                    ? [
+                          <MenuItem
+                              onClick={() =>
+                                  dispatch(groupsActions.setStatus([GroupsStatus.RenamingGroup, group.name, group.id]))
+                              }
+                          >
+                              <ListItemIcon>
+                                  <Edit fontSize="small" />
+                              </ListItemIcon>
+                              <ListItemText>Rename</ListItemText>
+                          </MenuItem>,
+                          <MenuItem onClick={editGroup}>
+                              <ListItemIcon>
+                                  <Edit fontSize="small" />
+                              </ListItemIcon>
+                              <ListItemText>Edit</ListItemText>
+                          </MenuItem>,
+                          <MenuItem
+                              onClick={() => dispatch(groupsActions.setStatus([GroupsStatus.Deleting, group.id]))}
+                          >
+                              <ListItemIcon>
+                                  <Delete fontSize="small" />
+                              </ListItemIcon>
+                              <ListItemText>Delete</ListItemText>
+                          </MenuItem>,
+                      ]
+                    : []
+                ).concat(
                     <MenuItem onClick={toggleColorPicker}>
                         <ListItemIcon>
                             <ColorLens sx={{ color: `rgb(${r}, ${g}, ${b})` }} fontSize="small" />
                         </ListItemIcon>
                         <ListItemText>Select color</ListItemText>
                     </MenuItem>
-                </MenuList>
+                )}
             </Menu>
         </>
     );
