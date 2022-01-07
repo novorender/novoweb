@@ -34,7 +34,7 @@ export function createRendering(
     view: View
 ): {
     start: () => Promise<void>;
-    update: (updated: Settings) => void;
+    update: (updated: Partial<Settings>) => void;
     stop: () => void;
 } {
     const running = { current: false };
@@ -42,10 +42,13 @@ export function createRendering(
 
     return { start, stop, update };
 
-    function update(updated: Settings) {
-        settings.ssaoEnabled = updated.ssaoEnabled;
-        settings.taaEnabled = updated.taaEnabled;
-        (view as any).settings.generation++;
+    function update(updated: Partial<Settings>) {
+        settings.ssaoEnabled = updated.ssaoEnabled !== undefined ? updated.ssaoEnabled : settings.ssaoEnabled;
+        settings.taaEnabled = updated.taaEnabled !== undefined ? updated.taaEnabled : settings.taaEnabled;
+
+        if (settings.ssaoEnabled !== updated.ssaoEnabled || settings.taaEnabled !== updated.taaEnabled) {
+            (view as any).settings.generation++;
+        }
     }
 
     function stop() {
