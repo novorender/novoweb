@@ -148,18 +148,17 @@ export function Groups() {
                         />
                     ) : isAdmin ? (
                         <Box mx={-1}>
-                            <Button
-                                color="grey"
-                                onClick={() => setCreatingGroup("")}
-                                disabled={status === GroupsStatus.Saving}
-                            >
+                            <Button color="grey" onClick={() => setCreatingGroup("")} disabled={disableChanges}>
                                 <AddCircle sx={{ mr: 1 }} />
                                 Add group
                             </Button>
                             <Button
                                 color="grey"
                                 onClick={handleGroupSelected}
-                                disabled={organisedGroups.singles.filter((group) => group.selected).length < 2}
+                                disabled={
+                                    disableChanges ||
+                                    organisedGroups.singles.filter((group) => group.selected).length < 2
+                                }
                             >
                                 <CheckCircle sx={{ mr: 1 }} />
                                 Group selected
