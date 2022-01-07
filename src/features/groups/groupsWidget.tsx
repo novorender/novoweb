@@ -39,6 +39,7 @@ import { Group } from "./group";
 import { Rename } from "./rename";
 import { GroupCollection } from "./groupCollection";
 import { groupsActions, GroupsStatus, selectGroupsStatus } from "./groupsSlice";
+import { useSceneId } from "hooks/useSceneId";
 
 export const StyledListItemButton = styled(ListItemButton, { shouldForwardProp: (prop) => prop !== "inset" })<
     ListItemButtonProps & { inset?: boolean }
@@ -59,6 +60,7 @@ export function Groups() {
         state: { scene },
     } = useExplorerGlobals(true);
     const { state: customGroups, dispatch: dispatchCustom } = useCustomGroups();
+    const sceneId = useSceneId();
 
     const editingScene = useAppSelector(selectEditingScene);
     const isAdmin = useAppSelector(selectHasAdminCapabilities);
@@ -113,7 +115,7 @@ export function Groups() {
     };
 
     const handleSave = async () => {
-        const id = editingScene && editingScene.id ? editingScene.id : scene.id;
+        const id = editingScene && editingScene.id ? editingScene.id : sceneId;
         dispatch(groupsActions.setStatus(GroupsStatus.Saving));
 
         try {

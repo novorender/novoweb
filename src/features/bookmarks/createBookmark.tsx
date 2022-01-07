@@ -19,6 +19,7 @@ import { useCustomGroups, CustomGroup } from "contexts/customGroups";
 import { useExplorerGlobals } from "contexts/explorerGlobals";
 import { useLazyHighlighted } from "contexts/highlighted";
 import { useLazyHidden } from "contexts/hidden";
+import { useSceneId } from "hooks/useSceneId";
 
 export function CreateBookmark({ onClose }: { onClose: () => void }) {
     const bookmarks = useAppSelector(selectBookmarks);
@@ -29,8 +30,9 @@ export function CreateBookmark({ onClose }: { onClose: () => void }) {
     const dispatch = useAppDispatch();
 
     const {
-        state: { canvas, scene, view },
+        state: { canvas, view },
     } = useExplorerGlobals(true);
+    const sceneId = useSceneId();
     const { state: customGroups } = useCustomGroups();
     const highlighted = useLazyHighlighted();
     const hidden = useLazyHidden();
@@ -57,7 +59,7 @@ export function CreateBookmark({ onClose }: { onClose: () => void }) {
         const toSave = bookmarks.concat({ ...bookmarkRef.current, name, description });
 
         dispatch(renderActions.setBookmarks(toSave));
-        dataApi.saveBookmarks(editingScene?.id ? editingScene.id : scene.id, toSave);
+        dataApi.saveBookmarks(editingScene?.id ? editingScene.id : sceneId, toSave);
 
         onClose();
     };

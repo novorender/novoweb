@@ -20,6 +20,7 @@ import { useDispatchVisible, visibleActions } from "contexts/visible";
 
 import { CreateBookmark } from "./createBookmark";
 import { Bookmark } from "./bookmark";
+import { useSceneId } from "hooks/useSceneId";
 
 type Filters = {
     title: string;
@@ -37,8 +38,9 @@ export function Bookmarks() {
     const dispatchHidden = useDispatchHidden();
     const { state: customGroups, dispatch: dispatchCustom } = useCustomGroups();
     const {
-        state: { view, scene },
+        state: { view },
     } = useExplorerGlobals(true);
+    const sceneId = useSceneId();
 
     const bookmarks = useAppSelector(selectBookmarks);
     const isAdmin = useAppSelector(selectHasAdminCapabilities);
@@ -132,7 +134,7 @@ export function Bookmarks() {
 
         dispatch(renderActions.setBookmarks(toSave));
         setBookmarkToDelete(undefined);
-        dataApi.saveBookmarks(editingScene?.id ? editingScene.id : scene.id, toSave);
+        dataApi.saveBookmarks(editingScene?.id ? editingScene.id : sceneId, toSave);
     };
 
     const filtersOpen = Boolean(filterMenuAnchor) && !menuOpen && !creatingBookmark && !bookmarkToDelete;
