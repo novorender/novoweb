@@ -1,6 +1,7 @@
 import { ObjectId } from "@novorender/webgl-api";
 import { createContext, Dispatch, ReactNode, useContext, useEffect, useReducer, useRef, useState } from "react";
 
+import { VecRGB, VecRGBA } from "utils/color";
 import { toIdObj, toIdArr } from "utils/objectData";
 
 // Highlighted/hidden/objectgroups may end up having huge (1M+) collections of objectIds and receive a lot of back-to-back state updates.
@@ -9,7 +10,7 @@ import { toIdObj, toIdArr } from "utils/objectData";
 const initialState = {
     ids: {} as Record<ObjectId, true | undefined>,
     idArr: [] as ObjectId[],
-    color: [1, 0, 0] as [number, number, number],
+    color: [1, 0, 0, 1] as VecRGB | VecRGBA,
 };
 
 type State = typeof initialState;

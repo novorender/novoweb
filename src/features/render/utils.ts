@@ -21,6 +21,7 @@ import { hiddenGroupActions, DispatchHidden } from "contexts/hidden";
 import { highlightActions, DispatchHighlighted } from "contexts/highlighted";
 import { MutableRefObject } from "react";
 import { AdvancedSetting, CameraType, ObjectVisibility, renderActions, RenderType } from "slices/renderSlice";
+import { VecRGB, VecRGBA } from "utils/color";
 import { sleep } from "utils/timers";
 
 type Settings = {
@@ -172,7 +173,7 @@ export function refillObjects({
     scene: Scene;
     view: View;
     objectGroups: (
-        | { ids: ObjectId[]; color: [number, number, number]; selected: boolean; hidden: boolean }
+        | { ids: ObjectId[]; color: VecRGB | VecRGBA; selected: boolean; hidden: boolean }
         | { ids: ObjectId[]; neutral: true; hidden: false; selected: true }
     )[];
     defaultVisibility: ObjectVisibility;

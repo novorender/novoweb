@@ -1,9 +1,11 @@
 import { ObjectGroup } from "@novorender/data-js-api";
 import { createContext, Dispatch, ReactNode, useContext, useEffect, useReducer, useRef } from "react";
 
+import { VecRGB, VecRGBA } from "utils/color";
+
 export interface CustomGroup extends ObjectGroup {
     ids: number[];
-    color: [number, number, number];
+    color: VecRGB | VecRGBA;
 }
 
 const initialState = [] as CustomGroup[];

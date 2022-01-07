@@ -43,7 +43,7 @@ export function Group({
         setMenuAnchor(null);
     };
 
-    const [r, g, b] = vecToRgb(group.color);
+    const { r, g, b } = vecToRgb(group.color);
     const disableChanges = status === GroupsStatus.Saving;
 
     return (
@@ -120,9 +120,7 @@ export function Group({
                     position={colorPickerPosition}
                     color={group.color}
                     onChangeComplete={({ rgb }) =>
-                        dispatchCustomGroups(
-                            customGroupsActions.update(group.id, { color: rgbToVec([rgb.r, rgb.g, rgb.b]) })
-                        )
+                        dispatchCustomGroups(customGroupsActions.update(group.id, { color: rgbToVec(rgb) }))
                     }
                     onOutsideClick={toggleColorPicker}
                 />

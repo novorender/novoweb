@@ -1,9 +1,8 @@
-import type { ReadonlyVec3, vec3 } from "gl-matrix";
 import { useState } from "react";
 import { ChromePicker, ColorChangeHandler } from "react-color";
 import { Box, Portal, ClickAwayListener } from "@mui/material";
 
-import { vecToRgb } from "utils/color";
+import { VecRGB, VecRGBA, vecToRgb } from "utils/color";
 
 type Props = {
     testId?: string;
@@ -13,16 +12,13 @@ type Props = {
         bottom?: number;
         left?: number;
     };
-    color: vec3 | ReadonlyVec3;
+    color: VecRGB | VecRGBA;
     onChangeComplete: ColorChangeHandler;
     onOutsideClick: () => void;
 };
 
 export function ColorPicker({ testId, position = {}, color, onChangeComplete, onOutsideClick }: Props) {
-    const [{ r, g, b }, setPickerColor] = useState(() => {
-        const [r, g, b] = vecToRgb(color);
-        return { r, g, b };
-    });
+    const [{ r, g, b, a }, setPickerColor] = useState(vecToRgb(color));
 
     return (
         <Portal>
@@ -36,9 +32,8 @@ export function ColorPicker({ testId, position = {}, color, onChangeComplete, on
                     {...position}
                 >
                     <ChromePicker
-                        color={{ r, g, b }}
-                        disableAlpha
-                        onChange={({ rgb }) => setPickerColor(rgb)}
+                        color={{ r, g, b, a }}
+                        onChange={({ rgb }) => setPickerColor({ ...rgb, a: rgb.a ?? 1 })}
                         onChangeComplete={onChangeComplete}
                     />
                 </Box>

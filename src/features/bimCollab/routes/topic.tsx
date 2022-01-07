@@ -299,7 +299,7 @@ function CommentListItem({
                           }))
                           .filter((item) => item.components.length)
                           .map(async (item) => ({
-                              color: hexToVec(item.color),
+                              color: hexToVec(item.color, item.color.length === 8),
                               ids: await guidsToIds({ scene, abortSignal, guids: item.components as string[] }),
                           }))
                   )
