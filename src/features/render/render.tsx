@@ -711,7 +711,7 @@ export function Render3D({ onInit }: Props) {
                     cameraGeneration.current = view.performanceStatistics.cameraGeneration ?? 0;
 
                     moveSvg();
-                    rendering.current.update({ ssaoEnabled: false });
+                    rendering.current.update({ moving: true });
 
                     if (movementTimer.current) {
                         clearTimeout(movementTimer.current);
@@ -733,9 +733,7 @@ export function Render3D({ onInit }: Props) {
                             return;
                         }
 
-                        if (advancedSettings.ssao) {
-                            rendering.current.update({ ssaoEnabled: true });
-                        }
+                        rendering.current.update({ moving: false });
 
                         dispatch(
                             renderActions.saveCameraPosition({

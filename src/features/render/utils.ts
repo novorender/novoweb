@@ -27,6 +27,7 @@ import { sleep } from "utils/timers";
 type Settings = {
     taaEnabled: boolean;
     ssaoEnabled: boolean;
+    moving: boolean;
 };
 
 export function createRendering(
@@ -38,15 +39,20 @@ export function createRendering(
     stop: () => void;
 } {
     const running = { current: false };
-    const settings = { ssaoEnabled: true, taaEnabled: true };
+    const settings = { ssaoEnabled: true, taaEnabled: true, moving: false };
 
     return { start, stop, update };
 
     function update(updated: Partial<Settings>) {
         settings.ssaoEnabled = updated.ssaoEnabled !== undefined ? updated.ssaoEnabled : settings.ssaoEnabled;
         settings.taaEnabled = updated.taaEnabled !== undefined ? updated.taaEnabled : settings.taaEnabled;
+        settings.moving = updated.moving !== undefined ? updated.moving : settings.moving;
 
-        if (settings.ssaoEnabled !== updated.ssaoEnabled || settings.taaEnabled !== updated.taaEnabled) {
+        if (
+            settings.ssaoEnabled !== updated.ssaoEnabled ||
+            settings.taaEnabled !== updated.taaEnabled ||
+            settings.moving !== updated.moving
+        ) {
             (view as any).settings.generation++;
         }
     }
@@ -78,7 +84,7 @@ export function createRendering(
             }
 
             // const { width, height } = canvas;
-            const badPerf = view.performanceStatistics.weakDevice; // || view.settings.quality.resolution.value < 1;
+            const badPerf = view.performanceStatistics.weakDevice || settings.moving; // || view.settings.quality.resolution.value < 1;
 
             if (settings.ssaoEnabled && !badPerf) {
                 output.applyPostEffect({ kind: "ssao", samples: 64, radius: 1, reset: true });
