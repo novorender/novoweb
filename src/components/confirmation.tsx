@@ -6,7 +6,7 @@ export function Confirmation({
     onCancel,
     onConfirm,
     ...boxProps
-}: BoxProps & { title: string; confirmBtnText: string; onCancel?: () => void; onConfirm?: () => void }) {
+}: BoxProps & { title: string; confirmBtnText: string; onCancel: () => void; onConfirm?: () => void }) {
     return (
         <Box
             display="flex"
@@ -34,7 +34,7 @@ export function Confirmation({
                 >
                     Cancel
                 </Button>
-                <Button fullWidth size="large" variant="contained" color="primary" onClick={onConfirm}>
+                <Button fullWidth type="submit" size="large" variant="contained" color="primary" onClick={onConfirm}>
                     {confirmBtnText}
                 </Button>
             </Box>
