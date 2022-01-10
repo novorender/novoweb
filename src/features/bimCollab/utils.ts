@@ -2,7 +2,7 @@ import { Camera, OrthoControllerParams, RenderSettings } from "@novorender/webgl
 import { vec3, mat3, quat, vec4, mat4 } from "gl-matrix";
 
 import { ObjectVisibility } from "slices/renderSlice";
-import { vecToHex } from "utils/color";
+import { VecRGB, VecRGBA, vecToHex } from "utils/color";
 import { uniqueArray } from "utils/misc";
 
 import { Viewpoint } from "./types";
@@ -241,14 +241,16 @@ export async function createBcfViewpointComponents({
     coloring,
 }: {
     selected: string[];
-    coloring: { color: [number, number, number]; guids: string[] }[];
+    coloring: { color: VecRGB | VecRGBA; guids: string[] }[];
     defaultVisibility: ObjectVisibility;
     exceptions?: string[];
 }): Promise<Viewpoint["components"] | undefined> {
     return {
         selection: selected.map((guid) => ({ ifc_guid: guid })),
         coloring: coloring.map((item) => ({
-            color: vecToHex(item.color),
+            color: vecToHex(
+                item.color.length === 3 ? item.color : ([item.color[3], ...item.color.slice(0, 4)] as VecRGBA)
+            ),
             components: item.guids.map((guid) => ({ ifc_guid: guid })),
         })),
         visibility: {

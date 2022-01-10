@@ -65,7 +65,7 @@ function getWidgetByKey(key: WidgetKey): JSX.Element | string {
     switch (key) {
         case featuresConfig.properties.key:
             return <Properties />;
-        case featuresConfig.propertiesTree.key:
+        case featuresConfig.propertyTree.key:
             return <PropertiesTree />;
         case featuresConfig.bookmarks.key:
             return <Bookmarks />;

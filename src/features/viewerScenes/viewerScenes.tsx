@@ -18,7 +18,6 @@ import {
     MenuItem,
     ListItemIcon,
     ListItemText,
-    MenuList,
     Link,
 } from "@mui/material";
 import { ScenePreview } from "@novorender/data-js-api";
@@ -154,9 +153,9 @@ function SceneListItem({ viewerScene }: { viewerScene: ScenePreview }) {
                     open={Boolean(menuAnchor)}
                     onClose={closeMenu}
                     id={viewerScene.id}
+                    MenuListProps={{ sx: { maxWidth: "100%" } }}
                 >
-                    <MenuList sx={{ maxWidth: "100%" }}>
-                        {/* <MenuItem onClick={() => {}}>
+                    {/* <MenuItem onClick={() => {}}>
                             <ListItemIcon>
                                 <PowerSettingsNew fontSize="small" />
                             </ListItemIcon>
@@ -168,13 +167,12 @@ function SceneListItem({ viewerScene }: { viewerScene: ScenePreview }) {
                             </ListItemIcon>
                             <ListItemText>Date</ListItemText>
                         </MenuItem> */}
-                        <MenuItem onClick={deleteScene}>
-                            <ListItemIcon>
-                                <Delete fontSize="small" />
-                            </ListItemIcon>
-                            <ListItemText>Delete</ListItemText>
-                        </MenuItem>
-                    </MenuList>
+                    <MenuItem onClick={deleteScene}>
+                        <ListItemIcon>
+                            <Delete fontSize="small" />
+                        </ListItemIcon>
+                        <ListItemText>Delete</ListItemText>
+                    </MenuItem>
                 </Menu>
                 <IconButton
                     size="small"

@@ -71,6 +71,8 @@ export function CreateGroup({ onClose, id }: { onClose: () => void; id?: string 
         };
 
         dispatchCustomGroup(customGroupsActions.add([newGroup]));
+        dispatchHighlighted(highlightActions.remove(ids));
+        onClose();
     };
 
     const updateGroup = () => {
@@ -78,7 +80,9 @@ export function CreateGroup({ onClose, id }: { onClose: () => void; id?: string 
             return;
         }
 
-        dispatchCustomGroup(customGroupsActions.update(groupToEdit.id, { search: [...savedInputs] }));
+        dispatchCustomGroup(customGroupsActions.update(groupToEdit.id, { search: [...savedInputs], ids }));
+        dispatchHighlighted(highlightActions.remove(ids));
+        onClose();
     };
 
     const disableSearch =

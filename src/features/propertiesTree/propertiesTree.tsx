@@ -278,7 +278,7 @@ export function PropertiesTree() {
     return (
         <>
             <WidgetContainer>
-                <WidgetHeader widget={featuresConfig.propertiesTree} />
+                <WidgetHeader widget={featuresConfig.propertyTree} />
                 <ScrollBox display={!menuOpen ? "block" : "none"} height={1} pb={2}>
                     <List>
                         {root === undefined ? (
@@ -292,14 +292,14 @@ export function PropertiesTree() {
                 </ScrollBox>
                 <WidgetList
                     display={menuOpen ? "block" : "none"}
-                    widgetKey={featuresConfig.propertiesTree.key}
+                    widgetKey={featuresConfig.propertyTree.key}
                     onSelect={toggleMenu}
                 />
             </WidgetContainer>
             <LogoSpeedDial
                 open={menuOpen}
                 toggle={toggleMenu}
-                testId={`${featuresConfig.propertiesTree.key}-widget-menu-fab`}
+                testId={`${featuresConfig.propertyTree.key}-widget-menu-fab`}
                 ariaLabel="toggle widget menu"
             />
         </>

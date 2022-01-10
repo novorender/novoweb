@@ -1,77 +1,33 @@
-import { vec3, quat } from "gl-matrix";
-import { FormEventHandler, Fragment, useRef, useState } from "react";
-import {
-    useTheme,
-    List,
-    ListItem,
-    Box,
-    Typography,
-    Tooltip as MuiTooltip,
-    styled,
-    tooltipClasses,
-    TooltipProps,
-    Button,
-} from "@mui/material";
-import { AddCircle } from "@mui/icons-material";
-import type { Bookmark } from "@novorender/data-js-api";
-import { OrthoControllerParams, View } from "@novorender/webgl-api";
-import { css } from "@mui/styled-engine";
+import { Fragment, MouseEvent, useEffect, useState } from "react";
+import { useTheme, List, ListItem, Typography, Button, Menu, MenuItem, InputAdornment, Checkbox } from "@mui/material";
+import { AddCircle, FilterAlt, Search } from "@mui/icons-material";
+import type { Bookmark as BookmarkType } from "@novorender/data-js-api";
 
 import { dataApi } from "app";
 import { featuresConfig } from "config/features";
 import { useToggle } from "hooks/useToggle";
+import { useSceneId } from "hooks/useSceneId";
 import { useAppDispatch, useAppSelector } from "app/store";
-import { ScrollBox, Tooltip, Divider, WidgetContainer, LogoSpeedDial, WidgetHeader, TextField } from "components";
+import { ScrollBox, WidgetContainer, LogoSpeedDial, WidgetHeader, TextField, Confirmation } from "components";
 import { WidgetList } from "features/widgetList";
 
-import {
-    CameraType,
-    ObjectVisibility,
-    renderActions,
-    selectBookmarks,
-    selectDefaultVisibility,
-    selectEditingScene,
-    selectMainObject,
-    selectMeasure,
-} from "slices/renderSlice";
+import { CameraType, ObjectVisibility, renderActions, selectBookmarks, selectEditingScene } from "slices/renderSlice";
 import { selectHasAdminCapabilities } from "slices/explorerSlice";
-import { highlightActions, useDispatchHighlighted, useLazyHighlighted } from "contexts/highlighted";
-import { hiddenGroupActions, useDispatchHidden, useLazyHidden } from "contexts/hidden";
-import { CustomGroup, customGroupsActions, useCustomGroups } from "contexts/customGroups";
+import { highlightActions, useDispatchHighlighted } from "contexts/highlighted";
+import { hiddenGroupActions, useDispatchHidden } from "contexts/hidden";
+import { customGroupsActions, useCustomGroups } from "contexts/customGroups";
 import { useExplorerGlobals } from "contexts/explorerGlobals";
 import { useDispatchVisible, visibleActions } from "contexts/visible";
 
-const Description = styled(Typography)(
-    () => css`
-        display: --webkit-box;
-        overflow: hidden;
-        --webkit-line-clamp: 2;
-        --webkit-box-orient: vertical;
-    `
-);
+import { CreateBookmark } from "./createBookmark";
+import { Bookmark } from "./bookmark";
 
-const ImgTooltip = styled(({ className, ...props }: TooltipProps) => (
-    <MuiTooltip {...props} classes={{ popper: className }} />
-))(
-    ({ theme }) => css`
-        & .${tooltipClasses.tooltip} {
-            max-width: none;
-            background: ${theme.palette.common.white};
-            padding: ${theme.spacing(1)};
-            border-radius: 4px;
-            border: 1px solid ${theme.palette.grey.A400};
-        }
-    `
-);
-
-const Img = styled("img")(
-    () => css`
-        height: 100%;
-        width: 100%;
-        object-fit: cover;
-        display: block;
-    `
-);
+type Filters = {
+    title: string;
+    measurements: boolean;
+    clipping: boolean;
+    groups: boolean;
+};
 
 export function Bookmarks() {
     const theme = useTheme();
@@ -84,14 +40,36 @@ export function Bookmarks() {
     const {
         state: { view },
     } = useExplorerGlobals(true);
+    const sceneId = useSceneId();
 
     const bookmarks = useAppSelector(selectBookmarks);
     const isAdmin = useAppSelector(selectHasAdminCapabilities);
+    const editingScene = useAppSelector(selectEditingScene);
     const dispatch = useAppDispatch();
 
+    const [filterMenuAnchor, setFilterMenuAnchor] = useState<HTMLElement | null>(null);
+    const [filters, setFilters] = useState({ title: "", measurements: false, clipping: false, groups: false });
+    const [filteredBookmarks, setFilteredBookmarks] = useState(bookmarks);
+    const [bookmarkToDelete, setBookmarkToDelete] = useState<BookmarkType>();
     const [creatingBookmark, toggleCreatingBookmark] = useToggle();
 
-    function handleSelect(bookmark: Bookmark) {
+    useEffect(
+        function filterBookmarks() {
+            setFilteredBookmarks(applyFilters(bookmarks, filters));
+        },
+        [bookmarks, filters]
+    );
+
+    const openFilters = (e: MouseEvent<HTMLButtonElement>) => {
+        e.stopPropagation();
+        setFilterMenuAnchor(e.currentTarget);
+    };
+
+    const closeFilters = () => {
+        setFilterMenuAnchor(null);
+    };
+
+    function handleSelect(bookmark: BookmarkType) {
         dispatchVisible(visibleActions.set([]));
 
         const bmDefaultGroup = bookmark.objectGroups?.find((group) => !group.id && group.selected);
@@ -151,76 +129,126 @@ export function Bookmarks() {
         }
     }
 
+    const handleDelete = () => {
+        const toSave = bookmarks.filter((bm) => bm !== bookmarkToDelete);
+
+        dispatch(renderActions.setBookmarks(toSave));
+        setBookmarkToDelete(undefined);
+        dataApi.saveBookmarks(editingScene?.id ? editingScene.id : sceneId, toSave);
+    };
+
+    const filtersOpen = Boolean(filterMenuAnchor) && !menuOpen && !creatingBookmark && !bookmarkToDelete;
+    const filterMenuId = "filter-menu";
+    const allFiltersChecked = filters.clipping && filters.groups && filters.measurements;
     return (
         <>
             <WidgetContainer>
                 <WidgetHeader widget={featuresConfig.bookmarks}>
-                    {isAdmin && !menuOpen && !creatingBookmark ? (
-                        <Button color="grey" onClick={toggleCreatingBookmark}>
-                            <AddCircle sx={{ mr: 1 }} />
-                            Add bookmark
-                        </Button>
+                    {!menuOpen && !creatingBookmark && !bookmarkToDelete ? (
+                        <>
+                            <Button
+                                color="grey"
+                                onClick={openFilters}
+                                aria-haspopup="true"
+                                aria-controls={filterMenuId}
+                                aria-expanded={filtersOpen ? "true" : undefined}
+                            >
+                                <FilterAlt sx={{ mr: 1 }} />
+                                Filters
+                            </Button>
+                            {isAdmin ? (
+                                <Button color="grey" onClick={toggleCreatingBookmark}>
+                                    <AddCircle sx={{ mr: 1 }} />
+                                    Add bookmark
+                                </Button>
+                            ) : null}
+                        </>
                     ) : null}
                 </WidgetHeader>
-                <ScrollBox display={menuOpen ? "none" : "flex"} height={1} pb={2}>
+                <Menu
+                    onClick={(e) => e.stopPropagation()}
+                    anchorEl={filterMenuAnchor}
+                    open={filtersOpen}
+                    onClose={closeFilters}
+                    id={filterMenuId}
+                    MenuListProps={{ sx: { maxWidth: "100%", width: 360, pt: 0 } }}
+                >
+                    <MenuItem sx={{ background: theme.palette.grey[100] }}>
+                        <TextField
+                            autoFocus
+                            fullWidth
+                            variant="standard"
+                            placeholder="Search"
+                            value={filters.title}
+                            onChange={(e) => setFilters((state) => ({ ...state, title: e.target.value }))}
+                            InputProps={{
+                                disableUnderline: true,
+                                onKeyDown: (e) => e.stopPropagation(),
+                                endAdornment: (
+                                    <InputAdornment position="end" sx={{ mr: 1.2 }}>
+                                        <Search />
+                                    </InputAdornment>
+                                ),
+                            }}
+                        />
+                    </MenuItem>
+                    <MenuItem
+                        onClick={() =>
+                            setFilters((state) => ({
+                                ...state,
+                                measurements: !allFiltersChecked,
+                                clipping: !allFiltersChecked,
+                                groups: !allFiltersChecked,
+                            }))
+                        }
+                        sx={{ display: "flex", justifyContent: "space-between" }}
+                    >
+                        <Typography>All</Typography>
+                        <Checkbox checked={allFiltersChecked} />
+                    </MenuItem>
+                    <MenuItem
+                        onClick={() => setFilters((state) => ({ ...state, measurements: !state.measurements }))}
+                        sx={{ display: "flex", justifyContent: "space-between" }}
+                    >
+                        <Typography>Measure</Typography>
+                        <Checkbox checked={filters.measurements} />
+                    </MenuItem>
+                    <MenuItem
+                        onClick={() => setFilters((state) => ({ ...state, clipping: !state.clipping }))}
+                        sx={{ display: "flex", justifyContent: "space-between" }}
+                    >
+                        <Typography>Clipping</Typography>
+                        <Checkbox checked={filters.clipping} />
+                    </MenuItem>
+                    <MenuItem
+                        onClick={() => setFilters((state) => ({ ...state, groups: !state.groups }))}
+                        sx={{ display: "flex", justifyContent: "space-between" }}
+                    >
+                        <Typography>Groups</Typography>
+                        <Checkbox checked={filters.groups} />
+                    </MenuItem>
+                </Menu>
+                <ScrollBox display={menuOpen ? "none" : "flex"} flexDirection="column" pb={2} height={1}>
                     {creatingBookmark ? (
                         <CreateBookmark onClose={toggleCreatingBookmark} />
+                    ) : bookmarkToDelete ? (
+                        <Confirmation
+                            title="Delete bookmark?"
+                            confirmBtnText="Delete"
+                            onCancel={() => setBookmarkToDelete(undefined)}
+                            onConfirm={handleDelete}
+                        />
                     ) : (
                         <List sx={{ width: 1 }}>
-                            {bookmarks.map((bookmark, index, array) => (
-                                <Fragment key={bookmark.name + index}>
-                                    <ListItem
-                                        sx={{ padding: `${theme.spacing(0.5)} ${theme.spacing(1)}` }}
-                                        button
-                                        onClick={() => handleSelect(bookmark)}
-                                    >
-                                        <Box
-                                            width={1}
-                                            maxHeight={80}
-                                            display="flex"
-                                            alignItems="flex-start"
-                                            overflow="hidden"
-                                        >
-                                            <Box
-                                                bgcolor={theme.palette.grey[200]}
-                                                height={65}
-                                                width={100}
-                                                flexShrink={0}
-                                                flexGrow={0}
-                                            >
-                                                {bookmark.img ? (
-                                                    <ImgTooltip
-                                                        placement="bottom-end"
-                                                        title={
-                                                            <Box sx={{ height: 176, width: 176, cursor: "pointer" }}>
-                                                                <Img alt="" src={bookmark.img} />
-                                                            </Box>
-                                                        }
-                                                    >
-                                                        <Img alt="" height="32px" width="32px" src={bookmark.img} />
-                                                    </ImgTooltip>
-                                                ) : null}
-                                            </Box>
-                                            <Box ml={1} flexDirection="column" flexGrow={1} width={0}>
-                                                <Tooltip disableInteractive title={bookmark.name}>
-                                                    <Typography noWrap variant="body1" sx={{ fontWeight: 600 }}>
-                                                        {bookmark.name}
-                                                    </Typography>
-                                                </Tooltip>
-                                                {bookmark.description ? (
-                                                    <Tooltip disableInteractive title={bookmark.description}>
-                                                        <Description>{bookmark.description}</Description>
-                                                    </Tooltip>
-                                                ) : null}
-                                            </Box>
-                                        </Box>
-                                    </ListItem>
-                                    {index !== array.length - 1 ? (
-                                        <Box my={0.5} component="li">
-                                            <Divider />
-                                        </Box>
-                                    ) : null}
-                                </Fragment>
+                            {filteredBookmarks.map((bookmark, index) => (
+                                <ListItem
+                                    key={bookmark.name + index}
+                                    sx={{ padding: `${theme.spacing(0.5)} ${theme.spacing(1)}` }}
+                                    button
+                                    onClick={() => handleSelect(bookmark)}
+                                >
+                                    <Bookmark bookmark={bookmark} onDelete={setBookmarkToDelete} />
+                                </ListItem>
                             ))}
                         </List>
                     )}
@@ -240,189 +268,34 @@ export function Bookmarks() {
     );
 }
 
-const CreateBookmark = ({ onClose }: { onClose: () => void }) => {
-    const bookmarks = useAppSelector(selectBookmarks);
-    const measurement = useAppSelector(selectMeasure);
-    const editingScene = useAppSelector(selectEditingScene);
-    const defaultVisibility = useAppSelector(selectDefaultVisibility);
-    const mainObject = useAppSelector(selectMainObject);
-    const dispatch = useAppDispatch();
+function applyFilters(bookmarks: BookmarkType[], filters: Filters): BookmarkType[] {
+    const titleMatcher = new RegExp(filters.title, "gi");
 
-    const {
-        state: { canvas, scene, view },
-    } = useExplorerGlobals(true);
-    const { state: customGroups } = useCustomGroups();
-    const highlighted = useLazyHighlighted();
-    const hidden = useLazyHidden();
+    return bookmarks.filter((bm) => {
+        if (filters.title) {
+            if (!titleMatcher.test(bm.name)) {
+                return false;
+            }
+        }
 
-    const [name, setName] = useState("");
-    const [description, setDescription] = useState("");
-    const imgRef = useRef(createBookmarkImg(canvas));
-    const bookmarkRef = useRef(
-        createBookmark({
-            view,
-            mainObject,
-            highlighted,
-            hidden,
-            customGroups,
-            defaultVisibility,
-            measurement,
-            img: imgRef.current,
-        })
-    );
+        if (filters.measurements) {
+            if (!(bm.measurement && bm.measurement.length)) {
+                return false;
+            }
+        }
 
-    const handleSubmit: FormEventHandler = (e) => {
-        e.preventDefault();
+        if (filters.clipping) {
+            if (!(bm.clippingVolume?.enabled && bm.clippingVolume.planes.length) && !bm.clippingPlanes?.enabled) {
+                return false;
+            }
+        }
 
-        const newBookmarks = bookmarks.concat({ ...bookmarkRef.current, name, description });
+        if (filters.groups) {
+            if (!bm.objectGroups?.filter((grp) => grp.id && (grp.hidden || grp.selected)).length) {
+                return false;
+            }
+        }
 
-        dispatch(renderActions.setBookmarks(newBookmarks));
-        dataApi.saveBookmarks(editingScene?.id || scene.id, newBookmarks);
-
-        onClose();
-    };
-
-    return (
-        <Box width={1} px={1} mt={2}>
-            <Box sx={{ img: { width: "100%", height: 200, objectFit: "cover" } }}>
-                <img alt="" src={imgRef.current} />
-            </Box>
-            <form onSubmit={handleSubmit}>
-                <TextField
-                    name="title"
-                    value={name}
-                    onChange={(e) => setName(e.target.value)}
-                    id={"bookmark-title"}
-                    label={"Title"}
-                    fullWidth
-                    required
-                    sx={{ my: 1 }}
-                />
-                <TextField
-                    value={description}
-                    onChange={(e) => setDescription(e.target.value)}
-                    id={"bookmark-description"}
-                    label={"Description"}
-                    fullWidth
-                    multiline
-                    rows={4}
-                    sx={{ mb: 2 }}
-                />
-                <Box display="flex">
-                    <Button
-                        color="grey"
-                        type="button"
-                        variant="outlined"
-                        onClick={onClose}
-                        fullWidth
-                        size="large"
-                        sx={{ marginRight: 1 }}
-                    >
-                        Cancel
-                    </Button>
-                    <Button type="submit" fullWidth disabled={!name} color="primary" variant="contained" size="large">
-                        Save
-                    </Button>
-                </Box>
-            </form>
-        </Box>
-    );
-};
-
-function createBookmarkImg(canvas: HTMLCanvasElement): string {
-    const dist = document.createElement("canvas");
-    const width = canvas.width;
-    const height = canvas.height;
-
-    dist.height = 350;
-    dist.width = (350 * height) / width;
-    const ctx = dist.getContext("2d", { alpha: false, desynchronized: false })!;
-    ctx.drawImage(canvas, 0, 0, width, height, 0, 0, dist.width, dist.height);
-
-    return dist.toDataURL("image/png");
+        return true;
+    });
 }
-
-const createBookmark = ({
-    view,
-    highlighted,
-    hidden,
-    customGroups,
-    mainObject,
-    defaultVisibility,
-    measurement,
-    img,
-}: {
-    view: View;
-    highlighted: ReturnType<typeof useLazyHighlighted>;
-    hidden: ReturnType<typeof useLazyHidden>;
-    customGroups: CustomGroup[];
-    mainObject: number | undefined;
-    defaultVisibility: ObjectVisibility;
-    measurement: ReturnType<typeof selectMeasure>;
-    img: string;
-}): Omit<Bookmark, "name" | "description"> => {
-    const camera = view.camera;
-    const { highlight: _highlight, ...clippingPlanes } = view.settings.clippingPlanes;
-    const { ...clippingVolume } = view.settings.clippingVolume;
-    const selectedOnly = defaultVisibility !== ObjectVisibility.Neutral;
-
-    const objectGroups = customGroups
-        .map(({ id, selected, hidden, ids }) => ({
-            id,
-            selected,
-            hidden,
-            ids: id ? undefined : ids,
-        }))
-        .concat({
-            id: "",
-            selected: true,
-            hidden: false,
-            ids: highlighted.current.idArr.concat(
-                mainObject !== undefined && !highlighted.current.ids[mainObject] ? [mainObject] : []
-            ),
-        })
-        .concat({
-            id: "",
-            selected: false,
-            hidden: true,
-            ids: hidden.current.idArr,
-        });
-
-    if (camera.kind === "pinhole") {
-        const { kind, position, rotation, fieldOfView, near, far } = camera;
-
-        return {
-            img,
-            objectGroups,
-            selectedOnly,
-            clippingVolume,
-            clippingPlanes: {
-                ...clippingPlanes,
-                bounds: {
-                    min: Array.from(clippingPlanes.bounds.min) as [number, number, number],
-                    max: Array.from(clippingPlanes.bounds.max) as [number, number, number],
-                },
-            },
-            camera: {
-                kind,
-                position: vec3.copy(vec3.create(), position),
-                rotation: quat.copy(quat.create(), rotation),
-                fieldOfView,
-                near,
-                far,
-            },
-            measurement: measurement.points.length > 0 ? measurement.points : undefined,
-        };
-    } else {
-        const ortho = camera.controller.params as OrthoControllerParams;
-        return {
-            img,
-            ortho,
-            objectGroups,
-            selectedOnly,
-            clippingPlanes,
-            clippingVolume,
-            measurement: measurement.points.length > 0 ? measurement.points : undefined,
-        };
-    }
-};

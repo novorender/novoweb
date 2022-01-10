@@ -6,7 +6,7 @@ import { useAppDispatch, useAppSelector } from "app/store";
 import { AddCircleOutline, BlurOn, DeleteForeverOutlined } from "@mui/icons-material";
 import { vec4 } from "gl-matrix";
 import { useToggle } from "hooks/useToggle";
-import { ColorPickerA } from "features/colorPicker/colorPicker";
+import { ColorPicker } from "features/colorPicker/colorPicker";
 import { ColorResult } from "react-color";
 import { RefCallback, useCallback, useState } from "react";
 import { useExplorerGlobals } from "contexts/explorerGlobals";
@@ -14,7 +14,7 @@ import { useMountedState } from "hooks/useMountedState";
 import { featuresConfig } from "config/features";
 import { LogoSpeedDial, WidgetContainer, WidgetHeader } from "components";
 import { WidgetList } from "features/widgetList";
-import { rgbaToVec } from "utils/color";
+import { rgbToVec, VecRGBA } from "utils/color";
 
 export function Deviations() {
     const theme = useTheme();
@@ -125,7 +125,7 @@ function ColorStop({ deviation, color, idx, colorPickerPosition, active, setActi
             return dispatch(
                 renderActions.setDeviation({
                     colors: colors.map((c, i) =>
-                        i === idx ? { ...c, color: rgbaToVec([rgb.r, rgb.g, rgb.b, rgb.a ?? 1]) } : c
+                        i === idx ? { ...c, color: rgbToVec({ ...rgb, a: rgb.a ?? 1 }) as VecRGBA } : c
                     ),
                 })
             );
@@ -207,9 +207,9 @@ function ColorStop({ deviation, color, idx, colorPickerPosition, active, setActi
                 <DeleteForeverOutlined fontSize="small" />
             </IconButton>
             {colorPicker ? (
-                <ColorPickerA
+                <ColorPicker
                     position={colorPickerPosition}
-                    color={color}
+                    color={color as VecRGBA}
                     onChangeComplete={change}
                     onOutsideClick={toggleColorPicker}
                 />

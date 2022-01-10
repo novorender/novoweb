@@ -153,8 +153,9 @@ export function AdvancedSettings() {
             }
         };
 
-    const showPointSettings =
-        [RenderType.All, RenderType.Points].includes(renderType) || view.performanceStatistics.points > 0;
+    const showPointSettings = Array.isArray(renderType)
+        ? renderType[1] === "points"
+        : [RenderType.All, RenderType.Points].includes(renderType) || view.performanceStatistics.points > 0;
 
     return (
         <>

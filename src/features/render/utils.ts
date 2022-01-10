@@ -21,12 +21,21 @@ import { hiddenGroupActions, DispatchHidden } from "contexts/hidden";
 import { highlightActions, DispatchHighlighted } from "contexts/highlighted";
 import { vec4 } from "gl-matrix";
 import { MutableRefObject } from "react";
-import { AdvancedSetting, CameraType, ObjectVisibility, renderActions, RenderType } from "slices/renderSlice";
+import {
+    AdvancedSetting,
+    CameraType,
+    ObjectVisibility,
+    renderActions,
+    RenderState,
+    RenderType,
+} from "slices/renderSlice";
+import { VecRGB, VecRGBA } from "utils/color";
 import { sleep } from "utils/timers";
 
 type Settings = {
     taaEnabled: boolean;
     ssaoEnabled: boolean;
+    moving: boolean;
 };
 
 export function createRendering(
@@ -34,18 +43,26 @@ export function createRendering(
     view: View
 ): {
     start: () => Promise<void>;
-    update: (updated: Settings) => void;
+    update: (updated: Partial<Settings>) => void;
     stop: () => void;
 } {
     const running = { current: false };
-    const settings = { ssaoEnabled: true, taaEnabled: true };
+    const settings = { ssaoEnabled: true, taaEnabled: true, moving: false };
 
     return { start, stop, update };
 
-    function update(updated: Settings) {
-        settings.ssaoEnabled = updated.ssaoEnabled;
-        settings.taaEnabled = updated.taaEnabled;
-        (view as any).settings.generation++;
+    function update(updated: Partial<Settings>) {
+        settings.ssaoEnabled = updated.ssaoEnabled !== undefined ? updated.ssaoEnabled : settings.ssaoEnabled;
+        settings.taaEnabled = updated.taaEnabled !== undefined ? updated.taaEnabled : settings.taaEnabled;
+        settings.moving = updated.moving !== undefined ? updated.moving : settings.moving;
+
+        if (
+            settings.ssaoEnabled !== updated.ssaoEnabled ||
+            settings.taaEnabled !== updated.taaEnabled ||
+            settings.moving !== updated.moving
+        ) {
+            (view as any).settings.generation++;
+        }
     }
 
     function stop() {
@@ -75,7 +92,7 @@ export function createRendering(
             }
 
             // const { width, height } = canvas;
-            const badPerf = view.performanceStatistics.weakDevice; // || view.settings.quality.resolution.value < 1;
+            const badPerf = view.performanceStatistics.weakDevice || settings.moving; // || view.settings.quality.resolution.value < 1;
 
             if (settings.ssaoEnabled && !badPerf) {
                 output.applyPostEffect({ kind: "ssao", samples: 64, radius: 1, reset: true });
@@ -173,7 +190,7 @@ export function refillObjects({
     scene: Scene;
     view: View;
     objectGroups: (
-        | { ids: ObjectId[]; color: [number, number, number]; selected: boolean; hidden: boolean }
+        | { ids: ObjectId[]; color: VecRGB | VecRGBA; selected: boolean; hidden: boolean }
         | { ids: ObjectId[]; neutral: true; hidden: false; selected: true }
     )[];
     defaultVisibility: ObjectVisibility;
@@ -229,9 +246,9 @@ export async function waitForSceneToRender(view: View): Promise<void> {
     }
 }
 
-export async function getRenderType(view: View): Promise<RenderType> {
+export async function getRenderType(view: View): Promise<RenderState["renderType"]> {
     if (!("advanced" in view.settings)) {
-        return RenderType.UnChangeable;
+        return [RenderType.UnChangeable, "triangles"];
     }
 
     // should be waitForSceneToRender(view), but big scenes require a stopped camera for a long time to finish rendering
@@ -239,11 +256,11 @@ export async function getRenderType(view: View): Promise<RenderType> {
 
     const advancedSettings = (view.settings as Internal.RenderSettingsExt).advanced;
     const points = advancedSettings.hidePoints || view.performanceStatistics.points > 0;
-    const triangles = advancedSettings.hideTriangles || view.performanceStatistics.triangles > 1000;
+    const triangles = advancedSettings.hideTriangles || view.performanceStatistics.triangles > 2048;
     const canChange = points && triangles;
 
     return !canChange
-        ? RenderType.UnChangeable
+        ? [RenderType.UnChangeable, points ? "points" : "triangles"]
         : advancedSettings.hidePoints
         ? RenderType.Triangles
         : advancedSettings.hideTriangles

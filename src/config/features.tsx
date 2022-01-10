@@ -27,6 +27,8 @@ import BlurOnIcon from "@mui/icons-material/BlurOn";
 import { ReactComponent as ClippingIcon } from "media/icons/clipping.svg";
 import { ReactComponent as RunIcon } from "media/icons/run.svg";
 
+import { RenderType } from "slices/renderSlice";
+
 export enum FeatureType {
     SelectionModifier,
     CameraNavigation,
@@ -71,9 +73,9 @@ export const featuresConfig = {
         Icon: ListIcon,
         type: FeatureType.Widget,
     },
-    propertiesTree: {
-        key: "propertiesTree",
-        name: "Properties Tree",
+    propertyTree: {
+        key: "propertyTree",
+        name: "Property tree",
         Icon: TreeIcon,
         type: FeatureType.Widget,
     },
@@ -130,6 +132,9 @@ export const featuresConfig = {
         name: "Panoramas",
         Icon: VrpanoOutlinedIcon,
         type: FeatureType.Widget,
+        dependencies: {
+            renderType: [RenderType.All, RenderType.Points, RenderType.Triangles, [RenderType.UnChangeable, "points"]],
+        },
     },
     deviations: {
         key: "deviations",
@@ -218,10 +223,6 @@ export type Widget = Config[WidgetKey];
 export const defaultEnabledWidgets = [];
 export const defaultEnabledAdminWidgets = Object.values(featuresConfig)
     .filter((value) => [FeatureType.AdminWidget, FeatureType.Widget].includes(value.type))
-    // NOTE(OLA: Not ready for prod
-    .filter(
-        (widget) => widget.key !== featuresConfig.viewerScenes.key && widget.key !== featuresConfig.advancedSettings.key
-    )
     .map((widget) => widget.key as WidgetKey);
 
 export const viewerWidgets = Object.values(featuresConfig).filter((widget) => widget.type === FeatureType.Widget) as {

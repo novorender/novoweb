@@ -8,6 +8,25 @@ import { ShareLink } from "features/shareLink";
 
 type Props = { display?: BoxProps["display"]; widgetKey?: WidgetKey; onSelect: () => void };
 
+const sorting = [
+    featuresConfig.properties.key,
+    featuresConfig.modelTree.key,
+    featuresConfig.bookmarks.key,
+    featuresConfig.layers.key,
+    featuresConfig.groups.key,
+    featuresConfig.search.key,
+    featuresConfig.measure.key,
+    featuresConfig.shareLink.key,
+    featuresConfig.clippingPlanes.key,
+    featuresConfig.clippingBox.key,
+    featuresConfig.orthoCam.key,
+    featuresConfig.bimcollab.key,
+    featuresConfig.panoramas.key,
+    featuresConfig.propertyTree.key,
+    featuresConfig.viewerScenes.key,
+    featuresConfig.advancedSettings.key,
+] as WidgetKey[];
+
 export function WidgetList({ display, widgetKey, onSelect }: Props) {
     const enabledWidgets = useAppSelector(selectEnabledWidgets);
     const activeWidgets = useAppSelector(selectWidgets);
@@ -31,10 +50,15 @@ export function WidgetList({ display, widgetKey, onSelect }: Props) {
     };
 
     return (
-        <ScrollBox display={display} flexGrow={1} mt={2} mb={2} px={1}>
+        <ScrollBox display={display} flexGrow={1} p={1} pb={2}>
             <Grid container wrap="wrap" spacing={1} data-test="widget-list">
                 {enabledWidgets
-                    .sort((a, b) => a.name.localeCompare(b.name, "en", { sensitivity: "accent" }))
+                    .sort((a, b) => {
+                        const idxA = sorting.indexOf(a.key);
+                        const idxB = sorting.indexOf(b.key);
+
+                        return (idxA === -1 ? sorting.length : idxA) - (idxB === -1 ? sorting.length : idxB);
+                    })
                     .map(({ Icon, name, key }) => {
                         const activeCurrent = key === widgetKey;
                         const activeElsewhere = !activeCurrent && activeWidgets.includes(key);

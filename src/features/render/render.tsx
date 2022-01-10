@@ -715,6 +715,7 @@ export function Render3D({ onInit }: Props) {
                     cameraGeneration.current = view.performanceStatistics.cameraGeneration ?? 0;
 
                     moveSvg();
+                    rendering.current.update({ moving: true });
 
                     if (movementTimer.current) {
                         clearTimeout(movementTimer.current);
@@ -736,6 +737,8 @@ export function Render3D({ onInit }: Props) {
                             return;
                         }
 
+                        rendering.current.update({ moving: false });
+
                         dispatch(
                             renderActions.saveCameraPosition({
                                 position: vec3.clone(view.camera.position),
@@ -748,7 +751,7 @@ export function Render3D({ onInit }: Props) {
 
             api.animate = () => cameraMoved(view);
         },
-        [view, moveSvg, dispatch, savedCameraPositions, cameraState]
+        [view, moveSvg, dispatch, savedCameraPositions, cameraState, advancedSettings]
     );
 
     useEffect(

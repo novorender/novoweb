@@ -20,7 +20,7 @@ export function SelectionColor(props: Props) {
     const buttonRef = useRef<HTMLButtonElement | null>(null);
 
     const handleChangeComplete = ({ rgb }: ColorResult) =>
-        dispatch(highlightActions.setColor(rgbToVec([rgb.r, rgb.g, rgb.b])));
+        dispatch(highlightActions.setColor(rgbToVec({ ...rgb, a: rgb.a ?? 1 })));
 
     return (
         <>
