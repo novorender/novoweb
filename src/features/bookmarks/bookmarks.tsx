@@ -228,7 +228,7 @@ export function Bookmarks() {
                         <Checkbox checked={filters.groups} />
                     </MenuItem>
                 </Menu>
-                <ScrollBox display={menuOpen ? "none" : "flex"} height={1}>
+                <ScrollBox display={menuOpen ? "none" : "flex"} flexDirection="column" pb={2} height={1}>
                     {creatingBookmark ? (
                         <CreateBookmark onClose={toggleCreatingBookmark} />
                     ) : bookmarkToDelete ? (

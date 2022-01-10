@@ -24,7 +24,7 @@ const sorting = [
     featuresConfig.advancedSettings.key,
     featuresConfig.bimcollab.key,
     featuresConfig.panoramas.key,
-    featuresConfig.propertiesTree.key,
+    featuresConfig.propertyTree.key,
 ] as WidgetKey[];
 
 export function WidgetList({ display, widgetKey, onSelect }: Props) {
@@ -50,7 +50,7 @@ export function WidgetList({ display, widgetKey, onSelect }: Props) {
     };
 
     return (
-        <ScrollBox display={display} flexGrow={1} mt={2} mb={2} px={1}>
+        <ScrollBox display={display} flexGrow={1} p={1} pb={2}>
             <Grid container wrap="wrap" spacing={1} data-test="widget-list">
                 {enabledWidgets
                     .sort((a, b) => {

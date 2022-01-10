@@ -70,9 +70,9 @@ export const featuresConfig = {
         Icon: ListIcon,
         type: FeatureType.Widget,
     },
-    propertiesTree: {
-        key: "propertiesTree",
-        name: "Properties tree",
+    propertyTree: {
+        key: "propertyTree",
+        name: "Property tree",
         Icon: TreeIcon,
         type: FeatureType.Widget,
     },

@@ -132,7 +132,7 @@ function enabledFeaturesToFeatureKeys(enabledFeatures: Record<string, boolean>):
         bookmarks: featuresConfig.bookmarks.key,
         measurement: [featuresConfig.measure.key, featuresConfig.orthoCam.key, featuresConfig.panoramas.key],
         clipping: [featuresConfig.clippingBox.key, featuresConfig.clippingPlanes.key],
-        properties: [featuresConfig.properties.key, featuresConfig.propertiesTree.key],
+        properties: [featuresConfig.properties.key, featuresConfig.propertyTree.key],
         tree: featuresConfig.modelTree.key,
         groups: [featuresConfig.groups.key, featuresConfig.layers.key],
         search: featuresConfig.search.key,
