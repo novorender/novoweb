@@ -33,13 +33,13 @@ import { CustomGroup, customGroupsActions, useCustomGroups } from "contexts/cust
 import { dataApi } from "app";
 import { featuresConfig } from "config/features";
 import { useToggle } from "hooks/useToggle";
+import { useSceneId } from "hooks/useSceneId";
 
 import { CreateGroup } from "./createGroup";
 import { Group } from "./group";
 import { Rename } from "./rename";
 import { GroupCollection } from "./groupCollection";
 import { groupsActions, GroupsStatus, selectGroupsStatus } from "./groupsSlice";
-import { useSceneId } from "hooks/useSceneId";
 
 export const StyledListItemButton = styled(ListItemButton, { shouldForwardProp: (prop) => prop !== "inset" })<
     ListItemButtonProps & { inset?: boolean }
