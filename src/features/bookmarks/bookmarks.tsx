@@ -6,6 +6,7 @@ import type { Bookmark as BookmarkType } from "@novorender/data-js-api";
 import { dataApi } from "app";
 import { featuresConfig } from "config/features";
 import { useToggle } from "hooks/useToggle";
+import { useSceneId } from "hooks/useSceneId";
 import { useAppDispatch, useAppSelector } from "app/store";
 import { ScrollBox, WidgetContainer, LogoSpeedDial, WidgetHeader, TextField, Confirmation } from "components";
 import { WidgetList } from "features/widgetList";
@@ -20,7 +21,6 @@ import { useDispatchVisible, visibleActions } from "contexts/visible";
 
 import { CreateBookmark } from "./createBookmark";
 import { Bookmark } from "./bookmark";
-import { useSceneId } from "hooks/useSceneId";
 
 type Filters = {
     title: string;
@@ -228,7 +228,7 @@ export function Bookmarks() {
                         <Checkbox checked={filters.groups} />
                     </MenuItem>
                 </Menu>
-                <ScrollBox display={menuOpen ? "none" : "flex"} height={1}>
+                <ScrollBox display={menuOpen ? "none" : "flex"} flexDirection="column" pb={2} height={1}>
                     {creatingBookmark ? (
                         <CreateBookmark onClose={toggleCreatingBookmark} />
                     ) : bookmarkToDelete ? (
