@@ -20,7 +20,14 @@ import { CustomGroup, customGroupsActions, DispatchCustomGroups } from "contexts
 import { hiddenGroupActions, DispatchHidden } from "contexts/hidden";
 import { highlightActions, DispatchHighlighted } from "contexts/highlighted";
 import { MutableRefObject } from "react";
-import { AdvancedSetting, CameraType, ObjectVisibility, renderActions, RenderType } from "slices/renderSlice";
+import {
+    AdvancedSetting,
+    CameraType,
+    ObjectVisibility,
+    renderActions,
+    RenderState,
+    RenderType,
+} from "slices/renderSlice";
 import { VecRGB, VecRGBA } from "utils/color";
 import { sleep } from "utils/timers";
 
@@ -238,9 +245,9 @@ export async function waitForSceneToRender(view: View): Promise<void> {
     }
 }
 
-export async function getRenderType(view: View): Promise<RenderType> {
+export async function getRenderType(view: View): Promise<RenderState["renderType"]> {
     if (!("advanced" in view.settings)) {
-        return RenderType.UnChangeable;
+        return [RenderType.UnChangeable, "triangles"];
     }
 
     // should be waitForSceneToRender(view), but big scenes require a stopped camera for a long time to finish rendering
@@ -248,11 +255,11 @@ export async function getRenderType(view: View): Promise<RenderType> {
 
     const advancedSettings = (view.settings as Internal.RenderSettingsExt).advanced;
     const points = advancedSettings.hidePoints || view.performanceStatistics.points > 0;
-    const triangles = advancedSettings.hideTriangles || view.performanceStatistics.triangles > 1000;
+    const triangles = advancedSettings.hideTriangles || view.performanceStatistics.triangles > 2048;
     const canChange = points && triangles;
 
     return !canChange
-        ? RenderType.UnChangeable
+        ? [RenderType.UnChangeable, points ? "points" : "triangles"]
         : advancedSettings.hidePoints
         ? RenderType.Triangles
         : advancedSettings.hideTriangles
