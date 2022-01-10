@@ -16,15 +16,15 @@ const sorting = [
     featuresConfig.groups.key,
     featuresConfig.search.key,
     featuresConfig.measure.key,
+    featuresConfig.shareLink.key,
     featuresConfig.clippingPlanes.key,
     featuresConfig.clippingBox.key,
     featuresConfig.orthoCam.key,
-    featuresConfig.shareLink.key,
-    featuresConfig.viewerScenes.key,
-    featuresConfig.advancedSettings.key,
     featuresConfig.bimcollab.key,
     featuresConfig.panoramas.key,
     featuresConfig.propertyTree.key,
+    featuresConfig.viewerScenes.key,
+    featuresConfig.advancedSettings.key,
 ] as WidgetKey[];
 
 export function WidgetList({ display, widgetKey, onSelect }: Props) {
