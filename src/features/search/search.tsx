@@ -69,6 +69,8 @@ export function Search() {
     >(undefined);
 
     const [abortController, abort] = useAbortController();
+    const [focusedInputIdx, setFocusedInputIdx] = useState<number>(-1);
+    const focusedInput = advancedInputs[focusedInputIdx];
     const listElRef = useRef<HTMLElement | null>(null);
     const previousSearchPattern = useRef<SearchPattern[] | string>();
 
@@ -256,7 +258,11 @@ export function Search() {
                     {!menuOpen ? (
                         <form onSubmit={handleSubmit}>
                             {advanced ? (
-                                <AdvancedSearchInputs inputs={advancedInputs} setInputs={setAdvancedInputs} />
+                                <AdvancedSearchInputs
+                                    inputs={advancedInputs}
+                                    setInputs={setAdvancedInputs}
+                                    setFocusedInputIdx={(input) => setFocusedInputIdx(input)}
+                                />
                             ) : (
                                 <TextField
                                     autoComplete="novorender-simple-search"
@@ -272,7 +278,7 @@ export function Search() {
 
                             <Box mb={2}>
                                 <FormControlLabel
-                                    sx={{ marginLeft: 0, marginRight: 4, minHeight: 24 }}
+                                    sx={{ ml: 0, mr: 3, minHeight: 24 }}
                                     control={<Switch checked={advanced} onChange={toggleAdvanced} />}
                                     label={
                                         <Box ml={0.5} fontSize={14}>
@@ -281,19 +287,48 @@ export function Search() {
                                     }
                                 />
                                 {advanced ? (
-                                    <Button
-                                        color="grey"
-                                        sx={{ padding: 0 }}
-                                        onClick={() =>
-                                            setAdvancedInputs((inputs) => [
-                                                ...inputs,
-                                                { property: "", value: "", exact: true },
-                                            ])
-                                        }
-                                    >
-                                        <AddCircleIcon />
-                                        <Box ml={0.5}>Add criteria</Box>
-                                    </Button>
+                                    <>
+                                        <Button
+                                            color="grey"
+                                            sx={{ padding: 0, mr: 3 }}
+                                            onClick={() =>
+                                                setAdvancedInputs((inputs) => [
+                                                    ...inputs,
+                                                    { property: "", value: "", exact: true },
+                                                ])
+                                            }
+                                        >
+                                            <AddCircleIcon />
+                                            <Box ml={0.5}>AND</Box>
+                                        </Button>
+                                        <Button
+                                            color="grey"
+                                            sx={{ padding: 0 }}
+                                            disabled={
+                                                !focusedInput ||
+                                                (Array.isArray(focusedInput.value)
+                                                    ? !focusedInput.value.slice(-1)[0]
+                                                    : !focusedInput.value)
+                                            }
+                                            onClick={() =>
+                                                setAdvancedInputs((inputs) =>
+                                                    inputs.map((input) =>
+                                                        input === focusedInput
+                                                            ? {
+                                                                  ...input,
+                                                                  value: Array.isArray(input.value)
+                                                                      ? input.value.concat("")
+                                                                      : [input.value, ""],
+                                                              }
+                                                            : input
+                                                    )
+                                                )
+                                            }
+                                        >
+                                            <AddCircleIcon />
+                                            <Box ml={0.5}>OR</Box>
+                                        </Button>
+                                    </>
                                 ) : null}
                             </Box>
                             <Box display="flex" mb={1}>
