@@ -21,7 +21,7 @@ const initialState = {
     sceneType: SceneType.Viewer,
     userRole: UserRole.Viewer,
     viewerScenes: [] as ScenePreview[],
-    widgets: [] as WidgetKey[],
+    widgets: ["panoramas"] as WidgetKey[],
     urlSearchQuery: undefined as undefined | string | SearchPattern[],
 };
 

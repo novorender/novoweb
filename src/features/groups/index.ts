@@ -1,2 +1,2 @@
 export { Groups } from "./groupsWidget";
-export { groupsReducer } from "./groupsSlice";
+export { groupsReducer, groupsActions } from "./groupsSlice";
