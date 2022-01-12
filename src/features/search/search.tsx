@@ -29,7 +29,7 @@ import { highlightActions, useDispatchHighlighted, useLazyHighlighted } from "co
 import { ObjectVisibility, renderActions } from "slices/renderSlice";
 import { explorerActions, selectUrlSearchQuery } from "slices/explorerSlice";
 
-import { iterateAsync, searchByPatterns, searchDeepByPatterns } from "utils/search";
+import { iterateAsync, searchDeepByPatterns, batchedPropertySearch } from "utils/search";
 import { getTotalBoundingSphere } from "utils/objectData";
 import { featuresConfig } from "config/features";
 
@@ -149,14 +149,14 @@ export function Search() {
                     },
                 });
 
-                await searchByPatterns({
-                    scene,
-                    abortSignal,
-                    searchPatterns: [{ property: "id", value: foundIds as unknown as string[], exact: true }],
-                    callback: (refs) => {
-                        foundRefs = foundRefs.concat(refs);
-                    },
-                });
+                if (foundIds.length) {
+                    foundRefs = await batchedPropertySearch({
+                        property: "id",
+                        value: foundIds.map((id) => String(id)),
+                        scene,
+                        abortSignal,
+                    });
+                }
             } catch (e) {
                 dispatch(explorerActions.setUrlSearchQuery(undefined));
                 if (abortSignal.aborted) {
@@ -168,9 +168,11 @@ export function Search() {
 
             dispatch(explorerActions.setUrlSearchQuery(undefined));
 
-            const boundingSphere = getTotalBoundingSphere(foundRefs);
-            if (boundingSphere) {
-                view.camera.controller.zoomTo(boundingSphere);
+            if (foundRefs.length) {
+                const boundingSphere = getTotalBoundingSphere(foundRefs);
+                if (boundingSphere) {
+                    view.camera.controller.zoomTo(boundingSphere);
+                }
             }
 
             const selectionOnly = new URLSearchParams(window.location.search).get("selectionOnly");

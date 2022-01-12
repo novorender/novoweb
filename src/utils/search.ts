@@ -234,3 +234,62 @@ export function getObjectData({ scene, id }: { scene: Scene; id: ObjectId }): Pr
         .loadMetaData()
         .catch(() => undefined);
 }
+
+export async function batchedPropertySearch<T = HierarcicalObjectReference>({
+    property,
+    value,
+    transformResult,
+    scene,
+    abortSignal,
+}: {
+    property: string;
+    value: string[];
+    transformResult?: (res: HierarcicalObjectReference[]) => T[];
+    scene: Scene;
+    abortSignal: AbortSignal;
+}): Promise<T[]> {
+    let result = [] as T[];
+
+    const batchSize = 100;
+    const batches = value.reduce(
+        (acc, guid) => {
+            const lastBatch = acc.slice(-1)[0];
+
+            if (lastBatch.length < batchSize) {
+                lastBatch.push(guid);
+            } else {
+                acc.push([guid]);
+            }
+
+            return acc;
+        },
+        [[]] as string[][]
+    );
+
+    const concurrentRequests = 5;
+    const callback = (refs: HierarcicalObjectReference[]) => {
+        result = result.concat(transformResult ? transformResult(refs) : (refs as unknown as T));
+    };
+    for (let i = 0; i < batches.length / concurrentRequests; i++) {
+        await Promise.all(
+            batches.slice(i * concurrentRequests, i * concurrentRequests + concurrentRequests).map((batch) => {
+                return searchByPatterns({
+                    scene,
+                    callback,
+                    abortSignal,
+                    searchPatterns: [
+                        {
+                            property,
+                            value: batch,
+                            exact: true,
+                        },
+                    ],
+                }).catch(() => {});
+            })
+        );
+
+        await sleep(1);
+    }
+
+    return result;
+}
