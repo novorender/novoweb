@@ -23,8 +23,9 @@ import { useAbortController } from "hooks/useAbortController";
 
 import { useAppDispatch, useAppSelector } from "app/store";
 import { useExplorerGlobals } from "contexts/explorerGlobals";
+import { visibleActions, useDispatchVisible } from "contexts/visible";
 import { hiddenGroupActions, useDispatchHidden } from "contexts/hidden";
-import { highlightActions, useDispatchHighlighted } from "contexts/highlighted";
+import { highlightActions, useDispatchHighlighted, useLazyHighlighted } from "contexts/highlighted";
 import { ObjectVisibility, renderActions } from "slices/renderSlice";
 import { explorerActions, selectUrlSearchQuery } from "slices/explorerSlice";
 
@@ -43,7 +44,9 @@ enum Status {
 
 export function Search() {
     const dispatch = useAppDispatch();
+    const highlighted = useLazyHighlighted();
     const dispatchHighlighted = useDispatchHighlighted();
+    const dispatchVisible = useDispatchVisible();
     const {
         state: { view, scene },
     } = useExplorerGlobals(true);
@@ -171,23 +174,30 @@ export function Search() {
             }
 
             const selectionOnly = new URLSearchParams(window.location.search).get("selectionOnly");
+
             if (selectionOnly === "1") {
                 dispatch(renderActions.setDefaultVisibility(ObjectVisibility.SemiTransparent));
             } else if (selectionOnly === "2") {
+                dispatch(renderActions.setDefaultVisibility(ObjectVisibility.Transparent));
+            } else if (selectionOnly === "3") {
+                dispatchVisible(visibleActions.add(highlighted.current.idArr));
+                dispatchHighlighted(highlightActions.setIds([]));
                 dispatch(renderActions.setDefaultVisibility(ObjectVisibility.Transparent));
             } else {
                 dispatch(renderActions.setDefaultVisibility(ObjectVisibility.Neutral));
             }
 
             setStatus(Status.Initial);
-            setAllSelected(true);
+            setAllSelected(selectionOnly !== "3");
             dispatch(renderActions.setMainObject(foundIds[0]));
         }
     }, [
         urlSearchQuery,
         status,
+        highlighted,
         search,
         dispatch,
+        dispatchVisible,
         view,
         abortController,
         dispatchHighlighted,
