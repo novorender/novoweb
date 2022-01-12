@@ -23,8 +23,9 @@ import { useAbortController } from "hooks/useAbortController";
 
 import { useAppDispatch, useAppSelector } from "app/store";
 import { useExplorerGlobals } from "contexts/explorerGlobals";
+import { visibleActions, useDispatchVisible } from "contexts/visible";
 import { hiddenGroupActions, useDispatchHidden } from "contexts/hidden";
-import { highlightActions, useDispatchHighlighted } from "contexts/highlighted";
+import { highlightActions, useDispatchHighlighted, useLazyHighlighted } from "contexts/highlighted";
 import { ObjectVisibility, renderActions } from "slices/renderSlice";
 import { explorerActions, selectUrlSearchQuery } from "slices/explorerSlice";
 
@@ -43,7 +44,9 @@ enum Status {
 
 export function Search() {
     const dispatch = useAppDispatch();
+    const highlighted = useLazyHighlighted();
     const dispatchHighlighted = useDispatchHighlighted();
+    const dispatchVisible = useDispatchVisible();
     const {
         state: { view, scene },
     } = useExplorerGlobals(true);
@@ -69,6 +72,8 @@ export function Search() {
     >(undefined);
 
     const [abortController, abort] = useAbortController();
+    const [focusedInputIdx, setFocusedInputIdx] = useState<number>(-1);
+    const focusedInput = advancedInputs[focusedInputIdx];
     const listElRef = useRef<HTMLElement | null>(null);
     const previousSearchPattern = useRef<SearchPattern[] | string>();
 
@@ -169,23 +174,30 @@ export function Search() {
             }
 
             const selectionOnly = new URLSearchParams(window.location.search).get("selectionOnly");
+
             if (selectionOnly === "1") {
                 dispatch(renderActions.setDefaultVisibility(ObjectVisibility.SemiTransparent));
             } else if (selectionOnly === "2") {
+                dispatch(renderActions.setDefaultVisibility(ObjectVisibility.Transparent));
+            } else if (selectionOnly === "3") {
+                dispatchVisible(visibleActions.add(highlighted.current.idArr));
+                dispatchHighlighted(highlightActions.setIds([]));
                 dispatch(renderActions.setDefaultVisibility(ObjectVisibility.Transparent));
             } else {
                 dispatch(renderActions.setDefaultVisibility(ObjectVisibility.Neutral));
             }
 
             setStatus(Status.Initial);
-            setAllSelected(true);
+            setAllSelected(selectionOnly !== "3");
             dispatch(renderActions.setMainObject(foundIds[0]));
         }
     }, [
         urlSearchQuery,
         status,
+        highlighted,
         search,
         dispatch,
+        dispatchVisible,
         view,
         abortController,
         dispatchHighlighted,
@@ -256,7 +268,11 @@ export function Search() {
                     {!menuOpen ? (
                         <form onSubmit={handleSubmit}>
                             {advanced ? (
-                                <AdvancedSearchInputs inputs={advancedInputs} setInputs={setAdvancedInputs} />
+                                <AdvancedSearchInputs
+                                    inputs={advancedInputs}
+                                    setInputs={setAdvancedInputs}
+                                    setFocusedInputIdx={(input) => setFocusedInputIdx(input)}
+                                />
                             ) : (
                                 <TextField
                                     autoComplete="novorender-simple-search"
@@ -272,7 +288,7 @@ export function Search() {
 
                             <Box mb={2}>
                                 <FormControlLabel
-                                    sx={{ marginLeft: 0, marginRight: 4, minHeight: 24 }}
+                                    sx={{ ml: 0, mr: 3, minHeight: 24 }}
                                     control={<Switch checked={advanced} onChange={toggleAdvanced} />}
                                     label={
                                         <Box ml={0.5} fontSize={14}>
@@ -281,19 +297,48 @@ export function Search() {
                                     }
                                 />
                                 {advanced ? (
-                                    <Button
-                                        color="grey"
-                                        sx={{ padding: 0 }}
-                                        onClick={() =>
-                                            setAdvancedInputs((inputs) => [
-                                                ...inputs,
-                                                { property: "", value: "", exact: true },
-                                            ])
-                                        }
-                                    >
-                                        <AddCircleIcon />
-                                        <Box ml={0.5}>Add criteria</Box>
-                                    </Button>
+                                    <>
+                                        <Button
+                                            color="grey"
+                                            sx={{ padding: 0, mr: 3 }}
+                                            onClick={() =>
+                                                setAdvancedInputs((inputs) => [
+                                                    ...inputs,
+                                                    { property: "", value: "", exact: true },
+                                                ])
+                                            }
+                                        >
+                                            <AddCircleIcon />
+                                            <Box ml={0.5}>AND</Box>
+                                        </Button>
+                                        <Button
+                                            color="grey"
+                                            sx={{ padding: 0 }}
+                                            disabled={
+                                                !focusedInput ||
+                                                (Array.isArray(focusedInput.value)
+                                                    ? !focusedInput.value.slice(-1)[0]
+                                                    : !focusedInput.value)
+                                            }
+                                            onClick={() =>
+                                                setAdvancedInputs((inputs) =>
+                                                    inputs.map((input) =>
+                                                        input === focusedInput
+                                                            ? {
+                                                                  ...input,
+                                                                  value: Array.isArray(input.value)
+                                                                      ? input.value.concat("")
+                                                                      : [input.value, ""],
+                                                              }
+                                                            : input
+                                                    )
+                                                )
+                                            }
+                                        >
+                                            <AddCircleIcon />
+                                            <Box ml={0.5}>OR</Box>
+                                        </Button>
+                                    </>
                                 ) : null}
                             </Box>
                             <Box display="flex" mb={1}>

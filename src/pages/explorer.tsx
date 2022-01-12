@@ -64,7 +64,8 @@ function ExplorerBase() {
         if (oAuthState && oAuthState.service === featuresConfig.bimcollab.key) {
             dispatch(explorerActions.setWidgets([featuresConfig.bimcollab.key]));
         } else {
-            dispatch(explorerActions.setUrlSearchQuery(getUrlSearchQuery()));
+            const selectionOnly = new URLSearchParams(window.location.search).get("selectionOnly") ?? "";
+            dispatch(explorerActions.setUrlSearchQuery({ query: getUrlSearchQuery(), selectionOnly }));
         }
     };
 
