@@ -109,7 +109,6 @@ function AuthCheck({ children }: { children: ReactNode }) {
 
             const scene = await dataApi.loadScene(id).catch(() => undefined);
             if (scene) {
-                dispatchGlobals(explorerGlobalsActions.update({ preloadedScene: scene }));
                 setStatus(AuthCheckStatus.Public);
             } else {
                 setStatus(AuthCheckStatus.RequireAuth);
@@ -121,11 +120,7 @@ function AuthCheck({ children }: { children: ReactNode }) {
         return <Loading />;
     }
 
-    if (status === AuthCheckStatus.Public) {
-        return <>{children}</>;
-    }
-
-    return <Protected>{children}</Protected>;
+    return <Protected allowUnauthenticated={status === AuthCheckStatus.Public}>{children}</Protected>;
 }
 
 function enabledFeaturesToFeatureKeys(enabledFeatures: Record<string, boolean>): WidgetKey[] {
