@@ -4,7 +4,7 @@ import { Box, CircularProgress, SpeedDialActionProps } from "@mui/material";
 
 import { SpeedDialAction } from "components";
 import { featuresConfig } from "config/features";
-import { searchByPatterns } from "utils/search";
+import { batchedPropertySearch } from "utils/search";
 import { useHighlighted } from "contexts/highlighted";
 import { useAbortController } from "hooks/useAbortController";
 import { useMountedState } from "hooks/useMountedState";
@@ -53,11 +53,11 @@ export function FlyToSelected({ position, ...speedDialProps }: Props) {
         let nodes = [] as HierarcicalObjectReference[];
 
         try {
-            await searchByPatterns({
+            nodes = await batchedPropertySearch({
+                property: "id",
+                value: highlighted.map((id) => String(id)),
                 scene,
                 abortSignal,
-                searchPatterns: [{ property: "id", value: highlighted as any as string[], exact: true }],
-                callback: (refs) => (nodes = nodes.concat(refs)),
             });
         } catch {
             return setStatus(Status.Initial);

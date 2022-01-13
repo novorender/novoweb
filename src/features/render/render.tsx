@@ -621,7 +621,7 @@ export function Render3D({ onInit }: Props) {
                     url,
                     db,
                     objectGroups = [],
-                    bookmarks = [],
+                    bookmarks,
                     customProperties,
                     title,
                     viewerScenes,
@@ -805,13 +805,15 @@ export function Render3D({ onInit }: Props) {
         function handleObjectHighlightChanges() {
             if (scene && view) {
                 refillObjects({
+                    sceneId: id,
                     scene,
                     view,
                     objectGroups: [
-                        { ids: hiddenObjects.idArr, hidden: true, selected: false, color: [0, 0, 0] },
-                        { ids: visibleObjects.idArr, hidden: false, selected: true, neutral: true },
+                        { id: "", ids: hiddenObjects.idArr, hidden: true, selected: false, color: [0, 0, 0] },
+                        { id: "", ids: visibleObjects.idArr, hidden: false, selected: true, neutral: true },
                         ...customGroups,
                         {
+                            id: "",
                             ids: highlightedObjects.idArr,
                             color: highlightedObjects.color,
                             hidden: false,
@@ -822,7 +824,17 @@ export function Render3D({ onInit }: Props) {
                 });
             }
         },
-        [scene, view, defaultVisibility, mainObject, customGroups, highlightedObjects, hiddenObjects, visibleObjects]
+        [
+            id,
+            scene,
+            view,
+            defaultVisibility,
+            mainObject,
+            customGroups,
+            highlightedObjects,
+            hiddenObjects,
+            visibleObjects,
+        ]
     );
 
     useEffect(
@@ -1010,7 +1022,7 @@ export function Render3D({ onInit }: Props) {
                     title,
                     customProperties,
                     camera = { kind: "flight" },
-                    bookmarks = [],
+                    bookmarks,
                     objectGroups = [],
                 } = await dataApi.loadScene(sceneId);
 
