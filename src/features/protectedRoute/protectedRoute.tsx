@@ -9,7 +9,7 @@ import { authActions, selectAccessToken, selectMsalAccount } from "slices/authSl
 import { useMountedState } from "hooks/useMountedState";
 import { getStoredActiveAccount } from "utils/auth";
 
-export function Protected({ children }: { children: ReactNode }) {
+export function Protected({ allowUnauthenticated, children }: { allowUnauthenticated: boolean; children: ReactNode }) {
     const { instance: msalInstance, accounts } = useMsal();
 
     const accessToken = useAppSelector(selectAccessToken);
@@ -51,5 +51,5 @@ export function Protected({ children }: { children: ReactNode }) {
         return <Loading />;
     }
 
-    return accessToken ? <>{children}</> : <Login />;
+    return accessToken || allowUnauthenticated ? <>{children}</> : <Login />;
 }

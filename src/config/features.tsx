@@ -26,6 +26,8 @@ import VrpanoOutlinedIcon from "@mui/icons-material/VrpanoOutlined";
 import { ReactComponent as ClippingIcon } from "media/icons/clipping.svg";
 import { ReactComponent as RunIcon } from "media/icons/run.svg";
 
+import { RenderType } from "slices/renderSlice";
+
 export enum FeatureType {
     SelectionModifier,
     CameraNavigation,
@@ -70,9 +72,9 @@ export const featuresConfig = {
         Icon: ListIcon,
         type: FeatureType.Widget,
     },
-    propertiesTree: {
-        key: "propertiesTree",
-        name: "Properties tree",
+    propertyTree: {
+        key: "propertyTree",
+        name: "Property tree",
         Icon: TreeIcon,
         type: FeatureType.Widget,
     },
@@ -129,6 +131,9 @@ export const featuresConfig = {
         name: "Panoramas",
         Icon: VrpanoOutlinedIcon,
         type: FeatureType.Widget,
+        dependencies: {
+            renderType: [RenderType.All, RenderType.Points, RenderType.Triangles, [RenderType.UnChangeable, "points"]],
+        },
     },
     home: {
         key: "home",

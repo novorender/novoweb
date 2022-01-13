@@ -73,13 +73,19 @@ export const explorerSlice = createSlice({
         removeWidgetSlot: (state, action: PayloadAction<WidgetKey>) => {
             state.widgets = state.widgets.filter((slot) => slot !== action.payload);
         },
-        setUrlSearchQuery: (state, action: PayloadAction<State["urlSearchQuery"]>) => {
-            const patterns = action.payload;
+        setUrlSearchQuery: (
+            state,
+            action: PayloadAction<{ query: State["urlSearchQuery"]; selectionOnly: string } | undefined>
+        ) => {
+            const patterns = action.payload?.query;
 
             state.urlSearchQuery = patterns;
 
             if ((Array.isArray(patterns) && patterns.length) || (!Array.isArray(patterns) && patterns)) {
-                state.widgets = [featuresConfig.search.key, featuresConfig.properties.key];
+                state.widgets = [
+                    featuresConfig.search.key,
+                    action.payload?.selectionOnly === "3" ? featuresConfig.layers.key : featuresConfig.properties.key,
+                ];
             }
         },
     },
@@ -95,8 +101,31 @@ export const selectIsAdminScene = (state: RootState) => state.explorer.sceneType
 export const selectHasAdminCapabilities = (state: RootState) => state.explorer.userRole !== UserRole.Viewer;
 
 export const selectEnabledWidgets = createSelector(
-    (state: RootState) => state.explorer.enabledWidgets,
-    (widgets) => widgets.map((widget) => featuresConfig[widget]).filter((config) => config) as Widget[]
+    (state: RootState) => [state.explorer.enabledWidgets, state.render] as [WidgetKey[], RootState["render"]],
+    ([widgets, renderState]) =>
+        widgets
+            .map((key) => featuresConfig[key])
+            .filter((config: Widget) => {
+                if (!config) {
+                    return false;
+                }
+
+                if (!("dependencies" in config)) {
+                    return true;
+                }
+
+                if (config.dependencies.renderType) {
+                    const renderType = config.dependencies.renderType;
+
+                    return renderType.some((type) =>
+                        Array.isArray(type) && Array.isArray(renderState.renderType)
+                            ? type[0] === renderState.renderType[0] && type[1] === renderState.renderType[1]
+                            : type === renderState.renderType
+                    );
+                }
+
+                return true;
+            }) as Widget[]
 );
 
 // Action creators are generated for each case reducer function

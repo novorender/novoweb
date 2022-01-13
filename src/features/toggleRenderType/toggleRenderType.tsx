@@ -22,7 +22,7 @@ export function ToggleRenderType(speedDialProps: SpeedDialActionProps) {
             )
         );
 
-    if (renderType === RenderType.UnChangeable) {
+    if (Array.isArray(renderType) && renderType[0] === RenderType.UnChangeable) {
         return null;
     }
 

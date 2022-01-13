@@ -83,13 +83,15 @@ const initialState = {
     environments: [] as EnvironmentDescription[],
     currentEnvironment: undefined as EnvironmentDescription | undefined,
     mainObject: undefined as ObjectId | undefined,
-    bookmarks: [] as WritableBookmark[] | undefined,
+    bookmarks: undefined as WritableBookmark[] | undefined,
     defaultVisibility: ObjectVisibility.Neutral,
     selectMultiple: false,
     baseCameraSpeed: 0.03,
     cameraSpeedMultiplier: CameraSpeedMultiplier.Normal,
     savedCameraPositions: { currentIndex: -1, positions: [] as CameraPosition[] },
-    renderType: RenderType.UnChangeable,
+    renderType: RenderType.All as
+        | Exclude<RenderType, RenderType.UnChangeable>
+        | [RenderType.UnChangeable, "points" | "triangles"],
     clippingBox: {
         defining: false,
         enabled: false,
@@ -207,7 +209,7 @@ export const renderSlice = createSlice({
         setBookmarks: (state, action: PayloadAction<Bookmark[] | undefined>) => {
             state.bookmarks = action.payload as WritableBookmark[] | undefined;
         },
-        setRenderType: (state, action: PayloadAction<RenderType>) => {
+        setRenderType: (state, action: PayloadAction<State["renderType"]>) => {
             state.renderType = action.payload;
         },
         setClippingBox: (state, action: PayloadAction<Partial<ClippingPlanes>>) => {
@@ -312,3 +314,4 @@ export const selectAdvancedSettings = (state: RootState) => state.render.advance
 
 const { reducer, actions } = renderSlice;
 export { reducer as renderReducer, actions as renderActions };
+export type { State as RenderState };
