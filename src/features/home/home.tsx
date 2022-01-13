@@ -64,7 +64,7 @@ export function Home({ position, ...speedDialProps }: Props) {
             settings,
             customProperties,
             objectGroups = [],
-            bookmarks = [],
+            bookmarks,
             camera = { kind: "flight" },
         } = await dataApi.loadScene(editingScene?.id || id);
 

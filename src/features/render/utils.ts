@@ -13,7 +13,7 @@ import {
     View,
 } from "@novorender/webgl-api";
 
-import { api } from "app";
+import { api, dataApi } from "app";
 import { store } from "app/store";
 import { offscreenCanvas } from "config";
 import { CustomGroup, customGroupsActions, DispatchCustomGroups } from "contexts/customGroups";
@@ -174,16 +174,18 @@ export function createRendering(
  * Applies highlights and hides objects in the 3d view based on the object groups provided
  */
 export function refillObjects({
+    sceneId,
     scene,
     view,
     objectGroups,
     defaultVisibility,
 }: {
+    sceneId: string;
     scene: Scene;
     view: View;
     objectGroups: (
-        | { ids: ObjectId[]; color: VecRGB | VecRGBA; selected: boolean; hidden: boolean }
-        | { ids: ObjectId[]; neutral: true; hidden: false; selected: true }
+        | { id: string; ids: ObjectId[]; color: VecRGB | VecRGBA; selected: boolean; hidden: boolean }
+        | { id: string; ids: ObjectId[]; neutral: true; hidden: false; selected: true }
     )[];
     defaultVisibility: ObjectVisibility;
 }): void {
@@ -193,36 +195,44 @@ export function refillObjects({
 
     const { objectHighlighter } = scene;
 
-    view.settings.objectHighlights = [
-        getHighlightByObjectVisibility(defaultVisibility),
-        ...objectGroups.map((group) => {
-            if ("color" in group) {
-                return api.createHighlight({ kind: "color", color: group.color });
-            }
-
-            return getHighlightByObjectVisibility(ObjectVisibility.Neutral);
-        }),
-    ];
-
     objectHighlighter.objectHighlightIndices.fill(defaultVisibility === ObjectVisibility.Transparent ? 255 : 0);
 
-    objectGroups
+    const proms: Promise<void>[] = objectGroups
         .filter((group) => group.hidden)
-        .forEach((group) => {
+        .map(async (group) => {
+            if (!group.ids) {
+                group.ids = await dataApi.getGroupIds(sceneId, group.id);
+            }
             for (const id of group.ids) {
                 objectHighlighter.objectHighlightIndices[id] = 255;
             }
         });
 
-    objectGroups.forEach((group, index) => {
-        if (group.selected) {
-            for (const id of group.ids) {
-                objectHighlighter.objectHighlightIndices[id] = index + 1;
+    proms.push(
+        ...objectGroups.map(async (group, index) => {
+            if (group.selected) {
+                if (!group.ids) {
+                    group.ids = await dataApi.getGroupIds(sceneId, group.id);
+                }
+                for (const id of group.ids) {
+                    objectHighlighter.objectHighlightIndices[id] = index + 1;
+                }
             }
-        }
-    });
+        })
+    );
+    Promise.all(proms).finally(() => {
+        objectHighlighter.commit();
+        view.settings.objectHighlights = [
+            getHighlightByObjectVisibility(defaultVisibility),
+            ...objectGroups.map((group) => {
+                if ("color" in group) {
+                    return api.createHighlight({ kind: "color", color: group.color });
+                }
 
-    objectHighlighter.commit();
+                return getHighlightByObjectVisibility(ObjectVisibility.Neutral);
+            }),
+        ];
+    });
 }
 
 export function getEnvironmentDescription(
@@ -290,7 +300,7 @@ export function initHighlighted(groups: ObjectGroup[], dispatch: DispatchHighlig
             })
         );
 
-        const lastHighlighted = defaultGroup.ids.slice(-1)[0];
+        const lastHighlighted = defaultGroup.ids?.slice(-1)[0];
         if (lastHighlighted) {
             store.dispatch(renderActions.setMainObject(lastHighlighted));
         }
