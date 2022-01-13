@@ -274,7 +274,7 @@ export async function getRenderType(view: View): Promise<RenderState["renderType
         ? RenderType.Triangles
         : advancedSettings.hideTriangles
         ? RenderType.Points
-        : RenderType.All;
+        : RenderType.TrianglesAndPoints;
 }
 
 export function serializeableObjectGroups(groups: ObjectGroup[]): CustomGroup[] {

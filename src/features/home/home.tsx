@@ -10,6 +10,7 @@ import {
     initHidden,
     initHighlighted,
 } from "features/render/utils";
+import { panoramasActions, PanoramaStatus } from "features/panoramas";
 import { useMountedState } from "hooks/useMountedState";
 import { useSceneId } from "hooks/useSceneId";
 
@@ -94,6 +95,7 @@ export function Home({ position, ...speedDialProps }: Props) {
         initHighlighted(objectGroups, dispatchHighlighted);
         initAdvancedSettings(view, customProperties);
         dispatch(renderActions.setBookmarks(bookmarks));
+        dispatch(panoramasActions.setStatus(PanoramaStatus.Initial));
 
         dispatchCustomGroups(
             customGroupsActions.set(

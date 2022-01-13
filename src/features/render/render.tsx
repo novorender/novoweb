@@ -33,6 +33,7 @@ import { api, dataApi } from "app";
 import { StorageKey } from "config/storage";
 import { useMountedState } from "hooks/useMountedState";
 import { useSceneId } from "hooks/useSceneId";
+import { useAbortController } from "hooks/useAbortController";
 import { deleteFromStorage } from "utils/storage";
 import { enabledFeaturesToFeatureKeys, getEnabledFeatures } from "utils/misc";
 import { sleep } from "utils/timers";
@@ -198,6 +199,13 @@ export function Render3D({ onInit }: Props) {
         typeof createRendering
     >);
     const currentPanoramaObj = useRef<{ id: string; obj: DynamicObject }>();
+    const storedRenderType = useRef<typeof renderType>(renderType);
+    const storedMouseButtonsMap = useRef<CameraController["mouseButtonsMap"]>({
+        rotate: 1,
+        pan: 4,
+        orbit: 2,
+        pivot: 2,
+    });
     const movementTimer = useRef<ReturnType<typeof setTimeout>>();
     const cameraGeneration = useRef<number>();
     const previousId = useRef("");
@@ -207,6 +215,7 @@ export function Render3D({ onInit }: Props) {
     const camX = useRef(vec3.create());
     const camY = useRef(vec3.create());
     const [size, setSize] = useState({ width: 0, height: 0 });
+    const [panoramaAbortController, abortPanorama] = useAbortController();
 
     const [svg, setSvg] = useState<null | SVGSVGElement>(null);
     const [status, setStatus] = useMountedState(Status.Initial);
@@ -223,10 +232,8 @@ export function Render3D({ onInit }: Props) {
             return;
         }
         const numPts = points.length;
-        const numPan = panoramas?.length ?? 0;
 
-        if (numPts < 1 && numPan < 1) {
-            // svg.innerHTML = "";
+        if (numPts < 1 && !panoramas?.length) {
             return;
         }
 
@@ -251,22 +258,28 @@ export function Render3D({ onInit }: Props) {
             return vec3.add(d, d, p);
         };
 
-        if (panoramas && numPan >= 1) {
+        if (panoramas?.length) {
             const vsPans = panoramas.map((p) => vec3.transformMat4(vec3.create(), p.position, camMatrix));
 
-            vsPans.forEach((_p, idx) => {
-                const icon = svg.children.namedItem(`panorama-${idx}`);
-                if (!icon) {
+            vsPans.forEach((pos, idx) => {
+                const marker = svg.children.namedItem(`panorama-${idx}`);
+
+                if (!marker) {
                     return;
                 }
-                if (_p[2] > 0) {
-                    icon.setAttribute("x", "-10");
+
+                const hide = pos[2] > 0 || pos.some((num) => Number.isNaN(num) || !Number.isFinite(num));
+
+                if (hide) {
+                    marker.setAttribute("x", "-100");
                     return;
                 }
-                const p = toScreen(_p);
-                icon.id = `panorama-${idx}`;
-                icon.setAttribute("x", p[0].toFixed(1));
-                icon.setAttribute("y", p[1].toFixed(1));
+
+                const p = toScreen(pos);
+                const x = p[0].toFixed(1);
+                const y = p[1].toFixed(1);
+                marker.setAttribute("x", Number.isNaN(Number(x)) || !Number.isFinite(Number(x)) ? "-100" : x);
+                marker.setAttribute("y", Number.isNaN(Number(y)) || !Number.isFinite(Number(x)) ? "-100" : y);
             });
         }
 
@@ -769,7 +782,11 @@ export function Render3D({ onInit }: Props) {
                     }
 
                     movementTimer.current = setTimeout(() => {
-                        if (!view || cameraState.type === CameraType.Orthographic) {
+                        if (
+                            !view ||
+                            cameraState.type === CameraType.Orthographic ||
+                            renderType === RenderType.Panorama
+                        ) {
                             return;
                         }
 
@@ -798,7 +815,7 @@ export function Render3D({ onInit }: Props) {
 
             api.animate = () => cameraMoved(view);
         },
-        [view, moveSvg, dispatch, savedCameraPositions, cameraState, advancedSettings]
+        [view, moveSvg, dispatch, savedCameraPositions, cameraState, advancedSettings, renderType]
     );
 
     useEffect(
@@ -843,10 +860,25 @@ export function Render3D({ onInit }: Props) {
                 return;
             }
 
+            if (renderType !== RenderType.Panorama) {
+                storedRenderType.current = renderType;
+                view.camera.controller.mouseButtonsMap = storedMouseButtonsMap.current;
+            } else {
+                storedMouseButtonsMap.current = view.camera.controller.mouseButtonsMap;
+                view.camera.controller.mouseButtonsMap = { pan: 0, rotate: 1, pivot: 0, orbit: 0 };
+            }
+
             const settings = view.settings as Internal.RenderSettingsExt;
 
-            settings.advanced.hidePoints = renderType === RenderType.Triangles;
-            settings.advanced.hideTriangles = renderType === RenderType.Points;
+            settings.advanced.hidePoints =
+                renderType === RenderType.Triangles ||
+                renderType === RenderType.Panorama ||
+                (Array.isArray(renderType) && renderType[1] === "triangles");
+
+            settings.advanced.hideTriangles =
+                renderType === RenderType.Points ||
+                renderType === RenderType.Panorama ||
+                (Array.isArray(renderType) && renderType[1] === "points");
         },
         [renderType, view]
     );
@@ -1070,23 +1102,28 @@ export function Render3D({ onInit }: Props) {
     );
 
     useEffect(
-        function handlePanorama() {
+        function handlePanoramaChanges() {
             if (!view || !scene) {
                 return;
             }
             const currentObj = currentPanoramaObj.current;
             if (currentObj && currentObj.id !== activePanorama?.guid) {
                 currentObj.obj.dispose();
+                abortPanorama();
             }
 
             if (!activePanorama) {
-                // clear?
+                dispatch(renderActions.setRenderType(storedRenderType.current));
+                abortPanorama();
             } else if (Array.isArray(panoramaStatus) && panoramaStatus[0] === PanoramaStatus.Loading) {
-                load(activePanorama, view, scene);
+                loadPanorama(activePanorama, view, scene);
             }
 
-            async function load(panorama: PanoramaType, view: View, scene: Scene) {
+            async function loadPanorama(panorama: PanoramaType, view: View, scene: Scene) {
+                const abortSignal = panoramaAbortController.current.signal;
+                dispatch(renderActions.setRenderType(storedRenderType.current));
                 view.camera.controller.moveTo(panorama.position, panorama.rotation);
+
                 let start = Date.now();
                 if (view.camera.controller.params.kind === "flight") {
                     start += view.camera.controller.params.flightTime * 1000;
@@ -1100,23 +1137,25 @@ export function Render3D({ onInit }: Props) {
                     return;
                 }
 
-                const panoramaObj = scene.createDynamicObject(asset);
-                currentPanoramaObj.current = { id: panorama.guid, obj: panoramaObj };
-                panoramaObj.position = panorama.position;
-
                 const delta = start - Date.now();
                 if (delta > 0) {
                     await sleep(delta);
                 }
 
-                const rse = view.settings as Internal.RenderSettingsExt;
+                if (abortSignal.aborted) {
+                    return;
+                }
+
+                const panoramaObj = scene.createDynamicObject(asset);
+                currentPanoramaObj.current = { id: panorama.guid, obj: panoramaObj };
+                panoramaObj.position = panorama.position;
+
                 panoramaObj.visible = true;
-                rse.advanced.hidePoints = true;
-                rse.advanced.hideTriangles = true;
                 dispatch(panoramasActions.setStatus([PanoramaStatus.Active, panorama.guid]));
+                dispatch(renderActions.setRenderType(RenderType.Panorama));
             }
         },
-        [panoramas, activePanorama, scene, view, dispatch, panoramaStatus]
+        [panoramas, activePanorama, scene, view, dispatch, panoramaStatus, panoramaAbortController, abortPanorama]
     );
 
     const exitPointerLock = () => {
