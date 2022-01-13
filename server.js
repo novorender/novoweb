@@ -18,8 +18,8 @@ function sendIndex(req, res) {
 
             if (process.env.DATA_SERVER_URL) {
                 indexHtml = indexHtml.replace(
-                    "window.dataServerUrl;",
-                    `window.dataServerUrl="${process.env.DATA_SERVER_URL}";`
+                    "window.dataServerUrl",
+                    `window.dataServerUrl="${process.env.DATA_SERVER_URL}"`
                 );
             }
             if (process.env.BIMCOLLAB_CLIENT_SECRET) {
