@@ -2,7 +2,7 @@ import type { SpeedDialActionProps } from "@mui/material";
 
 import { SpeedDialAction } from "components";
 import { featuresConfig } from "config/features";
-import { selectSavedCameraPositions, renderActions } from "slices/renderSlice";
+import { selectSavedCameraPositions, renderActions, selectRenderType, RenderType } from "slices/renderSlice";
 import { useAppDispatch, useAppSelector } from "app/store";
 import { useExplorerGlobals } from "contexts/explorerGlobals";
 
@@ -13,7 +13,10 @@ type Props = SpeedDialActionProps & {
 export function StepForwards({ position, ...speedDialProps }: Props) {
     const { name, Icon } = featuresConfig["stepForwards"];
     const savedCameraPositions = useAppSelector(selectSavedCameraPositions);
-    const canStepForwards = savedCameraPositions.currentIndex < savedCameraPositions.positions.length - 1;
+    const renderType = useAppSelector(selectRenderType);
+    const canStepForwards =
+        savedCameraPositions.currentIndex < savedCameraPositions.positions.length - 1 &&
+        renderType !== RenderType.Panorama;
     const {
         state: { view },
     } = useExplorerGlobals(true);

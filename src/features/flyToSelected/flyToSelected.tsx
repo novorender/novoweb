@@ -4,12 +4,14 @@ import { Box, CircularProgress, SpeedDialActionProps } from "@mui/material";
 
 import { SpeedDialAction } from "components";
 import { featuresConfig } from "config/features";
+import { panoramasActions, PanoramaStatus } from "features/panoramas";
 import { batchedPropertySearch } from "utils/search";
 import { useHighlighted } from "contexts/highlighted";
 import { useAbortController } from "hooks/useAbortController";
 import { useMountedState } from "hooks/useMountedState";
 import { getTotalBoundingSphere } from "utils/objectData";
 import { useExplorerGlobals } from "contexts/explorerGlobals";
+import { useAppDispatch } from "app/store";
 
 enum Status {
     Initial,
@@ -26,6 +28,7 @@ export function FlyToSelected({ position, ...speedDialProps }: Props) {
     const {
         state: { view, scene },
     } = useExplorerGlobals(true);
+    const dispatch = useAppDispatch();
 
     const [status, setStatus] = useMountedState(Status.Initial);
 
@@ -70,6 +73,7 @@ export function FlyToSelected({ position, ...speedDialProps }: Props) {
         if (boundingSphere) {
             previousBoundingSphere.current = boundingSphere;
             view.camera.controller.zoomTo(boundingSphere);
+            dispatch(panoramasActions.setStatus(PanoramaStatus.Initial));
         }
     };
 

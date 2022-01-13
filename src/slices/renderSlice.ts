@@ -27,7 +27,8 @@ export enum CameraSpeedMultiplier {
 export enum RenderType {
     Triangles,
     Points,
-    All,
+    TrianglesAndPoints,
+    Panorama,
     UnChangeable,
 }
 
@@ -89,7 +90,7 @@ const initialState = {
     baseCameraSpeed: 0.03,
     cameraSpeedMultiplier: CameraSpeedMultiplier.Normal,
     savedCameraPositions: { currentIndex: -1, positions: [] as CameraPosition[] },
-    renderType: RenderType.All as
+    renderType: RenderType.TrianglesAndPoints as
         | Exclude<RenderType, RenderType.UnChangeable>
         | [RenderType.UnChangeable, "points" | "triangles"],
     clippingBox: {
