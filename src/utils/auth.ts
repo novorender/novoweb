@@ -9,6 +9,7 @@ import { authActions } from "slices/authSlice";
 import { sha256, base64UrlEncode } from "utils/misc";
 import { getFromStorage, saveToStorage } from "./storage";
 import { StorageKey } from "config/storage";
+import { dataServerBaseUrl } from "config";
 
 export async function getAuthHeader(): Promise<AuthenticationHeader> {
     const { auth } = store.getState();
@@ -35,7 +36,7 @@ type FailedLoginResponse = { password: string } | { user: string };
 type LoginResponse = SuccessfulLoginResponse | FailedLoginResponse;
 
 export async function login(username: string, password: string): Promise<LoginResponse> {
-    return fetch(`https://data.novorender.com/api/user/login`, {
+    return fetch(dataServerBaseUrl + "/user/login", {
         method: "post",
         headers: {
             "Content-Type": "application/x-www-form-urlencoded",
