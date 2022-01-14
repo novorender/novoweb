@@ -21,7 +21,7 @@ const initialState = {
     sceneType: SceneType.Viewer,
     userRole: UserRole.Viewer,
     viewerScenes: [] as ScenePreview[],
-    widgets: [] as WidgetKey[],
+    widgets: ["panoramas"] as WidgetKey[],
     urlSearchQuery: undefined as undefined | string | SearchPattern[],
 };
 
@@ -73,13 +73,19 @@ export const explorerSlice = createSlice({
         removeWidgetSlot: (state, action: PayloadAction<WidgetKey>) => {
             state.widgets = state.widgets.filter((slot) => slot !== action.payload);
         },
-        setUrlSearchQuery: (state, action: PayloadAction<State["urlSearchQuery"]>) => {
-            const patterns = action.payload;
+        setUrlSearchQuery: (
+            state,
+            action: PayloadAction<{ query: State["urlSearchQuery"]; selectionOnly: string } | undefined>
+        ) => {
+            const patterns = action.payload?.query;
 
             state.urlSearchQuery = patterns;
 
             if ((Array.isArray(patterns) && patterns.length) || (!Array.isArray(patterns) && patterns)) {
-                state.widgets = [featuresConfig.search.key, featuresConfig.properties.key];
+                state.widgets = [
+                    featuresConfig.search.key,
+                    action.payload?.selectionOnly === "3" ? featuresConfig.layers.key : featuresConfig.properties.key,
+                ];
             }
         },
     },

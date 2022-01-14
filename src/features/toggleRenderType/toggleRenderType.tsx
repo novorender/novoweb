@@ -17,12 +17,15 @@ export function ToggleRenderType(speedDialProps: SpeedDialActionProps) {
                 renderType === RenderType.Triangles
                     ? RenderType.Points
                     : renderType === RenderType.Points
-                    ? RenderType.All
+                    ? RenderType.TrianglesAndPoints
                     : RenderType.Triangles
             )
         );
 
-    if (Array.isArray(renderType) && renderType[0] === RenderType.UnChangeable) {
+    if (
+        renderType === RenderType.Panorama ||
+        (Array.isArray(renderType) && renderType[0] === RenderType.UnChangeable)
+    ) {
         return null;
     }
 

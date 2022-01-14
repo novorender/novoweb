@@ -27,7 +27,8 @@ export enum CameraSpeedMultiplier {
 export enum RenderType {
     Triangles,
     Points,
-    All,
+    TrianglesAndPoints,
+    Panorama,
     UnChangeable,
 }
 
@@ -83,13 +84,13 @@ const initialState = {
     environments: [] as EnvironmentDescription[],
     currentEnvironment: undefined as EnvironmentDescription | undefined,
     mainObject: undefined as ObjectId | undefined,
-    bookmarks: [] as WritableBookmark[],
+    bookmarks: undefined as WritableBookmark[] | undefined,
     defaultVisibility: ObjectVisibility.Neutral,
     selectMultiple: false,
     baseCameraSpeed: 0.03,
     cameraSpeedMultiplier: CameraSpeedMultiplier.Normal,
     savedCameraPositions: { currentIndex: -1, positions: [] as CameraPosition[] },
-    renderType: RenderType.All as
+    renderType: RenderType.TrianglesAndPoints as
         | Exclude<RenderType, RenderType.UnChangeable>
         | [RenderType.UnChangeable, "points" | "triangles"],
     clippingBox: {
@@ -213,8 +214,8 @@ export const renderSlice = createSlice({
         redoCameraPosition: (state) => {
             state.savedCameraPositions.currentIndex = state.savedCameraPositions.currentIndex + 1;
         },
-        setBookmarks: (state, action: PayloadAction<Bookmark[]>) => {
-            state.bookmarks = action.payload as WritableBookmark[];
+        setBookmarks: (state, action: PayloadAction<Bookmark[] | undefined>) => {
+            state.bookmarks = action.payload as WritableBookmark[] | undefined;
         },
         setRenderType: (state, action: PayloadAction<State["renderType"]>) => {
             state.renderType = action.payload;
@@ -310,7 +311,7 @@ export const selectCameraSpeedMultiplier = (state: RootState) => state.render.ca
 export const selectBaseCameraSpeed = (state: RootState) => state.render.baseCameraSpeed;
 export const selectSavedCameraPositions = (state: RootState) => state.render.savedCameraPositions;
 export const selectHomeCameraPosition = (state: RootState) => state.render.savedCameraPositions.positions[0];
-export const selectBookmarks = (state: RootState) => state.render.bookmarks as Bookmark[];
+export const selectBookmarks = (state: RootState) => state.render.bookmarks as Bookmark[] | undefined;
 export const selectRenderType = (state: RootState) => state.render.renderType;
 export const selectClippingBox = (state: RootState) => state.render.clippingBox;
 export const selectMeasure = (state: RootState) => state.render.measure;

@@ -55,12 +55,12 @@ export function CreateBookmark({ onClose }: { onClose: () => void }) {
 
     const handleSubmit: FormEventHandler = (e) => {
         e.preventDefault();
+        if (bookmarks) {
+            const toSave = bookmarks.concat({ ...bookmarkRef.current, name, description });
 
-        const toSave = bookmarks.concat({ ...bookmarkRef.current, name, description });
-
-        dispatch(renderActions.setBookmarks(toSave));
-        dataApi.saveBookmarks(editingScene?.id ? editingScene.id : sceneId, toSave);
-
+            dispatch(renderActions.setBookmarks(toSave));
+            dataApi.saveBookmarks(editingScene?.id ? editingScene.id : sceneId, toSave);
+        }
         onClose();
     };
 

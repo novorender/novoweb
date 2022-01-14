@@ -7,7 +7,7 @@ const app = express();
 const index = path.resolve(__dirname, "build/index.html");
 
 function sendIndex(req, res) {
-    if (process.env.BIMCOLLAB_CLIENT_SECRET || process.env.BIMCOLLAB_CLIENT_ID) {
+    if (process.env.BIMCOLLAB_CLIENT_SECRET || process.env.BIMCOLLAB_CLIENT_ID || process.env.DATA_SERVER_URL) {
         fs.readFile(index, "utf8", function (err, data) {
             if (err) {
                 console.error(err);
@@ -16,6 +16,12 @@ function sendIndex(req, res) {
 
             let indexHtml = data.toString();
 
+            if (process.env.DATA_SERVER_URL) {
+                indexHtml = indexHtml.replace(
+                    "window.dataServerUrl",
+                    `window.dataServerUrl="${process.env.DATA_SERVER_URL}"`
+                );
+            }
             if (process.env.BIMCOLLAB_CLIENT_SECRET) {
                 indexHtml = indexHtml.replace(
                     "window.bimCollabClientSecret",

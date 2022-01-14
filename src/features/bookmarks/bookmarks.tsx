@@ -1,5 +1,16 @@
 import { Fragment, MouseEvent, useEffect, useState } from "react";
-import { useTheme, List, ListItem, Typography, Button, Menu, MenuItem, InputAdornment, Checkbox } from "@mui/material";
+import {
+    useTheme,
+    List,
+    ListItem,
+    Typography,
+    Button,
+    Menu,
+    MenuItem,
+    InputAdornment,
+    Checkbox,
+    LinearProgress,
+} from "@mui/material";
 import { AddCircle, FilterAlt, Search } from "@mui/icons-material";
 import type { Bookmark as BookmarkType } from "@novorender/data-js-api";
 
@@ -53,9 +64,19 @@ export function Bookmarks() {
     const [bookmarkToDelete, setBookmarkToDelete] = useState<BookmarkType>();
     const [creatingBookmark, toggleCreatingBookmark] = useToggle();
 
+    useEffect(() => {
+        if (!bookmarks) {
+            loadBookmarks(sceneId);
+        }
+        async function loadBookmarks(sceneId: string) {
+            const bmks = await dataApi.getBookmarks(sceneId);
+            dispatch(renderActions.setBookmarks(bmks));
+        }
+    }, [bookmarks, dispatch, sceneId]);
+
     useEffect(
         function filterBookmarks() {
-            setFilteredBookmarks(applyFilters(bookmarks, filters));
+            setFilteredBookmarks(bookmarks ? applyFilters(bookmarks, filters) : undefined);
         },
         [bookmarks, filters]
     );
@@ -130,6 +151,9 @@ export function Bookmarks() {
     }
 
     const handleDelete = () => {
+        if (!bookmarks) {
+            return;
+        }
         const toSave = bookmarks.filter((bm) => bm !== bookmarkToDelete);
 
         dispatch(renderActions.setBookmarks(toSave));
@@ -144,7 +168,7 @@ export function Bookmarks() {
         <>
             <WidgetContainer>
                 <WidgetHeader widget={featuresConfig.bookmarks}>
-                    {!menuOpen && !creatingBookmark && !bookmarkToDelete ? (
+                    {!menuOpen && !creatingBookmark && !bookmarkToDelete && bookmarks ? (
                         <>
                             <Button
                                 color="grey"
@@ -228,6 +252,7 @@ export function Bookmarks() {
                         <Checkbox checked={filters.groups} />
                     </MenuItem>
                 </Menu>
+                {!bookmarks ? <LinearProgress /> : null}
                 <ScrollBox display={menuOpen ? "none" : "flex"} flexDirection="column" pb={2} height={1}>
                     {creatingBookmark ? (
                         <CreateBookmark onClose={toggleCreatingBookmark} />
@@ -240,7 +265,7 @@ export function Bookmarks() {
                         />
                     ) : (
                         <List sx={{ width: 1 }}>
-                            {filteredBookmarks.map((bookmark, index) => (
+                            {filteredBookmarks?.map((bookmark, index) => (
                                 <ListItem
                                     key={bookmark.name + index}
                                     sx={{ padding: `${theme.spacing(0.5)} ${theme.spacing(1)}` }}

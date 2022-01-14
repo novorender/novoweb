@@ -133,7 +133,13 @@ export const featuresConfig = {
         Icon: VrpanoOutlinedIcon,
         type: FeatureType.Widget,
         dependencies: {
-            renderType: [RenderType.All, RenderType.Points, RenderType.Triangles, [RenderType.UnChangeable, "points"]],
+            renderType: [
+                RenderType.TrianglesAndPoints,
+                RenderType.Points,
+                RenderType.Triangles,
+                RenderType.Panorama,
+                [RenderType.UnChangeable, "points"],
+            ],
         },
     },
     deviations: {
