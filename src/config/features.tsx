@@ -147,6 +147,9 @@ export const featuresConfig = {
         name: "Deviations",
         Icon: BlurOnIcon,
         type: FeatureType.Widget,
+        dependencies: {
+            renderType: [RenderType.TrianglesAndPoints, RenderType.Points, RenderType.Triangles],
+        },
     },
     home: {
         key: "home",
