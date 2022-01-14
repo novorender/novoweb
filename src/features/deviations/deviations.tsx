@@ -12,7 +12,7 @@ import { RefCallback, useCallback, useState } from "react";
 import { useExplorerGlobals } from "contexts/explorerGlobals";
 import { useMountedState } from "hooks/useMountedState";
 import { featuresConfig } from "config/features";
-import { LogoSpeedDial, WidgetContainer, WidgetHeader } from "components";
+import { LogoSpeedDial, ScrollBox, WidgetContainer, WidgetHeader } from "components";
 import { WidgetList } from "features/widgetList";
 import { rgbToVec, VecRGBA } from "utils/color";
 
@@ -28,7 +28,7 @@ export function Deviations() {
     } = useExplorerGlobals(true);
 
     const [containerEl, setContainerEl] = useState<HTMLDivElement | null>(null);
-    const [active, setActive] = useMountedState<number>(0);
+    const [active, setActive] = useMountedState<number>(-1);
     const containerRef = useCallback<RefCallback<HTMLDivElement>>((el) => {
         setContainerEl(el);
     }, []);
@@ -44,51 +44,43 @@ export function Deviations() {
     return (
         <>
             <WidgetContainer>
-                <WidgetHeader widget={featuresConfig.deviations} />
-                <Box p={1} display={!menuOpen ? "block" : "none"}>
+                <WidgetHeader widget={featuresConfig.deviations}>
+                    {!menuOpen && use ? (
+                        <RadioGroup
+                            row
+                            aria-label="gender"
+                            name="row-radio-buttons-group"
+                            value={mode}
+                            onChange={change}
+                            sx={{ marginBottom: theme.spacing(1) }}
+                        >
+                            <FormControlLabel value="off" control={<Radio size="small" />} label="Off" />
+                            <FormControlLabel value="on" control={<Radio size="small" />} label="On" />
+                            <FormControlLabel value="mix" control={<Radio size="small" />} label="Mix" />
+                        </RadioGroup>
+                    ) : null}
+                </WidgetHeader>
+                <ScrollBox p={1} display={!menuOpen ? "block" : "none"} ref={containerRef}>
                     {use ? (
-                        <>
-                            <Box
-                                mt={1}
-                                mb={1}
-                                display="flex"
-                                justifyContent="center"
-                                boxShadow={theme.customShadows.widgetHeader}
-                                ref={containerRef}
-                            >
-                                <RadioGroup
-                                    row
-                                    aria-label="gender"
-                                    name="row-radio-buttons-group"
-                                    value={mode}
-                                    onChange={change}
-                                    sx={{ marginBottom: theme.spacing(1) }}
-                                >
-                                    <FormControlLabel value="off" control={<Radio />} label="Off" />
-                                    <FormControlLabel value="on" control={<Radio />} label="On" />
-                                    <FormControlLabel value="mix" control={<Radio />} label="Mix" />
-                                </RadioGroup>
-                            </Box>
-                            {mode !== "off"
-                                ? colors
-                                      .map((c, i) => (
-                                          <ColorStop
-                                              key={colors.length + "_" + i}
-                                              deviation={c.deviation}
-                                              color={c.color}
-                                              idx={i}
-                                              colorPickerPosition={colorPickerPosition}
-                                              active={active}
-                                              setActive={setActive}
-                                          />
-                                      ))
-                                      .reverse()
-                                : undefined}
-                        </>
+                        mode !== "off" ? (
+                            colors
+                                .map((c, i) => (
+                                    <ColorStop
+                                        key={colors.length + "_" + i}
+                                        deviation={c.deviation}
+                                        color={c.color}
+                                        idx={i}
+                                        colorPickerPosition={colorPickerPosition}
+                                        active={active}
+                                        setActive={setActive}
+                                    />
+                                ))
+                                .reverse()
+                        ) : undefined
                     ) : (
                         <Typography>No point clouds and triangles</Typography>
                     )}
-                </Box>
+                </ScrollBox>
                 <WidgetList
                     display={menuOpen ? "block" : "none"}
                     widgetKey={featuresConfig.deviations.key}
@@ -223,6 +215,6 @@ function getPickerPosition(el: HTMLElement | null) {
         return;
     }
 
-    const { bottom, left } = el.getBoundingClientRect();
-    return { top: bottom + 24, left: left + 24 }; // use picker width
+    const { top, left } = el.getBoundingClientRect();
+    return { top: top + 24, left: left + 24 }; // use picker width
 }
