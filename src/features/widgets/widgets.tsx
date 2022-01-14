@@ -21,6 +21,7 @@ import { AdvancedSettings } from "features/advancedSettings";
 import { BimCollab } from "features/bimCollab";
 import { Layers } from "features/layers";
 import { MenuWidget } from "features/menuWidget";
+import { Deviations } from "features/deviations";
 
 export function Widgets() {
     const theme = useTheme();
@@ -92,6 +93,8 @@ function getWidgetByKey(key: WidgetKey): JSX.Element | string {
             return <AdvancedSettings />;
         case featuresConfig.layers.key:
             return <Layers />;
+        case featuresConfig.deviations.key:
+            return <Deviations />;
         default:
             return key;
     }

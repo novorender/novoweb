@@ -22,6 +22,7 @@ import CropLandscapeIcon from "@mui/icons-material/CropLandscape";
 import CameraswitchIcon from "@mui/icons-material/Cameraswitch";
 import SettingsIcon from "@mui/icons-material/Settings";
 import VrpanoOutlinedIcon from "@mui/icons-material/VrpanoOutlined";
+import BlurOnIcon from "@mui/icons-material/BlurOn";
 
 import { ReactComponent as ClippingIcon } from "media/icons/clipping.svg";
 import { ReactComponent as RunIcon } from "media/icons/run.svg";
@@ -139,6 +140,15 @@ export const featuresConfig = {
                 RenderType.Panorama,
                 [RenderType.UnChangeable, "points"],
             ],
+        },
+    },
+    deviations: {
+        key: "deviations",
+        name: "Deviations",
+        Icon: BlurOnIcon,
+        type: FeatureType.Widget,
+        dependencies: {
+            renderType: [RenderType.TrianglesAndPoints, RenderType.Points, RenderType.Triangles],
         },
     },
     home: {

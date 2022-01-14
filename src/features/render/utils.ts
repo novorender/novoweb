@@ -19,6 +19,7 @@ import { offscreenCanvas } from "config";
 import { CustomGroup, customGroupsActions, DispatchCustomGroups } from "contexts/customGroups";
 import { hiddenGroupActions, DispatchHidden } from "contexts/hidden";
 import { highlightActions, DispatchHighlighted } from "contexts/highlighted";
+import { vec4 } from "gl-matrix";
 import { MutableRefObject } from "react";
 import {
     AdvancedSetting,
@@ -413,6 +414,15 @@ export function initClippingPlanes(clipping: RenderSettings["clippingVolume"]): 
             mode: clipping.mode,
             planes: clipping.planes.map((plane) => Array.from(plane) as [number, number, number, number]),
             baseW: clipping.planes.length ? clipping.planes[0][3] : 0,
+        })
+    );
+}
+
+export function initDeviation(deviation: RenderSettings["points"]["deviation"]): void {
+    store.dispatch(
+        renderActions.setDeviation({
+            mode: deviation.mode,
+            colors: deviation.colors.map((c) => ({ ...c, color: vec4.clone(c.color) })),
         })
     );
 }

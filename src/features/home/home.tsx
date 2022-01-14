@@ -7,6 +7,7 @@ import {
     initAdvancedSettings,
     initClippingBox,
     initClippingPlanes,
+    initDeviation,
     initHidden,
     initHighlighted,
 } from "features/render/utils";
@@ -77,6 +78,7 @@ export function Home({ position, ...speedDialProps }: Props) {
             view.applySettings(toApply);
             initClippingBox(toApply.clippingPlanes);
             initClippingPlanes(toApply.clippingVolume);
+            initDeviation(toApply.points.deviation);
         }
 
         if (camera.kind === "ortho") {
