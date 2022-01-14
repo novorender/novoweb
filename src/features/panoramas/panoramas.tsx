@@ -19,7 +19,15 @@ import { CancelPresentation, VrpanoOutlined } from "@mui/icons-material";
 
 import { featuresConfig } from "config/features";
 import { WidgetList } from "features/widgetList";
-import { ScrollBox, Divider, WidgetContainer, WidgetHeader, LogoSpeedDial, IosSwitch } from "components";
+import {
+    ScrollBox,
+    Divider,
+    WidgetContainer,
+    WidgetHeader,
+    LogoSpeedDial,
+    IosSwitch,
+    LinearProgress,
+} from "components";
 
 import { useExplorerGlobals } from "contexts/explorerGlobals";
 import { useToggle } from "hooks/useToggle";
@@ -77,7 +85,7 @@ export function Panoramas() {
         <>
             <WidgetContainer>
                 <WidgetHeader widget={featuresConfig.panoramas}>
-                    {!menuOpen ? (
+                    {!menuOpen && panoramas?.length ? (
                         <Box display="flex">
                             <FormControlLabel
                                 control={
@@ -103,19 +111,25 @@ export function Panoramas() {
                 </WidgetHeader>
                 <ScrollBox display={!menuOpen ? "block" : "none"} height={1} pb={2}>
                     {panoramas ? (
-                        <List>
-                            {panoramas.map((panorama, index, array) => (
-                                <Fragment key={index}>
-                                    <Panorama panorama={panorama} />
-                                    {index !== array.length - 1 ? (
-                                        <Box my={0.5} component="li">
-                                            <Divider />
-                                        </Box>
-                                    ) : null}
-                                </Fragment>
-                            ))}
-                        </List>
-                    ) : null}
+                        panoramas.length ? (
+                            <List>
+                                {panoramas.map((panorama, index, array) => (
+                                    <Fragment key={index}>
+                                        <Panorama panorama={panorama} />
+                                        {index !== array.length - 1 ? (
+                                            <Box my={0.5} component="li">
+                                                <Divider />
+                                            </Box>
+                                        ) : null}
+                                    </Fragment>
+                                ))}
+                            </List>
+                        ) : (
+                            <Typography sx={{ p: 1 }}>Found no panoramas for this scene.</Typography>
+                        )
+                    ) : (
+                        <LinearProgress />
+                    )}
                 </ScrollBox>
                 <WidgetList
                     display={menuOpen ? "block" : "none"}
@@ -225,7 +239,7 @@ async function loadPanoramas(scene: Scene) {
             panoramas.push({ name, guid, position, rotation, preview, gltf });
         }
     } catch {
-        return;
+        // go on
     }
 
     store.dispatch(panoramasActions.setPanoramas(panoramas));
