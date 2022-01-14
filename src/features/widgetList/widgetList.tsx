@@ -53,6 +53,12 @@ export function WidgetList({ display, widgetKey, onSelect }: Props) {
         <ScrollBox display={display} flexGrow={1} p={1} pb={2}>
             <Grid container wrap="wrap" spacing={1} data-test="widget-list">
                 {enabledWidgets
+                    .filter(
+                        (widget) =>
+                            !(
+                                [featuresConfig.advancedSettings.key, featuresConfig.viewerScenes.key] as string[]
+                            ).includes(widget.key)
+                    )
                     .sort((a, b) => {
                         const idxA = sorting.indexOf(a.key);
                         const idxB = sorting.indexOf(b.key);

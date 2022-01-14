@@ -204,19 +204,28 @@ function Panorama({ panorama }: { panorama: PanoramaType }) {
 async function loadPanoramas(scene: Scene) {
     const panoramas: PanoramaType[] = [];
 
-    for await (const p of scene.search({
-        searchPattern: [{ property: "Panorama/Preview", value: [], exact: true }],
-        full: true,
-    })) {
-        const panorama = await p.loadMetaData();
-        const name = panorama.name;
-        const guid = panorama.properties.filter((pr) => pr[0] === "GUID")[0][1];
-        const position = JSON.parse(panorama.properties.filter((pr) => pr[0] === "Panorama/Position")[0][1]);
-        const rotation = JSON.parse(panorama.properties.filter((pr) => pr[0] === "Panorama/Rotation")[0][1]);
-        const preview = panorama.properties.filter((pr) => pr[0] === "Panorama/Preview")[0][1];
-        const gltf = panorama.properties.filter((pr) => pr[0] === "Panorama/Gltf")[0][1];
+    try {
+        for await (const p of scene.search({
+            searchPattern: [
+                { property: "Panorama/Preview", value: [], exact: true },
+                { property: "Panorama/Rotation", value: [], exact: true },
+                { property: "Panorama/Position", value: [], exact: true },
+                { property: "Panorama/Gltf", value: [], exact: true },
+            ],
+            full: true,
+        })) {
+            const panorama = await p.loadMetaData();
+            const name = panorama.name;
+            const guid = panorama.properties.filter((pr) => pr[0] === "GUID")[0][1];
+            const position = JSON.parse(panorama.properties.filter((pr) => pr[0] === "Panorama/Position")[0][1]);
+            const rotation = JSON.parse(panorama.properties.filter((pr) => pr[0] === "Panorama/Rotation")[0][1]);
+            const preview = panorama.properties.filter((pr) => pr[0] === "Panorama/Preview")[0][1];
+            const gltf = panorama.properties.filter((pr) => pr[0] === "Panorama/Gltf")[0][1];
 
-        panoramas.push({ name, guid, position, rotation, preview, gltf });
+            panoramas.push({ name, guid, position, rotation, preview, gltf });
+        }
+    } catch {
+        return;
     }
 
     store.dispatch(panoramasActions.setPanoramas(panoramas));
