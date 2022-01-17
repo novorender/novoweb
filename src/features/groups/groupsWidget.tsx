@@ -39,7 +39,7 @@ import { CreateGroup } from "./createGroup";
 import { Group } from "./group";
 import { Rename } from "./rename";
 import { GroupCollection } from "./groupCollection";
-import { groupsActions, GroupsStatus, selectGroupsStatus } from "./groupsSlice";
+import { groupsActions, GroupsStatus, selectGroupsStatus, selectLoadingIds } from "./groupsSlice";
 
 export const StyledListItemButton = styled(ListItemButton, { shouldForwardProp: (prop) => prop !== "inset" })<
     ListItemButtonProps & { inset?: boolean }
@@ -65,6 +65,7 @@ export function Groups() {
     const editingScene = useAppSelector(selectEditingScene);
     const isAdmin = useAppSelector(selectHasAdminCapabilities);
     const status = useAppSelector(selectGroupsStatus);
+    const loadingIds = useAppSelector(selectLoadingIds);
     const dispatch = useAppDispatch();
 
     const [menuOpen, toggleMenu] = useToggle();
@@ -178,6 +179,7 @@ export function Groups() {
                     flexGrow={1}
                     height={1}
                 >
+                    {disableChanges || loadingIds ? <LinearProgress /> : null}
                     {Array.isArray(status) ? (
                         status[0] === GroupsStatus.Deleting ? (
                             <Confirmation
@@ -191,7 +193,6 @@ export function Groups() {
                         )
                     ) : (
                         <ScrollBox display="flex" flexDirection="column" ref={containerRef} height={1} pb={2}>
-                            {status === GroupsStatus.Saving ? <LinearProgress /> : null}
                             <List sx={{ width: 1, pb: 0 }}>
                                 <StyledListItemButton
                                     inset={hasGrouping}

@@ -19,6 +19,7 @@ import { offscreenCanvas } from "config";
 import { CustomGroup, customGroupsActions, DispatchCustomGroups } from "contexts/customGroups";
 import { hiddenGroupActions, DispatchHidden } from "contexts/hidden";
 import { highlightActions, DispatchHighlighted } from "contexts/highlighted";
+import { groupsActions, selectLoadingIds } from "features/groups";
 import { vec4 } from "gl-matrix";
 import { MutableRefObject } from "react";
 import {
@@ -181,7 +182,7 @@ export function createRendering(
 /**
  * Applies highlights and hides objects in the 3d view based on the object groups provided
  */
-export function refillObjects({
+export async function refillObjects({
     sceneId,
     scene,
     view,
@@ -196,7 +197,7 @@ export function refillObjects({
         | { id: string; ids: ObjectId[]; neutral: true; hidden: false; selected: true }
     )[];
     defaultVisibility: ObjectVisibility;
-}): void {
+}): Promise<void> {
     if (!view || !scene) {
         return;
     }
@@ -220,6 +221,7 @@ export function refillObjects({
         ...objectGroups.map(async (group, index) => {
             if (group.selected) {
                 if (!group.ids) {
+                    store.dispatch(groupsActions.setLoadingIds(true));
                     group.ids = await dataApi.getGroupIds(sceneId, group.id);
                 }
                 for (const id of group.ids) {
@@ -228,7 +230,8 @@ export function refillObjects({
             }
         })
     );
-    Promise.all(proms).finally(() => {
+
+    await Promise.all(proms).finally(() => {
         objectHighlighter.commit();
         view.settings.objectHighlights = [
             getHighlightByObjectVisibility(defaultVisibility),
@@ -241,6 +244,10 @@ export function refillObjects({
             }),
         ];
     });
+
+    if (selectLoadingIds(store.getState())) {
+        store.dispatch(groupsActions.setLoadingIds(false));
+    }
 }
 
 export function getEnvironmentDescription(
