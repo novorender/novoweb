@@ -210,6 +210,7 @@ export async function refillObjects({
         .filter((group) => group.hidden)
         .map(async (group) => {
             if (!group.ids) {
+                store.dispatch(groupsActions.setLoadingIds(true));
                 group.ids = await dataApi.getGroupIds(sceneId, group.id);
             }
             for (const id of group.ids) {
