@@ -88,6 +88,7 @@ import {
     initDeviation,
 } from "./utils";
 import { xAxis, yAxis, axis } from "./consts";
+import { featuresConfig, WidgetKey } from "config/features";
 
 glMatrix.setMatrixArrayType(Array);
 
@@ -753,11 +754,27 @@ export function Render3D({ onInit }: Props) {
             return;
         }
 
-        dispatchRenderType(view);
+        initRenderType(view);
 
-        async function dispatchRenderType(view: View) {
-            const type = await getRenderType(view);
-            dispatch(renderActions.setRenderType(type));
+        async function initRenderType(view: View) {
+            const initialRenderType = await getRenderType(view);
+            dispatch(renderActions.setRenderType(initialRenderType));
+
+            const toDisable = Object.values(featuresConfig)
+                .filter((feature) => {
+                    if ("dependencies" in feature && feature.dependencies.renderType) {
+                        return !feature.dependencies.renderType.some((type) =>
+                            Array.isArray(type) && Array.isArray(initialRenderType)
+                                ? type[0] === initialRenderType[0] && type[1] === initialRenderType[1]
+                                : type === initialRenderType
+                        );
+                    }
+
+                    return false;
+                })
+                .map((feature) => feature.key);
+
+            dispatch(explorerActions.disableWidgets(toDisable as WidgetKey[]));
         }
     }, [view, dispatch]);
 

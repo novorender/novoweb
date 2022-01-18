@@ -1,9 +1,9 @@
 import { createSelector, createSlice, PayloadAction } from "@reduxjs/toolkit";
 import { SearchPattern } from "@novorender/webgl-api";
+import { ScenePreview } from "@novorender/data-js-api";
 
 import { featuresConfig, WidgetKey, Widget, defaultEnabledWidgets } from "config/features";
 import type { RootState } from "app/store";
-import { ScenePreview } from "@novorender/data-js-api";
 
 export enum SceneType {
     Viewer,
@@ -18,6 +18,7 @@ export enum UserRole {
 
 const initialState = {
     enabledWidgets: defaultEnabledWidgets as WidgetKey[],
+    disabledWidgets: [featuresConfig.advancedSettings.key, featuresConfig.viewerScenes.key] as WidgetKey[],
     sceneType: SceneType.Viewer,
     userRole: UserRole.Viewer,
     viewerScenes: [] as ScenePreview[],
@@ -33,6 +34,9 @@ export const explorerSlice = createSlice({
     reducers: {
         setEnabledWidgets: (state, action: PayloadAction<WidgetKey[]>) => {
             state.enabledWidgets = action.payload;
+        },
+        disableWidgets: (state, action: PayloadAction<WidgetKey[]>) => {
+            state.disabledWidgets = state.disabledWidgets.concat(action.payload);
         },
         setSceneType: (state, action: PayloadAction<SceneType>) => {
             state.sceneType = action.payload;
@@ -92,6 +96,7 @@ export const explorerSlice = createSlice({
 });
 
 export const selectWidgets = (state: RootState) => state.explorer.widgets;
+export const selectDisabledWidgets = (state: RootState) => state.explorer.disabledWidgets;
 export const selectUrlSearchQuery = (state: RootState) => state.explorer.urlSearchQuery;
 export const selectSceneType = (state: RootState) => state.explorer.sceneType;
 export const selectUserRole = (state: RootState) => state.explorer.userRole;
@@ -101,31 +106,8 @@ export const selectIsAdminScene = (state: RootState) => state.explorer.sceneType
 export const selectHasAdminCapabilities = (state: RootState) => state.explorer.userRole !== UserRole.Viewer;
 
 export const selectEnabledWidgets = createSelector(
-    (state: RootState) => [state.explorer.enabledWidgets, state.render] as [WidgetKey[], RootState["render"]],
-    ([widgets, renderState]) =>
-        widgets
-            .map((key) => featuresConfig[key])
-            .filter((config: Widget) => {
-                if (!config) {
-                    return false;
-                }
-
-                if (!("dependencies" in config)) {
-                    return true;
-                }
-
-                if (config.dependencies.renderType) {
-                    const renderType = config.dependencies.renderType;
-
-                    return renderType.some((type) =>
-                        Array.isArray(type) && Array.isArray(renderState.renderType)
-                            ? type[0] === renderState.renderType[0] && type[1] === renderState.renderType[1]
-                            : type === renderState.renderType
-                    );
-                }
-
-                return true;
-            }) as Widget[]
+    (state: RootState) => state.explorer.enabledWidgets,
+    (widgets) => widgets.map((widget) => featuresConfig[widget]).filter((config) => config) as Widget[]
 );
 
 // Action creators are generated for each case reducer function

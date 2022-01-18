@@ -1,7 +1,7 @@
 import { BoxProps, Grid, IconButton, Typography } from "@mui/material";
 
 import { useAppDispatch, useAppSelector } from "app/store";
-import { explorerActions, selectEnabledWidgets, selectWidgets } from "slices/explorerSlice";
+import { explorerActions, selectDisabledWidgets, selectEnabledWidgets, selectWidgets } from "slices/explorerSlice";
 import { WidgetKey, featuresConfig } from "config/features";
 import { ScrollBox, WidgetMenuButtonWrapper } from "components";
 import { ShareLink } from "features/shareLink";
@@ -29,6 +29,7 @@ const sorting = [
 
 export function WidgetList({ display, widgetKey, onSelect }: Props) {
     const enabledWidgets = useAppSelector(selectEnabledWidgets);
+    const disabledWidgets = useAppSelector(selectDisabledWidgets);
     const activeWidgets = useAppSelector(selectWidgets);
 
     const dispatch = useAppDispatch();
@@ -53,12 +54,7 @@ export function WidgetList({ display, widgetKey, onSelect }: Props) {
         <ScrollBox display={display} flexGrow={1} p={1} pb={2}>
             <Grid container wrap="wrap" spacing={1} data-test="widget-list">
                 {enabledWidgets
-                    .filter(
-                        (widget) =>
-                            !(
-                                [featuresConfig.advancedSettings.key, featuresConfig.viewerScenes.key] as string[]
-                            ).includes(widget.key)
-                    )
+                    .filter((widget) => !disabledWidgets.includes(widget.key))
                     .sort((a, b) => {
                         const idxA = sorting.indexOf(a.key);
                         const idxB = sorting.indexOf(b.key);
