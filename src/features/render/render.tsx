@@ -210,6 +210,7 @@ export function Render3D({ onInit }: Props) {
         orbit: 2,
         pivot: 2,
     });
+    const storedFingersMap = useRef<CameraController["mouseButtonsMap"]>({ rotate: 1, pan: 2, orbit: 3, pivot: 3 });
     const movementTimer = useRef<ReturnType<typeof setTimeout>>();
     const cameraGeneration = useRef<number>();
     const previousId = useRef("");
@@ -884,9 +885,12 @@ export function Render3D({ onInit }: Props) {
             if (renderType !== RenderType.Panorama) {
                 storedRenderType.current = renderType;
                 view.camera.controller.mouseButtonsMap = storedMouseButtonsMap.current;
+                (view.camera.controller as any).fingersMap = storedFingersMap.current;
             } else {
                 storedMouseButtonsMap.current = view.camera.controller.mouseButtonsMap;
+                storedFingersMap.current = (view.camera.controller as any).fingersMap;
                 view.camera.controller.mouseButtonsMap = { pan: 0, rotate: 1, pivot: 0, orbit: 0 };
+                (view.camera.controller as any).fingersMap = { pan: 0, rotate: 1, pivot: 0, orbit: 0 };
             }
 
             const settings = view.settings as Internal.RenderSettingsExt;
