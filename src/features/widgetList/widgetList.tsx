@@ -25,6 +25,7 @@ const sorting = [
     featuresConfig.propertyTree.key,
     featuresConfig.viewerScenes.key,
     featuresConfig.advancedSettings.key,
+    featuresConfig.followPath.key,
 ] as WidgetKey[];
 
 export function WidgetList({ display, widgetKey, onSelect }: Props) {

@@ -23,6 +23,7 @@ import CameraswitchIcon from "@mui/icons-material/Cameraswitch";
 import SettingsIcon from "@mui/icons-material/Settings";
 import VrpanoOutlinedIcon from "@mui/icons-material/VrpanoOutlined";
 import BlurOnIcon from "@mui/icons-material/BlurOn";
+import RouteOutlinedIcon from "@mui/icons-material/RouteOutlined";
 
 import { ReactComponent as ClippingIcon } from "media/icons/clipping.svg";
 import { ReactComponent as RunIcon } from "media/icons/run.svg";
@@ -150,6 +151,12 @@ export const featuresConfig = {
         dependencies: {
             renderType: [RenderType.TrianglesAndPoints, RenderType.Points, RenderType.Triangles],
         },
+    },
+    followPath: {
+        key: "followPath",
+        name: "Follow Path",
+        Icon: RouteOutlinedIcon,
+        type: FeatureType.Widget,
     },
     home: {
         key: "home",

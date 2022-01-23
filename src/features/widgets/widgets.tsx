@@ -22,6 +22,7 @@ import { BimCollab } from "features/bimCollab";
 import { Layers } from "features/layers";
 import { MenuWidget } from "features/menuWidget";
 import { Deviations } from "features/deviations";
+import { FollowPath } from "features/followPath";
 
 export function Widgets() {
     const theme = useTheme();
@@ -95,6 +96,8 @@ function getWidgetByKey(key: WidgetKey): JSX.Element | string {
             return <Layers />;
         case featuresConfig.deviations.key:
             return <Deviations />;
+        case featuresConfig.followPath.key:
+            return <FollowPath />;
         default:
             return key;
     }

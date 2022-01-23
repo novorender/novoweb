@@ -90,7 +90,7 @@ export function Deviations() {
             <LogoSpeedDial
                 open={menuOpen}
                 toggle={toggleMenu}
-                testId={`${featuresConfig.panoramas.key}-widget-menu-fab`}
+                testId={`${featuresConfig.deviations.key}-widget-menu-fab`}
                 ariaLabel="toggle widget menu"
             />
         </>

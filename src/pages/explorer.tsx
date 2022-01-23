@@ -125,7 +125,7 @@ function AuthCheck({ children }: { children: ReactNode }) {
 
 function enabledFeaturesToFeatureKeys(enabledFeatures: Record<string, boolean>): WidgetKey[] {
     const dictionary: Record<string, string | string[] | undefined> = {
-        measurement: [featuresConfig.measure.key, featuresConfig.orthoCam.key],
+        measurement: [featuresConfig.measure.key, featuresConfig.orthoCam.key, featuresConfig.followPath.key],
         clipping: [featuresConfig.clippingBox.key, featuresConfig.clippingPlanes.key],
         tree: featuresConfig.modelTree.key,
     };

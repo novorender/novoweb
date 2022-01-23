@@ -273,8 +273,9 @@ export async function getRenderType(view: View): Promise<RenderState["renderType
     await sleep(1500);
 
     const advancedSettings = (view.settings as Internal.RenderSettingsExt).advanced;
-    const points = advancedSettings.hidePoints || view.performanceStatistics.points > 0;
-    const triangles = advancedSettings.hideTriangles || view.performanceStatistics.triangles > 2048;
+    const subtrees = (view.scene as any).config.subtrees as string[] | undefined;
+    const points = (subtrees?.indexOf("points") ?? -1) > -1 || view.performanceStatistics.points > 0;
+    const triangles = (subtrees?.indexOf("triangles") ?? -1) > -1 || view.performanceStatistics.triangles > 2048;
     const canChange = points && triangles;
 
     return !canChange
