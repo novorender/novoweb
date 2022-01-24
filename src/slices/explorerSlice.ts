@@ -24,6 +24,7 @@ const initialState = {
     viewerScenes: [] as ScenePreview[],
     widgets: [] as WidgetKey[],
     urlSearchQuery: undefined as undefined | string | SearchPattern[],
+    urlBookmarkId: undefined as undefined | string,
 };
 
 type State = typeof initialState;
@@ -77,6 +78,9 @@ export const explorerSlice = createSlice({
         removeWidgetSlot: (state, action: PayloadAction<WidgetKey>) => {
             state.widgets = state.widgets.filter((slot) => slot !== action.payload);
         },
+        setUrlBookmarkId: (state, action: PayloadAction<State["urlBookmarkId"]>) => {
+            state.urlBookmarkId = action.payload;
+        },
         setUrlSearchQuery: (
             state,
             action: PayloadAction<{ query: State["urlSearchQuery"]; selectionOnly: string } | undefined>
@@ -97,6 +101,7 @@ export const explorerSlice = createSlice({
 
 export const selectWidgets = (state: RootState) => state.explorer.widgets;
 export const selectDisabledWidgets = (state: RootState) => state.explorer.disabledWidgets;
+export const selectUrlBookmarkId = (state: RootState) => state.explorer.urlBookmarkId;
 export const selectUrlSearchQuery = (state: RootState) => state.explorer.urlSearchQuery;
 export const selectSceneType = (state: RootState) => state.explorer.sceneType;
 export const selectUserRole = (state: RootState) => state.explorer.userRole;
