@@ -270,12 +270,12 @@ export async function getRenderType(view: View): Promise<RenderState["renderType
     }
 
     // should be waitForSceneToRender(view), but big scenes require a stopped camera for a long time to finish rendering
-    await sleep(1500);
+    // await sleep(1500);
 
     const advancedSettings = (view.settings as Internal.RenderSettingsExt).advanced;
     const { subtrees } = view.scene;
-    const points = (subtrees?.indexOf("points") ?? -1) > -1 || view.performanceStatistics.points > 0;
-    const triangles = (subtrees?.indexOf("triangles") ?? -1) > -1 || view.performanceStatistics.triangles > 2048;
+    const points = (subtrees?.indexOf("points") ?? -1) > -1;
+    const triangles = (subtrees?.indexOf("triangles") ?? -1) > -1;
     const canChange = points && triangles;
 
     return !canChange
