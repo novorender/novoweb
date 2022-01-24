@@ -5,6 +5,7 @@ import { Box, IconButton, List, ListItemIcon, ListItemText, Menu, MenuItem } fro
 import { useAppDispatch, useAppSelector } from "app/store";
 import { Accordion, AccordionDetails, AccordionSummary } from "components";
 import { customGroupsActions, useCustomGroups } from "contexts/customGroups";
+import { selectHasAdminCapabilities } from "slices/explorerSlice";
 
 import { Group } from "./group";
 import { OrganisedGroups, StyledCheckbox } from "./groupsWidget";
@@ -22,6 +23,7 @@ export const GroupCollection = ({
     const { dispatch: dispatchCustomGroups } = useCustomGroups();
     const dispatch = useAppDispatch();
     const status = useAppSelector(selectGroupsStatus);
+    const isAdmin = useAppSelector(selectHasAdminCapabilities);
     const [menuAnchor, setMenuAnchor] = useState<HTMLElement | null>(null);
 
     const openMenu = (e: MouseEvent<HTMLButtonElement>) => {
@@ -90,7 +92,7 @@ export const GroupCollection = ({
                         onFocus={(event) => event.stopPropagation()}
                     />
                 </Box>
-                <Box flex="0 0 auto">
+                <Box flex="0 0 auto" sx={{ visibility: isAdmin ? "visible" : "hidden" }}>
                     <IconButton
                         size="small"
                         sx={{ py: 0 }}

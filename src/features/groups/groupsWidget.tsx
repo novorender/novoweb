@@ -263,27 +263,31 @@ export function Groups() {
                                     </Box>
                                 </StyledListItemButton>
 
-                                {organisedGroups.singles.map((group, index) => (
-                                    <Group
-                                        key={group.name + index}
-                                        inset={hasGrouping}
-                                        editGroup={() => setCreatingGroup(group.id)}
-                                        group={group}
-                                        colorPickerPosition={colorPickerPosition}
-                                    />
-                                ))}
+                                {organisedGroups.singles
+                                    .sort((a, b) => a.name.localeCompare(b.name, "en", { sensitivity: "accent" }))
+                                    .map((group, index) => (
+                                        <Group
+                                            key={group.name + index}
+                                            inset={hasGrouping}
+                                            editGroup={() => setCreatingGroup(group.id)}
+                                            group={group}
+                                            colorPickerPosition={colorPickerPosition}
+                                        />
+                                    ))}
                             </List>
                             {Object.values(organisedGroups.grouped).length ? <Divider /> : null}
-                            {Object.values(organisedGroups.grouped).map((collection, index) => {
-                                return (
-                                    <GroupCollection
-                                        key={collection.name + index}
-                                        collection={collection}
-                                        colorPickerPosition={colorPickerPosition}
-                                        editGroup={(id) => setCreatingGroup(id)}
-                                    />
-                                );
-                            })}
+                            {Object.values(organisedGroups.grouped)
+                                .sort((a, b) => a.name.localeCompare(b.name, "en", { sensitivity: "accent" }))
+                                .map((collection, index) => {
+                                    return (
+                                        <GroupCollection
+                                            key={collection.name + index}
+                                            collection={collection}
+                                            colorPickerPosition={colorPickerPosition}
+                                            editGroup={(id) => setCreatingGroup(id)}
+                                        />
+                                    );
+                                })}
                         </ScrollBox>
                     )}
                 </Box>

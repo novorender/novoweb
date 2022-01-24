@@ -265,16 +265,18 @@ export function Bookmarks() {
                         />
                     ) : (
                         <List sx={{ width: 1 }}>
-                            {filteredBookmarks?.map((bookmark, index) => (
-                                <ListItem
-                                    key={bookmark.name + index}
-                                    sx={{ padding: `${theme.spacing(0.5)} ${theme.spacing(1)}` }}
-                                    button
-                                    onClick={() => handleSelect(bookmark)}
-                                >
-                                    <Bookmark bookmark={bookmark} onDelete={setBookmarkToDelete} />
-                                </ListItem>
-                            ))}
+                            {filteredBookmarks
+                                ?.sort((a, b) => a.name.localeCompare(b.name, "en", { sensitivity: "accent" }))
+                                .map((bookmark, index) => (
+                                    <ListItem
+                                        key={bookmark.name + index}
+                                        sx={{ padding: `${theme.spacing(0.5)} ${theme.spacing(1)}` }}
+                                        button
+                                        onClick={() => handleSelect(bookmark)}
+                                    >
+                                        <Bookmark bookmark={bookmark} onDelete={setBookmarkToDelete} />
+                                    </ListItem>
+                                ))}
                         </List>
                     )}
                 </ScrollBox>
