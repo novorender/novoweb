@@ -39,7 +39,7 @@ export function Deviations() {
         return dispatch(renderActions.setDeviation({ mode: value as "off" | "on" | "mix" }));
     }
 
-    const subtrees = (scene as any).config.subtrees as string[] | undefined;
+    const { subtrees } = scene;
     const use = (subtrees?.indexOf("triangles") ?? -1) > -1 && (subtrees?.indexOf("points") ?? -1) > -1;
     return (
         <>
