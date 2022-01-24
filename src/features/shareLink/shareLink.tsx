@@ -28,7 +28,7 @@ export function ShareLink() {
     const [status, setStatus] = useMountedState(Status.Initial);
 
     const createLink = async () => {
-        if (editingScene) {
+        if (editingScene || status !== Status.Initial) {
             return;
         }
 
@@ -38,7 +38,11 @@ export function ShareLink() {
         try {
             setStatus(Status.Loading);
 
-            await dataApi.saveBookmarks(sceneId, [{ ...bm, id, name: id }], { group: id });
+            const saved = await dataApi.saveBookmarks(sceneId, [{ ...bm, id, name: id }], { group: id });
+
+            if (!saved) {
+                throw new Error("Failed to save bookmark");
+            }
             await navigator.clipboard.writeText(
                 `${window.location.origin}${window.location.pathname}?bookmarkId=${id}`
             );
@@ -70,7 +74,11 @@ export function ShareLink() {
                     </IconButton>
                 }
             />
-            <WidgetMenuButtonWrapper activeElsewhere={Boolean(editingScene)} onClick={createLink}>
+            <WidgetMenuButtonWrapper
+                activeElsewhere={Boolean(editingScene)}
+                activeCurrent={status !== Status.Initial}
+                onClick={createLink}
+            >
                 <IconButton size="large">
                     <Icon />
                 </IconButton>
