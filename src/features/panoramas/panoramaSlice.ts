@@ -20,6 +20,7 @@ export enum PanoramaStatus {
 const initialState = {
     panoramas: undefined as undefined | PanoramaType[],
     show3dMarkers: true,
+    show3dInPanorama: false,
     status: PanoramaStatus.Initial as
         | PanoramaStatus.Initial
         | [status: PanoramaStatus.Loading | PanoramaStatus.Active, id: string],
@@ -40,12 +41,16 @@ export const panoramasSlice = createSlice({
         setShow3dMarkers: (state, action: PayloadAction<State["show3dMarkers"]>) => {
             state.show3dMarkers = action.payload;
         },
+        setShow3dInPanorama: (state, action: PayloadAction<State["show3dInPanorama"]>) => {
+            state.show3dInPanorama = action.payload;
+        },
     },
 });
 
 export const selectPanoramas = (state: RootState) => state.panoramas.panoramas;
 export const selectPanoramaStatus = (state: RootState) => state.panoramas.status;
 export const selectShow3dMarkers = (state: RootState) => state.panoramas.show3dMarkers;
+export const selectShow3dInPanorama = (state: RootState) => state.panoramas.show3dInPanorama;
 
 export const selectActivePanorama = (state: RootState) => {
     const status = selectPanoramaStatus(state);

@@ -26,6 +26,7 @@ import {
     PanoramaType,
     PanoramaStatus,
     selectPanoramaStatus,
+    selectShow3dInPanorama,
 } from "features/panoramas";
 import { Loading } from "components";
 
@@ -197,6 +198,7 @@ export function Render3D({ onInit }: Props) {
     const { addingPoint, angles, points, distances, selected: selectedPoint } = measure;
     const panoramas = useAppSelector(selectPanoramas);
     const show3dMarkers = useAppSelector(selectShow3dMarkers);
+    const show3dInPanorama = useAppSelector(selectShow3dInPanorama);
     const activePanorama = useAppSelector(selectActivePanorama);
     const panoramaStatus = useAppSelector(selectPanoramaStatus);
     const urlBookmarkId = useAppSelector(selectUrlBookmarkId);
@@ -905,10 +907,10 @@ export function Render3D({ onInit }: Props) {
 
             settings.advanced.hideTriangles =
                 renderType === RenderType.Points ||
-                renderType === RenderType.Panorama ||
+                (renderType === RenderType.Panorama && !show3dInPanorama) ||
                 (Array.isArray(renderType) && renderType[1] === "points");
         },
-        [renderType, view]
+        [renderType, show3dInPanorama, view]
     );
 
     useEffect(

@@ -1,6 +1,5 @@
 import {
     Box,
-    Button,
     CircularProgress,
     css,
     FormControlLabel,
@@ -15,7 +14,7 @@ import {
 } from "@mui/material";
 import { Scene } from "@novorender/webgl-api";
 import { Fragment, useEffect, MouseEvent } from "react";
-import { CancelPresentation, VrpanoOutlined } from "@mui/icons-material";
+import { VrpanoOutlined } from "@mui/icons-material";
 
 import { featuresConfig } from "config/features";
 import { WidgetList } from "features/widgetList";
@@ -32,8 +31,15 @@ import {
 import { useExplorerGlobals } from "contexts/explorerGlobals";
 import { useToggle } from "hooks/useToggle";
 import { store, useAppDispatch, useAppSelector } from "app/store";
-import { PanoramaType, selectPanoramas } from "./panoramaSlice";
-import { panoramasActions, PanoramaStatus, selectPanoramaStatus, selectShow3dMarkers } from ".";
+import {
+    PanoramaType,
+    selectPanoramas,
+    panoramasActions,
+    PanoramaStatus,
+    selectPanoramaStatus,
+    selectShow3dInPanorama,
+    selectShow3dMarkers,
+} from "./panoramaSlice";
 import { CameraType, renderActions } from "slices/renderSlice";
 
 const ImgTooltip = styled(({ className, ...props }: TooltipProps) => (
@@ -65,8 +71,8 @@ export function Panoramas() {
     } = useExplorerGlobals(true);
 
     const panoramas = useAppSelector(selectPanoramas);
-    const status = useAppSelector(selectPanoramaStatus);
     const showMarkers = useAppSelector(selectShow3dMarkers);
+    const show3d = useAppSelector(selectShow3dInPanorama);
     const dispatch = useAppDispatch();
 
     const [menuOpen, toggleMenu] = useToggle();
@@ -81,6 +87,10 @@ export function Panoramas() {
         dispatch(panoramasActions.setShow3dMarkers(!showMarkers));
     };
 
+    const toggleShow3d = () => {
+        dispatch(panoramasActions.setShow3dInPanorama(!show3d));
+    };
+
     return (
         <>
             <WidgetContainer>
@@ -88,6 +98,7 @@ export function Panoramas() {
                     {!menuOpen && panoramas?.length ? (
                         <Box display="flex">
                             <FormControlLabel
+                                sx={{ mr: 3 }}
                                 control={
                                     <IosSwitch
                                         size="medium"
@@ -98,14 +109,12 @@ export function Panoramas() {
                                 }
                                 label={<Box fontSize={14}>Show markers</Box>}
                             />
-                            <Button
-                                color="grey"
-                                onClick={() => dispatch(panoramasActions.setStatus(PanoramaStatus.Initial))}
-                                disabled={status === PanoramaStatus.Initial}
-                            >
-                                <CancelPresentation sx={{ mr: 1 }} />
-                                Cancel
-                            </Button>
+                            <FormControlLabel
+                                control={
+                                    <IosSwitch size="medium" color="primary" checked={show3d} onChange={toggleShow3d} />
+                                }
+                                label={<Box fontSize={14}>3D in image</Box>}
+                            />
                         </Box>
                     ) : null}
                 </WidgetHeader>
