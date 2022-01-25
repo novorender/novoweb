@@ -263,7 +263,7 @@ export function Groups() {
                                     </Box>
                                 </StyledListItemButton>
 
-                                {organisedGroups.singles
+                                {[...organisedGroups.singles]
                                     .sort((a, b) => a.name.localeCompare(b.name, "en", { sensitivity: "accent" }))
                                     .map((group, index) => (
                                         <Group

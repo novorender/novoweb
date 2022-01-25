@@ -1,17 +1,21 @@
 import { FormEventHandler, useRef, useState } from "react";
-import { Box, Button, TextField } from "@mui/material";
+import { Box, Button, Checkbox, FormControlLabel, TextField } from "@mui/material";
 
 import { dataApi } from "app";
 import { useAppDispatch, useAppSelector } from "app/store";
 import { renderActions, selectBookmarks, selectEditingScene } from "slices/renderSlice";
+import { selectHasAdminCapabilities } from "slices/explorerSlice";
 import { useExplorerGlobals } from "contexts/explorerGlobals";
 import { useSceneId } from "hooks/useSceneId";
+import { useToggle } from "hooks/useToggle";
 
 import { useCreateBookmark } from "./useCreateBookmark";
+import { BookmarkAccess } from "./bookmarks";
 
 export function CreateBookmark({ onClose }: { onClose: () => void }) {
     const bookmarks = useAppSelector(selectBookmarks);
     const editingScene = useAppSelector(selectEditingScene);
+    const isAdmin = useAppSelector(selectHasAdminCapabilities);
     const dispatch = useAppDispatch();
 
     const {
@@ -22,22 +26,40 @@ export function CreateBookmark({ onClose }: { onClose: () => void }) {
 
     const [name, setName] = useState("");
     const [description, setDescription] = useState("");
+    const [personal, togglePersonal] = useToggle(true);
     const imgRef = useRef(createBookmarkImg(canvas));
     const bookmarkRef = useRef(createBookmark(imgRef.current));
 
     const handleSubmit: FormEventHandler = (e) => {
         e.preventDefault();
-        if (bookmarks) {
-            const toSave = bookmarks.concat({ ...bookmarkRef.current, name, description });
 
-            dispatch(renderActions.setBookmarks(toSave));
-            dataApi.saveBookmarks(editingScene?.id ? editingScene.id : sceneId, toSave);
+        if (!bookmarks) {
+            return;
         }
+
+        const newBookmarks = bookmarks.concat({
+            ...bookmarkRef.current,
+            name,
+            description,
+            access: personal ? BookmarkAccess.Personal : BookmarkAccess.Public,
+        });
+
+        dispatch(renderActions.setBookmarks(newBookmarks));
+        dataApi.saveBookmarks(
+            editingScene?.id ? editingScene.id : sceneId,
+            newBookmarks
+                .filter((bm) =>
+                    personal ? bm.access === BookmarkAccess.Personal : bm.access === BookmarkAccess.Public
+                )
+                .map(({ access: _access, ...bm }) => bm),
+            { personal }
+        );
+
         onClose();
     };
 
     return (
-        <Box width={1} px={1} mt={2}>
+        <Box width={1} px={1} mt={1}>
             <Box sx={{ img: { width: "100%", height: 200, objectFit: "cover" } }}>
                 <img alt="" src={imgRef.current} />
             </Box>
@@ -50,7 +72,7 @@ export function CreateBookmark({ onClose }: { onClose: () => void }) {
                     label={"Title"}
                     fullWidth
                     required
-                    sx={{ my: 1 }}
+                    sx={{ mt: 1, mb: 2 }}
                 />
                 <TextField
                     value={description}
@@ -60,8 +82,15 @@ export function CreateBookmark({ onClose }: { onClose: () => void }) {
                     fullWidth
                     multiline
                     rows={4}
-                    sx={{ mb: 2 }}
+                    sx={{ mb: 1 }}
                 />
+                {isAdmin ? (
+                    <FormControlLabel
+                        sx={{ mb: 2 }}
+                        control={<Checkbox color="primary" checked={!personal} onChange={togglePersonal} />}
+                        label={<Box mr={0.5}>Public</Box>}
+                    />
+                ) : null}
                 <Box display="flex">
                     <Button
                         color="grey"
@@ -75,7 +104,7 @@ export function CreateBookmark({ onClose }: { onClose: () => void }) {
                         Cancel
                     </Button>
                     <Button type="submit" fullWidth disabled={!name} color="primary" variant="contained" size="large">
-                        Save
+                        Add bookmark
                     </Button>
                 </Box>
             </form>

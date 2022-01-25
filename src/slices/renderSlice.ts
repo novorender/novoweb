@@ -12,6 +12,7 @@ import { vec3, vec4 } from "gl-matrix";
 
 import type { RootState } from "app/store";
 import type { WidgetKey } from "config/features";
+import { ExtendedBookmark } from "features/bookmarks/bookmarks";
 
 export const fetchEnvironments = createAsyncThunk("novorender/fetchEnvironments", async (api: API) => {
     const envs = await api.availableEnvironments("https://api.novorender.com/assets/env/index.json");
@@ -74,7 +75,7 @@ export type ClippingPlanes = Omit<RenderSettings["clippingPlanes"], "bounds"> & 
 // Redux toolkit with immer removes readonly modifier of state in the reducer so we get ts errors
 // unless we cast the types to writable ones.
 type DeepWritable<T> = { -readonly [P in keyof T]: DeepWritable<T[P]> };
-type WritableBookmark = DeepWritable<Bookmark>;
+type WritableBookmark = DeepWritable<ExtendedBookmark>;
 type CameraState =
     | { type: CameraType.Orthographic; params?: OrthoControllerParams }
     | { type: CameraType.Flight; goTo?: { position: Camera["position"]; rotation: Camera["rotation"] } };
@@ -311,7 +312,7 @@ export const selectCameraSpeedMultiplier = (state: RootState) => state.render.ca
 export const selectBaseCameraSpeed = (state: RootState) => state.render.baseCameraSpeed;
 export const selectSavedCameraPositions = (state: RootState) => state.render.savedCameraPositions;
 export const selectHomeCameraPosition = (state: RootState) => state.render.savedCameraPositions.positions[0];
-export const selectBookmarks = (state: RootState) => state.render.bookmarks as Bookmark[] | undefined;
+export const selectBookmarks = (state: RootState) => state.render.bookmarks as ExtendedBookmark[] | undefined;
 export const selectRenderType = (state: RootState) => state.render.renderType;
 export const selectClippingBox = (state: RootState) => state.render.clippingBox;
 export const selectMeasure = (state: RootState) => state.render.measure;
