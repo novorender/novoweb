@@ -1,4 +1,15 @@
-import { Box, FormControlLabel, IconButton, Radio, RadioGroup, Typography, useTheme, TextField } from "@mui/material";
+import {
+    Box,
+    FormControlLabel,
+    IconButton,
+    Radio,
+    RadioGroup,
+    Typography,
+    useTheme,
+    TextField,
+    Button,
+    Tooltip,
+} from "@mui/material";
 
 import { renderActions, selectDeviation } from "slices/renderSlice";
 import { useAppDispatch, useAppSelector } from "app/store";
@@ -8,19 +19,23 @@ import { vec4 } from "gl-matrix";
 import { useToggle } from "hooks/useToggle";
 import { ColorPicker } from "features/colorPicker/colorPicker";
 import { ColorResult } from "react-color";
-import { RefCallback, useCallback, useState } from "react";
+import { RefCallback, useCallback, useEffect, useState } from "react";
 import { useExplorerGlobals } from "contexts/explorerGlobals";
 import { useMountedState } from "hooks/useMountedState";
 import { featuresConfig } from "config/features";
 import { LogoSpeedDial, ScrollBox, WidgetContainer, WidgetHeader } from "components";
 import { WidgetList } from "features/widgetList";
 import { rgbToVec, VecRGBA } from "utils/color";
+import { selectIsAdminScene } from "slices/explorerSlice";
+import { dataApi } from "app";
+import { dataServerBaseUrl } from "config";
 
 export function Deviations() {
     const theme = useTheme();
     const [menuOpen, toggleMenu] = useToggle();
     const deviation = useAppSelector(selectDeviation);
     const { mode, colors } = deviation;
+    const isAdmin = useAppSelector(selectIsAdminScene);
     const dispatch = useAppDispatch();
 
     const {
@@ -29,15 +44,38 @@ export function Deviations() {
 
     const [containerEl, setContainerEl] = useState<HTMLDivElement | null>(null);
     const [active, setActive] = useMountedState<number>(-1);
+    const [error, setError] = useMountedState<string>("");
     const containerRef = useCallback<RefCallback<HTMLDivElement>>((el) => {
         setContainerEl(el);
     }, []);
 
+    useEffect(() => {
+        async function getProcesses() {
+            const processes = await dataApi.getProcesses();
+            const process = processes.filter((p) => p.id === scene.id)[0];
+            if (process) {
+                setError(process.state);
+            }
+        }
+        getProcesses();
+    }, [setError, scene]);
+    const process = useCallback(async () => {
+        const resp = await fetch(`${dataServerBaseUrl}/deviations/${scene.id}`, await (dataApi as any).auth());
+        const res = await resp.json();
+        if (res.success) {
+            setError("Running");
+        } else {
+            setError(res.error ?? "Undefined error");
+        }
+    }, [scene, setError]);
     const colorPickerPosition = getPickerPosition(containerEl);
 
-    function change(event: React.ChangeEvent<HTMLInputElement>, value: string) {
-        return dispatch(renderActions.setDeviation({ mode: value as "off" | "on" | "mix" }));
-    }
+    const change = useCallback(
+        (event: React.ChangeEvent<HTMLInputElement>, value: string) => {
+            return dispatch(renderActions.setDeviation({ mode: value as "off" | "on" | "mix" }));
+        },
+        [dispatch]
+    );
 
     const { subtrees } = scene;
     const use = (subtrees?.indexOf("triangles") ?? -1) > -1 && (subtrees?.indexOf("points") ?? -1) > -1;
@@ -46,18 +84,27 @@ export function Deviations() {
             <WidgetContainer>
                 <WidgetHeader widget={featuresConfig.deviations}>
                     {!menuOpen && use ? (
-                        <RadioGroup
-                            row
-                            aria-label="gender"
-                            name="row-radio-buttons-group"
-                            value={mode}
-                            onChange={change}
-                            sx={{ marginBottom: theme.spacing(1) }}
-                        >
-                            <FormControlLabel value="off" control={<Radio size="small" />} label="Off" />
-                            <FormControlLabel value="on" control={<Radio size="small" />} label="On" />
-                            <FormControlLabel value="mix" control={<Radio size="small" />} label="Mix" />
-                        </RadioGroup>
+                        <Box display="flex" justifyContent="space-between">
+                            <RadioGroup
+                                row
+                                aria-label="gender"
+                                name="row-radio-buttons-group"
+                                value={mode}
+                                onChange={change}
+                                sx={{ marginBottom: theme.spacing(1) }}
+                            >
+                                <FormControlLabel value="off" control={<Radio size="small" />} label="Off" />
+                                <FormControlLabel value="on" control={<Radio size="small" />} label="On" />
+                                <FormControlLabel value="mix" control={<Radio size="small" />} label="Mix" />
+                            </RadioGroup>
+                            {isAdmin ? (
+                                <Tooltip title={error ? error : "Calculate deviations"}>
+                                    <Button onClick={error === "" ? process : undefined}>
+                                        <featuresConfig.deviations.Icon />
+                                    </Button>
+                                </Tooltip>
+                            ) : undefined}
+                        </Box>
                     ) : null}
                 </WidgetHeader>
                 <ScrollBox p={1} display={!menuOpen ? "block" : "none"} ref={containerRef}>

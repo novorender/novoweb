@@ -138,33 +138,33 @@ export function FollowPath() {
                                 color="grey"
                                 disabled={controlPoints.length < 1 || activePoint < 1}
                             >
-                                <FirstPageIcon sx={{ mr: 1 }} />
+                                <FirstPageIcon />
                             </Button>
                             <Button
                                 onClick={to10Prev}
                                 color="grey"
                                 disabled={controlPoints.length < 1 || activePoint < 1}
                             >
-                                <DoubleChevronLeftIcon sx={{ mr: 1 }} />
+                                <DoubleChevronLeftIcon />
                             </Button>
                             <Button
                                 onClick={toPrev}
                                 color="grey"
                                 disabled={controlPoints.length < 1 || activePoint < 1}
                             >
-                                <ChevronLeftIcon sx={{ mr: 1 }} />
+                                <ChevronLeftIcon />
                             </Button>
                             <Button disabled={true} sx={{ fontWeight: "bold" }}>
                                 {controlPoints.length > 0 ? `${activePoint + 1}/${controlPoints.length}` : "0"}
                             </Button>
                             <Button onClick={toNext} color="grey" disabled={activePoint > controlPoints.length - 2}>
-                                <ChevronRightIcon sx={{ mr: 1 }} />
+                                <ChevronRightIcon />
                             </Button>
                             <Button onClick={to10Next} color="grey" disabled={activePoint > controlPoints.length - 2}>
-                                <DoubleChevronRightIcon sx={{ mr: 1 }} />
+                                <DoubleChevronRightIcon />
                             </Button>
                             <Button onClick={toLast} color="grey" disabled={activePoint > controlPoints.length - 2}>
-                                <LastPageIcon sx={{ mr: 1 }} />
+                                <LastPageIcon />
                             </Button>
                         </Box>
                     ) : null}
