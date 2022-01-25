@@ -14,10 +14,14 @@ import {
     ListItemText,
 } from "@mui/material";
 import { Delete, MoreVert } from "@mui/icons-material";
-import type { Bookmark as BookmarkType } from "@novorender/data-js-api";
 import { css } from "@mui/styled-engine";
 
 import { Tooltip } from "components";
+
+import { BookmarkAccess, ExtendedBookmark } from "./bookmarks";
+import { useAppSelector } from "app/store";
+import { selectHasAdminCapabilities } from "slices/explorerSlice";
+import { selectUser } from "slices/authSlice";
 
 const Description = styled(Typography)(
     () => css`
@@ -53,9 +57,17 @@ const Img = styled("img")(
     `
 );
 
-export function Bookmark({ bookmark, onDelete }: { bookmark: BookmarkType; onDelete: (bm: BookmarkType) => void }) {
+export function Bookmark({
+    bookmark,
+    onDelete,
+}: {
+    bookmark: ExtendedBookmark;
+    onDelete: (bm: ExtendedBookmark) => void;
+}) {
     const theme = useTheme();
     const [menuAnchor, setMenuAnchor] = useState<HTMLElement | null>(null);
+    const isAdmin = useAppSelector(selectHasAdminCapabilities);
+    const user = useAppSelector(selectUser);
 
     const openMenu = (e: MouseEvent<HTMLButtonElement>) => {
         e.stopPropagation();
@@ -90,15 +102,17 @@ export function Bookmark({ bookmark, onDelete }: { bookmark: BookmarkType; onDel
                                 {bookmark.name}
                             </Typography>
                         </Tooltip>
-                        <IconButton
-                            color={Boolean(menuAnchor) ? "primary" : "default"}
-                            size="small"
-                            sx={{ ml: "auto", py: 0 }}
-                            aria-haspopup="true"
-                            onClick={openMenu}
-                        >
-                            <MoreVert />
-                        </IconButton>
+                        {isAdmin || (bookmark.access === BookmarkAccess.Personal && user) ? (
+                            <IconButton
+                                color={Boolean(menuAnchor) ? "primary" : "default"}
+                                size="small"
+                                sx={{ ml: "auto", py: 0 }}
+                                aria-haspopup="true"
+                                onClick={openMenu}
+                            >
+                                <MoreVert />
+                            </IconButton>
+                        ) : null}
                     </Box>
                     {bookmark.description ? (
                         <Tooltip disableInteractive title={bookmark.description}>
