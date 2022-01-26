@@ -147,6 +147,3 @@ export function SelectionBasket() {
         </>
     );
 }
-
-// add alltid highlighta
-// hvis strict -> kan basically ikje adda
