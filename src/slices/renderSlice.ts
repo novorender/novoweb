@@ -68,6 +68,11 @@ export enum AdvancedSetting {
     PointToleranceFactor = "pointToleranceFactor",
 }
 
+export enum SelectionBasketMode {
+    Strict,
+    Loose,
+}
+
 type CameraPosition = Pick<Camera, "position" | "rotation">;
 export type ObjectGroups = { default: ObjectGroup; defaultHidden: ObjectGroup; custom: ObjectGroup[] };
 export type ClippingPlanes = Omit<RenderSettings["clippingPlanes"], "bounds"> & { defining: boolean };
@@ -94,6 +99,7 @@ const initialState = {
     renderType: RenderType.TrianglesAndPoints as
         | Exclude<RenderType, RenderType.UnChangeable>
         | [RenderType.UnChangeable, "points" | "triangles"],
+    selectionBasketMode: SelectionBasketMode.Loose,
     clippingBox: {
         defining: false,
         enabled: false,
@@ -221,6 +227,9 @@ export const renderSlice = createSlice({
         setRenderType: (state, action: PayloadAction<State["renderType"]>) => {
             state.renderType = action.payload;
         },
+        setSelectionBasketMode: (state, action: PayloadAction<State["selectionBasketMode"]>) => {
+            state.selectionBasketMode = action.payload;
+        },
         setClippingBox: (state, action: PayloadAction<Partial<ClippingPlanes>>) => {
             state.clippingBox = { ...state.clippingBox, ...action.payload };
         },
@@ -314,6 +323,7 @@ export const selectSavedCameraPositions = (state: RootState) => state.render.sav
 export const selectHomeCameraPosition = (state: RootState) => state.render.savedCameraPositions.positions[0];
 export const selectBookmarks = (state: RootState) => state.render.bookmarks as ExtendedBookmark[] | undefined;
 export const selectRenderType = (state: RootState) => state.render.renderType;
+export const selectSelectionBasketMode = (state: RootState) => state.render.selectionBasketMode;
 export const selectClippingBox = (state: RootState) => state.render.clippingBox;
 export const selectMeasure = (state: RootState) => state.render.measure;
 export const selectClippingPlanes = (state: RootState) => state.render.clippingPlanes;
