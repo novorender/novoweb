@@ -29,6 +29,7 @@ import {
     renderActions,
     RenderState,
     RenderType,
+    SelectionBasketMode,
 } from "slices/renderSlice";
 import { VecRGB, VecRGBA } from "utils/color";
 import { sleep } from "utils/timers";
@@ -188,6 +189,7 @@ export async function refillObjects({
     view,
     objectGroups,
     defaultVisibility,
+    selectionBasket,
 }: {
     sceneId: string;
     scene: Scene;
@@ -196,6 +198,11 @@ export async function refillObjects({
         | { id: string; ids: ObjectId[]; color: VecRGB | VecRGBA; selected: boolean; hidden: boolean }
         | { id: string; ids: ObjectId[]; neutral: true; hidden: false; selected: true }
     )[];
+    selectionBasket: {
+        ids: Record<number, true | undefined>;
+        idArr: number[];
+        mode: SelectionBasketMode;
+    };
     defaultVisibility: ObjectVisibility;
 }): Promise<void> {
     if (!view || !scene) {
@@ -225,8 +232,17 @@ export async function refillObjects({
                     store.dispatch(groupsActions.setLoadingIds(true));
                     group.ids = await dataApi.getGroupIds(sceneId, group.id);
                 }
-                for (const id of group.ids) {
-                    objectHighlighter.objectHighlightIndices[id] = index + 1;
+
+                if (selectionBasket.mode === SelectionBasketMode.Loose) {
+                    for (const id of group.ids) {
+                        objectHighlighter.objectHighlightIndices[id] = index + 1;
+                    }
+                } else {
+                    for (const id of group.ids) {
+                        if (selectionBasket.ids[id]) {
+                            objectHighlighter.objectHighlightIndices[id] = index + 1;
+                        }
+                    }
                 }
             }
         })
