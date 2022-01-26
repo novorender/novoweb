@@ -55,9 +55,9 @@ export const featuresConfig = {
         Icon: MovieIcon,
         type: FeatureType.AdminWidget,
     },
-    layers: {
-        key: "layers",
-        name: "Layers",
+    selectionBasket: {
+        key: "selectionBasket",
+        name: "Sel. basket",
         Icon: LayersIcon,
         type: FeatureType.Widget,
     },

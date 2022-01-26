@@ -128,6 +128,7 @@ function enabledFeaturesToFeatureKeys(enabledFeatures: Record<string, boolean>):
         measurement: [featuresConfig.measure.key, featuresConfig.orthoCam.key],
         clipping: [featuresConfig.clippingBox.key, featuresConfig.clippingPlanes.key],
         tree: featuresConfig.modelTree.key,
+        layers: [featuresConfig.selectionBasket.key],
     };
 
     const features: Record<string, boolean> = {
