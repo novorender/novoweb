@@ -64,7 +64,15 @@ function ExplorerBase() {
         if (oAuthState && oAuthState.service === featuresConfig.bimcollab.key) {
             dispatch(explorerActions.setWidgets([featuresConfig.bimcollab.key]));
         } else {
-            const selectionOnly = new URLSearchParams(window.location.search).get("selectionOnly") ?? "";
+            const searchParams = new URLSearchParams(window.location.search);
+
+            const bookmarkId = searchParams.get("bookmarkId");
+            if (bookmarkId) {
+                dispatch(explorerActions.setUrlBookmarkId(bookmarkId));
+                return;
+            }
+
+            const selectionOnly = searchParams.get("selectionOnly") ?? "";
             dispatch(explorerActions.setUrlSearchQuery({ query: getUrlSearchQuery(), selectionOnly }));
         }
     };

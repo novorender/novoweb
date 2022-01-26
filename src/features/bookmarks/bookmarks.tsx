@@ -22,55 +22,73 @@ import { useAppDispatch, useAppSelector } from "app/store";
 import { ScrollBox, WidgetContainer, LogoSpeedDial, WidgetHeader, TextField, Confirmation } from "components";
 import { WidgetList } from "features/widgetList";
 
-import { CameraType, ObjectVisibility, renderActions, selectBookmarks, selectEditingScene } from "slices/renderSlice";
-import { selectHasAdminCapabilities } from "slices/explorerSlice";
-import { highlightActions, useDispatchHighlighted } from "contexts/highlighted";
-import { hiddenGroupActions, useDispatchHidden } from "contexts/hidden";
-import { customGroupsActions, useCustomGroups } from "contexts/customGroups";
-import { useExplorerGlobals } from "contexts/explorerGlobals";
-import { useDispatchVisible, visibleActions } from "contexts/visible";
+import { renderActions, selectBookmarks, selectEditingScene } from "slices/renderSlice";
+import { selectUser } from "slices/authSlice";
 
 import { CreateBookmark } from "./createBookmark";
 import { Bookmark } from "./bookmark";
+import { useSelectBookmark } from "./useSelectBookmark";
 
 type Filters = {
     title: string;
     measurements: boolean;
     clipping: boolean;
     groups: boolean;
+    personal: boolean;
+    public: boolean;
 };
+
+export enum BookmarkAccess {
+    Public,
+    Personal,
+}
+
+export type ExtendedBookmark = BookmarkType & { access: BookmarkAccess };
 
 export function Bookmarks() {
     const theme = useTheme();
     const [menuOpen, toggleMenu] = useToggle();
 
-    const dispatchVisible = useDispatchVisible();
-    const dispatchHighlighted = useDispatchHighlighted();
-    const dispatchHidden = useDispatchHidden();
-    const { state: customGroups, dispatch: dispatchCustom } = useCustomGroups();
-    const {
-        state: { view },
-    } = useExplorerGlobals(true);
+    const handleSelect = useSelectBookmark();
     const sceneId = useSceneId();
 
     const bookmarks = useAppSelector(selectBookmarks);
-    const isAdmin = useAppSelector(selectHasAdminCapabilities);
+    const user = useAppSelector(selectUser);
     const editingScene = useAppSelector(selectEditingScene);
     const dispatch = useAppDispatch();
 
     const [filterMenuAnchor, setFilterMenuAnchor] = useState<HTMLElement | null>(null);
-    const [filters, setFilters] = useState({ title: "", measurements: false, clipping: false, groups: false });
+    const [filters, setFilters] = useState({
+        title: "",
+        measurements: false,
+        clipping: false,
+        groups: false,
+        personal: false,
+        public: false,
+    } as Filters);
     const [filteredBookmarks, setFilteredBookmarks] = useState(bookmarks);
-    const [bookmarkToDelete, setBookmarkToDelete] = useState<BookmarkType>();
+    const [bookmarkToDelete, setBookmarkToDelete] = useState<ExtendedBookmark>();
     const [creatingBookmark, toggleCreatingBookmark] = useToggle();
 
     useEffect(() => {
         if (!bookmarks) {
             loadBookmarks(sceneId);
         }
+
         async function loadBookmarks(sceneId: string) {
-            const bmks = await dataApi.getBookmarks(sceneId);
-            dispatch(renderActions.setBookmarks(bmks));
+            try {
+                const [publicBmks, personalBmks] = await Promise.all([
+                    dataApi.getBookmarks(sceneId),
+                    dataApi.getBookmarks(sceneId, { personal: true }).catch(() => []), // request fails if not logged in
+                ]);
+
+                dispatch(
+                    renderActions.setBookmarks([
+                        ...publicBmks.map((bm) => ({ ...bm, access: BookmarkAccess.Public })),
+                        ...personalBmks.map((bm) => ({ ...bm, access: BookmarkAccess.Personal })),
+                    ])
+                );
+            } catch {}
         }
     }, [bookmarks, dispatch, sceneId]);
 
@@ -90,80 +108,30 @@ export function Bookmarks() {
         setFilterMenuAnchor(null);
     };
 
-    function handleSelect(bookmark: BookmarkType) {
-        dispatchVisible(visibleActions.set([]));
-
-        const bmDefaultGroup = bookmark.objectGroups?.find((group) => !group.id && group.selected);
-        dispatchHighlighted(highlightActions.setIds((bmDefaultGroup?.ids as number[] | undefined) ?? []));
-
-        const bmHiddenGroup = bookmark.objectGroups?.find((group) => !group.id && group.hidden);
-        dispatchHidden(hiddenGroupActions.setIds((bmHiddenGroup?.ids as number[] | undefined) ?? []));
-
-        const updatedCustomGroups = customGroups.map((group) => {
-            const bookmarked = bookmark.objectGroups?.find((bmGroup) => bmGroup.id === group.id);
-
-            return {
-                ...group,
-                selected: bookmarked ? bookmarked.selected : false,
-                hidden: bookmarked ? bookmarked.hidden : false,
-            };
-        });
-
-        dispatchCustom(customGroupsActions.set(updatedCustomGroups));
-
-        const main = bmDefaultGroup && bmDefaultGroup.ids?.length ? bmDefaultGroup.ids.slice(-1)[0] : undefined;
-        dispatch(renderActions.setMainObject(main));
-
-        if (bookmark.selectedOnly !== undefined) {
-            dispatch(
-                renderActions.setDefaultVisibility(
-                    bookmark.selectedOnly ? ObjectVisibility.SemiTransparent : ObjectVisibility.Neutral
-                )
-            );
-        }
-
-        if (bookmark.measurement) {
-            dispatch(renderActions.setMeasurePoints(bookmark.measurement));
-        } else {
-            dispatch(renderActions.setMeasurePoints([]));
-        }
-
-        if (bookmark.clippingPlanes) {
-            view.applySettings({ clippingPlanes: { ...bookmark.clippingPlanes, highlight: -1 } });
-            dispatch(renderActions.setClippingBox({ ...bookmark.clippingPlanes, highlight: -1, defining: false }));
-        } else {
-            dispatch(renderActions.resetClippingBox());
-        }
-
-        if (bookmark.clippingVolume) {
-            const { enabled, mode, planes } = bookmark.clippingVolume;
-            dispatch(renderActions.setClippingPlanes({ enabled, mode, planes: Array.from(planes), defining: false }));
-        } else {
-            dispatch(renderActions.setClippingPlanes({ defining: false, planes: [], enabled: false, mode: "union" }));
-        }
-
-        if (bookmark.ortho) {
-            dispatch(renderActions.setCamera({ type: CameraType.Orthographic, params: bookmark.ortho }));
-        } else if (bookmark.camera) {
-            dispatch(renderActions.setCamera({ type: CameraType.Flight, goTo: bookmark.camera }));
-            dispatch(renderActions.setSelectingOrthoPoint(false));
-        }
-    }
-
     const handleDelete = () => {
-        if (!bookmarks) {
+        if (!bookmarks || !bookmarkToDelete) {
             return;
         }
-        const toSave = bookmarks.filter((bm) => bm !== bookmarkToDelete);
 
-        dispatch(renderActions.setBookmarks(toSave));
+        const personal = bookmarkToDelete.access === BookmarkAccess.Personal;
+        const newBookmarks = bookmarks.filter((bm) => bm !== bookmarkToDelete);
+
         setBookmarkToDelete(undefined);
-        dataApi.saveBookmarks(editingScene?.id ? editingScene.id : sceneId, toSave);
+        dispatch(renderActions.setBookmarks(newBookmarks));
+        dataApi.saveBookmarks(
+            editingScene?.id ? editingScene.id : sceneId,
+            newBookmarks
+                .filter((bm) =>
+                    personal ? bm.access === BookmarkAccess.Personal : bm.access === BookmarkAccess.Public
+                )
+                .map(({ access: _access, ...bm }) => bm),
+            { personal }
+        );
     };
 
     const filtersOpen = Boolean(filterMenuAnchor) && !menuOpen && !creatingBookmark && !bookmarkToDelete;
     const filterMenuId = "filter-menu";
-    const allFiltersChecked = filters.clipping && filters.groups && filters.measurements;
+    // const allFiltersChecked = filters.clipping && filters.groups && filters.measurements;
     return (
         <>
             <WidgetContainer>
@@ -180,7 +148,7 @@ export function Bookmarks() {
                                 <FilterAlt sx={{ mr: 1 }} />
                                 Filters
                             </Button>
-                            {isAdmin ? (
+                            {user ? (
                                 <Button color="grey" onClick={toggleCreatingBookmark}>
                                     <AddCircle sx={{ mr: 1 }} />
                                     Add bookmark
@@ -216,7 +184,7 @@ export function Bookmarks() {
                             }}
                         />
                     </MenuItem>
-                    <MenuItem
+                    {/*                     <MenuItem
                         onClick={() =>
                             setFilters((state) => ({
                                 ...state,
@@ -229,7 +197,7 @@ export function Bookmarks() {
                     >
                         <Typography>All</Typography>
                         <Checkbox checked={allFiltersChecked} />
-                    </MenuItem>
+                    </MenuItem> */}
                     <MenuItem
                         onClick={() => setFilters((state) => ({ ...state, measurements: !state.measurements }))}
                         sx={{ display: "flex", justifyContent: "space-between" }}
@@ -251,6 +219,38 @@ export function Bookmarks() {
                         <Typography>Groups</Typography>
                         <Checkbox checked={filters.groups} />
                     </MenuItem>
+                    {user
+                        ? [
+                              <MenuItem
+                                  key="personal"
+                                  onClick={() =>
+                                      setFilters((state) => ({
+                                          ...state,
+                                          personal: !state.personal,
+                                          public: !state.personal ? false : state.public,
+                                      }))
+                                  }
+                                  sx={{ display: "flex", justifyContent: "space-between" }}
+                              >
+                                  <Typography>Personal</Typography>
+                                  <Checkbox checked={filters.personal} />
+                              </MenuItem>,
+                              <MenuItem
+                                  key="public"
+                                  onClick={() =>
+                                      setFilters((state) => ({
+                                          ...state,
+                                          public: !state.public,
+                                          personal: !state.public ? false : state.personal,
+                                      }))
+                                  }
+                                  sx={{ display: "flex", justifyContent: "space-between" }}
+                              >
+                                  <Typography>Public</Typography>
+                                  <Checkbox checked={filters.public} />
+                              </MenuItem>,
+                          ]
+                        : null}
                 </Menu>
                 {!bookmarks ? <LinearProgress /> : null}
                 <ScrollBox display={menuOpen ? "none" : "flex"} flexDirection="column" pb={2} height={1}>
@@ -265,16 +265,18 @@ export function Bookmarks() {
                         />
                     ) : (
                         <List sx={{ width: 1 }}>
-                            {filteredBookmarks?.map((bookmark, index) => (
-                                <ListItem
-                                    key={bookmark.name + index}
-                                    sx={{ padding: `${theme.spacing(0.5)} ${theme.spacing(1)}` }}
-                                    button
-                                    onClick={() => handleSelect(bookmark)}
-                                >
-                                    <Bookmark bookmark={bookmark} onDelete={setBookmarkToDelete} />
-                                </ListItem>
-                            ))}
+                            {[...(filteredBookmarks || [])]
+                                .sort((a, b) => a.name.localeCompare(b.name, "en", { sensitivity: "accent" }))
+                                .map((bookmark, index) => (
+                                    <ListItem
+                                        key={bookmark.name + index}
+                                        sx={{ padding: `${theme.spacing(0.5)} ${theme.spacing(1)}` }}
+                                        button
+                                        onClick={() => handleSelect(bookmark)}
+                                    >
+                                        <Bookmark bookmark={bookmark} onDelete={setBookmarkToDelete} />
+                                    </ListItem>
+                                ))}
                         </List>
                     )}
                 </ScrollBox>
@@ -293,12 +295,24 @@ export function Bookmarks() {
     );
 }
 
-function applyFilters(bookmarks: BookmarkType[], filters: Filters): BookmarkType[] {
+function applyFilters(bookmarks: ExtendedBookmark[], filters: Filters): ExtendedBookmark[] {
     const titleMatcher = new RegExp(filters.title, "gi");
 
     return bookmarks.filter((bm) => {
         if (filters.title) {
             if (!titleMatcher.test(bm.name)) {
+                return false;
+            }
+        }
+
+        if (filters.personal) {
+            if (bm.access !== BookmarkAccess.Personal) {
+                return false;
+            }
+        }
+
+        if (filters.public) {
+            if (bm.access !== BookmarkAccess.Public) {
                 return false;
             }
         }

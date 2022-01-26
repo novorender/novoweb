@@ -64,7 +64,7 @@ import {
     selectDeviation,
 } from "slices/renderSlice";
 import { authActions } from "slices/authSlice";
-import { explorerActions } from "slices/explorerSlice";
+import { explorerActions, selectUrlBookmarkId } from "slices/explorerSlice";
 import { useAppDispatch, useAppSelector } from "app/store";
 
 import { useHighlighted, highlightActions, useDispatchHighlighted } from "contexts/highlighted";
@@ -89,6 +89,7 @@ import {
 } from "./utils";
 import { xAxis, yAxis, axis } from "./consts";
 import { featuresConfig, WidgetKey } from "config/features";
+import { useSelectBookmark } from "features/bookmarks/useSelectBookmark";
 
 glMatrix.setMatrixArrayType(Array);
 
@@ -172,6 +173,7 @@ export function Render3D({ onInit }: Props) {
         state: { view, scene, canvas, preloadedScene },
         dispatch: dispatchGlobals,
     } = useExplorerGlobals();
+    const selectBookmark = useSelectBookmark();
 
     const env = useAppSelector(selectCurrentEnvironment);
     const environments = useAppSelector(selectEnvironments);
@@ -197,6 +199,7 @@ export function Render3D({ onInit }: Props) {
     const show3dMarkers = useAppSelector(selectShow3dMarkers);
     const activePanorama = useAppSelector(selectActivePanorama);
     const panoramaStatus = useAppSelector(selectPanoramaStatus);
+    const urlBookmarkId = useAppSelector(selectUrlBookmarkId);
     const dispatch = useAppDispatch();
 
     const rendering = useRef({ start: () => Promise.resolve(), stop: () => {}, update: () => {} } as ReturnType<
@@ -1194,6 +1197,30 @@ export function Render3D({ onInit }: Props) {
         },
         [panoramas, activePanorama, scene, view, dispatch, panoramaStatus, panoramaAbortController, abortPanorama]
     );
+
+    useEffect(() => {
+        handleUrlBookmark();
+
+        async function handleUrlBookmark() {
+            if (!view || !urlBookmarkId) {
+                return;
+            }
+
+            dispatch(explorerActions.setUrlBookmarkId(undefined));
+
+            try {
+                const bookmark = (await dataApi.getBookmarks(id, { group: urlBookmarkId })).find(
+                    (bm) => bm.id === urlBookmarkId
+                );
+
+                if (!bookmark) {
+                    return;
+                }
+
+                selectBookmark(bookmark);
+            } catch {}
+        }
+    }, [view, id, dispatch, selectBookmark, urlBookmarkId]);
 
     const exitPointerLock = () => {
         if ("exitPointerLock" in window.document) {

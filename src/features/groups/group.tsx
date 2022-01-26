@@ -54,7 +54,10 @@ export function Group({
                 disabled={disableChanges}
                 onClick={() =>
                     dispatchCustomGroups(
-                        customGroupsActions.update(group.id, { selected: !group.selected, hidden: group.selected })
+                        customGroupsActions.update(group.id, {
+                            selected: !group.selected,
+                            hidden: !group.selected ? false : group.hidden,
+                        })
                     )
                 }
             >
