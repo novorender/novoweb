@@ -128,13 +128,17 @@ export function Properties() {
                 return;
             }
 
+            const cleanedObjectData = { ...objectData, properties: objectData.properties.slice(0, 100) };
             const parent = await searchFirstObjectAtPath({ scene, path: getParentPath(objectData.path) });
 
             if (parent) {
-                const parentPropertiesObject = createPropertiesObject(parent);
-                setObject({ ...createPropertiesObject(objectData), parent: parentPropertiesObject });
+                const parentPropertiesObject = createPropertiesObject({
+                    ...parent,
+                    properties: parent.properties.slice(0, 50),
+                });
+                setObject({ ...createPropertiesObject(cleanedObjectData), parent: parentPropertiesObject });
             } else {
-                setObject(createPropertiesObject(objectData));
+                setObject(createPropertiesObject(cleanedObjectData));
             }
 
             setStatus(Status.Initial);
@@ -302,9 +306,9 @@ function PropertyList({ object, handleChange, searches, nameWidth, resizing }: P
                 <List sx={{ padding: `0 0 ${theme.spacing(1)}`, "& .propertyName": { width: nameWidth } }}>
                     {object.base
                         .filter((property) => property[1])
-                        .map(([property, value]) => (
+                        .map(([property, value], idx) => (
                             <PropertyItem
-                                key={property + value}
+                                key={property + value + idx}
                                 property={property}
                                 value={value}
                                 checked={searches[property] !== undefined && searches[property].value === value}
@@ -325,9 +329,9 @@ function PropertyList({ object, handleChange, searches, nameWidth, resizing }: P
                         <List sx={{ padding: 0, "& .propertyName": { width: nameWidth } }}>
                             {group.properties
                                 .filter((property) => property[1])
-                                .map(([property, value]) => (
+                                .map(([property, value], idx) => (
                                     <PropertyItem
-                                        key={property + value}
+                                        key={group.name + property + value + idx}
                                         groupName={group.name}
                                         property={property}
                                         value={value}
