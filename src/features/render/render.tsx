@@ -62,6 +62,7 @@ import {
     SceneEditStatus,
     selectAdvancedSettings,
     selectDeviation,
+    selectSelectionBasketMode,
 } from "slices/renderSlice";
 import { authActions } from "slices/authSlice";
 import { explorerActions, selectUrlBookmarkId } from "slices/explorerSlice";
@@ -187,6 +188,7 @@ export function Render3D({ onInit }: Props) {
     const savedCameraPositions = useAppSelector(selectSavedCameraPositions);
     const selectMultiple = useAppSelector(selectSelectMultiple);
     const renderType = useAppSelector(selectRenderType);
+    const selectionBasketMode = useAppSelector(selectSelectionBasketMode);
     const clippingBox = useAppSelector(selectClippingBox);
     const clippingPlanes = useAppSelector(selectClippingPlanes);
     const cameraState = useAppSelector(selectCamera);
@@ -847,9 +849,10 @@ export function Render3D({ onInit }: Props) {
         function handleObjectHighlightChanges() {
             if (scene && view) {
                 refillObjects({
-                    sceneId: id,
                     scene,
                     view,
+                    defaultVisibility,
+                    sceneId: id,
                     objectGroups: [
                         { id: "", ids: hiddenObjects.idArr, hidden: true, selected: false, color: [0, 0, 0] },
                         { id: "", ids: visibleObjects.idArr, hidden: false, selected: true, neutral: true },
@@ -862,7 +865,7 @@ export function Render3D({ onInit }: Props) {
                             selected: true,
                         },
                     ],
-                    defaultVisibility,
+                    selectionBasket: { ...visibleObjects, mode: selectionBasketMode },
                 });
             }
         },
@@ -876,6 +879,7 @@ export function Render3D({ onInit }: Props) {
             highlightedObjects,
             hiddenObjects,
             visibleObjects,
+            selectionBasketMode,
         ]
     );
 

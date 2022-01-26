@@ -19,7 +19,7 @@ import { OrthoCam } from "features/orthoCam";
 import { Panoramas } from "features/panoramas";
 import { AdvancedSettings } from "features/advancedSettings";
 import { BimCollab } from "features/bimCollab";
-import { Layers } from "features/layers";
+import { SelectionBasket } from "features/selectionBasket";
 import { MenuWidget } from "features/menuWidget";
 import { Deviations } from "features/deviations";
 
@@ -91,8 +91,8 @@ function getWidgetByKey(key: WidgetKey): JSX.Element | string {
             return <Panoramas />;
         case featuresConfig.advancedSettings.key:
             return <AdvancedSettings />;
-        case featuresConfig.layers.key:
-            return <Layers />;
+        case featuresConfig.selectionBasket.key:
+            return <SelectionBasket />;
         case featuresConfig.deviations.key:
             return <Deviations />;
         default:

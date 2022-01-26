@@ -92,7 +92,9 @@ export const explorerSlice = createSlice({
             if ((Array.isArray(patterns) && patterns.length) || (!Array.isArray(patterns) && patterns)) {
                 state.widgets = [
                     featuresConfig.search.key,
-                    action.payload?.selectionOnly === "3" ? featuresConfig.layers.key : featuresConfig.properties.key,
+                    action.payload?.selectionOnly === "3"
+                        ? featuresConfig.selectionBasket.key
+                        : featuresConfig.properties.key,
                 ];
             }
         },
