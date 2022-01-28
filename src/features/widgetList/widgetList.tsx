@@ -12,7 +12,7 @@ const sorting = [
     featuresConfig.properties.key,
     featuresConfig.modelTree.key,
     featuresConfig.bookmarks.key,
-    featuresConfig.layers.key,
+    featuresConfig.selectionBasket.key,
     featuresConfig.groups.key,
     featuresConfig.search.key,
     featuresConfig.measure.key,

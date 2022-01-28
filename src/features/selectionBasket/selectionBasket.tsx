@@ -2,7 +2,7 @@ import { AddCircle, DeleteSweep, RemoveCircle } from "@mui/icons-material";
 import { Box, Button, Typography, RadioGroup, FormControlLabel, Radio } from "@mui/material";
 
 import { useAppDispatch, useAppSelector } from "app/store";
-import { Divider, LogoSpeedDial, WidgetContainer, WidgetHeader } from "components";
+import { Divider, IosSwitch, LogoSpeedDial, WidgetContainer, WidgetHeader } from "components";
 import { featuresConfig } from "config/features";
 import { useToggle } from "hooks/useToggle";
 import { WidgetList } from "features/widgetList";
@@ -10,11 +10,19 @@ import { WidgetList } from "features/widgetList";
 import { customGroupsActions, useCustomGroups } from "contexts/customGroups";
 import { highlightActions, useDispatchHighlighted, useHighlighted } from "contexts/highlighted";
 import { useDispatchVisible, useVisible, visibleActions } from "contexts/visible";
-import { ObjectVisibility, renderActions, selectDefaultVisibility } from "slices/renderSlice";
+import {
+    ObjectVisibility,
+    renderActions,
+    selectDefaultVisibility,
+    SelectionBasketMode,
+    selectSelectionBasketMode,
+} from "slices/renderSlice";
+import { useEffect } from "react";
 
-export function Layers() {
+export function SelectionBasket() {
     const [menuOpen, toggleMenu] = useToggle();
     const defaultVisibility = useAppSelector(selectDefaultVisibility);
+    const mode = useAppSelector(selectSelectionBasketMode);
     const { idArr: highlighted } = useHighlighted();
     const { idArr: visible } = useVisible();
     const { state: customGroups, dispatch: dispatchCustomGroups } = useCustomGroups();
@@ -25,6 +33,12 @@ export function Layers() {
 
     const selectedGroups = customGroups.filter((group) => group.selected);
     const hasHighlighted = highlighted.length || selectedGroups.length;
+
+    useEffect(() => {
+        if (mode === SelectionBasketMode.Strict && !visible.length) {
+            dispatch(renderActions.setSelectionBasketMode(SelectionBasketMode.Loose));
+        }
+    }, [visible, mode, dispatch]);
 
     const handleAdd = () => {
         const fromGroup = selectedGroups.map((grp) => grp.ids).flat();
@@ -54,10 +68,14 @@ export function Layers() {
     return (
         <>
             <WidgetContainer>
-                <WidgetHeader widget={featuresConfig.layers}>
+                <WidgetHeader widget={{ ...featuresConfig.selectionBasket, name: "Selection basket" as any }}>
                     {!menuOpen ? (
                         <Box display="flex" justifyContent="space-between">
-                            <Button color="grey" disabled={!hasHighlighted} onClick={handleAdd}>
+                            <Button
+                                color="grey"
+                                disabled={!hasHighlighted || mode === SelectionBasketMode.Strict}
+                                onClick={handleAdd}
+                            >
                                 <AddCircle sx={{ mr: 1 }} />
                                 Add
                             </Button>
@@ -73,7 +91,27 @@ export function Layers() {
                     ) : null}
                 </WidgetHeader>
                 <Box display={menuOpen ? "none" : "flex"} flexDirection="column" p={1} mt={1}>
-                    <Typography sx={{ mb: 2 }}>Objects in layer: {visible.length}</Typography>
+                    <Typography sx={{ mb: 2 }}>Objects in basket: {visible.length}</Typography>
+                    <FormControlLabel
+                        control={
+                            <IosSwitch
+                                size="medium"
+                                color="primary"
+                                disabled={!visible.length}
+                                checked={mode === SelectionBasketMode.Strict}
+                                onChange={() =>
+                                    dispatch(
+                                        renderActions.setSelectionBasketMode(
+                                            mode === SelectionBasketMode.Strict
+                                                ? SelectionBasketMode.Loose
+                                                : SelectionBasketMode.Strict
+                                        )
+                                    )
+                                }
+                            />
+                        }
+                        label={<Box fontSize={14}>Highlight only from basket</Box>}
+                    />
                     <Divider sx={{ mb: 2 }} />
                     <Typography fontWeight={600}>View mode</Typography>
                     <RadioGroup
@@ -86,25 +124,25 @@ export function Layers() {
                         <FormControlLabel
                             value={ObjectVisibility.SemiTransparent}
                             control={<Radio />}
-                            label="Layer - Semi-transparent"
+                            label="Basket - Semi-transparent"
                         />
                         <FormControlLabel
                             value={ObjectVisibility.Transparent}
                             control={<Radio />}
-                            label="Layer - Transparent"
+                            label="Basket - Transparent"
                         />
                     </RadioGroup>
                 </Box>
                 <WidgetList
                     display={menuOpen ? "block" : "none"}
-                    widgetKey={featuresConfig.layers.key}
+                    widgetKey={featuresConfig.selectionBasket.key}
                     onSelect={toggleMenu}
                 />
             </WidgetContainer>
             <LogoSpeedDial
                 open={menuOpen}
                 toggle={toggleMenu}
-                testId={`${featuresConfig.layers.key}-widget-menu-fab`}
+                testId={`${featuresConfig.selectionBasket.key}-widget-menu-fab`}
             />
         </>
     );
