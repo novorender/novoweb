@@ -200,9 +200,15 @@ export function FollowPath() {
             return;
         }
 
-        let next = Number(profile) - Number(step);
+        if (!step) {
+            dispatch(followPathActions.setStep("1"));
+        }
 
-        if (next < profileRange.min) {
+        let next = Number(profile) - Number(step || "1");
+
+        if (next > profileRange.max) {
+            next = profileRange.max;
+        } else if (next < profileRange.min) {
             next = profileRange.min;
         }
 
@@ -215,10 +221,16 @@ export function FollowPath() {
             return;
         }
 
-        let next = Number(profile) + Number(step);
+        if (!step) {
+            dispatch(followPathActions.setStep("1"));
+        }
+
+        let next = Number(profile) + Number(step || "1");
 
         if (next > profileRange.max) {
             next = profileRange.max;
+        } else if (next < profileRange.min) {
+            next = profileRange.min;
         }
 
         dispatch(followPathActions.setProfile(next.toFixed(3)));
@@ -244,8 +256,12 @@ export function FollowPath() {
                                         }
                                         label={<Box fontSize={14}>2D</Box>}
                                     />
-                                    <Box display="flex" alignItems="center">
-                                        <Button color="grey" onClick={handlePrev}>
+                                    <Box my={2} display="flex" alignItems="center">
+                                        <Button
+                                            disabled={profileRange?.min.toFixed(3) === profile}
+                                            color="grey"
+                                            onClick={handlePrev}
+                                        >
                                             <ArrowBack />
                                         </Button>
                                         <TextField
@@ -256,7 +272,11 @@ export function FollowPath() {
                                             InputProps={{ size: "small" }}
                                             onChange={(e) => dispatch(followPathActions.setStep(e.target.value))}
                                         />
-                                        <Button color="grey" onClick={handleNext}>
+                                        <Button
+                                            disabled={profileRange?.max.toFixed(3) === profile}
+                                            color="grey"
+                                            onClick={handleNext}
+                                        >
                                             <ArrowForward />
                                         </Button>
                                     </Box>
