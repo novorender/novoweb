@@ -994,13 +994,7 @@ export function Render3D({ onInit }: Props) {
                 view.camera.controller = controller;
 
                 if (cameraState.goTo) {
-                    const sameCameraPosition =
-                        vec3.equals(view.camera.position, cameraState.goTo.position) &&
-                        quat.equals(view.camera.rotation, cameraState.goTo.rotation);
-
-                    if (!sameCameraPosition) {
-                        view.camera.controller.moveTo(cameraState.goTo.position, cameraState.goTo.rotation);
-                    }
+                    view.camera.controller.moveTo(cameraState.goTo.position, cameraState.goTo.rotation);
                 }
             } else if (cameraState.type === CameraType.Orthographic && cameraState.params) {
                 // copy non-primitives

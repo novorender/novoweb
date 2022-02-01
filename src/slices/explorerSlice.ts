@@ -18,7 +18,8 @@ export enum UserRole {
 
 const initialState = {
     enabledWidgets: defaultEnabledWidgets as WidgetKey[],
-    disabledWidgets: [featuresConfig.advancedSettings.key, featuresConfig.viewerScenes.key] as WidgetKey[],
+    // TODO(OLA)
+    disabledWidgets: [/* featuresConfig.advancedSettings.key, */ featuresConfig.viewerScenes.key] as WidgetKey[],
     sceneType: SceneType.Viewer,
     userRole: UserRole.Viewer,
     viewerScenes: [] as ScenePreview[],

@@ -1,20 +1,22 @@
 import { FormEvent, useEffect } from "react";
-import { Box, Button, FormControlLabel, List, ListItemButton, Typography } from "@mui/material";
-import { ArrowBack, ArrowForward, LinearScale } from "@mui/icons-material";
+import {
+    Box,
+    Button,
+    FormControlLabel,
+    Grid,
+    InputAdornment,
+    List,
+    ListItemButton,
+    OutlinedInput,
+    Typography,
+} from "@mui/material";
+import { ArrowBack, ArrowForward, Edit, LinearScale, RestartAlt } from "@mui/icons-material";
 import { Scene } from "@novorender/webgl-api";
 import { vec3, quat, mat3, mat4 } from "gl-matrix";
 
 import { featuresConfig } from "config/features";
 import { WidgetList } from "features/widgetList";
-import {
-    LogoSpeedDial,
-    ScrollBox,
-    WidgetContainer,
-    WidgetHeader,
-    LinearProgress,
-    IosSwitch,
-    TextField,
-} from "components";
+import { LogoSpeedDial, ScrollBox, WidgetContainer, WidgetHeader, LinearProgress, IosSwitch } from "components";
 
 import { useAppDispatch, useAppSelector } from "app/store";
 import { CameraType, renderActions } from "slices/renderSlice";
@@ -45,6 +47,8 @@ enum Status {
     Loading,
 }
 
+const profileFractionDigits = 3;
+
 export function FollowPath() {
     const {
         state: { scene, view },
@@ -63,6 +67,9 @@ export function FollowPath() {
 
     const dispatch = useAppDispatch();
     const dispatchHighlighted = useDispatchHighlighted();
+
+    // TODO(OLA)
+    (window as any).view = view;
 
     useEffect(() => {
         if (!landXmlPaths) {
@@ -94,21 +101,13 @@ export function FollowPath() {
             return;
         }
 
-        // TODO(OLA)
-        // if (currentPath?.id === path.id) {
-        //     const start = currentPath.nurbs.knots[0];
-        //     dispatch(followPathActions.setProfile(start.toFixed(3)));
-        //     goToProfile(currentPath.nurbs, start, view2d);
-        //     return;
-        // }
-
         setStatus(Status.Loading);
         const nurbs = await getNurbs({ scene, objectId: path.id });
         setStatus(Status.Initial);
 
         const start = nurbs.knots[0];
 
-        dispatch(followPathActions.setProfile(start.toFixed(3)));
+        dispatch(followPathActions.setProfile(start.toFixed(profileFractionDigits)));
         dispatch(followPathActions.setProfileRange({ min: nurbs.knots[0], max: nurbs.knots.slice(-1)[0] }));
         goToProfile(nurbs, start, view2d);
         dispatch(
@@ -119,14 +118,16 @@ export function FollowPath() {
         );
     };
 
-    const goToProfile = (nurbs: Nurbs, p: number, view2d: boolean = false): void => {
+    const goToProfile = (nurbs: Nurbs, p: number, view2d: boolean): void => {
         if (p < nurbs.knots[0] || p > nurbs.knots.slice(-1)[0]) {
+            console.log(1);
             return;
         }
 
         let knot2Idx = nurbs.knots.findIndex((knot) => knot >= p);
 
         if (knot2Idx === -1) {
+            console.log(2);
             dispatch(followPathActions.setPtHeight(0));
             return;
         }
@@ -140,14 +141,12 @@ export function FollowPath() {
         const cp2 = vec3.fromValues(...nurbs.controlPoints[knot2Idx]);
         const dir = vec3.sub(vec3.create(), cp2, cp1);
         vec3.normalize(dir, dir);
+        vec3.negate(dir, dir);
 
         const l = knot2 - knot1;
         const t = (p - knot1) / l;
 
         const pt = vec3.lerp(vec3.create(), cp1, cp2, t);
-
-        // TODO(OLA)
-        // console.log({ brep: nurbs, p, knot1Idx, knot2Idx, cp1, cp2, knot1, knot2, l, t, pt });
 
         const up = vec3.fromValues(0, 1, 0);
         vec3.transformQuat(up, up, view.camera.rotation);
@@ -160,15 +159,13 @@ export function FollowPath() {
         vec3.cross(right, up, dir);
         vec3.normalize(right, right);
 
+        const rotation = quat.fromMat3(
+            quat.create(),
+            mat3.fromValues(right[0], right[1], right[2], up[0], up[1], up[2], dir[0], dir[1], dir[2])
+        );
+
         if (view2d) {
-            const mat = mat4.fromRotationTranslation(
-                mat4.create(),
-                quat.fromMat3(
-                    quat.create(),
-                    mat3.fromValues(right[0], right[1], right[2], up[0], up[1], up[2], dir[0], dir[1], dir[2])
-                ),
-                pt
-            );
+            const mat = mat4.fromRotationTranslation(mat4.create(), rotation, pt);
 
             dispatch(
                 renderActions.setCamera({
@@ -177,7 +174,6 @@ export function FollowPath() {
                 })
             );
         } else {
-            const rotation = quat.setAxes(quat.create(), dir, up, right);
             dispatch(renderActions.setCamera({ type: CameraType.Flight, goTo: { position: pt, rotation } }));
         }
 
@@ -212,7 +208,7 @@ export function FollowPath() {
             next = profileRange.min;
         }
 
-        dispatch(followPathActions.setProfile(next.toFixed(3)));
+        dispatch(followPathActions.setProfile(next.toFixed(profileFractionDigits)));
         goToProfile(currentPath.nurbs, next, view2d);
     };
 
@@ -233,8 +229,29 @@ export function FollowPath() {
             next = profileRange.min;
         }
 
-        dispatch(followPathActions.setProfile(next.toFixed(3)));
+        dispatch(followPathActions.setProfile(next.toFixed(profileFractionDigits)));
         goToProfile(currentPath.nurbs, next, view2d);
+    };
+
+    const handleGoToStart = () => {
+        if (!currentPath || !profileRange) {
+            return;
+        }
+
+        const p = profileRange.min.toFixed(profileFractionDigits);
+
+        dispatch(followPathActions.setProfile(p));
+        goToProfile(currentPath.nurbs, Number(p), view2d);
+    };
+
+    const handleProfileSubmit = (e: FormEvent) => {
+        e.preventDefault();
+
+        if (!currentPath) {
+            return;
+        }
+
+        goToProfile(currentPath.nurbs, Number(profile), view2d);
     };
 
     return (
@@ -244,8 +261,18 @@ export function FollowPath() {
                     {!menuOpen ? (
                         <>
                             {currentPath ? (
-                                <>
+                                <Box display="flex" justifyContent="space-between">
+                                    <Button
+                                        onClick={() => {
+                                            dispatch(followPathActions.setCurrentPath(undefined));
+                                        }}
+                                        color="grey"
+                                    >
+                                        <ArrowBack sx={{ mr: 1 }} />
+                                        Back
+                                    </Button>
                                     <FormControlLabel
+                                        sx={{ ml: 3 }}
                                         control={
                                             <IosSwitch
                                                 size="medium"
@@ -256,80 +283,123 @@ export function FollowPath() {
                                         }
                                         label={<Box fontSize={14}>2D</Box>}
                                     />
-                                    <Box my={2} display="flex" alignItems="center">
-                                        <Button
-                                            disabled={profileRange?.min.toFixed(3) === profile}
-                                            color="grey"
-                                            onClick={handlePrev}
-                                        >
-                                            <ArrowBack />
-                                        </Button>
-                                        <TextField
-                                            id="follow-path-distance"
-                                            sx={{ mb: 2, pt: 1, width: 100 }}
-                                            label="Meters"
-                                            value={step}
-                                            InputProps={{ size: "small" }}
-                                            onChange={(e) => dispatch(followPathActions.setStep(e.target.value))}
-                                        />
-                                        <Button
-                                            disabled={profileRange?.max.toFixed(3) === profile}
-                                            color="grey"
-                                            onClick={handleNext}
-                                        >
-                                            <ArrowForward />
-                                        </Button>
-                                    </Box>
-
-                                    {profileRange ? (
-                                        <Box my={2}>
-                                            <Typography sx={{ mr: 2 }}>Start: {profileRange.min.toFixed(3)}</Typography>
-                                            <Typography sx={{ mr: 2 }}>End: {profileRange.max.toFixed(3)}</Typography>
-                                        </Box>
-                                    ) : null}
-                                    <Box
-                                        component={"form"}
-                                        onSubmit={(e: FormEvent) => {
-                                            e.preventDefault();
-
-                                            if (!currentPath) {
-                                                return;
-                                            }
-
-                                            goToProfile(currentPath.nurbs, Number(profile), view2d);
-                                        }}
+                                    <Button
+                                        disabled={profileRange?.min.toFixed(profileFractionDigits) === profile}
+                                        onClick={handleGoToStart}
+                                        color="grey"
                                     >
-                                        <TextField
-                                            id="follow-path-distance"
-                                            label={"Profile"}
-                                            sx={{ mb: 2, pt: 1 }}
-                                            value={profile}
-                                            onChange={(e) => dispatch(followPathActions.setProfile(e.target.value))}
-                                        />
-                                    </Box>
-
-                                    {ptHeight ? <Typography>H = {ptHeight.toFixed(3)}</Typography> : null}
-                                </>
+                                        <RestartAlt sx={{ mr: 1 }} />
+                                        Start over
+                                    </Button>
+                                </Box>
                             ) : null}
                         </>
                     ) : null}
                 </WidgetHeader>
                 <ScrollBox display={menuOpen ? "none" : "block"}>
                     {status === Status.Loading ? <LinearProgress /> : null}
-                    <List>
-                        {landXmlPaths?.map((path) => (
-                            <ListItemButton
-                                key={path.id}
-                                onClick={() => handlePathClick(path)}
-                                disableGutters
-                                color="primary"
-                                sx={{ px: 1, py: 0.5 }}
-                            >
-                                <LinearScale sx={{ mr: 1 }} />
-                                {path.name}
-                            </ListItemButton>
-                        ))}
-                    </List>
+                    {!currentPath ? (
+                        <List>
+                            {landXmlPaths?.map((path) => (
+                                <ListItemButton
+                                    key={path.id}
+                                    onClick={() => handlePathClick(path)}
+                                    disableGutters
+                                    color="primary"
+                                    sx={{ px: 1, py: 0.5 }}
+                                >
+                                    <LinearScale sx={{ mr: 1 }} />
+                                    {path.name}
+                                </ListItemButton>
+                            ))}
+                        </List>
+                    ) : (
+                        <Box p={1} pt={2}>
+                            <Grid container columnSpacing={0} rowSpacing={2}>
+                                <Grid item xs={6}>
+                                    <Typography sx={{ mb: 0.5 }}>Profile start:</Typography>
+                                    <OutlinedInput
+                                        size="small"
+                                        readOnly
+                                        color="secondary"
+                                        value={profileRange?.min.toFixed(profileFractionDigits) ?? ""}
+                                    />
+                                </Grid>
+                                <Grid item xs={6}>
+                                    <Typography sx={{ mb: 0.5 }}>Profile end:</Typography>
+                                    <OutlinedInput
+                                        size="small"
+                                        readOnly
+                                        color="secondary"
+                                        value={profileRange?.max.toFixed(profileFractionDigits) ?? ""}
+                                    />
+                                </Grid>
+                                <Grid item xs={6}>
+                                    <Typography sx={{ mb: 0.5 }}>Height:</Typography>
+                                    <OutlinedInput
+                                        size="small"
+                                        readOnly
+                                        color="secondary"
+                                        value={ptHeight?.toFixed(profileFractionDigits) ?? ""}
+                                    />
+                                </Grid>
+                                <Grid item xs={6} component="form" onSubmit={handleProfileSubmit}>
+                                    <Typography sx={{ mb: 0.5 }}>Profile:</Typography>
+                                    <OutlinedInput
+                                        value={profile}
+                                        onChange={(e) => dispatch(followPathActions.setProfile(e.target.value))}
+                                        size="small"
+                                        sx={{ fontWeight: 600 }}
+                                        endAdornment={
+                                            <InputAdornment position="end">
+                                                <Edit fontSize="small" />
+                                            </InputAdornment>
+                                        }
+                                    />
+                                </Grid>
+                                <Grid pt={0} item xs={6}>
+                                    <Typography sx={{ mb: 0.5 }}>Meters:</Typography>
+                                    <OutlinedInput
+                                        value={step}
+                                        onChange={(e) => dispatch(followPathActions.setStep(e.target.value))}
+                                        size="small"
+                                        sx={{ fontWeight: 600 }}
+                                        endAdornment={
+                                            <InputAdornment position="end">
+                                                <Edit fontSize="small" />
+                                            </InputAdornment>
+                                        }
+                                    />
+                                </Grid>
+                                <Grid item xs={6} display="flex" alignItems="flex-end">
+                                    <Box display="flex" width={1}>
+                                        <Button
+                                            fullWidth
+                                            disabled={profileRange?.min.toFixed(profileFractionDigits) === profile}
+                                            color="grey"
+                                            onClick={handlePrev}
+                                            variant="contained"
+                                            sx={{ borderRadius: 0, boxShadow: "none", opacity: 0.7 }}
+                                            size="large"
+                                        >
+                                            <ArrowBack />
+                                        </Button>
+                                        <Button
+                                            fullWidth
+                                            disabled={profileRange?.max.toFixed(profileFractionDigits) === profile}
+                                            color="grey"
+                                            onClick={handleNext}
+                                            variant="contained"
+                                            sx={{ borderRadius: 0, boxShadow: "none" }}
+                                            size="large"
+                                        >
+                                            <ArrowForward />
+                                        </Button>
+                                    </Box>
+                                </Grid>
+                            </Grid>
+                        </Box>
+                    )}
                 </ScrollBox>
                 <WidgetList
                     display={menuOpen ? "block" : "none"}
