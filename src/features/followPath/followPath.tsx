@@ -1,4 +1,4 @@
-import { FormEvent, useEffect } from "react";
+import { FormEvent, SyntheticEvent, useEffect, useState } from "react";
 import {
     Box,
     Button,
@@ -8,15 +8,24 @@ import {
     List,
     ListItemButton,
     OutlinedInput,
+    Slider,
     Typography,
 } from "@mui/material";
 import { ArrowBack, ArrowForward, Edit, LinearScale, RestartAlt } from "@mui/icons-material";
-import { Scene } from "@novorender/webgl-api";
+import { FlightControllerParams, OrthoControllerParams, Scene } from "@novorender/webgl-api";
 import { vec3, quat, mat3, mat4 } from "gl-matrix";
 
 import { featuresConfig } from "config/features";
 import { WidgetList } from "features/widgetList";
-import { LogoSpeedDial, ScrollBox, WidgetContainer, WidgetHeader, LinearProgress, IosSwitch } from "components";
+import {
+    LogoSpeedDial,
+    ScrollBox,
+    WidgetContainer,
+    WidgetHeader,
+    LinearProgress,
+    IosSwitch,
+    Divider,
+} from "components";
 
 import { useAppDispatch, useAppSelector } from "app/store";
 import { CameraType, renderActions } from "slices/renderSlice";
@@ -40,6 +49,7 @@ import {
     selectStep,
     selectView2d,
     selectProfileRange,
+    selectClipping,
 } from "./followPathSlice";
 
 enum Status {
@@ -48,6 +58,7 @@ enum Status {
 }
 
 const profileFractionDigits = 3;
+const minClippingDiff = 1;
 
 export function FollowPath() {
     const {
@@ -61,9 +72,11 @@ export function FollowPath() {
     const step = useAppSelector(selectStep);
     const ptHeight = useAppSelector(selectPtHeight);
     const profileRange = useAppSelector(selectProfileRange);
+    const _clipping = useAppSelector(selectClipping);
 
     const [menuOpen, toggleMenu] = useToggle();
     const [status, setStatus] = useMountedState(Status.Initial);
+    const [clipping, setClipping] = useState(_clipping);
 
     const dispatch = useAppDispatch();
     const dispatchHighlighted = useDispatchHighlighted();
@@ -170,7 +183,13 @@ export function FollowPath() {
             dispatch(
                 renderActions.setCamera({
                     type: CameraType.Orthographic,
-                    params: { kind: "ortho", referenceCoordSys: mat, fieldOfView: view.camera.fieldOfView },
+                    params: {
+                        kind: "ortho",
+                        referenceCoordSys: mat,
+                        fieldOfView: view.camera.fieldOfView,
+                        near: clipping[0],
+                        far: clipping[1],
+                    },
                 })
             );
         } else {
@@ -252,6 +271,40 @@ export function FollowPath() {
         }
 
         goToProfile(currentPath.nurbs, Number(profile), view2d);
+    };
+
+    const handleClippingChange = (_event: Event, newValue: number | number[], activeThumb: number) => {
+        if (!Array.isArray(newValue)) {
+            return;
+        }
+
+        const cameraParams = view.camera.controller.params as FlightControllerParams | OrthoControllerParams;
+
+        if (newValue[1] - newValue[0] < minClippingDiff) {
+            if (activeThumb === 0) {
+                const clamped = Math.min(newValue[0], 100 - minClippingDiff);
+                setClipping([clamped, clamped + minClippingDiff]);
+                cameraParams.near = clamped;
+                cameraParams.far = clamped + minClippingDiff;
+            } else {
+                const clamped = Math.max(newValue[1], minClippingDiff);
+                setClipping([clamped - minClippingDiff, clamped]);
+                cameraParams.near = clamped - minClippingDiff;
+                cameraParams.far = clamped;
+            }
+        } else {
+            setClipping([newValue[0], newValue[1]]);
+            cameraParams.near = newValue[0];
+            cameraParams.far = newValue[1];
+        }
+    };
+
+    const handleClippingCommit = (_event: Event | SyntheticEvent<Element, Event>, newValue: number | number[]) => {
+        if (!Array.isArray(newValue)) {
+            return;
+        }
+
+        dispatch(followPathActions.setClipping(clipping));
     };
 
     return (
@@ -398,6 +451,26 @@ export function FollowPath() {
                                     </Box>
                                 </Grid>
                             </Grid>
+
+                            {view2d ? (
+                                <>
+                                    <Divider sx={{ mt: 2, mb: 1 }} />
+
+                                    <Typography>Clipping</Typography>
+                                    <Box mx={2}>
+                                        <Slider
+                                            getAriaLabel={() => "Clipping near/far"}
+                                            value={clipping}
+                                            min={0}
+                                            max={100}
+                                            onChange={handleClippingChange}
+                                            onChangeCommitted={handleClippingCommit}
+                                            valueLabelDisplay="auto"
+                                            disableSwap
+                                        />
+                                    </Box>
+                                </>
+                            ) : null}
                         </Box>
                     )}
                 </ScrollBox>

@@ -30,6 +30,7 @@ const initialState = {
     step: "1",
     ptHeight: undefined as undefined | number,
     profileRange: undefined as undefined | { min: number; max: number },
+    clipping: [0, 2] as [near: number, far: number],
 };
 
 type State = typeof initialState;
@@ -59,6 +60,9 @@ export const followPathSlice = createSlice({
         setProfileRange: (state, action: PayloadAction<State["profileRange"]>) => {
             state.profileRange = action.payload;
         },
+        setClipping: (state, action: PayloadAction<State["clipping"]>) => {
+            state.clipping = action.payload;
+        },
     },
 });
 
@@ -69,6 +73,7 @@ export const selectProfile = (state: RootState) => state.followPath.profile;
 export const selectStep = (state: RootState) => state.followPath.step;
 export const selectPtHeight = (state: RootState) => state.followPath.ptHeight;
 export const selectProfileRange = (state: RootState) => state.followPath.profileRange;
+export const selectClipping = (state: RootState) => state.followPath.clipping;
 
 const { actions, reducer } = followPathSlice;
 export { actions as followPathActions, reducer as followPathReducer };
