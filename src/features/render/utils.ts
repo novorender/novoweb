@@ -1,3 +1,4 @@
+import { MutableRefObject } from "react";
 import { ObjectGroup } from "@novorender/data-js-api";
 import {
     CameraController,
@@ -14,14 +15,14 @@ import {
 } from "@novorender/webgl-api";
 
 import { api, dataApi } from "app";
-import { store } from "app/store";
 import { offscreenCanvas } from "config";
+import { groupsActions, selectLoadingIds } from "features/groups";
+import { DeviationMode, deviationsActions } from "features/deviations";
+
+import { store } from "app/store";
 import { CustomGroup, customGroupsActions, DispatchCustomGroups } from "contexts/customGroups";
 import { hiddenGroupActions, DispatchHidden } from "contexts/hidden";
 import { highlightActions, DispatchHighlighted } from "contexts/highlighted";
-import { groupsActions, selectLoadingIds } from "features/groups";
-import { vec4 } from "gl-matrix";
-import { MutableRefObject } from "react";
 import {
     AdvancedSetting,
     CameraType,
@@ -31,6 +32,7 @@ import {
     RenderType,
     SelectionBasketMode,
 } from "slices/renderSlice";
+
 import { VecRGB, VecRGBA } from "utils/color";
 import { sleep } from "utils/timers";
 
@@ -444,9 +446,11 @@ export function initClippingPlanes(clipping: RenderSettings["clippingVolume"]): 
 
 export function initDeviation(deviation: RenderSettings["points"]["deviation"]): void {
     store.dispatch(
-        renderActions.setDeviation({
-            mode: deviation.mode,
-            colors: deviation.colors.map((c) => ({ ...c, color: vec4.clone(c.color) })),
+        deviationsActions.setDeviations({
+            mode: deviation.mode as DeviationMode,
+            colors: deviation.colors
+                .map((c) => ({ ...c, color: Array.from(c.color) as VecRGBA }))
+                .sort((a, b) => b.deviation - a.deviation),
         })
     );
 }
