@@ -41,15 +41,12 @@ export function WidgetHeader({
             <Box p={1} display="flex">
                 <Box display="flex" alignItems="center">
                     {WidgetMenu ? (
-                        <IconButton onClick={openMenu}>
-                            <MoreVert />
-                            <WidgetMenu
-                                onClick={(e) => e.stopPropagation()}
-                                anchorEl={menuAnchor}
-                                open={Boolean(menuAnchor)}
-                                onClose={closeMenu}
-                            />
-                        </IconButton>
+                        <>
+                            <IconButton size="small" onClick={openMenu}>
+                                <MoreVert fontSize="small" />
+                            </IconButton>
+                            <WidgetMenu anchorEl={menuAnchor} open={Boolean(menuAnchor)} onClose={closeMenu} />
+                        </>
                     ) : null}
                     <Icon style={{ marginRight: theme.spacing(1) }} />
                     <Typography variant="h6" component="h2">

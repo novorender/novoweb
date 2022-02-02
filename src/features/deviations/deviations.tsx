@@ -12,15 +12,15 @@ import {
     Typography,
 } from "@mui/material";
 import { Box } from "@mui/system";
-import { AddCircle, Delete, Edit, MoreVert, Palette, Save } from "@mui/icons-material";
-import { ChangeEvent, MouseEvent, useState } from "react";
+import { AddCircle, Delete, Edit, MoreVert, Palette, RestartAlt, Save } from "@mui/icons-material";
+import { ChangeEvent, MouseEvent, useEffect, useState } from "react";
 import { ColorResult } from "react-color";
 
 import { dataApi } from "app";
 import { featuresConfig } from "config/features";
 import { WidgetList } from "features/widgetList";
 import { ColorPicker } from "features/colorPicker";
-import { LinearProgress, LogoSpeedDial, ScrollBox, WidgetContainer, WidgetHeader } from "components";
+import { LinearProgress, LogoSpeedDial, ScrollBox, Tooltip, WidgetContainer, WidgetHeader } from "components";
 
 import { useToggle } from "hooks/useToggle";
 import { useSceneId } from "hooks/useSceneId";
@@ -29,7 +29,7 @@ import { rgbToVec, VecRGBA, vecToRgb } from "utils/color";
 import { useAppDispatch, useAppSelector } from "app/store";
 import { useExplorerGlobals } from "contexts/explorerGlobals";
 import { selectEditingScene } from "slices/renderSlice";
-import { selectHasAdminCapabilities } from "slices/explorerSlice";
+import { selectHasAdminCapabilities, selectIsAdminScene } from "slices/explorerSlice";
 
 import {
     selectDeviations,
@@ -38,11 +38,14 @@ import {
     Deviation as DeviationType,
     DeviationMode,
     DeviationsStatus,
+    selectDeviationCalculationStatus,
+    DeviationCalculationStatus,
 } from "./deviationsSlice";
 import { CreateDeviation } from "./createDeviation";
 
 export function Deviations() {
     const status = useAppSelector(selectDeviationsStatus);
+    const calculationStatus = useAppSelector(selectDeviationCalculationStatus);
     const deviations = useAppSelector(selectDeviations);
     const dispatch = useAppDispatch();
 
@@ -52,10 +55,56 @@ export function Deviations() {
     const sceneId = useSceneId();
     const editingScene = useAppSelector(selectEditingScene);
     const isAdmin = useAppSelector(selectHasAdminCapabilities);
+    const isAdminScene = useAppSelector(selectIsAdminScene);
 
     const [menuOpen, toggleMenu] = useToggle();
     const [containerEl, setContainerEl] = useState<HTMLDivElement | null>(null);
     const colorPickerPosition = getPickerPosition(containerEl);
+
+    useEffect(() => {
+        if (isAdminScene && calculationStatus.status === DeviationCalculationStatus.Initial) {
+            getProcesses();
+        }
+
+        async function getProcesses() {
+            dispatch(deviationsActions.setCalculationStatus({ status: DeviationCalculationStatus.Loading }));
+
+            const processes = await dataApi.getProcesses();
+            const process = processes.filter((p) => p.id === scene.id)[0];
+
+            if (!process) {
+                dispatch(deviationsActions.setCalculationStatus({ status: DeviationCalculationStatus.Initial }));
+                return;
+            }
+
+            if (process.state.toLowerCase() === "active" || process.state.toLowerCase() === "running") {
+                dispatch(deviationsActions.setCalculationStatus({ status: DeviationCalculationStatus.Running }));
+            } else {
+                dispatch(
+                    deviationsActions.setCalculationStatus({
+                        status: DeviationCalculationStatus.Error,
+                        error: process.state,
+                    })
+                );
+            }
+        }
+    }, [dispatch, scene, calculationStatus, isAdminScene]);
+
+    const handleCalculateDeviations = async () => {
+        dispatch(deviationsActions.setCalculationStatus({ status: DeviationCalculationStatus.Running }));
+        const res = await dataApi.fetch(`deviations/${scene.id}`).then((r) => r.json());
+
+        if (res.success) {
+            dispatch(deviationsActions.setCalculationStatus({ status: DeviationCalculationStatus.Running }));
+        } else {
+            dispatch(
+                deviationsActions.setCalculationStatus({
+                    status: DeviationCalculationStatus.Error,
+                    error: res.error ?? "Unknown error calculating deviations",
+                })
+            );
+        }
+    };
 
     const handleModeChange = (evt: SelectChangeEvent | ChangeEvent<HTMLInputElement>) =>
         dispatch(
@@ -99,7 +148,45 @@ export function Deviations() {
     return (
         <>
             <WidgetContainer>
-                <WidgetHeader widget={featuresConfig.deviations}>
+                <WidgetHeader
+                    widget={featuresConfig.deviations}
+                    WidgetMenu={
+                        isAdminScene
+                            ? (props) => (
+                                  <Menu {...props}>
+                                      <Tooltip
+                                          title={
+                                              calculationStatus.status === DeviationCalculationStatus.Error ? (
+                                                  <Typography>{calculationStatus.error} </Typography>
+                                              ) : calculationStatus.status === DeviationCalculationStatus.Running ? (
+                                                  "Running..."
+                                              ) : (
+                                                  ""
+                                              )
+                                          }
+                                      >
+                                          <div>
+                                              <MenuItem
+                                                  onClick={handleCalculateDeviations}
+                                                  disabled={
+                                                      calculationStatus.status === DeviationCalculationStatus.Running ||
+                                                      calculationStatus.status === DeviationCalculationStatus.Loading
+                                                  }
+                                              >
+                                                  <>
+                                                      <ListItemIcon>
+                                                          <RestartAlt fontSize="small" />
+                                                      </ListItemIcon>
+                                                      <ListItemText>Calculate deviations</ListItemText>
+                                                  </>
+                                              </MenuItem>
+                                          </div>
+                                      </Tooltip>
+                                  </Menu>
+                              )
+                            : undefined
+                    }
+                >
                     {!menuOpen && ![DeviationsStatus.Creating, DeviationsStatus.Editing].includes(status.status) ? (
                         <Box mx={-1} display="flex" justifyContent="space-between">
                             <Button

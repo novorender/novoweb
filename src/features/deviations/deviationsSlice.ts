@@ -22,7 +22,19 @@ export enum DeviationsStatus {
     Error,
 }
 
+export enum DeviationCalculationStatus {
+    Initial,
+    Loading,
+    Running,
+    Error,
+}
+
 const initialState = {
+    calculationStatus: {
+        status: DeviationCalculationStatus.Initial,
+    } as
+        | { status: Exclude<DeviationCalculationStatus, DeviationCalculationStatus.Error> }
+        | { status: DeviationCalculationStatus.Error; error: string },
     status: { status: DeviationsStatus.Initial } as
         | { status: Exclude<DeviationsStatus, DeviationsStatus.Editing> }
         | {
@@ -41,6 +53,9 @@ export const deviationsSlice = createSlice({
     name: "deviations",
     initialState: initialState,
     reducers: {
+        setCalculationStatus: (state, action: PayloadAction<State["calculationStatus"]>) => {
+            state.calculationStatus = action.payload;
+        },
         setStatus: (state, action: PayloadAction<State["status"]>) => {
             state.status = action.payload;
         },
@@ -52,6 +67,7 @@ export const deviationsSlice = createSlice({
 
 export const selectDeviations = (state: RootState) => state.deviations.deviations;
 export const selectDeviationsStatus = (state: RootState) => state.deviations.status;
+export const selectDeviationCalculationStatus = (state: RootState) => state.deviations.calculationStatus;
 
 const { actions, reducer } = deviationsSlice;
 export { actions as deviationsActions, reducer as deviationsReducer };
