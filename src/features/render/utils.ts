@@ -280,8 +280,8 @@ export async function waitForSceneToRender(view: View): Promise<void> {
     }
 }
 
-export async function getRenderType(view: View): Promise<RenderState["renderType"]> {
-    if (!view.scene || !("advanced" in view.settings)) {
+export async function getRenderType(view: View, scene: Scene): Promise<RenderState["renderType"]> {
+    if (!("advanced" in view.settings)) {
         return [RenderType.UnChangeable, "triangles"];
     }
 
@@ -289,9 +289,8 @@ export async function getRenderType(view: View): Promise<RenderState["renderType
     // await sleep(1500);
 
     const advancedSettings = (view.settings as Internal.RenderSettingsExt).advanced;
-    const { subtrees } = view.scene;
-    const points = (subtrees?.indexOf("points") ?? -1) > -1;
-    const triangles = (subtrees?.indexOf("triangles") ?? -1) > -1;
+    const points = scene.subtrees?.includes("points");
+    const triangles = scene.subtrees?.includes("triangles");
     const canChange = points && triangles;
 
     return !canChange

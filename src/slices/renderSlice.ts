@@ -26,6 +26,7 @@ export enum CameraSpeedMultiplier {
 }
 
 export enum RenderType {
+    Uninitialised,
     Triangles,
     Points,
     TrianglesAndPoints,
@@ -96,7 +97,7 @@ const initialState = {
     baseCameraSpeed: 0.03,
     cameraSpeedMultiplier: CameraSpeedMultiplier.Normal,
     savedCameraPositions: { currentIndex: -1, positions: [] as CameraPosition[] },
-    renderType: RenderType.TrianglesAndPoints as
+    renderType: RenderType.Uninitialised as
         | Exclude<RenderType, RenderType.UnChangeable>
         | [RenderType.UnChangeable, "points" | "triangles"],
     selectionBasketMode: SelectionBasketMode.Loose,

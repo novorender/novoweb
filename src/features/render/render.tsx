@@ -756,14 +756,14 @@ export function Render3D({ onInit }: Props) {
     ]);
 
     useEffect(() => {
-        if (!view) {
+        if (!view || !scene) {
             return;
         }
 
-        initRenderType(view);
+        initRenderType(view, scene);
 
-        async function initRenderType(view: View) {
-            const initialRenderType = await getRenderType(view);
+        async function initRenderType(view: View, scene: Scene) {
+            const initialRenderType = await getRenderType(view, scene);
             dispatch(renderActions.setRenderType(initialRenderType));
 
             const toDisable = Object.values(featuresConfig)
@@ -782,7 +782,7 @@ export function Render3D({ onInit }: Props) {
 
             dispatch(explorerActions.disableWidgets(toDisable as WidgetKey[]));
         }
-    }, [view, dispatch]);
+    }, [view, scene, dispatch]);
 
     useEffect(
         function initCameraMovedTracker() {
@@ -885,7 +885,7 @@ export function Render3D({ onInit }: Props) {
 
     useEffect(
         function handleRenderTypeChanges() {
-            if (!view || !("advanced" in view.settings)) {
+            if (!view || !("advanced" in view.settings) || renderType === RenderType.Uninitialised) {
                 return;
             }
 
