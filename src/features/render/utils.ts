@@ -285,9 +285,6 @@ export async function getRenderType(view: View, scene: Scene): Promise<RenderSta
         return [RenderType.UnChangeable, "triangles"];
     }
 
-    // should be waitForSceneToRender(view), but big scenes require a stopped camera for a long time to finish rendering
-    // await sleep(1500);
-
     const advancedSettings = (view.settings as Internal.RenderSettingsExt).advanced;
     const points = scene.subtrees?.includes("points");
     const triangles = scene.subtrees?.includes("triangles");
