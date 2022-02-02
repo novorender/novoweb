@@ -58,7 +58,6 @@ enum Status {
 }
 
 const profileFractionDigits = 3;
-const minClippingDiff = 1;
 
 export function FollowPath() {
     const {
@@ -80,9 +79,6 @@ export function FollowPath() {
 
     const dispatch = useAppDispatch();
     const dispatchHighlighted = useDispatchHighlighted();
-
-    // TODO(OLA)
-    (window as any).view = view;
 
     useEffect(() => {
         if (!landXmlPaths) {
@@ -133,14 +129,12 @@ export function FollowPath() {
 
     const goToProfile = (nurbs: Nurbs, p: number, view2d: boolean): void => {
         if (p < nurbs.knots[0] || p > nurbs.knots.slice(-1)[0]) {
-            console.log(1);
             return;
         }
 
         let knot2Idx = nurbs.knots.findIndex((knot) => knot >= p);
 
         if (knot2Idx === -1) {
-            console.log(2);
             dispatch(followPathActions.setPtHeight(0));
             return;
         }
@@ -187,8 +181,8 @@ export function FollowPath() {
                         kind: "ortho",
                         referenceCoordSys: mat,
                         fieldOfView: view.camera.fieldOfView,
-                        near: clipping[0],
-                        far: clipping[1],
+                        near: 0,
+                        far: clipping,
                     },
                 })
             );
@@ -273,38 +267,21 @@ export function FollowPath() {
         goToProfile(currentPath.nurbs, Number(profile), view2d);
     };
 
-    const handleClippingChange = (_event: Event, newValue: number | number[], activeThumb: number) => {
-        if (!Array.isArray(newValue)) {
+    const handleClippingChange = (_event: Event, newValue: number | number[]) => {
+        if (Array.isArray(newValue)) {
             return;
         }
 
-        const cameraParams = view.camera.controller.params as FlightControllerParams | OrthoControllerParams;
-
-        if (newValue[1] - newValue[0] < minClippingDiff) {
-            if (activeThumb === 0) {
-                const clamped = Math.min(newValue[0], 100 - minClippingDiff);
-                setClipping([clamped, clamped + minClippingDiff]);
-                cameraParams.near = clamped;
-                cameraParams.far = clamped + minClippingDiff;
-            } else {
-                const clamped = Math.max(newValue[1], minClippingDiff);
-                setClipping([clamped - minClippingDiff, clamped]);
-                cameraParams.near = clamped - minClippingDiff;
-                cameraParams.far = clamped;
-            }
-        } else {
-            setClipping([newValue[0], newValue[1]]);
-            cameraParams.near = newValue[0];
-            cameraParams.far = newValue[1];
-        }
+        setClipping(newValue);
+        (view.camera.controller.params as FlightControllerParams | OrthoControllerParams).far = newValue;
     };
 
     const handleClippingCommit = (_event: Event | SyntheticEvent<Element, Event>, newValue: number | number[]) => {
-        if (!Array.isArray(newValue)) {
+        if (Array.isArray(newValue)) {
             return;
         }
 
-        dispatch(followPathActions.setClipping(clipping));
+        dispatch(followPathActions.setClipping(newValue));
     };
 
     return (
@@ -461,12 +438,12 @@ export function FollowPath() {
                                         <Slider
                                             getAriaLabel={() => "Clipping near/far"}
                                             value={clipping}
-                                            min={0}
-                                            max={100}
+                                            min={0.1}
+                                            max={10}
+                                            step={0.1}
                                             onChange={handleClippingChange}
                                             onChangeCommitted={handleClippingCommit}
                                             valueLabelDisplay="auto"
-                                            disableSwap
                                         />
                                     </Box>
                                 </>

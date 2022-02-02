@@ -30,7 +30,7 @@ const initialState = {
     step: "1",
     ptHeight: undefined as undefined | number,
     profileRange: undefined as undefined | { min: number; max: number },
-    clipping: [0, 2] as [near: number, far: number],
+    clipping: 2,
 };
 
 type State = typeof initialState;
