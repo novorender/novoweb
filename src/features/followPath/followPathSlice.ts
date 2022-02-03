@@ -25,11 +25,12 @@ export type Brep = {
 const initialState = {
     paths: undefined as undefined | LandXmlPath[],
     currentPath: undefined as undefined | (LandXmlPath & { nurbs: Nurbs }),
-    view2d: false,
     profile: "",
     step: "1",
     ptHeight: undefined as undefined | number,
     profileRange: undefined as undefined | { min: number; max: number },
+    view2d: false,
+    showGrid: true,
     clipping: 2,
 };
 
@@ -63,6 +64,9 @@ export const followPathSlice = createSlice({
         setClipping: (state, action: PayloadAction<State["clipping"]>) => {
             state.clipping = action.payload;
         },
+        setShowGrid: (state, action: PayloadAction<State["showGrid"]>) => {
+            state.showGrid = action.payload;
+        },
     },
 });
 
@@ -74,6 +78,7 @@ export const selectStep = (state: RootState) => state.followPath.step;
 export const selectPtHeight = (state: RootState) => state.followPath.ptHeight;
 export const selectProfileRange = (state: RootState) => state.followPath.profileRange;
 export const selectClipping = (state: RootState) => state.followPath.clipping;
+export const selectShowGrid = (state: RootState) => state.followPath.showGrid;
 
 const { actions, reducer } = followPathSlice;
 export { actions as followPathActions, reducer as followPathReducer };

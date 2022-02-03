@@ -50,6 +50,7 @@ import {
     selectView2d,
     selectProfileRange,
     selectClipping,
+    selectShowGrid,
 } from "./followPathSlice";
 
 enum Status {
@@ -67,6 +68,7 @@ export function FollowPath() {
     const landXmlPaths = useAppSelector(selectLandXmlPaths);
     const currentPath = useAppSelector(selectCurrentPath);
     const view2d = useAppSelector(selectView2d);
+    const showGrid = useAppSelector(selectShowGrid);
     const profile = useAppSelector(selectProfile);
     const step = useAppSelector(selectStep);
     const ptHeight = useAppSelector(selectPtHeight);
@@ -121,7 +123,7 @@ export function FollowPath() {
 
         dispatch(followPathActions.setProfile(start.toFixed(profileFractionDigits)));
         dispatch(followPathActions.setProfileRange({ min: nurbs.knots[0], max: nurbs.knots.slice(-1)[0] }));
-        goToProfile(nurbs, start, view2d);
+        goToProfile({ nurbs, view2d, showGrid, p: start });
         dispatch(
             followPathActions.setCurrentPath({
                 ...path,
@@ -130,7 +132,17 @@ export function FollowPath() {
         );
     };
 
-    const goToProfile = (nurbs: Nurbs, p: number, view2d: boolean): void => {
+    const goToProfile = ({
+        nurbs,
+        p,
+        view2d,
+        showGrid,
+    }: {
+        nurbs: Nurbs;
+        p: number;
+        view2d: boolean;
+        showGrid: boolean;
+    }): void => {
         if (p < nurbs.knots[0] || p > nurbs.knots.slice(-1)[0]) {
             return;
         }
@@ -143,12 +155,14 @@ export function FollowPath() {
         }
 
         knot2Idx = Math.max(1, knot2Idx);
-
         const knot1Idx = knot2Idx - 1;
+
         const knot1 = nurbs.knots[knot1Idx];
         const knot2 = nurbs.knots[knot2Idx];
+
         const cp1 = vec3.fromValues(...nurbs.controlPoints[knot1Idx]);
         const cp2 = vec3.fromValues(...nurbs.controlPoints[knot2Idx]);
+
         const dir = vec3.sub(vec3.create(), cp1, cp2);
         vec3.normalize(dir, dir);
 
@@ -182,12 +196,14 @@ export function FollowPath() {
 
             view.applySettings({
                 grid: {
-                    enabled: true,
-                    lineCount: 17,
-                    origo: pt,
+                    enabled: showGrid,
+                    lineCount: 1001,
+                    origo: vec3.sub(vec3.create(), pt, vec3.scale(vec3.create(), dir, 0.2)),
                     axisY: up,
                     axisX: right,
-                    color: [0.5, 1, 0.5],
+                    // axisX: x,
+                    // axisY: y,
+                    color: [0.25, 0.25, 0.25],
                 },
             });
 
@@ -204,7 +220,14 @@ export function FollowPath() {
                 })
             );
         } else {
-            dispatch(renderActions.setCamera({ type: CameraType.Flight, goTo: { position: pt, rotation } }));
+            view.applySettings({ grid: { ...view.settings.grid, enabled: false } });
+            dispatch(
+                renderActions.setCamera({
+                    type: CameraType.Flight,
+                    // goTo: { position: vec3.add(vec3.create(), pt, vec3.scale(vec3.create(), dir, 12)), rotation },
+                    goTo: { position: pt, rotation },
+                })
+            );
         }
 
         dispatch(followPathActions.setPtHeight(pt[1]));
@@ -218,7 +241,18 @@ export function FollowPath() {
         const newState = !view2d;
 
         dispatch(followPathActions.setView2d(newState));
-        goToProfile(currentPath.nurbs, Number(profile), newState);
+        goToProfile({ nurbs: currentPath.nurbs, p: Number(profile), view2d: newState, showGrid });
+    };
+
+    const handleGridChange = () => {
+        if (!view2d) {
+            return;
+        }
+
+        const newState = !showGrid;
+
+        dispatch(followPathActions.setShowGrid(newState));
+        view.settings.grid.enabled = newState;
     };
 
     const handlePrev = () => {
@@ -239,7 +273,7 @@ export function FollowPath() {
         }
 
         dispatch(followPathActions.setProfile(next.toFixed(profileFractionDigits)));
-        goToProfile(currentPath.nurbs, next, view2d);
+        goToProfile({ nurbs: currentPath.nurbs, p: next, view2d, showGrid });
     };
 
     const handleNext = () => {
@@ -260,7 +294,7 @@ export function FollowPath() {
         }
 
         dispatch(followPathActions.setProfile(next.toFixed(profileFractionDigits)));
-        goToProfile(currentPath.nurbs, next, view2d);
+        goToProfile({ nurbs: currentPath.nurbs, p: next, view2d, showGrid });
     };
 
     const handleGoToStart = () => {
@@ -271,7 +305,7 @@ export function FollowPath() {
         const p = profileRange.min.toFixed(profileFractionDigits);
 
         dispatch(followPathActions.setProfile(p));
-        goToProfile(currentPath.nurbs, Number(p), view2d);
+        goToProfile({ nurbs: currentPath.nurbs, p: Number(p), view2d, showGrid });
     };
 
     const handleProfileSubmit = (e: FormEvent) => {
@@ -281,7 +315,7 @@ export function FollowPath() {
             return;
         }
 
-        goToProfile(currentPath.nurbs, Number(profile), view2d);
+        goToProfile({ nurbs: currentPath.nurbs, p: Number(profile), view2d, showGrid });
     };
 
     const handleClippingChange = (_event: Event, newValue: number | number[]) => {
@@ -449,6 +483,20 @@ export function FollowPath() {
                             {view2d ? (
                                 <>
                                     <Divider sx={{ mt: 2, mb: 1 }} />
+
+                                    <FormControlLabel
+                                        control={
+                                            <IosSwitch
+                                                size="medium"
+                                                color="primary"
+                                                checked={showGrid}
+                                                onChange={handleGridChange}
+                                            />
+                                        }
+                                        label={<Box>Show grid</Box>}
+                                    />
+
+                                    <Divider sx={{ my: 1 }} />
 
                                     <Typography>Clipping</Typography>
                                     <Box mx={2}>
