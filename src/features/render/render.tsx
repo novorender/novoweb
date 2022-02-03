@@ -1191,6 +1191,11 @@ export function Render3D({ onInit }: Props) {
                 const panoramaObj = scene.createDynamicObject(asset);
                 currentPanoramaObj.current = { id: panorama.guid, obj: panoramaObj };
                 panoramaObj.position = panorama.position;
+                panoramaObj.scale = vec3.fromValues(
+                    view.camera.far * 0.5,
+                    view.camera.far * 0.5,
+                    view.camera.far * 0.5
+                );
 
                 panoramaObj.visible = true;
                 dispatch(panoramasActions.setStatus([PanoramaStatus.Active, panorama.guid]));
