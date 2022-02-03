@@ -80,6 +80,9 @@ export function FollowPath() {
     const dispatch = useAppDispatch();
     const dispatchHighlighted = useDispatchHighlighted();
 
+    // TODO(OLA)
+    (window as any).view = view;
+
     useEffect(() => {
         if (!landXmlPaths) {
             dispatch(followPathActions.setPaths([]));
@@ -146,9 +149,8 @@ export function FollowPath() {
         const knot2 = nurbs.knots[knot2Idx];
         const cp1 = vec3.fromValues(...nurbs.controlPoints[knot1Idx]);
         const cp2 = vec3.fromValues(...nurbs.controlPoints[knot2Idx]);
-        const dir = vec3.sub(vec3.create(), cp2, cp1);
+        const dir = vec3.sub(vec3.create(), cp1, cp2);
         vec3.normalize(dir, dir);
-        vec3.negate(dir, dir);
 
         const l = knot2 - knot1;
         const t = (p - knot1) / l;
@@ -173,6 +175,21 @@ export function FollowPath() {
 
         if (view2d) {
             const mat = mat4.fromRotationTranslation(mat4.create(), rotation, pt);
+
+            // const y = vec3.fromValues(0, 1, 0);
+            // const x = vec3.cross(vec3.create(), y, dir);
+            // vec3.normalize(x, x);
+
+            view.applySettings({
+                grid: {
+                    enabled: true,
+                    lineCount: 17,
+                    origo: pt,
+                    axisY: up,
+                    axisX: right,
+                    color: [0.5, 1, 0.5],
+                },
+            });
 
             dispatch(
                 renderActions.setCamera({
