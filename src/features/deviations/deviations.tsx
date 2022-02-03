@@ -1,131 +1,249 @@
 import {
-    Box,
-    FormControlLabel,
-    IconButton,
-    Radio,
-    RadioGroup,
-    Typography,
-    useTheme,
-    TextField,
     Button,
-    Tooltip,
+    IconButton,
+    List,
+    ListItemButton,
+    ListItemIcon,
+    ListItemText,
+    Menu,
+    MenuItem,
+    Select,
+    SelectChangeEvent,
+    Typography,
 } from "@mui/material";
-
-import { renderActions, selectDeviation } from "slices/renderSlice";
-import { useAppDispatch, useAppSelector } from "app/store";
-
-import { AddCircleOutline, BlurOn, DeleteForeverOutlined } from "@mui/icons-material";
-import { vec4 } from "gl-matrix";
-import { useToggle } from "hooks/useToggle";
-import { ColorPicker } from "features/colorPicker/colorPicker";
+import { Box } from "@mui/system";
+import { AddCircle, Delete, Edit, MoreVert, Palette, RestartAlt, Save } from "@mui/icons-material";
+import { ChangeEvent, MouseEvent, useEffect, useState } from "react";
 import { ColorResult } from "react-color";
-import { RefCallback, useCallback, useEffect, useState } from "react";
-import { useExplorerGlobals } from "contexts/explorerGlobals";
-import { useMountedState } from "hooks/useMountedState";
-import { featuresConfig } from "config/features";
-import { LogoSpeedDial, ScrollBox, WidgetContainer, WidgetHeader } from "components";
-import { WidgetList } from "features/widgetList";
-import { rgbToVec, VecRGBA } from "utils/color";
-import { selectIsAdminScene } from "slices/explorerSlice";
+
 import { dataApi } from "app";
-import { dataServerBaseUrl } from "config";
+import { featuresConfig } from "config/features";
+import { WidgetList } from "features/widgetList";
+import { ColorPicker } from "features/colorPicker";
+import { LinearProgress, LogoSpeedDial, ScrollBox, Tooltip, WidgetContainer, WidgetHeader } from "components";
+
+import { useToggle } from "hooks/useToggle";
+import { useSceneId } from "hooks/useSceneId";
+import { rgbToVec, VecRGBA, vecToRgb } from "utils/color";
+
+import { useAppDispatch, useAppSelector } from "app/store";
+import { useExplorerGlobals } from "contexts/explorerGlobals";
+import { selectEditingScene } from "slices/renderSlice";
+import { selectHasAdminCapabilities, selectIsAdminScene } from "slices/explorerSlice";
+
+import {
+    selectDeviations,
+    selectDeviationsStatus,
+    deviationsActions,
+    Deviation as DeviationType,
+    DeviationMode,
+    DeviationsStatus,
+    selectDeviationCalculationStatus,
+    DeviationCalculationStatus,
+} from "./deviationsSlice";
+import { CreateDeviation } from "./createDeviation";
 
 export function Deviations() {
-    const theme = useTheme();
-    const [menuOpen, toggleMenu] = useToggle();
-    const deviation = useAppSelector(selectDeviation);
-    const { mode, colors } = deviation;
-    const isAdmin = useAppSelector(selectIsAdminScene);
+    const status = useAppSelector(selectDeviationsStatus);
+    const calculationStatus = useAppSelector(selectDeviationCalculationStatus);
+    const deviations = useAppSelector(selectDeviations);
     const dispatch = useAppDispatch();
 
     const {
         state: { scene },
     } = useExplorerGlobals(true);
+    const sceneId = useSceneId();
+    const editingScene = useAppSelector(selectEditingScene);
+    const isAdmin = useAppSelector(selectHasAdminCapabilities);
+    const isAdminScene = useAppSelector(selectIsAdminScene);
 
+    const [menuOpen, toggleMenu] = useToggle();
     const [containerEl, setContainerEl] = useState<HTMLDivElement | null>(null);
-    const [active, setActive] = useMountedState<number>(-1);
-    const [error, setError] = useMountedState<string>("");
-    const containerRef = useCallback<RefCallback<HTMLDivElement>>((el) => {
-        setContainerEl(el);
-    }, []);
-
-    useEffect(() => {
-        async function getProcesses() {
-            const processes = await dataApi.getProcesses();
-            const process = processes.filter((p) => p.id === scene.id)[0];
-            if (process) {
-                setError(process.state);
-            }
-        }
-        getProcesses();
-    }, [setError, scene]);
-    const process = useCallback(async () => {
-        const resp = await fetch(`${dataServerBaseUrl}/deviations/${scene.id}`, await (dataApi as any).auth());
-        const res = await resp.json();
-        if (res.success) {
-            setError("Running");
-        } else {
-            setError(res.error ?? "Undefined error");
-        }
-    }, [scene, setError]);
     const colorPickerPosition = getPickerPosition(containerEl);
 
-    const change = useCallback(
-        (event: React.ChangeEvent<HTMLInputElement>, value: string) => {
-            return dispatch(renderActions.setDeviation({ mode: value as "off" | "on" | "mix" }));
-        },
-        [dispatch]
-    );
+    useEffect(() => {
+        if (isAdminScene && calculationStatus.status === DeviationCalculationStatus.Initial) {
+            getProcesses();
+        }
 
-    const { subtrees } = scene;
-    const use = (subtrees?.indexOf("triangles") ?? -1) > -1 && (subtrees?.indexOf("points") ?? -1) > -1;
+        async function getProcesses() {
+            dispatch(deviationsActions.setCalculationStatus({ status: DeviationCalculationStatus.Loading }));
+
+            const processes = await dataApi.getProcesses();
+            const process = processes.filter((p) => p.id === scene.id)[0];
+
+            if (!process) {
+                dispatch(deviationsActions.setCalculationStatus({ status: DeviationCalculationStatus.Initial }));
+                return;
+            }
+
+            if (process.state.toLowerCase() === "active" || process.state.toLowerCase() === "running") {
+                dispatch(deviationsActions.setCalculationStatus({ status: DeviationCalculationStatus.Running }));
+            } else {
+                dispatch(
+                    deviationsActions.setCalculationStatus({
+                        status: DeviationCalculationStatus.Error,
+                        error: process.state,
+                    })
+                );
+            }
+        }
+    }, [dispatch, scene, calculationStatus, isAdminScene]);
+
+    const handleCalculateDeviations = async () => {
+        dispatch(deviationsActions.setCalculationStatus({ status: DeviationCalculationStatus.Running }));
+        const res = await dataApi.fetch(`deviations/${scene.id}`).then((r) => r.json());
+
+        if (res.success) {
+            dispatch(deviationsActions.setCalculationStatus({ status: DeviationCalculationStatus.Running }));
+        } else {
+            dispatch(
+                deviationsActions.setCalculationStatus({
+                    status: DeviationCalculationStatus.Error,
+                    error: res.error ?? "Unknown error calculating deviations",
+                })
+            );
+        }
+    };
+
+    const handleModeChange = (evt: SelectChangeEvent | ChangeEvent<HTMLInputElement>) =>
+        dispatch(
+            deviationsActions.setDeviations({
+                ...deviations,
+                mode: evt.target.value as DeviationMode,
+            })
+        );
+
+    const handleSave = async () => {
+        const id = editingScene && editingScene.id ? editingScene.id : sceneId;
+
+        dispatch(deviationsActions.setStatus({ status: DeviationsStatus.Saving }));
+
+        try {
+            const { url: _url, settings, ...originalScene } = await dataApi.loadScene(id);
+
+            if (settings) {
+                await dataApi.putScene({
+                    ...originalScene,
+                    url: `${id}:${scene.id}`,
+                    settings: {
+                        ...settings,
+                        points: {
+                            ...settings.points,
+                            deviation: {
+                                ...deviations,
+                                colors: [...deviations.colors].sort((a, b) => a.deviation - b.deviation),
+                            },
+                        },
+                    },
+                });
+            }
+
+            dispatch(deviationsActions.setStatus({ status: DeviationsStatus.Initial }));
+        } catch {
+            dispatch(deviationsActions.setStatus({ status: DeviationsStatus.Error }));
+        }
+    };
+
     return (
         <>
             <WidgetContainer>
-                <WidgetHeader widget={featuresConfig.deviations}>
-                    {!menuOpen && use ? (
-                        <Box display="flex" justifyContent="space-between">
-                            <RadioGroup
-                                row
-                                aria-label="gender"
-                                name="row-radio-buttons-group"
-                                value={mode}
-                                onChange={change}
-                                sx={{ marginBottom: theme.spacing(1) }}
+                <WidgetHeader
+                    widget={featuresConfig.deviations}
+                    WidgetMenu={
+                        isAdminScene
+                            ? (props) => (
+                                  <Menu {...props}>
+                                      <Tooltip
+                                          title={
+                                              calculationStatus.status === DeviationCalculationStatus.Error ? (
+                                                  <Typography>{calculationStatus.error} </Typography>
+                                              ) : calculationStatus.status === DeviationCalculationStatus.Running ? (
+                                                  "Running..."
+                                              ) : (
+                                                  ""
+                                              )
+                                          }
+                                      >
+                                          <div>
+                                              <MenuItem
+                                                  onClick={handleCalculateDeviations}
+                                                  disabled={
+                                                      calculationStatus.status === DeviationCalculationStatus.Running ||
+                                                      calculationStatus.status === DeviationCalculationStatus.Loading
+                                                  }
+                                              >
+                                                  <>
+                                                      <ListItemIcon>
+                                                          <RestartAlt fontSize="small" />
+                                                      </ListItemIcon>
+                                                      <ListItemText>Calculate deviations</ListItemText>
+                                                  </>
+                                              </MenuItem>
+                                          </div>
+                                      </Tooltip>
+                                  </Menu>
+                              )
+                            : undefined
+                    }
+                >
+                    {!menuOpen && ![DeviationsStatus.Creating, DeviationsStatus.Editing].includes(status.status) ? (
+                        <Box mx={-1} display="flex" justifyContent="space-between">
+                            <Button
+                                disabled={status.status === DeviationsStatus.Saving}
+                                color="grey"
+                                onClick={() =>
+                                    dispatch(deviationsActions.setStatus({ status: DeviationsStatus.Creating }))
+                                }
                             >
-                                <FormControlLabel value="off" control={<Radio size="small" />} label="Off" />
-                                <FormControlLabel value="on" control={<Radio size="small" />} label="On" />
-                                <FormControlLabel value="mix" control={<Radio size="small" />} label="Mix" />
-                            </RadioGroup>
+                                <AddCircle sx={{ mr: 1 }} /> Add
+                            </Button>
+                            <Select
+                                variant="standard"
+                                label="mode"
+                                size="small"
+                                value={deviations.mode}
+                                sx={{ minWidth: 50, lineHeight: "normal" }}
+                                inputProps={{ sx: { p: 0, fontSize: 14 } }}
+                                onChange={handleModeChange}
+                                disabled={status.status === DeviationsStatus.Saving}
+                            >
+                                <MenuItem value={DeviationMode.On}>On</MenuItem>
+                                <MenuItem value={DeviationMode.Mix}>Mix</MenuItem>
+                                <MenuItem value={DeviationMode.Off}>Off</MenuItem>
+                            </Select>
                             {isAdmin ? (
-                                <Tooltip title={error ? error : "Calculate deviations"}>
-                                    <Button onClick={error === "" ? process : undefined}>
-                                        <featuresConfig.deviations.Icon />
-                                    </Button>
-                                </Tooltip>
-                            ) : undefined}
+                                <Button
+                                    disabled={status.status === DeviationsStatus.Saving}
+                                    color="grey"
+                                    onClick={handleSave}
+                                >
+                                    <Save sx={{ mr: 1 }} /> Save
+                                </Button>
+                            ) : (
+                                <Box width={70} />
+                            )}
                         </Box>
                     ) : null}
                 </WidgetHeader>
-                <ScrollBox p={1} display={!menuOpen ? "block" : "none"} ref={containerRef}>
-                    {use ? (
-                        mode !== "off" ? (
-                            colors
-                                .map((c, i) => (
-                                    <ColorStop
-                                        key={colors.length + "_" + i}
-                                        deviation={c.deviation}
-                                        color={c.color}
-                                        idx={i}
-                                        colorPickerPosition={colorPickerPosition}
-                                        active={active}
-                                        setActive={setActive}
-                                    />
-                                ))
-                                .reverse()
-                        ) : undefined
+                <ScrollBox display={!menuOpen ? "block" : "none"} ref={setContainerEl} height={1}>
+                    {status.status === DeviationsStatus.Saving ? <LinearProgress /> : null}
+                    {[DeviationsStatus.Creating, DeviationsStatus.Editing].includes(status.status) ? (
+                        <CreateDeviation />
                     ) : (
-                        <Typography>No point clouds and triangles</Typography>
+                        <>
+                            <List>
+                                {deviations.colors.map((deviation) => {
+                                    return (
+                                        <Deviation
+                                            key={deviation.deviation}
+                                            deviation={deviation}
+                                            colorPickerPosition={colorPickerPosition}
+                                        />
+                                    );
+                                })}
+                            </List>
+                        </>
                     )}
                 </ScrollBox>
                 <WidgetList
@@ -144,116 +262,122 @@ export function Deviations() {
     );
 }
 
-type ColorStopProps = {
-    deviation: number;
-    color: vec4;
-    idx: number;
-    active: number;
+function Deviation({
+    deviation,
+    colorPickerPosition,
+}: {
+    deviation: DeviationType;
     colorPickerPosition: { top: number; left: number } | undefined;
-    setActive: (idx: number) => void;
-};
-
-function ColorStop({ deviation, color, idx, colorPickerPosition, active, setActive }: ColorStopProps) {
-    const theme = useTheme();
-    const [colorPicker, toggleColorPicker] = useToggle();
-    const dev = useAppSelector(selectDeviation);
-    const { colors } = dev;
+}) {
+    const status = useAppSelector(selectDeviationsStatus);
+    const deviations = useAppSelector(selectDeviations);
     const dispatch = useAppDispatch();
-    const change = useCallback(
-        ({ rgb }: ColorResult) => {
-            return dispatch(
-                renderActions.setDeviation({
-                    colors: colors.map((c, i) =>
-                        i === idx ? { ...c, color: rgbToVec({ ...rgb, a: rgb.a ?? 1 }) as VecRGBA } : c
-                    ),
-                })
-            );
-        },
-        [colors, idx, dispatch]
-    );
+    const [colorPicker, toggleColorPicker] = useToggle();
+    const [menuAnchor, setMenuAnchor] = useState<HTMLElement | null>(null);
 
-    const changeValue = useCallback(
-        (e: React.ChangeEvent<HTMLInputElement>) => {
-            const val = parseFloat(e.target.value);
+    const openMenu = (e: MouseEvent<HTMLButtonElement>) => {
+        e.stopPropagation();
+        setMenuAnchor(e.currentTarget);
+    };
 
-            const newColors = colors
-                .map((c, i) => ({ c: i === idx ? { ...c, deviation: val } : c, i }))
-                .sort((a, b) => a.c.deviation - b.c.deviation);
+    const closeMenu = () => {
+        setMenuAnchor(null);
+    };
 
-            const newIdx = newColors.map((c, i) => ({ c, i })).filter((_) => _.c.i === idx)[0].i;
-
-            dispatch(
-                renderActions.setDeviation({
-                    colors: newColors.map((c) => c.c),
-                })
-            );
-            if (newIdx !== idx) {
-                setActive(newIdx);
-            }
-        },
-        [colors, idx, dispatch, setActive]
-    );
-
-    const remove = useCallback(() => {
+    const handleColorChange = ({ rgb }: ColorResult) => {
         dispatch(
-            renderActions.setDeviation({
-                colors: colors.filter((c, i) => i !== idx),
+            deviationsActions.setDeviations({
+                ...deviations,
+                colors: deviations.colors.map((devi) =>
+                    devi === deviation ? { ...deviation, color: rgbToVec(rgb) as VecRGBA } : devi
+                ),
             })
         );
-        setActive(-1);
-    }, [colors, idx, dispatch, setActive]);
+    };
 
-    const add = useCallback(() => {
-        const newColors = colors.map((c) => c);
-        if (idx < 1) {
-            newColors.splice(0, 0, { color: vec4.clone(colors[0].color), deviation: colors[0].deviation - 0.1 });
-        } else {
-            newColors.splice(idx, 0, {
-                color: vec4.lerp(vec4.create(), colors[idx].color, colors[idx - 1].color, 0.5),
-                deviation: (colors[idx].deviation + colors[idx - 1].deviation) * 0.5,
-            });
-        }
+    const handleDelete = () => {
         dispatch(
-            renderActions.setDeviation({
-                colors: newColors,
+            deviationsActions.setDeviations({
+                ...deviations,
+                colors: deviations.colors.filter((devi) => devi !== deviation),
             })
         );
-        setActive(idx);
-    }, [colors, idx, dispatch, setActive]);
+    };
 
-    const focus = useCallback(() => setActive(idx), [idx, setActive]);
-
-    const [r, g, b, a] = color as [r: number, g: number, b: number, a: number];
+    const color = vecToRgb(deviation.color);
     return (
-        <Box mt={1} mb={1} display="flex">
-            <IconButton onClick={toggleColorPicker}>
-                <BlurOn fontSize="large" sx={{ color: `rgba(${r * 255},${g * 255},${b * 255},${a})` }} />
-            </IconButton>
-            <TextField
-                inputRef={active === idx ? (e) => e?.focus() : undefined}
-                onFocus={focus}
-                defaultValue={deviation}
-                inputProps={{ type: "number", step: 0.1 }}
-                variant="standard"
-                onChange={changeValue}
-                fullWidth
-                sx={{ marginTop: theme.spacing(1) }}
-            />
-            <IconButton onClick={add}>
-                <AddCircleOutline fontSize="small" />
-            </IconButton>
-            <IconButton onClick={remove}>
-                <DeleteForeverOutlined fontSize="small" />
-            </IconButton>
+        <>
+            <ListItemButton
+                disableGutters
+                dense
+                key={deviation.deviation}
+                sx={{ px: 1, display: "flex" }}
+                onClick={(evt) => {
+                    evt.stopPropagation();
+                    toggleColorPicker();
+                }}
+            >
+                <Typography flex="1 1 auto">
+                    {Math.sign(deviation.deviation) === 1 ? `+${deviation.deviation}` : deviation.deviation}
+                </Typography>
+                <IconButton
+                    size="small"
+                    onClick={(evt) => {
+                        evt.stopPropagation();
+                        toggleColorPicker();
+                    }}
+                >
+                    <Palette
+                        fontSize="small"
+                        sx={{
+                            color: `rgba(${color.r}, ${color.g}, ${color.b}, ${color.a ?? 1})`,
+                        }}
+                    />
+                </IconButton>
+                <IconButton
+                    size="small"
+                    disabled={status.status === DeviationsStatus.Saving}
+                    onClick={(evt) => {
+                        evt.stopPropagation();
+
+                        dispatch(
+                            deviationsActions.setStatus({
+                                status: DeviationsStatus.Editing,
+                                idx: deviations.colors.indexOf(deviation),
+                            })
+                        );
+                    }}
+                >
+                    <Edit fontSize="small" />
+                </IconButton>
+                <IconButton size="small" color={Boolean(menuAnchor) ? "primary" : "default"} onClick={openMenu}>
+                    <MoreVert fontSize="small" />
+                </IconButton>
+            </ListItemButton>
             {colorPicker ? (
                 <ColorPicker
                     position={colorPickerPosition}
-                    color={color as VecRGBA}
-                    onChangeComplete={change}
+                    color={deviation.color}
+                    onChangeComplete={handleColorChange}
                     onOutsideClick={toggleColorPicker}
                 />
             ) : null}
-        </Box>
+            <Menu
+                onClick={(e) => e.stopPropagation()}
+                anchorEl={menuAnchor}
+                open={Boolean(menuAnchor)}
+                onClose={closeMenu}
+                id={`${deviation.deviation}-menu`}
+                MenuListProps={{ sx: { maxWidth: "100%" } }}
+            >
+                <MenuItem key="delete" onClick={handleDelete}>
+                    <ListItemIcon>
+                        <Delete fontSize="small" />
+                    </ListItemIcon>
+                    <ListItemText>Delete</ListItemText>
+                </MenuItem>
+            </Menu>
+        </>
     );
 }
 
@@ -263,5 +387,5 @@ function getPickerPosition(el: HTMLElement | null) {
     }
 
     const { top, left } = el.getBoundingClientRect();
-    return { top: top + 24, left: left + 24 }; // use picker width
+    return { top: top + 24, left: left + 24 };
 }
