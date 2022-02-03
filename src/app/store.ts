@@ -7,6 +7,7 @@ import { explorerReducer } from "slices/explorerSlice";
 import { authReducer } from "slices/authSlice";
 import { groupsReducer } from "features/groups";
 import { panoramasReducer } from "features/panoramas";
+import { deviationsReducer } from "features/deviations";
 import { bimCollabReducer } from "features/bimCollab/bimCollabSlice";
 import { bimCollabApi } from "features/bimCollab/bimCollabApi";
 
@@ -16,6 +17,7 @@ const rootReducer = combineReducers({
     auth: authReducer,
     groups: groupsReducer,
     panoramas: panoramasReducer,
+    deviations: deviationsReducer,
     bimCollab: bimCollabReducer,
     [bimCollabApi.reducerPath]: bimCollabApi.reducer,
 });

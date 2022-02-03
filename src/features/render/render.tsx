@@ -61,11 +61,11 @@ import {
     selectBookmarks,
     SceneEditStatus,
     selectAdvancedSettings,
-    selectDeviation,
     selectSelectionBasketMode,
 } from "slices/renderSlice";
 import { authActions } from "slices/authSlice";
 import { explorerActions, selectUrlBookmarkId } from "slices/explorerSlice";
+import { selectDeviations } from "features/deviations";
 import { useAppDispatch, useAppSelector } from "app/store";
 
 import { useHighlighted, highlightActions, useDispatchHighlighted } from "contexts/highlighted";
@@ -195,9 +195,9 @@ export function Render3D({ onInit }: Props) {
     const selectingOrthoPoint = useAppSelector(selectSelectiongOrthoPoint);
     const advancedSettings = useAppSelector(selectAdvancedSettings);
     const measure = useAppSelector(selectMeasure);
-    const deviation = useAppSelector(selectDeviation);
     const { addingPoint, angles, points, distances, selected: selectedPoint } = measure;
     const panoramas = useAppSelector(selectPanoramas);
+    const deviation = useAppSelector(selectDeviations);
     const show3dMarkers = useAppSelector(selectShow3dMarkers);
     const activePanorama = useAppSelector(selectActivePanorama);
     const panoramaStatus = useAppSelector(selectPanoramaStatus);
@@ -976,7 +976,15 @@ export function Render3D({ onInit }: Props) {
                 return;
             }
 
-            view.applySettings({ points: { ...view.settings.points, deviation } });
+            view.applySettings({
+                points: {
+                    ...view.settings.points,
+                    deviation: {
+                        ...deviation,
+                        colors: [...deviation.colors].sort((a, b) => a.deviation - b.deviation),
+                    },
+                },
+            });
         },
         [view, deviation]
     );
