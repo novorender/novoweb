@@ -70,8 +70,8 @@ export enum AdvancedSetting {
 }
 
 export enum SelectionBasketMode {
-    Strict,
     Loose,
+    Strict,
 }
 
 type CameraPosition = Pick<Camera, "position" | "rotation">;
