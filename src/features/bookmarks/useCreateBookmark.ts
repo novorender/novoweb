@@ -7,12 +7,20 @@ import { useCustomGroups } from "contexts/customGroups";
 import { useExplorerGlobals } from "contexts/explorerGlobals";
 import { useLazyHidden } from "contexts/hidden";
 import { useLazyHighlighted } from "contexts/highlighted";
-import { ObjectVisibility, selectDefaultVisibility, selectMainObject, selectMeasure } from "slices/renderSlice";
+import { useLazyVisible } from "contexts/visible";
+import {
+    ObjectVisibility,
+    selectDefaultVisibility,
+    selectMainObject,
+    selectMeasure,
+    selectSelectionBasketMode,
+} from "slices/renderSlice";
 
 export function useCreateBookmark() {
     const measurement = useAppSelector(selectMeasure);
     const defaultVisibility = useAppSelector(selectDefaultVisibility);
     const mainObject = useAppSelector(selectMainObject);
+    const selectionBasketMode = useAppSelector(selectSelectionBasketMode);
 
     const {
         state: { view },
@@ -20,12 +28,20 @@ export function useCreateBookmark() {
     const { state: customGroups } = useCustomGroups();
     const highlighted = useLazyHighlighted();
     const hidden = useLazyHidden();
+    const visible = useLazyVisible();
 
     const create = (img?: string): Omit<Bookmark, "name" | "description" | "img"> & { img?: string } => {
         const camera = view.camera;
         const { highlight: _highlight, ...clippingPlanes } = view.settings.clippingPlanes;
         const { ...clippingVolume } = view.settings.clippingVolume;
         const selectedOnly = defaultVisibility !== ObjectVisibility.Neutral;
+
+        const selectionBasket: Bookmark["selectionBasket"] = visible.current.idArr.length
+            ? {
+                  ids: visible.current.idArr,
+                  mode: selectionBasketMode,
+              }
+            : undefined;
 
         const objectGroups = customGroups
             .map(({ id, selected, hidden, ids }) => ({
@@ -57,6 +73,7 @@ export function useCreateBookmark() {
                 objectGroups,
                 selectedOnly,
                 clippingVolume,
+                selectionBasket,
                 clippingPlanes: {
                     ...clippingPlanes,
                     bounds: {
@@ -81,6 +98,7 @@ export function useCreateBookmark() {
                 ortho,
                 objectGroups,
                 selectedOnly,
+                selectionBasket,
                 clippingPlanes,
                 clippingVolume,
                 measurement: measurement.points.length > 0 ? measurement.points : undefined,

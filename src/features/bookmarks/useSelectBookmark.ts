@@ -6,7 +6,7 @@ import { useExplorerGlobals } from "contexts/explorerGlobals";
 import { hiddenGroupActions, useDispatchHidden } from "contexts/hidden";
 import { highlightActions, useDispatchHighlighted } from "contexts/highlighted";
 import { useDispatchVisible, visibleActions } from "contexts/visible";
-import { CameraType, ObjectVisibility, renderActions } from "slices/renderSlice";
+import { CameraType, ObjectVisibility, renderActions, SelectionBasketMode } from "slices/renderSlice";
 
 export function useSelectBookmark() {
     const dispatchVisible = useDispatchVisible();
@@ -20,8 +20,6 @@ export function useSelectBookmark() {
     const dispatch = useAppDispatch();
 
     const select = (bookmark: Bookmark) => {
-        dispatchVisible(visibleActions.set([]));
-
         const bmDefaultGroup = bookmark.objectGroups?.find((group) => !group.id && group.selected);
         dispatchHighlighted(highlightActions.setIds((bmDefaultGroup?.ids as number[] | undefined) ?? []));
 
@@ -49,6 +47,14 @@ export function useSelectBookmark() {
                     bookmark.selectedOnly ? ObjectVisibility.SemiTransparent : ObjectVisibility.Neutral
                 )
             );
+        }
+
+        if (bookmark.selectionBasket) {
+            dispatchVisible(visibleActions.set(bookmark.selectionBasket.ids));
+            dispatch(renderActions.setSelectionBasketMode(bookmark.selectionBasket.mode));
+        } else {
+            dispatchVisible(visibleActions.set([]));
+            dispatch(renderActions.setSelectionBasketMode(SelectionBasketMode.Loose));
         }
 
         if (bookmark.measurement) {
