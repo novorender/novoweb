@@ -83,6 +83,14 @@ export function useSelectBookmark() {
             dispatch(renderActions.setCamera({ type: CameraType.Flight, goTo: bookmark.camera }));
             dispatch(renderActions.setSelectingOrthoPoint(false));
         }
+
+        if (bookmark.grid) {
+            if (!view) {
+                return;
+            }
+
+            view.applySettings({ grid: bookmark.grid });
+        }
     };
 
     return select;
