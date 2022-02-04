@@ -15,12 +15,15 @@ import {
     selectMeasure,
     selectSelectionBasketMode,
 } from "slices/renderSlice";
+import { selectCurrentPath, selectProfile } from "features/followPath";
 
 export function useCreateBookmark() {
     const measurement = useAppSelector(selectMeasure);
     const defaultVisibility = useAppSelector(selectDefaultVisibility);
     const mainObject = useAppSelector(selectMainObject);
     const selectionBasketMode = useAppSelector(selectSelectionBasketMode);
+    const currentPath = useAppSelector(selectCurrentPath);
+    const currentPathProfile = useAppSelector(selectProfile);
 
     const {
         state: { view },
@@ -65,22 +68,37 @@ export function useCreateBookmark() {
                 ids: hidden.current.idArr,
             });
 
+        const followPath: Bookmark["followPath"] =
+            currentPath && currentPathProfile
+                ? {
+                      id: currentPath.id,
+                      profile: Number(currentPathProfile),
+                  }
+                : undefined;
+
+        const base = {
+            img,
+            objectGroups,
+            selectedOnly,
+            clippingVolume,
+            selectionBasket,
+            followPath,
+            clippingPlanes: {
+                ...clippingPlanes,
+                bounds: {
+                    min: Array.from(clippingPlanes.bounds.min) as [number, number, number],
+                    max: Array.from(clippingPlanes.bounds.max) as [number, number, number],
+                },
+            },
+            measurement: measurement.points.length > 0 ? measurement.points : undefined,
+            grid: { ...view.settings.grid },
+        };
+
         if (camera.kind === "pinhole") {
             const { kind, position, rotation, fieldOfView, near, far } = camera;
 
             return {
-                img,
-                objectGroups,
-                selectedOnly,
-                clippingVolume,
-                selectionBasket,
-                clippingPlanes: {
-                    ...clippingPlanes,
-                    bounds: {
-                        min: Array.from(clippingPlanes.bounds.min) as [number, number, number],
-                        max: Array.from(clippingPlanes.bounds.max) as [number, number, number],
-                    },
-                },
+                ...base,
                 camera: {
                     kind,
                     position: vec3.copy(vec3.create(), position),
@@ -89,19 +107,12 @@ export function useCreateBookmark() {
                     near,
                     far,
                 },
-                measurement: measurement.points.length > 0 ? measurement.points : undefined,
             };
         } else {
             const ortho = camera.controller.params as OrthoControllerParams;
             return {
-                img,
+                ...base,
                 ortho,
-                objectGroups,
-                selectedOnly,
-                selectionBasket,
-                clippingPlanes,
-                clippingVolume,
-                measurement: measurement.points.length > 0 ? measurement.points : undefined,
             };
         }
     };

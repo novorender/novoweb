@@ -33,7 +33,7 @@ export function generateRandomString(): string {
 export function enabledFeaturesToFeatureKeys(enabledFeatures: Record<string, boolean>): WidgetKey[] {
     const dictionary: Record<string, string | string[] | undefined> = {
         bookmarks: featuresConfig.bookmarks.key,
-        measurement: featuresConfig.measure.key,
+        measurement: [featuresConfig.measure.key, featuresConfig.followPath.key],
         clipping: [featuresConfig.clippingBox.key, featuresConfig.clippingPlanes.key],
         properties: featuresConfig.properties.key,
         tree: featuresConfig.modelTree.key,

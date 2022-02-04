@@ -70,20 +70,20 @@ export function Deviations() {
             dispatch(deviationsActions.setCalculationStatus({ status: DeviationCalculationStatus.Loading }));
 
             const processes = await dataApi.getProcesses();
-            const process = processes.filter((p) => p.id === scene.id)[0];
+            const activeProcess = processes.filter((p) => p.id === scene.id)[0];
 
-            if (!process) {
+            if (!activeProcess) {
                 dispatch(deviationsActions.setCalculationStatus({ status: DeviationCalculationStatus.Initial }));
                 return;
             }
 
-            if (process.state.toLowerCase() === "active" || process.state.toLowerCase() === "running") {
+            if (activeProcess.state.toLowerCase() === "active" || activeProcess.state.toLowerCase() === "running") {
                 dispatch(deviationsActions.setCalculationStatus({ status: DeviationCalculationStatus.Running }));
             } else {
                 dispatch(
                     deviationsActions.setCalculationStatus({
                         status: DeviationCalculationStatus.Error,
-                        error: process.state,
+                        error: activeProcess.state,
                     })
                 );
             }
