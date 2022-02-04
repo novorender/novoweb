@@ -187,23 +187,21 @@ export function FollowPath() {
             mat3.fromValues(right[0], right[1], right[2], up[0], up[1], up[2], dir[0], dir[1], dir[2])
         );
 
+        console.log({ pt });
+
         if (view2d) {
             const mat = mat4.fromRotationTranslation(mat4.create(), rotation, pt);
-
-            // const y = vec3.fromValues(0, 1, 0);
-            // const x = vec3.cross(vec3.create(), y, dir);
-            // vec3.normalize(x, x);
 
             view.applySettings({
                 grid: {
                     enabled: showGrid,
-                    lineCount: 1001,
+                    majorLineCount: 101,
+                    minorLineCount: 4,
                     origo: vec3.sub(vec3.create(), pt, vec3.scale(vec3.create(), dir, 0.2)),
-                    axisY: up,
-                    axisX: right,
-                    // axisX: x,
-                    // axisY: y,
-                    color: [0.25, 0.25, 0.25],
+                    axisY: vec3.scale(vec3.create(), up, 5),
+                    axisX: vec3.scale(vec3.create(), right, 5),
+                    majorColor: [0.25, 0.25, 0.25],
+                    minorColor: [0.65, 0.65, 0.65],
                 },
             });
 
