@@ -82,9 +82,6 @@ export function FollowPath() {
     const dispatch = useAppDispatch();
     const dispatchHighlighted = useDispatchHighlighted();
 
-    // TODO(OLA)
-    (window as any).view = view;
-
     useEffect(() => {
         if (!landXmlPaths) {
             dispatch(followPathActions.setPaths([]));
@@ -116,8 +113,12 @@ export function FollowPath() {
         }
 
         setStatus(Status.Loading);
-        const nurbs = await getNurbs({ scene, objectId: path.id });
+        const nurbs = await getNurbs({ scene, objectId: path.id }).catch((e) => console.warn(e));
         setStatus(Status.Initial);
+
+        if (!nurbs) {
+            return;
+        }
 
         const start = nurbs.knots[0];
 
@@ -187,8 +188,6 @@ export function FollowPath() {
             mat3.fromValues(right[0], right[1], right[2], up[0], up[1], up[2], dir[0], dir[1], dir[2])
         );
 
-        console.log({ pt });
-
         if (view2d) {
             const mat = mat4.fromRotationTranslation(mat4.create(), rotation, pt);
 
@@ -222,7 +221,6 @@ export function FollowPath() {
             dispatch(
                 renderActions.setCamera({
                     type: CameraType.Flight,
-                    // goTo: { position: vec3.add(vec3.create(), pt, vec3.scale(vec3.create(), dir, 12)), rotation },
                     goTo: { position: pt, rotation },
                 })
             );
@@ -399,6 +397,7 @@ export function FollowPath() {
                                     <Typography sx={{ mb: 0.5 }}>Profile start:</Typography>
                                     <OutlinedInput
                                         size="small"
+                                        fullWidth
                                         readOnly
                                         color="secondary"
                                         value={profileRange?.min.toFixed(profileFractionDigits) ?? ""}
@@ -408,6 +407,7 @@ export function FollowPath() {
                                     <Typography sx={{ mb: 0.5 }}>Profile end:</Typography>
                                     <OutlinedInput
                                         size="small"
+                                        fullWidth
                                         readOnly
                                         color="secondary"
                                         value={profileRange?.max.toFixed(profileFractionDigits) ?? ""}
@@ -417,6 +417,7 @@ export function FollowPath() {
                                     <Typography sx={{ mb: 0.5 }}>Height:</Typography>
                                     <OutlinedInput
                                         size="small"
+                                        fullWidth
                                         readOnly
                                         color="secondary"
                                         value={ptHeight?.toFixed(profileFractionDigits) ?? ""}
@@ -427,6 +428,7 @@ export function FollowPath() {
                                     <OutlinedInput
                                         value={profile}
                                         onChange={(e) => dispatch(followPathActions.setProfile(e.target.value))}
+                                        fullWidth
                                         size="small"
                                         sx={{ fontWeight: 600 }}
                                         endAdornment={
@@ -442,6 +444,7 @@ export function FollowPath() {
                                         value={step}
                                         onChange={(e) => dispatch(followPathActions.setStep(e.target.value))}
                                         size="small"
+                                        fullWidth
                                         sx={{ fontWeight: 600 }}
                                         endAdornment={
                                             <InputAdornment position="end">
@@ -529,7 +532,7 @@ export function FollowPath() {
     );
 }
 
-function getNurbs({ scene, objectId }: { scene: Scene; objectId: number }): Promise<Nurbs> {
+export function getNurbs({ scene, objectId }: { scene: Scene; objectId: number }): Promise<Nurbs> {
     const url = new URL((scene as any).assetUrl);
     url.pathname += `brep/${objectId}.json`;
 
@@ -546,10 +549,12 @@ function getNurbs({ scene, objectId }: { scene: Scene; objectId: number }): Prom
                         ),
                     ].flat(),
                     controlPoints: [
-                        ...brep.geometries[0].compoundCurve.map((cCurve, idx) =>
-                            brep.curves3D[brep.curveSegments[cCurve].curve3D].controlPoints
-                                .slice(idx === 0 ? 1 : 0) // TODO(OLA): Fjern slice når siggen har fiksa
-                                .map((cp) => [cp[0], cp[2], -cp[1]])
+                        ...brep.geometries[0].compoundCurve.map((cCurve) =>
+                            brep.curves3D[brep.curveSegments[cCurve].curve3D].controlPoints.map((cp) => [
+                                cp[0],
+                                cp[2],
+                                -cp[1],
+                            ])
                         ),
                     ].flat(),
                 } as Nurbs)

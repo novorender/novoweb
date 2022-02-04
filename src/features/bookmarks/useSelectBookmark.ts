@@ -6,6 +6,8 @@ import { useExplorerGlobals } from "contexts/explorerGlobals";
 import { hiddenGroupActions, useDispatchHidden } from "contexts/hidden";
 import { highlightActions, useDispatchHighlighted } from "contexts/highlighted";
 import { useDispatchVisible, visibleActions } from "contexts/visible";
+import { followPathActions } from "features/followPath";
+import { getNurbs } from "features/followPath/followPath";
 import { CameraType, ObjectVisibility, renderActions, SelectionBasketMode } from "slices/renderSlice";
 
 export function useSelectBookmark() {
@@ -14,7 +16,7 @@ export function useSelectBookmark() {
     const dispatchHidden = useDispatchHidden();
     const { state: customGroups, dispatch: dispatchCustom } = useCustomGroups();
     const {
-        state: { view },
+        state: { view, scene },
     } = useExplorerGlobals();
 
     const dispatch = useAppDispatch();
@@ -90,6 +92,46 @@ export function useSelectBookmark() {
             }
 
             view.applySettings({ grid: bookmark.grid });
+        }
+
+        if (bookmark.followPath) {
+            if (!scene) {
+                return;
+            }
+
+            const { profile, id } = bookmark.followPath;
+
+            getNurbs({ scene, objectId: id })
+                .then((nurbs) => {
+                    dispatch(followPathActions.setProfile(String(profile)));
+                    dispatch(followPathActions.setProfileRange({ min: nurbs.knots[0], max: nurbs.knots.slice(-1)[0] }));
+                    dispatch(followPathActions.setView2d(Boolean(bookmark.ortho)));
+                    dispatch(followPathActions.setShowGrid(Boolean(bookmark.grid?.enabled)));
+
+                    if (bookmark.ortho?.far) {
+                        dispatch(followPathActions.setClipping(bookmark.ortho.far));
+                    }
+
+                    if (bookmark.ortho) {
+                        dispatch(
+                            followPathActions.setPtHeight(
+                                bookmark.ortho.referenceCoordSys ? bookmark.ortho.referenceCoordSys[13] : undefined
+                            )
+                        );
+                    } else {
+                        dispatch(
+                            followPathActions.setPtHeight(bookmark.camera ? bookmark.camera.position[1] : undefined)
+                        );
+                    }
+
+                    dispatch(
+                        followPathActions.setCurrentPath({
+                            id: id,
+                            nurbs,
+                        })
+                    );
+                })
+                .catch((e) => console.warn(e));
         }
     };
 

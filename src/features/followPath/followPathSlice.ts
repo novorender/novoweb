@@ -24,7 +24,7 @@ export type Brep = {
 
 const initialState = {
     paths: undefined as undefined | LandXmlPath[],
-    currentPath: undefined as undefined | (LandXmlPath & { nurbs: Nurbs }),
+    currentPath: undefined as undefined | { id: number; nurbs: Nurbs },
     profile: "",
     step: "1",
     ptHeight: undefined as undefined | number,
