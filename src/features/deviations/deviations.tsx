@@ -73,7 +73,7 @@ export function Deviations() {
             const activeProcess = processes.filter((p) => p.id === scene.id)[0];
 
             if (!activeProcess) {
-                dispatch(deviationsActions.setCalculationStatus({ status: DeviationCalculationStatus.Initial }));
+                dispatch(deviationsActions.setCalculationStatus({ status: DeviationCalculationStatus.Inactive }));
                 return;
             }
 

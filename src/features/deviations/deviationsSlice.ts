@@ -24,6 +24,7 @@ export enum DeviationsStatus {
 
 export enum DeviationCalculationStatus {
     Initial,
+    Inactive,
     Loading,
     Running,
     Error,
