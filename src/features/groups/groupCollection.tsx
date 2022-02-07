@@ -139,14 +139,16 @@ export const GroupCollection = ({
             <AccordionDetails>
                 <Box pr={3}>
                     <List sx={{ padding: 0 }}>
-                        {collection.groups.map((group, index) => (
-                            <Group
-                                key={group.name + index}
-                                editGroup={() => editGroup(group.id)}
-                                group={group}
-                                colorPickerPosition={colorPickerPosition}
-                            />
-                        ))}
+                        {[...collection.groups]
+                            .sort((a, b) => a.name.localeCompare(b.name, "en", { sensitivity: "accent" }))
+                            .map((group, index) => (
+                                <Group
+                                    key={group.name + index}
+                                    editGroup={() => editGroup(group.id)}
+                                    group={group}
+                                    colorPickerPosition={colorPickerPosition}
+                                />
+                            ))}
                     </List>
                 </Box>
             </AccordionDetails>
