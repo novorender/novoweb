@@ -59,6 +59,7 @@ enum Status {
 }
 
 const profileFractionDigits = 3;
+const orthoCamOffset = 0.2;
 
 export function FollowPath() {
     const {
@@ -189,14 +190,15 @@ export function FollowPath() {
         );
 
         if (view2d) {
-            const mat = mat4.fromRotationTranslation(mat4.create(), rotation, pt);
+            const ptt = vec3.add(vec3.create(), pt, vec3.scale(vec3.create(), dir, orthoCamOffset));
+            const mat = mat4.fromRotationTranslation(mat4.create(), rotation, ptt);
 
             view.applySettings({
                 grid: {
                     enabled: showGrid,
                     majorLineCount: 101,
                     minorLineCount: 4,
-                    origo: vec3.sub(vec3.create(), pt, vec3.scale(vec3.create(), dir, 0.2)),
+                    origo: vec3.sub(vec3.create(), pt, vec3.scale(vec3.create(), dir, 0.01)),
                     axisY: vec3.scale(vec3.create(), up, 5),
                     axisX: vec3.scale(vec3.create(), right, 5),
                     majorColor: [0.25, 0.25, 0.25],
@@ -211,8 +213,8 @@ export function FollowPath() {
                         kind: "ortho",
                         referenceCoordSys: mat,
                         fieldOfView: view.camera.fieldOfView,
-                        near: 0,
-                        far: clipping,
+                        near: orthoCamOffset,
+                        far: clipping + orthoCamOffset,
                     },
                 })
             );
@@ -320,7 +322,8 @@ export function FollowPath() {
         }
 
         setClipping(newValue);
-        (view.camera.controller.params as FlightControllerParams | OrthoControllerParams).far = newValue;
+        (view.camera.controller.params as FlightControllerParams | OrthoControllerParams).far =
+            newValue + orthoCamOffset;
     };
 
     const handleClippingCommit = (_event: Event | SyntheticEvent<Element, Event>, newValue: number | number[]) => {
