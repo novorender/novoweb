@@ -1000,6 +1000,7 @@ export function Render3D({ onInit }: Props) {
             if (cameraState.type === CameraType.Flight) {
                 controller.enabled = true;
                 view.camera.controller = controller;
+                view.applySettings({ grid: { ...view.settings.grid, enabled: false } });
 
                 if (cameraState.goTo) {
                     view.camera.controller.moveTo(cameraState.goTo.position, cameraState.goTo.rotation);
