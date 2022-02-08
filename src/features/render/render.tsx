@@ -644,7 +644,6 @@ export function Render3D({ onInit }: Props) {
                     url,
                     db,
                     objectGroups = [],
-                    bookmarks,
                     customProperties,
                     title,
                     viewerScenes,
@@ -685,8 +684,6 @@ export function Render3D({ onInit }: Props) {
                 if (window.self === window.top || !customProperties?.enabledFeatures?.transparentBackground) {
                     initEnvironment(settings.environment as unknown as EnvironmentDescription, environments, _view);
                 }
-
-                dispatch(renderActions.setBookmarks(bookmarks));
 
                 initClippingBox(_view.settings.clippingPlanes);
                 initClippingPlanes(_view.settings.clippingVolume);
@@ -1100,7 +1097,6 @@ export function Render3D({ onInit }: Props) {
                     title,
                     customProperties,
                     camera = { kind: "flight" },
-                    bookmarks,
                     objectGroups = [],
                 } = await dataApi.loadScene(sceneId);
 
@@ -1126,7 +1122,7 @@ export function Render3D({ onInit }: Props) {
                 initCustomGroups(objectGroups, dispatchCustomGroups);
                 initHighlighted(objectGroups, dispatchHighlighted);
                 initAdvancedSettings(view, customProperties);
-                dispatch(renderActions.setBookmarks(bookmarks));
+                dispatch(renderActions.setBookmarks(undefined));
 
                 return { title, customProperties };
             }
