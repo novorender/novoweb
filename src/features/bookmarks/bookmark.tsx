@@ -13,7 +13,7 @@ import {
     ListItemIcon,
     ListItemText,
 } from "@mui/material";
-import { Delete, MoreVert } from "@mui/icons-material";
+import { Delete, Edit, MoreVert } from "@mui/icons-material";
 import { css } from "@mui/styled-engine";
 
 import { Tooltip } from "components";
@@ -60,9 +60,11 @@ const Img = styled("img")(
 export function Bookmark({
     bookmark,
     onDelete,
+    onEdit,
 }: {
     bookmark: ExtendedBookmark;
     onDelete: (bm: ExtendedBookmark) => void;
+    onEdit: (bm: ExtendedBookmark) => void;
 }) {
     const theme = useTheme();
     const [menuAnchor, setMenuAnchor] = useState<HTMLElement | null>(null);
@@ -129,6 +131,12 @@ export function Bookmark({
                 id={`${bookmark.name}-menu`}
                 MenuListProps={{ sx: { maxWidth: "100%" } }}
             >
+                <MenuItem onClick={() => onEdit(bookmark)}>
+                    <ListItemIcon>
+                        <Edit fontSize="small" />
+                    </ListItemIcon>
+                    <ListItemText>Edit</ListItemText>
+                </MenuItem>
                 <MenuItem onClick={() => onDelete(bookmark)}>
                     <ListItemIcon>
                         <Delete fontSize="small" />

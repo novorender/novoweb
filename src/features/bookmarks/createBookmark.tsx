@@ -10,9 +10,9 @@ import { useSceneId } from "hooks/useSceneId";
 import { useToggle } from "hooks/useToggle";
 
 import { useCreateBookmark } from "./useCreateBookmark";
-import { BookmarkAccess } from "./bookmarks";
+import { BookmarkAccess, ExtendedBookmark } from "./bookmarks";
 
-export function CreateBookmark({ onClose }: { onClose: () => void }) {
+export function CreateBookmark({ onClose, bookmark }: { onClose: () => void; bookmark?: ExtendedBookmark }) {
     const bookmarks = useAppSelector(selectBookmarks);
     const editingScene = useAppSelector(selectEditingScene);
     const isAdmin = useAppSelector(selectHasAdminCapabilities);
@@ -24,15 +24,25 @@ export function CreateBookmark({ onClose }: { onClose: () => void }) {
     const sceneId = useSceneId();
     const createBookmark = useCreateBookmark();
 
-    const [name, setName] = useState("");
-    const [description, setDescription] = useState("");
-    const [personal, togglePersonal] = useToggle(true);
-    const imgRef = useRef(createBookmarkImg(canvas));
-    const bookmarkRef = useRef(createBookmark(imgRef.current));
+    const [name, setName] = useState(bookmark?.name ?? "");
+    const [description, setDescription] = useState(bookmark?.description ?? "");
+    const [personal, togglePersonal] = useToggle(bookmark ? bookmark.access === BookmarkAccess.Personal : true);
+    const imgRef = useRef(bookmark ? bookmark.img ?? "" : createBookmarkImg(canvas));
+    const bookmarkRef = useRef(bookmark ?? createBookmark(imgRef.current));
 
     const handleSubmit: FormEventHandler = (e) => {
         e.preventDefault();
 
+        if (bookmark) {
+            update();
+        } else {
+            create();
+        }
+
+        onClose();
+    };
+
+    const create = () => {
         if (!bookmarks) {
             return;
         }
@@ -54,8 +64,37 @@ export function CreateBookmark({ onClose }: { onClose: () => void }) {
                 .map(({ access: _access, ...bm }) => bm),
             { personal }
         );
+    };
 
-        onClose();
+    const update = () => {
+        if (!bookmarks) {
+            return;
+        }
+
+        const newBookmarks = bookmarks.map((bm) =>
+            bm === bookmark
+                ? {
+                      ...bookmark,
+                      name,
+                      description,
+                      access: personal ? BookmarkAccess.Personal : BookmarkAccess.Public,
+                  }
+                : bm
+        );
+
+        dispatch(renderActions.setBookmarks(newBookmarks));
+
+        dataApi.saveBookmarks(
+            editingScene?.id ? editingScene.id : sceneId,
+            newBookmarks.filter((bm) => bm.access !== BookmarkAccess.Personal).map(({ access: _access, ...bm }) => bm),
+            { personal: false }
+        );
+
+        dataApi.saveBookmarks(
+            editingScene?.id ? editingScene.id : sceneId,
+            newBookmarks.filter((bm) => bm.access === BookmarkAccess.Personal).map(({ access: _access, ...bm }) => bm),
+            { personal: true }
+        );
     };
 
     return (
@@ -104,7 +143,7 @@ export function CreateBookmark({ onClose }: { onClose: () => void }) {
                         Cancel
                     </Button>
                     <Button type="submit" fullWidth disabled={!name} color="primary" variant="contained" size="large">
-                        Add bookmark
+                        {bookmark ? "Save" : "Add"} bookmark
                     </Button>
                 </Box>
             </form>

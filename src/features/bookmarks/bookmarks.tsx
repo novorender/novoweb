@@ -68,6 +68,7 @@ export function Bookmarks() {
     } as Filters);
     const [filteredBookmarks, setFilteredBookmarks] = useState(bookmarks);
     const [bookmarkToDelete, setBookmarkToDelete] = useState<ExtendedBookmark>();
+    const [bookmarkToEdit, setBookmarkToEdit] = useState<ExtendedBookmark>();
     const [creatingBookmark, toggleCreatingBookmark] = useToggle();
 
     useEffect(() => {
@@ -184,20 +185,6 @@ export function Bookmarks() {
                             }}
                         />
                     </MenuItem>
-                    {/*                     <MenuItem
-                        onClick={() =>
-                            setFilters((state) => ({
-                                ...state,
-                                measurements: !allFiltersChecked,
-                                clipping: !allFiltersChecked,
-                                groups: !allFiltersChecked,
-                            }))
-                        }
-                        sx={{ display: "flex", justifyContent: "space-between" }}
-                    >
-                        <Typography>All</Typography>
-                        <Checkbox checked={allFiltersChecked} />
-                    </MenuItem> */}
                     <MenuItem
                         onClick={() => setFilters((state) => ({ ...state, measurements: !state.measurements }))}
                         sx={{ display: "flex", justifyContent: "space-between" }}
@@ -256,6 +243,8 @@ export function Bookmarks() {
                 <ScrollBox display={menuOpen ? "none" : "flex"} flexDirection="column" pb={2} height={1}>
                     {creatingBookmark ? (
                         <CreateBookmark onClose={toggleCreatingBookmark} />
+                    ) : bookmarkToEdit ? (
+                        <CreateBookmark onClose={() => setBookmarkToEdit(undefined)} bookmark={bookmarkToEdit} />
                     ) : bookmarkToDelete ? (
                         <Confirmation
                             title="Delete bookmark?"
@@ -274,7 +263,11 @@ export function Bookmarks() {
                                         button
                                         onClick={() => handleSelect(bookmark)}
                                     >
-                                        <Bookmark bookmark={bookmark} onDelete={setBookmarkToDelete} />
+                                        <Bookmark
+                                            bookmark={bookmark}
+                                            onDelete={setBookmarkToDelete}
+                                            onEdit={setBookmarkToEdit}
+                                        />
                                     </ListItem>
                                 ))}
                         </List>
