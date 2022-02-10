@@ -1,45 +1,48 @@
 import { FormEventHandler, useRef, useState } from "react";
 import { Box, Button, Checkbox, FormControlLabel, TextField } from "@mui/material";
+import { useHistory, useParams } from "react-router-dom";
 
-import { dataApi } from "app";
 import { useAppDispatch, useAppSelector } from "app/store";
-import { renderActions, selectBookmarks, selectEditingScene } from "slices/renderSlice";
 import { selectHasAdminCapabilities } from "slices/explorerSlice";
 import { useExplorerGlobals } from "contexts/explorerGlobals";
-import { useSceneId } from "hooks/useSceneId";
+
+import { ScrollBox } from "components";
 import { useToggle } from "hooks/useToggle";
 
-import { useCreateBookmark } from "./useCreateBookmark";
-import { BookmarkAccess, ExtendedBookmark } from "./bookmarks";
+import { useCreateBookmark } from "../useCreateBookmark";
+import { BookmarkAccess, selectBookmarks, bookmarksActions } from "../bookmarksSlice";
 
-export function CreateBookmark({ onClose, bookmark }: { onClose: () => void; bookmark?: ExtendedBookmark }) {
+export function Crupdate() {
+    const { id } = useParams<{ id?: string }>();
+    const history = useHistory();
+
     const bookmarks = useAppSelector(selectBookmarks);
-    const editingScene = useAppSelector(selectEditingScene);
+    const bmToEdit = bookmarks.find((bm) => bm.id === id);
+
     const isAdmin = useAppSelector(selectHasAdminCapabilities);
     const dispatch = useAppDispatch();
 
     const {
         state: { canvas },
     } = useExplorerGlobals(true);
-    const sceneId = useSceneId();
     const createBookmark = useCreateBookmark();
 
-    const [name, setName] = useState(bookmark?.name ?? "");
-    const [description, setDescription] = useState(bookmark?.description ?? "");
-    const [personal, togglePersonal] = useToggle(bookmark ? bookmark.access === BookmarkAccess.Personal : true);
-    const imgRef = useRef(bookmark ? bookmark.img ?? "" : createBookmarkImg(canvas));
-    const bookmarkRef = useRef(bookmark ?? createBookmark(imgRef.current));
+    const [name, setName] = useState(bmToEdit?.name ?? "");
+    const [description, setDescription] = useState(bmToEdit?.description ?? "");
+    const [personal, togglePersonal] = useToggle(bmToEdit ? bmToEdit.access === BookmarkAccess.Personal : true);
+    const imgRef = useRef(bmToEdit ? bmToEdit.img ?? "" : createBookmarkImg(canvas));
+    const bookmarkRef = useRef(bmToEdit ?? createBookmark(imgRef.current));
 
     const handleSubmit: FormEventHandler = (e) => {
         e.preventDefault();
 
-        if (bookmark) {
+        if (bmToEdit) {
             update();
         } else {
             create();
         }
 
-        onClose();
+        history.goBack();
     };
 
     const create = () => {
@@ -54,16 +57,7 @@ export function CreateBookmark({ onClose, bookmark }: { onClose: () => void; boo
             access: personal ? BookmarkAccess.Personal : BookmarkAccess.Public,
         });
 
-        dispatch(renderActions.setBookmarks(newBookmarks));
-        dataApi.saveBookmarks(
-            editingScene?.id ? editingScene.id : sceneId,
-            newBookmarks
-                .filter((bm) =>
-                    personal ? bm.access === BookmarkAccess.Personal : bm.access === BookmarkAccess.Public
-                )
-                .map(({ access: _access, ...bm }) => bm),
-            { personal }
-        );
+        dispatch(bookmarksActions.setBookmarks(newBookmarks));
     };
 
     const update = () => {
@@ -72,9 +66,9 @@ export function CreateBookmark({ onClose, bookmark }: { onClose: () => void; boo
         }
 
         const newBookmarks = bookmarks.map((bm) =>
-            bm === bookmark
+            bm === bmToEdit
                 ? {
-                      ...bookmark,
+                      ...bmToEdit,
                       name,
                       description,
                       access: personal ? BookmarkAccess.Personal : BookmarkAccess.Public,
@@ -82,23 +76,11 @@ export function CreateBookmark({ onClose, bookmark }: { onClose: () => void; boo
                 : bm
         );
 
-        dispatch(renderActions.setBookmarks(newBookmarks));
-
-        dataApi.saveBookmarks(
-            editingScene?.id ? editingScene.id : sceneId,
-            newBookmarks.filter((bm) => bm.access !== BookmarkAccess.Personal).map(({ access: _access, ...bm }) => bm),
-            { personal: false }
-        );
-
-        dataApi.saveBookmarks(
-            editingScene?.id ? editingScene.id : sceneId,
-            newBookmarks.filter((bm) => bm.access === BookmarkAccess.Personal).map(({ access: _access, ...bm }) => bm),
-            { personal: true }
-        );
+        dispatch(bookmarksActions.setBookmarks(newBookmarks));
     };
 
     return (
-        <Box width={1} px={1} mt={1}>
+        <ScrollBox width={1} px={1} mt={1}>
             <Box sx={{ img: { width: "100%", height: 200, objectFit: "cover" } }}>
                 <img alt="" src={imgRef.current} />
             </Box>
@@ -135,7 +117,7 @@ export function CreateBookmark({ onClose, bookmark }: { onClose: () => void; boo
                         color="grey"
                         type="button"
                         variant="outlined"
-                        onClick={onClose}
+                        onClick={() => history.goBack()}
                         fullWidth
                         size="large"
                         sx={{ marginRight: 1 }}
@@ -143,11 +125,11 @@ export function CreateBookmark({ onClose, bookmark }: { onClose: () => void; boo
                         Cancel
                     </Button>
                     <Button type="submit" fullWidth disabled={!name} color="primary" variant="contained" size="large">
-                        {bookmark ? "Save" : "Add"} bookmark
+                        {bmToEdit ? "Save" : "Add"} bookmark
                     </Button>
                 </Box>
             </form>
-        </Box>
+        </ScrollBox>
     );
 }
 
@@ -158,7 +140,7 @@ function createBookmarkImg(canvas: HTMLCanvasElement): string {
 
     dist.height = 350;
     dist.width = (350 * height) / width;
-    const ctx = dist.getContext("2d", { alpha: false, desynchronized: false })!;
+    const ctx = dist.getContext("2d", { alpha: true, desynchronized: false })!;
     ctx.drawImage(canvas, 0, 0, width, height, 0, 0, dist.width, dist.height);
 
     return dist.toDataURL("image/png");

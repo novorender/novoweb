@@ -22,7 +22,8 @@ const initialState = {
     sceneType: SceneType.Viewer,
     userRole: UserRole.Viewer,
     viewerScenes: [] as ScenePreview[],
-    widgets: [] as WidgetKey[],
+    // TODO(OLA)
+    widgets: ["bookmarks"] as WidgetKey[],
     urlSearchQuery: undefined as undefined | string | SearchPattern[],
     urlBookmarkId: undefined as undefined | string,
 };

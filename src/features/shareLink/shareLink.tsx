@@ -6,7 +6,7 @@ import { v4 as uuidv4 } from "uuid";
 import { dataApi } from "app";
 import { featuresConfig } from "config/features";
 import { WidgetMenuButtonWrapper } from "components";
-import { useCreateBookmark } from "features/bookmarks/useCreateBookmark";
+import { useCreateBookmark } from "features/bookmarks";
 import { useMountedState } from "hooks/useMountedState";
 import { useSceneId } from "hooks/useSceneId";
 import { useAppSelector } from "app/store";
