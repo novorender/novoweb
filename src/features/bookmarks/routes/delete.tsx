@@ -23,6 +23,7 @@ export function Delete() {
         const bookmarkToDelete = bookmarks.find((bm) => bm.id === id);
 
         if (!bookmarkToDelete) {
+            history.goBack();
             return;
         }
 
@@ -39,6 +40,7 @@ export function Delete() {
                 .map(({ access: _access, ...bm }) => bm),
             { personal }
         );
+        history.goBack();
     };
 
     return (

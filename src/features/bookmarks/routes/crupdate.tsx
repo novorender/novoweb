@@ -29,6 +29,7 @@ export function Crupdate() {
 
     const [name, setName] = useState(bmToEdit?.name ?? "");
     const [description, setDescription] = useState(bmToEdit?.description ?? "");
+    const [collection, setCollection] = useState(bmToEdit?.grouping ?? "");
     const [personal, togglePersonal] = useToggle(bmToEdit ? bmToEdit.access === BookmarkAccess.Personal : true);
     const imgRef = useRef(bmToEdit ? bmToEdit.img ?? "" : createBookmarkImg(canvas));
     const bookmarkRef = useRef(bmToEdit ?? createBookmark(imgRef.current));
@@ -54,6 +55,7 @@ export function Crupdate() {
             ...bookmarkRef.current,
             name,
             description,
+            grouping: collection,
             access: personal ? BookmarkAccess.Personal : BookmarkAccess.Public,
         });
 
@@ -71,6 +73,7 @@ export function Crupdate() {
                       ...bmToEdit,
                       name,
                       description,
+                      grouping: collection,
                       access: personal ? BookmarkAccess.Personal : BookmarkAccess.Public,
                   }
                 : bm
@@ -80,7 +83,7 @@ export function Crupdate() {
     };
 
     return (
-        <ScrollBox width={1} px={1} mt={1}>
+        <ScrollBox width={1} px={1} mt={1} display="flex" flexDirection="column" height={1} pb={2}>
             <Box sx={{ img: { width: "100%", height: 200, objectFit: "cover" } }}>
                 <img alt="" src={imgRef.current} />
             </Box>
@@ -103,8 +106,23 @@ export function Crupdate() {
                     fullWidth
                     multiline
                     rows={4}
+                    sx={{ mb: 2 }}
+                />
+                <TextField
+                    value={collection}
+                    onChange={(e) => setCollection(e.target.value)}
+                    id={"bookmark-collection"}
+                    label={"Collection"}
+                    fullWidth
+                    autoComplete="off"
+                    inputProps={{ list: "collections" }}
                     sx={{ mb: 1 }}
                 />
+                <datalist id="collections">
+                    {Array.from(new Set(bookmarks.filter((bm) => bm.grouping).map((bm) => bm.grouping))).map((coll) => (
+                        <option key={coll} value={coll} />
+                    ))}
+                </datalist>
                 {isAdmin ? (
                     <FormControlLabel
                         sx={{ mb: 2 }}

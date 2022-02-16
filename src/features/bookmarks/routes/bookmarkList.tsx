@@ -4,7 +4,7 @@ import { Box, Button, List, ListItem, useTheme } from "@mui/material";
 import { useState, MouseEvent, useEffect } from "react";
 
 import { dataApi } from "app";
-import { Divider, LinearProgress, ScrollBox } from "components";
+import { Accordion, AccordionSummary, AccordionDetails, Divider, LinearProgress, ScrollBox } from "components";
 import { useAppDispatch, useAppSelector } from "app/store";
 import { selectUser } from "slices/authSlice";
 import { selectEditingScene } from "slices/renderSlice";
@@ -122,23 +122,41 @@ export function BookmarkList() {
                     </Box>
                 </Box>
             </Box>
-            <Box height={1}>
+            <Box display="flex" flexDirection="column" height={1} pb={2}>
                 {[BookmarksStatus.Loading, BookmarksStatus.Saving].includes(status) ? <LinearProgress /> : null}
-                <ScrollBox flexDirection="column" pb={2} height={1}>
-                    <List sx={{ width: 1 }}>
-                        {[...(filteredBookmarks || [])]
-                            .sort((a, b) => a.name.localeCompare(b.name, "en", { sensitivity: "accent" }))
-                            .map((bookmark, index) => (
-                                <ListItem
-                                    key={bookmark.name + index}
-                                    sx={{ padding: `${theme.spacing(0.5)} ${theme.spacing(1)}` }}
-                                    button
-                                    onClick={() => handleSelect(bookmark)}
-                                >
-                                    <Bookmark bookmark={bookmark} />
-                                </ListItem>
-                            ))}
-                    </List>
+                <ScrollBox display="flex" flexDirection="column" height={1} pb={2}>
+                    {arrangeColllections(filteredBookmarks).map((collection) =>
+                        !collection.name ? (
+                            <List key="ungrouped">
+                                {collection.bookmarks.map((bookmark, index) => (
+                                    <ListItem
+                                        key={bookmark.name + index}
+                                        sx={{ padding: `${theme.spacing(0.5)} ${theme.spacing(1)}` }}
+                                        button
+                                        onClick={() => handleSelect(bookmark)}
+                                    >
+                                        <Bookmark bookmark={bookmark} />
+                                    </ListItem>
+                                ))}
+                            </List>
+                        ) : (
+                            <Accordion key={collection.name}>
+                                <AccordionSummary>{collection.name}</AccordionSummary>
+                                <AccordionDetails>
+                                    {collection.bookmarks.map((bookmark, index) => (
+                                        <ListItem
+                                            key={bookmark.name + index}
+                                            sx={{ padding: `${theme.spacing(0.5)} ${theme.spacing(1)}` }}
+                                            button
+                                            onClick={() => handleSelect(bookmark)}
+                                        >
+                                            <Bookmark bookmark={bookmark} />
+                                        </ListItem>
+                                    ))}
+                                </AccordionDetails>
+                            </Accordion>
+                        )
+                    )}
                 </ScrollBox>
             </Box>
             <FilterMenu
@@ -193,4 +211,40 @@ function applyFilters(bookmarks: ExtendedBookmark[], filters: Filters): Extended
 
         return true;
     });
+}
+
+type BmCollection = {
+    name: string;
+    bookmarks: ExtendedBookmark[];
+};
+
+function arrangeColllections(bookmarks: ExtendedBookmark[]): BmCollection[] {
+    let done = [] as string[];
+
+    return bookmarks
+        .reduce((prev, curr, idx, arr) => {
+            let toReturn = [...prev];
+
+            if (idx === 0) {
+                const ungrouped = arr
+                    .filter((bm) => !bm.grouping)
+                    .sort((a, b) => a.name.localeCompare(b.name, "en", { sensitivity: "accent" }));
+                toReturn = toReturn.concat({ name: "", bookmarks: ungrouped });
+            }
+
+            if (curr.grouping && !done.includes(curr.grouping)) {
+                const collection = {
+                    name: curr.grouping,
+                    bookmarks: arr
+                        .filter((bm) => bm.grouping === curr.grouping)
+                        .sort((a, b) => a.name.localeCompare(b.name, "en", { sensitivity: "accent" })),
+                };
+
+                toReturn = toReturn.concat(collection);
+                done = done.concat(curr.grouping);
+            }
+
+            return toReturn;
+        }, [] as BmCollection[])
+        .sort((a, b) => a.name.localeCompare(b.name, "en", { sensitivity: "accent" }));
 }
