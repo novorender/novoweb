@@ -58,7 +58,6 @@ import {
     CameraType,
     selectCamera,
     selectEditingScene,
-    selectBookmarks,
     SceneEditStatus,
     selectAdvancedSettings,
     selectSelectionBasketMode,
@@ -66,6 +65,7 @@ import {
 import { authActions } from "slices/authSlice";
 import { explorerActions, selectUrlBookmarkId } from "slices/explorerSlice";
 import { selectDeviations } from "features/deviations";
+import { bookmarksActions, selectBookmarks, useSelectBookmark } from "features/bookmarks";
 import { useAppDispatch, useAppSelector } from "app/store";
 
 import { useHighlighted, highlightActions, useDispatchHighlighted } from "contexts/highlighted";
@@ -90,7 +90,6 @@ import {
 } from "./utils";
 import { xAxis, yAxis, axis } from "./consts";
 import { featuresConfig, WidgetKey } from "config/features";
-import { useSelectBookmark } from "features/bookmarks/useSelectBookmark";
 
 glMatrix.setMatrixArrayType(Array);
 
@@ -1122,7 +1121,7 @@ export function Render3D({ onInit }: Props) {
                 initCustomGroups(objectGroups, dispatchCustomGroups);
                 initHighlighted(objectGroups, dispatchHighlighted);
                 initAdvancedSettings(view, customProperties);
-                dispatch(renderActions.setBookmarks(undefined));
+                dispatch(bookmarksActions.resetState());
 
                 return { title, customProperties };
             }

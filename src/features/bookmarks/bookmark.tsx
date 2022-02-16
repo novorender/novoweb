@@ -1,4 +1,5 @@
-import { Fragment, MouseEvent, useState } from "react";
+import { MouseEvent, useState } from "react";
+import { useHistory } from "react-router-dom";
 import {
     useTheme,
     Box,
@@ -18,10 +19,11 @@ import { css } from "@mui/styled-engine";
 
 import { Tooltip } from "components";
 
-import { BookmarkAccess, ExtendedBookmark } from "./bookmarks";
 import { useAppSelector } from "app/store";
 import { selectHasAdminCapabilities } from "slices/explorerSlice";
 import { selectUser } from "slices/authSlice";
+
+import { BookmarkAccess, ExtendedBookmark } from "./bookmarksSlice";
 
 const Description = styled(Typography)(
     () => css`
@@ -57,17 +59,11 @@ const Img = styled("img")(
     `
 );
 
-export function Bookmark({
-    bookmark,
-    onDelete,
-    onEdit,
-}: {
-    bookmark: ExtendedBookmark;
-    onDelete: (bm: ExtendedBookmark) => void;
-    onEdit: (bm: ExtendedBookmark) => void;
-}) {
+export function Bookmark({ bookmark }: { bookmark: ExtendedBookmark }) {
     const theme = useTheme();
+    const history = useHistory();
     const [menuAnchor, setMenuAnchor] = useState<HTMLElement | null>(null);
+
     const isAdmin = useAppSelector(selectHasAdminCapabilities);
     const user = useAppSelector(selectUser);
 
@@ -131,13 +127,13 @@ export function Bookmark({
                 id={`${bookmark.name}-menu`}
                 MenuListProps={{ sx: { maxWidth: "100%" } }}
             >
-                <MenuItem onClick={() => onEdit(bookmark)}>
+                <MenuItem onClick={() => history.push(`/edit/${bookmark.id}`)}>
                     <ListItemIcon>
                         <Edit fontSize="small" />
                     </ListItemIcon>
                     <ListItemText>Edit</ListItemText>
                 </MenuItem>
-                <MenuItem onClick={() => onDelete(bookmark)}>
+                <MenuItem onClick={() => history.push(`delete/${bookmark.id}`)}>
                     <ListItemIcon>
                         <Delete fontSize="small" />
                     </ListItemIcon>
