@@ -1,0 +1,1 @@
+export { Consent } from "./consent";

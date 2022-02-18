@@ -11,6 +11,7 @@ import { Loading } from "components";
 import { Hud } from "features/hud";
 import { Render3D } from "features/render";
 import { Protected } from "features/protectedRoute";
+import { Consent } from "features/consent";
 
 import { useAppSelector, useAppDispatch } from "app/store";
 import { explorerActions, SceneType, UserRole } from "slices/explorerSlice";
@@ -51,6 +52,12 @@ function ExplorerBase() {
             dispatch(explorerActions.setUserRole(getUserRole(customProperties)));
         }
 
+        const requireConsent = getRequireConsent(customProperties);
+
+        if (requireConsent) {
+            dispatch(explorerActions.setRequireConsent(requireConsent));
+        }
+
         const enabledFeatures = getEnabledFeatures(customProperties);
 
         if (isAdminScene) {
@@ -81,6 +88,7 @@ function ExplorerBase() {
         <AuthCheck>
             <Render3D onInit={handleInit} />
             {view && scene ? <Hud /> : null}
+            <Consent />
         </AuthCheck>
     );
 }
@@ -164,6 +172,12 @@ function getIsViewerScene(customProperties: unknown): boolean {
     return customProperties && typeof customProperties === "object" && "isViewer" in customProperties
         ? (customProperties as { isViewer: boolean }).isViewer
         : false;
+}
+
+function getRequireConsent(customProperties: unknown): string {
+    return customProperties && typeof customProperties === "object" && "requireConsent" in customProperties
+        ? (customProperties as { requireConsent: string }).requireConsent
+        : "";
 }
 
 function getUserRole(customProperties: unknown): UserRole {
