@@ -8,6 +8,7 @@ import { useExplorerGlobals } from "contexts/explorerGlobals";
 
 import { ScrollBox } from "components";
 import { useToggle } from "hooks/useToggle";
+import { v4 as uuidv4 } from "uuid";
 
 import { useCreateBookmark } from "../useCreateBookmark";
 import { BookmarkAccess, selectBookmarks, bookmarksActions } from "../bookmarksSlice";
@@ -53,6 +54,7 @@ export function Crupdate() {
 
         const newBookmarks = bookmarks.concat({
             ...bookmarkRef.current,
+            id: uuidv4(),
             name,
             description,
             grouping: collection,
