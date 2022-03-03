@@ -1,38 +1,56 @@
-import { useStore } from "react-redux";
 import { CameraControllerParams, RenderSettings } from "@novorender/webgl-api";
 import { Close } from "@mui/icons-material";
 import { Snackbar, IconButton, Typography } from "@mui/material";
+import { v4 as uuidv4 } from "uuid";
 
-import { WidgetMenuButtonWrapper } from "components";
-import { useToggle } from "hooks/useToggle";
+import { dataApi } from "app";
 import { featuresConfig } from "config/features";
-import { selectMainObject } from "slices/renderSlice";
-import { useExplorerGlobals } from "contexts/explorerGlobals";
+import { WidgetMenuButtonWrapper } from "components";
+import { useCreateBookmark } from "features/bookmarks";
+import { useMountedState } from "hooks/useMountedState";
+import { useSceneId } from "hooks/useSceneId";
+import { useAppSelector } from "app/store";
+import { selectEditingScene } from "slices/renderSlice";
+
+enum Status {
+    Initial,
+    Loading,
+    Success,
+}
 
 export function ShareLink() {
-    const store = useStore();
-    const {
-        state: { view },
-    } = useExplorerGlobals(true);
     const { Icon, name } = featuresConfig.shareLink;
-    const [open, toggle] = useToggle();
+
+    const createBookmark = useCreateBookmark();
+    const sceneId = useSceneId();
+    const editingScene = useAppSelector(selectEditingScene);
+
+    const [status, setStatus] = useMountedState(Status.Initial);
 
     const createLink = async () => {
-        const { display: _display, environment: _environment, ...settingsToInclude } = view.settings;
-        const mainObject = selectMainObject(store.getState());
+        if (editingScene || status !== Status.Initial) {
+            return;
+        }
+
+        const id = uuidv4();
+        const bm = createBookmark();
 
         try {
-            const dataString = formatUrlData({
-                mainObject,
-                camera: view.camera.controller.params,
-                settings: settingsToInclude,
-            });
+            setStatus(Status.Loading);
 
-            await navigator.clipboard.writeText(`${window.location.href.split("#")[0]}#${dataString}`);
+            const saved = await dataApi.saveBookmarks(sceneId, [{ ...bm, id, name: id }], { group: id });
 
-            toggle();
+            if (!saved) {
+                throw new Error("Failed to save bookmark");
+            }
+            await navigator.clipboard.writeText(
+                `${window.location.origin}${window.location.pathname}?bookmarkId=${id}`
+            );
+
+            setStatus(Status.Success);
         } catch (e) {
             console.warn(e);
+            setStatus(Status.Initial);
         }
     };
 
@@ -42,16 +60,25 @@ export function ShareLink() {
                 anchorOrigin={{ vertical: "bottom", horizontal: "center" }}
                 sx={{ width: { xs: "auto", sm: 350 }, bottom: { xs: "auto", sm: 24 }, top: { xs: 24, sm: "auto" } }}
                 autoHideDuration={2500}
-                open={open}
-                onClose={toggle}
+                open={status === Status.Success}
+                onClose={() => setStatus(Status.Initial)}
                 message="Copied to clipboard"
                 action={
-                    <IconButton size="small" aria-label="close" color="inherit" onClick={toggle}>
+                    <IconButton
+                        size="small"
+                        aria-label="close"
+                        color="inherit"
+                        onClick={() => setStatus(Status.Initial)}
+                    >
                         <Close fontSize="small" />
                     </IconButton>
                 }
             />
-            <WidgetMenuButtonWrapper onClick={createLink}>
+            <WidgetMenuButtonWrapper
+                activeElsewhere={Boolean(editingScene)}
+                activeCurrent={status !== Status.Initial}
+                onClick={createLink}
+            >
                 <IconButton size="large">
                     <Icon />
                 </IconButton>
@@ -66,10 +93,6 @@ type UrlData = {
     settings?: Partial<RenderSettings>;
     mainObject?: number;
 };
-
-function formatUrlData(data: UrlData): string {
-    return btoa(JSON.stringify(data));
-}
 
 export function getDataFromUrlHash(): UrlData {
     try {

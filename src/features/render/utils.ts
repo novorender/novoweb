@@ -1,3 +1,4 @@
+import { MutableRefObject } from "react";
 import { ObjectGroup } from "@novorender/data-js-api";
 import {
     CameraController,
@@ -14,14 +15,14 @@ import {
 } from "@novorender/webgl-api";
 
 import { api, dataApi } from "app";
-import { store } from "app/store";
 import { offscreenCanvas } from "config";
+import { groupsActions, selectLoadingIds } from "features/groups";
+import { DeviationMode, deviationsActions } from "features/deviations";
+
+import { store } from "app/store";
 import { CustomGroup, customGroupsActions, DispatchCustomGroups } from "contexts/customGroups";
 import { hiddenGroupActions, DispatchHidden } from "contexts/hidden";
 import { highlightActions, DispatchHighlighted } from "contexts/highlighted";
-import { groupsActions, selectLoadingIds } from "features/groups";
-import { vec4 } from "gl-matrix";
-import { MutableRefObject } from "react";
 import {
     AdvancedSetting,
     CameraType,
@@ -31,6 +32,7 @@ import {
     RenderType,
     SelectionBasketMode,
 } from "slices/renderSlice";
+
 import { VecRGB, VecRGBA } from "utils/color";
 import { sleep } from "utils/timers";
 
@@ -280,17 +282,14 @@ export async function waitForSceneToRender(view: View): Promise<void> {
     }
 }
 
-export async function getRenderType(view: View): Promise<RenderState["renderType"]> {
+export async function getRenderType(view: View, scene: Scene): Promise<RenderState["renderType"]> {
     if (!("advanced" in view.settings)) {
         return [RenderType.UnChangeable, "triangles"];
     }
 
-    // should be waitForSceneToRender(view), but big scenes require a stopped camera for a long time to finish rendering
-    await sleep(1500);
-
     const advancedSettings = (view.settings as Internal.RenderSettingsExt).advanced;
-    const points = advancedSettings.hidePoints || view.performanceStatistics.points > 0;
-    const triangles = advancedSettings.hideTriangles || view.performanceStatistics.triangles > 2048;
+    const points = scene.subtrees?.includes("points");
+    const triangles = scene.subtrees?.includes("triangles");
     const canChange = points && triangles;
 
     return !canChange
@@ -444,9 +443,11 @@ export function initClippingPlanes(clipping: RenderSettings["clippingVolume"]): 
 
 export function initDeviation(deviation: RenderSettings["points"]["deviation"]): void {
     store.dispatch(
-        renderActions.setDeviation({
-            mode: deviation.mode,
-            colors: deviation.colors.map((c) => ({ ...c, color: vec4.clone(c.color) })),
+        deviationsActions.setDeviations({
+            mode: deviation.mode as DeviationMode,
+            colors: deviation.colors
+                .map((c) => ({ ...c, color: Array.from(c.color) as VecRGBA }))
+                .sort((a, b) => b.deviation - a.deviation),
         })
     );
 }

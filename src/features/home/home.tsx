@@ -66,7 +66,6 @@ export function Home({ position, ...speedDialProps }: Props) {
             settings,
             customProperties,
             objectGroups = [],
-            bookmarks,
             camera = { kind: "flight" },
         } = await dataApi.loadScene(editingScene?.id || id);
 
@@ -96,7 +95,6 @@ export function Home({ position, ...speedDialProps }: Props) {
         initHidden(objectGroups, dispatchHidden);
         initHighlighted(objectGroups, dispatchHighlighted);
         initAdvancedSettings(view, customProperties);
-        dispatch(renderActions.setBookmarks(bookmarks));
         dispatch(panoramasActions.setStatus(PanoramaStatus.Initial));
 
         dispatchCustomGroups(

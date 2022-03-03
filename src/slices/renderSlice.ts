@@ -6,7 +6,7 @@ import type {
     OrthoControllerParams,
     RenderSettings,
 } from "@novorender/webgl-api";
-import type { Bookmark, ObjectGroup } from "@novorender/data-js-api";
+import type { ObjectGroup } from "@novorender/data-js-api";
 import { createSlice, createAsyncThunk, PayloadAction } from "@reduxjs/toolkit";
 import { vec3, vec4 } from "gl-matrix";
 
@@ -25,6 +25,7 @@ export enum CameraSpeedMultiplier {
 }
 
 export enum RenderType {
+    Uninitialised,
     Triangles,
     Points,
     TrianglesAndPoints,
@@ -68,8 +69,8 @@ export enum AdvancedSetting {
 }
 
 export enum SelectionBasketMode {
-    Strict,
     Loose,
+    Strict,
 }
 
 type CameraPosition = Pick<Camera, "position" | "rotation">;
@@ -79,7 +80,6 @@ export type ClippingPlanes = Omit<RenderSettings["clippingPlanes"], "bounds"> & 
 // Redux toolkit with immer removes readonly modifier of state in the reducer so we get ts errors
 // unless we cast the types to writable ones.
 type DeepWritable<T> = { -readonly [P in keyof T]: DeepWritable<T[P]> };
-type WritableBookmark = DeepWritable<Bookmark>;
 type CameraState =
     | { type: CameraType.Orthographic; params?: OrthoControllerParams }
     | { type: CameraType.Flight; goTo?: { position: Camera["position"]; rotation: Camera["rotation"] } };
@@ -89,13 +89,12 @@ const initialState = {
     environments: [] as EnvironmentDescription[],
     currentEnvironment: undefined as EnvironmentDescription | undefined,
     mainObject: undefined as ObjectId | undefined,
-    bookmarks: undefined as WritableBookmark[] | undefined,
     defaultVisibility: ObjectVisibility.Neutral,
     selectMultiple: false,
     baseCameraSpeed: 0.03,
     cameraSpeedMultiplier: CameraSpeedMultiplier.Normal,
     savedCameraPositions: { currentIndex: -1, positions: [] as CameraPosition[] },
-    renderType: RenderType.TrianglesAndPoints as
+    renderType: RenderType.Uninitialised as
         | Exclude<RenderType, RenderType.UnChangeable>
         | [RenderType.UnChangeable, "points" | "triangles"],
     selectionBasketMode: SelectionBasketMode.Loose,
@@ -140,13 +139,6 @@ const initialState = {
         [AdvancedSetting.PointSize]: 1,
         [AdvancedSetting.MaxPointSize]: 20,
         [AdvancedSetting.PointToleranceFactor]: 0,
-    },
-    deviation: {
-        mode: "mix" as "on" | "off" | "mix",
-        colors: [] as {
-            deviation: number;
-            color: vec4;
-        }[],
     },
 };
 
@@ -219,9 +211,6 @@ export const renderSlice = createSlice({
         },
         redoCameraPosition: (state) => {
             state.savedCameraPositions.currentIndex = state.savedCameraPositions.currentIndex + 1;
-        },
-        setBookmarks: (state, action: PayloadAction<Bookmark[] | undefined>) => {
-            state.bookmarks = action.payload as WritableBookmark[] | undefined;
         },
         setRenderType: (state, action: PayloadAction<State["renderType"]>) => {
             state.renderType = action.payload;
@@ -300,9 +289,6 @@ export const renderSlice = createSlice({
                 ...action.payload,
             };
         },
-        setDeviation: (state, action: PayloadAction<Partial<State["deviation"]>>) => {
-            state.deviation = { ...state.deviation, ...action.payload };
-        },
     },
     extraReducers: (builder) => {
         builder.addCase(fetchEnvironments.fulfilled, (state, action) => {
@@ -320,7 +306,6 @@ export const selectCameraSpeedMultiplier = (state: RootState) => state.render.ca
 export const selectBaseCameraSpeed = (state: RootState) => state.render.baseCameraSpeed;
 export const selectSavedCameraPositions = (state: RootState) => state.render.savedCameraPositions;
 export const selectHomeCameraPosition = (state: RootState) => state.render.savedCameraPositions.positions[0];
-export const selectBookmarks = (state: RootState) => state.render.bookmarks as Bookmark[] | undefined;
 export const selectRenderType = (state: RootState) => state.render.renderType;
 export const selectSelectionBasketMode = (state: RootState) => state.render.selectionBasketMode;
 export const selectClippingBox = (state: RootState) => state.render.clippingBox;
@@ -332,7 +317,6 @@ export const selectSelectiongOrthoPoint = (state: RootState) => state.render.sel
 export const selectShowPerformance = (state: RootState) => state.render.showPerformance;
 export const selectEditingScene = (state: RootState) => state.render.viewerSceneEditing;
 export const selectAdvancedSettings = (state: RootState) => state.render.advancedSettings;
-export const selectDeviation = (state: RootState) => state.render.deviation;
 
 const { reducer, actions } = renderSlice;
 export { reducer as renderReducer, actions as renderActions };

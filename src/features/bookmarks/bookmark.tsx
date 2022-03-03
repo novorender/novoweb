@@ -1,4 +1,5 @@
-import { Fragment, MouseEvent, useState } from "react";
+import { MouseEvent, useState } from "react";
+import { useHistory } from "react-router-dom";
 import {
     useTheme,
     Box,
@@ -13,11 +14,16 @@ import {
     ListItemIcon,
     ListItemText,
 } from "@mui/material";
-import { Delete, MoreVert } from "@mui/icons-material";
-import type { Bookmark as BookmarkType } from "@novorender/data-js-api";
+import { Delete, Edit, MoreVert } from "@mui/icons-material";
 import { css } from "@mui/styled-engine";
 
 import { Tooltip } from "components";
+
+import { useAppSelector } from "app/store";
+import { selectHasAdminCapabilities } from "slices/explorerSlice";
+import { selectUser } from "slices/authSlice";
+
+import { BookmarkAccess, ExtendedBookmark } from "./bookmarksSlice";
 
 const Description = styled(Typography)(
     () => css`
@@ -53,9 +59,13 @@ const Img = styled("img")(
     `
 );
 
-export function Bookmark({ bookmark, onDelete }: { bookmark: BookmarkType; onDelete: (bm: BookmarkType) => void }) {
+export function Bookmark({ bookmark }: { bookmark: ExtendedBookmark }) {
     const theme = useTheme();
+    const history = useHistory();
     const [menuAnchor, setMenuAnchor] = useState<HTMLElement | null>(null);
+
+    const isAdmin = useAppSelector(selectHasAdminCapabilities);
+    const user = useAppSelector(selectUser);
 
     const openMenu = (e: MouseEvent<HTMLButtonElement>) => {
         e.stopPropagation();
@@ -90,15 +100,17 @@ export function Bookmark({ bookmark, onDelete }: { bookmark: BookmarkType; onDel
                                 {bookmark.name}
                             </Typography>
                         </Tooltip>
-                        <IconButton
-                            color={Boolean(menuAnchor) ? "primary" : "default"}
-                            size="small"
-                            sx={{ ml: "auto", py: 0 }}
-                            aria-haspopup="true"
-                            onClick={openMenu}
-                        >
-                            <MoreVert />
-                        </IconButton>
+                        {isAdmin || (bookmark.access === BookmarkAccess.Personal && user) ? (
+                            <IconButton
+                                color={Boolean(menuAnchor) ? "primary" : "default"}
+                                size="small"
+                                sx={{ ml: "auto", py: 0 }}
+                                aria-haspopup="true"
+                                onClick={openMenu}
+                            >
+                                <MoreVert />
+                            </IconButton>
+                        ) : null}
                     </Box>
                     {bookmark.description ? (
                         <Tooltip disableInteractive title={bookmark.description}>
@@ -115,7 +127,13 @@ export function Bookmark({ bookmark, onDelete }: { bookmark: BookmarkType; onDel
                 id={`${bookmark.name}-menu`}
                 MenuListProps={{ sx: { maxWidth: "100%" } }}
             >
-                <MenuItem onClick={() => onDelete(bookmark)}>
+                <MenuItem onClick={() => history.push(`/edit/${bookmark.id}`)}>
+                    <ListItemIcon>
+                        <Edit fontSize="small" />
+                    </ListItemIcon>
+                    <ListItemText>Edit</ListItemText>
+                </MenuItem>
+                <MenuItem onClick={() => history.push(`delete/${bookmark.id}`)}>
                     <ListItemIcon>
                         <Delete fontSize="small" />
                     </ListItemIcon>

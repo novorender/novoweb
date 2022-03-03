@@ -25,12 +25,13 @@ import { useToggle } from "hooks/useToggle";
 import { useMountedState } from "hooks/useMountedState";
 
 import { useAppDispatch, useAppSelector } from "app/store";
-import { renderActions, selectBookmarks, selectCurrentEnvironment, selectEditingScene } from "slices/renderSlice";
+import { renderActions, selectCurrentEnvironment, selectEditingScene } from "slices/renderSlice";
 import { useExplorerGlobals } from "contexts/explorerGlobals";
 import { useHighlighted } from "contexts/highlighted";
 import { useHidden } from "contexts/hidden";
 import { useCustomGroups } from "contexts/customGroups";
 import { explorerActions } from "slices/explorerSlice";
+import { selectBookmarks } from "features/bookmarks";
 import { Save } from "@mui/icons-material";
 
 const today = new Date();

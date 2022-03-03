@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { ChromePicker, ColorChangeHandler } from "react-color";
-import { Box, Portal, ClickAwayListener } from "@mui/material";
+import { Box, ClickAwayListener } from "@mui/material";
+import { Portal } from "@mui/base";
 
 import { VecRGB, VecRGBA, vecToRgb } from "utils/color";
 

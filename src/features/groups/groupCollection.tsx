@@ -5,6 +5,7 @@ import { Box, IconButton, List, ListItemIcon, ListItemText, Menu, MenuItem } fro
 import { useAppDispatch, useAppSelector } from "app/store";
 import { Accordion, AccordionDetails, AccordionSummary } from "components";
 import { customGroupsActions, useCustomGroups } from "contexts/customGroups";
+import { selectHasAdminCapabilities } from "slices/explorerSlice";
 
 import { Group } from "./group";
 import { OrganisedGroups, StyledCheckbox } from "./groupsWidget";
@@ -22,6 +23,7 @@ export const GroupCollection = ({
     const { dispatch: dispatchCustomGroups } = useCustomGroups();
     const dispatch = useAppDispatch();
     const status = useAppSelector(selectGroupsStatus);
+    const isAdmin = useAppSelector(selectHasAdminCapabilities);
     const [menuAnchor, setMenuAnchor] = useState<HTMLElement | null>(null);
 
     const openMenu = (e: MouseEvent<HTMLButtonElement>) => {
@@ -90,7 +92,7 @@ export const GroupCollection = ({
                         onFocus={(event) => event.stopPropagation()}
                     />
                 </Box>
-                <Box flex="0 0 auto">
+                <Box flex="0 0 auto" sx={{ visibility: isAdmin ? "visible" : "hidden" }}>
                     <IconButton
                         size="small"
                         sx={{ py: 0 }}
@@ -137,14 +139,16 @@ export const GroupCollection = ({
             <AccordionDetails>
                 <Box pr={3}>
                     <List sx={{ padding: 0 }}>
-                        {collection.groups.map((group, index) => (
-                            <Group
-                                key={group.name + index}
-                                editGroup={() => editGroup(group.id)}
-                                group={group}
-                                colorPickerPosition={colorPickerPosition}
-                            />
-                        ))}
+                        {[...collection.groups]
+                            .sort((a, b) => a.name.localeCompare(b.name, "en", { sensitivity: "accent" }))
+                            .map((group, index) => (
+                                <Group
+                                    key={group.name + index}
+                                    editGroup={() => editGroup(group.id)}
+                                    group={group}
+                                    colorPickerPosition={colorPickerPosition}
+                                />
+                            ))}
                     </List>
                 </Box>
             </AccordionDetails>

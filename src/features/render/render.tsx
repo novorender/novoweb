@@ -58,14 +58,14 @@ import {
     CameraType,
     selectCamera,
     selectEditingScene,
-    selectBookmarks,
     SceneEditStatus,
     selectAdvancedSettings,
-    selectDeviation,
     selectSelectionBasketMode,
 } from "slices/renderSlice";
 import { authActions } from "slices/authSlice";
-import { explorerActions } from "slices/explorerSlice";
+import { explorerActions, selectUrlBookmarkId } from "slices/explorerSlice";
+import { selectDeviations } from "features/deviations";
+import { bookmarksActions, selectBookmarks, useSelectBookmark } from "features/bookmarks";
 import { useAppDispatch, useAppSelector } from "app/store";
 
 import { useHighlighted, highlightActions, useDispatchHighlighted } from "contexts/highlighted";
@@ -173,6 +173,7 @@ export function Render3D({ onInit }: Props) {
         state: { view, scene, canvas, preloadedScene },
         dispatch: dispatchGlobals,
     } = useExplorerGlobals();
+    const selectBookmark = useSelectBookmark();
 
     const env = useAppSelector(selectCurrentEnvironment);
     const environments = useAppSelector(selectEnvironments);
@@ -193,12 +194,13 @@ export function Render3D({ onInit }: Props) {
     const selectingOrthoPoint = useAppSelector(selectSelectiongOrthoPoint);
     const advancedSettings = useAppSelector(selectAdvancedSettings);
     const measure = useAppSelector(selectMeasure);
-    const deviation = useAppSelector(selectDeviation);
     const { addingPoint, angles, points, distances, selected: selectedPoint } = measure;
     const panoramas = useAppSelector(selectPanoramas);
+    const deviation = useAppSelector(selectDeviations);
     const show3dMarkers = useAppSelector(selectShow3dMarkers);
     const activePanorama = useAppSelector(selectActivePanorama);
     const panoramaStatus = useAppSelector(selectPanoramaStatus);
+    const urlBookmarkId = useAppSelector(selectUrlBookmarkId);
     const dispatch = useAppDispatch();
 
     const rendering = useRef({ start: () => Promise.resolve(), stop: () => {}, update: () => {} } as ReturnType<
@@ -212,7 +214,7 @@ export function Render3D({ onInit }: Props) {
         orbit: 2,
         pivot: 2,
     });
-    const storedFingersMap = useRef<CameraController["mouseButtonsMap"]>({ rotate: 1, pan: 2, orbit: 3, pivot: 3 });
+    const storedFingersMap = useRef<CameraController["fingersMap"]>({ rotate: 1, pan: 2, orbit: 3, pivot: 3 });
     const movementTimer = useRef<ReturnType<typeof setTimeout>>();
     const cameraGeneration = useRef<number>();
     const previousId = useRef("");
@@ -641,7 +643,6 @@ export function Render3D({ onInit }: Props) {
                     url,
                     db,
                     objectGroups = [],
-                    bookmarks,
                     customProperties,
                     title,
                     viewerScenes,
@@ -682,8 +683,6 @@ export function Render3D({ onInit }: Props) {
                 if (window.self === window.top || !customProperties?.enabledFeatures?.transparentBackground) {
                     initEnvironment(settings.environment as unknown as EnvironmentDescription, environments, _view);
                 }
-
-                dispatch(renderActions.setBookmarks(bookmarks));
 
                 initClippingBox(_view.settings.clippingPlanes);
                 initClippingPlanes(_view.settings.clippingVolume);
@@ -753,14 +752,14 @@ export function Render3D({ onInit }: Props) {
     ]);
 
     useEffect(() => {
-        if (!view) {
+        if (!view || !scene) {
             return;
         }
 
-        initRenderType(view);
+        initRenderType(view, scene);
 
-        async function initRenderType(view: View) {
-            const initialRenderType = await getRenderType(view);
+        async function initRenderType(view: View, scene: Scene) {
+            const initialRenderType = await getRenderType(view, scene);
             dispatch(renderActions.setRenderType(initialRenderType));
 
             const toDisable = Object.values(featuresConfig)
@@ -779,7 +778,7 @@ export function Render3D({ onInit }: Props) {
 
             dispatch(explorerActions.disableWidgets(toDisable as WidgetKey[]));
         }
-    }, [view, dispatch]);
+    }, [view, scene, dispatch]);
 
     useEffect(
         function initCameraMovedTracker() {
@@ -882,19 +881,19 @@ export function Render3D({ onInit }: Props) {
 
     useEffect(
         function handleRenderTypeChanges() {
-            if (!view || !("advanced" in view.settings)) {
+            if (!view || !("advanced" in view.settings) || renderType === RenderType.Uninitialised) {
                 return;
             }
 
             if (renderType !== RenderType.Panorama) {
                 storedRenderType.current = renderType;
                 view.camera.controller.mouseButtonsMap = storedMouseButtonsMap.current;
-                (view.camera.controller as any).fingersMap = storedFingersMap.current;
+                view.camera.controller.fingersMap = storedFingersMap.current;
             } else {
                 storedMouseButtonsMap.current = view.camera.controller.mouseButtonsMap;
-                storedFingersMap.current = (view.camera.controller as any).fingersMap;
+                storedFingersMap.current = view.camera.controller.fingersMap;
                 view.camera.controller.mouseButtonsMap = { pan: 0, rotate: 1, pivot: 0, orbit: 0 };
-                (view.camera.controller as any).fingersMap = { pan: 0, rotate: 1, pivot: 0, orbit: 0 };
+                view.camera.controller.fingersMap = { pan: 0, rotate: 1, pivot: 0, orbit: 0 };
             }
 
             const settings = view.settings as Internal.RenderSettingsExt;
@@ -973,7 +972,15 @@ export function Render3D({ onInit }: Props) {
                 return;
             }
 
-            view.applySettings({ points: { ...view.settings.points, deviation } });
+            view.applySettings({
+                points: {
+                    ...view.settings.points,
+                    deviation: {
+                        ...deviation,
+                        colors: [...deviation.colors].sort((a, b) => a.deviation - b.deviation),
+                    },
+                },
+            });
         },
         [view, deviation]
     );
@@ -989,15 +996,10 @@ export function Render3D({ onInit }: Props) {
             if (cameraState.type === CameraType.Flight) {
                 controller.enabled = true;
                 view.camera.controller = controller;
+                view.applySettings({ grid: { ...view.settings.grid, enabled: false } });
 
                 if (cameraState.goTo) {
-                    const sameCameraPosition =
-                        vec3.equals(view.camera.position, cameraState.goTo.position) &&
-                        quat.equals(view.camera.rotation, cameraState.goTo.rotation);
-
-                    if (!sameCameraPosition) {
-                        view.camera.controller.moveTo(cameraState.goTo.position, cameraState.goTo.rotation);
-                    }
+                    view.camera.controller.moveTo(cameraState.goTo.position, cameraState.goTo.rotation);
                 }
             } else if (cameraState.type === CameraType.Orthographic && cameraState.params) {
                 // copy non-primitives
@@ -1094,7 +1096,6 @@ export function Render3D({ onInit }: Props) {
                     title,
                     customProperties,
                     camera = { kind: "flight" },
-                    bookmarks,
                     objectGroups = [],
                 } = await dataApi.loadScene(sceneId);
 
@@ -1120,7 +1121,7 @@ export function Render3D({ onInit }: Props) {
                 initCustomGroups(objectGroups, dispatchCustomGroups);
                 initHighlighted(objectGroups, dispatchHighlighted);
                 initAdvancedSettings(view, customProperties);
-                dispatch(renderActions.setBookmarks(bookmarks));
+                dispatch(bookmarksActions.resetState());
 
                 return { title, customProperties };
             }
@@ -1198,6 +1199,30 @@ export function Render3D({ onInit }: Props) {
         },
         [panoramas, activePanorama, scene, view, dispatch, panoramaStatus, panoramaAbortController, abortPanorama]
     );
+
+    useEffect(() => {
+        handleUrlBookmark();
+
+        async function handleUrlBookmark() {
+            if (!view || !urlBookmarkId) {
+                return;
+            }
+
+            dispatch(explorerActions.setUrlBookmarkId(undefined));
+
+            try {
+                const bookmark = (await dataApi.getBookmarks(id, { group: urlBookmarkId })).find(
+                    (bm) => bm.id === urlBookmarkId
+                );
+
+                if (!bookmark) {
+                    return;
+                }
+
+                selectBookmark(bookmark);
+            } catch {}
+        }
+    }, [view, id, dispatch, selectBookmark, urlBookmarkId]);
 
     const exitPointerLock = () => {
         if ("exitPointerLock" in window.document) {
