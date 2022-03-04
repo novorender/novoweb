@@ -33,6 +33,8 @@ export function CreateGroup({ onClose, id }: { onClose: () => void; id?: string 
     const [status, setStatus] = useMountedState(Status.Initial);
     const [ids, setIds] = useMountedState([] as ObjectId[]);
     const [savedInputs, setSavedInputs] = useState<SearchPattern[]>([]);
+    const [focusedInputIdx, setFocusedInputIdx] = useState<number>(-1);
+    const focusedInput = inputs[focusedInputIdx];
 
     const [abortController, abort] = useAbortController();
 
@@ -91,15 +93,44 @@ export function CreateGroup({ onClose, id }: { onClose: () => void; id?: string 
     return (
         <Box>
             <form onSubmit={handleSubmit}>
-                <AdvancedSearchInputs inputs={inputs} setInputs={setInputs} />
+                <AdvancedSearchInputs
+                    inputs={inputs}
+                    setInputs={setInputs}
+                    setFocusedInputIdx={(input) => setFocusedInputIdx(input)}
+                />
                 <Box my={1} display="flex">
                     <Button
                         color="grey"
-                        sx={{ padding: 0, mr: 4 }}
+                        sx={{ padding: 0, mr: 3 }}
                         onClick={() => setInputs((state) => state.concat([{ property: "", value: "", exact: true }]))}
                     >
                         <AddCircle sx={{ mr: 0.5 }} />
-                        Add criteria
+                        AND
+                    </Button>
+                    <Button
+                        color="grey"
+                        sx={{ padding: 0, mr: 4 }}
+                        disabled={
+                            !focusedInput ||
+                            (Array.isArray(focusedInput.value) ? !focusedInput.value.slice(-1)[0] : !focusedInput.value)
+                        }
+                        onClick={() =>
+                            setInputs((inputs) =>
+                                inputs.map((input) =>
+                                    input === focusedInput
+                                        ? {
+                                              ...input,
+                                              value: Array.isArray(input.value)
+                                                  ? input.value.concat("")
+                                                  : [input.value, ""],
+                                          }
+                                        : input
+                                )
+                            )
+                        }
+                    >
+                        <AddCircle />
+                        <Box ml={0.5}>OR</Box>
                     </Button>
                     <Button
                         color="grey"
