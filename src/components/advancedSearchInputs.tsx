@@ -12,7 +12,7 @@ import {
     styled,
 } from "@mui/material";
 import { css } from "@mui/styled-engine";
-import { Cancel, Close, DragHandle, MoreVert } from "@mui/icons-material";
+import { Cancel, Close, DragHandle, MoreVert, NotInterested } from "@mui/icons-material";
 
 import { ScrollBox } from "./scrollBox";
 import { TextField } from "./textField";
@@ -84,7 +84,7 @@ function AdvancedInput({
         setMenuAnchor(null);
     };
 
-    const { property, value, exact } = input;
+    const { property, value, exact, exclude } = input;
     const multipleValues = Array.isArray(value);
 
     return (
@@ -195,21 +195,34 @@ function AdvancedInput({
                       ))
                     : null}
             </Menu>
-            <Box mx={1}>
-                <AdvancedSearchModifier
-                    title="Exact"
-                    onClick={() =>
-                        setInputs((inputs) =>
-                            inputs.map((input, idx) => (idx === index ? { ...input, exact: !input.exact } : input))
-                        )
-                    }
-                    active={exact}
-                    size="small"
-                >
-                    <DragHandle fontSize="small" />
-                </AdvancedSearchModifier>
-            </Box>
             <AdvancedSearchModifier
+                sx={{ ml: 1 }}
+                title="Exclude"
+                onClick={() =>
+                    setInputs((inputs) =>
+                        inputs.map((input, idx) => (idx === index ? { ...input, exclude: !input.exclude } : input))
+                    )
+                }
+                active={exclude}
+                size="small"
+            >
+                <NotInterested fontSize="small" />
+            </AdvancedSearchModifier>
+            <AdvancedSearchModifier
+                sx={{ ml: 1 }}
+                title="Exact"
+                onClick={() =>
+                    setInputs((inputs) =>
+                        inputs.map((input, idx) => (idx === index ? { ...input, exact: !input.exact } : input))
+                    )
+                }
+                active={exact}
+                size="small"
+            >
+                <DragHandle fontSize="small" />
+            </AdvancedSearchModifier>
+            <AdvancedSearchModifier
+                sx={{ ml: 1 }}
                 title="Remove"
                 onClick={() => {
                     setInputs((inputs) => {
