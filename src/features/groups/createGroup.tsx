@@ -4,7 +4,7 @@ import { Box, Button } from "@mui/material";
 import { ObjectId, SearchPattern } from "@novorender/webgl-api";
 import { v4 as uuidv4 } from "uuid";
 
-import { AdvancedSearchInputs } from "components";
+import { AdvancedSearchInputs, LinearProgress } from "components";
 
 import { CustomGroup, customGroupsActions, useCustomGroups } from "contexts/customGroups";
 import { useExplorerGlobals } from "contexts/explorerGlobals";
@@ -89,90 +89,95 @@ export function CreateGroup({ onClose, id }: { onClose: () => void; id?: string 
 
     const disableSearch =
         status === Status.Searching || !inputs.filter((input) => input.property && input.value).length;
+    const disableCreate =
+        status === Status.Searching || !savedInputs.filter((input) => input.property && input.value).length;
 
     return (
-        <Box>
-            <form onSubmit={handleSubmit}>
-                <AdvancedSearchInputs
-                    inputs={inputs}
-                    setInputs={setInputs}
-                    setFocusedInputIdx={(input) => setFocusedInputIdx(input)}
-                />
-                <Box my={1} display="flex">
-                    <Button
-                        color="grey"
-                        sx={{ padding: 0, mr: 3 }}
-                        onClick={() => setInputs((state) => state.concat([{ property: "", value: "", exact: true }]))}
-                    >
-                        <AddCircle sx={{ mr: 0.5 }} />
-                        AND
-                    </Button>
-                    <Button
-                        color="grey"
-                        sx={{ padding: 0, mr: 4 }}
-                        disabled={
-                            !focusedInput ||
-                            (Array.isArray(focusedInput.value) ? !focusedInput.value.slice(-1)[0] : !focusedInput.value)
-                        }
-                        onClick={() =>
-                            setInputs((inputs) =>
-                                inputs.map((input) =>
-                                    input === focusedInput
-                                        ? {
-                                              ...input,
-                                              value: Array.isArray(input.value)
-                                                  ? input.value.concat("")
-                                                  : [input.value, ""],
-                                          }
-                                        : input
-                                )
+        <Box component="form" onSubmit={handleSubmit}>
+            <AdvancedSearchInputs
+                inputs={inputs}
+                setInputs={setInputs}
+                setFocusedInputIdx={(input) => setFocusedInputIdx(input)}
+            />
+            <Box my={1} display="flex">
+                <Button
+                    color="grey"
+                    sx={{ padding: 0, mr: 3 }}
+                    onClick={() => setInputs((state) => state.concat([{ property: "", value: "", exact: true }]))}
+                >
+                    <AddCircle sx={{ mr: 0.5 }} />
+                    AND
+                </Button>
+                <Button
+                    color="grey"
+                    sx={{ padding: 0, mr: 4 }}
+                    disabled={
+                        !focusedInput ||
+                        (Array.isArray(focusedInput.value) ? !focusedInput.value.slice(-1)[0] : !focusedInput.value)
+                    }
+                    onClick={() =>
+                        setInputs((inputs) =>
+                            inputs.map((input) =>
+                                input === focusedInput
+                                    ? {
+                                          ...input,
+                                          value: Array.isArray(input.value)
+                                              ? input.value.concat("")
+                                              : [input.value, ""],
+                                      }
+                                    : input
                             )
-                        }
-                    >
-                        <AddCircle />
-                        <Box ml={0.5}>OR</Box>
-                    </Button>
+                        )
+                    }
+                >
+                    <AddCircle />
+                    <Box ml={0.5}>OR</Box>
+                </Button>
+                <Button
+                    color="grey"
+                    sx={{ padding: 0 }}
+                    disabled={disableCreate}
+                    onClick={groupToEdit ? updateGroup : createGroup}
+                >
+                    <AddCircle sx={{ mr: 0.5 }} />
+                    {groupToEdit ? "Update" : "Create"} group {!disableCreate ? `(${ids.length})` : ""}
+                </Button>
+            </Box>
+            <Box display="flex" mb={1}>
+                {status === Status.Initial ? (
                     <Button
+                        onClick={onClose}
                         color="grey"
-                        sx={{ padding: 0 }}
-                        onClick={groupToEdit ? updateGroup : createGroup}
-                        disabled={!ids.length}
+                        type="button"
+                        variant="outlined"
+                        fullWidth
+                        sx={{ marginRight: 1 }}
                     >
-                        <AddCircle sx={{ mr: 0.5 }} />
-                        {groupToEdit ? "Update" : "Create"} group {ids.length ? `(${ids.length})` : ""}
+                        Close
                     </Button>
-                </Box>
-                <Box display="flex" mb={1}>
-                    {status === Status.Initial ? (
-                        <Button
-                            onClick={onClose}
-                            color="grey"
-                            type="button"
-                            variant="outlined"
-                            fullWidth
-                            sx={{ marginRight: 1 }}
-                        >
-                            Close
-                        </Button>
-                    ) : (
-                        <Button
-                            onClick={() => {
-                                abort();
-                            }}
-                            color="grey"
-                            type="button"
-                            variant="outlined"
-                            fullWidth
-                            sx={{ marginRight: 1 }}
-                        >
-                            Cancel
-                        </Button>
-                    )}
-                    <Button type="submit" fullWidth disabled={disableSearch} color="primary" variant="contained">
-                        Search
+                ) : (
+                    <Button
+                        onClick={() => {
+                            abort();
+                        }}
+                        color="grey"
+                        type="button"
+                        variant="outlined"
+                        fullWidth
+                        sx={{ marginRight: 1 }}
+                    >
+                        Cancel
                     </Button>
+                )}
+                <Button type="submit" fullWidth disabled={disableSearch} color="primary" variant="contained">
+                    Search
+                </Button>
+            </Box>
+            {status === Status.Searching ? (
+                <Box ml={-1}>
+                    <LinearProgress />
                 </Box>
-            </form>
+            ) : null}
         </Box>
     );
 }
