@@ -15,7 +15,7 @@ import { Consent } from "features/consent";
 
 import { useAppSelector, useAppDispatch } from "app/store";
 import { explorerActions, SceneType, UserRole } from "slices/explorerSlice";
-import { selectAccessToken } from "slices/authSlice";
+import { authActions, selectAccessToken } from "slices/authSlice";
 import { HiddenProvider } from "contexts/hidden";
 import { CustomGroupsProvider } from "contexts/customGroups";
 import { HighlightedProvider } from "contexts/highlighted";
@@ -123,10 +123,15 @@ function AuthCheck({ children }: { children: ReactNode }) {
                 return;
             }
 
-            const scene = await dataApi.loadScene(id).catch(() => undefined);
-            if (scene) {
+            const sceneRes = await dataApi.loadScene(id).catch(() => undefined);
+
+            if (sceneRes && !("error" in sceneRes)) {
                 setStatus(AuthCheckStatus.Public);
             } else {
+                if (sceneRes && sceneRes.tenant) {
+                    dispatch(authActions.setAdTenant(sceneRes.tenant));
+                }
+
                 setStatus(AuthCheckStatus.RequireAuth);
             }
         }

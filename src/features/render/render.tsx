@@ -639,6 +639,12 @@ export function Render3D({ onInit }: Props) {
             previousId.current = id;
 
             try {
+                const sceneResponse = preloadedScene ?? (await dataApi.loadScene(id));
+
+                if ("error" in sceneResponse) {
+                    throw sceneResponse;
+                }
+
                 const {
                     url,
                     db,
@@ -647,7 +653,7 @@ export function Render3D({ onInit }: Props) {
                     title,
                     viewerScenes,
                     ...sceneData
-                } = preloadedScene ?? (await dataApi.loadScene(id));
+                } = sceneResponse;
 
                 const urlData = getDataFromUrlHash();
                 const camera = { kind: "flight", ...sceneData.camera, ...urlData.camera } as CameraControllerParams;
@@ -1097,7 +1103,7 @@ export function Render3D({ onInit }: Props) {
                     customProperties,
                     camera = { kind: "flight" },
                     objectGroups = [],
-                } = await dataApi.loadScene(sceneId);
+                } = (await dataApi.loadScene(sceneId)) as SceneData;
 
                 if (settings) {
                     const { display: _display, light: _light, ...viewerSceneSettings } = settings;
