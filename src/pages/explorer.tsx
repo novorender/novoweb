@@ -179,10 +179,10 @@ function getIsViewerScene(customProperties: unknown): boolean {
         : false;
 }
 
-function getRequireConsent(customProperties: unknown): string {
+function getRequireConsent(customProperties: unknown): boolean {
     return customProperties && typeof customProperties === "object" && "requireConsent" in customProperties
-        ? (customProperties as { requireConsent: string }).requireConsent
-        : "";
+        ? (customProperties as { requireConsent: boolean }).requireConsent
+        : false;
 }
 
 function getUserRole(customProperties: unknown): UserRole {

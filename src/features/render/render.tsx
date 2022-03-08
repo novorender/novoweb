@@ -708,6 +708,9 @@ export function Render3D({ onInit }: Props) {
                     dispatch(explorerActions.setViewerScenes(viewerScenes));
                 }
 
+                const organization = (sceneData as { organization?: string }).organization ?? "";
+                dispatch(explorerActions.setOrganization(organization));
+
                 rendering.current = createRendering(canvas, _view);
                 rendering.current.start();
                 window.document.title = `${title} - Novorender`;

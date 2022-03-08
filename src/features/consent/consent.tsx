@@ -1,12 +1,13 @@
 import { Box, Button, Modal, Typography, useTheme } from "@mui/material";
 import { useAppDispatch, useAppSelector } from "app/store";
 
-import { explorerActions, selectRequireConsent } from "slices/explorerSlice";
+import { explorerActions, selectOrganization, selectRequireConsent } from "slices/explorerSlice";
 
 import { ReactComponent as ConsentIcon } from "media/icons/consent.svg";
 
 export function Consent() {
     const theme = useTheme();
+    const organization = useAppSelector(selectOrganization);
     const requireConsent = useAppSelector(selectRequireConsent);
     const dispatch = useAppDispatch();
 
@@ -28,14 +29,14 @@ export function Consent() {
                         Consent to use
                     </Typography>
                     <Typography mb={3} textAlign="center">
-                        This 3D is the property of {requireConsent} and must neither be used, reproduced nor handed over
+                        This 3D is the property of {organization} and must neither be used, reproduced nor handed over
                         to any third party without written consent.
                     </Typography>
                     <Button
                         fullWidth
                         size="large"
                         variant="contained"
-                        onClick={() => dispatch(explorerActions.setRequireConsent(""))}
+                        onClick={() => dispatch(explorerActions.setRequireConsent(false))}
                     >
                         Agree
                     </Button>
