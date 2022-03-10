@@ -984,12 +984,18 @@ export function Render3D({ onInit }: Props) {
             view.applySettings({
                 points: {
                     ...view.settings.points,
+                    intensity: {
+                        ...view.settings.points.intensity,
+                        mode: ["on", "mix"].includes(deviation.mode) ? "off" : "mix",
+                    },
                     deviation: {
                         ...deviation,
                         colors: [...deviation.colors].sort((a, b) => a.deviation - b.deviation),
                     },
                 },
             });
+
+            (window as any).view = view;
         },
         [view, deviation]
     );
