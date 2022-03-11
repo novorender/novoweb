@@ -994,8 +994,6 @@ export function Render3D({ onInit }: Props) {
                     },
                 },
             });
-
-            (window as any).view = view;
         },
         [view, deviation]
     );
