@@ -677,12 +677,16 @@ export function Render3D({ onInit }: Props) {
                 });
                 _view.scene = await api.loadScene(url, db);
 
-                initCamera({
+                const controller = initCamera({
                     canvas,
                     camera,
                     view: _view,
                     flightControllerRef: flightController,
                 });
+
+                if (!sceneData.camera && !urlData.camera) {
+                    controller.autoZoomToScene = true;
+                }
 
                 cameraGeneration.current = _view.performanceStatistics.cameraGeneration;
 
