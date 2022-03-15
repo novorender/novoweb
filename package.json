@@ -52,7 +52,7 @@
         "@mui/lab": "^5.0.0-alpha.58",
         "@mui/material": "^5.0.3",
         "@novorender/data-js-api": "^0.2.12",
-        "@novorender/webgl-api": "^0.3.45",
+        "@novorender/webgl-api": "^0.3.47",
         "@reduxjs/toolkit": "^1.5.1",
         "@use-gesture/react": "^10.1.1",
         "date-fns": "^2.27.0",

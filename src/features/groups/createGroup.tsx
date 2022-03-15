@@ -123,7 +123,7 @@ export function CreateGroup({ onClose, id }: { onClose: () => void; id?: string 
                                           ...input,
                                           value: Array.isArray(input.value)
                                               ? input.value.concat("")
-                                              : [input.value, ""],
+                                              : [input.value ?? "", ""],
                                       }
                                     : input
                             )
