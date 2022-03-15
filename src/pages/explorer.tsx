@@ -68,8 +68,12 @@ function ExplorerBase() {
 
         const oAuthState = getOAuthState();
 
-        if (oAuthState && oAuthState.service === featuresConfig.bimcollab.key) {
-            dispatch(explorerActions.setWidgets([featuresConfig.bimcollab.key]));
+        if (oAuthState) {
+            if (oAuthState.service === featuresConfig.bimcollab.key) {
+                dispatch(explorerActions.setWidgets([featuresConfig.bimcollab.key]));
+            } else if (oAuthState.service === featuresConfig.bimTrack.key) {
+                dispatch(explorerActions.setWidgets([featuresConfig.bimTrack.key]));
+            }
         } else {
             const searchParams = new URLSearchParams(window.location.search);
 

@@ -4,9 +4,9 @@ import { RootState } from "app/store";
 import { StorageKey } from "config/storage";
 import { generateCodeChallenge } from "utils/auth";
 import { generateRandomString } from "utils/misc";
-import { handleImageResponse } from "utils/bcf";
 import { getFromStorage, saveToStorage } from "utils/storage";
 import { sleep } from "utils/timers";
+import { handleImageResponse } from "utils/bcf";
 
 import {
     AuthInfo,
@@ -17,22 +17,20 @@ import {
     ProjectExtensions,
     Topic,
     User,
-    Version,
     Viewpoint,
     Visibility,
 } from "types/bcf";
-
 import { NewViewpoint } from "./includeViewpoint";
 
-const clientId = window.bimCollabClientId || process.env.REACT_APP_BIMCOLLAB_CLIENT_ID || "";
-const clientSecret = window.bimCollabClientSecret || process.env.REACT_APP_BIMCOLLAB_CLIENT_SECRET || "";
+const clientId = window.bimTrackClientId || process.env.REACT_APP_BIMTRACK_CLIENT_ID || "";
+const clientSecret = window.bimTrackClientSecret || process.env.REACT_APP_BIMTRACK_CLIENT_SECRET || "";
 const callbackUrl = window.location.origin + "/";
-const scope = "openid offline_access bcf";
+const scope = "openid offline_access BcfWebApi";
 
 const rawBaseQuery = fetchBaseQuery({
     baseUrl: "/",
     prepareHeaders: (headers, { getState }) => {
-        const token = (getState() as RootState).bimCollab.accessToken;
+        const token = (getState() as RootState).bimTrack.accessToken;
 
         if (token) {
             headers.set("authorization", `Bearer ${token}`);
@@ -47,42 +45,18 @@ const dynamicBaseQuery: BaseQueryFn<string | FetchArgs, unknown, FetchBaseQueryE
     api,
     extraOptions
 ) => {
-    const { space, version } = (api.getState() as RootState).bimCollab;
-    if (!space) {
-        return {
-            error: {
-                status: 400,
-                statusText: "Bad Request",
-                data: "No bimcollab space provided",
-            },
-        };
-    }
-
     const urlEnd = typeof args === "string" ? args : args.url;
-
-    if (urlEnd !== "versions" && !version) {
-        return {
-            error: {
-                status: 400,
-                statusText: "Bad Request",
-                data: "No api version provided",
-            },
-        };
-    }
-
-    const adjustedUrl = `https://${space}.bimcollab.com/bcf/${version ? version + "/" : ""}${urlEnd}`;
+    const adjustedUrl = `/bimtrack/bcf/2.1/${urlEnd}`;
     const adjustedArgs = typeof args === "string" ? adjustedUrl : { ...args, url: adjustedUrl };
+
     return rawBaseQuery(adjustedArgs, api, extraOptions);
 };
 
-export const bimCollabApi = createApi({
-    reducerPath: "bimCollabApi",
+export const bimTrackApi = createApi({
+    reducerPath: "bimTrackApi",
     tagTypes: ["Topics"],
     baseQuery: dynamicBaseQuery,
     endpoints: (builder) => ({
-        getVersions: builder.mutation<{ versions: Version[] }, void>({
-            query: () => "versions",
-        }),
         getAuthInfo: builder.mutation<AuthInfo, void>({
             query: () => "auth",
         }),
@@ -146,12 +120,6 @@ export const bimCollabApi = createApi({
                 url: `projects/${projectId}/topics/${topicId}/viewpoints/${viewpointId}/snapshot`,
                 responseHandler: handleImageResponse,
             }),
-        }),
-        getThumbnail: builder.query<string, { projectId: string; topicId: string; viewpointId: string }>({
-            query: ({ projectId, topicId, viewpointId }) => ({
-                url: `projects/${projectId}/topics/${topicId}/viewpoints/${viewpointId}/thumbnail`,
-                responseHandler: handleImageResponse,
-            }),
             keepUnusedDataFor: 60 * 5,
         }),
         createTopic: builder.mutation<Topic, Partial<Topic> & Pick<Topic, "title"> & { projectId: string }>({
@@ -193,40 +161,35 @@ export const bimCollabApi = createApi({
                 method: "POST",
             }),
         }),
-        getToken: builder.mutation<{ access_token: string; refresh_token: string }, { tokenUrl: string; code: string }>(
-            {
-                queryFn: ({ code, tokenUrl }) => {
-                    const body = new URLSearchParams();
-                    body.set("code", code);
-                    body.set("client_id", clientId);
-                    body.set("client_secret", clientSecret);
-                    body.set("grant_type", "authorization_code");
-                    body.set("redirect_uri", callbackUrl);
-                    body.set("code_verifier", getFromStorage(StorageKey.BimCollabCodeVerifier));
+        getToken: builder.mutation<{ access_token: string; refresh_token: string }, { code: string }>({
+            queryFn: ({ code }) => {
+                const body = new URLSearchParams();
+                body.set("code", code);
+                body.set("client_id", clientId);
+                body.set("client_secret", clientSecret);
+                body.set("grant_type", "authorization_code");
+                body.set("redirect_uri", callbackUrl);
+                body.set("code_verifier", getFromStorage(StorageKey.BimTrackCodeVerifier));
 
-                    return fetch(tokenUrl, {
-                        method: "POST",
-                        headers: { "Content-Type": "application/x-www-form-urlencoded" },
-                        body,
-                    })
-                        .then((res) => res.json())
-                        .then((data) => ({ data }))
-                        .catch((error) => ({ error }));
-                },
-            }
-        ),
-        refreshToken: builder.mutation<
-            { access_token: string; refresh_token: string },
-            { tokenUrl: string; refreshToken: string }
-        >({
-            queryFn: ({ refreshToken, tokenUrl }) => {
+                return fetch("/bimtrack/token", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/x-www-form-urlencoded" },
+                    body,
+                })
+                    .then((res) => res.json())
+                    .then((data) => ({ data }))
+                    .catch((error) => ({ error }));
+            },
+        }),
+        refreshToken: builder.mutation<{ access_token: string; refresh_token: string }, { refreshToken: string }>({
+            queryFn: ({ refreshToken }) => {
                 const body = new URLSearchParams();
                 body.set("refresh_token", refreshToken);
                 body.set("client_id", clientId);
                 body.set("client_secret", clientSecret);
                 body.set("grant_type", "refresh_token");
 
-                return fetch(tokenUrl, {
+                return fetch("/bimtrack/token", {
                     body,
                     method: "POST",
                     headers: { "Content-Type": "application/x-www-form-urlencoded" },
@@ -242,7 +205,6 @@ export const bimCollabApi = createApi({
 // Export hooks for usage in functional components, which are
 // auto-generated based on the defined endpoints
 export const {
-    useGetVersionsMutation,
     useGetAuthInfoMutation,
     useGetCurrentUserQuery,
     useGetProjectsQuery,
@@ -257,19 +219,18 @@ export const {
     useGetSelectionQuery,
     useGetVisibilityQuery,
     useGetSnapshotQuery,
-    useGetThumbnailQuery,
     useCreateTopicMutation,
     useUpdateTopicMutation,
     useCreateViewpointMutation,
     useCreateCommentMutation,
     useGetTokenMutation,
     useRefreshTokenMutation,
-} = bimCollabApi;
+} = bimTrackApi;
 
 export async function getCode(authUrl: string, state: string) {
     const verifier = generateRandomString();
     const challenge = await generateCodeChallenge(verifier);
-    saveToStorage(StorageKey.BimCollabCodeVerifier, verifier);
+    saveToStorage(StorageKey.BimTrackCodeVerifier, verifier);
 
     window.location.href =
         authUrl +

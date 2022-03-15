@@ -27,6 +27,7 @@ import RouteOutlinedIcon from "@mui/icons-material/RouteOutlined";
 
 import { ReactComponent as ClippingIcon } from "media/icons/clipping.svg";
 import { ReactComponent as RunIcon } from "media/icons/run.svg";
+import { ReactComponent as BimTrack } from "media/icons/bimtrack.svg";
 
 import { RenderType } from "slices/renderSlice";
 
@@ -42,6 +43,13 @@ export const featuresConfig = {
         key: "bimcollab",
         name: "BIMcollab",
         Icon: DomainIcon,
+        type: FeatureType.Widget,
+    },
+    bimTrack: {
+        key: "bimTrack",
+        name: "BIM Track",
+        // Icon: BarChart,
+        Icon: BimTrack,
         type: FeatureType.Widget,
     },
     advancedSettings: {
@@ -236,7 +244,8 @@ export type WidgetKey = {
 
 export type Widget = Config[WidgetKey];
 
-export const defaultEnabledWidgets = [];
+// todo(OLA)
+export const defaultEnabledWidgets = [featuresConfig.bimTrack.key];
 export const defaultEnabledAdminWidgets = Object.values(featuresConfig)
     .filter((value) => [FeatureType.AdminWidget, FeatureType.Widget].includes(value.type))
     .map((widget) => widget.key as WidgetKey);

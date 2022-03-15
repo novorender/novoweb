@@ -3,9 +3,8 @@ import { vec3, mat3, quat, vec4, mat4 } from "gl-matrix";
 
 import { ObjectVisibility } from "slices/renderSlice";
 import { VecRGB, VecRGBA, vecToHex } from "utils/color";
-import { uniqueArray } from "utils/misc";
-
-import { Viewpoint } from "./types";
+import { base64UrlEncodeImg, uniqueArray } from "utils/misc";
+import { Viewpoint } from "types/bcf";
 
 type Point = {
     x: number;
@@ -229,7 +228,7 @@ export function createBcfSnapshot(canvas: HTMLCanvasElement): Viewpoint["snapsho
     dist.height = height;
     dist.width = width;
     const ctx = dist.getContext("2d", { alpha: false, desynchronized: false })!;
-    ctx.drawImage(canvas, 0, 0, width, height, 0, 0, width, height);
+    ctx.drawImage(canvas, (canvas.width - width) / 2, (canvas.height - height) / 2, width, height, 0, 0, width, height);
 
     return { snapshot_type: "png", snapshot_data: dist.toDataURL("image/png").split(";base64,")[1] };
 }
@@ -268,5 +267,5 @@ export async function createBcfViewpointComponents({
 }
 
 export function handleImageResponse(res: Response): Promise<string> {
-    return res.arrayBuffer().then((buffer) => `data:image/png;base64, ${Buffer.from(buffer).toString("base64")}`);
+    return res.arrayBuffer().then((buffer) => `data:image/png;base64, ${base64UrlEncodeImg(buffer)}`);
 }

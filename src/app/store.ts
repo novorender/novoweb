@@ -12,6 +12,8 @@ import { followPathReducer } from "features/followPath";
 import { deviationsReducer } from "features/deviations";
 import { bimCollabReducer } from "features/bimCollab/bimCollabSlice";
 import { bimCollabApi } from "features/bimCollab/bimCollabApi";
+import { bimTrackReducer } from "features/bimTrack/bimTrackSlice";
+import { bimTrackApi } from "features/bimTrack/bimTrackApi";
 
 const rootReducer = combineReducers({
     explorer: explorerReducer,
@@ -24,12 +26,15 @@ const rootReducer = combineReducers({
     deviations: deviationsReducer,
     bimCollab: bimCollabReducer,
     [bimCollabApi.reducerPath]: bimCollabApi.reducer,
+    bimTrack: bimTrackReducer,
+    [bimTrackApi.reducerPath]: bimTrackApi.reducer,
 });
 
 export const store = configureStore({
     reducer: rootReducer,
     devTools: process.env.NODE_ENV === "development",
-    middleware: (getDefaultMiddleware) => getDefaultMiddleware().concat(bimCollabApi.middleware),
+    middleware: (getDefaultMiddleware) =>
+        getDefaultMiddleware().concat(bimCollabApi.middleware).concat(bimTrackApi.middleware),
 });
 
 setupListeners(store.dispatch);

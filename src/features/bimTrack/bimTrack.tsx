@@ -1,17 +1,17 @@
-import { Box, Typography, useTheme, Button } from "@mui/material";
-import { FormEventHandler, useCallback, useEffect, useState } from "react";
+import { Box } from "@mui/material";
+import { useCallback, useEffect } from "react";
 import { MemoryRouter, Switch, Route } from "react-router-dom";
 
-import { AuthInfo } from "types/bcf";
+import { LinearProgress, LogoSpeedDial, WidgetContainer, WidgetHeader } from "components";
 import { WidgetList } from "features/widgetList";
-import { LinearProgress, LogoSpeedDial, TextField, WidgetContainer, WidgetHeader } from "components";
 import { useAppDispatch, useAppSelector } from "app/store";
 import { StorageKey } from "config/storage";
 import { featuresConfig } from "config/features";
 import { getFromStorage, saveToStorage, deleteFromStorage } from "utils/storage";
-import { createOAuthStateString, getOAuthState } from "utils/auth";
+import { createOAuthStateString } from "utils/auth";
 import { useSceneId } from "hooks/useSceneId";
 import { useToggle } from "hooks/useToggle";
+import { AuthInfo } from "types/bcf";
 
 import { Filters } from "./routes/filters";
 import { Topic } from "./routes/topic";
@@ -22,26 +22,24 @@ import { CreateComment } from "./routes/createComment";
 import { EditTopic } from "./routes/editTopic";
 
 import {
-    bimCollabActions,
+    bimTrackActions,
+    BimTrackStatus,
     FilterType,
     selectAccessToken,
     selectAuthInfo,
-    selectSpace,
-    selectVersion,
-} from "./bimCollabSlice";
+    selectStatus,
+} from "./bimTrackSlice";
 import {
     getCode,
     useGetAuthInfoMutation,
     useGetCurrentUserQuery,
     useGetTokenMutation,
-    useGetVersionsMutation,
     useRefreshTokenMutation,
-} from "./bimCollabApi";
+} from "./bimTrackApi";
 
-export function BimCollab() {
+export function BimTrack() {
     const sceneId = useSceneId();
-    const space = useAppSelector(selectSpace);
-    const apiVersion = useAppSelector(selectVersion);
+    const status = useAppSelector(selectStatus);
     const authInfo = useAppSelector(selectAuthInfo);
     const accessToken = useAppSelector(selectAccessToken);
     const dispatch = useAppDispatch();
@@ -52,32 +50,30 @@ export function BimCollab() {
     const [getToken] = useGetTokenMutation();
     const [refreshToken] = useRefreshTokenMutation();
 
-    const [fetchVersions, { isError: apiError }] = useGetVersionsMutation();
     const [fetchAuthInfo] = useGetAuthInfoMutation();
 
     const authenticate = useCallback(
-        async (authInfo: AuthInfo, space: string): Promise<string> => {
-            const storedRefreshToken = getFromStorage(StorageKey.BimCollabRefreshToken);
+        async (authInfo: AuthInfo): Promise<string> => {
+            const storedRefreshToken = getFromStorage(StorageKey.BimTrackRefreshToken);
             const code = new URLSearchParams(window.location.search).get("code");
 
             try {
                 if (code) {
                     window.history.replaceState(null, "", window.location.pathname.replace("Callback", ""));
 
-                    const res = await getToken({ tokenUrl: authInfo.oauth2_token_url, code });
+                    const res = await getToken({ code });
 
                     if (!("data" in res)) {
                         throw new Error("token request failed");
                     }
 
                     if (res.data.refresh_token) {
-                        saveToStorage(StorageKey.BimCollabRefreshToken, res.data.refresh_token);
+                        saveToStorage(StorageKey.BimTrackRefreshToken, res.data.refresh_token);
                     }
 
                     return res.data.access_token;
                 } else if (storedRefreshToken) {
                     const res = await refreshToken({
-                        tokenUrl: authInfo.oauth2_token_url,
                         refreshToken: storedRefreshToken,
                     });
 
@@ -86,9 +82,9 @@ export function BimCollab() {
                     }
 
                     if (res.data.refresh_token) {
-                        saveToStorage(StorageKey.BimCollabRefreshToken, res.data.refresh_token);
+                        saveToStorage(StorageKey.BimTrackRefreshToken, res.data.refresh_token);
                     } else {
-                        deleteFromStorage(StorageKey.BimCollabRefreshToken);
+                        deleteFromStorage(StorageKey.BimTrackRefreshToken);
                     }
 
                     return res.data.access_token;
@@ -98,8 +94,7 @@ export function BimCollab() {
             } catch (e) {
                 if (e instanceof Error && e.message === "get code") {
                     const state = createOAuthStateString({
-                        service: featuresConfig.bimcollab.key,
-                        space: space,
+                        service: featuresConfig.bimTrack.key,
                         sceneId,
                     });
 
@@ -113,71 +108,44 @@ export function BimCollab() {
     );
 
     useEffect(() => {
-        const state = getOAuthState();
-
-        if (state?.space) {
-            dispatch(bimCollabActions.setSpace(state.space));
-        }
-    }, [dispatch]);
-
-    useEffect(() => {
-        if (space && !apiVersion) {
-            getVersion();
-        }
-
-        async function getVersion() {
-            const versionRes = await fetchVersions();
-
-            if (!("data" in versionRes)) {
-                return;
-            }
-
-            const { versions } = versionRes.data;
-            const version =
-                versions.find((ver) => ver.version_id === "2.1") ?? versions.find((ver) => ver.version_id === "bc_2.1");
-
-            dispatch(bimCollabActions.setVersion(version?.version_id ?? "2.1"));
-        }
-    }, [space, dispatch, apiVersion, fetchVersions]);
-
-    useEffect(() => {
-        if (space && apiVersion && !authInfo) {
+        if (status === BimTrackStatus.Initial) {
             getAuthInfo();
         }
 
         async function getAuthInfo() {
+            dispatch(bimTrackActions.setStatus(BimTrackStatus.LoadingAuthInfo));
             const authInfoRes = await fetchAuthInfo();
 
             if (!("data" in authInfoRes)) {
                 return;
             }
 
-            dispatch(bimCollabActions.setAuthInfo(authInfoRes.data));
+            dispatch(bimTrackActions.setStatus(BimTrackStatus.Ready));
+            dispatch(bimTrackActions.setAuthInfo(authInfoRes.data));
         }
-    }, [space, apiVersion, fetchAuthInfo, dispatch, authInfo]);
+    }, [fetchAuthInfo, dispatch, authInfo, status]);
 
     useEffect(() => {
-        if (space && authInfo) {
-            init(authInfo, space);
+        if (authInfo) {
+            init(authInfo);
         }
 
-        async function init(authInfo: AuthInfo, space: string) {
-            const accessToken = await authenticate(authInfo, space);
+        async function init(authInfo: AuthInfo) {
+            const accessToken = await authenticate(authInfo);
 
             if (!accessToken) {
-                dispatch(bimCollabActions.logOut());
+                dispatch(bimTrackActions.logOut());
                 return;
             }
 
-            saveToStorage(StorageKey.BimCollabSuggestedSpace, space);
-            dispatch(bimCollabActions.setAccessToken(accessToken));
+            dispatch(bimTrackActions.setAccessToken(accessToken));
         }
-    }, [space, authInfo, dispatch, authenticate]);
+    }, [authInfo, dispatch, authenticate]);
 
     useEffect(
         function initFilter() {
             if (user) {
-                dispatch(bimCollabActions.setFilters({ [FilterType.AssignedTo]: [user.id] }));
+                dispatch(bimTrackActions.setFilters({ [FilterType.AssignedTo]: [user.id] }));
             }
         },
         [user, dispatch]
@@ -186,11 +154,9 @@ export function BimCollab() {
     return (
         <>
             <WidgetContainer>
-                <WidgetHeader widget={featuresConfig.bimcollab} disableShadow={!menuOpen} />
+                <WidgetHeader widget={featuresConfig.bimTrack} disableShadow={!menuOpen} />
                 <Box display={menuOpen ? "none" : "flex"} flexGrow={1} overflow="hidden" flexDirection="column">
-                    {!space || apiError ? (
-                        <EnterBimCollabSpace error={apiError} />
-                    ) : accessToken ? (
+                    {accessToken ? (
                         <MemoryRouter>
                             <Switch>
                                 <Route path="/" exact>
@@ -222,59 +188,16 @@ export function BimCollab() {
                 </Box>
                 <WidgetList
                     display={menuOpen ? "block" : "none"}
-                    widgetKey={featuresConfig.bimcollab.key}
+                    widgetKey={featuresConfig.bimTrack.key}
                     onSelect={toggleMenu}
                 />
             </WidgetContainer>
             <LogoSpeedDial
                 open={menuOpen}
                 toggle={toggleMenu}
-                testId={`${featuresConfig.bimcollab.key}-widget-menu-fab`}
+                testId={`${featuresConfig.bimTrack.key}-widget-menu-fab`}
                 ariaLabel="toggle widget menu"
             />
         </>
-    );
-}
-
-function EnterBimCollabSpace({ error }: { error?: boolean }) {
-    const theme = useTheme();
-    const dispatch = useAppDispatch();
-    const currentSpace = useAppSelector(selectSpace);
-
-    const [space, setSpace] = useState(getFromStorage(StorageKey.BimCollabSuggestedSpace));
-
-    const handleSubmit: FormEventHandler = (e) => {
-        e.preventDefault();
-
-        deleteFromStorage(StorageKey.BimCollabSuggestedSpace);
-        dispatch(bimCollabActions.logOut());
-        dispatch(bimCollabActions.setSpace(space.toLowerCase().trim()));
-    };
-
-    return (
-        <Box p={1} height={1} position="relative">
-            <Box position="absolute" height={5} top={-5} width={1} boxShadow={theme.customShadows.widgetHeader} />
-            <Typography variant="h5" sx={{ mt: 1, mb: 2 }}>
-                Connect to BIMcollab
-            </Typography>
-            <form onSubmit={handleSubmit}>
-                <Box display="flex" alignItems="center">
-                    <TextField
-                        error={error}
-                        helperText={error ? `"${currentSpace}" is not a valid space` : ""}
-                        autoComplete="bimcollab-space"
-                        id="bimcollab-space"
-                        label="BIMcollab space"
-                        fullWidth
-                        value={space}
-                        onChange={(e) => setSpace(e.target.value)}
-                        sx={{ mr: 1 }}
-                    />
-                    <Button type="submit" variant="contained">
-                        Connect
-                    </Button>
-                </Box>
-            </form>
-        </Box>
     );
 }

@@ -6,7 +6,7 @@ import { Box, Button, Typography, ListItem, useTheme } from "@mui/material";
 import { isAfter, isSameDay, parseISO } from "date-fns";
 import { FixedSizeList } from "react-window";
 
-import { useAppSelector } from "app/store";
+import { useAppDispatch, useAppSelector } from "app/store";
 import { LinearProgress, Tooltip, ImgTooltip, withCustomScrollbar, Divider } from "components";
 import { Topic } from "types/bcf";
 
@@ -14,9 +14,9 @@ import {
     useGetProjectQuery,
     useGetTopicsQuery,
     useGetViewpointsQuery,
-    useGetThumbnailQuery,
     useGetProjectExtensionsQuery,
-} from "../bimCollabApi";
+    useGetSnapshotQuery,
+} from "../bimTrackApi";
 import {
     FilterType,
     Filters,
@@ -24,7 +24,8 @@ import {
     FilterModifiers,
     FilterModifier,
     selectFilterModifiers,
-} from "../bimCollabSlice";
+    bimTrackActions,
+} from "../bimTrackSlice";
 
 const StyledFixedSizeList = withCustomScrollbar(FixedSizeList) as typeof FixedSizeList;
 
@@ -33,6 +34,7 @@ export function Project() {
     const history = useHistory();
     const filters = useAppSelector(selectFilters);
     const filterModifiers = useAppSelector(selectFilterModifiers);
+    const dispatch = useAppDispatch();
 
     const { projectId } = useParams<{ projectId: string }>();
     const { data: project } = useGetProjectQuery({ projectId });
@@ -76,30 +78,40 @@ export function Project() {
                         Showing {filteredTopics.length} of {topics.length} issues
                     </Typography>
                 </Box>
-                <Box flex={"1 1 100%"}>
-                    <AutoSizer>
-                        {({ height, width }) => (
-                            <StyledFixedSizeList
-                                style={{ paddingLeft: theme.spacing(1), paddingRight: theme.spacing(1) }}
-                                height={height}
-                                width={width}
-                                itemSize={80}
-                                overscanCount={3}
-                                itemCount={filteredTopics.length}
-                            >
-                                {({ index, style }) => {
-                                    return (
-                                        <TopicListItem
-                                            topic={filteredTopics[index]}
-                                            projectId={projectId}
-                                            style={style}
-                                        />
-                                    );
-                                }}
-                            </StyledFixedSizeList>
-                        )}
-                    </AutoSizer>
-                </Box>
+                {!filteredTopics.length && topics.length ? (
+                    <Box flex={"1 1 100%"}>
+                        <Box width={1} mt={4} display="flex" justifyContent="center">
+                            <Button variant="contained" onClick={() => dispatch(bimTrackActions.resetFilters())}>
+                                Clear filters
+                            </Button>
+                        </Box>
+                    </Box>
+                ) : (
+                    <Box flex={"1 1 100%"}>
+                        <AutoSizer>
+                            {({ height, width }) => (
+                                <StyledFixedSizeList
+                                    style={{ paddingLeft: theme.spacing(1), paddingRight: theme.spacing(1) }}
+                                    height={height}
+                                    width={width}
+                                    itemSize={80}
+                                    overscanCount={3}
+                                    itemCount={filteredTopics.length}
+                                >
+                                    {({ index, style }) => {
+                                        return (
+                                            <TopicListItem
+                                                topic={filteredTopics[index]}
+                                                projectId={projectId}
+                                                style={style}
+                                            />
+                                        );
+                                    }}
+                                </StyledFixedSizeList>
+                            )}
+                        </AutoSizer>
+                    </Box>
+                )}
             </Box>
         </>
     );
@@ -115,7 +127,8 @@ function TopicListItem({ topic, projectId, style }: { topic: Topic; projectId: s
         },
         { skip: Boolean(topic.default_viewpoint_guid) }
     );
-    const { data: thumbnail } = useGetThumbnailQuery(
+
+    const { data: thumbnail } = useGetSnapshotQuery(
         {
             projectId,
             topicId: topic.guid,
