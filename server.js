@@ -1,5 +1,6 @@
 const express = require("express");
 const expressStaticGzip = require("express-static-gzip");
+const { createProxyMiddleware } = require("http-proxy-middleware");
 const path = require("path");
 const fs = require("fs");
 const app = express();
@@ -7,7 +8,13 @@ const app = express();
 const index = path.resolve(__dirname, "build/index.html");
 
 function sendIndex(req, res) {
-    if (process.env.BIMCOLLAB_CLIENT_SECRET || process.env.BIMCOLLAB_CLIENT_ID || process.env.DATA_SERVER_URL) {
+    if (
+        process.env.BIMCOLLAB_CLIENT_SECRET ||
+        process.env.BIMCOLLAB_CLIENT_ID ||
+        process.env.BIMTRACK_CLIENT_SECRET ||
+        process.env.BIMTRACK_CLIENT_ID ||
+        process.env.DATA_SERVER_URL
+    ) {
         fs.readFile(index, "utf8", function (err, data) {
             if (err) {
                 console.error(err);
@@ -22,6 +29,7 @@ function sendIndex(req, res) {
                     `window.dataServerUrl="${process.env.DATA_SERVER_URL}"`
                 );
             }
+
             if (process.env.BIMCOLLAB_CLIENT_SECRET) {
                 indexHtml = indexHtml.replace(
                     "window.bimCollabClientSecret",
@@ -36,12 +44,49 @@ function sendIndex(req, res) {
                 );
             }
 
+            if (process.env.BIMTRACK_CLIENT_SECRET) {
+                indexHtml = indexHtml.replace(
+                    "window.bimTrackClientSecret",
+                    `window.bimTrackClientSecret="${process.env.BIMTRACK_CLIENT_SECRET}"`
+                );
+            }
+
+            if (process.env.BIMTRACK_CLIENT_ID) {
+                indexHtml = indexHtml.replace(
+                    "window.bimTrackClientId",
+                    `window.bimTrackClientId="${process.env.BIMTRACK_CLIENT_ID}"`
+                );
+            }
+
             res.send(indexHtml);
         });
     } else {
         res.sendFile(index);
     }
 }
+
+app.use(
+    "/bimtrack/token",
+    createProxyMiddleware({
+        target: "https://auth.bimtrackapp.co//connect/token",
+        pathRewrite: {
+            "^/bimtrack/token": "", // remove base path
+        },
+        changeOrigin: true,
+    })
+);
+
+app.use(
+    "/bimtrack/bcf/2.1",
+    createProxyMiddleware({
+        // target: "https://bcfrestapi.bimtrackapp.co/bcf/2.1/",
+        target: "https://bcfrestapi-bt02.bimtrackapp.co/bcf/2.1/",
+        pathRewrite: {
+            "^/bimtrack/bcf/2.1": "", // remove base path
+        },
+        changeOrigin: true,
+    })
+);
 
 app.get("/", sendIndex);
 app.use("/", express.static("build"));

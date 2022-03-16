@@ -330,7 +330,7 @@ export function Search() {
                                                                   ...input,
                                                                   value: Array.isArray(input.value)
                                                                       ? input.value.concat("")
-                                                                      : [input.value, ""],
+                                                                      : [input.value ?? "", ""],
                                                               }
                                                             : input
                                                     )

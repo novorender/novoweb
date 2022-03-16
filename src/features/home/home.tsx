@@ -1,3 +1,4 @@
+import { SceneData } from "@novorender/data-js-api";
 import { SpeedDialActionProps, Box, CircularProgress } from "@mui/material";
 
 import { dataApi } from "app";
@@ -67,7 +68,7 @@ export function Home({ position, ...speedDialProps }: Props) {
             customProperties,
             objectGroups = [],
             camera = { kind: "flight" },
-        } = await dataApi.loadScene(editingScene?.id || id);
+        } = (await dataApi.loadScene(editingScene?.id || id)) as SceneData;
 
         dispatch(renderActions.resetState());
 

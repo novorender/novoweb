@@ -639,6 +639,12 @@ export function Render3D({ onInit }: Props) {
             previousId.current = id;
 
             try {
+                const sceneResponse = preloadedScene ?? (await dataApi.loadScene(id));
+
+                if ("error" in sceneResponse) {
+                    throw sceneResponse;
+                }
+
                 const {
                     url,
                     db,
@@ -647,7 +653,7 @@ export function Render3D({ onInit }: Props) {
                     title,
                     viewerScenes,
                     ...sceneData
-                } = preloadedScene ?? (await dataApi.loadScene(id));
+                } = sceneResponse;
 
                 const urlData = getDataFromUrlHash();
                 const camera = { kind: "flight", ...sceneData.camera, ...urlData.camera } as CameraControllerParams;
@@ -671,12 +677,16 @@ export function Render3D({ onInit }: Props) {
                 });
                 _view.scene = await api.loadScene(url, db);
 
-                initCamera({
+                const controller = initCamera({
                     canvas,
                     camera,
                     view: _view,
                     flightControllerRef: flightController,
                 });
+
+                if (!sceneData.camera && !urlData.camera) {
+                    controller.autoZoomToScene = true;
+                }
 
                 cameraGeneration.current = _view.performanceStatistics.cameraGeneration;
 
@@ -701,6 +711,9 @@ export function Render3D({ onInit }: Props) {
                 if (viewerScenes) {
                     dispatch(explorerActions.setViewerScenes(viewerScenes));
                 }
+
+                const organization = (sceneData as { organization?: string }).organization ?? "";
+                dispatch(explorerActions.setOrganization(organization));
 
                 rendering.current = createRendering(canvas, _view);
                 rendering.current.start();
@@ -975,6 +988,10 @@ export function Render3D({ onInit }: Props) {
             view.applySettings({
                 points: {
                     ...view.settings.points,
+                    intensity: {
+                        ...view.settings.points.intensity,
+                        mode: ["on", "mix"].includes(deviation.mode) ? "off" : "mix",
+                    },
                     deviation: {
                         ...deviation,
                         colors: [...deviation.colors].sort((a, b) => a.deviation - b.deviation),
@@ -1097,7 +1114,7 @@ export function Render3D({ onInit }: Props) {
                     customProperties,
                     camera = { kind: "flight" },
                     objectGroups = [],
-                } = await dataApi.loadScene(sceneId);
+                } = (await dataApi.loadScene(sceneId)) as SceneData;
 
                 if (settings) {
                     const { display: _display, light: _light, ...viewerSceneSettings } = settings;

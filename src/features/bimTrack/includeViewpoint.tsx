@@ -23,6 +23,7 @@ import {
     createOrthogonalCamera,
 } from "utils/bcf";
 import { uniqueArray } from "utils/misc";
+
 import { Viewpoint } from "types/bcf";
 
 type BaseViewpoint = Partial<Viewpoint> & Pick<Viewpoint, "snapshot">;
@@ -76,16 +77,8 @@ export function IncludeViewpoint({
                 abortSignal,
                 ids: defaultVisibility === ObjectVisibility.Neutral ? hidden.current.idArr : visible.current.idArr,
             });
-            const getColoring = customGroups.current
-                .filter((group) => group.selected)
-                .map(async (group) => {
-                    return { color: group.color, guids: await idsToGuids({ scene, abortSignal, ids: group.ids }) };
-                });
-            const [exceptions, selected, coloring] = await Promise.all([
-                getExceptions,
-                getSelected,
-                Promise.all(getColoring),
-            ]);
+
+            const [exceptions, selected] = await Promise.all([getExceptions, getSelected]);
 
             setLoading(false);
 
@@ -97,10 +90,10 @@ export function IncludeViewpoint({
                 snapshot,
                 clipping_planes: createBcfClippingPlanes(view.settings.clippingVolume.planes),
                 components: await createBcfViewpointComponents({
-                    coloring,
                     selected,
                     defaultVisibility,
                     exceptions,
+                    coloring: [],
                 }),
             };
 

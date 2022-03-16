@@ -47,7 +47,7 @@ const Img = styled("img")(
     () => css`
         height: 100%;
         width: 100%;
-        object-fit: cover;
+        object-fit: fill;
         display: block;
     `
 );

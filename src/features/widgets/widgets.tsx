@@ -23,6 +23,7 @@ import { SelectionBasket } from "features/selectionBasket";
 import { MenuWidget } from "features/menuWidget";
 import { Deviations } from "features/deviations";
 import { FollowPath } from "features/followPath";
+import { BimTrack } from "features/bimTrack";
 
 export function Widgets() {
     const theme = useTheme();
@@ -82,6 +83,8 @@ function getWidgetByKey(key: WidgetKey): JSX.Element | string {
             return <Measure />;
         case featuresConfig.bimcollab.key:
             return <BimCollab />;
+        case featuresConfig.bimTrack.key:
+            return <BimTrack />;
         case featuresConfig.viewerScenes.key:
             return <ViewerScenes />;
         case featuresConfig.clippingPlanes.key:

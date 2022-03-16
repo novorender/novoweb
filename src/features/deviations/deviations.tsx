@@ -42,6 +42,7 @@ import {
     DeviationCalculationStatus,
 } from "./deviationsSlice";
 import { CreateDeviation } from "./createDeviation";
+import { SceneData } from "@novorender/data-js-api";
 
 export function Deviations() {
     const status = useAppSelector(selectDeviationsStatus);
@@ -120,7 +121,7 @@ export function Deviations() {
         dispatch(deviationsActions.setStatus({ status: DeviationsStatus.Saving }));
 
         try {
-            const { url: _url, settings, ...originalScene } = await dataApi.loadScene(id);
+            const { url: _url, settings, ...originalScene } = (await dataApi.loadScene(id)) as SceneData;
 
             if (settings) {
                 await dataApi.putScene({

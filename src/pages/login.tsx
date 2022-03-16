@@ -3,8 +3,8 @@ import { useMsal } from "@azure/msal-react";
 import { useTheme, Box, Button, OutlinedInput, IconButton, InputAdornment, FormControl } from "@mui/material";
 
 import { loginRequest } from "config/auth";
-import { useAppDispatch } from "app/store";
-import { authActions } from "slices/authSlice";
+import { useAppDispatch, useAppSelector } from "app/store";
+import { authActions, selectAdTentant } from "slices/authSlice";
 import { login } from "utils/auth";
 import { useToggle } from "hooks/useToggle";
 
@@ -16,6 +16,7 @@ import { StorageKey } from "config/storage";
 export function Login() {
     const theme = useTheme();
     const { instance } = useMsal();
+    const adTenant = useAppSelector(selectAdTentant);
     const dispatch = useAppDispatch();
 
     const [username, setUsername] = useState("");
@@ -23,9 +24,15 @@ export function Login() {
     const [showPassword, toggleShowPassword] = useToggle(false);
 
     const handleAdRedirect = async () => {
-        instance.loginRedirect({ ...loginRequest, prompt: "select_account" }).catch((e) => {
-            console.warn(e);
-        });
+        instance
+            .loginRedirect({
+                ...loginRequest,
+                authority: adTenant ? `https://login.microsoftonline.com/${adTenant}` : loginRequest.authority,
+                prompt: "select_account",
+            })
+            .catch((e) => {
+                console.warn(e);
+            });
     };
 
     const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {

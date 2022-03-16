@@ -12,6 +12,7 @@ import {
 } from "@mui/material";
 import { Visibility, AddCircle, CheckCircle, MoreVert, Save } from "@mui/icons-material";
 import { css } from "@mui/styled-engine";
+import { SceneData } from "@novorender/data-js-api";
 
 import {
     ScrollBox,
@@ -120,7 +121,11 @@ export function Groups() {
         dispatch(groupsActions.setStatus(GroupsStatus.Saving));
 
         try {
-            const { url: _url, objectGroups: originalGroups, ...originalScene } = await dataApi.loadScene(id);
+            const {
+                url: _url,
+                objectGroups: originalGroups,
+                ...originalScene
+            } = (await dataApi.loadScene(id)) as SceneData;
 
             await dataApi.putScene({
                 ...originalScene,

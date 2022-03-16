@@ -5,10 +5,10 @@ import { ReactEventHandler, useState } from "react";
 import { useAppSelector } from "app/store";
 import { ImgModal, ImgTooltip, ScrollBox } from "components";
 import { useToggle } from "hooks/useToggle";
+import { Project } from "types/bcf";
 
 import { useGetProjectsQuery } from "../bimCollabApi";
 import { selectSpace } from "../bimCollabSlice";
-import { Project } from "../types";
 
 import fallbackImage from "media/img/bimcollab_fallback.png";
 

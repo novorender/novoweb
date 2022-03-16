@@ -15,7 +15,7 @@ import { Consent } from "features/consent";
 
 import { useAppSelector, useAppDispatch } from "app/store";
 import { explorerActions, SceneType, UserRole } from "slices/explorerSlice";
-import { selectAccessToken } from "slices/authSlice";
+import { authActions, selectAccessToken } from "slices/authSlice";
 import { HiddenProvider } from "contexts/hidden";
 import { CustomGroupsProvider } from "contexts/customGroups";
 import { HighlightedProvider } from "contexts/highlighted";
@@ -68,8 +68,12 @@ function ExplorerBase() {
 
         const oAuthState = getOAuthState();
 
-        if (oAuthState && oAuthState.service === featuresConfig.bimcollab.key) {
-            dispatch(explorerActions.setWidgets([featuresConfig.bimcollab.key]));
+        if (oAuthState) {
+            if (oAuthState.service === featuresConfig.bimcollab.key) {
+                dispatch(explorerActions.setWidgets([featuresConfig.bimcollab.key]));
+            } else if (oAuthState.service === featuresConfig.bimTrack.key) {
+                dispatch(explorerActions.setWidgets([featuresConfig.bimTrack.key]));
+            }
         } else {
             const searchParams = new URLSearchParams(window.location.search);
 
@@ -123,10 +127,15 @@ function AuthCheck({ children }: { children: ReactNode }) {
                 return;
             }
 
-            const scene = await dataApi.loadScene(id).catch(() => undefined);
-            if (scene) {
+            const sceneRes = await dataApi.loadScene(id).catch(() => undefined);
+
+            if (sceneRes && !("error" in sceneRes)) {
                 setStatus(AuthCheckStatus.Public);
             } else {
+                if (sceneRes && sceneRes.tenant) {
+                    dispatch(authActions.setAdTenant(sceneRes.tenant));
+                }
+
                 setStatus(AuthCheckStatus.RequireAuth);
             }
         }
@@ -174,10 +183,10 @@ function getIsViewerScene(customProperties: unknown): boolean {
         : false;
 }
 
-function getRequireConsent(customProperties: unknown): string {
+function getRequireConsent(customProperties: unknown): boolean {
     return customProperties && typeof customProperties === "object" && "requireConsent" in customProperties
-        ? (customProperties as { requireConsent: string }).requireConsent
-        : "";
+        ? (customProperties as { requireConsent: boolean }).requireConsent
+        : false;
 }
 
 function getUserRole(customProperties: unknown): UserRole {

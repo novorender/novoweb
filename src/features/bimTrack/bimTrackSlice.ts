@@ -18,16 +18,21 @@ export enum FilterModifier {
     DeadlineOperator = "deadlineOperator",
 }
 
+export enum BimTrackStatus {
+    Initial,
+    LoadingAuthInfo,
+    Ready,
+}
+
 const initialState = {
+    status: BimTrackStatus.Initial,
     accessToken: "",
-    space: "",
-    version: "",
     authInfo: undefined as AuthInfo | undefined,
     user: undefined as User | undefined,
     filters: {
         [FilterType.Type]: [] as string[],
         [FilterType.Label]: [] as string[],
-        [FilterType.Status]: ["Active"] as string[],
+        [FilterType.Status]: [] as string[],
         [FilterType.Priority]: [] as string[],
         [FilterType.Stage]: [] as string[],
         [FilterType.CreatedBy]: [] as string[],
@@ -41,18 +46,17 @@ const initialState = {
 
 export const initialFilters = initialState.filters;
 export const initialFilterModifiers = initialState.filterModifiers;
-export type Filters = typeof initialFilters;
-export type FilterModifiers = typeof initialFilterModifiers;
 
-export const bimCollabSlice = createSlice({
-    name: "bimCollab",
+type State = typeof initialState;
+export type Filters = State["filters"];
+export type FilterModifiers = State["filterModifiers"];
+
+export const bimTrackSlice = createSlice({
+    name: "bimTrack",
     initialState: initialState,
     reducers: {
-        setSpace: (state, action: PayloadAction<string>) => {
-            state.space = action.payload;
-        },
-        setVersion: (state, action: PayloadAction<string>) => {
-            state.version = action.payload;
+        setStatus: (state, action: PayloadAction<State["status"]>) => {
+            state.status = action.payload;
         },
         setAccessToken: (state, action: PayloadAction<string>) => {
             state.accessToken = action.payload;
@@ -62,6 +66,10 @@ export const bimCollabSlice = createSlice({
         },
         setFilterModifiers: (state, action: PayloadAction<FilterModifiers>) => {
             state.filterModifiers = action.payload;
+        },
+        resetFilters: (state) => {
+            state.filters = initialFilters;
+            state.filterModifiers = initialFilterModifiers;
         },
         setUser: (state, action: PayloadAction<User | undefined>) => {
             state.user = action.payload;
@@ -75,13 +83,12 @@ export const bimCollabSlice = createSlice({
     },
 });
 
-export const selectAccessToken = (state: RootState) => state.bimCollab.accessToken;
-export const selectSpace = (state: RootState) => state.bimCollab.space;
-export const selectVersion = (state: RootState) => state.bimCollab.version;
-export const selectFilters = (state: RootState) => state.bimCollab.filters;
-export const selectFilterModifiers = (state: RootState) => state.bimCollab.filterModifiers;
-export const selectUser = (state: RootState) => state.bimCollab.user;
-export const selectAuthInfo = (state: RootState) => state.bimCollab.authInfo;
+export const selectAccessToken = (state: RootState) => state.bimTrack.accessToken;
+export const selectFilters = (state: RootState) => state.bimTrack.filters;
+export const selectFilterModifiers = (state: RootState) => state.bimTrack.filterModifiers;
+export const selectUser = (state: RootState) => state.bimTrack.user;
+export const selectAuthInfo = (state: RootState) => state.bimTrack.authInfo;
+export const selectStatus = (state: RootState) => state.bimTrack.status;
 
-const { actions, reducer } = bimCollabSlice;
-export { actions as bimCollabActions, reducer as bimCollabReducer };
+const { actions, reducer } = bimTrackSlice;
+export { actions as bimTrackActions, reducer as bimTrackReducer };

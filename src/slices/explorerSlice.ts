@@ -21,7 +21,8 @@ const initialState = {
     disabledWidgets: [featuresConfig.advancedSettings.key, featuresConfig.viewerScenes.key] as WidgetKey[],
     sceneType: SceneType.Viewer,
     userRole: UserRole.Viewer,
-    requireConsent: "",
+    requireConsent: false,
+    organization: "",
     viewerScenes: [] as ScenePreview[],
     widgets: [] as WidgetKey[],
     urlSearchQuery: undefined as undefined | string | SearchPattern[],
@@ -102,6 +103,9 @@ export const explorerSlice = createSlice({
         setRequireConsent: (state, action: PayloadAction<State["requireConsent"]>) => {
             state.requireConsent = action.payload;
         },
+        setOrganization: (state, action: PayloadAction<State["organization"]>) => {
+            state.organization = action.payload;
+        },
     },
 });
 
@@ -113,6 +117,7 @@ export const selectSceneType = (state: RootState) => state.explorer.sceneType;
 export const selectUserRole = (state: RootState) => state.explorer.userRole;
 export const selectViewerScenes = (state: RootState) => state.explorer.viewerScenes;
 export const selectRequireConsent = (state: RootState) => state.explorer.requireConsent;
+export const selectOrganization = (state: RootState) => state.explorer.organization;
 
 export const selectIsAdminScene = (state: RootState) => state.explorer.sceneType === SceneType.Admin;
 export const selectHasAdminCapabilities = (state: RootState) => state.explorer.userRole !== UserRole.Viewer;

@@ -20,7 +20,6 @@ import { renderActions, ObjectVisibility, CameraType } from "slices/renderSlice"
 import { useDispatchHidden, hiddenGroupActions } from "contexts/hidden";
 import { useDispatchHighlighted, highlightActions } from "contexts/highlighted";
 import { useDispatchVisible, visibleActions } from "contexts/visible";
-import { customGroupsActions, TempGroup, useCustomGroups } from "contexts/customGroups";
 import { useExplorerGlobals } from "contexts/explorerGlobals";
 
 import { useAbortController } from "hooks/useAbortController";
@@ -28,7 +27,6 @@ import { useMountedState } from "hooks/useMountedState";
 import { useToggle } from "hooks/useToggle";
 import { extractObjectIds } from "utils/objectData";
 import { searchByPatterns } from "utils/search";
-import { hexToVec } from "utils/color";
 import { sleep } from "utils/timers";
 import { translateBcfClippingPlanes, translateOrthogonalCamera, translatePerspectiveCamera } from "utils/bcf";
 import type { Comment } from "types/bcf";
@@ -37,14 +35,12 @@ import {
     useGetTopicQuery,
     useGetCommentsQuery,
     useGetViewpointsQuery,
-    useGetThumbnailQuery,
     useGetViewpointQuery,
-    useGetColoringQuery,
     useGetSelectionQuery,
     useGetVisibilityQuery,
     useGetSnapshotQuery,
     useGetProjectExtensionsQuery,
-} from "../bimCollabApi";
+} from "../bimTrackApi";
 
 export function Topic() {
     const theme = useTheme();
@@ -77,22 +73,13 @@ export function Topic() {
         ? viewpoints[0].guid
         : "";
 
-    const { data: thumbnail } = useGetThumbnailQuery(
-        {
-            projectId,
-            topicId: topic?.guid ?? "",
-            viewpointId: defaultViewpointId,
-        },
-        { skip: !topic || !defaultViewpointId }
-    );
-
     const { data: snapshot } = useGetSnapshotQuery(
         {
             projectId,
             topicId: topic?.guid ?? "",
             viewpointId: defaultViewpointId,
         },
-        { skip: !topic || !defaultViewpointId || !modalOpen }
+        { skip: !topic || !defaultViewpointId }
     );
 
     if (!topic || !comments) {
@@ -150,7 +137,7 @@ export function Topic() {
             </Box>
             <ScrollBox height={1} width={1} horizontal sx={{ mt: 1 }}>
                 <Box p={1} sx={{ "& > img": { width: "100%", maxHeight: 150, objectFit: "cover", cursor: "pointer" } }}>
-                    {thumbnail ? <img onClick={toggleModal} src={thumbnail} alt="" /> : null}
+                    {snapshot ? <img onClick={toggleModal} src={snapshot} alt="" /> : null}
                     <Accordion>
                         <AccordionSummary>
                             <Typography variant="h6" fontWeight={600}>
@@ -244,7 +231,6 @@ function CommentListItem({
     const dispatchHighlighted = useDispatchHighlighted();
     const dispatchHidden = useDispatchHidden();
     const dispatchVisible = useDispatchVisible();
-    const { dispatch: dispatchCustomGroups } = useCustomGroups();
     const {
         state: { scene },
     } = useExplorerGlobals(true);
@@ -252,15 +238,10 @@ function CommentListItem({
     const [modalOpen, toggleModal] = useToggle();
     const viewpointId = comment.viewpoint_guid || defaultViewpointId || "";
 
-    const { data: thumbnail } = useGetThumbnailQuery({ projectId, topicId, viewpointId }, { skip: !viewpointId });
     const { data: viewpoint } = useGetViewpointQuery({ projectId, topicId, viewpointId }, { skip: !viewpointId });
-    const { data: coloring } = useGetColoringQuery({ projectId, topicId, viewpointId }, { skip: !viewpointId });
     const { data: selection } = useGetSelectionQuery({ projectId, topicId, viewpointId }, { skip: !viewpointId });
     const { data: visibility } = useGetVisibilityQuery({ projectId, topicId, viewpointId }, { skip: !viewpointId });
-    const { data: snapshot } = useGetSnapshotQuery(
-        { projectId, topicId, viewpointId },
-        { skip: !viewpointId || !modalOpen }
-    );
+    const { data: snapshot } = useGetSnapshotQuery({ projectId, topicId, viewpointId }, { skip: !viewpointId });
 
     const has3dPos = Boolean(viewpoint?.perspective_camera || viewpoint?.orthogonal_camera);
     const [abortController] = useAbortController();
@@ -274,44 +255,20 @@ function CommentListItem({
 
         const visibilityExceptionGuids = visibility?.exceptions
             ?.map((exception) => exception.ifc_guid)
-            .filter((exception) => exception !== undefined) as string[];
+            .filter((exception) => exception) as string[];
 
         const getVisibilityExceptions = visibilityExceptionGuids.length
             ? guidsToIds({ scene, abortSignal, guids: visibilityExceptionGuids })
             : Promise.resolve([]);
 
-        const selectionGuids = selection
-            ?.map((obj) => obj.ifc_guid)
-            .filter((exception) => exception !== undefined) as string[];
+        const selectionGuids = selection?.map((obj) => obj.ifc_guid).filter((selection) => selection) as string[];
         const getSelection = selectionGuids.length
             ? guidsToIds({ scene, abortSignal, guids: selectionGuids })
             : Promise.resolve([]);
 
-        const getColorGroups =
-            coloring && coloring.length
-                ? Promise.all(
-                      coloring
-                          .map((item) => ({
-                              ...item,
-                              components: item.components
-                                  .map((component) => component.ifc_guid)
-                                  .filter((guid) => guid !== undefined),
-                          }))
-                          .filter((item) => item.components.length)
-                          .map(async (item) => ({
-                              color: hexToVec(item.color, item.color.length === 8),
-                              ids: await guidsToIds({ scene, abortSignal, guids: item.components as string[] }),
-                          }))
-                  )
-                : Promise.resolve([]);
-
         setLoading(true);
 
-        const [visibilityExceptionIds, selectionIds, colorGroups] = await Promise.all([
-            getVisibilityExceptions,
-            getSelection,
-            getColorGroups,
-        ]);
+        const [visibilityExceptionIds, selectionIds] = await Promise.all([getVisibilityExceptions, getSelection]);
 
         setLoading(false);
 
@@ -329,23 +286,6 @@ function CommentListItem({
         }
 
         dispatchHighlighted(highlightActions.setIds(selectionIds));
-
-        dispatchCustomGroups(customGroupsActions.reset());
-        if (colorGroups.length) {
-            dispatchCustomGroups(
-                customGroupsActions.add(
-                    colorGroups.map((item, index) => ({
-                        id: `Temporary BIMcollab viewpoint group ${index}`,
-                        ids: item.ids,
-                        color: item.color,
-                        selected: true,
-                        hidden: false,
-                        grouping: TempGroup.BIMcollab,
-                        name: `BIMcollab ${index + 1}`,
-                    }))
-                )
-            );
-        }
 
         if (viewpoint?.perspective_camera) {
             const camera = translatePerspectiveCamera(viewpoint.perspective_camera);
@@ -408,13 +348,13 @@ function CommentListItem({
                         flexShrink={0}
                         flexGrow={0}
                     >
-                        {thumbnail ? (
+                        {snapshot ? (
                             <ImgTooltip
                                 onTooltipClick={(e) => {
                                     e.stopPropagation();
                                     toggleModal();
                                 }}
-                                src={thumbnail}
+                                src={snapshot}
                             />
                         ) : null}
                     </Box>
