@@ -227,8 +227,7 @@ function getUrlSearchQuery(): undefined | string | SearchPattern[] {
                 typeof pattern === "object" &&
                 "property" in pattern &&
                 Boolean(pattern.property) &&
-                "value" in pattern &&
-                Boolean(pattern.value)
+                (("value" in pattern && Boolean(pattern.value)) || ("range" in pattern && Boolean(pattern.range)))
         );
 
         if (validPatterns.length) {
