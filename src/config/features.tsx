@@ -48,7 +48,6 @@ export const featuresConfig = {
     bimTrack: {
         key: "bimTrack",
         name: "BIM Track",
-        // Icon: BarChart,
         Icon: BimTrack,
         type: FeatureType.Widget,
     },
@@ -244,8 +243,7 @@ export type WidgetKey = {
 
 export type Widget = Config[WidgetKey];
 
-// todo(OLA)
-export const defaultEnabledWidgets = [featuresConfig.bimTrack.key];
+export const defaultEnabledWidgets = [];
 export const defaultEnabledAdminWidgets = Object.values(featuresConfig)
     .filter((value) => [FeatureType.AdminWidget, FeatureType.Widget].includes(value.type))
     .map((widget) => widget.key as WidgetKey);
