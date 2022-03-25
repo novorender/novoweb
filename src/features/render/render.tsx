@@ -1421,7 +1421,7 @@ export function Render3D({ onInit }: Props) {
         }
 
         moveSvgCursor(-100, -100, undefined);
-        canvas.style.cursor = "crosshair";
+        canvas.style.cursor = "default";
         if (
             !pointerDown.current ||
             !clippingBox.enabled ||
