@@ -21,7 +21,7 @@ export function Slope({ start, end }: { start: vec3; end: vec3 }) {
                     {vertical
                         ? "Vertical"
                         : horizontal
-                        ? "Horitzontal"
+                        ? "Horizontal"
                         : `${(Math.abs(sub[2] / vec2.len(planarVec)) * 100).toFixed(2)} %`}
                 </Grid>
             </Grid>

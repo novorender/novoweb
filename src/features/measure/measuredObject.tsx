@@ -171,7 +171,7 @@ export function MeasuredResult() {
                                         Distance
                                     </Grid>
                                     <Grid item xs={6}>
-                                        {duoMeasurementValues.distance.toFixed(3)}
+                                        {duoMeasurementValues.distance.toFixed(3)} m
                                     </Grid>
                                 </Grid>
                             </ListItem>
@@ -183,7 +183,7 @@ export function MeasuredResult() {
                                         Normal distance
                                     </Grid>
                                     <Grid item xs={6}>
-                                        {duoMeasurementValues.normalDistance.toFixed(3)}
+                                        {duoMeasurementValues.normalDistance.toFixed(3)} m
                                     </Grid>
                                 </Grid>
                             </ListItem>
