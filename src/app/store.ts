@@ -10,6 +10,7 @@ import { bookmarksReducer } from "features/bookmarks";
 import { panoramasReducer } from "features/panoramas";
 import { followPathReducer } from "features/followPath";
 import { deviationsReducer } from "features/deviations";
+import { measureReducer } from "features/measure";
 import { bimCollabReducer } from "features/bimCollab/bimCollabSlice";
 import { bimCollabApi } from "features/bimCollab/bimCollabApi";
 import { bimTrackReducer } from "features/bimTrack/bimTrackSlice";
@@ -24,6 +25,7 @@ const rootReducer = combineReducers({
     panoramas: panoramasReducer,
     followPath: followPathReducer,
     deviations: deviationsReducer,
+    measure: measureReducer,
     bimCollab: bimCollabReducer,
     [bimCollabApi.reducerPath]: bimCollabApi.reducer,
     bimTrack: bimTrackReducer,

@@ -8,7 +8,7 @@ import type {
 } from "@novorender/webgl-api";
 import type { ObjectGroup } from "@novorender/data-js-api";
 import { createSlice, createAsyncThunk, PayloadAction } from "@reduxjs/toolkit";
-import { vec3, vec4 } from "gl-matrix";
+import { vec4 } from "gl-matrix";
 
 import type { RootState } from "app/store";
 import type { WidgetKey } from "config/features";
@@ -111,14 +111,6 @@ const initialState = {
         mode: "union" as "union" | "intersection",
         planes: [] as vec4[],
         baseW: 0,
-    },
-    measure: {
-        addingPoint: false,
-        selected: -1,
-        points: [] as vec3[],
-        distance: 0,
-        distances: [] as number[],
-        angles: [] as number[],
     },
     camera: { type: CameraType.Flight } as WritableCameraState,
     selectingOrthoPoint: false,
@@ -230,32 +222,6 @@ export const renderSlice = createSlice({
         resetClippingPlanes: (state) => {
             state.clippingPlanes = initialState.clippingPlanes;
         },
-        setMeasure: (state, action: PayloadAction<Partial<State["measure"]>>) => {
-            state.measure = {
-                ...state.measure,
-                ...action.payload,
-            };
-        },
-        setMeasurePoints: (state, action: PayloadAction<vec3[]>) => {
-            const points = action.payload;
-            const num = points.length;
-            let distance = 0;
-            let distances: number[] = [];
-            let angles: number[] = [];
-
-            for (let i = 1; i < num; i++) {
-                const dist = vec3.distance(points[i - 1], points[i]);
-                distance += dist;
-                distances.push(dist);
-            }
-            for (let i = 2; i < num; i++) {
-                const v0 = vec3.sub(vec3.create(), points[i], points[i - 1]);
-                const v1 = vec3.sub(vec3.create(), points[i - 2], points[i - 1]);
-                const angle = (Math.acos(vec3.dot(vec3.normalize(v0, v0), vec3.normalize(v1, v1))) * 180) / Math.PI;
-                angles.push(angle);
-            }
-            state.measure = { ...state.measure, points, distance, distances, angles };
-        },
         resetState: (state) => {
             return { ...initialState, environments: state.environments, viewerSceneEditing: state.viewerSceneEditing };
         },
@@ -309,7 +275,6 @@ export const selectHomeCameraPosition = (state: RootState) => state.render.saved
 export const selectRenderType = (state: RootState) => state.render.renderType;
 export const selectSelectionBasketMode = (state: RootState) => state.render.selectionBasketMode;
 export const selectClippingBox = (state: RootState) => state.render.clippingBox;
-export const selectMeasure = (state: RootState) => state.render.measure;
 export const selectClippingPlanes = (state: RootState) => state.render.clippingPlanes;
 export const selectCamera = (state: RootState) => state.render.camera as CameraState;
 export const selectCameraType = (state: RootState) => state.render.camera.type;

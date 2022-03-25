@@ -11,6 +11,9 @@ import {
     OrthoControllerParams,
     CameraControllerParams,
     DynamicObject,
+    MeasureObject,
+    MeasureSettings,
+    DuoMeasurementValues,
 } from "@novorender/webgl-api";
 import { Box, Button, Paper, Typography, useTheme, styled } from "@mui/material";
 import { css } from "@mui/styled-engine";
@@ -29,7 +32,7 @@ import {
 } from "features/panoramas";
 import { Loading } from "components";
 
-import { api, dataApi } from "app";
+import { api, dataApi, measureApi } from "app";
 import { StorageKey } from "config/storage";
 import { useMountedState } from "hooks/useMountedState";
 import { useSceneId } from "hooks/useSceneId";
@@ -48,7 +51,6 @@ import {
     selectCurrentEnvironment,
     selectEnvironments,
     selectMainObject,
-    selectMeasure,
     selectRenderType,
     selectSavedCameraPositions,
     selectSelectMultiple,
@@ -73,6 +75,7 @@ import { useHidden, useDispatchHidden } from "contexts/hidden";
 import { useCustomGroups } from "contexts/customGroups";
 import { useDispatchVisible, useVisible, visibleActions } from "contexts/visible";
 import { explorerGlobalsActions, useExplorerGlobals } from "contexts/explorerGlobals";
+import { measureActions, selectMeasure, isMeasureObject } from "features/measure";
 
 import {
     getRenderType,
@@ -156,6 +159,18 @@ enum Status {
     Error,
 }
 
+type ExtendedMeasureObject = MeasureObject & {
+    pos: vec3;
+    settings?: MeasureSettings;
+};
+
+type MeasurePoint = {
+    pos: vec3;
+    id: number;
+    settings?: any;
+    selectedEntity?: any;
+};
+
 type Props = {
     onInit: (params: { customProperties: unknown }) => void;
 };
@@ -170,7 +185,7 @@ export function Render3D({ onInit }: Props) {
     const visibleObjects = useVisible();
     const { state: customGroups, dispatch: dispatchCustomGroups } = useCustomGroups();
     const {
-        state: { view, scene, canvas, preloadedScene },
+        state: { view, scene, canvas, measureScene, preloadedScene },
         dispatch: dispatchGlobals,
     } = useExplorerGlobals();
     const selectBookmark = useSelectBookmark();
@@ -194,7 +209,6 @@ export function Render3D({ onInit }: Props) {
     const selectingOrthoPoint = useAppSelector(selectSelectiongOrthoPoint);
     const advancedSettings = useAppSelector(selectAdvancedSettings);
     const measure = useAppSelector(selectMeasure);
-    const { addingPoint, angles, points, distances, selected: selectedPoint } = measure;
     const panoramas = useAppSelector(selectPanoramas);
     const deviation = useAppSelector(selectDeviations);
     const show3dMarkers = useAppSelector(selectShow3dMarkers);
@@ -226,6 +240,7 @@ export function Render3D({ onInit }: Props) {
     const [size, setSize] = useState({ width: 0, height: 0 });
     const [panoramaAbortController, abortPanorama] = useAbortController();
 
+    const [measureObjects, setMeasureObjects] = useMountedState([] as (ExtendedMeasureObject | MeasurePoint)[]);
     const [svg, setSvg] = useState<null | SVGSVGElement>(null);
     const [status, setStatus] = useMountedState(Status.Initial);
 
@@ -236,13 +251,222 @@ export function Render3D({ onInit }: Props) {
         [dispatchGlobals]
     );
 
-    const moveSvg = useCallback(() => {
-        if (!svg || !view) {
+    const renderSingleMeasurePoint = useCallback(
+        (view: View, point: vec3, pointName: string) => {
+            if (!svg || !measureApi) {
+                return;
+            }
+
+            const { width, height } = size;
+            const [_pathPoints, pixelPoints] = measureApi.toPathPoints([point], view, width, height);
+
+            pixelPoints.forEach((p) => {
+                const circle = svg.children.namedItem(pointName);
+                if (circle) {
+                    circle.setAttribute("cx", p[0].toFixed(1));
+                    circle.setAttribute("cy", p[1].toFixed(1));
+                }
+            });
+        },
+        [svg, size]
+    );
+
+    const renderMeasurePoints = useCallback(
+        (
+            view: View,
+            points: vec3[],
+            pathName: string | undefined,
+            pointName?: string,
+            txt?: { textName: string; distance: number }
+        ) => {
+            if (!svg || !measureApi) {
+                return;
+            }
+
+            const { width, height } = size;
+            const [pathPoints, pixelPoints] = measureApi.toPathPoints(points, view, width, height);
+            if (pathName) {
+                let curve = "";
+                if (pathPoints.length > 1) {
+                    curve += `M${pathPoints[0][0]}, ${pathPoints[0][1]}`;
+                    for (let i = 0; i < pathPoints.length; ++i) {
+                        curve += ` L${pathPoints[i][0]}, ${pathPoints[i][1]}`;
+                    }
+                }
+                const path = svg.children.namedItem(pathName);
+                if (path) {
+                    path.setAttribute("d", curve);
+                }
+            }
+            if (pointName) {
+                if (pixelPoints.length) {
+                    pixelPoints.forEach((p, i) => {
+                        const circle = svg.children.namedItem(`${pointName}_${i}`);
+                        if (circle) {
+                            circle.setAttribute("cx", p[0].toFixed(1));
+                            circle.setAttribute("cy", p[1].toFixed(1));
+                        }
+                    });
+                } else {
+                    const circles = svg.querySelectorAll(`[id^='${pointName}_']`);
+                    circles.forEach((circle) => {
+                        circle.removeAttribute("cx");
+                        circle.removeAttribute("cy");
+                    });
+                }
+            }
+            if (txt) {
+                const text = svg.children.namedItem(txt.textName);
+                if (!text) {
+                    return;
+                }
+                if (pathPoints.length !== 2) {
+                    text.innerHTML = "";
+                    return;
+                }
+
+                const _text = `${+txt.distance.toFixed(3)} m`;
+                let dir =
+                    pathPoints[0][0] > pathPoints[1][0]
+                        ? vec2.sub(vec2.create(), pathPoints[0], pathPoints[1])
+                        : vec2.sub(vec2.create(), pathPoints[1], pathPoints[0]);
+                const pixLen = _text.length * 12 + 20;
+                if (vec2.sqrLen(dir) > pixLen * pixLen) {
+                    const angle = (Math.asin(dir[1] / vec2.len(dir)) * 180) / Math.PI;
+                    const off = vec3.fromValues(0, 0, -1);
+                    vec3.scale(off, vec3.normalize(off, vec3.cross(off, off, vec3.fromValues(dir[0], dir[1], 0))), 5);
+                    const center = vec2.create();
+                    vec2.lerp(center, pathPoints[0], pathPoints[1], 0.5);
+                    text.setAttribute("x", (center[0] + off[0]).toFixed(1));
+                    text.setAttribute("y", (center[1] + off[1]).toFixed(1));
+                    text.setAttribute("transform", `rotate(${angle} ${center[0] + off[0]},${center[1] + off[1]})`);
+                    text.innerHTML = _text;
+                } else {
+                    text.innerHTML = "";
+                }
+            }
+        },
+        [svg, size]
+    );
+
+    const renderMeasureObject = useCallback(
+        (view: View, fillColor: string, pathName: string, objToDraw: MeasureObject) => {
+            const path = svg?.children.namedItem(pathName);
+
+            if (!path) {
+                return;
+            }
+
+            const { width, height } = size;
+            objToDraw.renderMeasureEntity(view, width, height).then((drawObjects) => {
+                if (!drawObjects?.length) {
+                    return;
+                }
+
+                let fillCurves = "";
+                let edgeCurves = "";
+                for (const drawObject of drawObjects) {
+                    if (drawObject && drawObject.vertices.length > 1) {
+                        if (drawObject.drawType === "lines") {
+                            edgeCurves += `M${drawObject.vertices[0][0]}, ${drawObject.vertices[0][1]}`;
+                            for (let i = 0; i < drawObject.vertices.length; ++i) {
+                                edgeCurves += ` L${drawObject.vertices[i][0]}, ${drawObject.vertices[i][1]}`;
+                            }
+                        } else {
+                            fillCurves += `M${drawObject.vertices[0][0]}, ${drawObject.vertices[0][1]}`;
+                            for (let i = 0; i < drawObject.vertices.length; ++i) {
+                                fillCurves += ` L${drawObject.vertices[i][0]}, ${drawObject.vertices[i][1]}`;
+                            }
+                        }
+                    }
+                }
+
+                if (edgeCurves.length > 0) {
+                    path.setAttribute("d", edgeCurves);
+                    path.setAttribute("fill", "none");
+                } else if (fillCurves.length > 0) {
+                    path.setAttribute("d", fillCurves);
+                    path.setAttribute("fill", fillColor);
+                } else {
+                    path.setAttribute("d", "");
+                }
+            });
+        },
+        [svg, size]
+    );
+
+    const renderParametricMeasure = useCallback(() => {
+        if (!view) {
             return;
         }
-        const numPts = points.length;
 
-        if (numPts < 1 && !panoramas?.length) {
+        measureObjects.forEach((obj) => {
+            if (isMeasureObject(obj)) {
+                renderMeasureObject(view, "lightblue", getMeasureObjectPathId(obj), obj);
+            } else {
+                renderSingleMeasurePoint(view, obj.pos, getMeasureObjectPathId(obj));
+            }
+        });
+
+        const normalPoints = measure.duoMeasurementValues?.normalPoints;
+        if (normalPoints) {
+            renderMeasurePoints(view, normalPoints, "normalDistance", "normal", {
+                textName: "normalDistanceText",
+                distance: vec3.len(vec3.sub(vec3.create(), normalPoints[0], normalPoints[1])),
+            });
+        }
+
+        const measurePoints =
+            measure.duoMeasurementValues?.pointA && measure.duoMeasurementValues?.pointB
+                ? [measure.duoMeasurementValues.pointA, measure.duoMeasurementValues.pointB]
+                : undefined;
+        if (measurePoints) {
+            let pts =
+                measurePoints[0][1] < measurePoints[1][1]
+                    ? [measurePoints[0], measurePoints[1]]
+                    : [measurePoints[1], measurePoints[0]];
+            const diff = vec3.sub(vec3.create(), pts[0], pts[1]);
+
+            renderMeasurePoints(view, measurePoints, "brepDistance", "measure", {
+                textName: "distanceText",
+                distance: vec3.len(diff),
+            });
+
+            pts = [
+                pts[0],
+                vec3.fromValues(pts[1][0], pts[0][1], pts[0][2]),
+                vec3.fromValues(pts[1][0], pts[0][1], pts[1][2]),
+                pts[1],
+            ];
+            renderMeasurePoints(view, [pts[0], pts[1]], "brepPathX", undefined, {
+                textName: "brepTextX",
+                distance: Math.abs(diff[0]),
+            });
+            renderMeasurePoints(view, [pts[1], pts[2]], "brepPathY", undefined, {
+                textName: "brepTextY",
+                distance: Math.abs(diff[2]),
+            });
+            renderMeasurePoints(view, [pts[2], pts[3]], "brepPathZ", undefined, {
+                textName: "brepTextZ",
+                distance: Math.abs(diff[1]),
+            });
+        } else {
+        }
+    }, [
+        view,
+        renderMeasureObject,
+        renderMeasurePoints,
+        renderSingleMeasurePoint,
+        measureObjects,
+        measure.duoMeasurementValues,
+    ]);
+
+    useEffect(() => {
+        renderParametricMeasure();
+    }, [renderParametricMeasure]);
+
+    const moveSvg = useCallback(() => {
+        if (!svg || !view || !panoramas?.length) {
             return;
         }
 
@@ -261,315 +485,34 @@ export function Render3D({ onInit }: Props) {
             const _p = vec4.transformMat4(vec4.create(), vec4.fromValues(p[0], p[1], p[2], 1), proj);
             return vec2.fromValues(((_p[0] * 0.5) / _p[3] + 0.5) * width, (0.5 - (_p[1] * 0.5) / _p[3]) * height);
         };
-        const clip = (p: vec3, p0: vec3) => {
-            const d = vec3.sub(vec3.create(), p0, p);
-            vec3.scale(d, d, (-camera.near - p[2]) / d[2]);
-            return vec3.add(d, d, p);
-        };
 
-        if (panoramas?.length) {
-            const vsPans = panoramas.map((p) => vec3.transformMat4(vec3.create(), p.position, camMatrix));
+        const vsPans = panoramas.map((p) => vec3.transformMat4(vec3.create(), p.position, camMatrix));
 
-            vsPans.forEach((pos, idx) => {
-                const marker = svg.children.namedItem(`panorama-${idx}`);
+        vsPans.forEach((pos, idx) => {
+            const marker = svg.children.namedItem(`panorama-${idx}`);
 
-                if (!marker) {
-                    return;
-                }
-
-                const hide = pos[2] > 0 || pos.some((num) => Number.isNaN(num) || !Number.isFinite(num));
-
-                if (hide) {
-                    marker.setAttribute("x", "-100");
-                    return;
-                }
-
-                const p = toScreen(pos);
-                const x = p[0].toFixed(1);
-                const y = p[1].toFixed(1);
-                marker.setAttribute("x", Number.isNaN(Number(x)) || !Number.isFinite(Number(x)) ? "-100" : x);
-                marker.setAttribute("y", Number.isNaN(Number(y)) || !Number.isFinite(Number(x)) ? "-100" : y);
-            });
-        }
-
-        if (numPts >= 1) {
-            const vsPoints = points.map((p) => {
-                return vec3.transformMat4(vec3.create(), p, camMatrix);
-            });
-            const lastP = vsPoints[numPts - 1];
-            const lastPs = toScreen(lastP);
-
-            angles.forEach((a, i) => {
-                const g = svg.children.namedItem(`angle ${i}`);
-                if (!g) {
-                    return;
-                }
-                const _p = vsPoints[i + 1];
-                if (_p[2] > 0) {
-                    g.innerHTML = "";
-                    return;
-                }
-                let _p0 = vsPoints[i];
-                let _p1 = vsPoints[i + 2];
-                if (_p0[2] > 0) {
-                    _p0 = clip(_p, _p0);
-                }
-                if (_p1[2] > 0) {
-                    _p1 = clip(_p, _p1);
-                }
-                const p = toScreen(_p);
-                const p0 = toScreen(_p0);
-                const p1 = toScreen(_p1);
-                const d0 = vec2.sub(vec2.create(), p0, p);
-                const d1 = vec2.sub(vec2.create(), p1, p);
-                const l0 = vec2.len(d0);
-                const l1 = vec2.len(d1);
-                if (l0 < 40 || l1 < 40) {
-                    g.innerHTML = "";
-                    return;
-                }
-                vec2.scale(d0, d0, 1 / l0);
-                vec2.scale(d1, d1, 1 / l1);
-                const sw = d0[0] * d1[1] - d0[1] * d1[0] > 0 ? 1 : 0;
-                const text = +a.toFixed(1) + "°";
-                const dir = vec2.add(vec2.create(), d1, d0);
-                const dirLen = vec2.len(dir);
-                if (dirLen < 0.001) {
-                    vec2.set(dir, 0, 1);
-                } else {
-                    vec2.scale(dir, dir, 1 / dirLen);
-                }
-                const angle = (Math.asin(dir[1]) * 180) / Math.PI;
-                g.innerHTML = `<path d="M ${p[0] + d0[0] * 20} ${p[1] + d0[1] * 20} A 20 20, 0, 0, ${sw}, ${
-                    p[0] + d1[0] * 20
-                } ${p[1] + d1[1] * 20}" stroke="blue" fill="transparent" stroke-width="2" stroke-linecap="square" />
-                        <text text-anchor=${
-                            dir[0] < 0 ? "end" : "start"
-                        } alignment-baseline="central" fill="white" x="${p[0] + dir[0] * 25}" y="${
-                    p[1] + dir[1] * 25
-                }" transform="rotate(${dir[0] < 0 ? -angle : angle} ${p[0] + dir[0] * 25},${
-                    p[1] + dir[1] * 25
-                })">${text}</text>`;
-            });
-            if (vsPoints.length > 1) {
-                const path = svg.children.namedItem("path");
-                if (path) {
-                    path.setAttribute(
-                        "d",
-                        vsPoints
-                            .map((p, i) => {
-                                if (p[2] > 0) {
-                                    if (i === 0 || vsPoints[i - 1][2] > 0) {
-                                        return "";
-                                    }
-                                    const p0 = clip(vsPoints[i - 1], p);
-                                    const _p = toScreen(p0);
-                                    return `L${_p[0]},${_p[1]}`;
-                                }
-                                const _p = toScreen(p);
-                                if (i === 0) {
-                                    return `M${_p[0]},${_p[1]}`;
-                                }
-                                if (vsPoints[i - 1][2] > 0) {
-                                    const p0 = clip(p, vsPoints[i - 1]);
-                                    const _p0 = toScreen(p0);
-                                    return `M${_p0[0]},${_p0[1]}L${_p[0]},${_p[1]}`;
-                                }
-                                return `L${_p[0]},${_p[1]}`;
-                            })
-                            .join(" ")
-                    );
-                }
-                if (vsPoints.length === 2) {
-                    const pathX = svg.children.namedItem("pathX");
-                    const pathY = svg.children.namedItem("pathY");
-                    const pathZ = svg.children.namedItem("pathZ");
-                    const textX = svg.children.namedItem("textX") as HTMLElement;
-                    const textY = svg.children.namedItem("textY") as HTMLElement;
-                    const textZ = svg.children.namedItem("textZ") as HTMLElement;
-                    if (pathX && pathY && pathZ && textX && textY && textZ) {
-                        let pts = points[0][1] < points[1][1] ? [points[0], points[1]] : [points[1], points[0]];
-                        const diff = vec3.sub(vec3.create(), pts[0], pts[1]);
-                        pts = [
-                            pts[0],
-                            vec3.fromValues(pts[1][0], pts[0][1], pts[0][2]),
-                            vec3.fromValues(pts[1][0], pts[0][1], pts[1][2]),
-                            pts[1],
-                        ];
-                        let centers: vec3[] = [];
-                        for (let i = 0; i < 3; i++) {
-                            const v = vec3.add(vec3.create(), pts[i], pts[i + 1]);
-                            centers.push(vec3.scale(v, v, 0.5));
-                        }
-                        const getOut = (center: vec3, d0: vec3, d1: vec3, up: vec3) => {
-                            const out = vec3.subtract(vec3.create(), d0, d1);
-                            vec3.cross(out, out, up);
-                            vec3.normalize(out, out);
-                            return vec3.add(out, out, center);
-                        };
-                        const cam2Z = vec3.subtract(vec3.create(), centers[2], camera.position);
-                        vec3.normalize(cam2Z, cam2Z);
-                        let outs = [
-                            getOut(centers[0], pts[0], pts[1], vec3.fromValues(0, 1, 0)),
-                            getOut(centers[1], pts[1], pts[2], vec3.fromValues(0, 1, 0)),
-                            getOut(centers[2], pts[2], pts[3], cam2Z),
-                        ];
-                        pts = pts.map((p) => {
-                            return vec3.transformMat4(vec3.create(), p, camMatrix);
-                        });
-                        centers = centers.map((p) => {
-                            return vec3.transformMat4(vec3.create(), p, camMatrix);
-                        });
-                        outs = outs.map((p) => {
-                            return vec3.transformMat4(vec3.create(), p, camMatrix);
-                        });
-                        const getD = (
-                            p0: vec3,
-                            p1: vec3,
-                            o: vec3,
-                            center: vec3,
-                            out: vec3,
-                            text: HTMLElement,
-                            d: number
-                        ) => {
-                            if (p0[2] > 0 && p1[2] > 0) {
-                                text.innerHTML = "";
-                                return "";
-                            }
-                            if (p0[2] > 0) {
-                                p0 = clip(p1, p0);
-                            } else if (p1[2] > 0) {
-                                p1 = clip(p0, p1);
-                            }
-                            const _p0 = toScreen(p0);
-                            const _p1 = toScreen(p1);
-                            const _o = toScreen(o);
-                            const _text = `${+d.toFixed(3)} m`;
-                            let dir =
-                                _p0[1] > _p1[1] ? vec2.sub(vec2.create(), _p0, _p1) : vec2.sub(vec2.create(), _p1, _p0);
-                            const pixLen = /*_text.length * 12 +*/ 20;
-                            if (vec2.sqrLen(dir) > pixLen * pixLen) {
-                                const _center = toScreen(center);
-                                const _out = toScreen(out);
-                                const off = vec2.create();
-                                vec2.normalize(dir, dir);
-                                vec2.normalize(off, vec2.sub(off, _out, _center));
-                                const perp = vec3.fromValues(0, 0, -1);
-                                vec3.normalize(perp, vec3.cross(perp, perp, vec3.fromValues(dir[0], dir[1], 0)));
-                                if (vec2.dot(vec2.fromValues(perp[0], perp[1]), vec2.sub(_o, _o, _p0)) > 0) {
-                                    vec3.scale(perp, perp, -1);
-                                }
-                                // vec2.set(off, perp[0], perp[1]);
-                                let dot = vec2.dot(vec2.fromValues(perp[0], perp[1]), off);
-                                if (dot < 0) {
-                                    vec2.scale(off, off, -1);
-                                    dot = -dot;
-                                }
-                                dot = Math.acos(dot) - Math.PI * 0.25;
-                                if (dot > 0) {
-                                    vec2.normalize(
-                                        off,
-                                        vec2.lerp(off, off, vec2.fromValues(perp[0], perp[1]), (dot * 4) / Math.PI)
-                                    );
-                                }
-                                const skew = (Math.asin(vec2.dot(dir, off)) * 180 * Math.sign(perp[0])) / Math.PI;
-                                const sign = Math.sign(off[0]);
-                                const angle = (Math.asin(off[1]) * 180 * sign) / Math.PI;
-                                vec2.scale(off, off, 5);
-                                text.setAttribute(
-                                    "transform",
-                                    `translate(${(_center[0] + off[0]).toFixed(1)},${(_center[1] + off[1]).toFixed(
-                                        1
-                                    )}) rotate(${angle.toFixed(1)}) skewX(${skew.toFixed(1)})`
-                                );
-                                text.innerHTML = _text;
-                                text.style.textAnchor = sign < 0 ? "end" : "start";
-                            } else {
-                                text.innerHTML = "";
-                            }
-                            return `M${_p0[0]},${_p0[1]}L${_p1[0]},${_p1[1]}`;
-                        };
-                        pathX.setAttribute(
-                            "d",
-                            getD(pts[0], pts[1], pts[3], centers[0], outs[0], textX, Math.abs(diff[0]))
-                        );
-                        pathY.setAttribute(
-                            "d",
-                            getD(
-                                pts[1],
-                                pts[2],
-                                pts[0], //vec3.lerp(vec3.create(), pts[0], pts[3], 0.5),
-                                centers[1],
-                                outs[1],
-                                textY,
-                                Math.abs(diff[2])
-                            )
-                        );
-                        pathZ.setAttribute(
-                            "d",
-                            getD(pts[2], pts[3], pts[0], centers[2], outs[2], textZ, Math.abs(diff[1]))
-                        );
-                    }
-                }
+            if (!marker) {
+                return;
             }
-            vsPoints.forEach((_p, i) => {
-                const circle = svg.children.namedItem(i.toString());
-                // const circle = svg.children.namedItem(`dot ${i}`);
-                if (!circle) {
-                    return;
-                }
-                if (_p[2] > 0) {
-                    circle.setAttribute("cx", "-10");
-                    return;
-                }
-                const p = toScreen(_p);
-                circle.id = i.toString();
-                circle.setAttribute("cx", p[0].toFixed(1));
-                circle.setAttribute("cy", p[1].toFixed(1));
-            });
-            {
-                const circle = svg.children.namedItem("lastDot");
-                if (circle) {
-                    if (lastP[2] <= 0) {
-                        circle.setAttribute("cx", lastPs[0].toFixed(1));
-                        circle.setAttribute("cy", lastPs[1].toFixed(1));
-                    } else {
-                        circle.setAttribute("cx", "-10");
-                    }
-                }
+
+            const hide = pos[2] > 0 || pos.some((num) => Number.isNaN(num) || !Number.isFinite(num));
+
+            if (hide) {
+                marker.setAttribute("x", "-100");
+                return;
             }
-            distances.forEach((d, i) => {
-                const text = svg.children.namedItem(`text ${i}`);
-                if (!text) {
-                    return;
-                }
-                const _p0 = vsPoints[i];
-                const _p1 = vsPoints[i + 1];
-                if (_p0[2] > 0 && _p1[2] > 0) {
-                    text.innerHTML = "";
-                    return;
-                }
-                const p0 = toScreen(_p0[2] > 0 ? clip(_p1, _p0) : _p0);
-                const p1 = toScreen(_p1[2] > 0 ? clip(_p0, _p1) : _p1);
-                const _text = `${+d.toFixed(3)} m`;
-                let dir = p0[0] > p1[0] ? vec2.sub(vec2.create(), p0, p1) : vec2.sub(vec2.create(), p1, p0);
-                const pixLen = _text.length * 12 + 20;
-                if (vec2.sqrLen(dir) > pixLen * pixLen) {
-                    const angle = (Math.asin(dir[1] / vec2.len(dir)) * 180) / Math.PI;
-                    const off = vec3.fromValues(0, 0, -1);
-                    vec3.scale(off, vec3.normalize(off, vec3.cross(off, off, vec3.fromValues(dir[0], dir[1], 0))), 5);
-                    const center = vec2.create();
-                    vec2.lerp(center, p0, p1, 0.5);
-                    text.setAttribute("x", (center[0] + off[0]).toFixed(1));
-                    text.setAttribute("y", (center[1] + off[1]).toFixed(1));
-                    text.setAttribute("transform", `rotate(${angle} ${center[0] + off[0]},${center[1] + off[1]})`);
-                    text.innerHTML = _text;
-                } else {
-                    text.innerHTML = "";
-                }
-            });
-        }
-    }, [svg, view, points, distances, angles, size, panoramas]);
+
+            const p = toScreen(pos);
+            const x = p[0].toFixed(1);
+            const y = p[1].toFixed(1);
+            marker.setAttribute("x", Number.isNaN(Number(x)) || !Number.isFinite(Number(x)) ? "-100" : x);
+            marker.setAttribute("y", Number.isNaN(Number(y)) || !Number.isFinite(Number(x)) ? "-100" : y);
+        });
+    }, [svg, view, size, panoramas]);
+
+    useEffect(() => {
+        moveSvg();
+    }, [moveSvg]);
 
     const moveSvgCursor = useCallback(
         (x: number, y: number, measurement: MeasureInfo | undefined) => {
@@ -589,16 +532,8 @@ export function Render3D({ onInit }: Props) {
                 const { width, height } = size;
                 const { camera } = view;
 
-                // const camMatrix = mat4.fromRotationTranslation(mat4.create(), camera.rotation, camera.position);
-                // mat4.invert(camMatrix, camMatrix);
-                // const camDir = vec3.transformMat4(vec3.create(), measurement.position, camMatrix);
-                // vec3.normalize(camDir, camDir);
-                // const _angleX = (Math.asin(camDir[1]) * -180) / Math.PI;
-                // const _angleY = (Math.asin(camDir[0]) * 180) / Math.PI;
-
                 const angleX = (y / height - 0.5) * camera.fieldOfView;
                 const angleY = ((x - width * 0.5) / height) * camera.fieldOfView;
-                // const n = vec3.transformQuat(vec3.create(), normal, quat.fromEuler(quat.create(), _angleX, _angleY, 0));
                 vec3.transformQuat(normal, normal, quat.fromEuler(quat.create(), angleX, angleY, 0));
                 let style = "";
                 if (normal[2] < 1) {
@@ -621,6 +556,68 @@ export function Render3D({ onInit }: Props) {
         },
         [svg, view, size]
     );
+
+    useEffect(() => {
+        getMeasureObjects();
+
+        async function getMeasureObjects() {
+            if (!measureScene) {
+                return;
+            }
+
+            const mObjects = (await Promise.all(
+                measure.selected.map((obj) =>
+                    measureScene
+                        .downloadMeasureObject(obj.id, obj.pos)
+                        .then((_mObj) => {
+                            const mObj = _mObj as ExtendedMeasureObject;
+
+                            if (mObj.selectedEntity) {
+                                if (mObj.selectedEntity.kind === "vertex") {
+                                    return { ...obj, pos: mObj.selectedEntity.parameter };
+                                }
+
+                                mObj.pos = obj.pos;
+                                mObj.settings = obj.settings;
+                            }
+
+                            return mObj.selectedEntity ? mObj : obj;
+                        })
+                        .catch(() => obj)
+                )
+            )) as (ExtendedMeasureObject | MeasurePoint)[];
+
+            if (mObjects.length !== 2) {
+                dispatch(measureActions.setDuoMeasurementValues(undefined));
+                setMeasureObjects(mObjects);
+                return;
+            }
+
+            const [obj1, obj2] = mObjects;
+
+            let res: DuoMeasurementValues | undefined;
+
+            if (obj1.selectedEntity && obj2.selectedEntity) {
+                res = (await measureScene.measure(
+                    obj1.selectedEntity!,
+                    obj2.selectedEntity,
+                    obj1.settings,
+                    obj2.settings
+                )) as DuoMeasurementValues | undefined;
+            } else if (obj1.selectedEntity || obj2.selectedEntity) {
+                const obj = obj1.selectedEntity ? obj1 : obj2;
+                const pt = obj === obj1 ? obj2 : obj1;
+                res = (await measureScene.measureToPoint(obj.selectedEntity, pt.pos, obj.settings)) as
+                    | DuoMeasurementValues
+                    | undefined;
+            } else {
+                res = measureScene.pointToPoint(obj1.pos, obj2.pos) as DuoMeasurementValues | undefined;
+            }
+
+            dispatch(measureActions.setDuoMeasurementValues(res));
+            setMeasureObjects(mObjects);
+        }
+    }, [measureScene, setMeasureObjects, measure.selected, dispatch]);
 
     useEffect(() => {
         if (!environments.length) {
@@ -676,6 +673,8 @@ export function Render3D({ onInit }: Props) {
                     },
                 });
                 _view.scene = await api.loadScene(url, db);
+                const assetUrl = new URL((_view.scene as any).assetUrl);
+                const measureScene = await measureApi.loadScene(assetUrl);
 
                 const controller = initCamera({
                     canvas,
@@ -741,6 +740,7 @@ export function Render3D({ onInit }: Props) {
                         view: _view,
                         scene: _view.scene,
                         preloadedScene: undefined,
+                        measureScene,
                     })
                 );
             } catch (e) {
@@ -811,6 +811,7 @@ export function Render3D({ onInit }: Props) {
                     cameraGeneration.current = view.performanceStatistics.cameraGeneration ?? 0;
 
                     moveSvg();
+                    renderParametricMeasure();
                     rendering.current.update({ moving: true });
 
                     if (movementTimer.current) {
@@ -851,7 +852,16 @@ export function Render3D({ onInit }: Props) {
 
             api.animate = () => cameraMoved(view);
         },
-        [view, moveSvg, dispatch, savedCameraPositions, cameraState, advancedSettings, renderType]
+        [
+            view,
+            moveSvg,
+            dispatch,
+            savedCameraPositions,
+            cameraState,
+            advancedSettings,
+            renderType,
+            renderParametricMeasure,
+        ]
     );
 
     useEffect(
@@ -1258,13 +1268,6 @@ export function Render3D({ onInit }: Props) {
             return;
         }
 
-        if (addingPoint) {
-            const points = measure.points.concat([result.position]);
-            moveSvgCursor(-100, -100, undefined);
-            dispatch(renderActions.setMeasurePoints(points));
-            return;
-        }
-
         if (clippingPlanes.defining) {
             const { normal, position } = result;
 
@@ -1299,6 +1302,11 @@ export function Render3D({ onInit }: Props) {
             dispatch(renderActions.setCamera({ type: CameraType.Orthographic }));
             dispatch(renderActions.setSelectingOrthoPoint(false));
 
+            return;
+        }
+
+        if (measure.selecting) {
+            dispatch(measureActions.selectObj({ id: result.objectId, pos: result.position }));
             return;
         }
 
@@ -1381,8 +1389,6 @@ export function Render3D({ onInit }: Props) {
     };
 
     const handleUp = () => {
-        dispatch(renderActions.setMeasure({ ...measure, selected: -1 }));
-
         if (!view) {
             return;
         }
@@ -1402,28 +1408,20 @@ export function Render3D({ onInit }: Props) {
             return;
         }
 
-        const useSvgCursor =
-            ((addingPoint || clippingPlanes.defining || selectingOrthoPoint) && e.buttons === 0) || selectedPoint > -1;
+        const useSvgCursor = (measure.selecting || clippingPlanes.defining || selectingOrthoPoint) && e.buttons === 0;
 
         if (useSvgCursor) {
             const measurement = await view.measure(e.nativeEvent.offsetX, e.nativeEvent.offsetY);
 
             canvas.style.cursor = "none";
 
-            if (selectedPoint > -1) {
-                moveSvgCursor(-100, -100, undefined);
-                if (measurement) {
-                    const points = measure.points.map((_, i) => (i !== selectedPoint ? _ : measurement.position));
-                    dispatch(renderActions.setMeasurePoints(points));
-                }
-            } else {
-                moveSvgCursor(e.nativeEvent.offsetX, e.nativeEvent.offsetY, measurement);
-            }
+            moveSvgCursor(e.nativeEvent.offsetX, e.nativeEvent.offsetY, measurement);
+
             return;
         }
 
         moveSvgCursor(-100, -100, undefined);
-        canvas.style.cursor = "default";
+        canvas.style.cursor = "crosshair";
         if (
             !pointerDown.current ||
             !clippingBox.enabled ||
@@ -1483,19 +1481,6 @@ export function Render3D({ onInit }: Props) {
 
         view.applySettings({ clippingPlanes: { ...clippingBox, bounds: { min, max } } });
     };
-    const numP = points.length;
-
-    const selectPoint = (ev: React.MouseEvent<SVGCircleElement>) => {
-        ev.stopPropagation();
-        const selected = parseInt(ev.currentTarget.id);
-        if (canvas && svg) {
-            canvas.focus();
-            view!.camera.controller.enabled = false;
-        }
-        dispatch(renderActions.setMeasure({ ...measure, selected }));
-    };
-
-    setTimeout(moveSvg, 1);
 
     return (
         <Box position="relative" width="100%" height="100%" sx={{ userSelect: "none" }}>
@@ -1517,35 +1502,76 @@ export function Render3D({ onInit }: Props) {
                     />
                     {canvas !== null && (
                         <Svg width={canvas.width} height={canvas.height} ref={setSvg}>
-                            {angles.map((_, i) => {
-                                return <g key={i} id={`angle ${i}`}></g>;
-                            })}
-                            {numP === 2 && (
+                            {measureObjects
+                                .sort((objA, objB) =>
+                                    isMeasureObject(objA) && isMeasureObject(objB) ? 0 : isMeasureObject(objA) ? -1 : 1
+                                )
+                                .map((obj) =>
+                                    isMeasureObject(obj) ? (
+                                        <path
+                                            key={getMeasureObjectPathId(obj)}
+                                            id={getMeasureObjectPathId(obj)}
+                                            d=""
+                                            stroke="yellow"
+                                            strokeWidth=""
+                                            fill="none"
+                                        />
+                                    ) : (
+                                        <MeasurementPoint
+                                            key={getMeasureObjectPathId(obj)}
+                                            id={getMeasureObjectPathId(obj)}
+                                            r={5}
+                                            disabled={true}
+                                            fill="blue"
+                                        />
+                                    )
+                                )}
+                            {measure.duoMeasurementValues?.normalPoints ? (
                                 <>
-                                    <path id="pathX" d="" stroke="red" strokeWidth={1} fill="none" />
-                                    <path id="pathY" d="" stroke="lightgreen" strokeWidth={1} fill="none" />
-                                    <path id="pathZ" d="" stroke="blue" strokeWidth={1} fill="none" />
-                                    <AxisText id="textX" />
-                                    <AxisText id="textY" />
-                                    <AxisText id="textZ" />
+                                    <path id="normalDistance" d="" stroke="black" strokeWidth={2} fill="none" />
+                                    <MeasurementPoint
+                                        name={`normal start`}
+                                        id={`normal_0`}
+                                        r={5}
+                                        disabled={true}
+                                        fill="black"
+                                    />
+                                    <MeasurementPoint
+                                        name={`normal end`}
+                                        id={`normal_1`}
+                                        r={5}
+                                        disabled={true}
+                                        fill="black"
+                                    />
+                                    <DistanceText id={`normalDistanceText`} />
                                 </>
-                            )}
-                            {numP > 1 && <path id="path" d="" stroke="green" strokeWidth={2} fill="none" />}
-                            {points.map((_, i) => (
-                                <MeasurementPoint
-                                    name={`dot ${i}`}
-                                    id={i.toString()}
-                                    r={5}
-                                    key={i}
-                                    onMouseDown={selectPoint}
-                                    disabled={selectedPoint >= 0}
-                                />
-                            ))}
-                            {numP > 0 && <MeasurementPoint id="lastDot" r={3} stroke="none" fill="red" disabled />}
-                            {distances.map((_, i) => (
-                                <DistanceText id={`text ${i}`} key={i} />
-                            ))}
-                            <g id="cursor" />
+                            ) : null}
+                            {measure.duoMeasurementValues?.pointA && measure.duoMeasurementValues?.pointB ? (
+                                <>
+                                    <MeasurementPoint
+                                        name={`measure start`}
+                                        id={`measure_0`}
+                                        r={5}
+                                        disabled={true}
+                                        fill="green"
+                                    />
+                                    <MeasurementPoint
+                                        name={`measure end`}
+                                        id={`measure_1`}
+                                        r={5}
+                                        disabled={true}
+                                        fill="green"
+                                    />
+                                    <path id="brepDistance" d="" stroke="green" strokeWidth={2} fill="none" />
+                                    <path id="brepPathX" d="" stroke="red" strokeWidth={1} fill="none" />
+                                    <path id="brepPathY" d="" stroke="lightgreen" strokeWidth={1} fill="none" />
+                                    <path id="brepPathZ" d="" stroke="blue" strokeWidth={1} fill="none" />
+                                    <AxisText id="brepTextX" />
+                                    <AxisText id="brepTextY" />
+                                    <AxisText id="brepTextZ" />
+                                    <DistanceText id={`distanceText`} />
+                                </>
+                            ) : null}
                             {panoramas && show3dMarkers
                                 ? panoramas.map((panorama, idx) => {
                                       if (!activePanorama) {
@@ -1591,6 +1617,7 @@ export function Render3D({ onInit }: Props) {
                                       return null;
                                   })
                                 : null}
+                            <g id="cursor" />
                         </Svg>
                     )}
                     {!view ? <Loading /> : null}
@@ -1634,4 +1661,8 @@ function NoScene({ id }: { id: string }) {
             </Paper>
         </Box>
     );
+}
+
+function getMeasureObjectPathId(obj: { id: number; pos: vec3 }): string {
+    return obj.id + vec3.str(obj.pos);
 }
