@@ -108,3 +108,7 @@ export function base64UrlEncodeImg(arrayBuffer: ArrayBuffer): string {
 
     return base64;
 }
+
+export function capitalize(str: string): string {
+    return str[0].toUpperCase() + str.slice(1);
+}

@@ -1,2 +1,2 @@
-export { FollowPath } from "./followPath";
+export { FollowPath, getNurbs } from "./followPath";
 export * from "./followPathSlice";

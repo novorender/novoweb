@@ -6,8 +6,8 @@ import { useExplorerGlobals } from "contexts/explorerGlobals";
 import { hiddenGroupActions, useDispatchHidden } from "contexts/hidden";
 import { highlightActions, useDispatchHighlighted } from "contexts/highlighted";
 import { useDispatchVisible, visibleActions } from "contexts/visible";
-import { followPathActions } from "features/followPath";
-import { getNurbs } from "features/followPath/followPath";
+import { followPathActions, getNurbs } from "features/followPath";
+import { measureActions } from "features/measure";
 import { CameraType, ObjectVisibility, renderActions, SelectionBasketMode } from "slices/renderSlice";
 
 export function useSelectBookmark() {
@@ -59,10 +59,14 @@ export function useSelectBookmark() {
             dispatch(renderActions.setSelectionBasketMode(SelectionBasketMode.Loose));
         }
 
-        if (bookmark.measurement) {
-            dispatch(renderActions.setMeasurePoints(bookmark.measurement));
+        if (bookmark.objectMeasurement) {
+            dispatch(measureActions.setSelected(bookmark.objectMeasurement));
+        } else if (bookmark.measurement) {
+            dispatch(
+                measureActions.setSelected(bookmark.measurement.slice(0, 2).map((pt, idx) => ({ pos: pt, id: -idx })))
+            );
         } else {
-            dispatch(renderActions.setMeasurePoints([]));
+            dispatch(measureActions.setSelected([]));
         }
 
         if (bookmark.clippingPlanes) {

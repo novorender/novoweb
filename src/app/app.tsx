@@ -4,7 +4,7 @@ import { ThemeProvider, StyledEngineProvider } from "@mui/material/styles";
 import { LocalizationProvider } from "@mui/lab";
 import AdapterDateFns from "@mui/lab/AdapterDateFns";
 import enLocale from "date-fns/locale/en-GB";
-import { createAPI } from "@novorender/webgl-api";
+import { createAPI, createMeasureAPI } from "@novorender/webgl-api";
 import { createAPI as createDataAPI } from "@novorender/data-js-api";
 import { MsalProvider } from "@azure/msal-react";
 import { PublicClientApplication } from "@azure/msal-browser";
@@ -23,6 +23,7 @@ import { useMountedState } from "hooks/useMountedState";
 
 export const api = createAPI({ webGL1Only: !hasCreateImageBitmap, noOffscreenCanvas: !offscreenCanvas });
 export const dataApi = createDataAPI({ authHeader: getAuthHeader, serviceUrl: dataServerBaseUrl });
+export const measureApi = createMeasureAPI();
 export const msalInstance = new PublicClientApplication(msalConfig);
 
 enum Status {

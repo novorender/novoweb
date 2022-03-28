@@ -12,10 +12,10 @@ import {
     ObjectVisibility,
     selectDefaultVisibility,
     selectMainObject,
-    selectMeasure,
     selectSelectionBasketMode,
 } from "slices/renderSlice";
 import { selectCurrentPath, selectProfile } from "features/followPath";
+import { selectMeasure } from "features/measure";
 
 export function useCreateBookmark() {
     const measurement = useAppSelector(selectMeasure);
@@ -90,7 +90,8 @@ export function useCreateBookmark() {
                     max: Array.from(clippingPlanes.bounds.max) as [number, number, number],
                 },
             },
-            measurement: measurement.points.length > 0 ? measurement.points : undefined,
+            measurement: measurement.selected.length > 0 ? measurement.selected.map((obj) => obj.pos) : undefined,
+            objectMeasurement: measurement.selected.length > 0 ? measurement.selected : undefined,
             grid: { ...view.settings.grid },
         };
 

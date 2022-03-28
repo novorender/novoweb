@@ -1,5 +1,5 @@
 import { SceneData } from "@novorender/data-js-api";
-import { Scene, View } from "@novorender/webgl-api";
+import { MeasureScene, Scene, View } from "@novorender/webgl-api";
 import { createContext, Dispatch, ReactNode, useContext, useReducer } from "react";
 
 // Values that are used all over the place within Explorer, but are unserializable go here instead of redux store.
@@ -9,11 +9,12 @@ const initialState = {
     scene: undefined as undefined | Scene,
     preloadedScene: undefined as undefined | SceneData,
     canvas: null as null | HTMLCanvasElement,
+    measureScene: undefined as undefined | MeasureScene,
 };
 
 type State = typeof initialState;
-type HydratedState = Pick<{ [K in keyof State]: NonNullable<State[K]> }, "view" | "scene" | "canvas"> &
-    Omit<State, "view" | "scene" | "canvas">;
+type HydratedState = Pick<{ [K in keyof State]: NonNullable<State[K]> }, "view" | "scene" | "canvas" | "measureScene"> &
+    Omit<State, "view" | "scene" | "canvas" | "measureScene">;
 
 enum ActionTypes {
     Set,
