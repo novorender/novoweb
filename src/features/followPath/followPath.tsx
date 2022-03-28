@@ -35,7 +35,7 @@ import { highlightActions, useDispatchHighlighted } from "contexts/highlighted";
 import { useMountedState } from "hooks/useMountedState";
 import { useToggle } from "hooks/useToggle";
 import { searchByPatterns } from "utils/search";
-import { getObjectNameFromPath } from "utils/objectData";
+import { getObjectNameFromPath, getParentPath } from "utils/objectData";
 
 import {
     Brep,
@@ -97,7 +97,9 @@ export function FollowPath() {
                 scene,
                 searchPatterns: [{ property: "Novorender/Path", value: "true", exact: true }],
                 callback: (refs) =>
-                    (paths = paths.concat(refs.map(({ path, id }) => ({ id, name: getObjectNameFromPath(path) })))),
+                    (paths = paths.concat(
+                        refs.map(({ path, id }) => ({ id, name: getObjectNameFromPath(getParentPath(path)) }))
+                    )),
             });
 
             dispatch(followPathActions.setPaths(paths));
