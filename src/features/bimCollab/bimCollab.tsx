@@ -47,6 +47,7 @@ export function BimCollab() {
     const dispatch = useAppDispatch();
 
     const [menuOpen, toggleMenu] = useToggle();
+    const [minimized, toggleMinimize] = useToggle(false);
 
     const { data: user } = useGetCurrentUserQuery(undefined, { skip: !accessToken });
     const [getToken] = useGetTokenMutation();
@@ -185,9 +186,19 @@ export function BimCollab() {
 
     return (
         <>
-            <WidgetContainer>
-                <WidgetHeader widget={featuresConfig.bimcollab} disableShadow={!menuOpen} />
-                <Box display={menuOpen ? "none" : "flex"} flexGrow={1} overflow="hidden" flexDirection="column">
+            <WidgetContainer minimized={minimized}>
+                <WidgetHeader
+                    minimized={minimized}
+                    toggleMinimize={toggleMinimize}
+                    widget={featuresConfig.bimcollab}
+                    disableShadow={!menuOpen}
+                />
+                <Box
+                    display={menuOpen || minimized ? "none" : "flex"}
+                    flexGrow={1}
+                    overflow="hidden"
+                    flexDirection="column"
+                >
                     {!space || apiError ? (
                         <EnterBimCollabSpace error={apiError} />
                     ) : accessToken ? (

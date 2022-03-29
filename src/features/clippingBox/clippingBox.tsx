@@ -17,6 +17,7 @@ export function ClippingBox() {
     const dispatch = useAppDispatch();
 
     const [menuOpen, toggleMenu] = useToggle();
+    const [minimized, toggleMinimize] = useToggle(false);
     const [enableOptions, setEnableOptions] = useState(enabled || showBox || defining);
 
     const toggle = (func: "enabled" | "showBox" | "inside") => () => {
@@ -45,9 +46,9 @@ export function ClippingBox() {
 
     return (
         <>
-            <WidgetContainer>
-                <WidgetHeader widget={featuresConfig.clippingBox}>
-                    {!menuOpen ? (
+            <WidgetContainer minimized={minimized}>
+                <WidgetHeader minimized={minimized} toggleMinimize={toggleMinimize} widget={featuresConfig.clippingBox}>
+                    {!menuOpen && !minimized ? (
                         <>
                             <Box mt={1} mb={1} display="flex" justifyContent="space-between">
                                 <FormControlLabel

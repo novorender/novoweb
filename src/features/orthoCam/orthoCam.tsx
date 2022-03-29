@@ -9,6 +9,7 @@ import { CameraType, renderActions, selectCameraType, selectSelectiongOrthoPoint
 
 export function OrthoCam() {
     const [menuOpen, toggleMenu] = useToggle();
+    const [minimized, toggleMinimize] = useToggle(false);
 
     const cameraType = useAppSelector(selectCameraType);
     const selectingOrthoPoint = useAppSelector(selectSelectiongOrthoPoint);
@@ -25,9 +26,9 @@ export function OrthoCam() {
 
     return (
         <>
-            <WidgetContainer>
-                <WidgetHeader widget={featuresConfig.orthoCam}>
-                    {!menuOpen ? (
+            <WidgetContainer minimized={minimized}>
+                <WidgetHeader minimized={minimized} toggleMinimize={toggleMinimize} widget={featuresConfig.orthoCam}>
+                    {!menuOpen && !minimized ? (
                         <FormControlLabel
                             sx={{ marginLeft: 0 }}
                             control={

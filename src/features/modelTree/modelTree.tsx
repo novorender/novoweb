@@ -55,6 +55,7 @@ export function ModelTree() {
     } = useExplorerGlobals(true);
 
     const [menuOpen, toggleMenu] = useToggle();
+    const [minimized, toggleMinimize] = useToggle(false);
     const [status, setStatus] = useMountedState(Status.Loading);
     const [currentDepth, setCurrentDepth] = useMountedState<TreeLevel | undefined>(undefined);
     const [currentNode, setCurrentNode] = useMountedState<HierarcicalObjectReference | RootNode | undefined>(undefined);
@@ -237,9 +238,9 @@ export function ModelTree() {
 
     return (
         <>
-            <WidgetContainer>
-                <WidgetHeader widget={featuresConfig.modelTree} />
-                <Box display={menuOpen ? "none" : "flex"} flexDirection="column" height={1}>
+            <WidgetContainer minimized={minimized}>
+                <WidgetHeader minimized={minimized} toggleMinimize={toggleMinimize} widget={featuresConfig.modelTree} />
+                <Box display={menuOpen || minimized ? "none" : "flex"} flexDirection="column" height={1}>
                     {status === Status.Loading ? <LinearProgress /> : null}
                     {currentDepth ? (
                         <>

@@ -59,6 +59,7 @@ export function Deviations() {
     const isAdminScene = useAppSelector(selectIsAdminScene);
 
     const [menuOpen, toggleMenu] = useToggle();
+    const [minimized, toggleMinimize] = useToggle(false);
     const [containerEl, setContainerEl] = useState<HTMLDivElement | null>(null);
     const colorPickerPosition = getPickerPosition(containerEl);
 
@@ -148,8 +149,10 @@ export function Deviations() {
 
     return (
         <>
-            <WidgetContainer>
+            <WidgetContainer minimized={minimized}>
                 <WidgetHeader
+                    minimized={minimized}
+                    toggleMinimize={toggleMinimize}
                     widget={featuresConfig.deviations}
                     WidgetMenu={
                         isAdminScene
@@ -188,7 +191,9 @@ export function Deviations() {
                             : undefined
                     }
                 >
-                    {!menuOpen && ![DeviationsStatus.Creating, DeviationsStatus.Editing].includes(status.status) ? (
+                    {!menuOpen &&
+                    !minimized &&
+                    ![DeviationsStatus.Creating, DeviationsStatus.Editing].includes(status.status) ? (
                         <Box mx={-1} display="flex" justifyContent="space-between">
                             <Button
                                 disabled={status.status === DeviationsStatus.Saving}
@@ -227,7 +232,7 @@ export function Deviations() {
                         </Box>
                     ) : null}
                 </WidgetHeader>
-                <ScrollBox display={!menuOpen ? "block" : "none"} ref={setContainerEl} height={1}>
+                <ScrollBox display={menuOpen || minimized ? "none" : "block"} ref={setContainerEl} height={1}>
                     {status.status === DeviationsStatus.Saving ? <LinearProgress /> : null}
                     {[DeviationsStatus.Creating, DeviationsStatus.Editing].includes(status.status) ? (
                         <CreateDeviation />

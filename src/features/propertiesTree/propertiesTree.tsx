@@ -229,6 +229,7 @@ export function PropertiesTree() {
     const dispatchHighlighted = useDispatchHighlighted();
     const [abortController, abort] = useAbortController();
     const [menuOpen, toggleMenu] = useToggle();
+    const [minimized, toggleMinimize] = useToggle(false);
 
     const [root, setRoot] = useMountedState<TreeLevel | undefined>(undefined);
     const [selected, setSelected] = useMountedState<string>("");
@@ -277,9 +278,13 @@ export function PropertiesTree() {
 
     return (
         <>
-            <WidgetContainer>
-                <WidgetHeader widget={featuresConfig.propertyTree} />
-                <ScrollBox display={!menuOpen ? "block" : "none"} height={1} pb={2}>
+            <WidgetContainer minimized={minimized}>
+                <WidgetHeader
+                    minimized={minimized}
+                    toggleMinimize={toggleMinimize}
+                    widget={featuresConfig.propertyTree}
+                />
+                <ScrollBox display={!menuOpen && !minimized ? "block" : "none"} height={1} pb={2}>
                     <List>
                         {root === undefined ? (
                             <LinearProgress />

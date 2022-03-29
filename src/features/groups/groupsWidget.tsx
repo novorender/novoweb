@@ -70,6 +70,7 @@ export function Groups() {
     const dispatch = useAppDispatch();
 
     const [menuOpen, toggleMenu] = useToggle();
+    const [minimized, toggleMinimize] = useToggle(false);
     const [creatingGroup, setCreatingGroup] = useState<boolean | string>(false);
     const [containerEl, setContainerEl] = useState<HTMLDivElement | null>(null);
     const containerRef = useCallback<RefCallback<HTMLDivElement>>((el) => {
@@ -140,12 +141,12 @@ export function Groups() {
     };
 
     const disableChanges = status === GroupsStatus.Saving;
-    const hideExtendedHeader = menuOpen || Array.isArray(status);
+    const hideExtendedHeader = menuOpen || minimized || Array.isArray(status);
 
     return (
         <>
-            <WidgetContainer>
-                <WidgetHeader widget={featuresConfig.groups}>
+            <WidgetContainer minimized={minimized}>
+                <WidgetHeader minimized={minimized} toggleMinimize={toggleMinimize} widget={featuresConfig.groups}>
                     {hideExtendedHeader ? null : creatingGroup !== false ? (
                         <CreateGroup
                             key={typeof creatingGroup === "string" ? creatingGroup : undefined}
@@ -178,7 +179,7 @@ export function Groups() {
                 </WidgetHeader>
 
                 <Box
-                    display={menuOpen ? "none" : "flex"}
+                    display={menuOpen || minimized ? "none" : "flex"}
                     flexDirection="column"
                     overflow="hidden"
                     flexGrow={1}

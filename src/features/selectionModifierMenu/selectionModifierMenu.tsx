@@ -15,11 +15,11 @@ import ArrowUpwardIcon from "@mui/icons-material/ArrowUpward";
 import ArrowDownwardIcon from "@mui/icons-material/ArrowDownward";
 
 export function SelectionModifierMenu() {
-    const [interacted, toggleInteracted] = useToggle();
-    const mainObject = useAppSelector(selectMainObject);
-    const [open, toggle] = useToggle();
     const theme = useTheme();
     const isSmall = useMediaQuery(theme.breakpoints.down("md"));
+    const [interacted, toggleInteracted] = useToggle(isSmall);
+    const mainObject = useAppSelector(selectMainObject);
+    const [open, toggle] = useToggle();
 
     useEffect(() => {
         if (!interacted && mainObject !== undefined && !open) {

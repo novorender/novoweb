@@ -21,6 +21,7 @@ import { useEffect } from "react";
 
 export function SelectionBasket() {
     const [menuOpen, toggleMenu] = useToggle();
+    const [minimized, toggleMinimize] = useToggle(false);
     const defaultVisibility = useAppSelector(selectDefaultVisibility);
     const mode = useAppSelector(selectSelectionBasketMode);
     const { idArr: highlighted } = useHighlighted();
@@ -67,9 +68,13 @@ export function SelectionBasket() {
 
     return (
         <>
-            <WidgetContainer>
-                <WidgetHeader widget={{ ...featuresConfig.selectionBasket, name: "Selection basket" as any }}>
-                    {!menuOpen ? (
+            <WidgetContainer minimized={minimized}>
+                <WidgetHeader
+                    minimized={minimized}
+                    toggleMinimize={toggleMinimize}
+                    widget={{ ...featuresConfig.selectionBasket, name: "Selection basket" as any }}
+                >
+                    {!menuOpen && !minimized ? (
                         <Box display="flex" justifyContent="space-between">
                             <Button
                                 color="grey"
@@ -90,7 +95,7 @@ export function SelectionBasket() {
                         </Box>
                     ) : null}
                 </WidgetHeader>
-                <Box display={menuOpen ? "none" : "flex"} flexDirection="column" p={1} mt={1}>
+                <Box display={menuOpen || minimized ? "none" : "flex"} flexDirection="column" p={1} mt={1}>
                     <Typography sx={{ mb: 2 }}>Objects in basket: {visible.length}</Typography>
                     <FormControlLabel
                         control={

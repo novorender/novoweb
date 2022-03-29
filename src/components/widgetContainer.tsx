@@ -1,12 +1,17 @@
-import { Paper, PaperProps, styled } from "@mui/material";
-import { css } from "@mui/styled-engine";
+import { Paper, PaperProps, styled, css } from "@mui/material";
 
-export const WidgetContainer = styled((props: PaperProps) => <Paper elevation={4} {...props} />)(
-    ({ theme }) => css`
+type StyleProps = {
+    minimized?: boolean;
+};
+
+export const WidgetContainer = styled((props: PaperProps) => <Paper elevation={4} {...props} />, {
+    shouldForwardProp: (prop) => prop !== "minimized",
+})<StyleProps>(
+    ({ theme, minimized }) => css`
         pointer-events: auto;
         border-radius: ${theme.shape.borderRadius}px;
         max-height: min(50vh, 400px);
-        height: 100%;
+        height: ${minimized ? "auto" : "100%"};
         position: absolute;
         left: ${theme.spacing(1)};
         right: ${theme.spacing(1)};
