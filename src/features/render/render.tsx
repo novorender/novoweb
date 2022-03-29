@@ -15,7 +15,7 @@ import {
     MeasureSettings,
     DuoMeasurementValues,
 } from "@novorender/webgl-api";
-import { Box, Button, Paper, Typography, useTheme, styled } from "@mui/material";
+import { Box, Button, Paper, Typography, useTheme, styled, Menu, MenuItem, popoverClasses } from "@mui/material";
 import { css } from "@mui/styled-engine";
 import { CameraAlt } from "@mui/icons-material";
 
@@ -91,7 +91,7 @@ import {
     initAdvancedSettings,
     initDeviation,
 } from "./utils";
-import { xAxis, yAxis, axis } from "./consts";
+import { xAxis, yAxis, axis, MAX_FLOAT } from "./consts";
 import { featuresConfig, WidgetKey } from "config/features";
 
 glMatrix.setMatrixArrayType(Array);
@@ -211,6 +211,7 @@ export function Render3D({ onInit }: Props) {
     const measure = useAppSelector(selectMeasure);
     const panoramas = useAppSelector(selectPanoramas);
     const deviation = useAppSelector(selectDeviations);
+
     const show3dMarkers = useAppSelector(selectShow3dMarkers);
     const activePanorama = useAppSelector(selectActivePanorama);
     const panoramaStatus = useAppSelector(selectPanoramaStatus);
@@ -243,6 +244,18 @@ export function Render3D({ onInit }: Props) {
     const [measureObjects, setMeasureObjects] = useMountedState([] as (ExtendedMeasureObject | MeasurePoint)[]);
     const [svg, setSvg] = useState<null | SVGSVGElement>(null);
     const [status, setStatus] = useMountedState(Status.Initial);
+
+    const [deviationStamp, setDeviationStamp] = useState<{
+        mouseX: number;
+        mouseY: number;
+        data: {
+            deviation: number;
+        };
+    } | null>(null);
+
+    const closeDeviationStamp = () => {
+        setDeviationStamp(null);
+    };
 
     const canvasRef: RefCallback<HTMLCanvasElement> = useCallback(
         (el) => {
@@ -812,6 +825,7 @@ export function Render3D({ onInit }: Props) {
 
                     moveSvg();
                     renderParametricMeasure();
+                    setDeviationStamp(null);
                     rendering.current.update({ moving: true });
 
                     if (movementTimer.current) {
@@ -1257,12 +1271,32 @@ export function Render3D({ onInit }: Props) {
         }
     };
 
-    const handleClick = async (e: React.MouseEvent) => {
+    const handleClick = async (e: MouseEvent) => {
         if (!view || clippingBox.defining) {
             return;
         }
 
         const result = await view.pick(e.nativeEvent.offsetX, e.nativeEvent.offsetY);
+
+        if (deviation.mode !== "off" && cameraState.type === CameraType.Orthographic) {
+            const measureRes = await view.measure(e.nativeEvent.offsetX, e.nativeEvent.offsetY);
+
+            if (measureRes && measureRes.deviation) {
+                setDeviationStamp({
+                    mouseX: e.nativeEvent.offsetX,
+                    mouseY: e.nativeEvent.offsetY,
+                    data: {
+                        deviation: measureRes.deviation,
+                    },
+                });
+
+                return;
+            } else {
+                setDeviationStamp(null);
+            }
+        } else {
+            setDeviationStamp(null);
+        }
 
         if (!result || result.objectId > 0x1000000) {
             return;
@@ -1408,20 +1442,35 @@ export function Render3D({ onInit }: Props) {
             return;
         }
 
+        const measurement = await view.measure(e.nativeEvent.offsetX, e.nativeEvent.offsetY);
         const useSvgCursor = (measure.selecting || clippingPlanes.defining || selectingOrthoPoint) && e.buttons === 0;
 
         if (useSvgCursor) {
-            const measurement = await view.measure(e.nativeEvent.offsetX, e.nativeEvent.offsetY);
-
             canvas.style.cursor = "none";
 
             moveSvgCursor(e.nativeEvent.offsetX, e.nativeEvent.offsetY, measurement);
 
             return;
+        } else {
+            moveSvgCursor(-100, -100, undefined);
         }
 
-        moveSvgCursor(-100, -100, undefined);
+        const useCrosshair =
+            deviation.mode !== "off" && cameraState.type === CameraType.Orthographic && measurement?.deviation;
+
+        if (useCrosshair) {
+            // canvas.style.cursor = "crosshair";
+            setDeviationStamp({
+                mouseX: e.nativeEvent.offsetX,
+                mouseY: e.nativeEvent.offsetY,
+                data: { deviation: measurement.deviation! },
+            });
+        } else {
+            setDeviationStamp(null);
+        }
+
         canvas.style.cursor = "default";
+
         if (
             !pointerDown.current ||
             !clippingBox.enabled ||
@@ -1500,6 +1549,31 @@ export function Render3D({ onInit }: Props) {
                         onPointerUp={handleUp}
                         onPointerOut={() => moveSvgCursor(-100, -100, undefined)}
                     />
+                    <Menu
+                        open={deviationStamp !== null}
+                        onClose={closeDeviationStamp}
+                        sx={{
+                            [`&.${popoverClasses.root}`]: {
+                                pointerEvents: "none",
+                            },
+                        }}
+                        anchorReference="anchorPosition"
+                        anchorPosition={
+                            deviationStamp !== null
+                                ? { top: deviationStamp.mouseY, left: deviationStamp.mouseX }
+                                : undefined
+                        }
+                        transitionDuration={{ exit: 0 }}
+                    >
+                        <Box sx={{ pointerEvents: "auto" }}>
+                            <MenuItem>
+                                Deviation:{" "}
+                                {deviationStamp?.data.deviation === MAX_FLOAT
+                                    ? "Outside threshold"
+                                    : deviationStamp?.data.deviation.toFixed(3)}
+                            </MenuItem>
+                        </Box>
+                    </Menu>
                     {canvas !== null && (
                         <Svg width={canvas.width} height={canvas.height} ref={setSvg}>
                             {measureObjects
