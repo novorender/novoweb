@@ -1442,10 +1442,10 @@ export function Render3D({ onInit }: Props) {
             return;
         }
 
-        const measurement = await view.measure(e.nativeEvent.offsetX, e.nativeEvent.offsetY);
         const useSvgCursor = (measure.selecting || clippingPlanes.defining || selectingOrthoPoint) && e.buttons === 0;
 
         if (useSvgCursor) {
+            const measurement = await view.measure(e.nativeEvent.offsetX, e.nativeEvent.offsetY);
             canvas.style.cursor = "none";
 
             moveSvgCursor(e.nativeEvent.offsetX, e.nativeEvent.offsetY, measurement);
@@ -1455,16 +1455,18 @@ export function Render3D({ onInit }: Props) {
             moveSvgCursor(-100, -100, undefined);
         }
 
-        const useCrosshair =
-            deviation.mode !== "off" && cameraState.type === CameraType.Orthographic && measurement?.deviation;
+        if (deviation.mode !== "off" && cameraState.type === CameraType.Orthographic) {
+            const measurement = await view.measure(e.nativeEvent.offsetX, e.nativeEvent.offsetY);
 
-        if (useCrosshair) {
-            // canvas.style.cursor = "crosshair";
-            setDeviationStamp({
-                mouseX: e.nativeEvent.offsetX,
-                mouseY: e.nativeEvent.offsetY,
-                data: { deviation: measurement.deviation! },
-            });
+            if (measurement?.deviation) {
+                setDeviationStamp({
+                    mouseX: e.nativeEvent.offsetX,
+                    mouseY: e.nativeEvent.offsetY,
+                    data: { deviation: measurement.deviation },
+                });
+            } else {
+                setDeviationStamp(null);
+            }
         } else {
             setDeviationStamp(null);
         }
