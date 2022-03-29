@@ -38,25 +38,27 @@ export function Measure() {
         <>
             <WidgetContainer>
                 <WidgetHeader widget={featuresConfig.measure}>
-                    <Box display="flex" justifyContent="space-between" alignItems="center">
-                        <FormControlLabel
-                            control={
-                                <IosSwitch
-                                    size="medium"
-                                    color="primary"
-                                    checked={selecting}
-                                    onChange={() => dispatch(measureActions.toggleSelecting())}
-                                />
-                            }
-                            label={<Box fontSize={14}>Selecting</Box>}
-                        />
-                        <Button onClick={() => dispatch(measureActions.clear())} color="grey" disabled={false}>
-                            <DeleteSweep sx={{ mr: 1 }} />
-                            Clear
-                        </Button>
-                    </Box>
+                    {!menuOpen ? (
+                        <Box display="flex" justifyContent="space-between" alignItems="center">
+                            <FormControlLabel
+                                control={
+                                    <IosSwitch
+                                        size="medium"
+                                        color="primary"
+                                        checked={selecting}
+                                        onChange={() => dispatch(measureActions.toggleSelecting())}
+                                    />
+                                }
+                                label={<Box fontSize={14}>Selecting</Box>}
+                            />
+                            <Button onClick={() => dispatch(measureActions.clear())} color="grey" disabled={false}>
+                                <DeleteSweep sx={{ mr: 1 }} />
+                                Clear
+                            </Button>
+                        </Box>
+                    ) : null}
                 </WidgetHeader>
-                <ScrollBox>
+                <ScrollBox display={!menuOpen ? "block" : "none"}>
                     {selected.map((obj, idx) => (
                         <MeasuredObject obj={obj} idx={idx} key={idx} />
                     ))}
