@@ -1455,7 +1455,7 @@ export function Render3D({ onInit }: Props) {
             moveSvgCursor(-100, -100, undefined);
         }
 
-        if (deviation.mode !== "off" && cameraState.type === CameraType.Orthographic) {
+        if (deviation.mode !== "off" && cameraState.type === CameraType.Orthographic && e.buttons === 0) {
             const measurement = await view.measure(e.nativeEvent.offsetX, e.nativeEvent.offsetY);
 
             if (measurement?.deviation) {
