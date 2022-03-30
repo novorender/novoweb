@@ -112,6 +112,10 @@ export function SelectionBasket() {
                 full: true,
             });
 
+            if (abortSignal.aborted) {
+                return;
+            }
+
             const allProps = uniqueArray(
                 nodes.reduce(
                     (props, current) => {
