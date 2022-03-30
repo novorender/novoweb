@@ -241,12 +241,14 @@ export async function batchedPropertySearch<T = HierarcicalObjectReference>({
     transformResult,
     scene,
     abortSignal,
+    full,
 }: {
     property: string;
     value: string[];
-    transformResult?: (res: HierarcicalObjectReference[]) => T[];
+    transformResult?: (res: (HierarcicalObjectReference | ObjectData)[]) => T[];
     scene: Scene;
     abortSignal: AbortSignal;
+    full?: boolean;
 }): Promise<T[]> {
     let result = [] as T[];
 
@@ -267,7 +269,7 @@ export async function batchedPropertySearch<T = HierarcicalObjectReference>({
     );
 
     const concurrentRequests = 5;
-    const callback = (refs: HierarcicalObjectReference[]) => {
+    const callback = (refs: (HierarcicalObjectReference | ObjectData)[]) => {
         result = result.concat(transformResult ? transformResult(refs) : (refs as unknown as T));
     };
     for (let i = 0; i < batches.length / concurrentRequests; i++) {
@@ -277,6 +279,7 @@ export async function batchedPropertySearch<T = HierarcicalObjectReference>({
                     scene,
                     callback,
                     abortSignal,
+                    full,
                     searchPatterns: [
                         {
                             property,
