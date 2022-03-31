@@ -33,6 +33,7 @@ import {
 import { Loading } from "components";
 
 import { api, dataApi, measureApi } from "app";
+import { featuresConfig, WidgetKey } from "config/features";
 import { StorageKey } from "config/storage";
 import { useMountedState } from "hooks/useMountedState";
 import { useSceneId } from "hooks/useSceneId";
@@ -90,9 +91,9 @@ import {
     initClippingPlanes,
     initAdvancedSettings,
     initDeviation,
+    pickDeviationArea,
 } from "./utils";
 import { xAxis, yAxis, axis, MAX_FLOAT } from "./consts";
-import { featuresConfig, WidgetKey } from "config/features";
 
 glMatrix.setMatrixArrayType(Array);
 
@@ -1271,7 +1272,7 @@ export function Render3D({ onInit }: Props) {
         }
     };
 
-    const handleClick = async (e: MouseEvent) => {
+    const handleClick = async (e: MouseEvent | PointerEvent) => {
         if (!view || clippingBox.defining) {
             return;
         }
@@ -1279,14 +1280,20 @@ export function Render3D({ onInit }: Props) {
         const result = await view.pick(e.nativeEvent.offsetX, e.nativeEvent.offsetY);
 
         if (deviation.mode !== "off" && cameraState.type === CameraType.Orthographic) {
-            const measureRes = await view.measure(e.nativeEvent.offsetX, e.nativeEvent.offsetY);
+            const pickSize = "pointerType" in e.nativeEvent && e.nativeEvent.pointerType === "touch" ? 16 : 0;
+            const deviation = await pickDeviationArea({
+                view,
+                size: pickSize,
+                clickX: e.nativeEvent.offsetX,
+                clickY: e.nativeEvent.offsetY,
+            });
 
-            if (measureRes && measureRes.deviation) {
+            if (deviation) {
                 setDeviationStamp({
                     mouseX: e.nativeEvent.offsetX,
                     mouseY: e.nativeEvent.offsetY,
                     data: {
-                        deviation: measureRes.deviation,
+                        deviation: deviation,
                     },
                 });
 
