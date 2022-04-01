@@ -237,6 +237,7 @@ export function Render3D({ onInit }: Props) {
     const camera2pointDistance = useRef(0);
     const flightController = useRef<CameraController>();
     const pointerDown = useRef(false);
+    const isTouchPointer = useRef(false);
     const camX = useRef(vec3.create());
     const camY = useRef(vec3.create());
     const [size, setSize] = useState({ width: 0, height: 0 });
@@ -1280,7 +1281,7 @@ export function Render3D({ onInit }: Props) {
         const result = await view.pick(e.nativeEvent.offsetX, e.nativeEvent.offsetY);
 
         if (deviation.mode !== "off" && cameraState.type === CameraType.Orthographic) {
-            const pickSize = "pointerType" in e.nativeEvent && e.nativeEvent.pointerType === "touch" ? 16 : 0;
+            const pickSize = isTouchPointer.current ? 16 : 0;
             const deviation = await pickDeviationArea({
                 view,
                 size: pickSize,
@@ -1415,9 +1416,11 @@ export function Render3D({ onInit }: Props) {
 
     const handlePointerDown = (e: PointerEvent) => {
         if (e.pointerType === "mouse") {
+            isTouchPointer.current = false;
             return;
         }
 
+        isTouchPointer.current = true;
         handleDown(e.nativeEvent.offsetX, e.nativeEvent.offsetY);
     };
 
