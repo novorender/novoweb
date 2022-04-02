@@ -35,7 +35,7 @@ import { highlightActions, useDispatchHighlighted } from "contexts/highlighted";
 import { useMountedState } from "hooks/useMountedState";
 import { useToggle } from "hooks/useToggle";
 import { searchByPatterns } from "utils/search";
-import { getObjectNameFromPath } from "utils/objectData";
+import { getObjectNameFromPath, getParentPath } from "utils/objectData";
 
 import {
     Brep,
@@ -77,6 +77,7 @@ export function FollowPath() {
     const _clipping = useAppSelector(selectClipping);
 
     const [menuOpen, toggleMenu] = useToggle();
+    const [minimized, toggleMinimize] = useToggle(false);
     const [status, setStatus] = useMountedState(Status.Initial);
     const [clipping, setClipping] = useState(_clipping);
 
@@ -97,7 +98,9 @@ export function FollowPath() {
                 scene,
                 searchPatterns: [{ property: "Novorender/Path", value: "true", exact: true }],
                 callback: (refs) =>
-                    (paths = paths.concat(refs.map(({ path, id }) => ({ id, name: getObjectNameFromPath(path) })))),
+                    (paths = paths.concat(
+                        refs.map(({ path, id }) => ({ id, name: getObjectNameFromPath(getParentPath(path)) }))
+                    )),
             });
 
             dispatch(followPathActions.setPaths(paths));
@@ -336,9 +339,9 @@ export function FollowPath() {
 
     return (
         <>
-            <WidgetContainer>
-                <WidgetHeader widget={featuresConfig.followPath}>
-                    {!menuOpen ? (
+            <WidgetContainer minimized={minimized}>
+                <WidgetHeader minimized={minimized} toggleMinimize={toggleMinimize} widget={featuresConfig.followPath}>
+                    {!menuOpen && !minimized ? (
                         <>
                             {currentPath ? (
                                 <Box display="flex" justifyContent="space-between">
@@ -376,7 +379,7 @@ export function FollowPath() {
                         </>
                     ) : null}
                 </WidgetHeader>
-                <ScrollBox display={menuOpen ? "none" : "block"}>
+                <ScrollBox display={menuOpen || minimized ? "none" : "block"}>
                     {status === Status.Loading ? <LinearProgress /> : null}
                     {!currentPath ? (
                         <List>

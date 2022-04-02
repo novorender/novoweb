@@ -38,12 +38,17 @@ export function ViewerScenes() {
     const editingScene = useAppSelector(selectEditingScene);
     const [menuOpen, toggleMenu] = useToggle();
     const [modalOpen, toggleModalOpen] = useToggle();
+    const [minimized, toggleMinimize] = useToggle(false);
 
     return (
         <>
-            <WidgetContainer>
-                <WidgetHeader widget={featuresConfig.viewerScenes}>
-                    {!menuOpen ? (
+            <WidgetContainer minimized={minimized}>
+                <WidgetHeader
+                    minimized={minimized}
+                    toggleMinimize={toggleMinimize}
+                    widget={featuresConfig.viewerScenes}
+                >
+                    {!menuOpen && !minimized ? (
                         <Box display="flex" justifyContent="space-between">
                             {editingScene === undefined ? (
                                 <Button onClick={toggleModalOpen} color="grey">
@@ -63,7 +68,7 @@ export function ViewerScenes() {
                         </Box>
                     ) : null}
                 </WidgetHeader>
-                <ScrollBox display={menuOpen ? "none" : "block"} height={1} pb={2} mt={1}>
+                <ScrollBox display={menuOpen || minimized ? "none" : "block"} height={1} pb={2} mt={1}>
                     <Typography p={1} color="textSecondary">
                         Scenes: {viewerScenes.length}
                     </Typography>

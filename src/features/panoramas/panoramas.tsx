@@ -70,6 +70,7 @@ export function Panoramas() {
     const dispatch = useAppDispatch();
 
     const [menuOpen, toggleMenu] = useToggle();
+    const [minimized, toggleMinimize] = useToggle(false);
 
     useEffect(() => {
         if (!panoramas) {
@@ -83,9 +84,9 @@ export function Panoramas() {
 
     return (
         <>
-            <WidgetContainer>
-                <WidgetHeader widget={featuresConfig.panoramas}>
-                    {!menuOpen && panoramas?.length ? (
+            <WidgetContainer minimized={minimized}>
+                <WidgetHeader minimized={minimized} toggleMinimize={toggleMinimize} widget={featuresConfig.panoramas}>
+                    {!menuOpen && !minimized && panoramas?.length ? (
                         <Box display="flex">
                             <FormControlLabel
                                 control={
@@ -109,7 +110,7 @@ export function Panoramas() {
                         </Box>
                     ) : null}
                 </WidgetHeader>
-                <ScrollBox display={!menuOpen ? "block" : "none"} height={1} pb={2}>
+                <ScrollBox display={!menuOpen && !minimized ? "block" : "none"} height={1} pb={2}>
                     {panoramas ? (
                         panoramas.length ? (
                             <List>

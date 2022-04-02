@@ -1,6 +1,6 @@
-import { MouseEvent, ReactNode, useState } from "react";
-import { Box, IconButton, MenuProps, Typography, useTheme } from "@mui/material";
-import { Close, MoreVert } from "@mui/icons-material";
+import { MouseEvent, ReactNode, useEffect, useState } from "react";
+import { Box, IconButton, MenuProps, Typography, useMediaQuery, useTheme } from "@mui/material";
+import { Close, CropSquare, Minimize, MoreVert } from "@mui/icons-material";
 
 import { Widget } from "config/features";
 import { Divider } from "components";
@@ -10,15 +10,20 @@ import { explorerActions } from "slices/explorerSlice";
 export function WidgetHeader({
     widget: { name, Icon, key },
     children,
-    WidgetMenu,
     disableShadow,
+    minimized,
+    toggleMinimize,
+    WidgetMenu,
 }: {
     widget: Widget;
-    WidgetMenu?: (props: MenuProps) => JSX.Element;
     children?: ReactNode;
     disableShadow?: boolean;
+    minimized?: boolean;
+    toggleMinimize?: () => void;
+    WidgetMenu?: (props: MenuProps) => JSX.Element;
 }) {
     const theme = useTheme();
+    const isSmall = useMediaQuery(theme.breakpoints.down("sm"));
     const dispatch = useAppDispatch();
 
     const [menuAnchor, setMenuAnchor] = useState<HTMLElement | null>(null);
@@ -35,6 +40,12 @@ export function WidgetHeader({
     const closeMenu = () => {
         setMenuAnchor(null);
     };
+
+    useEffect(() => {
+        if (!isSmall && minimized && toggleMinimize) {
+            toggleMinimize();
+        }
+    }, [isSmall, minimized, toggleMinimize]);
 
     return (
         <Box boxShadow={!disableShadow ? theme.customShadows.widgetHeader : undefined}>
@@ -54,6 +65,11 @@ export function WidgetHeader({
                     </Typography>
                 </Box>
                 <Box ml="auto">
+                    {toggleMinimize && isSmall ? (
+                        <IconButton sx={{ mr: 1 }} data-test="minimize-widget" size="small" onClick={toggleMinimize}>
+                            {minimized ? <CropSquare /> : <Minimize />}
+                        </IconButton>
+                    ) : null}
                     <IconButton data-test="close-widget" size="small" onClick={handleClose}>
                         <Close />
                     </IconButton>

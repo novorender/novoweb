@@ -158,6 +158,8 @@ export function MeasuredResult() {
             ? [duoMeasurementValues.pointA, duoMeasurementValues.pointB]
             : duoMeasurementValues.normalPoints;
 
+    const showSlope = duoMeasurementValues.pointA && duoMeasurementValues.pointB;
+
     return (
         <Accordion defaultExpanded={true}>
             <AccordionSummary sx={{ fontWeight: 600 }}>Result</AccordionSummary>
@@ -187,6 +189,9 @@ export function MeasuredResult() {
                                     </Grid>
                                 </Grid>
                             </ListItem>
+                        ) : null}
+                        {showSlope ? (
+                            <Slope start={duoMeasurementValues.pointA!} end={duoMeasurementValues.pointB!} />
                         ) : null}
                     </List>
                     <Box p={1}>

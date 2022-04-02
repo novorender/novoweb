@@ -75,6 +75,7 @@ export function Properties() {
     } = useExplorerGlobals(true);
 
     const [menuOpen, toggleMenu] = useToggle();
+    const [minimized, toggleMinimize] = useToggle(false);
     const [searches, setSearches] = useState<Record<string, SearchPattern>>({});
     const [status, setStatus] = useMountedState(Status.Initial);
     const [object, setObject] = useMountedState<PropertiesObject | undefined>(undefined);
@@ -229,10 +230,14 @@ export function Properties() {
 
     return (
         <>
-            <WidgetContainer>
-                <WidgetHeader widget={featuresConfig.properties} />
+            <WidgetContainer minimized={minimized}>
+                <WidgetHeader
+                    minimized={minimized}
+                    toggleMinimize={toggleMinimize}
+                    widget={featuresConfig.properties}
+                />
                 <ScrollBox
-                    display={menuOpen ? "none" : "flex"}
+                    display={menuOpen || minimized ? "none" : "flex"}
                     flexDirection={"column"}
                     height={1}
                     pb={2}

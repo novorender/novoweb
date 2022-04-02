@@ -10,6 +10,7 @@ import { WidgetList } from "features/widgetList";
 
 export function ClippingPlanes() {
     const [menuOpen, toggleMenu] = useToggle();
+    const [minimized, toggleMinimize] = useToggle(false);
     const { defining, enabled, planes, baseW } = useAppSelector(selectClippingPlanes);
     const [enableOptions, setEnableOptions] = useState(enabled || planes.length > 0 || defining);
     const dispatch = useAppDispatch();
@@ -41,9 +42,13 @@ export function ClippingPlanes() {
 
     return (
         <>
-            <WidgetContainer>
-                <WidgetHeader widget={featuresConfig.clippingPlanes}>
-                    {!menuOpen ? (
+            <WidgetContainer minimized={minimized}>
+                <WidgetHeader
+                    minimized={minimized}
+                    toggleMinimize={toggleMinimize}
+                    widget={featuresConfig.clippingPlanes}
+                >
+                    {!menuOpen && !minimized ? (
                         <>
                             <Box mt={1} mb={1} display="flex" justifyContent="space-between">
                                 <FormControlLabel

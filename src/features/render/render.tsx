@@ -15,7 +15,7 @@ import {
     MeasureSettings,
     DuoMeasurementValues,
 } from "@novorender/webgl-api";
-import { Box, Button, Paper, Typography, useTheme, styled } from "@mui/material";
+import { Box, Button, Paper, Typography, useTheme, styled, Menu, MenuItem, popoverClasses } from "@mui/material";
 import { css } from "@mui/styled-engine";
 import { CameraAlt } from "@mui/icons-material";
 
@@ -33,6 +33,7 @@ import {
 import { Loading } from "components";
 
 import { api, dataApi, measureApi } from "app";
+import { featuresConfig, WidgetKey } from "config/features";
 import { StorageKey } from "config/storage";
 import { useMountedState } from "hooks/useMountedState";
 import { useSceneId } from "hooks/useSceneId";
@@ -90,9 +91,9 @@ import {
     initClippingPlanes,
     initAdvancedSettings,
     initDeviation,
+    pickDeviationArea,
 } from "./utils";
-import { xAxis, yAxis, axis } from "./consts";
-import { featuresConfig, WidgetKey } from "config/features";
+import { xAxis, yAxis, axis, MAX_FLOAT } from "./consts";
 
 glMatrix.setMatrixArrayType(Array);
 
@@ -211,6 +212,7 @@ export function Render3D({ onInit }: Props) {
     const measure = useAppSelector(selectMeasure);
     const panoramas = useAppSelector(selectPanoramas);
     const deviation = useAppSelector(selectDeviations);
+
     const show3dMarkers = useAppSelector(selectShow3dMarkers);
     const activePanorama = useAppSelector(selectActivePanorama);
     const panoramaStatus = useAppSelector(selectPanoramaStatus);
@@ -235,6 +237,7 @@ export function Render3D({ onInit }: Props) {
     const camera2pointDistance = useRef(0);
     const flightController = useRef<CameraController>();
     const pointerDown = useRef(false);
+    const isTouchPointer = useRef(false);
     const camX = useRef(vec3.create());
     const camY = useRef(vec3.create());
     const [size, setSize] = useState({ width: 0, height: 0 });
@@ -243,6 +246,18 @@ export function Render3D({ onInit }: Props) {
     const [measureObjects, setMeasureObjects] = useMountedState([] as (ExtendedMeasureObject | MeasurePoint)[]);
     const [svg, setSvg] = useState<null | SVGSVGElement>(null);
     const [status, setStatus] = useMountedState(Status.Initial);
+
+    const [deviationStamp, setDeviationStamp] = useState<{
+        mouseX: number;
+        mouseY: number;
+        data: {
+            deviation: number;
+        };
+    } | null>(null);
+
+    const closeDeviationStamp = () => {
+        setDeviationStamp(null);
+    };
 
     const canvasRef: RefCallback<HTMLCanvasElement> = useCallback(
         (el) => {
@@ -812,6 +827,7 @@ export function Render3D({ onInit }: Props) {
 
                     moveSvg();
                     renderParametricMeasure();
+                    setDeviationStamp(null);
                     rendering.current.update({ moving: true });
 
                     if (movementTimer.current) {
@@ -1257,12 +1273,38 @@ export function Render3D({ onInit }: Props) {
         }
     };
 
-    const handleClick = async (e: React.MouseEvent) => {
+    const handleClick = async (e: MouseEvent | PointerEvent) => {
         if (!view || clippingBox.defining) {
             return;
         }
 
         const result = await view.pick(e.nativeEvent.offsetX, e.nativeEvent.offsetY);
+
+        if (deviation.mode !== "off" && cameraState.type === CameraType.Orthographic) {
+            const pickSize = isTouchPointer.current ? 16 : 0;
+            const deviation = await pickDeviationArea({
+                view,
+                size: pickSize,
+                clickX: e.nativeEvent.offsetX,
+                clickY: e.nativeEvent.offsetY,
+            });
+
+            if (deviation) {
+                setDeviationStamp({
+                    mouseX: e.nativeEvent.offsetX,
+                    mouseY: e.nativeEvent.offsetY,
+                    data: {
+                        deviation: deviation,
+                    },
+                });
+
+                return;
+            } else {
+                setDeviationStamp(null);
+            }
+        } else {
+            setDeviationStamp(null);
+        }
 
         if (!result || result.objectId > 0x1000000) {
             return;
@@ -1374,9 +1416,11 @@ export function Render3D({ onInit }: Props) {
 
     const handlePointerDown = (e: PointerEvent) => {
         if (e.pointerType === "mouse") {
+            isTouchPointer.current = false;
             return;
         }
 
+        isTouchPointer.current = true;
         handleDown(e.nativeEvent.offsetX, e.nativeEvent.offsetY);
     };
 
@@ -1412,16 +1456,33 @@ export function Render3D({ onInit }: Props) {
 
         if (useSvgCursor) {
             const measurement = await view.measure(e.nativeEvent.offsetX, e.nativeEvent.offsetY);
-
             canvas.style.cursor = "none";
 
             moveSvgCursor(e.nativeEvent.offsetX, e.nativeEvent.offsetY, measurement);
 
             return;
+        } else {
+            moveSvgCursor(-100, -100, undefined);
         }
 
-        moveSvgCursor(-100, -100, undefined);
+        if (deviation.mode !== "off" && cameraState.type === CameraType.Orthographic && e.buttons === 0) {
+            const measurement = await view.measure(e.nativeEvent.offsetX, e.nativeEvent.offsetY);
+
+            if (measurement?.deviation) {
+                setDeviationStamp({
+                    mouseX: e.nativeEvent.offsetX,
+                    mouseY: e.nativeEvent.offsetY,
+                    data: { deviation: measurement.deviation },
+                });
+            } else {
+                setDeviationStamp(null);
+            }
+        } else {
+            setDeviationStamp(null);
+        }
+
         canvas.style.cursor = "default";
+
         if (
             !pointerDown.current ||
             !clippingBox.enabled ||
@@ -1500,6 +1561,31 @@ export function Render3D({ onInit }: Props) {
                         onPointerUp={handleUp}
                         onPointerOut={() => moveSvgCursor(-100, -100, undefined)}
                     />
+                    <Menu
+                        open={deviationStamp !== null}
+                        onClose={closeDeviationStamp}
+                        sx={{
+                            [`&.${popoverClasses.root}`]: {
+                                pointerEvents: "none",
+                            },
+                        }}
+                        anchorReference="anchorPosition"
+                        anchorPosition={
+                            deviationStamp !== null
+                                ? { top: deviationStamp.mouseY, left: deviationStamp.mouseX }
+                                : undefined
+                        }
+                        transitionDuration={{ exit: 0 }}
+                    >
+                        <Box sx={{ pointerEvents: "auto" }}>
+                            <MenuItem>
+                                Deviation:{" "}
+                                {deviationStamp?.data.deviation === MAX_FLOAT
+                                    ? "Outside threshold"
+                                    : deviationStamp?.data.deviation.toFixed(3)}
+                            </MenuItem>
+                        </Box>
+                    </Menu>
                     {canvas !== null && (
                         <Svg width={canvas.width} height={canvas.height} ref={setSvg}>
                             {measureObjects

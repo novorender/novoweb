@@ -49,6 +49,7 @@ export function AdvancedSettings() {
     } = settings;
 
     const [menuOpen, toggleMenu] = useToggle();
+    const [minimized, toggleMinimize] = useToggle(false);
     const [size, setSize] = useState(pointSize);
     const [maxSize, setMaxSize] = useState(maxPointSize);
     const [toleranceFactor, setToleranceFactor] = useState(pointToleranceFactor);
@@ -160,9 +161,13 @@ export function AdvancedSettings() {
 
     return (
         <>
-            <WidgetContainer>
-                <WidgetHeader widget={featuresConfig.advancedSettings} />
-                <ScrollBox display={menuOpen ? "none" : "block"}>
+            <WidgetContainer minimized={minimized}>
+                <WidgetHeader
+                    minimized={minimized}
+                    toggleMinimize={toggleMinimize}
+                    widget={featuresConfig.advancedSettings}
+                />
+                <ScrollBox display={menuOpen || minimized ? "none" : "block"}>
                     <Box mt={1} p={1} display="flex" flexDirection="column">
                         <FormControlLabel
                             sx={{ ml: 0, mb: 2 }}

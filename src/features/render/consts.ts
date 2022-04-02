@@ -10,3 +10,4 @@ export const axis = [
 ];
 export const xAxis = vec3.fromValues(1, 0, 0);
 export const yAxis = vec3.fromValues(0, 1, 0);
+export const MAX_FLOAT = 3.4028234663852886e38;

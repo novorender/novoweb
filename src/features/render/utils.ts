@@ -7,6 +7,7 @@ import {
     FlightControllerParams,
     Highlight,
     Internal,
+    MeasureInfo,
     ObjectId,
     OrthoControllerParams,
     RenderSettings,
@@ -474,4 +475,43 @@ export function initAdvancedSettings(view: View, customProperties: any): void {
             [AdvancedSetting.PointToleranceFactor]: points.size.toleranceFactor ?? 0,
         })
     );
+}
+
+export async function pickDeviationArea({
+    view,
+    size,
+    clickX,
+    clickY,
+}: {
+    view: View;
+    size: number;
+    clickX: number;
+    clickY: number;
+}): Promise<number | undefined> {
+    const center = await view.measure(clickX, clickY);
+    const startX = clickX - size / 2;
+    const startY = clickY - size / 2;
+
+    if (center?.deviation) {
+        return center.deviation;
+    }
+
+    const res = [] as Promise<MeasureInfo | undefined>[];
+
+    for (let x = 1; x <= size; x++) {
+        for (let y = 1; y <= size; y++) {
+            res.push(view.measure(startX + x, startY + y));
+        }
+    }
+
+    return (await Promise.all(res))
+        .map((res) => (res?.deviation ? res : undefined))
+        .filter((res) => typeof res !== "undefined")
+        .reduce((deviation, measureInfo, idx, array) => {
+            if (idx === array.length - 1) {
+                return (deviation + measureInfo!.deviation!) / array.length;
+            } else {
+                return deviation + measureInfo!.deviation!;
+            }
+        }, 0);
 }

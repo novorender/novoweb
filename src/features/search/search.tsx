@@ -54,6 +54,7 @@ export function Search() {
     const urlSearchQuery = useAppSelector(selectUrlSearchQuery);
 
     const [menuOpen, toggleMenu] = useToggle();
+    const [minimized, toggleMinimize] = useToggle(false);
     const [advanced, toggleAdvanced] = useToggle(urlSearchQuery ? Array.isArray(urlSearchQuery) : true);
     const [simpleInput, setSimpleInput] = useState(typeof urlSearchQuery === "string" ? urlSearchQuery : "");
     const [advancedInputs, setAdvancedInputs] = useState(
@@ -265,9 +266,9 @@ export function Search() {
 
     return (
         <>
-            <WidgetContainer>
-                <WidgetHeader widget={featuresConfig.search}>
-                    {!menuOpen ? (
+            <WidgetContainer minimized={minimized}>
+                <WidgetHeader minimized={minimized} toggleMinimize={toggleMinimize} widget={featuresConfig.search}>
+                    {!menuOpen && !minimized ? (
                         <form onSubmit={handleSubmit}>
                             {advanced ? (
                                 <AdvancedSearchInputs
@@ -368,7 +369,7 @@ export function Search() {
                         </form>
                     ) : null}
                 </WidgetHeader>
-                <Box display={menuOpen ? "none" : "flex"} flexDirection="column" height={1}>
+                <Box display={menuOpen || minimized ? "none" : "flex"} flexDirection="column" height={1}>
                     {status === Status.Loading ? <LinearProgress /> : null}
                     <ScrollBox flex={"1 1 100%"}>
                         {status === Status.Error ? (

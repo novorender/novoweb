@@ -27,6 +27,7 @@ import { Crupdate } from "./routes/crupdate";
 
 export function Bookmarks() {
     const [menuOpen, toggleMenu] = useToggle();
+    const [minimized, toggleMinimize] = useToggle(false);
     const sceneId = useSceneId();
 
     const user = useAppSelector(selectUser);
@@ -65,9 +66,19 @@ export function Bookmarks() {
 
     return (
         <>
-            <WidgetContainer>
-                <WidgetHeader widget={featuresConfig.bookmarks} disableShadow />
-                <Box display={menuOpen ? "none" : "flex"} flexGrow={1} overflow="hidden" flexDirection="column">
+            <WidgetContainer minimized={minimized}>
+                <WidgetHeader
+                    minimized={minimized}
+                    toggleMinimize={toggleMinimize}
+                    widget={featuresConfig.bookmarks}
+                    disableShadow
+                />
+                <Box
+                    display={menuOpen || minimized ? "none" : "flex"}
+                    flexGrow={1}
+                    overflow="hidden"
+                    flexDirection="column"
+                >
                     <MemoryRouter>
                         <Switch>
                             <Route path="/" exact>

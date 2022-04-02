@@ -13,6 +13,7 @@ import { MeasuredObject, MeasuredResult } from "./measuredObject";
 
 export function Measure() {
     const [menuOpen, toggleMenu] = useToggle();
+    const [minimized, toggleMinimize] = useToggle(false);
 
     const dispatch = useAppDispatch();
     const { selecting, selected } = useAppSelector(selectMeasure);
@@ -36,9 +37,9 @@ export function Measure() {
 
     return (
         <>
-            <WidgetContainer>
-                <WidgetHeader widget={featuresConfig.measure}>
-                    {!menuOpen ? (
+            <WidgetContainer minimized={minimized}>
+                <WidgetHeader minimized={minimized} toggleMinimize={toggleMinimize} widget={featuresConfig.measure}>
+                    {!menuOpen && !minimized ? (
                         <Box display="flex" justifyContent="space-between" alignItems="center">
                             <FormControlLabel
                                 control={
@@ -58,7 +59,7 @@ export function Measure() {
                         </Box>
                     ) : null}
                 </WidgetHeader>
-                <ScrollBox display={!menuOpen ? "block" : "none"}>
+                <ScrollBox display={menuOpen || minimized ? "none" : "block"}>
                     {selected.map((obj, idx) => (
                         <MeasuredObject obj={obj} idx={idx} key={idx} />
                     ))}
