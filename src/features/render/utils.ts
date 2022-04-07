@@ -453,14 +453,13 @@ export function initDeviation(deviation: RenderSettings["points"]["deviation"]):
     );
 }
 
-export function initAdvancedSettings(view: View, customProperties: any): void {
-    const { diagnostics, advanced, points } = view.settings as Internal.RenderSettingsExt;
+export function initAdvancedSettings(view: View, customProperties: Record<string, any>): void {
+    const { diagnostics, advanced, points, light } = view.settings as Internal.RenderSettingsExt;
     const cameraParams = view.camera.controller.params as FlightControllerParams | OrthoControllerParams;
-    const isProd = window.location.origin !== "https://explorer.novorender.com";
 
     store.dispatch(
         renderActions.setAdvancedSettings({
-            [AdvancedSetting.ShowPerformance]: Boolean(isProd && customProperties?.showStats),
+            [AdvancedSetting.ShowPerformance]: Boolean(customProperties?.showStats),
             [AdvancedSetting.AutoFps]: view.settings.quality.resolution.autoAdjust.enabled,
             [AdvancedSetting.TriangleBudget]: view.settings.quality.detail.autoAdjust.enabled,
             [AdvancedSetting.ShowBoundingBoxes]: diagnostics.showBoundingBoxes,
@@ -473,6 +472,10 @@ export function initAdvancedSettings(view: View, customProperties: any): void {
             [AdvancedSetting.PointSize]: points.size.pixel ?? 1,
             [AdvancedSetting.MaxPointSize]: points.size.maxPixel ?? 20,
             [AdvancedSetting.PointToleranceFactor]: points.size.toleranceFactor ?? 0,
+            [AdvancedSetting.HeadlightIntensity]: light.camera.brightness,
+            [AdvancedSetting.HeadlightDistance]: light.camera.distance,
+            [AdvancedSetting.AmbientLight]: light.ambient.brightness,
+            [AdvancedSetting.NavigationCube]: Boolean(customProperties?.navigationCube),
         })
     );
 }

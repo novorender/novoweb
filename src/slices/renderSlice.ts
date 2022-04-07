@@ -66,6 +66,10 @@ export enum AdvancedSetting {
     PointSize = "pointSize",
     MaxPointSize = "maxPointSize",
     PointToleranceFactor = "pointToleranceFactor",
+    HeadlightIntensity = "headlightIntensity",
+    HeadlightDistance = "headlightDistance",
+    AmbientLight = "ambientLight",
+    NavigationCube = "navigationCube",
 }
 
 export enum SelectionBasketMode {
@@ -131,6 +135,10 @@ const initialState = {
         [AdvancedSetting.PointSize]: 1,
         [AdvancedSetting.MaxPointSize]: 20,
         [AdvancedSetting.PointToleranceFactor]: 0,
+        [AdvancedSetting.HeadlightIntensity]: 0,
+        [AdvancedSetting.HeadlightDistance]: 0,
+        [AdvancedSetting.AmbientLight]: 0,
+        [AdvancedSetting.NavigationCube]: false,
     },
 };
 

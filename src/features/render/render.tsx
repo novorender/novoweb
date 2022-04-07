@@ -957,7 +957,6 @@ export function Render3D({ onInit }: Props) {
             }
 
             view.camera.controller.params.linearVelocity = baseCameraSpeed * cameraSpeedMultiplier;
-            canvas?.focus();
         },
         [cameraSpeedMultiplier, baseCameraSpeed, view, canvas]
     );

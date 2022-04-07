@@ -44,13 +44,9 @@ function ExplorerBase() {
 
     const handleInit = ({ customProperties }: { customProperties: unknown }) => {
         const isAdminScene = !getIsViewerScene(customProperties);
+        const userRole = isAdminScene ? UserRole.Admin : getUserRole(customProperties);
         dispatch(explorerActions.setSceneType(isAdminScene ? SceneType.Admin : SceneType.Viewer));
-
-        if (isAdminScene) {
-            dispatch(explorerActions.setUserRole(UserRole.Admin));
-        } else {
-            dispatch(explorerActions.setUserRole(getUserRole(customProperties)));
-        }
+        dispatch(explorerActions.setUserRole(userRole));
 
         const requireConsent = getRequireConsent(customProperties);
 
@@ -60,7 +56,7 @@ function ExplorerBase() {
 
         const enabledFeatures = getEnabledFeatures(customProperties);
 
-        if (isAdminScene) {
+        if (userRole !== UserRole.Viewer) {
             dispatch(explorerActions.setEnabledWidgets(defaultEnabledAdminWidgets));
         } else if (enabledFeatures) {
             dispatch(explorerActions.setEnabledWidgets(enabledFeaturesToFeatureKeys(enabledFeatures)));
