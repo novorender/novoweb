@@ -13,7 +13,7 @@ export function FeatureSettings({ save, saving }: { save: () => Promise<void>; s
 
     const dispatch = useAppDispatch();
     const settings = useAppSelector(selectAdvancedSettings);
-    const { showPerformance } = settings;
+    const { showPerformance, navigationCube } = settings;
 
     const handleToggle = ({ target: { name, checked } }: ChangeEvent<HTMLInputElement>) => {
         dispatch(renderActions.setAdvancedSettings({ [name]: checked }));
@@ -43,13 +43,13 @@ export function FeatureSettings({ save, saving }: { save: () => Promise<void>; s
             ) : null}
             <ScrollBox height={1} pb={3}>
                 <Box p={1} mt={1} display="flex" flexDirection="column">
-                    {/* <FormControlLabel
+                    <FormControlLabel
                         sx={{ ml: 0, mb: 1 }}
                         control={
                             <Switch
-                                name={"Navigation cube"}
-                                // checked={showPerformance}
-                                // onChange={handleToggle}
+                                name={AdvancedSetting.NavigationCube}
+                                checked={navigationCube}
+                                onChange={handleToggle}
                             />
                         }
                         label={
@@ -57,7 +57,7 @@ export function FeatureSettings({ save, saving }: { save: () => Promise<void>; s
                                 Navigation cube
                             </Box>
                         }
-                    /> */}
+                    />
                     <FormControlLabel
                         sx={{ ml: 0, mb: 1 }}
                         control={

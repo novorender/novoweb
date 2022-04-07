@@ -5,6 +5,8 @@ import { CameraNavigationMenu } from "features/cameraNavigationMenu";
 import { Widgets } from "features/widgets";
 import { useAppSelector } from "app/store";
 import { selectEnabledWidgets } from "slices/explorerSlice";
+import { NavigationCube } from "features/navigationCube";
+import { selectAdvancedSettings } from "slices/renderSlice";
 
 const largeFabButtonDiameter = 40;
 
@@ -12,6 +14,7 @@ export function Hud() {
     const enabledWidgets = useAppSelector(selectEnabledWidgets);
     const theme = useTheme();
     const isSmall = useMediaQuery(theme.breakpoints.down("md"));
+    const { navigationCube } = useAppSelector(selectAdvancedSettings);
 
     if (enabledWidgets.length < 1) {
         return <></>;
@@ -19,6 +22,7 @@ export function Hud() {
 
     return (
         <>
+            {navigationCube ? <NavigationCube /> : null}
             <Box
                 position="absolute"
                 bottom={0}

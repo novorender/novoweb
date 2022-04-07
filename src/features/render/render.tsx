@@ -814,7 +814,7 @@ export function Render3D({ onInit }: Props) {
                 return;
             }
 
-            cameraMoved(view);
+            api.animate = () => cameraMoved(view);
 
             function cameraMoved(view: View) {
                 if (window.Cypress) {
@@ -865,8 +865,6 @@ export function Render3D({ onInit }: Props) {
                     }, 500);
                 }
             }
-
-            api.animate = () => cameraMoved(view);
         },
         [
             view,
