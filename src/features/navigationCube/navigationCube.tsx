@@ -189,6 +189,7 @@ const CubeContainer = styled("svg")`
     left: 20px;
     overflow: visible;
     pointer-events: none;
+    -webkit-tap-highlight-color: rgba(0, 0, 0, 0);
 
     text {
         user-select: none;
