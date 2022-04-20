@@ -4,10 +4,6 @@ export function uniqueArray<T>(arr: T[]): T[] {
     return Array.from(new Set(arr));
 }
 
-export function replaceEncodedSlash(str: String) {
-    return str.replace(/%2f/g, "/");
-}
-
 export function sha256(plain: string): Promise<ArrayBuffer> {
     const encoder = new TextEncoder();
     const data = encoder.encode(plain);
