@@ -2,7 +2,7 @@ import { createSelector, createSlice, PayloadAction } from "@reduxjs/toolkit";
 import { SearchPattern } from "@novorender/webgl-api";
 import { ScenePreview } from "@novorender/data-js-api";
 
-import { featuresConfig, WidgetKey, Widget, defaultEnabledWidgets } from "config/features";
+import { featuresConfig, WidgetKey, Widget, defaultEnabledWidgets, defaultLockedWidgets } from "config/features";
 import type { RootState } from "app/store";
 
 export enum SceneType {
@@ -17,8 +17,8 @@ export enum UserRole {
 }
 
 const initialState = {
-    enabledWidgets: defaultEnabledWidgets as WidgetKey[],
-    disabledWidgets: [featuresConfig.viewerScenes.key] as WidgetKey[],
+    enabledWidgets: defaultEnabledWidgets,
+    lockedWidgets: defaultLockedWidgets,
     sceneType: SceneType.Viewer,
     userRole: UserRole.Viewer,
     requireConsent: false,
@@ -38,8 +38,11 @@ export const explorerSlice = createSlice({
         setEnabledWidgets: (state, action: PayloadAction<WidgetKey[]>) => {
             state.enabledWidgets = action.payload;
         },
-        disableWidgets: (state, action: PayloadAction<WidgetKey[]>) => {
-            state.disabledWidgets = state.disabledWidgets.concat(action.payload);
+        lockWidgets: (state, action: PayloadAction<WidgetKey[]>) => {
+            state.lockedWidgets = state.lockedWidgets.concat(action.payload);
+        },
+        unlockWidgets: (state, action: PayloadAction<WidgetKey[]>) => {
+            state.lockedWidgets = state.lockedWidgets.filter((widget) => !action.payload.includes(widget));
         },
         setSceneType: (state, action: PayloadAction<SceneType>) => {
             state.sceneType = action.payload;
@@ -110,7 +113,7 @@ export const explorerSlice = createSlice({
 });
 
 export const selectWidgets = (state: RootState) => state.explorer.widgets;
-export const selectDisabledWidgets = (state: RootState) => state.explorer.disabledWidgets;
+export const selectLockedWidgets = (state: RootState) => state.explorer.lockedWidgets;
 export const selectUrlBookmarkId = (state: RootState) => state.explorer.urlBookmarkId;
 export const selectUrlSearchQuery = (state: RootState) => state.explorer.urlSearchQuery;
 export const selectSceneType = (state: RootState) => state.explorer.sceneType;

@@ -8,6 +8,7 @@ import { Accordion, AccordionDetails, AccordionSummary, Divider, LinearProgress,
 import { useAppDispatch, useAppSelector } from "app/store";
 import { useExplorerGlobals } from "contexts/explorerGlobals";
 import { AdvancedSetting, selectAdvancedSettings, renderActions } from "slices/renderSlice";
+import { selectUser } from "slices/authSlice";
 
 type SliderSettings =
     | AdvancedSetting.PointSize
@@ -23,6 +24,7 @@ export function RenderSettings({ save, saving }: { save: () => Promise<void>; sa
     } = useExplorerGlobals(true);
 
     const dispatch = useAppDispatch();
+    const user = useAppSelector(selectUser);
     const settings = useAppSelector(selectAdvancedSettings);
     const {
         taa,
@@ -168,66 +170,74 @@ export function RenderSettings({ save, saving }: { save: () => Promise<void>; sa
                                         </Box>
                                     }
                                 />
-                                <FormControlLabel
-                                    sx={{ ml: 0, mb: 2 }}
-                                    control={
-                                        <Switch
-                                            name={AdvancedSetting.ShowBoundingBoxes}
-                                            checked={showBoundingBoxes}
-                                            onChange={handleToggle}
+                                {user?.features?.debugInfo?.boundingBoxes ? (
+                                    <FormControlLabel
+                                        sx={{ ml: 0, mb: 2 }}
+                                        control={
+                                            <Switch
+                                                name={AdvancedSetting.ShowBoundingBoxes}
+                                                checked={showBoundingBoxes}
+                                                onChange={handleToggle}
+                                            />
+                                        }
+                                        label={
+                                            <Box ml={1} fontSize={16}>
+                                                Show bounding boxes
+                                            </Box>
+                                        }
+                                    />
+                                ) : null}
+                                {user?.features?.doubleSided ? (
+                                    <>
+                                        <FormControlLabel
+                                            sx={{ ml: 0, mb: 2 }}
+                                            control={
+                                                <Switch
+                                                    name={AdvancedSetting.DoubleSidedMaterials}
+                                                    checked={doubleSidedMaterials}
+                                                    onChange={handleToggle}
+                                                />
+                                            }
+                                            label={
+                                                <Box ml={1} fontSize={16}>
+                                                    Double sided materials
+                                                </Box>
+                                            }
                                         />
-                                    }
-                                    label={
-                                        <Box ml={1} fontSize={16}>
-                                            Show bounding boxes
-                                        </Box>
-                                    }
-                                />
-                                <FormControlLabel
-                                    sx={{ ml: 0, mb: 2 }}
-                                    control={
-                                        <Switch
-                                            name={AdvancedSetting.DoubleSidedMaterials}
-                                            checked={doubleSidedMaterials}
-                                            onChange={handleToggle}
+                                        <FormControlLabel
+                                            sx={{ ml: 0, mb: 2 }}
+                                            control={
+                                                <Switch
+                                                    name={AdvancedSetting.DoubleSidedTransparentMaterials}
+                                                    checked={doubleSidedTransparentMaterials}
+                                                    onChange={handleToggle}
+                                                />
+                                            }
+                                            label={
+                                                <Box ml={1} fontSize={16}>
+                                                    Double sided transparent materials
+                                                </Box>
+                                            }
                                         />
-                                    }
-                                    label={
-                                        <Box ml={1} fontSize={16}>
-                                            Double sided materials
-                                        </Box>
-                                    }
-                                />
-                                <FormControlLabel
-                                    sx={{ ml: 0, mb: 2 }}
-                                    control={
-                                        <Switch
-                                            name={AdvancedSetting.DoubleSidedTransparentMaterials}
-                                            checked={doubleSidedTransparentMaterials}
-                                            onChange={handleToggle}
-                                        />
-                                    }
-                                    label={
-                                        <Box ml={1} fontSize={16}>
-                                            Double sided transparent materials
-                                        </Box>
-                                    }
-                                />
-                                <FormControlLabel
-                                    sx={{ ml: 0, mb: 2 }}
-                                    control={
-                                        <Switch
-                                            name={AdvancedSetting.HoldDynamic}
-                                            checked={holdDynamic}
-                                            onChange={handleToggle}
-                                        />
-                                    }
-                                    label={
-                                        <Box ml={1} fontSize={16}>
-                                            Hold dynamic
-                                        </Box>
-                                    }
-                                />
+                                    </>
+                                ) : null}
+                                {user?.features?.debugInfo?.holdDynamic ? (
+                                    <FormControlLabel
+                                        sx={{ ml: 0, mb: 2 }}
+                                        control={
+                                            <Switch
+                                                name={AdvancedSetting.HoldDynamic}
+                                                checked={holdDynamic}
+                                                onChange={handleToggle}
+                                            />
+                                        }
+                                        label={
+                                            <Box ml={1} fontSize={16}>
+                                                Hold dynamic
+                                            </Box>
+                                        }
+                                    />
+                                ) : null}
                                 <FormControlLabel
                                     sx={{ ml: 0 }}
                                     control={

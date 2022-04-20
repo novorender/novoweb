@@ -6,7 +6,14 @@ import { uniqueArray } from "utils/misc";
 import { getOAuthState } from "utils/auth";
 import { useSceneId } from "hooks/useSceneId";
 
-import { featuresConfig, defaultEnabledWidgets, defaultEnabledAdminWidgets, WidgetKey } from "config/features";
+import {
+    featuresConfig,
+    defaultEnabledWidgets,
+    defaultEnabledAdminWidgets,
+    WidgetKey,
+    defaultLockedWidgets,
+    allWidgets,
+} from "config/features";
 import { Loading } from "components";
 import { Hud } from "features/hud";
 import { Render3D } from "features/render";
@@ -15,7 +22,7 @@ import { Consent } from "features/consent";
 
 import { useAppSelector, useAppDispatch } from "app/store";
 import { explorerActions, SceneType, UserRole } from "slices/explorerSlice";
-import { authActions, selectAccessToken } from "slices/authSlice";
+import { authActions, selectAccessToken, selectUser } from "slices/authSlice";
 import { HiddenProvider } from "contexts/hidden";
 import { CustomGroupsProvider } from "contexts/customGroups";
 import { HighlightedProvider } from "contexts/highlighted";
@@ -32,6 +39,7 @@ export function Explorer() {
 
 function ExplorerBase() {
     const id = useSceneId();
+    const user = useAppSelector(selectUser);
     const dispatch = useAppDispatch();
     const {
         state: { view, scene },
@@ -49,15 +57,23 @@ function ExplorerBase() {
         dispatch(explorerActions.setUserRole(userRole));
 
         const requireConsent = getRequireConsent(customProperties);
-
         if (requireConsent) {
             dispatch(explorerActions.setRequireConsent(requireConsent));
         }
 
-        const enabledFeatures = getEnabledFeatures(customProperties);
+        if (user && user.features) {
+            dispatch(explorerActions.unlockWidgets(defaultLockedWidgets.filter((widget) => user.features[widget])));
+        }
 
+        const enabledFeatures = getEnabledFeatures(customProperties) ?? {};
         if (userRole !== UserRole.Viewer) {
-            dispatch(explorerActions.setEnabledWidgets(defaultEnabledAdminWidgets));
+            dispatch(
+                explorerActions.setEnabledWidgets(
+                    enabledFeaturesToFeatureKeys(enabledFeatures).concat(
+                        isAdminScene ? allWidgets : defaultEnabledAdminWidgets
+                    )
+                )
+            );
         } else if (enabledFeatures) {
             dispatch(explorerActions.setEnabledWidgets(enabledFeaturesToFeatureKeys(enabledFeatures)));
         }
@@ -154,7 +170,7 @@ function enabledFeaturesToFeatureKeys(enabledFeatures: Record<string, boolean>):
 
     const features: Record<string, boolean> = {
         ...enabledFeatures,
-        [featuresConfig.shareLink.key]: !enabledFeatures.disableLink,
+        // [featuresConfig.shareLink.key]: !enabledFeatures.disableLink,
     };
 
     return uniqueArray(

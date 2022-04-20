@@ -11,7 +11,24 @@ export enum SceneAuthRequirement {
     AllowUnAuthenticated,
 }
 
-type User = { name: string; organization: string; role: string | undefined; features: any };
+type User = {
+    name: string;
+    organization: string;
+    role: string | undefined;
+    features: {
+        [k: string]: Record<string, boolean | undefined> | boolean | undefined;
+        render?: { full: boolean };
+        debugInfo?: {
+            quality?: boolean;
+            boundingBoxes?: boolean;
+            holdDynamic?: boolean;
+            render?: boolean;
+        };
+        doubleSided?: boolean;
+        bakeResources?: boolean;
+        vr?: boolean;
+    };
+};
 
 const initialState = {
     accessToken: getFromStorage(StorageKey.NovoToken),

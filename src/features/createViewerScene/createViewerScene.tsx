@@ -17,6 +17,7 @@ import { FormEventHandler, useState } from "react";
 import { format } from "date-fns";
 import { v4 as uuidv4 } from "uuid";
 import { RenderSettings } from "@novorender/webgl-api";
+import { Save } from "@mui/icons-material";
 
 import { TextField } from "components";
 import { viewerWidgets } from "config/features";
@@ -32,7 +33,6 @@ import { useHidden } from "contexts/hidden";
 import { useCustomGroups } from "contexts/customGroups";
 import { explorerActions } from "slices/explorerSlice";
 import { selectBookmarks } from "features/bookmarks";
-import { Save } from "@mui/icons-material";
 
 const today = new Date();
 

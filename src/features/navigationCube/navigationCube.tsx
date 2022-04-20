@@ -356,6 +356,7 @@ export function NavigationCube() {
     const [trianglePaths, setTrianglePath] = useState([] as Path[]);
 
     const prevRotation = useRef<quat>();
+    const animationFrameId = useRef<number>(-1);
 
     useEffect(() => {
         prevPivotPt.current = undefined;
@@ -420,8 +421,10 @@ export function NavigationCube() {
                 setTrianglePath([triangle.toPath(cubeSize, cubeSize)]);
             }
 
-            requestAnimationFrame(() => animate());
+            animationFrameId.current = requestAnimationFrame(() => animate());
         }
+
+        return () => cancelAnimationFrame(animationFrameId.current);
     }, [view]);
 
     return (

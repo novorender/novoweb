@@ -790,7 +790,7 @@ export function Render3D({ onInit }: Props) {
             const initialRenderType = await getRenderType(view, scene);
             dispatch(renderActions.setRenderType(initialRenderType));
 
-            const toDisable = Object.values(featuresConfig)
+            const toLock = Object.values(featuresConfig)
                 .filter((feature) => {
                     if ("dependencies" in feature && feature.dependencies.renderType) {
                         return !feature.dependencies.renderType.some((type) =>
@@ -804,7 +804,7 @@ export function Render3D({ onInit }: Props) {
                 })
                 .map((feature) => feature.key);
 
-            dispatch(explorerActions.disableWidgets(toDisable as WidgetKey[]));
+            dispatch(explorerActions.lockWidgets(toLock as WidgetKey[]));
         }
     }, [view, scene, dispatch]);
 

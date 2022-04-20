@@ -60,7 +60,7 @@ export function Protected({ allowUnauthenticated, children }: { allowUnauthentic
         }
     }, [user, accessToken, dispatch]);
 
-    if (loading) {
+    if (loading || (accessToken && !user)) {
         return <Loading />;
     }
 

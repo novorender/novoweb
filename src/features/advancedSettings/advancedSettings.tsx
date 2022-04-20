@@ -6,12 +6,12 @@ import { FlightControllerParams, Internal, OrthoControllerParams } from "@novore
 
 import { dataApi } from "app";
 import { useAppSelector } from "app/store";
-import { featuresConfig } from "config/features";
+import { featuresConfig, FeatureType } from "config/features";
 import { Divider, LinearProgress, LogoSpeedDial, WidgetContainer, WidgetHeader } from "components";
 import { WidgetList } from "features/widgetList";
 import { useExplorerGlobals } from "contexts/explorerGlobals";
 import { selectAdvancedSettings, selectBaseCameraSpeed } from "slices/renderSlice";
-import { selectIsAdminScene } from "slices/explorerSlice";
+import { selectEnabledWidgets, selectIsAdminScene } from "slices/explorerSlice";
 
 import { useMountedState } from "hooks/useMountedState";
 import { useSceneId } from "hooks/useSceneId";
@@ -37,6 +37,7 @@ export function AdvancedSettings() {
     const isAdminScene = useAppSelector(selectIsAdminScene);
     const settings = useAppSelector(selectAdvancedSettings);
     const baseCameraSpeed = useAppSelector(selectBaseCameraSpeed);
+    const enabledWidgets = useAppSelector(selectEnabledWidgets);
     const [menuOpen, toggleMenu] = useToggle();
     const [minimized, toggleMinimize] = useToggle(false);
     const [status, setStatus] = useMountedState(Status.Idle);
@@ -110,6 +111,13 @@ export function AdvancedSettings() {
                     ...customProperties,
                     showStats: settings.showPerformance,
                     navigationCube: settings.navigationCube,
+                    enabledFeatures: {
+                        ...Object.fromEntries(
+                            enabledWidgets
+                                .filter((widget) => widget.type === FeatureType.Widget)
+                                .map((widget) => [widget.key, true]) as [string, any]
+                        ),
+                    },
                 },
             });
         } catch {
@@ -213,7 +221,7 @@ function Root({ save, saving }: { save: () => Promise<void>; saving: boolean }) 
                     <Divider />
                 </Box>
                 <Box display="flex" justifyContent="flex-end">
-                    <Button sx={{ ml: "auto" }} onClick={save} color="grey" disabled={saving}>
+                    <Button sx={{ ml: "auto" }} onClick={() => save()} color="grey" disabled={saving}>
                         <Save sx={{ mr: 1 }} />
                         Save
                     </Button>
