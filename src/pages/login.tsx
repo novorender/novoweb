@@ -42,11 +42,11 @@ export function Login() {
             return;
         }
 
-        const res = await login(username, password).catch(() => ({ error: "" }));
+        const res = await login(username, password);
 
-        if ("token" in res) {
+        if (res) {
             saveToStorage(StorageKey.NovoToken, res.token);
-            dispatch(authActions.login({ accessToken: res.token }));
+            dispatch(authActions.login({ accessToken: res.token, user: res.user }));
         }
     };
 
