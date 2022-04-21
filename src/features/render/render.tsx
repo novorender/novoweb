@@ -242,8 +242,6 @@ export function Render3D({ onInit }: Props) {
         setDeviationStamp(null);
     };
 
-    (window as any).view = view;
-
     const canvasRef: RefCallback<HTMLCanvasElement> = useCallback(
         (el) => {
             dispatchGlobals(explorerGlobalsActions.update({ canvas: el }));
