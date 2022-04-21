@@ -30,12 +30,14 @@ import {
     ObjectVisibility,
     renderActions,
     RenderState,
-    RenderType,
     SelectionBasketMode,
+    SubtreeStatus,
 } from "slices/renderSlice";
 
 import { VecRGB, VecRGBA } from "utils/color";
 import { sleep } from "utils/timers";
+import { featuresConfig, WidgetKey } from "config/features";
+import { explorerActions } from "slices/explorerSlice";
 
 type Settings = {
     taaEnabled: boolean;
@@ -283,23 +285,53 @@ export async function waitForSceneToRender(view: View): Promise<void> {
     }
 }
 
-export async function getRenderType(view: View, scene: Scene): Promise<RenderState["renderType"]> {
-    if (!("advanced" in view.settings)) {
-        return [RenderType.UnChangeable, "triangles"];
-    }
-
+export async function getSubtrees(view: View, scene: Scene): Promise<NonNullable<RenderState["subtrees"]>> {
+    const subtrees = scene.subtrees ?? ["triangles"];
     const advancedSettings = (view.settings as Internal.RenderSettingsExt).advanced;
-    const points = scene.subtrees?.includes("points");
-    const triangles = scene.subtrees?.includes("triangles");
-    const canChange = points && triangles;
 
-    return !canChange
-        ? [RenderType.UnChangeable, points ? "points" : "triangles"]
-        : advancedSettings.hidePoints
-        ? RenderType.Triangles
-        : advancedSettings.hideTriangles
-        ? RenderType.Points
-        : RenderType.TrianglesAndPoints;
+    return {
+        terrain: subtrees.includes("terrain")
+            ? advancedSettings.hideTerrain
+                ? SubtreeStatus.Hidden
+                : SubtreeStatus.Shown
+            : SubtreeStatus.Unavailable,
+        lines: subtrees.includes("lines")
+            ? advancedSettings.hideLines
+                ? SubtreeStatus.Hidden
+                : SubtreeStatus.Shown
+            : SubtreeStatus.Unavailable,
+        points: subtrees.includes("points")
+            ? advancedSettings.hidePoints
+                ? SubtreeStatus.Hidden
+                : SubtreeStatus.Shown
+            : SubtreeStatus.Unavailable,
+        triangles: subtrees.includes("triangles")
+            ? advancedSettings.hideTriangles
+                ? SubtreeStatus.Hidden
+                : SubtreeStatus.Shown
+            : SubtreeStatus.Unavailable,
+    };
+}
+
+export async function initSubtrees(view: View, scene: Scene) {
+    const initialSubtrees = await getSubtrees(view, scene);
+    store.dispatch(renderActions.setSubtrees(initialSubtrees));
+
+    const toLock = Object.values(featuresConfig)
+        .filter((feature) => {
+            if ("dependencies" in feature && feature.dependencies.subtrees) {
+                return !feature.dependencies.subtrees
+                    .map((dep: readonly (keyof typeof initialSubtrees)[]) =>
+                        dep.every((val) => initialSubtrees[val] !== SubtreeStatus.Unavailable)
+                    )
+                    .some((val) => val === true);
+            }
+
+            return false;
+        })
+        .map((feature) => feature.key);
+
+    store.dispatch(explorerActions.lockWidgets(toLock as WidgetKey[]));
 }
 
 export function serializeableObjectGroups(groups: ObjectGroup[]): CustomGroup[] {
@@ -454,7 +486,7 @@ export function initDeviation(deviation: RenderSettings["points"]["deviation"]):
 }
 
 export function initAdvancedSettings(view: View, customProperties: Record<string, any>): void {
-    const { diagnostics, advanced, points, light } = view.settings as Internal.RenderSettingsExt;
+    const { diagnostics, advanced, points, light, terrain } = view.settings as Internal.RenderSettingsExt;
     const cameraParams = view.camera.controller.params as FlightControllerParams | OrthoControllerParams;
 
     store.dispatch(
@@ -476,6 +508,7 @@ export function initAdvancedSettings(view: View, customProperties: Record<string
             [AdvancedSetting.HeadlightDistance]: light.camera.distance,
             [AdvancedSetting.AmbientLight]: light.ambient.brightness,
             [AdvancedSetting.NavigationCube]: Boolean(customProperties?.navigationCube),
+            [AdvancedSetting.TerrainAsBackground]: Boolean(terrain.asBackground),
         })
     );
 }

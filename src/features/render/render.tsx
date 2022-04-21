@@ -3,14 +3,12 @@ import { useEffect, useState, useRef, MouseEvent, PointerEvent, useCallback, SVG
 import { SceneData } from "@novorender/data-js-api";
 import {
     View,
-    Scene,
     EnvironmentDescription,
     Internal,
     MeasureInfo,
     CameraController,
     OrthoControllerParams,
     CameraControllerParams,
-    DynamicObject,
     MeasureObject,
     MeasureSettings,
     DuoMeasurementValues,
@@ -26,33 +24,27 @@ import {
     selectActivePanorama,
     selectPanoramas,
     selectShow3dMarkers,
-    PanoramaType,
     PanoramaStatus,
-    selectPanoramaStatus,
+    useHandlePanoramaChanges,
 } from "features/panoramas";
 import { Loading } from "components";
 
 import { api, dataApi, measureApi } from "app";
-import { featuresConfig, WidgetKey } from "config/features";
 import { StorageKey } from "config/storage";
 import { useMountedState } from "hooks/useMountedState";
 import { useSceneId } from "hooks/useSceneId";
-import { useAbortController } from "hooks/useAbortController";
 import { deleteFromStorage } from "utils/storage";
 import { enabledFeaturesToFeatureKeys, getEnabledFeatures } from "utils/misc";
-import { sleep } from "utils/timers";
 
 import {
     fetchEnvironments,
     renderActions,
-    RenderType,
     selectBaseCameraSpeed,
     selectCameraSpeedMultiplier,
     selectClippingBox,
     selectCurrentEnvironment,
     selectEnvironments,
     selectMainObject,
-    selectRenderType,
     selectSavedCameraPositions,
     selectSelectMultiple,
     selectDefaultVisibility,
@@ -64,11 +56,14 @@ import {
     SceneEditStatus,
     selectAdvancedSettings,
     selectSelectionBasketMode,
+    SubtreeStatus,
+    selectSubtrees,
 } from "slices/renderSlice";
 import { authActions } from "slices/authSlice";
 import { explorerActions, selectUrlBookmarkId } from "slices/explorerSlice";
 import { selectDeviations } from "features/deviations";
 import { bookmarksActions, selectBookmarks, useSelectBookmark } from "features/bookmarks";
+import { measureActions, selectMeasure, isMeasureObject } from "features/measure";
 import { useAppDispatch, useAppSelector } from "app/store";
 
 import { useHighlighted, highlightActions, useDispatchHighlighted } from "contexts/highlighted";
@@ -76,10 +71,8 @@ import { useHidden, useDispatchHidden } from "contexts/hidden";
 import { useCustomGroups } from "contexts/customGroups";
 import { useDispatchVisible, useVisible, visibleActions } from "contexts/visible";
 import { explorerGlobalsActions, useExplorerGlobals } from "contexts/explorerGlobals";
-import { measureActions, selectMeasure, isMeasureObject } from "features/measure";
 
 import {
-    getRenderType,
     refillObjects,
     createRendering,
     initHighlighted,
@@ -92,6 +85,7 @@ import {
     initAdvancedSettings,
     initDeviation,
     pickDeviationArea,
+    initSubtrees,
 } from "./utils";
 import { xAxis, yAxis, axis, MAX_FLOAT } from "./consts";
 
@@ -202,7 +196,7 @@ export function Render3D({ onInit }: Props) {
     const baseCameraSpeed = useAppSelector(selectBaseCameraSpeed);
     const savedCameraPositions = useAppSelector(selectSavedCameraPositions);
     const selectMultiple = useAppSelector(selectSelectMultiple);
-    const renderType = useAppSelector(selectRenderType);
+    const subtrees = useAppSelector(selectSubtrees);
     const selectionBasketMode = useAppSelector(selectSelectionBasketMode);
     const clippingBox = useAppSelector(selectClippingBox);
     const clippingPlanes = useAppSelector(selectClippingPlanes);
@@ -215,22 +209,12 @@ export function Render3D({ onInit }: Props) {
 
     const show3dMarkers = useAppSelector(selectShow3dMarkers);
     const activePanorama = useAppSelector(selectActivePanorama);
-    const panoramaStatus = useAppSelector(selectPanoramaStatus);
     const urlBookmarkId = useAppSelector(selectUrlBookmarkId);
     const dispatch = useAppDispatch();
 
     const rendering = useRef({ start: () => Promise.resolve(), stop: () => {}, update: () => {} } as ReturnType<
         typeof createRendering
     >);
-    const currentPanoramaObj = useRef<{ id: string; obj: DynamicObject }>();
-    const storedRenderType = useRef<typeof renderType>(renderType);
-    const storedMouseButtonsMap = useRef<CameraController["mouseButtonsMap"]>({
-        rotate: 1,
-        pan: 4,
-        orbit: 2,
-        pivot: 2,
-    });
-    const storedFingersMap = useRef<CameraController["fingersMap"]>({ rotate: 1, pan: 2, orbit: 3, pivot: 3 });
     const movementTimer = useRef<ReturnType<typeof setTimeout>>();
     const cameraGeneration = useRef<number>();
     const previousId = useRef("");
@@ -241,7 +225,6 @@ export function Render3D({ onInit }: Props) {
     const camX = useRef(vec3.create());
     const camY = useRef(vec3.create());
     const [size, setSize] = useState({ width: 0, height: 0 });
-    const [panoramaAbortController, abortPanorama] = useAbortController();
 
     const [measureObjects, setMeasureObjects] = useMountedState([] as (ExtendedMeasureObject | MeasurePoint)[]);
     const [svg, setSvg] = useState<null | SVGSVGElement>(null);
@@ -258,6 +241,8 @@ export function Render3D({ onInit }: Props) {
     const closeDeviationStamp = () => {
         setDeviationStamp(null);
     };
+
+    (window as any).view = view;
 
     const canvasRef: RefCallback<HTMLCanvasElement> = useCallback(
         (el) => {
@@ -671,8 +656,10 @@ export function Render3D({ onInit }: Props) {
                 const camera = { kind: "flight", ...sceneData.camera, ...urlData.camera } as CameraControllerParams;
                 const { display: _display, ...settings } = { ...sceneData.settings, ...urlData.settings };
                 settings.background = { color: vec4.fromValues(0, 0, 0, 0) };
-                const _view = await api.createView(settings, canvas);
+                const _view = await api.createView(undefined, canvas);
+
                 _view.applySettings({
+                    ...settings,
                     quality: {
                         detail: {
                             ..._view.settings.quality.detail,
@@ -759,6 +746,7 @@ export function Render3D({ onInit }: Props) {
                     })
                 );
             } catch (e) {
+                console.warn(e);
                 setStatus(Status.Error);
             }
         }
@@ -784,29 +772,8 @@ export function Render3D({ onInit }: Props) {
             return;
         }
 
-        initRenderType(view, scene);
-
-        async function initRenderType(view: View, scene: Scene) {
-            const initialRenderType = await getRenderType(view, scene);
-            dispatch(renderActions.setRenderType(initialRenderType));
-
-            const toLock = Object.values(featuresConfig)
-                .filter((feature) => {
-                    if ("dependencies" in feature && feature.dependencies.renderType) {
-                        return !feature.dependencies.renderType.some((type) =>
-                            Array.isArray(type) && Array.isArray(initialRenderType)
-                                ? type[0] === initialRenderType[0] && type[1] === initialRenderType[1]
-                                : type === initialRenderType
-                        );
-                    }
-
-                    return false;
-                })
-                .map((feature) => feature.key);
-
-            dispatch(explorerActions.lockWidgets(toLock as WidgetKey[]));
-        }
-    }, [view, scene, dispatch]);
+        initSubtrees(view, scene);
+    }, [view, scene]);
 
     useEffect(
         function initCameraMovedTracker() {
@@ -835,11 +802,7 @@ export function Render3D({ onInit }: Props) {
                     }
 
                     movementTimer.current = setTimeout(() => {
-                        if (
-                            !view ||
-                            cameraState.type === CameraType.Orthographic ||
-                            renderType === RenderType.Panorama
-                        ) {
+                        if (!view || cameraState.type === CameraType.Orthographic || activePanorama) {
                             return;
                         }
 
@@ -873,7 +836,7 @@ export function Render3D({ onInit }: Props) {
             savedCameraPositions,
             cameraState,
             advancedSettings,
-            renderType,
+            activePanorama,
             renderParametricMeasure,
         ]
     );
@@ -917,35 +880,19 @@ export function Render3D({ onInit }: Props) {
     );
 
     useEffect(
-        function handleRenderTypeChanges() {
-            if (!view || !("advanced" in view.settings) || renderType === RenderType.Uninitialised) {
+        function handleSubtreeChanges() {
+            if (!view || !("advanced" in view.settings) || !subtrees) {
                 return;
-            }
-
-            if (renderType !== RenderType.Panorama) {
-                storedRenderType.current = renderType;
-                view.camera.controller.mouseButtonsMap = storedMouseButtonsMap.current;
-                view.camera.controller.fingersMap = storedFingersMap.current;
-            } else {
-                storedMouseButtonsMap.current = view.camera.controller.mouseButtonsMap;
-                storedFingersMap.current = view.camera.controller.fingersMap;
-                view.camera.controller.mouseButtonsMap = { pan: 0, rotate: 1, pivot: 0, orbit: 0 };
-                view.camera.controller.fingersMap = { pan: 0, rotate: 1, pivot: 0, orbit: 0 };
             }
 
             const settings = view.settings as Internal.RenderSettingsExt;
 
-            settings.advanced.hidePoints =
-                renderType === RenderType.Triangles ||
-                renderType === RenderType.Panorama ||
-                (Array.isArray(renderType) && renderType[1] === "triangles");
-
-            settings.advanced.hideTriangles =
-                renderType === RenderType.Points ||
-                renderType === RenderType.Panorama ||
-                (Array.isArray(renderType) && renderType[1] === "points");
+            settings.advanced.hideLines = subtrees.lines !== SubtreeStatus.Shown;
+            settings.advanced.hidePoints = subtrees.points !== SubtreeStatus.Shown;
+            settings.advanced.hideTerrain = subtrees.terrain !== SubtreeStatus.Shown;
+            settings.advanced.hideTriangles = subtrees.triangles !== SubtreeStatus.Shown;
         },
-        [renderType, view]
+        [subtrees, view]
     );
 
     useEffect(
@@ -1183,62 +1130,7 @@ export function Render3D({ onInit }: Props) {
         ]
     );
 
-    useEffect(
-        function handlePanoramaChanges() {
-            if (!view || !scene) {
-                return;
-            }
-            const currentObj = currentPanoramaObj.current;
-            if (currentObj && currentObj.id !== activePanorama?.guid) {
-                currentObj.obj.dispose();
-                abortPanorama();
-            }
-
-            if (!activePanorama) {
-                dispatch(renderActions.setRenderType(storedRenderType.current));
-                abortPanorama();
-            } else if (Array.isArray(panoramaStatus) && panoramaStatus[0] === PanoramaStatus.Loading) {
-                loadPanorama(activePanorama, view, scene);
-            }
-
-            async function loadPanorama(panorama: PanoramaType, view: View, scene: Scene) {
-                const abortSignal = panoramaAbortController.current.signal;
-                dispatch(renderActions.setRenderType(storedRenderType.current));
-                view.camera.controller.moveTo(panorama.position, panorama.rotation);
-
-                let start = Date.now();
-                if (view.camera.controller.params.kind === "flight") {
-                    start += view.camera.controller.params.flightTime * 1000;
-                }
-
-                const url = new URL((scene as any).assetUrl);
-                url.pathname += panorama.gltf;
-                const asset = await api.loadAsset(url);
-
-                if (!asset) {
-                    return;
-                }
-
-                const delta = start - Date.now();
-                if (delta > 0) {
-                    await sleep(delta);
-                }
-
-                if (abortSignal.aborted) {
-                    return;
-                }
-
-                const panoramaObj = scene.createDynamicObject(asset);
-                currentPanoramaObj.current = { id: panorama.guid, obj: panoramaObj };
-                panoramaObj.position = panorama.position;
-
-                panoramaObj.visible = true;
-                dispatch(panoramasActions.setStatus([PanoramaStatus.Active, panorama.guid]));
-                dispatch(renderActions.setRenderType(RenderType.Panorama));
-            }
-        },
-        [panoramas, activePanorama, scene, view, dispatch, panoramaStatus, panoramaAbortController, abortPanorama]
-    );
+    useHandlePanoramaChanges();
 
     useEffect(() => {
         handleUrlBookmark();

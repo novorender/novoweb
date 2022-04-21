@@ -7,7 +7,13 @@ import { ArrowBack, Save } from "@mui/icons-material";
 import { Accordion, AccordionDetails, AccordionSummary, Divider, LinearProgress, ScrollBox, Switch } from "components";
 import { useAppDispatch, useAppSelector } from "app/store";
 import { useExplorerGlobals } from "contexts/explorerGlobals";
-import { AdvancedSetting, selectAdvancedSettings, renderActions } from "slices/renderSlice";
+import {
+    AdvancedSetting,
+    selectAdvancedSettings,
+    renderActions,
+    selectSubtrees,
+    SubtreeStatus,
+} from "slices/renderSlice";
 import { selectUser } from "slices/authSlice";
 
 type SliderSettings =
@@ -20,11 +26,12 @@ export function RenderSettings({ save, saving }: { save: () => Promise<void>; sa
     const history = useHistory();
     const theme = useTheme();
     const {
-        state: { view, scene },
+        state: { view },
     } = useExplorerGlobals(true);
 
     const dispatch = useAppDispatch();
     const user = useAppSelector(selectUser);
+    const subtrees = useAppSelector(selectSubtrees);
     const settings = useAppSelector(selectAdvancedSettings);
     const {
         taa,
@@ -40,6 +47,7 @@ export function RenderSettings({ save, saving }: { save: () => Promise<void>; sa
         maxPointSize,
         pointToleranceFactor,
         ambientLight,
+        terrainAsBackground,
     } = settings;
 
     const [size, setSize] = useState(pointSize);
@@ -65,6 +73,8 @@ export function RenderSettings({ save, saving }: { save: () => Promise<void>; sa
                 return toggleTriangleBudget(view);
             case AdvancedSetting.QualityPoints:
                 return toggleQualityPoints(view);
+            case AdvancedSetting.TerrainAsBackground:
+                return toggleTerrainAsBackground(view);
             default:
                 return;
         }
@@ -115,9 +125,9 @@ export function RenderSettings({ save, saving }: { save: () => Promise<void>; sa
             }
         };
 
-    const showPointSettings = scene.subtrees?.includes("points") || view.performanceStatistics.points > 0;
-    const showMeshSettings =
-        scene.subtrees?.filter((subtree) => subtree !== "points").length || view.performanceStatistics.triangles > 2048;
+    const showPointSettings = subtrees?.points !== SubtreeStatus.Unavailable;
+    const showMeshSettings = subtrees?.triangles !== SubtreeStatus.Unavailable;
+    const showTerrainSettings = subtrees?.terrain !== SubtreeStatus.Unavailable;
 
     return (
         <>
@@ -347,6 +357,30 @@ export function RenderSettings({ save, saving }: { save: () => Promise<void>; sa
                         </AccordionDetails>
                     </Accordion>
                 ) : null}
+                {showTerrainSettings ? (
+                    <Accordion>
+                        <AccordionSummary>Terrain</AccordionSummary>
+                        <AccordionDetails>
+                            <Box p={1} display="flex" flexDirection="column">
+                                <FormControlLabel
+                                    sx={{ ml: 0, mb: 1 }}
+                                    control={
+                                        <Switch
+                                            name={AdvancedSetting.TerrainAsBackground}
+                                            checked={terrainAsBackground}
+                                            onChange={handleToggle}
+                                        />
+                                    }
+                                    label={
+                                        <Box ml={1} fontSize={16}>
+                                            Render terrain as background
+                                        </Box>
+                                    }
+                                />
+                            </Box>
+                        </AccordionDetails>
+                    </Accordion>
+                ) : null}
                 <Accordion>
                     <AccordionSummary>Light</AccordionSummary>
                     <AccordionDetails>
@@ -454,4 +488,9 @@ function toggleTriangleBudget(view: View): void {
 function toggleQualityPoints(view: View): void {
     const { points } = view.settings as Internal.RenderSettingsExt;
     points.shape = points.shape === "disc" ? "square" : "disc";
+}
+
+function toggleTerrainAsBackground(view: View): void {
+    const { terrain } = view.settings;
+    terrain.asBackground = !terrain.asBackground;
 }

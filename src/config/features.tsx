@@ -29,8 +29,6 @@ import { ReactComponent as ClippingIcon } from "media/icons/clipping.svg";
 import { ReactComponent as RunIcon } from "media/icons/run.svg";
 import { ReactComponent as BimTrack } from "media/icons/bimtrack.svg";
 
-import { RenderType } from "slices/renderSlice";
-
 export enum FeatureType {
     SelectionModifier,
     CameraNavigation,
@@ -158,13 +156,7 @@ export const featuresConfig = {
         type: FeatureType.Widget,
         defaultLocked: false,
         dependencies: {
-            renderType: [
-                RenderType.TrianglesAndPoints,
-                RenderType.Points,
-                RenderType.Triangles,
-                RenderType.Panorama,
-                [RenderType.UnChangeable, "points"],
-            ],
+            subtrees: [["points"]],
         },
     },
     deviations: {
@@ -174,7 +166,7 @@ export const featuresConfig = {
         type: FeatureType.Widget,
         defaultLocked: false,
         dependencies: {
-            renderType: [RenderType.TrianglesAndPoints, RenderType.Points, RenderType.Triangles],
+            subtrees: [["points", "triangles"]],
         },
     },
     followPath: {
@@ -254,9 +246,9 @@ export const featuresConfig = {
         type: FeatureType.SelectionModifier,
         defaultLocked: false,
     },
-    toggleRenderType: {
-        key: "toggleRenderType",
-        name: "Render type",
+    toggleSubtrees: {
+        key: "toggleSubtrees",
+        name: "Toggle subtrees",
         Icon: GradientIcon,
         type: FeatureType.SelectionModifier,
         defaultLocked: false,
