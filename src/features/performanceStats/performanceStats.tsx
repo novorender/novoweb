@@ -49,8 +49,8 @@ export function PerformanceStats() {
 
                 if (resolutionRef.current) {
                     const scale = settings.quality.resolution.value;
-                    const w = canvas.clientWidth * scale;
-                    const h = canvas.clientHeight * scale;
+                    const w = canvas.clientWidth * scale * devicePixelRatio;
+                    const h = canvas.clientHeight * scale * devicePixelRatio;
 
                     resolutionRef.current.innerText = `${w.toFixed(0)}x${h.toFixed(0)}`;
                 }
