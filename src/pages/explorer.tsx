@@ -168,6 +168,10 @@ function enabledFeaturesToFeatureKeys(enabledFeatures: Record<string, boolean>):
         layers: [featuresConfig.selectionBasket.key],
     };
 
+    if (enabledFeatures.disableLink === false && enabledFeatures.shareLink !== false) {
+        enabledFeatures.shareLink = true;
+    }
+
     const features: Record<string, boolean> = {
         ...enabledFeatures,
         // [featuresConfig.shareLink.key]: !enabledFeatures.disableLink,
