@@ -525,13 +525,13 @@ export async function pickDeviationArea({
     clickY: number;
 }): Promise<number | undefined> {
     const center = await view.measure(clickX, clickY);
-    const startX = clickX - size / 2;
-    const startY = clickY - size / 2;
 
     if (center?.deviation) {
         return center.deviation;
     }
 
+    const startX = clickX - size / 2;
+    const startY = clickY - size / 2;
     const res = [] as Promise<MeasureInfo | undefined>[];
 
     for (let x = 1; x <= size; x++) {

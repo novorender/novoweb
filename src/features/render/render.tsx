@@ -721,12 +721,12 @@ export function Render3D({ onInit }: Props) {
                 canvas.focus();
                 const resizeObserver = new ResizeObserver((entries) => {
                     for (const entry of entries) {
-                        canvas.width = entry.contentRect.width * window.devicePixelRatio;
-                        canvas.height = entry.contentRect.height * window.devicePixelRatio;
+                        canvas.width = entry.contentRect.width * devicePixelRatio;
+                        canvas.height = entry.contentRect.height * devicePixelRatio;
                         _view.applySettings({
-                            display: { width: entry.contentRect.width, height: entry.contentRect.height },
+                            display: { width: canvas.width, height: canvas.height },
                         });
-                        setSize({ width: entry.contentRect.width, height: entry.contentRect.height });
+                        setSize({ width: canvas.width, height: canvas.height });
                     }
                 });
 
@@ -1165,15 +1165,18 @@ export function Render3D({ onInit }: Props) {
             return;
         }
 
-        const result = await view.pick(e.nativeEvent.offsetX, e.nativeEvent.offsetY);
+        const result = await view.pick(
+            e.nativeEvent.offsetX * devicePixelRatio,
+            e.nativeEvent.offsetY * devicePixelRatio
+        );
 
         if (deviation.mode !== "off" && cameraState.type === CameraType.Orthographic) {
             const pickSize = isTouchPointer.current ? 16 : 0;
             const deviation = await pickDeviationArea({
                 view,
                 size: pickSize,
-                clickX: e.nativeEvent.offsetX,
-                clickY: e.nativeEvent.offsetY,
+                clickX: e.nativeEvent.offsetX * devicePixelRatio,
+                clickY: e.nativeEvent.offsetY * devicePixelRatio,
             });
 
             if (deviation) {
@@ -1308,7 +1311,7 @@ export function Render3D({ onInit }: Props) {
         }
 
         isTouchPointer.current = true;
-        handleDown(e.nativeEvent.offsetX, e.nativeEvent.offsetY);
+        handleDown(e.nativeEvent.offsetX * devicePixelRatio, e.nativeEvent.offsetY * devicePixelRatio);
     };
 
     const handleMouseDown = (e: MouseEvent) => {
@@ -1316,7 +1319,7 @@ export function Render3D({ onInit }: Props) {
             return;
         }
 
-        handleDown(e.nativeEvent.offsetX, e.nativeEvent.offsetY);
+        handleDown(e.nativeEvent.offsetX * devicePixelRatio, e.nativeEvent.offsetY * devicePixelRatio);
     };
 
     const handleUp = () => {
@@ -1342,7 +1345,10 @@ export function Render3D({ onInit }: Props) {
         const useSvgCursor = (measure.selecting || clippingPlanes.defining || selectingOrthoPoint) && e.buttons === 0;
 
         if (useSvgCursor) {
-            const measurement = await view.measure(e.nativeEvent.offsetX, e.nativeEvent.offsetY);
+            const measurement = await view.measure(
+                e.nativeEvent.offsetX * devicePixelRatio,
+                e.nativeEvent.offsetY * devicePixelRatio
+            );
             canvas.style.cursor = "none";
 
             moveSvgCursor(e.nativeEvent.offsetX, e.nativeEvent.offsetY, measurement);
@@ -1353,7 +1359,10 @@ export function Render3D({ onInit }: Props) {
         }
 
         if (deviation.mode !== "off" && cameraState.type === CameraType.Orthographic && e.buttons === 0) {
-            const measurement = await view.measure(e.nativeEvent.offsetX, e.nativeEvent.offsetY);
+            const measurement = await view.measure(
+                e.nativeEvent.offsetX * devicePixelRatio,
+                e.nativeEvent.offsetY * devicePixelRatio
+            );
 
             if (measurement?.deviation) {
                 setDeviationStamp({
