@@ -93,13 +93,8 @@ app.use("/", express.static("build"));
 app.use(
     "/",
     expressStaticGzip("build", {
-        customCompressions: [
-            {
-                encodingName: "gzip",
-                fileExtension: "gz",
-            },
-        ],
-        orderPreference: ["gz"],
+        enableBrotli: true,
+        orderPreference: ["br", "gz"],
     })
 );
 app.get("/*", sendIndex);
