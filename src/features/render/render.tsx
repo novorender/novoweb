@@ -86,6 +86,7 @@ import {
     initDeviation,
     pickDeviationArea,
     initSubtrees,
+    inversePixelRatio,
 } from "./utils";
 import { xAxis, yAxis, axis, MAX_FLOAT } from "./consts";
 
@@ -256,7 +257,8 @@ export function Render3D({ onInit }: Props) {
             }
 
             const { width, height } = size;
-            const [_pathPoints, pixelPoints] = measureApi.toPathPoints([point], view, width, height);
+            const [_pathPoints, _pixelPoints] = measureApi.toPathPoints([point], view, width, height);
+            const pixelPoints = inversePixelRatio(_pixelPoints as vec2[]);
 
             pixelPoints.forEach((p) => {
                 const circle = svg.children.namedItem(pointName);
@@ -282,7 +284,9 @@ export function Render3D({ onInit }: Props) {
             }
 
             const { width, height } = size;
-            const [pathPoints, pixelPoints] = measureApi.toPathPoints(points, view, width, height);
+            const [_pathPoints, _pixelPoints] = measureApi.toPathPoints(points, view, width, height);
+            const pathPoints = inversePixelRatio(_pathPoints as vec2[]);
+            const pixelPoints = inversePixelRatio(_pixelPoints as vec2[]);
             if (pathName) {
                 let curve = "";
                 if (pathPoints.length > 1) {
@@ -365,6 +369,7 @@ export function Render3D({ onInit }: Props) {
                 let edgeCurves = "";
                 for (const drawObject of drawObjects) {
                     if (drawObject && drawObject.vertices.length > 1) {
+                        drawObject.vertices = inversePixelRatio(drawObject.vertices as vec2[]);
                         if (drawObject.drawType === "lines") {
                             edgeCurves += `M${drawObject.vertices[0][0]}, ${drawObject.vertices[0][1]}`;
                             for (let i = 0; i < drawObject.vertices.length; ++i) {
@@ -481,7 +486,11 @@ export function Render3D({ onInit }: Props) {
         mat4.invert(camMatrix, camMatrix);
         const toScreen = (p: vec3) => {
             const _p = vec4.transformMat4(vec4.create(), vec4.fromValues(p[0], p[1], p[2], 1), proj);
-            return vec2.fromValues(((_p[0] * 0.5) / _p[3] + 0.5) * width, (0.5 - (_p[1] * 0.5) / _p[3]) * height);
+            return vec2.scale(
+                vec2.create(),
+                vec2.fromValues(((_p[0] * 0.5) / _p[3] + 0.5) * width, (0.5 - (_p[1] * 0.5) / _p[3]) * height),
+                1 / devicePixelRatio
+            );
         };
 
         const vsPans = panoramas.map((p) => vec3.transformMat4(vec3.create(), p.position, camMatrix));
