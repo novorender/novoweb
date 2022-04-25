@@ -38,6 +38,7 @@ import { VecRGB, VecRGBA } from "utils/color";
 import { sleep } from "utils/timers";
 import { featuresConfig, WidgetKey } from "config/features";
 import { explorerActions } from "slices/explorerSlice";
+import { vec2 } from "gl-matrix";
 
 type Settings = {
     taaEnabled: boolean;
@@ -550,4 +551,8 @@ export async function pickDeviationArea({
                 return deviation + measureInfo!.deviation!;
             }
         }, 0);
+}
+
+export function inversePixelRatio(points: vec2[]): vec2[] {
+    return points.map((pts) => vec2.scale(vec2.create(), pts, 1 / devicePixelRatio));
 }
