@@ -1,15 +1,14 @@
 import { useEffect, useRef } from "react";
-import { BoundingSphere, HierarcicalObjectReference } from "@novorender/webgl-api";
+import { BoundingSphere } from "@novorender/webgl-api";
 import { Box, CircularProgress, SpeedDialActionProps } from "@mui/material";
 
 import { SpeedDialAction } from "components";
 import { featuresConfig } from "config/features";
 import { panoramasActions, PanoramaStatus } from "features/panoramas";
-import { batchedPropertySearch } from "utils/search";
 import { useHighlighted } from "contexts/highlighted";
 import { useAbortController } from "hooks/useAbortController";
 import { useMountedState } from "hooks/useMountedState";
-import { getTotalBoundingSphere } from "utils/objectData";
+import { objIdsToTotalBoundingSphere } from "utils/objectData";
 import { useExplorerGlobals } from "contexts/explorerGlobals";
 import { useAppDispatch } from "app/store";
 
@@ -53,27 +52,16 @@ export function FlyToSelected({ position, ...speedDialProps }: Props) {
         setStatus(Status.Loading);
 
         const abortSignal = abortController.current.signal;
-        let nodes = [] as HierarcicalObjectReference[];
-
         try {
-            nodes = await batchedPropertySearch({
-                property: "id",
-                value: highlighted.map((id) => String(id)),
-                scene,
-                abortSignal,
-            });
-        } catch {
-            return setStatus(Status.Initial);
-        }
+            const boundingSphere = await objIdsToTotalBoundingSphere({ ids: highlighted, abortSignal, scene });
 
-        const boundingSphere = getTotalBoundingSphere(nodes);
-
-        setStatus(Status.Initial);
-
-        if (boundingSphere) {
-            previousBoundingSphere.current = boundingSphere;
-            view.camera.controller.zoomTo(boundingSphere);
-            dispatch(panoramasActions.setStatus(PanoramaStatus.Initial));
+            if (boundingSphere) {
+                previousBoundingSphere.current = boundingSphere;
+                view.camera.controller.zoomTo(boundingSphere);
+                dispatch(panoramasActions.setStatus(PanoramaStatus.Initial));
+            }
+        } finally {
+            setStatus(Status.Initial);
         }
     };
 

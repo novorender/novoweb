@@ -1,11 +1,12 @@
 import { Fragment, useEffect, useRef, useState } from "react";
 import { mat3, quat, vec2, vec3 } from "gl-matrix";
-import { styled, useTheme } from "@mui/material";
+import { css, styled, useTheme } from "@mui/material";
 
 import { useExplorerGlobals } from "contexts/explorerGlobals";
-import { useAppSelector } from "app/store";
-import { selectMainObject } from "slices/renderSlice";
-import { getObjectData } from "utils/search";
+import { useMountedState } from "hooks/useMountedState";
+import { useAbortController } from "hooks/useAbortController";
+import { objIdsToTotalBoundingSphere } from "utils/objectData";
+import { useHighlighted } from "contexts/highlighted";
 
 // prettier-ignore
 const top = [
@@ -183,40 +184,46 @@ class Cube {
     }
 }
 
-const CubeContainer = styled("svg")`
-    position: absolute;
-    top: 20px;
-    left: 20px;
-    overflow: visible;
-    pointer-events: none;
-    -webkit-tap-highlight-color: rgba(0, 0, 0, 0);
+const CubeContainer = styled("svg", { shouldForwardProp: (prop) => prop !== "loading" })<{ loading?: boolean }>(
+    ({ loading }) => css`
+        position: absolute;
+        top: 20px;
+        left: 20px;
+        overflow: visible;
+        pointer-events: none;
+        -webkit-tap-highlight-color: rgba(0, 0, 0, 0);
 
-    text {
-        user-select: none;
-        text-transform: capitalize;
-        opacity: 0.8;
-        transition: opacity 0.15s ease-in-out;
-    }
-
-    path {
-        transition: filter 0.15s ease-in-out;
-    }
-
-    g {
-        pointer-events: auto;
-        cursor: pointer;
-
-        &:hover {
-            path {
-                filter: brightness(1.5);
-            }
-
-            text {
-                opacity: 1;
-            }
+        text {
+            user-select: none;
+            text-transform: capitalize;
+            opacity: 0.8;
+            transition: opacity 0.15s ease-in-out;
         }
-    }
-`;
+
+        path {
+            transition: filter 0.15s ease-in-out;
+        }
+
+        g {
+            pointer-events: auto;
+            cursor: ${loading ? "progress" : "pointer"};
+
+            ${loading
+                ? ""
+                : css`
+                      &:hover {
+                          path {
+                              filter: brightness(1.5);
+                          }
+
+                          text {
+                              opacity: 1;
+                          }
+                      }
+                  `}
+        }
+    `
+);
 
 const createCircle = (radius: number, y: number) => {
     const circle: vec3[] = [];
@@ -349,28 +356,54 @@ export function NavigationCube() {
     const {
         state: { view, scene },
     } = useExplorerGlobals(true);
-    const mainObject = useAppSelector(selectMainObject);
+    const highlighted = useHighlighted().idArr;
     const prevPivotPt = useRef<vec3>();
     const [circlePaths, setCirclePaths] = useState([] as Path[]);
     const [cubePaths, setCubePaths] = useState([] as Path[]);
     const [trianglePaths, setTrianglePath] = useState([] as Path[]);
+    const [loading, setLoading] = useMountedState(false);
+    const [abortController, abort] = useAbortController();
 
+    const highlightedBoundingSphereCenter = useRef<vec3>();
     const prevRotation = useRef<quat>();
     const animationFrameId = useRef<number>(-1);
 
     useEffect(() => {
         prevPivotPt.current = undefined;
-    }, [mainObject]);
+        highlightedBoundingSphereCenter.current = undefined;
+        abort();
+    }, [highlighted, abort]);
 
     const handleClick = (face: string) => async () => {
-        if (!face) {
+        if (!face || loading) {
             return;
         }
 
         let pt: vec3 | undefined;
 
-        if (mainObject !== undefined) {
-            pt = (await getObjectData({ scene, id: mainObject }))?.bounds?.sphere.center;
+        if (highlighted.length) {
+            const abortSignal = abortController.current.signal;
+            const prevCenter = highlightedBoundingSphereCenter.current;
+
+            if (prevCenter) {
+                pt = prevCenter;
+            } else {
+                setLoading(true);
+
+                try {
+                    pt =
+                        highlightedBoundingSphereCenter.current ??
+                        (await objIdsToTotalBoundingSphere({ ids: highlighted, abortSignal, scene }))?.center;
+
+                    highlightedBoundingSphereCenter.current = pt;
+                } catch {
+                    if (!abortSignal.aborted) {
+                        pt = prevPivotPt.current;
+                    }
+                }
+
+                setLoading(false);
+            }
         } else if (prevPivotPt.current) {
             pt = prevPivotPt.current;
         } else {
@@ -428,11 +461,17 @@ export function NavigationCube() {
     }, [view]);
 
     return (
-        <CubeContainer height={cubeSize * 2} width={cubeSize * 2}>
+        <CubeContainer loading={loading} height={cubeSize * 2} width={cubeSize * 2}>
             <defs>
                 <linearGradient id="gradient" x1="0%" y1="0%" x2="100%" y2="0%">
                     <stop offset="0%" style={{ stopColor: theme.palette.secondary.dark, stopOpacity: 1 }} />
-                    <stop offset="100%" style={{ stopColor: theme.palette.secondary.main, stopOpacity: 1 }} />
+                    <stop
+                        offset="100%"
+                        style={{
+                            stopColor: loading ? theme.palette.secondary.dark : theme.palette.secondary.main,
+                            stopOpacity: 1,
+                        }}
+                    />
                 </linearGradient>
             </defs>
 
