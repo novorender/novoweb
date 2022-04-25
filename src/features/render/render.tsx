@@ -486,7 +486,11 @@ export function Render3D({ onInit }: Props) {
         mat4.invert(camMatrix, camMatrix);
         const toScreen = (p: vec3) => {
             const _p = vec4.transformMat4(vec4.create(), vec4.fromValues(p[0], p[1], p[2], 1), proj);
-            return vec2.fromValues(((_p[0] * 0.5) / _p[3] + 0.5) * width, (0.5 - (_p[1] * 0.5) / _p[3]) * height);
+            return vec2.scale(
+                vec2.create(),
+                vec2.fromValues(((_p[0] * 0.5) / _p[3] + 0.5) * width, (0.5 - (_p[1] * 0.5) / _p[3]) * height),
+                1 / devicePixelRatio
+            );
         };
 
         const vsPans = panoramas.map((p) => vec3.transformMat4(vec3.create(), p.position, camMatrix));
