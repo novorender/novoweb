@@ -222,10 +222,10 @@ async function loadPanoramas(scene: Scene) {
     try {
         for await (const p of scene.search({
             searchPattern: [
-                { property: "Panorama/Preview", value: [], exact: true },
-                { property: "Panorama/Rotation", value: [], exact: true },
-                { property: "Panorama/Position", value: [], exact: true },
-                { property: "Panorama/Gltf", value: [], exact: true },
+                { property: "Panorama/Preview", value: "", exact: true },
+                { property: "Panorama/Rotation", value: "", exact: true },
+                { property: "Panorama/Position", value: "", exact: true },
+                { property: "Panorama/Gltf", value: "", exact: true },
             ],
             full: true,
         })) {

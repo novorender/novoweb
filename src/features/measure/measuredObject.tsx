@@ -264,16 +264,18 @@ function MeasurementData({ measureValues }: { measureValues: MeasurementValues }
                                 </Grid>
                             </Grid>
                         </ListItem>
-                        <ListItem>
-                            <Grid container>
-                                <Grid item xs={4}>
-                                    Area
+                        {measureValues.area ? (
+                            <ListItem>
+                                <Grid container>
+                                    <Grid item xs={4}>
+                                        Area
+                                    </Grid>
+                                    <Grid item xs={6}>
+                                        {measureValues.area.toFixed(3)} &#13217;
+                                    </Grid>
                                 </Grid>
-                                <Grid item xs={6}>
-                                    {measureValues.area.toFixed(3)} &#13217;
-                                </Grid>
-                            </Grid>
-                        </ListItem>
+                            </ListItem>
+                        ) : null}
                     </List>
                     {measureValues.vertices.length > 0 ? (
                         <Box p={1}>

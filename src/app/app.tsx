@@ -17,9 +17,11 @@ import { Explorer } from "pages/explorer";
 import { authActions } from "slices/authSlice";
 import { msalConfig } from "config/auth";
 import { dataServerBaseUrl, offscreenCanvas, hasCreateImageBitmap } from "config";
-import { CustomNavigationClient, getOAuthState, storeActiveAccount } from "utils/auth";
+import { CustomNavigationClient, getAccessToken, getOAuthState, getUser, storeActiveAccount } from "utils/auth";
 import { getAuthHeader } from "utils/auth";
 import { useMountedState } from "hooks/useMountedState";
+import { StorageKey } from "config/storage";
+import { getFromStorage } from "utils/storage";
 
 export const api = createAPI({ webGL1Only: !hasCreateImageBitmap, noOffscreenCanvas: !offscreenCanvas });
 export const dataApi = createDataAPI({ authHeader: getAuthHeader, serviceUrl: dataServerBaseUrl });
@@ -28,6 +30,7 @@ export const msalInstance = new PublicClientApplication(msalConfig);
 
 enum Status {
     Initial,
+    Loading,
     Ready,
 }
 
@@ -45,7 +48,17 @@ export function App() {
             return;
         }
 
-        handleMsalReturn();
+        auth();
+
+        async function auth() {
+            setStatus(Status.Loading);
+
+            if (!(await verifyToken())) {
+                await handleMsalReturn();
+            }
+
+            setStatus(Status.Ready);
+        }
 
         async function handleMsalReturn() {
             try {
@@ -54,13 +67,40 @@ export function App() {
                 if (res) {
                     msalInstance.setActiveAccount(res.account);
                     storeActiveAccount(res.account);
-                    dispatch(authActions.login({ accessToken: res.accessToken, msalAccount: res.account }));
+
+                    const accessToken = await getAccessToken(res.accessToken);
+                    if (!accessToken) {
+                        return;
+                    }
+
+                    const user = await getUser(accessToken);
+                    if (!user) {
+                        throw new Error("Failed to get user.");
+                    }
+
+                    dispatch(authActions.login({ accessToken: res.accessToken, msalAccount: res.account, user }));
                 }
             } catch (e) {
                 console.warn(e);
             }
+        }
 
-            setStatus(Status.Ready);
+        async function verifyToken() {
+            const storedToken = getFromStorage(StorageKey.NovoToken);
+            if (!storedToken) {
+                return;
+            }
+
+            const accessToken = await getAccessToken(storedToken);
+            if (!accessToken) {
+                return;
+            }
+
+            const user = await getUser(accessToken);
+            if (user) {
+                dispatch(authActions.login({ accessToken: storedToken, user }));
+                return true;
+            }
         }
     }, [status, setStatus, dispatch]);
 
@@ -79,7 +119,7 @@ export function App() {
                     <StyledEngineProvider injectFirst>
                         <ThemeProvider theme={theme}>
                             <CssBaseline />
-                            {status === Status.Initial ? (
+                            {status !== Status.Ready ? (
                                 <Loading />
                             ) : (
                                 <BrowserRouter>

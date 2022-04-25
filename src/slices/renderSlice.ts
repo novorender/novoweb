@@ -24,15 +24,6 @@ export enum CameraSpeedMultiplier {
     Fast = 5,
 }
 
-export enum RenderType {
-    Uninitialised,
-    Triangles,
-    Points,
-    TrianglesAndPoints,
-    Panorama,
-    UnChangeable,
-}
-
 export enum ObjectVisibility {
     Neutral,
     SemiTransparent,
@@ -48,6 +39,12 @@ export enum SceneEditStatus {
     Init,
     Loading,
     Editing,
+}
+
+export enum SubtreeStatus {
+    Unavailable,
+    Shown,
+    Hidden,
 }
 
 export enum AdvancedSetting {
@@ -66,6 +63,11 @@ export enum AdvancedSetting {
     PointSize = "pointSize",
     MaxPointSize = "maxPointSize",
     PointToleranceFactor = "pointToleranceFactor",
+    HeadlightIntensity = "headlightIntensity",
+    HeadlightDistance = "headlightDistance",
+    AmbientLight = "ambientLight",
+    NavigationCube = "navigationCube",
+    TerrainAsBackground = "terrainAsBackground",
 }
 
 export enum SelectionBasketMode {
@@ -94,9 +96,14 @@ const initialState = {
     baseCameraSpeed: 0.03,
     cameraSpeedMultiplier: CameraSpeedMultiplier.Normal,
     savedCameraPositions: { currentIndex: -1, positions: [] as CameraPosition[] },
-    renderType: RenderType.Uninitialised as
-        | Exclude<RenderType, RenderType.UnChangeable>
-        | [RenderType.UnChangeable, "points" | "triangles"],
+    subtrees: undefined as
+        | undefined
+        | {
+              triangles: SubtreeStatus;
+              lines: SubtreeStatus;
+              terrain: SubtreeStatus;
+              points: SubtreeStatus;
+          },
     selectionBasketMode: SelectionBasketMode.Loose,
     clippingBox: {
         defining: false,
@@ -114,7 +121,6 @@ const initialState = {
     },
     camera: { type: CameraType.Flight } as WritableCameraState,
     selectingOrthoPoint: false,
-    showPerformance: false,
     advancedSettings: {
         [AdvancedSetting.Taa]: true,
         [AdvancedSetting.Ssao]: true,
@@ -131,6 +137,11 @@ const initialState = {
         [AdvancedSetting.PointSize]: 1,
         [AdvancedSetting.MaxPointSize]: 20,
         [AdvancedSetting.PointToleranceFactor]: 0,
+        [AdvancedSetting.HeadlightIntensity]: 0,
+        [AdvancedSetting.HeadlightDistance]: 0,
+        [AdvancedSetting.AmbientLight]: 0,
+        [AdvancedSetting.NavigationCube]: false,
+        [AdvancedSetting.TerrainAsBackground]: false,
     },
 };
 
@@ -204,8 +215,29 @@ export const renderSlice = createSlice({
         redoCameraPosition: (state) => {
             state.savedCameraPositions.currentIndex = state.savedCameraPositions.currentIndex + 1;
         },
-        setRenderType: (state, action: PayloadAction<State["renderType"]>) => {
-            state.renderType = action.payload;
+        setSubtrees: (state, action: PayloadAction<State["subtrees"]>) => {
+            state.subtrees = action.payload;
+        },
+        toggleSubtree: (
+            state,
+            action: PayloadAction<{ subtree: keyof NonNullable<State["subtrees"]>; newState?: SubtreeStatus }>
+        ) => {
+            if (!state.subtrees || state.subtrees[action.payload.subtree] === SubtreeStatus.Unavailable) {
+                return;
+            }
+
+            state.subtrees[action.payload.subtree] =
+                action.payload.newState ?? state.subtrees[action.payload.subtree] === SubtreeStatus.Shown
+                    ? SubtreeStatus.Hidden
+                    : SubtreeStatus.Shown;
+        },
+        disableAllSubtrees: (state) => {
+            state.subtrees = {
+                terrain: SubtreeStatus.Unavailable,
+                triangles: SubtreeStatus.Unavailable,
+                lines: SubtreeStatus.Unavailable,
+                points: SubtreeStatus.Unavailable,
+            };
         },
         setSelectionBasketMode: (state, action: PayloadAction<State["selectionBasketMode"]>) => {
             state.selectionBasketMode = action.payload;
@@ -233,9 +265,6 @@ export const renderSlice = createSlice({
         },
         setSelectingOrthoPoint: (state, action: PayloadAction<boolean>) => {
             state.selectingOrthoPoint = action.payload;
-        },
-        setShowPerformance: (state, action: PayloadAction<boolean>) => {
-            state.showPerformance = action.payload;
         },
         initViewerSceneEditing: (state, action: PayloadAction<string>) => {
             const { environments } = state;
@@ -272,14 +301,13 @@ export const selectCameraSpeedMultiplier = (state: RootState) => state.render.ca
 export const selectBaseCameraSpeed = (state: RootState) => state.render.baseCameraSpeed;
 export const selectSavedCameraPositions = (state: RootState) => state.render.savedCameraPositions;
 export const selectHomeCameraPosition = (state: RootState) => state.render.savedCameraPositions.positions[0];
-export const selectRenderType = (state: RootState) => state.render.renderType;
+export const selectSubtrees = (state: RootState) => state.render.subtrees;
 export const selectSelectionBasketMode = (state: RootState) => state.render.selectionBasketMode;
 export const selectClippingBox = (state: RootState) => state.render.clippingBox;
 export const selectClippingPlanes = (state: RootState) => state.render.clippingPlanes;
 export const selectCamera = (state: RootState) => state.render.camera as CameraState;
 export const selectCameraType = (state: RootState) => state.render.camera.type;
 export const selectSelectiongOrthoPoint = (state: RootState) => state.render.selectingOrthoPoint;
-export const selectShowPerformance = (state: RootState) => state.render.showPerformance;
 export const selectEditingScene = (state: RootState) => state.render.viewerSceneEditing;
 export const selectAdvancedSettings = (state: RootState) => state.render.advancedSettings;
 

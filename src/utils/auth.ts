@@ -5,7 +5,7 @@ import { History } from "history";
 import { msalInstance } from "app";
 import { store } from "app/store";
 import { loginRequest } from "config/auth";
-import { authActions } from "slices/authSlice";
+import { authActions, User } from "slices/authSlice";
 import { sha256, base64UrlEncode } from "utils/misc";
 import { getFromStorage, saveToStorage } from "./storage";
 import { StorageKey } from "config/storage";
@@ -22,7 +22,7 @@ export async function getAuthHeader(): Promise<AuthenticationHeader> {
         // checks expiry and refreshes token if needed
         try {
             const response = await msalInstance.acquireTokenSilent({ ...loginRequest, account: auth.msalAccount });
-            store.dispatch(authActions.login({ accessToken: response.accessToken }));
+            store.dispatch(authActions.setAccessToken(response.accessToken));
 
             return { header: "Authorization", value: `Bearer ${response.accessToken}` };
         } catch {}
@@ -33,16 +33,62 @@ export async function getAuthHeader(): Promise<AuthenticationHeader> {
 
 type SuccessfulLoginResponse = { token: string };
 type FailedLoginResponse = { password: string } | { user: string };
-type LoginResponse = SuccessfulLoginResponse | FailedLoginResponse;
+type LoginResponse = SuccessfulLoginResponse | FailedLoginResponse | undefined;
 
-export async function login(username: string, password: string): Promise<LoginResponse> {
-    return fetch(dataServerBaseUrl + "/user/login", {
+export async function login(
+    username: string,
+    password: string
+): Promise<undefined | (SuccessfulLoginResponse & { user: User })> {
+    const res: LoginResponse = await fetch(dataServerBaseUrl + "/user/login", {
         method: "post",
         headers: {
             "Content-Type": "application/x-www-form-urlencoded",
         },
         body: `username=${username}&password=${password}`,
-    }).then((r) => r.json());
+    })
+        .then((r) => r.json())
+        .catch(() => undefined);
+
+    if (!res || !("token" in res)) {
+        return;
+    }
+
+    const accessToken = await getAccessToken(res.token);
+
+    if (!accessToken) {
+        return;
+    }
+
+    const user = await getUser(accessToken);
+
+    if (!user) {
+        return;
+    }
+
+    return {
+        token: res.token,
+        user,
+    };
+}
+
+export async function getAccessToken(token: string): Promise<string> {
+    return fetch(dataServerBaseUrl + "/user/token", {
+        headers: {
+            Authorization: `Bearer ${token}`,
+        },
+    })
+        .then((r) => r.text())
+        .catch(() => "");
+}
+
+export async function getUser(accessToken: string): Promise<User | undefined> {
+    return fetch(dataServerBaseUrl + "/user", {
+        headers: {
+            Authorization: `Bearer ${accessToken}`,
+        },
+    })
+        .then((r) => r.json())
+        .catch(() => undefined);
 }
 
 /**

@@ -11,6 +11,7 @@ import {
     initDeviation,
     initHidden,
     initHighlighted,
+    initSubtrees,
 } from "features/render/utils";
 import { panoramasActions, PanoramaStatus } from "features/panoramas";
 import { useMountedState } from "hooks/useMountedState";
@@ -43,7 +44,7 @@ enum Status {
 export function Home({ position, ...speedDialProps }: Props) {
     const id = useSceneId();
     const {
-        state: { view },
+        state: { view, scene },
     } = useExplorerGlobals(true);
 
     const { name, Icon } = featuresConfig["home"];
@@ -75,6 +76,10 @@ export function Home({ position, ...speedDialProps }: Props) {
         if (settings) {
             const { display: _display, environment: _env, light: _light, ...toApply } = settings;
 
+            if (toApply.terrain.asBackground === undefined) {
+                toApply.terrain.asBackground = false;
+            }
+
             view.applySettings(toApply);
             initClippingBox(toApply.clippingPlanes);
             initClippingPlanes(toApply.clippingVolume);
@@ -92,11 +97,17 @@ export function Home({ position, ...speedDialProps }: Props) {
             );
         }
 
+        const cameraSpeed = (camera as { linearVelocity?: number }).linearVelocity;
+        if (cameraSpeed !== undefined) {
+            dispatch(renderActions.setBaseCameraSpeed(cameraSpeed));
+        }
+
         dispatchVisible(visibleActions.set([]));
         initHidden(objectGroups, dispatchHidden);
         initHighlighted(objectGroups, dispatchHighlighted);
         initAdvancedSettings(view, customProperties);
         dispatch(panoramasActions.setStatus(PanoramaStatus.Initial));
+        initSubtrees(view, scene);
 
         dispatchCustomGroups(
             customGroupsActions.set(

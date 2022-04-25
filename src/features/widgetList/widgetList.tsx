@@ -1,7 +1,7 @@
 import { BoxProps, Grid, IconButton, Typography } from "@mui/material";
 
 import { useAppDispatch, useAppSelector } from "app/store";
-import { explorerActions, selectDisabledWidgets, selectEnabledWidgets, selectWidgets } from "slices/explorerSlice";
+import { explorerActions, selectLockedWidgets, selectEnabledWidgets, selectWidgets } from "slices/explorerSlice";
 import { WidgetKey, featuresConfig } from "config/features";
 import { ScrollBox, WidgetMenuButtonWrapper } from "components";
 import { ShareLink } from "features/shareLink";
@@ -23,14 +23,15 @@ const sorting = [
     featuresConfig.bimcollab.key,
     featuresConfig.panoramas.key,
     featuresConfig.propertyTree.key,
+    featuresConfig.deviations.key,
+    featuresConfig.followPath.key,
     featuresConfig.viewerScenes.key,
     featuresConfig.advancedSettings.key,
-    featuresConfig.followPath.key,
 ] as WidgetKey[];
 
 export function WidgetList({ display, widgetKey, onSelect }: Props) {
     const enabledWidgets = useAppSelector(selectEnabledWidgets);
-    const disabledWidgets = useAppSelector(selectDisabledWidgets);
+    const lockedWidgets = useAppSelector(selectLockedWidgets);
     const activeWidgets = useAppSelector(selectWidgets);
 
     const dispatch = useAppDispatch();
@@ -55,7 +56,7 @@ export function WidgetList({ display, widgetKey, onSelect }: Props) {
         <ScrollBox display={display} flexGrow={1} p={1} pb={2}>
             <Grid container wrap="wrap" spacing={1} data-test="widget-list">
                 {enabledWidgets
-                    .filter((widget) => !disabledWidgets.includes(widget.key))
+                    .filter((widget) => !lockedWidgets.includes(widget.key))
                     .sort((a, b) => {
                         const idxA = sorting.indexOf(a.key);
                         const idxB = sorting.indexOf(b.key);

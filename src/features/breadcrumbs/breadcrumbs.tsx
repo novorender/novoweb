@@ -2,7 +2,7 @@ import { Box, Button, Menu, styled, useTheme } from "@mui/material";
 import { css } from "@mui/styled-engine";
 import { useState, useEffect, forwardRef, HTMLProps } from "react";
 
-import { replaceEncodedSlash } from "utils/misc";
+import { decodeObjPathName } from "utils/objectData";
 
 import NavigateNextIcon from "@mui/icons-material/NavigateNext";
 import MoreHorizIcon from "@mui/icons-material/MoreHoriz";
@@ -48,7 +48,7 @@ export function Breadcrumbs({
                 fullPath={crumb ? array.slice(1, index + 1).join("/") : crumb}
                 onClick={onClick}
                 isLast={array.length > crumbsToShow && index === array.length - 1}
-                name={crumb ? replaceEncodedSlash(crumb) : rootName}
+                name={crumb ? decodeObjPathName(crumb) : rootName}
             />
         );
     });

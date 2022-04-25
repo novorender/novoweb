@@ -1,7 +1,13 @@
 import { BoundingSphere, HierarcicalObjectReference, ObjectId } from "@novorender/webgl-api";
 import { vec3 } from "gl-matrix";
 
-import { replaceEncodedSlash } from "./misc";
+export function decodeObjPathName(str: string) {
+    try {
+        return decodeURIComponent(str);
+    } catch {
+        return str.replace(/%2f/g, "/").replace(/%20/g, " ");
+    }
+}
 
 export function getParentPath(path: string): string {
     return path.split("/").slice(0, -1).join("/");
@@ -16,7 +22,7 @@ export function extractObjectIds<T extends { id: any } = HierarcicalObjectRefere
 export function getObjectNameFromPath(path: string): string {
     const arr = path.split("/");
 
-    return replaceEncodedSlash(arr.length ? arr.pop()! : path);
+    return decodeObjPathName(arr.length ? arr.pop()! : path);
 }
 
 export function getTotalBoundingSphere(nodes: HierarcicalObjectReference[]): BoundingSphere | undefined {

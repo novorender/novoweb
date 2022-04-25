@@ -6,7 +6,7 @@ import { ClearSelection } from "features/clearSelection";
 import { ViewOnlySelected } from "features/viewOnlySelected";
 import { SelectionColor } from "features/selectionColor";
 import { HideSelected } from "features/hideSelected";
-import { ToggleRenderType } from "features/toggleRenderType";
+import { ToggleSubtrees } from "features/toggleSubtrees";
 import { useAppSelector } from "app/store";
 import { useToggle } from "hooks/useToggle";
 import { selectMainObject } from "slices/renderSlice";
@@ -60,7 +60,7 @@ export function SelectionModifierMenu() {
             <ViewOnlySelected />
             <SelectionColor />
             <MultipleSelection />
-            <ToggleRenderType />
+            <ToggleSubtrees />
         </SpeedDial>
     );
 }

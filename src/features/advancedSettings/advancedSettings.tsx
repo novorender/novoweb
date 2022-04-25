@@ -1,163 +1,133 @@
-import { FlightControllerParams, Internal, OrthoControllerParams, View } from "@novorender/webgl-api";
-import { Divider, FormControlLabel, Slider, Typography, Box } from "@mui/material";
-import { ChangeEvent, SyntheticEvent, useState } from "react";
+import { Link, MemoryRouter, Route, Switch } from "react-router-dom";
+import { Close, Save } from "@mui/icons-material";
+import { Box, Button, IconButton, List, ListItemButton, Snackbar, useTheme } from "@mui/material";
+import { SceneData } from "@novorender/data-js-api";
+import { FlightControllerParams, Internal, OrthoControllerParams } from "@novorender/webgl-api";
 
-import { useAppDispatch, useAppSelector } from "app/store";
-import { LogoSpeedDial, ScrollBox, Switch, WidgetContainer, WidgetHeader } from "components";
+import { dataApi } from "app";
+import { useAppSelector } from "app/store";
+import { featuresConfig, FeatureType } from "config/features";
+import { Divider, LinearProgress, LogoSpeedDial, WidgetContainer, WidgetHeader } from "components";
 import { WidgetList } from "features/widgetList";
-import {
-    AdvancedSetting,
-    renderActions,
-    RenderType,
-    selectAdvancedSettings,
-    selectRenderType,
-} from "slices/renderSlice";
 import { useExplorerGlobals } from "contexts/explorerGlobals";
-import { featuresConfig } from "config/features";
+import { selectAdvancedSettings, selectBaseCameraSpeed } from "slices/renderSlice";
+import { selectEnabledWidgets, selectIsAdminScene } from "slices/explorerSlice";
+
+import { useMountedState } from "hooks/useMountedState";
+import { useSceneId } from "hooks/useSceneId";
 import { useToggle } from "hooks/useToggle";
 
-type SliderSettings =
-    | AdvancedSetting.PointSize
-    | AdvancedSetting.MaxPointSize
-    | AdvancedSetting.PointToleranceFactor
-    | AdvancedSetting.CameraNearClipping
-    | AdvancedSetting.CameraFarClipping;
+import { CameraSettings } from "./routes/cameraSettings";
+import { FeatureSettings } from "./routes/featureSettings";
+import { RenderSettings } from "./routes/renderSettings";
+
+enum Status {
+    Idle,
+    Saving,
+    SaveSuccess,
+    SaveError,
+}
 
 export function AdvancedSettings() {
+    const sceneId = useSceneId();
     const {
-        state: { view },
+        state: { scene, view },
     } = useExplorerGlobals(true);
-    const dispatch = useAppDispatch();
-    const renderType = useAppSelector(selectRenderType);
-    const settings = useAppSelector(selectAdvancedSettings);
-    const {
-        taa,
-        ssao,
-        autoFps,
-        showBoundingBoxes,
-        doubleSidedMaterials,
-        doubleSidedTransparentMaterials,
-        holdDynamic,
-        triangleBudget,
-        cameraNearClipping,
-        cameraFarClipping,
-        showPerformance,
-        qualityPoints,
-        pointSize,
-        maxPointSize,
-        pointToleranceFactor,
-    } = settings;
 
+    const isAdminScene = useAppSelector(selectIsAdminScene);
+    const settings = useAppSelector(selectAdvancedSettings);
+    const baseCameraSpeed = useAppSelector(selectBaseCameraSpeed);
+    const enabledWidgets = useAppSelector(selectEnabledWidgets);
     const [menuOpen, toggleMenu] = useToggle();
     const [minimized, toggleMinimize] = useToggle(false);
-    const [size, setSize] = useState(pointSize);
-    const [maxSize, setMaxSize] = useState(maxPointSize);
-    const [toleranceFactor, setToleranceFactor] = useState(pointToleranceFactor);
-    const [far, setFar] = useState(() => {
-        const d = cameraFarClipping.toString();
-        const numZero = Math.max(0, d.length - 2);
-        return numZero * 90 + +d.substr(0, d.length - numZero) - 10;
-    });
-    const [near, setNear] = useState(() => {
-        const d = (cameraNearClipping * 10000).toString();
-        const numZero = Math.max(0, d.length - 2);
-        return numZero * 90 + +d.substr(0, d.length - numZero) - 10;
-    });
+    const [status, setStatus] = useMountedState(Status.Idle);
+    const saving = status === Status.Saving;
 
-    const handleToggle = ({ target: { name, checked } }: ChangeEvent<HTMLInputElement>) => {
-        dispatch(renderActions.setAdvancedSettings({ [name]: checked }));
+    const save = async () => {
+        setStatus(Status.Saving);
 
-        switch (name) {
-            case AdvancedSetting.AutoFps:
-                return toggleAutoFps(view);
-            case AdvancedSetting.ShowBoundingBoxes:
-                return toggleShowBoundingBox(view);
-            case AdvancedSetting.DoubleSidedMaterials:
-                return toggleDoubleSidedMaterials(view);
-            case AdvancedSetting.DoubleSidedTransparentMaterials:
-                return toggleDoubleSidedTransparentMaterials(view);
-            case AdvancedSetting.HoldDynamic:
-                return toggleHoldDynamic(view);
-            case AdvancedSetting.TriangleBudget:
-                return toggleTriangleBudget(view);
-            case AdvancedSetting.QualityPoints:
-                return toggleQualityPoints(view);
-            default:
-                return;
+        try {
+            const {
+                url: _url,
+                customProperties = {},
+                camera,
+                ...originalScene
+            } = (await dataApi.loadScene(sceneId)) as SceneData;
+
+            const originalSettings = originalScene.settings as undefined | Internal.RenderSettingsExt;
+
+            await dataApi.putScene({
+                ...originalScene,
+                url: isAdminScene ? scene.id : `${sceneId}:${scene.id}`,
+                settings: !originalSettings
+                    ? view.settings
+                    : ({
+                          ...originalSettings,
+                          advanced: {
+                              ...originalSettings.advanced,
+                              doubleSided: {
+                                  opaque: settings.doubleSidedMaterials,
+                                  transparent: settings.doubleSidedTransparentMaterials,
+                              },
+                          },
+                          diagnostics: {
+                              ...originalSettings.diagnostics,
+                              holdDynamic: settings.holdDynamic,
+                              showBoundingBoxes: settings.showBoundingBoxes,
+                          },
+                          light: {
+                              ...originalSettings.light,
+                              camera: {
+                                  ...originalSettings.light.camera,
+                                  brightness: settings.headlightIntensity,
+                                  distance: settings.headlightDistance,
+                              },
+                              ambient: {
+                                  ...originalSettings.light.ambient,
+                                  brightness: settings.ambientLight,
+                              },
+                          },
+                          points: {
+                              ...originalSettings.points,
+                              shape: settings.qualityPoints ? "disc" : "square",
+                              size: {
+                                  ...originalSettings.points.size,
+                                  pixel: settings.pointSize,
+                                  maxPixel: settings.maxPointSize,
+                                  toleranceFactor: settings.pointToleranceFactor,
+                              },
+                          },
+                      } as Internal.RenderSettingsExt),
+                camera:
+                    !camera || !["flight", "ortho"].includes(camera.kind)
+                        ? view.camera.controller.params
+                        : {
+                              ...(camera as Required<FlightControllerParams | OrthoControllerParams>),
+                              far: settings.cameraFarClipping,
+                              near: settings.cameraNearClipping,
+                              linearVelocity: baseCameraSpeed,
+                          },
+                customProperties: {
+                    ...customProperties,
+                    showStats: settings.showPerformance,
+                    navigationCube: settings.navigationCube,
+                    enabledFeatures: {
+                        ...Object.fromEntries(
+                            enabledWidgets
+                                .filter((widget) => widget.type === FeatureType.Widget)
+                                .map((widget) => [widget.key, true]) as [string, any]
+                        ),
+                    },
+                },
+            });
+        } catch {
+            return setStatus(Status.SaveError);
         }
+
+        setStatus(Status.SaveSuccess);
     };
 
-    const handleSliderChange =
-        (kind: SliderSettings) =>
-        (_event: Event, value: number | number[]): void => {
-            if (Array.isArray(value)) {
-                return;
-            }
-
-            const { points } = view.settings as Internal.RenderSettingsExt;
-
-            switch (kind) {
-                case AdvancedSetting.CameraFarClipping:
-                    setFar(value);
-
-                    (view.camera.controller.params as FlightControllerParams | OrthoControllerParams).far =
-                        scaleFarClipping(value);
-                    view.performanceStatistics.cameraGeneration++;
-                    return;
-                case AdvancedSetting.CameraNearClipping:
-                    setNear(value);
-
-                    (view.camera.controller.params as FlightControllerParams | OrthoControllerParams).near =
-                        scaleNearClipping(value);
-                    view.performanceStatistics.cameraGeneration++;
-                    return;
-                case AdvancedSetting.PointSize:
-                    setSize(value);
-                    points.size.pixel = value;
-                    return;
-                case AdvancedSetting.MaxPointSize:
-                    setMaxSize(value);
-                    points.size.maxPixel = value;
-                    return;
-                case AdvancedSetting.PointToleranceFactor:
-                    setToleranceFactor(value);
-                    points.size.toleranceFactor = value;
-                    return;
-            }
-        };
-
-    const handleSliderCommit =
-        (kind: SliderSettings) => (_event: Event | SyntheticEvent<Element, Event>, value: number | number[]) => {
-            if (Array.isArray(value)) {
-                return;
-            }
-
-            switch (kind) {
-                case AdvancedSetting.CameraFarClipping:
-                    dispatch(
-                        renderActions.setAdvancedSettings({
-                            [AdvancedSetting.CameraFarClipping]: scaleFarClipping(value),
-                        })
-                    );
-                    return;
-                case AdvancedSetting.CameraNearClipping:
-                    dispatch(
-                        renderActions.setAdvancedSettings({
-                            [AdvancedSetting.CameraNearClipping]: scaleNearClipping(value),
-                        })
-                    );
-                    return;
-                case AdvancedSetting.PointSize:
-                case AdvancedSetting.MaxPointSize:
-                case AdvancedSetting.PointToleranceFactor:
-                    dispatch(renderActions.setAdvancedSettings({ [kind]: value }));
-            }
-        };
-
-    const showPointSettings = Array.isArray(renderType)
-        ? renderType[1] === "points"
-        : [RenderType.TrianglesAndPoints, RenderType.Points].includes(renderType) ||
-          view.performanceStatistics.points > 0;
+    const showSnackbar = [Status.SaveError, Status.SaveSuccess].includes(status);
 
     return (
         <>
@@ -165,267 +135,66 @@ export function AdvancedSettings() {
                 <WidgetHeader
                     minimized={minimized}
                     toggleMinimize={toggleMinimize}
-                    widget={featuresConfig.advancedSettings}
+                    widget={{ ...featuresConfig.advancedSettings, name: "Advanced settings" as any }}
+                    disableShadow={!menuOpen}
                 />
-                <ScrollBox display={menuOpen || minimized ? "none" : "block"}>
-                    <Box mt={1} p={1} display="flex" flexDirection="column">
-                        <FormControlLabel
-                            sx={{ ml: 0, mb: 2 }}
-                            control={<Switch name={AdvancedSetting.Taa} checked={taa} onChange={handleToggle} />}
-                            label={
-                                <Box ml={1} fontSize={16}>
-                                    TAA
-                                </Box>
-                            }
-                        />
-                        <FormControlLabel
-                            sx={{ ml: 0, mb: 2 }}
-                            control={<Switch name={AdvancedSetting.Ssao} checked={ssao} onChange={handleToggle} />}
-                            label={
-                                <Box ml={1} fontSize={16}>
-                                    SSAO
-                                </Box>
-                            }
-                        />
-                        <FormControlLabel
-                            sx={{ ml: 0, mb: 2 }}
-                            control={
-                                <Switch name={AdvancedSetting.AutoFps} checked={autoFps} onChange={handleToggle} />
-                            }
-                            label={
-                                <Box ml={1} fontSize={16}>
-                                    Auto FPS
-                                </Box>
-                            }
-                        />
-                        <FormControlLabel
-                            sx={{ ml: 0, mb: 2 }}
-                            control={
-                                <Switch
-                                    name={AdvancedSetting.ShowBoundingBoxes}
-                                    checked={showBoundingBoxes}
-                                    onChange={handleToggle}
-                                />
-                            }
-                            label={
-                                <Box ml={1} fontSize={16}>
-                                    Show bounding boxes
-                                </Box>
-                            }
-                        />
-                        <FormControlLabel
-                            sx={{ ml: 0, mb: 2 }}
-                            control={
-                                <Switch
-                                    name={AdvancedSetting.DoubleSidedMaterials}
-                                    checked={doubleSidedMaterials}
-                                    onChange={handleToggle}
-                                />
-                            }
-                            label={
-                                <Box ml={1} fontSize={16}>
-                                    Double sided materials
-                                </Box>
-                            }
-                        />
-                        <FormControlLabel
-                            sx={{ ml: 0, mb: 2 }}
-                            control={
-                                <Switch
-                                    name={AdvancedSetting.DoubleSidedTransparentMaterials}
-                                    checked={doubleSidedTransparentMaterials}
-                                    onChange={handleToggle}
-                                />
-                            }
-                            label={
-                                <Box ml={1} fontSize={16}>
-                                    Double sided transparent materials
-                                </Box>
-                            }
-                        />
-                        <FormControlLabel
-                            sx={{ ml: 0, mb: 2 }}
-                            control={
-                                <Switch
-                                    name={AdvancedSetting.HoldDynamic}
-                                    checked={holdDynamic}
-                                    onChange={handleToggle}
-                                />
-                            }
-                            label={
-                                <Box ml={1} fontSize={16}>
-                                    Hold dynamic
-                                </Box>
-                            }
-                        />
-                        <FormControlLabel
-                            sx={{ ml: 0, mb: 2 }}
-                            control={
-                                <Switch
-                                    name={AdvancedSetting.TriangleBudget}
-                                    checked={triangleBudget}
-                                    onChange={handleToggle}
-                                />
-                            }
-                            label={
-                                <Box ml={1} fontSize={16}>
-                                    Triangle budget
-                                </Box>
-                            }
-                        />
-                        <FormControlLabel
-                            sx={{ ml: 0, mb: 2 }}
-                            control={
-                                <Switch
-                                    name={AdvancedSetting.ShowPerformance}
-                                    checked={showPerformance}
-                                    onChange={handleToggle}
-                                />
-                            }
-                            label={
-                                <Box ml={1} fontSize={16}>
-                                    Show stats
-                                </Box>
-                            }
-                        />
-                        {showPointSettings ? (
-                            <FormControlLabel
-                                sx={{ ml: 0, mb: 2 }}
-                                control={
-                                    <Switch
-                                        name={AdvancedSetting.QualityPoints}
-                                        checked={qualityPoints}
-                                        onChange={handleToggle}
-                                    />
-                                }
-                                label={
-                                    <Box ml={1} fontSize={16}>
-                                        Quality points
-                                    </Box>
-                                }
-                            />
-                        ) : null}
 
-                        <Divider />
-
-                        <Box display="flex" sx={{ my: 2 }} alignItems="center">
-                            <Typography
-                                sx={{
-                                    width: 160,
-                                    flexShrink: 0,
-                                }}
-                            >
-                                Camera near clipping
-                            </Typography>
-                            <Slider
-                                sx={{ mx: 2, flex: "1 1 100%" }}
-                                min={0}
-                                max={360}
-                                step={1}
-                                scale={scaleNearClipping}
-                                name={AdvancedSetting.CameraNearClipping}
-                                value={near}
-                                valueLabelFormat={(value) => value.toFixed(3)}
-                                valueLabelDisplay="auto"
-                                onChange={handleSliderChange(AdvancedSetting.CameraNearClipping)}
-                                onChangeCommitted={handleSliderCommit(AdvancedSetting.CameraNearClipping)}
-                            />
-                        </Box>
-                        <Box display="flex" sx={{ mb: 2 }} alignItems="center">
-                            <Typography
-                                sx={{
-                                    width: 160,
-                                    flexShrink: 0,
-                                }}
-                            >
-                                Camera far clipping
-                            </Typography>
-                            <Slider
-                                sx={{ mx: 2, flex: "1 1 100%" }}
-                                min={180}
-                                max={400}
-                                step={1}
-                                scale={scaleFarClipping}
-                                name={AdvancedSetting.CameraFarClipping}
-                                value={far}
-                                valueLabelFormat={(value) => value.toFixed(0)}
-                                valueLabelDisplay="auto"
-                                onChange={handleSliderChange(AdvancedSetting.CameraFarClipping)}
-                                onChangeCommitted={handleSliderCommit(AdvancedSetting.CameraFarClipping)}
-                            />
-                        </Box>
-
-                        {showPointSettings ? (
-                            <>
-                                <Divider />
-
-                                <Box display="flex" sx={{ my: 2 }} alignItems="center">
-                                    <Typography
-                                        sx={{
-                                            width: 160,
-                                            flexShrink: 0,
-                                        }}
-                                    >
-                                        Point size
-                                    </Typography>
-                                    <Slider
-                                        sx={{ mx: 2, flex: "1 1 100%" }}
-                                        min={0}
-                                        max={2}
-                                        step={0.25}
-                                        name={AdvancedSetting.PointSize}
-                                        value={size}
-                                        valueLabelDisplay="auto"
-                                        onChange={handleSliderChange(AdvancedSetting.PointSize)}
-                                        onChangeCommitted={handleSliderCommit(AdvancedSetting.PointSize)}
-                                    />
-                                </Box>
-                                <Box display="flex" sx={{ mb: 2 }} alignItems="center">
-                                    <Typography
-                                        sx={{
-                                            width: 160,
-                                            flexShrink: 0,
-                                        }}
-                                    >
-                                        Max point size
-                                    </Typography>
-                                    <Slider
-                                        sx={{ mx: 2, flex: "1 1 100%" }}
-                                        min={1}
-                                        max={100}
-                                        step={1}
-                                        name={AdvancedSetting.MaxPointSize}
-                                        value={maxSize}
-                                        valueLabelDisplay="auto"
-                                        onChange={handleSliderChange(AdvancedSetting.MaxPointSize)}
-                                        onChangeCommitted={handleSliderCommit(AdvancedSetting.MaxPointSize)}
-                                    />
-                                </Box>
-                                <Box display="flex" sx={{ mb: 2 }} alignItems="center">
-                                    <Typography
-                                        sx={{
-                                            width: 160,
-                                            flexShrink: 0,
-                                        }}
-                                    >
-                                        Pt. tolerance factor
-                                    </Typography>
-                                    <Slider
-                                        sx={{ mx: 2, flex: "1 1 100%" }}
-                                        min={0}
-                                        max={0.2}
-                                        step={0.005}
-                                        name={AdvancedSetting.PointToleranceFactor}
-                                        value={toleranceFactor}
-                                        valueLabelDisplay="auto"
-                                        onChange={handleSliderChange(AdvancedSetting.PointToleranceFactor)}
-                                        onChangeCommitted={handleSliderCommit(AdvancedSetting.PointToleranceFactor)}
-                                    />
-                                </Box>
-                            </>
-                        ) : null}
+                {minimized && saving ? (
+                    <Box position="relative" bottom={3}>
+                        <LinearProgress />
                     </Box>
-                </ScrollBox>
+                ) : null}
+
+                {showSnackbar ? (
+                    <Snackbar
+                        anchorOrigin={{ vertical: "bottom", horizontal: "center" }}
+                        sx={{
+                            width: { xs: "auto", sm: 350 },
+                            bottom: { xs: "auto", sm: 24 },
+                            top: { xs: 24, sm: "auto" },
+                        }}
+                        autoHideDuration={2500}
+                        open={showSnackbar}
+                        onClose={() => setStatus(Status.Idle)}
+                        message={
+                            status === Status.SaveError ? "Failed to save settings" : "Settings successfully saved"
+                        }
+                        action={
+                            <IconButton
+                                size="small"
+                                aria-label="close"
+                                color="inherit"
+                                onClick={() => setStatus(Status.Idle)}
+                            >
+                                <Close fontSize="small" />
+                            </IconButton>
+                        }
+                    />
+                ) : null}
+
+                <Box
+                    display={menuOpen || minimized ? "none" : "flex"}
+                    flexGrow={1}
+                    overflow="hidden"
+                    flexDirection="column"
+                >
+                    <MemoryRouter>
+                        <Switch>
+                            <Route path="/" exact>
+                                <Root save={save} saving={saving} />
+                            </Route>
+                            <Route path="/camera" exact>
+                                <CameraSettings save={save} saving={saving} />
+                            </Route>
+                            <Route path="/features" exact>
+                                <FeatureSettings save={save} saving={saving} />
+                            </Route>
+                            <Route path="/render" exact>
+                                <RenderSettings save={save} saving={saving} />
+                            </Route>
+                        </Switch>
+                    </MemoryRouter>
+                </Box>
                 <WidgetList
                     display={menuOpen ? "block" : "none"}
                     widgetKey={featuresConfig.advancedSettings.key}
@@ -436,79 +205,46 @@ export function AdvancedSettings() {
                 open={menuOpen}
                 toggle={toggleMenu}
                 testId={`${featuresConfig.advancedSettings.key}-widget-menu-fab`}
+                ariaLabel="toggle widget menu"
             />
         </>
     );
 }
 
-function scaleNearClipping(value: number): number {
-    return Math.pow(10, Math.floor(value / 90)) * ((value % 90) + 10) * 0.0001;
-}
+function Root({ save, saving }: { save: () => Promise<void>; saving: boolean }) {
+    const theme = useTheme();
 
-function scaleFarClipping(value: number): number {
-    return Math.pow(10, Math.floor(value / 90)) * ((value % 90) + 10);
-}
-
-function toggleAutoFps(view: View): void {
-    const { resolution } = view.settings.quality;
-
-    if (resolution.autoAdjust) {
-        resolution.autoAdjust.enabled = !resolution.autoAdjust.enabled;
-        return;
-    }
-
-    view.applySettings({
-        quality: {
-            resolution: { autoAdjust: { enabled: true, min: 0.2, max: 1 }, value: resolution.value },
-            detail: view.settings.quality.detail,
-        },
-    });
-}
-
-function toggleShowBoundingBox(view: View): void {
-    const { diagnostics } = view.settings as Internal.RenderSettingsExt;
-    diagnostics.showBoundingBoxes = !diagnostics.showBoundingBoxes;
-}
-
-function toggleDoubleSidedMaterials(view: View): void {
-    const {
-        advanced: { doubleSided },
-    } = view.settings as Internal.RenderSettingsExt;
-
-    doubleSided.opaque = !doubleSided.opaque;
-}
-
-function toggleDoubleSidedTransparentMaterials(view: View): void {
-    const {
-        advanced: { doubleSided },
-    } = view.settings as Internal.RenderSettingsExt;
-
-    doubleSided.transparent = !doubleSided.transparent;
-}
-
-function toggleHoldDynamic(view: View): void {
-    const { diagnostics } = view.settings as Internal.RenderSettingsExt;
-
-    diagnostics.holdDynamic = !diagnostics.holdDynamic;
-}
-
-function toggleTriangleBudget(view: View): void {
-    const { detail } = view.settings.quality;
-
-    if (detail.autoAdjust) {
-        detail.autoAdjust.enabled = !detail.autoAdjust.enabled;
-        return;
-    }
-
-    view.applySettings({
-        quality: {
-            detail: { autoAdjust: { enabled: true, min: -1, max: 1 }, value: detail.value },
-            resolution: view.settings.quality.resolution,
-        },
-    });
-}
-
-function toggleQualityPoints(view: View): void {
-    const { points } = view.settings as Internal.RenderSettingsExt;
-    points.shape = points.shape === "disc" ? "square" : "disc";
+    return (
+        <>
+            <Box boxShadow={theme.customShadows.widgetHeader}>
+                <Box px={1}>
+                    <Divider />
+                </Box>
+                <Box display="flex" justifyContent="flex-end">
+                    <Button sx={{ ml: "auto" }} onClick={() => save()} color="grey" disabled={saving}>
+                        <Save sx={{ mr: 1 }} />
+                        Save
+                    </Button>
+                </Box>
+            </Box>
+            {saving ? (
+                <Box>
+                    <LinearProgress />
+                </Box>
+            ) : null}
+            <Box height={1} mt={1} pb={3} display="flex" flexDirection="column">
+                <List disablePadding>
+                    <ListItemButton sx={{ pl: 1, fontWeight: 600 }} disableGutters component={Link} to="/features">
+                        Features
+                    </ListItemButton>
+                    <ListItemButton sx={{ pl: 1, fontWeight: 600 }} disableGutters component={Link} to="/camera">
+                        Camera
+                    </ListItemButton>
+                    <ListItemButton sx={{ pl: 1, fontWeight: 600 }} disableGutters component={Link} to="/render">
+                        Render
+                    </ListItemButton>
+                </List>
+            </Box>
+        </>
+    );
 }
