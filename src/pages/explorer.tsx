@@ -200,9 +200,19 @@ function getIsViewerScene(customProperties: unknown): boolean {
 }
 
 function getRequireConsent(customProperties: unknown): boolean {
-    return customProperties && typeof customProperties === "object" && "requireConsent" in customProperties
-        ? (customProperties as { requireConsent: boolean }).requireConsent
-        : false;
+    if (!customProperties || typeof customProperties !== "object") {
+        return false;
+    }
+
+    if ("requireConsent" in customProperties) {
+        return (customProperties as { requireConsent: boolean }).requireConsent;
+    } else if ("enabledFeatures" in customProperties) {
+        return Boolean(
+            (customProperties as { enabledFeatures?: { requireConsent?: boolean } })?.enabledFeatures?.requireConsent
+        );
+    }
+
+    return false;
 }
 
 function getUserRole(customProperties: unknown): UserRole {

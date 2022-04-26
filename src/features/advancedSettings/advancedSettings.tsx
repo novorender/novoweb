@@ -117,6 +117,10 @@ export function AdvancedSettings() {
                                 .filter((widget) => widget.type === FeatureType.Widget)
                                 .map((widget) => [widget.key, true]) as [string, any]
                         ),
+                        enabledOrgs: customProperties?.enabledFeatures?.enabledOrgs,
+                        expiration: customProperties?.enabledFeatures?.expiration,
+                        transparentBackground: customProperties?.enabledFeatures?.transparentBackground,
+                        requireConsent: customProperties?.enabledFeatures?.requireConsent,
                     },
                 },
             });
