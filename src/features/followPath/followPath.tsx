@@ -51,6 +51,8 @@ import {
     selectProfileRange,
     selectClipping,
     selectShowGrid,
+    selectAutoRecenter,
+    selectCurrentCenter,
 } from "./followPathSlice";
 
 enum Status {
@@ -59,7 +61,7 @@ enum Status {
 }
 
 const profileFractionDigits = 3;
-const orthoCamOffset = 0.2;
+const orthoCamFarOffset = 0.2;
 
 export function FollowPath() {
     const {
@@ -68,8 +70,10 @@ export function FollowPath() {
 
     const landXmlPaths = useAppSelector(selectLandXmlPaths);
     const currentPath = useAppSelector(selectCurrentPath);
+    const currentCenter = useAppSelector(selectCurrentCenter);
     const view2d = useAppSelector(selectView2d);
     const showGrid = useAppSelector(selectShowGrid);
+    const autoRecenter = useAppSelector(selectAutoRecenter);
     const profile = useAppSelector(selectProfile);
     const step = useAppSelector(selectStep);
     const ptHeight = useAppSelector(selectPtHeight);
@@ -142,11 +146,13 @@ export function FollowPath() {
         p,
         view2d,
         showGrid,
+        keepOffset,
     }: {
         nurbs: Nurbs;
         p: number;
         view2d: boolean;
         showGrid: boolean;
+        keepOffset?: boolean;
     }): void => {
         if (p < nurbs.knots[0] || p > nurbs.knots.slice(-1)[0]) {
             return;
@@ -175,6 +181,11 @@ export function FollowPath() {
         const t = (p - knot1) / l;
 
         const pt = vec3.lerp(vec3.create(), cp1, cp2, t);
+        const offset =
+            keepOffset && currentCenter
+                ? vec3.sub(vec3.create(), currentCenter, view.camera.position)
+                : vec3.fromValues(0, 0, 0);
+        const offsetPt = vec3.sub(vec3.create(), pt, offset);
 
         const up = vec3.fromValues(0, 1, 0);
         vec3.transformQuat(up, up, view.camera.rotation);
@@ -193,7 +204,7 @@ export function FollowPath() {
         );
 
         if (view2d) {
-            const ptt = vec3.add(vec3.create(), pt, vec3.scale(vec3.create(), dir, orthoCamOffset));
+            const ptt = vec3.add(vec3.create(), offsetPt, vec3.scale(vec3.create(), dir, orthoCamFarOffset));
             const mat = mat4.fromRotationTranslation(mat4.create(), rotation, ptt);
 
             view.applySettings({
@@ -216,19 +227,32 @@ export function FollowPath() {
                         kind: "ortho",
                         referenceCoordSys: mat,
                         fieldOfView: view.camera.fieldOfView,
-                        near: orthoCamOffset,
-                        far: clipping + orthoCamOffset,
+                        near: orthoCamFarOffset,
+                        far: clipping + orthoCamFarOffset,
                     },
                 })
+            );
+            dispatch(
+                followPathActions.setCurrentCenter(
+                    vec3.add(vec3.create(), pt, vec3.scale(vec3.create(), dir, orthoCamFarOffset)) as [
+                        number,
+                        number,
+                        number
+                    ]
+                )
             );
         } else {
             view.applySettings({ grid: { ...view.settings.grid, enabled: false } });
             dispatch(
                 renderActions.setCamera({
                     type: CameraType.Flight,
-                    goTo: { position: pt, rotation },
+                    goTo: {
+                        position: offsetPt,
+                        rotation,
+                    },
                 })
             );
+            dispatch(followPathActions.setCurrentCenter(pt as [number, number, number]));
         }
 
         dispatch(followPathActions.setPtHeight(pt[1]));
@@ -256,6 +280,20 @@ export function FollowPath() {
         view.settings.grid.enabled = newState;
     };
 
+    const handleAutoRecenterChange = () => {
+        if (!currentPath) {
+            return;
+        }
+
+        const recenter = !autoRecenter;
+
+        if (recenter) {
+            goToProfile({ nurbs: currentPath.nurbs, p: Number(profile), view2d, showGrid, keepOffset: false });
+        }
+
+        dispatch(followPathActions.setAutoRecenter(recenter));
+    };
+
     const handlePrev = () => {
         if (!currentPath || !profileRange) {
             return;
@@ -274,7 +312,7 @@ export function FollowPath() {
         }
 
         dispatch(followPathActions.setProfile(next.toFixed(profileFractionDigits)));
-        goToProfile({ nurbs: currentPath.nurbs, p: next, view2d, showGrid });
+        goToProfile({ nurbs: currentPath.nurbs, p: next, view2d, showGrid, keepOffset: !autoRecenter });
     };
 
     const handleNext = () => {
@@ -295,7 +333,7 @@ export function FollowPath() {
         }
 
         dispatch(followPathActions.setProfile(next.toFixed(profileFractionDigits)));
-        goToProfile({ nurbs: currentPath.nurbs, p: next, view2d, showGrid });
+        goToProfile({ nurbs: currentPath.nurbs, p: next, view2d, showGrid, keepOffset: !autoRecenter });
     };
 
     const handleGoToStart = () => {
@@ -316,7 +354,7 @@ export function FollowPath() {
             return;
         }
 
-        goToProfile({ nurbs: currentPath.nurbs, p: Number(profile), view2d, showGrid });
+        goToProfile({ nurbs: currentPath.nurbs, p: Number(profile), view2d, showGrid, keepOffset: !autoRecenter });
     };
 
     const handleClippingChange = (_event: Event, newValue: number | number[]) => {
@@ -326,7 +364,7 @@ export function FollowPath() {
 
         setClipping(newValue);
         (view.camera.controller.params as FlightControllerParams | OrthoControllerParams).far =
-            newValue + orthoCamOffset;
+            addOrthoCamFarOffset(newValue);
     };
 
     const handleClippingCommit = (_event: Event | SyntheticEvent<Element, Event>, newValue: number | number[]) => {
@@ -487,10 +525,24 @@ export function FollowPath() {
                                 </Grid>
                             </Grid>
 
+                            <Divider sx={{ mt: 2, mb: 1 }} />
+
+                            <div>
+                                <FormControlLabel
+                                    control={
+                                        <IosSwitch
+                                            size="medium"
+                                            color="primary"
+                                            checked={autoRecenter}
+                                            onChange={handleAutoRecenterChange}
+                                        />
+                                    }
+                                    label={<Box>Automatically recenter</Box>}
+                                />
+                            </div>
+
                             {view2d ? (
                                 <>
-                                    <Divider sx={{ mt: 2, mb: 1 }} />
-
                                     <FormControlLabel
                                         control={
                                             <IosSwitch
@@ -565,4 +617,12 @@ export function getNurbs({ scene, objectId }: { scene: Scene; objectId: number }
                     ].flat(),
                 } as Nurbs)
         );
+}
+
+export function addOrthoCamFarOffset(num: number): number {
+    return Math.round((num + orthoCamFarOffset + Number.EPSILON) * 100) / 100;
+}
+
+export function subOrthoCamFarOffset(num: number): number {
+    return Math.round((num - orthoCamFarOffset - Number.EPSILON) * 100) / 100;
 }

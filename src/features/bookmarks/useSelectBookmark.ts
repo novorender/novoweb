@@ -7,6 +7,7 @@ import { hiddenGroupActions, useDispatchHidden } from "contexts/hidden";
 import { highlightActions, useDispatchHighlighted } from "contexts/highlighted";
 import { useDispatchVisible, visibleActions } from "contexts/visible";
 import { followPathActions, getNurbs } from "features/followPath";
+import { subOrthoCamFarOffset } from "features/followPath/followPath";
 import { measureActions } from "features/measure";
 import { CameraType, ObjectVisibility, renderActions, SelectionBasketMode } from "slices/renderSlice";
 
@@ -111,9 +112,10 @@ export function useSelectBookmark() {
                     dispatch(followPathActions.setProfileRange({ min: nurbs.knots[0], max: nurbs.knots.slice(-1)[0] }));
                     dispatch(followPathActions.setView2d(Boolean(bookmark.ortho)));
                     dispatch(followPathActions.setShowGrid(Boolean(bookmark.grid?.enabled)));
+                    dispatch(followPathActions.setCurrentCenter(bookmark.followPath.currentCenter));
 
                     if (bookmark.ortho?.far) {
-                        dispatch(followPathActions.setClipping(bookmark.ortho.far));
+                        dispatch(followPathActions.setClipping(subOrthoCamFarOffset(bookmark.ortho.far)));
                     }
 
                     if (bookmark.ortho) {

@@ -14,7 +14,7 @@ import {
     selectMainObject,
     selectSelectionBasketMode,
 } from "slices/renderSlice";
-import { selectCurrentPath, selectProfile } from "features/followPath";
+import { selectCurrentCenter, selectCurrentPath, selectProfile } from "features/followPath";
 import { selectMeasure } from "features/measure";
 
 export function useCreateBookmark() {
@@ -24,6 +24,7 @@ export function useCreateBookmark() {
     const selectionBasketMode = useAppSelector(selectSelectionBasketMode);
     const currentPath = useAppSelector(selectCurrentPath);
     const currentPathProfile = useAppSelector(selectProfile);
+    const currentCenter = useAppSelector(selectCurrentCenter);
 
     const {
         state: { view },
@@ -73,6 +74,7 @@ export function useCreateBookmark() {
                 ? {
                       id: currentPath.id,
                       profile: Number(currentPathProfile),
+                      currentCenter: currentCenter,
                   }
                 : undefined;
 
