@@ -39,6 +39,13 @@ export function useSelectBookmark() {
             };
         });
 
+        if (bookmark.objectGroups) {
+            const groups = bookmark.objectGroups;
+            updatedCustomGroups.sort(
+                (a, b) => groups.findIndex((grp) => grp.id === a.id) - groups.findIndex((grp) => grp.id === b.id)
+            );
+        }
+
         dispatchCustom(customGroupsActions.set(updatedCustomGroups));
 
         const main = bmDefaultGroup && bmDefaultGroup.ids?.length ? bmDefaultGroup.ids.slice(-1)[0] : undefined;

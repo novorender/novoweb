@@ -67,13 +67,22 @@ type ContextType = { state: State; dispatch: DispatchCustomGroups };
 
 const Context = createContext<ContextType>(undefined as any);
 
-function reducer(state: State, action: Actions) {
+function reducer(state: State, action: Actions): CustomGroup[] {
     switch (action.type) {
         case ActionTypes.Delete: {
             return state.filter((group) => group.id !== action.groupId);
         }
         case ActionTypes.Update: {
-            return state.map((group) => (group.id === action.groupId ? { ...group, ...action.updates } : group));
+            const updated = state.map((group) =>
+                group.id === action.groupId ? { ...group, ...action.updates } : group
+            );
+            const idx = updated.findIndex((group) => group.id === action.groupId);
+
+            if (idx !== -1) {
+                updated.push(updated.splice(idx, 1)[0]);
+            }
+
+            return updated;
         }
         case ActionTypes.Set: {
             return action.state;

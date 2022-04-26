@@ -111,14 +111,20 @@ export function Home({ position, ...speedDialProps }: Props) {
 
         dispatchCustomGroups(
             customGroupsActions.set(
-                customGroups.map((group) => {
-                    const originalGrpSettings = objectGroups.find((grp) => group.id === grp.id);
+                [
+                    ...customGroups.map((group) => {
+                        const originalGrpSettings = objectGroups.find((grp) => group.id === grp.id);
 
-                    group.selected = originalGrpSettings?.selected ?? false;
-                    group.hidden = originalGrpSettings?.hidden ?? false;
+                        group.selected = originalGrpSettings?.selected ?? false;
+                        group.hidden = originalGrpSettings?.hidden ?? false;
 
-                    return group;
-                })
+                        return group;
+                    }),
+                ].sort(
+                    (a, b) =>
+                        objectGroups.findIndex((grp) => grp.id === a.id) -
+                        objectGroups.findIndex((grp) => grp.id === b.id)
+                )
             )
         );
 

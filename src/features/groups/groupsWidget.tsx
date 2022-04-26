@@ -97,11 +97,7 @@ export function Groups() {
     );
 
     const handleChange = (updatedGroups: CustomGroup[]) => {
-        dispatchCustom(
-            customGroupsActions.set(
-                customGroups.map((group) => updatedGroups.find((updated) => updated.id === group.id) ?? group)
-            )
-        );
+        updatedGroups.forEach((group) => dispatchCustom(customGroupsActions.update(group.id, group)));
     };
 
     const handleGroupSelected = () => {
