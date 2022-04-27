@@ -1,4 +1,4 @@
-import { Box } from "@mui/material";
+import { Box, ListItemIcon, ListItemText, Menu, MenuItem } from "@mui/material";
 import { useRef, useEffect } from "react";
 import { ListOnScrollProps } from "react-window";
 import { HierarcicalObjectReference } from "@novorender/webgl-api";
@@ -18,6 +18,7 @@ import { useToggle } from "hooks/useToggle";
 import { getObjectData, iterateAsync, searchFirstObjectAtPath } from "utils/search";
 import { getParentPath } from "utils/objectData";
 import { featuresConfig } from "config/features";
+import { ContentCopy } from "@mui/icons-material";
 
 enum Status {
     Ready,
@@ -239,7 +240,34 @@ export function ModelTree() {
     return (
         <>
             <WidgetContainer minimized={minimized}>
-                <WidgetHeader minimized={minimized} toggleMinimize={toggleMinimize} widget={featuresConfig.modelTree} />
+                <WidgetHeader
+                    minimized={minimized}
+                    toggleMinimize={toggleMinimize}
+                    widget={featuresConfig.modelTree}
+                    WidgetMenu={(props) => (
+                        <Menu {...props}>
+                            <div>
+                                <MenuItem
+                                    onClick={() => {
+                                        navigator.clipboard.writeText(currentDepth?.path ?? "");
+
+                                        if (props.onClose) {
+                                            props.onClose({}, "backdropClick");
+                                        }
+                                    }}
+                                    disabled={!currentDepth?.path}
+                                >
+                                    <>
+                                        <ListItemIcon>
+                                            <ContentCopy fontSize="small" />
+                                        </ListItemIcon>
+                                        <ListItemText>Copy current path</ListItemText>
+                                    </>
+                                </MenuItem>
+                            </div>
+                        </Menu>
+                    )}
+                />
                 <Box display={menuOpen || minimized ? "none" : "flex"} flexDirection="column" height={1}>
                     {status === Status.Loading ? <LinearProgress /> : null}
                     {currentDepth ? (

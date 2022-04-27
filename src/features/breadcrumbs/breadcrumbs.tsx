@@ -6,6 +6,7 @@ import { decodeObjPathName } from "utils/objectData";
 
 import NavigateNextIcon from "@mui/icons-material/NavigateNext";
 import MoreHorizIcon from "@mui/icons-material/MoreHoriz";
+import { Tooltip } from "components";
 
 const BreadcrumbSeparator = styled((props: HTMLProps<HTMLDivElement>) => (
     <div {...props} aria-hidden>
@@ -44,7 +45,7 @@ export function Breadcrumbs({
     const crumbs = (path ? ["", ...path.split("/")] : [""]).map((crumb, index, array) => {
         return (
             <Breadcrumb
-                key={crumb ? crumb : "root"}
+                key={crumb ? crumb + index : "root"}
                 fullPath={crumb ? array.slice(1, index + 1).join("/") : crumb}
                 onClick={onClick}
                 isLast={array.length > crumbsToShow && index === array.length - 1}
@@ -100,6 +101,8 @@ export function Breadcrumbs({
                             "& button": {
                                 width: 1,
                                 color: theme.palette.text.primary,
+                                px: 1,
+                                justifyContent: "center",
                             },
                         }}
                         id={id}
@@ -127,17 +130,19 @@ const Breadcrumb = forwardRef<
     }
 >(({ name, fullPath, isLast, onClick }, ref) => {
     return (
-        <Box display="flex" flex={isLast ? "1 0 auto" : "0 1 auto"} width={isLast ? 0 : "auto"} overflow="hidden">
+        <Box display="flex" flex={isLast ? "1 2 auto" : "0 3 auto"} width={"auto"} overflow="hidden">
             <Button
                 ref={ref}
                 size="small"
                 color="grey"
-                sx={{ textOverflow: "ellipsis", whiteSpace: "nowrap" }}
+                sx={{ textOverflow: "ellipsis", whiteSpace: "nowrap", justifyContent: "flex-start", minWidth: 32 }}
                 onClick={() => onClick(fullPath)}
             >
-                <Box overflow="hidden" whiteSpace="nowrap" textOverflow="ellipsis" component="span">
-                    {name}
-                </Box>
+                <Tooltip title={<Box onClick={(e) => e.stopPropagation()}>{name}</Box>}>
+                    <Box overflow="hidden" whiteSpace="nowrap" textOverflow="ellipsis" component="span">
+                        {name}
+                    </Box>
+                </Tooltip>
             </Button>
         </Box>
     );
