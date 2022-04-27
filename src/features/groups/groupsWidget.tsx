@@ -9,10 +9,9 @@ import {
     ListItemButtonProps,
     ListItemButton,
     Button,
+    css,
 } from "@mui/material";
 import { Visibility, AddCircle, CheckCircle, MoreVert, Save } from "@mui/icons-material";
-import { css } from "@mui/styled-engine";
-import { SceneData } from "@novorender/data-js-api";
 
 import {
     ScrollBox,
@@ -26,21 +25,18 @@ import {
 import { WidgetList } from "features/widgetList";
 
 import { useAppDispatch, useAppSelector } from "app/store";
-import { selectEditingScene } from "slices/renderSlice";
 import { selectHasAdminCapabilities } from "slices/explorerSlice";
-import { useExplorerGlobals } from "contexts/explorerGlobals";
 import { CustomGroup, customGroupsActions, useCustomGroups } from "contexts/customGroups";
 
-import { dataApi } from "app";
 import { featuresConfig } from "config/features";
 import { useToggle } from "hooks/useToggle";
-import { useSceneId } from "hooks/useSceneId";
 
 import { CreateGroup } from "./createGroup";
 import { Group } from "./group";
 import { Rename } from "./rename";
 import { GroupCollection } from "./groupCollection";
 import { groupsActions, GroupsStatus, selectGroupsStatus, selectLoadingIds } from "./groupsSlice";
+import { ConfirmSave } from "./confirmSave";
 
 export const StyledListItemButton = styled(ListItemButton, { shouldForwardProp: (prop) => prop !== "inset" })<
     ListItemButtonProps & { inset?: boolean }
@@ -57,13 +53,7 @@ export const StyledCheckbox = styled(Checkbox)`
 `;
 
 export function Groups() {
-    const {
-        state: { scene },
-    } = useExplorerGlobals(true);
     const { state: customGroups, dispatch: dispatchCustom } = useCustomGroups();
-    const sceneId = useSceneId();
-
-    const editingScene = useAppSelector(selectEditingScene);
     const isAdmin = useAppSelector(selectHasAdminCapabilities);
     const status = useAppSelector(selectGroupsStatus);
     const loadingIds = useAppSelector(selectLoadingIds);
@@ -113,31 +103,8 @@ export function Groups() {
             .forEach((group) => dispatchCustom(customGroupsActions.update(group.id, { grouping: name })));
     };
 
-    const handleSave = async () => {
-        const id = editingScene && editingScene.id ? editingScene.id : sceneId;
-        dispatch(groupsActions.setStatus(GroupsStatus.Saving));
-
-        try {
-            const {
-                url: _url,
-                objectGroups: originalGroups,
-                ...originalScene
-            } = (await dataApi.loadScene(id)) as SceneData;
-
-            await dataApi.putScene({
-                ...originalScene,
-                url: `${id}:${scene.id}`,
-                objectGroups: originalGroups.filter((grp) => !grp.id).concat(customGroups),
-            });
-
-            dispatch(groupsActions.setStatus(GroupsStatus.Initial));
-        } catch {
-            dispatch(groupsActions.setStatus(GroupsStatus.Error));
-        }
-    };
-
     const disableChanges = status === GroupsStatus.Saving;
-    const hideExtendedHeader = menuOpen || minimized || Array.isArray(status);
+    const hideExtendedHeader = menuOpen || minimized || Array.isArray(status) || status === GroupsStatus.ConfirmingSave;
 
     return (
         <>
@@ -166,7 +133,11 @@ export function Groups() {
                                 <CheckCircle sx={{ mr: 1 }} />
                                 Group selected
                             </Button>
-                            <Button color="grey" onClick={handleSave} disabled={status !== GroupsStatus.Unsaved}>
+                            <Button
+                                color="grey"
+                                onClick={() => dispatch(groupsActions.setStatus(GroupsStatus.ConfirmingSave))}
+                                disabled={status !== GroupsStatus.Unsaved}
+                            >
                                 <Save sx={{ mr: 1 }} />
                                 Save
                             </Button>
@@ -193,6 +164,8 @@ export function Groups() {
                         ) : (
                             <Rename />
                         )
+                    ) : status === GroupsStatus.ConfirmingSave ? (
+                        <ConfirmSave />
                     ) : (
                         <ScrollBox display="flex" flexDirection="column" ref={containerRef} height={1} pb={2}>
                             <List sx={{ width: 1, pb: 0 }}>

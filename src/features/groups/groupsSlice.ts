@@ -4,6 +4,7 @@ import { RootState } from "app/store";
 export enum GroupsStatus {
     Initial,
     Unsaved,
+    ConfirmingSave,
     Saving,
     Deleting,
     RenamingGroup,

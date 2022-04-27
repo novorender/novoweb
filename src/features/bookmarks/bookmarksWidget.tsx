@@ -71,7 +71,7 @@ export function Bookmarks() {
                     minimized={minimized}
                     toggleMinimize={toggleMinimize}
                     widget={featuresConfig.bookmarks}
-                    disableShadow
+                    disableShadow={!menuOpen}
                 />
                 <Box
                     display={menuOpen || minimized ? "none" : "flex"}
