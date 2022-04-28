@@ -33,7 +33,6 @@ export function Crupdate() {
     const [collection, setCollection] = useState(bmToEdit?.grouping ?? "");
     const [personal, togglePersonal] = useToggle(bmToEdit ? bmToEdit.access === BookmarkAccess.Personal : true);
     const imgRef = useRef(bmToEdit ? bmToEdit.img ?? "" : createBookmarkImg(canvas));
-    const bookmarkRef = useRef(bmToEdit ?? createBookmark(imgRef.current));
 
     const handleSubmit: FormEventHandler = (e) => {
         e.preventDefault();
@@ -52,8 +51,10 @@ export function Crupdate() {
             return;
         }
 
+        const bm = createBookmark(createBookmarkImg(canvas));
+
         const newBookmarks = bookmarks.concat({
-            ...bookmarkRef.current,
+            ...bm,
             id: uuidv4(),
             name,
             description,
@@ -72,7 +73,8 @@ export function Crupdate() {
         const newBookmarks = bookmarks.map((bm) =>
             bm === bmToEdit
                 ? {
-                      ...bmToEdit,
+                      ...createBookmark(createBookmarkImg(canvas)),
+                      id: bmToEdit.id,
                       name,
                       description,
                       grouping: collection,
