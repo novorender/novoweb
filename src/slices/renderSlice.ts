@@ -81,11 +81,12 @@ export type ClippingPlanes = Omit<RenderSettings["clippingPlanes"], "bounds"> & 
 
 // Redux toolkit with immer removes readonly modifier of state in the reducer so we get ts errors
 // unless we cast the types to writable ones.
-type DeepWritable<T> = { -readonly [P in keyof T]: DeepWritable<T[P]> };
+export type DeepWritable<T> = { -readonly [P in keyof T]: DeepWritable<T[P]> };
 type CameraState =
     | { type: CameraType.Orthographic; params?: OrthoControllerParams }
     | { type: CameraType.Flight; goTo?: { position: Camera["position"]; rotation: Camera["rotation"] } };
 type WritableCameraState = DeepWritable<CameraState>;
+type WritableGrid = DeepWritable<RenderSettings["grid"]>;
 
 const initialState = {
     environments: [] as EnvironmentDescription[],
@@ -143,6 +144,23 @@ const initialState = {
         [AdvancedSetting.NavigationCube]: false,
         [AdvancedSetting.TerrainAsBackground]: false,
     },
+    gridDefaults: {
+        enabled: false,
+        majorLineCount: 1001,
+        minorLineCount: 4,
+        majorColor: [0.15, 0.15, 0.15] as [number, number, number],
+        minorColor: [0.65, 0.65, 0.65] as [number, number, number],
+    },
+    grid: {
+        enabled: false,
+        majorLineCount: 1001,
+        minorLineCount: 4,
+        origo: [0, 0, 0],
+        axisX: [0, 0, 0],
+        axisY: [0, 0, 0],
+        majorColor: [0, 0, 0],
+        minorColor: [0, 0, 0],
+    } as WritableGrid,
 };
 
 type State = typeof initialState & {
@@ -284,6 +302,13 @@ export const renderSlice = createSlice({
                 ...action.payload,
             };
         },
+        setGridDefaults: (state, action: PayloadAction<Partial<State["gridDefaults"]>>) => {
+            state.gridDefaults = { ...state.gridDefaults, ...action.payload };
+            state.grid = { ...state.grid, ...state.gridDefaults };
+        },
+        setGrid: (state, action: PayloadAction<Partial<State["grid"]>>) => {
+            state.grid = { ...state.gridDefaults, ...action.payload } as WritableGrid;
+        },
     },
     extraReducers: (builder) => {
         builder.addCase(fetchEnvironments.fulfilled, (state, action) => {
@@ -310,6 +335,8 @@ export const selectCameraType = (state: RootState) => state.render.camera.type;
 export const selectSelectiongOrthoPoint = (state: RootState) => state.render.selectingOrthoPoint;
 export const selectEditingScene = (state: RootState) => state.render.viewerSceneEditing;
 export const selectAdvancedSettings = (state: RootState) => state.render.advancedSettings;
+export const selectGridDefaults = (state: RootState) => state.render.gridDefaults;
+export const selectGrid = (state: RootState) => state.render.grid as RenderSettings["grid"];
 
 const { reducer, actions } = renderSlice;
 export { reducer as renderReducer, actions as renderActions };

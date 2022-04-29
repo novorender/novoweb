@@ -28,7 +28,7 @@ import {
 } from "components";
 
 import { useAppDispatch, useAppSelector } from "app/store";
-import { CameraType, renderActions } from "slices/renderSlice";
+import { CameraType, renderActions, selectGridDefaults } from "slices/renderSlice";
 import { useExplorerGlobals } from "contexts/explorerGlobals";
 import { highlightActions, useDispatchHighlighted } from "contexts/highlighted";
 
@@ -68,6 +68,7 @@ export function FollowPath() {
         state: { scene, view },
     } = useExplorerGlobals(true);
 
+    const gridDefaults = useAppSelector(selectGridDefaults);
     const landXmlPaths = useAppSelector(selectLandXmlPaths);
     const currentPath = useAppSelector(selectCurrentPath);
     const currentCenter = useAppSelector(selectCurrentCenter);
@@ -207,18 +208,15 @@ export function FollowPath() {
             const ptt = vec3.add(vec3.create(), offsetPt, vec3.scale(vec3.create(), dir, orthoCamFarOffset));
             const mat = mat4.fromRotationTranslation(mat4.create(), rotation, ptt);
 
-            view.applySettings({
-                grid: {
+            dispatch(
+                renderActions.setGrid({
+                    ...gridDefaults,
                     enabled: showGrid,
-                    majorLineCount: 101,
-                    minorLineCount: 4,
                     origo: vec3.sub(vec3.create(), pt, vec3.scale(vec3.create(), dir, 0.01)),
                     axisY: vec3.scale(vec3.create(), up, 5),
                     axisX: vec3.scale(vec3.create(), right, 5),
-                    majorColor: [0.25, 0.25, 0.25],
-                    minorColor: [0.65, 0.65, 0.65],
-                },
-            });
+                })
+            );
 
             dispatch(
                 renderActions.setCamera({
@@ -242,7 +240,7 @@ export function FollowPath() {
                 )
             );
         } else {
-            view.applySettings({ grid: { ...view.settings.grid, enabled: false } });
+            dispatch(renderActions.setGrid({ enabled: false }));
             dispatch(
                 renderActions.setCamera({
                     type: CameraType.Flight,
@@ -277,7 +275,7 @@ export function FollowPath() {
         const newState = !showGrid;
 
         dispatch(followPathActions.setShowGrid(newState));
-        view.settings.grid.enabled = newState;
+        dispatch(renderActions.setGrid({ enabled: newState }));
     };
 
     const handleAutoRecenterChange = () => {

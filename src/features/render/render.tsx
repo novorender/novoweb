@@ -58,6 +58,7 @@ import {
     selectSelectionBasketMode,
     SubtreeStatus,
     selectSubtrees,
+    selectGridDefaults,
 } from "slices/renderSlice";
 import { authActions } from "slices/authSlice";
 import { explorerActions, selectUrlBookmarkId } from "slices/explorerSlice";
@@ -89,6 +90,7 @@ import {
     inversePixelRatio,
 } from "./utils";
 import { xAxis, yAxis, axis, MAX_FLOAT } from "./consts";
+import { useHandleGridChanges } from "./useHandleGridChanges";
 
 glMatrix.setMatrixArrayType(Array);
 
@@ -207,6 +209,7 @@ export function Render3D({ onInit }: Props) {
     const measure = useAppSelector(selectMeasure);
     const panoramas = useAppSelector(selectPanoramas);
     const deviation = useAppSelector(selectDeviations);
+    const gridDefaults = useAppSelector(selectGridDefaults);
 
     const show3dMarkers = useAppSelector(selectShow3dMarkers);
     const activePanorama = useAppSelector(selectActivePanorama);
@@ -988,9 +991,9 @@ export function Render3D({ onInit }: Props) {
             }
 
             if (cameraState.type === CameraType.Flight) {
+                dispatch(renderActions.setGrid({ enabled: false }));
                 controller.enabled = true;
                 view.camera.controller = controller;
-                view.applySettings({ grid: { ...view.settings.grid, enabled: false } });
 
                 if (cameraState.goTo) {
                     view.camera.controller.moveTo(cameraState.goTo.position, cameraState.goTo.rotation);
@@ -1020,7 +1023,7 @@ export function Render3D({ onInit }: Props) {
                 view.camera.controller = orthoController;
             }
         },
-        [cameraState, view, canvas]
+        [cameraState, view, canvas, dispatch]
     );
 
     useEffect(
@@ -1137,6 +1140,7 @@ export function Render3D({ onInit }: Props) {
         ]
     );
 
+    useHandleGridChanges();
     useHandlePanoramaChanges();
 
     useEffect(() => {
@@ -1178,7 +1182,6 @@ export function Render3D({ onInit }: Props) {
             e.nativeEvent.offsetX * devicePixelRatio,
             e.nativeEvent.offsetY * devicePixelRatio
         );
-
         if (deviation.mode !== "off" && cameraState.type === CameraType.Orthographic) {
             const pickSize = isTouchPointer.current ? 16 : 0;
             const deviation = await pickDeviationArea({
@@ -1234,14 +1237,31 @@ export function Render3D({ onInit }: Props) {
                 return;
             }
 
+            const normal = result.normal.some((n) => Number.isNaN(n)) ? undefined : result.normal;
+
             const orthoController = api.createCameraController({ kind: "ortho" }, canvas);
-            (orthoController as any).init(result.position, result.normal, view.camera);
+            (orthoController as any).init(result.position, normal, view.camera);
             flightController.current = view.camera.controller;
             flightController.current.enabled = false;
 
             view.camera.controller = orthoController;
             dispatch(renderActions.setCamera({ type: CameraType.Orthographic }));
             dispatch(renderActions.setSelectingOrthoPoint(false));
+
+            const mat = (orthoController.params as any).referenceCoordSys;
+            const right = vec3.fromValues(mat[0], mat[1], mat[2]);
+            const up = vec3.fromValues(mat[4], mat[5], mat[6]);
+            const norm = vec3.fromValues(mat[8], mat[9], mat[10]);
+            const pt = vec3.fromValues(mat[12], mat[13], mat[14]);
+            const squareSize = 1 * (gridDefaults.minorLineCount + 1);
+
+            dispatch(
+                renderActions.setGrid({
+                    origo: vec3.sub(vec3.create(), pt, vec3.scale(vec3.create(), norm, 0.001)),
+                    axisY: vec3.scale(vec3.create(), up, squareSize),
+                    axisX: vec3.scale(vec3.create(), right, squareSize),
+                })
+            );
 
             return;
         }

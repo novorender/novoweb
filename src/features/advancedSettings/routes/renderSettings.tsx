@@ -1,6 +1,6 @@
 import { useState, ChangeEvent, SyntheticEvent } from "react";
 import { useTheme, Box, Button, FormControlLabel, Slider, Typography } from "@mui/material";
-import { Internal, View } from "@novorender/webgl-api";
+import { Internal } from "@novorender/webgl-api";
 import { useHistory } from "react-router-dom";
 import { ArrowBack, Save } from "@mui/icons-material";
 
@@ -15,6 +15,17 @@ import {
     SubtreeStatus,
 } from "slices/renderSlice";
 import { selectUser } from "slices/authSlice";
+
+import {
+    toggleAutoFps,
+    toggleShowBoundingBox,
+    toggleDoubleSidedMaterials,
+    toggleDoubleSidedTransparentMaterials,
+    toggleHoldDynamic,
+    toggleTriangleBudget,
+    toggleQualityPoints,
+    toggleTerrainAsBackground,
+} from "../utils";
 
 type SliderSettings =
     | AdvancedSetting.PointSize
@@ -424,73 +435,4 @@ export function RenderSettings({ save, saving }: { save: () => Promise<void>; sa
             </ScrollBox>
         </>
     );
-}
-
-function toggleAutoFps(view: View): void {
-    const { resolution } = view.settings.quality;
-
-    if (resolution.autoAdjust) {
-        resolution.autoAdjust.enabled = !resolution.autoAdjust.enabled;
-        return;
-    }
-
-    view.applySettings({
-        quality: {
-            resolution: { autoAdjust: { enabled: true, min: 0.2, max: 1 }, value: resolution.value },
-            detail: view.settings.quality.detail,
-        },
-    });
-}
-
-function toggleShowBoundingBox(view: View): void {
-    const { diagnostics } = view.settings as Internal.RenderSettingsExt;
-    diagnostics.showBoundingBoxes = !diagnostics.showBoundingBoxes;
-}
-
-function toggleDoubleSidedMaterials(view: View): void {
-    const {
-        advanced: { doubleSided },
-    } = view.settings as Internal.RenderSettingsExt;
-
-    doubleSided.opaque = !doubleSided.opaque;
-}
-
-function toggleDoubleSidedTransparentMaterials(view: View): void {
-    const {
-        advanced: { doubleSided },
-    } = view.settings as Internal.RenderSettingsExt;
-
-    doubleSided.transparent = !doubleSided.transparent;
-}
-
-function toggleHoldDynamic(view: View): void {
-    const { diagnostics } = view.settings as Internal.RenderSettingsExt;
-
-    diagnostics.holdDynamic = !diagnostics.holdDynamic;
-}
-
-function toggleTriangleBudget(view: View): void {
-    const { detail } = view.settings.quality;
-
-    if (detail.autoAdjust) {
-        detail.autoAdjust.enabled = !detail.autoAdjust.enabled;
-        return;
-    }
-
-    view.applySettings({
-        quality: {
-            detail: { autoAdjust: { enabled: true, min: -1, max: 1 }, value: detail.value },
-            resolution: view.settings.quality.resolution,
-        },
-    });
-}
-
-function toggleQualityPoints(view: View): void {
-    const { points } = view.settings as Internal.RenderSettingsExt;
-    points.shape = points.shape === "disc" ? "square" : "disc";
-}
-
-function toggleTerrainAsBackground(view: View): void {
-    const { terrain } = view.settings;
-    terrain.asBackground = !terrain.asBackground;
 }

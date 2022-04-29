@@ -9,7 +9,7 @@ import { useDispatchVisible, visibleActions } from "contexts/visible";
 import { followPathActions, getNurbs } from "features/followPath";
 import { subOrthoCamFarOffset } from "features/followPath/followPath";
 import { measureActions } from "features/measure";
-import { CameraType, ObjectVisibility, renderActions, SelectionBasketMode } from "slices/renderSlice";
+import { CameraType, DeepWritable, ObjectVisibility, renderActions, SelectionBasketMode } from "slices/renderSlice";
 
 export function useSelectBookmark() {
     const dispatchVisible = useDispatchVisible();
@@ -103,7 +103,8 @@ export function useSelectBookmark() {
                 return;
             }
 
-            view.applySettings({ grid: bookmark.grid });
+            dispatch(renderActions.setGridDefaults({ enabled: bookmark.grid.enabled }));
+            dispatch(renderActions.setGrid(bookmark.grid as DeepWritable<typeof bookmark.grid>));
         }
 
         if (bookmark.followPath) {
@@ -111,7 +112,7 @@ export function useSelectBookmark() {
                 return;
             }
 
-            const { profile, id } = bookmark.followPath;
+            const { profile, id, currentCenter } = bookmark.followPath;
 
             getNurbs({ scene, objectId: id })
                 .then((nurbs) => {
@@ -119,7 +120,7 @@ export function useSelectBookmark() {
                     dispatch(followPathActions.setProfileRange({ min: nurbs.knots[0], max: nurbs.knots.slice(-1)[0] }));
                     dispatch(followPathActions.setView2d(Boolean(bookmark.ortho)));
                     dispatch(followPathActions.setShowGrid(Boolean(bookmark.grid?.enabled)));
-                    dispatch(followPathActions.setCurrentCenter(bookmark.followPath.currentCenter));
+                    dispatch(followPathActions.setCurrentCenter(currentCenter));
 
                     if (bookmark.ortho?.far) {
                         dispatch(followPathActions.setClipping(subOrthoCamFarOffset(bookmark.ortho.far)));

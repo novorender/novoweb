@@ -248,7 +248,7 @@ export const featuresConfig = {
     },
     toggleSubtrees: {
         key: "toggleSubtrees",
-        name: "Toggle subtrees",
+        name: "Toggle render types",
         Icon: GradientIcon,
         type: FeatureType.SelectionModifier,
         defaultLocked: false,
