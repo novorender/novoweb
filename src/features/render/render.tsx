@@ -134,21 +134,13 @@ const PanoramaMarker = styled((props: any) => <CameraAlt color="primary" height=
     `
 );
 
-const DistanceText = styled("text")(
-    () => css`
-        text-anchor: middle;
-        fill: white;
-        font-size: 16px;
-        font-weight: bold;
-        user-select: none;
-    `
-);
-
 const AxisText = styled((props: SVGProps<SVGTextElement>) => <text alignmentBaseline="middle" {...props} />)(
     () => css`
         fill: white;
-        font-size: 14px;
+        font-size: 16px;
         user-select: none;
+        font-weight: bold;
+        text-anchor: middle;
     `
 );
 
@@ -444,6 +436,7 @@ export function Render3D({ onInit }: Props) {
                 vec3.fromValues(pts[1][0], pts[0][1], pts[1][2]),
                 pts[1],
             ];
+
             renderMeasurePoints(view, [pts[0], pts[1]], "brepPathX", undefined, {
                 textName: "brepTextX",
                 distance: Math.abs(diff[0]),
@@ -455,6 +448,14 @@ export function Render3D({ onInit }: Props) {
             renderMeasurePoints(view, [pts[2], pts[3]], "brepPathZ", undefined, {
                 textName: "brepTextZ",
                 distance: Math.abs(diff[1]),
+            });
+
+            const planarDiff = vec2.len(vec2.fromValues(diff[0], diff[2]));
+            const pdPt1 = vec3.fromValues(pts[0][0], Math.min(pts[0][1], pts[3][1]), pts[0][2]);
+            const pdPt2 = vec3.fromValues(pts[3][0], Math.min(pts[0][1], pts[3][1]), pts[3][2]);
+            renderMeasurePoints(view, [pdPt1, pdPt2], "brepPathXZ", undefined, {
+                textName: "brepTextXZ",
+                distance: planarDiff,
             });
         } else {
         }
@@ -1539,7 +1540,7 @@ export function Render3D({ onInit }: Props) {
                                 )}
                             {measure.duoMeasurementValues?.normalPoints ? (
                                 <>
-                                    <path id="normalDistance" d="" stroke="black" strokeWidth={2} fill="none" />
+                                    <path id="normalDistance" d="" stroke="black" strokeWidth={3} fill="none" />
                                     <MeasurementPoint
                                         name={`normal start`}
                                         id={`normal_0`}
@@ -1554,7 +1555,7 @@ export function Render3D({ onInit }: Props) {
                                         disabled={true}
                                         fill="black"
                                     />
-                                    <DistanceText id={`normalDistanceText`} />
+                                    <AxisText id={`normalDistanceText`} />
                                 </>
                             ) : null}
                             {measure.duoMeasurementValues?.pointA && measure.duoMeasurementValues?.pointB ? (
@@ -1574,13 +1575,15 @@ export function Render3D({ onInit }: Props) {
                                         fill="green"
                                     />
                                     <path id="brepDistance" d="" stroke="green" strokeWidth={2} fill="none" />
-                                    <path id="brepPathX" d="" stroke="red" strokeWidth={1} fill="none" />
-                                    <path id="brepPathY" d="" stroke="lightgreen" strokeWidth={1} fill="none" />
-                                    <path id="brepPathZ" d="" stroke="blue" strokeWidth={1} fill="none" />
+                                    <path id="brepPathX" d="" stroke="red" strokeWidth={2} fill="none" />
+                                    <path id="brepPathY" d="" stroke="lightgreen" strokeWidth={2} fill="none" />
+                                    <path id="brepPathZ" d="" stroke="blue" strokeWidth={2} fill="none" />
+                                    <path id="brepPathXZ" d="" stroke="purple" strokeWidth={2} fill="none" />
                                     <AxisText id="brepTextX" />
                                     <AxisText id="brepTextY" />
                                     <AxisText id="brepTextZ" />
-                                    <DistanceText id={`distanceText`} />
+                                    <AxisText id="brepTextXZ" />
+                                    <AxisText id={`distanceText`} />
                                 </>
                             ) : null}
                             {panoramas && show3dMarkers

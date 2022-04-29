@@ -24,6 +24,7 @@ import { useMountedState } from "hooks/useMountedState";
 import { measureActions, SelectedMeasureObj, selectMeasure } from "./measureSlice";
 import { Slope } from "./slope";
 import { VertexTable, MeasurementTable } from "./tables";
+import { PlanarDiff } from "./planarDiff";
 
 const NestedAccordionSummary = styled(AccordionSummary)(
     ({ theme }) => css`
@@ -159,6 +160,7 @@ export function MeasuredResult() {
             : duoMeasurementValues.normalPoints;
 
     const showSlope = duoMeasurementValues.pointA && duoMeasurementValues.pointB;
+    const showPlanarDiff = duoMeasurementValues.pointA && duoMeasurementValues.pointB;
 
     return (
         <Accordion defaultExpanded={true}>
@@ -189,6 +191,9 @@ export function MeasuredResult() {
                                     </Grid>
                                 </Grid>
                             </ListItem>
+                        ) : null}
+                        {showPlanarDiff ? (
+                            <PlanarDiff start={duoMeasurementValues.pointA!} end={duoMeasurementValues.pointB!} />
                         ) : null}
                         {showSlope ? (
                             <Slope start={duoMeasurementValues.pointA!} end={duoMeasurementValues.pointB!} />
