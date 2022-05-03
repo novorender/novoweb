@@ -181,7 +181,7 @@ export const featuresConfig = {
     },
     followPath: {
         key: "followPath",
-        name: "Follow Path",
+        name: "Follow path",
         Icon: RouteOutlined,
         type: FeatureType.Widget,
         defaultLocked: false,

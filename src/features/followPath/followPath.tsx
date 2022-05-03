@@ -322,7 +322,11 @@ export function FollowPath() {
             dispatch(followPathActions.setStep("1"));
         }
 
-        let next = Number(profile) + Number(step || "1");
+        let next = Number(profile) + Number(step.replace(",", ".") || "1");
+
+        if (Number.isNaN(next)) {
+            next = 1;
+        }
 
         if (next > profileRange.max) {
             next = profileRange.max;
@@ -469,6 +473,7 @@ export function FollowPath() {
                                     <Typography sx={{ mb: 0.5 }}>Profile:</Typography>
                                     <OutlinedInput
                                         value={profile}
+                                        inputProps={{ inputMode: "numeric", pattern: "[0-9,.]*" }}
                                         onChange={(e) => dispatch(followPathActions.setProfile(e.target.value))}
                                         fullWidth
                                         size="small"
@@ -481,9 +486,10 @@ export function FollowPath() {
                                     />
                                 </Grid>
                                 <Grid pt={0} item xs={6}>
-                                    <Typography sx={{ mb: 0.5 }}>Meters:</Typography>
+                                    <Typography sx={{ mb: 0.5 }}>Meter:</Typography>
                                     <OutlinedInput
                                         value={step}
+                                        inputProps={{ inputMode: "numeric", pattern: "[0-9]*" }}
                                         onChange={(e) => dispatch(followPathActions.setStep(e.target.value))}
                                         size="small"
                                         fullWidth
@@ -555,17 +561,17 @@ export function FollowPath() {
 
                                     <Divider sx={{ my: 1 }} />
 
-                                    <Typography>Clipping</Typography>
+                                    <Typography>Clipping: {clipping} m</Typography>
                                     <Box mx={2}>
                                         <Slider
                                             getAriaLabel={() => "Clipping near/far"}
                                             value={clipping}
                                             min={0.1}
-                                            max={10}
-                                            step={0.1}
+                                            max={1}
+                                            step={0.05}
                                             onChange={handleClippingChange}
                                             onChangeCommitted={handleClippingCommit}
-                                            valueLabelDisplay="auto"
+                                            valueLabelDisplay="off"
                                         />
                                     </Box>
                                 </>

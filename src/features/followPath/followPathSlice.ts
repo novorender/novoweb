@@ -33,7 +33,7 @@ const initialState = {
     view2d: false,
     showGrid: true,
     autoRecenter: false,
-    clipping: 2,
+    clipping: 0.1,
 };
 
 type State = typeof initialState;
