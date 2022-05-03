@@ -1,5 +1,5 @@
 import { MutableRefObject } from "react";
-import { ObjectGroup } from "@novorender/data-js-api";
+import { ObjectGroup, SceneData } from "@novorender/data-js-api";
 import {
     CameraController,
     CameraControllerParams,
@@ -14,6 +14,7 @@ import {
     Scene,
     View,
 } from "@novorender/webgl-api";
+import { vec2 } from "gl-matrix";
 
 import { api, dataApi } from "app";
 import { offscreenCanvas } from "config";
@@ -28,6 +29,7 @@ import {
     AdvancedSetting,
     CameraType,
     ObjectVisibility,
+    ProjectSetting,
     renderActions,
     RenderState,
     SelectionBasketMode,
@@ -38,7 +40,6 @@ import { VecRGB, VecRGBA } from "utils/color";
 import { sleep } from "utils/timers";
 import { featuresConfig, WidgetKey } from "config/features";
 import { explorerActions } from "slices/explorerSlice";
-import { vec2 } from "gl-matrix";
 
 type Settings = {
     taaEnabled: boolean;
@@ -512,6 +513,10 @@ export function initAdvancedSettings(view: View, customProperties: Record<string
             [AdvancedSetting.TerrainAsBackground]: Boolean(terrain.asBackground),
         })
     );
+}
+
+export function initProjectSettings({ sceneData }: { sceneData: SceneData }): void {
+    store.dispatch(renderActions.setProjectSettings({ [ProjectSetting.TmZone]: sceneData.tmZone ?? "" }));
 }
 
 export async function pickDeviationArea({

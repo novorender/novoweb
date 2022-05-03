@@ -10,7 +10,7 @@ import { featuresConfig, FeatureType } from "config/features";
 import { Divider, LinearProgress, LogoSpeedDial, WidgetContainer, WidgetHeader } from "components";
 import { WidgetList } from "features/widgetList";
 import { useExplorerGlobals } from "contexts/explorerGlobals";
-import { selectAdvancedSettings, selectBaseCameraSpeed } from "slices/renderSlice";
+import { selectAdvancedSettings, selectBaseCameraSpeed, selectProjectSettings } from "slices/renderSlice";
 import { selectEnabledWidgets, selectIsAdminScene } from "slices/explorerSlice";
 
 import { useMountedState } from "hooks/useMountedState";
@@ -20,6 +20,7 @@ import { useToggle } from "hooks/useToggle";
 import { CameraSettings } from "./routes/cameraSettings";
 import { FeatureSettings } from "./routes/featureSettings";
 import { RenderSettings } from "./routes/renderSettings";
+import { ProjectSettings } from "./routes/projectSettings";
 
 enum Status {
     Idle,
@@ -36,6 +37,7 @@ export function AdvancedSettings() {
 
     const isAdminScene = useAppSelector(selectIsAdminScene);
     const settings = useAppSelector(selectAdvancedSettings);
+    const projectSettings = useAppSelector(selectProjectSettings);
     const baseCameraSpeed = useAppSelector(selectBaseCameraSpeed);
     const enabledWidgets = useAppSelector(selectEnabledWidgets);
     const [menuOpen, toggleMenu] = useToggle();
@@ -123,6 +125,7 @@ export function AdvancedSettings() {
                         requireConsent: customProperties?.enabledFeatures?.requireConsent,
                     },
                 },
+                tmZone: projectSettings.tmZone,
             });
         } catch {
             return setStatus(Status.SaveError);
@@ -193,6 +196,9 @@ export function AdvancedSettings() {
                             <Route path="/features" exact>
                                 <FeatureSettings save={save} saving={saving} />
                             </Route>
+                            <Route path="/project" exact>
+                                <ProjectSettings save={save} saving={saving} />
+                            </Route>
                             <Route path="/render" exact>
                                 <RenderSettings save={save} saving={saving} />
                             </Route>
@@ -240,6 +246,9 @@ function Root({ save, saving }: { save: () => Promise<void>; saving: boolean }) 
                 <List disablePadding>
                     <ListItemButton sx={{ pl: 1, fontWeight: 600 }} disableGutters component={Link} to="/features">
                         Features
+                    </ListItemButton>
+                    <ListItemButton sx={{ pl: 1, fontWeight: 600 }} disableGutters component={Link} to="/project">
+                        Project
                     </ListItemButton>
                     <ListItemButton sx={{ pl: 1, fontWeight: 600 }} disableGutters component={Link} to="/camera">
                         Camera

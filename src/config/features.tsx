@@ -1,32 +1,35 @@
-import ListIcon from "@mui/icons-material/List";
-import TreeIcon from "@mui/icons-material/AccountTreeRounded";
-import StarIcon from "@mui/icons-material/Star";
-import ShareIcon from "@mui/icons-material/Share";
-import HomeIcon from "@mui/icons-material/Home";
-import UndoIcon from "@mui/icons-material/Undo";
-import RedoIcon from "@mui/icons-material/Redo";
-import LayersIcon from "@mui/icons-material/Layers";
-import ColorLensIcon from "@mui/icons-material/ColorLens";
-import VisibilityIcon from "@mui/icons-material/Visibility";
-import VisibilityOffIcon from "@mui/icons-material/VisibilityOff";
-import CheckBoxIcon from "@mui/icons-material/CheckBox";
-import StraightenIcon from "@mui/icons-material/Straighten";
-import CategoryIcon from "@mui/icons-material/Category";
-import FolderIcon from "@mui/icons-material/Folder";
-import SearchIcon from "@mui/icons-material/Search";
-import GradientIcon from "@mui/icons-material/Gradient";
-import FlightTakeoffIcon from "@mui/icons-material/FlightTakeoff";
-import DomainIcon from "@mui/icons-material/Domain";
-import MovieIcon from "@mui/icons-material/Movie";
-import CropLandscapeIcon from "@mui/icons-material/CropLandscape";
-import CameraswitchIcon from "@mui/icons-material/Cameraswitch";
-import SettingsIcon from "@mui/icons-material/Settings";
-import VrpanoOutlinedIcon from "@mui/icons-material/VrpanoOutlined";
-import BlurOnIcon from "@mui/icons-material/BlurOn";
-import RouteOutlinedIcon from "@mui/icons-material/RouteOutlined";
+import {
+    AccountTreeRounded,
+    BlurOn,
+    Cameraswitch,
+    Category,
+    CheckBox,
+    ColorLens,
+    CropLandscape,
+    Domain,
+    FlightTakeoff,
+    Folder,
+    Gradient,
+    Home,
+    Layers,
+    List,
+    Movie,
+    MyLocation,
+    Redo,
+    RouteOutlined,
+    Search,
+    Settings,
+    Share,
+    Star,
+    Straighten,
+    Undo,
+    Visibility,
+    VisibilityOff,
+    VrpanoOutlined,
+} from "@mui/icons-material";
 
-import { ReactComponent as ClippingIcon } from "media/icons/clipping.svg";
-import { ReactComponent as RunIcon } from "media/icons/run.svg";
+import { ReactComponent as Clipping } from "media/icons/clipping.svg";
+import { ReactComponent as Run } from "media/icons/run.svg";
 import { ReactComponent as BimTrack } from "media/icons/bimtrack.svg";
 
 export enum FeatureType {
@@ -37,10 +40,17 @@ export enum FeatureType {
 }
 
 export const featuresConfig = {
+    myLocation: {
+        key: "myLocation",
+        name: "My location",
+        Icon: MyLocation,
+        type: FeatureType.Widget,
+        defaultLocked: false,
+    },
     bimcollab: {
         key: "bimcollab",
         name: "BIMcollab",
-        Icon: DomainIcon,
+        Icon: Domain,
         type: FeatureType.Widget,
         defaultLocked: true,
     },
@@ -54,105 +64,105 @@ export const featuresConfig = {
     advancedSettings: {
         key: "advancedSettings",
         name: "Adv. settings",
-        Icon: SettingsIcon,
+        Icon: Settings,
         type: FeatureType.AdminWidget,
         defaultLocked: false,
     },
     viewerScenes: {
         key: "viewerScenes",
         name: "Viewer scenes",
-        Icon: MovieIcon,
+        Icon: Movie,
         type: FeatureType.AdminWidget,
         defaultLocked: true,
     },
     selectionBasket: {
         key: "selectionBasket",
         name: "Sel. basket",
-        Icon: LayersIcon,
+        Icon: Layers,
         type: FeatureType.Widget,
         defaultLocked: false,
     },
     modelTree: {
         key: "modelTree",
         name: "Model tree",
-        Icon: CategoryIcon,
+        Icon: Category,
         type: FeatureType.Widget,
         defaultLocked: false,
     },
     properties: {
         key: "properties",
         name: "Properties",
-        Icon: ListIcon,
+        Icon: List,
         type: FeatureType.Widget,
         defaultLocked: false,
     },
     propertyTree: {
         key: "propertyTree",
         name: "Property tree",
-        Icon: TreeIcon,
+        Icon: AccountTreeRounded,
         type: FeatureType.Widget,
         defaultLocked: false,
     },
     bookmarks: {
         key: "bookmarks",
         name: "Bookmarks",
-        Icon: StarIcon,
+        Icon: Star,
         type: FeatureType.Widget,
         defaultLocked: false,
     },
     groups: {
         key: "groups",
         name: "Groups",
-        Icon: FolderIcon,
+        Icon: Folder,
         type: FeatureType.Widget,
         defaultLocked: false,
     },
     search: {
         key: "search",
         name: "Search",
-        Icon: SearchIcon,
+        Icon: Search,
         type: FeatureType.Widget,
         defaultLocked: false,
     },
     clippingBox: {
         key: "clippingBox",
         name: "Clipping box",
-        Icon: ClippingIcon,
+        Icon: Clipping,
         type: FeatureType.Widget,
         defaultLocked: false,
     },
     measure: {
         key: "measure",
         name: "Measure",
-        Icon: StraightenIcon,
+        Icon: Straighten,
         type: FeatureType.Widget,
         defaultLocked: false,
     },
     shareLink: {
         key: "shareLink",
         name: "Share link",
-        Icon: ShareIcon,
+        Icon: Share,
         type: FeatureType.Widget,
         defaultLocked: false,
     },
     clippingPlanes: {
         key: "clippingPlanes",
         name: "Clipping plane",
-        Icon: CropLandscapeIcon,
+        Icon: CropLandscape,
         type: FeatureType.Widget,
         defaultLocked: false,
     },
     orthoCam: {
         key: "orthoCam",
         name: "2D",
-        Icon: CameraswitchIcon,
+        Icon: Cameraswitch,
         type: FeatureType.Widget,
         defaultLocked: false,
     },
     panoramas: {
         key: "panoramas",
         name: "Panoramas",
-        Icon: VrpanoOutlinedIcon,
+        Icon: VrpanoOutlined,
         type: FeatureType.Widget,
         defaultLocked: false,
         dependencies: {
@@ -162,7 +172,7 @@ export const featuresConfig = {
     deviations: {
         key: "deviations",
         name: "Deviations",
-        Icon: BlurOnIcon,
+        Icon: BlurOn,
         type: FeatureType.Widget,
         defaultLocked: false,
         dependencies: {
@@ -172,84 +182,84 @@ export const featuresConfig = {
     followPath: {
         key: "followPath",
         name: "Follow Path",
-        Icon: RouteOutlinedIcon,
+        Icon: RouteOutlined,
         type: FeatureType.Widget,
         defaultLocked: false,
     },
     home: {
         key: "home",
         name: "Home",
-        Icon: HomeIcon,
+        Icon: Home,
         type: FeatureType.CameraNavigation,
         defaultLocked: false,
     },
     stepBack: {
         key: "stepBack",
         name: "Step back",
-        Icon: UndoIcon,
+        Icon: Undo,
         type: FeatureType.CameraNavigation,
         defaultLocked: false,
     },
     stepForwards: {
         key: "stepForwards",
         name: "Step forwards",
-        Icon: RedoIcon,
+        Icon: Redo,
         type: FeatureType.CameraNavigation,
         defaultLocked: false,
     },
     cameraSpeed: {
         key: "cameraSpeed",
         name: "Camera speed",
-        Icon: RunIcon,
+        Icon: Run,
         type: FeatureType.CameraNavigation,
         defaultLocked: false,
     },
     flyToSelected: {
         key: "flyToSelected",
         name: "Fly to selected",
-        Icon: FlightTakeoffIcon,
+        Icon: FlightTakeoff,
         type: FeatureType.CameraNavigation,
         defaultLocked: false,
     },
     multipleSelection: {
         key: "multipleSelection",
         name: "Multiple selection",
-        Icon: LayersIcon,
+        Icon: Layers,
         type: FeatureType.SelectionModifier,
         defaultLocked: false,
     },
     selectionColor: {
         key: "selectionColor",
         name: "Selection color",
-        Icon: ColorLensIcon,
+        Icon: ColorLens,
         type: FeatureType.SelectionModifier,
         defaultLocked: false,
     },
     viewOnlySelected: {
         key: "viewOnlySelected",
         name: "View only selected",
-        Icon: VisibilityIcon,
+        Icon: Visibility,
         type: FeatureType.SelectionModifier,
         defaultLocked: false,
     },
     hideSelected: {
         key: "hideSelected",
         name: "Hide selected",
-        Icon: VisibilityOffIcon,
+        Icon: VisibilityOff,
         type: FeatureType.SelectionModifier,
         defaultLocked: false,
     },
     clearSelection: {
         key: "clearSelection",
         name: "Clear selection",
-        Icon: CheckBoxIcon,
+        Icon: CheckBox,
         type: FeatureType.SelectionModifier,
         defaultLocked: false,
     },
     toggleSubtrees: {
         key: "toggleSubtrees",
         name: "Toggle render types",
-        Icon: GradientIcon,
+        Icon: Gradient,
         type: FeatureType.SelectionModifier,
         defaultLocked: false,
     },

@@ -1,0 +1,1 @@
+export { MyLocation } from "./myLocation";

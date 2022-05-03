@@ -70,6 +70,10 @@ export enum AdvancedSetting {
     TerrainAsBackground = "terrainAsBackground",
 }
 
+export enum ProjectSetting {
+    TmZone = "tmZone",
+}
+
 export enum SelectionBasketMode {
     Loose,
     Strict,
@@ -161,6 +165,9 @@ const initialState = {
         majorColor: [0, 0, 0],
         minorColor: [0, 0, 0],
     } as WritableGrid,
+    projectSettings: {
+        [ProjectSetting.TmZone]: "",
+    },
 };
 
 type State = typeof initialState & {
@@ -273,7 +280,12 @@ export const renderSlice = createSlice({
             state.clippingPlanes = initialState.clippingPlanes;
         },
         resetState: (state) => {
-            return { ...initialState, environments: state.environments, viewerSceneEditing: state.viewerSceneEditing };
+            return {
+                ...initialState,
+                environments: state.environments,
+                viewerSceneEditing: state.viewerSceneEditing,
+                projectSettings: state.projectSettings,
+            };
         },
         setCamera: (state, { payload }: PayloadAction<CameraState>) => {
             state.camera = payload as WritableCameraState;
@@ -299,6 +311,12 @@ export const renderSlice = createSlice({
         setAdvancedSettings: (state, action: PayloadAction<Partial<State["advancedSettings"]>>) => {
             state.advancedSettings = {
                 ...state.advancedSettings,
+                ...action.payload,
+            };
+        },
+        setProjectSettings: (state, action: PayloadAction<Partial<State["projectSettings"]>>) => {
+            state.projectSettings = {
+                ...state.projectSettings,
                 ...action.payload,
             };
         },
@@ -335,6 +353,7 @@ export const selectCameraType = (state: RootState) => state.render.camera.type;
 export const selectSelectiongOrthoPoint = (state: RootState) => state.render.selectingOrthoPoint;
 export const selectEditingScene = (state: RootState) => state.render.viewerSceneEditing;
 export const selectAdvancedSettings = (state: RootState) => state.render.advancedSettings;
+export const selectProjectSettings = (state: RootState) => state.render.projectSettings;
 export const selectGridDefaults = (state: RootState) => state.render.gridDefaults;
 export const selectGrid = (state: RootState) => state.render.grid as RenderSettings["grid"];
 

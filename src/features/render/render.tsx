@@ -88,6 +88,7 @@ import {
     pickDeviationArea,
     initSubtrees,
     inversePixelRatio,
+    initProjectSettings,
 } from "./utils";
 import { xAxis, yAxis, axis, MAX_FLOAT } from "./consts";
 import { useHandleGridChanges } from "./useHandleGridChanges";
@@ -747,6 +748,7 @@ export function Render3D({ onInit }: Props) {
 
                 onInit({ customProperties });
                 initAdvancedSettings(_view, customProperties);
+                initProjectSettings({ sceneData: sceneResponse });
 
                 dispatchGlobals(
                     explorerGlobalsActions.update({
