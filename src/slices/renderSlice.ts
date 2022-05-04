@@ -79,6 +79,8 @@ export enum SelectionBasketMode {
     Strict,
 }
 
+export type Subtree = keyof NonNullable<State["subtrees"]>;
+
 type CameraPosition = Pick<Camera, "position" | "rotation">;
 export type ObjectGroups = { default: ObjectGroup; defaultHidden: ObjectGroup; custom: ObjectGroup[] };
 export type ClippingPlanes = Omit<RenderSettings["clippingPlanes"], "bounds"> & { defining: boolean };
@@ -243,10 +245,7 @@ export const renderSlice = createSlice({
         setSubtrees: (state, action: PayloadAction<State["subtrees"]>) => {
             state.subtrees = action.payload;
         },
-        toggleSubtree: (
-            state,
-            action: PayloadAction<{ subtree: keyof NonNullable<State["subtrees"]>; newState?: SubtreeStatus }>
-        ) => {
+        toggleSubtree: (state, action: PayloadAction<{ subtree: Subtree; newState?: SubtreeStatus }>) => {
             if (!state.subtrees || state.subtrees[action.payload.subtree] === SubtreeStatus.Unavailable) {
                 return;
             }

@@ -10,7 +10,13 @@ import { featuresConfig, FeatureType } from "config/features";
 import { Divider, LinearProgress, LogoSpeedDial, WidgetContainer, WidgetHeader } from "components";
 import { WidgetList } from "features/widgetList";
 import { useExplorerGlobals } from "contexts/explorerGlobals";
-import { selectAdvancedSettings, selectBaseCameraSpeed, selectProjectSettings } from "slices/renderSlice";
+import {
+    selectAdvancedSettings,
+    selectBaseCameraSpeed,
+    selectProjectSettings,
+    selectSubtrees,
+    SubtreeStatus,
+} from "slices/renderSlice";
 import { selectEnabledWidgets, selectIsAdminScene } from "slices/explorerSlice";
 
 import { useMountedState } from "hooks/useMountedState";
@@ -36,6 +42,7 @@ export function AdvancedSettings() {
     } = useExplorerGlobals(true);
 
     const isAdminScene = useAppSelector(selectIsAdminScene);
+    const subtrees = useAppSelector(selectSubtrees);
     const settings = useAppSelector(selectAdvancedSettings);
     const projectSettings = useAppSelector(selectProjectSettings);
     const baseCameraSpeed = useAppSelector(selectBaseCameraSpeed);
@@ -67,6 +74,10 @@ export function AdvancedSettings() {
                           ...originalSettings,
                           advanced: {
                               ...originalSettings.advanced,
+                              hideTriangles: subtrees?.triangles === SubtreeStatus.Hidden,
+                              hidePoints: subtrees?.points === SubtreeStatus.Hidden,
+                              hideTerrain: subtrees?.terrain === SubtreeStatus.Hidden,
+                              hideLines: subtrees?.lines === SubtreeStatus.Hidden,
                               doubleSided: {
                                   opaque: settings.doubleSidedMaterials,
                                   transparent: settings.doubleSidedTransparentMaterials,

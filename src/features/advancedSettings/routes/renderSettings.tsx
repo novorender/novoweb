@@ -13,6 +13,7 @@ import {
     renderActions,
     selectSubtrees,
     SubtreeStatus,
+    Subtree,
 } from "slices/renderSlice";
 import { selectUser } from "slices/authSlice";
 
@@ -65,6 +66,10 @@ export function RenderSettings({ save, saving }: { save: () => Promise<void>; sa
     const [maxSize, setMaxSize] = useState(maxPointSize);
     const [toleranceFactor, setToleranceFactor] = useState(pointToleranceFactor);
     const [ambLight, setAmbLight] = useState(ambientLight);
+
+    const handleSubtreeToggle = (subtree: Subtree) => () => {
+        dispatch(renderActions.toggleSubtree({ subtree }));
+    };
 
     const handleToggle = ({ target: { name, checked } }: ChangeEvent<HTMLInputElement>) => {
         dispatch(renderActions.setAdvancedSettings({ [name]: checked }));
@@ -138,6 +143,7 @@ export function RenderSettings({ save, saving }: { save: () => Promise<void>; sa
 
     const showPointSettings = subtrees?.points !== SubtreeStatus.Unavailable;
     const showMeshSettings = subtrees?.triangles !== SubtreeStatus.Unavailable;
+    const showLineSettings = subtrees?.lines !== SubtreeStatus.Unavailable;
     const showTerrainSettings = subtrees?.terrain !== SubtreeStatus.Unavailable;
 
     return (
@@ -180,6 +186,20 @@ export function RenderSettings({ save, saving }: { save: () => Promise<void>; sa
                         <AccordionSummary>Mesh</AccordionSummary>
                         <AccordionDetails>
                             <Box p={1} display="flex" flexDirection="column">
+                                <FormControlLabel
+                                    sx={{ ml: 0, mb: 2 }}
+                                    control={
+                                        <Switch
+                                            checked={subtrees && subtrees?.triangles === SubtreeStatus.Shown}
+                                            onChange={handleSubtreeToggle("triangles")}
+                                        />
+                                    }
+                                    label={
+                                        <Box ml={1} fontSize={16}>
+                                            Show
+                                        </Box>
+                                    }
+                                />
                                 <FormControlLabel
                                     sx={{ ml: 0, mb: 2 }}
                                     control={
@@ -284,6 +304,20 @@ export function RenderSettings({ save, saving }: { save: () => Promise<void>; sa
                         <AccordionDetails>
                             <Box p={1} display="flex" flexDirection="column">
                                 <FormControlLabel
+                                    sx={{ ml: 0, mb: 2 }}
+                                    control={
+                                        <Switch
+                                            checked={subtrees && subtrees?.points === SubtreeStatus.Shown}
+                                            onChange={handleSubtreeToggle("points")}
+                                        />
+                                    }
+                                    label={
+                                        <Box ml={1} fontSize={16}>
+                                            Show
+                                        </Box>
+                                    }
+                                />
+                                <FormControlLabel
                                     sx={{ ml: 0, mb: 1 }}
                                     control={
                                         <Switch
@@ -368,11 +402,48 @@ export function RenderSettings({ save, saving }: { save: () => Promise<void>; sa
                         </AccordionDetails>
                     </Accordion>
                 ) : null}
+                {showLineSettings ? (
+                    <Accordion>
+                        <AccordionSummary>Lines</AccordionSummary>
+                        <AccordionDetails>
+                            <Box p={1} display="flex" flexDirection="column">
+                                <FormControlLabel
+                                    sx={{ ml: 0 }}
+                                    control={
+                                        <Switch
+                                            checked={subtrees && subtrees?.lines === SubtreeStatus.Shown}
+                                            onChange={handleSubtreeToggle("lines")}
+                                        />
+                                    }
+                                    label={
+                                        <Box ml={1} fontSize={16}>
+                                            Show
+                                        </Box>
+                                    }
+                                />
+                            </Box>
+                        </AccordionDetails>
+                    </Accordion>
+                ) : null}
                 {showTerrainSettings ? (
                     <Accordion>
                         <AccordionSummary>Terrain</AccordionSummary>
                         <AccordionDetails>
                             <Box p={1} display="flex" flexDirection="column">
+                                <FormControlLabel
+                                    sx={{ ml: 0, mb: 2 }}
+                                    control={
+                                        <Switch
+                                            checked={subtrees && subtrees?.terrain === SubtreeStatus.Shown}
+                                            onChange={handleSubtreeToggle("terrain")}
+                                        />
+                                    }
+                                    label={
+                                        <Box ml={1} fontSize={16}>
+                                            Show
+                                        </Box>
+                                    }
+                                />
                                 <FormControlLabel
                                     sx={{ ml: 0, mb: 1 }}
                                     control={
