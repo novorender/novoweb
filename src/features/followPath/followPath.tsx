@@ -356,7 +356,13 @@ export function FollowPath() {
             return;
         }
 
-        goToProfile({ nurbs: currentPath.nurbs, p: Number(profile), view2d, showGrid, keepOffset: !autoRecenter });
+        goToProfile({
+            nurbs: currentPath.nurbs,
+            p: Number(profile.replace(",", ".")),
+            view2d,
+            showGrid,
+            keepOffset: !autoRecenter,
+        });
     };
 
     const handleClippingChange = (_event: Event, newValue: number | number[]) => {
@@ -407,7 +413,10 @@ export function FollowPath() {
                                         label={<Box fontSize={14}>2D</Box>}
                                     />
                                     <Button
-                                        disabled={profileRange?.min.toFixed(profileFractionDigits) === profile}
+                                        disabled={
+                                            profileRange?.min.toFixed(profileFractionDigits) ===
+                                            profile.replace(",", ".")
+                                        }
                                         onClick={handleGoToStart}
                                         color="grey"
                                     >
