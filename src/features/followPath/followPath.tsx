@@ -322,7 +322,7 @@ export function FollowPath() {
             dispatch(followPathActions.setStep("1"));
         }
 
-        let next = Number(profile) + Number(step.replace(",", ".") || "1");
+        let next = Number(profile) + Number(step || "1");
 
         if (Number.isNaN(next)) {
             next = 1;
@@ -358,7 +358,7 @@ export function FollowPath() {
 
         goToProfile({
             nurbs: currentPath.nurbs,
-            p: Number(profile.replace(",", ".")),
+            p: Number(profile),
             view2d,
             showGrid,
             keepOffset: !autoRecenter,
@@ -413,10 +413,7 @@ export function FollowPath() {
                                         label={<Box fontSize={14}>2D</Box>}
                                     />
                                     <Button
-                                        disabled={
-                                            profileRange?.min.toFixed(profileFractionDigits) ===
-                                            profile.replace(",", ".")
-                                        }
+                                        disabled={profileRange?.min.toFixed(profileFractionDigits) === profile}
                                         onClick={handleGoToStart}
                                         color="grey"
                                     >
@@ -483,7 +480,9 @@ export function FollowPath() {
                                     <OutlinedInput
                                         value={profile}
                                         inputProps={{ inputMode: "numeric", pattern: "[0-9,.]*" }}
-                                        onChange={(e) => dispatch(followPathActions.setProfile(e.target.value))}
+                                        onChange={(e) =>
+                                            dispatch(followPathActions.setProfile(e.target.value.replace(",", ".")))
+                                        }
                                         fullWidth
                                         size="small"
                                         sx={{ fontWeight: 600 }}
@@ -498,8 +497,10 @@ export function FollowPath() {
                                     <Typography sx={{ mb: 0.5 }}>Meter:</Typography>
                                     <OutlinedInput
                                         value={step}
-                                        inputProps={{ inputMode: "numeric", pattern: "[0-9]*" }}
-                                        onChange={(e) => dispatch(followPathActions.setStep(e.target.value))}
+                                        inputProps={{ inputMode: "numeric", pattern: "[0-9,.]*" }}
+                                        onChange={(e) =>
+                                            dispatch(followPathActions.setStep(e.target.value.replace(",", ".")))
+                                        }
                                         size="small"
                                         fullWidth
                                         sx={{ fontWeight: 600 }}
