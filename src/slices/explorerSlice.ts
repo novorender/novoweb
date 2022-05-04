@@ -4,6 +4,7 @@ import { ScenePreview } from "@novorender/data-js-api";
 
 import { featuresConfig, WidgetKey, Widget, defaultEnabledWidgets, defaultLockedWidgets } from "config/features";
 import type { RootState } from "app/store";
+import { uniqueArray } from "utils/misc";
 
 export enum SceneType {
     Viewer,
@@ -36,7 +37,7 @@ export const explorerSlice = createSlice({
     initialState: initialState,
     reducers: {
         setEnabledWidgets: (state, action: PayloadAction<WidgetKey[]>) => {
-            state.enabledWidgets = action.payload;
+            state.enabledWidgets = uniqueArray(action.payload);
         },
         lockWidgets: (state, action: PayloadAction<WidgetKey[]>) => {
             state.lockedWidgets = state.lockedWidgets.concat(action.payload);
