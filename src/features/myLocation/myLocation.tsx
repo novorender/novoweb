@@ -37,7 +37,12 @@ export function MyLocation() {
 
         function handlePositionSuccess(pos: GeolocationPosition) {
             const scenePos = dataApi.latLon2tm(pos.coords, tmZone);
-            view.camera.controller.moveTo(scenePos, view.camera.rotation);
+
+            view.camera.controller.moveTo(
+                [scenePos[0], pos.coords.altitude ?? view.camera.position[1], scenePos[2]],
+                view.camera.rotation
+            );
+
             setStatus({ status: Status.Idle });
         }
 
