@@ -401,7 +401,7 @@ export function Render3D({ onInit }: Props) {
 
         measureObjects.forEach((obj) => {
             if (isMeasureObject(obj)) {
-                renderMeasureObject(view, "lightblue", getMeasureObjectPathId(obj), obj);
+                renderMeasureObject(view, "rgba(0, 191, 255, 0.5)", getMeasureObjectPathId(obj), obj);
             } else {
                 renderSingleMeasurePoint(view, obj.pos, getMeasureObjectPathId(obj));
             }

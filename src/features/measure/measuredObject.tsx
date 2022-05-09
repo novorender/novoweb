@@ -249,26 +249,30 @@ function MeasurementData({ measureValues }: { measureValues: MeasurementValues }
             return (
                 <>
                     <List dense>
-                        <ListItem>
-                            <Grid container>
-                                <Grid item xs={4}>
-                                    Height
+                        {measureValues.height ? (
+                            <ListItem>
+                                <Grid container>
+                                    <Grid item xs={4}>
+                                        Height
+                                    </Grid>
+                                    <Grid item xs={6}>
+                                        {measureValues.height.toFixed(3)} m
+                                    </Grid>
                                 </Grid>
-                                <Grid item xs={6}>
-                                    {measureValues.height.toFixed(3)} m
+                            </ListItem>
+                        ) : null}
+                        {measureValues.width ? (
+                            <ListItem>
+                                <Grid container>
+                                    <Grid item xs={4}>
+                                        Width
+                                    </Grid>
+                                    <Grid item xs={6}>
+                                        {measureValues.width.toFixed(3)} m
+                                    </Grid>
                                 </Grid>
-                            </Grid>
-                        </ListItem>
-                        <ListItem>
-                            <Grid container>
-                                <Grid item xs={4}>
-                                    Width
-                                </Grid>
-                                <Grid item xs={6}>
-                                    {measureValues.width.toFixed(3)} m
-                                </Grid>
-                            </Grid>
-                        </ListItem>
+                            </ListItem>
+                        ) : null}
                         {measureValues.area ? (
                             <ListItem>
                                 <Grid container>
@@ -277,6 +281,30 @@ function MeasurementData({ measureValues }: { measureValues: MeasurementValues }
                                     </Grid>
                                     <Grid item xs={6}>
                                         {measureValues.area.toFixed(3)} &#13217;
+                                    </Grid>
+                                </Grid>
+                            </ListItem>
+                        ) : null}
+                        {measureValues.radius ? (
+                            <ListItem>
+                                <Grid container>
+                                    <Grid item xs={4}>
+                                        Radius
+                                    </Grid>
+                                    <Grid item xs={6}>
+                                        {measureValues.radius.toFixed(3)} m
+                                    </Grid>
+                                </Grid>
+                            </ListItem>
+                        ) : null}
+                        {measureValues.heightAboveXyPlane !== undefined ? (
+                            <ListItem>
+                                <Grid container>
+                                    <Grid item xs={4}>
+                                        Over XY plane
+                                    </Grid>
+                                    <Grid item xs={6}>
+                                        {measureValues.heightAboveXyPlane.toFixed(3)} m
                                     </Grid>
                                 </Grid>
                             </ListItem>
