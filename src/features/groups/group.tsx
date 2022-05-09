@@ -43,7 +43,7 @@ export function Group({
         setMenuAnchor(null);
     };
 
-    const { r, g, b } = vecToRgb(group.color);
+    const { r, g, b, a } = vecToRgb(group.color);
     const disableChanges = status === GroupsStatus.Saving;
 
     return (
@@ -89,7 +89,7 @@ export function Group({
                             data-test="toggle-visibility"
                             aria-label="toggle group visibility"
                             size="small"
-                            icon={<Visibility />}
+                            icon={<Visibility htmlColor={`rgba(${r}, ${g}, ${b}, ${Math.max(a ?? 0, 0.2)})`} />}
                             checkedIcon={<Visibility color="disabled" />}
                             checked={group.hidden}
                             disabled={disableChanges}
