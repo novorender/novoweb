@@ -44,6 +44,7 @@ import { explorerActions } from "slices/explorerSlice";
 type Settings = {
     taaEnabled: boolean;
     ssaoEnabled: boolean;
+    outlineRenderingEnabled: boolean;
     moving: boolean;
 };
 
@@ -56,20 +57,21 @@ export function createRendering(
     stop: () => void;
 } {
     const running = { current: false };
-    const settings = { ssaoEnabled: true, taaEnabled: true, moving: false };
+    // TODO(OLA): toggle outline
+    let settings = { ssaoEnabled: true, taaEnabled: true, moving: false, outlineRenderingEnabled: false };
 
     return { start, stop, update };
 
     function update(updated: Partial<Settings>) {
-        settings.ssaoEnabled = updated.ssaoEnabled !== undefined ? updated.ssaoEnabled : settings.ssaoEnabled;
-        settings.taaEnabled = updated.taaEnabled !== undefined ? updated.taaEnabled : settings.taaEnabled;
-        settings.moving = updated.moving !== undefined ? updated.moving : settings.moving;
+        const updatedSettings = { ...settings, ...updated };
 
         if (
-            settings.ssaoEnabled !== updated.ssaoEnabled ||
-            settings.taaEnabled !== updated.taaEnabled ||
-            settings.moving !== updated.moving
+            settings.ssaoEnabled !== updatedSettings.ssaoEnabled ||
+            settings.taaEnabled !== updatedSettings.taaEnabled ||
+            settings.outlineRenderingEnabled !== updatedSettings.outlineRenderingEnabled ||
+            settings.moving !== updatedSettings.moving
         ) {
+            settings = updatedSettings;
             (view as any).settings.generation++;
         }
     }
@@ -85,26 +87,23 @@ export function createRendering(
         const ctx = offscreenCanvas ? canvas.getContext("bitmaprenderer") : undefined;
 
         const fpsTable: number[] = [];
-        // let noBlankFrame = true;
         let startRender = 0;
         let fps = 0;
-        function blankCallback() {
-            // noBlankFrame = false;
-        }
 
         while (running.current) {
-            // noBlankFrame = true;
-            const output = await view.render(blankCallback);
+            const output = await view.render();
 
             if (!running.current) {
                 break;
             }
 
-            // const { width, height } = canvas;
-            const badPerf = view.performanceStatistics.weakDevice || settings.moving; // || view.settings.quality.resolution.value < 1;
-
+            const badPerf = view.performanceStatistics.weakDevice || settings.moving;
             if (settings.ssaoEnabled && !badPerf) {
-                output.applyPostEffect({ kind: "ssao", samples: 64, radius: 1, reset: true });
+                await output.applyPostEffect({ kind: "ssao", samples: 64, radius: 1, reset: true });
+            }
+
+            if (settings.outlineRenderingEnabled && view.camera.controller.params.kind === "ortho") {
+                await output.applyPostEffect({ kind: "outline", color: [1, 0, 0, 1] });
             }
 
             const image = await output.getImage();
@@ -114,24 +113,8 @@ export function createRendering(
             }
 
             if (ctx && image) {
-                // ctx.clearRect(0, 0, width, height);
-                // ctx.drawImage(image, 0, 0, width, height); // display in canvas (work on all platforms, but might be less performant)
                 ctx.transferFromImageBitmap(image); // display in canvas
             }
-
-            /* if (noBlankFrame) {
-                const dt = performance.now() - startRender;
-                fpsTable.splice(0, 0, 1000 / dt);
-                if (fpsTable.length > 200) {
-                    fpsTable.length = 200;
-                }
-                let fps = 0;
-                for (let f of fpsTable) {
-                    fps += f;
-                }
-                fps /= fpsTable.length;
-                (view.performanceStatistics as any).fps = fps;
-            } */
 
             const now = performance.now();
             if (startRender > 0) {
@@ -159,10 +142,6 @@ export function createRendering(
 
                 await (api as any).waitFrame();
 
-                /*  if (performance.now() - start < 500) {
-                    continue;
-                } */
-
                 run = (await output.applyPostEffect({ kind: "taa", reset })) || false;
 
                 if (!running.current) {
@@ -177,12 +156,9 @@ export function createRendering(
                 startRender = 0;
                 const image = await output.getImage();
                 if (ctx && image) {
-                    // ctx.clearRect(0, 0, width, height);
-                    // ctx.drawImage(image, 0, 0, width, height); // display in canvas (work on all platforms, but might be less performant)
                     ctx.transferFromImageBitmap(image); // display in canvas
                 }
             }
-            (output as any).dispose();
         }
     }
 }
