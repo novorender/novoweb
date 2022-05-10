@@ -245,7 +245,30 @@ function MeasurementData({ measureValues }: { measureValues: MeasurementValues }
                 </>
             );
         }
+        case "arc": {
+            return (
+                <List dense>
+                    <ListItem>
+                        <Grid container>
+                            <Grid item xs={4}>
+                                Radius
+                            </Grid>
+                            <Grid item xs={6}>
+                                {measureValues.radius.toFixed(3)} m
+                            </Grid>
+                            <Grid item xs={4}>
+                                Total angle
+                            </Grid>
+                            <Grid item xs={6}>
+                                {Math.round(measureValues.totalAngle * (180 / Math.PI))} deg
+                            </Grid>
+                        </Grid>
+                    </ListItem>
+                </List>
+            );
+        }
         case "plane":
+            console.log(measureValues.edges);
             return (
                 <>
                     <List dense>
@@ -310,7 +333,19 @@ function MeasurementData({ measureValues }: { measureValues: MeasurementValues }
                             </ListItem>
                         ) : null}
                     </List>
-                    {measureValues.vertices.length > 0 ? (
+                    {/* {measureValues.edges.length >= 1 ? (
+                        <Box p={1}>
+                            <Accordion defaultExpanded={false}>
+                                <NestedAccordionSummary>Edges</NestedAccordionSummary>
+                                <NestedAccordionDetails>
+                                    {measureValues.edges.map((val, idx) => (
+                                        <Edge value={val} key={val.kind + idx} />
+                                    ))}
+                                </NestedAccordionDetails>
+                            </Accordion>
+                        </Box>
+                    ) : null} */}
+                    {measureValues.vertices.length ? (
                         <Box p={1}>
                             <Accordion defaultExpanded={false}>
                                 <NestedAccordionSummary>Components</NestedAccordionSummary>
@@ -368,6 +403,55 @@ function MeasurementData({ measureValues }: { measureValues: MeasurementValues }
             return null;
     }
 }
+
+// function Edge({ value }: { value: EdgeValues }) {
+//     if (value.kind === "line") {
+//         return (
+//             <>
+//                 <Typography>{capitalize(value.kind)}</Typography>
+//                 <List dense>
+//                     <ListItem>
+//                         <Grid container>
+//                             <Grid item xs={4}>
+//                                 Length
+//                             </Grid>
+//                             <Grid item xs={6}>
+//                                 {value.distance.toFixed(3)} m
+//                             </Grid>
+//                         </Grid>
+//                     </ListItem>
+//                 </List>
+//                 <Box p={1}>
+//                     <MeasurementTable start={value.start} end={value.end} />
+//                 </Box>
+//             </>
+//         );
+//     } else {
+//         return (
+//             <>
+//                 <Typography>{capitalize(value.kind)}</Typography>
+//                 <List dense>
+//                     <ListItem>
+//                         <Grid container>
+//                             <Grid item xs={4}>
+//                                 Radius
+//                             </Grid>
+//                             <Grid item xs={6}>
+//                                 {value.radius.toFixed(3)} m
+//                             </Grid>
+//                             <Grid item xs={4}>
+//                                 Total angle
+//                             </Grid>
+//                             <Grid item xs={6}>
+//                                 {Math.round(value.totalAngle * (180 / Math.PI))} deg
+//                             </Grid>
+//                         </Grid>
+//                     </ListItem>
+//                 </List>
+//             </>
+//         );
+//     }
+// }
 
 export function isMeasureObject(obj: any): obj is MeasureObject {
     return obj && "selectedEntity" in obj && "id" in obj;
