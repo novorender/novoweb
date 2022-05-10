@@ -1390,7 +1390,12 @@ export function Render3D({ onInit }: Props) {
             moveSvgCursor(-100, -100, undefined);
         }
 
-        if (deviation.mode !== "off" && cameraState.type === CameraType.Orthographic && e.buttons === 0) {
+        if (
+            deviation.mode !== "off" &&
+            cameraState.type === CameraType.Orthographic &&
+            e.buttons === 0 &&
+            subtrees?.points === SubtreeStatus.Shown
+        ) {
             const measurement = await view.measure(
                 e.nativeEvent.offsetX * devicePixelRatio,
                 e.nativeEvent.offsetY * devicePixelRatio
