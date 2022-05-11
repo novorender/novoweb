@@ -45,11 +45,13 @@ export function Protected({ allowUnauthenticated, children }: { allowUnauthentic
             }
 
             try {
-                const response = await msalInstance.ssoSilent({
-                    ...loginRequest,
-                    authority: adTenant ? `https://login.microsoftonline.com/${adTenant}` : loginRequest.authority,
-                    account,
-                });
+                const response = await msalInstance
+                    .ssoSilent({
+                        ...loginRequest,
+                        authority: adTenant ? `https://login.microsoftonline.com/${adTenant}` : loginRequest.authority,
+                        account,
+                    })
+                    .catch(() => msalInstance.acquireTokenSilent({ ...loginRequest, account }));
                 const accessToken = await getAccessToken(response.accessToken);
 
                 if (!accessToken) {
