@@ -14,18 +14,25 @@ import { dataServerBaseUrl } from "config";
 export async function getAuthHeader(): Promise<AuthenticationHeader> {
     const { auth } = store.getState();
 
-    if (!auth.accessToken) {
-        return { header: "", value: "" };
-    }
-
     if (auth.msalAccount) {
         // checks expiry and refreshes token if needed
         try {
-            const response = await msalInstance.acquireTokenSilent({ ...loginRequest, account: auth.msalAccount });
-            store.dispatch(authActions.setAccessToken(response.accessToken));
+            const response = await msalInstance
+                .acquireTokenSilent({ ...loginRequest, account: auth.msalAccount })
+                .catch(() => {
+                    return msalInstance.ssoSilent({ ...loginRequest, account: auth.msalAccount ?? undefined });
+                });
 
             return { header: "Authorization", value: `Bearer ${response.accessToken}` };
-        } catch {}
+        } catch (e) {
+            console.warn(e);
+            store.dispatch(authActions.logout());
+            return { header: "", value: "" };
+        }
+    }
+
+    if (!auth.accessToken) {
+        return { header: "", value: "" };
     }
 
     return { header: "Authorization", value: `Bearer ${auth.accessToken}` };

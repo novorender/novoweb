@@ -5,7 +5,7 @@ import { useAppDispatch, useAppSelector } from "app/store";
 import { Login } from "pages/login";
 import { Loading } from "components";
 import { loginRequest } from "config/auth";
-import { authActions, selectAccessToken, selectMsalAccount } from "slices/authSlice";
+import { authActions, selectAccessToken, selectAdTentant, selectMsalAccount } from "slices/authSlice";
 import { useMountedState } from "hooks/useMountedState";
 import { getAccessToken, getStoredActiveAccount, getUser } from "utils/auth";
 
@@ -19,6 +19,7 @@ export function Protected({ allowUnauthenticated, children }: { allowUnauthentic
     const { instance: msalInstance, accounts } = useMsal();
 
     const accessToken = useAppSelector(selectAccessToken);
+    const adTenant = useAppSelector(selectAdTentant);
     const msalAccount = useAppSelector(selectMsalAccount);
     const dispatch = useAppDispatch();
 
@@ -44,7 +45,11 @@ export function Protected({ allowUnauthenticated, children }: { allowUnauthentic
             }
 
             try {
-                const response = await msalInstance.acquireTokenSilent({ ...loginRequest, account });
+                const response = await msalInstance.ssoSilent({
+                    ...loginRequest,
+                    authority: adTenant ? `https://login.microsoftonline.com/${adTenant}` : loginRequest.authority,
+                    account,
+                });
                 const accessToken = await getAccessToken(response.accessToken);
 
                 if (!accessToken) {
@@ -64,7 +69,7 @@ export function Protected({ allowUnauthenticated, children }: { allowUnauthentic
 
             setStatus(Status.Ready);
         }
-    }, [accounts, dispatch, msalInstance, accessToken, msalAccount, status, setStatus]);
+    }, [accounts, dispatch, msalInstance, accessToken, msalAccount, status, setStatus, adTenant]);
 
     if (status !== Status.Ready) {
         return <Loading />;
