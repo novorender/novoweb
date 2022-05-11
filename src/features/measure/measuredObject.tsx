@@ -335,7 +335,7 @@ function MeasurementData({ measureValues }: { measureValues: MeasurementValues }
                             <ListItem>
                                 <Grid container>
                                     <Grid item xs={4}>
-                                        Over XY plane
+                                        Elevation
                                     </Grid>
                                     <Grid item xs={6}>
                                         {measureValues.heightAboveXyPlane.toFixed(3)} m
