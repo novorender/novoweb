@@ -1181,6 +1181,7 @@ export function Render3D({ onInit }: Props) {
             return;
         }
 
+        await view.updatePickBuffers();
         const result = await view.pick(
             e.nativeEvent.offsetX * devicePixelRatio,
             e.nativeEvent.offsetY * devicePixelRatio
@@ -1303,6 +1304,7 @@ export function Render3D({ onInit }: Props) {
         }
 
         pointerDown.current = true;
+        await view.updatePickBuffers();
         const result = await view.pick(x, y);
 
         if (!result || !pointerDown.current) {
@@ -1377,6 +1379,7 @@ export function Render3D({ onInit }: Props) {
         const useSvgCursor = (measure.selecting || clippingPlanes.defining || selectingOrthoPoint) && e.buttons === 0;
 
         if (useSvgCursor) {
+            await view.updatePickBuffers();
             const measurement = await view.measure(
                 e.nativeEvent.offsetX * devicePixelRatio,
                 e.nativeEvent.offsetY * devicePixelRatio
@@ -1396,6 +1399,7 @@ export function Render3D({ onInit }: Props) {
             e.buttons === 0 &&
             subtrees?.points === SubtreeStatus.Shown
         ) {
+            await view.updatePickBuffers();
             const measurement = await view.measure(
                 e.nativeEvent.offsetX * devicePixelRatio,
                 e.nativeEvent.offsetY * devicePixelRatio

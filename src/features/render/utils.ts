@@ -506,6 +506,7 @@ export async function pickDeviationArea({
     clickX: number;
     clickY: number;
 }): Promise<number | undefined> {
+    await view.updatePickBuffers();
     const center = await view.measure(clickX, clickY);
 
     if (center?.deviation) {

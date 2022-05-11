@@ -268,7 +268,6 @@ function MeasurementData({ measureValues }: { measureValues: MeasurementValues }
             );
         }
         case "plane":
-            console.log(measureValues.edges);
             return (
                 <>
                     <List dense>
@@ -308,14 +307,26 @@ function MeasurementData({ measureValues }: { measureValues: MeasurementValues }
                                 </Grid>
                             </ListItem>
                         ) : null}
-                        {measureValues.radius ? (
+                        {measureValues.innerRadius ? (
                             <ListItem>
                                 <Grid container>
                                     <Grid item xs={4}>
-                                        Radius
+                                        Inner radius
                                     </Grid>
                                     <Grid item xs={6}>
-                                        {measureValues.radius.toFixed(3)} m
+                                        {measureValues.innerRadius.toFixed(3)} m
+                                    </Grid>
+                                </Grid>
+                            </ListItem>
+                        ) : null}
+                        {measureValues.outerRadius ? (
+                            <ListItem>
+                                <Grid container>
+                                    <Grid item xs={4}>
+                                        {measureValues.innerRadius ? "Outer radius" : "Radius"}
+                                    </Grid>
+                                    <Grid item xs={6}>
+                                        {measureValues.outerRadius.toFixed(3)} m
                                     </Grid>
                                 </Grid>
                             </ListItem>
@@ -333,18 +344,6 @@ function MeasurementData({ measureValues }: { measureValues: MeasurementValues }
                             </ListItem>
                         ) : null}
                     </List>
-                    {/* {measureValues.edges.length >= 1 ? (
-                        <Box p={1}>
-                            <Accordion defaultExpanded={false}>
-                                <NestedAccordionSummary>Edges</NestedAccordionSummary>
-                                <NestedAccordionDetails>
-                                    {measureValues.edges.map((val, idx) => (
-                                        <Edge value={val} key={val.kind + idx} />
-                                    ))}
-                                </NestedAccordionDetails>
-                            </Accordion>
-                        </Box>
-                    ) : null} */}
                     {measureValues.vertices.length ? (
                         <Box p={1}>
                             <Accordion defaultExpanded={false}>
@@ -403,55 +402,6 @@ function MeasurementData({ measureValues }: { measureValues: MeasurementValues }
             return null;
     }
 }
-
-// function Edge({ value }: { value: EdgeValues }) {
-//     if (value.kind === "line") {
-//         return (
-//             <>
-//                 <Typography>{capitalize(value.kind)}</Typography>
-//                 <List dense>
-//                     <ListItem>
-//                         <Grid container>
-//                             <Grid item xs={4}>
-//                                 Length
-//                             </Grid>
-//                             <Grid item xs={6}>
-//                                 {value.distance.toFixed(3)} m
-//                             </Grid>
-//                         </Grid>
-//                     </ListItem>
-//                 </List>
-//                 <Box p={1}>
-//                     <MeasurementTable start={value.start} end={value.end} />
-//                 </Box>
-//             </>
-//         );
-//     } else {
-//         return (
-//             <>
-//                 <Typography>{capitalize(value.kind)}</Typography>
-//                 <List dense>
-//                     <ListItem>
-//                         <Grid container>
-//                             <Grid item xs={4}>
-//                                 Radius
-//                             </Grid>
-//                             <Grid item xs={6}>
-//                                 {value.radius.toFixed(3)} m
-//                             </Grid>
-//                             <Grid item xs={4}>
-//                                 Total angle
-//                             </Grid>
-//                             <Grid item xs={6}>
-//                                 {Math.round(value.totalAngle * (180 / Math.PI))} deg
-//                             </Grid>
-//                         </Grid>
-//                     </ListItem>
-//                 </List>
-//             </>
-//         );
-//     }
-// }
 
 export function isMeasureObject(obj: any): obj is MeasureObject {
     return obj && "selectedEntity" in obj && "id" in obj;
