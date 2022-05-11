@@ -193,10 +193,14 @@ export function MeasuredResult() {
                             </ListItem>
                         ) : null}
                         {showPlanarDiff ? (
-                            <PlanarDiff start={duoMeasurementValues.pointA!} end={duoMeasurementValues.pointB!} />
+                            <ListItem>
+                                <PlanarDiff start={duoMeasurementValues.pointA!} end={duoMeasurementValues.pointB!} />
+                            </ListItem>
                         ) : null}
                         {showSlope ? (
-                            <Slope start={duoMeasurementValues.pointA!} end={duoMeasurementValues.pointB!} />
+                            <ListItem>
+                                <Slope start={duoMeasurementValues.pointA!} end={duoMeasurementValues.pointB!} />
+                            </ListItem>
                         ) : null}
                     </List>
                     <Box p={1}>
@@ -232,6 +236,9 @@ function MeasurementData({ measureValues }: { measureValues: MeasurementValues }
                                     {measureValues.distance.toFixed(3)} m
                                 </Grid>
                             </Grid>
+                        </ListItem>
+                        <ListItem>
+                            <Slope start={measureValues.start} end={measureValues.end} />
                         </ListItem>
                     </List>
                     <Box p={1}>
@@ -382,7 +389,9 @@ function MeasurementData({ measureValues }: { measureValues: MeasurementValues }
                                 </Grid>
                             </Grid>
                         </ListItem>
-                        <Slope start={measureValues.centerLineStart} end={measureValues.centerLineEnd} />
+                        <ListItem>
+                            <Slope start={measureValues.centerLineStart} end={measureValues.centerLineEnd} />
+                        </ListItem>
                     </List>
                     <Box p={1}>
                         <Accordion defaultExpanded={false}>

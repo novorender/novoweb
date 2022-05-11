@@ -1,4 +1,4 @@
-import { ListItem, Grid } from "@mui/material";
+import { Grid } from "@mui/material";
 import { vec3, vec2 } from "gl-matrix";
 
 const epsilon = 1e-3;
@@ -12,19 +12,17 @@ export function Slope({ start, end }: { start: vec3; end: vec3 }) {
     const planarVec = vec2.fromValues(sub[0], sub[2]);
 
     return (
-        <ListItem>
-            <Grid container>
-                <Grid item xs={4}>
-                    Slope
-                </Grid>
-                <Grid item xs={6}>
-                    {vertical
-                        ? "Vertical"
-                        : horizontal
-                        ? "Horizontal"
-                        : `${(Math.abs(sub[1] / vec2.len(planarVec)) * 100).toFixed(2)} %`}
-                </Grid>
+        <Grid container>
+            <Grid item xs={4}>
+                Slope
             </Grid>
-        </ListItem>
+            <Grid item xs={6}>
+                {vertical
+                    ? "Vertical"
+                    : horizontal
+                    ? "Horizontal"
+                    : `${(Math.abs(sub[1] / vec2.len(planarVec)) * 100).toFixed(2)} %`}
+            </Grid>
+        </Grid>
     );
 }
