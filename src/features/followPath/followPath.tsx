@@ -61,7 +61,6 @@ enum Status {
 }
 
 const profileFractionDigits = 3;
-const orthoCamFarOffset = 0.2;
 
 export function FollowPath() {
     const {
@@ -187,6 +186,8 @@ export function FollowPath() {
                 ? vec3.sub(vec3.create(), currentCenter, view.camera.position)
                 : vec3.fromValues(0, 0, 0);
         const offsetPt = vec3.sub(vec3.create(), pt, offset);
+        const dist = vec3.dot(vec3.sub(vec3.create(), offsetPt, pt), dir);
+        vec3.scaleAndAdd(offsetPt, offsetPt, dir, -dist);
 
         const up = vec3.fromValues(0, 1, 0);
         vec3.transformQuat(up, up, view.camera.rotation);
@@ -205,14 +206,13 @@ export function FollowPath() {
         );
 
         if (view2d) {
-            const ptt = vec3.add(vec3.create(), offsetPt, vec3.scale(vec3.create(), dir, orthoCamFarOffset));
-            const mat = mat4.fromRotationTranslation(mat4.create(), rotation, ptt);
+            const mat = mat4.fromRotationTranslation(mat4.create(), rotation, offsetPt);
 
             dispatch(
                 renderActions.setGrid({
                     ...gridDefaults,
                     enabled: showGrid,
-                    origo: vec3.sub(vec3.create(), pt, vec3.scale(vec3.create(), dir, 0.01)),
+                    origo: pt,
                     axisY: vec3.scale(vec3.create(), up, 5),
                     axisX: vec3.scale(vec3.create(), right, 5),
                 })
@@ -225,19 +225,10 @@ export function FollowPath() {
                         kind: "ortho",
                         referenceCoordSys: mat,
                         fieldOfView: view.camera.fieldOfView,
-                        near: orthoCamFarOffset,
-                        far: clipping + orthoCamFarOffset,
+                        near: -0.001,
+                        far: clipping,
                     },
                 })
-            );
-            dispatch(
-                followPathActions.setCurrentCenter(
-                    vec3.add(vec3.create(), pt, vec3.scale(vec3.create(), dir, orthoCamFarOffset)) as [
-                        number,
-                        number,
-                        number
-                    ]
-                )
             );
         } else {
             dispatch(renderActions.setGrid({ enabled: false }));
@@ -250,9 +241,9 @@ export function FollowPath() {
                     },
                 })
             );
-            dispatch(followPathActions.setCurrentCenter(pt as [number, number, number]));
         }
 
+        dispatch(followPathActions.setCurrentCenter(pt as [number, number, number]));
         dispatch(followPathActions.setPtHeight(pt[1]));
     };
 
@@ -371,8 +362,7 @@ export function FollowPath() {
         }
 
         setClipping(newValue);
-        (view.camera.controller.params as FlightControllerParams | OrthoControllerParams).far =
-            addOrthoCamFarOffset(newValue);
+        (view.camera.controller.params as FlightControllerParams | OrthoControllerParams).far = newValue;
     };
 
     const handleClippingCommit = (_event: Event | SyntheticEvent<Element, Event>, newValue: number | number[]) => {
@@ -631,12 +621,4 @@ export function getNurbs({ scene, objectId }: { scene: Scene; objectId: number }
                     ].flat(),
                 } as Nurbs)
         );
-}
-
-export function addOrthoCamFarOffset(num: number): number {
-    return Math.round((num + orthoCamFarOffset + Number.EPSILON) * 100) / 100;
-}
-
-export function subOrthoCamFarOffset(num: number): number {
-    return Math.round((num - orthoCamFarOffset - Number.EPSILON) * 100) / 100;
 }

@@ -10,6 +10,7 @@ import {
     MeasureInfo,
     ObjectId,
     OrthoControllerParams,
+    PickInfo,
     RenderSettings,
     Scene,
     View,
@@ -55,12 +56,20 @@ export function createRendering(
     start: () => Promise<void>;
     update: (updated: Partial<Settings>) => void;
     stop: () => void;
+    pick: typeof view.pick;
+    measure: typeof view.measure;
 } {
     const running = { current: false };
-    // TODO(OLA): toggle outline
-    let settings = { ssaoEnabled: true, taaEnabled: true, moving: false, outlineRenderingEnabled: false };
+    let settings: Settings = {
+        ssaoEnabled: true,
+        taaEnabled: true,
+        moving: false,
+        outlineRenderingEnabled: true,
+    };
 
-    return { start, stop, update };
+    let hook = undefined as undefined | (() => any);
+
+    return { start, stop, update, pick, measure };
 
     function update(updated: Partial<Settings>) {
         const updatedSettings = { ...settings, ...updated };
@@ -74,6 +83,41 @@ export function createRendering(
             settings = updatedSettings;
             (view as any).settings.generation++;
         }
+    }
+
+    async function pick(x: number, y: number): Promise<PickInfo | undefined> {
+        let cb: (value: PickInfo | undefined) => void;
+        const prom = new Promise<PickInfo | undefined>((res) => {
+            cb = res;
+        });
+
+        hook = async () => {
+            await view.updatePickBuffers();
+            cb(await view.pick(x, y));
+        };
+
+        (window as any).view = view;
+
+        await sleep(10);
+        (view as any).settings.generation++;
+        return prom;
+    }
+
+    async function measure(x: number, y: number): Promise<MeasureInfo | undefined> {
+        let cb: (value: MeasureInfo | undefined) => void;
+        const prom = new Promise<MeasureInfo | undefined>((res) => {
+            cb = res;
+        });
+
+        hook = async () => {
+            await view.updatePickBuffers();
+            cb(await view.measure(x, y));
+        };
+
+        (window as any).view = view;
+
+        (view as any).settings.generation++;
+        return prom;
     }
 
     function stop() {
@@ -103,7 +147,12 @@ export function createRendering(
             }
 
             if (settings.outlineRenderingEnabled && view.camera.controller.params.kind === "ortho") {
-                await output.applyPostEffect({ kind: "outline", color: [1, 0, 0, 1] });
+                await output.applyPostEffect({ kind: "outline", color: [0, 0, 0, 0] });
+            }
+
+            if (hook) {
+                hook();
+                hook = undefined;
             }
 
             const image = await output.getImage();
@@ -496,18 +545,17 @@ export function initProjectSettings({ sceneData }: { sceneData: SceneData }): vo
 }
 
 export async function pickDeviationArea({
-    view,
+    measure,
     size,
     clickX,
     clickY,
 }: {
-    view: View;
+    measure: View["measure"];
     size: number;
     clickX: number;
     clickY: number;
 }): Promise<number | undefined> {
-    await view.updatePickBuffers();
-    const center = await view.measure(clickX, clickY);
+    const center = await measure(clickX, clickY);
 
     if (center?.deviation) {
         return center.deviation;
@@ -519,7 +567,7 @@ export async function pickDeviationArea({
 
     for (let x = 1; x <= size; x++) {
         for (let y = 1; y <= size; y++) {
-            res.push(view.measure(startX + x, startY + y));
+            res.push(measure(startX + x, startY + y));
         }
     }
 

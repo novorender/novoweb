@@ -318,10 +318,17 @@ function MeasurementData({ measureValues }: { measureValues: MeasurementValues }
                             <ListItem>
                                 <Grid container>
                                     <Grid item xs={4}>
-                                        Inner radius
+                                        {measureValues.outerRadius ? "Inner radius" : "Radius"}
                                     </Grid>
                                     <Grid item xs={6}>
-                                        {measureValues.innerRadius.toFixed(3)} m
+                                        {(measureValues.outerRadius
+                                            ? Math.min(
+                                                  measureValues.outerRadius as number,
+                                                  measureValues.innerRadius as number
+                                              )
+                                            : measureValues.innerRadius
+                                        ).toFixed(3)}{" "}
+                                        m
                                     </Grid>
                                 </Grid>
                             </ListItem>
@@ -333,7 +340,14 @@ function MeasurementData({ measureValues }: { measureValues: MeasurementValues }
                                         {measureValues.innerRadius ? "Outer radius" : "Radius"}
                                     </Grid>
                                     <Grid item xs={6}>
-                                        {measureValues.outerRadius.toFixed(3)} m
+                                        {(measureValues.innerRadius
+                                            ? Math.max(
+                                                  measureValues.outerRadius as number,
+                                                  measureValues.innerRadius as number
+                                              )
+                                            : measureValues.outerRadius
+                                        ).toFixed(3)}{" "}
+                                        m
                                     </Grid>
                                 </Grid>
                             </ListItem>

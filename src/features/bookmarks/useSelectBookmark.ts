@@ -7,7 +7,6 @@ import { hiddenGroupActions, useDispatchHidden } from "contexts/hidden";
 import { highlightActions, useDispatchHighlighted } from "contexts/highlighted";
 import { useDispatchVisible, visibleActions } from "contexts/visible";
 import { followPathActions, getNurbs } from "features/followPath";
-import { subOrthoCamFarOffset } from "features/followPath/followPath";
 import { measureActions } from "features/measure";
 import { CameraType, DeepWritable, ObjectVisibility, renderActions, SelectionBasketMode } from "slices/renderSlice";
 
@@ -123,7 +122,7 @@ export function useSelectBookmark() {
                     dispatch(followPathActions.setCurrentCenter(currentCenter));
 
                     if (bookmark.ortho?.far) {
-                        dispatch(followPathActions.setClipping(subOrthoCamFarOffset(bookmark.ortho.far)));
+                        dispatch(followPathActions.setClipping(bookmark.ortho.far));
                     }
 
                     if (bookmark.ortho) {

@@ -209,9 +209,13 @@ export function Render3D({ onInit }: Props) {
     const urlBookmarkId = useAppSelector(selectUrlBookmarkId);
     const dispatch = useAppDispatch();
 
-    const rendering = useRef({ start: () => Promise.resolve(), stop: () => {}, update: () => {} } as ReturnType<
-        typeof createRendering
-    >);
+    const rendering = useRef({
+        start: () => Promise.resolve(),
+        stop: () => {},
+        update: () => {},
+        pick: () => Promise.resolve(),
+        measure: () => Promise.resolve(),
+    } as ReturnType<typeof createRendering>);
     const movementTimer = useRef<ReturnType<typeof setTimeout>>();
     const cameraGeneration = useRef<number>();
     const previousId = useRef("");
@@ -1181,15 +1185,14 @@ export function Render3D({ onInit }: Props) {
             return;
         }
 
-        await view.updatePickBuffers();
-        const result = await view.pick(
+        const result = await rendering.current.pick(
             e.nativeEvent.offsetX * devicePixelRatio,
             e.nativeEvent.offsetY * devicePixelRatio
         );
         if (deviation.mode !== "off" && cameraState.type === CameraType.Orthographic) {
             const pickSize = isTouchPointer.current ? 16 : 0;
             const deviation = await pickDeviationArea({
-                view,
+                measure: rendering.current.measure,
                 size: pickSize,
                 clickX: e.nativeEvent.offsetX * devicePixelRatio,
                 clickY: e.nativeEvent.offsetY * devicePixelRatio,
@@ -1304,8 +1307,8 @@ export function Render3D({ onInit }: Props) {
         }
 
         pointerDown.current = true;
-        await view.updatePickBuffers();
-        const result = await view.pick(x, y);
+
+        const result = await rendering.current.pick(x, y);
 
         if (!result || !pointerDown.current) {
             return;
@@ -1379,8 +1382,7 @@ export function Render3D({ onInit }: Props) {
         const useSvgCursor = (measure.selecting || clippingPlanes.defining || selectingOrthoPoint) && e.buttons === 0;
 
         if (useSvgCursor) {
-            await view.updatePickBuffers();
-            const measurement = await view.measure(
+            const measurement = await rendering.current.measure(
                 e.nativeEvent.offsetX * devicePixelRatio,
                 e.nativeEvent.offsetY * devicePixelRatio
             );
@@ -1399,8 +1401,7 @@ export function Render3D({ onInit }: Props) {
             e.buttons === 0 &&
             subtrees?.points === SubtreeStatus.Shown
         ) {
-            await view.updatePickBuffers();
-            const measurement = await view.measure(
+            const measurement = await rendering.current.measure(
                 e.nativeEvent.offsetX * devicePixelRatio,
                 e.nativeEvent.offsetY * devicePixelRatio
             );
