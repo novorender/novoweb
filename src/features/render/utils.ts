@@ -68,6 +68,7 @@ export function createRendering(
     };
 
     let hook = undefined as undefined | (() => any);
+    let pickBufferUpdated = false;
 
     return { start, stop, update, pick, measure };
 
@@ -86,37 +87,42 @@ export function createRendering(
     }
 
     async function pick(x: number, y: number): Promise<PickInfo | undefined> {
-        let cb: (value: PickInfo | undefined) => void;
+        let cb: (value: PickInfo | undefined) => void = () => {};
         const prom = new Promise<PickInfo | undefined>((res) => {
             cb = res;
         });
 
-        hook = async () => {
-            await view.updatePickBuffers();
+        if (pickBufferUpdated) {
             cb(await view.pick(x, y));
-        };
+        } else {
+            hook = async () => {
+                await view.updatePickBuffers();
+                pickBufferUpdated = true;
+                cb(await view.pick(x, y));
+            };
+            (view as any).settings.generation++;
+        }
 
-        (window as any).view = view;
-
-        await sleep(10);
-        (view as any).settings.generation++;
         return prom;
     }
 
     async function measure(x: number, y: number): Promise<MeasureInfo | undefined> {
-        let cb: (value: MeasureInfo | undefined) => void;
+        let cb: (value: MeasureInfo | undefined) => void = () => {};
         const prom = new Promise<MeasureInfo | undefined>((res) => {
             cb = res;
         });
 
-        hook = async () => {
-            await view.updatePickBuffers();
+        if (pickBufferUpdated) {
             cb(await view.measure(x, y));
-        };
+        } else {
+            hook = async () => {
+                await view.updatePickBuffers();
+                pickBufferUpdated = true;
+                cb(await view.measure(x, y));
+            };
+            (view as any).settings.generation++;
+        }
 
-        (window as any).view = view;
-
-        (view as any).settings.generation++;
         return prom;
     }
 
@@ -136,6 +142,7 @@ export function createRendering(
 
         while (running.current) {
             const output = await view.render();
+            pickBufferUpdated = false;
 
             if (!running.current) {
                 break;
