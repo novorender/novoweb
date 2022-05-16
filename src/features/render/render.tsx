@@ -355,6 +355,7 @@ export function Render3D({ onInit }: Props) {
         (view: View, fillColor: string, pathName: string, objToDraw: MeasureObject) => {
             const path = svg?.children.namedItem(pathName);
 
+            console.log(pathName, objToDraw);
             if (!path) {
                 return;
             }
@@ -614,12 +615,9 @@ export function Render3D({ onInit }: Props) {
             let res: DuoMeasurementValues | undefined;
 
             if (obj1.selectedEntity && obj2.selectedEntity) {
-                res = (await measureScene.measure(
-                    obj1.selectedEntity!,
-                    obj2.selectedEntity,
-                    obj1.settings,
-                    obj2.settings
-                )) as DuoMeasurementValues | undefined;
+                res = (await measureScene
+                    .measure(obj1.selectedEntity!, obj2.selectedEntity, obj1.settings, obj2.settings)
+                    .catch((e) => console.warn(e))) as DuoMeasurementValues | undefined;
             } else if (obj1.selectedEntity || obj2.selectedEntity) {
                 const obj = obj1.selectedEntity ? obj1 : obj2;
                 const pt = obj === obj1 ? obj2 : obj1;

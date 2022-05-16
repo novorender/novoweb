@@ -81,7 +81,8 @@ export function MeasuredObject({ obj, idx }: { obj: SelectedMeasureObj; idx: num
     const kind = !measurement ? "" : "obj" in measurement ? getMeasurementValueKind(measurement.val) : "point";
     const _idx = idx === 0 ? "a" : "b";
     const enableSettings =
-        !duoMeasurementValues?.validMeasureSettings || duoMeasurementValues.validMeasureSettings[_idx];
+        duoMeasurementValues &&
+        (!duoMeasurementValues.validMeasureSettings || duoMeasurementValues.validMeasureSettings[_idx]);
 
     return (
         <Accordion defaultExpanded={true}>
@@ -112,7 +113,7 @@ export function MeasuredObject({ obj, idx }: { obj: SelectedMeasureObj; idx: num
                 </Box>
             </AccordionSummary>
             <AccordionDetails>
-                {kind === "cylinder" ? (
+                {kind === "cylinder" && enableSettings ? (
                     <>
                         <RadioGroup
                             row
@@ -128,27 +129,13 @@ export function MeasuredObject({ obj, idx }: { obj: SelectedMeasureObj; idx: num
                                     })
                                 );
                             }}
-                            value={
-                                !enableSettings || !obj.settings?.cylinderMeasure
-                                    ? "center"
-                                    : obj.settings.cylinderMeasure
-                            }
+                            value={!obj.settings?.cylinderMeasure ? "center" : obj.settings.cylinderMeasure}
                             name="radio-buttons-group"
                             sx={{ px: 1.8, mb: 0.5 }}
                         >
-                            <FormControlLabel
-                                disabled={!enableSettings}
-                                value={"furthest"}
-                                control={<Radio size="small" />}
-                                label="Furthest"
-                            />
+                            <FormControlLabel value={"furthest"} control={<Radio size="small" />} label="Furthest" />
                             <FormControlLabel value={"center"} control={<Radio size="small" />} label="Center" />
-                            <FormControlLabel
-                                disabled={!enableSettings}
-                                value={"closest"}
-                                control={<Radio size="small" />}
-                                label="Closest"
-                            />
+                            <FormControlLabel value={"closest"} control={<Radio size="small" />} label="Closest" />
                         </RadioGroup>
                     </>
                 ) : null}
