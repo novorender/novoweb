@@ -355,7 +355,6 @@ export function Render3D({ onInit }: Props) {
         (view: View, fillColor: string, pathName: string, objToDraw: MeasureObject) => {
             const path = svg?.children.namedItem(pathName);
 
-            console.log(pathName, objToDraw);
             if (!path) {
                 return;
             }
