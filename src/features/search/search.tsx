@@ -55,7 +55,7 @@ export function Search() {
 
     const [menuOpen, toggleMenu] = useToggle();
     const [minimized, toggleMinimize] = useToggle(false);
-    const [advanced, toggleAdvanced] = useToggle(urlSearchQuery ? Array.isArray(urlSearchQuery) : true);
+    const [advanced, toggleAdvanced] = useToggle(urlSearchQuery ? Array.isArray(urlSearchQuery) : false);
     const [simpleInput, setSimpleInput] = useState(typeof urlSearchQuery === "string" ? urlSearchQuery : "");
     const [advancedInputs, setAdvancedInputs] = useState(
         Array.isArray(urlSearchQuery) ? urlSearchQuery : [{ property: "", value: "", exact: true }]
