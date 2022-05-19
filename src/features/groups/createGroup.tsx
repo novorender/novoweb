@@ -5,7 +5,6 @@ import { ObjectId, SearchPattern } from "@novorender/webgl-api";
 import { v4 as uuidv4 } from "uuid";
 
 import { AdvancedSearchInputs, LinearProgress } from "components";
-
 import { CustomGroup, customGroupsActions, useCustomGroups } from "contexts/customGroups";
 import { useExplorerGlobals } from "contexts/explorerGlobals";
 import { highlightActions, useDispatchHighlighted, useHighlighted } from "contexts/highlighted";
@@ -13,6 +12,7 @@ import { highlightActions, useDispatchHighlighted, useHighlighted } from "contex
 import { useAbortController } from "hooks/useAbortController";
 import { useMountedState } from "hooks/useMountedState";
 import { searchDeepByPatterns } from "utils/search";
+import { uniqueArray } from "utils/misc";
 
 enum Status {
     Initial,
@@ -44,6 +44,7 @@ export function CreateGroup({ onClose, id }: { onClose: () => void; id?: string 
         const abortSignal = abortController.current.signal;
 
         setIds([]);
+        dispatchHighlighted(highlightActions.setIds([]));
         setSavedInputs(inputs);
         setStatus(Status.Searching);
 
@@ -57,6 +58,7 @@ export function CreateGroup({ onClose, id }: { onClose: () => void; id?: string 
             },
         }).catch(() => {});
 
+        setIds((ids) => uniqueArray(ids));
         setStatus(Status.Initial);
     };
 

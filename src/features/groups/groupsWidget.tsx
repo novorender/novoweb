@@ -10,8 +10,12 @@ import {
     ListItemButton,
     Button,
     css,
+    Menu,
+    MenuItem,
+    ListItemIcon,
+    ListItemText,
 } from "@mui/material";
-import { Visibility, AddCircle, CheckCircle, MoreVert, Save } from "@mui/icons-material";
+import { Visibility, AddCircle, CheckCircle, MoreVert, Save, Code } from "@mui/icons-material";
 
 import {
     ScrollBox,
@@ -25,8 +29,8 @@ import {
 import { WidgetList } from "features/widgetList";
 
 import { useAppDispatch, useAppSelector } from "app/store";
-import { selectHasAdminCapabilities } from "slices/explorerSlice";
 import { CustomGroup, customGroupsActions, useCustomGroups } from "contexts/customGroups";
+import { selectHasAdminCapabilities } from "slices/explorerSlice";
 
 import { featuresConfig } from "config/features";
 import { useToggle } from "hooks/useToggle";
@@ -37,6 +41,7 @@ import { Rename } from "./rename";
 import { GroupCollection } from "./groupCollection";
 import { groupsActions, GroupsStatus, selectGroupsStatus, selectLoadingIds } from "./groupsSlice";
 import { ConfirmSave } from "./confirmSave";
+import { CreateJsonGroup } from "./createJsonGroup";
 
 export const StyledListItemButton = styled(ListItemButton, { shouldForwardProp: (prop) => prop !== "inset" })<
     ListItemButtonProps & { inset?: boolean }
@@ -62,6 +67,7 @@ export function Groups() {
     const [menuOpen, toggleMenu] = useToggle();
     const [minimized, toggleMinimize] = useToggle(false);
     const [creatingGroup, setCreatingGroup] = useState<boolean | string>(false);
+    const [inputJson, setInputJson] = useState(false);
     const [containerEl, setContainerEl] = useState<HTMLDivElement | null>(null);
     const containerRef = useCallback<RefCallback<HTMLDivElement>>((el) => {
         setContainerEl(el);
@@ -105,12 +111,55 @@ export function Groups() {
 
     const disableChanges = status === GroupsStatus.Saving;
     const hideExtendedHeader = menuOpen || minimized || Array.isArray(status) || status === GroupsStatus.ConfirmingSave;
+    const showSearch = hideExtendedHeader ? null : creatingGroup !== false;
 
     return (
         <>
             <WidgetContainer minimized={minimized}>
-                <WidgetHeader minimized={minimized} toggleMinimize={toggleMinimize} widget={featuresConfig.groups}>
-                    {hideExtendedHeader ? null : creatingGroup !== false ? (
+                <WidgetHeader
+                    minimized={minimized}
+                    toggleMinimize={toggleMinimize}
+                    widget={featuresConfig.groups}
+                    WidgetMenu={
+                        showSearch
+                            ? (props) => (
+                                  <Menu {...props}>
+                                      <div>
+                                          <MenuItem
+                                              onClick={() => {
+                                                  setInputJson(true);
+
+                                                  if (props.onClose) {
+                                                      props.onClose({}, "backdropClick");
+                                                  }
+                                              }}
+                                          >
+                                              <>
+                                                  <ListItemIcon>
+                                                      <Code />
+                                                  </ListItemIcon>
+                                                  <ListItemText>input JSON</ListItemText>
+                                              </>
+                                          </MenuItem>
+                                      </div>
+                                  </Menu>
+                              )
+                            : undefined
+                    }
+                >
+                    <CreateJsonGroup
+                        key={typeof creatingGroup === "string" ? `json-edit-${creatingGroup}` : "json-edit"}
+                        id={typeof creatingGroup === "string" ? creatingGroup : undefined}
+                        open={inputJson}
+                        onClose={(canceled?: boolean) => {
+                            setInputJson(false);
+
+                            if (!canceled) {
+                                setCreatingGroup(false);
+                            }
+                        }}
+                    />
+                    {showSearch ? (
                         <CreateGroup
                             key={typeof creatingGroup === "string" ? creatingGroup : undefined}
                             id={typeof creatingGroup === "string" ? creatingGroup : undefined}
