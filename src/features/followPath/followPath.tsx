@@ -545,61 +545,63 @@ export function FollowPath() {
 
                             <Divider sx={{ mt: 2, mb: 1 }} />
 
-                            <FormControlLabel
-                                control={
-                                    <IosSwitch
-                                        size="medium"
-                                        color="primary"
-                                        checked={autoRecenter}
-                                        onChange={handleAutoRecenterChange}
-                                    />
-                                }
-                                label={<Box>Automatically recenter</Box>}
-                            />
-
-                            {view2d ? (
-                                <>
-                                    <FormControlLabel
-                                        control={
-                                            <IosSwitch
-                                                size="medium"
-                                                color="primary"
-                                                checked={showGrid}
-                                                onChange={handleGridChange}
-                                            />
-                                        }
-                                        label={<Box>Show grid</Box>}
-                                    />
-
-                                    <FormControlLabel
-                                        control={
-                                            <IosSwitch
-                                                size="medium"
-                                                color="primary"
-                                                checked={autoStepSize}
-                                                onChange={handleAutoStepSizeChange}
-                                            />
-                                        }
-                                        label={<Box>Match step size to clipping distance</Box>}
-                                    />
-
-                                    <Divider sx={{ my: 1 }} />
-
-                                    <Typography>Clipping: {clipping} m</Typography>
-                                    <Box mx={2}>
-                                        <Slider
-                                            getAriaLabel={() => "Clipping near/far"}
-                                            value={clipping}
-                                            min={0.01}
-                                            max={1}
-                                            step={0.01}
-                                            onChange={handleClippingChange}
-                                            onChangeCommitted={handleClippingCommit}
-                                            valueLabelDisplay="off"
+                            <Box display="flex" flexDirection="column">
+                                <FormControlLabel
+                                    control={
+                                        <IosSwitch
+                                            size="medium"
+                                            color="primary"
+                                            checked={autoRecenter}
+                                            onChange={handleAutoRecenterChange}
                                         />
-                                    </Box>
-                                </>
-                            ) : null}
+                                    }
+                                    label={<Box>Automatically recenter</Box>}
+                                />
+
+                                {view2d ? (
+                                    <>
+                                        <FormControlLabel
+                                            control={
+                                                <IosSwitch
+                                                    size="medium"
+                                                    color="primary"
+                                                    checked={showGrid}
+                                                    onChange={handleGridChange}
+                                                />
+                                            }
+                                            label={<Box>Show grid</Box>}
+                                        />
+
+                                        <FormControlLabel
+                                            control={
+                                                <IosSwitch
+                                                    size="medium"
+                                                    color="primary"
+                                                    checked={autoStepSize}
+                                                    onChange={handleAutoStepSizeChange}
+                                                />
+                                            }
+                                            label={<Box>Match step size to clipping distance</Box>}
+                                        />
+
+                                        <Divider sx={{ my: 1 }} />
+
+                                        <Typography>Clipping: {clipping} m</Typography>
+                                        <Box mx={2}>
+                                            <Slider
+                                                getAriaLabel={() => "Clipping near/far"}
+                                                value={clipping}
+                                                min={0.01}
+                                                max={1}
+                                                step={0.01}
+                                                onChange={handleClippingChange}
+                                                onChangeCommitted={handleClippingCommit}
+                                                valueLabelDisplay="off"
+                                            />
+                                        </Box>
+                                    </>
+                                ) : null}
+                            </Box>
                         </Box>
                     )}
                 </ScrollBox>

@@ -1516,7 +1516,7 @@ export function Render3D({ onInit }: Props) {
                             <MenuItem>
                                 Deviation:{" "}
                                 {deviationStamp?.data.deviation === MAX_FLOAT
-                                    ? "Outside threshold"
+                                    ? "Outside range -1 to 1"
                                     : deviationStamp?.data.deviation.toFixed(3)}
                             </MenuItem>
                         </Box>

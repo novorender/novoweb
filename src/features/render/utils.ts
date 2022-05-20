@@ -19,6 +19,7 @@ import { vec2 } from "gl-matrix";
 
 import { api, dataApi } from "app";
 import { offscreenCanvas } from "config";
+import { featuresConfig, WidgetKey } from "config/features";
 import { groupsActions, selectLoadingIds } from "features/groups";
 import { DeviationMode, deviationsActions } from "features/deviations";
 
@@ -36,11 +37,11 @@ import {
     SelectionBasketMode,
     SubtreeStatus,
 } from "slices/renderSlice";
+import { explorerActions } from "slices/explorerSlice";
 
 import { VecRGB, VecRGBA } from "utils/color";
 import { sleep } from "utils/timers";
-import { featuresConfig, WidgetKey } from "config/features";
-import { explorerActions } from "slices/explorerSlice";
+import { MAX_FLOAT } from "./consts";
 
 type Settings = {
     taaEnabled: boolean;
@@ -582,6 +583,9 @@ export async function pickDeviationArea({
         .map((res) => (res?.deviation ? res : undefined))
         .filter((res) => typeof res !== "undefined")
         .reduce((deviation, measureInfo, idx, array) => {
+            if (deviation === MAX_FLOAT) {
+                return deviation;
+            }
             if (idx === array.length - 1) {
                 return (deviation + measureInfo!.deviation!) / array.length;
             } else {
