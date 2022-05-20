@@ -192,8 +192,6 @@ export function FollowPath() {
         vec3.scaleAndAdd(offsetPt, offsetPt, dir, -dist);
 
         const up = vec3.fromValues(0, 1, 0);
-        vec3.transformQuat(up, up, view.camera.rotation);
-
         const right = vec3.cross(vec3.create(), up, dir);
 
         vec3.cross(up, dir, right);
