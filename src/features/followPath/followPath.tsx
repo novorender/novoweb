@@ -592,9 +592,9 @@ export function FollowPath() {
                                         <Slider
                                             getAriaLabel={() => "Clipping near/far"}
                                             value={clipping}
-                                            min={0.1}
+                                            min={0.01}
                                             max={1}
-                                            step={0.05}
+                                            step={0.01}
                                             onChange={handleClippingChange}
                                             onChangeCommitted={handleClippingCommit}
                                             valueLabelDisplay="off"
