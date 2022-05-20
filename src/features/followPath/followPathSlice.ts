@@ -33,6 +33,7 @@ const initialState = {
     view2d: false,
     showGrid: true,
     autoRecenter: false,
+    autoStepSize: false,
     clipping: 0.1,
 };
 
@@ -75,6 +76,9 @@ export const followPathSlice = createSlice({
         setAutoRecenter: (state, action: PayloadAction<State["autoRecenter"]>) => {
             state.autoRecenter = action.payload;
         },
+        setAutoStepSize: (state, action: PayloadAction<State["autoStepSize"]>) => {
+            state.autoStepSize = action.payload;
+        },
     },
 });
 
@@ -89,6 +93,7 @@ export const selectProfileRange = (state: RootState) => state.followPath.profile
 export const selectClipping = (state: RootState) => state.followPath.clipping;
 export const selectShowGrid = (state: RootState) => state.followPath.showGrid;
 export const selectAutoRecenter = (state: RootState) => state.followPath.autoRecenter;
+export const selectAutoStepSize = (state: RootState) => state.followPath.autoStepSize;
 
 const { actions, reducer } = followPathSlice;
 export { actions as followPathActions, reducer as followPathReducer };

@@ -53,6 +53,7 @@ import {
     selectShowGrid,
     selectAutoRecenter,
     selectCurrentCenter,
+    selectAutoStepSize,
 } from "./followPathSlice";
 
 enum Status {
@@ -74,6 +75,7 @@ export function FollowPath() {
     const view2d = useAppSelector(selectView2d);
     const showGrid = useAppSelector(selectShowGrid);
     const autoRecenter = useAppSelector(selectAutoRecenter);
+    const autoStepSize = useAppSelector(selectAutoStepSize);
     const profile = useAppSelector(selectProfile);
     const step = useAppSelector(selectStep);
     const ptHeight = useAppSelector(selectPtHeight);
@@ -283,6 +285,15 @@ export function FollowPath() {
         dispatch(followPathActions.setAutoRecenter(recenter));
     };
 
+    const handleAutoStepSizeChange = () => {
+        if (!autoStepSize) {
+            dispatch(followPathActions.setStep(String(clipping)));
+            dispatch(followPathActions.setAutoStepSize(true));
+        } else {
+            dispatch(followPathActions.setAutoStepSize(false));
+        }
+    };
+
     const handlePrev = () => {
         if (!currentPath || !profileRange) {
             return;
@@ -371,6 +382,10 @@ export function FollowPath() {
         }
 
         dispatch(followPathActions.setClipping(newValue));
+
+        if (autoStepSize) {
+            dispatch(followPathActions.setStep(String(newValue)));
+        }
     };
 
     return (
@@ -484,13 +499,14 @@ export function FollowPath() {
                                     />
                                 </Grid>
                                 <Grid pt={0} item xs={6}>
-                                    <Typography sx={{ mb: 0.5 }}>Meter:</Typography>
+                                    <Typography sx={{ mb: 0.5 }}>Step size (meters):</Typography>
                                     <OutlinedInput
-                                        value={step}
+                                        value={autoStepSize ? String(clipping) : step}
                                         inputProps={{ inputMode: "numeric", pattern: "[0-9,.]*" }}
-                                        onChange={(e) =>
-                                            dispatch(followPathActions.setStep(e.target.value.replace(",", ".")))
-                                        }
+                                        onChange={(e) => {
+                                            dispatch(followPathActions.setAutoStepSize(false));
+                                            dispatch(followPathActions.setStep(e.target.value.replace(",", ".")));
+                                        }}
                                         size="small"
                                         fullWidth
                                         sx={{ fontWeight: 600 }}
@@ -531,19 +547,17 @@ export function FollowPath() {
 
                             <Divider sx={{ mt: 2, mb: 1 }} />
 
-                            <div>
-                                <FormControlLabel
-                                    control={
-                                        <IosSwitch
-                                            size="medium"
-                                            color="primary"
-                                            checked={autoRecenter}
-                                            onChange={handleAutoRecenterChange}
-                                        />
-                                    }
-                                    label={<Box>Automatically recenter</Box>}
-                                />
-                            </div>
+                            <FormControlLabel
+                                control={
+                                    <IosSwitch
+                                        size="medium"
+                                        color="primary"
+                                        checked={autoRecenter}
+                                        onChange={handleAutoRecenterChange}
+                                    />
+                                }
+                                label={<Box>Automatically recenter</Box>}
+                            />
 
                             {view2d ? (
                                 <>
@@ -557,6 +571,18 @@ export function FollowPath() {
                                             />
                                         }
                                         label={<Box>Show grid</Box>}
+                                    />
+
+                                    <FormControlLabel
+                                        control={
+                                            <IosSwitch
+                                                size="medium"
+                                                color="primary"
+                                                checked={autoStepSize}
+                                                onChange={handleAutoStepSizeChange}
+                                            />
+                                        }
+                                        label={<Box>Match step size to clipping distance</Box>}
                                     />
 
                                     <Divider sx={{ my: 1 }} />
