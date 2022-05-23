@@ -118,10 +118,6 @@ function reducer(state: State, action: Actions): State {
 function HighlightedProvider({ children }: { children: ReactNode }) {
     const [state, dispatch] = useReducer(reducer, initialState);
 
-    if (window.Cypress) {
-        window.contexts = { ...window.contexts, highlighted: { state, dispatch } };
-    }
-
     return (
         <StateContext.Provider value={state}>
             <DispatchContext.Provider value={dispatch}>{children}</DispatchContext.Provider>

@@ -79,10 +79,6 @@ function reducer(state: State, action: Actions): State {
 function VisibleProvider({ children }: { children: ReactNode }) {
     const [state, dispatch] = useReducer(reducer, initialState);
 
-    if (window.Cypress) {
-        window.contexts = { ...window.contexts, visible: { state, dispatch } };
-    }
-
     return (
         <StateContext.Provider value={state}>
             <DispatchContext.Provider value={dispatch}>{children}</DispatchContext.Provider>

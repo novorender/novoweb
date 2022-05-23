@@ -3,6 +3,7 @@ import { HierarcicalObjectReference, ObjectId, Scene } from "@novorender/webgl-a
 import { useStore } from "react-redux";
 import { useEffect } from "react";
 
+import { RootState } from "app/store";
 import { ObjectVisibility, selectDefaultVisibility } from "slices/renderSlice";
 import { useLazyHidden } from "contexts/hidden";
 import { useLazyHighlighted } from "contexts/highlighted";
@@ -45,7 +46,7 @@ export function IncludeViewpoint({
     const {
         state: { view, scene, canvas },
     } = useExplorerGlobals(true);
-    const store = useStore();
+    const store = useStore<RootState>();
 
     const [abortController, abort] = useAbortController();
     const [loading, setLoading] = useMountedState(false);

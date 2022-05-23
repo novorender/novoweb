@@ -106,10 +106,6 @@ function CustomGroupsProvider({ children }: { children: ReactNode }) {
 
     const value = { state, dispatch };
 
-    if (window.Cypress) {
-        window.contexts = { ...window.contexts, customGroups: value };
-    }
-
     return <Context.Provider value={value}>{children}</Context.Provider>;
 }
 

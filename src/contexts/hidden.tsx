@@ -80,10 +80,6 @@ function reducer(state: State, action: Actions): State {
 function HiddenProvider({ children }: { children: ReactNode }) {
     const [state, dispatch] = useReducer(reducer, initialState);
 
-    if (window.Cypress) {
-        window.contexts = { ...window.contexts, hidden: { state, dispatch } };
-    }
-
     return (
         <StateContext.Provider value={state}>
             <DispatchContext.Provider value={dispatch}>{children}</DispatchContext.Provider>

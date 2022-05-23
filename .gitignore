@@ -4,8 +4,6 @@
 /docs
 /node_modules
 /js
-/cypress/screenshots/
-/cypress/videos/
 
 .DS_Store
 .env.local

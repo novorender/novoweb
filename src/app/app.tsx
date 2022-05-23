@@ -8,7 +8,7 @@ import { createAPI, createMeasureAPI } from "@novorender/webgl-api";
 import { createAPI as createDataAPI } from "@novorender/data-js-api";
 import { MsalProvider } from "@azure/msal-react";
 import { PublicClientApplication } from "@azure/msal-browser";
-import { BrowserRouter, Route, useHistory, Switch } from "react-router-dom";
+import { Route, useHistory, Switch } from "react-router-dom";
 
 import { theme } from "app/theme";
 import { useAppDispatch } from "app/store";
@@ -122,19 +122,17 @@ export function App() {
                             {status !== Status.Ready ? (
                                 <Loading />
                             ) : (
-                                <BrowserRouter>
-                                    <Switch>
-                                        <Route path="/callback">
-                                            <Loading />
-                                        </Route>
-                                        <Route path="/explorer/:id?">
-                                            <Explorer />
-                                        </Route>
-                                        <Route path="/:id?">
-                                            <Explorer />
-                                        </Route>
-                                    </Switch>
-                                </BrowserRouter>
+                                <Switch>
+                                    <Route path="/callback">
+                                        <Loading />
+                                    </Route>
+                                    <Route path="/explorer/:id?">
+                                        <Explorer />
+                                    </Route>
+                                    <Route path="/:id?">
+                                        <Explorer />
+                                    </Route>
+                                </Switch>
                             )}
                         </ThemeProvider>
                     </StyledEngineProvider>

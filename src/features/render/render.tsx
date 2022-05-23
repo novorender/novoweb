@@ -798,11 +798,6 @@ export function Render3D({ onInit }: Props) {
             api.animate = () => cameraMoved(view);
 
             function cameraMoved(view: View) {
-                if (window.Cypress) {
-                    window.appFullyRendered =
-                        view.performanceStatistics.sceneResolved && view.performanceStatistics.renderResolved;
-                }
-
                 if (cameraGeneration.current !== view.performanceStatistics.cameraGeneration) {
                     cameraGeneration.current = view.performanceStatistics.cameraGeneration ?? 0;
 
