@@ -4,5 +4,7 @@ interface Window {
     bimCollabClientSecret?: string;
     bimTrackClientId?: string;
     bimTrackClientSecret?: string;
+    ditioClientId?: string;
+    ditioClientSecret?: string;
     dataServerUrl?: string;
 }

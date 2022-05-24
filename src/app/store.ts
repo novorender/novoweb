@@ -15,6 +15,8 @@ import { bimCollabReducer } from "features/bimCollab/bimCollabSlice";
 import { bimCollabApi } from "features/bimCollab/bimCollabApi";
 import { bimTrackReducer } from "features/bimTrack/bimTrackSlice";
 import { bimTrackApi } from "features/bimTrack/bimTrackApi";
+import { ditioReducer } from "features/ditio";
+import { ditioApi } from "features/ditio";
 
 const rootReducer = combineReducers({
     explorer: explorerReducer,
@@ -30,13 +32,18 @@ const rootReducer = combineReducers({
     [bimCollabApi.reducerPath]: bimCollabApi.reducer,
     bimTrack: bimTrackReducer,
     [bimTrackApi.reducerPath]: bimTrackApi.reducer,
+    ditio: ditioReducer,
+    [ditioApi.reducerPath]: ditioApi.reducer,
 });
 
 export const store = configureStore({
     reducer: rootReducer,
     devTools: process.env.NODE_ENV === "development",
     middleware: (getDefaultMiddleware) =>
-        getDefaultMiddleware().concat(bimCollabApi.middleware).concat(bimTrackApi.middleware),
+        getDefaultMiddleware()
+            .concat(bimCollabApi.middleware)
+            .concat(bimTrackApi.middleware)
+            .concat(ditioApi.middleware),
 });
 
 setupListeners(store.dispatch);

@@ -50,7 +50,6 @@ export function BimTrack() {
     const { data: user } = useGetCurrentUserQuery(undefined, { skip: !accessToken });
     const [getToken] = useGetTokenMutation();
     const [refreshToken] = useRefreshTokenMutation();
-
     const [fetchAuthInfo] = useGetAuthInfoMutation();
 
     const authenticate = useCallback(

@@ -179,7 +179,7 @@ export function Topic() {
                             <Box display="flex" justifyContent="space-between">
                                 <Typography variant="h6">Deadline:</Typography>
                                 <Typography variant="h6" fontWeight={600}>
-                                    {topic.due_date ? new Date(topic.due_date).toLocaleString("nb") : "Undecided"}
+                                    {topic.due_date ? new Date(topic.due_date).toLocaleDateString("nb") : "Undecided"}
                                 </Typography>
                             </Box>
                             <Divider sx={{ mt: 1.5, mb: 1, color: theme.palette.grey[200] }} />
@@ -380,12 +380,7 @@ function CommentListItem({
                     </Box>
                 </Box>
             </ListItem>
-            <ImgModal
-                open={modalOpen}
-                onClose={toggleModal}
-                sx={{ display: "flex", justifyContent: "center", alignItems: "center" }}
-                src={snapshot ?? ""}
-            />
+            <ImgModal open={modalOpen} onClose={toggleModal} src={snapshot ?? ""} />
         </>
     );
 }

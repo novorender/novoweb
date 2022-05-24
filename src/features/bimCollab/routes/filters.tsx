@@ -16,6 +16,7 @@ import {
 } from "@mui/material";
 import { ArrowBack } from "@mui/icons-material";
 import { DatePicker } from "@mui/lab";
+import { isValid, set } from "date-fns";
 
 import { LinearProgress, ScrollBox, Divider } from "components";
 import { useAppDispatch, useAppSelector } from "app/store";
@@ -283,7 +284,11 @@ export function Filters() {
                                 onChange={(newDate: Date | null) =>
                                     setFilters((state) => ({
                                         ...state,
-                                        [FilterType.Deadline]: newDate?.toISOString() ?? "",
+                                        [FilterType.Deadline]: newDate
+                                            ? isValid(newDate)
+                                                ? set(newDate, { hours: 0, minutes: 0, seconds: 0 }).toISOString()
+                                                : ""
+                                            : "",
                                     }))
                                 }
                                 renderInput={(params) => <TextField {...params} size="small" />}

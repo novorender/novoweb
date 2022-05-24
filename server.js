@@ -13,6 +13,8 @@ function sendIndex(req, res) {
         process.env.BIMCOLLAB_CLIENT_ID ||
         process.env.BIMTRACK_CLIENT_SECRET ||
         process.env.BIMTRACK_CLIENT_ID ||
+        process.env.DITIO_CLIENT_SECRET ||
+        process.env.DITIO_CLIENT_ID ||
         process.env.DATA_SERVER_URL
     ) {
         fs.readFile(index, "utf8", function (err, data) {
@@ -55,6 +57,20 @@ function sendIndex(req, res) {
                 indexHtml = indexHtml.replace(
                     "window.bimTrackClientId",
                     `window.bimTrackClientId="${process.env.BIMTRACK_CLIENT_ID}"`
+                );
+            }
+
+            if (process.env.DITIO_CLIENT_SECRET) {
+                indexHtml = indexHtml.replace(
+                    "window.ditioClientSecret",
+                    `window.ditioClientSecret="${process.env.DITIO_CLIENT_SECRET}"`
+                );
+            }
+
+            if (process.env.DITIO_CLIENT_ID) {
+                indexHtml = indexHtml.replace(
+                    "window.ditioClientId",
+                    `window.ditioClientId="${process.env.DITIO_CLIENT_ID}"`
                 );
             }
 

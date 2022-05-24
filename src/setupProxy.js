@@ -23,4 +23,16 @@ module.exports = function (app) {
             changeOrigin: true,
         })
     );
+
+    app.use(
+        "/ditio",
+        createProxyMiddleware({
+            target: "https://ditio-api-v3.azurewebsites.net",
+            // target: "https://ditio-api-test.azurewebsites.net",
+            pathRewrite: {
+                "^/ditio": "", // remove base path
+            },
+            changeOrigin: true,
+        })
+    );
 };

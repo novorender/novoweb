@@ -24,6 +24,7 @@ import { MenuWidget } from "features/menuWidget";
 import { Deviations } from "features/deviations";
 import { FollowPath } from "features/followPath";
 import { BimTrack } from "features/bimTrack";
+import { Ditio } from "features/ditio";
 import { MyLocation } from "features/myLocation";
 
 export function Widgets() {
@@ -102,6 +103,8 @@ function getWidgetByKey(key: WidgetKey): JSX.Element | string {
             return <Deviations />;
         case featuresConfig.followPath.key:
             return <FollowPath />;
+        case featuresConfig.ditio.key:
+            return <Ditio />;
         case featuresConfig.myLocation.key:
             return <MyLocation />;
         default:

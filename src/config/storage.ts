@@ -6,6 +6,8 @@ export enum StorageKey {
     BimCollabSuggestedSpace = "BIMcollab_suggested_space",
     BimTrackRefreshToken = "BIMtrack_refresh_token",
     BimTrackCodeVerifier = "BIMtrack_code_verifier",
+    DitioRefreshToken = "ditio_refresh_token",
+    DitioCodeVerifier = "ditio_code_verifier",
 }
 
 export const storageConfig = {
@@ -22,6 +24,12 @@ export const storageConfig = {
         storage: sessionStorage,
     },
     [StorageKey.BimTrackCodeVerifier]: {
+        storage: sessionStorage,
+    },
+    [StorageKey.DitioRefreshToken]: {
+        storage: localStorage,
+    },
+    [StorageKey.DitioCodeVerifier]: {
         storage: sessionStorage,
     },
     [StorageKey.NovoToken]: {

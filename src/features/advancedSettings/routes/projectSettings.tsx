@@ -6,6 +6,9 @@ import { dataApi } from "app";
 import { Divider, LinearProgress, ScrollBox, TextField } from "components";
 import { useAppDispatch, useAppSelector } from "app/store";
 import { ProjectSetting, renderActions, selectProjectSettings } from "slices/renderSlice";
+import { selectLockedWidgets } from "slices/explorerSlice";
+import { featuresConfig } from "config/features";
+import { useState } from "react";
 
 const filter = createFilterOptions<string>();
 
@@ -14,9 +17,13 @@ export function ProjectSettings({ save, saving }: { save: () => Promise<void>; s
     const theme = useTheme();
 
     const settings = useAppSelector(selectProjectSettings);
+    const lockedWidgets = useAppSelector(selectLockedWidgets);
     const dispatch = useAppDispatch();
 
+    const [ditioProject, setDitioProject] = useState(settings.ditioProjectNumber);
+
     const wkZones = dataApi.getWKZones();
+
     return (
         <>
             <Box boxShadow={theme.customShadows.widgetHeader}>
@@ -63,6 +70,21 @@ export function ProjectSettings({ save, saving }: { save: () => Promise<void>; s
                     )}
                     ListboxProps={{ style: { maxHeight: "200px" } }}
                 />
+                {!lockedWidgets.includes(featuresConfig.ditio.key) ? (
+                    <TextField
+                        sx={{ mt: 2 }}
+                        fullWidth
+                        size="medium"
+                        label="Ditio project number"
+                        value={ditioProject}
+                        onChange={({ target: { value } }) => setDitioProject(value)}
+                        onBlur={() =>
+                            dispatch(
+                                renderActions.setProjectSettings({ [ProjectSetting.DitioProjectNumber]: ditioProject })
+                            )
+                        }
+                    />
+                ) : null}
             </ScrollBox>
         </>
     );

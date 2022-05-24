@@ -15,9 +15,9 @@ export function FeatureSettings({ save, saving }: { save: () => Promise<void>; s
 
     const dispatch = useAppDispatch();
     const isAdminScene = useAppSelector(selectIsAdminScene);
-    const settings = useAppSelector(selectAdvancedSettings);
     const enabledWidgets = useAppSelector(selectEnabledWidgets);
     const lockedWidgets = useAppSelector(selectLockedWidgets);
+    const settings = useAppSelector(selectAdvancedSettings);
     const { showPerformance, navigationCube } = settings;
 
     const handleToggleFeature = ({ target: { name, checked } }: ChangeEvent<HTMLInputElement>) => {

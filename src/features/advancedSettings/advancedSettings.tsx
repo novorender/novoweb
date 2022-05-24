@@ -124,6 +124,7 @@ export function AdvancedSettings() {
                     ...customProperties,
                     showStats: settings.showPerformance,
                     navigationCube: settings.navigationCube,
+                    ditioProjectNumber: projectSettings.ditioProjectNumber,
                     enabledFeatures: {
                         ...Object.fromEntries(
                             enabledWidgets

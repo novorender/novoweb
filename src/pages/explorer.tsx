@@ -85,6 +85,8 @@ function ExplorerBase() {
                 dispatch(explorerActions.setWidgets([featuresConfig.bimcollab.key]));
             } else if (oAuthState.service === featuresConfig.bimTrack.key) {
                 dispatch(explorerActions.setWidgets([featuresConfig.bimTrack.key]));
+            } else if (oAuthState.service === featuresConfig.ditio.key) {
+                dispatch(explorerActions.setWidgets([featuresConfig.ditio.key]));
             }
         } else {
             const searchParams = new URLSearchParams(window.location.search);
@@ -172,14 +174,9 @@ function enabledFeaturesToFeatureKeys(enabledFeatures: Record<string, boolean>):
         enabledFeatures.shareLink = true;
     }
 
-    const features: Record<string, boolean> = {
-        ...enabledFeatures,
-        // [featuresConfig.shareLink.key]: !enabledFeatures.disableLink,
-    };
-
     return uniqueArray(
-        Object.keys(features)
-            .map((key) => ({ key, enabled: features[key] }))
+        Object.keys(enabledFeatures)
+            .map((key) => ({ key, enabled: enabledFeatures[key] }))
             .filter((feature) => feature.enabled)
             .map((feature) => (dictionary[feature.key] ? dictionary[feature.key]! : feature.key))
             .concat(defaultEnabledWidgets)

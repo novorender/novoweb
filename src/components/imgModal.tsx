@@ -1,10 +1,25 @@
-import { Modal, ModalProps, styled } from "@mui/material";
+import { Close } from "@mui/icons-material";
+import { Modal, ModalProps, styled, IconButton } from "@mui/material";
 import { css } from "@mui/styled-engine";
 
 export const ImgModal = styled(({ src, ...props }: Omit<ModalProps, "children"> & { src: string }) => {
     return (
         <Modal {...props}>
             <Wrapper>
+                {props.onClose ? (
+                    <IconButton
+                        aria-label="close"
+                        onClick={() => props.onClose!({}, "escapeKeyDown")}
+                        sx={{
+                            position: "absolute",
+                            right: -14,
+                            top: -20,
+                            color: (theme) => theme.palette.grey[100],
+                        }}
+                    >
+                        <Close />
+                    </IconButton>
+                ) : null}
                 <img src={src} alt="" />
             </Wrapper>
         </Modal>
@@ -25,6 +40,11 @@ const Wrapper = styled("div")(
         display: inline-flex;
         justify-content: center;
         align-items: center;
+        position: relative;
+
+        &:focus {
+            outline: 0;
+        }
 
         & img {
             display: block;

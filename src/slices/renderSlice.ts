@@ -8,7 +8,7 @@ import type {
 } from "@novorender/webgl-api";
 import type { ObjectGroup } from "@novorender/data-js-api";
 import { createSlice, createAsyncThunk, PayloadAction } from "@reduxjs/toolkit";
-import { vec4 } from "gl-matrix";
+import { quat, vec3, vec4 } from "gl-matrix";
 
 import type { RootState } from "app/store";
 import type { WidgetKey } from "config/features";
@@ -72,6 +72,7 @@ export enum AdvancedSetting {
 
 export enum ProjectSetting {
     TmZone = "tmZone",
+    DitioProjectNumber = "ditioProjectNumber",
 }
 
 export enum SelectionBasketMode {
@@ -169,6 +170,7 @@ const initialState = {
     } as WritableGrid,
     projectSettings: {
         [ProjectSetting.TmZone]: "",
+        [ProjectSetting.DitioProjectNumber]: "",
     },
 };
 
@@ -287,7 +289,14 @@ export const renderSlice = createSlice({
             };
         },
         setCamera: (state, { payload }: PayloadAction<CameraState>) => {
-            state.camera = payload as WritableCameraState;
+            const goTo =
+                "goTo" in payload
+                    ? {
+                          position: Array.from(payload.goTo!.position) as vec3,
+                          rotation: Array.from(payload.goTo!.rotation) as quat,
+                      }
+                    : undefined;
+            state.camera = { ...payload, goTo } as WritableCameraState;
         },
         setBaseCameraSpeed: (state, { payload }: PayloadAction<number>) => {
             state.baseCameraSpeed = payload;

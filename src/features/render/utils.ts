@@ -549,7 +549,12 @@ export function initAdvancedSettings(view: View, customProperties: Record<string
 }
 
 export function initProjectSettings({ sceneData }: { sceneData: SceneData }): void {
-    store.dispatch(renderActions.setProjectSettings({ [ProjectSetting.TmZone]: sceneData.tmZone ?? "" }));
+    store.dispatch(
+        renderActions.setProjectSettings({
+            [ProjectSetting.TmZone]: sceneData.tmZone ?? "",
+            [ProjectSetting.DitioProjectNumber]: sceneData.customProperties?.ditioProjectNumber ?? "",
+        })
+    );
 }
 
 export async function pickDeviationArea({

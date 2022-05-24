@@ -95,6 +95,10 @@ let theme = createTheme({
                     overflow: hidden;
                     background: transparent;
                 }
+
+                label {
+                    user-select: none;
+                }
             `,
         },
         MuiButton: {

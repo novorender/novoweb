@@ -65,6 +65,7 @@ import { explorerActions, selectUrlBookmarkId } from "slices/explorerSlice";
 import { selectDeviations } from "features/deviations";
 import { bookmarksActions, selectBookmarks, useSelectBookmark } from "features/bookmarks";
 import { measureActions, selectMeasure, isMeasureObject } from "features/measure";
+import { ditioActions, selectMarkers, selectShowMarkers } from "features/ditio";
 import { useAppDispatch, useAppSelector } from "app/store";
 
 import { useHighlighted, highlightActions, useDispatchHighlighted } from "contexts/highlighted";
@@ -202,11 +203,12 @@ export function Render3D({ onInit }: Props) {
     const measure = useAppSelector(selectMeasure);
     const panoramas = useAppSelector(selectPanoramas);
     const deviation = useAppSelector(selectDeviations);
+    const showPanoramaMarkers = useAppSelector(selectShow3dMarkers);
     const gridDefaults = useAppSelector(selectGridDefaults);
-
-    const show3dMarkers = useAppSelector(selectShow3dMarkers);
     const activePanorama = useAppSelector(selectActivePanorama);
     const urlBookmarkId = useAppSelector(selectUrlBookmarkId);
+    const showDitioMarkers = useAppSelector(selectShowMarkers);
+    const ditioMarkers = useAppSelector(selectMarkers);
     const dispatch = useAppDispatch();
 
     const rendering = useRef({
@@ -478,7 +480,7 @@ export function Render3D({ onInit }: Props) {
     }, [renderParametricMeasure]);
 
     const moveSvg = useCallback(() => {
-        if (!svg || !view || !panoramas?.length) {
+        if (!svg || !view || (!panoramas?.length && !ditioMarkers.length)) {
             return;
         }
 
@@ -502,33 +504,58 @@ export function Render3D({ onInit }: Props) {
             );
         };
 
-        const vsPans = panoramas.map((p) => vec3.transformMat4(vec3.create(), p.position, camMatrix));
+        if (panoramas?.length) {
+            panoramas
+                .map((p) => vec3.transformMat4(vec3.create(), p.position, camMatrix))
+                .forEach((pos, idx) => {
+                    const marker = svg.children.namedItem(`panorama-${idx}`);
 
-        vsPans.forEach((pos, idx) => {
-            const marker = svg.children.namedItem(`panorama-${idx}`);
+                    if (!marker) {
+                        return;
+                    }
 
-            if (!marker) {
-                return;
-            }
+                    const hide = pos[2] > 0 || pos.some((num) => Number.isNaN(num) || !Number.isFinite(num));
 
-            const hide = pos[2] > 0 || pos.some((num) => Number.isNaN(num) || !Number.isFinite(num));
+                    if (hide) {
+                        marker.setAttribute("x", "-100");
+                        return;
+                    }
 
-            if (hide) {
-                marker.setAttribute("x", "-100");
-                return;
-            }
+                    const p = toScreen(pos);
+                    const x = p[0].toFixed(1);
+                    const y = p[1].toFixed(1);
+                    marker.setAttribute("x", Number.isNaN(Number(x)) || !Number.isFinite(Number(x)) ? "-100" : x);
+                    marker.setAttribute("y", Number.isNaN(Number(y)) || !Number.isFinite(Number(x)) ? "-100" : y);
+                });
+        }
 
-            const p = toScreen(pos);
-            const x = p[0].toFixed(1);
-            const y = p[1].toFixed(1);
-            marker.setAttribute("x", Number.isNaN(Number(x)) || !Number.isFinite(Number(x)) ? "-100" : x);
-            marker.setAttribute("y", Number.isNaN(Number(y)) || !Number.isFinite(Number(x)) ? "-100" : y);
-        });
-    }, [svg, view, size, panoramas]);
+        ditioMarkers
+            .map((marker) => vec3.transformMat4(vec3.create(), marker.position, camMatrix))
+            .forEach((pos, idx) => {
+                const marker = svg.children.namedItem(`ditioMarker-${idx}`);
+
+                if (!marker) {
+                    return;
+                }
+
+                const hide = pos[2] > 0 || pos.some((num) => Number.isNaN(num) || !Number.isFinite(num));
+
+                if (hide) {
+                    marker.setAttribute("x", "-100");
+                    return;
+                }
+
+                const p = toScreen(pos);
+                const x = p[0].toFixed(1);
+                const y = p[1].toFixed(1);
+                marker.setAttribute("x", Number.isNaN(Number(x)) || !Number.isFinite(Number(x)) ? "-100" : x);
+                marker.setAttribute("y", Number.isNaN(Number(y)) || !Number.isFinite(Number(x)) ? "-100" : y);
+            });
+    }, [svg, view, size, panoramas, ditioMarkers]);
 
     useEffect(() => {
         moveSvg();
-    }, [moveSvg]);
+    }, [moveSvg, showDitioMarkers, showPanoramaMarkers]);
 
     const moveSvgCursor = useCallback(
         (x: number, y: number, measurement: MeasureInfo | undefined) => {
@@ -1590,7 +1617,7 @@ export function Render3D({ onInit }: Props) {
                                     <AxisText id={`distanceText`} />
                                 </>
                             ) : null}
-                            {panoramas && show3dMarkers
+                            {panoramas && showPanoramaMarkers
                                 ? panoramas.map((panorama, idx) => {
                                       if (!activePanorama) {
                                           return (
@@ -1634,6 +1661,18 @@ export function Render3D({ onInit }: Props) {
 
                                       return null;
                                   })
+                                : null}
+                            {showDitioMarkers && ditioMarkers
+                                ? ditioMarkers.map((marker, idx) => (
+                                      <PanoramaMarker
+                                          height="32px"
+                                          width="32px"
+                                          id={`ditioMarker-${idx}`}
+                                          name={`ditioMarker-${idx}`}
+                                          key={marker.id}
+                                          onClick={() => dispatch(ditioActions.setClickedMarker(marker.id))}
+                                      />
+                                  ))
                                 : null}
                             <g id="cursor" />
                         </Svg>

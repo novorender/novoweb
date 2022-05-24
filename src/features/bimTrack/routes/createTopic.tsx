@@ -15,6 +15,7 @@ import { DatePicker } from "@mui/lab";
 import { useParams, useHistory } from "react-router-dom";
 import { FormEvent, useState } from "react";
 import { ArrowBack } from "@mui/icons-material";
+import { isValid, set } from "date-fns";
 
 import { Divider, IosSwitch, LinearProgress, ScrollBox, TextField, Tooltip } from "components";
 import { useToggle } from "hooks/useToggle";
@@ -328,7 +329,14 @@ export function CreateTopic() {
                                 value={deadline || null}
                                 minDate={today}
                                 onChange={(newDate: Date | null) =>
-                                    handleInputChange({ name: "deadline", value: newDate?.toISOString() ?? "" })
+                                    handleInputChange({
+                                        name: "deadline",
+                                        value: newDate
+                                            ? isValid(newDate)
+                                                ? set(newDate, { hours: 0, minutes: 0, seconds: 0 }).toISOString()
+                                                : ""
+                                            : "",
+                                    })
                                 }
                                 renderInput={(params) => <TextField {...params} size="small" />}
                             />
