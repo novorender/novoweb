@@ -1189,7 +1189,9 @@ export function Render3D({ onInit }: Props) {
                 }
 
                 selectBookmark(bookmark);
-            } catch {}
+            } catch (e) {
+                console.warn(e);
+            }
         }
     }, [view, id, dispatch, selectBookmark, urlBookmarkId]);
 
