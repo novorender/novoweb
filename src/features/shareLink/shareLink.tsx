@@ -35,23 +35,43 @@ export function ShareLink() {
         const id = uuidv4();
         const bm = createBookmark();
 
+        setStatus(Status.Loading);
+        const blob = new Blob([`${window.location.origin}${window.location.pathname}?bookmarkId=${id}`], {
+            type: "text/plain",
+        });
+        let saved: boolean = false;
+
         try {
-            setStatus(Status.Loading);
+            // Safari treats user activation differently:
+            // https://bugs.webkit.org/show_bug.cgi?id=222262.
+            await navigator.clipboard.write([
+                new ClipboardItem({
+                    "text/plain": new Promise(async (resolve) => {
+                        saved = await dataApi.saveBookmarks(sceneId, [{ ...bm, id, name: id }], { group: id });
 
-            const saved = await dataApi.saveBookmarks(sceneId, [{ ...bm, id, name: id }], { group: id });
+                        if (!saved) {
+                            throw new Error("Failed to save bookmark");
+                        }
 
-            if (!saved) {
-                throw new Error("Failed to save bookmark");
-            }
-            await navigator.clipboard.writeText(
-                `${window.location.origin}${window.location.pathname}?bookmarkId=${id}`
-            );
-
-            setStatus(Status.Success);
+                        resolve(blob);
+                    }),
+                }),
+            ]);
         } catch (e) {
-            console.warn(e);
-            setStatus(Status.Initial);
+            if (!saved) {
+                console.warn(e);
+                setStatus(Status.Initial);
+                return;
+            }
+
+            navigator.clipboard.write([
+                new ClipboardItem({
+                    [blob.type]: blob,
+                }),
+            ]);
         }
+
+        setStatus(Status.Success);
     };
 
     return (
