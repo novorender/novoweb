@@ -91,7 +91,7 @@ export function useSelectBookmark() {
                     mode,
                     planes: Array.from(planes),
                     defining: false,
-                    baseW: planes[0][3],
+                    baseW: planes[0] && planes[0][3] !== undefined ? planes[0][3] : 0,
                 })
             );
         } else {
