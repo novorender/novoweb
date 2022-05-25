@@ -85,7 +85,15 @@ export function useSelectBookmark() {
 
         if (bookmark.clippingVolume) {
             const { enabled, mode, planes } = bookmark.clippingVolume;
-            dispatch(renderActions.setClippingPlanes({ enabled, mode, planes: Array.from(planes), defining: false }));
+            dispatch(
+                renderActions.setClippingPlanes({
+                    enabled,
+                    mode,
+                    planes: Array.from(planes),
+                    defining: false,
+                    baseW: planes[0][3],
+                })
+            );
         } else {
             dispatch(renderActions.setClippingPlanes({ defining: false, planes: [], enabled: false, mode: "union" }));
         }

@@ -7,4 +7,5 @@ interface Window {
     ditioClientId?: string;
     ditioClientSecret?: string;
     dataServerUrl?: string;
+    view?: any;
 }
