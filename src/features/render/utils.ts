@@ -489,6 +489,9 @@ export function initCamera({
 }
 
 export function initClippingBox(clipping: RenderSettings["clippingPlanes"]): void {
+    // highlight is sometimes saved as null and crashes render
+    clipping.highlight = clipping.highlight ?? -1;
+
     store.dispatch(
         renderActions.setClippingBox({
             enabled: clipping.enabled,
