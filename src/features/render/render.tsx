@@ -1275,17 +1275,17 @@ export function Render3D({ onInit }: Props) {
             view.camera.controller = orthoController;
             dispatch(renderActions.setCamera({ type: CameraType.Orthographic }));
             dispatch(renderActions.setSelectingOrthoPoint(false));
+            (orthoController as any).near = -0.001;
 
             const mat = (orthoController.params as any).referenceCoordSys;
             const right = vec3.fromValues(mat[0], mat[1], mat[2]);
             const up = vec3.fromValues(mat[4], mat[5], mat[6]);
-            const norm = vec3.fromValues(mat[8], mat[9], mat[10]);
             const pt = vec3.fromValues(mat[12], mat[13], mat[14]);
             const squareSize = 1 * (gridDefaults.minorLineCount + 1);
 
             dispatch(
                 renderActions.setGrid({
-                    origo: vec3.sub(vec3.create(), pt, vec3.scale(vec3.create(), norm, 0.001)),
+                    origo: pt,
                     axisY: vec3.scale(vec3.create(), up, squareSize),
                     axisX: vec3.scale(vec3.create(), right, squareSize),
                 })
