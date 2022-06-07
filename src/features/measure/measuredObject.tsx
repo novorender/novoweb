@@ -1,6 +1,6 @@
 import { vec3 } from "gl-matrix";
 import { useEffect } from "react";
-import { MeasurementValues, MeasureObject, MeasureSettings } from "@novorender/webgl-api";
+import { MeasurementValues, MeasureObject, MeasureSettings } from "@novorender/measure-api";
 import {
     Box,
     FormControlLabel,

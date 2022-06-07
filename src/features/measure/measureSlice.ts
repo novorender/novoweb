@@ -1,4 +1,4 @@
-import { DuoMeasurementValues, MeasureSettings } from "@novorender/webgl-api";
+import { DuoMeasurementValues, MeasureSettings } from "@novorender/measure-api";
 import { createSlice, PayloadAction } from "@reduxjs/toolkit";
 import { vec3 } from "gl-matrix";
 

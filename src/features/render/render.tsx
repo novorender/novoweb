@@ -5,14 +5,13 @@ import {
     View,
     EnvironmentDescription,
     Internal,
-    MeasureInfo,
     CameraController,
     OrthoControllerParams,
     CameraControllerParams,
-    MeasureObject,
-    MeasureSettings,
-    DuoMeasurementValues,
+    MeasureInfo,
 } from "@novorender/webgl-api";
+import { MeasureObject, MeasureSettings, DuoMeasurementValues } from "@novorender/measure-api";
+
 import { Box, Button, Paper, Typography, useTheme, styled, Menu, MenuItem, popoverClasses } from "@mui/material";
 import { css } from "@mui/styled-engine";
 import { CameraAlt } from "@mui/icons-material";

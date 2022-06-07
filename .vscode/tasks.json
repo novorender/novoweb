@@ -3,36 +3,15 @@
     "tasks": [
         {
             "type": "npm",
-            "script": "dev",
+            "script": "http-dev",
             "group": "build",
+            "options": { "env": { "HTTPS": "true" } },
             "presentation": {
                 "group": "build"
             },
             "isBackground": true,
             "problemMatcher": [],
             "label": "Build and watch debug bundles"
-        },
-        {
-            "type": "npm",
-            "script": "test",
-            "group": {
-                "kind": "test",
-                "isDefault": true
-            },
-            "problemMatcher": [],
-            "label": "Run tests"
-        },
-        {
-            "group": {
-                "kind": "build",
-                "isDefault": true
-            },
-            "label": "Build and watch all",
-            "problemMatcher": [],
-            // "runOptions": {
-            //     "runOn": "folderOpen"
-            // },
-            "dependsOn": ["Build and watch debug bundles"]
         }
     ]
 }
