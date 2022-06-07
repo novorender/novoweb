@@ -269,7 +269,7 @@ export function Search() {
             <WidgetContainer minimized={minimized}>
                 <WidgetHeader minimized={minimized} toggleMinimize={toggleMinimize} widget={featuresConfig.search}>
                     {!menuOpen && !minimized ? (
-                        <form onSubmit={handleSubmit}>
+                        <Box component="form" sx={{ mt: 1 }} onSubmit={handleSubmit}>
                             {advanced ? (
                                 <AdvancedSearchInputs
                                     inputs={advancedInputs}
@@ -366,7 +366,7 @@ export function Search() {
                                     Search
                                 </Button>
                             </Box>
-                        </form>
+                        </Box>
                     ) : null}
                 </WidgetHeader>
                 <Box display={menuOpen || minimized ? "none" : "flex"} flexDirection="column" height={1}>
@@ -422,7 +422,7 @@ export function Search() {
     );
 }
 
-function CustomParentNode({
+export function CustomParentNode({
     style,
     abortController,
     searchPatterns,

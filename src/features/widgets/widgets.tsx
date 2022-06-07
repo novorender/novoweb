@@ -26,6 +26,7 @@ import { FollowPath } from "features/followPath";
 import { BimTrack } from "features/bimTrack";
 import { Ditio } from "features/ditio";
 import { MyLocation } from "features/myLocation";
+import { RangeSearch } from "features/rangeSearch";
 
 export function Widgets() {
     const theme = useTheme();
@@ -107,6 +108,8 @@ function getWidgetByKey(key: WidgetKey): JSX.Element | string {
             return <Ditio />;
         case featuresConfig.myLocation.key:
             return <MyLocation />;
+        case featuresConfig.rangeSearch.key:
+            return <RangeSearch />;
         default:
             return key;
     }

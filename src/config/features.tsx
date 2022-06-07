@@ -41,6 +41,13 @@ export enum FeatureType {
 }
 
 export const featuresConfig = {
+    rangeSearch: {
+        key: "rangeSearch",
+        name: "Range search",
+        Icon: Search,
+        type: FeatureType.Widget,
+        defaultLocked: false,
+    },
     ditio: {
         key: "ditio",
         name: "Ditio",
