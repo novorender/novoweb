@@ -100,6 +100,7 @@ export function SelectionBasket() {
     };
 
     const exportCSV = async () => {
+        const baseProperties = ["Name", "GUID", "Path"];
         const abortSignal = abortController.current.signal;
         setExportStatus(ExportStatus.Exporting);
 
@@ -117,14 +118,11 @@ export function SelectionBasket() {
             }
 
             const allProps = uniqueArray(
-                nodes.reduce(
-                    (props, current) => {
-                        return props.concat(current.properties.map(([key]) => key));
-                    },
-                    ["Name", "GUID"] as string[]
-                )
+                nodes.reduce((props, current) => {
+                    return props.concat(current.properties.map(([key]) => key));
+                }, baseProperties)
             ).sort((a, b) =>
-                ["Name", "GUID"].includes(a) || ["Name", "GUID"].includes(b)
+                baseProperties.includes(a) || baseProperties.includes(b)
                     ? 0
                     : a.localeCompare(b, "en", { sensitivity: "accent" })
             );
@@ -132,6 +130,7 @@ export function SelectionBasket() {
             const rows = nodes.map((node) => {
                 const obj: Record<string, string> = {
                     Name: node.name,
+                    Path: node.path,
                     ...Object.fromEntries(node.properties),
                 };
 
