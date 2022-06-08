@@ -244,6 +244,9 @@ export const renderSlice = createSlice({
         redoCameraPosition: (state) => {
             state.savedCameraPositions.currentIndex = state.savedCameraPositions.currentIndex + 1;
         },
+        setHomeCameraPos: (state, action: PayloadAction<CameraPosition>) => {
+            state.savedCameraPositions.positions[0] = action.payload;
+        },
         setSubtrees: (state, action: PayloadAction<State["subtrees"]>) => {
             state.subtrees = action.payload;
         },

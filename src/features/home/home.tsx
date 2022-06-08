@@ -31,6 +31,7 @@ import { useDispatchHighlighted } from "contexts/highlighted";
 import { useDispatchHidden } from "contexts/hidden";
 import { customGroupsActions, useCustomGroups } from "contexts/customGroups";
 import { useDispatchVisible, visibleActions } from "contexts/visible";
+import { measureActions } from "features/measure";
 
 type Props = SpeedDialActionProps & {
     position?: { top?: number; right?: number; bottom?: number; left?: number };
@@ -72,6 +73,7 @@ export function Home({ position, ...speedDialProps }: Props) {
         } = (await dataApi.loadScene(editingScene?.id || id)) as SceneData;
 
         dispatch(renderActions.resetState());
+        dispatch(measureActions.clear());
 
         if (settings) {
             const { display: _display, environment: _env, light: _light, ...toApply } = settings;

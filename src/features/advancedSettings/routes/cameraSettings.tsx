@@ -3,6 +3,7 @@ import { FlightControllerParams, OrthoControllerParams } from "@novorender/webgl
 import { useHistory } from "react-router-dom";
 import { useTheme, Box, Button, Slider, Typography, InputAdornment, OutlinedInput, InputLabel } from "@mui/material";
 import { ArrowBack, Edit, Save } from "@mui/icons-material";
+import { quat, vec3 } from "gl-matrix";
 
 import { Divider, ScrollBox, Accordion, AccordionDetails, AccordionSummary, LinearProgress } from "components";
 import { useAppDispatch, useAppSelector } from "app/store";
@@ -13,6 +14,8 @@ import {
     renderActions,
     selectBaseCameraSpeed,
     CameraSpeedMultiplier,
+    selectCameraType,
+    CameraType,
 } from "slices/renderSlice";
 
 type SliderSettings =
@@ -21,7 +24,15 @@ type SliderSettings =
     | AdvancedSetting.HeadlightDistance
     | AdvancedSetting.HeadlightIntensity;
 
-export function CameraSettings({ save, saving }: { save: () => Promise<void>; saving: boolean }) {
+export function CameraSettings({
+    save,
+    saveCameraPos,
+    saving,
+}: {
+    save: () => Promise<void>;
+    saveCameraPos: (camera: Required<FlightControllerParams>) => Promise<void>;
+    saving: boolean;
+}) {
     const history = useHistory();
     const theme = useTheme();
     const {
@@ -32,6 +43,7 @@ export function CameraSettings({ save, saving }: { save: () => Promise<void>; sa
     const baseSpeed = useAppSelector(selectBaseCameraSpeed);
     const settings = useAppSelector(selectAdvancedSettings);
     const { cameraNearClipping, cameraFarClipping, headlightIntensity, headlightDistance } = settings;
+    const cameraType = useAppSelector(selectCameraType);
 
     const [far, setFar] = useState(() => {
         const d = cameraFarClipping.toString();
@@ -273,6 +285,7 @@ export function CameraSettings({ save, saving }: { save: () => Promise<void>; sa
                                     min={0}
                                     max={360}
                                     step={1}
+                                    disabled={cameraType !== CameraType.Flight}
                                     scale={scaleNearClipping}
                                     name={AdvancedSetting.CameraNearClipping}
                                     value={near}
@@ -296,6 +309,7 @@ export function CameraSettings({ save, saving }: { save: () => Promise<void>; sa
                                     min={180}
                                     max={400}
                                     step={1}
+                                    disabled={cameraType !== CameraType.Flight}
                                     scale={scaleFarClipping}
                                     name={AdvancedSetting.CameraFarClipping}
                                     value={far}
@@ -308,6 +322,25 @@ export function CameraSettings({ save, saving }: { save: () => Promise<void>; sa
                         </Box>
                     </AccordionDetails>
                 </Accordion>
+                <Button
+                    disabled={cameraType !== CameraType.Flight}
+                    variant="outlined"
+                    color="grey"
+                    sx={{ ml: 1, my: 2 }}
+                    onClick={async () => {
+                        if (view.camera.controller.params.kind === "flight") {
+                            await saveCameraPos(view.camera.controller.params);
+                            dispatch(
+                                renderActions.setHomeCameraPos({
+                                    position: vec3.clone(view.camera.position),
+                                    rotation: quat.clone(view.camera.rotation),
+                                })
+                            );
+                        }
+                    }}
+                >
+                    Save default camera position
+                </Button>
             </ScrollBox>
         </>
     );

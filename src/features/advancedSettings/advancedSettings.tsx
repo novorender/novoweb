@@ -146,6 +146,27 @@ export function AdvancedSettings() {
         setStatus(Status.SaveSuccess);
     };
 
+    const saveCameraPos = async (camera: Required<FlightControllerParams>) => {
+        setStatus(Status.Saving);
+
+        try {
+            const { url: _url, ...originalScene } = (await dataApi.loadScene(sceneId)) as SceneData;
+
+            await dataApi.putScene({
+                ...originalScene,
+                url: isAdminScene ? scene.id : `${sceneId}:${scene.id}`,
+                camera: {
+                    ...camera,
+                    linearVelocity: baseCameraSpeed,
+                },
+            });
+        } catch {
+            return setStatus(Status.SaveError);
+        }
+
+        setStatus(Status.SaveSuccess);
+    };
+
     const showSnackbar = [Status.SaveError, Status.SaveSuccess].includes(status);
 
     return (
@@ -203,7 +224,7 @@ export function AdvancedSettings() {
                                 <Root save={save} saving={saving} />
                             </Route>
                             <Route path="/camera" exact>
-                                <CameraSettings save={save} saving={saving} />
+                                <CameraSettings save={save} saveCameraPos={saveCameraPos} saving={saving} />
                             </Route>
                             <Route path="/features" exact>
                                 <FeatureSettings save={save} saving={saving} />
