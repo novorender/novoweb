@@ -45,7 +45,10 @@ export function Login() {
         const res = await login(username, password);
 
         if (res) {
-            saveToStorage(StorageKey.NovoToken, res.token);
+            saveToStorage(
+                StorageKey.NovoToken,
+                JSON.stringify({ token: res.token, expiry: Date.now() + 1000 * 60 * 60 * 24 })
+            );
             dispatch(authActions.login({ accessToken: res.token, user: res.user }));
         }
     };

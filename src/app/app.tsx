@@ -22,7 +22,7 @@ import { CustomNavigationClient, getAccessToken, getOAuthState, getUser, storeAc
 import { getAuthHeader } from "utils/auth";
 import { useMountedState } from "hooks/useMountedState";
 import { StorageKey } from "config/storage";
-import { getFromStorage } from "utils/storage";
+import { deleteFromStorage, getFromStorage } from "utils/storage";
 
 export const api = createAPI({ noOffscreenCanvas: !offscreenCanvas });
 export const dataApi = createDataAPI({ authHeader: getAuthHeader, serviceUrl: dataServerBaseUrl });
@@ -87,19 +87,31 @@ export function App() {
         }
 
         async function verifyToken() {
-            const storedToken = getFromStorage(StorageKey.NovoToken);
-            if (!storedToken) {
-                return;
-            }
+            let accessToken = "";
 
-            const accessToken = await getAccessToken(storedToken);
-            if (!accessToken) {
+            try {
+                const stored = getFromStorage(StorageKey.NovoToken);
+
+                if (!stored) {
+                    return;
+                }
+                const storedToken = JSON.parse(stored);
+
+                // Force relog if less than 12 hours left to prevent token expiring mid session
+                if (storedToken.expiry - Date.now() >= 1000 * 60 * 60 * 12) {
+                    accessToken = storedToken.token;
+                } else {
+                    throw new Error("Token has expired");
+                }
+            } catch (e) {
+                console.warn(e);
+                deleteFromStorage(StorageKey.NovoToken);
                 return;
             }
 
             const user = await getUser(accessToken);
             if (user) {
-                dispatch(authActions.login({ accessToken: storedToken, user }));
+                dispatch(authActions.login({ accessToken, user }));
                 return true;
             }
         }
