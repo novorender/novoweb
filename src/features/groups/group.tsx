@@ -1,6 +1,7 @@
 import { MouseEvent, useState } from "react";
-import { Delete, Edit, MoreVert, Visibility, ColorLens } from "@mui/icons-material";
+import { Delete, Edit, MoreVert, Visibility, ColorLens, LibraryAdd } from "@mui/icons-material";
 import { Box, IconButton, ListItemIcon, ListItemText, Menu, MenuItem, Typography } from "@mui/material";
+import { v4 as uuidv4 } from "uuid";
 
 import { Tooltip } from "components";
 import { ColorPicker } from "features/colorPicker";
@@ -154,6 +155,30 @@ export function Group({
                                   <Edit fontSize="small" />
                               </ListItemIcon>
                               <ListItemText>Edit</ListItemText>
+                          </MenuItem>,
+                          <MenuItem
+                              key="duplicate"
+                              onClick={() =>
+                                  dispatchCustomGroups(
+                                      customGroupsActions.add([
+                                          {
+                                              id: uuidv4(),
+                                              name: group.name + " - COPY",
+                                              grouping: group.grouping,
+                                              search: group.search ? [...group.search] : undefined,
+                                              ids: [...group.ids],
+                                              color: [...group.color],
+                                              selected: false,
+                                              hidden: false,
+                                          },
+                                      ])
+                                  )
+                              }
+                          >
+                              <ListItemIcon>
+                                  <LibraryAdd fontSize="small" />
+                              </ListItemIcon>
+                              <ListItemText>Duplicate</ListItemText>
                           </MenuItem>,
                           <MenuItem
                               key="delete"
