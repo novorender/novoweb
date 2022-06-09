@@ -312,6 +312,24 @@ export function SelectionBasket() {
                         label={<Box fontSize={14}>Use natural colors</Box>}
                     />
 
+                    {color.use ? (
+                        <Box sx={{ mt: 1 }}>
+                            <Button
+                                variant="outlined"
+                                color="grey"
+                                disabled={!color.use}
+                                startIcon={
+                                    <ColorLens
+                                        sx={{ color: color.use ? `rgb(${r}, ${g}, ${b})` : undefined }}
+                                        fontSize="small"
+                                    />
+                                }
+                                onClick={toggleColorPicker}
+                            >
+                                Set basket color
+                            </Button>
+                        </Box>
+                    ) : null}
                     <ColorPicker
                         id={colorPickerAnchor ? "selection-basket-color-picker" : undefined}
                         open={Boolean(colorPickerAnchor)}
@@ -322,22 +340,6 @@ export function SelectionBasket() {
                             dispatch(renderActions.setSelectionBasketColor({ color: rgbToVec(rgb) }))
                         }
                     />
-                    <Box sx={{ mt: 1 }}>
-                        <Button
-                            variant="outlined"
-                            color="grey"
-                            disabled={!color.use}
-                            startIcon={
-                                <ColorLens
-                                    sx={{ color: color.use ? `rgb(${r}, ${g}, ${b})` : undefined }}
-                                    fontSize="small"
-                                />
-                            }
-                            onClick={toggleColorPicker}
-                        >
-                            Set basket color
-                        </Button>
-                    </Box>
                 </Box>
                 <WidgetList
                     display={menuOpen ? "block" : "none"}
