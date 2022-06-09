@@ -1,4 +1,4 @@
-import { useState, useCallback, RefCallback, useEffect, useRef } from "react";
+import { useState, useEffect, useRef } from "react";
 import {
     List,
     Box,
@@ -68,16 +68,11 @@ export function Groups() {
     const [minimized, toggleMinimize] = useToggle(false);
     const [creatingGroup, setCreatingGroup] = useState<boolean | string>(false);
     const [inputJson, setInputJson] = useState(false);
-    const [containerEl, setContainerEl] = useState<HTMLDivElement | null>(null);
-    const containerRef = useCallback<RefCallback<HTMLDivElement>>((el) => {
-        setContainerEl(el);
-    }, []);
     const initialized = useRef(false);
 
     const organisedGroups = organiseGroups(customGroups);
     const allGroupsSelected = customGroups.length > 0 && !customGroups.some((group) => !group.selected);
     const allGroupsHidden = customGroups.length > 0 && !customGroups.some((group) => !group.hidden);
-    const colorPickerPosition = getPickerPosition(containerEl);
     const hasGrouping = customGroups.some((group) => group.grouping);
 
     useEffect(
@@ -216,7 +211,7 @@ export function Groups() {
                     ) : status === GroupsStatus.ConfirmingSave ? (
                         <ConfirmSave />
                     ) : (
-                        <ScrollBox display="flex" flexDirection="column" ref={containerRef} height={1} pb={2}>
+                        <ScrollBox display="flex" flexDirection="column" height={1} pb={2}>
                             <List sx={{ width: 1, pb: 0 }}>
                                 <StyledListItemButton
                                     inset={hasGrouping}
@@ -295,7 +290,6 @@ export function Groups() {
                                             inset={hasGrouping}
                                             editGroup={() => setCreatingGroup(group.id)}
                                             group={group}
-                                            colorPickerPosition={colorPickerPosition}
                                         />
                                     ))}
                             </List>
@@ -307,7 +301,6 @@ export function Groups() {
                                         <GroupCollection
                                             key={collection.name + index}
                                             collection={collection}
-                                            colorPickerPosition={colorPickerPosition}
                                             editGroup={(id) => setCreatingGroup(id)}
                                         />
                                     );
@@ -329,15 +322,6 @@ export function Groups() {
             />
         </>
     );
-}
-
-function getPickerPosition(el: HTMLElement | null) {
-    if (!el) {
-        return;
-    }
-
-    const { top, left } = el.getBoundingClientRect();
-    return { top: top + 24, left: left + 24 };
 }
 
 export type OrganisedGroups = {

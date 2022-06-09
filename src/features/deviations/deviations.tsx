@@ -60,8 +60,6 @@ export function Deviations() {
 
     const [menuOpen, toggleMenu] = useToggle();
     const [minimized, toggleMinimize] = useToggle(false);
-    const [containerEl, setContainerEl] = useState<HTMLDivElement | null>(null);
-    const colorPickerPosition = getPickerPosition(containerEl);
 
     useEffect(() => {
         if (isAdminScene && calculationStatus.status === DeviationCalculationStatus.Initial) {
@@ -232,7 +230,7 @@ export function Deviations() {
                         </Box>
                     ) : null}
                 </WidgetHeader>
-                <ScrollBox display={menuOpen || minimized ? "none" : "block"} ref={setContainerEl} height={1}>
+                <ScrollBox display={menuOpen || minimized ? "none" : "block"} height={1}>
                     {status.status === DeviationsStatus.Saving ? <LinearProgress /> : null}
                     {[DeviationsStatus.Creating, DeviationsStatus.Editing].includes(status.status) ? (
                         <CreateDeviation />
@@ -240,13 +238,7 @@ export function Deviations() {
                         <>
                             <List>
                                 {deviations.colors.map((deviation) => {
-                                    return (
-                                        <Deviation
-                                            key={deviation.deviation}
-                                            deviation={deviation}
-                                            colorPickerPosition={colorPickerPosition}
-                                        />
-                                    );
+                                    return <Deviation key={deviation.deviation} deviation={deviation} />;
                                 })}
                             </List>
                         </>
@@ -268,17 +260,11 @@ export function Deviations() {
     );
 }
 
-function Deviation({
-    deviation,
-    colorPickerPosition,
-}: {
-    deviation: DeviationType;
-    colorPickerPosition: { top: number; left: number } | undefined;
-}) {
+function Deviation({ deviation }: { deviation: DeviationType }) {
     const status = useAppSelector(selectDeviationsStatus);
     const deviations = useAppSelector(selectDeviations);
     const dispatch = useAppDispatch();
-    const [colorPicker, toggleColorPicker] = useToggle();
+    const [colorPickerAnchor, setColorPickerAnchor] = useState<HTMLElement | null>(null);
     const [menuAnchor, setMenuAnchor] = useState<HTMLElement | null>(null);
 
     const openMenu = (e: MouseEvent<HTMLButtonElement>) => {
@@ -288,6 +274,10 @@ function Deviation({
 
     const closeMenu = () => {
         setMenuAnchor(null);
+    };
+
+    const toggleColorPicker = (event?: MouseEvent<HTMLElement>) => {
+        setColorPickerAnchor(!colorPickerAnchor && event?.currentTarget ? event.currentTarget : null);
     };
 
     const handleColorChange = ({ rgb }: ColorResult) => {
@@ -330,7 +320,7 @@ function Deviation({
                     size="small"
                     onClick={(evt) => {
                         evt.stopPropagation();
-                        toggleColorPicker();
+                        toggleColorPicker(evt);
                     }}
                 >
                     <Palette
@@ -360,14 +350,13 @@ function Deviation({
                     <MoreVert fontSize="small" />
                 </IconButton>
             </ListItemButton>
-            {colorPicker ? (
-                <ColorPicker
-                    position={colorPickerPosition}
-                    color={deviation.color}
-                    onChangeComplete={handleColorChange}
-                    onOutsideClick={toggleColorPicker}
-                />
-            ) : null}
+            <ColorPicker
+                open={Boolean(colorPickerAnchor)}
+                anchorEl={colorPickerAnchor}
+                onClose={() => toggleColorPicker()}
+                color={deviation.color}
+                onChangeComplete={handleColorChange}
+            />
             <Menu
                 onClick={(e) => e.stopPropagation()}
                 anchorEl={menuAnchor}
@@ -385,13 +374,4 @@ function Deviation({
             </Menu>
         </>
     );
-}
-
-function getPickerPosition(el: HTMLElement | null) {
-    if (!el) {
-        return;
-    }
-
-    const { top, left } = el.getBoundingClientRect();
-    return { top: top + 24, left: left + 24 };
 }

@@ -12,6 +12,7 @@ import { quat, vec3, vec4 } from "gl-matrix";
 
 import type { RootState } from "app/store";
 import type { WidgetKey } from "config/features";
+import { VecRGB, VecRGBA } from "utils/color";
 
 export const fetchEnvironments = createAsyncThunk("novorender/fetchEnvironments", async (api: API) => {
     const envs = await api.availableEnvironments("https://api.novorender.com/assets/env/index.json");
@@ -113,6 +114,10 @@ const initialState = {
               points: SubtreeStatus;
           },
     selectionBasketMode: SelectionBasketMode.Loose,
+    selectionBasketColor: {
+        color: [0, 0, 1, 1] as VecRGB | VecRGBA,
+        use: false,
+    },
     clippingBox: {
         defining: false,
         enabled: false,
@@ -271,6 +276,9 @@ export const renderSlice = createSlice({
         setSelectionBasketMode: (state, action: PayloadAction<State["selectionBasketMode"]>) => {
             state.selectionBasketMode = action.payload;
         },
+        setSelectionBasketColor: (state, action: PayloadAction<Partial<State["selectionBasketColor"]>>) => {
+            state.selectionBasketColor = { ...state.selectionBasketColor, ...action.payload };
+        },
         setClippingBox: (state, action: PayloadAction<Partial<ClippingPlanes>>) => {
             state.clippingBox = { ...state.clippingBox, ...action.payload };
         },
@@ -357,6 +365,7 @@ export const selectSavedCameraPositions = (state: RootState) => state.render.sav
 export const selectHomeCameraPosition = (state: RootState) => state.render.savedCameraPositions.positions[0];
 export const selectSubtrees = (state: RootState) => state.render.subtrees;
 export const selectSelectionBasketMode = (state: RootState) => state.render.selectionBasketMode;
+export const selectSelectionBasketColor = (state: RootState) => state.render.selectionBasketColor;
 export const selectClippingBox = (state: RootState) => state.render.clippingBox;
 export const selectClippingPlanes = (state: RootState) => state.render.clippingPlanes;
 export const selectCamera = (state: RootState) => state.render.camera as CameraState;

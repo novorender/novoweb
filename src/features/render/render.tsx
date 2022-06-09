@@ -58,6 +58,7 @@ import {
     SubtreeStatus,
     selectSubtrees,
     selectGridDefaults,
+    selectSelectionBasketColor,
 } from "slices/renderSlice";
 import { authActions } from "slices/authSlice";
 import { explorerActions, selectUrlBookmarkId } from "slices/explorerSlice";
@@ -194,6 +195,7 @@ export function Render3D({ onInit }: Props) {
     const selectMultiple = useAppSelector(selectSelectMultiple);
     const subtrees = useAppSelector(selectSubtrees);
     const selectionBasketMode = useAppSelector(selectSelectionBasketMode);
+    const selectionBasketColor = useAppSelector(selectSelectionBasketColor);
     const clippingBox = useAppSelector(selectClippingBox);
     const clippingPlanes = useAppSelector(selectClippingPlanes);
     const cameraState = useAppSelector(selectCamera);
@@ -886,7 +888,13 @@ export function Render3D({ onInit }: Props) {
                     sceneId: id,
                     objectGroups: [
                         { id: "", ids: hiddenObjects.idArr, hidden: true, selected: false, color: [0, 0, 0] },
-                        { id: "", ids: visibleObjects.idArr, hidden: false, selected: true, neutral: true },
+                        {
+                            id: "",
+                            ids: visibleObjects.idArr,
+                            hidden: false,
+                            selected: true,
+                            ...(selectionBasketColor.use ? { color: selectionBasketColor.color } : { neutral: true }),
+                        },
                         ...customGroups,
                         {
                             id: "",
@@ -911,6 +919,7 @@ export function Render3D({ onInit }: Props) {
             hiddenObjects,
             visibleObjects,
             selectionBasketMode,
+            selectionBasketColor,
         ]
     );
 

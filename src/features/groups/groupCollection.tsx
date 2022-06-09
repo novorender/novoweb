@@ -13,11 +13,9 @@ import { groupsActions, GroupsStatus, selectGroupsStatus } from "./groupsSlice";
 
 export const GroupCollection = ({
     collection,
-    colorPickerPosition,
     editGroup,
 }: {
     collection: OrganisedGroups["grouped"][keyof OrganisedGroups["grouped"]];
-    colorPickerPosition: { top: number; left: number } | undefined;
     editGroup: (id: string) => void;
 }) => {
     const { dispatch: dispatchCustomGroups } = useCustomGroups();
@@ -142,12 +140,7 @@ export const GroupCollection = ({
                         {[...collection.groups]
                             .sort((a, b) => a.name.localeCompare(b.name, "en", { sensitivity: "accent" }))
                             .map((group, index) => (
-                                <Group
-                                    key={group.name + index}
-                                    editGroup={() => editGroup(group.id)}
-                                    group={group}
-                                    colorPickerPosition={colorPickerPosition}
-                                />
+                                <Group key={group.name + index} editGroup={() => editGroup(group.id)} group={group} />
                             ))}
                     </List>
                 </Box>

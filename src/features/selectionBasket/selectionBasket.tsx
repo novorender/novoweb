@@ -1,7 +1,7 @@
-import { useEffect } from "react";
+import { useEffect, useState, MouseEvent } from "react";
 import { unparse } from "papaparse";
 import { ObjectData } from "@novorender/webgl-api";
-import { AddCircle, Close, DeleteSweep, FileDownload, RemoveCircle } from "@mui/icons-material";
+import { AddCircle, Close, ColorLens, DeleteSweep, FileDownload, RemoveCircle } from "@mui/icons-material";
 import {
     Box,
     Button,
@@ -34,10 +34,13 @@ import {
     renderActions,
     selectDefaultVisibility,
     SelectionBasketMode,
+    selectSelectionBasketColor,
     selectSelectionBasketMode,
 } from "slices/renderSlice";
 import { useExplorerGlobals } from "contexts/explorerGlobals";
 import { useMountedState } from "hooks/useMountedState";
+import { ColorPicker } from "features/colorPicker";
+import { rgbToVec, vecToRgb } from "utils/color";
 
 enum ExportStatus {
     Idle,
@@ -61,6 +64,14 @@ export function SelectionBasket() {
     const dispatchHighlighted = useDispatchHighlighted();
     const dispatchVisible = useDispatchVisible();
     const dispatch = useAppDispatch();
+
+    const color = useAppSelector(selectSelectionBasketColor);
+    const { r, g, b } = vecToRgb(color.color);
+
+    const [colorPickerAnchor, setColorPickerAnchor] = useState<null | HTMLElement>(null);
+    const toggleColorPicker = (event?: MouseEvent<HTMLElement>) => {
+        setColorPickerAnchor(!colorPickerAnchor && event?.currentTarget ? event.currentTarget : null);
+    };
 
     const [exportStatus, setExportStatus] = useMountedState(ExportStatus.Idle);
     const [abortController] = useAbortController();
@@ -287,6 +298,46 @@ export function SelectionBasket() {
                             label="Basket - Transparent"
                         />
                     </RadioGroup>
+                    <Divider sx={{ my: 2 }} />
+                    <Typography fontWeight={600}>Basket color</Typography>
+                    <FormControlLabel
+                        control={
+                            <IosSwitch
+                                size="medium"
+                                color="primary"
+                                checked={!color.use}
+                                onChange={() => dispatch(renderActions.setSelectionBasketColor({ use: !color.use }))}
+                            />
+                        }
+                        label={<Box fontSize={14}>Use natural colors</Box>}
+                    />
+
+                    <ColorPicker
+                        id={colorPickerAnchor ? "selection-basket-color-picker" : undefined}
+                        open={Boolean(colorPickerAnchor)}
+                        anchorEl={colorPickerAnchor}
+                        onClose={() => toggleColorPicker()}
+                        color={color.color}
+                        onChangeComplete={({ rgb }) =>
+                            dispatch(renderActions.setSelectionBasketColor({ color: rgbToVec(rgb) }))
+                        }
+                    />
+                    <Box sx={{ mt: 1 }}>
+                        <Button
+                            variant="outlined"
+                            color="grey"
+                            disabled={!color.use}
+                            startIcon={
+                                <ColorLens
+                                    sx={{ color: color.use ? `rgb(${r}, ${g}, ${b})` : undefined }}
+                                    fontSize="small"
+                                />
+                            }
+                            onClick={toggleColorPicker}
+                        >
+                            Set basket color
+                        </Button>
+                    </Box>
                 </Box>
                 <WidgetList
                     display={menuOpen ? "block" : "none"}

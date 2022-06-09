@@ -1,10 +1,9 @@
-import { useRef } from "react";
+import { MouseEvent, useState } from "react";
 import type { ColorResult } from "react-color";
 import type { SpeedDialActionProps } from "@mui/material";
 
 import { SpeedDialAction } from "components";
 import { featuresConfig } from "config/features";
-import { useToggle } from "hooks/useToggle";
 import { rgbToVec } from "utils/color";
 import { ColorPicker } from "features/colorPicker";
 import { highlightActions, useDispatchHighlighted, useHighlighted } from "contexts/highlighted";
@@ -13,14 +12,20 @@ type Props = SpeedDialActionProps;
 
 export function SelectionColor(props: Props) {
     const { name, Icon } = featuresConfig["selectionColor"];
-    const [open, toggle] = useToggle();
+
     const { color } = useHighlighted();
     const dispatch = useDispatchHighlighted();
 
-    const buttonRef = useRef<HTMLButtonElement | null>(null);
+    const [colorPickerAnchor, setColorPickerAnchor] = useState<null | HTMLElement>(null);
+
+    const toggleColorPicker = (event?: MouseEvent<HTMLElement>) => {
+        setColorPickerAnchor(!colorPickerAnchor && event?.currentTarget ? event.currentTarget : null);
+    };
 
     const handleChangeComplete = ({ rgb }: ColorResult) =>
         dispatch(highlightActions.setColor(rgbToVec({ ...rgb, a: rgb.a ?? 1 })));
+
+    const open = Boolean(colorPickerAnchor);
 
     return (
         <>
@@ -28,37 +33,18 @@ export function SelectionColor(props: Props) {
                 {...props}
                 data-test="selection-color"
                 active={open}
-                FabProps={{
-                    ref: (el) => {
-                        if (typeof props.FabProps?.ref === "function") {
-                            props.FabProps.ref(el);
-                        }
-
-                        buttonRef.current = el;
-                    },
-                }}
-                onClick={toggle}
+                onClick={toggleColorPicker}
                 title={name}
                 icon={<Icon />}
             />
-            {open ? (
-                <ColorPicker
-                    testId="selection-color-picker"
-                    position={getPickerPosition(buttonRef.current)}
-                    color={color}
-                    onChangeComplete={handleChangeComplete}
-                    onOutsideClick={toggle}
-                />
-            ) : null}
+            <ColorPicker
+                anchorOrigin={{ vertical: "top", horizontal: "right" }}
+                open={open}
+                anchorEl={colorPickerAnchor}
+                onClose={() => toggleColorPicker()}
+                color={color}
+                onChangeComplete={handleChangeComplete}
+            />
         </>
     );
-}
-
-function getPickerPosition(el: HTMLElement | null) {
-    if (!el) {
-        return;
-    }
-
-    const { top, height, left, width } = el.getBoundingClientRect();
-    return { top: top + height / 3, left: left + width + 16 };
 }

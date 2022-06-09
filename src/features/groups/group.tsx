@@ -10,30 +10,23 @@ import { useAppDispatch, useAppSelector } from "app/store";
 import { selectHasAdminCapabilities } from "slices/explorerSlice";
 import { CustomGroup, customGroupsActions, useCustomGroups } from "contexts/customGroups";
 
-import { useToggle } from "hooks/useToggle";
 import { rgbToVec, vecToRgb } from "utils/color";
 
 import { StyledCheckbox, StyledListItemButton } from "./groupsWidget";
 import { groupsActions, GroupsStatus, selectGroupsStatus } from "./groupsSlice";
 
-export function Group({
-    group,
-    inset,
-    editGroup,
-    colorPickerPosition,
-}: {
-    group: CustomGroup;
-    inset?: boolean;
-    editGroup: () => void;
-    colorPickerPosition: { top: number; left: number } | undefined;
-}) {
+export function Group({ group, inset, editGroup }: { group: CustomGroup; inset?: boolean; editGroup: () => void }) {
     const isAdmin = useAppSelector(selectHasAdminCapabilities);
     const status = useAppSelector(selectGroupsStatus);
     const dispatch = useAppDispatch();
     const { dispatch: dispatchCustomGroups } = useCustomGroups();
 
     const [menuAnchor, setMenuAnchor] = useState<HTMLElement | null>(null);
-    const [colorPicker, toggleColorPicker] = useToggle();
+    const [colorPickerAnchor, setColorPickerAnchor] = useState<HTMLElement | null>(null);
+
+    const toggleColorPicker = (event?: MouseEvent<HTMLElement>) => {
+        setColorPickerAnchor(!colorPickerAnchor && event?.currentTarget ? event.currentTarget : null);
+    };
 
     const openMenu = (e: MouseEvent<HTMLButtonElement>) => {
         e.stopPropagation();
@@ -119,16 +112,15 @@ export function Group({
                     </Box>
                 </Box>
             </StyledListItemButton>
-            {colorPicker ? (
-                <ColorPicker
-                    position={colorPickerPosition}
-                    color={group.color}
-                    onChangeComplete={({ rgb }) =>
-                        dispatchCustomGroups(customGroupsActions.update(group.id, { color: rgbToVec(rgb) }))
-                    }
-                    onOutsideClick={toggleColorPicker}
-                />
-            ) : null}
+            <ColorPicker
+                open={Boolean(colorPickerAnchor)}
+                anchorEl={colorPickerAnchor}
+                onClose={() => toggleColorPicker()}
+                color={group.color}
+                onChangeComplete={({ rgb }) =>
+                    dispatchCustomGroups(customGroupsActions.update(group.id, { color: rgbToVec(rgb) }))
+                }
+            />
             <Menu
                 onClick={(e) => e.stopPropagation()}
                 anchorEl={menuAnchor}
