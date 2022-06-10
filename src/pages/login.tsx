@@ -1,6 +1,7 @@
-import { useState, FormEvent } from "react";
+import { useState, FormEvent, ChangeEvent } from "react";
 import { useMsal } from "@azure/msal-react";
 import { useTheme, Box, Button, OutlinedInput, IconButton, InputAdornment, FormControl } from "@mui/material";
+import { useHistory } from "react-router-dom";
 
 import { loginRequest } from "config/auth";
 import { useAppDispatch, useAppSelector } from "app/store";
@@ -15,12 +16,14 @@ import { StorageKey } from "config/storage";
 
 export function Login() {
     const theme = useTheme();
+    const history = useHistory();
     const { instance } = useMsal();
     const adTenant = useAppSelector(selectAdTentant);
     const dispatch = useAppDispatch();
 
     const [username, setUsername] = useState("");
     const [password, setPassword] = useState("");
+    const [error, setError] = useState("");
     const [showPassword, toggleShowPassword] = useToggle(false);
 
     const handleAdRedirect = async () => {
@@ -33,6 +36,11 @@ export function Login() {
             .catch((e) => {
                 console.warn(e);
             });
+    };
+
+    const handleChange = (setState: (val: string) => void) => (e: ChangeEvent<HTMLInputElement>) => {
+        setError("");
+        setState(e.target.value);
     };
 
     const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
@@ -50,6 +58,9 @@ export function Login() {
                 JSON.stringify({ token: res.token, expiry: Date.now() + 1000 * 60 * 60 * 24 })
             );
             dispatch(authActions.login({ accessToken: res.token, user: res.user }));
+            history.replace(history.location.pathname.replace("login/", ""));
+        } else {
+            setError("Invalid username or password.");
         }
     };
 
@@ -81,8 +92,9 @@ export function Login() {
                             <label htmlFor="username">Username</label>
                             <OutlinedInput
                                 id="username"
+                                required
                                 value={username}
-                                onChange={(e) => setUsername(e.target.value)}
+                                onChange={handleChange(setUsername)}
                                 type="text"
                                 startAdornment={
                                     <InputAdornment position="start">
@@ -92,13 +104,14 @@ export function Login() {
                             />
                         </FormControl>
                     </Box>
-                    <Box mb={3}>
+                    <Box mb={1.5} pb={4} position="relative">
                         <FormControl fullWidth>
                             <label htmlFor="password">Password</label>
                             <OutlinedInput
                                 id="password"
+                                required
                                 value={password}
-                                onChange={(e) => setPassword(e.target.value)}
+                                onChange={handleChange(setPassword)}
                                 type={showPassword ? "text" : "password"}
                                 startAdornment={
                                     <InputAdornment position="start">
@@ -118,6 +131,9 @@ export function Login() {
                                 }
                             />
                         </FormControl>
+                        <Box color={"red"} position="absolute" bottom={0}>
+                            {error}
+                        </Box>
                     </Box>
                     <Box mb={2}>
                         <Button type="submit" variant="contained" fullWidth color="primary" size="large">

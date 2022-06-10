@@ -15,6 +15,7 @@ import { theme } from "app/theme";
 import { useAppDispatch } from "app/store";
 import { Loading } from "components";
 import { Explorer } from "pages/explorer";
+import { Login } from "pages/login";
 import { authActions } from "slices/authSlice";
 import { msalConfig } from "config/auth";
 import { dataServerBaseUrl, offscreenCanvas } from "config";
@@ -80,6 +81,7 @@ export function App() {
                     }
 
                     dispatch(authActions.login({ accessToken: res.accessToken, msalAccount: res.account, user }));
+                    history.replace(history.location.pathname.replace("login/", ""));
                 }
             } catch (e) {
                 console.warn(e);
@@ -115,7 +117,7 @@ export function App() {
                 return true;
             }
         }
-    }, [status, setStatus, dispatch]);
+    }, [status, setStatus, dispatch, history]);
 
     useEffect(() => {
         const state = getOAuthState();
@@ -136,6 +138,9 @@ export function App() {
                                 <Loading />
                             ) : (
                                 <Switch>
+                                    <Route path="/login/:id">
+                                        <Login />
+                                    </Route>
                                     <Route path="/callback">
                                         <Loading />
                                     </Route>

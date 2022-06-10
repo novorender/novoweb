@@ -37,6 +37,8 @@ export function Explorer() {
     );
 }
 
+const disableHud = new URLSearchParams(window.location.search).get("disableHud") === "true";
+
 function ExplorerBase() {
     const id = useSceneId();
     const user = useAppSelector(selectUser);
@@ -105,7 +107,7 @@ function ExplorerBase() {
     return (
         <AuthCheck>
             <Render3D onInit={handleInit} />
-            {view && scene ? <Hud /> : null}
+            {view && scene && !disableHud ? <Hud /> : null}
             <Consent />
         </AuthCheck>
     );

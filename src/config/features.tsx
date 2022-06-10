@@ -15,6 +15,7 @@ import {
     List,
     Movie,
     MyLocation,
+    Person,
     Redo,
     RouteOutlined,
     Search,
@@ -41,6 +42,13 @@ export enum FeatureType {
 }
 
 export const featuresConfig = {
+    user: {
+        key: "user",
+        name: "User",
+        Icon: Person,
+        type: FeatureType.Widget,
+        defaultLocked: false,
+    },
     rangeSearch: {
         key: "rangeSearch",
         name: "Range search",
@@ -290,7 +298,7 @@ export type WidgetKey = {
 
 export type Widget = Config[WidgetKey];
 
-export const defaultEnabledWidgets = [] as WidgetKey[];
+export const defaultEnabledWidgets = [featuresConfig.user.key] as WidgetKey[];
 export const allWidgets = Object.values(featuresConfig)
     .filter((widget) => [FeatureType.AdminWidget, FeatureType.Widget].includes(widget.type))
     .map((widget) => widget.key as WidgetKey);

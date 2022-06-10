@@ -28,7 +28,7 @@ import {
 } from "features/panoramas";
 import { Loading } from "components";
 
-import { api, dataApi, measureApi } from "app";
+import { api, dataApi, measureApi, msalInstance } from "app";
 import { StorageKey } from "config/storage";
 import { useMountedState } from "hooks/useMountedState";
 import { useSceneId } from "hooks/useSceneId";
@@ -60,7 +60,7 @@ import {
     selectGridDefaults,
     selectSelectionBasketColor,
 } from "slices/renderSlice";
-import { authActions } from "slices/authSlice";
+import { authActions, selectMsalAccount } from "slices/authSlice";
 import { explorerActions, selectUrlBookmarkId } from "slices/explorerSlice";
 import { selectDeviations } from "features/deviations";
 import { bookmarksActions, selectBookmarks, useSelectBookmark } from "features/bookmarks";
@@ -1697,10 +1697,17 @@ export function Render3D({ onInit }: Props) {
 function NoScene({ id }: { id: string }) {
     const theme = useTheme();
     const dispatch = useAppDispatch();
+    const msalAccount = useAppSelector(selectMsalAccount);
 
-    const logout = async () => {
+    const logOut = () => {
         deleteFromStorage(StorageKey.NovoToken);
-        dispatch(authActions.logout());
+
+        if (msalInstance.getAllAccounts().length) {
+            deleteFromStorage(StorageKey.MsalActiveAccount);
+            msalInstance.logoutRedirect({ account: msalAccount });
+        } else {
+            dispatch(authActions.logout());
+        }
     };
 
     return (
@@ -1720,7 +1727,7 @@ function NoScene({ id }: { id: string }) {
                         The scene with id <em>{id}</em> is not available.
                     </Typography>
                     <Box textAlign="center">
-                        <Button onClick={logout} variant="contained" color="secondary">
+                        <Button onClick={logOut} variant="contained" color="secondary">
                             Log in with a different account
                         </Button>
                     </Box>

@@ -4,22 +4,15 @@ import { SelectionModifierMenu } from "features/selectionModifierMenu";
 import { CameraNavigationMenu } from "features/cameraNavigationMenu";
 import { Widgets } from "features/widgets";
 import { useAppSelector } from "app/store";
-import { selectEnabledWidgets, selectUserRole, UserRole } from "slices/explorerSlice";
 import { NavigationCube } from "features/navigationCube";
 import { selectAdvancedSettings } from "slices/renderSlice";
 
 const largeFabButtonDiameter = 40;
 
 export function Hud() {
-    const enabledWidgets = useAppSelector(selectEnabledWidgets);
     const theme = useTheme();
     const isSmall = useMediaQuery(theme.breakpoints.down("md"));
-    const userRole = useAppSelector(selectUserRole);
     const { navigationCube } = useAppSelector(selectAdvancedSettings);
-
-    if (enabledWidgets.length < 1 && userRole === UserRole.Viewer) {
-        return <></>;
-    }
 
     return (
         <>

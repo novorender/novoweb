@@ -27,6 +27,7 @@ import { BimTrack } from "features/bimTrack";
 import { Ditio } from "features/ditio";
 import { MyLocation } from "features/myLocation";
 import { RangeSearch } from "features/rangeSearch";
+import { User } from "features/user";
 
 export function Widgets() {
     const theme = useTheme();
@@ -110,6 +111,8 @@ function getWidgetByKey(key: WidgetKey): JSX.Element | string {
             return <MyLocation />;
         case featuresConfig.rangeSearch.key:
             return <RangeSearch />;
+        case featuresConfig.user.key:
+            return <User />;
         default:
             return key;
     }
