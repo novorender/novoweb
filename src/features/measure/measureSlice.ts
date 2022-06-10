@@ -13,6 +13,7 @@ export type SelectedMeasureObj = {
 const initialState = {
     selecting: false,
     selected: [] as SelectedMeasureObj[],
+    forcePoint: false,
     pinned: undefined as undefined | number,
     duoMeasurementValues: undefined as undefined | DuoMeasurementValues,
 };
@@ -39,6 +40,9 @@ export const measureSlice = createSlice({
         clear: (state) => {
             state.selected = [];
             state.pinned = undefined;
+        },
+        toggleForcePoint: (state) => {
+            state.forcePoint = !state.forcePoint;
         },
         toggleSelecting: (state) => {
             state.selecting = !state.selecting;

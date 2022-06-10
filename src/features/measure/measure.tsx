@@ -1,6 +1,6 @@
 import { DeleteSweep } from "@mui/icons-material";
 import { useRef, useEffect } from "react";
-import { Box, Button, FormControlLabel } from "@mui/material";
+import { Box, Button, Checkbox, FormControlLabel } from "@mui/material";
 
 import { useAppDispatch, useAppSelector } from "app/store";
 import { IosSwitch, LogoSpeedDial, ScrollBox, WidgetContainer, WidgetHeader } from "components";
@@ -16,7 +16,7 @@ export function Measure() {
     const [minimized, toggleMinimize] = useToggle(false);
 
     const dispatch = useAppDispatch();
-    const { selecting, selected } = useAppSelector(selectMeasure);
+    const { selecting, selected, forcePoint } = useAppSelector(selectMeasure);
     const isInitial = useRef(true);
 
     useEffect(() => {
@@ -51,6 +51,17 @@ export function Measure() {
                                     />
                                 }
                                 label={<Box fontSize={14}>Selecting</Box>}
+                            />
+                            <FormControlLabel
+                                control={
+                                    <Checkbox
+                                        size="medium"
+                                        color="primary"
+                                        checked={forcePoint}
+                                        onChange={() => dispatch(measureActions.toggleForcePoint())}
+                                    />
+                                }
+                                label={<Box fontSize={14}>Force points</Box>}
                             />
                             <Button onClick={() => dispatch(measureActions.clear())} color="grey" disabled={false}>
                                 <DeleteSweep sx={{ mr: 1 }} />

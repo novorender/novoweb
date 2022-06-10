@@ -108,7 +108,7 @@ export function MeasuredObject({ obj, idx }: { obj: SelectedMeasureObj; idx: num
                 </Box>
                 <Box width={0} flex="1 1 auto" overflow="hidden">
                     <Box overflow="hidden" whiteSpace="nowrap" textOverflow="ellipsis">
-                        {kind ? capitalize(kind) : obj.id}
+                        {kind ? (kind === "lineStrip" ? "Line strip" : capitalize(kind)) : obj.id}
                     </Box>
                 </Box>
             </AccordionSummary>
@@ -253,6 +253,24 @@ function MeasurementData({ measureValues }: { measureValues: MeasurementValues }
                             </NestedAccordionDetails>
                         </Accordion>
                     </Box>
+                </>
+            );
+        }
+        case "lineStrip": {
+            return (
+                <>
+                    <List dense>
+                        <ListItem>
+                            <Grid container>
+                                <Grid item xs={4}>
+                                    Length
+                                </Grid>
+                                <Grid item xs={6}>
+                                    {measureValues.totalLength.toFixed(3)} m
+                                </Grid>
+                            </Grid>
+                        </ListItem>
+                    </List>
                 </>
             );
         }

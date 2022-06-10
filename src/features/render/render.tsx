@@ -611,23 +611,25 @@ export function Render3D({ onInit }: Props) {
 
             const mObjects = (await Promise.all(
                 measure.selected.map((obj) =>
-                    measureScene
-                        .downloadMeasureObject(obj.id, obj.pos)
-                        .then((_mObj) => {
-                            const mObj = _mObj as ExtendedMeasureObject;
+                    obj.id === -1
+                        ? obj
+                        : measureScene
+                              .downloadMeasureObject(obj.id, obj.pos)
+                              .then((_mObj) => {
+                                  const mObj = _mObj as ExtendedMeasureObject;
 
-                            if (mObj.selectedEntity) {
-                                if (mObj.selectedEntity.kind === "vertex") {
-                                    return { ...obj, pos: mObj.selectedEntity.parameter };
-                                }
+                                  if (mObj.selectedEntity) {
+                                      if (mObj.selectedEntity.kind === "vertex") {
+                                          return { ...obj, pos: mObj.selectedEntity.parameter };
+                                      }
 
-                                mObj.pos = obj.pos;
-                                mObj.settings = obj.settings;
-                            }
+                                      mObj.pos = obj.pos;
+                                      mObj.settings = obj.settings;
+                                  }
 
-                            return mObj.selectedEntity ? mObj : obj;
-                        })
-                        .catch(() => obj)
+                                  return mObj.selectedEntity ? mObj : obj;
+                              })
+                              .catch(() => obj)
                 )
             )) as (ExtendedMeasureObject | MeasurePoint)[];
 
@@ -1303,7 +1305,7 @@ export function Render3D({ onInit }: Props) {
         }
 
         if (measure.selecting) {
-            dispatch(measureActions.selectObj({ id: result.objectId, pos: result.position }));
+            dispatch(measureActions.selectObj({ id: measure.forcePoint ? -1 : result.objectId, pos: result.position }));
             return;
         }
 
