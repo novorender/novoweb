@@ -42,9 +42,9 @@ function LoggedIn({ user }: { user: UserType }) {
 
     const logOut = () => {
         deleteFromStorage(StorageKey.NovoToken);
+        deleteFromStorage(StorageKey.MsalActiveAccount);
 
         if (msalInstance.getAllAccounts().length) {
-            deleteFromStorage(StorageKey.MsalActiveAccount);
             msalInstance.logoutRedirect({ account: msalAccount });
         } else {
             window.location.reload();

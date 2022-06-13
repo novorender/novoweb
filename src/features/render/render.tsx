@@ -1703,9 +1703,9 @@ function NoScene({ id }: { id: string }) {
 
     const logOut = () => {
         deleteFromStorage(StorageKey.NovoToken);
+        deleteFromStorage(StorageKey.MsalActiveAccount);
 
         if (msalInstance.getAllAccounts().length) {
-            deleteFromStorage(StorageKey.MsalActiveAccount);
             msalInstance.logoutRedirect({ account: msalAccount });
         } else {
             dispatch(authActions.logout());

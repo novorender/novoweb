@@ -7,7 +7,7 @@ import { store } from "app/store";
 import { loginRequest } from "config/auth";
 import { authActions, User } from "slices/authSlice";
 import { sha256, base64UrlEncode } from "utils/misc";
-import { getFromStorage, saveToStorage } from "./storage";
+import { deleteFromStorage, getFromStorage, saveToStorage } from "./storage";
 import { StorageKey } from "config/storage";
 import { dataServerBaseUrl } from "config";
 
@@ -26,6 +26,8 @@ export async function getAuthHeader(): Promise<AuthenticationHeader> {
             return { header: "Authorization", value: `Bearer ${response.accessToken}` };
         } catch (e) {
             console.warn(e);
+            deleteFromStorage(StorageKey.MsalActiveAccount);
+            deleteFromStorage(StorageKey.NovoToken);
             store.dispatch(authActions.logout());
             return { header: "", value: "" };
         }
