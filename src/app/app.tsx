@@ -81,7 +81,7 @@ export function App() {
                     }
 
                     dispatch(authActions.login({ accessToken: res.accessToken, msalAccount: res.account, user }));
-                    history.replace(history.location.pathname.replace("login/", ""));
+                    history.replace(history.location.pathname.replace("login/", "") + window.location.search);
                 }
             } catch (e) {
                 console.warn(e);

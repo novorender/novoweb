@@ -58,7 +58,7 @@ export function Login() {
                 JSON.stringify({ token: res.token, expiry: Date.now() + 1000 * 60 * 60 * 24 })
             );
             dispatch(authActions.login({ accessToken: res.token, user: res.user }));
-            history.replace(history.location.pathname.replace("login/", ""));
+            history.replace(history.location.pathname.replace("login/", "") + window.location.search);
         } else {
             setError("Invalid username or password.");
         }

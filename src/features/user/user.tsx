@@ -89,7 +89,7 @@ function LoggedOut() {
         <Box width={1} display="flex" flexDirection="column" justifyContent="center" alignItems="center">
             <Button
                 component="a"
-                href={`${window.location.origin}/login/${sceneId}`}
+                href={`${window.location.origin}/login/${sceneId}${window.location.search}`}
                 sx={{ mt: 2 }}
                 variant="contained"
                 size="large"
