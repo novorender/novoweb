@@ -135,7 +135,7 @@ export function storeActiveAccount(account: AccountInfo | null): void {
     }
 }
 
-export function getStoredActiveAccount(): AccountInfo | undefined {
+export function getStoredActiveMsalAccount(): AccountInfo | undefined {
     try {
         const storedAccount = getFromStorage(StorageKey.MsalActiveAccount)
             ? JSON.parse(getFromStorage(StorageKey.MsalActiveAccount))

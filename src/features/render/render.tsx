@@ -60,7 +60,7 @@ import {
     selectGridDefaults,
     selectSelectionBasketColor,
 } from "slices/renderSlice";
-import { authActions, selectMsalAccount } from "slices/authSlice";
+import { authActions, selectMsalAccount, selectUser } from "slices/authSlice";
 import { explorerActions, selectUrlBookmarkId } from "slices/explorerSlice";
 import { selectDeviations } from "features/deviations";
 import { bookmarksActions, selectBookmarks, useSelectBookmark } from "features/bookmarks";
@@ -1700,15 +1700,21 @@ function NoScene({ id }: { id: string }) {
     const theme = useTheme();
     const dispatch = useAppDispatch();
     const msalAccount = useAppSelector(selectMsalAccount);
+    const user = useAppSelector(selectUser);
+    const loginUrl = `${window.location.origin}/login/${id}${window.location.search}`;
 
     const logOut = () => {
         deleteFromStorage(StorageKey.NovoToken);
         deleteFromStorage(StorageKey.MsalActiveAccount);
 
         if (msalInstance.getAllAccounts().length) {
-            msalInstance.logoutRedirect({ account: msalAccount });
+            msalInstance.logoutRedirect({
+                account: msalAccount,
+                postLogoutRedirectUri: loginUrl,
+            });
         } else {
             dispatch(authActions.logout());
+            window.location.replace(loginUrl);
         }
     };
 
@@ -1730,7 +1736,7 @@ function NoScene({ id }: { id: string }) {
                     </Typography>
                     <Box textAlign="center">
                         <Button onClick={logOut} variant="contained" color="secondary">
-                            Log in with a different account
+                            Log in {user ? "with a different account" : ""}
                         </Button>
                     </Box>
                 </Box>

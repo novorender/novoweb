@@ -17,9 +17,16 @@ import { Loading } from "components";
 import { Explorer } from "pages/explorer";
 import { Login } from "pages/login";
 import { authActions } from "slices/authSlice";
-import { msalConfig } from "config/auth";
+import { loginRequest, msalConfig } from "config/auth";
 import { dataServerBaseUrl, offscreenCanvas } from "config";
-import { CustomNavigationClient, getAccessToken, getOAuthState, getUser, storeActiveAccount } from "utils/auth";
+import {
+    CustomNavigationClient,
+    getAccessToken,
+    getOAuthState,
+    getStoredActiveMsalAccount,
+    getUser,
+    storeActiveAccount,
+} from "utils/auth";
 import { getAuthHeader } from "utils/auth";
 import { useMountedState } from "hooks/useMountedState";
 import { StorageKey } from "config/storage";
@@ -57,6 +64,8 @@ export function App() {
 
             if (!(await verifyToken())) {
                 await handleMsalReturn();
+            } else {
+                history.replace(history.location.pathname.replace("login/", "") + window.location.search);
             }
 
             setStatus(Status.Ready);
@@ -64,7 +73,26 @@ export function App() {
 
         async function handleMsalReturn() {
             try {
-                const res = await msalInstance.handleRedirectPromise();
+                const res = await msalInstance.handleRedirectPromise().then((res) => {
+                    if (res) {
+                        return res;
+                    }
+
+                    const account = getStoredActiveMsalAccount();
+
+                    if (!account) {
+                        return;
+                    }
+
+                    return msalInstance
+                        .acquireTokenSilent({ ...loginRequest, account: getStoredActiveMsalAccount() })
+                        .catch(() => {
+                            return msalInstance.ssoSilent({
+                                ...loginRequest,
+                                account: getStoredActiveMsalAccount(),
+                            });
+                        });
+                });
 
                 if (res) {
                     msalInstance.setActiveAccount(res.account);

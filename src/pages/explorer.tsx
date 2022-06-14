@@ -1,7 +1,6 @@
-import { ReactNode, useEffect, useState } from "react";
+import { ReactNode, useEffect } from "react";
 import { SearchPattern } from "@novorender/webgl-api";
 
-import { dataApi } from "app";
 import { uniqueArray } from "utils/misc";
 import { getOAuthState } from "utils/auth";
 import { useSceneId } from "hooks/useSceneId";
@@ -14,15 +13,13 @@ import {
     defaultLockedWidgets,
     allWidgets,
 } from "config/features";
-import { Loading } from "components";
 import { Hud } from "features/hud";
 import { Render3D } from "features/render";
-import { Protected } from "features/protectedRoute";
 import { Consent } from "features/consent";
 
 import { useAppSelector, useAppDispatch } from "app/store";
 import { explorerActions, SceneType, UserRole } from "slices/explorerSlice";
-import { authActions, selectAccessToken, selectUser } from "slices/authSlice";
+import { selectUser } from "slices/authSlice";
 import { HiddenProvider } from "contexts/hidden";
 import { CustomGroupsProvider } from "contexts/customGroups";
 import { HighlightedProvider } from "contexts/highlighted";
@@ -105,63 +102,12 @@ function ExplorerBase() {
     };
 
     return (
-        <AuthCheck>
+        <>
             <Render3D onInit={handleInit} />
             {view && scene && !disableHud ? <Hud /> : null}
             <Consent />
-        </AuthCheck>
+        </>
     );
-}
-
-enum AuthCheckStatus {
-    Pending,
-    RequireAuth,
-    Public,
-}
-
-/**
- * Loading a scene that requires authentication or a scene that does not exist returns an empty response.
- * Attempt to load the scene unauthenticated to check if it is public. Assume that it requires authentication if it is empty.
- */
-
-function AuthCheck({ children }: { children: ReactNode }) {
-    const id = useSceneId();
-    const accessToken = useAppSelector(selectAccessToken);
-    const dispatch = useAppDispatch();
-    const { dispatch: dispatchGlobals } = useExplorerGlobals();
-
-    // Skip auth-check if token already exists and handle missing scene in child component
-    const [status, setStatus] = useState(accessToken ? AuthCheckStatus.RequireAuth : AuthCheckStatus.Pending);
-
-    useEffect(() => {
-        if (status === AuthCheckStatus.Pending) {
-            tryLoadingSceneUnauthenticated();
-        }
-
-        async function tryLoadingSceneUnauthenticated() {
-            if (!id) {
-                return;
-            }
-
-            const sceneRes = await dataApi.loadScene(id).catch(() => undefined);
-
-            if (sceneRes && !("error" in sceneRes)) {
-                setStatus(AuthCheckStatus.Public);
-            } else {
-                if (sceneRes && sceneRes.tenant) {
-                    dispatch(authActions.setAdTenant(sceneRes.tenant));
-                }
-
-                setStatus(AuthCheckStatus.RequireAuth);
-            }
-        }
-    }, [status, dispatch, id, accessToken, dispatchGlobals]);
-
-    if (status === AuthCheckStatus.Pending) {
-        return <Loading />;
-    }
-
-    return <Protected allowUnauthenticated={status === AuthCheckStatus.Public}>{children}</Protected>;
 }
 
 function enabledFeaturesToFeatureKeys(enabledFeatures: Record<string, boolean>): WidgetKey[] {

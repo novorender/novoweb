@@ -31,7 +31,6 @@ export type User = {
 const initialState = {
     accessToken: "",
     msalAccount: null as null | AccountInfo,
-    adTenant: "",
     user: undefined as undefined | User,
 };
 
@@ -61,16 +60,12 @@ export const authSlice = createSlice({
         setUser: (state, action: PayloadAction<State["user"]>) => {
             state.user = action.payload;
         },
-        setAdTenant: (state, action: PayloadAction<State["adTenant"]>) => {
-            state.adTenant = action.payload;
-        },
     },
 });
 
 export const selectAccessToken = (state: RootState) => state.auth.accessToken;
 export const selectMsalAccount = (state: RootState) => state.auth.msalAccount;
 export const selectUser = (state: RootState) => state.auth.user;
-export const selectAdTentant = (state: RootState) => state.auth.adTenant;
 
 const { actions, reducer } = authSlice;
 export { actions as authActions, reducer as authReducer };

@@ -1,6 +1,6 @@
 export enum StorageKey {
     NovoToken = "novoweb_token",
-    MsalActiveAccount = "msal_active_account",
+    MsalActiveAccount = "msal_active_account_a",
     BimCollabRefreshToken = "BIMcollab_refresh_token",
     BimCollabCodeVerifier = "BIMcollab_code_verifier",
     BimCollabSuggestedSpace = "BIMcollab_suggested_space",
