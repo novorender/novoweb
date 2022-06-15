@@ -446,11 +446,16 @@ export function initCamera({
     canvas,
     flightControllerRef,
     view,
+    controls,
 }: {
     camera: CameraControllerParams;
     canvas: HTMLCanvasElement;
-    flightControllerRef?: MutableRefObject<CameraController | undefined>;
+    flightControllerRef: MutableRefObject<CameraController | undefined>;
     view: View;
+    controls?: {
+        mouseButtonMap?: CameraController["mouseButtonsMap"];
+        fingerMap?: CameraController["fingersMap"];
+    };
 }): CameraController {
     const controller = api.createCameraController(camera as any, canvas);
 
@@ -458,22 +463,28 @@ export function initCamera({
         controller.autoZoomToScene = false;
     }
 
-    if (flightControllerRef) {
-        if (controller.params.kind === "flight") {
-            flightControllerRef.current = controller;
-        } else if (!flightControllerRef.current) {
-            flightControllerRef.current = {
-                ...api.createCameraController({ kind: "flight" }, canvas),
-                autoZoomToScene: false,
-                enabled: false,
-            };
+    if (controller.params.kind === "flight") {
+        flightControllerRef.current = controller;
+    } else if (!flightControllerRef.current) {
+        flightControllerRef.current = {
+            ...api.createCameraController({ kind: "flight" }, canvas),
+            autoZoomToScene: false,
+            enabled: false,
+        };
 
-            store.dispatch(
-                renderActions.setBaseCameraSpeed(
-                    (flightControllerRef.current.params as Required<FlightControllerParams>).linearVelocity
-                )
-            );
-        }
+        store.dispatch(
+            renderActions.setBaseCameraSpeed(
+                (flightControllerRef.current.params as Required<FlightControllerParams>).linearVelocity
+            )
+        );
+    }
+
+    if (controls?.mouseButtonMap) {
+        flightControllerRef.current!.mouseButtonsMap = controls.mouseButtonMap;
+    }
+
+    if (controls?.fingerMap) {
+        flightControllerRef.current!.fingersMap = controls.fingerMap;
     }
 
     view.camera.controller = controller;
@@ -547,6 +558,12 @@ export function initAdvancedSettings(view: View, customProperties: Record<string
             [AdvancedSetting.AmbientLight]: light.ambient.brightness,
             [AdvancedSetting.NavigationCube]: Boolean(customProperties?.navigationCube),
             [AdvancedSetting.TerrainAsBackground]: Boolean(terrain.asBackground),
+            ...(customProperties?.flightMouseButtonMap
+                ? { [AdvancedSetting.MouseButtonMap]: customProperties?.flightMouseButtonMap }
+                : {}),
+            ...(customProperties?.flightFingerMap
+                ? { [AdvancedSetting.FingerMap]: customProperties?.flightFingerMap }
+                : {}),
         })
     );
 }

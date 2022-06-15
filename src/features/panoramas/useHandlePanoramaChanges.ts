@@ -1,11 +1,11 @@
 import { useRef, useEffect } from "react";
-import { DynamicObject, CameraController, View, Scene } from "@novorender/webgl-api";
+import { DynamicObject, View, Scene } from "@novorender/webgl-api";
 
 import { api } from "app";
 import { useAppDispatch, useAppSelector } from "app/store";
 import { useExplorerGlobals } from "contexts/explorerGlobals";
 import { useAbortController } from "hooks/useAbortController";
-import { renderActions, selectSubtrees } from "slices/renderSlice";
+import { CameraType, renderActions, selectSubtrees } from "slices/renderSlice";
 import { sleep } from "utils/timers";
 
 import {
@@ -28,13 +28,6 @@ export function useHandlePanoramaChanges() {
     const currentPanoramaObj = useRef<{ id: string; obj: DynamicObject }>();
     const panoramaIsActive = useRef(activePanorama !== undefined);
     const storedSubtrees = useRef<typeof subtrees>();
-    const storedMouseButtonsMap = useRef<CameraController["mouseButtonsMap"]>({
-        rotate: 1,
-        pan: 4,
-        orbit: 2,
-        pivot: 2,
-    });
-    const storedFingersMap = useRef<CameraController["fingersMap"]>({ rotate: 1, pan: 2, orbit: 3, pivot: 3 });
     const [panoramaAbortController, abortPanorama] = useAbortController();
 
     useEffect(
@@ -52,8 +45,6 @@ export function useHandlePanoramaChanges() {
             if (!activePanorama) {
                 abortPanorama();
                 panoramaIsActive.current = false;
-                view.camera.controller.fingersMap = storedFingersMap.current;
-                view.camera.controller.mouseButtonsMap = storedMouseButtonsMap.current;
 
                 const currentlyStoredSubtree = storedSubtrees.current;
                 if (currentlyStoredSubtree) {
@@ -62,20 +53,21 @@ export function useHandlePanoramaChanges() {
                 }
             } else if (Array.isArray(panoramaStatus) && panoramaStatus[0] === PanoramaStatus.Loading) {
                 if (!panoramaIsActive.current) {
-                    storedMouseButtonsMap.current = view.camera.controller.mouseButtonsMap;
-                    storedFingersMap.current = view.camera.controller.fingersMap;
                     storedSubtrees.current = subtrees;
                 }
 
                 panoramaIsActive.current = true;
-                view.camera.controller.mouseButtonsMap = { pan: 0, rotate: 1, pivot: 0, orbit: 0 };
-                view.camera.controller.fingersMap = { pan: 0, rotate: 1, pivot: 0, orbit: 0 };
                 loadPanorama(activePanorama, view, scene);
             }
 
             async function loadPanorama(panorama: PanoramaType, view: View, scene: Scene) {
                 const abortSignal = panoramaAbortController.current.signal;
-                view.camera.controller.moveTo(panorama.position, panorama.rotation);
+                dispatch(
+                    renderActions.setCamera({
+                        type: CameraType.Flight,
+                        goTo: { position: panorama.position, rotation: panorama.rotation },
+                    })
+                );
 
                 let start = Date.now();
                 if (view.camera.controller.params.kind === "flight") {

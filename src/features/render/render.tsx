@@ -93,6 +93,7 @@ import {
 } from "./utils";
 import { xAxis, yAxis, axis, MAX_FLOAT } from "./consts";
 import { useHandleGridChanges } from "./useHandleGridChanges";
+import { useHandleCameraControls } from "./useHandleCameraControls";
 
 glMatrix.setMatrixArrayType(Array);
 
@@ -1178,6 +1179,7 @@ export function Render3D({ onInit }: Props) {
 
     useHandleGridChanges();
     useHandlePanoramaChanges();
+    useHandleCameraControls();
 
     useEffect(() => {
         handleUrlBookmark();

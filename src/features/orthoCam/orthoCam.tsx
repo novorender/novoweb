@@ -1,6 +1,7 @@
 import { ChangeEvent } from "react";
 import { Box, Button, FormControlLabel } from "@mui/material";
 import { ArrowDownward } from "@mui/icons-material";
+import { vec3 } from "gl-matrix";
 
 import { api } from "app";
 import { useAppDispatch, useAppSelector } from "app/store";
@@ -23,7 +24,6 @@ import {
     selectGridDefaults,
     selectGrid,
 } from "slices/renderSlice";
-import { vec3 } from "gl-matrix";
 
 export function OrthoCam() {
     const [menuOpen, toggleMenu] = useToggle();

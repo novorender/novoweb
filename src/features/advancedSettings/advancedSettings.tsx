@@ -125,6 +125,8 @@ export function AdvancedSettings() {
                     showStats: settings.showPerformance,
                     navigationCube: settings.navigationCube,
                     ditioProjectNumber: projectSettings.ditioProjectNumber,
+                    flightMouseButtonMap: settings.mouseButtonMap,
+                    flightFingerMap: settings.fingerMap,
                     enabledFeatures: {
                         ...Object.fromEntries(
                             enabledWidgets

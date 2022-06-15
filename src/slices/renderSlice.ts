@@ -13,6 +13,7 @@ import { quat, vec3, vec4 } from "gl-matrix";
 import type { RootState } from "app/store";
 import type { WidgetKey } from "config/features";
 import { VecRGB, VecRGBA } from "utils/color";
+import { defaultFlightControls } from "config/camera";
 
 export const fetchEnvironments = createAsyncThunk("novorender/fetchEnvironments", async (api: API) => {
     const envs = await api.availableEnvironments("https://api.novorender.com/assets/env/index.json");
@@ -69,6 +70,8 @@ export enum AdvancedSetting {
     AmbientLight = "ambientLight",
     NavigationCube = "navigationCube",
     TerrainAsBackground = "terrainAsBackground",
+    MouseButtonMap = "mouseButtonMap",
+    FingerMap = "fingerMap",
 }
 
 export enum ProjectSetting {
@@ -155,6 +158,8 @@ const initialState = {
         [AdvancedSetting.AmbientLight]: 0,
         [AdvancedSetting.NavigationCube]: false,
         [AdvancedSetting.TerrainAsBackground]: false,
+        [AdvancedSetting.FingerMap]: defaultFlightControls.touch,
+        [AdvancedSetting.MouseButtonMap]: defaultFlightControls.mouse,
     },
     gridDefaults: {
         enabled: false,
