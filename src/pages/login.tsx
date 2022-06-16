@@ -1,15 +1,6 @@
 import { useState, FormEvent, ChangeEvent } from "react";
 import { useMsal } from "@azure/msal-react";
-import {
-    useTheme,
-    Box,
-    Button,
-    OutlinedInput,
-    IconButton,
-    InputAdornment,
-    FormControl,
-    CircularProgress,
-} from "@mui/material";
+import { useTheme, Box, OutlinedInput, IconButton, InputAdornment, FormControl, CircularProgress } from "@mui/material";
 import { useHistory } from "react-router-dom";
 
 import { loginRequest } from "config/auth";
@@ -37,6 +28,7 @@ export function Login() {
     const [password, setPassword] = useState("");
     const [error, setError] = useState("");
     const [showPassword, toggleShowPassword] = useToggle(false);
+    const [loadingLogin, setLoadingLogin] = useState(false);
     const [loadingTenant, setLoadingTenant] = useState(false);
 
     const handleAdRedirect = async () => {
@@ -74,7 +66,14 @@ export function Login() {
             return;
         }
 
-        const res = await login(username, password);
+        setLoadingLogin(true);
+        const res = await login(username, password).catch((err) => {
+            if (err instanceof Error) {
+                setError(err.message);
+            } else {
+                setError("An error ocurred.");
+            }
+        });
 
         if (res) {
             saveToStorage(
@@ -83,9 +82,9 @@ export function Login() {
             );
             dispatch(authActions.login({ accessToken: res.token, user: res.user }));
             history.replace(history.location.pathname.replace("login/", "") + window.location.search);
-        } else {
-            setError("Invalid username or password.");
         }
+
+        setLoadingLogin(false);
     };
 
     return (
@@ -160,9 +159,21 @@ export function Login() {
                         </Box>
                     </Box>
                     <Box mb={2}>
-                        <Button type="submit" variant="contained" fullWidth color="primary" size="large">
+                        <LoadingButton
+                            type="submit"
+                            fullWidth
+                            variant="contained"
+                            color="primary"
+                            size="large"
+                            loading={loadingLogin}
+                            loadingIndicator={
+                                <Box display="flex" alignItems="center">
+                                    Log in <CircularProgress sx={{ ml: 1 }} color="inherit" size={16} />
+                                </Box>
+                            }
+                        >
                             Log in
-                        </Button>
+                        </LoadingButton>
                     </Box>
                     <LoadingButton
                         type="button"

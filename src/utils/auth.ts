@@ -58,20 +58,18 @@ export async function login(
         .then((r) => r.json())
         .catch(() => undefined);
 
-    if (!res || !("token" in res)) {
-        return;
+    if (!res) {
+        throw new Error("An error occurred");
     }
 
-    const accessToken = await getAccessToken(res.token);
-
-    if (!accessToken) {
-        return;
+    if (!("token" in res)) {
+        throw new Error("Invalid username or password");
     }
 
-    const user = await getUser(accessToken);
+    const user = await getUser(res.token);
 
     if (!user) {
-        return;
+        throw new Error("An error occurred");
     }
 
     return {
