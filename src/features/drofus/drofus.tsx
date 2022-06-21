@@ -47,12 +47,11 @@ export function Drofus() {
                 prevNavigationMsg.current = msg.data;
             }
 
-            let res = [] as HierarcicalObjectReference[];
-
             if (msg.data?.userNavigation !== "occurrenceDetail" || !msg.data.parameters?.occurrenceId) {
                 return;
             }
 
+            let res = [] as HierarcicalObjectReference[];
             await searchByPatterns({
                 scene,
                 searchPatterns: [
@@ -71,7 +70,7 @@ export function Drofus() {
                 return;
             }
 
-            const bs = await getTotalBoundingSphere(res);
+            const bs = getTotalBoundingSphere(res);
 
             if (bs) {
                 view.camera.controller.zoomTo(bs);

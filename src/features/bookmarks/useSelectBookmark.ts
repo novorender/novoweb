@@ -53,7 +53,7 @@ export function useSelectBookmark() {
         if (bookmark.selectedOnly !== undefined) {
             dispatch(
                 renderActions.setDefaultVisibility(
-                    bookmark.selectedOnly ? ObjectVisibility.SemiTransparent : ObjectVisibility.Neutral
+                    bookmark.selectedOnly ? ObjectVisibility.Transparent : ObjectVisibility.Neutral
                 )
             );
         }
