@@ -6,7 +6,7 @@ import { ArrowBack, Save } from "@mui/icons-material";
 import { Accordion, AccordionDetails, AccordionSummary, Divider, LinearProgress, ScrollBox, Switch } from "components";
 import { useAppDispatch, useAppSelector } from "app/store";
 import { AdvancedSetting, selectAdvancedSettings, renderActions } from "slices/renderSlice";
-import { viewerWidgets, WidgetKey } from "config/features";
+import { defaultEnabledWidgets, viewerWidgets, WidgetKey } from "config/features";
 import { explorerActions, selectLockedWidgets, selectEnabledWidgets, selectIsAdminScene } from "slices/explorerSlice";
 
 export function FeatureSettings({ save, saving }: { save: () => Promise<void>; saving: boolean }) {
@@ -102,30 +102,34 @@ export function FeatureSettings({ save, saving }: { save: () => Promise<void>; s
                                                 ? 100
                                                 : -100)
                                     )
-                                    .map((widget) => (
-                                        <Grid item xs={6} key={widget.key}>
-                                            <FormControlLabel
-                                                control={
-                                                    <Checkbox
-                                                        size="small"
-                                                        color="primary"
-                                                        checked={
-                                                            enabledWidgets.some(
-                                                                (enabled) => enabled.key === widget.key
-                                                            ) && !lockedWidgets.includes(widget.key)
-                                                        }
-                                                        onChange={(_e, checked) => toggleWidget(widget.key, checked)}
-                                                        disabled={lockedWidgets.includes(widget.key)}
-                                                    />
-                                                }
-                                                label={
-                                                    <Box mr={0.5} sx={{ userSelect: "none" }}>
-                                                        {widget.name}
-                                                    </Box>
-                                                }
-                                            />
-                                        </Grid>
-                                    ))}
+                                    .map((widget) =>
+                                        defaultEnabledWidgets.includes(widget.key) ? null : (
+                                            <Grid item xs={6} key={widget.key}>
+                                                <FormControlLabel
+                                                    control={
+                                                        <Checkbox
+                                                            size="small"
+                                                            color="primary"
+                                                            checked={
+                                                                enabledWidgets.some(
+                                                                    (enabled) => enabled.key === widget.key
+                                                                ) && !lockedWidgets.includes(widget.key)
+                                                            }
+                                                            onChange={(_e, checked) =>
+                                                                toggleWidget(widget.key, checked)
+                                                            }
+                                                            disabled={lockedWidgets.includes(widget.key)}
+                                                        />
+                                                    }
+                                                    label={
+                                                        <Box mr={0.5} sx={{ userSelect: "none" }}>
+                                                            {widget.name}
+                                                        </Box>
+                                                    }
+                                                />
+                                            </Grid>
+                                        )
+                                    )}
                             </Grid>
                         </AccordionDetails>
                     </Accordion>
