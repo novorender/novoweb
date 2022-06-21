@@ -50,7 +50,9 @@ export function useSelectBookmark() {
         const main = bmDefaultGroup && bmDefaultGroup.ids?.length ? bmDefaultGroup.ids.slice(-1)[0] : undefined;
         dispatch(renderActions.setMainObject(main));
 
-        if (bookmark.selectedOnly !== undefined) {
+        if (bookmark.defaultVisibility !== undefined) {
+            dispatch(renderActions.setDefaultVisibility(bookmark.defaultVisibility));
+        } else if (bookmark.selectedOnly !== undefined) {
             dispatch(
                 renderActions.setDefaultVisibility(
                     bookmark.selectedOnly ? ObjectVisibility.SemiTransparent : ObjectVisibility.Neutral

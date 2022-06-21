@@ -5,5 +5,6 @@ declare module "@novorender/data-js-api" {
             profile: number;
             currentCenter?: [number, number, number];
         };
+        defaultVisibility?: number;
     }
 }

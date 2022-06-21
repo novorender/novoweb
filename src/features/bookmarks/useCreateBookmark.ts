@@ -85,6 +85,7 @@ export function useCreateBookmark() {
             clippingVolume,
             selectionBasket,
             followPath,
+            defaultVisibility,
             clippingPlanes: {
                 ...clippingPlanes,
                 bounds: {
