@@ -8,6 +8,7 @@ export enum StorageKey {
     BimTrackCodeVerifier = "BIMtrack_code_verifier",
     DitioRefreshToken = "ditio_refresh_token",
     DitioCodeVerifier = "ditio_code_verifier",
+    DrofusAccessToken = "drofus_access_token",
 }
 
 export const storageConfig = {
@@ -36,6 +37,9 @@ export const storageConfig = {
         storage: localStorage,
     },
     [StorageKey.MsalActiveAccount]: {
+        storage: localStorage,
+    },
+    [StorageKey.DrofusAccessToken]: {
         storage: localStorage,
     },
 };

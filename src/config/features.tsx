@@ -11,6 +11,7 @@ import {
     Folder,
     Gradient,
     Home,
+    InfoOutlined,
     Layers,
     List,
     Movie,
@@ -42,6 +43,13 @@ export enum FeatureType {
 }
 
 export const featuresConfig = {
+    drofus: {
+        key: "drofus",
+        name: "dRofus",
+        Icon: InfoOutlined,
+        type: FeatureType.Widget,
+        defaultLocked: false,
+    },
     user: {
         key: "user",
         name: "User",

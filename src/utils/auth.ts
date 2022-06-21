@@ -157,7 +157,9 @@ type OAuthState = {
 };
 
 export function getOAuthState(): OAuthState | undefined {
-    const state = new URLSearchParams(window.location.search).get("state");
+    const state =
+        new URLSearchParams(window.location.search).get("state") ??
+        new URLSearchParams(window.location.hash.slice(1)).get("state");
 
     if (!state) {
         return;

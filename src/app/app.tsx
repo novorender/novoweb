@@ -65,7 +65,9 @@ export function App() {
             if (!(await verifyToken())) {
                 await handleMsalReturn();
             } else {
-                history.replace(history.location.pathname.replace("login/", "") + window.location.search);
+                history.replace(
+                    history.location.pathname.replace("login/", "") + window.location.search + window.location.hash
+                );
             }
 
             setStatus(Status.Ready);
@@ -109,7 +111,9 @@ export function App() {
                     }
 
                     dispatch(authActions.login({ accessToken: res.accessToken, msalAccount: res.account, user }));
-                    history.replace(history.location.pathname.replace("login/", "") + window.location.search);
+                    history.replace(
+                        history.location.pathname.replace("login/", "") + window.location.search + window.location.hash
+                    );
                 }
             } catch (e) {
                 console.warn(e);
@@ -151,7 +155,7 @@ export function App() {
         const state = getOAuthState();
 
         if (state && state.sceneId) {
-            history.replace(`/${state.sceneId}${window.location.search}`);
+            history.replace(`/${state.sceneId}${window.location.search}${window.location.hash}`);
         }
     }, [history]);
 
