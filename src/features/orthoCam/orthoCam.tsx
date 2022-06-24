@@ -24,10 +24,12 @@ import {
     selectGridDefaults,
     selectGrid,
 } from "slices/renderSlice";
+import { selectMinimized, selectMaximized } from "slices/explorerSlice";
 
 export function OrthoCam() {
     const [menuOpen, toggleMenu] = useToggle();
-    const [minimized, toggleMinimize] = useToggle(false);
+    const minimized = useAppSelector(selectMinimized) === featuresConfig.orthoCam.key;
+    const maximized = useAppSelector(selectMaximized) === featuresConfig.orthoCam.key;
     const {
         state: { view, canvas },
     } = useExplorerGlobals(true);
@@ -93,8 +95,8 @@ export function OrthoCam() {
 
     return (
         <>
-            <WidgetContainer minimized={minimized}>
-                <WidgetHeader minimized={minimized} toggleMinimize={toggleMinimize} widget={featuresConfig.orthoCam}>
+            <WidgetContainer minimized={minimized} maximized={maximized}>
+                <WidgetHeader widget={featuresConfig.orthoCam}>
                     {!menuOpen && !minimized ? (
                         <Box mx={-1} display="flex" justifyContent="space-between">
                             <Button

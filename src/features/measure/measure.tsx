@@ -7,13 +7,15 @@ import { IosSwitch, LogoSpeedDial, ScrollBox, WidgetContainer, WidgetHeader } fr
 import { WidgetList } from "features/widgetList";
 import { useToggle } from "hooks/useToggle";
 import { featuresConfig } from "config/features";
+import { selectMinimized, selectMaximized } from "slices/explorerSlice";
 
 import { measureActions, selectMeasure } from "./measureSlice";
 import { MeasuredObject, MeasuredResult } from "./measuredObject";
 
 export function Measure() {
     const [menuOpen, toggleMenu] = useToggle();
-    const [minimized, toggleMinimize] = useToggle(false);
+    const minimized = useAppSelector(selectMinimized) === featuresConfig.measure.key;
+    const maximized = useAppSelector(selectMaximized) === featuresConfig.measure.key;
 
     const dispatch = useAppDispatch();
     const { selecting, selected, forcePoint } = useAppSelector(selectMeasure);
@@ -37,8 +39,8 @@ export function Measure() {
 
     return (
         <>
-            <WidgetContainer minimized={minimized}>
-                <WidgetHeader minimized={minimized} toggleMinimize={toggleMinimize} widget={featuresConfig.measure}>
+            <WidgetContainer minimized={minimized} maximized={maximized}>
+                <WidgetHeader widget={featuresConfig.measure}>
                     {!menuOpen && !minimized ? (
                         <Box display="flex" justifyContent="space-between" alignItems="center">
                             <FormControlLabel

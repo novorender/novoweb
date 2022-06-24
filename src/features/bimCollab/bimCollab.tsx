@@ -12,6 +12,7 @@ import { getFromStorage, saveToStorage, deleteFromStorage } from "utils/storage"
 import { createOAuthStateString, getOAuthState } from "utils/auth";
 import { useSceneId } from "hooks/useSceneId";
 import { useToggle } from "hooks/useToggle";
+import { selectMinimized, selectMaximized } from "slices/explorerSlice";
 
 import { Filters } from "./routes/filters";
 import { Topic } from "./routes/topic";
@@ -47,7 +48,8 @@ export function BimCollab() {
     const dispatch = useAppDispatch();
 
     const [menuOpen, toggleMenu] = useToggle();
-    const [minimized, toggleMinimize] = useToggle(false);
+    const minimized = useAppSelector(selectMinimized) === featuresConfig.bimcollab.key;
+    const maximized = useAppSelector(selectMaximized) === featuresConfig.bimcollab.key;
 
     const { data: user } = useGetCurrentUserQuery(undefined, { skip: !accessToken });
     const [getToken] = useGetTokenMutation();
@@ -186,13 +188,8 @@ export function BimCollab() {
 
     return (
         <>
-            <WidgetContainer minimized={minimized}>
-                <WidgetHeader
-                    minimized={minimized}
-                    toggleMinimize={toggleMinimize}
-                    widget={featuresConfig.bimcollab}
-                    disableShadow={!menuOpen}
-                />
+            <WidgetContainer minimized={minimized} maximized={maximized}>
+                <WidgetHeader widget={featuresConfig.bimcollab} disableShadow={!menuOpen} />
                 <Box
                     display={menuOpen || minimized ? "none" : "flex"}
                     flexGrow={1}

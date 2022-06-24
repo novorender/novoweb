@@ -1,7 +1,6 @@
 import { PropsWithChildren, useCallback, useEffect, useRef } from "react";
 import { MemoryRouter, Route, Switch, SwitchProps, useHistory, useLocation } from "react-router-dom";
 import { Box } from "@mui/material";
-import { AuthConfig } from "./types";
 
 import { LogoSpeedDial, WidgetContainer, WidgetHeader, LinearProgress } from "components";
 import { featuresConfig } from "config/features";
@@ -13,7 +12,9 @@ import { useToggle } from "hooks/useToggle";
 import { useSceneId } from "hooks/useSceneId";
 import { getFromStorage, saveToStorage, deleteFromStorage } from "utils/storage";
 import { createOAuthStateString } from "utils/auth";
+import { selectMinimized, selectMaximized } from "slices/explorerSlice";
 
+import { AuthConfig } from "./types";
 import {
     getCode,
     useGetAuthConfigMutation,
@@ -38,7 +39,8 @@ import { Filters } from "./routes/filters";
 export function Ditio() {
     const sceneId = useSceneId();
     const [menuOpen, toggleMenu] = useToggle();
-    const [minimized, toggleMinimize] = useToggle();
+    const minimized = useAppSelector(selectMinimized) === featuresConfig.ditio.key;
+    const maximized = useAppSelector(selectMaximized) === featuresConfig.ditio.key;
 
     const { ditioProjectNumber } = useAppSelector(selectProjectSettings);
     const status = useAppSelector(selectStatus);
@@ -161,13 +163,8 @@ export function Ditio() {
 
     return (
         <>
-            <WidgetContainer minimized={minimized}>
-                <WidgetHeader
-                    minimized={minimized}
-                    toggleMinimize={toggleMinimize}
-                    widget={featuresConfig.ditio}
-                    disableShadow={!menuOpen && showRouter}
-                />
+            <WidgetContainer minimized={minimized} maximized={maximized}>
+                <WidgetHeader widget={featuresConfig.ditio} disableShadow={!menuOpen && showRouter} />
 
                 {!showRouter && ditioProjectNumber ? (
                     <Box position={"relative"} bottom={minimized ? 3 : 0}>

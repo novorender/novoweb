@@ -35,6 +35,7 @@ import { store, useAppDispatch, useAppSelector } from "app/store";
 import { PanoramaType, selectPanoramas } from "./panoramaSlice";
 import { panoramasActions, PanoramaStatus, selectPanoramaStatus, selectShow3dMarkers } from ".";
 import { CameraType, renderActions } from "slices/renderSlice";
+import { selectMinimized, selectMaximized } from "slices/explorerSlice";
 
 const ImgTooltip = styled(({ className, ...props }: TooltipProps) => (
     <ImgTooltip {...props} classes={{ popper: className }} />
@@ -70,7 +71,8 @@ export function Panoramas() {
     const dispatch = useAppDispatch();
 
     const [menuOpen, toggleMenu] = useToggle();
-    const [minimized, toggleMinimize] = useToggle(false);
+    const minimized = useAppSelector(selectMinimized) === featuresConfig.panoramas.key;
+    const maximized = useAppSelector(selectMaximized) === featuresConfig.panoramas.key;
 
     useEffect(() => {
         if (!panoramas) {
@@ -84,8 +86,8 @@ export function Panoramas() {
 
     return (
         <>
-            <WidgetContainer minimized={minimized}>
-                <WidgetHeader minimized={minimized} toggleMinimize={toggleMinimize} widget={featuresConfig.panoramas}>
+            <WidgetContainer minimized={minimized} maximized={maximized}>
+                <WidgetHeader widget={featuresConfig.panoramas}>
                     {!menuOpen && !minimized && panoramas?.length ? (
                         <Box display="flex">
                             <FormControlLabel

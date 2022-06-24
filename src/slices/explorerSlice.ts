@@ -26,6 +26,8 @@ const initialState = {
     organization: "",
     viewerScenes: [] as ScenePreview[],
     widgets: [] as WidgetKey[],
+    maximized: undefined as undefined | WidgetKey,
+    minimized: undefined as undefined | WidgetKey,
     urlSearchQuery: undefined as undefined | string | SearchPattern[],
     urlBookmarkId: undefined as undefined | string,
 };
@@ -72,6 +74,12 @@ export const explorerSlice = createSlice({
             state.widgets = state.widgets.concat(action.payload);
         },
         replaceWidgetSlot: (state, action: PayloadAction<{ replace: WidgetKey; key: WidgetKey }>) => {
+            state.minimized = undefined;
+
+            if (state.maximized === action.payload.replace) {
+                state.maximized = action.payload.key;
+            }
+
             const widgets = [...state.widgets];
             const indexToReplace = widgets.indexOf(action.payload.replace);
 
@@ -82,6 +90,8 @@ export const explorerSlice = createSlice({
             state.widgets = widgets;
         },
         removeWidgetSlot: (state, action: PayloadAction<WidgetKey>) => {
+            state.maximized = undefined;
+            state.minimized = undefined;
             state.widgets = state.widgets.filter((slot) => slot !== action.payload);
         },
         setUrlBookmarkId: (state, action: PayloadAction<State["urlBookmarkId"]>) => {
@@ -104,6 +114,19 @@ export const explorerSlice = createSlice({
                 ];
             }
         },
+        setMaximized: (state, action: PayloadAction<State["maximized"]>) => {
+            if (action.payload) {
+                state.widgets = [action.payload];
+                state.minimized = undefined;
+            }
+            state.maximized = action.payload;
+        },
+        setMinimized: (state, action: PayloadAction<State["maximized"]>) => {
+            if (action.payload) {
+                state.maximized = undefined;
+            }
+            state.minimized = action.payload;
+        },
         setRequireConsent: (state, action: PayloadAction<State["requireConsent"]>) => {
             state.requireConsent = action.payload;
         },
@@ -122,6 +145,8 @@ export const selectUserRole = (state: RootState) => state.explorer.userRole;
 export const selectViewerScenes = (state: RootState) => state.explorer.viewerScenes;
 export const selectRequireConsent = (state: RootState) => state.explorer.requireConsent;
 export const selectOrganization = (state: RootState) => state.explorer.organization;
+export const selectMaximized = (state: RootState) => state.explorer.maximized;
+export const selectMinimized = (state: RootState) => state.explorer.minimized;
 
 export const selectIsAdminScene = (state: RootState) => state.explorer.sceneType === SceneType.Admin;
 export const selectHasAdminCapabilities = (state: RootState) => state.explorer.userRole !== UserRole.Viewer;

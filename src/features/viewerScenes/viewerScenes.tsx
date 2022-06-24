@@ -28,7 +28,7 @@ import { CreateViewerScene } from "features/createViewerScene";
 import { dataApi } from "app";
 import { useToggle } from "hooks/useToggle";
 import { useAppDispatch, useAppSelector } from "app/store";
-import { explorerActions, selectViewerScenes } from "slices/explorerSlice";
+import { explorerActions, selectMaximized, selectMinimized, selectViewerScenes } from "slices/explorerSlice";
 import { renderActions, SceneEditStatus, selectEditingScene } from "slices/renderSlice";
 import { featuresConfig } from "config/features";
 import { WidgetList } from "features/widgetList";
@@ -36,18 +36,15 @@ import { WidgetList } from "features/widgetList";
 export function ViewerScenes() {
     const viewerScenes = useAppSelector(selectViewerScenes);
     const editingScene = useAppSelector(selectEditingScene);
+    const minimized = useAppSelector(selectMinimized) === featuresConfig.viewerScenes.key;
+    const maximized = useAppSelector(selectMaximized) === featuresConfig.viewerScenes.key;
     const [menuOpen, toggleMenu] = useToggle();
     const [modalOpen, toggleModalOpen] = useToggle();
-    const [minimized, toggleMinimize] = useToggle(false);
 
     return (
         <>
-            <WidgetContainer minimized={minimized}>
-                <WidgetHeader
-                    minimized={minimized}
-                    toggleMinimize={toggleMinimize}
-                    widget={featuresConfig.viewerScenes}
-                >
+            <WidgetContainer minimized={minimized} maximized={maximized}>
+                <WidgetHeader widget={featuresConfig.viewerScenes}>
                     {!menuOpen && !minimized ? (
                         <Box display="flex" justifyContent="space-between">
                             {editingScene === undefined ? (

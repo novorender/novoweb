@@ -38,6 +38,7 @@ export function LogoSpeedDial({
             open={open}
             onOpen={handleToggle}
             onClose={handleToggle}
+            sx={{ ...props.sx, zIndex: 1052 }}
             FabProps={
                 {
                     color: open ? "secondary" : "primary",

@@ -30,7 +30,7 @@ import { WidgetList } from "features/widgetList";
 
 import { useAppDispatch, useAppSelector } from "app/store";
 import { CustomGroup, customGroupsActions, useCustomGroups } from "contexts/customGroups";
-import { selectHasAdminCapabilities } from "slices/explorerSlice";
+import { selectHasAdminCapabilities, selectMaximized, selectMinimized } from "slices/explorerSlice";
 
 import { featuresConfig } from "config/features";
 import { useToggle } from "hooks/useToggle";
@@ -65,7 +65,8 @@ export function Groups() {
     const dispatch = useAppDispatch();
 
     const [menuOpen, toggleMenu] = useToggle();
-    const [minimized, toggleMinimize] = useToggle(false);
+    const minimized = useAppSelector(selectMinimized) === featuresConfig.groups.key;
+    const maximized = useAppSelector(selectMaximized) === featuresConfig.groups.key;
     const [creatingGroup, setCreatingGroup] = useState<boolean | string>(false);
     const [inputJson, setInputJson] = useState(false);
     const initialized = useRef(false);
@@ -110,10 +111,8 @@ export function Groups() {
 
     return (
         <>
-            <WidgetContainer minimized={minimized}>
+            <WidgetContainer minimized={minimized} maximized={maximized}>
                 <WidgetHeader
-                    minimized={minimized}
-                    toggleMinimize={toggleMinimize}
                     widget={featuresConfig.groups}
                     WidgetMenu={
                         showSearch

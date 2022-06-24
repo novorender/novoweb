@@ -7,10 +7,12 @@ import { renderActions, selectClippingPlanes } from "slices/renderSlice";
 import { useToggle } from "hooks/useToggle";
 import { featuresConfig } from "config/features";
 import { WidgetList } from "features/widgetList";
+import { selectMinimized, selectMaximized } from "slices/explorerSlice";
 
 export function ClippingPlanes() {
     const [menuOpen, toggleMenu] = useToggle();
-    const [minimized, toggleMinimize] = useToggle(false);
+    const minimized = useAppSelector(selectMinimized) === featuresConfig.clippingPlanes.key;
+    const maximized = useAppSelector(selectMaximized) === featuresConfig.clippingPlanes.key;
     const { defining, enabled, planes, baseW } = useAppSelector(selectClippingPlanes);
     const [enableOptions, setEnableOptions] = useState(enabled || planes.length > 0 || defining);
     const dispatch = useAppDispatch();
@@ -42,12 +44,8 @@ export function ClippingPlanes() {
 
     return (
         <>
-            <WidgetContainer minimized={minimized}>
-                <WidgetHeader
-                    minimized={minimized}
-                    toggleMinimize={toggleMinimize}
-                    widget={featuresConfig.clippingPlanes}
-                >
+            <WidgetContainer minimized={minimized} maximized={maximized}>
+                <WidgetHeader widget={featuresConfig.clippingPlanes}>
                     {!menuOpen && !minimized ? (
                         <>
                             <Box mt={1} mb={1} display="flex" justifyContent="space-between">

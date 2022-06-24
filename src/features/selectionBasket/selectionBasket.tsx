@@ -41,6 +41,7 @@ import { useExplorerGlobals } from "contexts/explorerGlobals";
 import { useMountedState } from "hooks/useMountedState";
 import { ColorPicker } from "features/colorPicker";
 import { rgbToVec, vecToRgb } from "utils/color";
+import { selectMinimized, selectMaximized } from "slices/explorerSlice";
 
 enum ExportStatus {
     Idle,
@@ -53,7 +54,8 @@ export function SelectionBasket() {
         state: { scene },
     } = useExplorerGlobals(true);
     const [menuOpen, toggleMenu] = useToggle();
-    const [minimized, toggleMinimize] = useToggle(false);
+    const minimized = useAppSelector(selectMinimized) === featuresConfig.selectionBasket.key;
+    const maximized = useAppSelector(selectMaximized) === featuresConfig.selectionBasket.key;
 
     const defaultVisibility = useAppSelector(selectDefaultVisibility);
     const mode = useAppSelector(selectSelectionBasketMode);
@@ -169,10 +171,8 @@ export function SelectionBasket() {
 
     return (
         <>
-            <WidgetContainer minimized={minimized}>
+            <WidgetContainer minimized={minimized} maximized={maximized}>
                 <WidgetHeader
-                    minimized={minimized}
-                    toggleMinimize={toggleMinimize}
                     widget={{ ...featuresConfig.selectionBasket, name: "Selection basket" as any }}
                     WidgetMenu={(props) => (
                         <Menu {...props} open={exportStatus === ExportStatus.Error ? false : props.open}>

@@ -29,7 +29,7 @@ import { rgbToVec, VecRGBA, vecToRgb } from "utils/color";
 import { useAppDispatch, useAppSelector } from "app/store";
 import { useExplorerGlobals } from "contexts/explorerGlobals";
 import { selectEditingScene } from "slices/renderSlice";
-import { selectHasAdminCapabilities, selectIsAdminScene } from "slices/explorerSlice";
+import { selectHasAdminCapabilities, selectIsAdminScene, selectMaximized, selectMinimized } from "slices/explorerSlice";
 
 import {
     selectDeviations,
@@ -59,7 +59,8 @@ export function Deviations() {
     const isAdminScene = useAppSelector(selectIsAdminScene);
 
     const [menuOpen, toggleMenu] = useToggle();
-    const [minimized, toggleMinimize] = useToggle(false);
+    const minimized = useAppSelector(selectMinimized) === featuresConfig.deviations.key;
+    const maximized = useAppSelector(selectMaximized) === featuresConfig.deviations.key;
 
     useEffect(() => {
         if (isAdminScene && calculationStatus.status === DeviationCalculationStatus.Initial) {
@@ -147,10 +148,8 @@ export function Deviations() {
 
     return (
         <>
-            <WidgetContainer minimized={minimized}>
+            <WidgetContainer minimized={minimized} maximized={maximized}>
                 <WidgetHeader
-                    minimized={minimized}
-                    toggleMinimize={toggleMinimize}
                     widget={featuresConfig.deviations}
                     WidgetMenu={
                         isAdminScene

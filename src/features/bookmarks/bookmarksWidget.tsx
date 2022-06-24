@@ -6,6 +6,7 @@ import { v4 as uuidv4 } from "uuid";
 import { dataApi } from "app";
 import { useAppDispatch, useAppSelector } from "app/store";
 import { selectUser } from "slices/authSlice";
+import { selectMaximized, selectMinimized } from "slices/explorerSlice";
 
 import { featuresConfig } from "config/features";
 import { WidgetContainer, LogoSpeedDial, WidgetHeader } from "components";
@@ -27,7 +28,8 @@ import { Crupdate } from "./routes/crupdate";
 
 export function Bookmarks() {
     const [menuOpen, toggleMenu] = useToggle();
-    const [minimized, toggleMinimize] = useToggle(false);
+    const minimized = useAppSelector(selectMinimized) === featuresConfig.bookmarks.key;
+    const maximized = useAppSelector(selectMaximized) === featuresConfig.bookmarks.key;
     const sceneId = useSceneId();
 
     const user = useAppSelector(selectUser);
@@ -66,13 +68,8 @@ export function Bookmarks() {
 
     return (
         <>
-            <WidgetContainer minimized={minimized}>
-                <WidgetHeader
-                    minimized={minimized}
-                    toggleMinimize={toggleMinimize}
-                    widget={featuresConfig.bookmarks}
-                    disableShadow={!menuOpen}
-                />
+            <WidgetContainer minimized={minimized} maximized={maximized}>
+                <WidgetHeader widget={featuresConfig.bookmarks} disableShadow={!menuOpen} />
                 <Box
                     display={menuOpen || minimized ? "none" : "flex"}
                     flexGrow={1}

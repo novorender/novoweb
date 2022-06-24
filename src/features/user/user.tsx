@@ -10,18 +10,20 @@ import { useSceneId } from "hooks/useSceneId";
 import { deleteFromStorage } from "utils/storage";
 import { StorageKey } from "config/storage";
 import { msalInstance } from "app";
-import { selectUserRole, UserRole } from "slices/explorerSlice";
+import { selectMaximized, selectMinimized, selectUserRole, UserRole } from "slices/explorerSlice";
 
 export function User() {
     const [menuOpen, toggleMenu] = useToggle();
-    const [minimized, toggleMinimize] = useToggle(false);
+
+    const minimized = useAppSelector(selectMinimized) === featuresConfig.user.key;
+    const maximized = useAppSelector(selectMaximized) === featuresConfig.user.key;
 
     const user = useAppSelector(selectUser);
 
     return (
         <>
-            <WidgetContainer minimized={minimized}>
-                <WidgetHeader minimized={minimized} toggleMinimize={toggleMinimize} widget={featuresConfig.user} />
+            <WidgetContainer minimized={minimized} maximized={maximized}>
+                <WidgetHeader widget={featuresConfig.user} />
                 <ScrollBox p={1} mt={2} display={!menuOpen ? "flex" : "none"} flexDirection="column">
                     {user ? <LoggedIn user={user} /> : <LoggedOut />}
                 </ScrollBox>

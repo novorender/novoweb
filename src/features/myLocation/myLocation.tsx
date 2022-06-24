@@ -10,6 +10,7 @@ import { useMountedState } from "hooks/useMountedState";
 import { useExplorerGlobals } from "contexts/explorerGlobals";
 import { useAppSelector } from "app/store";
 import { selectProjectSettings } from "slices/renderSlice";
+import { selectMinimized, selectMaximized } from "slices/explorerSlice";
 
 enum Status {
     Idle,
@@ -21,7 +22,8 @@ type LocationStatus = { status: Status.Idle | Status.Loading } | { status: Statu
 
 export function MyLocation() {
     const [menuOpen, toggleMenu] = useToggle();
-    const [minimized, toggleMinimize] = useToggle(false);
+    const minimized = useAppSelector(selectMinimized) === featuresConfig.myLocation.key;
+    const maximized = useAppSelector(selectMaximized) === featuresConfig.myLocation.key;
     const {
         state: { view },
     } = useExplorerGlobals(true);
@@ -53,8 +55,8 @@ export function MyLocation() {
 
     return (
         <>
-            <WidgetContainer minimized={minimized}>
-                <WidgetHeader minimized={minimized} toggleMinimize={toggleMinimize} widget={featuresConfig.myLocation}>
+            <WidgetContainer minimized={minimized} maximized={maximized}>
+                <WidgetHeader widget={featuresConfig.myLocation}>
                     {!menuOpen && !minimized ? (
                         <Box mx={-1}>
                             <Button disabled={!tmZone} onClick={goToPos} color="grey">

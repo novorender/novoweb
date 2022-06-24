@@ -46,6 +46,7 @@ import { NodeType } from "features/modelTree/modelTree";
 import { useExplorerGlobals } from "contexts/explorerGlobals";
 import { featuresConfig } from "config/features";
 import { WidgetList } from "features/widgetList";
+import { selectMaximized, selectMinimized } from "slices/explorerSlice";
 
 enum Status {
     Initial,
@@ -74,8 +75,9 @@ export function Properties() {
         state: { scene },
     } = useExplorerGlobals(true);
 
+    const minimized = useAppSelector(selectMinimized) === featuresConfig.properties.key;
+    const maximized = useAppSelector(selectMaximized) === featuresConfig.properties.key;
     const [menuOpen, toggleMenu] = useToggle();
-    const [minimized, toggleMinimize] = useToggle(false);
     const [searches, setSearches] = useState<Record<string, SearchPattern>>({});
     const [status, setStatus] = useMountedState(Status.Initial);
     const [object, setObject] = useMountedState<PropertiesObject | undefined>(undefined);
@@ -230,12 +232,8 @@ export function Properties() {
 
     return (
         <>
-            <WidgetContainer minimized={minimized}>
-                <WidgetHeader
-                    minimized={minimized}
-                    toggleMinimize={toggleMinimize}
-                    widget={featuresConfig.properties}
-                />
+            <WidgetContainer minimized={minimized} maximized={maximized}>
+                <WidgetHeader widget={featuresConfig.properties} />
                 <ScrollBox
                     display={menuOpen || minimized ? "none" : "flex"}
                     flexDirection={"column"}

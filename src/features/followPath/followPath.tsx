@@ -36,6 +36,7 @@ import { useMountedState } from "hooks/useMountedState";
 import { useToggle } from "hooks/useToggle";
 import { searchByPatterns } from "utils/search";
 import { getObjectNameFromPath, getParentPath } from "utils/objectData";
+import { selectMinimized, selectMaximized } from "slices/explorerSlice";
 
 import {
     Brep,
@@ -83,7 +84,8 @@ export function FollowPath() {
     const _clipping = useAppSelector(selectClipping);
 
     const [menuOpen, toggleMenu] = useToggle();
-    const [minimized, toggleMinimize] = useToggle(false);
+    const minimized = useAppSelector(selectMinimized) === featuresConfig.followPath.key;
+    const maximized = useAppSelector(selectMaximized) === featuresConfig.followPath.key;
     const [status, setStatus] = useMountedState(Status.Initial);
     const [clipping, setClipping] = useState(_clipping);
 
@@ -388,8 +390,8 @@ export function FollowPath() {
 
     return (
         <>
-            <WidgetContainer minimized={minimized}>
-                <WidgetHeader minimized={minimized} toggleMinimize={toggleMinimize} widget={featuresConfig.followPath}>
+            <WidgetContainer minimized={minimized} maximized={maximized}>
+                <WidgetHeader widget={featuresConfig.followPath}>
                     {!menuOpen && !minimized ? (
                         <>
                             {currentPath ? (

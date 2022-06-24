@@ -8,6 +8,7 @@ import { LogoSpeedDial, WidgetContainer, WidgetHeader } from "components";
 import { featuresConfig } from "config/features";
 import { useToggle } from "hooks/useToggle";
 import { WidgetList } from "features/widgetList";
+import { selectMinimized, selectMaximized } from "slices/explorerSlice";
 
 const axisNames = ["-X", "-Y", "-Z", "+X", "+Y", "+Z"];
 
@@ -17,7 +18,8 @@ export function ClippingBox() {
     const dispatch = useAppDispatch();
 
     const [menuOpen, toggleMenu] = useToggle();
-    const [minimized, toggleMinimize] = useToggle(false);
+    const minimized = useAppSelector(selectMinimized) === featuresConfig.clippingBox.key;
+    const maximized = useAppSelector(selectMaximized) === featuresConfig.clippingBox.key;
     const [enableOptions, setEnableOptions] = useState(enabled || showBox || defining);
 
     const toggle = (func: "enabled" | "showBox" | "inside") => () => {
@@ -46,8 +48,8 @@ export function ClippingBox() {
 
     return (
         <>
-            <WidgetContainer minimized={minimized}>
-                <WidgetHeader minimized={minimized} toggleMinimize={toggleMinimize} widget={featuresConfig.clippingBox}>
+            <WidgetContainer minimized={minimized} maximized={maximized}>
+                <WidgetHeader widget={featuresConfig.clippingBox}>
                     {!menuOpen && !minimized ? (
                         <>
                             <Box mt={1} mb={1} display="flex" justifyContent="space-between">

@@ -12,6 +12,7 @@ import { createOAuthStateString } from "utils/auth";
 import { useSceneId } from "hooks/useSceneId";
 import { useToggle } from "hooks/useToggle";
 import { AuthInfo } from "types/bcf";
+import { selectMinimized, selectMaximized } from "slices/explorerSlice";
 
 import { Filters } from "./routes/filters";
 import { Topic } from "./routes/topic";
@@ -45,7 +46,8 @@ export function BimTrack() {
     const dispatch = useAppDispatch();
 
     const [menuOpen, toggleMenu] = useToggle();
-    const [minimized, toggleMinimize] = useToggle(false);
+    const minimized = useAppSelector(selectMinimized) === featuresConfig.bimTrack.key;
+    const maximized = useAppSelector(selectMaximized) === featuresConfig.bimTrack.key;
 
     const { data: user } = useGetCurrentUserQuery(undefined, { skip: !accessToken });
     const [getToken] = useGetTokenMutation();
@@ -153,13 +155,8 @@ export function BimTrack() {
 
     return (
         <>
-            <WidgetContainer minimized={minimized}>
-                <WidgetHeader
-                    minimized={minimized}
-                    toggleMinimize={toggleMinimize}
-                    widget={featuresConfig.bimTrack}
-                    disableShadow={!menuOpen}
-                />
+            <WidgetContainer minimized={minimized} maximized={maximized}>
+                <WidgetHeader widget={featuresConfig.bimTrack} disableShadow={!menuOpen} />
                 <Box
                     display={menuOpen || minimized ? "none" : "flex"}
                     flexGrow={1}

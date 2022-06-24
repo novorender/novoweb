@@ -17,7 +17,7 @@ import {
     selectSubtrees,
     SubtreeStatus,
 } from "slices/renderSlice";
-import { selectEnabledWidgets, selectIsAdminScene } from "slices/explorerSlice";
+import { selectEnabledWidgets, selectIsAdminScene, selectMaximized, selectMinimized } from "slices/explorerSlice";
 
 import { useMountedState } from "hooks/useMountedState";
 import { useSceneId } from "hooks/useSceneId";
@@ -48,7 +48,8 @@ export function AdvancedSettings() {
     const baseCameraSpeed = useAppSelector(selectBaseCameraSpeed);
     const enabledWidgets = useAppSelector(selectEnabledWidgets);
     const [menuOpen, toggleMenu] = useToggle();
-    const [minimized, toggleMinimize] = useToggle(false);
+    const minimized = useAppSelector(selectMinimized) === featuresConfig.advancedSettings.key;
+    const maximized = useAppSelector(selectMaximized) === featuresConfig.advancedSettings.key;
     const [status, setStatus] = useMountedState(Status.Idle);
     const saving = status === Status.Saving;
 
@@ -173,10 +174,8 @@ export function AdvancedSettings() {
 
     return (
         <>
-            <WidgetContainer minimized={minimized}>
+            <WidgetContainer minimized={minimized} maximized={maximized}>
                 <WidgetHeader
-                    minimized={minimized}
-                    toggleMinimize={toggleMinimize}
                     widget={{ ...featuresConfig.advancedSettings, name: "Advanced settings" as any }}
                     disableShadow={!menuOpen}
                 />

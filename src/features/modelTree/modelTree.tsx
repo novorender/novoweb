@@ -19,6 +19,7 @@ import { getObjectData, iterateAsync, searchFirstObjectAtPath } from "utils/sear
 import { getParentPath } from "utils/objectData";
 import { featuresConfig } from "config/features";
 import { ContentCopy } from "@mui/icons-material";
+import { selectMinimized, selectMaximized } from "slices/explorerSlice";
 
 enum Status {
     Ready,
@@ -56,7 +57,8 @@ export function ModelTree() {
     } = useExplorerGlobals(true);
 
     const [menuOpen, toggleMenu] = useToggle();
-    const [minimized, toggleMinimize] = useToggle(false);
+    const minimized = useAppSelector(selectMinimized) === featuresConfig.modelTree.key;
+    const maximized = useAppSelector(selectMaximized) === featuresConfig.modelTree.key;
     const [status, setStatus] = useMountedState(Status.Loading);
     const [currentDepth, setCurrentDepth] = useMountedState<TreeLevel | undefined>(undefined);
     const [currentNode, setCurrentNode] = useMountedState<HierarcicalObjectReference | RootNode | undefined>(undefined);
@@ -239,10 +241,8 @@ export function ModelTree() {
 
     return (
         <>
-            <WidgetContainer minimized={minimized}>
+            <WidgetContainer minimized={minimized} maximized={maximized}>
                 <WidgetHeader
-                    minimized={minimized}
-                    toggleMinimize={toggleMinimize}
                     widget={featuresConfig.modelTree}
                     WidgetMenu={(props) => (
                         <Menu {...props}>

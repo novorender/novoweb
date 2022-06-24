@@ -1,7 +1,7 @@
 import { Fragment, useEffect } from "react";
 import { Box, useMediaQuery, useTheme } from "@mui/material";
 
-import { explorerActions, selectWidgets } from "slices/explorerSlice";
+import { explorerActions, selectMaximized, selectWidgets } from "slices/explorerSlice";
 import { useAppDispatch, useAppSelector } from "app/store";
 import { featuresConfig, WidgetKey } from "config/features";
 
@@ -34,6 +34,7 @@ export function Widgets() {
     const isSmall = useMediaQuery(
         `@media (max-width: ${theme.breakpoints.values.sm}px), (max-height: ${theme.customBreakPoints.height.sm}px)`
     );
+    const maximized = useAppSelector(selectMaximized);
 
     const slots = useAppSelector(selectWidgets);
     const dispatch = useAppDispatch();
@@ -56,7 +57,7 @@ export function Widgets() {
             height={1}
             width={{ xs: "auto", md: "100%" }}
         >
-            {(isSmall && slots.length < 1) || (!isSmall && slots.length < 2) ? <MenuWidget /> : null}
+            {(isSmall && slots.length < 1) || (!isSmall && slots.length < 2 && !maximized) ? <MenuWidget /> : null}
             {slots
                 .slice(0)
                 .reverse()

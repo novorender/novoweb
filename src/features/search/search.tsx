@@ -27,7 +27,7 @@ import { visibleActions, useDispatchVisible } from "contexts/visible";
 import { hiddenGroupActions, useDispatchHidden } from "contexts/hidden";
 import { highlightActions, useDispatchHighlighted, useLazyHighlighted } from "contexts/highlighted";
 import { ObjectVisibility, renderActions } from "slices/renderSlice";
-import { explorerActions, selectUrlSearchQuery } from "slices/explorerSlice";
+import { explorerActions, selectMaximized, selectMinimized, selectUrlSearchQuery } from "slices/explorerSlice";
 
 import { iterateAsync, searchDeepByPatterns, batchedPropertySearch } from "utils/search";
 import { getTotalBoundingSphere } from "utils/objectData";
@@ -54,7 +54,8 @@ export function Search() {
     const urlSearchQuery = useAppSelector(selectUrlSearchQuery);
 
     const [menuOpen, toggleMenu] = useToggle();
-    const [minimized, toggleMinimize] = useToggle(false);
+    const minimized = useAppSelector(selectMinimized) === featuresConfig.search.key;
+    const maximized = useAppSelector(selectMaximized) === featuresConfig.search.key;
     const [advanced, toggleAdvanced] = useToggle(urlSearchQuery ? Array.isArray(urlSearchQuery) : false);
     const [simpleInput, setSimpleInput] = useState(typeof urlSearchQuery === "string" ? urlSearchQuery : "");
     const [advancedInputs, setAdvancedInputs] = useState(
@@ -266,8 +267,8 @@ export function Search() {
 
     return (
         <>
-            <WidgetContainer minimized={minimized}>
-                <WidgetHeader minimized={minimized} toggleMinimize={toggleMinimize} widget={featuresConfig.search}>
+            <WidgetContainer minimized={minimized} maximized={maximized}>
+                <WidgetHeader widget={featuresConfig.search}>
                     {!menuOpen && !minimized ? (
                         <Box component="form" sx={{ mt: 1 }} onSubmit={handleSubmit}>
                             {advanced ? (

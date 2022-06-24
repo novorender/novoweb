@@ -18,6 +18,8 @@ import { useExplorerGlobals } from "contexts/explorerGlobals";
 import { iterateAsync } from "utils/search";
 import { featuresConfig } from "config/features";
 import { CustomParentNode } from "features/search";
+import { useAppSelector } from "app/store";
+import { selectMinimized, selectMaximized } from "slices/explorerSlice";
 
 enum Status {
     Initial,
@@ -33,7 +35,8 @@ export function RangeSearch() {
     } = useExplorerGlobals(true);
 
     const [menuOpen, toggleMenu] = useToggle();
-    const [minimized, toggleMinimize] = useToggle(false);
+    const minimized = useAppSelector(selectMinimized) === featuresConfig.rangeSearch.key;
+    const maximized = useAppSelector(selectMaximized) === featuresConfig.rangeSearch.key;
 
     const [dates, toggleDates] = useToggle();
     const [property, setProperty] = useState("");
@@ -130,8 +133,8 @@ export function RangeSearch() {
 
     return (
         <>
-            <WidgetContainer minimized={minimized}>
-                <WidgetHeader minimized={minimized} toggleMinimize={toggleMinimize} widget={featuresConfig.rangeSearch}>
+            <WidgetContainer minimized={minimized} maximized={maximized}>
+                <WidgetHeader widget={featuresConfig.rangeSearch}>
                     {!menuOpen && !minimized ? (
                         <Box component="form" mt={1} onSubmit={handleSubmit}>
                             <TextField

@@ -12,6 +12,8 @@ import { useAbortController } from "hooks/useAbortController";
 import { useToggle } from "hooks/useToggle";
 import { featuresConfig } from "config/features";
 import { WidgetList } from "features/widgetList";
+import { useAppSelector } from "app/store";
+import { selectMinimized, selectMaximized } from "slices/explorerSlice";
 
 type TreeLevel = {
     properties?: TreeLevel[];
@@ -19,6 +21,92 @@ type TreeLevel = {
     path: string;
     values?: string[];
 };
+
+export function PropertiesTree() {
+    const {
+        state: { scene },
+    } = useExplorerGlobals(true);
+    const dispatchHighlighted = useDispatchHighlighted();
+    const [abortController, abort] = useAbortController();
+    const [menuOpen, toggleMenu] = useToggle();
+    const minimized = useAppSelector(selectMinimized) === featuresConfig.propertyTree.key;
+    const maximized = useAppSelector(selectMaximized) === featuresConfig.propertyTree.key;
+
+    const [root, setRoot] = useMountedState<TreeLevel | undefined>(undefined);
+    const [selected, setSelected] = useMountedState<string>("");
+
+    const search = useCallback(
+        async (property: string, value: string) => {
+            abort();
+            dispatchHighlighted(highlightActions.setIds([]));
+            setSelected("");
+            try {
+                const { signal } = abortController.current;
+                await searchDeepByPatterns({
+                    scene,
+                    searchPatterns: [{ property, value, exact: true }],
+                    callback: (ids) => {
+                        if (!signal.aborted) {
+                            dispatchHighlighted(highlightActions.add(ids));
+                        }
+                    },
+                    abortSignal: signal,
+                });
+                if (!signal.aborted) {
+                    setSelected(`${encodeURIComponent(property)}=${encodeURIComponent(value)}`);
+                }
+            } catch {}
+        },
+        [scene, dispatchHighlighted, abort, abortController, setSelected]
+    );
+
+    useEffect(() => {
+        init();
+
+        async function init() {
+            const url = new URL((scene as any).assetUrl);
+            url.pathname += "propcache/root";
+            try {
+                const resp = await fetch(url.toString());
+                const res: { properties?: string[] } = await resp.json();
+                const properties = res.properties?.map((p) => ({ name: p, path: p })) ?? [];
+                setRoot({ properties, name: "root", path: "" });
+            } catch {
+                setRoot({ properties: [], name: "root", path: "" });
+            }
+        }
+    }, [scene, setRoot]);
+
+    return (
+        <>
+            <WidgetContainer minimized={minimized} maximized={maximized}>
+                <WidgetHeader widget={featuresConfig.propertyTree} />
+                <ScrollBox display={!menuOpen && !minimized ? "block" : "none"} height={1} pb={2}>
+                    <List>
+                        {root === undefined ? (
+                            <LinearProgress />
+                        ) : (
+                            root.properties?.map((p) => (
+                                <Node key={p.path} prop={p} level={0} selected={selected} search={search} />
+                            ))
+                        )}
+                    </List>
+                </ScrollBox>
+                <WidgetList
+                    display={menuOpen ? "block" : "none"}
+                    widgetKey={featuresConfig.propertyTree.key}
+                    onSelect={toggleMenu}
+                />
+            </WidgetContainer>
+            <LogoSpeedDial
+                open={menuOpen}
+                toggle={toggleMenu}
+                testId={`${featuresConfig.propertyTree.key}-widget-menu-fab`}
+                ariaLabel="toggle widget menu"
+            />
+        </>
+    );
+}
 
 type ValueProps = {
     prop: string;
@@ -220,93 +308,5 @@ function Node({ prop, level, selected, search }: NodeProps) {
                 </>
             ) : undefined}
         </Fragment>
-    );
-}
-export function PropertiesTree() {
-    const {
-        state: { scene },
-    } = useExplorerGlobals(true);
-    const dispatchHighlighted = useDispatchHighlighted();
-    const [abortController, abort] = useAbortController();
-    const [menuOpen, toggleMenu] = useToggle();
-    const [minimized, toggleMinimize] = useToggle(false);
-
-    const [root, setRoot] = useMountedState<TreeLevel | undefined>(undefined);
-    const [selected, setSelected] = useMountedState<string>("");
-
-    const search = useCallback(
-        async (property: string, value: string) => {
-            abort();
-            dispatchHighlighted(highlightActions.setIds([]));
-            setSelected("");
-            try {
-                const { signal } = abortController.current;
-                await searchDeepByPatterns({
-                    scene,
-                    searchPatterns: [{ property, value, exact: true }],
-                    callback: (ids) => {
-                        if (!signal.aborted) {
-                            dispatchHighlighted(highlightActions.add(ids));
-                        }
-                    },
-                    abortSignal: signal,
-                });
-                if (!signal.aborted) {
-                    setSelected(`${encodeURIComponent(property)}=${encodeURIComponent(value)}`);
-                }
-            } catch {}
-        },
-        [scene, dispatchHighlighted, abort, abortController, setSelected]
-    );
-
-    useEffect(() => {
-        init();
-
-        async function init() {
-            const url = new URL((scene as any).assetUrl);
-            url.pathname += "propcache/root";
-            try {
-                const resp = await fetch(url.toString());
-                const res: { properties?: string[] } = await resp.json();
-                const properties = res.properties?.map((p) => ({ name: p, path: p })) ?? [];
-                setRoot({ properties, name: "root", path: "" });
-            } catch {
-                setRoot({ properties: [], name: "root", path: "" });
-            }
-        }
-    }, [scene, setRoot]);
-
-    return (
-        <>
-            <WidgetContainer minimized={minimized}>
-                <WidgetHeader
-                    minimized={minimized}
-                    toggleMinimize={toggleMinimize}
-                    widget={featuresConfig.propertyTree}
-                />
-                <ScrollBox display={!menuOpen && !minimized ? "block" : "none"} height={1} pb={2}>
-                    <List>
-                        {root === undefined ? (
-                            <LinearProgress />
-                        ) : (
-                            root.properties?.map((p) => (
-                                <Node key={p.path} prop={p} level={0} selected={selected} search={search} />
-                            ))
-                        )}
-                    </List>
-                </ScrollBox>
-                <WidgetList
-                    display={menuOpen ? "block" : "none"}
-                    widgetKey={featuresConfig.propertyTree.key}
-                    onSelect={toggleMenu}
-                />
-            </WidgetContainer>
-            <LogoSpeedDial
-                open={menuOpen}
-                toggle={toggleMenu}
-                testId={`${featuresConfig.propertyTree.key}-widget-menu-fab`}
-                ariaLabel="toggle widget menu"
-            />
-        </>
     );
 }

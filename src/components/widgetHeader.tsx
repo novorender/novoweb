@@ -4,26 +4,24 @@ import { Close, CropSquare, Minimize, MoreVert } from "@mui/icons-material";
 
 import { Widget } from "config/features";
 import { Divider } from "components";
-import { useAppDispatch } from "app/store";
-import { explorerActions } from "slices/explorerSlice";
+import { useAppDispatch, useAppSelector } from "app/store";
+import { explorerActions, selectMaximized, selectMinimized } from "slices/explorerSlice";
 
 export function WidgetHeader({
     widget: { name, Icon, key },
     children,
     disableShadow,
-    minimized,
-    toggleMinimize,
     WidgetMenu,
 }: {
     widget: Widget;
     children?: ReactNode;
     disableShadow?: boolean;
-    minimized?: boolean;
-    toggleMinimize?: () => void;
     WidgetMenu?: (props: MenuProps) => JSX.Element;
 }) {
     const theme = useTheme();
     const isSmall = useMediaQuery(theme.breakpoints.down("sm"));
+    const maximized = useAppSelector(selectMaximized) === key;
+    const minimized = useAppSelector(selectMinimized) === key;
     const dispatch = useAppDispatch();
 
     const [menuAnchor, setMenuAnchor] = useState<HTMLElement | null>(null);
@@ -41,11 +39,19 @@ export function WidgetHeader({
         setMenuAnchor(null);
     };
 
+    const toggleMaximize = () => {
+        dispatch(explorerActions.setMaximized(maximized ? undefined : key));
+    };
+
+    const toggleMinimize = () => {
+        dispatch(explorerActions.setMinimized(minimized ? undefined : key));
+    };
+
     useEffect(() => {
-        if (!isSmall && minimized && toggleMinimize) {
-            toggleMinimize();
+        if (!isSmall) {
+            dispatch(explorerActions.setMinimized(undefined));
         }
-    }, [isSmall, minimized, toggleMinimize]);
+    }, [isSmall, dispatch]);
 
     return (
         <Box boxShadow={!disableShadow ? theme.customShadows.widgetHeader : undefined}>
@@ -65,9 +71,14 @@ export function WidgetHeader({
                     </Typography>
                 </Box>
                 <Box ml="auto">
-                    {toggleMinimize && isSmall ? (
+                    {isSmall ? (
                         <IconButton sx={{ mr: 1 }} data-test="minimize-widget" size="small" onClick={toggleMinimize}>
-                            {minimized ? <CropSquare /> : <Minimize />}
+                            <Minimize color={minimized ? "primary" : undefined} />
+                        </IconButton>
+                    ) : null}
+                    {toggleMaximize ? (
+                        <IconButton sx={{ mr: 1 }} data-test="minimize-widget" size="small" onClick={toggleMaximize}>
+                            {<CropSquare color={maximized ? "primary" : undefined} />}
                         </IconButton>
                     ) : null}
                     <IconButton data-test="close-widget" size="small" onClick={handleClose}>
