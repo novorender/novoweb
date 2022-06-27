@@ -1,3 +1,4 @@
+import { vec4 } from "gl-matrix";
 import { Bookmark } from "@novorender/data-js-api";
 
 import { useAppDispatch } from "app/store";
@@ -51,7 +52,7 @@ export function useSelectBookmark() {
         dispatch(renderActions.setMainObject(main));
 
         if (bookmark.defaultVisibility !== undefined) {
-            dispatch(renderActions.setDefaultVisibility(bookmark.defaultVisibility));
+            dispatch(renderActions.setDefaultVisibility(bookmark.defaultVisibility as ObjectVisibility));
         } else if (bookmark.selectedOnly !== undefined) {
             dispatch(
                 renderActions.setDefaultVisibility(
@@ -91,7 +92,7 @@ export function useSelectBookmark() {
                 renderActions.setClippingPlanes({
                     enabled,
                     mode,
-                    planes: Array.from(planes),
+                    planes: Array.from(planes) as vec4[],
                     defining: false,
                     baseW: planes[0] && planes[0][3] !== undefined ? planes[0][3] : 0,
                 })
@@ -129,7 +130,7 @@ export function useSelectBookmark() {
                     dispatch(followPathActions.setProfileRange({ min: nurbs.knots[0], max: nurbs.knots.slice(-1)[0] }));
                     dispatch(followPathActions.setView2d(Boolean(bookmark.ortho)));
                     dispatch(followPathActions.setShowGrid(Boolean(bookmark.grid?.enabled)));
-                    dispatch(followPathActions.setCurrentCenter(currentCenter));
+                    dispatch(followPathActions.setCurrentCenter(currentCenter as [number, number, number]));
 
                     if (bookmark.ortho?.far) {
                         dispatch(followPathActions.setClipping(bookmark.ortho.far));

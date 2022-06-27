@@ -46,7 +46,7 @@
         "@mui/icons-material": "^5.8.0",
         "@mui/lab": "^5.0.0-alpha.58",
         "@mui/material": "^5.8.0",
-        "@novorender/data-js-api": "^0.2.19",
+        "@novorender/data-js-api": "^0.2.22",
         "@novorender/measure-api": "^0.0.24",
         "@novorender/webgl-api": "^0.3.88",
         "@reduxjs/toolkit": "^1.8.1",

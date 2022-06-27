@@ -27,9 +27,9 @@ export enum CameraSpeedMultiplier {
 }
 
 export enum ObjectVisibility {
-    Neutral,
-    SemiTransparent,
-    Transparent,
+    Neutral = "neutral",
+    SemiTransparent = "semiTransparent",
+    Transparent = "transparent",
 }
 
 export enum CameraType {

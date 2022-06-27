@@ -108,8 +108,7 @@ export function SelectionBasket() {
     };
 
     const handleViewTypeChange = (_: any, value: string) => {
-        const val = Number(value) as ObjectVisibility;
-        dispatch(renderActions.setDefaultVisibility(val));
+        dispatch(renderActions.setDefaultVisibility(value as ObjectVisibility));
     };
 
     const exportCSV = async () => {
