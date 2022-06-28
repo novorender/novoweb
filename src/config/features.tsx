@@ -9,6 +9,7 @@ import {
     Domain,
     FlightTakeoff,
     Folder,
+    GpsFixed,
     Gradient,
     Home,
     Layers,
@@ -42,6 +43,13 @@ export enum FeatureType {
 }
 
 export const featuresConfig = {
+    leica: {
+        key: "leica",
+        name: "Leica",
+        Icon: GpsFixed,
+        type: FeatureType.Widget,
+        defaultLocked: false,
+    },
     user: {
         key: "user",
         name: "User",

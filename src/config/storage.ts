@@ -8,6 +8,8 @@ export enum StorageKey {
     BimTrackCodeVerifier = "BIMtrack_code_verifier",
     DitioRefreshToken = "ditio_refresh_token",
     DitioCodeVerifier = "ditio_code_verifier",
+    LeicaSessionId = "leica_session_id",
+    LeicaCsrfToken = "leica_csrf_token",
 }
 
 export const storageConfig = {
@@ -37,5 +39,11 @@ export const storageConfig = {
     },
     [StorageKey.MsalActiveAccount]: {
         storage: localStorage,
+    },
+    [StorageKey.LeicaSessionId]: {
+        storage: sessionStorage,
+    },
+    [StorageKey.LeicaCsrfToken]: {
+        storage: sessionStorage,
     },
 };

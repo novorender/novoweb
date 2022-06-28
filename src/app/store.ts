@@ -17,6 +17,7 @@ import { bimTrackReducer } from "features/bimTrack/bimTrackSlice";
 import { bimTrackApi } from "features/bimTrack/bimTrackApi";
 import { ditioReducer } from "features/ditio";
 import { ditioApi } from "features/ditio";
+import { leicaReducer } from "features/leica";
 
 const rootReducer = combineReducers({
     explorer: explorerReducer,
@@ -34,6 +35,7 @@ const rootReducer = combineReducers({
     [bimTrackApi.reducerPath]: bimTrackApi.reducer,
     ditio: ditioReducer,
     [ditioApi.reducerPath]: ditioApi.reducer,
+    leica: leicaReducer,
 });
 
 export const store = configureStore({
