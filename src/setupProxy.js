@@ -47,12 +47,12 @@ module.exports = function (app) {
             onProxyRes: (proxyRes, _req, _res) => {
                 const csrftoken = proxyRes.headers["set-cookie"]
                     ?.find((cookie) => cookie.includes("csrftoken"))
-                    ?.match(/csrftoken=(?<csrfToken>[\w]+)/).groups?.csrfToken;
+                    ?.match(/csrftoken=(?<csrfToken>[\w]+)/)?.groups?.csrfToken;
                 proxyRes.headers["x-csrftoken"] = csrftoken;
 
                 const sessionId = proxyRes.headers["set-cookie"]
                     ?.find((cookie) => cookie.includes("sessionid"))
-                    ?.match(/sessionid=(?<sessionId>[\w]+)/).groups?.sessionId;
+                    ?.match(/sessionid=(?<sessionId>[\w]+)/)?.groups?.sessionId;
                 proxyRes.headers["x-sessionid"] = sessionId;
 
                 const success = proxyRes.headers["location"] !== undefined;
@@ -73,6 +73,28 @@ module.exports = function (app) {
                 if (cookie) {
                     proxyReq.setHeader("Cookie", cookie);
                 }
+            },
+        })
+    );
+
+    app.use(
+        "/leica/api",
+        createProxyMiddleware({
+            target: "https://conx.leica-geosystems.com/api",
+            changeOrigin: true,
+            pathRewrite: {
+                "^/leica/api": "",
+            },
+            onProxyReq: (proxyReq, _req, _res) => {
+                const cookie = proxyReq.getHeader("x-cookie");
+
+                if (cookie) {
+                    proxyReq.setHeader("Cookie", cookie);
+                }
+            },
+            onProxyRes: (proxyRes, _req, _res) => {
+                delete proxyRes.headers["set-cookie"];
+                delete proxyRes.headers["location"];
             },
         })
     );

@@ -1,12 +1,11 @@
 import { ChangeEvent, FormEvent, useEffect, useState } from "react";
 import { useHistory } from "react-router-dom";
-import { Box, CircularProgress, FormControl, IconButton, InputAdornment, OutlinedInput } from "@mui/material";
+import { Box, CircularProgress, FormControl, IconButton, InputAdornment, OutlinedInput, useTheme } from "@mui/material";
 import { VisibilityOff, Visibility, AccountCircle, Lock } from "@mui/icons-material";
 
 import { useAppDispatch, useAppSelector } from "app/store";
-import { LinearProgress } from "components";
+import { LinearProgress, ScrollBox } from "components";
 import { useToggle } from "hooks/useToggle";
-import { theme } from "app/theme";
 import { LoadingButton } from "@mui/lab";
 import { leicaActions, LeicaStatus, selectCsrfToken, selectSessionId, selectStatus } from "../leicaSlice";
 import { saveToStorage } from "utils/storage";
@@ -14,6 +13,7 @@ import { StorageKey } from "config/storage";
 
 export function Login() {
     const history = useHistory();
+    const theme = useTheme();
 
     const [username, setUsername] = useState("");
     const [password, setPassword] = useState("");
@@ -45,7 +45,7 @@ export function Login() {
                     const success = res.headers.get("x-success");
 
                     if (success) {
-                        history.replace("/equipment");
+                        history.replace("/project");
                         return;
                     }
                 }
@@ -93,7 +93,7 @@ export function Login() {
                 saveToStorage(StorageKey.LeicaSessionId, _sessionId);
                 dispatch(leicaActions.setSessionId(_sessionId));
                 dispatch(leicaActions.setStatus(LeicaStatus.Authenticated));
-                history.replace("/equipment");
+                history.replace("/project");
             } else {
                 dispatch(leicaActions.setError("Login failed."));
             }
@@ -104,71 +104,74 @@ export function Login() {
     };
 
     return [LeicaStatus.LoadingCsrfToken, LeicaStatus.Initial].includes(status) ? (
-        <LinearProgress sx={{ ml: -1, mt: -1 }} />
+        <LinearProgress />
     ) : (
-        <Box component="form" onSubmit={handleSubmit}>
-            <FormControl fullWidth>
-                <label htmlFor="username">Username</label>
-                <OutlinedInput
-                    id="username"
-                    required
-                    value={username}
-                    onChange={handleChange(setUsername)}
-                    type="text"
-                    size="small"
-                    autoFocus
-                    startAdornment={
-                        <InputAdornment position="start">
-                            <AccountCircle htmlColor={theme.palette.grey[600]} />
-                        </InputAdornment>
-                    }
-                />
-            </FormControl>
+        <>
+            <Box boxShadow={theme.customShadows.widgetHeader} sx={{ height: 5, width: 1 }} position="absolute" />
+            <ScrollBox component="form" onSubmit={handleSubmit} p={1} pt={2}>
+                <FormControl fullWidth sx={{ mb: 1 }}>
+                    <label htmlFor="username">Username</label>
+                    <OutlinedInput
+                        id="username"
+                        required
+                        value={username}
+                        onChange={handleChange(setUsername)}
+                        type="text"
+                        size="small"
+                        autoFocus
+                        startAdornment={
+                            <InputAdornment position="start">
+                                <AccountCircle htmlColor={theme.palette.grey[600]} />
+                            </InputAdornment>
+                        }
+                    />
+                </FormControl>
 
-            <FormControl fullWidth>
-                <label htmlFor="password">Password</label>
-                <OutlinedInput
-                    id="password"
-                    required
-                    value={password}
-                    onChange={handleChange(setPassword)}
-                    type={showPassword ? "text" : "password"}
-                    size="small"
-                    startAdornment={
-                        <InputAdornment position="start">
-                            <Lock htmlColor={theme.palette.grey[600]} />
-                        </InputAdornment>
-                    }
-                    endAdornment={
-                        <InputAdornment position="end">
-                            <IconButton
-                                aria-label="toggle password visibility"
-                                onClick={toggleShowPassword}
-                                size="large"
-                            >
-                                {showPassword ? <VisibilityOff /> : <Visibility />}
-                            </IconButton>
-                        </InputAdornment>
-                    }
-                />
-            </FormControl>
-            <Box mt={2}>
-                <LoadingButton
-                    type="submit"
-                    fullWidth
-                    variant="contained"
-                    color="primary"
-                    size="large"
-                    loading={status === LeicaStatus.LoadingLogin}
-                    loadingIndicator={
-                        <Box display="flex" alignItems="center">
-                            Logging in <CircularProgress sx={{ ml: 1 }} color="inherit" size={16} />
-                        </Box>
-                    }
-                >
-                    Log in to Leica ConX
-                </LoadingButton>
-            </Box>
-        </Box>
+                <FormControl fullWidth>
+                    <label htmlFor="password">Password</label>
+                    <OutlinedInput
+                        id="password"
+                        required
+                        value={password}
+                        onChange={handleChange(setPassword)}
+                        type={showPassword ? "text" : "password"}
+                        size="small"
+                        startAdornment={
+                            <InputAdornment position="start">
+                                <Lock htmlColor={theme.palette.grey[600]} />
+                            </InputAdornment>
+                        }
+                        endAdornment={
+                            <InputAdornment position="end">
+                                <IconButton
+                                    aria-label="toggle password visibility"
+                                    onClick={toggleShowPassword}
+                                    size="large"
+                                >
+                                    {showPassword ? <VisibilityOff /> : <Visibility />}
+                                </IconButton>
+                            </InputAdornment>
+                        }
+                    />
+                </FormControl>
+                <Box mt={2}>
+                    <LoadingButton
+                        type="submit"
+                        fullWidth
+                        variant="contained"
+                        color="primary"
+                        size="large"
+                        loading={status === LeicaStatus.LoadingLogin}
+                        loadingIndicator={
+                            <Box display="flex" alignItems="center">
+                                Logging in <CircularProgress sx={{ ml: 1 }} color="inherit" size={16} />
+                            </Box>
+                        }
+                    >
+                        Log in to Leica ConX
+                    </LoadingButton>
+                </Box>
+            </ScrollBox>
+        </>
     );
 }
