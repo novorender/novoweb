@@ -1,4 +1,4 @@
-import { GpsFixed, NoiseControlOff } from "@mui/icons-material";
+import { GpsFixed, GpsOff } from "@mui/icons-material";
 import {
     Box,
     FormControlLabel,
@@ -9,25 +9,27 @@ import {
     Typography,
     useTheme,
 } from "@mui/material";
-
-import { useAppSelector } from "app/store";
-import { Divider, IosSwitch, LinearProgress, ScrollBox } from "components";
 import { formatDistance } from "date-fns";
 import { Link } from "react-router-dom";
 
+import { useAppDispatch, useAppSelector } from "app/store";
+import { Divider, IosSwitch, LinearProgress, ScrollBox } from "components";
+
 import { useAllUnitsQuery } from "../leicaApi";
-import { selectProjectId } from "../leicaSlice";
+import { selectProjectId, selectShowLeicaMarkers, leicaActions } from "../leicaSlice";
 
 export function Units() {
     const theme = useTheme();
     const projectId = useAppSelector(selectProjectId);
+    const showMarkers = useAppSelector(selectShowLeicaMarkers);
+    const dispatch = useAppDispatch();
     const { data: units, isLoading, isError } = useAllUnitsQuery(projectId, { pollingInterval: 20 * 1000 });
 
     return isLoading ? (
         <LinearProgress />
     ) : (
         <>
-            <Box boxShadow={theme.customShadows.widgetHeader}>
+            <Box boxShadow={theme.customShadows.widgetHeader} sx={{ minHeight: 5 }}>
                 <>
                     <Box px={1}>
                         <Divider />
@@ -35,7 +37,14 @@ export function Units() {
                     <Box display="flex" justifyContent="center">
                         {units?.some((unit) => unit.location) ? (
                             <FormControlLabel
-                                control={<IosSwitch size="medium" color="primary" checked={true} onChange={() => {}} />}
+                                control={
+                                    <IosSwitch
+                                        size="medium"
+                                        color="primary"
+                                        checked={showMarkers}
+                                        onChange={() => dispatch(leicaActions.toggleShowMarkers())}
+                                    />
+                                }
                                 label={
                                     <Box fontSize={14} sx={{ userSelect: "none" }}>
                                         Show markers
@@ -77,7 +86,10 @@ export function Units() {
                                             color={unit.metadata.is_online ? "primary" : undefined}
                                         />
                                     ) : (
-                                        <NoiseControlOff color={unit.metadata.is_online ? "primary" : undefined} />
+                                        <GpsOff
+                                            fontSize="small"
+                                            color={unit.metadata.is_online ? "primary" : undefined}
+                                        />
                                     )}
                                 </ListItemIcon>
                                 <ListItemText>

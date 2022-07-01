@@ -14,7 +14,7 @@ import { MeasureObject, MeasureSettings, DuoMeasurementValues } from "@novorende
 
 import { Box, Button, Paper, Typography, useTheme, styled, Menu, MenuItem, popoverClasses } from "@mui/material";
 import { css } from "@mui/styled-engine";
-import { CameraAlt } from "@mui/icons-material";
+import { CameraAlt, Engineering } from "@mui/icons-material";
 
 import { PerformanceStats } from "features/performanceStats";
 import { getDataFromUrlHash } from "features/shareLink";
@@ -67,6 +67,7 @@ import { bookmarksActions, selectBookmarks, useSelectBookmark } from "features/b
 import { measureActions, selectMeasure, isMeasureObject } from "features/measure";
 import { ditioActions, selectMarkers, selectShowMarkers } from "features/ditio";
 import { useAppDispatch, useAppSelector } from "app/store";
+import { selectLeicaMarkers, selectShowLeicaMarkers, usePollLeicaPositions } from "features/leica";
 
 import { useHighlighted, highlightActions, useDispatchHighlighted } from "contexts/highlighted";
 import { useHidden, useDispatchHidden } from "contexts/hidden";
@@ -130,6 +131,14 @@ const MeasurementPoint = styled("circle", { shouldForwardProp: (prop) => prop !=
 );
 
 const PanoramaMarker = styled((props: any) => <CameraAlt color="primary" height="50px" width="50px" {...props} />)(
+    () => css`
+        cursor: pointer;
+        pointer-events: auto;
+        filter: drop-shadow(3px 3px 2px rgba(0, 0, 0, 0.3));
+    `
+);
+
+const LeicaMarker = styled((props: any) => <Engineering color="primary" height="50px" width="50px" {...props} />)(
     () => css`
         cursor: pointer;
         pointer-events: auto;
@@ -211,6 +220,8 @@ export function Render3D({ onInit }: Props) {
     const urlBookmarkId = useAppSelector(selectUrlBookmarkId);
     const showDitioMarkers = useAppSelector(selectShowMarkers);
     const ditioMarkers = useAppSelector(selectMarkers);
+    const showLeicaMarkers = useAppSelector(selectShowLeicaMarkers);
+    const leicaMarkers = useAppSelector(selectLeicaMarkers);
     const dispatch = useAppDispatch();
 
     const rendering = useRef({
@@ -482,7 +493,7 @@ export function Render3D({ onInit }: Props) {
     }, [renderParametricMeasure]);
 
     const moveSvg = useCallback(() => {
-        if (!svg || !view || (!panoramas?.length && !ditioMarkers.length)) {
+        if (!svg || !view || (!panoramas?.length && !ditioMarkers.length && !leicaMarkers.length)) {
             return;
         }
 
@@ -495,8 +506,7 @@ export function Render3D({ onInit }: Props) {
             camera.near,
             camera.far
         );
-        const camMatrix = mat4.fromRotationTranslation(mat4.create(), camera.rotation, camera.position);
-        mat4.invert(camMatrix, camMatrix);
+
         const toScreen = (p: vec3) => {
             const _p = vec4.transformMat4(vec4.create(), vec4.fromValues(p[0], p[1], p[2], 1), proj);
             return vec2.scale(
@@ -506,11 +516,22 @@ export function Render3D({ onInit }: Props) {
             );
         };
 
-        if (panoramas?.length) {
-            panoramas
-                .map((p) => vec3.transformMat4(vec3.create(), p.position, camMatrix))
+        const camMatrix = mat4.fromRotationTranslation(mat4.create(), camera.rotation, camera.position);
+        mat4.invert(camMatrix, camMatrix);
+
+        const moveMarkers = ({
+            svgEl,
+            markers,
+            key,
+        }: {
+            svgEl: SVGSVGElement;
+            markers: { position: vec3 }[];
+            key: string;
+        }) => {
+            markers
+                .map((marker) => vec3.transformMat4(vec3.create(), marker.position, camMatrix))
                 .forEach((pos, idx) => {
-                    const marker = svg.children.namedItem(`panorama-${idx}`);
+                    const marker = svgEl.children.namedItem(`${key}-${idx}`);
 
                     if (!marker) {
                         return;
@@ -529,35 +550,16 @@ export function Render3D({ onInit }: Props) {
                     marker.setAttribute("x", Number.isNaN(Number(x)) || !Number.isFinite(Number(x)) ? "-100" : x);
                     marker.setAttribute("y", Number.isNaN(Number(y)) || !Number.isFinite(Number(x)) ? "-100" : y);
                 });
-        }
+        };
 
-        ditioMarkers
-            .map((marker) => vec3.transformMat4(vec3.create(), marker.position, camMatrix))
-            .forEach((pos, idx) => {
-                const marker = svg.children.namedItem(`ditioMarker-${idx}`);
-
-                if (!marker) {
-                    return;
-                }
-
-                const hide = pos[2] > 0 || pos.some((num) => Number.isNaN(num) || !Number.isFinite(num));
-
-                if (hide) {
-                    marker.setAttribute("x", "-100");
-                    return;
-                }
-
-                const p = toScreen(pos);
-                const x = p[0].toFixed(1);
-                const y = p[1].toFixed(1);
-                marker.setAttribute("x", Number.isNaN(Number(x)) || !Number.isFinite(Number(x)) ? "-100" : x);
-                marker.setAttribute("y", Number.isNaN(Number(y)) || !Number.isFinite(Number(x)) ? "-100" : y);
-            });
-    }, [svg, view, size, panoramas, ditioMarkers]);
+        moveMarkers({ svgEl: svg, markers: panoramas ?? [], key: "panorama" });
+        moveMarkers({ svgEl: svg, markers: ditioMarkers, key: "ditioMarker" });
+        moveMarkers({ svgEl: svg, markers: leicaMarkers, key: "leicaMarker" });
+    }, [svg, view, size, panoramas, ditioMarkers, leicaMarkers]);
 
     useEffect(() => {
         moveSvg();
-    }, [moveSvg, showDitioMarkers, showPanoramaMarkers]);
+    }, [moveSvg, showDitioMarkers, showPanoramaMarkers, showLeicaMarkers]);
 
     const moveSvgCursor = useCallback(
         (x: number, y: number, measurement: MeasureInfo | undefined) => {
@@ -1180,6 +1182,7 @@ export function Render3D({ onInit }: Props) {
     useHandleGridChanges();
     useHandlePanoramaChanges();
     useHandleCameraControls();
+    usePollLeicaPositions();
 
     useEffect(() => {
         handleUrlBookmark();
@@ -1685,6 +1688,18 @@ export function Render3D({ onInit }: Props) {
                                           name={`ditioMarker-${idx}`}
                                           key={marker.id}
                                           onClick={() => dispatch(ditioActions.setClickedMarker(marker.id))}
+                                      />
+                                  ))
+                                : null}
+                            {showLeicaMarkers && leicaMarkers
+                                ? leicaMarkers.map((marker, idx) => (
+                                      <LeicaMarker
+                                          height="32px"
+                                          width="32px"
+                                          id={`leicaMarker-${idx}`}
+                                          name={`leicaMarker-${idx}`}
+                                          key={marker.id}
+                                          //   onClick={() => dispatch(leicaActions.setClickedMarker(marker.id))}
                                       />
                                   ))
                                 : null}

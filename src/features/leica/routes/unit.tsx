@@ -56,6 +56,8 @@ export function Unit() {
                             {unit.name}
                             <br />
                             {unit.metadata.type_label}
+                            <br />
+                            {unit.metadata.note}
                         </Box>
 
                         <Box sx={{ mx: -1 }}>
