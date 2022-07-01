@@ -18,7 +18,15 @@ import {
 } from "@mui/material";
 
 import { useAppDispatch, useAppSelector } from "app/store";
-import { Divider, IosSwitch, LinearProgress, LogoSpeedDial, WidgetContainer, WidgetHeader } from "components";
+import {
+    Divider,
+    IosSwitch,
+    LinearProgress,
+    LogoSpeedDial,
+    ScrollBox,
+    WidgetContainer,
+    WidgetHeader,
+} from "components";
 import { featuresConfig } from "config/features";
 import { WidgetList } from "features/widgetList";
 import { useToggle } from "hooks/useToggle";
@@ -255,7 +263,7 @@ export function SelectionBasket() {
                     />
                 ) : null}
 
-                <Box display={menuOpen || minimized ? "none" : "flex"} flexDirection="column" p={1} mt={1}>
+                <ScrollBox display={menuOpen || minimized ? "none" : "flex"} flexDirection="column" p={1} pb={2} mt={1}>
                     <Typography sx={{ mb: 2 }}>Objects in basket: {visible.length}</Typography>
                     <FormControlLabel
                         control={
@@ -339,7 +347,7 @@ export function SelectionBasket() {
                             dispatch(renderActions.setSelectionBasketColor({ color: rgbToVec(rgb) }))
                         }
                     />
-                </Box>
+                </ScrollBox>
                 <WidgetList
                     display={menuOpen ? "block" : "none"}
                     widgetKey={featuresConfig.selectionBasket.key}
