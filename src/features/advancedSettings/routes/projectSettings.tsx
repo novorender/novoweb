@@ -21,6 +21,7 @@ export function ProjectSettings({ save, saving }: { save: () => Promise<void>; s
     const dispatch = useAppDispatch();
 
     const [ditioProject, setDitioProject] = useState(settings.ditioProjectNumber);
+    const [leicaProjectId, setLeicaProjectId] = useState(settings.leicaProjectId);
 
     const wkZones = dataApi.getWKZones();
 
@@ -81,6 +82,21 @@ export function ProjectSettings({ save, saving }: { save: () => Promise<void>; s
                         onBlur={() =>
                             dispatch(
                                 renderActions.setProjectSettings({ [ProjectSetting.DitioProjectNumber]: ditioProject })
+                            )
+                        }
+                    />
+                ) : null}
+                {!lockedWidgets.includes(featuresConfig.leica.key) ? (
+                    <TextField
+                        sx={{ mt: 2 }}
+                        fullWidth
+                        size="medium"
+                        label="Leica project ID"
+                        value={leicaProjectId}
+                        onChange={({ target: { value } }) => setLeicaProjectId(value)}
+                        onBlur={() =>
+                            dispatch(
+                                renderActions.setProjectSettings({ [ProjectSetting.LeicaProjectId]: leicaProjectId })
                             )
                         }
                     />

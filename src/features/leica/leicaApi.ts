@@ -1,7 +1,18 @@
 import { createApi, fetchBaseQuery } from "@reduxjs/toolkit/query/react";
 
 import { RootState } from "app/store";
-import { Account, Project, ProjectsResponse, SearchResponse, Unit, UnitsResponse } from "./types";
+import {
+    Account,
+    Equipment,
+    EquipmentResponse,
+    Location,
+    LocationResponse,
+    Project,
+    ProjectsResponse,
+    SearchResponse,
+    Unit,
+    UnitsResponse,
+} from "./types";
 
 const rawBaseQuery = fetchBaseQuery({
     baseUrl: "leica/api",
@@ -45,10 +56,11 @@ export const leicaApi = createApi({
                 next: Boolean(res.next) ? args.page + 1 : undefined,
             }),
         }),
-        allUnits: builder.query<Unit[], string>({
+        allUnits: builder.query<(Unit & { location?: Location })[], string>({
             queryFn: async (projectId, _queryApi, _extraOptions, fetchBaseQuery) => {
                 let page: number | undefined = 1;
                 let allUnits = [] as Unit[];
+                const locationReq = fetchBaseQuery(`/accounts/v1/accounts/${projectId}/locations/`);
 
                 while (page) {
                     const res = await fetchBaseQuery(
@@ -67,10 +79,29 @@ export const leicaApi = createApi({
                     }
                 }
 
-                return { data: allUnits };
+                const locationRes = await locationReq;
+                const locations = (locationRes.data as LocationResponse | undefined)?.results ?? [];
+
+                return {
+                    data: allUnits.map((unit) => ({
+                        ...unit,
+                        location: locations.find((loc) => loc.parent_uuid === unit.uuid),
+                    })),
+                };
             },
+        }),
+        equipment: builder.query<Equipment[], string>({
+            query: (unitId) => `accounts/v1/accounts/${unitId}/children/equipment/`,
+            transformResponse: (res: EquipmentResponse) => res.results,
         }),
     }),
 });
 
-export const { useActiveAccountQuery, useProjectsQuery, useSearchQuery, useUnitsQuery, useAllUnitsQuery } = leicaApi;
+export const {
+    useActiveAccountQuery,
+    useProjectsQuery,
+    useSearchQuery,
+    useUnitsQuery,
+    useAllUnitsQuery,
+    useEquipmentQuery,
+} = leicaApi;

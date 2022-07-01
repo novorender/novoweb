@@ -126,6 +126,7 @@ export function AdvancedSettings() {
                     showStats: settings.showPerformance,
                     navigationCube: settings.navigationCube,
                     ditioProjectNumber: projectSettings.ditioProjectNumber,
+                    leicaProjectId: projectSettings.leicaProjectId,
                     flightMouseButtonMap: settings.mouseButtonMap,
                     flightFingerMap: settings.fingerMap,
                     enabledFeatures: {

@@ -12,7 +12,8 @@ import { selectMinimized, selectMaximized } from "slices/explorerSlice";
 import { Login } from "./routes/login";
 import { Project } from "./routes/project";
 import { leicaActions, selectLastViewedPath } from "./leicaSlice";
-import { Equipment } from "./routes/equipment";
+import { Units } from "./routes/units";
+import { Unit } from "./routes/unit";
 
 export function Leica() {
     const [menuOpen, toggleMenu] = useToggle();
@@ -38,8 +39,11 @@ export function Leica() {
                             <Route path="/project" exact>
                                 <Project />
                             </Route>
-                            <Route path="/equipment" exact>
-                                <Equipment />
+                            <Route path="/units/:id" exact>
+                                <Unit />
+                            </Route>
+                            <Route path="/units" exact>
+                                <Units />
                             </Route>
                         </CustomSwitch>
                     </MemoryRouter>

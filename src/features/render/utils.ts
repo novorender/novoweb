@@ -573,6 +573,7 @@ export function initProjectSettings({ sceneData }: { sceneData: SceneData }): vo
         renderActions.setProjectSettings({
             [ProjectSetting.TmZone]: sceneData.tmZone ?? "",
             [ProjectSetting.DitioProjectNumber]: sceneData.customProperties?.ditioProjectNumber ?? "",
+            [ProjectSetting.LeicaProjectId]: sceneData.customProperties?.leicaProjectId ?? "",
         })
     );
 }

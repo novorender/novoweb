@@ -77,6 +77,7 @@ export enum AdvancedSetting {
 export enum ProjectSetting {
     TmZone = "tmZone",
     DitioProjectNumber = "ditioProjectNumber",
+    LeicaProjectId = "leicaProjectId",
 }
 
 export enum SelectionBasketMode {
@@ -181,6 +182,7 @@ const initialState = {
     projectSettings: {
         [ProjectSetting.TmZone]: "",
         [ProjectSetting.DitioProjectNumber]: "",
+        [ProjectSetting.LeicaProjectId]: "",
     },
 };
 

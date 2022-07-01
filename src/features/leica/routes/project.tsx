@@ -1,35 +1,35 @@
 import { Box, Typography, useTheme } from "@mui/material";
 import { useEffect, useState } from "react";
+import { Redirect } from "react-router-dom";
 
 import { useAppDispatch, useAppSelector } from "app/store";
 import { LinearProgress, ScrollBox } from "components";
+import { selectProjectSettings } from "slices/renderSlice";
 
 import { useSearchQuery } from "../leicaApi";
 import { leicaActions, selectProjectId } from "../leicaSlice";
 import { SearchProject } from "../types";
-import { Redirect } from "react-router-dom";
-
-const projectName = "200113Bussveien";
 
 export function Project() {
     const theme = useTheme();
     const projectId = useAppSelector(selectProjectId);
+    const { leicaProjectId: projectKey } = useAppSelector(selectProjectSettings);
     const dispatch = useAppDispatch();
 
     const [searchPage, setSearchPage] = useState(1);
     const [projectNotFound, setProjectNotFound] = useState(false);
     const { data: searchResults, isError: searchError } = useSearchQuery(
-        { query: projectName, page: searchPage },
-        { skip: projectNotFound || !projectName }
+        { query: projectKey, page: searchPage },
+        { skip: projectNotFound || !projectKey }
     );
 
     useEffect(() => {
-        if (projectId || !searchResults) {
+        if (!projectKey || !searchResults) {
             return;
         }
 
         const project = searchResults.results.find(
-            (res) => "type" in res && res.type === "PROJECT" && res.name === projectName
+            (res) => "type" in res && res.type === "PROJECT" && res.project.key === projectKey
         ) as SearchProject | undefined;
 
         if (project) {
@@ -39,9 +39,9 @@ export function Project() {
         } else {
             setProjectNotFound(true);
         }
-    }, [projectId, searchResults, dispatch]);
+    }, [projectKey, searchResults, dispatch]);
 
-    const isLoading = projectName && !projectId && !projectNotFound;
+    const isLoading = projectKey && !projectId && !projectNotFound;
     const isError = searchError;
 
     return isLoading ? (
@@ -54,12 +54,14 @@ export function Project() {
                     <Typography>Failed to load data from Leica.</Typography>
                 ) : projectNotFound ? (
                     <Typography>
-                        Project <em>{projectName}</em> was not found.
+                        Project <em>{projectKey}</em> was not found.
                     </Typography>
-                ) : !projectName ? (
-                    <Typography>Leica project not set. This can be set in Advanced settings -{">"} Project.</Typography>
+                ) : !projectKey ? (
+                    <Typography>
+                        Leica project not set. <br /> Admins can set it in Advanced settings -{">"} Project.
+                    </Typography>
                 ) : (
-                    <Redirect to="/equipment" />
+                    <Redirect to="/units" />
                 )}
             </ScrollBox>
         </>

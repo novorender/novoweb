@@ -95,11 +95,11 @@ export type Project = {
     managed_storage_sum: number;
 };
 
-export type ProjectsResponse = {
+type BaseSuccessResponse<T> = {
     count: number;
     next: string | null;
     previous: string | null;
-    results: Project[];
+    results: T[];
 };
 
 export type SearchProject = {
@@ -161,6 +161,22 @@ export type SearchResponse = {
     results: (SearchProject | SearchUnit | SearchUser)[];
 };
 
+export type Location = {
+    validity: boolean;
+    timestamp: number;
+    uuid: string;
+    parent_uuid: string;
+    parent_name: string;
+    unit_type: string;
+    unit_ref_model_file_state: string;
+    lat: number;
+    lon: number;
+    velocity: number | null;
+    heading: number;
+    distance: null;
+    altitude: number;
+};
+
 export type Unit = {
     uuid: string;
     type: "UNIT";
@@ -180,7 +196,7 @@ export type Unit = {
         is_track_online: boolean;
         is_last_track_position_valid: boolean;
         reference_model_file_state: string;
-        last_seen: null;
+        last_seen: null | string;
         server_time: number;
         reference: string;
         reference_id: string;
@@ -190,9 +206,94 @@ export type Unit = {
     };
 };
 
-export type UnitsResponse = {
-    count: number;
-    next: string | null;
-    previous: string | null;
-    results: Unit[];
+export type Equipment = {
+    uuid: string;
+    type: "EQUIPMENT";
+    name: string;
+    equipment: {
+        serial: string;
+        is_enabled: boolean;
+        type: string;
+        type_label: string;
+        features: {
+            has_view: boolean;
+            has_sync: boolean;
+            has_unitsync: boolean;
+            check_license: boolean;
+            can_pair: boolean;
+            can_message: boolean;
+            has_activity_tracking: boolean;
+        };
+        versions_uuid: [];
+        software_update: null;
+        license: {
+            starts_at: string;
+            expires_at: string;
+            is_valid: boolean;
+            is_temporary: boolean;
+            metadata: {};
+            level: string;
+            key: string;
+            name: string;
+            uuid: string;
+        };
+        device_licenses: [];
+        sshlink: null;
+        legend: {
+            top: { key: []; value: [] };
+            left: { key: []; value: [] };
+            right: { key: []; value: [] };
+            bottom: { key: []; value: [] };
+        };
+        is_online: boolean;
+        is_track_online: boolean;
+        is_last_track_position_valid: boolean;
+        is_paired: boolean;
+        data: null;
+        entitlement_id: null;
+        is_perpetual_license_holder: boolean;
+        pending_message: null;
+        has_wifi_settings: boolean;
+        created_at: string;
+        updated_at: string;
+    };
+    parent_uuid: string;
+    created_at: string;
+    updated_at: string;
+    waffle_flags: {
+        integration: boolean;
+        hide_wifi_push_config: boolean;
+        move_project: boolean;
+        cost_type: boolean;
+        user_roles: boolean;
+        pair_icon3d: boolean;
+        Tesla: boolean;
+        display_reference_model_revision_state_in_frontend: boolean;
+        sync_page: boolean;
+        VisualMachine: boolean;
+        company_migrated_with_script: boolean;
+        rsync_post_xfer_allowed: boolean;
+        integration_infrakit: boolean;
+        show_measure_point_view: boolean;
+        show_ui2: boolean;
+        dealer_license_report: boolean;
+        app_license: boolean;
+        download_points: boolean;
+        Captivate: boolean;
+        weak_spot_analysis: boolean;
+        iconAPS: boolean;
+        files_page: boolean;
+        show_release_notes: boolean;
+        show_pointcloud: boolean;
+        use_new_tickservice: boolean;
+        olaf_features: boolean;
+        earthmover: boolean;
+        utilization: boolean;
+    };
+    permissions: string[];
 };
+
+export type ProjectsResponse = BaseSuccessResponse<Project>;
+export type UnitsResponse = BaseSuccessResponse<Unit>;
+export type EquipmentResponse = BaseSuccessResponse<Equipment>;
+export type LocationResponse = BaseSuccessResponse<Location>;
