@@ -158,7 +158,7 @@ export function Group({ group, inset, editGroup }: { group: CustomGroup; inset?:
                                               name: group.name + " - COPY",
                                               grouping: group.grouping,
                                               search: group.search ? [...group.search] : undefined,
-                                              ids: [...group.ids],
+                                              ids: [],
                                               color: [...group.color],
                                               selected: false,
                                               hidden: false,
