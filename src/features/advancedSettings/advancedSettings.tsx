@@ -111,6 +111,10 @@ export function AdvancedSettings() {
                                   toleranceFactor: settings.pointToleranceFactor,
                               },
                           },
+                          terrain: {
+                              ...originalSettings.terrain,
+                              asBackground: settings.terrainAsBackground,
+                          },
                       } as Internal.RenderSettingsExt),
                 camera:
                     !camera || !["flight", "ortho"].includes(camera.kind)
