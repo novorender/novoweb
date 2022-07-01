@@ -1034,6 +1034,8 @@ export function Render3D({ onInit }: Props) {
 
                 if (cameraState.goTo) {
                     view.camera.controller.moveTo(cameraState.goTo.position, cameraState.goTo.rotation);
+                } else if (cameraState.zoomTo) {
+                    view.camera.controller.zoomTo(cameraState.zoomTo);
                 }
             } else if (cameraState.type === CameraType.Orthographic && cameraState.params) {
                 // copy non-primitives

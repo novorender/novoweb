@@ -1,5 +1,6 @@
 import type {
     API,
+    BoundingSphere,
     Camera,
     EnvironmentDescription,
     ObjectId,
@@ -95,7 +96,11 @@ export type ClippingPlanes = Omit<RenderSettings["clippingPlanes"], "bounds"> & 
 export type DeepWritable<T> = { -readonly [P in keyof T]: DeepWritable<T[P]> };
 type CameraState =
     | { type: CameraType.Orthographic; params?: OrthoControllerParams }
-    | { type: CameraType.Flight; goTo?: { position: Camera["position"]; rotation: Camera["rotation"] } };
+    | {
+          type: CameraType.Flight;
+          goTo?: { position: Camera["position"]; rotation: Camera["rotation"] };
+          zoomTo?: BoundingSphere;
+      };
 type WritableCameraState = DeepWritable<CameraState>;
 type WritableGrid = DeepWritable<RenderSettings["grid"]>;
 
@@ -306,13 +311,26 @@ export const renderSlice = createSlice({
         },
         setCamera: (state, { payload }: PayloadAction<CameraState>) => {
             const goTo =
-                "goTo" in payload
+                "goTo" in payload && payload.goTo
                     ? {
-                          position: Array.from(payload.goTo!.position) as vec3,
-                          rotation: Array.from(payload.goTo!.rotation) as quat,
+                          position: Array.from(payload.goTo.position) as vec3,
+                          rotation: Array.from(payload.goTo.rotation) as quat,
                       }
                     : undefined;
-            state.camera = { ...payload, goTo } as WritableCameraState;
+
+            const zoomTo =
+                "zoomTo" in payload && payload.zoomTo
+                    ? {
+                          center: Array.from(payload.zoomTo.center) as vec3,
+                          radius: payload.zoomTo.radius,
+                      }
+                    : undefined;
+
+            state.camera = {
+                ...payload,
+                ...(goTo ? { goTo } : {}),
+                ...(zoomTo ? { zoomTo } : {}),
+            } as WritableCameraState;
         },
         setBaseCameraSpeed: (state, { payload }: PayloadAction<number>) => {
             state.baseCameraSpeed = payload;
