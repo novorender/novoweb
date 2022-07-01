@@ -67,7 +67,7 @@ import { bookmarksActions, selectBookmarks, useSelectBookmark } from "features/b
 import { measureActions, selectMeasure, isMeasureObject } from "features/measure";
 import { ditioActions, selectMarkers, selectShowMarkers } from "features/ditio";
 import { useAppDispatch, useAppSelector } from "app/store";
-import { selectLeicaMarkers, selectShowLeicaMarkers, usePollLeicaPositions } from "features/leica";
+import { leicaActions, selectLeicaMarkers, selectShowLeicaMarkers, usePollLeicaPositions } from "features/leica";
 
 import { useHighlighted, highlightActions, useDispatchHighlighted } from "contexts/highlighted";
 import { useHidden, useDispatchHidden } from "contexts/hidden";
@@ -1699,7 +1699,8 @@ export function Render3D({ onInit }: Props) {
                                           id={`leicaMarker-${idx}`}
                                           name={`leicaMarker-${idx}`}
                                           key={marker.id}
-                                          //   onClick={() => dispatch(leicaActions.setClickedMarker(marker.id))}
+                                          onClick={() => dispatch(leicaActions.setClickedMarker(marker.id))}
+                                          color={marker.online ? "primary" : "secondary"}
                                       />
                                   ))
                                 : null}

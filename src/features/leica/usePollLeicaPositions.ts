@@ -35,7 +35,7 @@ export function usePollLeicaPositions() {
 
                             position[1] = unit.location!.altitude + 1;
 
-                            return { position, id: unit.uuid };
+                            return { position, id: unit.uuid, online: unit.metadata.is_online };
                         })
                 )
             );

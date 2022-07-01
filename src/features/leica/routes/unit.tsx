@@ -3,15 +3,23 @@ import { Box, Button, CircularProgress, Typography, useTheme } from "@mui/materi
 import { ArrowBack, LocationOnOutlined } from "@mui/icons-material";
 
 import { LinearProgress, ScrollBox, Divider, Accordion, AccordionSummary, AccordionDetails } from "components";
+import { useAppDispatch, useAppSelector } from "app/store";
+import { CameraType, renderActions, selectProjectSettings } from "slices/renderSlice";
+import { dataApi } from "app";
+import { useExplorerGlobals } from "contexts/explorerGlobals";
+
 import { useAllUnitsQuery, useEquipmentQuery } from "../leicaApi";
-import { useAppSelector } from "app/store";
 import { selectProjectId } from "../leicaSlice";
-import { selectProjectSettings } from "slices/renderSlice";
 
 export function Unit() {
     const theme = useTheme();
     const history = useHistory();
     const { id } = useParams<{ id?: string }>();
+    const {
+        state: { view },
+    } = useExplorerGlobals(true);
+
+    const dispatch = useAppDispatch();
     const projectId = useAppSelector(selectProjectId);
     const { tmZone } = useAppSelector(selectProjectSettings);
 
@@ -24,6 +32,24 @@ export function Unit() {
         }),
     });
 
+    const handleGoTo = () => {
+        if (!unit?.location || !tmZone) {
+            return;
+        }
+
+        const pos = dataApi.latLon2tm({ latitude: unit.location.lat, longitude: unit.location.lon }, tmZone);
+
+        dispatch(
+            renderActions.setCamera({
+                type: CameraType.Flight,
+                goTo: {
+                    position: [pos[0], unit.location.altitude + 2, pos[2]],
+                    rotation: view.camera.rotation,
+                },
+            })
+        );
+    };
+
     return isLoading ? (
         <LinearProgress />
     ) : (
@@ -34,12 +60,12 @@ export function Unit() {
                         <Divider />
                     </Box>
                     <Box display="flex">
-                        <Button onClick={() => history.goBack()} color="grey">
+                        <Button onClick={() => history.push("/units")} color="grey">
                             <ArrowBack sx={{ mr: 1 }} />
                             Back
                         </Button>
                         {unit?.location ? (
-                            <Button disabled={!tmZone} onClick={() => {}} color="grey">
+                            <Button disabled={!tmZone} onClick={handleGoTo} color="grey">
                                 <LocationOnOutlined sx={{ mr: 1 }} />
                                 Go to
                             </Button>
@@ -56,8 +82,15 @@ export function Unit() {
                             {unit.name}
                             <br />
                             {unit.metadata.type_label}
+                            {unit.metadata.note ? (
+                                <>
+                                    {" "}
+                                    <br />
+                                    {unit.metadata.note}
+                                </>
+                            ) : null}
                             <br />
-                            {unit.metadata.note}
+                            {unit.metadata.is_online ? "Online" : "Offline"}
                         </Box>
 
                         <Box sx={{ mx: -1 }}>
@@ -71,9 +104,9 @@ export function Unit() {
 }
 
 function EquipmentList({ unitId }: { unitId: string }) {
-    const { equipment, isLoading, isError } = useEquipmentQuery(unitId!, {
-        selectFromResult: ({ data, isLoading, isError }) => ({
-            isLoading,
+    const { equipment, isFetching, isError } = useEquipmentQuery(unitId!, {
+        selectFromResult: ({ data, isFetching, isError }) => ({
+            isFetching,
             isError,
             equipment: data,
         }),
@@ -84,7 +117,7 @@ function EquipmentList({ unitId }: { unitId: string }) {
         <Accordion defaultExpanded>
             <AccordionSummary>Equipment</AccordionSummary>
             <AccordionDetails sx={{ p: 1 }}>
-                {isLoading ? (
+                {isFetching ? (
                     <Box display="flex" justifyContent="center" alignItems="center" height={50}>
                         <CircularProgress />
                     </Box>

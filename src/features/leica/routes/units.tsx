@@ -29,7 +29,7 @@ export function Units() {
         <LinearProgress />
     ) : (
         <>
-            <Box boxShadow={theme.customShadows.widgetHeader} sx={{ minHeight: 5 }}>
+            <Box boxShadow={theme.customShadows.widgetHeader} sx={{ minHeight: 5, flexShrink: 0 }}>
                 <>
                     <Box px={1}>
                         <Divider />

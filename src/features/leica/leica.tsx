@@ -1,5 +1,5 @@
 import { PropsWithChildren, useRef, useEffect } from "react";
-import { MemoryRouter, Route, Switch, SwitchProps, useLocation } from "react-router-dom";
+import { MemoryRouter, Route, Switch, SwitchProps, useHistory, useLocation } from "react-router-dom";
 import { Box } from "@mui/material";
 
 import { useAppDispatch, useAppSelector } from "app/store";
@@ -11,7 +11,7 @@ import { selectMinimized, selectMaximized } from "slices/explorerSlice";
 
 import { Login } from "./routes/login";
 import { Project } from "./routes/project";
-import { leicaActions, selectLastViewedPath } from "./leicaSlice";
+import { leicaActions, selectClickedMarker, selectLastViewedPath } from "./leicaSlice";
 import { Units } from "./routes/units";
 import { Unit } from "./routes/unit";
 
@@ -31,7 +31,7 @@ export function Leica() {
                     flexGrow={1}
                     overflow="hidden"
                 >
-                    <MemoryRouter initialEntries={["/project", lastViewedPath]} initialIndex={1}>
+                    <MemoryRouter initialEntries={["/units", lastViewedPath]} initialIndex={1}>
                         <CustomSwitch>
                             <Route path="/" exact>
                                 <Login />
@@ -61,8 +61,17 @@ export function Leica() {
 
 function CustomSwitch(props: PropsWithChildren<SwitchProps>) {
     const location = useLocation();
+    const history = useHistory();
     const willUnmount = useRef(false);
+    const clickedMarker = useAppSelector(selectClickedMarker);
     const dispatch = useAppDispatch();
+
+    useEffect(() => {
+        if (clickedMarker) {
+            history.push(`/units/${clickedMarker}`);
+            dispatch(leicaActions.setClickedMarker(""));
+        }
+    }, [dispatch, history, clickedMarker]);
 
     useEffect(() => {
         return () => {

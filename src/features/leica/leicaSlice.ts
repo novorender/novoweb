@@ -23,9 +23,11 @@ const initialState = {
     status: LeicaStatus.Initial,
     error: "",
     lastViewedPath: "/",
+    clickedMarker: "",
     markers: [] as {
         position: vec3;
         id: string;
+        online: boolean;
     }[],
     showMarkers: false,
 };
@@ -68,6 +70,9 @@ export const leicaSlice = createSlice({
                 state.showMarkers = action.payload;
             }
         },
+        setClickedMarker: (state, action: PayloadAction<State["clickedMarker"]>) => {
+            state.clickedMarker = action.payload;
+        },
     },
 });
 
@@ -79,6 +84,7 @@ export const selectAccountId = (state: RootState) => state.leica.accountId;
 export const selectProjectId = (state: RootState) => state.leica.projectId;
 export const selectLeicaMarkers = (state: RootState) => state.leica.markers;
 export const selectShowLeicaMarkers = (state: RootState) => state.leica.showMarkers;
+export const selectClickedMarker = (state: RootState) => state.leica.clickedMarker;
 
 const { actions, reducer } = leicaSlice;
 export { actions as leicaActions, reducer as leicaReducer };
