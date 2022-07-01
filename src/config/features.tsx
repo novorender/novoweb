@@ -48,6 +48,7 @@ export const featuresConfig = {
         name: "Leica",
         Icon: GpsFixed,
         type: FeatureType.Widget,
+        // todo(OLA)
         defaultLocked: false,
     },
     user: {
