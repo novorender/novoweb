@@ -47,7 +47,7 @@
         "@mui/lab": "^5.0.0-alpha.58",
         "@mui/material": "^5.8.0",
         "@novorender/data-js-api": "^0.2.22",
-        "@novorender/measure-api": "^0.0.24",
+        "@novorender/measure-api": "^0.0.30",
         "@novorender/webgl-api": "^0.3.88",
         "@reduxjs/toolkit": "^1.8.1",
         "@use-gesture/react": "^10.2.14",
