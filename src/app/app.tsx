@@ -85,9 +85,12 @@ export function App() {
                     }
 
                     return msalInstance
-                        .acquireTokenSilent({ ...loginRequest, account: getStoredActiveMsalAccount() })
+                        .ssoSilent({
+                            ...loginRequest,
+                            account: getStoredActiveMsalAccount(),
+                        })
                         .catch(() => {
-                            return msalInstance.ssoSilent({
+                            return msalInstance.acquireTokenSilent({
                                 ...loginRequest,
                                 account: getStoredActiveMsalAccount(),
                             });
