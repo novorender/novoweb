@@ -80,8 +80,6 @@ export function App() {
 
                     const account = getStoredActiveMsalAccount();
 
-                    console.log("redirPromise account", { account });
-
                     if (!account) {
                         return;
                     }
@@ -96,8 +94,7 @@ export function App() {
                                 ? `https://login.microsoftonline.com/${account.tenantId}`
                                 : loginRequest.authority,
                         })
-                        .catch((e) => {
-                            console.warn("catch ssosilent", e);
+                        .catch(() => {
                             return msalInstance.acquireTokenSilent({
                                 ...loginRequest,
                                 account,
@@ -108,7 +105,7 @@ export function App() {
                         })
                         .catch((e) => {
                             if (e instanceof InteractionRequiredAuthError) {
-                                return msalInstance.loginPopup({
+                                return msalInstance.acquireTokenPopup({
                                     ...loginRequest,
                                     account,
                                     sid: account.idTokenClaims?.sid,
@@ -134,14 +131,13 @@ export function App() {
                         throw new Error("Failed to get user.");
                     }
 
-                    console.log("msal success");
                     msalInstance.setActiveAccount(res.account);
                     storeActiveAccount(res.account);
                     dispatch(authActions.login({ accessToken: res.accessToken, msalAccount: res.account, user }));
                     history.replace(history.location.pathname.replace("login/", "") + window.location.search);
                 }
             } catch (e) {
-                console.warn("catch msalReturn", e);
+                console.warn(e);
             }
         }
 

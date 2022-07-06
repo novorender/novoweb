@@ -1707,9 +1707,6 @@ function NoScene({ id }: { id: string }) {
     const user = useAppSelector(selectUser);
     const loginUrl = `${window.location.origin}/login/${id}${window.location.search}`;
 
-    console.log("noScene allAccounts", msalInstance.getAllAccounts());
-    console.log("noScene msalAccount", msalAccount);
-
     const logOut = () => {
         deleteFromStorage(StorageKey.NovoToken);
         deleteFromStorage(StorageKey.MsalActiveAccount);

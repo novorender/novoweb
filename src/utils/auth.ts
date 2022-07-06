@@ -1,5 +1,5 @@
 import { AuthenticationHeader } from "@novorender/data-js-api";
-import { AccountInfo, NavigationClient, NavigationOptions } from "@azure/msal-browser";
+import { AccountInfo, InteractionRequiredAuthError, NavigationClient, NavigationOptions } from "@azure/msal-browser";
 import { History } from "history";
 
 import { msalInstance } from "app";
@@ -27,8 +27,7 @@ export async function getAuthHeader(): Promise<AuthenticationHeader> {
                         ? `https://login.microsoftonline.com/${msalAccount.tenantId}`
                         : loginRequest.authority,
                 })
-                .catch((e) => {
-                    console.log("catch authHeader tokenSilent()", e);
+                .catch(() => {
                     return msalInstance.ssoSilent({
                         ...loginRequest,
                         sid: msalAccount.idTokenClaims?.sid,
@@ -40,16 +39,19 @@ export async function getAuthHeader(): Promise<AuthenticationHeader> {
                     });
                 })
                 .catch((e) => {
-                    console.log("catch authHeader ssoSilent()", e);
-                    return msalInstance.acquireTokenPopup({
-                        ...loginRequest,
-                        sid: msalAccount.idTokenClaims?.sid,
-                        loginHint: msalAccount.idTokenClaims?.login_hint,
-                        account: msalAccount,
-                        authority: msalAccount.tenantId
-                            ? `https://login.microsoftonline.com/${msalAccount.tenantId}`
-                            : loginRequest.authority,
-                    });
+                    if (e instanceof InteractionRequiredAuthError) {
+                        return msalInstance.acquireTokenPopup({
+                            ...loginRequest,
+                            sid: msalAccount.idTokenClaims?.sid,
+                            loginHint: msalAccount.idTokenClaims?.login_hint,
+                            account: msalAccount,
+                            authority: msalAccount.tenantId
+                                ? `https://login.microsoftonline.com/${msalAccount.tenantId}`
+                                : loginRequest.authority,
+                        });
+                    } else {
+                        throw e;
+                    }
                 });
 
             if (!response) {
