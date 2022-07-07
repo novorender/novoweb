@@ -521,10 +521,16 @@ export function Render3D({ onInit }: Props) {
             const planarDiff = vec2.len(vec2.fromValues(diff[0], diff[2]));
             const pdPt1 = vec3.fromValues(pts[0][0], Math.min(pts[0][1], pts[3][1]), pts[0][2]);
             const pdPt2 = vec3.fromValues(pts[3][0], Math.min(pts[0][1], pts[3][1]), pts[3][2]);
-            renderMeasurePoints(view, [pdPt1, pdPt2], "brepPathXZ", undefined, {
+            const xyPathPoints = renderMeasurePoints(view, [pdPt1, pdPt2], "brepPathXZ", undefined, {
                 textName: "brepTextXZ",
                 distance: planarDiff,
             });
+
+            if (measurePathPoints && xyPathPoints) {
+                const xyDiff = vec3.sub(vec3.create(), pdPt1, pdPt2);
+                const fromP = flip ? measurePathPoints[0][0] : measurePathPoints[0][1];
+                renderAngles(xyPathPoints[0][0], fromP, xyPathPoints[0][1], diff, xyDiff, `angle measureToXY`);
+            }
         } else {
         }
     }, [
@@ -1681,7 +1687,7 @@ export function Render3D({ onInit }: Props) {
                                         disabled={true}
                                         fill="green"
                                     />
-                                    <g id={`angle measureToZ`}></g>;
+                                    <g id={`angle measureToZ`}></g>;<g id={`angle measureToXY`}></g>;
                                     <path id="brepDistance" d="" stroke="green" strokeWidth={2} fill="none" />
                                     <path id="brepPathX" d="" stroke="red" strokeWidth={2} fill="none" />
                                     <path id="brepPathY" d="" stroke="lightgreen" strokeWidth={2} fill="none" />
