@@ -95,7 +95,7 @@ export function Login() {
             width={1}
             bgcolor={{ xs: theme.palette.common.white, sm: theme.palette.grey[200] }}
         >
-            <ScrollBox mb={2}>
+            <ScrollBox pb={4}>
                 <Box p={3} textAlign={{ xs: "center", sm: "left" }}>
                     <NovorenderLogo title="novorender" height={35} fill={theme.palette.primary.main} />
                 </Box>
