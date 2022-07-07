@@ -1,4 +1,4 @@
-import { glMatrix, mat4, quat, vec2, vec3, vec4 } from "gl-matrix";
+import { glMatrix, mat4, quat, ReadonlyVec2, ReadonlyVec3, vec2, vec3, vec4 } from "gl-matrix";
 import { useEffect, useState, useRef, MouseEvent, PointerEvent, useCallback, SVGProps, RefCallback } from "react";
 import { SceneData } from "@novorender/data-js-api";
 import {
@@ -351,8 +351,63 @@ export function Render3D({ onInit }: Props) {
                     text.innerHTML = "";
                 }
             }
+            return [pathPoints, pixelPoints];
         },
         [svg, size]
+    );
+
+    const renderAngles = useCallback(
+        (
+            anglePoint: ReadonlyVec2,
+            fromP: ReadonlyVec2,
+            toP: ReadonlyVec2,
+            diffA: ReadonlyVec3,
+            diffB: ReadonlyVec3,
+            pathName: string
+        ) => {
+            if (!svg) {
+                return;
+            }
+            const angleToZ = vec3.angle(diffA, diffB) * (180 / Math.PI);
+            const g = svg.children.namedItem(pathName);
+            if (!g) {
+                return;
+            }
+
+            const d0 = vec2.sub(vec2.create(), fromP, anglePoint);
+            const d1 = vec2.sub(vec2.create(), toP, anglePoint);
+            const l0 = vec2.len(d0);
+            const l1 = vec2.len(d1);
+            if (l0 < 40 || l1 < 40) {
+                g.innerHTML = "";
+                return;
+            }
+            vec2.scale(d0, d0, 1 / l0);
+            vec2.scale(d1, d1, 1 / l1);
+            const sw = d0[0] * d1[1] - d0[1] * d1[0] > 0 ? 1 : 0;
+            const text = +angleToZ.toFixed(1) + "°";
+            const dir = vec2.add(vec2.create(), d1, d0);
+            const dirLen = vec2.len(dir);
+            if (dirLen < 0.001) {
+                vec2.set(dir, 0, 1);
+            } else {
+                vec2.scale(dir, dir, 1 / dirLen);
+            }
+            const angle = (Math.asin(dir[1]) * 180) / Math.PI;
+            g.innerHTML = `<path d="M ${anglePoint[0] + d0[0] * 20} ${
+                anglePoint[1] + d0[1] * 20
+            } A 20 20, 0, 0, ${sw}, ${anglePoint[0] + d1[0] * 20} ${
+                anglePoint[1] + d1[1] * 20
+            }" stroke="blue" fill="transparent" stroke-width="2" stroke-linecap="square" />
+                        <text text-anchor=${
+                            dir[0] < 0 ? "end" : "start"
+                        } alignment-baseline="central" fill="white" x="${anglePoint[0] + dir[0] * 25}" y="${
+                anglePoint[1] + dir[1] * 25
+            }" transform="rotate(${dir[0] < 0 ? -angle : angle} ${anglePoint[0] + dir[0] * 25},${
+                anglePoint[1] + dir[1] * 25
+            })">${text}</text>`;
+        },
+        [svg]
     );
 
     const renderMeasureObject = useCallback(
@@ -428,13 +483,11 @@ export function Render3D({ onInit }: Props) {
                 ? [measure.duoMeasurementValues.pointA, measure.duoMeasurementValues.pointB]
                 : undefined;
         if (measurePoints) {
-            let pts =
-                measurePoints[0][1] < measurePoints[1][1]
-                    ? [measurePoints[0], measurePoints[1]]
-                    : [measurePoints[1], measurePoints[0]];
+            const flip = measurePoints[0][1] > measurePoints[1][1];
+            let pts = flip ? [measurePoints[1], measurePoints[0]] : [measurePoints[0], measurePoints[1]];
             const diff = vec3.sub(vec3.create(), pts[0], pts[1]);
 
-            renderMeasurePoints(view, measurePoints, "brepDistance", "measure", {
+            const measurePathPoints = renderMeasurePoints(view, measurePoints, "brepDistance", "measure", {
                 textName: "distanceText",
                 distance: vec3.len(diff),
             });
@@ -454,10 +507,16 @@ export function Render3D({ onInit }: Props) {
                 textName: "brepTextY",
                 distance: Math.abs(diff[2]),
             });
-            renderMeasurePoints(view, [pts[2], pts[3]], "brepPathZ", undefined, {
+
+            const zPathPoints = renderMeasurePoints(view, [pts[2], pts[3]], "brepPathZ", undefined, {
                 textName: "brepTextZ",
                 distance: Math.abs(diff[1]),
             });
+            if (measurePathPoints && zPathPoints) {
+                const zDiff = vec3.sub(vec3.create(), pts[2], pts[3]);
+                const fromP = flip ? measurePathPoints[0][1] : measurePathPoints[0][0];
+                renderAngles(zPathPoints[0][1], fromP, zPathPoints[0][0], diff, zDiff, `angle measureToZ`);
+            }
 
             const planarDiff = vec2.len(vec2.fromValues(diff[0], diff[2]));
             const pdPt1 = vec3.fromValues(pts[0][0], Math.min(pts[0][1], pts[3][1]), pts[0][2]);
@@ -473,6 +532,7 @@ export function Render3D({ onInit }: Props) {
         renderMeasureObject,
         renderMeasurePoints,
         renderSingleMeasurePoint,
+        renderAngles,
         measureObjects,
         measure.duoMeasurementValues,
     ]);
@@ -1621,6 +1681,7 @@ export function Render3D({ onInit }: Props) {
                                         disabled={true}
                                         fill="green"
                                     />
+                                    <g id={`angle measureToZ`}></g>;
                                     <path id="brepDistance" d="" stroke="green" strokeWidth={2} fill="none" />
                                     <path id="brepPathX" d="" stroke="red" strokeWidth={2} fill="none" />
                                     <path id="brepPathY" d="" stroke="lightgreen" strokeWidth={2} fill="none" />
