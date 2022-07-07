@@ -1,4 +1,4 @@
-import { FormEventHandler, useRef, useState } from "react";
+import { FormEventHandler, useEffect, useState } from "react";
 import { Box, Button, Checkbox, FormControlLabel, TextField } from "@mui/material";
 import { useHistory, useParams } from "react-router-dom";
 
@@ -32,7 +32,19 @@ export function Crupdate() {
     const [description, setDescription] = useState(bmToEdit?.description ?? "");
     const [collection, setCollection] = useState(bmToEdit?.grouping ?? "");
     const [personal, togglePersonal] = useToggle(bmToEdit ? bmToEdit.access === BookmarkAccess.Personal : true);
-    const imgRef = useRef(bmToEdit ? bmToEdit.img ?? "" : createBookmarkImg(canvas));
+    const [bmImg, setBmImg] = useState("");
+
+    useEffect(() => {
+        if (bmImg) {
+            return;
+        }
+
+        if (bmToEdit) {
+            setBmImg(bmToEdit.img ?? "");
+        } else {
+            createBookmarkImg(canvas).then((img) => setBmImg(img));
+        }
+    }, [bmImg, bmToEdit, canvas]);
 
     const handleSubmit: FormEventHandler = (e) => {
         e.preventDefault();
@@ -46,12 +58,12 @@ export function Crupdate() {
         history.goBack();
     };
 
-    const create = () => {
+    const create = async () => {
         if (!bookmarks) {
             return;
         }
 
-        const bm = createBookmark(createBookmarkImg(canvas));
+        const bm = createBookmark(await createBookmarkImg(canvas));
 
         const newBookmarks = bookmarks.concat({
             ...bm,
@@ -65,15 +77,17 @@ export function Crupdate() {
         dispatch(bookmarksActions.setBookmarks(newBookmarks));
     };
 
-    const update = () => {
+    const update = async () => {
         if (!bookmarks) {
             return;
         }
 
+        const img = await createBookmarkImg(canvas);
+
         const newBookmarks = bookmarks.map((bm) =>
             bm === bmToEdit
                 ? {
-                      ...createBookmark(createBookmarkImg(canvas)),
+                      ...createBookmark(img),
                       id: bmToEdit.id,
                       name,
                       description,
@@ -88,8 +102,8 @@ export function Crupdate() {
 
     return (
         <ScrollBox width={1} px={1} mt={1} display="flex" flexDirection="column" height={1} pb={2}>
-            <Box sx={{ img: { width: "100%", height: 200, objectFit: "cover" } }}>
-                <img alt="" src={imgRef.current} />
+            <Box sx={{ img: { width: "100%", height: 200, objectFit: "contain" } }}>
+                {bmImg ? <img alt="" src={bmImg} /> : null}
             </Box>
             <form onSubmit={handleSubmit}>
                 <TextField
@@ -155,15 +169,27 @@ export function Crupdate() {
     );
 }
 
-function createBookmarkImg(canvas: HTMLCanvasElement): string {
-    const dist = document.createElement("canvas");
-    const width = canvas.width;
-    const height = canvas.height;
+async function createBookmarkImg(canvas: HTMLCanvasElement, w = 100, h = 70): Promise<string> {
+    const width = Math.min(canvas.width, canvas.height > canvas.width ? h : w);
+    const height = Math.min(canvas.width, canvas.height > canvas.width ? w : h);
 
-    dist.height = 350;
-    dist.width = (350 * height) / width;
-    const ctx = dist.getContext("2d", { alpha: true, desynchronized: false })!;
-    ctx.drawImage(canvas, 0, 0, width, height, 0, 0, dist.width, dist.height);
+    try {
+        const bitmap = await createImageBitmap(canvas, {
+            resizeHeight: height,
+            resizeWidth: width,
+            resizeQuality: "high",
+        });
 
-    return dist.toDataURL("image/png");
+        const dist = document.createElement("canvas");
+        dist.height = height;
+        dist.width = width;
+
+        const ctx = dist.getContext("2d")!;
+        ctx.drawImage(bitmap, 0, 0);
+
+        return dist.toDataURL("image/png");
+    } catch (e) {
+        console.warn(e);
+        return "";
+    }
 }
