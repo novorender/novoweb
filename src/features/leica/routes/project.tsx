@@ -1,27 +1,43 @@
 import { Box, Typography, useTheme } from "@mui/material";
 import { useEffect, useState } from "react";
-import { Redirect } from "react-router-dom";
+import { Redirect, useHistory, useParams } from "react-router-dom";
 
 import { useAppDispatch, useAppSelector } from "app/store";
 import { LinearProgress, ScrollBox } from "components";
 import { selectProjectSettings } from "slices/renderSlice";
 
-import { useSearchQuery } from "../leicaApi";
+import { useActiveAccountQuery, useProjectsQuery, useSearchQuery } from "../leicaApi";
 import { leicaActions, selectProjectId } from "../leicaSlice";
-import { SearchProject } from "../types";
+import { Project as ProjectType, SearchProject } from "../types";
 
 export function Project() {
     const theme = useTheme();
+    const history = useHistory();
+    const { id: accountId = "" } = useParams<{ id?: string }>();
     const projectId = useAppSelector(selectProjectId);
     const { leicaProjectId: projectKey } = useAppSelector(selectProjectSettings);
     const dispatch = useAppDispatch();
+    const { data: account, isError: accountError } = useActiveAccountQuery(undefined, { skip: Boolean(accountId) });
 
     const [searchPage, setSearchPage] = useState(1);
-    const [projectNotFound, setProjectNotFound] = useState(false);
+    const [notInSearch, setNotInSearch] = useState(false);
     const { data: searchResults, isError: searchError } = useSearchQuery(
         { query: projectKey, page: searchPage },
-        { skip: projectNotFound || !projectKey }
+        { skip: notInSearch || !projectKey }
     );
+
+    const [projectsPage, setProjectsPage] = useState(1);
+    const [projectNotFound, setProjectNotFound] = useState(false);
+    const { data: projectsResults, isError: projectError } = useProjectsQuery(
+        { accountId, page: projectsPage },
+        { skip: !notInSearch || !projectKey || projectNotFound || !accountId }
+    );
+
+    useEffect(() => {
+        if (account && !accountId) {
+            history.replace(`/project/${account.profile.account_uuid}`);
+        }
+    });
 
     useEffect(() => {
         if (!projectKey || !searchResults) {
@@ -37,12 +53,30 @@ export function Project() {
         } else if (searchResults?.next) {
             setSearchPage(searchResults.next);
         } else {
-            setProjectNotFound(true);
+            setNotInSearch(true);
         }
     }, [projectKey, searchResults, dispatch]);
 
-    const isLoading = projectKey && !projectId && !projectNotFound;
-    const isError = searchError;
+    useEffect(() => {
+        if (!projectKey || (!notInSearch && !searchError) || !projectsResults) {
+            return;
+        }
+
+        const project = projectsResults.projects.find(
+            (res) => "type" in res && res.type === "PROJECT" && res.project.key === projectKey
+        ) as ProjectType | undefined;
+
+        if (project) {
+            dispatch(leicaActions.setProjectId(project.uuid));
+        } else if (projectsResults?.next) {
+            setProjectsPage(projectsResults.next);
+        } else {
+            setProjectNotFound(true);
+        }
+    }, [projectKey, notInSearch, projectsResults, searchError, dispatch]);
+
+    const isLoading = projectKey && !projectId && !projectNotFound && !accountError;
+    const isError = accountError || (searchError && projectError);
 
     return isLoading ? (
         <LinearProgress />

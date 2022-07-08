@@ -43,7 +43,7 @@ export function Unit() {
             renderActions.setCamera({
                 type: CameraType.Flight,
                 goTo: {
-                    position: [pos[0], unit.location.altitude + 2, pos[2]],
+                    position: [pos[0], unit.location.altitude + 1, pos[2]],
                     rotation: view.camera.rotation,
                 },
             })

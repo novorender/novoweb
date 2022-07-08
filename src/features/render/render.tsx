@@ -12,7 +12,18 @@ import {
 } from "@novorender/webgl-api";
 import { MeasureObject, MeasureSettings, DuoMeasurementValues } from "@novorender/measure-api";
 
-import { Box, Button, Paper, Typography, useTheme, styled, Menu, MenuItem, popoverClasses } from "@mui/material";
+import {
+    Box,
+    Button,
+    Paper,
+    Typography,
+    useTheme,
+    styled,
+    Menu,
+    MenuItem,
+    popoverClasses,
+    SvgIconProps,
+} from "@mui/material";
 import { css } from "@mui/styled-engine";
 import { CameraAlt, Engineering } from "@mui/icons-material";
 
@@ -130,18 +141,27 @@ const MeasurementPoint = styled("circle", { shouldForwardProp: (prop) => prop !=
     `
 );
 
-const PanoramaMarker = styled((props: any) => <CameraAlt color="primary" height="50px" width="50px" {...props} />)(
+const PanoramaMarker = styled((props: SvgIconProps) => (
+    <CameraAlt color="primary" height="50px" width="50px" {...props} />
+))(
     () => css`
         cursor: pointer;
-        pointer-events: auto;
+        pointer-events: bounding-box;
         filter: drop-shadow(3px 3px 2px rgba(0, 0, 0, 0.3));
     `
 );
 
-const LeicaMarker = styled((props: any) => <Engineering color="primary" height="50px" width="50px" {...props} />)(
+const LeicaMarker = styled(({ ...props }: SvgIconProps) => (
+    <Engineering
+        height="50px"
+        width="50px"
+        color={!props.color && !props.htmlColor ? "primary" : undefined}
+        {...props}
+    />
+))(
     () => css`
         cursor: pointer;
-        pointer-events: auto;
+        pointer-events: bounding-box;
         filter: drop-shadow(3px 3px 2px rgba(0, 0, 0, 0.3));
     `
 );
@@ -178,6 +198,7 @@ type Props = {
 };
 
 export function Render3D({ onInit }: Props) {
+    const theme = useTheme();
     const id = useSceneId();
     const highlightedObjects = useHighlighted();
     const dispatchHighlighted = useDispatchHighlighted();
@@ -1694,13 +1715,11 @@ export function Render3D({ onInit }: Props) {
                             {showLeicaMarkers && leicaMarkers
                                 ? leicaMarkers.map((marker, idx) => (
                                       <LeicaMarker
-                                          height="32px"
-                                          width="32px"
                                           id={`leicaMarker-${idx}`}
                                           name={`leicaMarker-${idx}`}
                                           key={marker.id}
                                           onClick={() => dispatch(leicaActions.setClickedMarker(marker.id))}
-                                          color={marker.online ? "primary" : "secondary"}
+                                          htmlColor={marker.online ? theme.palette.primary.main : "#f5f5f5"}
                                       />
                                   ))
                                 : null}

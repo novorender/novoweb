@@ -36,7 +36,7 @@ export function Leica() {
                             <Route path="/" exact>
                                 <Login />
                             </Route>
-                            <Route path="/project" exact>
+                            <Route path="/project/:id?" exact>
                                 <Project />
                             </Route>
                             <Route path="/units/:id" exact>
