@@ -1,6 +1,7 @@
 import { FormEventHandler, useEffect, useState } from "react";
 import { Box, Button, Checkbox, FormControlLabel, TextField } from "@mui/material";
 import { useHistory, useParams } from "react-router-dom";
+import { v4 as uuidv4 } from "uuid";
 
 import { useAppDispatch, useAppSelector } from "app/store";
 import { selectHasAdminCapabilities } from "slices/explorerSlice";
@@ -8,7 +9,7 @@ import { useExplorerGlobals } from "contexts/explorerGlobals";
 
 import { ScrollBox } from "components";
 import { useToggle } from "hooks/useToggle";
-import { v4 as uuidv4 } from "uuid";
+import { createCanvasSnapshot } from "utils/misc";
 
 import { useCreateBookmark } from "../useCreateBookmark";
 import { BookmarkAccess, selectBookmarks, bookmarksActions } from "../bookmarksSlice";
@@ -102,7 +103,12 @@ export function Crupdate() {
 
     return (
         <ScrollBox width={1} px={1} mt={1} display="flex" flexDirection="column" height={1} pb={2}>
-            <Box sx={{ img: { width: "100%", height: 200, objectFit: "contain" } }}>
+            <Box
+                display="flex"
+                justifyContent="center"
+                width={1}
+                sx={{ img: { maxHeight: 200, objectFit: "contain" } }}
+            >
                 {bmImg ? <img alt="" src={bmImg} /> : null}
             </Box>
             <form onSubmit={handleSubmit}>
@@ -169,27 +175,6 @@ export function Crupdate() {
     );
 }
 
-async function createBookmarkImg(canvas: HTMLCanvasElement, w = 100, h = 70): Promise<string> {
-    const width = Math.min(canvas.width, canvas.height > canvas.width ? h : w);
-    const height = Math.min(canvas.width, canvas.height > canvas.width ? w : h);
-
-    try {
-        const bitmap = await createImageBitmap(canvas, {
-            resizeHeight: height,
-            resizeWidth: width,
-            resizeQuality: "high",
-        });
-
-        const dist = document.createElement("canvas");
-        dist.height = height;
-        dist.width = width;
-
-        const ctx = dist.getContext("2d")!;
-        ctx.drawImage(bitmap, 0, 0);
-
-        return dist.toDataURL("image/png");
-    } catch (e) {
-        console.warn(e);
-        return "";
-    }
+async function createBookmarkImg(canvas: HTMLCanvasElement): Promise<string> {
+    return (await createCanvasSnapshot(canvas, 100, 100)) ?? "";
 }

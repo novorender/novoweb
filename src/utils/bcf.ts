@@ -3,7 +3,7 @@ import { vec3, mat3, quat, vec4, mat4 } from "gl-matrix";
 
 import { ObjectVisibility } from "slices/renderSlice";
 import { VecRGB, VecRGBA, vecToHex } from "utils/color";
-import { base64UrlEncodeImg, uniqueArray } from "utils/misc";
+import { base64UrlEncodeImg, createCanvasSnapshot, uniqueArray } from "utils/misc";
 import { Viewpoint } from "types/bcf";
 
 type Point = {
@@ -221,42 +221,13 @@ export function createBcfClippingPlanes(
 }
 
 export async function createBcfSnapshot(canvas: HTMLCanvasElement): Promise<Viewpoint["snapshot"] | undefined> {
-    const maxWidth = 1500;
-    const maxHeight = 1500;
-    let width = canvas.width;
-    let height = canvas.height;
+    const snapshot = await createCanvasSnapshot(canvas, 1500, 1500);
 
-    if (width > height) {
-        if (width > maxWidth) {
-            height = height * (maxWidth / width);
-            width = maxWidth;
-        }
-    } else {
-        if (height > maxHeight) {
-            width = width * (maxHeight / height);
-            height = maxHeight;
-        }
-    }
-
-    const dist = document.createElement("canvas");
-    dist.height = height;
-    dist.width = width;
-    const ctx = dist.getContext("2d")!;
-
-    try {
-        const bitmap = await createImageBitmap(canvas, {
-            resizeHeight: height,
-            resizeWidth: width,
-            resizeQuality: "high",
-        });
-
-        ctx.drawImage(bitmap, 0, 0);
-
-        return { snapshot_type: "png", snapshot_data: dist.toDataURL("image/png").split(";base64,")[1] };
-    } catch (e) {
-        console.warn(e);
+    if (!snapshot) {
         return;
     }
+
+    return { snapshot_type: "png", snapshot_data: snapshot.split(";base64,")[1] };
 }
 
 export async function createBcfViewpointComponents({

@@ -108,3 +108,42 @@ export function base64UrlEncodeImg(arrayBuffer: ArrayBuffer): string {
 export function capitalize(str: string): string {
     return str[0].toUpperCase() + str.slice(1);
 }
+
+export async function createCanvasSnapshot(
+    canvas: HTMLCanvasElement,
+    maxWidth: number,
+    maxHeight: number
+): Promise<string | undefined> {
+    let width = canvas.width;
+    let height = canvas.height;
+
+    if (width > maxWidth) {
+        height = height * (maxWidth / width);
+        width = maxWidth;
+    }
+
+    if (height > maxHeight) {
+        width = width * (maxHeight / height);
+        height = maxHeight;
+    }
+
+    const dist = document.createElement("canvas");
+    dist.height = height;
+    dist.width = width;
+    const ctx = dist.getContext("2d")!;
+
+    try {
+        const bitmap = await createImageBitmap(canvas, {
+            resizeHeight: height,
+            resizeWidth: width,
+            resizeQuality: "high",
+        });
+
+        ctx.drawImage(bitmap, 0, 0);
+
+        return dist.toDataURL("image/png");
+    } catch (e) {
+        console.warn(e);
+        return;
+    }
+}
