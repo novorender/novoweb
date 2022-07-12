@@ -220,17 +220,43 @@ export function createBcfClippingPlanes(
     });
 }
 
-export function createBcfSnapshot(canvas: HTMLCanvasElement): Viewpoint["snapshot"] | undefined {
-    const dist = document.createElement("canvas");
-    const width = Math.min(canvas.width, 1500);
-    const height = Math.min(canvas.height, 1500);
+export async function createBcfSnapshot(canvas: HTMLCanvasElement): Promise<Viewpoint["snapshot"] | undefined> {
+    const maxWidth = 1500;
+    const maxHeight = 1500;
+    let width = canvas.width;
+    let height = canvas.height;
 
+    if (width > height) {
+        if (width > maxWidth) {
+            height = height * (maxWidth / width);
+            width = maxWidth;
+        }
+    } else {
+        if (height > maxHeight) {
+            width = width * (maxHeight / height);
+            height = maxHeight;
+        }
+    }
+
+    const dist = document.createElement("canvas");
     dist.height = height;
     dist.width = width;
-    const ctx = dist.getContext("2d", { alpha: false, desynchronized: false })!;
-    ctx.drawImage(canvas, (canvas.width - width) / 2, (canvas.height - height) / 2, width, height, 0, 0, width, height);
+    const ctx = dist.getContext("2d")!;
 
-    return { snapshot_type: "png", snapshot_data: dist.toDataURL("image/png").split(";base64,")[1] };
+    try {
+        const bitmap = await createImageBitmap(canvas, {
+            resizeHeight: height,
+            resizeWidth: width,
+            resizeQuality: "high",
+        });
+
+        ctx.drawImage(bitmap, 0, 0);
+
+        return { snapshot_type: "png", snapshot_data: dist.toDataURL("image/png").split(";base64,")[1] };
+    } catch (e) {
+        console.warn(e);
+        return;
+    }
 }
 
 export async function createBcfViewpointComponents({
