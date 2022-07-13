@@ -9,7 +9,6 @@ import { useExplorerGlobals } from "contexts/explorerGlobals";
 
 import { ScrollBox } from "components";
 import { useToggle } from "hooks/useToggle";
-import { createCanvasSnapshot } from "utils/misc";
 
 import { useCreateBookmark } from "../useCreateBookmark";
 import { BookmarkAccess, selectBookmarks, bookmarksActions } from "../bookmarksSlice";
@@ -176,5 +175,33 @@ export function Crupdate() {
 }
 
 async function createBookmarkImg(canvas: HTMLCanvasElement): Promise<string> {
-    return (await createCanvasSnapshot(canvas, 100, 100)) ?? "";
+    // const width = canvas.width;
+    // const height = canvas.height;
+    // const dist = document.createElement("canvas");
+    // dist.height = 70;
+    // dist.width = 100;
+
+    // const ctx = dist.getContext("2d", { alpha: true, desynchronized: false })!;
+    // let dx = 0;
+    // let dy = 0;
+
+    // if (height / width < 0.7) {
+    //     dx = width - Math.round((height * 10) / 7);
+    // } else {
+    //     dy = height - Math.round(width * 0.7);
+    // }
+
+    // ctx.drawImage(canvas, dx / 2, dy / 2, width - dx, height - dy, 0, 0, dist.width, dist.height);
+    // return dist.toDataURL("image/jpeg");
+
+    const dist = document.createElement("canvas");
+    const width = canvas.width;
+    const height = canvas.height;
+
+    dist.height = 350;
+    dist.width = (350 * height) / width;
+    const ctx = dist.getContext("2d", { alpha: true, desynchronized: false })!;
+    ctx.drawImage(canvas, 0, 0, width, height, 0, 0, dist.width, dist.height);
+
+    return dist.toDataURL("image/png");
 }
