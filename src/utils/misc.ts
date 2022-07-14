@@ -114,8 +114,7 @@ export async function createCanvasSnapshot(
     maxWidth: number,
     maxHeight: number
 ): Promise<string | undefined> {
-    let width = canvas.width;
-    let height = canvas.height;
+    let { width, height } = canvas.getBoundingClientRect();
 
     if (width > maxWidth) {
         height = height * (maxWidth / width);
