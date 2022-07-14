@@ -175,7 +175,9 @@ export function Crupdate() {
 }
 
 async function createBookmarkImg(canvas: HTMLCanvasElement): Promise<string> {
-    const { width, height } = canvas.getBoundingClientRect();
+    const isWindows = /\bWindows\b/.test(navigator.userAgent);
+    let width = isWindows ? canvas.width : canvas.clientWidth;
+    let height = isWindows ? canvas.height : canvas.clientHeight;
     let dx = 0;
     let dy = 0;
 
