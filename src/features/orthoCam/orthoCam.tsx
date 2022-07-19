@@ -18,11 +18,12 @@ import {
     renderActions,
     selectAdvancedSettings,
     selectCameraType,
-    selectSelectiongOrthoPoint,
     selectSubtrees,
     SubtreeStatus,
     selectGridDefaults,
     selectGrid,
+    selectPicker,
+    Picker,
 } from "slices/renderSlice";
 import { selectMinimized, selectMaximized } from "slices/explorerSlice";
 
@@ -37,17 +38,17 @@ export function OrthoCam() {
     const gridDefaults = useAppSelector(selectGridDefaults);
     const grid = useAppSelector(selectGrid);
     const cameraType = useAppSelector(selectCameraType);
-    const selectingOrthoPoint = useAppSelector(selectSelectiongOrthoPoint);
+    const selectingOrthoPoint = useAppSelector(selectPicker) === Picker.OrthoPlane;
     const { terrainAsBackground } = useAppSelector(selectAdvancedSettings);
     const subtrees = useAppSelector(selectSubtrees);
     const dispatch = useAppDispatch();
 
     const togglePick = () => {
         if (cameraType === CameraType.Orthographic || selectingOrthoPoint) {
-            dispatch(renderActions.setSelectingOrthoPoint(false));
+            dispatch(renderActions.setPicker(Picker.Object));
             dispatch(renderActions.setCamera({ type: CameraType.Flight }));
         } else {
-            dispatch(renderActions.setSelectingOrthoPoint(true));
+            dispatch(renderActions.setPicker(Picker.OrthoPlane));
         }
     };
 

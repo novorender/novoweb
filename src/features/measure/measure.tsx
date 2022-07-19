@@ -8,6 +8,7 @@ import { WidgetList } from "features/widgetList";
 import { useToggle } from "hooks/useToggle";
 import { featuresConfig } from "config/features";
 import { selectMinimized, selectMaximized } from "slices/explorerSlice";
+import { Picker, renderActions, selectPicker } from "slices/renderSlice";
 
 import { measureActions, selectMeasure } from "./measureSlice";
 import { MeasuredObject, MeasuredResult } from "./measuredObject";
@@ -18,13 +19,14 @@ export function Measure() {
     const maximized = useAppSelector(selectMaximized) === featuresConfig.measure.key;
 
     const dispatch = useAppDispatch();
-    const { selecting, selected, forcePoint } = useAppSelector(selectMeasure);
+    const { selected, forcePoint } = useAppSelector(selectMeasure);
+    const selecting = useAppSelector(selectPicker) === Picker.Measurement;
     const isInitial = useRef(true);
 
     useEffect(() => {
         if (isInitial.current) {
             if (!selecting && !selected.length) {
-                dispatch(measureActions.setSelecting(true));
+                dispatch(renderActions.setPicker(Picker.Measurement));
             }
 
             isInitial.current = false;
@@ -33,7 +35,7 @@ export function Measure() {
 
     useEffect(() => {
         return () => {
-            dispatch(measureActions.setSelecting(false));
+            dispatch(renderActions.stopPicker(Picker.Measurement));
         };
     }, [dispatch]);
 
@@ -49,7 +51,11 @@ export function Measure() {
                                         size="medium"
                                         color="primary"
                                         checked={selecting}
-                                        onChange={() => dispatch(measureActions.toggleSelecting())}
+                                        onChange={() =>
+                                            dispatch(
+                                                renderActions.setPicker(selecting ? Picker.Object : Picker.Measurement)
+                                            )
+                                        }
                                     />
                                 }
                                 label={<Box fontSize={14}>Selecting</Box>}

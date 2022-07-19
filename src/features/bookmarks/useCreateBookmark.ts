@@ -16,6 +16,7 @@ import {
 } from "slices/renderSlice";
 import { selectCurrentCenter, selectCurrentPath, selectProfile } from "features/followPath";
 import { selectMeasure } from "features/measure";
+import { AsyncStatus } from "types/misc";
 
 export function useCreateBookmark() {
     const measurement = useAppSelector(selectMeasure);
@@ -70,9 +71,9 @@ export function useCreateBookmark() {
             });
 
         const followPath: Bookmark["followPath"] =
-            currentPath && currentPathProfile
+            currentPath.status === AsyncStatus.Success && currentPathProfile
                 ? {
-                      id: currentPath.id,
+                      id: currentPath.data.id,
                       profile: Number(currentPathProfile),
                       currentCenter: currentCenter,
                   }

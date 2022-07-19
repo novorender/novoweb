@@ -1,9 +1,17 @@
 import { createSlice, PayloadAction } from "@reduxjs/toolkit";
+import { vec3 } from "gl-matrix";
+
 import { RootState } from "app/store";
+import { AsyncState, AsyncStatus } from "types/misc";
 
 export type LandXmlPath = {
     id: number;
     name: string;
+};
+
+export type ParametricPath = {
+    id: number;
+    pos: vec3;
 };
 
 export type Nurbs = {
@@ -23,8 +31,8 @@ export type Brep = {
 };
 
 const initialState = {
-    paths: undefined as undefined | LandXmlPath[],
-    currentPath: undefined as undefined | { id: number; nurbs: Nurbs },
+    paths: { status: AsyncStatus.Initial } as AsyncState<LandXmlPath[]>,
+    currentPath: { status: AsyncStatus.Initial } as AsyncState<{ id: number; nurbs: Nurbs }>,
     currentCenter: undefined as undefined | [number, number, number],
     profile: "",
     step: "1",
@@ -35,6 +43,11 @@ const initialState = {
     autoRecenter: false,
     autoStepSize: false,
     clipping: 0.1,
+    lastViewedRouterPath: "/",
+    goToRouterPath: "",
+    selected: [] as ParametricPath[],
+    drawSelected: true,
+    resetPositionOnInit: false,
 };
 
 type State = typeof initialState;
@@ -79,6 +92,21 @@ export const followPathSlice = createSlice({
         setAutoStepSize: (state, action: PayloadAction<State["autoStepSize"]>) => {
             state.autoStepSize = action.payload;
         },
+        setLastViewedRouterPath: (state, action: PayloadAction<State["lastViewedRouterPath"]>) => {
+            state.lastViewedRouterPath = action.payload;
+        },
+        setGoToRouterPath: (state, action: PayloadAction<State["goToRouterPath"]>) => {
+            state.goToRouterPath = action.payload;
+        },
+        toggleDrawSelected: (state, action: PayloadAction<State["drawSelected"] | undefined>) => {
+            state.drawSelected = action.payload !== undefined ? action.payload : !state.drawSelected;
+        },
+        toggleResetPositionOnInit: (state, action: PayloadAction<State["resetPositionOnInit"] | undefined>) => {
+            state.resetPositionOnInit = action.payload !== undefined ? action.payload : !state.resetPositionOnInit;
+        },
+        setSelected: (state, action: PayloadAction<State["selected"]>) => {
+            state.selected = action.payload;
+        },
     },
 });
 
@@ -94,6 +122,11 @@ export const selectClipping = (state: RootState) => state.followPath.clipping;
 export const selectShowGrid = (state: RootState) => state.followPath.showGrid;
 export const selectAutoRecenter = (state: RootState) => state.followPath.autoRecenter;
 export const selectAutoStepSize = (state: RootState) => state.followPath.autoStepSize;
+export const selectLastViewedRouterPath = (state: RootState) => state.followPath.lastViewedRouterPath;
+export const selectGoToRouterPath = (state: RootState) => state.followPath.goToRouterPath;
+export const selectSelectedPaths = (state: RootState) => state.followPath.selected;
+export const selectDrawSelected = (state: RootState) => state.followPath.drawSelected;
+export const selectResetPositionOnInit = (state: RootState) => state.followPath.resetPositionOnInit;
 
 const { actions, reducer } = followPathSlice;
 export { actions as followPathActions, reducer as followPathReducer };

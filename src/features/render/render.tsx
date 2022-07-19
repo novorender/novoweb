@@ -10,7 +10,7 @@ import {
     CameraControllerParams,
     MeasureInfo,
 } from "@novorender/webgl-api";
-import { MeasureObject, MeasureSettings, DuoMeasurementValues } from "@novorender/measure-api";
+import { MeasureObject } from "@novorender/measure-api";
 
 import { Box, Button, Paper, Typography, useTheme, styled, Menu, MenuItem, popoverClasses } from "@mui/material";
 import { css } from "@mui/styled-engine";
@@ -48,7 +48,6 @@ import {
     selectSelectMultiple,
     selectDefaultVisibility,
     selectClippingPlanes,
-    selectSelectiongOrthoPoint,
     CameraType,
     selectCamera,
     selectEditingScene,
@@ -59,6 +58,8 @@ import {
     selectSubtrees,
     selectGridDefaults,
     selectSelectionBasketColor,
+    selectPicker,
+    Picker,
 } from "slices/renderSlice";
 import { authActions, selectMsalAccount, selectUser } from "slices/authSlice";
 import { explorerActions, selectUrlBookmarkId } from "slices/explorerSlice";
@@ -67,6 +68,8 @@ import { bookmarksActions, selectBookmarks, useSelectBookmark } from "features/b
 import { measureActions, selectMeasure, isMeasureObject } from "features/measure";
 import { ditioActions, selectMarkers, selectShowMarkers } from "features/ditio";
 import { useAppDispatch, useAppSelector } from "app/store";
+import { followPathActions, selectDrawSelected, usePathMeasureObjects } from "features/followPath";
+import { useMeasureObjects } from "features/measure";
 
 import { useHighlighted, highlightActions, useDispatchHighlighted } from "contexts/highlighted";
 import { useHidden, useDispatchHidden } from "contexts/hidden";
@@ -152,18 +155,6 @@ enum Status {
     Error,
 }
 
-type ExtendedMeasureObject = MeasureObject & {
-    pos: vec3;
-    settings?: MeasureSettings;
-};
-
-type MeasurePoint = {
-    pos: vec3;
-    id: number;
-    settings?: any;
-    selectedEntity?: any;
-};
-
 type Props = {
     onInit: (params: { customProperties: unknown }) => void;
 };
@@ -178,7 +169,7 @@ export function Render3D({ onInit }: Props) {
     const visibleObjects = useVisible();
     const { state: customGroups, dispatch: dispatchCustomGroups } = useCustomGroups();
     const {
-        state: { view, scene, canvas, measureScene, preloadedScene },
+        state: { view, scene, canvas, preloadedScene },
         dispatch: dispatchGlobals,
     } = useExplorerGlobals();
     const selectBookmark = useSelectBookmark();
@@ -200,7 +191,6 @@ export function Render3D({ onInit }: Props) {
     const clippingBox = useAppSelector(selectClippingBox);
     const clippingPlanes = useAppSelector(selectClippingPlanes);
     const cameraState = useAppSelector(selectCamera);
-    const selectingOrthoPoint = useAppSelector(selectSelectiongOrthoPoint);
     const advancedSettings = useAppSelector(selectAdvancedSettings);
     const measure = useAppSelector(selectMeasure);
     const panoramas = useAppSelector(selectPanoramas);
@@ -211,6 +201,8 @@ export function Render3D({ onInit }: Props) {
     const urlBookmarkId = useAppSelector(selectUrlBookmarkId);
     const showDitioMarkers = useAppSelector(selectShowMarkers);
     const ditioMarkers = useAppSelector(selectMarkers);
+    const drawSelectedPaths = useAppSelector(selectDrawSelected);
+    const picker = useAppSelector(selectPicker);
     const dispatch = useAppDispatch();
 
     const rendering = useRef({
@@ -231,7 +223,8 @@ export function Render3D({ onInit }: Props) {
     const camY = useRef(vec3.create());
     const [size, setSize] = useState({ width: 0, height: 0 });
 
-    const [measureObjects, setMeasureObjects] = useMountedState([] as (ExtendedMeasureObject | MeasurePoint)[]);
+    const measureObjects = useMeasureObjects();
+    const [pathMeasureObjects] = usePathMeasureObjects();
     const [svg, setSvg] = useState<null | SVGSVGElement>(null);
     const [status, setStatus] = useMountedState(Status.Initial);
 
@@ -407,6 +400,12 @@ export function Render3D({ onInit }: Props) {
             return;
         }
 
+        if (drawSelectedPaths) {
+            pathMeasureObjects.forEach((obj) => {
+                renderMeasureObject(view, "rgba(0, 191, 255, 0.5)", "fp_" + getMeasureObjectPathId(obj), obj);
+            });
+        }
+
         measureObjects.forEach((obj) => {
             if (isMeasureObject(obj)) {
                 renderMeasureObject(view, "rgba(0, 191, 255, 0.5)", getMeasureObjectPathId(obj), obj);
@@ -475,6 +474,8 @@ export function Render3D({ onInit }: Props) {
         renderSingleMeasurePoint,
         measureObjects,
         measure.duoMeasurementValues,
+        pathMeasureObjects,
+        drawSelectedPaths,
     ]);
 
     useEffect(() => {
@@ -601,67 +602,6 @@ export function Render3D({ onInit }: Props) {
         },
         [svg, view, size]
     );
-
-    useEffect(() => {
-        getMeasureObjects();
-
-        async function getMeasureObjects() {
-            if (!measureScene) {
-                return;
-            }
-
-            const mObjects = (await Promise.all(
-                measure.selected.map((obj) =>
-                    obj.id === -1
-                        ? obj
-                        : measureScene
-                              .downloadMeasureObject(obj.id, obj.pos)
-                              .then((_mObj) => {
-                                  const mObj = _mObj as ExtendedMeasureObject;
-
-                                  if (mObj.selectedEntity) {
-                                      if (mObj.selectedEntity.kind === "vertex") {
-                                          return { ...obj, pos: mObj.selectedEntity.parameter };
-                                      }
-
-                                      mObj.pos = obj.pos;
-                                      mObj.settings = obj.settings;
-                                  }
-
-                                  return mObj.selectedEntity ? mObj : obj;
-                              })
-                              .catch(() => obj)
-                )
-            )) as (ExtendedMeasureObject | MeasurePoint)[];
-
-            if (mObjects.length !== 2) {
-                dispatch(measureActions.setDuoMeasurementValues(undefined));
-                setMeasureObjects(mObjects);
-                return;
-            }
-
-            const [obj1, obj2] = mObjects;
-
-            let res: DuoMeasurementValues | undefined;
-
-            if (obj1.selectedEntity && obj2.selectedEntity) {
-                res = (await measureScene
-                    .measure(obj1.selectedEntity!, obj2.selectedEntity, obj1.settings, obj2.settings)
-                    .catch((e) => console.warn(e))) as DuoMeasurementValues | undefined;
-            } else if (obj1.selectedEntity || obj2.selectedEntity) {
-                const obj = obj1.selectedEntity ? obj1 : obj2;
-                const pt = obj === obj1 ? obj2 : obj1;
-                res = (await measureScene.measureToPoint(obj.selectedEntity, pt.pos, obj.settings)) as
-                    | DuoMeasurementValues
-                    | undefined;
-            } else {
-                res = measureScene.pointToPoint(obj1.pos, obj2.pos) as DuoMeasurementValues | undefined;
-            }
-
-            dispatch(measureActions.setDuoMeasurementValues(res));
-            setMeasureObjects(mObjects);
-        }
-    }, [measureScene, setMeasureObjects, measure.selected, dispatch]);
 
     useEffect(() => {
         if (!environments.length) {
@@ -1058,6 +998,12 @@ export function Render3D({ onInit }: Props) {
                 }
 
                 const orthoController = api.createCameraController(safeParams, canvas);
+
+                if (view.camera.controller.params.kind === "ortho") {
+                    orthoController.fingersMap = { ...view.camera.controller.fingersMap };
+                    orthoController.mouseButtonsMap = { ...view.camera.controller.mouseButtonsMap };
+                }
+
                 controller.enabled = false;
                 view.camera.controller = orthoController;
             }
@@ -1216,7 +1162,7 @@ export function Render3D({ onInit }: Props) {
     };
 
     const handleClick = async (e: MouseEvent | PointerEvent) => {
-        if (!view || clippingBox.defining) {
+        if (!view || clippingBox.defining || !canvas) {
             return;
         }
 
@@ -1254,84 +1200,81 @@ export function Render3D({ onInit }: Props) {
             return;
         }
 
-        if (clippingPlanes.defining) {
-            const { normal, position } = result;
+        const { normal: _normal, position } = result;
+        const normal = _normal.some((n) => Number.isNaN(n)) ? undefined : result.normal;
 
-            if (!normal) {
-                return;
-            }
+        switch (picker) {
+            case Picker.Object:
+                const alreadySelected = highlightedObjects.ids[result.objectId] === true;
 
-            const w = -vec3.dot(normal, position);
-
-            dispatch(
-                renderActions.setClippingPlanes({
-                    defining: false,
-                    planes: [vec4.fromValues(normal[0], normal[1], normal[2], w)],
-                    baseW: w,
-                })
-            );
-            moveSvgCursor(-100, -100, undefined);
-            return;
-        }
-
-        if (selectingOrthoPoint) {
-            if (!canvas) {
-                return;
-            }
-
-            const normal = result.normal.some((n) => Number.isNaN(n)) ? undefined : result.normal;
-
-            const orthoController = api.createCameraController({ kind: "ortho" }, canvas);
-            (orthoController as any).init(result.position, normal, view.camera);
-            flightController.current = view.camera.controller;
-            flightController.current.enabled = false;
-
-            view.camera.controller = orthoController;
-            dispatch(renderActions.setCamera({ type: CameraType.Orthographic }));
-            dispatch(renderActions.setSelectingOrthoPoint(false));
-            (orthoController as any).near = -0.001;
-
-            const mat = (orthoController.params as any).referenceCoordSys;
-            const right = vec3.fromValues(mat[0], mat[1], mat[2]);
-            const up = vec3.fromValues(mat[4], mat[5], mat[6]);
-            const pt = vec3.fromValues(mat[12], mat[13], mat[14]);
-            const squareSize = 1 * (gridDefaults.minorLineCount + 1);
-
-            dispatch(
-                renderActions.setGrid({
-                    origo: pt,
-                    axisY: vec3.scale(vec3.create(), up, squareSize),
-                    axisX: vec3.scale(vec3.create(), right, squareSize),
-                })
-            );
-
-            return;
-        }
-
-        if (measure.selecting) {
-            dispatch(measureActions.selectObj({ id: measure.forcePoint ? -1 : result.objectId, pos: result.position }));
-            return;
-        }
-
-        const alreadySelected = highlightedObjects.ids[result.objectId] === true;
-
-        if (selectMultiple) {
-            if (alreadySelected) {
-                if (result.objectId === mainObject) {
-                    dispatch(renderActions.setMainObject(undefined));
+                if (selectMultiple) {
+                    if (alreadySelected) {
+                        if (result.objectId === mainObject) {
+                            dispatch(renderActions.setMainObject(undefined));
+                        }
+                        dispatchHighlighted(highlightActions.remove([result.objectId]));
+                    } else {
+                        dispatch(renderActions.setMainObject(result.objectId));
+                        dispatchHighlighted(highlightActions.add([result.objectId]));
+                    }
+                } else {
+                    if (alreadySelected && highlightedObjects.idArr.length === 1) {
+                        dispatch(renderActions.setMainObject(undefined));
+                        dispatchHighlighted(highlightActions.setIds([]));
+                    } else {
+                        dispatch(renderActions.setMainObject(result.objectId));
+                        dispatchHighlighted(highlightActions.setIds([result.objectId]));
+                    }
                 }
-                dispatchHighlighted(highlightActions.remove([result.objectId]));
-            } else {
-                dispatch(renderActions.setMainObject(result.objectId));
-                dispatchHighlighted(highlightActions.add([result.objectId]));
-            }
-        } else {
-            if (alreadySelected && highlightedObjects.idArr.length === 1) {
-                dispatch(renderActions.setMainObject(undefined));
-                dispatchHighlighted(highlightActions.setIds([]));
-            } else {
-                dispatch(renderActions.setMainObject(result.objectId));
-                dispatchHighlighted(highlightActions.setIds([result.objectId]));
+                break;
+            case Picker.ClippingPlane:
+                if (!normal) {
+                    return;
+                }
+
+                const w = -vec3.dot(normal, position);
+
+                dispatch(renderActions.setPicker(Picker.Object));
+                dispatch(
+                    renderActions.setClippingPlanes({
+                        planes: [vec4.fromValues(normal[0], normal[1], normal[2], w)],
+                        baseW: w,
+                    })
+                );
+                break;
+            case Picker.OrthoPlane:
+                const orthoController = api.createCameraController({ kind: "ortho" }, canvas);
+                (orthoController as any).init(result.position, normal, view.camera);
+                flightController.current = view.camera.controller;
+                flightController.current.enabled = false;
+
+                view.camera.controller = orthoController;
+                dispatch(renderActions.setCamera({ type: CameraType.Orthographic }));
+                dispatch(renderActions.setPicker(Picker.Object));
+                (orthoController as any).near = -0.001;
+
+                const mat = (orthoController.params as any).referenceCoordSys;
+                const right = vec3.fromValues(mat[0], mat[1], mat[2]);
+                const up = vec3.fromValues(mat[4], mat[5], mat[6]);
+                const pt = vec3.fromValues(mat[12], mat[13], mat[14]);
+                const squareSize = 1 * (gridDefaults.minorLineCount + 1);
+
+                dispatch(
+                    renderActions.setGrid({
+                        origo: pt,
+                        axisY: vec3.scale(vec3.create(), up, squareSize),
+                        axisX: vec3.scale(vec3.create(), right, squareSize),
+                    })
+                );
+                break;
+            case Picker.Measurement:
+                dispatch(
+                    measureActions.selectObj({ id: measure.forcePoint ? -1 : result.objectId, pos: result.position })
+                );
+                break;
+            case Picker.FollowPathObject: {
+                dispatch(followPathActions.setSelected([{ id: result.objectId, pos: result.position }]));
+                break;
             }
         }
     };
@@ -1414,7 +1357,9 @@ export function Render3D({ onInit }: Props) {
             return;
         }
 
-        const useSvgCursor = (measure.selecting || clippingPlanes.defining || selectingOrthoPoint) && e.buttons === 0;
+        const useSvgCursor =
+            e.buttons === 0 &&
+            [Picker.Measurement, Picker.OrthoPlane, Picker.FollowPathObject, Picker.ClippingPlane].includes(picker);
 
         if (useSvgCursor) {
             const measurement = await rendering.current.measure(
@@ -1561,6 +1506,18 @@ export function Render3D({ onInit }: Props) {
                     </Menu>
                     {canvas !== null && (
                         <Svg width={canvas.width} height={canvas.height} ref={setSvg}>
+                            {drawSelectedPaths
+                                ? pathMeasureObjects.map((obj) => (
+                                      <path
+                                          key={getMeasureObjectPathId(obj)}
+                                          id={"fp_" + getMeasureObjectPathId(obj)}
+                                          d=""
+                                          stroke="yellow"
+                                          strokeWidth=""
+                                          fill="none"
+                                      />
+                                  ))
+                                : null}
                             {measureObjects
                                 .sort((objA, objB) =>
                                     isMeasureObject(objA) && isMeasureObject(objB) ? 0 : isMeasureObject(objA) ? -1 : 1

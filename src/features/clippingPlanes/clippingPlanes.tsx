@@ -3,7 +3,7 @@ import { useState } from "react";
 
 import { useAppDispatch, useAppSelector } from "app/store";
 import { IosSwitch, LogoSpeedDial, WidgetContainer, WidgetHeader } from "components";
-import { renderActions, selectClippingPlanes } from "slices/renderSlice";
+import { Picker, renderActions, selectClippingPlanes, selectPicker } from "slices/renderSlice";
 import { useToggle } from "hooks/useToggle";
 import { featuresConfig } from "config/features";
 import { WidgetList } from "features/widgetList";
@@ -13,7 +13,8 @@ export function ClippingPlanes() {
     const [menuOpen, toggleMenu] = useToggle();
     const minimized = useAppSelector(selectMinimized) === featuresConfig.clippingPlanes.key;
     const maximized = useAppSelector(selectMaximized) === featuresConfig.clippingPlanes.key;
-    const { defining, enabled, planes, baseW } = useAppSelector(selectClippingPlanes);
+    const defining = useAppSelector(selectPicker) === Picker.ClippingPlane;
+    const { enabled, planes, baseW } = useAppSelector(selectClippingPlanes);
     const [enableOptions, setEnableOptions] = useState(enabled || planes.length > 0 || defining);
     const dispatch = useAppDispatch();
 
@@ -23,14 +24,15 @@ export function ClippingPlanes() {
         }
 
         if (defining) {
-            return dispatch(renderActions.setClippingPlanes({ defining: false }));
+            dispatch(renderActions.setPicker(Picker.Object));
+            return;
         }
 
+        dispatch(renderActions.setPicker(Picker.ClippingPlane));
         dispatch(
             renderActions.setClippingPlanes({
                 planes: [],
                 enabled: true,
-                defining: true,
             })
         );
     };

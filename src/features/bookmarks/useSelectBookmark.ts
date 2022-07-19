@@ -10,6 +10,7 @@ import { useDispatchVisible, visibleActions } from "contexts/visible";
 import { followPathActions, getNurbs } from "features/followPath";
 import { measureActions } from "features/measure";
 import { CameraType, DeepWritable, ObjectVisibility, renderActions, SelectionBasketMode } from "slices/renderSlice";
+import { AsyncStatus } from "types/misc";
 
 export function useSelectBookmark() {
     const dispatchVisible = useDispatchVisible();
@@ -93,19 +94,17 @@ export function useSelectBookmark() {
                     enabled,
                     mode,
                     planes: Array.from(planes) as vec4[],
-                    defining: false,
                     baseW: planes[0] && planes[0][3] !== undefined ? planes[0][3] : 0,
                 })
             );
         } else {
-            dispatch(renderActions.setClippingPlanes({ defining: false, planes: [], enabled: false, mode: "union" }));
+            dispatch(renderActions.setClippingPlanes({ planes: [], enabled: false, mode: "union" }));
         }
 
         if (bookmark.ortho) {
             dispatch(renderActions.setCamera({ type: CameraType.Orthographic, params: bookmark.ortho }));
         } else if (bookmark.camera) {
             dispatch(renderActions.setCamera({ type: CameraType.Flight, goTo: bookmark.camera }));
-            dispatch(renderActions.setSelectingOrthoPoint(false));
         }
 
         if (bookmark.grid) {
@@ -148,10 +147,15 @@ export function useSelectBookmark() {
                         );
                     }
 
+                    dispatch(followPathActions.setGoToRouterPath(`/landXml/${id}`));
+
                     dispatch(
                         followPathActions.setCurrentPath({
-                            id: id,
-                            nurbs,
+                            status: AsyncStatus.Success,
+                            data: {
+                                id,
+                                nurbs,
+                            },
                         })
                     );
                 })
