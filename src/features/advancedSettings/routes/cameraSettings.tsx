@@ -148,10 +148,18 @@ export function CameraSettings({
                     );
                     return;
                 case AdvancedSetting.HeadlightIntensity:
-                    //
+                    dispatch(
+                        renderActions.setAdvancedSettings({
+                            [AdvancedSetting.HeadlightIntensity]: value,
+                        })
+                    );
                     return;
                 case AdvancedSetting.HeadlightDistance:
-                    //
+                    dispatch(
+                        renderActions.setAdvancedSettings({
+                            [AdvancedSetting.HeadlightDistance]: scaleHeadlightDistance(value),
+                        })
+                    );
                     return;
             }
         };
