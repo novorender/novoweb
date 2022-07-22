@@ -45,8 +45,10 @@ export function HeightProfileChart({
 
     const profiles = useMemo(() => pts.map(getX), [pts]);
     const heights = useMemo(() => pts.map(getY), [pts]);
-    const minY = min(heights) ?? 0;
-    const maxY = max(heights) ?? 0;
+    const yMin = min(heights) ?? 0;
+    const yMax = max(heights) ?? 0;
+    const xMin = min(profiles) ?? 0;
+    const xMax = max(profiles) ?? 0;
 
     const xScale = useMemo(
         () =>
@@ -61,11 +63,11 @@ export function HeightProfileChart({
     const yScale = useMemo(
         () =>
             scaleLinear<number>({
-                domain: [minY - Math.abs(minY * 0.15), maxY + Math.abs(maxY * 0.15)] as [number, number],
+                domain: [yMin - Math.abs(yMin * 0.15), yMax + Math.abs(yMax * 0.15)] as [number, number],
                 range: [innerHeight, 0],
                 nice: 10,
             }),
-        [maxY, minY, innerHeight]
+        [yMax, yMin, innerHeight]
     );
 
     const handleTooltip = useCallback(
@@ -73,10 +75,10 @@ export function HeightProfileChart({
             const { x } = localPoint(event) || { x: 0 };
             let x0 = xScale.invert(x - margin.left);
 
-            if (x0 < min(profiles)!) {
-                x0 = min(profiles)!;
-            } else if (x0 > max(profiles)!) {
-                x0 = max(profiles)!;
+            if (x0 < xMin!) {
+                x0 = xMin!;
+            } else if (x0 > xMax!) {
+                x0 = xMax!;
             }
 
             const index = bisectLeft(profiles, x0, 1);
@@ -99,7 +101,7 @@ export function HeightProfileChart({
                 tooltipTop: yScale(y),
             });
         },
-        [showTooltip, yScale, xScale, profiles, pts]
+        [showTooltip, yScale, xScale, profiles, pts, xMin, xMax]
     );
 
     return (
