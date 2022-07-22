@@ -23,6 +23,7 @@ import {
     Share,
     Star,
     Straighten,
+    Timeline,
     Undo,
     Visibility,
     VisibilityOff,
@@ -42,6 +43,13 @@ export enum FeatureType {
 }
 
 export const featuresConfig = {
+    heightProfile: {
+        key: "heightProfile",
+        name: "Ht. profile",
+        Icon: Timeline,
+        type: FeatureType.Widget,
+        defaultLocked: false,
+    },
     user: {
         key: "user",
         name: "User",
@@ -298,7 +306,8 @@ export type WidgetKey = {
 
 export type Widget = Config[WidgetKey];
 
-export const defaultEnabledWidgets = [featuresConfig.user.key] as WidgetKey[];
+// TODO(OLA)
+export const defaultEnabledWidgets = [featuresConfig.user.key, featuresConfig.heightProfile.key] as WidgetKey[];
 export const allWidgets = Object.values(featuresConfig)
     .filter((widget) => [FeatureType.AdminWidget, FeatureType.Widget].includes(widget.type))
     .map((widget) => widget.key as WidgetKey);

@@ -55,6 +55,8 @@ export function useMeasureObjects() {
                                       mObj.settings = obj.settings;
                                   }
 
+                                  // TODO(OLA)
+                                  console.log(mObj.selectedEntity);
                                   return mObj.selectedEntity ? mObj : obj;
                               })
                               .catch(() => obj)
