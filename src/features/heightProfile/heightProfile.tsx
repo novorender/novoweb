@@ -15,6 +15,14 @@ import { useHighlighted } from "contexts/highlighted";
 
 import { HeightProfileChart } from "./heightProfileChart";
 
+const PTS = [
+    [0, 0],
+    [5, 0],
+    [9, 0.2],
+    [27, 5],
+    [39, 4.9],
+] as [number, number][];
+
 export function HeightProfile() {
     const theme = useTheme();
     const [menuOpen, toggleMenu] = useToggle();
@@ -38,6 +46,8 @@ export function HeightProfile() {
         try {
             const profile = await measureScene.getProfileViewFromMultiSelect(highlighted, "cylinders");
             console.log(highlighted, profile);
+
+            // return setPts({ status: AsyncStatus.Success, data: PTS });
 
             if (!profile) {
                 throw new Error("No profile");

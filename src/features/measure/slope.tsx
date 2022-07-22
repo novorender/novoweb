@@ -1,7 +1,6 @@
 import { Grid } from "@mui/material";
 import { vec3, vec2 } from "gl-matrix";
-
-const epsilon = 1e-3;
+import { epsilon } from "features/render/consts";
 
 export function Slope({ start, end }: { start: vec3; end: vec3 }) {
     const sub = vec3.sub(vec3.create(), start, end);

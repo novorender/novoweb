@@ -13,6 +13,8 @@ import { GlyphCircle } from "@visx/glyph";
 import { TooltipWithBounds, useTooltip, defaultStyles } from "@visx/tooltip";
 import { localPoint } from "@visx/event";
 
+import { epsilon } from "features/render/consts";
+
 const getX = (d: [number, number]) => d[0];
 const getY = (d: [number, number]) => d[1];
 
@@ -174,6 +176,14 @@ export function HeightProfileChart({
 
                         const dist = getX(pt2) - getX(pt);
                         const rise = getY(pt2) - getY(pt);
+
+                        const horizontal = Math.abs(rise) < epsilon;
+                        const vertical = Math.abs(dist) < epsilon;
+
+                        if (horizontal || vertical) {
+                            return null;
+                        }
+
                         const slope = rise / dist;
 
                         const yStart = yScale(getY(pt));
@@ -199,6 +209,7 @@ export function HeightProfileChart({
                                     fontSize={12}
                                     fontFamily="Roboto, sans-serif"
                                     dy={"-2em"}
+                                    textAnchor="middle"
                                     angle={Math.atan(scaledSlope) * (180 / Math.PI)}
                                 >
                                     {Math.abs(slope * 100).toFixed(2) + " %"}
