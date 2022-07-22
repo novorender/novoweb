@@ -1,4 +1,4 @@
-import { Fragment, useCallback, TouchEvent, MouseEvent } from "react";
+import { Fragment, useCallback, TouchEvent, MouseEvent, useMemo } from "react";
 import { extent, bisectLeft, min, max } from "d3-array";
 import { Box, Typography, useTheme } from "@mui/material";
 import { vec2 } from "gl-matrix";
@@ -7,68 +7,14 @@ import { Axis, Orientation } from "@visx/axis";
 import { LinearGradient } from "@visx/gradient";
 import { LinePath, Line } from "@visx/shape";
 import { Group } from "@visx/group";
+import { Grid } from "@visx/grid";
 import { Text } from "@visx/text";
 import { GlyphCircle } from "@visx/glyph";
 import { TooltipWithBounds, useTooltip, defaultStyles } from "@visx/tooltip";
 import { localPoint } from "@visx/event";
 
-// const objs = [212, 214, 215, 216];
-// const pts = [
-//     [0, 6699991.175585205],
-//     [0.010000000351072822, 6699991.167478834],
-//     [0.010000000351072822, 6699991.175585205],
-//     [82.8910527755095, 6699942.638810951],
-//     [82.8910527755095, 6699991.175585205],
-// ];
-
-// ojbid 8146 nbf master
-// const pts = [
-//     [0, 6699768.836672768],
-//     [7.287728417810739, 6699772.533776209],
-//     [7.420584239630998, 6699768.755939105],
-//     [7.553020332859261, 6699768.664039376],
-//     [27.024467063449208, 6699768.562192192],
-// ];
-
-// const pts = [
-//     [0, 6699924.0681547485],
-//     [34.75313668682716, 6699946.608539481],
-//     [42.543665296475915, 6699971.988605044],
-//     [23.52986147069269, 6699985.671324779],
-// ];
-const pts = [
-    [6699912.0681547485, 12],
-    [6699946.608539481, 24],
-    [6699971.988605044, 26.55291],
-    [6699985.671324779, 23.51233],
-] as [number, number][];
-
-// const pts = [
-//     [0, 5],
-//     [0.5, 4.9],
-//     [1, 4],
-//     [3, -1],
-//     [5, 0],
-//     [6, 0.5],
-// ] as [number, number][];
-
 const getX = (d: [number, number]) => d[0];
 const getY = (d: [number, number]) => d[1];
-
-const xScale = scaleLinear<number>({
-    domain: extent(pts, getX) as [number, number],
-    nice: false,
-});
-
-const profiles = pts.map(getX);
-const heights = pts.map(getY);
-const minY = min(heights) ?? 0;
-const maxY = max(heights) ?? 0;
-
-const yScale = scaleLinear<number>({
-    domain: [minY - Math.abs(minY * 0.15), maxY + Math.abs(maxY * 0.15)] as [number, number],
-    nice: 10,
-});
 
 const margin = {
     top: 48,
@@ -77,7 +23,15 @@ const margin = {
     left: 48,
 };
 
-export function HeightProfileChart({ width: outerWidth, height: outerHeight }: { width: number; height: number }) {
+export function HeightProfileChart({
+    pts,
+    width: outerWidth,
+    height: outerHeight,
+}: {
+    width: number;
+    height: number;
+    pts: [number, number][];
+}) {
     const theme = useTheme();
     const {
         showTooltip,
@@ -86,15 +40,45 @@ export function HeightProfileChart({ width: outerWidth, height: outerHeight }: {
         tooltipTop = 0,
         tooltipLeft = 0,
     } = useTooltip<{ x: number; y: number }>();
-    const xMax = Math.max(outerWidth - margin.left - margin.right, 0);
-    const yMax = Math.max(outerHeight - margin.top - margin.bottom, 0);
-    xScale.range([0, xMax]);
-    yScale.range([yMax, 0]);
+    const innerWidth = Math.max(outerWidth - margin.left - margin.right, 0);
+    const innerHeight = Math.max(outerHeight - margin.top - margin.bottom, 0);
+
+    const profiles = useMemo(() => pts.map(getX), [pts]);
+    const heights = useMemo(() => pts.map(getY), [pts]);
+    const minY = min(heights) ?? 0;
+    const maxY = max(heights) ?? 0;
+
+    const xScale = useMemo(
+        () =>
+            scaleLinear<number>({
+                domain: extent(pts, getX) as [number, number],
+                range: [0, innerWidth],
+                nice: false,
+            }),
+        [innerWidth, pts]
+    );
+
+    const yScale = useMemo(
+        () =>
+            scaleLinear<number>({
+                domain: [minY - Math.abs(minY * 0.15), maxY + Math.abs(maxY * 0.15)] as [number, number],
+                range: [innerHeight, 0],
+                nice: 10,
+            }),
+        [maxY, minY, innerHeight]
+    );
 
     const handleTooltip = useCallback(
         (event: TouchEvent<SVGRectElement> | MouseEvent<SVGRectElement>) => {
-            const { x } = localPoint(event) || { x: 0, y: 0 };
-            const x0 = xScale.invert(x - margin.left);
+            const { x } = localPoint(event) || { x: 0 };
+            let x0 = xScale.invert(x - margin.left);
+
+            if (x0 < min(profiles)!) {
+                x0 = min(profiles)!;
+            } else if (x0 > max(profiles)!) {
+                x0 = max(profiles)!;
+            }
+
             const index = bisectLeft(profiles, x0, 1);
             const pt0 = pts[index - 1];
             const pt1 = pts[index];
@@ -115,11 +99,11 @@ export function HeightProfileChart({ width: outerWidth, height: outerHeight }: {
                 tooltipTop: yScale(y),
             });
         },
-        [showTooltip]
+        [showTooltip, yScale, xScale, profiles, pts]
     );
 
     return (
-        <Box position="relative">
+        <Box position="relative" sx={{ pointerEvents: "none" }}>
             <svg width={outerWidth} height={outerHeight}>
                 <LinearGradient
                     id={"gradient"}
@@ -129,16 +113,24 @@ export function HeightProfileChart({ width: outerWidth, height: outerHeight }: {
                 />
                 <rect x={0} y={0} width={outerWidth} height={outerHeight} fill={`url(#gradient)`} rx={14} />
                 <Group transform={`translate(${margin.left} ${margin.top})`}>
+                    <Grid
+                        xScale={xScale}
+                        yScale={yScale}
+                        width={innerWidth}
+                        height={innerHeight}
+                        stroke={theme.palette.grey[300]}
+                    />
                     <rect
-                        x={0}
-                        y={0}
-                        width={xMax}
-                        height={yMax}
+                        x={-10}
+                        y={-10}
+                        width={innerWidth + 20}
+                        height={innerHeight + 20}
                         fill={`transparent`}
                         onTouchStart={handleTooltip}
                         onTouchMove={handleTooltip}
                         onMouseMove={handleTooltip}
                         onMouseLeave={() => hideTooltip()}
+                        pointerEvents="auto"
                     />
                     <LinePath<[number, number]>
                         data={pts}
@@ -147,7 +139,6 @@ export function HeightProfileChart({ width: outerWidth, height: outerHeight }: {
                         stroke={theme.palette.secondary.main}
                         strokeWidth={2}
                         shapeRendering="geometricPrecision"
-                        pointerEvents="none"
                     />
                     <Axis
                         orientation={Orientation.left}
@@ -163,7 +154,7 @@ export function HeightProfileChart({ width: outerWidth, height: outerHeight }: {
                     />
                     <Axis
                         orientation={Orientation.bottom}
-                        top={yMax}
+                        top={innerHeight}
                         scale={xScale}
                         numTicks={5}
                         tickLabelProps={() => ({
@@ -201,7 +192,6 @@ export function HeightProfileChart({ width: outerWidth, height: outerHeight }: {
                                     <GlyphCircle left={xStart} top={yStart} fill={theme.palette.secondary.dark} />
                                 ) : null}
                                 <Text
-                                    pointerEvents="none"
                                     y={yCenter}
                                     x={xCenter}
                                     fontSize={12}
@@ -218,11 +208,10 @@ export function HeightProfileChart({ width: outerWidth, height: outerHeight }: {
                         <Group>
                             <Line
                                 from={{ x: tooltipLeft, y: 0 }}
-                                to={{ x: tooltipLeft, y: yMax }}
+                                to={{ x: tooltipLeft, y: innerHeight }}
                                 stroke={theme.palette.primary.light}
                                 strokeOpacity={0.3}
                                 strokeWidth={2}
-                                pointerEvents="none"
                                 strokeDasharray="5,2"
                             />
                             <circle
@@ -232,7 +221,6 @@ export function HeightProfileChart({ width: outerWidth, height: outerHeight }: {
                                 stroke={theme.palette.primary.main}
                                 fill={theme.palette.primary.light}
                                 strokeWidth={2}
-                                pointerEvents="none"
                             />
                         </Group>
                     )}
