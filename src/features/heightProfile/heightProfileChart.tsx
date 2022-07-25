@@ -1,5 +1,5 @@
 import { Fragment, useCallback, TouchEvent, MouseEvent, useMemo } from "react";
-import { extent, bisectLeft, min, max } from "d3-array";
+import { bisectLeft, min, max } from "d3-array";
 import { Box, Typography, useTheme } from "@mui/material";
 import { vec2 } from "gl-matrix";
 import { scaleLinear } from "@visx/scale";
@@ -13,7 +13,7 @@ import { GlyphCircle } from "@visx/glyph";
 import { TooltipWithBounds, useTooltip, defaultStyles } from "@visx/tooltip";
 import { localPoint } from "@visx/event";
 
-import { epsilon } from "features/render/consts";
+export const epsilon = 1e-3;
 
 const getX = (d: [number, number]) => d[0];
 const getY = (d: [number, number]) => d[1];
@@ -52,25 +52,34 @@ export function HeightProfileChart({
     const xMin = min(profiles) ?? 0;
     const xMax = max(profiles) ?? 0;
 
-    const xScale = useMemo(
-        () =>
-            scaleLinear<number>({
-                domain: extent(pts, getX) as [number, number],
-                range: [0, innerWidth],
-                nice: false,
-            }),
-        [innerWidth, pts]
-    );
+    const [xScale, yScale] = useMemo(() => {
+        const _xScale = scaleLinear<number>({
+            domain: [xMin, xMax],
+            range: [0, innerWidth],
+            nice: false,
+        });
 
-    const yScale = useMemo(
-        () =>
-            scaleLinear<number>({
-                domain: [yMin - Math.abs(yMin * 0.15), yMax + Math.abs(yMax * 0.15)] as [number, number],
-                range: [innerHeight, 0],
-                nice: 10,
-            }),
-        [yMax, yMin, innerHeight]
-    );
+        const getYDomain = () => {
+            const yLength = yMax - yMin;
+            const xLength = Math.min(xMax - xMin, 50);
+
+            if (yLength < xLength) {
+                const d = xLength - yLength;
+
+                return [yMin - d / 2, yMax + d / 2];
+            } else {
+                return [yMin - Math.abs(yMin * 0.15), yMax + Math.abs(yMax * 0.15)];
+            }
+        };
+
+        const _yScale = scaleLinear<number>({
+            domain: getYDomain(),
+            range: [innerHeight, 0],
+            nice: false,
+        });
+
+        return [_xScale, _yScale];
+    }, [innerHeight, innerWidth, xMax, xMin, yMax, yMin]);
 
     const handleTooltip = useCallback(
         (event: TouchEvent<SVGRectElement> | MouseEvent<SVGRectElement>) => {

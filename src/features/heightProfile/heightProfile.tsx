@@ -15,13 +15,35 @@ import { useHighlighted } from "contexts/highlighted";
 
 import { HeightProfileChart } from "./heightProfileChart";
 
-const PTS = [
-    [0, 0],
-    [5, 0],
-    [9, 0.2],
-    [27, 5],
-    [39, 4.9],
-] as [number, number][];
+// const PTS = [
+//     [0, 0],
+//     [5, 0],
+//     [9, 0.2],
+//     [27, 5],
+//     [39, 4.9],
+// ] as [number, number][];
+
+// const PTS = [
+//     [0, 10],
+//     [130, 10.3534],
+//     [194, 10.2],
+//     [321, 10.9],
+//     [600, 11.1],
+//     [680, 10.953],
+//     [821, 10.3215],
+//     [999, -10.121],
+// ] as [number, number][];
+
+// const PTS = [
+//     [0, 0],
+//     [130, 0.3534],
+//     [194, 0.2],
+//     [321, 0.9],
+//     [600, 1.1],
+//     [680, 0.953],
+//     [821, 0.3215],
+//     [999, -0.121],
+// ] as [number, number][];
 
 export function HeightProfile() {
     const theme = useTheme();
