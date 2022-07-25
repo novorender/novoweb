@@ -142,7 +142,7 @@ export function HeightProfile() {
                 ) : null}
                 <ScrollBox display={menuOpen || minimized ? "none" : "flex"} flexDirection="column" p={1}>
                     <Button
-                        disabled={!highlighted.length || highlighted.length > 10 || pts.status === AsyncStatus.Loading}
+                        disabled={!highlighted.length || highlighted.length > 20 || pts.status === AsyncStatus.Loading}
                         onClick={handleLoadPts}
                     >
                         Load profile

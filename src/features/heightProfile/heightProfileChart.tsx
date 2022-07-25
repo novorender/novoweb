@@ -61,7 +61,7 @@ export function HeightProfileChart({
 
         const getYDomain = () => {
             const yLength = yMax - yMin;
-            const xLength = Math.min(xMax - xMin, 50);
+            const xLength = Math.min(xMax - xMin, 100);
 
             if (yLength < xLength) {
                 const d = xLength - yLength;
