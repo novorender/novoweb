@@ -91,6 +91,7 @@ export enum Picker {
     FollowPathObject,
     ClippingPlane,
     OrthoPlane,
+    Area,
 }
 
 export type Subtree = keyof NonNullable<State["subtrees"]>;

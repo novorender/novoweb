@@ -97,6 +97,7 @@ import {
 import { xAxis, yAxis, axis, MAX_FLOAT } from "./consts";
 import { useHandleGridChanges } from "./useHandleGridChanges";
 import { useHandleCameraControls } from "./useHandleCameraControls";
+import { areaActions, selectAreaPoints } from "features/area";
 
 glMatrix.setMatrixArrayType(Array);
 
@@ -127,7 +128,6 @@ const MeasurementPoint = styled("circle", { shouldForwardProp: (prop) => prop !=
     ({ disabled, fill }) => css`
         pointer-events: ${disabled ? "none" : "all"};
         cursor: pointer;
-        stroke: none;
         fill: ${fill ?? "green"};
     `
 );
@@ -203,6 +203,7 @@ export function Render3D({ onInit }: Props) {
     const ditioMarkers = useAppSelector(selectMarkers);
     const drawSelectedPaths = useAppSelector(selectDrawSelected);
     const picker = useAppSelector(selectPicker);
+    const areaPoints = useAppSelector(selectAreaPoints);
     const dispatch = useAppDispatch();
 
     const rendering = useRef({
@@ -426,6 +427,7 @@ export function Render3D({ onInit }: Props) {
             measure.duoMeasurementValues?.pointA && measure.duoMeasurementValues?.pointB
                 ? [measure.duoMeasurementValues.pointA, measure.duoMeasurementValues.pointB]
                 : undefined;
+
         if (measurePoints) {
             let pts =
                 measurePoints[0][1] < measurePoints[1][1]
@@ -465,7 +467,12 @@ export function Render3D({ onInit }: Props) {
                 textName: "brepTextXZ",
                 distance: planarDiff,
             });
-        } else {
+        }
+
+        if (areaPoints.length) {
+            renderMeasurePoints(view, areaPoints, undefined, "area-pt");
+            // TODO: draw
+            // id / name === area-pt_${idx}
         }
     }, [
         view,
@@ -476,6 +483,7 @@ export function Render3D({ onInit }: Props) {
         measure.duoMeasurementValues,
         pathMeasureObjects,
         drawSelectedPaths,
+        areaPoints,
     ]);
 
     useEffect(() => {
@@ -1276,6 +1284,12 @@ export function Render3D({ onInit }: Props) {
                 dispatch(followPathActions.setSelected([{ id: result.objectId, pos: result.position }]));
                 break;
             }
+            case Picker.Area: {
+                dispatch(areaActions.addPoint(result.position));
+                break;
+            }
+            default:
+                console.warn("Picker not handled", picker);
         }
     };
 
@@ -1359,7 +1373,13 @@ export function Render3D({ onInit }: Props) {
 
         const useSvgCursor =
             e.buttons === 0 &&
-            [Picker.Measurement, Picker.OrthoPlane, Picker.FollowPathObject, Picker.ClippingPlane].includes(picker);
+            [
+                Picker.Measurement,
+                Picker.OrthoPlane,
+                Picker.FollowPathObject,
+                Picker.ClippingPlane,
+                Picker.Area,
+            ].includes(picker);
 
         if (useSvgCursor) {
             const measurement = await rendering.current.measure(
@@ -1506,6 +1526,17 @@ export function Render3D({ onInit }: Props) {
                     </Menu>
                     {canvas !== null && (
                         <Svg width={canvas.width} height={canvas.height} ref={setSvg}>
+                            {areaPoints.map((pt, idx, array) => (
+                                <MeasurementPoint
+                                    key={idx + pt.toString()}
+                                    name={`area-pt_${idx}`}
+                                    id={`area-pt_${idx}`}
+                                    stroke="black"
+                                    fill={idx === 0 ? "green" : idx === array.length - 1 ? "blue" : "white"}
+                                    strokeWidth={2}
+                                    r={5}
+                                />
+                            ))}
                             {drawSelectedPaths
                                 ? pathMeasureObjects.map((obj) => (
                                       <path

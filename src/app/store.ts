@@ -17,6 +17,7 @@ import { bimTrackReducer } from "features/bimTrack/bimTrackSlice";
 import { bimTrackApi } from "features/bimTrack/bimTrackApi";
 import { ditioReducer } from "features/ditio";
 import { ditioApi } from "features/ditio";
+import { areaReducer } from "features/area";
 
 const rootReducer = combineReducers({
     explorer: explorerReducer,
@@ -28,6 +29,7 @@ const rootReducer = combineReducers({
     followPath: followPathReducer,
     deviations: deviationsReducer,
     measure: measureReducer,
+    area: areaReducer,
     bimCollab: bimCollabReducer,
     [bimCollabApi.reducerPath]: bimCollabApi.reducer,
     bimTrack: bimTrackReducer,

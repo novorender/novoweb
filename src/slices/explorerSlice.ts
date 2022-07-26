@@ -25,7 +25,8 @@ const initialState = {
     requireConsent: false,
     organization: "",
     viewerScenes: [] as ScenePreview[],
-    widgets: ["heightProfile"] as WidgetKey[],
+    // TODO(OLA)
+    widgets: ["area"] as WidgetKey[],
     maximized: undefined as undefined | WidgetKey,
     minimized: undefined as undefined | WidgetKey,
     urlSearchQuery: undefined as undefined | string | SearchPattern[],
