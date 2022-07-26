@@ -70,6 +70,7 @@ import { ditioActions, selectMarkers, selectShowMarkers } from "features/ditio";
 import { useAppDispatch, useAppSelector } from "app/store";
 import { followPathActions, selectDrawSelected, usePathMeasureObjects } from "features/followPath";
 import { useMeasureObjects } from "features/measure";
+import { areaActions, selectAreaDrawPoints } from "features/area";
 
 import { useHighlighted, highlightActions, useDispatchHighlighted } from "contexts/highlighted";
 import { useHidden, useDispatchHidden } from "contexts/hidden";
@@ -97,7 +98,6 @@ import {
 import { xAxis, yAxis, axis, MAX_FLOAT } from "./consts";
 import { useHandleGridChanges } from "./useHandleGridChanges";
 import { useHandleCameraControls } from "./useHandleCameraControls";
-import { areaActions, selectAreaPoints } from "features/area";
 
 glMatrix.setMatrixArrayType(Array);
 
@@ -203,7 +203,7 @@ export function Render3D({ onInit }: Props) {
     const ditioMarkers = useAppSelector(selectMarkers);
     const drawSelectedPaths = useAppSelector(selectDrawSelected);
     const picker = useAppSelector(selectPicker);
-    const areaPoints = useAppSelector(selectAreaPoints);
+    const areaPoints = useAppSelector(selectAreaDrawPoints);
     const dispatch = useAppDispatch();
 
     const rendering = useRef({
@@ -1285,7 +1285,7 @@ export function Render3D({ onInit }: Props) {
                 break;
             }
             case Picker.Area: {
-                dispatch(areaActions.addPoint(result.position));
+                dispatch(areaActions.addPoint([result.position, result.normal]));
                 break;
             }
             default:
