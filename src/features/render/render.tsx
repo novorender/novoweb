@@ -470,7 +470,7 @@ export function Render3D({ onInit }: Props) {
         }
 
         if (areaPoints.length) {
-            renderMeasurePoints(view, areaPoints, undefined, "area-pt");
+            renderMeasurePoints(view, areaPoints, "area-path", "area-pt");
             // TODO: draw
             // id / name === area-pt_${idx}
         }
@@ -1526,6 +1526,7 @@ export function Render3D({ onInit }: Props) {
                     </Menu>
                     {canvas !== null && (
                         <Svg width={canvas.width} height={canvas.height} ref={setSvg}>
+                            {areaPoints.length ? <path name={`area-path`} id={`area-path`} fill="black" /> : null}
                             {areaPoints.map((pt, idx, array) => (
                                 <MeasurementPoint
                                     key={idx + pt.toString()}

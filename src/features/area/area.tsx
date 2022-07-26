@@ -1,6 +1,7 @@
 import { useEffect } from "react";
 import { Box, Button, FormControlLabel } from "@mui/material";
 import { DeleteSweep, Undo } from "@mui/icons-material";
+import { ReadonlyVec3 } from "gl-matrix";
 
 import { useAppDispatch, useAppSelector } from "app/store";
 import { IosSwitch, ScrollBox, LogoSpeedDial, WidgetContainer, WidgetHeader } from "components";
@@ -11,9 +12,13 @@ import { Picker, renderActions, selectPicker } from "slices/renderSlice";
 import { selectMinimized, selectMaximized } from "slices/explorerSlice";
 
 import { areaActions, selectArea, selectAreaPoints } from "./areaSlice";
+import { useExplorerGlobals } from "contexts/explorerGlobals";
 
 export function Area() {
     const [menuOpen, toggleMenu] = useToggle();
+    const {
+        state: { measureScene },
+    } = useExplorerGlobals(true);
     const minimized = useAppSelector(selectMinimized) === featuresConfig.area.key;
     const maximized = useAppSelector(selectMaximized) === featuresConfig.area.key;
 
@@ -21,6 +26,14 @@ export function Area() {
     const points = useAppSelector(selectAreaPoints);
     const area = useAppSelector(selectArea);
     const dispatch = useAppDispatch();
+
+    useEffect(() => {
+        if (points.length <= 2) {
+            dispatch(areaActions.setArea(undefined));
+        } else {
+            dispatch(areaActions.setArea(measureScene.areaFromPolygon(points as ReadonlyVec3[])));
+        }
+    }, [points, dispatch, measureScene]);
 
     useEffect(() => {
         return () => {
@@ -65,7 +78,7 @@ export function Area() {
                     </Box>
                 </WidgetHeader>
                 <ScrollBox display={menuOpen || minimized ? "none" : "flex"}>
-                    {area !== undefined ? `Area: ${area}` : null}
+                    <Box p={1}>{area !== undefined ? `Area: ${area.toFixed(3)} m2` : null}</Box>
                 </ScrollBox>
                 <WidgetList
                     display={menuOpen ? "block" : "none"}
