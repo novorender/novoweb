@@ -119,12 +119,19 @@ export function HeightProfileChart({
         <Box position="relative" sx={{ pointerEvents: "none" }}>
             <svg width={outerWidth} height={outerHeight}>
                 <LinearGradient
-                    id={"gradient"}
+                    id={"height-profile-chart-gradient"}
                     from={theme.palette.grey[100]}
                     to={theme.palette.grey[50]}
                     rotate={45}
                 />
-                <rect x={0} y={0} width={outerWidth} height={outerHeight} fill={`url(#gradient)`} rx={14} />
+                <rect
+                    x={0}
+                    y={0}
+                    width={outerWidth}
+                    height={outerHeight}
+                    fill={`url(#height-profile-chart-gradient)`}
+                    rx={14}
+                />
                 <Group transform={`translate(${margin.left} ${margin.top})`}>
                     <Grid
                         xScale={xScale}
@@ -184,6 +191,14 @@ export function HeightProfileChart({
                         const pt2 = arr[i + 1];
 
                         const dist = getX(pt2) - getX(pt);
+
+                        const showGlyph = dist / xMax > 0.01 && i !== 0;
+                        const showText = dist / xMax > 0.05;
+
+                        if (!showGlyph && !showText) {
+                            return null;
+                        }
+
                         const rise = getY(pt2) - getY(pt);
 
                         const horizontal = Math.abs(rise) < epsilon;
@@ -209,20 +224,22 @@ export function HeightProfileChart({
 
                         return (
                             <Fragment key={i}>
-                                {i !== 0 ? (
+                                {showGlyph ? (
                                     <GlyphCircle left={xStart} top={yStart} fill={theme.palette.secondary.dark} />
                                 ) : null}
-                                <Text
-                                    y={yCenter}
-                                    x={xCenter}
-                                    fontSize={12}
-                                    fontFamily="Roboto, sans-serif"
-                                    dy={"-2em"}
-                                    textAnchor="middle"
-                                    angle={Math.atan(scaledSlope) * (180 / Math.PI)}
-                                >
-                                    {Math.abs(slope * 100).toFixed(2) + " %"}
-                                </Text>
+                                {showText ? (
+                                    <Text
+                                        y={yCenter}
+                                        x={xCenter}
+                                        fontSize={12}
+                                        fontFamily="Roboto, sans-serif"
+                                        dy={"-2em"}
+                                        textAnchor="middle"
+                                        angle={Math.atan(scaledSlope) * (180 / Math.PI)}
+                                    >
+                                        {Math.abs(slope * 100).toFixed(2) + " %"}
+                                    </Text>
+                                ) : null}
                             </Fragment>
                         );
                     })}

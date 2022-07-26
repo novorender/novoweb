@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { MeasureError } from "@novorender/measure-api";
 import { Box, Button, IconButton, Modal, Typography, useTheme } from "@mui/material";
 import { ParentSizeModern } from "@visx/responsive";
 import { Close } from "@mui/icons-material";
@@ -66,7 +67,7 @@ export function HeightProfile() {
         setPts({ status: AsyncStatus.Loading });
 
         try {
-            const profile = await measureScene.getProfileViewFromMultiSelect(highlighted, "cylinders");
+            const profile = await measureScene.getProfileViewFromMultiSelect(highlighted);
             console.log(highlighted, profile);
 
             // return setPts({ status: AsyncStatus.Success, data: PTS });
@@ -76,7 +77,11 @@ export function HeightProfile() {
             } else {
                 setPts({ status: AsyncStatus.Success, data: profile.profilePoints as [number, number][] });
             }
-        } catch {
+        } catch (e) {
+            // TODO(OLA): handle
+            if (e instanceof MeasureError) {
+                console.log(e.message);
+            }
             setPts({ status: AsyncStatus.Error, msg: "No height profile available for selected items" });
         }
     };
