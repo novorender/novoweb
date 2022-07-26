@@ -5,9 +5,9 @@ import { RootState } from "app/store";
 
 const initialState = {
     // TODO(OLA)
-    points: [] as [vec3, vec3][],
+    points: [] as [point: vec3, normal: vec3][],
     drawPoints: [] as vec3[],
-    area: undefined as number | undefined,
+    area: -1,
 };
 
 type State = typeof initialState;

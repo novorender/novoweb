@@ -98,6 +98,7 @@ import {
 import { xAxis, yAxis, axis, MAX_FLOAT } from "./consts";
 import { useHandleGridChanges } from "./useHandleGridChanges";
 import { useHandleCameraControls } from "./useHandleCameraControls";
+import { useHandleAreaPoints } from "features/area/useHandleAreaPoints";
 
 glMatrix.setMatrixArrayType(Array);
 
@@ -149,6 +150,8 @@ const AxisText = styled((props: SVGProps<SVGTextElement>) => <text alignmentBase
         text-anchor: middle;
     `
 );
+
+const measurementFillColor = "rgba(0, 191, 255, 0.5)";
 
 enum Status {
     Initial,
@@ -294,6 +297,11 @@ export function Render3D({ onInit }: Props) {
                     }
                 }
                 const path = svg.children.namedItem(pathName);
+
+                if (curve) {
+                    curve += " Z";
+                }
+
                 if (path) {
                     path.setAttribute("d", curve);
                 }
@@ -403,13 +411,13 @@ export function Render3D({ onInit }: Props) {
 
         if (drawSelectedPaths) {
             pathMeasureObjects.forEach((obj) => {
-                renderMeasureObject(view, "rgba(0, 191, 255, 0.5)", "fp_" + getMeasureObjectPathId(obj), obj);
+                renderMeasureObject(view, measurementFillColor, "fp_" + getMeasureObjectPathId(obj), obj);
             });
         }
 
         measureObjects.forEach((obj) => {
             if (isMeasureObject(obj)) {
-                renderMeasureObject(view, "rgba(0, 191, 255, 0.5)", getMeasureObjectPathId(obj), obj);
+                renderMeasureObject(view, measurementFillColor, getMeasureObjectPathId(obj), obj);
             } else {
                 renderSingleMeasurePoint(view, obj.pos, getMeasureObjectPathId(obj));
             }
@@ -581,7 +589,7 @@ export function Render3D({ onInit }: Props) {
                 g.innerHTML = "";
                 return;
             }
-            const normal = measurement?.normalVS;
+            const normal = measurement?.normalVS?.some((v) => Number.isNaN(v)) ? undefined : measurement?.normalVS;
             if (normal) {
                 const { width, height } = size;
                 const { camera } = view;
@@ -1136,6 +1144,7 @@ export function Render3D({ onInit }: Props) {
     useHandleGridChanges();
     useHandlePanoramaChanges();
     useHandleCameraControls();
+    useHandleAreaPoints();
 
     useEffect(() => {
         handleUrlBookmark();
@@ -1178,6 +1187,7 @@ export function Render3D({ onInit }: Props) {
             e.nativeEvent.offsetX * devicePixelRatio,
             e.nativeEvent.offsetY * devicePixelRatio
         );
+
         if (deviation.mode !== "off" && cameraState.type === CameraType.Orthographic) {
             const pickSize = isTouchPointer.current ? 16 : 0;
             const deviation = await pickDeviationArea({
@@ -1285,7 +1295,7 @@ export function Render3D({ onInit }: Props) {
                 break;
             }
             case Picker.Area: {
-                dispatch(areaActions.addPoint([result.position, result.normal]));
+                dispatch(areaActions.addPoint([result.position, normal ?? [0, 0, 0]]));
                 break;
             }
             default:
@@ -1526,9 +1536,18 @@ export function Render3D({ onInit }: Props) {
                     </Menu>
                     {canvas !== null && (
                         <Svg width={canvas.width} height={canvas.height} ref={setSvg}>
-                            {areaPoints.length ? <path name={`area-path`} id={`area-path`} fill="black" /> : null}
+                            {areaPoints.length ? (
+                                <path
+                                    name={`area-path`}
+                                    id={`area-path`}
+                                    fill={measurementFillColor}
+                                    stroke="yellow"
+                                    strokeWidth={1}
+                                />
+                            ) : null}
                             {areaPoints.map((pt, idx, array) => (
                                 <MeasurementPoint
+                                    disabled
                                     key={idx + pt.toString()}
                                     name={`area-pt_${idx}`}
                                     id={`area-pt_${idx}`}
