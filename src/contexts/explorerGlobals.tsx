@@ -1,4 +1,3 @@
-import { SceneData } from "@novorender/data-js-api";
 import { Scene, View } from "@novorender/webgl-api";
 import { MeasureScene } from "@novorender/measure-api";
 import { createContext, Dispatch, ReactNode, useContext, useReducer } from "react";
@@ -8,7 +7,6 @@ import { createContext, Dispatch, ReactNode, useContext, useReducer } from "reac
 const initialState = {
     view: undefined as undefined | View,
     scene: undefined as undefined | Scene,
-    preloadedScene: undefined as undefined | SceneData,
     canvas: null as null | HTMLCanvasElement,
     measureScene: undefined as undefined | MeasureScene,
 };
