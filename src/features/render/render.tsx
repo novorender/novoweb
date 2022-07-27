@@ -39,10 +39,8 @@ import {
 import { Loading } from "components";
 
 import { api, dataApi, measureApi } from "app";
-import { StorageKey } from "config/storage";
 import { useMountedState } from "hooks/useMountedState";
 import { useSceneId } from "hooks/useSceneId";
-import { deleteFromStorage } from "utils/storage";
 import { enabledFeaturesToFeatureKeys, getEnabledFeatures } from "utils/misc";
 
 import {
@@ -70,7 +68,6 @@ import {
     selectGridDefaults,
     selectSelectionBasketColor,
 } from "slices/renderSlice";
-import { authActions } from "slices/authSlice";
 import { explorerActions, selectUrlBookmarkId } from "slices/explorerSlice";
 import { selectDeviations } from "features/deviations";
 import { bookmarksActions, selectBookmarks, useSelectBookmark } from "features/bookmarks";
@@ -1723,18 +1720,17 @@ export function Render3D({ onInit }: Props) {
 
 function SceneError({ id, error }: { id: string; error: Exclude<Status, Status.Initial> }) {
     const theme = useTheme();
-    const dispatch = useAppDispatch();
     const loginUrl = `${window.location.origin}/login/${id}${window.location.search}`;
 
-    const logOut = () => {
-        deleteFromStorage(StorageKey.NovoToken);
-        deleteFromStorage(StorageKey.MsalActiveAccount);
-        dispatch(authActions.logout());
-        window.location.replace(loginUrl);
-    };
-
     if (error === Status.AuthError) {
-        logOut();
+        window.location.replace(
+            loginUrl +
+                (window.location.search
+                    ? window.location.search.includes("force-login=true")
+                        ? ""
+                        : "&force-login=true"
+                    : "?force-login=true")
+        );
     }
 
     return (

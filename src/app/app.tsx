@@ -65,9 +65,11 @@ export function App() {
             if (!(await verifyToken())) {
                 await handleMsalReturn();
             } else {
-                history.replace(history.location.pathname.replace("login/", "") + window.location.search);
+                const query = new URLSearchParams(window.location.search);
+                if (!query.get("force-login")) {
+                    history.replace(history.location.pathname.replace("login/", "") + window.location.search);
+                }
             }
-
             setStatus(Status.Ready);
         }
 
@@ -105,15 +107,19 @@ export function App() {
                         })
                         .catch((e) => {
                             if (e instanceof InteractionRequiredAuthError) {
-                                return msalInstance.acquireTokenPopup({
-                                    ...loginRequest,
-                                    account,
-                                    sid: account.idTokenClaims?.sid,
-                                    loginHint: account.idTokenClaims?.login_hint,
-                                    authority: account.tenantId
-                                        ? `https://login.microsoftonline.com/${account.tenantId}`
-                                        : loginRequest.authority,
-                                });
+                                return msalInstance
+                                    .acquireTokenPopup({
+                                        ...loginRequest,
+                                        account,
+                                        sid: account.idTokenClaims?.sid,
+                                        loginHint: account.idTokenClaims?.login_hint,
+                                        authority: account.tenantId
+                                            ? `https://login.microsoftonline.com/${account.tenantId}`
+                                            : loginRequest.authority,
+                                    })
+                                    .catch(() => {
+                                        dispatch(authActions.setMsalInteractionRequired(true));
+                                    });
                             } else {
                                 throw e;
                             }
@@ -134,7 +140,6 @@ export function App() {
                     msalInstance.setActiveAccount(res.account);
                     storeActiveAccount(res.account);
                     dispatch(authActions.login({ accessToken: res.accessToken, msalAccount: res.account, user }));
-                    history.replace(history.location.pathname.replace("login/", "") + window.location.search);
                 }
             } catch (e) {
                 console.warn(e);

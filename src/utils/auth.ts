@@ -40,15 +40,19 @@ export async function getAuthHeader(): Promise<AuthenticationHeader> {
                 })
                 .catch((e) => {
                     if (e instanceof InteractionRequiredAuthError) {
-                        return msalInstance.acquireTokenPopup({
-                            ...loginRequest,
-                            sid: msalAccount.idTokenClaims?.sid,
-                            loginHint: msalAccount.idTokenClaims?.login_hint,
-                            account: msalAccount,
-                            authority: msalAccount.tenantId
-                                ? `https://login.microsoftonline.com/${msalAccount.tenantId}`
-                                : loginRequest.authority,
-                        });
+                        return msalInstance
+                            .acquireTokenPopup({
+                                ...loginRequest,
+                                sid: msalAccount.idTokenClaims?.sid,
+                                loginHint: msalAccount.idTokenClaims?.login_hint,
+                                account: msalAccount,
+                                authority: msalAccount.tenantId
+                                    ? `https://login.microsoftonline.com/${msalAccount.tenantId}`
+                                    : loginRequest.authority,
+                            })
+                            .catch(() => {
+                                store.dispatch(authActions.setMsalInteractionRequired(true));
+                            });
                     } else {
                         throw e;
                     }

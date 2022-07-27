@@ -32,6 +32,7 @@ const initialState = {
     accessToken: "",
     msalAccount: null as null | AccountInfo,
     user: undefined as undefined | User,
+    msalInteractionRequired: false,
 };
 
 type State = typeof initialState;
@@ -46,10 +47,7 @@ export const authSlice = createSlice({
         ) => {
             state.accessToken = action.payload.accessToken;
             state.user = action.payload.user;
-
-            if (action.payload.msalAccount) {
-                state.msalAccount = action.payload.msalAccount;
-            }
+            state.msalAccount = action.payload.msalAccount || null;
         },
         logout: (state) => {
             return { ...state, msalAccount: null, accessToken: "", user: undefined };
@@ -60,12 +58,16 @@ export const authSlice = createSlice({
         setUser: (state, action: PayloadAction<State["user"]>) => {
             state.user = action.payload;
         },
+        setMsalInteractionRequired: (state, action: PayloadAction<State["msalInteractionRequired"]>) => {
+            state.msalInteractionRequired = action.payload;
+        },
     },
 });
 
 export const selectAccessToken = (state: RootState) => state.auth.accessToken;
 export const selectMsalAccount = (state: RootState) => state.auth.msalAccount;
 export const selectUser = (state: RootState) => state.auth.user;
+export const selectMsalInteractionRequired = (state: RootState) => state.auth.msalInteractionRequired;
 
 const { actions, reducer } = authSlice;
 export { actions as authActions, reducer as authReducer };
