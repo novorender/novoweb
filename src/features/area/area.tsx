@@ -33,37 +33,39 @@ export function Area() {
         <>
             <WidgetContainer minimized={minimized} maximized={maximized}>
                 <WidgetHeader widget={featuresConfig.area}>
-                    <Box display="flex" justifyContent="space-between">
-                        <FormControlLabel
-                            control={
-                                <IosSwitch
-                                    size="medium"
-                                    color="primary"
-                                    checked={selecting}
-                                    onChange={() =>
-                                        dispatch(renderActions.setPicker(selecting ? Picker.Object : Picker.Area))
-                                    }
-                                />
-                            }
-                            label={<Box fontSize={14}>Selecting</Box>}
-                        />
-                        <Button
-                            disabled={!points.length}
-                            onClick={() => dispatch(areaActions.undoPoint())}
-                            color="grey"
-                        >
-                            <Undo sx={{ mr: 1 }} />
-                            Undo
-                        </Button>
-                        <Button
-                            disabled={!points.length}
-                            onClick={() => dispatch(areaActions.setPoints([]))}
-                            color="grey"
-                        >
-                            <DeleteSweep sx={{ mr: 1 }} />
-                            Clear
-                        </Button>
-                    </Box>
+                    {!menuOpen && !minimized ? (
+                        <Box display="flex" justifyContent="space-between">
+                            <FormControlLabel
+                                control={
+                                    <IosSwitch
+                                        size="medium"
+                                        color="primary"
+                                        checked={selecting}
+                                        onChange={() =>
+                                            dispatch(renderActions.setPicker(selecting ? Picker.Object : Picker.Area))
+                                        }
+                                    />
+                                }
+                                label={<Box fontSize={14}>Selecting</Box>}
+                            />
+                            <Button
+                                disabled={!points.length}
+                                onClick={() => dispatch(areaActions.undoPoint())}
+                                color="grey"
+                            >
+                                <Undo sx={{ mr: 1 }} />
+                                Undo
+                            </Button>
+                            <Button
+                                disabled={!points.length}
+                                onClick={() => dispatch(areaActions.setPoints([]))}
+                                color="grey"
+                            >
+                                <DeleteSweep sx={{ mr: 1 }} />
+                                Clear
+                            </Button>
+                        </Box>
+                    ) : null}
                 </WidgetHeader>
                 <ScrollBox display={menuOpen || minimized ? "none" : "flex"}>
                     <Box p={1}>{area > 0 ? <>Area: {area.toFixed(3)} &#13217;</> : null}</Box>
