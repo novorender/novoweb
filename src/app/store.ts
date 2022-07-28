@@ -17,6 +17,7 @@ import { bimTrackReducer } from "features/bimTrack/bimTrackSlice";
 import { bimTrackApi } from "features/bimTrack/bimTrackApi";
 import { ditioReducer } from "features/ditio";
 import { ditioApi } from "features/ditio";
+import { heightProfileReducer } from "features/heightProfile";
 
 const rootReducer = combineReducers({
     explorer: explorerReducer,
@@ -29,6 +30,7 @@ const rootReducer = combineReducers({
     deviations: deviationsReducer,
     measure: measureReducer,
     bimCollab: bimCollabReducer,
+    heightProfile: heightProfileReducer,
     [bimCollabApi.reducerPath]: bimCollabApi.reducer,
     bimTrack: bimTrackReducer,
     [bimTrackApi.reducerPath]: bimTrackApi.reducer,

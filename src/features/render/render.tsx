@@ -97,6 +97,8 @@ import {
 import { xAxis, yAxis, axis, MAX_FLOAT } from "./consts";
 import { useHandleGridChanges } from "./useHandleGridChanges";
 import { useHandleCameraControls } from "./useHandleCameraControls";
+import { useHeightProfileMeasureObject } from "features/heightProfile/useHeightProfileMeasureObject";
+import { heightProfileActions } from "features/heightProfile";
 
 glMatrix.setMatrixArrayType(Array);
 
@@ -127,7 +129,6 @@ const MeasurementPoint = styled("circle", { shouldForwardProp: (prop) => prop !=
     ({ disabled, fill }) => css`
         pointer-events: ${disabled ? "none" : "all"};
         cursor: pointer;
-        stroke: none;
         fill: ${fill ?? "green"};
     `
 );
@@ -223,6 +224,7 @@ export function Render3D({ onInit }: Props) {
     const camY = useRef(vec3.create());
     const [size, setSize] = useState({ width: 0, height: 0 });
 
+    const heightProfileMeasureObject = useHeightProfileMeasureObject();
     const measureObjects = useMeasureObjects();
     const [pathMeasureObjects] = usePathMeasureObjects();
     const [svg, setSvg] = useState<null | SVGSVGElement>(null);
@@ -406,6 +408,19 @@ export function Render3D({ onInit }: Props) {
             });
         }
 
+        if (heightProfileMeasureObject) {
+            if (isMeasureObject(heightProfileMeasureObject)) {
+                renderMeasureObject(
+                    view,
+                    "rgba(0, 255, 38, 0.5)",
+                    "heightProfileMeasureObject",
+                    heightProfileMeasureObject
+                );
+            } else {
+                renderSingleMeasurePoint(view, heightProfileMeasureObject.pos, "heightProfileMeasureObject");
+            }
+        }
+
         measureObjects.forEach((obj) => {
             if (isMeasureObject(obj)) {
                 renderMeasureObject(view, "rgba(0, 191, 255, 0.5)", getMeasureObjectPathId(obj), obj);
@@ -476,6 +491,7 @@ export function Render3D({ onInit }: Props) {
         measure.duoMeasurementValues,
         pathMeasureObjects,
         drawSelectedPaths,
+        heightProfileMeasureObject,
     ]);
 
     useEffect(() => {
@@ -1276,6 +1292,10 @@ export function Render3D({ onInit }: Props) {
                 dispatch(followPathActions.setSelected([{ id: result.objectId, pos: result.position }]));
                 break;
             }
+            case Picker.HeightProfileEntity: {
+                dispatch(heightProfileActions.selectPoint({ id: result.objectId, pos: result.position }));
+                break;
+            }
         }
     };
 
@@ -1359,7 +1379,13 @@ export function Render3D({ onInit }: Props) {
 
         const useSvgCursor =
             e.buttons === 0 &&
-            [Picker.Measurement, Picker.OrthoPlane, Picker.FollowPathObject, Picker.ClippingPlane].includes(picker);
+            [
+                Picker.Measurement,
+                Picker.OrthoPlane,
+                Picker.FollowPathObject,
+                Picker.ClippingPlane,
+                Picker.HeightProfileEntity,
+            ].includes(picker);
 
         if (useSvgCursor) {
             const measurement = await rendering.current.measure(
@@ -1589,6 +1615,28 @@ export function Render3D({ onInit }: Props) {
                                     <AxisText id="brepTextXZ" />
                                     <AxisText id={`distanceText`} />
                                 </>
+                            ) : null}
+                            {heightProfileMeasureObject ? (
+                                isMeasureObject(heightProfileMeasureObject) ? (
+                                    <path
+                                        key={"heightProfileMeasureObject"}
+                                        id={"heightProfileMeasureObject"}
+                                        d=""
+                                        stroke="yellow"
+                                        strokeWidth={2}
+                                        fill="none"
+                                    />
+                                ) : (
+                                    <MeasurementPoint
+                                        key={"heightProfileMeasureObject"}
+                                        id={"heightProfileMeasureObject"}
+                                        r={5}
+                                        disabled={true}
+                                        fill="yellow"
+                                        stroke="black"
+                                        strokeWidth={2}
+                                    />
+                                )
                             ) : null}
                             {panoramas && showPanoramaMarkers
                                 ? panoramas.map((panorama, idx) => {
