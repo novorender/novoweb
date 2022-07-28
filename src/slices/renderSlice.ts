@@ -91,6 +91,7 @@ export enum Picker {
     FollowPathObject,
     ClippingPlane,
     OrthoPlane,
+    Area,
     HeightProfileEntity,
 }
 

@@ -71,7 +71,11 @@ export function Measure() {
                                 }
                                 label={<Box fontSize={14}>Force points</Box>}
                             />
-                            <Button onClick={() => dispatch(measureActions.clear())} color="grey" disabled={false}>
+                            <Button
+                                onClick={() => dispatch(measureActions.clear())}
+                                color="grey"
+                                disabled={!selected.length}
+                            >
                                 <DeleteSweep sx={{ mr: 1 }} />
                                 Clear
                             </Button>

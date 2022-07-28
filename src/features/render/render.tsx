@@ -70,6 +70,7 @@ import { ditioActions, selectMarkers, selectShowMarkers } from "features/ditio";
 import { useAppDispatch, useAppSelector } from "app/store";
 import { followPathActions, selectDrawSelected, usePathMeasureObjects } from "features/followPath";
 import { useMeasureObjects } from "features/measure";
+import { areaActions, selectAreaDrawPoints } from "features/area";
 
 import { useHighlighted, highlightActions, useDispatchHighlighted } from "contexts/highlighted";
 import { useHidden, useDispatchHidden } from "contexts/hidden";
@@ -97,6 +98,7 @@ import {
 import { xAxis, yAxis, axis, MAX_FLOAT } from "./consts";
 import { useHandleGridChanges } from "./useHandleGridChanges";
 import { useHandleCameraControls } from "./useHandleCameraControls";
+import { useHandleAreaPoints } from "features/area/useHandleAreaPoints";
 import { useHeightProfileMeasureObject } from "features/heightProfile/useHeightProfileMeasureObject";
 import { heightProfileActions } from "features/heightProfile";
 
@@ -151,6 +153,8 @@ const AxisText = styled((props: SVGProps<SVGTextElement>) => <text alignmentBase
     `
 );
 
+const measurementFillColor = "rgba(0, 191, 255, 0.5)";
+
 enum Status {
     Initial,
     Error,
@@ -204,6 +208,7 @@ export function Render3D({ onInit }: Props) {
     const ditioMarkers = useAppSelector(selectMarkers);
     const drawSelectedPaths = useAppSelector(selectDrawSelected);
     const picker = useAppSelector(selectPicker);
+    const areaPoints = useAppSelector(selectAreaDrawPoints);
     const dispatch = useAppDispatch();
 
     const rendering = useRef({
@@ -295,6 +300,11 @@ export function Render3D({ onInit }: Props) {
                     }
                 }
                 const path = svg.children.namedItem(pathName);
+
+                if (curve) {
+                    curve += " Z";
+                }
+
                 if (path) {
                     path.setAttribute("d", curve);
                 }
@@ -404,7 +414,7 @@ export function Render3D({ onInit }: Props) {
 
         if (drawSelectedPaths) {
             pathMeasureObjects.forEach((obj) => {
-                renderMeasureObject(view, "rgba(0, 191, 255, 0.5)", "fp_" + getMeasureObjectPathId(obj), obj);
+                renderMeasureObject(view, measurementFillColor, "fp_" + getMeasureObjectPathId(obj), obj);
             });
         }
 
@@ -423,7 +433,7 @@ export function Render3D({ onInit }: Props) {
 
         measureObjects.forEach((obj) => {
             if (isMeasureObject(obj)) {
-                renderMeasureObject(view, "rgba(0, 191, 255, 0.5)", getMeasureObjectPathId(obj), obj);
+                renderMeasureObject(view, measurementFillColor, getMeasureObjectPathId(obj), obj);
             } else {
                 renderSingleMeasurePoint(view, obj.pos, getMeasureObjectPathId(obj));
             }
@@ -441,6 +451,7 @@ export function Render3D({ onInit }: Props) {
             measure.duoMeasurementValues?.pointA && measure.duoMeasurementValues?.pointB
                 ? [measure.duoMeasurementValues.pointA, measure.duoMeasurementValues.pointB]
                 : undefined;
+
         if (measurePoints) {
             let pts =
                 measurePoints[0][1] < measurePoints[1][1]
@@ -480,7 +491,12 @@ export function Render3D({ onInit }: Props) {
                 textName: "brepTextXZ",
                 distance: planarDiff,
             });
-        } else {
+        }
+
+        if (areaPoints.length) {
+            renderMeasurePoints(view, areaPoints, "area-path", "area-pt");
+            // TODO: draw
+            // id / name === area-pt_${idx}
         }
     }, [
         view,
@@ -491,6 +507,7 @@ export function Render3D({ onInit }: Props) {
         measure.duoMeasurementValues,
         pathMeasureObjects,
         drawSelectedPaths,
+        areaPoints,
         heightProfileMeasureObject,
     ]);
 
@@ -589,7 +606,7 @@ export function Render3D({ onInit }: Props) {
                 g.innerHTML = "";
                 return;
             }
-            const normal = measurement?.normalVS;
+            const normal = measurement?.normalVS?.some((v) => Number.isNaN(v)) ? undefined : measurement?.normalVS;
             if (normal) {
                 const { width, height } = size;
                 const { camera } = view;
@@ -1144,6 +1161,7 @@ export function Render3D({ onInit }: Props) {
     useHandleGridChanges();
     useHandlePanoramaChanges();
     useHandleCameraControls();
+    useHandleAreaPoints();
 
     useEffect(() => {
         handleUrlBookmark();
@@ -1186,6 +1204,7 @@ export function Render3D({ onInit }: Props) {
             e.nativeEvent.offsetX * devicePixelRatio,
             e.nativeEvent.offsetY * devicePixelRatio
         );
+
         if (deviation.mode !== "off" && cameraState.type === CameraType.Orthographic) {
             const pickSize = isTouchPointer.current ? 16 : 0;
             const deviation = await pickDeviationArea({
@@ -1292,10 +1311,16 @@ export function Render3D({ onInit }: Props) {
                 dispatch(followPathActions.setSelected([{ id: result.objectId, pos: result.position }]));
                 break;
             }
+            case Picker.Area: {
+                dispatch(areaActions.addPoint([result.position, normal ?? [0, 0, 0]]));
+                break;
+            }
             case Picker.HeightProfileEntity: {
                 dispatch(heightProfileActions.selectPoint({ id: result.objectId, pos: result.position }));
                 break;
             }
+            default:
+                console.warn("Picker not handled", picker);
         }
     };
 
@@ -1384,6 +1409,7 @@ export function Render3D({ onInit }: Props) {
                 Picker.OrthoPlane,
                 Picker.FollowPathObject,
                 Picker.ClippingPlane,
+                Picker.Area,
                 Picker.HeightProfileEntity,
             ].includes(picker);
 
@@ -1532,6 +1558,27 @@ export function Render3D({ onInit }: Props) {
                     </Menu>
                     {canvas !== null && (
                         <Svg width={canvas.width} height={canvas.height} ref={setSvg}>
+                            {areaPoints.length ? (
+                                <path
+                                    name={`area-path`}
+                                    id={`area-path`}
+                                    fill={measurementFillColor}
+                                    stroke="yellow"
+                                    strokeWidth={1}
+                                />
+                            ) : null}
+                            {areaPoints.map((pt, idx, array) => (
+                                <MeasurementPoint
+                                    disabled
+                                    key={idx + pt.toString()}
+                                    name={`area-pt_${idx}`}
+                                    id={`area-pt_${idx}`}
+                                    stroke="black"
+                                    fill={idx === 0 ? "green" : idx === array.length - 1 ? "blue" : "white"}
+                                    strokeWidth={2}
+                                    r={5}
+                                />
+                            ))}
                             {drawSelectedPaths
                                 ? pathMeasureObjects.map((obj) => (
                                       <path
