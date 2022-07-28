@@ -4,8 +4,9 @@ import { vec3 } from "gl-matrix";
 
 import { useExplorerGlobals } from "contexts/explorerGlobals";
 import { useAppDispatch, useAppSelector } from "app/store";
-import { heightProfileActions, selectSelectedPoint } from "./heightProfileSlice";
 import { AsyncStatus } from "types/misc";
+
+import { heightProfileActions, selectSelectedPoint } from "./heightProfileSlice";
 
 type ExtendedMeasureObject = MeasureObject & {
     pos: vec3;

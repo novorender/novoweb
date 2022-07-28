@@ -71,6 +71,9 @@ import { useAppDispatch, useAppSelector } from "app/store";
 import { followPathActions, selectDrawSelected, usePathMeasureObjects } from "features/followPath";
 import { useMeasureObjects } from "features/measure";
 import { areaActions, selectAreaDrawPoints } from "features/area";
+import { useHandleAreaPoints } from "features/area";
+import { useHeightProfileMeasureObject } from "features/heightProfile";
+import { heightProfileActions } from "features/heightProfile";
 
 import { useHighlighted, highlightActions, useDispatchHighlighted } from "contexts/highlighted";
 import { useHidden, useDispatchHidden } from "contexts/hidden";
@@ -98,9 +101,6 @@ import {
 import { xAxis, yAxis, axis, MAX_FLOAT } from "./consts";
 import { useHandleGridChanges } from "./useHandleGridChanges";
 import { useHandleCameraControls } from "./useHandleCameraControls";
-import { useHandleAreaPoints } from "features/area/useHandleAreaPoints";
-import { useHeightProfileMeasureObject } from "features/heightProfile/useHeightProfileMeasureObject";
-import { heightProfileActions } from "features/heightProfile";
 
 glMatrix.setMatrixArrayType(Array);
 
