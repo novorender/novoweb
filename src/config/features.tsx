@@ -23,6 +23,7 @@ import {
     Share,
     Star,
     Straighten,
+    Timeline,
     Undo,
     Visibility,
     VisibilityOff,
@@ -42,6 +43,13 @@ export enum FeatureType {
 }
 
 export const featuresConfig = {
+    heightProfile: {
+        key: "heightProfile",
+        name: "Ht. profile",
+        Icon: Timeline,
+        type: FeatureType.Widget,
+        defaultLocked: false,
+    },
     user: {
         key: "user",
         name: "User",
