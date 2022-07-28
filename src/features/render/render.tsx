@@ -495,8 +495,6 @@ export function Render3D({ onInit }: Props) {
 
         if (areaPoints.length) {
             renderMeasurePoints(view, areaPoints, "area-path", "area-pt");
-            // TODO: draw
-            // id / name === area-pt_${idx}
         }
     }, [
         view,

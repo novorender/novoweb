@@ -4,7 +4,6 @@ import { vec3 } from "gl-matrix";
 import { RootState } from "app/store";
 
 const initialState = {
-    // TODO(OLA)
     points: [] as [point: vec3, normal: vec3][],
     drawPoints: [] as vec3[],
     area: -1,
