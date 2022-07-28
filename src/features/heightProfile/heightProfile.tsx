@@ -20,6 +20,8 @@ import { heightProfileActions, selectHeightProfileMeasureEntity, selectSelectedP
 
 const maxObjects = 50;
 
+// wait for measure api to allow cylinders etc as entity
+
 export function HeightProfile() {
     const theme = useTheme();
     const [menuOpen, toggleMenu] = useToggle();
