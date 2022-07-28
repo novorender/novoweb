@@ -314,12 +314,7 @@ export type WidgetKey = {
 
 export type Widget = Config[WidgetKey];
 
-// TODO(OLA)
-export const defaultEnabledWidgets = [
-    featuresConfig.user.key,
-    featuresConfig.heightProfile.key,
-    featuresConfig.area.key,
-] as WidgetKey[];
+export const defaultEnabledWidgets = [featuresConfig.user.key] as WidgetKey[];
 export const allWidgets = Object.values(featuresConfig)
     .filter((widget) => [FeatureType.AdminWidget, FeatureType.Widget].includes(widget.type))
     .map((widget) => widget.key as WidgetKey);

@@ -1,50 +1,26 @@
 import { useEffect, useState } from "react";
 import { MeasureError } from "@novorender/measure-api";
-import { Box, Button, IconButton, Modal, Typography, useTheme } from "@mui/material";
+import { Box, Button, FormControlLabel, IconButton, Modal, Typography, useTheme } from "@mui/material";
 import { ParentSizeModern } from "@visx/responsive";
-import { Close } from "@mui/icons-material";
+import { Close, DeleteSweep, Timeline } from "@mui/icons-material";
 
-import { useAppSelector } from "app/store";
-import { LinearProgress, LogoSpeedDial, ScrollBox, WidgetContainer, WidgetHeader } from "components";
+import { useAppDispatch, useAppSelector } from "app/store";
+import { IosSwitch, LinearProgress, LogoSpeedDial, ScrollBox, WidgetContainer, WidgetHeader } from "components";
 import { useToggle } from "hooks/useToggle";
 import { featuresConfig } from "config/features";
 import { WidgetList } from "features/widgetList";
 import { selectMinimized, selectMaximized } from "slices/explorerSlice";
 import { useExplorerGlobals } from "contexts/explorerGlobals";
-import { AsyncState, AsyncStatus } from "types/misc";
-import { useHighlighted } from "contexts/highlighted";
+import { AsyncState, AsyncStatus, hasFinished } from "types/misc";
+import { highlightActions, useDispatchHighlighted, useHighlighted } from "contexts/highlighted";
+import { Picker, renderActions, selectPicker } from "slices/renderSlice";
 
 import { HeightProfileChart } from "./heightProfileChart";
+import { heightProfileActions, selectHeightProfileMeasureEntity, selectSelectedPoint } from "./heightProfileSlice";
 
-// const PTS = [
-//     [0, 0],
-//     [5, 0],
-//     [9, 0.2],
-//     [27, 5],
-//     [39, 4.9],
-// ] as [number, number][];
+const maxObjects = 50;
 
-// const PTS = [
-//     [0, 10],
-//     [130, 10.3534],
-//     [194, 10.2],
-//     [321, 10.9],
-//     [600, 11.1],
-//     [680, 10.953],
-//     [821, 10.3215],
-//     [999, -10.121],
-// ] as [number, number][];
-
-// const PTS = [
-//     [0, 0],
-//     [130, 0.3534],
-//     [194, 0.2],
-//     [321, 0.9],
-//     [600, 1.1],
-//     [680, 0.953],
-//     [821, 0.3215],
-//     [999, -0.121],
-// ] as [number, number][];
+// wait for measure api to allow cylinders etc as entity
 
 export function HeightProfile() {
     const theme = useTheme();
@@ -55,41 +31,156 @@ export function HeightProfile() {
         state: { measureScene },
     } = useExplorerGlobals(true);
 
+    const selectingParametric = useAppSelector(selectPicker) === Picker.HeightProfileEntity;
+    const selectedPoint = useAppSelector(selectSelectedPoint);
+    const selectedEntity = useAppSelector(selectHeightProfileMeasureEntity);
     const highlighted = useHighlighted().idArr;
+    const dispatchHighlighted = useDispatchHighlighted();
+    const dispatch = useAppDispatch();
+
     const [modalOpen, toggleModal] = useToggle();
     const [pts, setPts] = useState<AsyncState<[number, number][]>>({ status: AsyncStatus.Initial });
 
     useEffect(() => {
-        setPts({ status: AsyncStatus.Initial });
-    }, [highlighted]);
+        return () => {
+            dispatch(renderActions.stopPicker(Picker.HeightProfileEntity));
+            dispatch(heightProfileActions.selectPoint(undefined));
+        };
+    }, [dispatch]);
 
-    const handleLoadPts = async () => {
-        setPts({ status: AsyncStatus.Loading });
-
-        try {
-            const profile = await measureScene.getProfileViewFromMultiSelect(highlighted);
-            console.log(highlighted, profile);
-
-            // return setPts({ status: AsyncStatus.Success, data: PTS });
-
-            if (!profile) {
-                throw new Error("No profile");
-            } else {
-                setPts({ status: AsyncStatus.Success, data: profile.profilePoints as [number, number][] });
-            }
-        } catch (e) {
-            // TODO(OLA): handle
-            if (e instanceof MeasureError) {
-                console.log(e.message);
-            }
-            setPts({ status: AsyncStatus.Error, msg: "No height profile available for selected items" });
+    useEffect(() => {
+        if (selectingParametric) {
+            fromSelectedEntity();
+        } else {
+            fromMultiSelect();
         }
-    };
+
+        async function fromMultiSelect() {
+            if (!highlighted.length) {
+                setPts({ status: AsyncStatus.Initial });
+                return;
+            } else if (highlighted.length > maxObjects) {
+                setPts({
+                    status: AsyncStatus.Error,
+                    msg: `Select fewer than ${maxObjects} objects to load height profile.`,
+                });
+                return;
+            }
+
+            setPts({ status: AsyncStatus.Loading });
+
+            try {
+                const profile = await measureScene.getProfileViewFromMultiSelect(highlighted);
+
+                if (!profile) {
+                    throw new Error("No profile");
+                } else {
+                    setPts({ status: AsyncStatus.Success, data: profile.profilePoints as [number, number][] });
+                }
+            } catch (e) {
+                if (e instanceof MeasureError) {
+                    setPts({
+                        status: AsyncStatus.Error,
+                        msg: `The selected ${
+                            highlighted.length > 1 ? "objects are" : "object is"
+                        } too complex. Use parametric selection to pick the right entity.`,
+                    });
+                    return;
+                }
+                setPts({
+                    status: AsyncStatus.Error,
+                    msg: `No height profile available for the selected object${highlighted.length > 1 ? "s" : ""}.`,
+                });
+            }
+        }
+
+        async function fromSelectedEntity() {
+            if (!selectedPoint) {
+                setPts({ status: AsyncStatus.Initial });
+                return;
+            } else if (!hasFinished(selectedEntity)) {
+                setPts({ status: AsyncStatus.Loading });
+                return;
+            } else if (
+                selectedEntity.status === AsyncStatus.Error ||
+                (selectedEntity.status === AsyncStatus.Success &&
+                    (!selectedEntity.data || selectedEntity.data?.kind === "vertex"))
+            ) {
+                setPts({
+                    status: AsyncStatus.Error,
+                    msg: `No valid parametric entity found at selected point.`,
+                });
+                return;
+            }
+
+            setPts({ status: AsyncStatus.Loading });
+
+            try {
+                const profile = await measureScene.getProfileViewFromLinestrip(selectedEntity.data!);
+
+                if (!profile) {
+                    throw new Error("No profile");
+                } else {
+                    setPts({ status: AsyncStatus.Success, data: profile.profilePoints as [number, number][] });
+                }
+            } catch (e) {
+                setPts({
+                    status: AsyncStatus.Error,
+                    msg: `No height profile available for the selected entity.`,
+                });
+            }
+        }
+    }, [highlighted, measureScene, selectingParametric, selectedEntity, selectedPoint]);
 
     return (
         <>
             <WidgetContainer minimized={minimized} maximized={maximized}>
-                <WidgetHeader widget={{ ...featuresConfig.heightProfile, name: "Height profile" as any }} />
+                <WidgetHeader widget={{ ...featuresConfig.heightProfile, name: "Height profile" as any }}>
+                    {!menuOpen && !minimized ? (
+                        <Box mx={-1} display="flex" justifyContent="space-between">
+                            <Button
+                                color="grey"
+                                disabled={selectingParametric ? !selectedPoint : !highlighted.length}
+                                onClick={() =>
+                                    selectingParametric
+                                        ? dispatch(heightProfileActions.selectPoint(undefined))
+                                        : dispatchHighlighted(highlightActions.setIds([]))
+                                }
+                            >
+                                <DeleteSweep sx={{ mr: 1 }} />
+                                Clear
+                            </Button>
+                            <FormControlLabel
+                                control={
+                                    <IosSwitch
+                                        size="medium"
+                                        color="primary"
+                                        checked={selectingParametric}
+                                        onChange={() => {
+                                            if (selectingParametric) {
+                                                dispatch(heightProfileActions.selectPoint(undefined));
+                                            }
+                                            dispatch(
+                                                renderActions.setPicker(
+                                                    selectingParametric ? Picker.Object : Picker.HeightProfileEntity
+                                                )
+                                            );
+                                        }}
+                                    />
+                                }
+                                label={<Box fontSize={14}>Parametric</Box>}
+                            />
+                            <Button
+                                disabled={Boolean(pts.status !== AsyncStatus.Success || !pts.data.length)}
+                                color="grey"
+                                onClick={toggleModal}
+                            >
+                                <Timeline sx={{ mr: 1 }} />
+                                Show
+                            </Button>
+                        </Box>
+                    ) : null}
+                </WidgetHeader>
                 {pts.status === AsyncStatus.Loading ? (
                     <Box position="relative">
                         <LinearProgress />
@@ -146,18 +237,7 @@ export function HeightProfile() {
                     </Modal>
                 ) : null}
                 <ScrollBox display={menuOpen || minimized ? "none" : "flex"} flexDirection="column" p={1}>
-                    <Button
-                        disabled={!highlighted.length || highlighted.length > 20 || pts.status === AsyncStatus.Loading}
-                        onClick={handleLoadPts}
-                    >
-                        Load profile
-                    </Button>
-                    <Button
-                        disabled={Boolean(pts.status !== AsyncStatus.Success || !pts.data.length)}
-                        onClick={toggleModal}
-                    >
-                        Show profile
-                    </Button>
+                    {pts.status === AsyncStatus.Error ? pts.msg : ""}
                 </ScrollBox>
                 <WidgetList
                     display={menuOpen ? "block" : "none"}

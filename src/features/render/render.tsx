@@ -99,6 +99,8 @@ import { xAxis, yAxis, axis, MAX_FLOAT } from "./consts";
 import { useHandleGridChanges } from "./useHandleGridChanges";
 import { useHandleCameraControls } from "./useHandleCameraControls";
 import { useHandleAreaPoints } from "features/area/useHandleAreaPoints";
+import { useHeightProfileMeasureObject } from "features/heightProfile/useHeightProfileMeasureObject";
+import { heightProfileActions } from "features/heightProfile";
 
 glMatrix.setMatrixArrayType(Array);
 
@@ -227,6 +229,7 @@ export function Render3D({ onInit }: Props) {
     const camY = useRef(vec3.create());
     const [size, setSize] = useState({ width: 0, height: 0 });
 
+    const heightProfileMeasureObject = useHeightProfileMeasureObject();
     const measureObjects = useMeasureObjects();
     const [pathMeasureObjects] = usePathMeasureObjects();
     const [svg, setSvg] = useState<null | SVGSVGElement>(null);
@@ -415,6 +418,19 @@ export function Render3D({ onInit }: Props) {
             });
         }
 
+        if (heightProfileMeasureObject) {
+            if (isMeasureObject(heightProfileMeasureObject)) {
+                renderMeasureObject(
+                    view,
+                    "rgba(0, 255, 38, 0.5)",
+                    "heightProfileMeasureObject",
+                    heightProfileMeasureObject
+                );
+            } else {
+                renderSingleMeasurePoint(view, heightProfileMeasureObject.pos, "heightProfileMeasureObject");
+            }
+        }
+
         measureObjects.forEach((obj) => {
             if (isMeasureObject(obj)) {
                 renderMeasureObject(view, measurementFillColor, getMeasureObjectPathId(obj), obj);
@@ -492,6 +508,7 @@ export function Render3D({ onInit }: Props) {
         pathMeasureObjects,
         drawSelectedPaths,
         areaPoints,
+        heightProfileMeasureObject,
     ]);
 
     useEffect(() => {
@@ -1298,6 +1315,10 @@ export function Render3D({ onInit }: Props) {
                 dispatch(areaActions.addPoint([result.position, normal ?? [0, 0, 0]]));
                 break;
             }
+            case Picker.HeightProfileEntity: {
+                dispatch(heightProfileActions.selectPoint({ id: result.objectId, pos: result.position }));
+                break;
+            }
             default:
                 console.warn("Picker not handled", picker);
         }
@@ -1389,6 +1410,7 @@ export function Render3D({ onInit }: Props) {
                 Picker.FollowPathObject,
                 Picker.ClippingPlane,
                 Picker.Area,
+                Picker.HeightProfileEntity,
             ].includes(picker);
 
         if (useSvgCursor) {
@@ -1640,6 +1662,28 @@ export function Render3D({ onInit }: Props) {
                                     <AxisText id="brepTextXZ" />
                                     <AxisText id={`distanceText`} />
                                 </>
+                            ) : null}
+                            {heightProfileMeasureObject ? (
+                                isMeasureObject(heightProfileMeasureObject) ? (
+                                    <path
+                                        key={"heightProfileMeasureObject"}
+                                        id={"heightProfileMeasureObject"}
+                                        d=""
+                                        stroke="yellow"
+                                        strokeWidth={2}
+                                        fill="none"
+                                    />
+                                ) : (
+                                    <MeasurementPoint
+                                        key={"heightProfileMeasureObject"}
+                                        id={"heightProfileMeasureObject"}
+                                        r={5}
+                                        disabled={true}
+                                        fill="yellow"
+                                        stroke="black"
+                                        strokeWidth={2}
+                                    />
+                                )
                             ) : null}
                             {panoramas && showPanoramaMarkers
                                 ? panoramas.map((panorama, idx) => {
