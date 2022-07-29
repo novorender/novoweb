@@ -52,6 +52,7 @@ export async function getAuthHeader(): Promise<AuthenticationHeader> {
                             })
                             .catch(() => {
                                 store.dispatch(authActions.setMsalInteractionRequired(true));
+                                return { accessToken: "" };
                             });
                     } else {
                         throw e;
