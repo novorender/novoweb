@@ -12,7 +12,17 @@ import {
 } from "@novorender/webgl-api";
 import { MeasureObject } from "@novorender/measure-api";
 
-import { Box, Button, Paper, Typography, useTheme, styled, Menu, MenuItem, popoverClasses } from "@mui/material";
+import {
+    Box,
+    Paper,
+    Typography,
+    useTheme,
+    styled,
+    Menu,
+    MenuItem,
+    popoverClasses,
+    CircularProgress,
+} from "@mui/material";
 import { css } from "@mui/styled-engine";
 import { CameraAlt } from "@mui/icons-material";
 
@@ -28,11 +38,9 @@ import {
 } from "features/panoramas";
 import { Loading } from "components";
 
-import { api, dataApi, measureApi, msalInstance } from "app";
-import { StorageKey } from "config/storage";
+import { api, dataApi, measureApi } from "app";
 import { useMountedState } from "hooks/useMountedState";
 import { useSceneId } from "hooks/useSceneId";
-import { deleteFromStorage } from "utils/storage";
 import { enabledFeaturesToFeatureKeys, getEnabledFeatures } from "utils/misc";
 
 import {
@@ -61,7 +69,6 @@ import {
     selectPicker,
     Picker,
 } from "slices/renderSlice";
-import { authActions, selectMsalAccount, selectUser } from "slices/authSlice";
 import { explorerActions, selectUrlBookmarkId } from "slices/explorerSlice";
 import { selectDeviations } from "features/deviations";
 import { bookmarksActions, selectBookmarks, useSelectBookmark } from "features/bookmarks";
@@ -157,7 +164,9 @@ const measurementFillColor = "rgba(0, 191, 255, 0.5)";
 
 enum Status {
     Initial,
-    Error,
+    NoSceneError,
+    AuthError,
+    ServerError,
 }
 
 type Props = {
@@ -174,7 +183,7 @@ export function Render3D({ onInit }: Props) {
     const visibleObjects = useVisible();
     const { state: customGroups, dispatch: dispatchCustomGroups } = useCustomGroups();
     const {
-        state: { view, scene, canvas, preloadedScene },
+        state: { view, scene, canvas },
         dispatch: dispatchGlobals,
     } = useExplorerGlobals();
     const selectBookmark = useSelectBookmark();
@@ -651,7 +660,7 @@ export function Render3D({ onInit }: Props) {
             previousId.current = id;
 
             try {
-                const sceneResponse = preloadedScene ?? (await dataApi.loadScene(id));
+                const sceneResponse = await dataApi.loadScene(id);
 
                 if ("error" in sceneResponse) {
                     throw sceneResponse;
@@ -757,13 +766,23 @@ export function Render3D({ onInit }: Props) {
                     explorerGlobalsActions.update({
                         view: _view,
                         scene: _view.scene,
-                        preloadedScene: undefined,
                         measureScene,
                     })
                 );
             } catch (e) {
-                console.warn(e);
-                setStatus(Status.Error);
+                if (e && typeof e === "object" && "error" in e) {
+                    const error = (e as { error: string }).error;
+
+                    if (error === "Not authorized") {
+                        setStatus(Status.AuthError);
+                    } else if (error === "Scene not found") {
+                        setStatus(Status.NoSceneError);
+                    } else {
+                        setStatus(Status.ServerError);
+                    }
+                } else {
+                    setStatus(Status.ServerError);
+                }
             }
         }
     }, [
@@ -780,7 +799,6 @@ export function Render3D({ onInit }: Props) {
         dispatchHighlighted,
         dispatchVisible,
         setSize,
-        preloadedScene,
     ]);
 
     useEffect(() => {
@@ -1513,8 +1531,8 @@ export function Render3D({ onInit }: Props) {
 
     return (
         <Box position="relative" width="100%" height="100%" sx={{ userSelect: "none" }}>
-            {status === Status.Error ? (
-                <NoScene id={id} />
+            {isSceneError(status) ? (
+                <SceneError error={status} id={id} />
             ) : (
                 <>
                     {advancedSettings.showPerformance && view && canvas ? <PerformanceStats /> : null}
@@ -1750,27 +1768,20 @@ export function Render3D({ onInit }: Props) {
     );
 }
 
-function NoScene({ id }: { id: string }) {
+function SceneError({ id, error }: { id: string; error: Exclude<Status, Status.Initial> }) {
     const theme = useTheme();
-    const dispatch = useAppDispatch();
-    const msalAccount = useAppSelector(selectMsalAccount);
-    const user = useAppSelector(selectUser);
     const loginUrl = `${window.location.origin}/login/${id}${window.location.search}`;
 
-    const logOut = () => {
-        deleteFromStorage(StorageKey.NovoToken);
-        deleteFromStorage(StorageKey.MsalActiveAccount);
-
-        if (msalAccount) {
-            msalInstance.logoutRedirect({
-                account: msalAccount,
-                postLogoutRedirectUri: loginUrl,
-            });
-        } else {
-            dispatch(authActions.logout());
-            window.location.replace(loginUrl);
-        }
-    };
+    if (error === Status.AuthError) {
+        window.location.replace(
+            loginUrl +
+                (window.location.search
+                    ? window.location.search.includes("force-login=true")
+                        ? ""
+                        : "&force-login=true"
+                    : "?force-login=true")
+        );
+    }
 
     return (
         <Box
@@ -1780,25 +1791,42 @@ function NoScene({ id }: { id: string }) {
             alignItems="center"
             height={"100vh"}
         >
-            <Paper>
-                <Box minWidth={320} p={2}>
-                    <Typography paragraph variant="h4" component="h1" align="center">
-                        Unable to load scene
-                    </Typography>
-                    <Typography paragraph>
-                        The scene with id <em>{id}</em> is not available.
-                    </Typography>
-                    <Box textAlign="center">
-                        <Button onClick={logOut} variant="contained" color="secondary">
-                            Log in {user ? "with a different account" : ""}
-                        </Button>
+            {error === Status.AuthError ? (
+                <CircularProgress />
+            ) : (
+                <Paper>
+                    <Box minWidth={320} p={2}>
+                        <Typography paragraph variant="h4" component="h1" align="center">
+                            {error === Status.ServerError
+                                ? "An error occured"
+                                : error === Status.NoSceneError
+                                ? `Scene not found`
+                                : "Unable to load scene"}
+                        </Typography>
+                        <Typography paragraph>
+                            {error === Status.ServerError ? (
+                                "Failed to download the scene. Please try again later."
+                            ) : error === Status.NoSceneError ? (
+                                <>
+                                    The scene with id <em>{id}</em> does not exist.
+                                </>
+                            ) : (
+                                <>
+                                    You do not have access to the scene <em>{id}</em>.
+                                </>
+                            )}
+                        </Typography>
                     </Box>
-                </Box>
-            </Paper>
+                </Paper>
+            )}
         </Box>
     );
 }
 
 function getMeasureObjectPathId(obj: { id: number; pos: vec3 }): string {
     return obj.id + vec3.str(obj.pos);
+}
+
+function isSceneError(status: Status): status is Exclude<Status, Status.Initial> {
+    return [Status.AuthError, Status.NoSceneError, Status.ServerError].includes(status);
 }
