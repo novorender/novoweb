@@ -45,12 +45,12 @@ export function HeightProfileChart({
     const innerWidth = Math.max(outerWidth - margin.left - margin.right, 0);
     const innerHeight = Math.max(outerHeight - margin.top - margin.bottom, 0);
 
-    const profiles = useMemo(() => pts.map(getX), [pts]);
+    const lengths = useMemo(() => pts.map(getX), [pts]);
     const heights = useMemo(() => pts.map(getY), [pts]);
     const yMin = min(heights) ?? 0;
     const yMax = max(heights) ?? 0;
-    const xMin = min(profiles) ?? 0;
-    const xMax = max(profiles) ?? 0;
+    const xMin = min(lengths) ?? 0;
+    const xMax = max(lengths) ?? 0;
 
     const [xScale, yScale] = useMemo(() => {
         const _xScale = scaleLinear<number>({
@@ -92,7 +92,7 @@ export function HeightProfileChart({
                 x0 = xMax!;
             }
 
-            const index = bisectLeft(profiles, x0, 1);
+            const index = bisectLeft(lengths, x0, 1);
             const pt0 = pts[index - 1];
             const pt1 = pts[index];
 
@@ -112,7 +112,7 @@ export function HeightProfileChart({
                 tooltipTop: yScale(y),
             });
         },
-        [showTooltip, yScale, xScale, profiles, pts, xMin, xMax]
+        [showTooltip, yScale, xScale, lengths, pts, xMin, xMax]
     );
 
     return (
@@ -279,7 +279,7 @@ export function HeightProfileChart({
                             padding: theme.spacing(1),
                         }}
                     >
-                        <Typography>Profile: {tooltipData.x.toFixed(3)}</Typography>
+                        <Typography>Length: {tooltipData.x.toFixed(3)}</Typography>
                         <Typography>Elevation: {tooltipData.y.toFixed(3)} m</Typography>
                     </TooltipWithBounds>
                 </div>
