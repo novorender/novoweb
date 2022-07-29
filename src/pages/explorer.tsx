@@ -25,6 +25,7 @@ import { CustomGroupsProvider } from "contexts/customGroups";
 import { HighlightedProvider } from "contexts/highlighted";
 import { VisibleProvider } from "contexts/visible";
 import { explorerGlobalsActions, ExplorerGlobalsProvider, useExplorerGlobals } from "contexts/explorerGlobals";
+import { MsalInteraction } from "features/msalInteraction";
 
 export function Explorer() {
     return (
@@ -106,6 +107,7 @@ function ExplorerBase() {
             <Render3D onInit={handleInit} />
             {view && scene && !disableHud ? <Hud /> : null}
             <Consent />
+            <MsalInteraction />
         </>
     );
 }

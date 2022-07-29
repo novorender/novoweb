@@ -34,6 +34,7 @@ export function Login() {
     const handleAdRedirect = async () => {
         setLoadingTenant(true);
         deleteFromStorage(StorageKey.NovoToken);
+        deleteFromStorage(StorageKey.MsalActiveAccount);
         const tenant = await fetch(`${dataServerBaseUrl}/scenes/${sceneId}`)
             .then((res) => res.json())
             .then((res) => ("tenant" in res ? res.tenant : undefined))
@@ -43,7 +44,7 @@ export function Login() {
             .loginRedirect({
                 ...loginRequest,
                 authority: tenant ? `https://login.microsoftonline.com/${tenant}` : loginRequest.authority,
-                redirectStartPage: window.location.href.replace("/login", ""),
+                redirectStartPage: window.location.href.replace("/login", "").replace(/(\?|&)force-login=[\w]*/g, ""),
                 prompt: "select_account",
             })
             .catch((e) => {
@@ -80,11 +81,14 @@ export function Login() {
                 StorageKey.NovoToken,
                 JSON.stringify({ token: res.token, expiry: Date.now() + 1000 * 60 * 60 * 24 })
             );
-            dispatch(authActions.login({ accessToken: res.token, user: res.user }));
-            history.replace(history.location.pathname.replace("login/", "") + window.location.search);
+            dispatch(authActions.login({ user: res.user, accessToken: res.token }));
+            history.replace(
+                history.location.pathname.replace("login/", "") +
+                    window.location.search.replace(/(\?|&)force-login=[\w]*/g, "")
+            );
+        } else {
+            setLoadingLogin(false);
         }
-
-        setLoadingLogin(false);
     };
 
     return (
