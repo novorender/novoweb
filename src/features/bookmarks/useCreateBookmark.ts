@@ -14,18 +14,16 @@ import {
     selectMainObject,
     selectSelectionBasketMode,
 } from "slices/renderSlice";
-import { selectCurrentCenter, selectCurrentPath, selectProfile } from "features/followPath";
 import { selectMeasure } from "features/measure";
-import { AsyncStatus } from "types/misc";
+import { selectFollowPath } from "features/followPath";
+// import { AsyncStatus } from "types/misc";
 
 export function useCreateBookmark() {
     const measurement = useAppSelector(selectMeasure);
     const defaultVisibility = useAppSelector(selectDefaultVisibility);
     const mainObject = useAppSelector(selectMainObject);
     const selectionBasketMode = useAppSelector(selectSelectionBasketMode);
-    const currentPath = useAppSelector(selectCurrentPath);
-    const currentPathProfile = useAppSelector(selectProfile);
-    const currentCenter = useAppSelector(selectCurrentCenter);
+    const followPath = useAppSelector(selectFollowPath);
 
     const {
         state: { view },
@@ -70,14 +68,20 @@ export function useCreateBookmark() {
                 ids: hidden.current.idArr,
             });
 
-        const followPath: Bookmark["followPath"] =
-            currentPath.status === AsyncStatus.Success && currentPathProfile
-                ? {
-                      id: currentPath.data.id,
-                      profile: Number(currentPathProfile),
-                      currentCenter: currentCenter,
-                  }
-                : undefined;
+        const fpBase = {
+            profile: Number(followPath.profile),
+            currentCenter: followPath.currentCenter,
+        };
+
+        const fp: Bookmark["followPath"] = followPath.selectedIds.length
+            ? {
+                  ...fpBase,
+                  ids: followPath.selectedIds,
+              }
+            : {
+                  ...fpBase,
+                  parametric: followPath.selectedPositions,
+              };
 
         const base = {
             img,
@@ -85,8 +89,8 @@ export function useCreateBookmark() {
             selectedOnly,
             clippingVolume,
             selectionBasket,
-            followPath,
             defaultVisibility,
+            followPath: fp,
             clippingPlanes: {
                 ...clippingPlanes,
                 bounds: {

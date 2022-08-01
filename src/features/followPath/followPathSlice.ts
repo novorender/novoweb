@@ -3,6 +3,7 @@ import { vec3 } from "gl-matrix";
 
 import { RootState } from "app/store";
 import { AsyncState, AsyncStatus } from "types/misc";
+import { ObjectId } from "@novorender/webgl-api";
 
 export type LandXmlPath = {
     id: number;
@@ -14,25 +15,8 @@ export type ParametricPath = {
     pos: vec3;
 };
 
-export type Nurbs = {
-    kind: "nurbs";
-    order: number;
-    knots: number[];
-    controlPoints: [number, number, number][];
-};
-
-export type Brep = {
-    units: string;
-    vertices: [number, number, number][];
-    instances: { geometries: number }[];
-    geometries: { compoundCurve: number[] }[];
-    curveSegments: { parameterBounds: [number, number]; curve3D: number }[];
-    curves3D: Nurbs[];
-};
-
 const initialState = {
     paths: { status: AsyncStatus.Initial } as AsyncState<LandXmlPath[]>,
-    currentPath: { status: AsyncStatus.Initial } as AsyncState<{ id: number; nurbs: Nurbs }>,
     currentCenter: undefined as undefined | [number, number, number],
     profile: "",
     step: "1",
@@ -45,8 +29,9 @@ const initialState = {
     clipping: 0.1,
     lastViewedRouterPath: "/",
     goToRouterPath: "",
-    selected: [] as ParametricPath[],
-    drawSelected: true,
+    selectedPositions: [] as ParametricPath[],
+    drawSelectedPositions: true,
+    selectedIds: [] as ObjectId[],
     resetPositionOnInit: false,
 };
 
@@ -58,9 +43,6 @@ export const followPathSlice = createSlice({
     reducers: {
         setPaths: (state, action: PayloadAction<State["paths"]>) => {
             state.paths = action.payload;
-        },
-        setCurrentPath: (state, action: PayloadAction<State["currentPath"]>) => {
-            state.currentPath = action.payload;
         },
         setCurrentCenter: (state, action: PayloadAction<State["currentCenter"]>) => {
             state.currentCenter = action.payload;
@@ -98,20 +80,23 @@ export const followPathSlice = createSlice({
         setGoToRouterPath: (state, action: PayloadAction<State["goToRouterPath"]>) => {
             state.goToRouterPath = action.payload;
         },
-        toggleDrawSelected: (state, action: PayloadAction<State["drawSelected"] | undefined>) => {
-            state.drawSelected = action.payload !== undefined ? action.payload : !state.drawSelected;
+        toggleDrawSelectedPositions: (state, action: PayloadAction<State["drawSelectedPositions"] | undefined>) => {
+            state.drawSelectedPositions = action.payload !== undefined ? action.payload : !state.drawSelectedPositions;
+        },
+        setSelectedPositions: (state, action: PayloadAction<State["selectedPositions"]>) => {
+            state.selectedPositions = action.payload;
+        },
+        setSelectedIds: (state, action: PayloadAction<State["selectedIds"]>) => {
+            state.selectedIds = action.payload;
         },
         toggleResetPositionOnInit: (state, action: PayloadAction<State["resetPositionOnInit"] | undefined>) => {
             state.resetPositionOnInit = action.payload !== undefined ? action.payload : !state.resetPositionOnInit;
         },
-        setSelected: (state, action: PayloadAction<State["selected"]>) => {
-            state.selected = action.payload;
-        },
     },
 });
 
+export const selectFollowPath = (state: RootState) => state.followPath;
 export const selectLandXmlPaths = (state: RootState) => state.followPath.paths;
-export const selectCurrentPath = (state: RootState) => state.followPath.currentPath;
 export const selectCurrentCenter = (state: RootState) => state.followPath.currentCenter;
 export const selectView2d = (state: RootState) => state.followPath.view2d;
 export const selectProfile = (state: RootState) => state.followPath.profile;
@@ -124,8 +109,9 @@ export const selectAutoRecenter = (state: RootState) => state.followPath.autoRec
 export const selectAutoStepSize = (state: RootState) => state.followPath.autoStepSize;
 export const selectLastViewedRouterPath = (state: RootState) => state.followPath.lastViewedRouterPath;
 export const selectGoToRouterPath = (state: RootState) => state.followPath.goToRouterPath;
-export const selectSelectedPaths = (state: RootState) => state.followPath.selected;
-export const selectDrawSelected = (state: RootState) => state.followPath.drawSelected;
+export const selectSelectedPositions = (state: RootState) => state.followPath.selectedPositions;
+export const selectDrawSelectedPositions = (state: RootState) => state.followPath.drawSelectedPositions;
+export const selectSelectedIds = (state: RootState) => state.followPath.selectedIds;
 export const selectResetPositionOnInit = (state: RootState) => state.followPath.resetPositionOnInit;
 
 const { actions, reducer } = followPathSlice;

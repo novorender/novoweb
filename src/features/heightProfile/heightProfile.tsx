@@ -116,7 +116,7 @@ export function HeightProfile() {
             setPts({ status: AsyncStatus.Loading });
 
             try {
-                const profile = await measureScene.getProfileViewFromLinestrip(selectedEntity.data!);
+                const profile = await measureScene.getProfileViewFromEntity(selectedEntity.data!);
 
                 if (!profile) {
                     throw new Error("No profile");

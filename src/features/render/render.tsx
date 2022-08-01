@@ -75,7 +75,7 @@ import { bookmarksActions, selectBookmarks, useSelectBookmark } from "features/b
 import { measureActions, selectMeasure, isMeasureObject } from "features/measure";
 import { ditioActions, selectMarkers, selectShowMarkers } from "features/ditio";
 import { useAppDispatch, useAppSelector } from "app/store";
-import { followPathActions, selectDrawSelected, usePathMeasureObjects } from "features/followPath";
+import { followPathActions, selectDrawSelectedPositions, usePathMeasureObjects } from "features/followPath";
 import { useMeasureObjects } from "features/measure";
 import { areaActions, selectAreaDrawPoints } from "features/area";
 import { useHandleAreaPoints } from "features/area";
@@ -108,6 +108,7 @@ import {
 import { xAxis, yAxis, axis, MAX_FLOAT } from "./consts";
 import { useHandleGridChanges } from "./useHandleGridChanges";
 import { useHandleCameraControls } from "./useHandleCameraControls";
+import { AsyncStatus } from "types/misc";
 
 glMatrix.setMatrixArrayType(Array);
 
@@ -215,7 +216,7 @@ export function Render3D({ onInit }: Props) {
     const urlBookmarkId = useAppSelector(selectUrlBookmarkId);
     const showDitioMarkers = useAppSelector(selectShowMarkers);
     const ditioMarkers = useAppSelector(selectMarkers);
-    const drawSelectedPaths = useAppSelector(selectDrawSelected);
+    const drawSelectedPaths = useAppSelector(selectDrawSelectedPositions);
     const picker = useAppSelector(selectPicker);
     const areaPoints = useAppSelector(selectAreaDrawPoints);
     const dispatch = useAppDispatch();
@@ -240,7 +241,7 @@ export function Render3D({ onInit }: Props) {
 
     const heightProfileMeasureObject = useHeightProfileMeasureObject();
     const measureObjects = useMeasureObjects();
-    const [pathMeasureObjects] = usePathMeasureObjects();
+    const pathMeasureObjects = usePathMeasureObjects();
     const [svg, setSvg] = useState<null | SVGSVGElement>(null);
     const [status, setStatus] = useMountedState(Status.Initial);
 
@@ -421,8 +422,8 @@ export function Render3D({ onInit }: Props) {
             return;
         }
 
-        if (drawSelectedPaths) {
-            pathMeasureObjects.forEach((obj) => {
+        if (drawSelectedPaths && pathMeasureObjects.status === AsyncStatus.Success) {
+            pathMeasureObjects.data.forEach((obj) => {
                 renderMeasureObject(view, measurementFillColor, "fp_" + getMeasureObjectPathId(obj), obj);
             });
         }
@@ -1324,7 +1325,7 @@ export function Render3D({ onInit }: Props) {
                 );
                 break;
             case Picker.FollowPathObject: {
-                dispatch(followPathActions.setSelected([{ id: result.objectId, pos: result.position }]));
+                dispatch(followPathActions.setSelectedPositions([{ id: result.objectId, pos: result.position }]));
                 break;
             }
             case Picker.Area: {
@@ -1596,7 +1597,8 @@ export function Render3D({ onInit }: Props) {
                                 />
                             ))}
                             {drawSelectedPaths
-                                ? pathMeasureObjects.map((obj) => (
+                                ? pathMeasureObjects.status === AsyncStatus.Success &&
+                                  pathMeasureObjects.data.map((obj) => (
                                       <path
                                           key={getMeasureObjectPathId(obj)}
                                           id={"fp_" + getMeasureObjectPathId(obj)}

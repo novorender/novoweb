@@ -11,8 +11,8 @@ import { selectMinimized, selectMaximized } from "slices/explorerSlice";
 
 import { followPathActions, selectGoToRouterPath, selectLastViewedRouterPath } from "./followPathSlice";
 import { PathList } from "./routes/pathList";
-import { FollowParametric } from "./routes/followParametric";
-import { FollowLandXml } from "./routes/followLandXml";
+import { FollowParametricFromPos } from "./routes/followParametricFromPos";
+import { FollowParametricFromIds } from "./routes/followParametrcFromId";
 
 export function FollowPath() {
     const [menuOpen, toggleMenu] = useToggle();
@@ -35,11 +35,11 @@ export function FollowPath() {
                             <Route path="/" exact>
                                 <PathList />
                             </Route>
-                            <Route path="/parametric" exact>
-                                <FollowParametric />
+                            <Route path="/followPos" exact>
+                                <FollowParametricFromPos />
                             </Route>
-                            <Route path="/landXml/:id" exact>
-                                <FollowLandXml />
+                            <Route path="/followIds" exact>
+                                <FollowParametricFromIds />
                             </Route>
                         </CustomSwitch>
                     </MemoryRouter>

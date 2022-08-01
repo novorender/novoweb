@@ -10,9 +10,11 @@ import { AsyncStatus, hasFinished } from "types/misc";
 import { getObjectNameFromPath, getParentPath } from "utils/objectData";
 import { searchByPatterns } from "utils/search";
 import { Picker, renderActions, selectPicker } from "slices/renderSlice";
+import { highlightActions, useDispatchHighlighted, useHighlighted } from "contexts/highlighted";
 
 import { followPathActions, LandXmlPath, selectLandXmlPaths } from "../followPathSlice";
 import { usePathMeasureObjects } from "../usePathMeasureObjects";
+import { useFollowPathFromIds } from "../useFollowPathFromIds";
 
 export function PathList() {
     const theme = useTheme();
@@ -20,20 +22,31 @@ export function PathList() {
     const {
         state: { scene },
     } = useExplorerGlobals(true);
+    const highlighted = useHighlighted().idArr;
+    const dispatchHighlighted = useDispatchHighlighted();
 
     const landXmlPaths = useAppSelector(selectLandXmlPaths);
-    const selecting = useAppSelector(selectPicker) === Picker.FollowPathObject;
-    const [selected, isLoadingSelected] = usePathMeasureObjects();
+    const selectingPos = useAppSelector(selectPicker) === Picker.FollowPathObject;
     const dispatch = useAppDispatch();
+    const selectedByPos = usePathMeasureObjects();
+    const selectedById = useFollowPathFromIds();
 
     useEffect(() => {
-        dispatch(followPathActions.toggleDrawSelected(true));
+        dispatch(followPathActions.toggleDrawSelectedPositions(true));
 
         return () => {
-            dispatch(followPathActions.toggleDrawSelected(false));
+            dispatch(followPathActions.toggleDrawSelectedPositions(false));
             dispatch(renderActions.stopPicker(Picker.FollowPathObject));
         };
     }, [dispatch]);
+
+    useEffect(() => {
+        if (!highlighted.length || highlighted.length > 50 || selectingPos) {
+            dispatch(followPathActions.setSelectedIds([]));
+        } else {
+            dispatch(followPathActions.setSelectedIds(highlighted));
+        }
+    }, [selectingPos, highlighted, dispatch]);
 
     useEffect(() => {
         if (landXmlPaths.status === AsyncStatus.Initial) {
@@ -68,6 +81,17 @@ export function PathList() {
         }
     }, [scene, landXmlPaths, dispatch]);
 
+    const isLoading =
+        !hasFinished(landXmlPaths) ||
+        (selectingPos && selectedByPos.status === AsyncStatus.Loading) ||
+        (!selectingPos && selectedById.status === AsyncStatus.Loading);
+
+    const canFollowSelected = selectingPos
+        ? selectedByPos.status === AsyncStatus.Success &&
+          selectedByPos.data.length &&
+          !selectedByPos.data.some((obj) => !obj.fp)
+        : selectedById.status === AsyncStatus.Success;
+
     return (
         <>
             <Box boxShadow={theme.customShadows.widgetHeader}>
@@ -81,21 +105,30 @@ export function PathList() {
                                 <IosSwitch
                                     size="medium"
                                     color="primary"
-                                    checked={selecting}
-                                    onChange={() =>
-                                        dispatch(
-                                            renderActions.setPicker(selecting ? Picker.Object : Picker.FollowPathObject)
-                                        )
-                                    }
+                                    checked={selectingPos}
+                                    onChange={() => {
+                                        if (selectingPos) {
+                                            dispatch(renderActions.setPicker(Picker.Object));
+                                            dispatch(followPathActions.toggleDrawSelectedPositions(false));
+                                        } else {
+                                            dispatch(renderActions.setPicker(Picker.FollowPathObject));
+                                            dispatch(followPathActions.toggleDrawSelectedPositions(true));
+                                        }
+                                    }}
                                 />
                             }
-                            label={<Box fontSize={14}>Selecting</Box>}
+                            label={<Box fontSize={14}>Parametric</Box>}
                         />
                         <Button
-                            disabled={!selected.length || selected.some((obj) => !obj.fp)}
+                            disabled={!canFollowSelected}
                             onClick={() => {
                                 dispatch(followPathActions.toggleResetPositionOnInit(true));
-                                history.push("/parametric");
+
+                                if (selectingPos) {
+                                    history.push("/followPos");
+                                } else {
+                                    history.push("/followIds");
+                                }
                             }}
                             color="grey"
                         >
@@ -105,7 +138,7 @@ export function PathList() {
                     </Box>
                 </>
             </Box>
-            {!hasFinished(landXmlPaths) || isLoadingSelected ? (
+            {isLoading ? (
                 <Box position="relative">
                     <LinearProgress />
                 </Box>
@@ -120,10 +153,14 @@ export function PathList() {
                         <List disablePadding>
                             {landXmlPaths.data.map((path) => (
                                 <ListItemButton
+                                    disabled={selectingPos}
                                     key={path.id}
                                     onClick={() => {
                                         dispatch(followPathActions.toggleResetPositionOnInit(true));
-                                        history.push(`landXml/${path.id}`);
+                                        dispatch(renderActions.setMainObject(path.id));
+                                        dispatch(followPathActions.setSelectedIds([path.id]));
+                                        dispatchHighlighted(highlightActions.setIds([path.id]));
+                                        history.push(`/followIds`);
                                     }}
                                     disableGutters
                                     color="primary"

@@ -7,10 +7,9 @@ import { useExplorerGlobals } from "contexts/explorerGlobals";
 import { hiddenGroupActions, useDispatchHidden } from "contexts/hidden";
 import { highlightActions, useDispatchHighlighted } from "contexts/highlighted";
 import { useDispatchVisible, visibleActions } from "contexts/visible";
-import { followPathActions, getNurbs } from "features/followPath";
+import { followPathActions } from "features/followPath";
 import { measureActions } from "features/measure";
 import { CameraType, DeepWritable, ObjectVisibility, renderActions, SelectionBasketMode } from "slices/renderSlice";
-import { AsyncStatus } from "types/misc";
 
 export function useSelectBookmark() {
     const dispatchVisible = useDispatchVisible();
@@ -120,46 +119,37 @@ export function useSelectBookmark() {
             if (!scene) {
                 return;
             }
+            const { profile, currentCenter } = bookmark.followPath;
 
-            const { profile, id, currentCenter } = bookmark.followPath;
+            dispatch(followPathActions.setProfile(String(profile)));
+            dispatch(followPathActions.setView2d(Boolean(bookmark.ortho)));
+            dispatch(followPathActions.setShowGrid(Boolean(bookmark.grid?.enabled)));
+            dispatch(followPathActions.setCurrentCenter(currentCenter as [number, number, number]));
 
-            getNurbs({ scene, objectId: id })
-                .then((nurbs) => {
-                    dispatch(followPathActions.setProfile(String(profile)));
-                    dispatch(followPathActions.setProfileRange({ min: nurbs.knots[0], max: nurbs.knots.slice(-1)[0] }));
-                    dispatch(followPathActions.setView2d(Boolean(bookmark.ortho)));
-                    dispatch(followPathActions.setShowGrid(Boolean(bookmark.grid?.enabled)));
-                    dispatch(followPathActions.setCurrentCenter(currentCenter as [number, number, number]));
+            if (bookmark.ortho?.far) {
+                dispatch(followPathActions.setClipping(bookmark.ortho.far));
+            }
 
-                    if (bookmark.ortho?.far) {
-                        dispatch(followPathActions.setClipping(bookmark.ortho.far));
-                    }
+            if (bookmark.followPath.currentCenter) {
+                dispatch(followPathActions.setPtHeight(bookmark.followPath.currentCenter[1]));
+            } else if (bookmark.ortho) {
+                dispatch(
+                    followPathActions.setPtHeight(
+                        bookmark.ortho.referenceCoordSys ? bookmark.ortho.referenceCoordSys[13] : undefined
+                    )
+                );
+            } else {
+                dispatch(followPathActions.setPtHeight(bookmark.camera ? bookmark.camera.position[1] : undefined));
+            }
 
-                    if (bookmark.ortho) {
-                        dispatch(
-                            followPathActions.setPtHeight(
-                                bookmark.ortho.referenceCoordSys ? bookmark.ortho.referenceCoordSys[13] : undefined
-                            )
-                        );
-                    } else {
-                        dispatch(
-                            followPathActions.setPtHeight(bookmark.camera ? bookmark.camera.position[1] : undefined)
-                        );
-                    }
-
-                    dispatch(followPathActions.setGoToRouterPath(`/landXml/${id}`));
-
-                    dispatch(
-                        followPathActions.setCurrentPath({
-                            status: AsyncStatus.Success,
-                            data: {
-                                id,
-                                nurbs,
-                            },
-                        })
-                    );
-                })
-                .catch((e) => console.warn(e));
+            if ("parametric" in bookmark.followPath) {
+                dispatch(followPathActions.setSelectedPositions(bookmark.followPath.parametric));
+                dispatch(followPathActions.setGoToRouterPath(`/followPos`));
+            } else {
+                const ids = "ids" in bookmark.followPath ? bookmark.followPath.ids : [bookmark.followPath.id];
+                dispatch(followPathActions.setSelectedIds(ids));
+                dispatch(followPathActions.setGoToRouterPath(`/followIds`));
+            }
         }
     };
 

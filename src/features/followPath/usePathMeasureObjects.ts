@@ -4,7 +4,8 @@ import { vec3 } from "gl-matrix";
 
 import { useExplorerGlobals } from "contexts/explorerGlobals";
 import { useAppDispatch, useAppSelector } from "app/store";
-import { selectSelectedPaths } from "./followPathSlice";
+import { selectSelectedPositions } from "./followPathSlice";
+import { AsyncState, AsyncStatus } from "types/misc";
 
 type ExtendedMeasureObject = {
     fp?: FollowParametricObject;
@@ -16,11 +17,12 @@ export function usePathMeasureObjects() {
         state: { measureScene },
     } = useExplorerGlobals();
 
-    const selected = useAppSelector(selectSelectedPaths);
+    const selected = useAppSelector(selectSelectedPositions);
     const dispatch = useAppDispatch();
 
-    const [measureObjects, setMeasureObjects] = useState([] as ExtendedMeasureObject[]);
-    const [isLoading, setIsLoading] = useState(false);
+    const [measureObjects, setMeasureObjects] = useState<AsyncState<ExtendedMeasureObject[]>>({
+        status: AsyncStatus.Initial,
+    });
 
     useEffect(() => {
         getMeasureObjects();
@@ -30,7 +32,7 @@ export function usePathMeasureObjects() {
                 return;
             }
 
-            setIsLoading(true);
+            setMeasureObjects({ status: AsyncStatus.Loading });
             const mObjects = (
                 await Promise.all(
                     selected.map((obj) =>
@@ -51,7 +53,7 @@ export function usePathMeasureObjects() {
                                     return;
                                 }
 
-                                mObj.fp = await measureScene.followParametricObject(obj.id, obj.pos);
+                                mObj.fp = await measureScene.followParametricObjectFromPosition(obj.id, obj.pos);
 
                                 return mObj;
                             })
@@ -60,10 +62,9 @@ export function usePathMeasureObjects() {
                 )
             ).filter((obj) => obj !== undefined) as ExtendedMeasureObject[];
 
-            setMeasureObjects(mObjects);
-            setIsLoading(false);
+            setMeasureObjects({ status: AsyncStatus.Success, data: mObjects });
         }
     }, [measureScene, selected, dispatch]);
 
-    return [measureObjects, isLoading] as const;
+    return measureObjects;
 }

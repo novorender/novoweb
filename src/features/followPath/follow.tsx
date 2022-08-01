@@ -1,4 +1,5 @@
 import { FormEvent, SyntheticEvent, useCallback, useEffect, useState } from "react";
+import { FollowParametricObject } from "@novorender/measure-api";
 import {
     Box,
     Button,
@@ -12,7 +13,7 @@ import {
 } from "@mui/material";
 import { ArrowBack, ArrowForward, Edit, RestartAlt } from "@mui/icons-material";
 import { FlightControllerParams, OrthoControllerParams } from "@novorender/webgl-api";
-import { vec3, quat, mat3, mat4, ReadonlyVec3, glMatrix } from "gl-matrix";
+import { vec3, quat, mat3, mat4, glMatrix } from "gl-matrix";
 import { useHistory } from "react-router-dom";
 
 import { IosSwitch, Divider, ScrollBox } from "components";
@@ -37,11 +38,7 @@ import {
 
 const profileFractionDigits = 3;
 
-export function Follow({
-    getPos,
-}: {
-    getPos: (p: number) => Promise<{ pt: vec3 | ReadonlyVec3; dir: vec3 | ReadonlyVec3 } | undefined>;
-}) {
+export function Follow({ fpObj }: { fpObj: FollowParametricObject }) {
     const theme = useTheme();
     const history = useHistory();
     const {
@@ -77,12 +74,13 @@ export function Follow({
             showGrid: boolean;
             keepOffset?: boolean;
         }): Promise<void> => {
-            const pos = await getPos(p);
+            const pos = await fpObj.getCameraValues(p);
+
             if (!pos) {
                 return;
             }
 
-            const { pt, dir } = pos;
+            const { position: pt, normal: dir } = pos;
 
             const offset =
                 keepOffset && currentCenter
@@ -150,17 +148,24 @@ export function Follow({
             dispatch(followPathActions.setCurrentCenter(pt as [number, number, number]));
             dispatch(followPathActions.setPtHeight(pt[1]));
         },
-        [clipping, currentCenter, dispatch, getPos, gridDefaults, view]
+        [clipping, currentCenter, dispatch, fpObj, gridDefaults, view]
     );
 
     useEffect(() => {
-        if (!resetPosition || !profileRange) {
+        dispatch(
+            followPathActions.setProfileRange({ min: fpObj.parameterBounds.start, max: fpObj.parameterBounds.end })
+        );
+    }, [fpObj, dispatch]);
+
+    useEffect(() => {
+        if (!resetPosition || !fpObj) {
             return;
         }
 
         dispatch(followPathActions.toggleResetPositionOnInit(false));
-        goToProfile({ view2d, showGrid, keepOffset: false, p: Number(profileRange.min) });
-    }, [view2d, showGrid, profile, goToProfile, autoRecenter, resetPosition, dispatch, profileRange]);
+        dispatch(followPathActions.setProfile(fpObj.parameterBounds.start.toFixed(3)));
+        goToProfile({ view2d, showGrid, keepOffset: false, p: fpObj.parameterBounds.start });
+    }, [view2d, showGrid, profile, goToProfile, autoRecenter, resetPosition, dispatch, fpObj]);
 
     const handle2dChange = () => {
         const newState = !view2d;
