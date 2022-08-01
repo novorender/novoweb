@@ -10,6 +10,7 @@ import { useDispatchVisible, visibleActions } from "contexts/visible";
 import { followPathActions } from "features/followPath";
 import { measureActions } from "features/measure";
 import { CameraType, DeepWritable, ObjectVisibility, renderActions, SelectionBasketMode } from "slices/renderSlice";
+import { areaActions } from "features/area";
 
 export function useSelectBookmark() {
     const dispatchVisible = useDispatchVisible();
@@ -77,6 +78,12 @@ export function useSelectBookmark() {
             );
         } else {
             dispatch(measureActions.setSelected([]));
+        }
+
+        if (bookmark.area) {
+            dispatch(areaActions.setPoints(bookmark.area.pts));
+        } else {
+            dispatch(areaActions.setPoints([]));
         }
 
         if (bookmark.clippingPlanes) {

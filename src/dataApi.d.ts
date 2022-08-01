@@ -21,5 +21,8 @@ declare module "@novorender/data-js-api" {
                   profile: number;
                   currentCenter?: vec3;
               };
+        area?: {
+            pts: [point: vec3, normal: vec3][];
+        };
     }
 }

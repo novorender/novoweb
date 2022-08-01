@@ -16,7 +16,7 @@ import {
 } from "slices/renderSlice";
 import { selectMeasure } from "features/measure";
 import { selectFollowPath } from "features/followPath";
-// import { AsyncStatus } from "types/misc";
+import { selectAreaPoints } from "features/area";
 
 export function useCreateBookmark() {
     const measurement = useAppSelector(selectMeasure);
@@ -24,6 +24,7 @@ export function useCreateBookmark() {
     const mainObject = useAppSelector(selectMainObject);
     const selectionBasketMode = useAppSelector(selectSelectionBasketMode);
     const followPath = useAppSelector(selectFollowPath);
+    const areaPts = useAppSelector(selectAreaPoints);
 
     const {
         state: { view },
@@ -68,20 +69,23 @@ export function useCreateBookmark() {
                 ids: hidden.current.idArr,
             });
 
-        const fpBase = {
-            profile: Number(followPath.profile),
-            currentCenter: followPath.currentCenter,
-        };
+        let fp: Bookmark["followPath"] | undefined = undefined;
+        if (followPath.selectedIds.length || followPath.selectedPositions.length) {
+            const fpBase = {
+                profile: Number(followPath.profile),
+                currentCenter: followPath.currentCenter,
+            };
 
-        const fp: Bookmark["followPath"] = followPath.selectedIds.length
-            ? {
-                  ...fpBase,
-                  ids: followPath.selectedIds,
-              }
-            : {
-                  ...fpBase,
-                  parametric: followPath.selectedPositions,
-              };
+            fp = followPath.selectedIds.length
+                ? {
+                      ...fpBase,
+                      ids: followPath.selectedIds,
+                  }
+                : {
+                      ...fpBase,
+                      parametric: followPath.selectedPositions,
+                  };
+        }
 
         const base = {
             img,
@@ -101,6 +105,7 @@ export function useCreateBookmark() {
             measurement: measurement.selected.length > 0 ? measurement.selected.map((obj) => obj.pos) : undefined,
             objectMeasurement: measurement.selected.length > 0 ? measurement.selected : undefined,
             grid: { ...view.settings.grid },
+            area: { pts: areaPts },
         };
 
         if (camera.kind === "pinhole") {
