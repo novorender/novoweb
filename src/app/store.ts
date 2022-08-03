@@ -9,6 +9,7 @@ import { areaReducer } from "features/area";
 import { bimCollabApi, bimCollabReducer } from "features/bimCollab";
 import { bimTrackApi, bimTrackReducer } from "features/bimTrack";
 import { bookmarksReducer } from "features/bookmarks";
+import { checklistsReducer } from "features/checklists/checklistsSlice";
 import { deviationsReducer } from "features/deviations";
 import { ditioApi } from "features/ditio";
 import { ditioReducer } from "features/ditio";
@@ -57,6 +58,7 @@ const rootReducer = combineReducers({
     pims: pimsReducer,
     propertyTree: propertyTreeReducer,
     [propertyTreeApi.reducerPath]: propertyTreeApi.reducer,
+    checklists: checklistsReducer,
     [bimCollabApi.reducerPath]: bimCollabApi.reducer,
     bimTrack: bimTrackReducer,
     [bimTrackApi.reducerPath]: bimTrackApi.reducer,
