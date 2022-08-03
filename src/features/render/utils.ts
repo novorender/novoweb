@@ -70,6 +70,7 @@ export function createRendering(
 
     let hook = undefined as undefined | (() => any);
     let pickBufferUpdated = false;
+    let lastPickBufferUpdate = 0;
 
     return { start, stop, update, pick, measure };
 
@@ -93,11 +94,12 @@ export function createRendering(
             cb = res;
         });
 
-        if (pickBufferUpdated) {
+        if (pickBufferUpdated || performance.now() - lastPickBufferUpdate < 1000) {
             cb(await view.pick(x, y));
         } else {
             hook = async () => {
                 await view.updatePickBuffers();
+                lastPickBufferUpdate = performance.now();
                 pickBufferUpdated = true;
                 cb(await view.pick(x, y));
             };
@@ -113,11 +115,12 @@ export function createRendering(
             cb = res;
         });
 
-        if (pickBufferUpdated) {
+        if (pickBufferUpdated || performance.now() - lastPickBufferUpdate < 1000) {
             cb(await view.measure(x, y));
         } else {
             hook = async () => {
                 await view.updatePickBuffers();
+                lastPickBufferUpdate = performance.now();
                 pickBufferUpdated = true;
                 cb(await view.measure(x, y));
             };
