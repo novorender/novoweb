@@ -63,8 +63,12 @@ export function OrthoCam() {
     };
 
     const handleTopDown = () => {
+        const bs = view.scene?.boundingSphere;
+        const maxY = bs ? bs.center[1] + bs?.radius : 10000;
         const orthoController = api.createCameraController({ kind: "ortho" }, canvas);
-        (orthoController as any).init(view.camera.position, [0, 1, 0], view.camera);
+        const pos = vec3.copy(vec3.create(), view.camera.position);
+        pos[1] = Math.min(pos[1], maxY);
+        (orthoController as any).init(pos, [0, 1, 0], view.camera);
         const mat = (orthoController.params as any).referenceCoordSys;
         const right = vec3.fromValues(mat[0], mat[1], mat[2]);
         const up = vec3.fromValues(mat[4], mat[5], mat[6]);
