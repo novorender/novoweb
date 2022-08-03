@@ -28,6 +28,7 @@ import { selectionBasketReducer } from "features/selectionBasket";
 import { xsiteManageApi, xsiteManageReducer } from "features/xsiteManage";
 import { authReducer } from "slices/authSlice";
 import { explorerReducer } from "slices/explorerSlice";
+import { checklistsReducer } from "features/checklists/checklistsSlice";
 
 const rootReducer = combineReducers({
     explorer: explorerReducer,
@@ -51,6 +52,7 @@ const rootReducer = combineReducers({
     properties: propertiesReducer,
     offline: offlineReducer,
     omega365: omega365Reducer,
+    checklists: checklistsReducer,
     [bimCollabApi.reducerPath]: bimCollabApi.reducer,
     bimTrack: bimTrackReducer,
     [bimTrackApi.reducerPath]: bimTrackApi.reducer,
