@@ -117,7 +117,7 @@ export function PathList() {
                                     }}
                                 />
                             }
-                            label={<Box fontSize={14}>Parametric</Box>}
+                            label={<Box fontSize={14}>Entity</Box>}
                         />
                         <Button
                             disabled={!canFollowSelected}

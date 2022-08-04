@@ -31,7 +31,7 @@ export function HeightProfile() {
         state: { measureScene },
     } = useExplorerGlobals(true);
 
-    const selectingParametric = useAppSelector(selectPicker) === Picker.HeightProfileEntity;
+    const selectingEntity = useAppSelector(selectPicker) === Picker.HeightProfileEntity;
     const selectedPoint = useAppSelector(selectSelectedPoint);
     const selectedEntity = useAppSelector(selectHeightProfileMeasureEntity);
     const highlighted = useHighlighted().idArr;
@@ -49,7 +49,7 @@ export function HeightProfile() {
     }, [dispatch]);
 
     useEffect(() => {
-        if (selectingParametric) {
+        if (selectingEntity) {
             fromSelectedEntity();
         } else {
             fromMultiSelect();
@@ -83,7 +83,7 @@ export function HeightProfile() {
                         status: AsyncStatus.Error,
                         msg: `The selected ${
                             highlighted.length > 1 ? "objects are" : "object is"
-                        } too complex. Use parametric selection to pick the right entity.`,
+                        } too complex. Use entity selection to pick the right entity.`,
                     });
                     return;
                 }
@@ -130,7 +130,7 @@ export function HeightProfile() {
                 });
             }
         }
-    }, [highlighted, measureScene, selectingParametric, selectedEntity, selectedPoint]);
+    }, [highlighted, measureScene, selectingEntity, selectedEntity, selectedPoint]);
 
     return (
         <>
@@ -140,9 +140,9 @@ export function HeightProfile() {
                         <Box mx={-1} display="flex" justifyContent="space-between">
                             <Button
                                 color="grey"
-                                disabled={selectingParametric ? !selectedPoint : !highlighted.length}
+                                disabled={selectingEntity ? !selectedPoint : !highlighted.length}
                                 onClick={() =>
-                                    selectingParametric
+                                    selectingEntity
                                         ? dispatch(heightProfileActions.selectPoint(undefined))
                                         : dispatchHighlighted(highlightActions.setIds([]))
                                 }
@@ -155,20 +155,20 @@ export function HeightProfile() {
                                     <IosSwitch
                                         size="medium"
                                         color="primary"
-                                        checked={selectingParametric}
+                                        checked={selectingEntity}
                                         onChange={() => {
-                                            if (selectingParametric) {
+                                            if (selectingEntity) {
                                                 dispatch(heightProfileActions.selectPoint(undefined));
                                             }
                                             dispatch(
                                                 renderActions.setPicker(
-                                                    selectingParametric ? Picker.Object : Picker.HeightProfileEntity
+                                                    selectingEntity ? Picker.Object : Picker.HeightProfileEntity
                                                 )
                                             );
                                         }}
                                     />
                                 }
-                                label={<Box fontSize={14}>Parametric</Box>}
+                                label={<Box fontSize={14}>Entity</Box>}
                             />
                             <Button
                                 disabled={Boolean(pts.status !== AsyncStatus.Success || !pts.data.length)}
