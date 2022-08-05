@@ -11,7 +11,8 @@ import { selectMinimized, selectMaximized } from "slices/explorerSlice";
 
 import { checklistsActions, selectLastViewedPath } from "./checklistsSlice";
 import { Checklists } from "./routes/checklists";
-import { NewChecklist } from "./routes/newChecklist";
+import { Create } from "./routes/create";
+import { Checklist } from "./routes/checklist";
 
 export function ChecklistsWidget() {
     const [menuOpen, toggleMenu] = useToggle();
@@ -34,8 +35,11 @@ export function ChecklistsWidget() {
                             <Route path="/" exact>
                                 <Checklists />
                             </Route>
-                            <Route path="/new" exact>
-                                <NewChecklist />
+                            <Route path="/checklist/:id">
+                                <Checklist />
+                            </Route>
+                            <Route path="/create">
+                                <Create />
                             </Route>
                         </CustomSwitch>
                     </MemoryRouter>
