@@ -159,7 +159,7 @@ export function Groups() {
                             id={typeof creatingGroup === "string" ? creatingGroup : undefined}
                             onClose={() => setCreatingGroup(false)}
                         />
-                    ) : isAdmin ? (
+                    ) : isAdmin && !hideExtendedHeader ? (
                         <Box mx={-1}>
                             <Button color="grey" onClick={() => setCreatingGroup("")} disabled={disableChanges}>
                                 <AddCircle sx={{ mr: 1 }} />
