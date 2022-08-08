@@ -132,10 +132,14 @@ export function moveSvgCursor({
 
 export function getPathPoints({ view, size, points }: { view: View; size: Size; points: vec3[] }) {
     const { width, height } = size;
-    const [_pathPoints, _pixelPoints] = measureApi.toPathPoints(points, view, width, height);
-    const path = inversePixelRatio(_pathPoints as vec2[]);
-    const pixel = inversePixelRatio(_pixelPoints as vec2[]);
-    return { pixel, path } as const;
+    const pts = measureApi.toPathPoints(points, view, width, height);
+    if (pts) {
+        const [_pathPoints, _pixelPoints] = pts;
+        const path = inversePixelRatio(_pathPoints as vec2[]);
+        const pixel = inversePixelRatio(_pixelPoints as vec2[]);
+        return { pixel, path } as const;
+    }
+    return undefined;
 }
 
 export function renderSingleMeasurePoint({

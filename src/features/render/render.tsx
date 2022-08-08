@@ -303,7 +303,7 @@ export function Render3D({ onInit }: Props) {
                 });
             } else {
                 const pts = pathPoints({ points: [heightProfileMeasureObject.pos] });
-                if (pts.pixel.length > 0) {
+                if (pts) {
                     renderSingleMeasurePoint({
                         svg,
                         pixelPoint: pts.pixel[0],
@@ -318,7 +318,7 @@ export function Render3D({ onInit }: Props) {
                 renderObject({ obj, fillColor: measurementFillColor, pathName: getMeasureObjectPathId(obj) });
             } else {
                 const pts = pathPoints({ points: [obj.pos] });
-                if (pts.pixel.length > 0) {
+                if (pts) {
                     renderSingleMeasurePoint({
                         svg,
                         pixelPoint: pts.pixel[0],
@@ -405,7 +405,7 @@ export function Render3D({ onInit }: Props) {
                 },
             });
 
-            if (measurePathPoints.pixel.length > 0 && zPathPoints.pixel.length > 0) {
+            if (measurePathPoints && zPathPoints) {
                 if (vec3.distance(camera.position, pts[3]) < measureLen * 2) {
                     const zDiff = vec3.sub(vec3.create(), pts[2], pts[3]);
                     const fromP = flip ? measurePathPoints.path[1] : measurePathPoints.path[0];
@@ -428,27 +428,29 @@ export function Render3D({ onInit }: Props) {
             const pdPt2 = vec3.fromValues(pts[3][0], Math.min(pts[0][1], pts[3][1]), pts[3][2]);
 
             const xzPathPoints = pathPoints({ points: [pdPt1, pdPt2] });
-            const pixelDiffX =
-                vec2.dist(xPathPoints.path[0], xzPathPoints.path[0]) +
-                vec2.dist(xPathPoints.path[1], xzPathPoints.path[1]);
-            const pixelDiffY =
-                vec2.dist(yPathPoints.path[0], xzPathPoints.path[0]) +
-                vec2.dist(yPathPoints.path[1], xzPathPoints.path[1]);
-            const pixelMesureDiff =
-                vec2.dist(measurePathPoints.path[0], xzPathPoints.path[0]) +
-                vec2.dist(measurePathPoints.path[1], xzPathPoints.path[1]);
-            const skipXZ = pixelDiffX < 20 || pixelDiffY < 20 || pixelMesureDiff < 20;
-            renderPoints({
-                points: skipXZ ? undefined : xzPathPoints,
-                svgNames: { path: "brepPathXZ" },
-                text: {
-                    textName: "brepTextXZ",
-                    value: planarDiff,
-                    type: "distance",
-                },
-            });
+            if (xPathPoints && yPathPoints && measurePathPoints && xzPathPoints) {
+                const pixelDiffX =
+                    vec2.dist(xPathPoints.path[0], xzPathPoints.path[0]) +
+                    vec2.dist(xPathPoints.path[1], xzPathPoints.path[1]);
+                const pixelDiffY =
+                    vec2.dist(yPathPoints.path[0], xzPathPoints.path[0]) +
+                    vec2.dist(yPathPoints.path[1], xzPathPoints.path[1]);
+                const pixelMesureDiff =
+                    vec2.dist(measurePathPoints.path[0], xzPathPoints.path[0]) +
+                    vec2.dist(measurePathPoints.path[1], xzPathPoints.path[1]);
+                const skipXZ = pixelDiffX < 20 || pixelDiffY < 20 || pixelMesureDiff < 20;
+                renderPoints({
+                    points: skipXZ ? undefined : xzPathPoints,
+                    svgNames: { path: "brepPathXZ" },
+                    text: {
+                        textName: "brepTextXZ",
+                        value: planarDiff,
+                        type: "distance",
+                    },
+                });
+            }
 
-            if (measurePathPoints.path.length > 0 && xzPathPoints.path.length > 0) {
+            if (measurePathPoints && xzPathPoints) {
                 if (vec3.distance(camera.position, pdPt2) < measureLen * 2) {
                     const xzDiff = vec3.sub(vec3.create(), pdPt1, pdPt2);
                     const fromP = flip ? measurePathPoints.path[0] : measurePathPoints.path[1];
@@ -469,37 +471,42 @@ export function Render3D({ onInit }: Props) {
 
         if (areaPoints.length) {
             const areaPts = pathPoints({ points: areaPoints });
-            renderPoints({
-                points: areaPts,
-                svgNames: { path: "area-path", point: "area-pt" },
-                text: {
-                    textName: "areaText",
-                    value: areaValue,
-                    type: "area",
-                },
-            });
-            if (areaPoints.length > 2) {
-                const asqt = Math.sqrt(areaValue) * 5;
-                for (let i = 0; i < areaPoints.length; ++i) {
-                    const anglePt = areaPoints[i];
-                    if (areaPts.path.length === areaPoints.length && vec3.distance(camera.position, anglePt) < asqt) {
-                        const fromPIdx = i === 0 ? areaPoints.length - 1 : i - 1;
-                        const toPIdx = i === areaPoints.length - 1 ? 0 : i + 1;
-                        const fromP = areaPts.path[fromPIdx];
-                        const toP = areaPts.path[toPIdx];
-                        const diffA = vec3.sub(vec3.create(), areaPoints[fromPIdx], anglePt);
-                        const diffB = vec3.sub(vec3.create(), areaPoints[toPIdx], anglePt);
-                        renderAngles({
-                            svg,
-                            anglePoint: areaPts.path[i],
-                            fromP,
-                            toP,
-                            diffA,
-                            diffB,
-                            pathName: `area-an_${i}`,
-                        });
-                    } else {
-                        resetSVG({ svg, pathName: `area-an_${i}` });
+            if (areaPts) {
+                renderPoints({
+                    points: areaPts,
+                    svgNames: { path: "area-path", point: "area-pt" },
+                    text: {
+                        textName: "areaText",
+                        value: areaValue,
+                        type: "area",
+                    },
+                });
+                if (areaPoints.length > 2) {
+                    const asqt = Math.sqrt(areaValue) * 5;
+                    for (let i = 0; i < areaPoints.length; ++i) {
+                        const anglePt = areaPoints[i];
+                        if (
+                            areaPts.path.length === areaPoints.length &&
+                            vec3.distance(camera.position, anglePt) < asqt
+                        ) {
+                            const fromPIdx = i === 0 ? areaPoints.length - 1 : i - 1;
+                            const toPIdx = i === areaPoints.length - 1 ? 0 : i + 1;
+                            const fromP = areaPts.path[fromPIdx];
+                            const toP = areaPts.path[toPIdx];
+                            const diffA = vec3.sub(vec3.create(), areaPoints[fromPIdx], anglePt);
+                            const diffB = vec3.sub(vec3.create(), areaPoints[toPIdx], anglePt);
+                            renderAngles({
+                                svg,
+                                anglePoint: areaPts.path[i],
+                                fromP,
+                                toP,
+                                diffA,
+                                diffB,
+                                pathName: `area-an_${i}`,
+                            });
+                        } else {
+                            resetSVG({ svg, pathName: `area-an_${i}` });
+                        }
                     }
                 }
             }
