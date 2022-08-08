@@ -23,7 +23,7 @@ export function FollowPath() {
     return (
         <>
             <WidgetContainer minimized={minimized} maximized={maximized}>
-                <WidgetHeader widget={featuresConfig.followPath} disableShadow />
+                <WidgetHeader widget={featuresConfig.followPath} disableShadow={!menuOpen} />
                 <Box
                     display={menuOpen || minimized ? "none" : "flex"}
                     flexDirection="column"
