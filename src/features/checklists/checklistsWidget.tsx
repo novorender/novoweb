@@ -13,6 +13,7 @@ import { checklistsActions, selectLastViewedPath } from "./checklistsSlice";
 import { Checklists } from "./routes/checklists";
 import { Create } from "./routes/create";
 import { Checklist } from "./routes/checklist";
+import { Instance } from "./routes/instance";
 
 export function ChecklistsWidget() {
     const [menuOpen, toggleMenu] = useToggle();
@@ -37,6 +38,9 @@ export function ChecklistsWidget() {
                             </Route>
                             <Route path="/checklist/:id">
                                 <Checklist />
+                            </Route>
+                            <Route path="/instance/:id">
+                                <Instance />
                             </Route>
                             <Route path="/create">
                                 <Create />

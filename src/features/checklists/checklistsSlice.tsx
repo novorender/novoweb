@@ -2,12 +2,12 @@ import { createSelector, createSlice, PayloadAction } from "@reduxjs/toolkit";
 
 import { RootState } from "app/store";
 
-import { parseChecklistInstanceStorage, parseChecklistsStorage } from "./utils";
+import { getChecklistInstances, getChecklists } from "./utils";
 
 const initialState = {
     lastViewedPath: "/",
-    checklists: parseChecklistsStorage(),
-    checklistInstances: parseChecklistInstanceStorage(),
+    checklists: getChecklists(),
+    checklistInstances: getChecklistInstances(),
 };
 
 type State = typeof initialState;
@@ -39,6 +39,11 @@ export const selectChecklistById = createSelector([selectChecklists, (_state, id
 export const selectInstanceByChecklistId = createSelector(
     [selectChecklistInstances, (_state, id: string) => id],
     (instances, checklistId) => instances.filter((instance) => instance.checklistId === checklistId)
+);
+
+export const selectInstanceById = createSelector(
+    [selectChecklistInstances, (_state, id: string) => id],
+    (instances, id) => instances.find((instance) => instance.id === id)
 );
 
 const { actions, reducer } = checklistsSlice;

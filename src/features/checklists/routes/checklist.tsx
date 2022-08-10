@@ -1,5 +1,5 @@
-import { ArrowBack, Layers } from "@mui/icons-material";
-import { Box, Button, Typography, useTheme } from "@mui/material";
+import { ArrowBack, Circle, Layers } from "@mui/icons-material";
+import { Box, Button, List, ListItemButton, ListItemIcon, ListItemText, Typography, useTheme } from "@mui/material";
 import { useHistory, useParams } from "react-router-dom";
 
 import { Divider, ScrollBox } from "components";
@@ -50,13 +50,47 @@ export function Checklist() {
                     </Box>
                 </>
             </Box>
-            <ScrollBox p={1} pt={2} pb={3}>
-                <Typography fontWeight={600} mb={2}>
+            <ScrollBox pt={2} pb={3}>
+                <Typography px={1} fontWeight={600} mb={1}>
                     {checklist?.title}
                 </Typography>
-                {instances.map((instance) => (
-                    <Box key={instance.id}>{instance.name}</Box>
-                ))}
+                <List dense disablePadding>
+                    {instances.map((instance) => {
+                        const completedItems = instance.items.filter((item) => item.value).length;
+
+                        return (
+                            <ListItemButton
+                                sx={{ px: 1 }}
+                                key={instance.id}
+                                onClick={() => history.push(`/instance/${instance.id}`)}
+                            >
+                                <ListItemIcon
+                                    sx={{
+                                        minWidth: 24,
+                                        minHeight: 24,
+                                        display: "flex",
+                                        alignItems: "center",
+                                        justifyContent: "center",
+                                        fontSize: 12,
+                                        mr: 1,
+                                    }}
+                                >
+                                    <Circle
+                                        htmlColor={
+                                            completedItems === 0
+                                                ? "red"
+                                                : completedItems === instance.items.length
+                                                ? "green"
+                                                : "orange"
+                                        }
+                                        fontSize="inherit"
+                                    />
+                                </ListItemIcon>
+                                <ListItemText>{instance.name}</ListItemText>
+                            </ListItemButton>
+                        );
+                    })}
+                </List>
             </ScrollBox>
         </>
     );

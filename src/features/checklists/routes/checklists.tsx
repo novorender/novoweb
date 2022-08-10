@@ -3,14 +3,21 @@ import { Box, Button, List, ListItemButton, Typography, useTheme } from "@mui/ma
 import { useHistory } from "react-router-dom";
 
 import { Divider, ScrollBox } from "components";
-import { useAppSelector } from "app/store";
+import { useAppDispatch, useAppSelector } from "app/store";
 
-import { selectChecklists } from "../checklistsSlice";
+import { checklistsActions, selectChecklists } from "../checklistsSlice";
+import { useEffect } from "react";
+import { getChecklists } from "../utils";
 
 export function Checklists() {
     const theme = useTheme();
     const history = useHistory();
     const checklists = useAppSelector(selectChecklists);
+    const dispatch = useAppDispatch();
+
+    useEffect(() => {
+        dispatch(checklistsActions.setChecklists(getChecklists()));
+    }, [dispatch]);
 
     return (
         <>
@@ -44,7 +51,7 @@ export function Checklists() {
                         ))}{" "}
                     </List>
                 ) : (
-                    "No checklists"
+                    <Typography p={1}>No checklists</Typography>
                 )}
             </ScrollBox>
         </>

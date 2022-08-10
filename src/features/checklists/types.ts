@@ -9,12 +9,12 @@ export enum ChecklistItemType {
     Text = "text",
 }
 
-export type ChecklistItem = SimpleItem | ItemWithOptions;
+export type ChecklistItem = (SimpleItem | ItemWithOptions) &
+    ({ required: true } | { required: false; relevant: boolean });
 
 type BaseItem = {
     id: string;
     title: string;
-    required: boolean;
 };
 
 type SimpleItem = BaseItem & {
