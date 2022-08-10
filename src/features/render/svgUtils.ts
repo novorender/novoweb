@@ -285,6 +285,7 @@ export function renderMeasureObject({
     const { width, height } = size;
     obj.renderMeasureEntity(view, width, height).then((drawObjects) => {
         if (!drawObjects?.length) {
+            path.setAttribute("d", "");
             return;
         }
 
