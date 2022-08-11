@@ -743,6 +743,7 @@ export function Render3D({ onInit }: Props) {
                     })
                 );
             } catch (e) {
+                console.warn(e);
                 if (e && typeof e === "object" && "error" in e) {
                     const error = (e as { error: string }).error;
 

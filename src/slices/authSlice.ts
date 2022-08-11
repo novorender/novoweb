@@ -48,6 +48,7 @@ export const authSlice = createSlice({
             state.accessToken = action.payload.accessToken;
             state.user = action.payload.user;
             state.msalAccount = action.payload.msalAccount || null;
+            state.msalInteractionRequired = false;
         },
         logout: (state) => {
             return { ...state, msalAccount: null, accessToken: "", user: undefined };
