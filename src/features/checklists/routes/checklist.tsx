@@ -4,31 +4,90 @@ import { useHistory, useParams } from "react-router-dom";
 
 import { Divider, ScrollBox } from "components";
 import { useAppDispatch, useAppSelector } from "app/store";
-
-import { selectChecklistById, selectInstanceByChecklistId } from "../checklistsSlice";
 import { useDispatchVisible, visibleActions } from "contexts/visible";
 import { ObjectVisibility, renderActions } from "slices/renderSlice";
-import { customGroupsActions, useCustomGroups } from "contexts/customGroups";
+import { customGroupsActions, InternalGroup, useCustomGroups } from "contexts/customGroups";
 import { highlightActions, useDispatchHighlighted } from "contexts/highlighted";
+
+import { selectChecklistById, selectInstanceByChecklistId } from "../checklistsSlice";
+import { getRequiredItems } from "../utils";
+
+enum Status {
+    Initial,
+    InProgress,
+    Done,
+}
 
 export function Checklist() {
     const { id } = useParams<{ id: string }>();
     const theme = useTheme();
     const history = useHistory();
     const checklist = useAppSelector((state) => selectChecklistById(state, id));
-    const instances = useAppSelector((state) => selectInstanceByChecklistId(state, id));
+    const requiredItems = checklist ? getRequiredItems(checklist) : [];
+    const instances = useAppSelector((state) => selectInstanceByChecklistId(state, id)).map((instance) => {
+        const completedItems = instance.items.filter((item) => item.value && item.value[0]).length;
+
+        return {
+            ...instance,
+            status:
+                completedItems === 0
+                    ? Status.Initial
+                    : completedItems === requiredItems.length
+                    ? Status.Done
+                    : Status.InProgress,
+        };
+    });
     const dispatchVisible = useDispatchVisible();
     const dispatchHighlighted = useDispatchHighlighted();
     const { dispatch: dispatchGroups } = useCustomGroups();
     const dispatch = useAppDispatch();
 
     const handleShowObjects = () => {
-        // todo special group R/Y/G colors?
-
         dispatchHighlighted(highlightActions.setIds([]));
         dispatchVisible(visibleActions.set(instances.map((instance) => instance.objectId)));
         dispatch(renderActions.setDefaultVisibility(ObjectVisibility.Transparent));
+
         dispatchGroups(customGroupsActions.reset());
+        // todo flytt te init og update ids heller
+        // todo hover highlight group
+        // todo open checklist - set main object
+        dispatchGroups(
+            customGroupsActions.add([
+                {
+                    id: InternalGroup.Checklist + "_RED",
+                    name: "Red",
+                    grouping: InternalGroup.Checklist,
+                    selected: true,
+                    hidden: false,
+                    color: [0.5, 0, 0, 1],
+                    ids: instances
+                        .filter((instance) => instance.status === Status.Initial)
+                        .map((instance) => instance.objectId),
+                },
+                {
+                    id: InternalGroup.Checklist + "_ORANGE",
+                    name: "Orange",
+                    grouping: InternalGroup.Checklist,
+                    selected: true,
+                    hidden: false,
+                    color: [1, 0.75, 0, 1],
+                    ids: instances
+                        .filter((instance) => instance.status === Status.InProgress)
+                        .map((instance) => instance.objectId),
+                },
+                {
+                    id: InternalGroup.Checklist + "_GREEN",
+                    name: "Green",
+                    grouping: InternalGroup.Checklist,
+                    selected: true,
+                    hidden: false,
+                    color: [0, 0.5, 0, 1],
+                    ids: instances
+                        .filter((instance) => instance.status === Status.Done)
+                        .map((instance) => instance.objectId),
+                },
+            ])
+        );
     };
 
     return (
@@ -56,8 +115,6 @@ export function Checklist() {
                 </Typography>
                 <List dense disablePadding>
                     {instances.map((instance) => {
-                        const completedItems = instance.items.filter((item) => item.value).length;
-
                         return (
                             <ListItemButton
                                 sx={{ px: 1 }}
@@ -77,9 +134,9 @@ export function Checklist() {
                                 >
                                     <Circle
                                         htmlColor={
-                                            completedItems === 0
+                                            instance.status === Status.Initial
                                                 ? "red"
-                                                : completedItems === instance.items.length
+                                                : instance.status === Status.Done
                                                 ? "green"
                                                 : "orange"
                                         }

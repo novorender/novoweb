@@ -9,12 +9,12 @@ export enum ChecklistItemType {
     Text = "text",
 }
 
-export type ChecklistItem = (SimpleItem | ItemWithOptions) &
-    ({ required: true } | { required: false; relevant: boolean });
+export type ChecklistItem = SimpleItem | ItemWithOptions;
 
 type BaseItem = {
     id: string;
     title: string;
+    required: boolean;
 };
 
 type SimpleItem = BaseItem & {
@@ -45,5 +45,5 @@ export type ChecklistInstance = {
     objectId: number;
     position?: vec3;
     checklistId: string;
-    items: { id: string; value: null | string[] }[];
+    items: { id: string; value: null | string[]; relevant: boolean }[];
 };
