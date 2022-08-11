@@ -98,7 +98,7 @@ function updateChecklistStatus(id: string) {
     }
 
     const instances = checklistInstances.filter((instance) => instance.checklistId === id);
-    const requiredItems = checklist.items.filter((item) => item.required || item.relevant);
+    const requiredItems = checklist.items.filter((item) => item.required);
 
     updateChecklist(id, {
         instances: {
@@ -106,10 +106,20 @@ function updateChecklistStatus(id: string) {
             count: instances.length,
             completed: instances.filter(
                 (instance) =>
-                    !requiredItems.some(
-                        (requiredItem) => !instance.items.find((item) => item.id === requiredItem.id)?.value
-                    )
+                    !requiredItems.some((requiredItem) => {
+                        const instanceItem = instance.items.find((item) => item.id === requiredItem.id);
+
+                        if (!instanceItem) {
+                            throw new Error(`Instance item ${requiredItem.id} not found in instance ${instance.id}`);
+                        }
+
+                        return !Boolean(instanceItem.relevant && (instanceItem.value || [])[0]);
+                    })
             ).length,
         },
     });
+}
+
+export function getRequiredItems(checklist: Checklist) {
+    return checklist.items.filter((item) => item.required);
 }

@@ -69,7 +69,7 @@ export function CreateChecklist({
 
             const instances: Omit<ChecklistInstance, "id">[] = objectDataList.map((obj) => ({
                 checklistId: checklist.id,
-                items: checklist.items.map((item) => ({ id: item.id, value: null })),
+                items: checklist.items.map((item) => ({ id: item.id, value: null, relevant: true })),
                 name: getObjectNameFromPath(obj.path),
                 objectId: obj.id,
                 position: obj.bounds?.sphere.center,

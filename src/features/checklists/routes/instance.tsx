@@ -35,12 +35,21 @@ export function Instance() {
     const checklist = useAppSelector((state) => selectChecklistById(state, instance?.checklistId ?? ""));
     const willUnmount = useRef(false);
 
-    const [items, setItems] = useState(
-        checklist?.items.map((item) => ({
-            ...item,
-            value: instance?.items.find((instanceItem) => instanceItem.id === item.id)?.value ?? null,
-        }))!
-    );
+    const [items, setItems] = useState(() => {
+        if (!checklist || !instance) {
+            return [];
+        }
+
+        return checklist.items.map((item) => {
+            const instanceItem = instance?.items.find((instanceItem) => instanceItem.id === item.id);
+
+            return {
+                ...item,
+                value: instanceItem?.value ?? null,
+                relevant: instanceItem?.relevant ?? false,
+            };
+        });
+    });
 
     useEffect(() => {
         return () => {
@@ -54,7 +63,9 @@ export function Instance() {
                 return;
             }
 
-            const updatedInstances = updateChecklistInstance(instance.id, { items });
+            const updatedInstances = updateChecklistInstance(instance.id, {
+                items: items.map(({ id, relevant, value }) => ({ id, relevant, value })),
+            });
             dispatch(checklistsActions.setChecklistInstances(updatedInstances));
         };
     }, [items, instance, dispatch]);
@@ -102,7 +113,7 @@ export function Instance() {
     );
 }
 
-type ItemType = ChecklistItem & { value: string[] | null };
+type ItemType = ChecklistItem & { value: string[] | null; relevant: boolean };
 
 function Item({ item, setItems }: { item: ItemType; setItems: React.Dispatch<React.SetStateAction<ItemType[]>> }) {
     const handleChange = (_evt: ChangeEvent | undefined, value: string) =>
@@ -123,7 +134,7 @@ function Item({ item, setItems }: { item: ItemType; setItems: React.Dispatch<Rea
                 _item === item
                     ? {
                           ...item,
-                          ...(!item.required ? { relevant: !item.relevant } : {}),
+                          relevant: item.required ? true : !item.relevant,
                           value: null,
                       }
                     : _item
