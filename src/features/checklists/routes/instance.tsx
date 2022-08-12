@@ -34,6 +34,7 @@ export function Instance() {
     const instance = useAppSelector((state) => selectInstanceById(state, id));
     const checklist = useAppSelector((state) => selectChecklistById(state, instance?.checklistId ?? ""));
     const willUnmount = useRef(false);
+    const prevId = useRef(id);
 
     const [items, setItems] = useState(() => {
         if (!checklist || !instance) {
@@ -69,6 +70,39 @@ export function Instance() {
             dispatch(checklistsActions.setChecklistInstances(updatedInstances));
         };
     }, [items, instance, dispatch]);
+
+    // todo fix mess
+
+    useEffect(() => {
+        if (id === prevId.current) {
+            return;
+        }
+
+        const toSave = prevId.current;
+        prevId.current = id;
+
+        const updatedInstances = updateChecklistInstance(toSave, {
+            items: items.map(({ id, relevant, value }) => ({ id, relevant, value })),
+        });
+        dispatch(checklistsActions.setChecklistInstances(updatedInstances));
+
+        if (!checklist || !instance) {
+            setItems([]);
+            return;
+        }
+
+        setItems(
+            checklist.items.map((item) => {
+                const instanceItem = instance.items.find((instanceItem) => instanceItem.id === item.id);
+
+                return {
+                    ...item,
+                    value: instanceItem?.value ?? null,
+                    relevant: instanceItem?.relevant ?? false,
+                };
+            })
+        );
+    }, [id, dispatch, items, checklist, instance]);
 
     return (
         <>

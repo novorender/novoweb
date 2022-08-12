@@ -5,7 +5,7 @@ import { RootState } from "app/store";
 import { getChecklistInstances, getChecklists } from "./utils";
 
 const initialState = {
-    lastViewedPath: "/",
+    lastViewedPaths: ["/"],
     checklists: getChecklists(),
     checklistInstances: getChecklistInstances(),
 };
@@ -16,8 +16,8 @@ export const checklistsSlice = createSlice({
     name: "checklists",
     initialState: initialState,
     reducers: {
-        setLastViewedPath: (state, action: PayloadAction<State["lastViewedPath"]>) => {
-            state.lastViewedPath = action.payload;
+        setLastViewedPaths: (state, action: PayloadAction<State["lastViewedPaths"]>) => {
+            state.lastViewedPaths = action.payload;
         },
         setChecklists: (state, action: PayloadAction<State["checklists"]>) => {
             state.checklists = action.payload;
@@ -28,7 +28,7 @@ export const checklistsSlice = createSlice({
     },
 });
 
-export const selectLastViewedPath = (state: RootState) => state.checklists.lastViewedPath;
+export const selectLastViewedPaths = (state: RootState) => state.checklists.lastViewedPaths;
 export const selectChecklists = (state: RootState) => state.checklists.checklists;
 export const selectChecklistInstances = (state: RootState) => state.checklists.checklistInstances;
 
@@ -39,6 +39,11 @@ export const selectChecklistById = createSelector([selectChecklists, (_state, id
 export const selectInstanceByChecklistId = createSelector(
     [selectChecklistInstances, (_state, id: string) => id],
     (instances, checklistId) => instances.filter((instance) => instance.checklistId === checklistId)
+);
+
+export const selectInstancesByObjectId = createSelector(
+    [selectChecklistInstances, (_state, id: number) => id],
+    (instances, objectId) => instances.filter((instance) => instance.objectId === objectId)
 );
 
 export const selectInstanceById = createSelector(

@@ -1,5 +1,5 @@
 import { PropsWithChildren, useRef, useEffect } from "react";
-import { MemoryRouter, Route, Switch, SwitchProps, useLocation } from "react-router-dom";
+import { MemoryRouter, Route, Switch, SwitchProps, useHistory, useLocation } from "react-router-dom";
 import { Box } from "@mui/material";
 
 import { useAppDispatch, useAppSelector } from "app/store";
@@ -8,14 +8,21 @@ import { featuresConfig } from "config/features";
 import { WidgetList } from "features/widgetList";
 import { useToggle } from "hooks/useToggle";
 import { selectMinimized, selectMaximized } from "slices/explorerSlice";
-import { customGroupsActions, InternalGroup, useCustomGroups, useLazyCustomGroups } from "contexts/customGroups";
+import {
+    customGroupsActions,
+    InternalGroup,
+    useDispatchCustomGroups,
+    useLazyCustomGroups,
+} from "contexts/customGroups";
 import { VecRGBA } from "utils/color";
+import { selectMainObject } from "slices/renderSlice";
 
-import { checklistsActions, selectLastViewedPath } from "./checklistsSlice";
+import { selectLastViewedPaths } from "./checklistsSlice";
 import { Checklists } from "./routes/checklists";
 import { Create } from "./routes/create";
 import { Checklist } from "./routes/checklist";
 import { Instance } from "./routes/instance";
+import { Object } from "./routes/object";
 
 const checklistGroups = [
     {
@@ -58,11 +65,11 @@ const checklistGroups = [
 
 export function ChecklistsWidget() {
     const customGroups = useLazyCustomGroups();
-    const { dispatch: dispatchCustomGroups } = useCustomGroups();
+    const dispatchCustomGroups = useDispatchCustomGroups();
     const [menuOpen, toggleMenu] = useToggle();
     const minimized = useAppSelector(selectMinimized) === featuresConfig.checklists.key;
     const maximized = useAppSelector(selectMaximized) === featuresConfig.checklists.key;
-    const lastViewedPath = useAppSelector(selectLastViewedPath);
+    // const lastViewedPaths = useAppSelector(selectLastViewedPaths);
 
     useEffect(
         function initChecklistGroups() {
@@ -75,8 +82,6 @@ export function ChecklistsWidget() {
         [customGroups, dispatchCustomGroups]
     );
 
-    (window as any).groups = customGroups;
-
     return (
         <>
             <WidgetContainer minimized={minimized} maximized={maximized}>
@@ -87,7 +92,7 @@ export function ChecklistsWidget() {
                     flexGrow={1}
                     overflow="hidden"
                 >
-                    <MemoryRouter initialEntries={["/", lastViewedPath]} initialIndex={1}>
+                    <MemoryRouter>
                         <CustomSwitch>
                             <Route path="/" exact>
                                 <Checklists />
@@ -97,6 +102,9 @@ export function ChecklistsWidget() {
                             </Route>
                             <Route path="/instance/:id">
                                 <Instance />
+                            </Route>
+                            <Route path="/object/:id">
+                                <Object />
                             </Route>
                             <Route path="/create">
                                 <Create />
@@ -119,24 +127,53 @@ export function ChecklistsWidget() {
     );
 }
 
+// todo fix mess
 function CustomSwitch(props: PropsWithChildren<SwitchProps>) {
+    // eslint-disable-next-line
     const location = useLocation();
+    const history = useHistory();
+    // eslint-disable-next-line
     const willUnmount = useRef(false);
+    // eslint-disable-next-line
     const dispatch = useAppDispatch();
+    const mainObject = useAppSelector(selectMainObject);
+    const lastViewedPaths = useAppSelector(selectLastViewedPaths);
+    // eslint-disable-next-line
+    const prevPaths = useRef(lastViewedPaths);
 
     useEffect(() => {
-        return () => {
-            willUnmount.current = true;
-        };
-    }, []);
+        if (mainObject !== undefined) {
+            history.push(`/object/${mainObject}`);
+            // console.log(history);
+            // if (history.location.pathname.includes("/object")) {
+            //     history.replace(`/object/${mainObject}`);
+            // } else {
+            //     history.push(`/object/${mainObject}`);
+            // }
+        }
+    }, [mainObject, history]);
 
-    useEffect(() => {
-        return () => {
-            if (willUnmount.current) {
-                dispatch(checklistsActions.setLastViewedPath(location.pathname));
-            }
-        };
-    }, [location, dispatch]);
+    // useEffect(() => {
+    //     if (history.action === "PUSH") {
+    //         prevPaths.current = prevPaths.current.concat(history.location.pathname);
+    //     } else if (["POP", "REPLACE"].includes(history.action) && history.location.pathname !== location.pathname) {
+    //         prevPaths.current = prevPaths.current.slice(0, -1);
+    //     }
+    // }, [history, location.pathname]);
+
+    // useEffect(() => {
+    //     return () => {
+    //         willUnmount.current = true;
+    //     };
+    // }, []);
+
+    // useEffect(() => {
+    //     return () => {
+    //         if (willUnmount.current) {
+    //             dispatch(checklistsActions.setLastViewedPaths(prevPaths.current));
+    //         }
+    //     };
+    // }, [location, dispatch]);
 
     return <Switch {...props} />;
 }

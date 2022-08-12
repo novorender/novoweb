@@ -1,4 +1,4 @@
-import { ArrowBack, Circle, Layers } from "@mui/icons-material";
+import { ArrowBack, Circle } from "@mui/icons-material";
 import { Box, Button, List, ListItemButton, ListItemIcon, ListItemText, Typography, useTheme } from "@mui/material";
 import { useHistory, useParams } from "react-router-dom";
 
@@ -6,11 +6,12 @@ import { Divider, ScrollBox } from "components";
 import { useAppDispatch, useAppSelector } from "app/store";
 import { useDispatchVisible, visibleActions } from "contexts/visible";
 import { ObjectVisibility, renderActions } from "slices/renderSlice";
-import { customGroupsActions, InternalGroup, useCustomGroups } from "contexts/customGroups";
+import { customGroupsActions, InternalGroup, useDispatchCustomGroups } from "contexts/customGroups";
 import { highlightActions, useDispatchHighlighted } from "contexts/highlighted";
 
 import { selectChecklistById, selectInstanceByChecklistId } from "../checklistsSlice";
 import { getRequiredItems } from "../utils";
+import { useEffect } from "react";
 
 enum Status {
     Initial,
@@ -39,10 +40,49 @@ export function Checklist() {
     });
     const dispatchVisible = useDispatchVisible();
     const dispatchHighlighted = useDispatchHighlighted();
-    const { dispatch: dispatchGroups } = useCustomGroups();
+    const dispatchGroups = useDispatchCustomGroups();
     const dispatch = useAppDispatch();
 
-    const handleShowObjects = () => {
+    // const handleShowObjects = () => {
+    //     dispatchHighlighted(highlightActions.setIds([]));
+    //     dispatchVisible(visibleActions.set(instances.map((instance) => instance.objectId)));
+    //     dispatch(renderActions.setDefaultVisibility(ObjectVisibility.Transparent));
+
+    //     dispatchGroups(customGroupsActions.reset());
+    //     // todo open checklist - set main object
+
+    //     const red = instances
+    //         .filter((instance) => instance.status === Status.Initial)
+    //         .map((instance) => instance.objectId);
+
+    //     const orange = instances
+    //         .filter((instance) => instance.status === Status.InProgress)
+    //         .map((instance) => instance.objectId);
+
+    //     const green = instances
+    //         .filter((instance) => instance.status === Status.Done)
+    //         .map((instance) => instance.objectId);
+
+    //     dispatchGroups(
+    //         customGroupsActions.update(InternalGroup.Checklist + "_RED", { ids: red, selected: true, hidden: false })
+    //     );
+    //     dispatchGroups(
+    //         customGroupsActions.update(InternalGroup.Checklist + "_ORANGE", {
+    //             ids: orange,
+    //             selected: true,
+    //             hidden: false,
+    //         })
+    //     );
+    //     dispatchGroups(
+    //         customGroupsActions.update(InternalGroup.Checklist + "_GREEN", {
+    //             ids: green,
+    //             selected: true,
+    //             hidden: false,
+    //         })
+    //     );
+    // };
+
+    useEffect(() => {
         dispatchHighlighted(highlightActions.setIds([]));
         dispatchVisible(visibleActions.set(instances.map((instance) => instance.objectId)));
         dispatch(renderActions.setDefaultVisibility(ObjectVisibility.Transparent));
@@ -79,7 +119,7 @@ export function Checklist() {
                 hidden: false,
             })
         );
-    };
+    }, [dispatch, dispatchHighlighted, dispatchGroups, dispatchVisible, instances]);
 
     return (
         <>
@@ -93,10 +133,10 @@ export function Checklist() {
                             <ArrowBack sx={{ mr: 1 }} />
                             Back
                         </Button>
-                        <Button color="grey" onClick={handleShowObjects}>
+                        {/* <Button color="grey" onClick={handleShowObjects}>
                             <Layers sx={{ mr: 1 }} />
                             Show objects
-                        </Button>
+                        </Button> */}
                     </Box>
                 </>
             </Box>
