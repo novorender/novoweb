@@ -48,45 +48,36 @@ export function Checklist() {
         dispatch(renderActions.setDefaultVisibility(ObjectVisibility.Transparent));
 
         dispatchGroups(customGroupsActions.reset());
-        // todo flytt te init og update ids heller
-        // todo hover highlight group
         // todo open checklist - set main object
+
+        const red = instances
+            .filter((instance) => instance.status === Status.Initial)
+            .map((instance) => instance.objectId);
+
+        const orange = instances
+            .filter((instance) => instance.status === Status.InProgress)
+            .map((instance) => instance.objectId);
+
+        const green = instances
+            .filter((instance) => instance.status === Status.Done)
+            .map((instance) => instance.objectId);
+
         dispatchGroups(
-            customGroupsActions.add([
-                {
-                    id: InternalGroup.Checklist + "_RED",
-                    name: "Red",
-                    grouping: InternalGroup.Checklist,
-                    selected: true,
-                    hidden: false,
-                    color: [0.5, 0, 0, 1],
-                    ids: instances
-                        .filter((instance) => instance.status === Status.Initial)
-                        .map((instance) => instance.objectId),
-                },
-                {
-                    id: InternalGroup.Checklist + "_ORANGE",
-                    name: "Orange",
-                    grouping: InternalGroup.Checklist,
-                    selected: true,
-                    hidden: false,
-                    color: [1, 0.75, 0, 1],
-                    ids: instances
-                        .filter((instance) => instance.status === Status.InProgress)
-                        .map((instance) => instance.objectId),
-                },
-                {
-                    id: InternalGroup.Checklist + "_GREEN",
-                    name: "Green",
-                    grouping: InternalGroup.Checklist,
-                    selected: true,
-                    hidden: false,
-                    color: [0, 0.5, 0, 1],
-                    ids: instances
-                        .filter((instance) => instance.status === Status.Done)
-                        .map((instance) => instance.objectId),
-                },
-            ])
+            customGroupsActions.update(InternalGroup.Checklist + "_RED", { ids: red, selected: true, hidden: false })
+        );
+        dispatchGroups(
+            customGroupsActions.update(InternalGroup.Checklist + "_ORANGE", {
+                ids: orange,
+                selected: true,
+                hidden: false,
+            })
+        );
+        dispatchGroups(
+            customGroupsActions.update(InternalGroup.Checklist + "_GREEN", {
+                ids: green,
+                selected: true,
+                hidden: false,
+            })
         );
     };
 
@@ -120,6 +111,23 @@ export function Checklist() {
                                 sx={{ px: 1 }}
                                 key={instance.id}
                                 onClick={() => history.push(`/instance/${instance.id}`)}
+                                onMouseEnter={() => {
+                                    dispatchGroups(
+                                        customGroupsActions.update(InternalGroup.Checklist + "_CUSTOM_HIGHLIGHT", {
+                                            ids: [instance.objectId],
+                                            selected: true,
+                                            hidden: false,
+                                        })
+                                    );
+                                }}
+                                onMouseLeave={() => {
+                                    dispatchGroups(
+                                        customGroupsActions.update(InternalGroup.Checklist + "_CUSTOM_HIGHLIGHT", {
+                                            selected: false,
+                                            hidden: false,
+                                        })
+                                    );
+                                }}
                             >
                                 <ListItemIcon
                                     sx={{
