@@ -1,5 +1,5 @@
 import { Table, TableHead, TableRow, TableCell, Box, TableBody, css, styled, TableCellProps } from "@mui/material";
-import { vec3 } from "gl-matrix";
+import { ReadonlyVec3, vec3 } from "gl-matrix";
 
 const StyledTableCell = styled(TableCell, { shouldForwardProp: (prop) => prop !== "bold" })<
     TableCellProps & { bold?: boolean }
@@ -15,7 +15,7 @@ const StyledTableCell = styled(TableCell, { shouldForwardProp: (prop) => prop !=
     `
 );
 
-export function MeasurementTable({ start, end }: { start: vec3; end: vec3 }) {
+export function MeasurementTable({ start, end }: { start: ReadonlyVec3; end: ReadonlyVec3 }) {
     const delta = vec3.sub(vec3.create(), end, start);
 
     return (
