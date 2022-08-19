@@ -1,5 +1,15 @@
 import { glMatrix, mat4, quat, vec2, vec3, vec4 } from "gl-matrix";
-import { useEffect, useState, useRef, MouseEvent, PointerEvent, useCallback, SVGProps, RefCallback } from "react";
+import {
+    useEffect,
+    useState,
+    useRef,
+    MouseEvent,
+    PointerEvent,
+    useCallback,
+    SVGProps,
+    RefCallback,
+    Fragment,
+} from "react";
 import { SceneData } from "@novorender/data-js-api";
 import {
     View,
@@ -733,6 +743,7 @@ export function Render3D({ onInit }: Props) {
                     })
                 );
             } catch (e) {
+                console.warn(e);
                 if (e && typeof e === "object" && "error" in e) {
                     const error = (e as { error: string }).error;
 
@@ -1553,11 +1564,10 @@ export function Render3D({ onInit }: Props) {
                                     <AxisText id={`areaText`} />
                                 </>
                             ) : null}
-                            {areaPoints.map((pt, idx, array) => (
-                                <>
+                            {areaPoints.map((_pt, idx, array) => (
+                                <Fragment key={idx}>
                                     <MeasurementPoint
                                         disabled
-                                        key={idx + pt.toString()}
                                         name={`area-pt_${idx}`}
                                         id={`area-pt_${idx}`}
                                         stroke="black"
@@ -1566,7 +1576,7 @@ export function Render3D({ onInit }: Props) {
                                         r={5}
                                     />
                                     <g id={`area-an_${idx}`}></g>
-                                </>
+                                </Fragment>
                             ))}
 
                             {drawSelectedPaths
