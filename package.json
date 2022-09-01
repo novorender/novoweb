@@ -19,6 +19,7 @@
         "url": "https://github.com/novorender/novoweb/issues"
     },
     "devDependencies": {
+        "@types/d3-array": "^3.0.3",
         "@types/node": "^14.11.2",
         "@types/papaparse": "^5.3.2",
         "@types/react": "^18.0.9",
@@ -47,10 +48,13 @@
         "@mui/lab": "^5.0.0-alpha.58",
         "@mui/material": "^5.8.0",
         "@novorender/data-js-api": "^0.2.22",
-        "@novorender/measure-api": "^0.0.32",
+        "@novorender/measure-api": "^0.0.60",
         "@novorender/webgl-api": "^0.3.89",
         "@reduxjs/toolkit": "^1.8.1",
         "@use-gesture/react": "^10.2.14",
+        "@visx/tooltip": "^2.10.0",
+        "@visx/visx": "^2.12.1",
+        "d3-array": "^3.2.0",
         "date-fns": "^2.27.0",
         "express": "^4.17.1",
         "express-static-gzip": "^2.1.1",

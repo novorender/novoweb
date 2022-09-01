@@ -18,11 +18,12 @@ import {
     renderActions,
     selectAdvancedSettings,
     selectCameraType,
-    selectSelectiongOrthoPoint,
     selectSubtrees,
     SubtreeStatus,
     selectGridDefaults,
     selectGrid,
+    selectPicker,
+    Picker,
 } from "slices/renderSlice";
 import { selectMinimized, selectMaximized } from "slices/explorerSlice";
 
@@ -37,17 +38,17 @@ export function OrthoCam() {
     const gridDefaults = useAppSelector(selectGridDefaults);
     const grid = useAppSelector(selectGrid);
     const cameraType = useAppSelector(selectCameraType);
-    const selectingOrthoPoint = useAppSelector(selectSelectiongOrthoPoint);
+    const selectingOrthoPoint = useAppSelector(selectPicker) === Picker.OrthoPlane;
     const { terrainAsBackground } = useAppSelector(selectAdvancedSettings);
     const subtrees = useAppSelector(selectSubtrees);
     const dispatch = useAppDispatch();
 
     const togglePick = () => {
         if (cameraType === CameraType.Orthographic || selectingOrthoPoint) {
-            dispatch(renderActions.setSelectingOrthoPoint(false));
+            dispatch(renderActions.setPicker(Picker.Object));
             dispatch(renderActions.setCamera({ type: CameraType.Flight }));
         } else {
-            dispatch(renderActions.setSelectingOrthoPoint(true));
+            dispatch(renderActions.setPicker(Picker.OrthoPlane));
         }
     };
 
@@ -62,8 +63,12 @@ export function OrthoCam() {
     };
 
     const handleTopDown = () => {
+        const bs = view.scene?.boundingSphere;
+        const maxY = bs ? bs.center[1] + bs?.radius : 10000;
         const orthoController = api.createCameraController({ kind: "ortho" }, canvas);
-        (orthoController as any).init(view.camera.position, [0, 1, 0], view.camera);
+        const pos = vec3.copy(vec3.create(), view.camera.position);
+        pos[1] = Math.min(pos[1], maxY);
+        (orthoController as any).init(pos, [0, 1, 0], view.camera);
         const mat = (orthoController.params as any).referenceCoordSys;
         const right = vec3.fromValues(mat[0], mat[1], mat[2]);
         const up = vec3.fromValues(mat[4], mat[5], mat[6]);

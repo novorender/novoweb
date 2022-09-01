@@ -260,16 +260,18 @@ function MeasurementData({ measureValues }: { measureValues: MeasurementValues }
             return (
                 <>
                     <List dense>
-                        <ListItem>
-                            <Grid container>
-                                <Grid item xs={4}>
-                                    Length
+                        {measureValues.totalLength ? (
+                            <ListItem>
+                                <Grid container>
+                                    <Grid item xs={4}>
+                                        Length
+                                    </Grid>
+                                    <Grid item xs={6}>
+                                        {measureValues.totalLength.toFixed(3)} m
+                                    </Grid>
                                 </Grid>
-                                <Grid item xs={6}>
-                                    {measureValues.totalLength.toFixed(3)} m
-                                </Grid>
-                            </Grid>
-                        </ListItem>
+                            </ListItem>
+                        ) : null}
                     </List>
                 </>
             );

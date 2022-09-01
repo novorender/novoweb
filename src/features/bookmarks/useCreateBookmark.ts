@@ -14,17 +14,17 @@ import {
     selectMainObject,
     selectSelectionBasketMode,
 } from "slices/renderSlice";
-import { selectCurrentCenter, selectCurrentPath, selectProfile } from "features/followPath";
 import { selectMeasure } from "features/measure";
+import { selectFollowPath } from "features/followPath";
+import { selectAreaPoints } from "features/area";
 
 export function useCreateBookmark() {
     const measurement = useAppSelector(selectMeasure);
     const defaultVisibility = useAppSelector(selectDefaultVisibility);
     const mainObject = useAppSelector(selectMainObject);
     const selectionBasketMode = useAppSelector(selectSelectionBasketMode);
-    const currentPath = useAppSelector(selectCurrentPath);
-    const currentPathProfile = useAppSelector(selectProfile);
-    const currentCenter = useAppSelector(selectCurrentCenter);
+    const followPath = useAppSelector(selectFollowPath);
+    const areaPts = useAppSelector(selectAreaPoints);
 
     const {
         state: { view },
@@ -69,14 +69,23 @@ export function useCreateBookmark() {
                 ids: hidden.current.idArr,
             });
 
-        const followPath: Bookmark["followPath"] =
-            currentPath && currentPathProfile
+        let fp: Bookmark["followPath"] | undefined = undefined;
+        if (followPath.selectedIds.length || followPath.selectedPositions.length) {
+            const fpBase = {
+                profile: Number(followPath.profile),
+                currentCenter: followPath.currentCenter,
+            };
+
+            fp = followPath.selectedIds.length
                 ? {
-                      id: currentPath.id,
-                      profile: Number(currentPathProfile),
-                      currentCenter: currentCenter,
+                      ...fpBase,
+                      ids: followPath.selectedIds,
                   }
-                : undefined;
+                : {
+                      ...fpBase,
+                      parametric: followPath.selectedPositions,
+                  };
+        }
 
         const base = {
             img,
@@ -84,8 +93,8 @@ export function useCreateBookmark() {
             selectedOnly,
             clippingVolume,
             selectionBasket,
-            followPath,
             defaultVisibility,
+            followPath: fp,
             clippingPlanes: {
                 ...clippingPlanes,
                 bounds: {
@@ -96,6 +105,7 @@ export function useCreateBookmark() {
             measurement: measurement.selected.length > 0 ? measurement.selected.map((obj) => obj.pos) : undefined,
             objectMeasurement: measurement.selected.length > 0 ? measurement.selected : undefined,
             grid: { ...view.settings.grid },
+            area: { pts: areaPts },
         };
 
         if (camera.kind === "pinhole") {

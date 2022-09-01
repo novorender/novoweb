@@ -575,6 +575,3 @@ function scaleFarClipping(value: number): number {
 }
 
 const scaleHeadlightDistance = scaleFarClipping;
-
-// view.camera.controller.mouseButtonsMap
-// {rotate: 1, pan: 4, orbit: 2, pivot: 2}

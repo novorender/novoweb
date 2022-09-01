@@ -7,9 +7,10 @@ import { useExplorerGlobals } from "contexts/explorerGlobals";
 import { hiddenGroupActions, useDispatchHidden } from "contexts/hidden";
 import { highlightActions, useDispatchHighlighted } from "contexts/highlighted";
 import { useDispatchVisible, visibleActions } from "contexts/visible";
-import { followPathActions, getNurbs } from "features/followPath";
+import { followPathActions } from "features/followPath";
 import { measureActions } from "features/measure";
 import { CameraType, DeepWritable, ObjectVisibility, renderActions, SelectionBasketMode } from "slices/renderSlice";
+import { areaActions } from "features/area";
 
 export function useSelectBookmark() {
     const dispatchVisible = useDispatchVisible();
@@ -79,6 +80,12 @@ export function useSelectBookmark() {
             dispatch(measureActions.setSelected([]));
         }
 
+        if (bookmark.area) {
+            dispatch(areaActions.setPoints(bookmark.area.pts));
+        } else {
+            dispatch(areaActions.setPoints([]));
+        }
+
         if (bookmark.clippingPlanes) {
             view?.applySettings({ clippingPlanes: { ...bookmark.clippingPlanes, highlight: -1 } });
             dispatch(renderActions.setClippingBox({ ...bookmark.clippingPlanes, highlight: -1, defining: false }));
@@ -93,19 +100,17 @@ export function useSelectBookmark() {
                     enabled,
                     mode,
                     planes: Array.from(planes) as vec4[],
-                    defining: false,
                     baseW: planes[0] && planes[0][3] !== undefined ? planes[0][3] : 0,
                 })
             );
         } else {
-            dispatch(renderActions.setClippingPlanes({ defining: false, planes: [], enabled: false, mode: "union" }));
+            dispatch(renderActions.setClippingPlanes({ planes: [], enabled: false, mode: "union" }));
         }
 
         if (bookmark.ortho) {
             dispatch(renderActions.setCamera({ type: CameraType.Orthographic, params: bookmark.ortho }));
         } else if (bookmark.camera) {
             dispatch(renderActions.setCamera({ type: CameraType.Flight, goTo: bookmark.camera }));
-            dispatch(renderActions.setSelectingOrthoPoint(false));
         }
 
         if (bookmark.grid) {
@@ -121,41 +126,37 @@ export function useSelectBookmark() {
             if (!scene) {
                 return;
             }
+            const { profile, currentCenter } = bookmark.followPath;
 
-            const { profile, id, currentCenter } = bookmark.followPath;
+            dispatch(followPathActions.setProfile(String(profile)));
+            dispatch(followPathActions.setView2d(Boolean(bookmark.ortho)));
+            dispatch(followPathActions.setShowGrid(Boolean(bookmark.grid?.enabled)));
+            dispatch(followPathActions.setCurrentCenter(currentCenter as [number, number, number]));
 
-            getNurbs({ scene, objectId: id })
-                .then((nurbs) => {
-                    dispatch(followPathActions.setProfile(String(profile)));
-                    dispatch(followPathActions.setProfileRange({ min: nurbs.knots[0], max: nurbs.knots.slice(-1)[0] }));
-                    dispatch(followPathActions.setView2d(Boolean(bookmark.ortho)));
-                    dispatch(followPathActions.setShowGrid(Boolean(bookmark.grid?.enabled)));
-                    dispatch(followPathActions.setCurrentCenter(currentCenter as [number, number, number]));
+            if (bookmark.ortho?.far) {
+                dispatch(followPathActions.setClipping(bookmark.ortho.far));
+            }
 
-                    if (bookmark.ortho?.far) {
-                        dispatch(followPathActions.setClipping(bookmark.ortho.far));
-                    }
+            if (bookmark.followPath.currentCenter) {
+                dispatch(followPathActions.setPtHeight(bookmark.followPath.currentCenter[1]));
+            } else if (bookmark.ortho) {
+                dispatch(
+                    followPathActions.setPtHeight(
+                        bookmark.ortho.referenceCoordSys ? bookmark.ortho.referenceCoordSys[13] : undefined
+                    )
+                );
+            } else {
+                dispatch(followPathActions.setPtHeight(bookmark.camera ? bookmark.camera.position[1] : undefined));
+            }
 
-                    if (bookmark.ortho) {
-                        dispatch(
-                            followPathActions.setPtHeight(
-                                bookmark.ortho.referenceCoordSys ? bookmark.ortho.referenceCoordSys[13] : undefined
-                            )
-                        );
-                    } else {
-                        dispatch(
-                            followPathActions.setPtHeight(bookmark.camera ? bookmark.camera.position[1] : undefined)
-                        );
-                    }
-
-                    dispatch(
-                        followPathActions.setCurrentPath({
-                            id: id,
-                            nurbs,
-                        })
-                    );
-                })
-                .catch((e) => console.warn(e));
+            if ("parametric" in bookmark.followPath) {
+                dispatch(followPathActions.setSelectedPositions(bookmark.followPath.parametric));
+                dispatch(followPathActions.setGoToRouterPath(`/followPos`));
+            } else {
+                const ids = "ids" in bookmark.followPath ? bookmark.followPath.ids : [bookmark.followPath.id];
+                dispatch(followPathActions.setSelectedIds(ids));
+                dispatch(followPathActions.setGoToRouterPath(`/followIds`));
+            }
         }
     };
 

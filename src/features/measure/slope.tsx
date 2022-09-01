@@ -1,9 +1,9 @@
 import { Grid } from "@mui/material";
-import { vec3, vec2 } from "gl-matrix";
+import { vec3, vec2, ReadonlyVec3 } from "gl-matrix";
 
-const epsilon = 1e-3;
+export const epsilon = 1e-3;
 
-export function Slope({ start, end }: { start: vec3; end: vec3 }) {
+export function Slope({ start, end }: { start: ReadonlyVec3; end: ReadonlyVec3 }) {
     const sub = vec3.sub(vec3.create(), start, end);
     const dir = vec3.normalize(vec3.create(), sub);
 

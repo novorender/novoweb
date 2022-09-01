@@ -24,7 +24,7 @@ export const WidgetContainer = styled((props: PaperProps) => <Paper elevation={4
             min-width: 384px;
             max-width: 20vw;
             width: 100%;
-            min-height: 350px;
+            min-height: min(365px, 100%);
             position: static;
             transform: translateX(-20px) translateY(40px);
         }

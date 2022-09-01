@@ -85,6 +85,16 @@ export enum SelectionBasketMode {
     Strict,
 }
 
+export enum Picker {
+    Object,
+    Measurement,
+    FollowPathObject,
+    ClippingPlane,
+    OrthoPlane,
+    Area,
+    HeightProfileEntity,
+}
+
 export type Subtree = keyof NonNullable<State["subtrees"]>;
 
 type CameraPosition = Pick<Camera, "position" | "rotation">;
@@ -134,14 +144,12 @@ const initialState = {
         highlight: -1,
     } as ClippingPlanes,
     clippingPlanes: {
-        defining: false,
         enabled: false,
         mode: "union" as "union" | "intersection",
         planes: [] as vec4[],
         baseW: 0,
     },
     camera: { type: CameraType.Flight } as WritableCameraState,
-    selectingOrthoPoint: false,
     advancedSettings: {
         [AdvancedSetting.Taa]: true,
         [AdvancedSetting.Ssao]: true,
@@ -187,6 +195,7 @@ const initialState = {
         [ProjectSetting.TmZone]: "",
         [ProjectSetting.DitioProjectNumber]: "",
     },
+    picker: Picker.Object,
 };
 
 type State = typeof initialState & {
@@ -335,9 +344,6 @@ export const renderSlice = createSlice({
         setBaseCameraSpeed: (state, { payload }: PayloadAction<number>) => {
             state.baseCameraSpeed = payload;
         },
-        setSelectingOrthoPoint: (state, action: PayloadAction<boolean>) => {
-            state.selectingOrthoPoint = action.payload;
-        },
         initViewerSceneEditing: (state, action: PayloadAction<string>) => {
             const { environments } = state;
 
@@ -369,6 +375,14 @@ export const renderSlice = createSlice({
         setGrid: (state, action: PayloadAction<Partial<State["grid"]>>) => {
             state.grid = { ...state.gridDefaults, ...action.payload } as WritableGrid;
         },
+        setPicker: (state, action: PayloadAction<State["picker"]>) => {
+            state.picker = action.payload;
+        },
+        stopPicker: (state, action: PayloadAction<State["picker"]>) => {
+            if (action.payload === state.picker) {
+                state.picker = Picker.Object;
+            }
+        },
     },
     extraReducers: (builder) => {
         builder.addCase(fetchEnvironments.fulfilled, (state, action) => {
@@ -393,12 +407,12 @@ export const selectClippingBox = (state: RootState) => state.render.clippingBox;
 export const selectClippingPlanes = (state: RootState) => state.render.clippingPlanes;
 export const selectCamera = (state: RootState) => state.render.camera as CameraState;
 export const selectCameraType = (state: RootState) => state.render.camera.type;
-export const selectSelectiongOrthoPoint = (state: RootState) => state.render.selectingOrthoPoint;
 export const selectEditingScene = (state: RootState) => state.render.viewerSceneEditing;
 export const selectAdvancedSettings = (state: RootState) => state.render.advancedSettings;
 export const selectProjectSettings = (state: RootState) => state.render.projectSettings;
 export const selectGridDefaults = (state: RootState) => state.render.gridDefaults;
 export const selectGrid = (state: RootState) => state.render.grid as RenderSettings["grid"];
+export const selectPicker = (state: RootState) => state.render.picker;
 
 const { reducer, actions } = renderSlice;
 export { reducer as renderReducer, actions as renderActions };

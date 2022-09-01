@@ -21,8 +21,10 @@ import {
     Search,
     Settings,
     Share,
+    SquareFoot,
     Star,
     Straighten,
+    Timeline,
     Undo,
     Visibility,
     VisibilityOff,
@@ -42,6 +44,20 @@ export enum FeatureType {
 }
 
 export const featuresConfig = {
+    area: {
+        key: "area",
+        name: "Area",
+        Icon: SquareFoot,
+        type: FeatureType.Widget,
+        defaultLocked: false,
+    },
+    heightProfile: {
+        key: "heightProfile",
+        name: "Ht. profile",
+        Icon: Timeline,
+        type: FeatureType.Widget,
+        defaultLocked: false,
+    },
     user: {
         key: "user",
         name: "User",

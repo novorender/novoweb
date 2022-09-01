@@ -1,5 +1,15 @@
 import { glMatrix, mat4, quat, vec2, vec3, vec4 } from "gl-matrix";
-import { useEffect, useState, useRef, MouseEvent, PointerEvent, useCallback, SVGProps, RefCallback } from "react";
+import {
+    useEffect,
+    useState,
+    useRef,
+    MouseEvent,
+    PointerEvent,
+    useCallback,
+    SVGProps,
+    RefCallback,
+    Fragment,
+} from "react";
 import { SceneData } from "@novorender/data-js-api";
 import {
     View,
@@ -8,9 +18,7 @@ import {
     CameraController,
     OrthoControllerParams,
     CameraControllerParams,
-    MeasureInfo,
 } from "@novorender/webgl-api";
-import { MeasureObject, MeasureSettings, DuoMeasurementValues } from "@novorender/measure-api";
 
 import {
     Box,
@@ -42,6 +50,7 @@ import { api, dataApi, measureApi } from "app";
 import { useMountedState } from "hooks/useMountedState";
 import { useSceneId } from "hooks/useSceneId";
 import { enabledFeaturesToFeatureKeys, getEnabledFeatures } from "utils/misc";
+import { AsyncStatus } from "types/misc";
 
 import {
     fetchEnvironments,
@@ -56,7 +65,6 @@ import {
     selectSelectMultiple,
     selectDefaultVisibility,
     selectClippingPlanes,
-    selectSelectiongOrthoPoint,
     CameraType,
     selectCamera,
     selectEditingScene,
@@ -67,6 +75,8 @@ import {
     selectSubtrees,
     selectGridDefaults,
     selectSelectionBasketColor,
+    selectPicker,
+    Picker,
 } from "slices/renderSlice";
 import { explorerActions, selectUrlBookmarkId } from "slices/explorerSlice";
 import { selectDeviations } from "features/deviations";
@@ -74,6 +84,12 @@ import { bookmarksActions, selectBookmarks, useSelectBookmark } from "features/b
 import { measureActions, selectMeasure, isMeasureObject } from "features/measure";
 import { ditioActions, selectMarkers, selectShowMarkers } from "features/ditio";
 import { useAppDispatch, useAppSelector } from "app/store";
+import { followPathActions, selectDrawSelectedPositions, usePathMeasureObjects } from "features/followPath";
+import { useMeasureObjects } from "features/measure";
+import { areaActions, selectArea, selectAreaDrawPoints } from "features/area";
+import { useHandleAreaPoints } from "features/area";
+import { useHeightProfileMeasureObject } from "features/heightProfile";
+import { heightProfileActions } from "features/heightProfile";
 
 import { useHighlighted, highlightActions, useDispatchHighlighted } from "contexts/highlighted";
 import { useHidden, useDispatchHidden } from "contexts/hidden";
@@ -95,12 +111,20 @@ import {
     initDeviation,
     pickDeviationArea,
     initSubtrees,
-    inversePixelRatio,
     initProjectSettings,
 } from "./utils";
 import { xAxis, yAxis, axis, MAX_FLOAT } from "./consts";
 import { useHandleGridChanges } from "./useHandleGridChanges";
 import { useHandleCameraControls } from "./useHandleCameraControls";
+import {
+    getPathPoints,
+    moveSvgCursor,
+    resetSVG,
+    renderAngles,
+    renderMeasureObject,
+    renderMeasurePoints,
+    renderSingleMeasurePoint,
+} from "./svgUtils";
 
 glMatrix.setMatrixArrayType(Array);
 
@@ -131,7 +155,6 @@ const MeasurementPoint = styled("circle", { shouldForwardProp: (prop) => prop !=
     ({ disabled, fill }) => css`
         pointer-events: ${disabled ? "none" : "all"};
         cursor: pointer;
-        stroke: none;
         fill: ${fill ?? "green"};
     `
 );
@@ -154,24 +177,14 @@ const AxisText = styled((props: SVGProps<SVGTextElement>) => <text alignmentBase
     `
 );
 
+const measurementFillColor = "rgba(0, 191, 255, 0.5)";
+
 enum Status {
     Initial,
     NoSceneError,
     AuthError,
     ServerError,
 }
-
-type ExtendedMeasureObject = MeasureObject & {
-    pos: vec3;
-    settings?: MeasureSettings;
-};
-
-type MeasurePoint = {
-    pos: vec3;
-    id: number;
-    settings?: any;
-    selectedEntity?: any;
-};
 
 type Props = {
     onInit: (params: { customProperties: unknown }) => void;
@@ -187,7 +200,7 @@ export function Render3D({ onInit }: Props) {
     const visibleObjects = useVisible();
     const { state: customGroups, dispatch: dispatchCustomGroups } = useCustomGroups();
     const {
-        state: { view, scene, canvas, measureScene },
+        state: { view, scene, canvas },
         dispatch: dispatchGlobals,
     } = useExplorerGlobals();
     const selectBookmark = useSelectBookmark();
@@ -209,7 +222,6 @@ export function Render3D({ onInit }: Props) {
     const clippingBox = useAppSelector(selectClippingBox);
     const clippingPlanes = useAppSelector(selectClippingPlanes);
     const cameraState = useAppSelector(selectCamera);
-    const selectingOrthoPoint = useAppSelector(selectSelectiongOrthoPoint);
     const advancedSettings = useAppSelector(selectAdvancedSettings);
     const measure = useAppSelector(selectMeasure);
     const panoramas = useAppSelector(selectPanoramas);
@@ -220,6 +232,11 @@ export function Render3D({ onInit }: Props) {
     const urlBookmarkId = useAppSelector(selectUrlBookmarkId);
     const showDitioMarkers = useAppSelector(selectShowMarkers);
     const ditioMarkers = useAppSelector(selectMarkers);
+    const drawSelectedPaths = useAppSelector(selectDrawSelectedPositions);
+    const picker = useAppSelector(selectPicker);
+    const areaPoints = useAppSelector(selectAreaDrawPoints);
+    const areaValue = useAppSelector(selectArea);
+
     const dispatch = useAppDispatch();
 
     const rendering = useRef({
@@ -240,7 +257,9 @@ export function Render3D({ onInit }: Props) {
     const camY = useRef(vec3.create());
     const [size, setSize] = useState({ width: 0, height: 0 });
 
-    const [measureObjects, setMeasureObjects] = useMountedState([] as (ExtendedMeasureObject | MeasurePoint)[]);
+    const heightProfileMeasureObject = useHeightProfileMeasureObject();
+    const measureObjects = useMeasureObjects();
+    const pathMeasureObjects = usePathMeasureObjects();
     const [svg, setSvg] = useState<null | SVGSVGElement>(null);
     const [status, setStatus] = useMountedState(Status.Initial);
 
@@ -263,172 +282,72 @@ export function Render3D({ onInit }: Props) {
         [dispatchGlobals]
     );
 
-    const renderSingleMeasurePoint = useCallback(
-        (view: View, point: vec3, pointName: string) => {
-            if (!svg || !measureApi) {
-                return;
-            }
-
-            const { width, height } = size;
-            const [_pathPoints, _pixelPoints] = measureApi.toPathPoints([point], view, width, height);
-            const pixelPoints = inversePixelRatio(_pixelPoints as vec2[]);
-
-            pixelPoints.forEach((p) => {
-                const circle = svg.children.namedItem(pointName);
-                if (circle) {
-                    circle.setAttribute("cx", p[0].toFixed(1));
-                    circle.setAttribute("cy", p[1].toFixed(1));
-                }
-            });
-        },
-        [svg, size]
-    );
-
-    const renderMeasurePoints = useCallback(
-        (
-            view: View,
-            points: vec3[],
-            pathName: string | undefined,
-            pointName?: string,
-            txt?: { textName: string; distance: number }
-        ) => {
-            if (!svg || !measureApi) {
-                return;
-            }
-
-            const { width, height } = size;
-            const [_pathPoints, _pixelPoints] = measureApi.toPathPoints(points, view, width, height);
-            const pathPoints = inversePixelRatio(_pathPoints as vec2[]);
-            const pixelPoints = inversePixelRatio(_pixelPoints as vec2[]);
-            if (pathName) {
-                let curve = "";
-                if (pathPoints.length > 1) {
-                    curve += `M${pathPoints[0][0]}, ${pathPoints[0][1]}`;
-                    for (let i = 0; i < pathPoints.length; ++i) {
-                        curve += ` L${pathPoints[i][0]}, ${pathPoints[i][1]}`;
-                    }
-                }
-                const path = svg.children.namedItem(pathName);
-                if (path) {
-                    path.setAttribute("d", curve);
-                }
-            }
-            if (pointName) {
-                if (pixelPoints.length) {
-                    pixelPoints.forEach((p, i) => {
-                        const circle = svg.children.namedItem(`${pointName}_${i}`);
-                        if (circle) {
-                            circle.setAttribute("cx", p[0].toFixed(1));
-                            circle.setAttribute("cy", p[1].toFixed(1));
-                        }
-                    });
-                } else {
-                    const circles = svg.querySelectorAll(`[id^='${pointName}_']`);
-                    circles.forEach((circle) => {
-                        circle.removeAttribute("cx");
-                        circle.removeAttribute("cy");
-                    });
-                }
-            }
-            if (txt) {
-                const text = svg.children.namedItem(txt.textName);
-                if (!text) {
-                    return;
-                }
-                if (pathPoints.length !== 2) {
-                    text.innerHTML = "";
-                    return;
-                }
-
-                const _text = `${+txt.distance.toFixed(3)} m`;
-                let dir =
-                    pathPoints[0][0] > pathPoints[1][0]
-                        ? vec2.sub(vec2.create(), pathPoints[0], pathPoints[1])
-                        : vec2.sub(vec2.create(), pathPoints[1], pathPoints[0]);
-                const pixLen = _text.length * 12 + 20;
-                if (vec2.sqrLen(dir) > pixLen * pixLen) {
-                    const angle = (Math.asin(dir[1] / vec2.len(dir)) * 180) / Math.PI;
-                    const off = vec3.fromValues(0, 0, -1);
-                    vec3.scale(off, vec3.normalize(off, vec3.cross(off, off, vec3.fromValues(dir[0], dir[1], 0))), 5);
-                    const center = vec2.create();
-                    vec2.lerp(center, pathPoints[0], pathPoints[1], 0.5);
-                    text.setAttribute("x", (center[0] + off[0]).toFixed(1));
-                    text.setAttribute("y", (center[1] + off[1]).toFixed(1));
-                    text.setAttribute("transform", `rotate(${angle} ${center[0] + off[0]},${center[1] + off[1]})`);
-                    text.innerHTML = _text;
-                } else {
-                    text.innerHTML = "";
-                }
-            }
-        },
-        [svg, size]
-    );
-
-    const renderMeasureObject = useCallback(
-        (view: View, fillColor: string, pathName: string, objToDraw: MeasureObject) => {
-            const path = svg?.children.namedItem(pathName);
-
-            if (!path) {
-                return;
-            }
-
-            const { width, height } = size;
-            objToDraw.renderMeasureEntity(view, width, height).then((drawObjects) => {
-                if (!drawObjects?.length) {
-                    return;
-                }
-
-                let fillCurves = "";
-                let edgeCurves = "";
-                for (const drawObject of drawObjects) {
-                    if (drawObject && drawObject.vertices.length > 1) {
-                        drawObject.vertices = inversePixelRatio(drawObject.vertices as vec2[]);
-                        if (drawObject.drawType === "lines") {
-                            edgeCurves += `M${drawObject.vertices[0][0]}, ${drawObject.vertices[0][1]}`;
-                            for (let i = 0; i < drawObject.vertices.length; ++i) {
-                                edgeCurves += ` L${drawObject.vertices[i][0]}, ${drawObject.vertices[i][1]}`;
-                            }
-                        } else {
-                            fillCurves += `M${drawObject.vertices[0][0]}, ${drawObject.vertices[0][1]}`;
-                            for (let i = 0; i < drawObject.vertices.length; ++i) {
-                                fillCurves += ` L${drawObject.vertices[i][0]}, ${drawObject.vertices[i][1]}`;
-                            }
-                        }
-                    }
-                }
-
-                if (edgeCurves.length > 0) {
-                    path.setAttribute("d", edgeCurves);
-                    path.setAttribute("fill", "none");
-                } else if (fillCurves.length > 0) {
-                    path.setAttribute("d", fillCurves);
-                    path.setAttribute("fill", fillColor);
-                } else {
-                    path.setAttribute("d", "");
-                }
-            });
-        },
-        [svg, size]
-    );
-
     const renderParametricMeasure = useCallback(() => {
-        if (!view) {
+        if (!view || !svg) {
             return;
+        }
+
+        const { camera } = view;
+
+        const renderPoints = (params: Omit<Parameters<typeof renderMeasurePoints>[0], "svg">) =>
+            renderMeasurePoints({ svg, ...params });
+
+        const renderObject = (params: Omit<Parameters<typeof renderMeasureObject>[0], "svg" | "view" | "size">) =>
+            renderMeasureObject({ svg, view, size, ...params });
+
+        const pathPoints = (params: Omit<Parameters<typeof getPathPoints>[0], "view" | "size">) =>
+            getPathPoints({ view, size, ...params });
+
+        if (drawSelectedPaths && pathMeasureObjects.status === AsyncStatus.Success) {
+            pathMeasureObjects.data.forEach((obj) => {
+                renderObject({ obj, fillColor: measurementFillColor, pathName: "fp_" + getMeasureObjectPathId(obj) });
+            });
+        }
+
+        if (heightProfileMeasureObject) {
+            if (isMeasureObject(heightProfileMeasureObject)) {
+                renderObject({
+                    obj: heightProfileMeasureObject,
+                    fillColor: "rgba(0, 255, 38, 0.5)",
+                    pathName: "heightProfileMeasureObject",
+                });
+            } else {
+                const pts = pathPoints({ points: [heightProfileMeasureObject.pos] });
+                if (pts) {
+                    renderSingleMeasurePoint({
+                        svg,
+                        pixelPoint: pts.pixel[0],
+                        pointName: "heightProfileMeasureObject",
+                    });
+                }
+            }
         }
 
         measureObjects.forEach((obj) => {
             if (isMeasureObject(obj)) {
-                renderMeasureObject(view, "rgba(0, 191, 255, 0.5)", getMeasureObjectPathId(obj), obj);
+                renderObject({ obj, fillColor: measurementFillColor, pathName: getMeasureObjectPathId(obj) });
             } else {
-                renderSingleMeasurePoint(view, obj.pos, getMeasureObjectPathId(obj));
+                const pts = pathPoints({ points: [obj.pos] });
+                if (pts) {
+                    renderSingleMeasurePoint({
+                        svg,
+                        pixelPoint: pts.pixel[0],
+                        pointName: getMeasureObjectPathId(obj),
+                    });
+                }
             }
         });
 
         const normalPoints = measure.duoMeasurementValues?.normalPoints;
         if (normalPoints) {
-            renderMeasurePoints(view, normalPoints, "normalDistance", "normal", {
-                textName: "normalDistanceText",
-                distance: vec3.len(vec3.sub(vec3.create(), normalPoints[0], normalPoints[1])),
+            renderPoints({
+                points: pathPoints({ points: normalPoints }),
+                svgNames: { path: "normalDistance", point: "normal" },
+                text: {
+                    textName: "normalDistanceText",
+                    value: vec3.len(vec3.sub(vec3.create(), normalPoints[0], normalPoints[1])),
+                    type: "distance",
+                },
             });
         }
 
@@ -436,16 +355,23 @@ export function Render3D({ onInit }: Props) {
             measure.duoMeasurementValues?.pointA && measure.duoMeasurementValues?.pointB
                 ? [measure.duoMeasurementValues.pointA, measure.duoMeasurementValues.pointB]
                 : undefined;
-        if (measurePoints) {
-            let pts =
-                measurePoints[0][1] < measurePoints[1][1]
-                    ? [measurePoints[0], measurePoints[1]]
-                    : [measurePoints[1], measurePoints[0]];
-            const diff = vec3.sub(vec3.create(), pts[0], pts[1]);
 
-            renderMeasurePoints(view, measurePoints, "brepDistance", "measure", {
-                textName: "distanceText",
-                distance: vec3.len(diff),
+        if (measurePoints) {
+            const flip = measurePoints[0][1] > measurePoints[1][1];
+            let pts = flip ? [measurePoints[1], measurePoints[0]] : [measurePoints[0], measurePoints[1]];
+            const diff = vec3.sub(vec3.create(), pts[0], pts[1]);
+            const measureLen = vec3.len(diff);
+
+            const measurePathPoints = pathPoints({ points: measurePoints });
+
+            renderPoints({
+                points: measurePathPoints,
+                svgNames: { path: "brepDistance", point: "measure" },
+                text: {
+                    textName: "distanceText",
+                    value: measureLen,
+                    type: "distance",
+                },
             });
 
             pts = [
@@ -455,35 +381,157 @@ export function Render3D({ onInit }: Props) {
                 pts[1],
             ];
 
-            renderMeasurePoints(view, [pts[0], pts[1]], "brepPathX", undefined, {
-                textName: "brepTextX",
-                distance: Math.abs(diff[0]),
+            const xPathPoints = pathPoints({ points: [pts[0], pts[1]] });
+            renderPoints({
+                points: xPathPoints,
+                svgNames: { path: "brepPathX" },
+                text: {
+                    textName: "brepTextX",
+                    value: Math.abs(diff[0]),
+                    type: "distance",
+                },
             });
-            renderMeasurePoints(view, [pts[1], pts[2]], "brepPathY", undefined, {
-                textName: "brepTextY",
-                distance: Math.abs(diff[2]),
+
+            const yPathPoints = pathPoints({ points: [pts[1], pts[2]] });
+            renderPoints({
+                points: yPathPoints,
+                svgNames: { path: "brepPathY" },
+                text: {
+                    textName: "brepTextY",
+                    value: Math.abs(diff[2]),
+                    type: "distance",
+                },
             });
-            renderMeasurePoints(view, [pts[2], pts[3]], "brepPathZ", undefined, {
-                textName: "brepTextZ",
-                distance: Math.abs(diff[1]),
+
+            const zPathPoints = pathPoints({ points: [pts[2], pts[3]] });
+
+            renderPoints({
+                points: zPathPoints,
+                svgNames: { path: "brepPathZ" },
+                text: {
+                    textName: "brepTextZ",
+                    value: Math.abs(diff[1]),
+                    type: "distance",
+                },
             });
+
+            if (measurePathPoints && zPathPoints) {
+                if (vec3.distance(camera.position, pts[3]) < measureLen * 2) {
+                    const zDiff = vec3.sub(vec3.create(), pts[2], pts[3]);
+                    const fromP = flip ? measurePathPoints.path[1] : measurePathPoints.path[0];
+                    renderAngles({
+                        svg,
+                        anglePoint: zPathPoints.path[1],
+                        fromP,
+                        toP: zPathPoints.path[0],
+                        diffA: diff,
+                        diffB: zDiff,
+                        pathName: `angle_measureToZ`,
+                    });
+                } else {
+                    resetSVG({ svg, pathName: `angle_measureToZ` });
+                }
+            }
 
             const planarDiff = vec2.len(vec2.fromValues(diff[0], diff[2]));
             const pdPt1 = vec3.fromValues(pts[0][0], Math.min(pts[0][1], pts[3][1]), pts[0][2]);
             const pdPt2 = vec3.fromValues(pts[3][0], Math.min(pts[0][1], pts[3][1]), pts[3][2]);
-            renderMeasurePoints(view, [pdPt1, pdPt2], "brepPathXZ", undefined, {
-                textName: "brepTextXZ",
-                distance: planarDiff,
-            });
-        } else {
+
+            const xzPathPoints = pathPoints({ points: [pdPt1, pdPt2] });
+            if (xPathPoints && yPathPoints && measurePathPoints && xzPathPoints) {
+                const pixelDiffX =
+                    vec2.dist(xPathPoints.path[0], xzPathPoints.path[0]) +
+                    vec2.dist(xPathPoints.path[1], xzPathPoints.path[1]);
+                const pixelDiffY =
+                    vec2.dist(yPathPoints.path[0], xzPathPoints.path[0]) +
+                    vec2.dist(yPathPoints.path[1], xzPathPoints.path[1]);
+                const pixelMesureDiff =
+                    vec2.dist(measurePathPoints.path[0], xzPathPoints.path[0]) +
+                    vec2.dist(measurePathPoints.path[1], xzPathPoints.path[1]);
+                const skipXZ = pixelDiffX < 20 || pixelDiffY < 20 || pixelMesureDiff < 20;
+                renderPoints({
+                    points: skipXZ ? undefined : xzPathPoints,
+                    svgNames: { path: "brepPathXZ" },
+                    text: {
+                        textName: "brepTextXZ",
+                        value: planarDiff,
+                        type: "distance",
+                    },
+                });
+            }
+
+            if (measurePathPoints && xzPathPoints) {
+                if (vec3.distance(camera.position, pdPt2) < measureLen * 2) {
+                    const xzDiff = vec3.sub(vec3.create(), pdPt1, pdPt2);
+                    const fromP = flip ? measurePathPoints.path[0] : measurePathPoints.path[1];
+                    renderAngles({
+                        svg,
+                        anglePoint: xzPathPoints.path[0],
+                        fromP,
+                        toP: xzPathPoints.path[1],
+                        diffA: diff,
+                        diffB: xzDiff,
+                        pathName: `angle_measureToXZ`,
+                    });
+                } else {
+                    resetSVG({ svg, pathName: `angle_measureToXZ` });
+                }
+            }
+        }
+
+        if (areaPoints.length) {
+            const areaPts = pathPoints({ points: areaPoints });
+            if (areaPts) {
+                renderPoints({
+                    points: areaPts,
+                    svgNames: { path: "area-path", point: "area-pt" },
+                    text: {
+                        textName: "areaText",
+                        value: areaValue,
+                        type: "area",
+                    },
+                });
+                if (areaPoints.length > 2) {
+                    const asqt = Math.sqrt(areaValue) * 5;
+                    for (let i = 0; i < areaPoints.length; ++i) {
+                        const anglePt = areaPoints[i];
+                        if (
+                            areaPts.path.length === areaPoints.length &&
+                            vec3.distance(camera.position, anglePt) < asqt
+                        ) {
+                            const fromPIdx = i === 0 ? areaPoints.length - 1 : i - 1;
+                            const toPIdx = i === areaPoints.length - 1 ? 0 : i + 1;
+                            const fromP = areaPts.path[fromPIdx];
+                            const toP = areaPts.path[toPIdx];
+                            const diffA = vec3.sub(vec3.create(), areaPoints[fromPIdx], anglePt);
+                            const diffB = vec3.sub(vec3.create(), areaPoints[toPIdx], anglePt);
+                            renderAngles({
+                                svg,
+                                anglePoint: areaPts.path[i],
+                                fromP,
+                                toP,
+                                diffA,
+                                diffB,
+                                pathName: `area-an_${i}`,
+                            });
+                        } else {
+                            resetSVG({ svg, pathName: `area-an_${i}` });
+                        }
+                    }
+                }
+            }
         }
     }, [
         view,
-        renderMeasureObject,
-        renderMeasurePoints,
-        renderSingleMeasurePoint,
         measureObjects,
         measure.duoMeasurementValues,
+        pathMeasureObjects,
+        drawSelectedPaths,
+        areaPoints,
+        heightProfileMeasureObject,
+        size,
+        svg,
+        areaValue,
     ]);
 
     useEffect(() => {
@@ -567,110 +615,6 @@ export function Render3D({ onInit }: Props) {
     useEffect(() => {
         moveSvg();
     }, [moveSvg, showDitioMarkers, showPanoramaMarkers]);
-
-    const moveSvgCursor = useCallback(
-        (x: number, y: number, measurement: MeasureInfo | undefined) => {
-            if (!svg || !view) {
-                return;
-            }
-            const g = svg.children.namedItem("cursor");
-            if (!g) {
-                return;
-            }
-            if (x < 0) {
-                g.innerHTML = "";
-                return;
-            }
-            const normal = measurement?.normalVS;
-            if (normal) {
-                const { width, height } = size;
-                const { camera } = view;
-
-                const angleX = (y / height - 0.5) * camera.fieldOfView;
-                const angleY = ((x - width * 0.5) / height) * camera.fieldOfView;
-                vec3.transformQuat(normal, normal, quat.fromEuler(quat.create(), angleX, angleY, 0));
-                let style = "";
-                if (normal[2] < 1) {
-                    const rot = vec3.cross(vec3.create(), normal, vec3.fromValues(0, 0, 1));
-                    vec3.normalize(rot, rot);
-                    const angle = (Math.acos(normal[2]) * 180) / Math.PI;
-                    style = `style="transform:rotate3d(${rot[0]},${-rot[1]},${rot[2]},${angle}deg)"`;
-                }
-                g.innerHTML = `<circle r="20" fill="rgba(255,255,255,0.25)" ${style}/><line x2="${(
-                    normal[0] * 20
-                ).toFixed(1)}" y2="${(normal[1] * -20).toFixed(
-                    1
-                )}" stroke="lightblue" stroke-width="2" stroke-linecap="round" />`;
-            } else {
-                g.innerHTML = `<path d="M-10,-10L10,10M-10,10L10,-10" stroke-width="2" stroke-linecap="round" stroke="${
-                    measurement ? "lightgreen" : "red"
-                }"/>`;
-            }
-            g.setAttribute("transform", `translate(${x},${y})`);
-        },
-        [svg, view, size]
-    );
-
-    useEffect(() => {
-        getMeasureObjects();
-
-        async function getMeasureObjects() {
-            if (!measureScene) {
-                return;
-            }
-
-            const mObjects = (await Promise.all(
-                measure.selected.map((obj) =>
-                    obj.id === -1
-                        ? obj
-                        : measureScene
-                              .downloadMeasureObject(obj.id, obj.pos)
-                              .then((_mObj) => {
-                                  const mObj = _mObj as ExtendedMeasureObject;
-
-                                  if (mObj.selectedEntity) {
-                                      if (mObj.selectedEntity.kind === "vertex") {
-                                          return { ...obj, pos: mObj.selectedEntity.parameter };
-                                      }
-
-                                      mObj.pos = obj.pos;
-                                      mObj.settings = obj.settings;
-                                  }
-
-                                  return mObj.selectedEntity ? mObj : obj;
-                              })
-                              .catch(() => obj)
-                )
-            )) as (ExtendedMeasureObject | MeasurePoint)[];
-
-            if (mObjects.length !== 2) {
-                dispatch(measureActions.setDuoMeasurementValues(undefined));
-                setMeasureObjects(mObjects);
-                return;
-            }
-
-            const [obj1, obj2] = mObjects;
-
-            let res: DuoMeasurementValues | undefined;
-
-            if (obj1.selectedEntity && obj2.selectedEntity) {
-                res = (await measureScene
-                    .measure(obj1.selectedEntity!, obj2.selectedEntity, obj1.settings, obj2.settings)
-                    .catch((e) => console.warn(e))) as DuoMeasurementValues | undefined;
-            } else if (obj1.selectedEntity || obj2.selectedEntity) {
-                const obj = obj1.selectedEntity ? obj1 : obj2;
-                const pt = obj === obj1 ? obj2 : obj1;
-                res = (await measureScene.measureToPoint(obj.selectedEntity, pt.pos, obj.settings)) as
-                    | DuoMeasurementValues
-                    | undefined;
-            } else {
-                res = measureScene.pointToPoint(obj1.pos, obj2.pos) as DuoMeasurementValues | undefined;
-            }
-
-            dispatch(measureActions.setDuoMeasurementValues(res));
-            setMeasureObjects(mObjects);
-        }
-    }, [measureScene, setMeasureObjects, measure.selected, dispatch]);
 
     useEffect(() => {
         if (!environments.length) {
@@ -799,6 +743,7 @@ export function Render3D({ onInit }: Props) {
                     })
                 );
             } catch (e) {
+                console.warn(e);
                 if (e && typeof e === "object" && "error" in e) {
                     const error = (e as { error: string }).error;
 
@@ -1076,6 +1021,12 @@ export function Render3D({ onInit }: Props) {
                 }
 
                 const orthoController = api.createCameraController(safeParams, canvas);
+
+                if (view.camera.controller.params.kind === "ortho") {
+                    orthoController.fingersMap = { ...view.camera.controller.fingersMap };
+                    orthoController.mouseButtonsMap = { ...view.camera.controller.mouseButtonsMap };
+                }
+
                 controller.enabled = false;
                 view.camera.controller = orthoController;
             }
@@ -1200,6 +1151,7 @@ export function Render3D({ onInit }: Props) {
     useHandleGridChanges();
     useHandlePanoramaChanges();
     useHandleCameraControls();
+    useHandleAreaPoints();
 
     useEffect(() => {
         handleUrlBookmark();
@@ -1234,7 +1186,7 @@ export function Render3D({ onInit }: Props) {
     };
 
     const handleClick = async (e: MouseEvent | PointerEvent) => {
-        if (!view || clippingBox.defining) {
+        if (!view || clippingBox.defining || !canvas) {
             return;
         }
 
@@ -1242,6 +1194,7 @@ export function Render3D({ onInit }: Props) {
             e.nativeEvent.offsetX * devicePixelRatio,
             e.nativeEvent.offsetY * devicePixelRatio
         );
+
         if (deviation.mode !== "off" && cameraState.type === CameraType.Orthographic) {
             const pickSize = isTouchPointer.current ? 16 : 0;
             const deviation = await pickDeviationArea({
@@ -1272,85 +1225,92 @@ export function Render3D({ onInit }: Props) {
             return;
         }
 
-        if (clippingPlanes.defining) {
-            const { normal, position } = result;
+        const { normal: _normal, position } = result;
+        const normal = _normal.some((n) => Number.isNaN(n)) ? undefined : result.normal;
 
-            if (!normal) {
-                return;
-            }
+        switch (picker) {
+            case Picker.Object:
+                const alreadySelected = highlightedObjects.ids[result.objectId] === true;
 
-            const w = -vec3.dot(normal, position);
-
-            dispatch(
-                renderActions.setClippingPlanes({
-                    defining: false,
-                    planes: [vec4.fromValues(normal[0], normal[1], normal[2], w)],
-                    baseW: w,
-                })
-            );
-            moveSvgCursor(-100, -100, undefined);
-            return;
-        }
-
-        if (selectingOrthoPoint) {
-            if (!canvas) {
-                return;
-            }
-
-            const normal = result.normal.some((n) => Number.isNaN(n)) ? undefined : result.normal;
-
-            const orthoController = api.createCameraController({ kind: "ortho" }, canvas);
-            (orthoController as any).init(result.position, normal, view.camera);
-            flightController.current = view.camera.controller;
-            flightController.current.enabled = false;
-
-            view.camera.controller = orthoController;
-            dispatch(renderActions.setCamera({ type: CameraType.Orthographic }));
-            dispatch(renderActions.setSelectingOrthoPoint(false));
-            (orthoController as any).near = -0.001;
-
-            const mat = (orthoController.params as any).referenceCoordSys;
-            const right = vec3.fromValues(mat[0], mat[1], mat[2]);
-            const up = vec3.fromValues(mat[4], mat[5], mat[6]);
-            const pt = vec3.fromValues(mat[12], mat[13], mat[14]);
-            const squareSize = 1 * (gridDefaults.minorLineCount + 1);
-
-            dispatch(
-                renderActions.setGrid({
-                    origo: pt,
-                    axisY: vec3.scale(vec3.create(), up, squareSize),
-                    axisX: vec3.scale(vec3.create(), right, squareSize),
-                })
-            );
-
-            return;
-        }
-
-        if (measure.selecting) {
-            dispatch(measureActions.selectObj({ id: measure.forcePoint ? -1 : result.objectId, pos: result.position }));
-            return;
-        }
-
-        const alreadySelected = highlightedObjects.ids[result.objectId] === true;
-
-        if (selectMultiple) {
-            if (alreadySelected) {
-                if (result.objectId === mainObject) {
-                    dispatch(renderActions.setMainObject(undefined));
+                if (selectMultiple) {
+                    if (alreadySelected) {
+                        if (result.objectId === mainObject) {
+                            dispatch(renderActions.setMainObject(undefined));
+                        }
+                        dispatchHighlighted(highlightActions.remove([result.objectId]));
+                    } else {
+                        dispatch(renderActions.setMainObject(result.objectId));
+                        dispatchHighlighted(highlightActions.add([result.objectId]));
+                    }
+                } else {
+                    if (alreadySelected && highlightedObjects.idArr.length === 1) {
+                        dispatch(renderActions.setMainObject(undefined));
+                        dispatchHighlighted(highlightActions.setIds([]));
+                    } else {
+                        dispatch(renderActions.setMainObject(result.objectId));
+                        dispatchHighlighted(highlightActions.setIds([result.objectId]));
+                    }
                 }
-                dispatchHighlighted(highlightActions.remove([result.objectId]));
-            } else {
-                dispatch(renderActions.setMainObject(result.objectId));
-                dispatchHighlighted(highlightActions.add([result.objectId]));
+                break;
+            case Picker.ClippingPlane:
+                if (!normal) {
+                    return;
+                }
+
+                const w = -vec3.dot(normal, position);
+
+                dispatch(renderActions.setPicker(Picker.Object));
+                dispatch(
+                    renderActions.setClippingPlanes({
+                        planes: [vec4.fromValues(normal[0], normal[1], normal[2], w)],
+                        baseW: w,
+                    })
+                );
+                break;
+            case Picker.OrthoPlane:
+                const orthoController = api.createCameraController({ kind: "ortho" }, canvas);
+                (orthoController as any).init(result.position, normal, view.camera);
+                flightController.current = view.camera.controller;
+                flightController.current.enabled = false;
+
+                view.camera.controller = orthoController;
+                dispatch(renderActions.setCamera({ type: CameraType.Orthographic }));
+                dispatch(renderActions.setPicker(Picker.Object));
+                (orthoController as any).near = -0.001;
+
+                const mat = (orthoController.params as any).referenceCoordSys;
+                const right = vec3.fromValues(mat[0], mat[1], mat[2]);
+                const up = vec3.fromValues(mat[4], mat[5], mat[6]);
+                const pt = vec3.fromValues(mat[12], mat[13], mat[14]);
+                const squareSize = 1 * (gridDefaults.minorLineCount + 1);
+
+                dispatch(
+                    renderActions.setGrid({
+                        origo: pt,
+                        axisY: vec3.scale(vec3.create(), up, squareSize),
+                        axisX: vec3.scale(vec3.create(), right, squareSize),
+                    })
+                );
+                break;
+            case Picker.Measurement:
+                dispatch(
+                    measureActions.selectObj({ id: measure.forcePoint ? -1 : result.objectId, pos: result.position })
+                );
+                break;
+            case Picker.FollowPathObject: {
+                dispatch(followPathActions.setSelectedPositions([{ id: result.objectId, pos: result.position }]));
+                break;
             }
-        } else {
-            if (alreadySelected && highlightedObjects.idArr.length === 1) {
-                dispatch(renderActions.setMainObject(undefined));
-                dispatchHighlighted(highlightActions.setIds([]));
-            } else {
-                dispatch(renderActions.setMainObject(result.objectId));
-                dispatchHighlighted(highlightActions.setIds([result.objectId]));
+            case Picker.Area: {
+                dispatch(areaActions.addPoint([result.position, normal ?? [0, 0, 0]]));
+                break;
             }
+            case Picker.HeightProfileEntity: {
+                dispatch(heightProfileActions.selectPoint({ id: result.objectId, pos: result.position }));
+                break;
+            }
+            default:
+                console.warn("Picker not handled", picker);
         }
     };
 
@@ -1428,11 +1388,20 @@ export function Render3D({ onInit }: Props) {
     };
 
     const handleMove = async (e: PointerEvent) => {
-        if (!view || !canvas || (!e.movementY && !e.movementX)) {
+        if (!view || !canvas || !svg || (!e.movementY && !e.movementX)) {
             return;
         }
 
-        const useSvgCursor = (measure.selecting || clippingPlanes.defining || selectingOrthoPoint) && e.buttons === 0;
+        const useSvgCursor =
+            e.buttons === 0 &&
+            [
+                Picker.Measurement,
+                Picker.OrthoPlane,
+                Picker.FollowPathObject,
+                Picker.ClippingPlane,
+                Picker.Area,
+                Picker.HeightProfileEntity,
+            ].includes(picker);
 
         if (useSvgCursor) {
             const measurement = await rendering.current.measure(
@@ -1441,11 +1410,11 @@ export function Render3D({ onInit }: Props) {
             );
             canvas.style.cursor = "none";
 
-            moveSvgCursor(e.nativeEvent.offsetX, e.nativeEvent.offsetY, measurement);
+            moveSvgCursor({ svg, view, size, measurement, x: e.nativeEvent.offsetX, y: e.nativeEvent.offsetY });
 
             return;
         } else {
-            moveSvgCursor(-100, -100, undefined);
+            moveSvgCursor({ svg, view, size, measurement: undefined, x: -100, y: -100 });
         }
 
         if (
@@ -1550,7 +1519,11 @@ export function Render3D({ onInit }: Props) {
                         onPointerEnter={handlePointerDown}
                         onPointerMove={handleMove}
                         onPointerUp={handleUp}
-                        onPointerOut={() => moveSvgCursor(-100, -100, undefined)}
+                        onPointerOut={() => {
+                            if (svg && view) {
+                                moveSvgCursor({ svg, view, size, measurement: undefined, x: -100, y: -100 });
+                            }
+                        }}
                     />
                     <Menu
                         open={deviationStamp !== null}
@@ -1579,6 +1552,46 @@ export function Render3D({ onInit }: Props) {
                     </Menu>
                     {canvas !== null && (
                         <Svg width={canvas.width} height={canvas.height} ref={setSvg}>
+                            {areaPoints.length ? (
+                                <>
+                                    <path
+                                        name={`area-path`}
+                                        id={`area-path`}
+                                        fill={measurementFillColor}
+                                        stroke="yellow"
+                                        strokeWidth={1}
+                                    />
+                                    <AxisText id={`areaText`} />
+                                </>
+                            ) : null}
+                            {areaPoints.map((_pt, idx, array) => (
+                                <Fragment key={idx}>
+                                    <MeasurementPoint
+                                        disabled
+                                        name={`area-pt_${idx}`}
+                                        id={`area-pt_${idx}`}
+                                        stroke="black"
+                                        fill={idx === 0 ? "green" : idx === array.length - 1 ? "blue" : "white"}
+                                        strokeWidth={2}
+                                        r={5}
+                                    />
+                                    <g id={`area-an_${idx}`}></g>
+                                </Fragment>
+                            ))}
+
+                            {drawSelectedPaths
+                                ? pathMeasureObjects.status === AsyncStatus.Success &&
+                                  pathMeasureObjects.data.map((obj) => (
+                                      <path
+                                          key={getMeasureObjectPathId(obj)}
+                                          id={"fp_" + getMeasureObjectPathId(obj)}
+                                          d=""
+                                          stroke="yellow"
+                                          strokeWidth=""
+                                          fill="none"
+                                      />
+                                  ))
+                                : null}
                             {measureObjects
                                 .sort((objA, objB) =>
                                     isMeasureObject(objA) && isMeasureObject(objB) ? 0 : isMeasureObject(objA) ? -1 : 1
@@ -1644,12 +1657,37 @@ export function Render3D({ onInit }: Props) {
                                     <path id="brepPathY" d="" stroke="lightgreen" strokeWidth={2} fill="none" />
                                     <path id="brepPathZ" d="" stroke="blue" strokeWidth={2} fill="none" />
                                     <path id="brepPathXZ" d="" stroke="purple" strokeWidth={2} fill="none" />
+                                    <g id={`angle_measureToZ`}></g>
+                                    <g id={`angle_measureToXZ`}></g>
                                     <AxisText id="brepTextX" />
                                     <AxisText id="brepTextY" />
                                     <AxisText id="brepTextZ" />
                                     <AxisText id="brepTextXZ" />
                                     <AxisText id={`distanceText`} />
+                                    <AxisText id={`areaText`} />
                                 </>
+                            ) : null}
+                            {heightProfileMeasureObject ? (
+                                isMeasureObject(heightProfileMeasureObject) ? (
+                                    <path
+                                        key={"heightProfileMeasureObject"}
+                                        id={"heightProfileMeasureObject"}
+                                        d=""
+                                        stroke="yellow"
+                                        strokeWidth={2}
+                                        fill="none"
+                                    />
+                                ) : (
+                                    <MeasurementPoint
+                                        key={"heightProfileMeasureObject"}
+                                        id={"heightProfileMeasureObject"}
+                                        r={5}
+                                        disabled={true}
+                                        fill="yellow"
+                                        stroke="black"
+                                        strokeWidth={2}
+                                    />
+                                )
                             ) : null}
                             {panoramas && showPanoramaMarkers
                                 ? panoramas.map((panorama, idx) => {

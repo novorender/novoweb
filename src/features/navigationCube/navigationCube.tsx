@@ -464,7 +464,7 @@ export function NavigationCube() {
     return (
         <CubeContainer loading={loading} height={cubeSize * 2} width={cubeSize * 2}>
             <defs>
-                <linearGradient id="gradient" x1="0%" y1="0%" x2="100%" y2="0%">
+                <linearGradient id="navigation-cube-gradient" x1="0%" y1="0%" x2="100%" y2="0%">
                     <stop offset="0%" style={{ stopColor: theme.palette.secondary.dark, stopOpacity: 1 }} />
                     <stop
                         offset="100%"
@@ -485,7 +485,7 @@ export function NavigationCube() {
                                 <path
                                     stroke={theme.palette.secondary.light}
                                     strokeWidth={1}
-                                    fill={"url(#gradient)"}
+                                    fill={"url(#navigation-cube-gradient)"}
                                     id={path.id}
                                     d={path.path}
                                 />
