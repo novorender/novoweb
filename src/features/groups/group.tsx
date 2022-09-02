@@ -1,7 +1,6 @@
 import { MouseEvent, useState } from "react";
 import { Delete, Edit, MoreVert, Visibility, ColorLens, LibraryAdd } from "@mui/icons-material";
 import { Box, IconButton, ListItemIcon, ListItemText, Menu, MenuItem, Typography } from "@mui/material";
-import { v4 as uuidv4 } from "uuid";
 
 import { Tooltip } from "components";
 import { ColorPicker } from "features/colorPicker";
@@ -150,22 +149,10 @@ export function Group({ group, inset, editGroup }: { group: CustomGroup; inset?:
                           </MenuItem>,
                           <MenuItem
                               key="duplicate"
-                              onClick={() =>
-                                  dispatchCustomGroups(
-                                      customGroupsActions.add([
-                                          {
-                                              id: uuidv4(),
-                                              name: group.name + " - COPY",
-                                              grouping: group.grouping,
-                                              search: group.search ? [...group.search] : undefined,
-                                              ids: [],
-                                              color: [...group.color],
-                                              selected: false,
-                                              hidden: false,
-                                          },
-                                      ])
-                                  )
-                              }
+                              onClick={() => {
+                                  dispatchCustomGroups(customGroupsActions.copy(group.id));
+                                  closeMenu();
+                              }}
                           >
                               <ListItemIcon>
                                   <LibraryAdd fontSize="small" />
