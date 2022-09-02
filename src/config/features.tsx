@@ -51,6 +51,13 @@ export const featuresConfig = {
         type: FeatureType.Widget,
         defaultLocked: false,
     },
+    zoneSelector: {
+        key: "zoneSelector",
+        name: "Zone Selector",
+        Icon: SquareFoot,
+        type: FeatureType.Widget,
+        defaultLocked: false,
+    },
     heightProfile: {
         key: "heightProfile",
         name: "Ht. profile",
@@ -314,7 +321,7 @@ export type WidgetKey = {
 
 export type Widget = Config[WidgetKey];
 
-export const defaultEnabledWidgets = [featuresConfig.user.key] as WidgetKey[];
+export const defaultEnabledWidgets = [featuresConfig.user.key, featuresConfig.zoneSelector.key] as WidgetKey[];
 export const allWidgets = Object.values(featuresConfig)
     .filter((widget) => [FeatureType.AdminWidget, FeatureType.Widget].includes(widget.type))
     .map((widget) => widget.key as WidgetKey);

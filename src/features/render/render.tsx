@@ -125,6 +125,7 @@ import {
     renderMeasurePoints,
     renderSingleMeasurePoint,
 } from "./svgUtils";
+import { selectZoneSelectorPoints, zoneSelectorActions } from "features/zoneSelector";
 
 glMatrix.setMatrixArrayType(Array);
 
@@ -236,6 +237,7 @@ export function Render3D({ onInit }: Props) {
     const picker = useAppSelector(selectPicker);
     const areaPoints = useAppSelector(selectAreaDrawPoints);
     const areaValue = useAppSelector(selectArea);
+    const zoneSelectorPoints = useAppSelector(selectZoneSelectorPoints);
 
     const dispatch = useAppDispatch();
 
@@ -521,6 +523,24 @@ export function Render3D({ onInit }: Props) {
                 }
             }
         }
+        for (let i = 0; i < zoneSelectorPoints.length; ++i) {
+            if (camera.kind === "pinhole") {
+                resetSVG({ svg, pathName: `zoneSelector-path_${i}` });
+                for (let j = 0; j < zoneSelectorPoints[i].length; ++j) {
+                    resetSVG({ svg, pathName: `zoneSelector-pt_${i}_${j}` });
+                }
+                continue;
+            }
+            const zonePts = pathPoints({ points: zoneSelectorPoints[i] });
+            if (zonePts) {
+                renderPoints({
+                    points: zonePts,
+                    svgNames: { path: `zoneSelector-path_${i}`, point: `zoneSelector-pt_${i}` },
+                });
+            } else {
+                resetSVG({ svg, pathName: `zoneSelector-path_${i}` });
+            }
+        }
     }, [
         view,
         measureObjects,
@@ -528,6 +548,7 @@ export function Render3D({ onInit }: Props) {
         pathMeasureObjects,
         drawSelectedPaths,
         areaPoints,
+        zoneSelectorPoints,
         heightProfileMeasureObject,
         size,
         svg,
@@ -794,9 +815,9 @@ export function Render3D({ onInit }: Props) {
             function cameraMoved(view: View) {
                 if (cameraGeneration.current !== view.performanceStatistics.cameraGeneration) {
                     cameraGeneration.current = view.performanceStatistics.cameraGeneration ?? 0;
+                    api.update();
 
                     moveSvg();
-                    renderParametricMeasure();
                     setDeviationStamp(null);
                     rendering.current.update({ moving: true });
 
@@ -829,6 +850,7 @@ export function Render3D({ onInit }: Props) {
                             })
                         );
                     }, 500);
+                    renderParametricMeasure();
                 }
             }
         },
@@ -1309,6 +1331,10 @@ export function Render3D({ onInit }: Props) {
                 dispatch(heightProfileActions.selectPoint({ id: result.objectId, pos: result.position }));
                 break;
             }
+            case Picker.ZoneSelector: {
+                dispatch(zoneSelectorActions.addPoint(result.position));
+                break;
+            }
             default:
                 console.warn("Picker not handled", picker);
         }
@@ -1403,6 +1429,8 @@ export function Render3D({ onInit }: Props) {
                 Picker.HeightProfileEntity,
             ].includes(picker);
 
+        const useCrosshair = picker === Picker.ZoneSelector;
+
         if (useSvgCursor) {
             const measurement = await rendering.current.measure(
                 e.nativeEvent.offsetX * devicePixelRatio,
@@ -1442,7 +1470,9 @@ export function Render3D({ onInit }: Props) {
         }
 
         canvas.style.cursor = "default";
-
+        if (useCrosshair) {
+            canvas.style.cursor = "crosshair";
+        }
         if (
             !pointerDown.current ||
             !clippingBox.enabled ||
@@ -1578,6 +1608,34 @@ export function Render3D({ onInit }: Props) {
                                     <g id={`area-an_${idx}`}></g>
                                 </Fragment>
                             ))}
+                            {zoneSelectorPoints.map((_pt, idx) => (
+                                <>
+                                    <path
+                                        name={`zoneSelector-path_${idx}`}
+                                        id={`zoneSelector-path_${idx}`}
+                                        fill={measurementFillColor}
+                                        stroke="yellow"
+                                        strokeWidth={1}
+                                    />
+                                    <AxisText id={`zoneSelectorText_${idx}`} />
+                                </>
+                            ))}
+                            {zoneSelectorPoints.map((ar, idx) =>
+                                ar.map((_pt, ptIdx) => (
+                                    <Fragment key={ptIdx}>
+                                        <MeasurementPoint
+                                            disabled
+                                            name={`zoneSelector-pt_${idx}_${ptIdx}`}
+                                            id={`zoneSelector-pt_${idx}_${ptIdx}`}
+                                            stroke="black"
+                                            fill={"green"}
+                                            strokeWidth={2}
+                                            r={5}
+                                        />
+                                        <g id={`zoneSelector-an_${idx}_${ptIdx}`}></g>
+                                    </Fragment>
+                                ))
+                            )}
 
                             {drawSelectedPaths
                                 ? pathMeasureObjects.status === AsyncStatus.Success &&

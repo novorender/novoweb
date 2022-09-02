@@ -26,6 +26,7 @@ const initialState = {
     organization: "",
     viewerScenes: [] as ScenePreview[],
     widgets: [] as WidgetKey[],
+    //widgets: [featuresConfig.zoneSelector.key] as WidgetKey[],
     maximized: undefined as undefined | WidgetKey,
     minimized: undefined as undefined | WidgetKey,
     urlSearchQuery: undefined as undefined | string | SearchPattern[],
