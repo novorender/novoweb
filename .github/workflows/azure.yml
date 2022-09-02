@@ -43,6 +43,9 @@ jobs:
             - name: Remove node modules
               run: |
                   rm -rf ./node_modules
+            - name: Install server dependencies
+              run: |
+                  (cd server && npm ci && mv ./node_modules ../node_modules)
             - name: "Deploy to Azure WebApp"
               uses: azure/webapps-deploy@v2
               with:
