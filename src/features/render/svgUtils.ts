@@ -20,6 +20,9 @@ export function resetSVG({ pathName, svg }: { pathName: string; svg: SVGSVGEleme
         return;
     }
     g.innerHTML = "";
+    g.removeAttribute("d");
+    g.removeAttribute("cx");
+    g.removeAttribute("cy");
 }
 
 export function renderAngles({
