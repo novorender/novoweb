@@ -1,5 +1,5 @@
-import { AddCircle, CheckCircle, Save } from "@mui/icons-material";
-import { Box, Button, useTheme } from "@mui/material";
+import { AddCircle, CheckCircle, MoreVert, Save, Visibility } from "@mui/icons-material";
+import { Box, Button, IconButton, Typography, useTheme } from "@mui/material";
 import { useHistory } from "react-router-dom";
 
 import { Divider, LinearProgress, ScrollBox } from "components";
@@ -9,7 +9,7 @@ import { useAppSelector } from "app/store";
 import { AsyncStatus } from "types/misc";
 
 import { Collection } from "../collection";
-import { Group } from "../group";
+import { Group, StyledCheckbox, StyledListItemButton } from "../group";
 import { selectLoadingIds, selectSaveStatus } from "../groupsSlice";
 
 export function GroupList() {
@@ -36,6 +36,8 @@ export function GroupList() {
         .sort((a, b) => a.name.localeCompare(b.name, "en", { sensitivity: "accent" }));
 
     const isLoading = loadingIds || saveStatus === AsyncStatus.Loading;
+    const allSelected = !groups.some((group) => !group.selected);
+    const allHidden = !groups.some((group) => !group.hidden);
 
     return (
         <>
@@ -78,6 +80,73 @@ export function GroupList() {
             ) : null}
 
             <ScrollBox display="flex" flexDirection="column" height={1} pt={1} pb={2}>
+                <StyledListItemButton
+                    disableRipple
+                    disabled={isLoading}
+                    onClick={() =>
+                        groups.forEach((group) =>
+                            dispatchCustomGroups(
+                                customGroupsActions.update(group.id, {
+                                    selected: !allSelected,
+                                    hidden: !allSelected ? false : group.hidden,
+                                })
+                            )
+                        )
+                    }
+                >
+                    <Box display="flex" width={1} alignItems="center">
+                        <Box flex={"1 1 100%"}>
+                            <Typography color="textSecondary" noWrap={true}>
+                                Groups: {groups.length}
+                            </Typography>
+                        </Box>
+                        {groups.length ? (
+                            <>
+                                <StyledCheckbox
+                                    aria-label="toggle all groups highlighting"
+                                    size="small"
+                                    checked={allSelected}
+                                    disabled={isLoading}
+                                    onClick={(event) => event.stopPropagation()}
+                                    onChange={() =>
+                                        groups.forEach((group) =>
+                                            dispatchCustomGroups(
+                                                customGroupsActions.update(group.id, {
+                                                    selected: !allSelected,
+                                                    hidden: !allSelected ? false : group.hidden,
+                                                })
+                                            )
+                                        )
+                                    }
+                                />
+                                <StyledCheckbox
+                                    aria-label="toggle all groups visibility"
+                                    size="small"
+                                    icon={<Visibility />}
+                                    checkedIcon={<Visibility color="disabled" />}
+                                    checked={allHidden}
+                                    disabled={isLoading}
+                                    onClick={(event) => event.stopPropagation()}
+                                    onChange={() =>
+                                        groups.forEach((group) =>
+                                            dispatchCustomGroups(
+                                                customGroupsActions.update(group.id, {
+                                                    hidden: !allHidden,
+                                                    selected: !allHidden ? false : group.selected,
+                                                })
+                                            )
+                                        )
+                                    }
+                                />
+                                <Box flex="0 0 auto" visibility={"hidden"}>
+                                    <IconButton size="small" sx={{ py: 0 }}>
+                                        <MoreVert />
+                                    </IconButton>
+                                </Box>
+                            </>
+                        ) : null}
+                    </Box>
+                </StyledListItemButton>
                 {singles.map((grp) => (
                     <Group disabled={isLoading} group={grp} key={grp.id} />
                 ))}
