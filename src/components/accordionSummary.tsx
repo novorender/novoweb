@@ -3,22 +3,24 @@ import {
     AccordionSummaryProps,
     styled,
     accordionSummaryClasses,
+    Color,
 } from "@mui/material";
 import { css } from "@mui/styled-engine";
 
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 
-export const AccordionSummary = styled((props: AccordionSummaryProps) => (
-    <MuiAccordionSummary expandIcon={<ExpandMoreIcon />} {...props} />
-))(
-    ({ theme }) => css`
+export const AccordionSummary = styled(
+    (props: AccordionSummaryProps) => <MuiAccordionSummary expandIcon={<ExpandMoreIcon />} {...props} />,
+    { shouldForwardProp: (prop) => prop !== "level" }
+)<AccordionSummaryProps & { level?: number }>(
+    ({ theme, level }) => css`
         padding: ${theme.spacing(1)};
-        border-bottom: 1px solid ${theme.palette.grey[100]};
+        border-bottom: 1px solid ${theme.palette.grey[(100 * (level ?? 1)) as keyof Color]};
         min-height: 0;
         font-weight: 600;
 
         &:hover {
-            background: ${theme.palette.grey[100]};
+            background: ${theme.palette.grey[(100 * (level ?? 1)) as keyof Color]};
         }
 
         &.${accordionSummaryClasses.expanded} {
@@ -26,7 +28,7 @@ export const AccordionSummary = styled((props: AccordionSummaryProps) => (
             border-bottom: 0;
 
             &:hover {
-                background: ${theme.palette.grey[200]};
+                background: ${theme.palette.grey[(100 + 100 * (level ?? 1)) as keyof Color]};
             }
         }
 

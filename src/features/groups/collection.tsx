@@ -1,28 +1,26 @@
-import { MouseEvent, useState } from "react";
-import { Clear, Edit, MoreVert, Visibility } from "@mui/icons-material";
+import { Visibility, MoreVert, Edit, Clear } from "@mui/icons-material";
 import { Box, IconButton, List, ListItemIcon, ListItemText, Menu, MenuItem } from "@mui/material";
+import { useState, MouseEvent } from "react";
+import { useHistory } from "react-router-dom";
 
 import { useAppDispatch, useAppSelector } from "app/store";
-import { Accordion, AccordionDetails, AccordionSummary } from "components";
 import { customGroupsActions, useCustomGroups } from "contexts/customGroups";
 import { selectHasAdminCapabilities } from "slices/explorerSlice";
+import { Accordion, AccordionDetails, AccordionSummary } from "components";
 
+import { StyledCheckbox } from "./group";
 import { Group } from "./group";
-import { OrganisedGroups, StyledCheckbox } from "./groupsWidget";
-import { groupsActions, GroupsStatus, selectGroupsStatus } from "./groupsSlice";
+import { groupsActions, selectIsCollectionExpanded } from "./groupsSlice";
 
-export const GroupCollection = ({
-    collection,
-    editGroup,
-}: {
-    collection: OrganisedGroups["grouped"][keyof OrganisedGroups["grouped"]];
-    editGroup: (id: string) => void;
-}) => {
-    const { dispatch: dispatchCustomGroups } = useCustomGroups();
-    const dispatch = useAppDispatch();
-    const status = useAppSelector(selectGroupsStatus);
+export function Collection({ collection, disabled }: { collection: string; disabled: boolean }) {
+    const history = useHistory();
     const isAdmin = useAppSelector(selectHasAdminCapabilities);
+    const expanded = useAppSelector((state) => selectIsCollectionExpanded(state, collection));
+    const dispatch = useAppDispatch();
+
     const [menuAnchor, setMenuAnchor] = useState<HTMLElement | null>(null);
+
+    const { state: groups, dispatch: dispatchCustomGroups } = useCustomGroups();
 
     const openMenu = (e: MouseEvent<HTMLButtonElement>) => {
         e.stopPropagation();
@@ -33,16 +31,41 @@ export const GroupCollection = ({
         setMenuAnchor(null);
     };
 
-    const allGroupedSelected = !collection.groups.some((group) => !group.selected);
-    const allGroupedHidden = !collection.groups.some((group) => !group.hidden);
-    const disableChanges = status === GroupsStatus.Saving;
+    const currentDepth = collection.split("/").length;
+    const nestedCollections = Array.from(
+        groups.reduce((set, grp) => {
+            if (grp.grouping !== collection && grp.grouping?.startsWith(collection)) {
+                const nestedCollection = grp.grouping
+                    .split("/")
+                    .slice(0, currentDepth + 1)
+                    .join("/");
+                set.add(nestedCollection);
+            }
+
+            return set;
+        }, new Set<string>())
+    ).sort((a, b) => a.localeCompare(b, "en", { sensitivity: "accent" }));
+
+    const name = collection.split("/").pop() ?? "";
+    const collectionGroups = groups.filter((group) => group.grouping === collection);
+    const nestedGroups = groups.filter((group) => group.grouping?.startsWith(collection));
+    const allGroupedSelected = !nestedGroups.some((group) => !group.selected);
+    const allGroupedHidden = !nestedGroups.some((group) => !group.hidden);
 
     return (
-        <Accordion>
-            <AccordionSummary>
+        <Accordion
+            expanded={expanded}
+            onChange={(_e, expand) =>
+                expand
+                    ? dispatch(groupsActions.expandCollection(collection))
+                    : dispatch(groupsActions.closeCollection(collection))
+            }
+            level={currentDepth}
+        >
+            <AccordionSummary level={currentDepth}>
                 <Box width={0} flex="1 1 auto" overflow="hidden">
                     <Box fontWeight={600} overflow="hidden" whiteSpace="nowrap" textOverflow="ellipsis">
-                        {collection.name}
+                        {name}
                     </Box>
                 </Box>
                 <Box flex="0 0 auto">
@@ -51,9 +74,9 @@ export const GroupCollection = ({
                         aria-label="toggle group highlighting"
                         sx={{ marginLeft: "auto" }}
                         size="small"
-                        disabled={disableChanges}
+                        disabled={disabled}
                         onChange={() =>
-                            collection.groups.forEach((group) =>
+                            nestedGroups.forEach((group) =>
                                 dispatchCustomGroups(
                                     customGroupsActions.update(group.id, {
                                         selected: !allGroupedSelected,
@@ -74,9 +97,9 @@ export const GroupCollection = ({
                         size="small"
                         icon={<Visibility />}
                         checkedIcon={<Visibility color="disabled" />}
-                        disabled={disableChanges}
+                        disabled={disabled}
                         onChange={() =>
-                            collection.groups.forEach((group) =>
+                            nestedGroups.forEach((group) =>
                                 dispatchCustomGroups(
                                     customGroupsActions.update(group.id, {
                                         hidden: !allGroupedHidden,
@@ -95,7 +118,7 @@ export const GroupCollection = ({
                         size="small"
                         sx={{ py: 0 }}
                         aria-haspopup="true"
-                        disabled={disableChanges}
+                        disabled={disabled}
                         onClick={openMenu}
                         onFocus={(event) => event.stopPropagation()}
                     >
@@ -107,13 +130,13 @@ export const GroupCollection = ({
                     anchorEl={menuAnchor}
                     open={Boolean(menuAnchor)}
                     onClose={closeMenu}
-                    id={`${collection.name}-menu`}
+                    id={`${name}-menu`}
                     MenuListProps={{ sx: { maxWidth: "100%" } }}
                 >
                     <MenuItem
-                        onClick={() =>
-                            dispatch(groupsActions.setStatus([GroupsStatus.RenamingGroupCollection, collection.name]))
-                        }
+                        onClick={() => {
+                            history.push("/renameCollection", { collection });
+                        }}
                     >
                         <ListItemIcon>
                             <Edit fontSize="small" />
@@ -122,9 +145,19 @@ export const GroupCollection = ({
                     </MenuItem>
                     <MenuItem
                         onClick={() => {
-                            collection.groups.forEach((group) =>
-                                dispatchCustomGroups(customGroupsActions.update(group.id, { grouping: undefined }))
+                            const path = collection.split("/");
+                            const toUngroup = path.slice(-1)[0];
+                            const regExp = new RegExp(`(${path.slice(0, -1).join("/")}/?)${toUngroup}/?`);
+
+                            nestedGroups.forEach((group) =>
+                                dispatchCustomGroups(
+                                    customGroupsActions.update(group.id, {
+                                        grouping: group.grouping?.replace(regExp, "$1").replace(/\/$/, ""),
+                                    })
+                                )
                             );
+
+                            dispatch(groupsActions.closeCollection(collection));
                         }}
                     >
                         <ListItemIcon>
@@ -134,17 +167,20 @@ export const GroupCollection = ({
                     </MenuItem>
                 </Menu>
             </AccordionSummary>
-            <AccordionDetails>
-                <Box pr={3}>
-                    <List sx={{ padding: 0 }}>
-                        {[...collection.groups]
-                            .sort((a, b) => a.name.localeCompare(b.name, "en", { sensitivity: "accent" }))
-                            .map((group, index) => (
-                                <Group key={group.name + index} editGroup={() => editGroup(group.id)} group={group} />
-                            ))}
-                    </List>
-                </Box>
+            <AccordionDetails sx={{ pb: 0 }}>
+                <List sx={{ padding: 0 }}>
+                    {[...collectionGroups]
+                        .sort((a, b) => a.name.localeCompare(b.name, "en", { sensitivity: "accent" }))
+                        .map((group, index) => (
+                            <Group disabled={disabled} key={group.name + index} group={group} />
+                        ))}
+                    {nestedCollections.length
+                        ? nestedCollections.map((coll) => (
+                              <Collection disabled={disabled} key={coll} collection={coll} />
+                          ))
+                        : null}
+                </List>
             </AccordionDetails>
         </Accordion>
     );
-};
+}

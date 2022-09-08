@@ -1,24 +1,12 @@
-import { createSlice, PayloadAction } from "@reduxjs/toolkit";
-import { RootState } from "app/store";
+import { createSelector, createSlice, PayloadAction } from "@reduxjs/toolkit";
 
-export enum GroupsStatus {
-    Initial,
-    Unsaved,
-    ConfirmingSave,
-    Saving,
-    Deleting,
-    RenamingGroup,
-    RenamingGroupCollection,
-    Error,
-}
+import { RootState } from "app/store";
+import { AsyncStatus } from "types/misc";
 
 const initialState = {
     loadingIds: false,
-    status: GroupsStatus.Initial as
-        | Exclude<GroupsStatus, GroupsStatus.Deleting>
-        | [status: GroupsStatus.Deleting, id: string]
-        | [status: GroupsStatus.RenamingGroup, currentName: string, id: string]
-        | [status: GroupsStatus.RenamingGroupCollection, currentName: string],
+    saveStatus: AsyncStatus.Initial,
+    expandedCollections: [] as string[],
 };
 
 type State = typeof initialState;
@@ -27,17 +15,37 @@ export const groupsSlice = createSlice({
     name: "groups",
     initialState: initialState,
     reducers: {
-        setStatus: (state, action: PayloadAction<State["status"]>) => {
-            state.status = action.payload;
+        setSaveStatus: (state, action: PayloadAction<State["saveStatus"]>) => {
+            state.saveStatus = action.payload;
         },
         setLoadingIds: (state, action: PayloadAction<State["loadingIds"]>) => {
             state.loadingIds = action.payload;
         },
+        setExpandedCollections: (state, action: PayloadAction<State["expandedCollections"]>) => {
+            state.expandedCollections = action.payload;
+        },
+        expandCollection: (state, action: PayloadAction<string>) => {
+            state.expandedCollections = state.expandedCollections.concat(action.payload);
+        },
+        closeCollection: (state, action: PayloadAction<string>) => {
+            state.expandedCollections = state.expandedCollections.filter((collection) => collection !== action.payload);
+        },
+        renameExpandedCollection: (state, { payload: { from, to } }: PayloadAction<{ from: string; to: string }>) => {
+            state.expandedCollections = state.expandedCollections.map((collection) =>
+                collection.startsWith(from) ? collection.replace(from, to) : collection
+            );
+        },
     },
 });
 
-export const selectGroupsStatus = (state: RootState) => state.groups.status;
+export const selectSaveStatus = (state: RootState) => state.groups.saveStatus;
 export const selectLoadingIds = (state: RootState) => state.groups.loadingIds;
+export const selectExpandedCollections = (state: RootState) => state.groups.expandedCollections;
+
+export const selectIsCollectionExpanded = createSelector(
+    [selectExpandedCollections, (_state, collection: string) => collection],
+    (collections, collection) => collections.includes(collection)
+);
 
 const { actions, reducer } = groupsSlice;
 export { actions as groupsActions, reducer as groupsReducer };

@@ -1,23 +1,44 @@
 import { MouseEvent, useState } from "react";
+import { useHistory } from "react-router-dom";
 import { Delete, Edit, MoreVert, Visibility, ColorLens, LibraryAdd } from "@mui/icons-material";
-import { Box, IconButton, ListItemIcon, ListItemText, Menu, MenuItem, Typography } from "@mui/material";
+import {
+    Box,
+    Checkbox,
+    css,
+    IconButton,
+    ListItemButton,
+    ListItemButtonProps,
+    ListItemIcon,
+    ListItemText,
+    Menu,
+    MenuItem,
+    styled,
+    Typography,
+} from "@mui/material";
 
 import { Tooltip } from "components";
 import { ColorPicker } from "features/colorPicker";
-
-import { useAppDispatch, useAppSelector } from "app/store";
+import { useAppSelector } from "app/store";
 import { selectHasAdminCapabilities } from "slices/explorerSlice";
 import { CustomGroup, customGroupsActions, useCustomGroups } from "contexts/customGroups";
-
 import { rgbToVec, vecToRgb } from "utils/color";
 
-import { StyledCheckbox, StyledListItemButton } from "./groupsWidget";
-import { groupsActions, GroupsStatus, selectGroupsStatus } from "./groupsSlice";
+export const StyledListItemButton = styled(ListItemButton)<ListItemButtonProps>(
+    ({ theme }) => css`
+        margin: 0;
+        flex-grow: 0;
+        padding: ${theme.spacing(0.5)} ${theme.spacing(4)} ${theme.spacing(0.5)} ${theme.spacing(1)};
+    `
+);
 
-export function Group({ group, inset, editGroup }: { group: CustomGroup; inset?: boolean; editGroup: () => void }) {
+export const StyledCheckbox = styled(Checkbox)`
+    padding-top: 0;
+    padding-bottom: 0;
+`;
+
+export function Group({ group, disabled }: { group: CustomGroup; disabled: boolean }) {
+    const history = useHistory();
     const isAdmin = useAppSelector(selectHasAdminCapabilities);
-    const status = useAppSelector(selectGroupsStatus);
-    const dispatch = useAppDispatch();
     const { dispatch: dispatchCustomGroups } = useCustomGroups();
 
     const [menuAnchor, setMenuAnchor] = useState<HTMLElement | null>(null);
@@ -37,14 +58,12 @@ export function Group({ group, inset, editGroup }: { group: CustomGroup; inset?:
     };
 
     const { r, g, b, a } = vecToRgb(group.color);
-    const disableChanges = status === GroupsStatus.Saving;
 
     return (
         <>
             <StyledListItemButton
-                inset={inset}
                 disableRipple
-                disabled={disableChanges}
+                disabled={disabled}
                 onClick={() =>
                     dispatchCustomGroups(
                         customGroupsActions.update(group.id, {
@@ -65,7 +84,7 @@ export function Group({ group, inset, editGroup }: { group: CustomGroup; inset?:
                             aria-label="toggle group highlighting"
                             size="small"
                             checked={group.selected}
-                            disabled={disableChanges}
+                            disabled={disabled}
                             onClick={(event) => event.stopPropagation()}
                             onChange={() =>
                                 dispatchCustomGroups(
@@ -85,7 +104,7 @@ export function Group({ group, inset, editGroup }: { group: CustomGroup; inset?:
                             icon={<Visibility htmlColor={`rgba(${r}, ${g}, ${b}, ${Math.max(a ?? 0, 0.2)})`} />}
                             checkedIcon={<Visibility color="disabled" />}
                             checked={group.hidden}
-                            disabled={disableChanges}
+                            disabled={disabled}
                             onClick={(event) => event.stopPropagation()}
                             onChange={() =>
                                 dispatchCustomGroups(
@@ -103,7 +122,7 @@ export function Group({ group, inset, editGroup }: { group: CustomGroup; inset?:
                             size="small"
                             sx={{ py: 0 }}
                             aria-haspopup="true"
-                            disabled={disableChanges}
+                            disabled={disabled}
                             onClick={openMenu}
                         >
                             <MoreVert />
@@ -131,17 +150,11 @@ export function Group({ group, inset, editGroup }: { group: CustomGroup; inset?:
                 {(isAdmin
                     ? [
                           <MenuItem
-                              key="rename"
-                              onClick={() =>
-                                  dispatch(groupsActions.setStatus([GroupsStatus.RenamingGroup, group.name, group.id]))
-                              }
+                              key="edit"
+                              onClick={() => {
+                                  history.push("/edit/" + group.id);
+                              }}
                           >
-                              <ListItemIcon>
-                                  <Edit fontSize="small" />
-                              </ListItemIcon>
-                              <ListItemText>Rename</ListItemText>
-                          </MenuItem>,
-                          <MenuItem key="edit" onClick={editGroup}>
                               <ListItemIcon>
                                   <Edit fontSize="small" />
                               </ListItemIcon>
@@ -159,10 +172,7 @@ export function Group({ group, inset, editGroup }: { group: CustomGroup; inset?:
                               </ListItemIcon>
                               <ListItemText>Duplicate</ListItemText>
                           </MenuItem>,
-                          <MenuItem
-                              key="delete"
-                              onClick={() => dispatch(groupsActions.setStatus([GroupsStatus.Deleting, group.id]))}
-                          >
+                          <MenuItem key="delete" onClick={() => history.push("/delete/" + group.id)}>
                               <ListItemIcon>
                                   <Delete fontSize="small" />
                               </ListItemIcon>

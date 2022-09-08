@@ -1,2 +1,2 @@
-export { Groups } from "./groupsWidget";
+export { Groups } from "./groups";
 export * from "./groupsSlice";

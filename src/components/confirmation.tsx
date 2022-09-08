@@ -1,3 +1,4 @@
+import { LoadingButton } from "@mui/lab";
 import { Box, BoxProps, Button, Typography } from "@mui/material";
 
 export function Confirmation({
@@ -5,8 +6,15 @@ export function Confirmation({
     confirmBtnText,
     onCancel,
     onConfirm,
+    loading,
     ...boxProps
-}: BoxProps & { title: string; confirmBtnText: string; onCancel: () => void; onConfirm?: () => void }) {
+}: BoxProps & {
+    title: string;
+    confirmBtnText: string;
+    onCancel: () => void;
+    onConfirm?: () => void;
+    loading?: boolean;
+}) {
     return (
         <Box
             display="flex"
@@ -31,12 +39,21 @@ export function Confirmation({
                     variant="outlined"
                     color="grey"
                     onClick={onCancel}
+                    disabled={loading}
                 >
                     Cancel
                 </Button>
-                <Button fullWidth type="submit" size="large" variant="contained" color="primary" onClick={onConfirm}>
+                <LoadingButton
+                    fullWidth
+                    type="submit"
+                    size="large"
+                    variant="contained"
+                    color="primary"
+                    onClick={onConfirm}
+                    loading={loading}
+                >
                     {confirmBtnText}
-                </Button>
+                </LoadingButton>
             </Box>
         </Box>
     );

@@ -24,6 +24,7 @@ enum ActionTypes {
     Delete,
     Reset,
     Copy,
+    GroupSelected,
 }
 
 function update(groupId: string, updates: Partial<CustomGroup>) {
@@ -68,7 +69,13 @@ function copy(id: string) {
     };
 }
 
-const actions = { update, set, add, copy, reset, delete: deleteGroup };
+function groupSelected() {
+    return {
+        type: ActionTypes.GroupSelected as const,
+    };
+}
+
+const actions = { update, set, add, copy, reset, groupSelected, delete: deleteGroup };
 
 type Actions = ReturnType<typeof actions[keyof typeof actions]>;
 type DispatchCustomGroups = Dispatch<Actions>;
@@ -128,6 +135,28 @@ function reducer(state: State, action: Actions): CustomGroup[] {
             };
 
             return state.concat(copy);
+        }
+        case ActionTypes.GroupSelected: {
+            let collectionNumber = 1;
+            let name = `Collection ${collectionNumber}`;
+            let runLoop = state.find((group) => group.grouping === name) !== undefined;
+
+            while (runLoop) {
+                const newName = `Collection ${++collectionNumber}`;
+                name = newName;
+                runLoop = state.find((group) => group.grouping === newName) !== undefined;
+            }
+
+            return state.map((group) => {
+                if (group.grouping || !group.selected) {
+                    return group;
+                }
+
+                return {
+                    ...group,
+                    grouping: name,
+                };
+            });
         }
         case ActionTypes.Reset: {
             return state

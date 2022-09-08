@@ -1,5 +1,5 @@
 import { FormEventHandler, useEffect, useState } from "react";
-import { Box, Button, Checkbox, FormControlLabel, TextField } from "@mui/material";
+import { Box, Button, Checkbox, FormControlLabel } from "@mui/material";
 import { useHistory, useParams } from "react-router-dom";
 import { v4 as uuidv4 } from "uuid";
 
@@ -7,7 +7,7 @@ import { useAppDispatch, useAppSelector } from "app/store";
 import { selectHasAdminCapabilities } from "slices/explorerSlice";
 import { useExplorerGlobals } from "contexts/explorerGlobals";
 
-import { ScrollBox } from "components";
+import { ScrollBox, TextField } from "components";
 import { useToggle } from "hooks/useToggle";
 
 import { useCreateBookmark } from "../useCreateBookmark";

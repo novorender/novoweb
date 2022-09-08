@@ -1,15 +1,13 @@
-import { useState, FormEventHandler } from "react";
+import { FormEventHandler, useState } from "react";
 import { Box, Typography, Button, Modal, useTheme, Link, FormControlLabel } from "@mui/material";
 import { LoadingButton } from "@mui/lab";
-import { HierarcicalObjectReference, SearchPattern } from "@novorender/webgl-api";
-import { v4 as uuidv4 } from "uuid";
+import { HierarcicalObjectReference, ObjectId, SearchPattern } from "@novorender/webgl-api";
+import { useHistory, useRouteMatch } from "react-router-dom";
 
 import { api } from "app";
 import { ScrollBox, TextField, Switch } from "components";
 import { useExplorerGlobals } from "contexts/explorerGlobals";
-import { highlightActions, useDispatchHighlighted, useHighlighted } from "contexts/highlighted";
-import { CustomGroup, customGroupsActions, useCustomGroups } from "contexts/customGroups";
-
+import { highlightActions, useDispatchHighlighted } from "contexts/highlighted";
 import { useToggle } from "hooks/useToggle";
 import { useAbortController } from "hooks/useAbortController";
 import { useMountedState } from "hooks/useMountedState";
@@ -24,40 +22,27 @@ enum Status {
     SearchSuccess,
 }
 
-// @prettier-ignore
-const initialSearchPattern = `{
-    "searchPattern": [
-        {
-            "property": "",
-            "value": "",
-            "exact": true
-        }
-    ]
-}`;
-
 export function CreateJsonGroup({
-    open,
-    id,
-    onClose,
+    savedInputs,
+    setSavedInputs,
+    ids,
+    setIds,
 }: {
-    open: boolean;
-    id?: string;
-    onClose: (canceled?: boolean) => void;
+    savedInputs: SearchPattern[];
+    setSavedInputs: React.Dispatch<React.SetStateAction<SearchPattern[]>>;
+    ids: ObjectId[];
+    setIds: (arg: number[] | ((_ids: ObjectId[]) => ObjectId[])) => void;
 }) {
+    const history = useHistory();
+    const match = useRouteMatch();
     const theme = useTheme();
     const {
         state: { scene },
     } = useExplorerGlobals(true);
-    const highlighted = useHighlighted();
     const dispatchHighlighted = useDispatchHighlighted();
-    const { state: customGroups, dispatch: dispatchCustomGroup } = useCustomGroups();
-    const groupToEdit = id ? customGroups.find((group) => group.id === id) : undefined;
 
     const [status, setStatus] = useMountedState(Status.Initial);
-    const [json, setJson] = useState(
-        groupToEdit ? JSON.stringify({ searchPattern: groupToEdit.search }, undefined, 2) : initialSearchPattern
-    );
-    const [ids, setIds] = useState([] as number[]);
+    const [json, setJson] = useState(JSON.stringify({ searchPattern: savedInputs }, undefined, 2));
     const [includeDescendants, toggleIncludeDescendants] = useToggle(true);
 
     const [abortController] = useAbortController();
@@ -103,50 +88,23 @@ export function CreateJsonGroup({
             }).catch(() => {});
         }
 
+        setSavedInputs(searchPatterns);
         setIds((ids) => uniqueArray(ids));
         setStatus(Status.SearchSuccess);
     };
 
-    const handleSubmit: FormEventHandler<HTMLFormElement> = (e) => {
+    const handleSubmit: FormEventHandler = (e) => {
         e.preventDefault();
 
-        let searchPatterns: SearchPattern[];
-        try {
-            searchPatterns = JSON.parse(json).searchPattern;
-
-            if (!searchByPatterns || !Array.isArray(searchPatterns)) {
-                throw new Error("Invalid search pattern");
-            }
-        } catch {
-            return setStatus(Status.SearchError);
-        }
-
-        if (!groupToEdit) {
-            const name = "New group (from JSON)";
-            const newGroup: CustomGroup = {
-                id: uuidv4(),
-                name,
-                ids,
-                includeDescendants,
-                selected: true,
-                hidden: false,
-                search: searchPatterns,
-                color: highlighted.color,
-            };
-
-            dispatchCustomGroup(customGroupsActions.add([newGroup]));
-        } else {
-            dispatchCustomGroup(
-                customGroupsActions.update(groupToEdit.id, { search: searchPatterns, ids, includeDescendants })
-            );
-        }
-
-        dispatchHighlighted(highlightActions.remove(ids));
-        onClose();
+        history.push(match.url.replace("json", "step2"));
     };
 
+    const disableNext =
+        ![Status.Initial, Status.SearchSuccess].includes(status) ||
+        !savedInputs.filter((input) => input.property && input.value).length;
+
     return (
-        <Modal open={open}>
+        <Modal open={true} onClose={() => history.goBack()}>
             <Box display="flex" justifyContent="center" alignItems="center" width={1} height={1}>
                 <Box
                     width={`min(100%, 900px)`}
@@ -212,7 +170,7 @@ export function CreateJsonGroup({
                                 variant="contained"
                                 type="button"
                                 sx={{ mr: 3 }}
-                                onClick={() => onClose(true)}
+                                onClick={() => history.goBack()}
                             >
                                 Cancel
                             </Button>
@@ -228,13 +186,8 @@ export function CreateJsonGroup({
                                 >
                                     Search
                                 </LoadingButton>
-                                <Button
-                                    disabled={status !== Status.SearchSuccess}
-                                    size="large"
-                                    variant="contained"
-                                    type="submit"
-                                >
-                                    {groupToEdit ? "Update" : "Create"} group ({ids.length})
+                                <Button disabled={disableNext} size="large" variant="contained" type="submit">
+                                    Next ({ids.length})
                                 </Button>
                             </Box>
                         </Box>
