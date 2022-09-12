@@ -1,0 +1,19 @@
+{
+    "name": "novoweb-server",
+    "version": "0.0.1",
+    "description": "Novorender frontend - server",
+    "main": "server.js",
+    "repository": {
+        "type": "git",
+        "url": "git+https://github.com/novorender/novoweb.git"
+    },
+    "license": "BSD 4-Clause",
+    "bugs": {
+        "url": "https://github.com/novorender/novoweb/issues"
+    },
+    "dependencies": {
+        "express": "^4.17.1",
+        "express-static-gzip": "^2.1.1",
+        "http-proxy-middleware": "^2.0.3"
+    }
+}

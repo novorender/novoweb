@@ -1,0 +1,1 @@
+App dependencies are deleted after build to speed up deploy script, so we keep a separate package.json with server dependencies to be installed and moved after.
