@@ -1,3 +1,5 @@
+// @ts-nocheck
+// todo update data-api to use measure-api MeasureSettings
 import { Bookmark } from "@novorender/data-js-api";
 import { OrthoControllerParams } from "@novorender/webgl-api";
 import { quat, vec3 } from "gl-matrix";

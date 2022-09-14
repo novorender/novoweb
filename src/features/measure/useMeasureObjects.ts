@@ -7,7 +7,7 @@ import { useAppDispatch, useAppSelector } from "app/store";
 
 import { measureActions, selectMeasure } from "./measureSlice";
 
-type ExtendedMeasureObject = MeasureObject & {
+export type ExtendedMeasureObject = MeasureObject & {
     pos: vec3;
     settings?: MeasureSettings;
 };

@@ -1,10 +1,10 @@
 import { MeasureInfo, View } from "@novorender/webgl-api";
-import { MeasureObject } from "@novorender/measure-api";
 import { quat, vec2, vec3 } from "gl-matrix";
 
 import { measureApi } from "app";
 
 import { inversePixelRatio } from "./utils";
+import { ExtendedMeasureObject } from "features/measure/useMeasureObjects";
 
 type Size = {
     width: number;
@@ -274,7 +274,7 @@ export function renderMeasureObject({
     size: Size;
     fillColor: string;
     pathName: string;
-    obj: MeasureObject;
+    obj: ExtendedMeasureObject;
 }) {
     const path = svg.children.namedItem(pathName);
 
@@ -283,7 +283,7 @@ export function renderMeasureObject({
     }
 
     const { width, height } = size;
-    obj.renderMeasureEntity(view, width, height).then((drawObjects) => {
+    obj.renderMeasureEntity(view, width, height, obj.settings).then((drawObjects) => {
         if (!drawObjects?.length) {
             path.setAttribute("d", "");
             return;
