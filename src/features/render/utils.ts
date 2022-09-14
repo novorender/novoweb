@@ -551,7 +551,7 @@ export function initAdvancedSettings(view: View, customProperties: Record<string
             [AdvancedSetting.DoubleSidedMaterials]: advanced.doubleSided.opaque,
             [AdvancedSetting.DoubleSidedTransparentMaterials]: advanced.doubleSided.transparent,
             [AdvancedSetting.CameraFarClipping]: cameraParams.far,
-            [AdvancedSetting.CameraNearClipping]: cameraParams.near,
+            [AdvancedSetting.CameraNearClipping]: cameraParams.kind === "flight" ? cameraParams.near : 0.1,
             [AdvancedSetting.QualityPoints]: points.shape === "disc",
             [AdvancedSetting.PointSize]: points.size.pixel ?? 1,
             [AdvancedSetting.MaxPointSize]: points.size.maxPixel ?? 20,
