@@ -43,8 +43,13 @@ export function useMeasureObjects() {
                         ? obj
                         : measureScene
                               .downloadMeasureObject(obj.id, obj.pos)
-                              .then((_mObj) => {
+                              .then(async (_mObj) => {
                                   const mObj = _mObj as ExtendedMeasureObject;
+                                  if (obj.settings?.cylinderMeasure === "top") {
+                                      await mObj.swapCylinder("outer");
+                                  } else if (obj.settings?.cylinderMeasure === "bottom") {
+                                      await mObj.swapCylinder("inner");
+                                  }
 
                                   if (mObj.selectedEntity) {
                                       if (mObj.selectedEntity.kind === "vertex") {

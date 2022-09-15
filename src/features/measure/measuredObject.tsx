@@ -1,5 +1,5 @@
 import { vec3 } from "gl-matrix";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { MeasurementValues, MeasureObject, MeasureSettings } from "@novorender/measure-api";
 import {
     Box,
@@ -20,12 +20,12 @@ import { PushPin } from "@mui/icons-material";
 import { Accordion, AccordionDetails, AccordionSummary } from "components";
 import { useAppDispatch, useAppSelector } from "app/store";
 import { useExplorerGlobals } from "contexts/explorerGlobals";
-import { useMountedState } from "hooks/useMountedState";
 
 import { measureActions, SelectedMeasureObj, selectMeasure } from "./measureSlice";
 import { Slope } from "./slope";
 import { VertexTable, MeasurementTable } from "./tables";
 import { PlanarDiff } from "./planarDiff";
+import { useMeasureObjects } from "./useMeasureObjects";
 
 const NestedAccordionSummary = styled(AccordionSummary)(
     ({ theme }) => css`
@@ -54,32 +54,22 @@ export function MeasuredObject({ obj, idx }: { obj: SelectedMeasureObj; idx: num
     const { pinned, duoMeasurementValues } = useAppSelector(selectMeasure);
     const isPinned = pinned === idx;
 
-    const [measurement, setMeasurement] = useMountedState<
-        { obj: MeasureObject; val: MeasurementValues } | vec3 | undefined
-    >(undefined);
+    const measureObject = useMeasureObjects()[idx];
+    const [measureValues, setMeasureValues] = useState<MeasurementValues>();
 
     useEffect(() => {
-        initMeasureObj();
+        getMeasureValues();
 
-        async function initMeasureObj() {
-            if (measureScene) {
-                const measureObj = await measureScene.downloadMeasureObject(obj.id, obj.pos).catch(() => undefined);
-                const measureVal = measureObj?.selectedEntity
-                    ? await measureScene.measure(measureObj.selectedEntity, undefined, obj.settings)
-                    : undefined;
-
-                if (measureObj && measureObj.selectedEntity?.kind === "vertex") {
-                    setMeasurement(measureObj.selectedEntity.parameter as vec3);
-                } else if (measureObj && measureVal) {
-                    setMeasurement({ obj: measureObj, val: measureVal });
-                } else {
-                    setMeasurement(obj.pos);
-                }
+        async function getMeasureValues() {
+            if (measureObject.selectedEntity) {
+                setMeasureValues(
+                    await measureScene.measure(measureObject.selectedEntity, undefined, measureObject.settings)
+                );
             }
         }
-    }, [measureScene, obj, setMeasurement, idx, dispatch]);
+    }, [measureObject, measureScene]);
 
-    const kind = !measurement ? "" : "obj" in measurement ? getMeasurementValueKind(measurement.val) : "point";
+    const kind = !measureObject ? "" : measureValues ? getMeasurementValueKind(measureValues) : "point";
 
     const _idx = idx === 0 ? "a" : "b";
     const useCylinderMeasureSettings =
@@ -115,16 +105,16 @@ export function MeasuredObject({ obj, idx }: { obj: SelectedMeasureObj; idx: num
                 </Box>
             </AccordionSummary>
             <AccordionDetails>
-                {!measurement ? null : "obj" in measurement ? (
+                {!measureObject ? null : measureValues ? (
                     <MeasurementData
-                        measureValues={measurement.val}
+                        measureValues={measureValues}
                         obj={obj}
                         useCylinderMeasureSettings={useCylinderMeasureSettings ? useCylinderMeasureSettings : false}
                         idx={idx}
                     />
                 ) : (
                     <Box p={2}>
-                        <VertexTable vertices={[measurement]} />
+                        <VertexTable vertices={[measureObject.pos]} />
                     </Box>
                 )}
             </AccordionDetails>
@@ -395,7 +385,13 @@ function MeasurementData({
             );
         case "cylinder": {
             const distance = vec3.dist(measureValues.centerLineStart, measureValues.centerLineEnd);
-            const cylinderOptions = ["center", "closest", "furthest", "top", "bottom"] as const;
+            const cylinderOptions = [
+                { val: "center", label: "Center" },
+                { val: "top", label: "Outer top" },
+                { val: "bottom", label: "Inner bottom" },
+                { val: "closest", label: "Closest" },
+                { val: "furthest", label: "Furthest" },
+            ] as const;
 
             return (
                 <>
@@ -424,7 +420,7 @@ function MeasurementData({
                             <Slope start={measureValues.centerLineStart} end={measureValues.centerLineEnd} />
                         </ListItem>
                     </List>
-                    <Box flex="1 1 auto" overflow="hidden">
+                    <Box px={2} flex="1 1 auto" overflow="hidden">
                         <InputLabel sx={{ color: "text.primary" }}>Measure from: </InputLabel>
                         <Select
                             fullWidth
@@ -447,12 +443,14 @@ function MeasurementData({
                             {cylinderOptions.map((opt) => (
                                 <MenuItem
                                     disabled={
-                                        useCylinderMeasureSettings ? false : opt === "closest" || opt === "furthest"
+                                        useCylinderMeasureSettings
+                                            ? false
+                                            : opt.val === "closest" || opt.val === "furthest"
                                     }
-                                    key={opt}
-                                    value={opt}
+                                    key={opt.val}
+                                    value={opt.val}
                                 >
-                                    {opt}
+                                    {opt.label}
                                 </MenuItem>
                             ))}
                         </Select>
