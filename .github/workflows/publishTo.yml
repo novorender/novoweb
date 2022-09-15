@@ -37,6 +37,12 @@ jobs:
                   npm ci
                   npm run build --if-present
               # npm run test --if-present
+            - name: Remove node modules
+              run: |
+                  rm -rf ./node_modules
+            - name: Install server dependencies
+              run: |
+                  (cd server && npm ci && mv ./node_modules ../node_modules)
             - name: create publish profile name
               run: |
                   publish_profile=$(echo 'console.log("AZURE_WEBAPP_PUBLISH_PROFILE_${{ github.event.inputs.slot }}".toUpperCase().replace("-","_"))' | node -)

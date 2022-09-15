@@ -16,6 +16,7 @@ on:
             - develop
         paths-ignore:
             - ".github/workflows/**"
+    workflow_dispatch:
 env:
     AZURE_WEBAPP_NAME: novorender-explorer # set this to your application's name
     AZURE_WEBAPP_SLOT: dev
@@ -39,6 +40,12 @@ jobs:
                   npm ci
                   npm run build --if-present
               # npm run test --if-present
+            - name: Remove node modules
+              run: |
+                  rm -rf ./node_modules
+            - name: Install server dependencies
+              run: |
+                  (cd server && npm ci && mv ./node_modules ../node_modules)
             - name: "Deploy to Azure WebApp"
               uses: azure/webapps-deploy@v2
               with:
