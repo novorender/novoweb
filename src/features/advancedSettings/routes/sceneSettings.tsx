@@ -141,10 +141,12 @@ export function SceneSettings({
                     </Accordion>
                 ) : null}
                 <Box p={1} mt={1}>
-                    <Button sx={{ mb: 2 }} variant="outlined" color="grey" onClick={toggleColorPicker}>
-                        <ColorLens sx={{ mr: 1, color: `rgb(${r}, ${g}, ${b})` }} fontSize="small" />
-                        2D background color
-                    </Button>
+                    <Box>
+                        <Button sx={{ mb: 2 }} variant="outlined" color="grey" onClick={toggleColorPicker}>
+                            <ColorLens sx={{ mr: 1, color: `rgb(${r}, ${g}, ${b})` }} fontSize="small" />
+                            2D background color
+                        </Button>
+                    </Box>
                     <Button
                         disabled={cameraType !== CameraType.Flight}
                         variant="outlined"
