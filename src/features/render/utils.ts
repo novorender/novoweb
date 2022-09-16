@@ -538,7 +538,7 @@ export function initDeviation(deviation: RenderSettings["points"]["deviation"]):
 }
 
 export function initAdvancedSettings(view: View, customProperties: Record<string, any>): void {
-    const { diagnostics, advanced, points, light, terrain } = view.settings as Internal.RenderSettingsExt;
+    const { diagnostics, advanced, points, light, terrain, background } = view.settings as Internal.RenderSettingsExt;
     const cameraParams = view.camera.controller.params as FlightControllerParams | OrthoControllerParams;
 
     store.dispatch(
@@ -561,6 +561,7 @@ export function initAdvancedSettings(view: View, customProperties: Record<string
             [AdvancedSetting.AmbientLight]: light.ambient.brightness,
             [AdvancedSetting.NavigationCube]: Boolean(customProperties?.navigationCube),
             [AdvancedSetting.TerrainAsBackground]: Boolean(terrain.asBackground),
+            [AdvancedSetting.BackgroundColor]: background.color as VecRGBA,
             ...(customProperties?.flightMouseButtonMap
                 ? { [AdvancedSetting.MouseButtonMap]: customProperties?.flightMouseButtonMap }
                 : {}),
