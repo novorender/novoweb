@@ -118,6 +118,9 @@ export function AdvancedSettings() {
                               ...originalSettings.terrain,
                               asBackground: settings.terrainAsBackground,
                           },
+                          background: {
+                              color: settings.backgroundColor,
+                          },
                           ...(currentEnvironment ? { environment: currentEnvironment.name } : {}),
                       } as Internal.RenderSettingsExt),
                 camera:

@@ -1,9 +1,9 @@
-import { ChangeEvent } from "react";
+import { ChangeEvent, MouseEvent, useState } from "react";
 import { quat, vec3 } from "gl-matrix";
 import { FlightControllerParams } from "@novorender/webgl-api";
 import { useTheme, Box, Button, Autocomplete, FormControlLabel } from "@mui/material";
 import { useHistory } from "react-router-dom";
-import { ArrowBack, Save } from "@mui/icons-material";
+import { ArrowBack, ColorLens, Save } from "@mui/icons-material";
 
 import {
     Accordion,
@@ -28,6 +28,8 @@ import {
     CameraType,
 } from "slices/renderSlice";
 import { useExplorerGlobals } from "contexts/explorerGlobals";
+import { rgbToVec, VecRGBA, vecToRgb } from "utils/color";
+import { ColorPicker } from "features/colorPicker";
 
 import { toggleTerrainAsBackground } from "../utils";
 
@@ -52,7 +54,13 @@ export function SceneSettings({
     const subtrees = useAppSelector(selectSubtrees);
     const cameraType = useAppSelector(selectCameraType);
     const settings = useAppSelector(selectAdvancedSettings);
-    const { terrainAsBackground } = settings;
+    const { terrainAsBackground, backgroundColor } = settings;
+
+    const [colorPickerAnchor, setColorPickerAnchor] = useState<HTMLElement | null>(null);
+    const toggleColorPicker = (event?: MouseEvent<HTMLElement>) => {
+        setColorPickerAnchor(!colorPickerAnchor && event?.currentTarget ? event.currentTarget : null);
+    };
+    const { r, g, b } = vecToRgb(backgroundColor);
 
     const showTerrainSettings = subtrees?.terrain !== SubtreeStatus.Unavailable;
 
@@ -132,26 +140,46 @@ export function SceneSettings({
                         </AccordionDetails>
                     </Accordion>
                 ) : null}
-                <Button
-                    disabled={cameraType !== CameraType.Flight}
-                    variant="outlined"
-                    color="grey"
-                    sx={{ ml: 1, my: 2 }}
-                    onClick={async () => {
-                        if (view.camera.controller.params.kind === "flight") {
-                            await saveCameraPos(view.camera.controller.params);
-                            dispatch(
-                                renderActions.setHomeCameraPos({
-                                    position: vec3.clone(view.camera.position),
-                                    rotation: quat.clone(view.camera.rotation),
-                                })
-                            );
-                        }
-                    }}
-                >
-                    Save default camera position
-                </Button>
+                <Box p={1} mt={1}>
+                    <Button sx={{ mb: 2 }} variant="outlined" color="grey" onClick={toggleColorPicker}>
+                        <ColorLens sx={{ mr: 1, color: `rgb(${r}, ${g}, ${b})` }} fontSize="small" />
+                        2D background color
+                    </Button>
+                    <Button
+                        disabled={cameraType !== CameraType.Flight}
+                        variant="outlined"
+                        color="grey"
+                        onClick={async () => {
+                            if (view.camera.controller.params.kind === "flight") {
+                                await saveCameraPos(view.camera.controller.params);
+                                dispatch(
+                                    renderActions.setHomeCameraPos({
+                                        position: vec3.clone(view.camera.position),
+                                        rotation: quat.clone(view.camera.rotation),
+                                    })
+                                );
+                            }
+                        }}
+                    >
+                        Save default camera position
+                    </Button>
+                </Box>
             </ScrollBox>
+            <ColorPicker
+                open={Boolean(colorPickerAnchor)}
+                anchorEl={colorPickerAnchor}
+                onClose={() => toggleColorPicker()}
+                color={backgroundColor}
+                onChangeComplete={({ rgb }) => {
+                    const rgba = rgbToVec(rgb) as VecRGBA;
+                    view.applySettings({ background: { color: rgba } });
+                    dispatch(
+                        renderActions.setAdvancedSettings({
+                            [AdvancedSetting.BackgroundColor]: rgba,
+                        })
+                    );
+                }}
+            />
         </>
     );
 }
