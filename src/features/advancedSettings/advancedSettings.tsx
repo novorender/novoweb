@@ -13,6 +13,7 @@ import { useExplorerGlobals } from "contexts/explorerGlobals";
 import {
     selectAdvancedSettings,
     selectBaseCameraSpeed,
+    selectCurrentEnvironment,
     selectProjectSettings,
     selectSubtrees,
     SubtreeStatus,
@@ -27,6 +28,7 @@ import { CameraSettings } from "./routes/cameraSettings";
 import { FeatureSettings } from "./routes/featureSettings";
 import { RenderSettings } from "./routes/renderSettings";
 import { ProjectSettings } from "./routes/projectSettings";
+import { SceneSettings } from "./routes/sceneSettings";
 
 enum Status {
     Idle,
@@ -44,6 +46,7 @@ export function AdvancedSettings() {
     const isAdminScene = useAppSelector(selectIsAdminScene);
     const subtrees = useAppSelector(selectSubtrees);
     const settings = useAppSelector(selectAdvancedSettings);
+    const currentEnvironment = useAppSelector(selectCurrentEnvironment);
     const projectSettings = useAppSelector(selectProjectSettings);
     const baseCameraSpeed = useAppSelector(selectBaseCameraSpeed);
     const enabledWidgets = useAppSelector(selectEnabledWidgets);
@@ -115,6 +118,7 @@ export function AdvancedSettings() {
                               ...originalSettings.terrain,
                               asBackground: settings.terrainAsBackground,
                           },
+                          ...(currentEnvironment ? { environment: currentEnvironment.name } : {}),
                       } as Internal.RenderSettingsExt),
                 camera:
                     !camera || !["flight", "ortho"].includes(camera.kind)
@@ -228,6 +232,9 @@ export function AdvancedSettings() {
                             <Route path="/" exact>
                                 <Root save={save} saving={saving} />
                             </Route>
+                            <Route path="/scene" exact>
+                                <SceneSettings save={save} saveCameraPos={saveCameraPos} saving={saving} />
+                            </Route>
                             <Route path="/camera" exact>
                                 <CameraSettings save={save} saveCameraPos={saveCameraPos} saving={saving} />
                             </Route>
@@ -282,6 +289,9 @@ function Root({ save, saving }: { save: () => Promise<void>; saving: boolean }) 
             ) : null}
             <Box height={1} mt={1} pb={3} display="flex" flexDirection="column">
                 <List disablePadding>
+                    <ListItemButton sx={{ pl: 1, fontWeight: 600 }} disableGutters component={Link} to="/scene">
+                        Scene
+                    </ListItemButton>
                     <ListItemButton sx={{ pl: 1, fontWeight: 600 }} disableGutters component={Link} to="/features">
                         Features
                     </ListItemButton>
