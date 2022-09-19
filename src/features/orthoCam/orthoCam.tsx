@@ -91,7 +91,7 @@ export function OrthoCam() {
                 params: {
                     kind: "ortho",
                     referenceCoordSys: mat,
-                    fieldOfView: maxY,
+                    fieldOfView: 100,
                     near: -0.001,
                     far: (view.camera.controller.params as any).far,
                 },
