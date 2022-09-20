@@ -32,39 +32,41 @@ export const zoneSelectorSlice = createSlice({
         },
         addPoint: (state, action: PayloadAction<vec3>) => {
             let current = state.points[state.points.length - 1];
-            if (current.length > 1) {
-                const p = action.payload as vec3;
-                const dir = vec3.sub(vec3.create(), current[0], current[1]);
-                vec3.normalize(dir, dir);
-                const n = vec3.cross(vec3.create(), dir, vec3.fromValues(0, 1, 0));
-                const po = vec3.sub(vec3.create(), current[0], p);
-                const t = vec3.dot(po, n);
+            current = current.concat([action.payload]);
+            // if (current.length > 1) {
+            //     const p = action.payload as vec3;
+            //     const dir = vec3.sub(vec3.create(), current[0], current[1]);
+            //     vec3.normalize(dir, dir);
+            //     const n = vec3.cross(vec3.create(), dir, vec3.fromValues(0, 1, 0));
+            //     const po = vec3.sub(vec3.create(), current[0], p);
+            //     const t = vec3.dot(po, n);
 
-                if (current.length > 2) {
-                    current = current.slice(0, 2);
-                }
-                current = current.concat([
-                    vec3.scaleAndAdd(vec3.create(), current[1], n, -t),
-                    vec3.scaleAndAdd(vec3.create(), current[0], n, -t),
-                ]);
-            } else {
-                current = current.concat([action.payload]);
-            }
+            //     if (current.length > 2) {
+            //         current = current.slice(0, 2);
+            //     }
+            //     current = current.concat([
+            //         vec3.scaleAndAdd(vec3.create(), current[1], n, -t),
+            //         vec3.scaleAndAdd(vec3.create(), current[0], n, -t),
+            //     ]);
+            // } else {
+            //     current = current.concat([action.payload]);
+            // }
             state.points = [...state.points.slice(0, state.points.length - 1), current];
         },
         addExtent(state) {
             const current = state.points[state.points.length - 1];
-            if (current.length === 4) {
+            if (current.length > 2) {
                 state.points = [...state.points, []];
             }
         },
         undoPoint: (state) => {
             let current = state.points[state.points.length - 1];
-            if (current.length > 2) {
-                current = current.slice(0, 2);
-            } else {
-                current = current.slice(0, current.length - 1);
-            }
+            current = current.slice(0, current.length - 1);
+            // if (current.length > 2) {
+            //     current = current.slice(0, 2);
+            // } else {
+            //     current = current.slice(0, current.length - 1);
+            // }
             state.points = [...state.points.slice(0, state.points.length - 1), current];
         },
     },

@@ -141,7 +141,7 @@ export function ZoneSelector() {
                                 Undo
                             </Button>
                             <Button
-                                disabled={points[points.length - 1].length !== 4}
+                                //disabled={points[points.length - 1].length !== 4}
                                 onClick={() => dispatch(zoneSelectorActions.addExtent())}
                                 color="grey"
                             >
