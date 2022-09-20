@@ -339,7 +339,6 @@ export function CameraSettings({
                                     min={180}
                                     max={400}
                                     step={1}
-                                    disabled={cameraType !== CameraType.Flight}
                                     scale={scaleFarClipping}
                                     name={AdvancedSetting.CameraFarClipping}
                                     value={far}

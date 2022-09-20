@@ -538,7 +538,7 @@ export function initDeviation(deviation: RenderSettings["points"]["deviation"]):
 }
 
 export function initAdvancedSettings(view: View, customProperties: Record<string, any>): void {
-    const { diagnostics, advanced, points, light, terrain } = view.settings as Internal.RenderSettingsExt;
+    const { diagnostics, advanced, points, light, terrain, background } = view.settings as Internal.RenderSettingsExt;
     const cameraParams = view.camera.controller.params as FlightControllerParams | OrthoControllerParams;
 
     store.dispatch(
@@ -551,7 +551,7 @@ export function initAdvancedSettings(view: View, customProperties: Record<string
             [AdvancedSetting.DoubleSidedMaterials]: advanced.doubleSided.opaque,
             [AdvancedSetting.DoubleSidedTransparentMaterials]: advanced.doubleSided.transparent,
             [AdvancedSetting.CameraFarClipping]: cameraParams.far,
-            [AdvancedSetting.CameraNearClipping]: cameraParams.near,
+            [AdvancedSetting.CameraNearClipping]: cameraParams.kind === "flight" ? cameraParams.near : 0.1,
             [AdvancedSetting.QualityPoints]: points.shape === "disc",
             [AdvancedSetting.PointSize]: points.size.pixel ?? 1,
             [AdvancedSetting.MaxPointSize]: points.size.maxPixel ?? 20,
@@ -561,6 +561,7 @@ export function initAdvancedSettings(view: View, customProperties: Record<string
             [AdvancedSetting.AmbientLight]: light.ambient.brightness,
             [AdvancedSetting.NavigationCube]: Boolean(customProperties?.navigationCube),
             [AdvancedSetting.TerrainAsBackground]: Boolean(terrain.asBackground),
+            [AdvancedSetting.BackgroundColor]: background.color as VecRGBA,
             ...(customProperties?.flightMouseButtonMap
                 ? { [AdvancedSetting.MouseButtonMap]: customProperties?.flightMouseButtonMap }
                 : {}),

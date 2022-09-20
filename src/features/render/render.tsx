@@ -673,7 +673,6 @@ export function Render3D({ onInit }: Props) {
                 const urlData = getDataFromUrlHash();
                 const camera = { kind: "flight", ...sceneData.camera, ...urlData.camera } as CameraControllerParams;
                 const { display: _display, ...settings } = { ...sceneData.settings, ...urlData.settings };
-                settings.background = { color: vec4.fromValues(0, 0, 0, 0) };
                 const _view = await api.createView(undefined, canvas);
 
                 _view.applySettings({
