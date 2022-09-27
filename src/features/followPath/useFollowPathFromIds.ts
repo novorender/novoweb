@@ -5,13 +5,14 @@ import { useAppDispatch, useAppSelector } from "app/store";
 import { AsyncState, AsyncStatus } from "types/misc";
 import { useExplorerGlobals } from "contexts/explorerGlobals";
 
-import { selectSelectedIds } from "./followPathSlice";
+import { followCylindersFrom, selectSelectedIds } from "./followPathSlice";
 
 export function useFollowPathFromIds() {
     const {
         state: { measureScene },
     } = useExplorerGlobals(true);
 
+    const followFrom = useAppSelector(followCylindersFrom);
     const toFollow = useAppSelector(selectSelectedIds);
     const dispatch = useAppDispatch();
 
@@ -24,7 +25,9 @@ export function useFollowPathFromIds() {
             setObjects({ status: AsyncStatus.Loading });
 
             try {
-                const fp = await measureScene.followParametricObjects(toFollow);
+                const fp = await measureScene.followParametricObjects(toFollow, {
+                    cylinderMeasure: followFrom,
+                });
 
                 if (!fp) {
                     setObjects({ status: AsyncStatus.Error, msg: "Selected objects can't be followed." });
@@ -36,7 +39,7 @@ export function useFollowPathFromIds() {
                 setObjects({ status: AsyncStatus.Error, msg: "An error occured." });
             }
         }
-    }, [toFollow, measureScene, dispatch]);
+    }, [toFollow, measureScene, dispatch, followFrom]);
 
     return objects;
 }

@@ -6,7 +6,10 @@ import {
     FormControlLabel,
     Grid,
     InputAdornment,
+    InputLabel,
+    MenuItem,
     OutlinedInput,
+    Select,
     Slider,
     Typography,
     useTheme,
@@ -34,6 +37,7 @@ import {
     selectCurrentCenter,
     selectAutoStepSize,
     selectResetPositionOnInit,
+    followCylindersFrom,
 } from "./followPathSlice";
 
 const profileFractionDigits = 3;
@@ -57,6 +61,7 @@ export function Follow({ fpObj }: { fpObj: FollowParametricObject }) {
     const profileRange = useAppSelector(selectProfileRange);
     const resetPosition = useAppSelector(selectResetPositionOnInit);
     const _clipping = useAppSelector(selectClipping);
+    const followFrom = useAppSelector(followCylindersFrom);
 
     const [clipping, setClipping] = useState(_clipping);
 
@@ -293,6 +298,14 @@ export function Follow({ fpObj }: { fpObj: FollowParametricObject }) {
         }
     };
 
+    const cylinderOptions = [
+        { val: "center", label: "Center" },
+        { val: "top", label: "Outer top" },
+        { val: "bottom", label: "Inner bottom" },
+    ] as const;
+
+    const canUseCylinderOptions = fpObj.type === "cylinder" || fpObj.type === "cylinders";
+
     return (
         <>
             <Box boxShadow={theme.customShadows.widgetHeader}>
@@ -480,6 +493,30 @@ export function Follow({ fpObj }: { fpObj: FollowParametricObject }) {
                                 />
                             </Box>
                         </>
+                    ) : null}
+                    {canUseCylinderOptions ? (
+                        <Box px={2} flex="1 1 auto" overflow="hidden">
+                            <InputLabel sx={{ color: "text.primary" }}>Follow from: </InputLabel>
+                            <Select
+                                fullWidth
+                                name="pivot"
+                                size="small"
+                                value={followFrom}
+                                onChange={(e) => {
+                                    dispatch(
+                                        followPathActions.setFollowFrom(e.target.value as "center" | "top" | "bottom")
+                                    );
+                                    //TODO_HANDLE update
+                                }}
+                                input={<OutlinedInput fullWidth />}
+                            >
+                                {cylinderOptions.map((opt) => (
+                                    <MenuItem key={opt.val} value={opt.val}>
+                                        {opt.label}
+                                    </MenuItem>
+                                ))}
+                            </Select>
+                        </Box>
                     ) : null}
                 </Box>
             </ScrollBox>
