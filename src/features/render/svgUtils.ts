@@ -294,6 +294,38 @@ export function renderMeasureObject({
         for (const drawObject of drawObjects) {
             if (drawObject && drawObject.vertices.length > 1) {
                 drawObject.vertices = inversePixelRatio(drawObject.vertices as vec2[]);
+                if (drawObject.elevation && drawObject.vertices.length === 2) {
+                    path.setAttribute("stroke", "url(#gr_" + obj.id + ")");
+
+                    const defs = svg.children[0];
+                    const gradient = defs?.children.namedItem("gr_" + obj.id);
+                    if (gradient) {
+                        let flip = false;
+                        if (drawObject.elevation.horizontalDisplay) {
+                            flip =
+                                drawObject.elevation.from < drawObject.elevation.to
+                                    ? drawObject.vertices[0][0] < drawObject.vertices[1][0]
+                                    : drawObject.vertices[0][0] > drawObject.vertices[1][0];
+                            gradient.setAttribute("x2", "1");
+                            gradient.setAttribute("y2", "0");
+                        } else {
+                            flip =
+                                drawObject.elevation.from < drawObject.elevation.to
+                                    ? drawObject.vertices[0][1] < drawObject.vertices[1][1]
+                                    : drawObject.vertices[0][1] > drawObject.vertices[1][1];
+                            gradient.setAttribute("x2", "0");
+                            gradient.setAttribute("y2", "1");
+                        }
+
+                        if (flip) {
+                            gradient.children[0].setAttribute("stop-color", "#D61E5C");
+                            gradient.children[1].setAttribute("stop-color", "#E1E000");
+                        } else {
+                            gradient.children[0].setAttribute("stop-color", "#E1E000");
+                            gradient.children[1].setAttribute("stop-color", "#D61E5C");
+                        }
+                    }
+                }
                 if (drawObject.drawType === "lines") {
                     edgeCurves += `M${drawObject.vertices[0][0]}, ${drawObject.vertices[0][1]}`;
                     for (let i = 0; i < drawObject.vertices.length; ++i) {

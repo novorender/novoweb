@@ -136,7 +136,6 @@ export function MeasuredResult() {
 
     const showSlope = duoMeasurementValues.pointA && duoMeasurementValues.pointB;
     const showPlanarDiff = duoMeasurementValues.pointA && duoMeasurementValues.pointB;
-
     return (
         <Accordion defaultExpanded={true}>
             <AccordionSummary sx={{ fontWeight: 600 }}>Result</AccordionSummary>
@@ -151,6 +150,18 @@ export function MeasuredResult() {
                                     </Grid>
                                     <Grid item xs={6}>
                                         {duoMeasurementValues.distance.toFixed(3)} m
+                                    </Grid>
+                                </Grid>
+                            </ListItem>
+                        ) : null}
+                        {duoMeasurementValues.angle ? (
+                            <ListItem>
+                                <Grid container>
+                                    <Grid item xs={4}>
+                                        Angle
+                                    </Grid>
+                                    <Grid item xs={6}>
+                                        {(duoMeasurementValues.angle * (180 / Math.PI)).toFixed(3)} °
                                     </Grid>
                                 </Grid>
                             </ListItem>

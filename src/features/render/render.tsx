@@ -1609,14 +1609,23 @@ export function Render3D({ onInit }: Props) {
                                 )
                                 .map((obj) =>
                                     isMeasureObject(obj) ? (
-                                        <path
-                                            key={getMeasureObjectPathId(obj)}
-                                            id={getMeasureObjectPathId(obj)}
-                                            d=""
-                                            stroke="yellow"
-                                            strokeWidth=""
-                                            fill="none"
-                                        />
+                                        <>
+                                            <defs>
+                                                <stop offset="0%" style={{ stopColor: "green", stopOpacity: 1 }} />
+                                                <linearGradient id={"gr_" + obj.id} x1={0} x2={0} y1={0} y2={1}>
+                                                    <stop offset="0%" stopColor="#E1E000" />
+                                                    <stop offset="100%" stopColor="#D61E5C" />
+                                                </linearGradient>
+                                            </defs>
+                                            <path
+                                                key={getMeasureObjectPathId(obj)}
+                                                id={getMeasureObjectPathId(obj)}
+                                                d=""
+                                                stroke={"yellow"}
+                                                strokeWidth="2"
+                                                fill={"blue"}
+                                            />
+                                        </>
                                     ) : (
                                         <MeasurementPoint
                                             key={getMeasureObjectPathId(obj)}
