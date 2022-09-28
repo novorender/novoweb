@@ -160,7 +160,28 @@ export function PathList() {
                     <LinearProgress />
                 </Box>
             ) : null}
-            {hasFinished(landXmlPaths) ? (
+
+            {canUseCylinderOptions ? (
+                <ScrollBox p={1} pt={2} pb={2}>
+                    <InputLabel sx={{ color: "text.primary" }}>Follow from: </InputLabel>
+                    <Select
+                        fullWidth
+                        name="pivot"
+                        size="small"
+                        value={followFrom}
+                        onChange={(e) => {
+                            dispatch(followPathActions.setFollowFrom(e.target.value as "center" | "top" | "bottom"));
+                        }}
+                        input={<OutlinedInput fullWidth />}
+                    >
+                        {singleCylinderOptions.map((opt) => (
+                            <MenuItem key={opt.val} value={opt.val}>
+                                {opt.label}
+                            </MenuItem>
+                        ))}
+                    </Select>
+                </ScrollBox>
+            ) : hasFinished(landXmlPaths) ? (
                 <ScrollBox p={1} pt={2} pb={2}>
                     {landXmlPaths.status === AsyncStatus.Error ? (
                         landXmlPaths.msg
@@ -190,27 +211,6 @@ export function PathList() {
                         </List>
                     )}
                 </ScrollBox>
-            ) : null}
-            {canUseCylinderOptions ? (
-                <Box px={2} flex="1 1 auto" overflow="hidden">
-                    <InputLabel sx={{ color: "text.primary" }}>Follow from: </InputLabel>
-                    <Select
-                        fullWidth
-                        name="pivot"
-                        size="small"
-                        value={followFrom}
-                        onChange={(e) => {
-                            dispatch(followPathActions.setFollowFrom(e.target.value as "center" | "top" | "bottom"));
-                        }}
-                        input={<OutlinedInput fullWidth />}
-                    >
-                        {singleCylinderOptions.map((opt) => (
-                            <MenuItem key={opt.val} value={opt.val}>
-                                {opt.label}
-                            </MenuItem>
-                        ))}
-                    </Select>
-                </Box>
             ) : null}
         </>
     );
