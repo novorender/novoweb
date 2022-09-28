@@ -680,8 +680,20 @@ export function Render3D({ onInit }: Props) {
                 const { display: _display, ...settings } = { ...sceneData.settings, ...urlData.settings };
                 const _view = await api.createView(undefined, canvas);
 
+                const grey = vec4.fromValues(0.75, 0.75, 0.75, 1);
+                let bgColor = settings.background?.color || grey;
+                const [r, g, b, a] = bgColor;
+
+                if (r === 0 && g === 0 && b === 0.25 && a === 1) {
+                    bgColor = grey;
+                }
+
                 _view.applySettings({
                     ...settings,
+                    background: {
+                        ...settings.background,
+                        color: bgColor,
+                    },
                     quality: {
                         detail: {
                             ..._view.settings.quality.detail,
