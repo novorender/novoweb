@@ -26,6 +26,7 @@ import { Slope } from "./slope";
 import { VertexTable, MeasurementTable } from "./tables";
 import { PlanarDiff } from "./planarDiff";
 import { useMeasureObjects } from "./useMeasureObjects";
+import { cylinderOptions } from "./config";
 
 const NestedAccordionSummary = styled(AccordionSummary)(
     ({ theme }) => css`
@@ -396,13 +397,6 @@ function MeasurementData({
             );
         case "cylinder": {
             const distance = vec3.dist(measureValues.centerLineStart, measureValues.centerLineEnd);
-            const cylinderOptions = [
-                { val: "center", label: "Center" },
-                { val: "top", label: "Outer top" },
-                { val: "bottom", label: "Inner bottom" },
-                { val: "closest", label: "Closest" },
-                { val: "furthest", label: "Furthest" },
-            ] as const;
 
             return (
                 <>

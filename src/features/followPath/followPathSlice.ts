@@ -117,7 +117,7 @@ export const selectSelectedPositions = (state: RootState) => state.followPath.se
 export const selectDrawSelectedPositions = (state: RootState) => state.followPath.drawSelectedPositions;
 export const selectSelectedIds = (state: RootState) => state.followPath.selectedIds;
 export const selectResetPositionOnInit = (state: RootState) => state.followPath.resetPositionOnInit;
-export const followCylindersFrom = (state: RootState) => state.followPath.followCylindersFrom;
+export const selectFollowCylindersFrom = (state: RootState) => state.followPath.followCylindersFrom;
 
 const { actions, reducer } = followPathSlice;
 export { actions as followPathActions, reducer as followPathReducer };

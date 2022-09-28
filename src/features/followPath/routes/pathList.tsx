@@ -22,8 +22,9 @@ import { getObjectNameFromPath, getParentPath } from "utils/objectData";
 import { searchByPatterns } from "utils/search";
 import { Picker, renderActions, selectPicker } from "slices/renderSlice";
 import { highlightActions, useDispatchHighlighted, useHighlighted } from "contexts/highlighted";
+import { singleCylinderOptions } from "features/measure";
 
-import { followCylindersFrom, followPathActions, LandXmlPath, selectLandXmlPaths } from "../followPathSlice";
+import { selectFollowCylindersFrom, followPathActions, LandXmlPath, selectLandXmlPaths } from "../followPathSlice";
 import { usePathMeasureObjects } from "../usePathMeasureObjects";
 import { useFollowPathFromIds } from "../useFollowPathFromIds";
 
@@ -41,7 +42,7 @@ export function PathList() {
     const dispatch = useAppDispatch();
     const selectedByPos = usePathMeasureObjects();
     const selectedById = useFollowPathFromIds();
-    const followFrom = useAppSelector(followCylindersFrom);
+    const followFrom = useAppSelector(selectFollowCylindersFrom);
 
     useEffect(() => {
         dispatch(followPathActions.toggleDrawSelectedPositions(true));
@@ -104,11 +105,6 @@ export function PathList() {
           !selectedByPos.data.some((obj) => !obj.fp)
         : selectedById.status === AsyncStatus.Success;
 
-    const cylinderOptions = [
-        { val: "center", label: "Center" },
-        { val: "top", label: "Outer top" },
-        { val: "bottom", label: "Inner bottom" },
-    ] as const;
     const canUseCylinderOptions =
         selectedById.status === AsyncStatus.Success &&
         (selectedById.data.type === "cylinders" || selectedById.data.type === "cylinder");
@@ -208,7 +204,7 @@ export function PathList() {
                         }}
                         input={<OutlinedInput fullWidth />}
                     >
-                        {cylinderOptions.map((opt) => (
+                        {singleCylinderOptions.map((opt) => (
                             <MenuItem key={opt.val} value={opt.val}>
                                 {opt.label}
                             </MenuItem>

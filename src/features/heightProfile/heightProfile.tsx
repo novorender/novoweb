@@ -29,6 +29,7 @@ import { useExplorerGlobals } from "contexts/explorerGlobals";
 import { AsyncState, AsyncStatus, hasFinished } from "types/misc";
 import { highlightActions, useDispatchHighlighted, useHighlighted } from "contexts/highlighted";
 import { Picker, renderActions, selectPicker } from "slices/renderSlice";
+import { singleCylinderOptions } from "features/measure";
 
 import { HeightProfileChart } from "./heightProfileChart";
 import {
@@ -39,8 +40,6 @@ import {
 } from "./heightProfileSlice";
 
 const maxObjects = 50;
-
-// wait for measure api to allow cylinders etc as entity
 
 export function HeightProfile() {
     const theme = useTheme();
@@ -157,12 +156,8 @@ export function HeightProfile() {
         }
     }, [highlighted, measureScene, selectingEntity, selectedEntity, selectedPoint, selectCylindersFrom]);
 
-    const cylinderOptions = [
-        { val: "center", label: "Center" },
-        { val: "top", label: "Outer top" },
-        { val: "bottom", label: "Inner bottom" },
-    ] as const;
-
+    // NOTE(OLA):
+    // Always show options while waiting for measure api to tell if Profile is of cylinders.
     const canUseCylinderOptions = true;
 
     return (
@@ -290,7 +285,7 @@ export function HeightProfile() {
                                 }}
                                 input={<OutlinedInput fullWidth />}
                             >
-                                {cylinderOptions.map((opt) => (
+                                {singleCylinderOptions.map((opt) => (
                                     <MenuItem key={opt.val} value={opt.val}>
                                         {opt.label}
                                     </MenuItem>

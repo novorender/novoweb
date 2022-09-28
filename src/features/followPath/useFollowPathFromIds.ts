@@ -5,14 +5,14 @@ import { useAppDispatch, useAppSelector } from "app/store";
 import { AsyncState, AsyncStatus } from "types/misc";
 import { useExplorerGlobals } from "contexts/explorerGlobals";
 
-import { followCylindersFrom, selectSelectedIds } from "./followPathSlice";
+import { selectFollowCylindersFrom, selectSelectedIds } from "./followPathSlice";
 
 export function useFollowPathFromIds() {
     const {
         state: { measureScene },
     } = useExplorerGlobals(true);
 
-    const followFrom = useAppSelector(followCylindersFrom);
+    const followFrom = useAppSelector(selectFollowCylindersFrom);
     const toFollow = useAppSelector(selectSelectedIds);
     const dispatch = useAppDispatch();
 

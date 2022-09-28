@@ -23,6 +23,7 @@ import { IosSwitch, Divider, ScrollBox } from "components";
 import { useAppDispatch, useAppSelector } from "app/store";
 import { CameraType, renderActions, selectGridDefaults } from "slices/renderSlice";
 import { useExplorerGlobals } from "contexts/explorerGlobals";
+import { singleCylinderOptions } from "features/measure";
 
 import {
     followPathActions,
@@ -37,7 +38,7 @@ import {
     selectCurrentCenter,
     selectAutoStepSize,
     selectResetPositionOnInit,
-    followCylindersFrom,
+    selectFollowCylindersFrom,
 } from "./followPathSlice";
 
 const profileFractionDigits = 3;
@@ -61,7 +62,7 @@ export function Follow({ fpObj }: { fpObj: FollowParametricObject }) {
     const profileRange = useAppSelector(selectProfileRange);
     const resetPosition = useAppSelector(selectResetPositionOnInit);
     const _clipping = useAppSelector(selectClipping);
-    const followFrom = useAppSelector(followCylindersFrom);
+    const followFrom = useAppSelector(selectFollowCylindersFrom);
 
     const [clipping, setClipping] = useState(_clipping);
 
@@ -298,12 +299,6 @@ export function Follow({ fpObj }: { fpObj: FollowParametricObject }) {
         }
     };
 
-    const cylinderOptions = [
-        { val: "center", label: "Center" },
-        { val: "top", label: "Outer top" },
-        { val: "bottom", label: "Inner bottom" },
-    ] as const;
-
     const canUseCylinderOptions = fpObj.type === "cylinder" || fpObj.type === "cylinders";
 
     return (
@@ -510,7 +505,7 @@ export function Follow({ fpObj }: { fpObj: FollowParametricObject }) {
                                 }}
                                 input={<OutlinedInput fullWidth />}
                             >
-                                {cylinderOptions.map((opt) => (
+                                {singleCylinderOptions.map((opt) => (
                                     <MenuItem key={opt.val} value={opt.val}>
                                         {opt.label}
                                     </MenuItem>
