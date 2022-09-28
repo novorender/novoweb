@@ -1,16 +1,18 @@
-import { Box, Button } from "@mui/material";
+import { Box, Button, FormControlLabel } from "@mui/material";
 import { MyLocation as MyLocationIcon } from "@mui/icons-material";
 
 import { dataApi } from "app";
-import { LinearProgress, LogoSpeedDial, ScrollBox, WidgetContainer, WidgetHeader } from "components";
+import { IosSwitch, LinearProgress, LogoSpeedDial, ScrollBox, WidgetContainer, WidgetHeader } from "components";
 import { featuresConfig } from "config/features";
 import { WidgetList } from "features/widgetList";
 import { useToggle } from "hooks/useToggle";
 import { useMountedState } from "hooks/useMountedState";
 import { useExplorerGlobals } from "contexts/explorerGlobals";
-import { useAppSelector } from "app/store";
+import { useAppDispatch, useAppSelector } from "app/store";
 import { selectProjectSettings } from "slices/renderSlice";
 import { selectMinimized, selectMaximized } from "slices/explorerSlice";
+import { vec3 } from "gl-matrix";
+import { myLocationActions, selectMyLocation } from "./myLocationSlice";
 
 enum Status {
     Idle,
@@ -30,28 +32,43 @@ export function MyLocation() {
 
     const { tmZone } = useAppSelector(selectProjectSettings);
     const [status, setStatus] = useMountedState({ status: Status.Idle } as LocationStatus);
+    const dispatch = useAppDispatch();
+
+    function handlePositionError(error: GeolocationPositionError) {
+        setStatus({ status: Status.Error, msg: error.message });
+    }
 
     const goToPos = () => {
+        function handlePositionSuccess(pos: GeolocationPosition) {
+            const scenePos = dataApi.latLon2tm(pos.coords, tmZone);
+            const posWS = vec3.fromValues(scenePos[0], pos.coords.altitude ?? view.camera.position[1], scenePos[2]);
+            view.camera.controller.moveTo(posWS, view.camera.rotation);
+
+            dispatch(myLocationActions.setLocation(vec3.fromValues(298426.923, 2.6, -6699970.618)));
+        }
         setStatus({ status: Status.Loading });
         navigator.geolocation.getCurrentPosition(handlePositionSuccess, handlePositionError, {
             enableHighAccuracy: true,
         });
+    };
 
-        function handlePositionSuccess(pos: GeolocationPosition) {
-            const scenePos = dataApi.latLon2tm(pos.coords, tmZone);
-
-            view.camera.controller.moveTo(
-                [scenePos[0], pos.coords.altitude ?? view.camera.position[1], scenePos[2]],
-                view.camera.rotation
-            );
-
-            setStatus({ status: Status.Idle });
-        }
-
-        function handlePositionError(error: GeolocationPositionError) {
-            setStatus({ status: Status.Error, msg: error.message });
+    const SetShow = (show: boolean) => {
+        if (show) {
+            function handlePositionSuccess(pos: GeolocationPosition) {
+                const scenePos = dataApi.latLon2tm(pos.coords, tmZone);
+                const posWS = vec3.fromValues(scenePos[0], pos.coords.altitude ?? view.camera.position[1], scenePos[2]);
+                dispatch(myLocationActions.setLocation(posWS));
+            }
+            setStatus({ status: Status.Loading });
+            navigator.geolocation.getCurrentPosition(handlePositionSuccess, handlePositionError, {
+                enableHighAccuracy: true,
+            });
+        } else {
+            dispatch(myLocationActions.setLocation(undefined));
         }
     };
+
+    const loc = useAppSelector(selectMyLocation);
 
     return (
         <>
@@ -62,6 +79,19 @@ export function MyLocation() {
                             <Button disabled={!tmZone} onClick={goToPos} color="grey">
                                 <MyLocationIcon fontSize="small" sx={{ mr: 1 }} /> Go to location
                             </Button>
+                            <FormControlLabel
+                                control={
+                                    <IosSwitch
+                                        size="medium"
+                                        color="primary"
+                                        checked={loc !== undefined}
+                                        onChange={() => {
+                                            SetShow(loc === undefined);
+                                        }}
+                                    />
+                                }
+                                label={<Box fontSize={14}>Show location</Box>}
+                            />
                         </Box>
                     ) : null}
                 </WidgetHeader>

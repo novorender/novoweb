@@ -125,6 +125,7 @@ import {
     renderMeasurePoints,
     renderSingleMeasurePoint,
 } from "./svgUtils";
+import { selectMyLocation } from "features/myLocation";
 
 glMatrix.setMatrixArrayType(Array);
 
@@ -235,6 +236,7 @@ export function Render3D({ onInit }: Props) {
     const drawSelectedPaths = useAppSelector(selectDrawSelectedPositions);
     const picker = useAppSelector(selectPicker);
     const areaPoints = useAppSelector(selectAreaDrawPoints);
+    const myLocationPoint = useAppSelector(selectMyLocation);
     const areaValue = useAppSelector(selectArea);
 
     const dispatch = useAppDispatch();
@@ -521,6 +523,30 @@ export function Render3D({ onInit }: Props) {
                 }
             }
         }
+
+        if (myLocationPoint !== undefined) {
+            const myLocationPt = pathPoints({ points: [myLocationPoint] });
+            if (myLocationPt) {
+                const marker1 = svg.children.namedItem("myLocationPoint1");
+                const marker2 = svg.children.namedItem("myLocationPoint2");
+                if (marker1 && marker2) {
+                    marker1.setAttribute(
+                        "transform",
+                        `translate(${myLocationPt.pixel[0][0] - 40} ${myLocationPt.pixel[0][1] - 60}) scale(10)`
+                    );
+                    marker2.setAttribute(
+                        "transform",
+                        `translate(${myLocationPt.pixel[0][0] - 40} ${myLocationPt.pixel[0][1] - 60}) scale(10)`
+                    );
+                }
+
+                // renderSingleMeasurePoint({
+                //     svg,
+                //     pixelPoint: myLocationPt.pixel[0],
+                //     pointName: "myLocationPoint",
+                // });
+            }
+        }
     }, [
         view,
         measureObjects,
@@ -532,8 +558,8 @@ export function Render3D({ onInit }: Props) {
         size,
         svg,
         areaValue,
+        myLocationPoint,
     ]);
-
     useEffect(() => {
         renderParametricMeasure();
     }, [renderParametricMeasure]);
@@ -1710,6 +1736,32 @@ export function Render3D({ onInit }: Props) {
                                         strokeWidth={2}
                                     />
                                 )
+                            ) : null}
+                            {myLocationPoint ? (
+                                <>
+                                    <path
+                                        key={"myLocationPoint1"}
+                                        id={"myLocationPoint1"}
+                                        fill="#E1E000"
+                                        d="M4.30377 2.18898c0,-0.491776 -0.398657,-0.890433 -0.890437,-0.890433 -0.49178,0 -0.890437,0.398657 -0.890437,0.890433 0,0.49178 0.398657,0.890437 0.890437,0.890437 0.49178,0 0.890437,-0.398657 0.890437,-0.890437z"
+                                    ></path>
+                                    <path
+                                        key={"myLocationPoint2"}
+                                        id={"myLocationPoint2"}
+                                        fill="#D61E5C"
+                                        d="M3.41333 0.853331c0.775929,0 1.40494,0.584311 1.40494,1.30509 0,0.484299 -1.16429,3.17937 -1.40494,3.81491 -0.17128,-0.447213 -1.40494,-3.29828 -1.40494,-3.81491 0,-0.720783 0.629012,-1.30509 1.40494,-1.30509zm0 0.445217c0.49178,0 0.890437,0.398657 0.890437,0.890433 0,0.49178 -0.398657,0.890437 -0.890437,0.890437 -0.49178,0 -0.890437,-0.398657 -0.890437,-0.890437 0,-0.491776 0.398657,-0.890433 0.890437,-0.890433z"
+                                    ></path>
+
+                                    <MeasurementPoint
+                                        key={"myLocationPoint"}
+                                        id={"myLocationPoint"}
+                                        r={5}
+                                        disabled={true}
+                                        fill="red"
+                                        stroke="black"
+                                        strokeWidth={2}
+                                    />
+                                </>
                             ) : null}
                             {panoramas && showPanoramaMarkers
                                 ? panoramas.map((panorama, idx) => {

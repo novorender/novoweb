@@ -1,7 +1,7 @@
 import { Table, TableHead, TableRow, TableCell, Box, TableBody, css, styled, TableCellProps } from "@mui/material";
 import { ReadonlyVec3, vec3 } from "gl-matrix";
 
-const StyledTableCell = styled(TableCell, { shouldForwardProp: (prop) => prop !== "bold" })<
+export const StyledTableCell = styled(TableCell, { shouldForwardProp: (prop) => prop !== "bold" })<
     TableCellProps & { bold?: boolean }
 >(
     ({ bold, theme }) => css`
