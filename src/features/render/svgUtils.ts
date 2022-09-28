@@ -276,31 +276,70 @@ export function renderMeasureObject({
     pathName: string;
     obj: ExtendedMeasureObject;
 }) {
-    const path = svg.children.namedItem(pathName);
+    let path = svg.children.namedItem(pathName + "_0");
 
     if (!path) {
         return;
     }
 
+    const topZCol = "green";
+    const botZCol = "red";
+
     const { width, height } = size;
     obj.renderMeasureEntity(view, width, height, obj.settings).then((drawObjects) => {
+        if (!path) {
+            return;
+        }
+
         if (!drawObjects?.length) {
             path.setAttribute("d", "");
             return;
         }
 
+        let pathIdx = 0;
         let fillCurves = "";
         let edgeCurves = "";
+        let topFirst = false;
+
+        const flush = () => {
+            if (!path) {
+                return;
+            }
+            if (edgeCurves.length > 0) {
+                path.setAttribute("d", edgeCurves);
+                edgeCurves = "";
+                path.setAttribute("fill", "none");
+            } else if (fillCurves.length > 0) {
+                path.setAttribute("d", fillCurves);
+                fillCurves = "";
+                path.setAttribute("fill", fillColor);
+            } else {
+                path.setAttribute("d", "");
+            }
+        };
+
         for (const drawObject of drawObjects) {
+            if (pathIdx !== 0) {
+                flush();
+                path = svg.children.namedItem(pathName + "_" + pathIdx);
+                if (!path) {
+                    return;
+                }
+                const col = pathIdx === 1 ? (topFirst ? topZCol : botZCol) : topFirst ? botZCol : topZCol;
+                path.setAttribute("stroke", col);
+                pathIdx++;
+            }
             if (drawObject && drawObject.vertices.length > 1) {
                 drawObject.vertices = inversePixelRatio(drawObject.vertices as vec2[]);
                 if (drawObject.elevation && drawObject.vertices.length === 2) {
-                    path.setAttribute("stroke", "url(#gr_" + obj.id + ")");
+                    //Special handle to cylinders
+                    path!.setAttribute("stroke", "url(#gr_" + obj.id + ")");
+                    let flip = false;
 
                     const defs = svg.children[0];
                     const gradient = defs?.children.namedItem("gr_" + obj.id);
+                    topFirst = drawObject.elevation.from < drawObject.elevation.to;
                     if (gradient) {
-                        let flip = false;
                         if (drawObject.elevation.horizontalDisplay) {
                             flip =
                                 drawObject.elevation.from < drawObject.elevation.to
@@ -318,13 +357,14 @@ export function renderMeasureObject({
                         }
 
                         if (flip) {
-                            gradient.children[0].setAttribute("stop-color", "#D61E5C");
-                            gradient.children[1].setAttribute("stop-color", "#E1E000");
+                            gradient.children[0].setAttribute("stop-color", topZCol);
+                            gradient.children[1].setAttribute("stop-color", botZCol);
                         } else {
-                            gradient.children[0].setAttribute("stop-color", "#E1E000");
-                            gradient.children[1].setAttribute("stop-color", "#D61E5C");
+                            gradient.children[0].setAttribute("stop-color", botZCol);
+                            gradient.children[1].setAttribute("stop-color", topZCol);
                         }
                     }
+                    pathIdx++;
                 }
                 if (drawObject.drawType === "lines") {
                     edgeCurves += `M${drawObject.vertices[0][0]}, ${drawObject.vertices[0][1]}`;
@@ -340,14 +380,6 @@ export function renderMeasureObject({
             }
         }
 
-        if (edgeCurves.length > 0) {
-            path.setAttribute("d", edgeCurves);
-            path.setAttribute("fill", "none");
-        } else if (fillCurves.length > 0) {
-            path.setAttribute("d", fillCurves);
-            path.setAttribute("fill", fillColor);
-        } else {
-            path.setAttribute("d", "");
-        }
+        flush();
     });
 }
