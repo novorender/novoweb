@@ -4,11 +4,8 @@ import {
     Box,
     Button,
     FormControlLabel,
-    Grid,
     IconButton,
     InputLabel,
-    List,
-    ListItem,
     MenuItem,
     Modal,
     OutlinedInput,
@@ -20,7 +17,15 @@ import { ParentSizeModern } from "@visx/responsive";
 import { Close, DeleteSweep, Timeline } from "@mui/icons-material";
 
 import { useAppDispatch, useAppSelector } from "app/store";
-import { IosSwitch, LinearProgress, LogoSpeedDial, ScrollBox, WidgetContainer, WidgetHeader } from "components";
+import {
+    Divider,
+    IosSwitch,
+    LinearProgress,
+    LogoSpeedDial,
+    ScrollBox,
+    WidgetContainer,
+    WidgetHeader,
+} from "components";
 import { useToggle } from "hooks/useToggle";
 import { featuresConfig } from "config/features";
 import { WidgetList } from "features/widgetList";
@@ -266,79 +271,64 @@ export function HeightProfile() {
                         </ScrollBox>
                     </Modal>
                 ) : null}
-                <ScrollBox display={menuOpen || minimized ? "none" : "flex"} flexDirection="column" p={1}>
-                    {profile.status === AsyncStatus.Error ? profile.msg : ""}
-                    {canUseCylinderOptions ? (
-                        <Box px={2} flex="1 1 auto" overflow="hidden">
-                            <InputLabel sx={{ color: "text.primary" }}>Cylinder profile from: </InputLabel>
-                            <Select
-                                fullWidth
-                                name="pivot"
-                                size="small"
-                                value={selectCylindersFrom}
-                                onChange={(e) => {
-                                    dispatch(
-                                        heightProfileActions.setCylindersProfilesFrom(
-                                            e.target.value as "center" | "top" | "bottom"
-                                        )
-                                    );
-                                }}
-                                input={<OutlinedInput fullWidth />}
-                            >
-                                {singleCylinderOptions.map((opt) => (
-                                    <MenuItem key={opt.val} value={opt.val}>
-                                        {opt.label}
-                                    </MenuItem>
-                                ))}
-                            </Select>
-                        </Box>
-                    ) : null}
-                    {profile.status === AsyncStatus.Success && profile.data.profilePoints.length ? (
-                        <Box px={2} flex="1 1 auto" overflow="hidden">
-                            <List dense>
-                                <ListItem>
-                                    <Grid container>
-                                        <Grid item xs={4}>
-                                            Start elevation
-                                        </Grid>
-                                        <Grid item xs={6}>
-                                            {profile.data.startElevation.toFixed(3)} m
-                                        </Grid>
-                                    </Grid>
-                                </ListItem>
-                                <ListItem>
-                                    <Grid container>
-                                        <Grid item xs={4}>
-                                            End elevation
-                                        </Grid>
-                                        <Grid item xs={6}>
-                                            {profile.data.endElevation.toFixed(3)} m
-                                        </Grid>
-                                    </Grid>
-                                </ListItem>
-                                <ListItem>
-                                    <Grid container>
-                                        <Grid item xs={4}>
-                                            Max elevation
-                                        </Grid>
-                                        <Grid item xs={6}>
-                                            {profile.data.top.toFixed(3)} m
-                                        </Grid>
-                                    </Grid>
-                                </ListItem>
-                                <ListItem>
-                                    <Grid container>
-                                        <Grid item xs={4}>
-                                            Min elevation
-                                        </Grid>
-                                        <Grid item xs={6}>
-                                            {profile.data.bottom.toFixed(3)} m
-                                        </Grid>
-                                    </Grid>
-                                </ListItem>
-                            </List>
-                        </Box>
-                    ) : null}
+                <ScrollBox display={menuOpen || minimized ? "none" : "flex"} flexDirection="column" p={1} pt={2}>
+                    {profile.status === AsyncStatus.Error ? (
+                        profile.msg
+                    ) : (
+                        <>
+                            {canUseCylinderOptions ? (
+                                <>
+                                    <Box>
+                                        <InputLabel sx={{ color: "text.primary", mb: 0.5 }}>
+                                            Cylinder profile from:{" "}
+                                        </InputLabel>
+                                        <Select
+                                            fullWidth
+                                            name="pivot"
+                                            size="small"
+                                            value={selectCylindersFrom}
+                                            onChange={(e) => {
+                                                dispatch(
+                                                    heightProfileActions.setCylindersProfilesFrom(
+                                                        e.target.value as "center" | "top" | "bottom"
+                                                    )
+                                                );
+                                            }}
+                                            input={<OutlinedInput fullWidth />}
+                                        >
+                                            {singleCylinderOptions.map((opt) => (
+                                                <MenuItem key={opt.val} value={opt.val}>
+                                                    {opt.label}
+                                                </MenuItem>
+                                            ))}
+                                        </Select>
+                                    </Box>
+                                    <Divider sx={{ mt: 2, mb: 1 }} />
+                                </>
+                            ) : null}
+                            {profile.status === AsyncStatus.Success && profile.data.profilePoints.length ? (
+                                <>
+                                    <Typography fontWeight={600}>Elevation</Typography>
+                                    <Box display="flex">
+                                        <Typography minWidth={60}>Start</Typography>
+                                        <Typography>{profile.data.startElevation.toFixed(3)} m</Typography>
+                                    </Box>
+                                    <Box display="flex">
+                                        <Typography minWidth={60}>End</Typography>
+                                        <Typography>{profile.data.endElevation.toFixed(3)} m</Typography>
+                                    </Box>
+                                    <Box display="flex">
+                                        <Typography minWidth={60}>Min</Typography>
+                                        <Typography>{profile.data.bottom.toFixed(3)} m</Typography>
+                                    </Box>
+                                    <Box display="flex">
+                                        <Typography minWidth={60}>Max</Typography>
+                                        <Typography>{profile.data.top.toFixed(3)} m</Typography>
+                                    </Box>
+                                </>
+                            ) : null}
+                        </>
+                    )}
                 </ScrollBox>
                 <WidgetList
                     display={menuOpen ? "block" : "none"}
