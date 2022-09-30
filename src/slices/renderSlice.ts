@@ -73,6 +73,7 @@ export enum AdvancedSetting {
     TerrainAsBackground = "terrainAsBackground",
     MouseButtonMap = "mouseButtonMap",
     FingerMap = "fingerMap",
+    BackgroundColor = "backgroundColor",
 }
 
 export enum ProjectSetting {
@@ -173,6 +174,7 @@ const initialState = {
         [AdvancedSetting.TerrainAsBackground]: false,
         [AdvancedSetting.FingerMap]: defaultFlightControls.touch,
         [AdvancedSetting.MouseButtonMap]: defaultFlightControls.mouse,
+        [AdvancedSetting.BackgroundColor]: [0.75, 0.75, 0.75, 1] as VecRGBA,
     },
     gridDefaults: {
         enabled: false,

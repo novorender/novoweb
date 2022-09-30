@@ -1,30 +1,31 @@
 import { vec3 } from "gl-matrix";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { MeasurementValues, MeasureObject, MeasureSettings } from "@novorender/measure-api";
 import {
     Box,
-    FormControlLabel,
     Checkbox,
-    RadioGroup,
-    Radio,
     capitalize,
     Grid,
     List,
     ListItem,
     css,
     styled,
+    Select,
+    InputLabel,
+    OutlinedInput,
+    MenuItem,
 } from "@mui/material";
 import { PushPin } from "@mui/icons-material";
 
 import { Accordion, AccordionDetails, AccordionSummary } from "components";
 import { useAppDispatch, useAppSelector } from "app/store";
 import { useExplorerGlobals } from "contexts/explorerGlobals";
-import { useMountedState } from "hooks/useMountedState";
 
 import { measureActions, SelectedMeasureObj, selectMeasure } from "./measureSlice";
 import { Slope } from "./slope";
 import { VertexTable, MeasurementTable } from "./tables";
 import { PlanarDiff } from "./planarDiff";
+import { useMeasureObjects } from "./useMeasureObjects";
 
 const NestedAccordionSummary = styled(AccordionSummary)(
     ({ theme }) => css`
@@ -53,34 +54,25 @@ export function MeasuredObject({ obj, idx }: { obj: SelectedMeasureObj; idx: num
     const { pinned, duoMeasurementValues } = useAppSelector(selectMeasure);
     const isPinned = pinned === idx;
 
-    const [measurement, setMeasurement] = useMountedState<
-        { obj: MeasureObject; val: MeasurementValues } | vec3 | undefined
-    >(undefined);
+    const measureObject = useMeasureObjects()[idx];
+    const [measureValues, setMeasureValues] = useState<MeasurementValues>();
 
     useEffect(() => {
-        initMeasureObj();
+        getMeasureValues();
 
-        async function initMeasureObj() {
-            if (measureScene) {
-                const measureObj = await measureScene.downloadMeasureObject(obj.id, obj.pos).catch(() => undefined);
-                const measureVal = measureObj?.selectedEntity
-                    ? await measureScene.measure(measureObj.selectedEntity)
-                    : undefined;
-
-                if (measureObj && measureObj.selectedEntity?.kind === "vertex") {
-                    setMeasurement(measureObj.selectedEntity.parameter as vec3);
-                } else if (measureObj && measureVal) {
-                    setMeasurement({ obj: measureObj, val: measureVal });
-                } else {
-                    setMeasurement(obj.pos);
-                }
+        async function getMeasureValues() {
+            if (measureObject.selectedEntity) {
+                setMeasureValues(
+                    await measureScene.measure(measureObject.selectedEntity, undefined, measureObject.settings)
+                );
             }
         }
-    }, [measureScene, obj, setMeasurement, idx, dispatch]);
+    }, [measureObject, measureScene]);
 
-    const kind = !measurement ? "" : "obj" in measurement ? getMeasurementValueKind(measurement.val) : "point";
+    const kind = !measureObject ? "" : measureValues ? getMeasurementValueKind(measureValues) : "point";
+
     const _idx = idx === 0 ? "a" : "b";
-    const enableSettings =
+    const useCylinderMeasureSettings =
         duoMeasurementValues &&
         (!duoMeasurementValues.validMeasureSettings || duoMeasurementValues.validMeasureSettings[_idx]);
 
@@ -113,37 +105,16 @@ export function MeasuredObject({ obj, idx }: { obj: SelectedMeasureObj; idx: num
                 </Box>
             </AccordionSummary>
             <AccordionDetails>
-                {kind === "cylinder" && enableSettings ? (
-                    <>
-                        <RadioGroup
-                            row
-                            aria-label="Cylinder measure point position"
-                            onChange={(e, value) => {
-                                dispatch(
-                                    measureActions.setSettings({
-                                        idx,
-                                        settings: {
-                                            ...obj.settings,
-                                            cylinderMeasure: value as MeasureSettings["cylinderMeasure"],
-                                        },
-                                    })
-                                );
-                            }}
-                            value={!obj.settings?.cylinderMeasure ? "center" : obj.settings.cylinderMeasure}
-                            name="radio-buttons-group"
-                            sx={{ px: 1.8, mb: 0.5 }}
-                        >
-                            <FormControlLabel value={"furthest"} control={<Radio size="small" />} label="Furthest" />
-                            <FormControlLabel value={"center"} control={<Radio size="small" />} label="Center" />
-                            <FormControlLabel value={"closest"} control={<Radio size="small" />} label="Closest" />
-                        </RadioGroup>
-                    </>
-                ) : null}
-                {!measurement ? null : "obj" in measurement ? (
-                    <MeasurementData measureValues={measurement.val} />
+                {!measureObject ? null : measureValues ? (
+                    <MeasurementData
+                        measureValues={measureValues}
+                        obj={obj}
+                        useCylinderMeasureSettings={useCylinderMeasureSettings ? useCylinderMeasureSettings : false}
+                        idx={idx}
+                    />
                 ) : (
                     <Box p={2}>
-                        <VertexTable vertices={[measurement]} />
+                        <VertexTable vertices={[measureObject.pos]} />
                     </Box>
                 )}
             </AccordionDetails>
@@ -165,7 +136,6 @@ export function MeasuredResult() {
 
     const showSlope = duoMeasurementValues.pointA && duoMeasurementValues.pointB;
     const showPlanarDiff = duoMeasurementValues.pointA && duoMeasurementValues.pointB;
-
     return (
         <Accordion defaultExpanded={true}>
             <AccordionSummary sx={{ fontWeight: 600 }}>Result</AccordionSummary>
@@ -180,6 +150,18 @@ export function MeasuredResult() {
                                     </Grid>
                                     <Grid item xs={6}>
                                         {duoMeasurementValues.distance.toFixed(3)} m
+                                    </Grid>
+                                </Grid>
+                            </ListItem>
+                        ) : null}
+                        {duoMeasurementValues.angle ? (
+                            <ListItem>
+                                <Grid container>
+                                    <Grid item xs={4}>
+                                        Angle
+                                    </Grid>
+                                    <Grid item xs={6}>
+                                        {(duoMeasurementValues.angle * (180 / Math.PI)).toFixed(3)} °
                                     </Grid>
                                 </Grid>
                             </ListItem>
@@ -221,7 +203,18 @@ export function MeasuredResult() {
     );
 }
 
-function MeasurementData({ measureValues }: { measureValues: MeasurementValues }) {
+function MeasurementData({
+    measureValues,
+    obj,
+    useCylinderMeasureSettings,
+    idx,
+}: {
+    measureValues: MeasurementValues;
+    obj: SelectedMeasureObj;
+    useCylinderMeasureSettings: boolean;
+    idx: number;
+}) {
+    const dispatch = useAppDispatch();
     if (!("kind" in measureValues)) {
         return null;
     }
@@ -403,6 +396,13 @@ function MeasurementData({ measureValues }: { measureValues: MeasurementValues }
             );
         case "cylinder": {
             const distance = vec3.dist(measureValues.centerLineStart, measureValues.centerLineEnd);
+            const cylinderOptions = [
+                { val: "center", label: "Center" },
+                { val: "top", label: "Outer top" },
+                { val: "bottom", label: "Inner bottom" },
+                { val: "closest", label: "Closest" },
+                { val: "furthest", label: "Furthest" },
+            ] as const;
 
             return (
                 <>
@@ -431,6 +431,41 @@ function MeasurementData({ measureValues }: { measureValues: MeasurementValues }
                             <Slope start={measureValues.centerLineStart} end={measureValues.centerLineEnd} />
                         </ListItem>
                     </List>
+                    <Box px={2} flex="1 1 auto" overflow="hidden">
+                        <InputLabel sx={{ color: "text.primary" }}>Measure from: </InputLabel>
+                        <Select
+                            fullWidth
+                            name="pivot"
+                            size="small"
+                            value={!obj.settings?.cylinderMeasure ? "center" : obj.settings.cylinderMeasure}
+                            onChange={(e) => {
+                                dispatch(
+                                    measureActions.setSettings({
+                                        idx,
+                                        settings: {
+                                            ...obj.settings,
+                                            cylinderMeasure: e.target.value as MeasureSettings["cylinderMeasure"],
+                                        },
+                                    })
+                                );
+                            }}
+                            input={<OutlinedInput fullWidth />}
+                        >
+                            {cylinderOptions.map((opt) => (
+                                <MenuItem
+                                    disabled={
+                                        useCylinderMeasureSettings
+                                            ? false
+                                            : opt.val === "closest" || opt.val === "furthest"
+                                    }
+                                    key={opt.val}
+                                    value={opt.val}
+                                >
+                                    {opt.label}
+                                </MenuItem>
+                            ))}
+                        </Select>
+                    </Box>
                     <Box p={1}>
                         <Accordion defaultExpanded={false}>
                             <NestedAccordionSummary>Components</NestedAccordionSummary>

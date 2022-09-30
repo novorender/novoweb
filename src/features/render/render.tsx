@@ -652,11 +652,22 @@ export function Render3D({ onInit }: Props) {
                 const urlData = getDataFromUrlHash();
                 const camera = { kind: "flight", ...sceneData.camera, ...urlData.camera } as CameraControllerParams;
                 const { display: _display, ...settings } = { ...sceneData.settings, ...urlData.settings };
-                settings.background = { color: vec4.fromValues(0, 0, 0, 0) };
                 const _view = await api.createView(undefined, canvas);
+
+                const grey = vec4.fromValues(0.75, 0.75, 0.75, 1);
+                let bgColor = settings.background?.color || grey;
+                const [r, g, b, a] = bgColor;
+
+                if (r === 0 && g === 0 && b === 0.25 && a === 1) {
+                    bgColor = grey;
+                }
 
                 _view.applySettings({
                     ...settings,
+                    background: {
+                        ...settings.background,
+                        color: bgColor,
+                    },
                     quality: {
                         detail: {
                             ..._view.settings.quality.detail,
@@ -1598,14 +1609,25 @@ export function Render3D({ onInit }: Props) {
                                 )
                                 .map((obj) =>
                                     isMeasureObject(obj) ? (
-                                        <path
-                                            key={getMeasureObjectPathId(obj)}
-                                            id={getMeasureObjectPathId(obj)}
-                                            d=""
-                                            stroke="yellow"
-                                            strokeWidth=""
-                                            fill="none"
-                                        />
+                                        <>
+                                            <defs>
+                                                <stop offset="0%" style={{ stopColor: "green", stopOpacity: 1 }} />
+                                                <linearGradient id={"gr_" + obj.id} x1={0} x2={0} y1={0} y2={1}>
+                                                    <stop offset="0%" stopColor="green" />
+                                                    <stop offset="100%" stopColor="red" />
+                                                </linearGradient>
+                                            </defs>
+                                            {Array.from({ length: 3 }).map((_, idx) => (
+                                                <path
+                                                    key={`${getMeasureObjectPathId(obj)}_${idx}`}
+                                                    id={`${getMeasureObjectPathId(obj)}_${idx}`}
+                                                    d=""
+                                                    stroke={"yellow"}
+                                                    strokeWidth="2"
+                                                    fill={"blue"}
+                                                />
+                                            ))}
+                                        </>
                                     ) : (
                                         <MeasurementPoint
                                             key={getMeasureObjectPathId(obj)}

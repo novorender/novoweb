@@ -1,10 +1,10 @@
 import { MeasureInfo, View } from "@novorender/webgl-api";
-import { MeasureObject } from "@novorender/measure-api";
 import { quat, vec2, vec3 } from "gl-matrix";
 
 import { measureApi } from "app";
 
 import { inversePixelRatio } from "./utils";
+import { ExtendedMeasureObject } from "features/measure/useMeasureObjects";
 
 type Size = {
     width: number;
@@ -274,26 +274,98 @@ export function renderMeasureObject({
     size: Size;
     fillColor: string;
     pathName: string;
-    obj: MeasureObject;
+    obj: ExtendedMeasureObject;
 }) {
-    const path = svg.children.namedItem(pathName);
+    let path = svg.children.namedItem(pathName + "_0");
 
     if (!path) {
         return;
     }
 
+    const topZCol = "green";
+    const botZCol = "red";
+
     const { width, height } = size;
-    obj.renderMeasureEntity(view, width, height).then((drawObjects) => {
+    obj.renderMeasureEntity(view, width, height, obj.settings).then((drawObjects) => {
+        if (!path) {
+            return;
+        }
+
         if (!drawObjects?.length) {
             path.setAttribute("d", "");
             return;
         }
 
+        let pathIdx = 0;
         let fillCurves = "";
         let edgeCurves = "";
+        let topFirst = false;
+
+        const flush = () => {
+            if (!path) {
+                return;
+            }
+            if (edgeCurves.length > 0) {
+                path.setAttribute("d", edgeCurves);
+                edgeCurves = "";
+                path.setAttribute("fill", "none");
+            } else if (fillCurves.length > 0) {
+                path.setAttribute("d", fillCurves);
+                fillCurves = "";
+                path.setAttribute("fill", fillColor);
+            } else {
+                path.setAttribute("d", "");
+            }
+        };
+
         for (const drawObject of drawObjects) {
+            if (pathIdx !== 0) {
+                flush();
+                path = svg.children.namedItem(pathName + "_" + pathIdx);
+                if (!path) {
+                    return;
+                }
+                const col = pathIdx === 1 ? (topFirst ? topZCol : botZCol) : topFirst ? botZCol : topZCol;
+                path.setAttribute("stroke", col);
+                pathIdx++;
+            }
             if (drawObject && drawObject.vertices.length > 1) {
                 drawObject.vertices = inversePixelRatio(drawObject.vertices as vec2[]);
+                if (drawObject.elevation && drawObject.vertices.length === 2) {
+                    //Special handle to cylinders
+                    path!.setAttribute("stroke", "url(#gr_" + obj.id + ")");
+                    let flip = false;
+
+                    const defs = svg.children[0];
+                    const gradient = defs?.children.namedItem("gr_" + obj.id);
+                    topFirst = drawObject.elevation.from < drawObject.elevation.to;
+                    if (gradient) {
+                        if (drawObject.elevation.horizontalDisplay) {
+                            flip =
+                                drawObject.elevation.from < drawObject.elevation.to
+                                    ? drawObject.vertices[0][0] < drawObject.vertices[1][0]
+                                    : drawObject.vertices[0][0] > drawObject.vertices[1][0];
+                            gradient.setAttribute("x2", "1");
+                            gradient.setAttribute("y2", "0");
+                        } else {
+                            flip =
+                                drawObject.elevation.from < drawObject.elevation.to
+                                    ? drawObject.vertices[0][1] < drawObject.vertices[1][1]
+                                    : drawObject.vertices[0][1] > drawObject.vertices[1][1];
+                            gradient.setAttribute("x2", "0");
+                            gradient.setAttribute("y2", "1");
+                        }
+
+                        if (flip) {
+                            gradient.children[0].setAttribute("stop-color", topZCol);
+                            gradient.children[1].setAttribute("stop-color", botZCol);
+                        } else {
+                            gradient.children[0].setAttribute("stop-color", botZCol);
+                            gradient.children[1].setAttribute("stop-color", topZCol);
+                        }
+                    }
+                    pathIdx++;
+                }
                 if (drawObject.drawType === "lines") {
                     edgeCurves += `M${drawObject.vertices[0][0]}, ${drawObject.vertices[0][1]}`;
                     for (let i = 0; i < drawObject.vertices.length; ++i) {
@@ -308,14 +380,6 @@ export function renderMeasureObject({
             }
         }
 
-        if (edgeCurves.length > 0) {
-            path.setAttribute("d", edgeCurves);
-            path.setAttribute("fill", "none");
-        } else if (fillCurves.length > 0) {
-            path.setAttribute("d", fillCurves);
-            path.setAttribute("fill", fillColor);
-        } else {
-            path.setAttribute("d", "");
-        }
+        flush();
     });
 }

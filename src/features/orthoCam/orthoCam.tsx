@@ -1,6 +1,6 @@
-import { ChangeEvent } from "react";
+import { ChangeEvent, useState, MouseEvent } from "react";
 import { Box, Button, FormControlLabel } from "@mui/material";
-import { ArrowDownward } from "@mui/icons-material";
+import { ArrowDownward, ColorLens } from "@mui/icons-material";
 import { vec3 } from "gl-matrix";
 
 import { api } from "app";
@@ -26,6 +26,8 @@ import {
     Picker,
 } from "slices/renderSlice";
 import { selectMinimized, selectMaximized } from "slices/explorerSlice";
+import { ColorPicker } from "features/colorPicker";
+import { rgbToVec, VecRGBA, vecToRgb } from "utils/color";
 
 export function OrthoCam() {
     const [menuOpen, toggleMenu] = useToggle();
@@ -41,7 +43,14 @@ export function OrthoCam() {
     const selectingOrthoPoint = useAppSelector(selectPicker) === Picker.OrthoPlane;
     const { terrainAsBackground } = useAppSelector(selectAdvancedSettings);
     const subtrees = useAppSelector(selectSubtrees);
+    const backgroundColor = useAppSelector(selectAdvancedSettings).backgroundColor;
     const dispatch = useAppDispatch();
+
+    const [colorPickerAnchor, setColorPickerAnchor] = useState<HTMLElement | null>(null);
+    const toggleColorPicker = (event?: MouseEvent<HTMLElement>) => {
+        setColorPickerAnchor(!colorPickerAnchor && event?.currentTarget ? event.currentTarget : null);
+    };
+    const { r, g, b } = vecToRgb(backgroundColor);
 
     const togglePick = () => {
         if (cameraType === CameraType.Orthographic || selectingOrthoPoint) {
@@ -84,7 +93,7 @@ export function OrthoCam() {
                     referenceCoordSys: mat,
                     fieldOfView: 100,
                     near: -0.001,
-                    far: 1000,
+                    far: (view.camera.controller.params as any).far,
                 },
             })
         );
@@ -127,10 +136,10 @@ export function OrthoCam() {
                         </Box>
                     ) : null}
                 </WidgetHeader>
-                <ScrollBox display={menuOpen || minimized ? "none" : "flex"} flexDirection="column" p={1}>
+                <ScrollBox display={menuOpen || minimized ? "none" : "flex"} flexDirection="column" p={1} pt={2}>
                     {subtrees?.terrain !== SubtreeStatus.Unavailable ? (
                         <FormControlLabel
-                            sx={{ ml: 0, mb: 1 }}
+                            sx={{ ml: 0, mb: 2 }}
                             control={
                                 <Switch
                                     name={AdvancedSetting.TerrainAsBackground}
@@ -146,15 +155,23 @@ export function OrthoCam() {
                         />
                     ) : null}
                     {cameraType === CameraType.Orthographic ? (
-                        <FormControlLabel
-                            sx={{ ml: 0, mb: 1 }}
-                            control={<Switch name={"Show grid"} checked={grid.enabled} onChange={toggleGrid} />}
-                            label={
-                                <Box ml={1} fontSize={16}>
-                                    Show grid
-                                </Box>
-                            }
-                        />
+                        <>
+                            <FormControlLabel
+                                sx={{ ml: 0, mb: 2 }}
+                                control={<Switch name={"Show grid"} checked={grid.enabled} onChange={toggleGrid} />}
+                                label={
+                                    <Box ml={1} fontSize={16}>
+                                        Show grid
+                                    </Box>
+                                }
+                            />
+                            <Box>
+                                <Button variant="outlined" color="grey" onClick={toggleColorPicker}>
+                                    <ColorLens sx={{ mr: 1, color: `rgb(${r}, ${g}, ${b})` }} fontSize="small" />
+                                    Background color
+                                </Button>
+                            </Box>
+                        </>
                     ) : null}
                 </ScrollBox>
                 <WidgetList
@@ -163,6 +180,21 @@ export function OrthoCam() {
                     onSelect={toggleMenu}
                 />
             </WidgetContainer>
+            <ColorPicker
+                open={Boolean(colorPickerAnchor)}
+                anchorEl={colorPickerAnchor}
+                onClose={() => toggleColorPicker()}
+                color={backgroundColor}
+                onChangeComplete={({ rgb }) => {
+                    const rgba = rgbToVec(rgb) as VecRGBA;
+                    view.applySettings({ background: { color: rgba } });
+                    dispatch(
+                        renderActions.setAdvancedSettings({
+                            [AdvancedSetting.BackgroundColor]: rgba,
+                        })
+                    );
+                }}
+            />
             <LogoSpeedDial
                 open={menuOpen}
                 toggle={toggleMenu}
