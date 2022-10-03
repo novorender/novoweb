@@ -238,8 +238,15 @@ export async function refillObjects({
     scene: Scene;
     view: View;
     objectGroups: (
-        | { id: string; ids: ObjectId[]; color: VecRGB | VecRGBA; selected: boolean; hidden: boolean }
-        | { id: string; ids: ObjectId[]; neutral: true; hidden: false; selected: true }
+        | {
+              id: string;
+              ids: ObjectId[];
+              color: VecRGB | VecRGBA;
+              selected: boolean;
+              hidden: boolean;
+              highlightIdx?: number;
+          }
+        | { id: string; ids: ObjectId[]; neutral: true; hidden: false; selected: true; highlightIdx?: number }
     )[];
     selectionBasket: {
         ids: Record<number, true | undefined>;
@@ -256,54 +263,73 @@ export async function refillObjects({
 
     objectHighlighter.objectHighlightIndices.fill(defaultVisibility === ObjectVisibility.Transparent ? 255 : 0);
 
-    const proms: Promise<void>[] = objectGroups
-        .filter((group) => group.hidden)
-        .map(async (group) => {
-            if (!group.ids) {
-                store.dispatch(groupsActions.setLoadingIds(true));
-                group.ids = await dataApi.getGroupIds(sceneId, group.id);
-            }
-            for (const id of group.ids) {
-                objectHighlighter.objectHighlightIndices[id] = 255;
-            }
-        });
+    const proms: Promise<void>[] = objectGroups.map(async (group) => {
+        if ((group.selected || group.hidden) && !group.ids) {
+            store.dispatch(groupsActions.setLoadingIds(true));
+            group.ids = await dataApi.getGroupIds(sceneId, group.id).catch(() => {
+                console.warn("failed to load ids for group - ", group.id);
+                return [];
+            });
+        }
+    });
 
-    proms.push(
-        ...objectGroups.map(async (group, index) => {
-            if (group.selected) {
-                if (!group.ids) {
-                    store.dispatch(groupsActions.setLoadingIds(true));
-                    group.ids = await dataApi.getGroupIds(sceneId, group.id);
-                }
+    await Promise.all(proms);
 
-                if (selectionBasket.mode === SelectionBasketMode.Loose) {
-                    for (const id of group.ids) {
-                        objectHighlighter.objectHighlightIndices[id] = index + 1;
-                    }
+    let index = 1; // 0 is default visibility
+    const [hidden, _highlights] = objectGroups.reduce(
+        (prev, group) => {
+            delete group.highlightIdx;
+            if (group.hidden) {
+                return [[...prev[0], ...group.ids], prev[1]];
+            }
+
+            if (group.selected && group.ids.length) {
+                const neutral = "neutral" in group;
+                const color = neutral ? "neutral" : String(group.color);
+
+                if (!prev[1][color]) {
+                    prev[1][color] = {
+                        color,
+                        idx: index,
+                        highlight: neutral
+                            ? getHighlightByObjectVisibility(ObjectVisibility.Neutral)
+                            : api.createHighlight({ kind: "color", color: group.color }),
+                    };
+
+                    group.highlightIdx = index;
+                    index = index + 1;
+
+                    return [prev[0], prev[1]];
                 } else {
-                    for (const id of group.ids) {
-                        if (selectionBasket.ids[id]) {
-                            objectHighlighter.objectHighlightIndices[id] = index + 1;
-                        }
-                    }
+                    group.highlightIdx = prev[1][color].idx;
                 }
             }
-        })
+
+            return prev;
+        },
+        [[], {}] as [number[], { [color: string]: { color: string; idx: number; highlight: Highlight } }]
     );
 
-    await Promise.all(proms).finally(() => {
-        objectHighlighter.commit();
-        view.settings.objectHighlights = [
-            getHighlightByObjectVisibility(defaultVisibility),
-            ...objectGroups.map((group) => {
-                if ("color" in group) {
-                    return api.createHighlight({ kind: "color", color: group.color });
-                }
+    const highlights = Object.values(_highlights);
+    hidden.forEach((id) => (objectHighlighter.objectHighlightIndices[id] = 255));
 
-                return getHighlightByObjectVisibility(ObjectVisibility.Neutral);
-            }),
-        ];
+    objectGroups.forEach((group) => {
+        const { highlightIdx } = group;
+        if (group.selected && group.ids.length && highlightIdx) {
+            group.ids.forEach((id) => {
+                if (selectionBasket.mode === SelectionBasketMode.Loose || selectionBasket.ids[id]) {
+                    objectHighlighter.objectHighlightIndices[id] = highlightIdx;
+                }
+            });
+        }
     });
+
+    view.settings.objectHighlights = [
+        getHighlightByObjectVisibility(defaultVisibility),
+        ...highlights.sort((a, b) => a.idx - b.idx).map((selected) => selected.highlight),
+    ];
+
+    objectHighlighter.commit();
 
     if (selectLoadingIds(store.getState())) {
         store.dispatch(groupsActions.setLoadingIds(false));
