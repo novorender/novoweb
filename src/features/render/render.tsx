@@ -125,6 +125,7 @@ import {
     renderMeasurePoints,
     renderSingleMeasurePoint,
 } from "./svgUtils";
+import { lineMeasureActions, selectLineMeasureLength, selectlineMeasurePoints } from "features/lineMeasure";
 
 glMatrix.setMatrixArrayType(Array);
 
@@ -236,7 +237,8 @@ export function Render3D({ onInit }: Props) {
     const picker = useAppSelector(selectPicker);
     const areaPoints = useAppSelector(selectAreaDrawPoints);
     const areaValue = useAppSelector(selectArea);
-
+    const lineMeasurePoints = useAppSelector(selectlineMeasurePoints);
+    const lineMeasureLength = useAppSelector(selectLineMeasureLength);
     const dispatch = useAppDispatch();
 
     const rendering = useRef({
@@ -488,7 +490,8 @@ export function Render3D({ onInit }: Props) {
                     text: {
                         textName: "areaText",
                         value: areaValue,
-                        type: "area",
+                        type: "center",
+                        unit: "&#13217",
                     },
                 });
                 if (areaPoints.length > 2) {
@@ -521,6 +524,46 @@ export function Render3D({ onInit }: Props) {
                 }
             }
         }
+
+        if (lineMeasurePoints.length) {
+            const lineMeasurePts = pathPoints({ points: lineMeasurePoints });
+            if (lineMeasurePts) {
+                renderPoints({
+                    points: lineMeasurePts,
+                    svgNames: { path: "line-path", point: "line-pt" },
+                    text: {
+                        textName: "lineText",
+                        value: lineMeasureLength,
+                        type: "center",
+                    },
+                    closed: false,
+                });
+                if (lineMeasurePoints.length > 2) {
+                    for (let i = 1; i < lineMeasurePoints.length - 1; ++i) {
+                        const anglePt = lineMeasurePoints[i];
+                        if (lineMeasurePts.path.length === lineMeasurePoints.length) {
+                            const fromPIdx = i - 1;
+                            const toPIdx = i + 1;
+                            const fromP = lineMeasurePts.path[fromPIdx];
+                            const toP = lineMeasurePts.path[toPIdx];
+                            const diffA = vec3.sub(vec3.create(), lineMeasurePoints[fromPIdx], anglePt);
+                            const diffB = vec3.sub(vec3.create(), lineMeasurePoints[toPIdx], anglePt);
+                            renderAngles({
+                                svg,
+                                anglePoint: lineMeasurePts.path[i],
+                                fromP,
+                                toP,
+                                diffA,
+                                diffB,
+                                pathName: `line-an_${i}`,
+                            });
+                        } else {
+                            resetSVG({ svg, pathName: `line-an_${i}` });
+                        }
+                    }
+                }
+            }
+        }
     }, [
         view,
         measureObjects,
@@ -528,6 +571,8 @@ export function Render3D({ onInit }: Props) {
         pathMeasureObjects,
         drawSelectedPaths,
         areaPoints,
+        lineMeasurePoints,
+        lineMeasureLength,
         heightProfileMeasureObject,
         size,
         svg,
@@ -1316,6 +1361,10 @@ export function Render3D({ onInit }: Props) {
                 dispatch(areaActions.addPoint([result.position, normal ?? [0, 0, 0]]));
                 break;
             }
+            case Picker.LineMeasure: {
+                dispatch(lineMeasureActions.addPoint(result.position));
+                break;
+            }
             case Picker.HeightProfileEntity: {
                 dispatch(heightProfileActions.selectPoint({ id: result.objectId, pos: result.position }));
                 break;
@@ -1411,6 +1460,7 @@ export function Render3D({ onInit }: Props) {
                 Picker.FollowPathObject,
                 Picker.ClippingPlane,
                 Picker.Area,
+                Picker.LineMeasure,
                 Picker.HeightProfileEntity,
             ].includes(picker);
 
@@ -1587,6 +1637,31 @@ export function Render3D({ onInit }: Props) {
                                         r={5}
                                     />
                                     <g id={`area-an_${idx}`}></g>
+                                </Fragment>
+                            ))}
+                            {lineMeasurePoints.length ? (
+                                <>
+                                    <path
+                                        name={`line-path`}
+                                        id={`line-path`}
+                                        stroke="yellow"
+                                        strokeWidth={1}
+                                        fill="none"
+                                    />
+                                    <AxisText id={`lineText`} />
+                                </>
+                            ) : null}
+                            {lineMeasurePoints.map((_pt, idx) => (
+                                <Fragment key={idx}>
+                                    <MeasurementPoint
+                                        disabled
+                                        name={`line-pt_${idx}`}
+                                        id={`line-pt_${idx}`}
+                                        stroke="black"
+                                        strokeWidth={2}
+                                        r={5}
+                                    />
+                                    <g id={`line-an_${idx}`}></g>
                                 </Fragment>
                             ))}
 

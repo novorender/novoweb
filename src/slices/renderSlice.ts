@@ -93,6 +93,7 @@ export enum Picker {
     ClippingPlane,
     OrthoPlane,
     Area,
+    LineMeasure,
     HeightProfileEntity,
 }
 

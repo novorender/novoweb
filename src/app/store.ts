@@ -18,6 +18,7 @@ import { bimTrackApi } from "features/bimTrack/bimTrackApi";
 import { ditioReducer } from "features/ditio";
 import { ditioApi } from "features/ditio";
 import { areaReducer } from "features/area";
+import { lineMeasureReducer } from "features/lineMeasure";
 import { heightProfileReducer } from "features/heightProfile";
 
 const rootReducer = combineReducers({
@@ -31,6 +32,7 @@ const rootReducer = combineReducers({
     deviations: deviationsReducer,
     measure: measureReducer,
     area: areaReducer,
+    lineMeasure: lineMeasureReducer,
     bimCollab: bimCollabReducer,
     heightProfile: heightProfileReducer,
     [bimCollabApi.reducerPath]: bimCollabApi.reducer,

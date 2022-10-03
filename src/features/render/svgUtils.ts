@@ -166,11 +166,13 @@ export function renderMeasurePoints({
     svgNames,
     text,
     points,
+    closed = true,
 }: {
     svg: SVGSVGElement;
     svgNames: { path?: string; point?: string };
-    text?: { textName: string; value: number; type: "distance" | "area" };
+    text?: { textName: string; value: number; type: "distance" | "center"; unit?: string };
     points: { pixel: vec2[]; path: vec2[] } | undefined;
+    closed?: boolean;
 }) {
     if (!svg) {
         return;
@@ -186,7 +188,7 @@ export function renderMeasurePoints({
         }
         const path = svg.children.namedItem(svgNames.path);
 
-        if (curve) {
+        if (closed && curve) {
             curve += " Z";
         }
 
@@ -225,7 +227,7 @@ export function renderMeasurePoints({
                 textEl.innerHTML = "";
                 return;
             }
-            const _text = `${+text.value.toFixed(3)} m`;
+            const _text = `${+text.value.toFixed(3)} ${text.unit ? text.unit : "m"}`;
             let dir =
                 points.path[0][0] > points.path[1][0]
                     ? vec2.sub(vec2.create(), points.path[0], points.path[1])
@@ -244,12 +246,12 @@ export function renderMeasurePoints({
             } else {
                 textEl.innerHTML = "";
             }
-        } else if (text.type === "area") {
-            if (points.path.length < 3) {
+        } else if (text.type === "center") {
+            if (points.path.length < 2 || text.value === 0) {
                 textEl.innerHTML = "";
                 return;
             }
-            const _text = `${+text.value.toFixed(3)} &#13217;`;
+            const _text = `${text.value.toFixed(3)} ${text.unit ? text.unit : "m"}`;
             const center = vec2.create();
             for (const p of points.path) {
                 vec2.add(center, center, p);
