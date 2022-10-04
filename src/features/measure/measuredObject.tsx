@@ -62,7 +62,7 @@ export function MeasuredObject({ obj, idx }: { obj: SelectedMeasureObj; idx: num
         getMeasureValues();
 
         async function getMeasureValues() {
-            if (measureObject.selectedEntity) {
+            if (measureObject?.selectedEntity) {
                 setMeasureValues(
                     await measureScene.measure(measureObject.selectedEntity, undefined, measureObject.settings)
                 );
