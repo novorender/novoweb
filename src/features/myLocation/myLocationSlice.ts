@@ -3,8 +3,18 @@ import { vec3 } from "gl-matrix";
 
 import { RootState } from "app/store";
 
+export enum LocationStatus {
+    Idle,
+    Loading,
+    Error,
+}
+
 const initialState = {
-    location: undefined as undefined | vec3,
+    showMarker: false,
+    currentLocation: undefined as undefined | vec3,
+    status: {} as
+        | { status: LocationStatus.Idle | LocationStatus.Loading }
+        | { status: LocationStatus.Error; msg: string },
 };
 
 type State = typeof initialState;
@@ -13,14 +23,21 @@ export const myLocationSlice = createSlice({
     name: "area",
     initialState: initialState,
     reducers: {
-        setLocation: (state, action: PayloadAction<State["location"]>) => {
-            state.location = action.payload;
+        setCurrentLocation: (state, action: PayloadAction<State["currentLocation"]>) => {
+            state.currentLocation = action.payload;
+        },
+        toggleShowMarker: (state, action: PayloadAction<boolean | undefined>) => {
+            state.showMarker = action.payload ?? !state.showMarker;
+        },
+        setSatus: (state, action: PayloadAction<State["status"]>) => {
+            state.status = action.payload;
         },
     },
 });
 
-export const selectMyLocation = (state: RootState) => state.myLocation.location;
-export const selectShowLocation = (state: RootState) => state.render.picker;
+export const selectCurrentLocation = (state: RootState) => state.myLocation.currentLocation;
+export const selectShowLocationMarker = (state: RootState) => state.myLocation.showMarker;
+export const selectLocationStatus = (state: RootState) => state.myLocation.status;
 
 const { actions, reducer } = myLocationSlice;
 export { actions as myLocationActions, reducer as myLocationReducer };

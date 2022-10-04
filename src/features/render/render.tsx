@@ -125,7 +125,7 @@ import {
     renderMeasurePoints,
     renderSingleMeasurePoint,
 } from "./svgUtils";
-import { selectMyLocation } from "features/myLocation";
+import { selectCurrentLocation, useHandleLocationMarker } from "features/myLocation";
 
 glMatrix.setMatrixArrayType(Array);
 
@@ -236,7 +236,7 @@ export function Render3D({ onInit }: Props) {
     const drawSelectedPaths = useAppSelector(selectDrawSelectedPositions);
     const picker = useAppSelector(selectPicker);
     const areaPoints = useAppSelector(selectAreaDrawPoints);
-    const myLocationPoint = useAppSelector(selectMyLocation);
+    const myLocationPoint = useAppSelector(selectCurrentLocation);
     const areaValue = useAppSelector(selectArea);
 
     const dispatch = useAppDispatch();
@@ -1189,6 +1189,7 @@ export function Render3D({ onInit }: Props) {
     useHandlePanoramaChanges();
     useHandleCameraControls();
     useHandleAreaPoints();
+    useHandleLocationMarker();
 
     useEffect(() => {
         handleUrlBookmark();
