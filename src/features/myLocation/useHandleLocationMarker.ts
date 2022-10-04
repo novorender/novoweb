@@ -10,7 +10,7 @@ import { LocationStatus, myLocationActions, selectShowLocationMarker } from "./m
 
 export function useHandleLocationMarker() {
     const {
-        state: { view },
+        state: { view, scene },
     } = useExplorerGlobals();
 
     const { tmZone } = useAppSelector(selectProjectSettings);
@@ -30,11 +30,11 @@ export function useHandleLocationMarker() {
             watchId.current = navigator.geolocation.watchPosition(handlePositionSuccess, handlePositionError, {
                 enableHighAccuracy: true,
                 maximumAge: 5000,
-                timeout: 10000,
+                timeout: 30000,
             });
 
             function handlePositionSuccess(pos: GeolocationPosition) {
-                if (!view) {
+                if (!view || !scene) {
                     return;
                 }
 
@@ -44,18 +44,32 @@ export function useHandleLocationMarker() {
                     return;
                 }
 
-                lastUpdate.current = now;
                 const scenePos = dataApi.latLon2tm(pos.coords, tmZone);
+                const outOfBounds = vec3.dist(scenePos, scene.boundingSphere.center) > scene.boundingSphere.radius;
 
+                if (outOfBounds) {
+                    dispatch(
+                        myLocationActions.setSatus({
+                            status: LocationStatus.Error,
+                            msg: "Your position is outside the scene's boundaries.",
+                        })
+                    );
+
+                    return;
+                }
+
+                lastUpdate.current = now;
                 dispatch(
                     myLocationActions.setCurrentLocation(
                         vec3.fromValues(scenePos[0], pos.coords.altitude ?? view.camera.position[1], scenePos[2])
                     )
                 );
+                dispatch(myLocationActions.setAccuracy(pos.coords.accuracy));
                 dispatch(myLocationActions.setSatus({ status: LocationStatus.Idle }));
             }
 
             function handlePositionError(error: GeolocationPositionError) {
+                dispatch(myLocationActions.setAccuracy(undefined));
                 dispatch(myLocationActions.setSatus({ status: LocationStatus.Error, msg: error.message }));
             }
         } else {
@@ -65,7 +79,7 @@ export function useHandleLocationMarker() {
             lastUpdate.current = 0;
             dispatch(myLocationActions.setCurrentLocation(undefined));
         }
-    }, [showMarker, view, dispatch, tmZone]);
+    }, [showMarker, view, scene, dispatch, tmZone]);
 
     useEffect(() => {
         return () => {
