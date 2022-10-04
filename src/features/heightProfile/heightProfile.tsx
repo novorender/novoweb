@@ -1,11 +1,31 @@
 import { useEffect, useState } from "react";
-import { MeasureError } from "@novorender/measure-api";
-import { Box, Button, FormControlLabel, IconButton, Modal, Typography, useTheme } from "@mui/material";
+import { MeasureError, Profile } from "@novorender/measure-api";
+import {
+    Box,
+    Button,
+    FormControlLabel,
+    IconButton,
+    InputLabel,
+    MenuItem,
+    Modal,
+    OutlinedInput,
+    Select,
+    Typography,
+    useTheme,
+} from "@mui/material";
 import { ParentSizeModern } from "@visx/responsive";
 import { Close, DeleteSweep, Timeline } from "@mui/icons-material";
 
 import { useAppDispatch, useAppSelector } from "app/store";
-import { IosSwitch, LinearProgress, LogoSpeedDial, ScrollBox, WidgetContainer, WidgetHeader } from "components";
+import {
+    Divider,
+    IosSwitch,
+    LinearProgress,
+    LogoSpeedDial,
+    ScrollBox,
+    WidgetContainer,
+    WidgetHeader,
+} from "components";
 import { useToggle } from "hooks/useToggle";
 import { featuresConfig } from "config/features";
 import { WidgetList } from "features/widgetList";
@@ -14,13 +34,17 @@ import { useExplorerGlobals } from "contexts/explorerGlobals";
 import { AsyncState, AsyncStatus, hasFinished } from "types/misc";
 import { highlightActions, useDispatchHighlighted, useHighlighted } from "contexts/highlighted";
 import { Picker, renderActions, selectPicker } from "slices/renderSlice";
+import { singleCylinderOptions } from "features/measure";
 
 import { HeightProfileChart } from "./heightProfileChart";
-import { heightProfileActions, selectHeightProfileMeasureEntity, selectSelectedPoint } from "./heightProfileSlice";
+import {
+    heightProfileActions,
+    selectCylindersProfilesFrom,
+    selectHeightProfileMeasureEntity,
+    selectSelectedPoint,
+} from "./heightProfileSlice";
 
 const maxObjects = 50;
-
-// wait for measure api to allow cylinders etc as entity
 
 export function HeightProfile() {
     const theme = useTheme();
@@ -34,12 +58,13 @@ export function HeightProfile() {
     const selectingEntity = useAppSelector(selectPicker) === Picker.HeightProfileEntity;
     const selectedPoint = useAppSelector(selectSelectedPoint);
     const selectedEntity = useAppSelector(selectHeightProfileMeasureEntity);
+    const selectCylindersFrom = useAppSelector(selectCylindersProfilesFrom);
     const highlighted = useHighlighted().idArr;
     const dispatchHighlighted = useDispatchHighlighted();
     const dispatch = useAppDispatch();
 
     const [modalOpen, toggleModal] = useToggle();
-    const [pts, setPts] = useState<AsyncState<[number, number][]>>({ status: AsyncStatus.Initial });
+    const [profile, setProfile] = useState<AsyncState<Profile>>({ status: AsyncStatus.Initial });
 
     useEffect(() => {
         return () => {
@@ -57,29 +82,31 @@ export function HeightProfile() {
 
         async function fromMultiSelect() {
             if (!highlighted.length) {
-                setPts({ status: AsyncStatus.Initial });
+                setProfile({ status: AsyncStatus.Initial });
                 return;
             } else if (highlighted.length > maxObjects) {
-                setPts({
+                setProfile({
                     status: AsyncStatus.Error,
                     msg: `Select fewer than ${maxObjects} objects to load height profile.`,
                 });
                 return;
             }
 
-            setPts({ status: AsyncStatus.Loading });
+            setProfile({ status: AsyncStatus.Loading });
 
             try {
-                const profile = await measureScene.getProfileViewFromMultiSelect(highlighted);
+                const profile = await measureScene.getProfileViewFromMultiSelect(highlighted, {
+                    cylinderMeasure: selectCylindersFrom,
+                });
 
                 if (!profile) {
                     throw new Error("No profile");
                 } else {
-                    setPts({ status: AsyncStatus.Success, data: profile.profilePoints as [number, number][] });
+                    setProfile({ status: AsyncStatus.Success, data: profile });
                 }
             } catch (e) {
                 if (e instanceof MeasureError) {
-                    setPts({
+                    setProfile({
                         status: AsyncStatus.Error,
                         msg: `The selected ${
                             highlighted.length > 1 ? "objects are" : "object is"
@@ -87,7 +114,7 @@ export function HeightProfile() {
                     });
                     return;
                 }
-                setPts({
+                setProfile({
                     status: AsyncStatus.Error,
                     msg: `No height profile available for the selected object${highlighted.length > 1 ? "s" : ""}.`,
                 });
@@ -96,41 +123,47 @@ export function HeightProfile() {
 
         async function fromSelectedEntity() {
             if (!selectedPoint) {
-                setPts({ status: AsyncStatus.Initial });
+                setProfile({ status: AsyncStatus.Initial });
                 return;
             } else if (!hasFinished(selectedEntity)) {
-                setPts({ status: AsyncStatus.Loading });
+                setProfile({ status: AsyncStatus.Loading });
                 return;
             } else if (
                 selectedEntity.status === AsyncStatus.Error ||
                 (selectedEntity.status === AsyncStatus.Success &&
                     (!selectedEntity.data || selectedEntity.data?.kind === "vertex"))
             ) {
-                setPts({
+                setProfile({
                     status: AsyncStatus.Error,
                     msg: `No valid parametric entity found at selected point.`,
                 });
                 return;
             }
 
-            setPts({ status: AsyncStatus.Loading });
+            setProfile({ status: AsyncStatus.Loading });
 
             try {
-                const profile = await measureScene.getProfileViewFromEntity(selectedEntity.data!);
+                const profile = await measureScene.getProfileViewFromEntity(selectedEntity.data!, {
+                    cylinderMeasure: selectCylindersFrom,
+                });
 
                 if (!profile) {
                     throw new Error("No profile");
                 } else {
-                    setPts({ status: AsyncStatus.Success, data: profile.profilePoints as [number, number][] });
+                    setProfile({ status: AsyncStatus.Success, data: profile });
                 }
             } catch (e) {
-                setPts({
+                setProfile({
                     status: AsyncStatus.Error,
                     msg: `No height profile available for the selected entity.`,
                 });
             }
         }
-    }, [highlighted, measureScene, selectingEntity, selectedEntity, selectedPoint]);
+    }, [highlighted, measureScene, selectingEntity, selectedEntity, selectedPoint, selectCylindersFrom]);
+
+    // NOTE(OLA):
+    // Always show options while waiting for measure api to tell if Profile is of cylinders.
+    const canUseCylinderOptions = true;
 
     return (
         <>
@@ -171,7 +204,9 @@ export function HeightProfile() {
                                 label={<Box fontSize={14}>Entity</Box>}
                             />
                             <Button
-                                disabled={Boolean(pts.status !== AsyncStatus.Success || !pts.data.length)}
+                                disabled={Boolean(
+                                    profile.status !== AsyncStatus.Success || !profile.data.profilePoints.length
+                                )}
                                 color="grey"
                                 onClick={toggleModal}
                             >
@@ -181,12 +216,12 @@ export function HeightProfile() {
                         </Box>
                     ) : null}
                 </WidgetHeader>
-                {pts.status === AsyncStatus.Loading ? (
+                {profile.status === AsyncStatus.Loading ? (
                     <Box position="relative">
                         <LinearProgress />
                     </Box>
                 ) : null}
-                {pts.status === AsyncStatus.Success ? (
+                {profile.status === AsyncStatus.Success ? (
                     <Modal open={modalOpen}>
                         <ScrollBox
                             display="flex"
@@ -226,7 +261,7 @@ export function HeightProfile() {
                                 <ParentSizeModern>
                                     {(parent) => (
                                         <HeightProfileChart
-                                            pts={pts.data}
+                                            pts={profile.data.profilePoints as [number, number][]}
                                             height={parent.height}
                                             width={parent.width}
                                         />
@@ -236,8 +271,64 @@ export function HeightProfile() {
                         </ScrollBox>
                     </Modal>
                 ) : null}
-                <ScrollBox display={menuOpen || minimized ? "none" : "flex"} flexDirection="column" p={1}>
-                    {pts.status === AsyncStatus.Error ? pts.msg : ""}
+                <ScrollBox display={menuOpen || minimized ? "none" : "flex"} flexDirection="column" p={1} pt={2}>
+                    {profile.status === AsyncStatus.Error ? (
+                        profile.msg
+                    ) : (
+                        <>
+                            {canUseCylinderOptions ? (
+                                <>
+                                    <Box>
+                                        <InputLabel sx={{ color: "text.primary", mb: 0.5 }}>
+                                            Cylinder profile from:{" "}
+                                        </InputLabel>
+                                        <Select
+                                            fullWidth
+                                            name="pivot"
+                                            size="small"
+                                            value={selectCylindersFrom}
+                                            onChange={(e) => {
+                                                dispatch(
+                                                    heightProfileActions.setCylindersProfilesFrom(
+                                                        e.target.value as "center" | "top" | "bottom"
+                                                    )
+                                                );
+                                            }}
+                                            input={<OutlinedInput fullWidth />}
+                                        >
+                                            {singleCylinderOptions.map((opt) => (
+                                                <MenuItem key={opt.val} value={opt.val}>
+                                                    {opt.label}
+                                                </MenuItem>
+                                            ))}
+                                        </Select>
+                                    </Box>
+                                    <Divider sx={{ mt: 2, mb: 1 }} />
+                                </>
+                            ) : null}
+                            {profile.status === AsyncStatus.Success && profile.data.profilePoints.length ? (
+                                <>
+                                    <Typography fontWeight={600}>Elevation</Typography>
+                                    <Box display="flex">
+                                        <Typography minWidth={60}>Start</Typography>
+                                        <Typography>{profile.data.startElevation.toFixed(3)} m</Typography>
+                                    </Box>
+                                    <Box display="flex">
+                                        <Typography minWidth={60}>End</Typography>
+                                        <Typography>{profile.data.endElevation.toFixed(3)} m</Typography>
+                                    </Box>
+                                    <Box display="flex">
+                                        <Typography minWidth={60}>Min</Typography>
+                                        <Typography>{profile.data.bottom.toFixed(3)} m</Typography>
+                                    </Box>
+                                    <Box display="flex">
+                                        <Typography minWidth={60}>Max</Typography>
+                                        <Typography>{profile.data.top.toFixed(3)} m</Typography>
+                                    </Box>
+                                </>
+                            ) : null}
+                        </>
+                    )}
                 </ScrollBox>
                 <WidgetList
                     display={menuOpen ? "block" : "none"}
