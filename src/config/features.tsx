@@ -52,8 +52,8 @@ export const featuresConfig = {
         type: FeatureType.Widget,
         defaultLocked: false,
     },
-    lineMeasure: {
-        key: "lineMeasure",
+    pointLine: {
+        key: "pointLine",
         name: "Point line",
         Icon: LinearScale,
         type: FeatureType.Widget,

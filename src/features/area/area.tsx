@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import { Box, Button, FormControlLabel } from "@mui/material";
 import { DeleteSweep, Undo } from "@mui/icons-material";
 
@@ -22,6 +22,18 @@ export function Area() {
     const points = useAppSelector(selectAreaPoints);
     const area = useAppSelector(selectArea);
     const dispatch = useAppDispatch();
+
+    const isInitial = useRef(true);
+
+    useEffect(() => {
+        if (isInitial.current) {
+            if (!selecting && !points.length) {
+                dispatch(renderActions.setPicker(Picker.Area));
+            }
+
+            isInitial.current = false;
+        }
+    }, [dispatch, selecting, points]);
 
     useEffect(() => {
         return () => {

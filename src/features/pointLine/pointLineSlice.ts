@@ -10,8 +10,8 @@ const initialState = {
 
 type State = typeof initialState;
 
-export const lineMeasureSlice = createSlice({
-    name: "lineMeasure",
+export const pointLineSlice = createSlice({
+    name: "pointLine",
     initialState: initialState,
     reducers: {
         setPoints: (state, action: PayloadAction<State["points"]>) => {
@@ -29,8 +29,8 @@ export const lineMeasureSlice = createSlice({
     },
 });
 
-export const selectlineMeasurePoints = (state: RootState) => state.lineMeasure.points;
-export const selectLineMeasureLength = (state: RootState) => state.lineMeasure.length;
+export const selectPointLinePoints = (state: RootState) => state.pointLine.points;
+export const selectPointLineLength = (state: RootState) => state.pointLine.length;
 
-const { actions, reducer } = lineMeasureSlice;
-export { actions as lineMeasureActions, reducer as lineMeasureReducer };
+const { actions, reducer } = pointLineSlice;
+export { actions as pointLineActions, reducer as pointLineReducer };

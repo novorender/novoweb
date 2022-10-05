@@ -32,6 +32,8 @@ import { useDispatchHidden } from "contexts/hidden";
 import { customGroupsActions, useCustomGroups } from "contexts/customGroups";
 import { useDispatchVisible, visibleActions } from "contexts/visible";
 import { measureActions } from "features/measure";
+import { areaActions } from "features/area";
+import { pointLineActions } from "features/pointLine";
 
 type Props = SpeedDialActionProps & {
     position?: { top?: number; right?: number; bottom?: number; left?: number };
@@ -74,6 +76,8 @@ export function Home({ position, ...speedDialProps }: Props) {
 
         dispatch(renderActions.resetState());
         dispatch(measureActions.clear());
+        dispatch(areaActions.setPoints([]));
+        dispatch(pointLineActions.setPoints([]));
 
         if (settings) {
             const { display: _display, environment: _env, light: _light, ...toApply } = settings;
