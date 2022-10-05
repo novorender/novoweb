@@ -493,6 +493,9 @@ export function initCamera({
     }
 
     if (controller.params.kind === "flight") {
+        if (controller.params.near <= 0) {
+            controller.params.near = 0.1;
+        }
         flightControllerRef.current = controller;
     } else if (!flightControllerRef.current) {
         flightControllerRef.current = {
