@@ -33,6 +33,19 @@ import { StorageKey } from "config/storage";
 import { deleteFromStorage, getFromStorage } from "utils/storage";
 
 export const api = createAPI({ noOffscreenCanvas: !offscreenCanvas });
+
+try {
+    const debugProfile =
+        new URLSearchParams(window.location.search).get("debugDeviceProfile") ?? localStorage["debugDeviceProfile"];
+
+    if (debugProfile) {
+        api.deviceProfile = { ...api.deviceProfile, ...JSON.parse(debugProfile), debugProfile: true };
+        console.log(api.version, "using debug device profile");
+    }
+} catch (e) {
+    console.warn(e);
+}
+
 export const dataApi = createDataAPI({ authHeader: getAuthHeader, serviceUrl: dataServerBaseUrl });
 export const measureApi = createMeasureAPI();
 export const msalInstance = new PublicClientApplication(msalConfig);

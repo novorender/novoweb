@@ -35,6 +35,7 @@ import { FeatureSettings } from "./routes/featureSettings";
 import { RenderSettings } from "./routes/renderSettings";
 import { ProjectSettings } from "./routes/projectSettings";
 import { SceneSettings } from "./routes/sceneSettings";
+import { PerformanceSettings } from "./routes/performanceSettings";
 
 enum Status {
     Idle,
@@ -261,6 +262,9 @@ export function AdvancedSettings() {
                             <Route path="/render" exact>
                                 <RenderSettings save={save} saving={saving} />
                             </Route>
+                            <Route path="/performance" exact>
+                                <PerformanceSettings />
+                            </Route>
                         </Switch>
                     </MemoryRouter>
                 </Box>
@@ -317,6 +321,9 @@ function Root({ save, saving }: { save: () => Promise<void>; saving: boolean }) 
                     </ListItemButton>
                     <ListItemButton sx={{ pl: 1, fontWeight: 600 }} disableGutters component={Link} to="/render">
                         Render
+                    </ListItemButton>
+                    <ListItemButton sx={{ pl: 1, fontWeight: 600 }} disableGutters component={Link} to="/performance">
+                        Performance
                     </ListItemButton>
                 </List>
             </Box>
