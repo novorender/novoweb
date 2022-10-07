@@ -290,12 +290,14 @@ export function renderMeasureObject({
 
     const { width, height } = size;
     obj.renderMeasureEntity(view, width, height, obj.settings).then((drawObjects) => {
-        if (!path) {
-            return;
+        for (let i = 0; i < 3; ++i) {
+            const cleanPath = svg.children.namedItem(pathName + "_" + i);
+            if (cleanPath) {
+                cleanPath.setAttribute("d", "");
+            }
         }
 
         if (!drawObjects?.length) {
-            path.setAttribute("d", "");
             return;
         }
 
@@ -316,8 +318,6 @@ export function renderMeasureObject({
                 path.setAttribute("d", fillCurves);
                 fillCurves = "";
                 path.setAttribute("fill", fillColor);
-            } else {
-                path.setAttribute("d", "");
             }
         };
 
@@ -334,7 +334,20 @@ export function renderMeasureObject({
             }
             if (drawObject && drawObject.vertices.length > 1) {
                 drawObject.vertices = inversePixelRatio(drawObject.vertices as vec2[]);
-                if (drawObject.elevation && drawObject.vertices.length === 2) {
+                let pointsOutsideScreen = 0;
+                for (const v of drawObject.vertices) {
+                    if (v[0] < -10000 || v[0] > 10000 || v[1] < -10000 || v[1] > 10000) {
+                        ++pointsOutsideScreen;
+                        if (pointsOutsideScreen > 1) {
+                            break;
+                        }
+                    }
+                }
+                if (pointsOutsideScreen > 1) {
+                    continue;
+                }
+                const cylinderDawing = drawObject.elevation && drawObject.vertices.length === 2;
+                if (drawObject.elevation && cylinderDawing) {
                     //Special handle to cylinders
                     path!.setAttribute("stroke", "url(#gr_" + obj.id + ")");
                     let flip = false;
