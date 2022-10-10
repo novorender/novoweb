@@ -334,18 +334,6 @@ export function renderMeasureObject({
             }
             if (drawObject && drawObject.vertices.length > 1) {
                 drawObject.vertices = inversePixelRatio(drawObject.vertices as vec2[]);
-                let pointsOutsideScreen = 0;
-                for (const v of drawObject.vertices) {
-                    if (v[0] < -10000 || v[0] > 10000 || v[1] < -10000 || v[1] > 10000) {
-                        ++pointsOutsideScreen;
-                        if (pointsOutsideScreen > 1) {
-                            break;
-                        }
-                    }
-                }
-                if (pointsOutsideScreen > 1) {
-                    continue;
-                }
                 const cylinderDawing = drawObject.elevation && drawObject.vertices.length === 2;
                 if (drawObject.elevation && cylinderDawing) {
                     //Special handle to cylinders
