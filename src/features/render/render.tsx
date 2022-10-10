@@ -305,7 +305,12 @@ export function Render3D({ onInit }: Props) {
 
         if (drawSelectedPaths && pathMeasureObjects.status === AsyncStatus.Success) {
             pathMeasureObjects.data.forEach((obj) => {
-                renderObject({ obj, fillColor: measurementFillColor, pathName: "fp_" + getMeasureObjectPathId(obj) });
+                renderObject({
+                    obj,
+                    fillColor: measurementFillColor,
+                    pathName: "fp_" + getMeasureObjectPathId(obj),
+                    advancedDrawing: false,
+                });
             });
         }
 
@@ -315,6 +320,7 @@ export function Render3D({ onInit }: Props) {
                     obj: heightProfileMeasureObject,
                     fillColor: "rgba(0, 255, 38, 0.5)",
                     pathName: "heightProfileMeasureObject",
+                    advancedDrawing: false,
                 });
             } else {
                 const pts = pathPoints({ points: [heightProfileMeasureObject.pos] });
@@ -330,7 +336,12 @@ export function Render3D({ onInit }: Props) {
 
         measureObjects.forEach((obj) => {
             if (isMeasureObject(obj)) {
-                renderObject({ obj, fillColor: measurementFillColor, pathName: getMeasureObjectPathId(obj) });
+                renderObject({
+                    obj,
+                    fillColor: measurementFillColor,
+                    pathName: getMeasureObjectPathId(obj),
+                    advancedDrawing: true,
+                });
             } else {
                 const pts = pathPoints({ points: [obj.pos] });
                 if (pts) {

@@ -271,6 +271,7 @@ export function renderMeasureObject({
     fillColor,
     pathName,
     obj,
+    advancedDrawing = false,
 }: {
     svg: SVGSVGElement;
     view: View;
@@ -278,8 +279,9 @@ export function renderMeasureObject({
     fillColor: string;
     pathName: string;
     obj: ExtendedMeasureObject;
+    advancedDrawing: boolean;
 }) {
-    let path = svg.children.namedItem(pathName + "_0");
+    let path = svg.children.namedItem(pathName + (advancedDrawing ? "_0" : ""));
 
     if (!path) {
         return;
@@ -334,7 +336,7 @@ export function renderMeasureObject({
             }
             if (drawObject && drawObject.vertices.length > 1) {
                 drawObject.vertices = inversePixelRatio(drawObject.vertices as vec2[]);
-                const cylinderDawing = drawObject.elevation && drawObject.vertices.length === 2;
+                const cylinderDawing = advancedDrawing && drawObject.elevation && drawObject.vertices.length === 2;
                 if (drawObject.elevation && cylinderDawing) {
                     //Special handle to cylinders
                     path!.setAttribute("stroke", "url(#gr_" + obj.id + ")");
