@@ -350,6 +350,8 @@ export function Render3D({ onInit }: Props) {
                         pixelPoint: pts.pixel[0],
                         pointName: getMeasureObjectPathId(obj),
                     });
+                } else {
+                    resetSVG({ svg, pathName: getMeasureObjectPathId(obj) });
                 }
             }
         });
@@ -447,6 +449,8 @@ export function Render3D({ onInit }: Props) {
                 } else {
                     resetSVG({ svg, pathName: `angle_measureToZ` });
                 }
+            } else {
+                resetSVG({ svg, pathName: `angle_measureToZ` });
             }
 
             const planarDiff = vec2.len(vec2.fromValues(diff[0], diff[2]));
@@ -474,6 +478,9 @@ export function Render3D({ onInit }: Props) {
                         type: "distance",
                     },
                 });
+            } else {
+                resetSVG({ svg, pathName: `brepPathXZ` });
+                resetSVG({ svg, pathName: `brepTextXZ` });
             }
 
             if (measurePathPoints && xzPathPoints) {
@@ -492,6 +499,8 @@ export function Render3D({ onInit }: Props) {
                 } else {
                     resetSVG({ svg, pathName: `angle_measureToXZ` });
                 }
+            } else {
+                resetSVG({ svg, pathName: `angle_measureToXZ` });
             }
         }
 
