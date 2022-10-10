@@ -34,7 +34,7 @@ export function Collection({ collection, disabled }: { collection: string; disab
     const currentDepth = collection.split("/").length;
     const nestedCollections = Array.from(
         groups.reduce((set, grp) => {
-            if (grp.grouping !== collection && grp.grouping?.startsWith(collection)) {
+            if (grp.grouping !== collection && grp.grouping?.startsWith(collection + "/")) {
                 const nestedCollection = grp.grouping
                     .split("/")
                     .slice(0, currentDepth + 1)

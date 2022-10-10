@@ -151,16 +151,18 @@ export function Crupdate() {
                         <option key={coll} value={coll} />
                     ))}
                 </datalist>
-                <FormControlLabel
-                    control={
-                        <Checkbox
-                            color="primary"
-                            checked={addToSelectionBasket}
-                            onChange={toggleAddToSelectionBasket}
-                        />
-                    }
-                    label={<Box mr={0.5}>Add selected to selection basket</Box>}
-                />
+                <Box>
+                    <FormControlLabel
+                        control={
+                            <Checkbox
+                                color="primary"
+                                checked={addToSelectionBasket}
+                                onChange={toggleAddToSelectionBasket}
+                            />
+                        }
+                        label={<Box mr={0.5}>Add selected to selection basket</Box>}
+                    />
+                </Box>
                 {isAdmin ? (
                     <FormControlLabel
                         sx={{ mb: 2 }}
