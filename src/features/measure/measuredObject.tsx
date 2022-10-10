@@ -66,6 +66,8 @@ export function MeasuredObject({ obj, idx }: { obj: SelectedMeasureObj; idx: num
                 setMeasureValues(
                     await measureScene.measure(measureObject.selectedEntity, undefined, measureObject.settings)
                 );
+            } else {
+                setMeasureValues(undefined);
             }
         }
     }, [measureObject, measureScene]);
