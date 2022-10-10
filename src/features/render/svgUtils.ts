@@ -15,11 +15,13 @@ export function resetSVG({ pathName, svg }: { pathName: string; svg: SVGSVGEleme
     if (!svg) {
         return;
     }
-    const g = svg.children.namedItem(pathName);
-    if (!g) {
+    const obj = svg.children.namedItem(pathName);
+    if (!obj) {
         return;
     }
-    g.innerHTML = "";
+    obj.innerHTML = "";
+    obj.setAttribute("d", "");
+    obj.setAttribute("r", "0");
 }
 
 export function renderAngles({
@@ -157,6 +159,7 @@ export function renderSingleMeasurePoint({
     }
     const circle = svg.children.namedItem(pointName);
     if (circle) {
+        circle.setAttribute("r", "5");
         circle.setAttribute("cx", pixelPoint[0].toFixed(1));
         circle.setAttribute("cy", pixelPoint[1].toFixed(1));
     }
