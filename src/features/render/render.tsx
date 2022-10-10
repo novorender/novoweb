@@ -1721,8 +1721,7 @@ export function Render3D({ onInit }: Props) {
                                 .map((obj, idx) =>
                                     isMeasureObject(obj) ? (
                                         <Fragment key={`${getMeasureObjectPathId(obj)}_${idx}`}>
-                                            <defs>
-                                                <stop offset="0%" style={{ stopColor: "green", stopOpacity: 1 }} />
+                                            <defs id={"gr_def_" + obj.id}>
                                                 <linearGradient id={"gr_" + obj.id} x1={0} x2={0} y1={0} y2={1}>
                                                     <stop offset="0%" stopColor="green" />
                                                     <stop offset="100%" stopColor="red" />

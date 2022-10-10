@@ -345,8 +345,8 @@ export function renderMeasureObject({
                     path!.setAttribute("stroke", "url(#gr_" + obj.id + ")");
                     let flip = false;
 
-                    const defs = svg.children[0];
-                    const gradient = defs?.children.namedItem("gr_" + obj.id);
+                    const defs = svg.children.namedItem("gr_def_" + obj.id);
+                    const gradient = defs?.children[0];
                     topFirst = drawObject.elevation.from < drawObject.elevation.to;
                     if (gradient) {
                         if (drawObject.elevation.horizontalDisplay) {
