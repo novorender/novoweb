@@ -13,10 +13,13 @@ import {
     selectDefaultVisibility,
     selectMainObject,
     selectSelectionBasketMode,
+    selectSubtrees,
+    SubtreeStatus,
 } from "slices/renderSlice";
 import { selectMeasure } from "features/measure";
 import { selectFollowPath } from "features/followPath";
 import { selectAreaPoints } from "features/area";
+import { selectPointLinePoints } from "features/pointLine";
 
 export function useCreateBookmark() {
     const measurement = useAppSelector(selectMeasure);
@@ -25,6 +28,8 @@ export function useCreateBookmark() {
     const selectionBasketMode = useAppSelector(selectSelectionBasketMode);
     const followPath = useAppSelector(selectFollowPath);
     const areaPts = useAppSelector(selectAreaPoints);
+    const pointLinePts = useAppSelector(selectPointLinePoints);
+    const subtrees = useAppSelector(selectSubtrees);
 
     const {
         state: { view },
@@ -102,10 +107,20 @@ export function useCreateBookmark() {
                     max: Array.from(clippingPlanes.bounds.max) as [number, number, number],
                 },
             },
-            measurement: measurement.selected.length > 0 ? measurement.selected.map((obj) => obj.pos) : undefined,
-            objectMeasurement: measurement.selected.length > 0 ? measurement.selected : undefined,
             grid: { ...view.settings.grid },
-            area: { pts: areaPts },
+            ...(measurement.selected.length > 0 ? { objectMeasurement: measurement.selected } : {}),
+            ...(areaPts.length ? { area: { pts: areaPts } } : {}),
+            ...(pointLinePts.length ? { pointLine: { pts: pointLinePts } } : {}),
+            ...(subtrees
+                ? {
+                      subtrees: {
+                          triangles: subtrees.triangles === SubtreeStatus.Shown,
+                          points: subtrees.points === SubtreeStatus.Shown,
+                          terrain: subtrees.terrain === SubtreeStatus.Shown,
+                          lines: subtrees.lines === SubtreeStatus.Shown,
+                      },
+                  }
+                : {}),
         };
 
         if (camera.kind === "pinhole") {

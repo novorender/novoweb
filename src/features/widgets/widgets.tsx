@@ -31,6 +31,7 @@ import { User } from "features/user";
 import { HeightProfile } from "features/heightProfile";
 import { Area } from "features/area";
 import { ZoneSelector } from "features/zoneSelector";
+import { PointLine } from "features/pointLine";
 
 export function Widgets() {
     const theme = useTheme();
@@ -123,6 +124,8 @@ function getWidgetByKey(key: WidgetKey): JSX.Element | string {
             return <Area />;
         case featuresConfig.zoneSelector.key:
             return <ZoneSelector />;
+        case featuresConfig.pointLine.key:
+            return <PointLine />;
         default:
             return key;
     }

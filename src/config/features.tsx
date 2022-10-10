@@ -29,6 +29,7 @@ import {
     Visibility,
     VisibilityOff,
     VrpanoOutlined,
+    LinearScale,
 } from "@mui/icons-material";
 
 import { ReactComponent as Clipping } from "media/icons/clipping.svg";
@@ -55,6 +56,13 @@ export const featuresConfig = {
         key: "zoneSelector",
         name: "Zone Selector",
         Icon: SquareFoot,
+        type: FeatureType.Widget,
+        defaultLocked: false,
+    },
+    pointLine: {
+        key: "pointLine",
+        name: "Point line",
+        Icon: LinearScale,
         type: FeatureType.Widget,
         defaultLocked: false,
     },

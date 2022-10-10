@@ -32,6 +32,9 @@ export function Crupdate() {
     const [description, setDescription] = useState(bmToEdit?.description ?? "");
     const [collection, setCollection] = useState(bmToEdit?.grouping ?? "");
     const [personal, togglePersonal] = useToggle(bmToEdit ? bmToEdit.access === BookmarkAccess.Personal : true);
+    const [addToSelectionBasket, toggleAddToSelectionBasket] = useToggle(
+        bmToEdit ? bmToEdit.options?.addSelectedToSelectionBasket : false
+    );
     const [bmImg, setBmImg] = useState("");
 
     useEffect(() => {
@@ -72,6 +75,7 @@ export function Crupdate() {
             description,
             grouping: collection,
             access: personal ? BookmarkAccess.Personal : BookmarkAccess.Public,
+            options: { addSelectedToSelectionBasket: addToSelectionBasket },
         });
 
         dispatch(bookmarksActions.setBookmarks(newBookmarks));
@@ -93,6 +97,7 @@ export function Crupdate() {
                       description,
                       grouping: collection,
                       access: personal ? BookmarkAccess.Personal : BookmarkAccess.Public,
+                      options: { addSelectedToSelectionBasket: addToSelectionBasket },
                   }
                 : bm
         );
@@ -146,6 +151,18 @@ export function Crupdate() {
                         <option key={coll} value={coll} />
                     ))}
                 </datalist>
+                <Box>
+                    <FormControlLabel
+                        control={
+                            <Checkbox
+                                color="primary"
+                                checked={addToSelectionBasket}
+                                onChange={toggleAddToSelectionBasket}
+                            />
+                        }
+                        label={<Box mr={0.5}>Add selected to selection basket</Box>}
+                    />
+                </Box>
                 {isAdmin ? (
                     <FormControlLabel
                         sx={{ mb: 2 }}

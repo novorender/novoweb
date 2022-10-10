@@ -26,6 +26,7 @@ import { Slope } from "./slope";
 import { VertexTable, MeasurementTable } from "./tables";
 import { PlanarDiff } from "./planarDiff";
 import { useMeasureObjects } from "./useMeasureObjects";
+import { cylinderOptions } from "./config";
 
 const NestedAccordionSummary = styled(AccordionSummary)(
     ({ theme }) => css`
@@ -61,10 +62,12 @@ export function MeasuredObject({ obj, idx }: { obj: SelectedMeasureObj; idx: num
         getMeasureValues();
 
         async function getMeasureValues() {
-            if (measureObject.selectedEntity) {
+            if (measureObject?.selectedEntity) {
                 setMeasureValues(
                     await measureScene.measure(measureObject.selectedEntity, undefined, measureObject.settings)
                 );
+            } else {
+                setMeasureValues(undefined);
             }
         }
     }, [measureObject, measureScene]);
@@ -136,7 +139,6 @@ export function MeasuredResult() {
 
     const showSlope = duoMeasurementValues.pointA && duoMeasurementValues.pointB;
     const showPlanarDiff = duoMeasurementValues.pointA && duoMeasurementValues.pointB;
-
     return (
         <Accordion defaultExpanded={true}>
             <AccordionSummary sx={{ fontWeight: 600 }}>Result</AccordionSummary>
@@ -151,6 +153,18 @@ export function MeasuredResult() {
                                     </Grid>
                                     <Grid item xs={6}>
                                         {duoMeasurementValues.distance.toFixed(3)} m
+                                    </Grid>
+                                </Grid>
+                            </ListItem>
+                        ) : null}
+                        {duoMeasurementValues.angle ? (
+                            <ListItem>
+                                <Grid container>
+                                    <Grid item xs={4}>
+                                        Angle
+                                    </Grid>
+                                    <Grid item xs={6}>
+                                        {(duoMeasurementValues.angle * (180 / Math.PI)).toFixed(3)} °
                                     </Grid>
                                 </Grid>
                             </ListItem>
@@ -385,13 +399,6 @@ function MeasurementData({
             );
         case "cylinder": {
             const distance = vec3.dist(measureValues.centerLineStart, measureValues.centerLineEnd);
-            const cylinderOptions = [
-                { val: "center", label: "Center" },
-                { val: "top", label: "Outer top" },
-                { val: "bottom", label: "Inner bottom" },
-                { val: "closest", label: "Closest" },
-                { val: "furthest", label: "Furthest" },
-            ] as const;
 
             return (
                 <>

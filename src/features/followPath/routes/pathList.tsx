@@ -1,5 +1,16 @@
 import { ArrowForward, LinearScale } from "@mui/icons-material";
-import { Box, Button, FormControlLabel, List, ListItemButton, useTheme } from "@mui/material";
+import {
+    Box,
+    Button,
+    FormControlLabel,
+    InputLabel,
+    List,
+    ListItemButton,
+    MenuItem,
+    OutlinedInput,
+    Select,
+    useTheme,
+} from "@mui/material";
 import { useEffect } from "react";
 import { useHistory } from "react-router-dom";
 
@@ -11,8 +22,9 @@ import { getObjectNameFromPath, getParentPath } from "utils/objectData";
 import { searchByPatterns } from "utils/search";
 import { Picker, renderActions, selectPicker } from "slices/renderSlice";
 import { highlightActions, useDispatchHighlighted, useHighlighted } from "contexts/highlighted";
+import { singleCylinderOptions } from "features/measure";
 
-import { followPathActions, LandXmlPath, selectLandXmlPaths } from "../followPathSlice";
+import { selectFollowCylindersFrom, followPathActions, LandXmlPath, selectLandXmlPaths } from "../followPathSlice";
 import { usePathMeasureObjects } from "../usePathMeasureObjects";
 import { useFollowPathFromIds } from "../useFollowPathFromIds";
 
@@ -30,6 +42,7 @@ export function PathList() {
     const dispatch = useAppDispatch();
     const selectedByPos = usePathMeasureObjects();
     const selectedById = useFollowPathFromIds();
+    const followFrom = useAppSelector(selectFollowCylindersFrom);
 
     useEffect(() => {
         dispatch(followPathActions.toggleDrawSelectedPositions(true));
@@ -92,6 +105,10 @@ export function PathList() {
           !selectedByPos.data.some((obj) => !obj.fp)
         : selectedById.status === AsyncStatus.Success;
 
+    const canUseCylinderOptions =
+        selectedById.status === AsyncStatus.Success &&
+        (selectedById.data.type === "cylinders" || selectedById.data.type === "cylinder");
+
     return (
         <>
             <Box boxShadow={theme.customShadows.widgetHeader}>
@@ -143,7 +160,28 @@ export function PathList() {
                     <LinearProgress />
                 </Box>
             ) : null}
-            {hasFinished(landXmlPaths) ? (
+
+            {canUseCylinderOptions ? (
+                <ScrollBox p={1} pt={2} pb={2}>
+                    <InputLabel sx={{ color: "text.primary" }}>Follow from: </InputLabel>
+                    <Select
+                        fullWidth
+                        name="pivot"
+                        size="small"
+                        value={followFrom}
+                        onChange={(e) => {
+                            dispatch(followPathActions.setFollowFrom(e.target.value as "center" | "top" | "bottom"));
+                        }}
+                        input={<OutlinedInput fullWidth />}
+                    >
+                        {singleCylinderOptions.map((opt) => (
+                            <MenuItem key={opt.val} value={opt.val}>
+                                {opt.label}
+                            </MenuItem>
+                        ))}
+                    </Select>
+                </ScrollBox>
+            ) : hasFinished(landXmlPaths) ? (
                 <ScrollBox p={1} pt={2} pb={2}>
                     {landXmlPaths.status === AsyncStatus.Error ? (
                         landXmlPaths.msg

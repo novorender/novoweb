@@ -90,6 +90,8 @@ import { areaActions, selectArea, selectAreaDrawPoints } from "features/area";
 import { useHandleAreaPoints } from "features/area";
 import { useHeightProfileMeasureObject } from "features/heightProfile";
 import { heightProfileActions } from "features/heightProfile";
+import { pointLineActions, selectPointLineLength, selectPointLinePoints } from "features/pointLine";
+import { selectCurrentLocation, useHandleLocationMarker } from "features/myLocation";
 
 import { useHighlighted, highlightActions, useDispatchHighlighted } from "contexts/highlighted";
 import { useHidden, useDispatchHidden } from "contexts/hidden";
@@ -192,6 +194,7 @@ type Props = {
 };
 
 export function Render3D({ onInit }: Props) {
+    const theme = useTheme();
     const id = useSceneId();
     const highlightedObjects = useHighlighted();
     const dispatchHighlighted = useDispatchHighlighted();
@@ -236,9 +239,13 @@ export function Render3D({ onInit }: Props) {
     const drawSelectedPaths = useAppSelector(selectDrawSelectedPositions);
     const picker = useAppSelector(selectPicker);
     const areaPoints = useAppSelector(selectAreaDrawPoints);
+    const myLocationPoint = useAppSelector(selectCurrentLocation);
     const areaValue = useAppSelector(selectArea);
+
     const zoneSelectorPoints = useAppSelector(selectZoneSelectorPoints);
 
+    const pointLinePoints = useAppSelector(selectPointLinePoints);
+    const pointLineLength = useAppSelector(selectPointLineLength);
     const dispatch = useAppDispatch();
 
     const rendering = useRef({
@@ -302,7 +309,12 @@ export function Render3D({ onInit }: Props) {
 
         if (drawSelectedPaths && pathMeasureObjects.status === AsyncStatus.Success) {
             pathMeasureObjects.data.forEach((obj) => {
-                renderObject({ obj, fillColor: measurementFillColor, pathName: "fp_" + getMeasureObjectPathId(obj) });
+                renderObject({
+                    obj,
+                    fillColor: measurementFillColor,
+                    pathName: "fp_" + getMeasureObjectPathId(obj),
+                    advancedDrawing: false,
+                });
             });
         }
 
@@ -312,6 +324,7 @@ export function Render3D({ onInit }: Props) {
                     obj: heightProfileMeasureObject,
                     fillColor: "rgba(0, 255, 38, 0.5)",
                     pathName: "heightProfileMeasureObject",
+                    advancedDrawing: false,
                 });
             } else {
                 const pts = pathPoints({ points: [heightProfileMeasureObject.pos] });
@@ -327,7 +340,12 @@ export function Render3D({ onInit }: Props) {
 
         measureObjects.forEach((obj) => {
             if (isMeasureObject(obj)) {
-                renderObject({ obj, fillColor: measurementFillColor, pathName: getMeasureObjectPathId(obj) });
+                renderObject({
+                    obj,
+                    fillColor: measurementFillColor,
+                    pathName: getMeasureObjectPathId(obj),
+                    advancedDrawing: true,
+                });
             } else {
                 const pts = pathPoints({ points: [obj.pos] });
                 if (pts) {
@@ -336,6 +354,8 @@ export function Render3D({ onInit }: Props) {
                         pixelPoint: pts.pixel[0],
                         pointName: getMeasureObjectPathId(obj),
                     });
+                } else {
+                    resetSVG({ svg, pathName: getMeasureObjectPathId(obj) });
                 }
             }
         });
@@ -433,6 +453,8 @@ export function Render3D({ onInit }: Props) {
                 } else {
                     resetSVG({ svg, pathName: `angle_measureToZ` });
                 }
+            } else {
+                resetSVG({ svg, pathName: `angle_measureToZ` });
             }
 
             const planarDiff = vec2.len(vec2.fromValues(diff[0], diff[2]));
@@ -460,6 +482,9 @@ export function Render3D({ onInit }: Props) {
                         type: "distance",
                     },
                 });
+            } else {
+                resetSVG({ svg, pathName: `brepPathXZ` });
+                resetSVG({ svg, pathName: `brepTextXZ` });
             }
 
             if (measurePathPoints && xzPathPoints) {
@@ -478,6 +503,8 @@ export function Render3D({ onInit }: Props) {
                 } else {
                     resetSVG({ svg, pathName: `angle_measureToXZ` });
                 }
+            } else {
+                resetSVG({ svg, pathName: `angle_measureToXZ` });
             }
         }
 
@@ -490,7 +517,8 @@ export function Render3D({ onInit }: Props) {
                     text: {
                         textName: "areaText",
                         value: areaValue,
-                        type: "area",
+                        type: "center",
+                        unit: "&#13217",
                     },
                 });
                 if (areaPoints.length > 2) {
@@ -541,6 +569,58 @@ export function Render3D({ onInit }: Props) {
                 resetSVG({ svg, pathName: `zoneSelector-path_${i}` });
             }
         }
+
+        if (pointLinePoints.length) {
+            const pointLinePts = pathPoints({ points: pointLinePoints });
+            if (pointLinePts) {
+                renderPoints({
+                    points: pointLinePts,
+                    svgNames: { path: "line-path", point: "line-pt" },
+                    text: {
+                        textName: "lineText",
+                        value: pointLineLength,
+                        type: "center",
+                    },
+                    closed: false,
+                });
+                if (pointLinePoints.length > 2) {
+                    for (let i = 1; i < pointLinePoints.length - 1; ++i) {
+                        const anglePt = pointLinePoints[i];
+                        if (pointLinePts.path.length === pointLinePoints.length) {
+                            const fromPIdx = i - 1;
+                            const toPIdx = i + 1;
+                            const fromP = pointLinePts.path[fromPIdx];
+                            const toP = pointLinePts.path[toPIdx];
+                            const diffA = vec3.sub(vec3.create(), pointLinePoints[fromPIdx], anglePt);
+                            const diffB = vec3.sub(vec3.create(), pointLinePoints[toPIdx], anglePt);
+                            renderAngles({
+                                svg,
+                                anglePoint: pointLinePts.path[i],
+                                fromP,
+                                toP,
+                                diffA,
+                                diffB,
+                                pathName: `line-an_${i}`,
+                            });
+                        } else {
+                            resetSVG({ svg, pathName: `line-an_${i}` });
+                        }
+                    }
+                }
+            }
+        }
+
+        if (myLocationPoint !== undefined) {
+            const myLocationPt = pathPoints({ points: [myLocationPoint] });
+            if (myLocationPt) {
+                const marker = svg.children.namedItem("myLocationPoint");
+
+                marker?.setAttribute(
+                    "transform",
+                    `translate(${myLocationPt.pixel[0][0] - 25} ${myLocationPt.pixel[0][1] - 40}) scale(2)`
+                );
+            }
+        }
     }, [
         view,
         measureObjects,
@@ -549,12 +629,14 @@ export function Render3D({ onInit }: Props) {
         drawSelectedPaths,
         areaPoints,
         zoneSelectorPoints,
+        pointLinePoints,
+        pointLineLength,
         heightProfileMeasureObject,
         size,
         svg,
         areaValue,
+        myLocationPoint,
     ]);
-
     useEffect(() => {
         renderParametricMeasure();
     }, [renderParametricMeasure]);
@@ -675,8 +757,20 @@ export function Render3D({ onInit }: Props) {
                 const { display: _display, ...settings } = { ...sceneData.settings, ...urlData.settings };
                 const _view = await api.createView(undefined, canvas);
 
+                const grey = vec4.fromValues(0.75, 0.75, 0.75, 1);
+                let bgColor = settings.background?.color || grey;
+                const [r, g, b, a] = bgColor;
+
+                if (r === 0 && g === 0 && b === 0.25 && a === 1) {
+                    bgColor = grey;
+                }
+
                 _view.applySettings({
                     ...settings,
+                    background: {
+                        ...settings.background,
+                        color: bgColor,
+                    },
                     quality: {
                         detail: {
                             ..._view.settings.quality.detail,
@@ -1173,6 +1267,7 @@ export function Render3D({ onInit }: Props) {
     useHandlePanoramaChanges();
     useHandleCameraControls();
     useHandleAreaPoints();
+    useHandleLocationMarker();
 
     useEffect(() => {
         handleUrlBookmark();
@@ -1326,6 +1421,10 @@ export function Render3D({ onInit }: Props) {
                 dispatch(areaActions.addPoint([result.position, normal ?? [0, 0, 0]]));
                 break;
             }
+            case Picker.PointLine: {
+                dispatch(pointLineActions.addPoint(result.position));
+                break;
+            }
             case Picker.HeightProfileEntity: {
                 dispatch(heightProfileActions.selectPoint({ id: result.objectId, pos: result.position }));
                 break;
@@ -1425,6 +1524,7 @@ export function Render3D({ onInit }: Props) {
                 Picker.FollowPathObject,
                 Picker.ClippingPlane,
                 Picker.Area,
+                Picker.PointLine,
                 Picker.HeightProfileEntity,
             ].includes(picker);
 
@@ -1635,6 +1735,31 @@ export function Render3D({ onInit }: Props) {
                                     </Fragment>
                                 ))
                             )}
+                            {pointLinePoints.length ? (
+                                <>
+                                    <path
+                                        name={`line-path`}
+                                        id={`line-path`}
+                                        stroke="yellow"
+                                        strokeWidth={1}
+                                        fill="none"
+                                    />
+                                    <AxisText id={`lineText`} />
+                                    {pointLinePoints.map((_pt, idx) => (
+                                        <Fragment key={idx}>
+                                            <MeasurementPoint
+                                                disabled
+                                                name={`line-pt_${idx}`}
+                                                id={`line-pt_${idx}`}
+                                                stroke="black"
+                                                strokeWidth={2}
+                                                r={5}
+                                            />
+                                            <g id={`line-an_${idx}`}></g>
+                                        </Fragment>
+                                    ))}
+                                </>
+                            ) : null}
 
                             {drawSelectedPaths
                                 ? pathMeasureObjects.status === AsyncStatus.Success &&
@@ -1653,16 +1778,26 @@ export function Render3D({ onInit }: Props) {
                                 .sort((objA, objB) =>
                                     isMeasureObject(objA) && isMeasureObject(objB) ? 0 : isMeasureObject(objA) ? -1 : 1
                                 )
-                                .map((obj) =>
+                                .map((obj, idx) =>
                                     isMeasureObject(obj) ? (
-                                        <path
-                                            key={getMeasureObjectPathId(obj)}
-                                            id={getMeasureObjectPathId(obj)}
-                                            d=""
-                                            stroke="yellow"
-                                            strokeWidth=""
-                                            fill="none"
-                                        />
+                                        <Fragment key={`${getMeasureObjectPathId(obj)}_${idx}`}>
+                                            <defs id={"gr_def_" + obj.id}>
+                                                <linearGradient id={"gr_" + obj.id} x1={0} x2={0} y1={0} y2={1}>
+                                                    <stop offset="0%" stopColor="green" />
+                                                    <stop offset="100%" stopColor="red" />
+                                                </linearGradient>
+                                            </defs>
+                                            {Array.from({ length: 3 }).map((_, idx) => (
+                                                <path
+                                                    key={`${getMeasureObjectPathId(obj)}_${idx}`}
+                                                    id={`${getMeasureObjectPathId(obj)}_${idx}`}
+                                                    d=""
+                                                    stroke={"yellow"}
+                                                    strokeWidth="2"
+                                                    fill={"blue"}
+                                                />
+                                            ))}
+                                        </Fragment>
                                     ) : (
                                         <MeasurementPoint
                                             key={getMeasureObjectPathId(obj)}
@@ -1727,7 +1862,6 @@ export function Render3D({ onInit }: Props) {
                             {heightProfileMeasureObject ? (
                                 isMeasureObject(heightProfileMeasureObject) ? (
                                     <path
-                                        key={"heightProfileMeasureObject"}
                                         id={"heightProfileMeasureObject"}
                                         d=""
                                         stroke="yellow"
@@ -1736,7 +1870,6 @@ export function Render3D({ onInit }: Props) {
                                     />
                                 ) : (
                                     <MeasurementPoint
-                                        key={"heightProfileMeasureObject"}
                                         id={"heightProfileMeasureObject"}
                                         r={5}
                                         disabled={true}
@@ -1745,6 +1878,14 @@ export function Render3D({ onInit }: Props) {
                                         strokeWidth={2}
                                     />
                                 )
+                            ) : null}
+                            {myLocationPoint ? (
+                                <path
+                                    id="myLocationPoint"
+                                    name="myLocationPoint"
+                                    fill={theme.palette.primary.main}
+                                    d="M12 2C8.14 2 5 5.14 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.86-3.14-7-7-7zm0 2c1.1 0 2 .9 2 2 0 1.11-.9 2-2 2s-2-.89-2-2c0-1.1.9-2 2-2zm0 10c-1.67 0-3.14-.85-4-2.15.02-1.32 2.67-2.05 4-2.05s3.98.73 4 2.05c-.86 1.3-2.33 2.15-4 2.15z"
+                                ></path>
                             ) : null}
                             {panoramas && showPanoramaMarkers
                                 ? panoramas.map((panorama, idx) => {

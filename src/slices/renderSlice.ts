@@ -7,7 +7,7 @@ import type {
     OrthoControllerParams,
     RenderSettings,
 } from "@novorender/webgl-api";
-import type { ObjectGroup } from "@novorender/data-js-api";
+import type { Bookmark, ObjectGroup } from "@novorender/data-js-api";
 import { createSlice, createAsyncThunk, PayloadAction } from "@reduxjs/toolkit";
 import { quat, vec3, vec4 } from "gl-matrix";
 
@@ -93,6 +93,7 @@ export enum Picker {
     ClippingPlane,
     OrthoPlane,
     Area,
+    PointLine,
     HeightProfileEntity,
     ZoneSelector,
 }
@@ -286,6 +287,39 @@ export const renderSlice = createSlice({
                 action.payload.newState ?? state.subtrees[action.payload.subtree] === SubtreeStatus.Shown
                     ? SubtreeStatus.Hidden
                     : SubtreeStatus.Shown;
+        },
+        setSubtreesFromBookmark: (state, action: PayloadAction<Required<Bookmark>["subtrees"]>) => {
+            if (!state.subtrees) {
+                return;
+            }
+
+            state.subtrees.lines =
+                state.subtrees.lines !== SubtreeStatus.Unavailable
+                    ? action.payload.lines
+                        ? SubtreeStatus.Shown
+                        : SubtreeStatus.Hidden
+                    : state.subtrees.lines;
+
+            state.subtrees.points =
+                state.subtrees.points !== SubtreeStatus.Unavailable
+                    ? action.payload.points
+                        ? SubtreeStatus.Shown
+                        : SubtreeStatus.Hidden
+                    : state.subtrees.points;
+
+            state.subtrees.terrain =
+                state.subtrees.terrain !== SubtreeStatus.Unavailable
+                    ? action.payload.terrain
+                        ? SubtreeStatus.Shown
+                        : SubtreeStatus.Hidden
+                    : state.subtrees.terrain;
+
+            state.subtrees.triangles =
+                state.subtrees.triangles !== SubtreeStatus.Unavailable
+                    ? action.payload.triangles
+                        ? SubtreeStatus.Shown
+                        : SubtreeStatus.Hidden
+                    : state.subtrees.triangles;
         },
         disableAllSubtrees: (state) => {
             state.subtrees = {
