@@ -347,20 +347,18 @@ export function renderMeasureObject({
 
                     const defs = svg.children.namedItem("gr_def_" + obj.id);
                     const gradient = defs?.children[0];
-                    topFirst = drawObject.elevation.from < drawObject.elevation.to;
+                    topFirst = drawObject.elevation.from > drawObject.elevation.to;
                     if (gradient) {
                         if (drawObject.elevation.horizontalDisplay) {
-                            flip =
-                                drawObject.elevation.from < drawObject.elevation.to
-                                    ? drawObject.vertices[0][0] < drawObject.vertices[1][0]
-                                    : drawObject.vertices[0][0] > drawObject.vertices[1][0];
+                            flip = topFirst
+                                ? drawObject.vertices[0][0] < drawObject.vertices[1][0]
+                                : drawObject.vertices[0][0] > drawObject.vertices[1][0];
                             gradient.setAttribute("x2", "1");
                             gradient.setAttribute("y2", "0");
                         } else {
-                            flip =
-                                drawObject.elevation.from < drawObject.elevation.to
-                                    ? drawObject.vertices[0][1] < drawObject.vertices[1][1]
-                                    : drawObject.vertices[0][1] > drawObject.vertices[1][1];
+                            flip = topFirst
+                                ? drawObject.vertices[0][1] < drawObject.vertices[1][1]
+                                : drawObject.vertices[0][1] > drawObject.vertices[1][1];
                             gradient.setAttribute("x2", "0");
                             gradient.setAttribute("y2", "1");
                         }
