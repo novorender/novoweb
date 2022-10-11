@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useCallback, useEffect, useState } from "react";
 import {
     Box,
     Button,
@@ -31,21 +31,27 @@ import { selectMinimized, selectMaximized } from "slices/explorerSlice";
 
 import { zoneSelectorActions, selectZoneSelectorPoints, selectZoneSelectorHeight } from "./zoneSelectorSlice";
 import { useExplorerGlobals } from "contexts/explorerGlobals";
-import { vec3 } from "gl-matrix";
+import { vec3, vec4 } from "gl-matrix";
 import { api } from "app";
+import { HierarcicalObjectReference } from "@novorender/webgl-api";
+import { useAbortController } from "hooks/useAbortController";
+import { searchByPatterns } from "utils/search";
+import { highlightActions, useDispatchHighlighted } from "contexts/highlighted";
 
 export function ZoneSelector() {
+    const [loading, setLoading] = useState(false);
     const [menuOpen, toggleMenu] = useToggle();
 
     const minimized = useAppSelector(selectMinimized) === featuresConfig.area.key;
     const maximized = useAppSelector(selectMaximized) === featuresConfig.area.key;
+    const dispatchHighlighted = useDispatchHighlighted();
 
     const selecting = useAppSelector(selectPicker) === Picker.ZoneSelector;
     const points = useAppSelector(selectZoneSelectorPoints);
     const heights = useAppSelector(selectZoneSelectorHeight);
     const dispatch = useAppDispatch();
     const {
-        state: { view, canvas },
+        state: { view, scene, canvas },
     } = useExplorerGlobals(true);
 
     useEffect(() => {
@@ -108,6 +114,62 @@ export function ZoneSelector() {
         };
     }, [dispatch]);
 
+    const [abortController] = useAbortController();
+
+    const selectZone = useCallback(
+        async (zoneIdx: number): Promise<HierarcicalObjectReference[] | undefined> => {
+            const height = heights[zoneIdx];
+            if (!height) {
+                return;
+            }
+
+            const zoneToPlanes = (zonePoints: vec3[], top: number, bottom: number) => {
+                const planes: vec4[] = [];
+                planes.push(vec4.fromValues(0, -1, 0, bottom));
+                planes.push(vec4.fromValues(0, 1, 0, -top));
+
+                if (zonePoints.length > 2) {
+                    for (let i = 0; i < zonePoints.length; ++i) {
+                        const left =
+                            i === 0
+                                ? vec3.sub(vec3.create(), zonePoints[i], zonePoints[zonePoints.length - 1])
+                                : vec3.sub(vec3.create(), zonePoints[i], zonePoints[i - 1]);
+                        vec3.normalize(left, left);
+                        const norm = vec3.cross(vec3.create(), left, vec3.fromValues(0, 1, 0));
+                        vec3.normalize(norm, norm);
+                        planes.push(vec4.fromValues(norm[0], norm[1], norm[2], -vec3.dot(zonePoints[i], norm)));
+                    }
+                }
+                return planes;
+            };
+
+            const abortSignal = abortController.current.signal;
+            const searchPattern = { exact: true, planes: zoneToPlanes(points[zoneIdx], height.max, height.min) };
+
+            if (!searchPattern) {
+                return;
+            }
+
+            try {
+                setLoading(true);
+                await searchByPatterns({
+                    scene,
+                    searchPatterns: [searchPattern],
+                    callback: (result) => {
+                        dispatchHighlighted(highlightActions.add(result.map((obj) => obj.id)));
+                    },
+                    abortSignal,
+                });
+            } catch (e) {
+                if (!abortSignal.aborted) {
+                    throw e;
+                }
+            }
+            setLoading(false);
+        },
+        [abortController, scene, heights, points, dispatchHighlighted]
+    );
+
     return (
         <>
             <WidgetContainer minimized={minimized} maximized={maximized}>
@@ -164,12 +226,23 @@ export function ZoneSelector() {
                                                 <Grid item xs={20}>
                                                     Zone_{index}
                                                     <Button
-                                                        disabled={points[index].length !== 4}
+                                                        disabled={points[index].length < 3}
                                                         onClick={() => dispatch(zoneSelectorActions.removeZone(index))}
                                                         color="grey"
                                                     >
                                                         <DeleteSweep sx={{ mr: 1 }} />
                                                         Delete
+                                                    </Button>
+                                                    <Button
+                                                        disabled={points[index].length < 3 || loading}
+                                                        onClick={(e) => {
+                                                            e.stopPropagation();
+                                                            selectZone(index);
+                                                        }}
+                                                        color="grey"
+                                                    >
+                                                        <DeleteSweep sx={{ mr: 1 }} />
+                                                        Select
                                                     </Button>
                                                 </Grid>
                                             </Grid>
