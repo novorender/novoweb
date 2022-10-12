@@ -24,5 +24,17 @@ declare module "@novorender/data-js-api" {
         area?: {
             pts: [point: vec3, normal: vec3][];
         };
+        pointLine?: {
+            pts: vec3[];
+        };
+        subtrees?: {
+            triangles: boolean;
+            lines: boolean;
+            terrain: boolean;
+            points: boolean;
+        };
+        options?: {
+            addSelectedToSelectionBasket?: boolean;
+        };
     }
 }

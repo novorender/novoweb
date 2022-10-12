@@ -15,11 +15,13 @@ export function resetSVG({ pathName, svg }: { pathName: string; svg: SVGSVGEleme
     if (!svg) {
         return;
     }
-    const g = svg.children.namedItem(pathName);
-    if (!g) {
+    const obj = svg.children.namedItem(pathName);
+    if (!obj) {
         return;
     }
-    g.innerHTML = "";
+    obj.innerHTML = "";
+    obj.setAttribute("d", "");
+    obj.setAttribute("r", "0");
 }
 
 export function renderAngles({
@@ -133,7 +135,8 @@ export function moveSvgCursor({
 export function getPathPoints({ view, size, points }: { view: View; size: Size; points: vec3[] }) {
     const { width, height } = size;
     const pts = measureApi.toPathPoints(points, view, width, height);
-    if (pts) {
+
+    if (pts && pts.flat(2).every((num) => !Number.isNaN(num) && Number.isFinite(num))) {
         const [_pathPoints, _pixelPoints] = pts;
         const path = inversePixelRatio(_pathPoints as vec2[]);
         const pixel = inversePixelRatio(_pixelPoints as vec2[]);
@@ -156,6 +159,7 @@ export function renderSingleMeasurePoint({
     }
     const circle = svg.children.namedItem(pointName);
     if (circle) {
+        circle.setAttribute("r", "5");
         circle.setAttribute("cx", pixelPoint[0].toFixed(1));
         circle.setAttribute("cy", pixelPoint[1].toFixed(1));
     }
@@ -166,11 +170,13 @@ export function renderMeasurePoints({
     svgNames,
     text,
     points,
+    closed = true,
 }: {
     svg: SVGSVGElement;
     svgNames: { path?: string; point?: string };
-    text?: { textName: string; value: number; type: "distance" | "area" };
+    text?: { textName: string; value: number; type: "distance" | "center"; unit?: string };
     points: { pixel: vec2[]; path: vec2[] } | undefined;
+    closed?: boolean;
 }) {
     if (!svg) {
         return;
@@ -186,7 +192,7 @@ export function renderMeasurePoints({
         }
         const path = svg.children.namedItem(svgNames.path);
 
-        if (curve) {
+        if (closed && curve) {
             curve += " Z";
         }
 
@@ -225,7 +231,7 @@ export function renderMeasurePoints({
                 textEl.innerHTML = "";
                 return;
             }
-            const _text = `${+text.value.toFixed(3)} m`;
+            const _text = `${+text.value.toFixed(3)} ${text.unit ? text.unit : "m"}`;
             let dir =
                 points.path[0][0] > points.path[1][0]
                     ? vec2.sub(vec2.create(), points.path[0], points.path[1])
@@ -244,12 +250,12 @@ export function renderMeasurePoints({
             } else {
                 textEl.innerHTML = "";
             }
-        } else if (text.type === "area") {
-            if (points.path.length < 3) {
+        } else if (text.type === "center") {
+            if (points.path.length < 2 || text.value === 0) {
                 textEl.innerHTML = "";
                 return;
             }
-            const _text = `${+text.value.toFixed(3)} &#13217;`;
+            const _text = `${text.value.toFixed(3)} ${text.unit ? text.unit : "m"}`;
             const center = vec2.create();
             for (const p of points.path) {
                 vec2.add(center, center, p);
@@ -268,6 +274,7 @@ export function renderMeasureObject({
     fillColor,
     pathName,
     obj,
+    advancedDrawing = false,
 }: {
     svg: SVGSVGElement;
     view: View;
@@ -275,8 +282,9 @@ export function renderMeasureObject({
     fillColor: string;
     pathName: string;
     obj: ExtendedMeasureObject;
+    advancedDrawing: boolean;
 }) {
-    let path = svg.children.namedItem(pathName + "_0");
+    let path = svg.children.namedItem(pathName + (advancedDrawing ? "_0" : ""));
 
     if (!path) {
         return;
@@ -287,12 +295,14 @@ export function renderMeasureObject({
 
     const { width, height } = size;
     obj.renderMeasureEntity(view, width, height, obj.settings).then((drawObjects) => {
-        if (!path) {
-            return;
+        for (let i = 0; i < 3; ++i) {
+            const cleanPath = svg.children.namedItem(pathName + "_" + i);
+            if (cleanPath) {
+                cleanPath.setAttribute("d", "");
+            }
         }
 
         if (!drawObjects?.length) {
-            path.setAttribute("d", "");
             return;
         }
 
@@ -313,8 +323,6 @@ export function renderMeasureObject({
                 path.setAttribute("d", fillCurves);
                 fillCurves = "";
                 path.setAttribute("fill", fillColor);
-            } else {
-                path.setAttribute("d", "");
             }
         };
 
@@ -331,27 +339,26 @@ export function renderMeasureObject({
             }
             if (drawObject && drawObject.vertices.length > 1) {
                 drawObject.vertices = inversePixelRatio(drawObject.vertices as vec2[]);
-                if (drawObject.elevation && drawObject.vertices.length === 2) {
+                const cylinderDawing = advancedDrawing && drawObject.elevation && drawObject.vertices.length === 2;
+                if (drawObject.elevation && cylinderDawing) {
                     //Special handle to cylinders
                     path!.setAttribute("stroke", "url(#gr_" + obj.id + ")");
                     let flip = false;
 
-                    const defs = svg.children[0];
-                    const gradient = defs?.children.namedItem("gr_" + obj.id);
-                    topFirst = drawObject.elevation.from < drawObject.elevation.to;
+                    const defs = svg.children.namedItem("gr_def_" + obj.id);
+                    const gradient = defs?.children[0];
+                    topFirst = drawObject.elevation.from > drawObject.elevation.to;
                     if (gradient) {
                         if (drawObject.elevation.horizontalDisplay) {
-                            flip =
-                                drawObject.elevation.from < drawObject.elevation.to
-                                    ? drawObject.vertices[0][0] < drawObject.vertices[1][0]
-                                    : drawObject.vertices[0][0] > drawObject.vertices[1][0];
+                            flip = topFirst
+                                ? drawObject.vertices[0][0] < drawObject.vertices[1][0]
+                                : drawObject.vertices[0][0] > drawObject.vertices[1][0];
                             gradient.setAttribute("x2", "1");
                             gradient.setAttribute("y2", "0");
                         } else {
-                            flip =
-                                drawObject.elevation.from < drawObject.elevation.to
-                                    ? drawObject.vertices[0][1] < drawObject.vertices[1][1]
-                                    : drawObject.vertices[0][1] > drawObject.vertices[1][1];
+                            flip = topFirst
+                                ? drawObject.vertices[0][1] < drawObject.vertices[1][1]
+                                : drawObject.vertices[0][1] > drawObject.vertices[1][1];
                             gradient.setAttribute("x2", "0");
                             gradient.setAttribute("y2", "1");
                         }

@@ -328,7 +328,7 @@ export function Follow({ fpObj }: { fpObj: FollowParametricObject }) {
                     </Box>
                 </>
             </Box>
-            <ScrollBox p={1} py={2}>
+            <ScrollBox p={1} pt={2} pb={4}>
                 <Grid container columnSpacing={0} rowSpacing={2}>
                     <Grid item xs={6}>
                         <Typography sx={{ mb: 0.5 }}>Profile start:</Typography>

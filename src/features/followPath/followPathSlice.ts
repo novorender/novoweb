@@ -33,6 +33,7 @@ const initialState = {
     drawSelectedPositions: true,
     selectedIds: [] as ObjectId[],
     resetPositionOnInit: false,
+    followCylindersFrom: "center" as "center" | "top" | "bottom",
 };
 
 type State = typeof initialState;
@@ -92,6 +93,9 @@ export const followPathSlice = createSlice({
         toggleResetPositionOnInit: (state, action: PayloadAction<State["resetPositionOnInit"] | undefined>) => {
             state.resetPositionOnInit = action.payload !== undefined ? action.payload : !state.resetPositionOnInit;
         },
+        setFollowFrom: (state, action: PayloadAction<State["followCylindersFrom"]>) => {
+            state.followCylindersFrom = action.payload;
+        },
     },
 });
 
@@ -113,6 +117,7 @@ export const selectSelectedPositions = (state: RootState) => state.followPath.se
 export const selectDrawSelectedPositions = (state: RootState) => state.followPath.drawSelectedPositions;
 export const selectSelectedIds = (state: RootState) => state.followPath.selectedIds;
 export const selectResetPositionOnInit = (state: RootState) => state.followPath.resetPositionOnInit;
+export const selectFollowCylindersFrom = (state: RootState) => state.followPath.followCylindersFrom;
 
 const { actions, reducer } = followPathSlice;
 export { actions as followPathActions, reducer as followPathReducer };

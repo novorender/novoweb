@@ -12,6 +12,7 @@ type WritableSelectedEntity = DeepWritable<SelectedEntity>;
 const initialState = {
     selectedPoint: undefined as undefined | { pos: vec3; id: number },
     selectedEntity: { status: AsyncStatus.Initial } as WritableSelectedEntity,
+    cylindersProfilesFrom: "center" as "center" | "top" | "bottom",
 };
 
 type State = typeof initialState;
@@ -26,10 +27,14 @@ export const heightProfileSlice = createSlice({
         setSelectedEntity: (state, action: PayloadAction<SelectedEntity>) => {
             state.selectedEntity = action.payload as WritableSelectedEntity;
         },
+        setCylindersProfilesFrom: (state, action: PayloadAction<State["cylindersProfilesFrom"]>) => {
+            state.cylindersProfilesFrom = action.payload;
+        },
     },
 });
 
 export const selectSelectedPoint = (state: RootState) => state.heightProfile.selectedPoint;
+export const selectCylindersProfilesFrom = (state: RootState) => state.heightProfile.cylindersProfilesFrom;
 export const selectHeightProfileMeasureEntity = (state: RootState) =>
     state.heightProfile.selectedEntity as SelectedEntity;
 
