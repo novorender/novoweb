@@ -125,15 +125,29 @@ export function ZoneSelector() {
 
             const zoneToPlanes = (zonePoints: vec3[], top: number, bottom: number) => {
                 const planes: vec4[] = [];
-                planes.push(vec4.fromValues(0, -1, 0, bottom));
-                planes.push(vec4.fromValues(0, 1, 0, -top));
-
                 if (zonePoints.length > 2) {
+                    let clockwise = 0;
+                    for (let i = 0; i < zonePoints.length; ++i) {
+                        let startIdx = i === 0 ? zonePoints.length - 1 : i - 1;
+                        let endIdx = i;
+
+                        clockwise +=
+                            zonePoints[endIdx][0] * zonePoints[startIdx][2] -
+                            zonePoints[endIdx][2] * zonePoints[startIdx][0];
+                    }
+
+                    planes.push(vec4.fromValues(0, -1, 0, bottom));
+                    planes.push(vec4.fromValues(0, 1, 0, -top));
                     for (let i = 0; i < zonePoints.length; ++i) {
                         const left =
-                            i === 0
-                                ? vec3.sub(vec3.create(), zonePoints[i], zonePoints[zonePoints.length - 1])
-                                : vec3.sub(vec3.create(), zonePoints[i], zonePoints[i - 1]);
+                            clockwise >= 0
+                                ? i === 0
+                                    ? vec3.sub(vec3.create(), zonePoints[i], zonePoints[zonePoints.length - 1])
+                                    : vec3.sub(vec3.create(), zonePoints[i], zonePoints[i - 1])
+                                : i === 0
+                                ? vec3.sub(vec3.create(), zonePoints[zonePoints.length - 1], zonePoints[i])
+                                : vec3.sub(vec3.create(), zonePoints[i - 1], zonePoints[i]);
+
                         vec3.normalize(left, left);
                         const norm = vec3.cross(vec3.create(), left, vec3.fromValues(0, 1, 0));
                         vec3.normalize(norm, norm);
@@ -241,7 +255,6 @@ export function ZoneSelector() {
                                                         }}
                                                         color="grey"
                                                     >
-                                                        <DeleteSweep sx={{ mr: 1 }} />
                                                         Select
                                                     </Button>
                                                 </Grid>
