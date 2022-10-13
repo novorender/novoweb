@@ -8,9 +8,17 @@ export enum StorageKey {
     BimTrackCodeVerifier = "BIMtrack_code_verifier",
     DitioRefreshToken = "ditio_refresh_token",
     DitioCodeVerifier = "ditio_code_verifier",
+    JiraAccessToken = "jira_access_token",
+    JiraRefreshToken = "jira_refresh_token",
 }
 
 export const storageConfig = {
+    [StorageKey.JiraAccessToken]: {
+        storage: sessionStorage,
+    },
+    [StorageKey.JiraRefreshToken]: {
+        storage: sessionStorage,
+    },
     [StorageKey.BimCollabRefreshToken]: {
         storage: sessionStorage,
     },

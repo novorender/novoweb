@@ -36,6 +36,7 @@ import { ReactComponent as Clipping } from "media/icons/clipping.svg";
 import { ReactComponent as Run } from "media/icons/run.svg";
 import { ReactComponent as BimTrack } from "media/icons/bimtrack.svg";
 import { ReactComponent as Ditio } from "media/icons/ditio.svg";
+import { ReactComponent as Jira } from "media/icons/jira-software.svg";
 
 export enum FeatureType {
     SelectionModifier,
@@ -45,6 +46,14 @@ export enum FeatureType {
 }
 
 export const featuresConfig = {
+    jira: {
+        key: "jira",
+        name: "Jira",
+        Icon: Jira,
+        type: FeatureType.Widget,
+        // TODO(OLA)
+        defaultLocked: false,
+    },
     area: {
         key: "area",
         name: "Area",
@@ -322,7 +331,8 @@ export type WidgetKey = {
 
 export type Widget = Config[WidgetKey];
 
-export const defaultEnabledWidgets = [featuresConfig.user.key] as WidgetKey[];
+// TODO
+export const defaultEnabledWidgets = [featuresConfig.user.key, featuresConfig.jira.key] as WidgetKey[];
 export const allWidgets = Object.values(featuresConfig)
     .filter((widget) => [FeatureType.AdminWidget, FeatureType.Widget].includes(widget.type))
     .map((widget) => widget.key as WidgetKey);

@@ -21,6 +21,7 @@ export function ProjectSettings({ save, saving }: { save: () => Promise<void>; s
     const dispatch = useAppDispatch();
 
     const [ditioProject, setDitioProject] = useState(settings.ditioProjectNumber);
+    const [jiraSpace, setJiraSpace] = useState(settings.jiraSpace);
 
     const wkZones = dataApi.getWKZones();
 
@@ -78,6 +79,19 @@ export function ProjectSettings({ save, saving }: { save: () => Promise<void>; s
                         label="Ditio project number"
                         value={ditioProject}
                         onChange={({ target: { value } }) => setDitioProject(value)}
+                        onBlur={() =>
+                            dispatch(renderActions.setProjectSettings({ [ProjectSetting.JiraSpace]: jiraSpace }))
+                        }
+                    />
+                ) : null}
+                {!lockedWidgets.includes(featuresConfig.jira.key) ? (
+                    <TextField
+                        sx={{ mt: 2 }}
+                        fullWidth
+                        size="medium"
+                        label="Jira space"
+                        value={jiraSpace}
+                        onChange={({ target: { value } }) => setJiraSpace(value)}
                         onBlur={() =>
                             dispatch(
                                 renderActions.setProjectSettings({ [ProjectSetting.DitioProjectNumber]: ditioProject })
