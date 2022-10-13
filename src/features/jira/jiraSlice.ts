@@ -1,9 +1,7 @@
 import { createSlice, PayloadAction } from "@reduxjs/toolkit";
 
 import { RootState } from "app/store";
-import { StorageKey } from "config/storage";
 import { AsyncState, AsyncStatus } from "types/misc";
-import { getFromStorage } from "utils/storage";
 import { Space } from "./types";
 
 export enum JiraStatus {
@@ -16,14 +14,11 @@ export enum JiraStatus {
     Error,
 }
 
-const storedToken = getFromStorage(StorageKey.JiraAccessToken);
-
 const initialState = {
     oAuthCode: new URLSearchParams(window.location.search).get("code"),
-    space: { status: AsyncStatus.Initial } as AsyncState<Space>,
-    accessToken: (storedToken
-        ? { status: AsyncStatus.Success, data: storedToken }
-        : { status: AsyncStatus.Initial }) as AsyncState<string>,
+    space: undefined as undefined | Space,
+    accessToken: { status: AsyncStatus.Initial } as AsyncState<string>,
+    availableSpaces: { status: AsyncStatus.Initial } as AsyncState<Space[]>,
 };
 
 if (initialState.oAuthCode) {
@@ -39,8 +34,11 @@ export const jiraSlice = createSlice({
         setAccessToken: (state, action: PayloadAction<State["accessToken"]>) => {
             state.accessToken = action.payload;
         },
-        setCloudId: (state, action: PayloadAction<State["space"]>) => {
+        setSpace: (state, action: PayloadAction<State["space"]>) => {
             state.space = action.payload;
+        },
+        setAvailableSpaces: (state, action: PayloadAction<State["availableSpaces"]>) => {
+            state.availableSpaces = action.payload;
         },
         deleteOAuthCode: (state) => {
             state.oAuthCode = "";
@@ -51,6 +49,7 @@ export const jiraSlice = createSlice({
 export const selectJiraAccessToken = (state: RootState) => state.jira.accessToken;
 export const selectOAuthCode = (state: RootState) => state.jira.oAuthCode;
 export const selectJiraSpace = (state: RootState) => state.jira.space;
+export const selectAvailableJiraSpaces = (state: RootState) => state.jira.availableSpaces;
 
 const { actions, reducer } = jiraSlice;
 export { actions as jiraActions, reducer as jiraReducer };

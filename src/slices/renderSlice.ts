@@ -79,7 +79,7 @@ export enum AdvancedSetting {
 export enum ProjectSetting {
     TmZone = "tmZone",
     DitioProjectNumber = "ditioProjectNumber",
-    JiraSpace = "jiraSpace",
+    Jira = "jira",
 }
 
 export enum SelectionBasketMode {
@@ -198,7 +198,7 @@ const initialState = {
     projectSettings: {
         [ProjectSetting.TmZone]: "",
         [ProjectSetting.DitioProjectNumber]: "",
-        [ProjectSetting.JiraSpace]: "novorender-test", // TODO
+        [ProjectSetting.Jira]: undefined as undefined | { space: string; project: string }, // TODO
     },
     picker: Picker.Object,
 };

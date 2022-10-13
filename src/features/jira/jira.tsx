@@ -12,6 +12,7 @@ import { useSceneId } from "hooks/useSceneId";
 import { Auth } from "./routes/auth";
 import { Login } from "./routes/login";
 import { Tasks } from "./routes/tasks";
+import { Settings } from "./routes/settings";
 
 export function Jira() {
     const sceneId = useSceneId();
@@ -39,6 +40,9 @@ export function Jira() {
                             </Route>
                             <Route path="/tasks" exact>
                                 <Tasks />
+                            </Route>
+                            <Route path="/settings" exact>
+                                <Settings />
                             </Route>
                         </Switch>
                     </MemoryRouter>

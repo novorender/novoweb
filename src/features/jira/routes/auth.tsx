@@ -1,27 +1,39 @@
 import { useEffect } from "react";
-import { Redirect } from "react-router-dom";
+import { useHistory } from "react-router-dom";
 import { Box, Typography, useTheme } from "@mui/material";
 
 import { useAppDispatch, useAppSelector } from "app/store";
 import { LinearProgress, ScrollBox } from "components";
 import { AsyncStatus } from "types/misc";
 import { selectProjectSettings } from "slices/renderSlice";
-import { deleteFromStorage, saveToStorage } from "utils/storage";
+import { deleteFromStorage, getFromStorage, saveToStorage } from "utils/storage";
 import { StorageKey } from "config/storage";
 
-import { jiraActions, selectJiraSpace, selectJiraAccessToken, selectOAuthCode } from "../jiraSlice";
-import { useGetAccessibleResourcesMutation, useGetTokenMutation } from "../jiraApi";
+import {
+    jiraActions,
+    selectJiraSpace,
+    selectJiraAccessToken,
+    selectOAuthCode,
+    selectAvailableJiraSpaces,
+} from "../jiraSlice";
+import { useGetAccessibleResourcesMutation, useGetTokenMutation, useRefreshTokensMutation } from "../jiraApi";
+import { selectHasAdminCapabilities } from "slices/explorerSlice";
 
 let codeExhangeInitialisedAt = 0;
 
 export function Auth() {
+    const history = useHistory();
     const dispatch = useAppDispatch();
+
+    const isAdmin = useAppSelector(selectHasAdminCapabilities);
     const accessToken = useAppSelector(selectJiraAccessToken);
     const code = useAppSelector(selectOAuthCode);
     const space = useAppSelector(selectJiraSpace);
-    const { jiraSpace } = useAppSelector(selectProjectSettings);
+    const availableSpaces = useAppSelector(selectAvailableJiraSpaces);
+    const { jira: jiraSettings } = useAppSelector(selectProjectSettings);
 
     const [getToken] = useGetTokenMutation();
+    const [refreshTokens] = useRefreshTokensMutation();
     const [getAccessibleResources] = useGetAccessibleResourcesMutation();
 
     useEffect(() => {
@@ -43,7 +55,7 @@ export function Auth() {
 
             if ("data" in res) {
                 dispatch(jiraActions.setAccessToken({ status: AsyncStatus.Success, data: res.data.access_token }));
-                saveToStorage(StorageKey.JiraAccessToken, res.data.access_token);
+                saveToStorage(StorageKey.JiraRefreshToken, res.data.refresh_token);
             } else {
                 console.warn(res.error);
                 dispatch(jiraActions.setAccessToken({ status: AsyncStatus.Error, msg: "An error occured." }));
@@ -52,43 +64,96 @@ export function Auth() {
     }, [code, getToken, dispatch]);
 
     useEffect(() => {
-        initCloudId();
+        initRefreshTokens();
 
-        async function initCloudId() {
-            if (space.status !== AsyncStatus.Initial || accessToken.status !== AsyncStatus.Success) {
+        async function initRefreshTokens() {
+            const refreshToken = getFromStorage(StorageKey.JiraRefreshToken);
+
+            if (code || accessToken.status !== AsyncStatus.Initial) {
                 return;
             }
 
-            dispatch(jiraActions.setCloudId({ status: AsyncStatus.Loading }));
+            if (!refreshToken) {
+                history.push("/login");
+                return;
+            }
+
+            dispatch(jiraActions.setAccessToken({ status: AsyncStatus.Loading }));
+
+            const res = await refreshTokens({ refreshToken });
+
+            if ("data" in res) {
+                saveToStorage(StorageKey.JiraRefreshToken, res.data.refresh_token);
+                dispatch(jiraActions.setAccessToken({ status: AsyncStatus.Success, data: res.data.access_token }));
+            } else {
+                console.warn(res.error);
+                deleteFromStorage(StorageKey.JiraRefreshToken);
+                history.push("/login");
+            }
+        }
+    }, [code, accessToken, refreshTokens, dispatch, history]);
+
+    useEffect(() => {
+        initAccessibleResources();
+
+        async function initAccessibleResources() {
+            if (availableSpaces.status === AsyncStatus.Success) {
+                if (!jiraSettings?.space && isAdmin) {
+                    history.push("/settings");
+                } else {
+                    history.push("/tasks");
+                }
+
+                return;
+            }
+
+            if (availableSpaces.status !== AsyncStatus.Error && !jiraSettings?.space && !isAdmin) {
+                dispatch(
+                    jiraActions.setAvailableSpaces({
+                        status: AsyncStatus.Error,
+                        msg: "Jira has not yet been set up for this project.",
+                    })
+                );
+                return;
+            }
+
+            if (availableSpaces.status !== AsyncStatus.Initial || accessToken.status !== AsyncStatus.Success) {
+                return;
+            }
+
+            dispatch(jiraActions.setAvailableSpaces({ status: AsyncStatus.Loading }));
             const res = await getAccessibleResources({ accessToken: accessToken.data });
 
             if ("data" in res) {
-                const space = res.data.find((resource) => resource.name === jiraSpace.toLowerCase());
+                dispatch(jiraActions.setAvailableSpaces({ status: AsyncStatus.Success, data: res.data }));
+
+                if (!jiraSettings?.space && isAdmin) {
+                    history.push("/settings");
+                    return;
+                }
+
+                const space = res.data.find((resource) => resource.name === jiraSettings?.space.toLowerCase());
 
                 if (space) {
-                    dispatch(jiraActions.setCloudId({ status: AsyncStatus.Success, data: space }));
+                    dispatch(jiraActions.setSpace(space));
+                    history.push("/tasks");
                 } else {
                     dispatch(
-                        jiraActions.setCloudId({
+                        jiraActions.setAvailableSpaces({
                             status: AsyncStatus.Error,
-                            msg: `You do not have access to the ${jiraSpace} jira space.`,
+                            msg: `You do not have access to the ${jiraSettings?.space} jira space.`,
                         })
                     );
                 }
             } else {
                 console.warn(res.error);
-                dispatch(jiraActions.setCloudId({ status: AsyncStatus.Error, msg: "An error occurred." }));
-                deleteFromStorage(StorageKey.JiraAccessToken);
+                dispatch(jiraActions.setAvailableSpaces({ status: AsyncStatus.Error, msg: "An error occurred." }));
             }
         }
-    }, [space, accessToken, getAccessibleResources, jiraSpace, dispatch]);
+    }, [space, accessToken, getAccessibleResources, jiraSettings, dispatch, history, availableSpaces, isAdmin]);
 
-    if (space.status === AsyncStatus.Success) {
-        return <Redirect to="/tasks" />;
-    } else if (accessToken.status === AsyncStatus.Initial && !code) {
-        return <Redirect to="/login" />;
-    } else if (space.status === AsyncStatus.Error) {
-        return <ErrorMsg>{space.msg}</ErrorMsg>;
+    if (availableSpaces.status === AsyncStatus.Error) {
+        return <ErrorMsg>{availableSpaces.msg}</ErrorMsg>;
     } else if (accessToken.status === AsyncStatus.Error) {
         return <ErrorMsg>{accessToken.msg}</ErrorMsg>;
     } else {
