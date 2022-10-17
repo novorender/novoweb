@@ -1,4 +1,4 @@
-import { createSlice, PayloadAction } from "@reduxjs/toolkit";
+import { createSelector, createSlice, PayloadAction } from "@reduxjs/toolkit";
 
 import { RootState } from "app/store";
 import { AsyncState, AsyncStatus } from "types/misc";
@@ -47,6 +47,9 @@ export const jiraSlice = createSlice({
 });
 
 export const selectJiraAccessToken = (state: RootState) => state.jira.accessToken;
+export const selectJiraAccessTokenData = createSelector(selectJiraAccessToken, (token) =>
+    token.status === AsyncStatus.Success ? token.data : ""
+);
 export const selectOAuthCode = (state: RootState) => state.jira.oAuthCode;
 export const selectJiraSpace = (state: RootState) => state.jira.space;
 export const selectAvailableJiraSpaces = (state: RootState) => state.jira.availableSpaces;

@@ -1,31 +1,92 @@
-import { createApi, fetchBaseQuery } from "@reduxjs/toolkit/query/react";
+import { BaseQueryFn, createApi, FetchArgs, fetchBaseQuery, FetchBaseQueryError } from "@reduxjs/toolkit/query/react";
+import { RootState } from "app/store";
+import { AsyncStatus } from "types/misc";
+
+import { selectJiraAccessToken, selectJiraSpace } from "./jiraSlice";
 import { Space } from "./types";
 
 export const jiraIdentityServer = "https://auth.atlassian.com/authorize";
 export const jiraClientId = window.jiraClientId || process.env.REACT_APP_JIRA_CLIENT_ID || "";
 export const jiraClientSecret = window.jiraClientSecret || process.env.REACT_APP_JIRA_CLIENT_SECRET || "";
-// export const baseUrl = process.env.NODE_ENV === "development" ? "/ditio" : "https://ditio-api-v3.azurewebsites.net";
 
 const rawBaseQuery = fetchBaseQuery({
-    baseUrl: "jira/api",
+    baseUrl: "/",
     prepareHeaders: (headers, { getState }) => {
-        // const sessionId = (getState() as RootState).jira.sessionId;
-        // headers.set("x-cookie", `login_remember_me=true; sessionid=${sessionId};`);
+        const token = selectJiraAccessToken(getState() as RootState);
+
+        if (token.status === AsyncStatus.Success) {
+            headers.set("Authorization", `Bearer ${token.data}`);
+        }
+
         return headers;
     },
 });
 
+const dynamicBaseQuery: BaseQueryFn<string | FetchArgs, unknown, FetchBaseQueryError> = async (
+    args,
+    api,
+    extraOptions
+) => {
+    const space = selectJiraSpace(api.getState() as RootState);
+
+    if (!space) {
+        return {
+            error: {
+                status: 400,
+                statusText: "Bad Request",
+                data: "No jira space provided",
+            },
+        };
+    }
+
+    const urlEnd = typeof args === "string" ? args : args.url;
+
+    const adjustedUrl = `https://api.atlassian.com/ex/jira/${space.id}/rest/api/3/${urlEnd}`;
+    const adjustedArgs = typeof args === "string" ? adjustedUrl : { ...args, url: adjustedUrl };
+    return rawBaseQuery(adjustedArgs, api, extraOptions);
+};
+
 export const jiraApi = createApi({
     reducerPath: "jiraApi",
-    baseQuery: rawBaseQuery,
+    baseQuery: dynamicBaseQuery,
     endpoints: (builder) => ({
         getAccessibleResources: builder.mutation<Space[], { accessToken: string }>({
             queryFn: async ({ accessToken }) => {
                 return fetch("https://api.atlassian.com/oauth/token/accessible-resources", {
                     headers: { Authorization: `Bearer ${accessToken}` },
                 })
-                    .then((res) => res.json())
-                    .then((data) => ({ data }))
+                    .then((res) => {
+                        if (!res.ok) {
+                            throw res.statusText;
+                        }
+                        return res.json();
+                    })
+                    .then((data) => {
+                        if (data.error) {
+                            return { error: data.error };
+                        }
+                        return { data };
+                    })
+                    .catch((error) => ({ error }));
+            },
+        }),
+        getProjects: builder.query<any[], { space: string; accessToken: string }>({
+            queryFn: async ({ space, accessToken }) => {
+                return fetch(`https://api.atlassian.com/ex/jira/${space}/rest/api/3/project`, {
+                    headers: { Authorization: `Bearer ${accessToken}` },
+                })
+                    .then((res) => {
+                        if (!res.ok) {
+                            throw res.statusText;
+                        }
+                        return res.json();
+                    })
+                    .then((data) => {
+                        if (data.error) {
+                            return { error: data.error };
+                        }
+                        return { data };
+                    })
                     .catch((error) => ({ error }));
             },
         }),
@@ -45,7 +106,12 @@ export const jiraApi = createApi({
                         redirect_uri: window.location.origin,
                     }),
                 })
-                    .then((res) => res.json())
+                    .then((res) => {
+                        if (!res.ok) {
+                            throw res.statusText;
+                        }
+                        return res.json();
+                    })
                     .then((data) => {
                         if (data.error) {
                             return { error: data.error };
@@ -71,7 +137,12 @@ export const jiraApi = createApi({
                         redirect_uri: window.location.origin,
                     }),
                 })
-                    .then((res) => res.json())
+                    .then((res) => {
+                        if (!res.ok) {
+                            throw res.statusText;
+                        }
+                        return res.json();
+                    })
                     .then((data) => {
                         if (data.error) {
                             return { error: data.error };
@@ -84,4 +155,5 @@ export const jiraApi = createApi({
     }),
 });
 
-export const { useGetTokenMutation, useGetAccessibleResourcesMutation, useRefreshTokensMutation } = jiraApi;
+export const { useGetTokenMutation, useGetAccessibleResourcesMutation, useRefreshTokensMutation, useGetProjectsQuery } =
+    jiraApi;
