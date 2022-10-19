@@ -11,7 +11,7 @@ import { useSceneId } from "hooks/useSceneId";
 
 import { Auth } from "./routes/auth";
 import { Login } from "./routes/login";
-import { Tasks } from "./routes/tasks";
+import { Issues } from "./routes/issues";
 import { Settings } from "./routes/settings";
 
 export function Jira() {
@@ -38,8 +38,8 @@ export function Jira() {
                             <Route path="/login" exact>
                                 <Login sceneId={sceneId} />
                             </Route>
-                            <Route path="/tasks" exact>
-                                <Tasks />
+                            <Route path="/issues" exact>
+                                <Issues />
                             </Route>
                             <Route path="/settings" exact>
                                 <Settings />

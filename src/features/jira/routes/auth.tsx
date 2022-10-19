@@ -42,6 +42,7 @@ export function Auth() {
         async function exchangeCodeForToken() {
             const now = Date.now();
 
+            // TODO(OLA): Sjekk med useLazyQuery...() heller enn mutation
             // NOTE(OLA): React strict mode double mounts quicker than any store updates.
             // Attempting to exchange twice results in a race condition.
             if (!code || now - codeExhangeInitialisedAt < 3000) {
@@ -101,7 +102,7 @@ export function Auth() {
                 if (!jiraSettings?.space && isAdmin) {
                     history.push("/settings");
                 } else {
-                    history.push("/tasks");
+                    history.push("/issues");
                 }
 
                 return;
@@ -136,7 +137,7 @@ export function Auth() {
 
                 if (space) {
                     dispatch(jiraActions.setSpace(space));
-                    history.push("/tasks");
+                    history.push("/issues");
                 } else {
                     dispatch(
                         jiraActions.setAvailableSpaces({

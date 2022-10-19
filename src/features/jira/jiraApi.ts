@@ -3,7 +3,7 @@ import { RootState } from "app/store";
 import { AsyncStatus } from "types/misc";
 
 import { selectJiraAccessToken, selectJiraSpace } from "./jiraSlice";
-import { Space } from "./types";
+import { Component, Project, Space } from "./types";
 
 export const jiraIdentityServer = "https://auth.atlassian.com/authorize";
 export const jiraClientId = window.jiraClientId || process.env.REACT_APP_JIRA_CLIENT_ID || "";
@@ -50,6 +50,10 @@ export const jiraApi = createApi({
     reducerPath: "jiraApi",
     baseQuery: dynamicBaseQuery,
     endpoints: (builder) => ({
+        getIssues: builder.query<any, { project: string; component: string }>({
+            query: ({ project, component }) =>
+                `search?jql=${encodeURIComponent(`project = ${project} AND component = ${component}`)}`,
+        }),
         getAccessibleResources: builder.mutation<Space[], { accessToken: string }>({
             queryFn: async ({ accessToken }) => {
                 return fetch("https://api.atlassian.com/oauth/token/accessible-resources", {
@@ -70,9 +74,29 @@ export const jiraApi = createApi({
                     .catch((error) => ({ error }));
             },
         }),
-        getProjects: builder.query<any[], { space: string; accessToken: string }>({
+        getProjects: builder.query<Project[], { space: string; accessToken: string }>({
             queryFn: async ({ space, accessToken }) => {
                 return fetch(`https://api.atlassian.com/ex/jira/${space}/rest/api/3/project`, {
+                    headers: { Authorization: `Bearer ${accessToken}` },
+                })
+                    .then((res) => {
+                        if (!res.ok) {
+                            throw res.statusText;
+                        }
+                        return res.json();
+                    })
+                    .then((data) => {
+                        if (data.error) {
+                            return { error: data.error };
+                        }
+                        return { data };
+                    })
+                    .catch((error) => ({ error }));
+            },
+        }),
+        getComponents: builder.query<Component[], { space: string; project: string; accessToken: string }>({
+            queryFn: async ({ space, project, accessToken }) => {
+                return fetch(`https://api.atlassian.com/ex/jira/${space}/rest/api/3/project/${project}/components`, {
                     headers: { Authorization: `Bearer ${accessToken}` },
                 })
                     .then((res) => {
@@ -155,5 +179,11 @@ export const jiraApi = createApi({
     }),
 });
 
-export const { useGetTokenMutation, useGetAccessibleResourcesMutation, useRefreshTokensMutation, useGetProjectsQuery } =
-    jiraApi;
+export const {
+    useGetTokenMutation,
+    useGetAccessibleResourcesMutation,
+    useRefreshTokensMutation,
+    useGetProjectsQuery,
+    useGetComponentsQuery,
+    useGetIssuesQuery,
+} = jiraApi;
