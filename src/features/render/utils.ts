@@ -374,6 +374,11 @@ export async function getSubtrees(view: View, scene: Scene): Promise<NonNullable
                 ? SubtreeStatus.Hidden
                 : SubtreeStatus.Shown
             : SubtreeStatus.Unavailable,
+        documents: subtrees.includes("documents")
+            ? advancedSettings.hideDocuments
+                ? SubtreeStatus.Hidden
+                : SubtreeStatus.Shown
+            : SubtreeStatus.Unavailable,
     };
 }
 

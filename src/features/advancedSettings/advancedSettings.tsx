@@ -82,6 +82,7 @@ export function AdvancedSettings() {
                               hidePoints: subtrees?.points === SubtreeStatus.Hidden,
                               hideTerrain: subtrees?.terrain === SubtreeStatus.Hidden,
                               hideLines: subtrees?.lines === SubtreeStatus.Hidden,
+                              hideDocuments: subtrees?.documents === SubtreeStatus.Hidden,
                               doubleSided: {
                                   opaque: settings.doubleSidedMaterials,
                                   transparent: settings.doubleSidedTransparentMaterials,

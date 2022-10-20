@@ -145,6 +145,7 @@ export function RenderSettings({ save, saving }: { save: () => Promise<void>; sa
     const showMeshSettings = subtrees?.triangles !== SubtreeStatus.Unavailable;
     const showLineSettings = subtrees?.lines !== SubtreeStatus.Unavailable;
     const showTerrainSettings = subtrees?.terrain !== SubtreeStatus.Unavailable;
+    const showDocumentSettings = subtrees?.documents !== SubtreeStatus.Unavailable;
 
     return (
         <>
@@ -456,6 +457,29 @@ export function RenderSettings({ save, saving }: { save: () => Promise<void>; sa
                                     label={
                                         <Box ml={1} fontSize={16}>
                                             Render terrain as background
+                                        </Box>
+                                    }
+                                />
+                            </Box>
+                        </AccordionDetails>
+                    </Accordion>
+                ) : null}
+                {showDocumentSettings ? (
+                    <Accordion>
+                        <AccordionSummary>PDF</AccordionSummary>
+                        <AccordionDetails>
+                            <Box p={1} display="flex" flexDirection="column">
+                                <FormControlLabel
+                                    sx={{ ml: 0 }}
+                                    control={
+                                        <Switch
+                                            checked={subtrees && subtrees?.documents === SubtreeStatus.Shown}
+                                            onChange={handleSubtreeToggle("documents")}
+                                        />
+                                    }
+                                    label={
+                                        <Box ml={1} fontSize={16}>
+                                            Show
                                         </Box>
                                     }
                                 />
