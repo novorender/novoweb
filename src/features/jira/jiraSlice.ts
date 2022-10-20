@@ -21,6 +21,7 @@ const initialState = {
     availableSpaces: { status: AsyncStatus.Initial } as AsyncState<Space[]>,
 };
 
+// TODO (flytt inn i jira component)
 if (initialState.oAuthCode) {
     window.history.replaceState(null, "", window.location.pathname);
 }

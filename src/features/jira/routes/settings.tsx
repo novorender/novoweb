@@ -8,9 +8,9 @@ import { AsyncState, AsyncStatus } from "types/misc";
 import { renderActions, selectProjectSettings } from "slices/renderSlice";
 import { ScrollBox, TextField } from "components";
 
-import { Component, Project, Space } from "../../types";
-import { jiraActions, selectAvailableJiraSpaces, selectJiraAccessTokenData } from "../../jiraSlice";
-import { useGetComponentsQuery, useGetProjectsQuery } from "../../jiraApi";
+import { Component, Project, Space } from "../types";
+import { jiraActions, selectAvailableJiraSpaces, selectJiraAccessTokenData } from "../jiraSlice";
+import { useGetComponentsQuery, useGetProjectsQuery } from "../jiraApi";
 
 export function Settings() {
     const history = useHistory();

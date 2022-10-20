@@ -198,7 +198,9 @@ const initialState = {
     projectSettings: {
         [ProjectSetting.TmZone]: "",
         [ProjectSetting.DitioProjectNumber]: "",
-        [ProjectSetting.Jira]: undefined as undefined | { space: string; project: string; component: string }, // TODO
+        [ProjectSetting.Jira]: { space: "novorender-test", project: "TI", component: "novorender" } as
+            | undefined
+            | { space: string; project: string; component: string }, // TODO
     },
     picker: Picker.Object,
 };

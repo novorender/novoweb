@@ -62,3 +62,10 @@ export type Component = {
     project: string;
     projectId: number;
 };
+
+export type Issue = {
+    key: string;
+    fields: {
+        summary: string;
+    };
+};

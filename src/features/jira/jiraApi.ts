@@ -3,7 +3,7 @@ import { RootState } from "app/store";
 import { AsyncStatus } from "types/misc";
 
 import { selectJiraAccessToken, selectJiraSpace } from "./jiraSlice";
-import { Component, Project, Space } from "./types";
+import { Component, Issue, Project, Space } from "./types";
 
 export const jiraIdentityServer = "https://auth.atlassian.com/authorize";
 export const jiraClientId = window.jiraClientId || process.env.REACT_APP_JIRA_CLIENT_ID || "";
@@ -50,7 +50,7 @@ export const jiraApi = createApi({
     reducerPath: "jiraApi",
     baseQuery: dynamicBaseQuery,
     endpoints: (builder) => ({
-        getIssues: builder.query<any, { project: string; component: string }>({
+        getIssues: builder.query<{ issues: Issue[] }, { project: string; component: string }>({
             query: ({ project, component }) =>
                 `search?jql=${encodeURIComponent(`project = ${project} AND component = ${component}`)}`,
         }),

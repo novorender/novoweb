@@ -13,6 +13,8 @@ import { Auth } from "./routes/auth";
 import { Login } from "./routes/login";
 import { Issues } from "./routes/issues";
 import { Settings } from "./routes/settings";
+import { Filters } from "./routes/filters";
+import { Issue } from "./routes/issue";
 
 export function Jira() {
     const sceneId = useSceneId();
@@ -35,14 +37,20 @@ export function Jira() {
                             <Route path="/" exact>
                                 <Auth />
                             </Route>
-                            <Route path="/login" exact>
+                            <Route path="/login">
                                 <Login sceneId={sceneId} />
                             </Route>
-                            <Route path="/issues" exact>
+                            <Route path="/issues">
                                 <Issues />
                             </Route>
-                            <Route path="/settings" exact>
+                            <Route path="/settings">
                                 <Settings />
+                            </Route>
+                            <Route path="/filters">
+                                <Filters />
+                            </Route>
+                            <Route path="/issue/:key">
+                                <Issue />
                             </Route>
                         </Switch>
                     </MemoryRouter>
