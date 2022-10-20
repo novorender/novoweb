@@ -32,6 +32,7 @@ declare module "@novorender/data-js-api" {
             lines: boolean;
             terrain: boolean;
             points: boolean;
+            documents: boolean;
         };
         options?: {
             addSelectedToSelectionBasket?: boolean;

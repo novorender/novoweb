@@ -118,6 +118,7 @@ export function useCreateBookmark() {
                           points: subtrees.points === SubtreeStatus.Shown,
                           terrain: subtrees.terrain === SubtreeStatus.Shown,
                           lines: subtrees.lines === SubtreeStatus.Shown,
+                          documents: subtrees.documents === SubtreeStatus.Shown,
                       },
                   }
                 : {}),

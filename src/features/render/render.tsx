@@ -980,6 +980,8 @@ export function Render3D({ onInit }: Props) {
         ]
     );
 
+    window.view = view;
+
     useEffect(
         function handleSubtreeChanges() {
             if (!view || !("advanced" in view.settings) || !subtrees) {
@@ -992,6 +994,7 @@ export function Render3D({ onInit }: Props) {
             settings.advanced.hidePoints = subtrees.points !== SubtreeStatus.Shown;
             settings.advanced.hideTerrain = subtrees.terrain !== SubtreeStatus.Shown;
             settings.advanced.hideTriangles = subtrees.triangles !== SubtreeStatus.Shown;
+            settings.advanced.hideDocuments = subtrees.documents !== SubtreeStatus.Shown;
         },
         [subtrees, view]
     );

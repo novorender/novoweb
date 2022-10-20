@@ -132,6 +132,7 @@ const initialState = {
               lines: SubtreeStatus;
               terrain: SubtreeStatus;
               points: SubtreeStatus;
+              documents: SubtreeStatus;
           },
     selectionBasketMode: SelectionBasketMode.Loose,
     selectionBasketColor: {
@@ -319,6 +320,13 @@ export const renderSlice = createSlice({
                         ? SubtreeStatus.Shown
                         : SubtreeStatus.Hidden
                     : state.subtrees.triangles;
+
+            state.subtrees.documents =
+                state.subtrees.documents !== SubtreeStatus.Unavailable
+                    ? action.payload.documents
+                        ? SubtreeStatus.Shown
+                        : SubtreeStatus.Hidden
+                    : state.subtrees.documents;
         },
         disableAllSubtrees: (state) => {
             state.subtrees = {
@@ -326,6 +334,7 @@ export const renderSlice = createSlice({
                 triangles: SubtreeStatus.Unavailable,
                 lines: SubtreeStatus.Unavailable,
                 points: SubtreeStatus.Unavailable,
+                documents: SubtreeStatus.Unavailable,
             };
         },
         setSelectionBasketMode: (state, action: PayloadAction<State["selectionBasketMode"]>) => {
