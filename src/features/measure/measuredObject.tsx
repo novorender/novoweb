@@ -104,7 +104,7 @@ export function MeasuredObject({ obj, idx }: { obj: SelectedMeasureObj; idx: num
                 </Box>
                 <Box width={0} flex="1 1 auto" overflow="hidden">
                     <Box overflow="hidden" whiteSpace="nowrap" textOverflow="ellipsis">
-                        {kind ? (kind === "lineStrip" ? "Line strip" : capitalize(kind)) : obj.id}
+                        {kind ? (kind === "lineStrip" ? "Line strip" : capitalize(kind)) : "Loading..."}
                     </Box>
                 </Box>
             </AccordionSummary>
