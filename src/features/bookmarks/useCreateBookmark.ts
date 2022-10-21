@@ -20,6 +20,7 @@ import { selectMeasure } from "features/measure";
 import { selectFollowPath } from "features/followPath";
 import { selectAreaPoints } from "features/area";
 import { selectPointLinePoints } from "features/pointLine";
+import { selectManhole } from "features/manhole";
 
 export function useCreateBookmark() {
     const measurement = useAppSelector(selectMeasure);
@@ -30,6 +31,7 @@ export function useCreateBookmark() {
     const areaPts = useAppSelector(selectAreaPoints);
     const pointLinePts = useAppSelector(selectPointLinePoints);
     const subtrees = useAppSelector(selectSubtrees);
+    const manhole = useAppSelector(selectManhole);
 
     const {
         state: { view },
@@ -111,6 +113,7 @@ export function useCreateBookmark() {
             ...(measurement.selected.length > 0 ? { objectMeasurement: measurement.selected } : {}),
             ...(areaPts.length ? { area: { pts: areaPts } } : {}),
             ...(pointLinePts.length ? { pointLine: { pts: pointLinePts } } : {}),
+            ...(manhole ? { manhole: { id: manhole.ObjectId } } : {}),
             ...(subtrees
                 ? {
                       subtrees: {

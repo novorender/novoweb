@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { MeasureEntity, MeasureObject } from "@novorender/measure-api";
+import { MeasureEntity } from "@novorender/measure-api";
 import { vec3 } from "gl-matrix";
 
 import { useExplorerGlobals } from "contexts/explorerGlobals";
@@ -8,14 +8,8 @@ import { AsyncStatus } from "types/misc";
 
 import { heightProfileActions, selectSelectedPoint } from "./heightProfileSlice";
 
-type ExtendedMeasureObject = MeasureObject & {
+type ExtendedMeasureEntity = MeasureEntity & {
     pos: vec3;
-};
-
-type MeasurePoint = {
-    pos: vec3;
-    id: number;
-    selectedEntity?: MeasureEntity;
 };
 
 export function useHeightProfileMeasureObject() {
@@ -26,7 +20,7 @@ export function useHeightProfileMeasureObject() {
     const point = useAppSelector(selectSelectedPoint);
     const dispatch = useAppDispatch();
 
-    const [measureObjects, setMeasureObjects] = useState(undefined as undefined | ExtendedMeasureObject | MeasurePoint);
+    const [measureObjects, setMeasureObjects] = useState(undefined as undefined | ExtendedMeasureEntity);
 
     useEffect(() => {
         getMeasureObjects();
@@ -53,31 +47,24 @@ export function useHeightProfileMeasureObject() {
                         data: undefined,
                     })
                 );
-                setMeasureObjects(point);
+                setMeasureObjects(undefined);
                 return;
             }
 
             try {
                 dispatch(heightProfileActions.setSelectedEntity({ status: AsyncStatus.Loading }));
 
-                const mObject = await measureScene.downloadMeasureObject(point.id, point.pos).then((_mObj) => {
-                    const mObj = _mObj as ExtendedMeasureObject;
+                const mObject = await measureScene.pickMeasureEntity(point.id, point.pos).then((_mObj) => {
+                    const mObj = _mObj as ExtendedMeasureEntity;
+                    mObj.pos = point.pos;
 
-                    if (mObj.selectedEntity) {
-                        if (mObj.selectedEntity.kind === "vertex") {
-                            return { ...point, pos: mObj.selectedEntity.parameter as vec3 };
-                        }
-
-                        mObj.pos = point.pos;
-                    }
-
-                    return mObj.selectedEntity ? mObj : (point as MeasurePoint);
+                    return mObj;
                 });
 
                 dispatch(
                     heightProfileActions.setSelectedEntity({
                         status: AsyncStatus.Success,
-                        data: mObject.selectedEntity,
+                        data: mObject,
                     })
                 );
                 setMeasureObjects(mObject);
@@ -88,7 +75,7 @@ export function useHeightProfileMeasureObject() {
                         msg: "Failed to load the selected entity.",
                     })
                 );
-                setMeasureObjects(point);
+                setMeasureObjects(undefined);
             }
         }
     }, [measureScene, setMeasureObjects, point, dispatch]);

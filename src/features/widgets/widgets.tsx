@@ -31,6 +31,7 @@ import { User } from "features/user";
 import { HeightProfile } from "features/heightProfile";
 import { Area } from "features/area";
 import { PointLine } from "features/pointLine";
+import { Manhole } from "features/manhole";
 
 export function Widgets() {
     const theme = useTheme();
@@ -123,6 +124,8 @@ function getWidgetByKey(key: WidgetKey): JSX.Element | string {
             return <Area />;
         case featuresConfig.pointLine.key:
             return <PointLine />;
+        case featuresConfig.manhole.key:
+            return <Manhole />;
         default:
             return key;
     }

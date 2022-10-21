@@ -1,6 +1,6 @@
 import { vec3 } from "gl-matrix";
 import { useEffect, useState } from "react";
-import { MeasurementValues, MeasureObject, MeasureSettings } from "@novorender/measure-api";
+import { MeasureEntity, MeasurementValues, MeasureSettings, PointEntity } from "@novorender/measure-api";
 import {
     Box,
     Checkbox,
@@ -62,10 +62,8 @@ export function MeasuredObject({ obj, idx }: { obj: SelectedMeasureObj; idx: num
         getMeasureValues();
 
         async function getMeasureValues() {
-            if (measureObject?.selectedEntity) {
-                setMeasureValues(
-                    await measureScene.measure(measureObject.selectedEntity, undefined, measureObject.settings)
-                );
+            if (measureObject) {
+                setMeasureValues(await measureScene.measure(measureObject, undefined, measureObject.settings));
             } else {
                 setMeasureValues(undefined);
             }
@@ -79,6 +77,9 @@ export function MeasuredObject({ obj, idx }: { obj: SelectedMeasureObj; idx: num
         duoMeasurementValues &&
         (!duoMeasurementValues.validMeasureSettings || duoMeasurementValues.validMeasureSettings[_idx]);
 
+    const isVertex = (measureObject: MeasureEntity | undefined): measureObject is PointEntity => {
+        return measureObject ? measureObject.drawKind === "vertex" : false;
+    };
     return (
         <Accordion defaultExpanded={true}>
             <AccordionSummary>
@@ -111,15 +112,15 @@ export function MeasuredObject({ obj, idx }: { obj: SelectedMeasureObj; idx: num
                 {!measureObject ? null : measureValues ? (
                     <MeasurementData
                         measureValues={measureValues}
-                        obj={obj}
+                        settings={obj.settings}
                         useCylinderMeasureSettings={useCylinderMeasureSettings ? useCylinderMeasureSettings : false}
                         idx={idx}
                     />
-                ) : (
+                ) : isVertex(measureObject) ? (
                     <Box p={2}>
-                        <VertexTable vertices={[measureObject.pos]} />
+                        <VertexTable vertices={[measureObject.parameter]} />
                     </Box>
-                )}
+                ) : null}
             </AccordionDetails>
         </Accordion>
     );
@@ -206,16 +207,18 @@ export function MeasuredResult() {
     );
 }
 
-function MeasurementData({
+export function MeasurementData({
     measureValues,
-    obj,
     useCylinderMeasureSettings,
     idx,
+    simpleCylinder,
+    settings,
 }: {
     measureValues: MeasurementValues;
-    obj: SelectedMeasureObj;
     useCylinderMeasureSettings: boolean;
     idx: number;
+    settings?: MeasureSettings;
+    simpleCylinder?: boolean;
 }) {
     const dispatch = useAppDispatch();
     if (!("kind" in measureValues)) {
@@ -423,45 +426,49 @@ function MeasurementData({
                                 </Grid>
                             </Grid>
                         </ListItem>
-                        <ListItem>
-                            <Slope start={measureValues.centerLineStart} end={measureValues.centerLineEnd} />
-                        </ListItem>
+                        {simpleCylinder ? null : (
+                            <ListItem>
+                                <Slope start={measureValues.centerLineStart} end={measureValues.centerLineEnd} />
+                            </ListItem>
+                        )}
                     </List>
-                    <Box px={2} flex="1 1 auto" overflow="hidden">
-                        <InputLabel sx={{ color: "text.primary" }}>Measure from: </InputLabel>
-                        <Select
-                            fullWidth
-                            name="pivot"
-                            size="small"
-                            value={!obj.settings?.cylinderMeasure ? "center" : obj.settings.cylinderMeasure}
-                            onChange={(e) => {
-                                dispatch(
-                                    measureActions.setSettings({
-                                        idx,
-                                        settings: {
-                                            ...obj.settings,
-                                            cylinderMeasure: e.target.value as MeasureSettings["cylinderMeasure"],
-                                        },
-                                    })
-                                );
-                            }}
-                            input={<OutlinedInput fullWidth />}
-                        >
-                            {cylinderOptions.map((opt) => (
-                                <MenuItem
-                                    disabled={
-                                        useCylinderMeasureSettings
-                                            ? false
-                                            : opt.val === "closest" || opt.val === "furthest"
-                                    }
-                                    key={opt.val}
-                                    value={opt.val}
-                                >
-                                    {opt.label}
-                                </MenuItem>
-                            ))}
-                        </Select>
-                    </Box>
+                    {simpleCylinder ? null : (
+                        <Box px={2} flex="1 1 auto" overflow="hidden">
+                            <InputLabel sx={{ color: "text.primary" }}>Measure from: </InputLabel>
+                            <Select
+                                fullWidth
+                                name="pivot"
+                                size="small"
+                                value={settings?.cylinderMeasure ? settings.cylinderMeasure : "center"}
+                                onChange={(e) => {
+                                    dispatch(
+                                        measureActions.setSettings({
+                                            idx,
+                                            settings: {
+                                                ...settings,
+                                                cylinderMeasure: e.target.value as MeasureSettings["cylinderMeasure"],
+                                            },
+                                        })
+                                    );
+                                }}
+                                input={<OutlinedInput fullWidth />}
+                            >
+                                {cylinderOptions.map((opt) => (
+                                    <MenuItem
+                                        disabled={
+                                            useCylinderMeasureSettings
+                                                ? false
+                                                : opt.val === "closest" || opt.val === "furthest"
+                                        }
+                                        key={opt.val}
+                                        value={opt.val}
+                                    >
+                                        {opt.label}
+                                    </MenuItem>
+                                ))}
+                            </Select>
+                        </Box>
+                    )}
                     <Box p={1}>
                         <Accordion defaultExpanded={false}>
                             <NestedAccordionSummary>Components</NestedAccordionSummary>
@@ -479,10 +486,6 @@ function MeasurementData({
         default:
             return null;
     }
-}
-
-export function isMeasureObject(obj: any): obj is MeasureObject {
-    return obj && "selectedEntity" in obj && "id" in obj;
 }
 
 function getMeasurementValueKind(val: MeasurementValues): string {
