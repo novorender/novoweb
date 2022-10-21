@@ -1981,9 +1981,10 @@ function SceneError({ id, error }: { id: string; error: Exclude<Status, Status.I
 }
 
 function getMeasureObjectPathId(obj: MeasureEntity): string {
-    return obj.ObjectId + obj.drawKind === "vertex"
-        ? vec3.str(obj.parameter as vec3)
-        : `${obj.instanceIndex}_${obj.pathIndex}`;
+    return (
+        obj.ObjectId +
+        (obj.drawKind === "vertex" ? vec3.str(obj.parameter as vec3) : `${obj.instanceIndex}_${obj.pathIndex}`)
+    );
 }
 
 function isSceneError(status: Status): status is Exclude<Status, Status.Initial> {
