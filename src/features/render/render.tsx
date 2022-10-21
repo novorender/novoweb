@@ -1714,24 +1714,19 @@ export function Render3D({ onInit }: Props) {
                                         fill="none"
                                     />
                                     <AxisText id={`lineText`} />
-                                    {pointLinePoints.map((_pt, idx, arr) => {
-                                        if (idx === 0 || idx === arr.length - 1) {
-                                            return null;
-                                        }
-                                        return (
-                                            <Fragment key={idx}>
-                                                <MeasurementPoint
-                                                    disabled
-                                                    name={`line-pt_${idx}`}
-                                                    id={`line-pt_${idx}`}
-                                                    stroke="black"
-                                                    strokeWidth={2}
-                                                    r={5}
-                                                />
-                                                <g id={`line-an_${idx}`} />
-                                            </Fragment>
-                                        );
-                                    })}
+                                    {pointLinePoints.map((_pt, idx, arr) => (
+                                        <Fragment key={idx}>
+                                            <MeasurementPoint
+                                                disabled
+                                                name={`line-pt_${idx}`}
+                                                id={`line-pt_${idx}`}
+                                                stroke="black"
+                                                strokeWidth={2}
+                                                r={5}
+                                            />
+                                            {idx === 0 || idx === arr.length - 1 ? null : <g id={`line-an_${idx}`} />}
+                                        </Fragment>
+                                    ))}
                                 </>
                             ) : null}
 
