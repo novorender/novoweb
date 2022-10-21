@@ -20,7 +20,7 @@ import { selectMinimized, selectMaximized } from "slices/explorerSlice";
 import { Picker, renderActions, selectPicker } from "slices/renderSlice";
 import { MeasurementData } from "features/measure/measuredObject";
 
-import { manholeActions, selectManhole } from "./manholeSlice";
+import { manholeActions, selectManhole, selectManholeId } from "./manholeSlice";
 
 export function Manhole() {
     const [menuOpen, toggleMenu] = useToggle();
@@ -29,6 +29,7 @@ export function Manhole() {
 
     const dispatch = useAppDispatch();
     const manhole = useAppSelector(selectManhole);
+    const manholeId = useAppSelector(selectManholeId);
     const selecting = useAppSelector(selectPicker) === Picker.Manhole;
     const isInitial = useRef(true);
 
@@ -87,7 +88,7 @@ export function Manhole() {
                                 <AccordionSummary>
                                     <Box width={0} flex="1 1 auto" overflow="hidden">
                                         <Box overflow="hidden" whiteSpace="nowrap" textOverflow="ellipsis">
-                                            Top elevation : {manhole.topElevation.toFixed(3)}
+                                            Top - Elevation: {manhole.topElevation.toFixed(3)} m
                                         </Box>
                                     </Box>
                                 </AccordionSummary>
@@ -105,7 +106,7 @@ export function Manhole() {
                                 <AccordionSummary>
                                     <Box width={0} flex="1 1 auto" overflow="hidden">
                                         <Box overflow="hidden" whiteSpace="nowrap" textOverflow="ellipsis">
-                                            Bottom elevation : {manhole.bottomElevation.toFixed(3)}
+                                            Bottom - Elevation: {manhole.bottomElevation.toFixed(3)} m
                                         </Box>
                                     </Box>
                                 </AccordionSummary>
@@ -124,8 +125,9 @@ export function Manhole() {
                                     <Box width={0} flex="1 1 auto" overflow="hidden">
                                         <Box overflow="hidden" whiteSpace="nowrap" textOverflow="ellipsis">
                                             {`${
-                                                manhole.inner ? "Outer radius" : "Radius"
-                                            } : ${manhole.outerRadius.toFixed(3)}`}
+                                                manhole.inner ? "Outer - Radius" : "Radius"
+                                            }: ${manhole.outerRadius.toFixed(3)}`}{" "}
+                                            m
                                         </Box>
                                     </Box>
                                 </AccordionSummary>
@@ -144,7 +146,7 @@ export function Manhole() {
                                     <AccordionSummary>
                                         <Box width={0} flex="1 1 auto" overflow="hidden">
                                             <Box overflow="hidden" whiteSpace="nowrap" textOverflow="ellipsis">
-                                                Inner radius : {manhole.innerRadius.toFixed(3)}
+                                                Inner - Radius: {manhole.innerRadius.toFixed(3)} m
                                             </Box>
                                         </Box>
                                     </AccordionSummary>
@@ -161,7 +163,11 @@ export function Manhole() {
                             ) : null}
                         </>
                     ) : (
-                        <>Manhole not found</>
+                        <Box p={1}>
+                            {manholeId !== undefined
+                                ? `Object with ID ${manholeId} is not a manhole.`
+                                : "No object selected."}
+                        </Box>
                     )}
                 </ScrollBox>
                 <WidgetList
