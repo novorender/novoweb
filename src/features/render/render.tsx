@@ -83,7 +83,7 @@ import { explorerActions, selectUrlBookmarkId } from "slices/explorerSlice";
 import { selectDeviations } from "features/deviations";
 import { bookmarksActions, selectBookmarks, useSelectBookmark } from "features/bookmarks";
 import { measureActions, selectMeasure } from "features/measure";
-import { manholeActions, selectManhole, useHandleManholeUpdates } from "features/manhole";
+import { manholeActions, selectManholeMeasureValues, useHandleManholeUpdates } from "features/manhole";
 import { ditioActions, selectMarkers, selectShowMarkers } from "features/ditio";
 import { useAppDispatch, useAppSelector } from "app/store";
 import { followPathActions, selectDrawSelectedPositions, usePathMeasureObjects } from "features/followPath";
@@ -243,7 +243,7 @@ export function Render3D({ onInit }: Props) {
     const myLocationPoint = useAppSelector(selectCurrentLocation);
     const areaValue = useAppSelector(selectArea);
     const { points: pointLinePoints, result: pointLineResult } = useAppSelector(selectPointLine);
-    const manhole = useAppSelector(selectManhole);
+    const manhole = useAppSelector(selectManholeMeasureValues);
 
     const dispatch = useAppDispatch();
 
