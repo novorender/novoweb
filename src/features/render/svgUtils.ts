@@ -359,7 +359,11 @@ export async function renderMeasureObject({
                 }
                 if (part && part.vertices2D.length > 1) {
                     part.vertices2D = inversePixelRatio(part.vertices2D as vec2[]);
-                    const cylinderDawing = advancedDrawing && part.elevation && part.vertices2D.length === 2;
+                    const cylinderDawing =
+                        advancedDrawing &&
+                        part.elevation &&
+                        part.elevation.from !== part.elevation.to &&
+                        part.vertices2D.length === 2;
                     if (part.elevation && cylinderDawing) {
                         //Special handle to cylinders
                         path!.setAttribute("stroke", "url(#gr_" + entity.ObjectId + ")");
