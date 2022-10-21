@@ -226,6 +226,7 @@ export function createRendering(
 /**
  * Applies highlights and hides objects in the 3d view based on the object groups provided
  */
+let refillId = 0;
 export async function refillObjects({
     sceneId,
     scene,
@@ -259,6 +260,7 @@ export async function refillObjects({
         return;
     }
 
+    const id = ++refillId;
     const { objectHighlighter } = scene;
 
     objectHighlighter.objectHighlightIndices.fill(defaultVisibility === ObjectVisibility.Transparent ? 255 : 0);
@@ -274,6 +276,10 @@ export async function refillObjects({
     });
 
     await Promise.all(proms);
+
+    if (id !== refillId) {
+        return;
+    }
 
     let index = 1; // 0 is default visibility
     const [hidden, _highlights] = objectGroups.reduce(
