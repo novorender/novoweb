@@ -94,7 +94,7 @@ export function Manhole() {
                                 <AccordionDetails>
                                     <MeasurementData
                                         settings={undefined}
-                                        measureValues={manhole.bottom}
+                                        measureValues={manhole.top}
                                         idx={0}
                                         useCylinderMeasureSettings={false}
                                     />
@@ -112,7 +112,7 @@ export function Manhole() {
                                 <AccordionDetails>
                                     <MeasurementData
                                         settings={undefined}
-                                        measureValues={manhole.top}
+                                        measureValues={manhole.bottom}
                                         idx={1}
                                         useCylinderMeasureSettings={false}
                                     />
