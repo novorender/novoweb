@@ -29,6 +29,7 @@ export function useMeasureObjects() {
                 return;
             }
 
+            dispatch(measureActions.setLoadingBrep(true));
             const mObjects = (await Promise.all(
                 measure.selected.map((obj) =>
                     obj.id === -1
@@ -61,6 +62,7 @@ export function useMeasureObjects() {
             if (mObjects.length !== 2) {
                 dispatch(measureActions.setDuoMeasurementValues(undefined));
                 setMeasureObjects(mObjects);
+                dispatch(measureActions.setLoadingBrep(false));
                 return;
             }
 
@@ -69,11 +71,12 @@ export function useMeasureObjects() {
             let res: DuoMeasurementValues | undefined;
 
             res = (await measureScene
-                .measure(obj1!, obj2, obj1.settings, obj2.settings)
+                .measure(obj1, obj2, obj1.settings, obj2.settings)
                 .catch((e) => console.warn(e))) as DuoMeasurementValues | undefined;
 
             dispatch(measureActions.setDuoMeasurementValues(res));
             setMeasureObjects(mObjects);
+            dispatch(measureActions.setLoadingBrep(false));
         }
     }, [measureScene, setMeasureObjects, measure.selected, dispatch]);
 

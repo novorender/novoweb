@@ -1,13 +1,15 @@
 import { DeleteSweep } from "@mui/icons-material";
 import { useRef, useEffect } from "react";
-import { Box, Button, FormControlLabel } from "@mui/material";
+import { Box, Button, FormControlLabel, Typography } from "@mui/material";
 
 import { useAppDispatch, useAppSelector } from "app/store";
 import {
     Accordion,
     AccordionDetails,
     AccordionSummary,
+    Divider,
     IosSwitch,
+    LinearProgress,
     LogoSpeedDial,
     ScrollBox,
     WidgetContainer,
@@ -20,16 +22,22 @@ import { selectMinimized, selectMaximized } from "slices/explorerSlice";
 import { Picker, renderActions, selectPicker } from "slices/renderSlice";
 import { MeasurementData } from "features/measure/measuredObject";
 
-import { manholeActions, selectManhole, selectManholeId } from "./manholeSlice";
+import {
+    manholeActions,
+    selectManholeMeasureValues,
+    selectManholeId,
+    selectIsLoadingManholeBrep,
+} from "./manholeSlice";
 
 export function Manhole() {
     const [menuOpen, toggleMenu] = useToggle();
-    const minimized = useAppSelector(selectMinimized) === featuresConfig.measure.key;
-    const maximized = useAppSelector(selectMaximized) === featuresConfig.measure.key;
+    const minimized = useAppSelector(selectMinimized) === featuresConfig.manhole.key;
+    const maximized = useAppSelector(selectMaximized) === featuresConfig.manhole.key;
 
     const dispatch = useAppDispatch();
-    const manhole = useAppSelector(selectManhole);
-    const manholeId = useAppSelector(selectManholeId);
+    const manhole = useAppSelector(selectManholeMeasureValues);
+    const selectedObj = useAppSelector(selectManholeId);
+    const isLoading = useAppSelector(selectIsLoadingManholeBrep);
     const selecting = useAppSelector(selectPicker) === Picker.Manhole;
     const isInitial = useRef(true);
 
@@ -72,8 +80,8 @@ export function Manhole() {
                             />
                             <Button
                                 color="grey"
-                                disabled={manhole === undefined}
-                                onClick={() => dispatch(manholeActions.setManholeValues(undefined))}
+                                disabled={selectedObj === undefined}
+                                onClick={() => dispatch(manholeActions.selectObj(undefined))}
                             >
                                 <DeleteSweep sx={{ mr: 1 }} />
                                 Clear
@@ -81,18 +89,52 @@ export function Manhole() {
                         </Box>
                     ) : null}
                 </WidgetHeader>
-                <ScrollBox display={menuOpen || minimized ? "none" : "block"}>
+                {isLoading ? (
+                    <Box>
+                        <LinearProgress />
+                    </Box>
+                ) : null}
+                <ScrollBox display={menuOpen || minimized ? "none" : "block"} pb={3}>
                     {manhole ? (
                         <>
+                            <Box p={1}>
+                                <Typography>
+                                    <Box sx={{ minWidth: 110 }} display="inline-block">
+                                        Elevation top:
+                                    </Box>
+                                    {manhole.topElevation.toFixed(3)} m
+                                </Typography>
+                                <Typography>
+                                    <Box sx={{ minWidth: 110 }} display="inline-block">
+                                        Elevation bot:
+                                    </Box>
+                                    {manhole.bottomElevation.toFixed(3)} m
+                                </Typography>
+                                <Typography>
+                                    <Box sx={{ minWidth: 110 }} display="inline-block">
+                                        Radius outer:
+                                    </Box>
+                                    {manhole.outerRadius.toFixed(3)} m
+                                </Typography>
+                                {manhole.innerRadius ? (
+                                    <Typography>
+                                        <Box sx={{ minWidth: 110 }} display="inline-block">
+                                            Radius inner:
+                                        </Box>
+                                        {manhole.innerRadius.toFixed(3)} m
+                                    </Typography>
+                                ) : null}
+                            </Box>
+                            <Divider />
                             <Accordion defaultExpanded={false}>
                                 <AccordionSummary>
                                     <Box width={0} flex="1 1 auto" overflow="hidden">
                                         <Box overflow="hidden" whiteSpace="nowrap" textOverflow="ellipsis">
-                                            Top - Elevation: {manhole.topElevation.toFixed(3)} m
+                                            Top
                                         </Box>
                                     </Box>
                                 </AccordionSummary>
-                                <AccordionDetails>
+                                <AccordionDetails sx={{ mx: -1 }}>
                                     <MeasurementData
                                         settings={undefined}
                                         measureValues={manhole.top}
@@ -106,11 +148,11 @@ export function Manhole() {
                                 <AccordionSummary>
                                     <Box width={0} flex="1 1 auto" overflow="hidden">
                                         <Box overflow="hidden" whiteSpace="nowrap" textOverflow="ellipsis">
-                                            Bottom - Elevation: {manhole.bottomElevation.toFixed(3)} m
+                                            Bottom
                                         </Box>
                                     </Box>
                                 </AccordionSummary>
-                                <AccordionDetails>
+                                <AccordionDetails sx={{ mx: -1 }}>
                                     <MeasurementData
                                         settings={undefined}
                                         measureValues={manhole.bottom}
@@ -124,14 +166,11 @@ export function Manhole() {
                                 <AccordionSummary>
                                     <Box width={0} flex="1 1 auto" overflow="hidden">
                                         <Box overflow="hidden" whiteSpace="nowrap" textOverflow="ellipsis">
-                                            {`${
-                                                manhole.inner ? "Outer - Radius" : "Radius"
-                                            }: ${manhole.outerRadius.toFixed(3)}`}{" "}
-                                            m
+                                            Outer
                                         </Box>
                                     </Box>
                                 </AccordionSummary>
-                                <AccordionDetails>
+                                <AccordionDetails sx={{ mx: -1 }}>
                                     <MeasurementData
                                         settings={undefined}
                                         measureValues={manhole.outer}
@@ -146,11 +185,11 @@ export function Manhole() {
                                     <AccordionSummary>
                                         <Box width={0} flex="1 1 auto" overflow="hidden">
                                             <Box overflow="hidden" whiteSpace="nowrap" textOverflow="ellipsis">
-                                                Inner - Radius: {manhole.innerRadius.toFixed(3)} m
+                                                Inner
                                             </Box>
                                         </Box>
                                     </AccordionSummary>
-                                    <AccordionDetails>
+                                    <AccordionDetails sx={{ mx: -1 }}>
                                         <MeasurementData
                                             settings={undefined}
                                             measureValues={manhole.inner}
@@ -164,12 +203,13 @@ export function Manhole() {
                         </>
                     ) : (
                         <Box p={1}>
-                            {manholeId !== undefined
-                                ? `Object with ID ${manholeId} is not a manhole.`
+                            {selectedObj !== undefined
+                                ? `Object with ID ${selectedObj} is not a manhole.`
                                 : "No object selected."}
                         </Box>
                     )}
                 </ScrollBox>
+
                 <WidgetList
                     display={menuOpen ? "block" : "none"}
                     widgetKey={featuresConfig.manhole.key}

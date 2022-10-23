@@ -83,7 +83,7 @@ import { explorerActions, selectUrlBookmarkId } from "slices/explorerSlice";
 import { selectDeviations } from "features/deviations";
 import { bookmarksActions, selectBookmarks, useSelectBookmark } from "features/bookmarks";
 import { measureActions, selectMeasure } from "features/measure";
-import { manholeActions, selectManhole, useHandleManholeUpdates } from "features/manhole";
+import { manholeActions, selectManholeMeasureValues, useHandleManholeUpdates } from "features/manhole";
 import { ditioActions, selectMarkers, selectShowMarkers } from "features/ditio";
 import { useAppDispatch, useAppSelector } from "app/store";
 import { followPathActions, selectDrawSelectedPositions, usePathMeasureObjects } from "features/followPath";
@@ -243,7 +243,7 @@ export function Render3D({ onInit }: Props) {
     const myLocationPoint = useAppSelector(selectCurrentLocation);
     const areaValue = useAppSelector(selectArea);
     const { points: pointLinePoints, result: pointLineResult } = useAppSelector(selectPointLine);
-    const manhole = useAppSelector(selectManhole);
+    const manhole = useAppSelector(selectManholeMeasureValues);
 
     const dispatch = useAppDispatch();
 
@@ -1688,22 +1688,22 @@ export function Render3D({ onInit }: Props) {
                                         strokeWidth={1}
                                     />
                                     <AxisText id={`areaText`} />
+                                    {areaPoints.map((_pt, idx, array) => (
+                                        <Fragment key={idx}>
+                                            <MeasurementPoint
+                                                disabled
+                                                name={`area-pt_${idx}`}
+                                                id={`area-pt_${idx}`}
+                                                stroke="black"
+                                                fill={idx === 0 ? "green" : idx === array.length - 1 ? "blue" : "white"}
+                                                strokeWidth={2}
+                                                r={5}
+                                            />
+                                            {array.length > 2 ? <g id={`area-an_${idx}`} /> : null}
+                                        </Fragment>
+                                    ))}
                                 </>
                             ) : null}
-                            {areaPoints.map((_pt, idx, array) => (
-                                <Fragment key={idx}>
-                                    <MeasurementPoint
-                                        disabled
-                                        name={`area-pt_${idx}`}
-                                        id={`area-pt_${idx}`}
-                                        stroke="black"
-                                        fill={idx === 0 ? "green" : idx === array.length - 1 ? "blue" : "white"}
-                                        strokeWidth={2}
-                                        r={5}
-                                    />
-                                    {array.length > 2 ? <g id={`area-an_${idx}`} /> : null}
-                                </Fragment>
-                            ))}
                             {pointLinePoints.length ? (
                                 <>
                                     <path
@@ -1714,24 +1714,20 @@ export function Render3D({ onInit }: Props) {
                                         fill="none"
                                     />
                                     <AxisText id={`lineText`} />
-                                    {pointLinePoints.map((_pt, idx, arr) => {
-                                        if (idx === 0 || idx === arr.length - 1) {
-                                            return null;
-                                        }
-                                        return (
-                                            <Fragment key={idx}>
-                                                <MeasurementPoint
-                                                    disabled
-                                                    name={`line-pt_${idx}`}
-                                                    id={`line-pt_${idx}`}
-                                                    stroke="black"
-                                                    strokeWidth={2}
-                                                    r={5}
-                                                />
-                                                <g id={`line-an_${idx}`} />
-                                            </Fragment>
-                                        );
-                                    })}
+                                    {pointLinePoints.map((_pt, idx, arr) => (
+                                        <Fragment key={idx}>
+                                            <MeasurementPoint
+                                                disabled
+                                                name={`line-pt_${idx}`}
+                                                id={`line-pt_${idx}`}
+                                                stroke="black"
+                                                strokeWidth={2}
+                                                fill={idx === 0 ? "green" : idx === arr.length - 1 ? "blue" : "white"}
+                                                r={5}
+                                            />
+                                            {idx === 0 || idx === arr.length - 1 ? null : <g id={`line-an_${idx}`} />}
+                                        </Fragment>
+                                    ))}
                                 </>
                             ) : null}
 
@@ -1755,7 +1751,9 @@ export function Render3D({ onInit }: Props) {
                                         id={getMeasureObjectPathId(obj)}
                                         r={5}
                                         disabled={true}
-                                        fill="blue"
+                                        fill="green"
+                                        stroke="black"
+                                        strokeWidth={2}
                                     />
                                 ) : (
                                     <Fragment key={`${getMeasureObjectPathId(obj)}_${idx}`}>
@@ -1787,6 +1785,8 @@ export function Render3D({ onInit }: Props) {
                                         r={5}
                                         disabled={true}
                                         fill="black"
+                                        stroke="white"
+                                        strokeWidth={2}
                                     />
                                     <MeasurementPoint
                                         name={`normal end`}
@@ -1794,26 +1794,14 @@ export function Render3D({ onInit }: Props) {
                                         r={5}
                                         disabled={true}
                                         fill="black"
+                                        stroke="white"
+                                        strokeWidth={2}
                                     />
                                     <AxisText id={`normalDistanceText`} />
                                 </>
                             ) : null}
                             {measure.duoMeasurementValues?.pointA && measure.duoMeasurementValues?.pointB ? (
                                 <>
-                                    <MeasurementPoint
-                                        name={`measure start`}
-                                        id={`measure_0`}
-                                        r={5}
-                                        disabled={true}
-                                        fill="green"
-                                    />
-                                    <MeasurementPoint
-                                        name={`measure end`}
-                                        id={`measure_1`}
-                                        r={5}
-                                        disabled={true}
-                                        fill="green"
-                                    />
                                     <path id="brepDistance" d="" stroke="green" strokeWidth={2} fill="none" />
                                     <path id="brepPathX" d="" stroke="red" strokeWidth={2} fill="none" />
                                     <path id="brepPathY" d="" stroke="lightgreen" strokeWidth={2} fill="none" />

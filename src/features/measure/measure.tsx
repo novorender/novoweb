@@ -3,7 +3,7 @@ import { useRef, useEffect } from "react";
 import { Box, Button, Checkbox, FormControlLabel } from "@mui/material";
 
 import { useAppDispatch, useAppSelector } from "app/store";
-import { IosSwitch, LogoSpeedDial, ScrollBox, WidgetContainer, WidgetHeader } from "components";
+import { IosSwitch, LinearProgress, LogoSpeedDial, ScrollBox, WidgetContainer, WidgetHeader } from "components";
 import { WidgetList } from "features/widgetList";
 import { useToggle } from "hooks/useToggle";
 import { featuresConfig } from "config/features";
@@ -19,7 +19,7 @@ export function Measure() {
     const maximized = useAppSelector(selectMaximized) === featuresConfig.measure.key;
 
     const dispatch = useAppDispatch();
-    const { selected, forcePoint } = useAppSelector(selectMeasure);
+    const { selected, forcePoint, loadingBrep } = useAppSelector(selectMeasure);
     const selecting = useAppSelector(selectPicker) === Picker.Measurement;
     const isInitial = useRef(true);
 
@@ -82,6 +82,11 @@ export function Measure() {
                         </Box>
                     ) : null}
                 </WidgetHeader>
+                {loadingBrep ? (
+                    <Box>
+                        <LinearProgress />
+                    </Box>
+                ) : null}
                 <ScrollBox display={menuOpen || minimized ? "none" : "block"}>
                     {selected.map((obj, idx) => (
                         <MeasuredObject obj={obj} idx={idx} key={idx} />

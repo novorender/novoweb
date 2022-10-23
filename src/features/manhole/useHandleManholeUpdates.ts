@@ -12,18 +12,23 @@ export function useHandleManholeUpdates() {
     } = useExplorerGlobals();
 
     const dispatch = useAppDispatch();
-    const selectedId = useAppSelector(selectManholeId);
+    const selectedObj = useAppSelector(selectManholeId);
 
     useEffect(() => {
         loadManholeValues();
 
         async function loadManholeValues() {
-            if (measureScene) {
-                const manhole = selectedId
-                    ? ((await measureScene.inspectObject(selectedId, "manhole")) as ManholeMeasureValues)
-                    : undefined;
-                dispatch(manholeActions.setManholeValues(manhole));
+            if (!measureScene) {
+                return;
             }
+
+            dispatch(manholeActions.setLoadingBrep(true));
+            const manhole = selectedObj
+                ? // TODO(SIGVE): fix type
+                  ((await measureScene.inspectObject(selectedObj, "manhole")) as ManholeMeasureValues)
+                : undefined;
+            dispatch(manholeActions.setManholeValues(manhole));
+            dispatch(manholeActions.setLoadingBrep(false));
         }
-    }, [selectedId, dispatch, measureScene]);
+    }, [selectedObj, dispatch, measureScene]);
 }
