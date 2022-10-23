@@ -52,7 +52,9 @@ export function useMeasureObjects() {
                                   mObj.settings = obj.settings;
                                   return mObj;
                               })
-                              .catch(() => obj)
+                              .catch(() => {
+                                  return { ObjectId: obj.id, drawKind: "vertex", parameter: obj.pos };
+                              })
                 )
             )) as ExtendedMeasureEntity[];
 
