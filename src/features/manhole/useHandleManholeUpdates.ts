@@ -1,5 +1,4 @@
 import { useEffect } from "react";
-import { ManholeMeasureValues } from "@novorender/measure-api";
 
 import { useAppDispatch, useAppSelector } from "app/store";
 import { useExplorerGlobals } from "contexts/explorerGlobals";
@@ -22,12 +21,13 @@ export function useHandleManholeUpdates() {
                 return;
             }
 
+            if (!selectedObj) {
+                dispatch(manholeActions.setManholeValues(undefined));
+                return;
+            }
+
             dispatch(manholeActions.setLoadingBrep(true));
-            const manhole = selectedObj
-                ? // TODO(SIGVE): fix type
-                  ((await measureScene.inspectObject(selectedObj, "manhole")) as ManholeMeasureValues)
-                : undefined;
-            dispatch(manholeActions.setManholeValues(manhole));
+            dispatch(manholeActions.setManholeValues(await measureScene.inspectObject(selectedObj, "manhole")));
             dispatch(manholeActions.setLoadingBrep(false));
         }
     }, [selectedObj, dispatch, measureScene]);
