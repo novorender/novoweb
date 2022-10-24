@@ -1,7 +1,6 @@
-import { useEffect, useRef, useState } from "react";
-import { Box, Button, FormControlLabel } from "@mui/material";
+import { useEffect, useRef } from "react";
+import { Box, Button, Checkbox, FormControlLabel } from "@mui/material";
 import { DeleteSweep, Undo } from "@mui/icons-material";
-import { LineStripMeasureValues } from "@novorender/measure-api";
 
 import { useAppDispatch, useAppSelector } from "app/store";
 import {
@@ -13,29 +12,26 @@ import {
     Accordion,
     AccordionSummary,
     AccordionDetails,
+    Divider,
 } from "components";
 import { featuresConfig } from "config/features";
 import { WidgetList } from "features/widgetList";
 import { useToggle } from "hooks/useToggle";
 import { Picker, renderActions, selectPicker } from "slices/renderSlice";
 import { selectMinimized, selectMaximized } from "slices/explorerSlice";
-import { useExplorerGlobals } from "contexts/explorerGlobals";
 
-import { pointLineActions, selectPointLinePoints } from "./pointLineSlice";
+import { pointLineActions, selectPointLine } from "./pointLineSlice";
+import { VertexTable } from "features/measure/tables";
 
 export function PointLine() {
     const [menuOpen, toggleMenu] = useToggle();
-    const {
-        state: { measureScene },
-    } = useExplorerGlobals(true);
 
     const minimized = useAppSelector(selectMinimized) === featuresConfig.area.key;
     const maximized = useAppSelector(selectMaximized) === featuresConfig.area.key;
 
     const selecting = useAppSelector(selectPicker) === Picker.PointLine;
-    const points = useAppSelector(selectPointLinePoints);
+    const { points, lockElevation, result } = useAppSelector(selectPointLine);
     const dispatch = useAppDispatch();
-    const [measurement, setMeasurement] = useState<LineStripMeasureValues>();
 
     const isInitial = useRef(true);
 
@@ -48,12 +44,6 @@ export function PointLine() {
             isInitial.current = false;
         }
     }, [dispatch, selecting, points]);
-
-    useEffect(() => {
-        const val = measureScene.measureLineStrip(points);
-        setMeasurement(val);
-        dispatch(pointLineActions.setLength(val.totalLength));
-    }, [points, dispatch, measureScene]);
 
     useEffect(() => {
         return () => {
@@ -102,13 +92,27 @@ export function PointLine() {
                     ) : null}
                 </WidgetHeader>
                 <ScrollBox flexDirection="column" display={menuOpen || minimized ? "none" : "flex"}>
-                    {measurement && measurement.totalLength > 0 ? (
+                    <Box px={1} pt={1}>
+                        <FormControlLabel
+                            control={
+                                <Checkbox
+                                    size="medium"
+                                    color="primary"
+                                    checked={lockElevation}
+                                    onChange={() => dispatch(pointLineActions.toggleLockElevation())}
+                                />
+                            }
+                            label={<Box fontSize={14}>Lock elevation</Box>}
+                        />
+                    </Box>
+                    {result && result.totalLength > 0 ? (
                         <>
-                            <Box p={1}>Total length: {measurement.totalLength.toFixed(3)} m</Box>
+                            <Divider sx={{ py: 0 }} />
+                            <Box p={1}>Total length: {result.totalLength.toFixed(3)} m</Box>
                             <Accordion defaultExpanded={false}>
                                 <AccordionSummary>Segment lengths</AccordionSummary>
                                 <AccordionDetails>
-                                    {measurement.segmentLengts.map((l, idx) => (
+                                    {result.segmentLengts.map((l, idx) => (
                                         <Box key={idx} p={1}>
                                             {l.toFixed(3)} m
                                         </Box>
@@ -118,13 +122,23 @@ export function PointLine() {
                             <Accordion defaultExpanded={false}>
                                 <AccordionSummary>Angles between segments</AccordionSummary>
                                 <AccordionDetails>
-                                    {measurement.angles.map((a, idx) => (
+                                    {result.angles.map((a, idx) => (
                                         <Box key={idx} p={1}>
                                             {(a * (180 / Math.PI)).toFixed(3)} °
                                         </Box>
                                     ))}
                                 </AccordionDetails>
                             </Accordion>
+                            {points.length > 0 ? (
+                                <Accordion defaultExpanded={false}>
+                                    <AccordionSummary>Points</AccordionSummary>
+                                    <AccordionDetails>
+                                        <Box p={1}>
+                                            <VertexTable vertices={points} />
+                                        </Box>
+                                    </AccordionDetails>
+                                </Accordion>
+                            ) : null}
                         </>
                     ) : null}
                 </ScrollBox>

@@ -15,6 +15,7 @@ import { pointLineActions } from "features/pointLine";
 import { groupsActions } from "features/groups";
 import { dataApi } from "app";
 import { useSceneId } from "hooks/useSceneId";
+import { manholeActions } from "features/manhole";
 
 export function useSelectBookmark() {
     const sceneId = useSceneId();
@@ -140,6 +141,12 @@ export function useSelectBookmark() {
             dispatch(pointLineActions.setPoints(bookmark.pointLine.pts));
         } else {
             dispatch(pointLineActions.setPoints([]));
+        }
+
+        if (bookmark.manhole) {
+            dispatch(manholeActions.selectObj(bookmark.manhole.id));
+        } else {
+            dispatch(manholeActions.selectObj(undefined));
         }
 
         if (bookmark.clippingPlanes) {

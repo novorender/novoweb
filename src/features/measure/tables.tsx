@@ -70,7 +70,7 @@ export function MeasurementTable({ start, end }: { start: ReadonlyVec3; end: Rea
     );
 }
 
-export function VertexTable({ vertices, text }: { vertices: vec3[]; text?: string[] }) {
+export function VertexTable({ vertices, text }: { vertices: ReadonlyVec3[]; text?: string[] }) {
     return (
         <Table size="small" padding="none">
             <TableHead>

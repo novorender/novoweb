@@ -131,7 +131,7 @@ export function HeightProfile() {
             } else if (
                 selectedEntity.status === AsyncStatus.Error ||
                 (selectedEntity.status === AsyncStatus.Success &&
-                    (!selectedEntity.data || selectedEntity.data?.kind === "vertex"))
+                    (!selectedEntity.data || selectedEntity.data.drawKind === "vertex"))
             ) {
                 setProfile({
                     status: AsyncStatus.Error,

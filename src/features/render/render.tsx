@@ -11,6 +11,7 @@ import {
     Fragment,
 } from "react";
 import { SceneData } from "@novorender/data-js-api";
+import { MeasureEntity } from "@novorender/measure-api";
 import {
     View,
     EnvironmentDescription,
@@ -81,7 +82,8 @@ import {
 import { explorerActions, selectUrlBookmarkId } from "slices/explorerSlice";
 import { selectDeviations } from "features/deviations";
 import { bookmarksActions, selectBookmarks, useSelectBookmark } from "features/bookmarks";
-import { measureActions, selectMeasure, isMeasureObject } from "features/measure";
+import { measureActions, selectMeasure } from "features/measure";
+import { manholeActions, selectManholeMeasureValues, useHandleManholeUpdates } from "features/manhole";
 import { ditioActions, selectMarkers, selectShowMarkers } from "features/ditio";
 import { useAppDispatch, useAppSelector } from "app/store";
 import { followPathActions, selectDrawSelectedPositions, usePathMeasureObjects } from "features/followPath";
@@ -90,7 +92,7 @@ import { areaActions, selectArea, selectAreaDrawPoints } from "features/area";
 import { useHandleAreaPoints } from "features/area";
 import { useHeightProfileMeasureObject } from "features/heightProfile";
 import { heightProfileActions } from "features/heightProfile";
-import { pointLineActions, selectPointLineLength, selectPointLinePoints } from "features/pointLine";
+import { pointLineActions, selectPointLine, useHandlePointLineUpdates } from "features/pointLine";
 import { selectCurrentLocation, useHandleLocationMarker } from "features/myLocation";
 
 import { useHighlighted, highlightActions, useDispatchHighlighted } from "contexts/highlighted";
@@ -203,7 +205,7 @@ export function Render3D({ onInit }: Props) {
     const visibleObjects = useVisible();
     const { state: customGroups, dispatch: dispatchCustomGroups } = useCustomGroups();
     const {
-        state: { view, scene, canvas },
+        state: { view, scene, canvas, measureScene },
         dispatch: dispatchGlobals,
     } = useExplorerGlobals();
     const selectBookmark = useSelectBookmark();
@@ -240,8 +242,9 @@ export function Render3D({ onInit }: Props) {
     const areaPoints = useAppSelector(selectAreaDrawPoints);
     const myLocationPoint = useAppSelector(selectCurrentLocation);
     const areaValue = useAppSelector(selectArea);
-    const pointLinePoints = useAppSelector(selectPointLinePoints);
-    const pointLineLength = useAppSelector(selectPointLineLength);
+    const { points: pointLinePoints, result: pointLineResult } = useAppSelector(selectPointLine);
+    const manhole = useAppSelector(selectManholeMeasureValues);
+
     const dispatch = useAppDispatch();
 
     const rendering = useRef({
@@ -288,7 +291,7 @@ export function Render3D({ onInit }: Props) {
     );
 
     const renderParametricMeasure = useCallback(() => {
-        if (!view || !svg) {
+        if (!view || !svg || !measureScene) {
             return;
         }
 
@@ -297,8 +300,9 @@ export function Render3D({ onInit }: Props) {
         const renderPoints = (params: Omit<Parameters<typeof renderMeasurePoints>[0], "svg">) =>
             renderMeasurePoints({ svg, ...params });
 
-        const renderObject = (params: Omit<Parameters<typeof renderMeasureObject>[0], "svg" | "view" | "size">) =>
-            renderMeasureObject({ svg, view, size, ...params });
+        const renderObject = (
+            params: Omit<Parameters<typeof renderMeasureObject>[0], "svg" | "view" | "size" | "measureScene">
+        ) => renderMeasureObject({ svg, view, size, measureScene, ...params });
 
         const pathPoints = (params: Omit<Parameters<typeof getPathPoints>[0], "view" | "size">) =>
             getPathPoints({ view, size, ...params });
@@ -306,23 +310,17 @@ export function Render3D({ onInit }: Props) {
         if (drawSelectedPaths && pathMeasureObjects.status === AsyncStatus.Success) {
             pathMeasureObjects.data.forEach((obj) => {
                 renderObject({
-                    obj,
                     fillColor: measurementFillColor,
                     pathName: "fp_" + getMeasureObjectPathId(obj),
+                    entity: obj,
                     advancedDrawing: false,
+                    measureSettings: undefined,
                 });
             });
         }
 
         if (heightProfileMeasureObject) {
-            if (isMeasureObject(heightProfileMeasureObject)) {
-                renderObject({
-                    obj: heightProfileMeasureObject,
-                    fillColor: "rgba(0, 255, 38, 0.5)",
-                    pathName: "heightProfileMeasureObject",
-                    advancedDrawing: false,
-                });
-            } else {
+            if (heightProfileMeasureObject.drawKind === "vertex") {
                 const pts = pathPoints({ points: [heightProfileMeasureObject.pos] });
                 if (pts) {
                     renderSingleMeasurePoint({
@@ -331,19 +329,20 @@ export function Render3D({ onInit }: Props) {
                         pointName: "heightProfileMeasureObject",
                     });
                 }
+            } else {
+                renderObject({
+                    fillColor: "rgba(0, 255, 38, 0.5)",
+                    pathName: "heightProfileMeasureObject",
+                    entity: heightProfileMeasureObject,
+                    advancedDrawing: false,
+                    measureSettings: undefined,
+                });
             }
         }
 
         measureObjects.forEach((obj) => {
-            if (isMeasureObject(obj)) {
-                renderObject({
-                    obj,
-                    fillColor: measurementFillColor,
-                    pathName: getMeasureObjectPathId(obj),
-                    advancedDrawing: true,
-                });
-            } else {
-                const pts = pathPoints({ points: [obj.pos] });
+            if (obj.drawKind === "vertex") {
+                const pts = pathPoints({ points: [obj.parameter as vec3] });
                 if (pts) {
                     renderSingleMeasurePoint({
                         svg,
@@ -353,8 +352,26 @@ export function Render3D({ onInit }: Props) {
                 } else {
                     resetSVG({ svg, pathName: getMeasureObjectPathId(obj) });
                 }
+            } else {
+                renderObject({
+                    fillColor: measurementFillColor,
+                    pathName: getMeasureObjectPathId(obj),
+                    entity: obj,
+                    advancedDrawing: true,
+                    measureSettings: obj.settings,
+                });
             }
         });
+
+        if (manhole) {
+            renderObject({
+                fillColor: "rgba(0, 255, 38, 0.5)",
+                pathName: "manhole",
+                entity: manhole,
+                advancedDrawing: false,
+                measureSettings: undefined,
+            });
+        }
 
         const normalPoints = measure.duoMeasurementValues?.normalPoints;
         if (normalPoints) {
@@ -556,7 +573,7 @@ export function Render3D({ onInit }: Props) {
                     svgNames: { path: "line-path", point: "line-pt" },
                     text: {
                         textName: "lineText",
-                        value: pointLineLength,
+                        value: pointLineResult?.totalLength ?? 0,
                         type: "center",
                     },
                     closed: false,
@@ -607,12 +624,14 @@ export function Render3D({ onInit }: Props) {
         drawSelectedPaths,
         areaPoints,
         pointLinePoints,
-        pointLineLength,
+        pointLineResult,
         heightProfileMeasureObject,
         size,
         svg,
         areaValue,
         myLocationPoint,
+        manhole,
+        measureScene,
     ]);
     useEffect(() => {
         renderParametricMeasure();
@@ -980,6 +999,8 @@ export function Render3D({ onInit }: Props) {
         ]
     );
 
+    window.view = view;
+
     useEffect(
         function handleSubtreeChanges() {
             if (!view || !("advanced" in view.settings) || !subtrees) {
@@ -992,6 +1013,7 @@ export function Render3D({ onInit }: Props) {
             settings.advanced.hidePoints = subtrees.points !== SubtreeStatus.Shown;
             settings.advanced.hideTerrain = subtrees.terrain !== SubtreeStatus.Shown;
             settings.advanced.hideTriangles = subtrees.triangles !== SubtreeStatus.Shown;
+            settings.advanced.hideDocuments = subtrees.documents !== SubtreeStatus.Shown;
         },
         [subtrees, view]
     );
@@ -1244,6 +1266,8 @@ export function Render3D({ onInit }: Props) {
     useHandleCameraControls();
     useHandleAreaPoints();
     useHandleLocationMarker();
+    useHandleManholeUpdates();
+    useHandlePointLineUpdates();
 
     useEffect(() => {
         handleUrlBookmark();
@@ -1389,6 +1413,10 @@ export function Render3D({ onInit }: Props) {
                     measureActions.selectObj({ id: measure.forcePoint ? -1 : result.objectId, pos: result.position })
                 );
                 break;
+            case Picker.Manhole:
+                dispatch(manholeActions.selectObj(result.objectId));
+                break;
+
             case Picker.FollowPathObject: {
                 dispatch(followPathActions.setSelectedPositions([{ id: result.objectId, pos: result.position }]));
                 break;
@@ -1497,6 +1525,7 @@ export function Render3D({ onInit }: Props) {
                 Picker.ClippingPlane,
                 Picker.Area,
                 Picker.PointLine,
+                Picker.Manhole,
                 Picker.HeightProfileEntity,
             ].includes(picker);
 
@@ -1659,22 +1688,22 @@ export function Render3D({ onInit }: Props) {
                                         strokeWidth={1}
                                     />
                                     <AxisText id={`areaText`} />
+                                    {areaPoints.map((_pt, idx, array) => (
+                                        <Fragment key={idx}>
+                                            <MeasurementPoint
+                                                disabled
+                                                name={`area-pt_${idx}`}
+                                                id={`area-pt_${idx}`}
+                                                stroke="black"
+                                                fill={idx === 0 ? "green" : idx === array.length - 1 ? "blue" : "white"}
+                                                strokeWidth={2}
+                                                r={5}
+                                            />
+                                            {array.length > 2 ? <g id={`area-an_${idx}`} /> : null}
+                                        </Fragment>
+                                    ))}
                                 </>
                             ) : null}
-                            {areaPoints.map((_pt, idx, array) => (
-                                <Fragment key={idx}>
-                                    <MeasurementPoint
-                                        disabled
-                                        name={`area-pt_${idx}`}
-                                        id={`area-pt_${idx}`}
-                                        stroke="black"
-                                        fill={idx === 0 ? "green" : idx === array.length - 1 ? "blue" : "white"}
-                                        strokeWidth={2}
-                                        r={5}
-                                    />
-                                    <g id={`area-an_${idx}`}></g>
-                                </Fragment>
-                            ))}
                             {pointLinePoints.length ? (
                                 <>
                                     <path
@@ -1685,7 +1714,7 @@ export function Render3D({ onInit }: Props) {
                                         fill="none"
                                     />
                                     <AxisText id={`lineText`} />
-                                    {pointLinePoints.map((_pt, idx) => (
+                                    {pointLinePoints.map((_pt, idx, arr) => (
                                         <Fragment key={idx}>
                                             <MeasurementPoint
                                                 disabled
@@ -1693,9 +1722,10 @@ export function Render3D({ onInit }: Props) {
                                                 id={`line-pt_${idx}`}
                                                 stroke="black"
                                                 strokeWidth={2}
+                                                fill={idx === 0 ? "green" : idx === arr.length - 1 ? "blue" : "white"}
                                                 r={5}
                                             />
-                                            <g id={`line-an_${idx}`}></g>
+                                            {idx === 0 || idx === arr.length - 1 ? null : <g id={`line-an_${idx}`} />}
                                         </Fragment>
                                     ))}
                                 </>
@@ -1714,40 +1744,38 @@ export function Render3D({ onInit }: Props) {
                                       />
                                   ))
                                 : null}
-                            {measureObjects
-                                .sort((objA, objB) =>
-                                    isMeasureObject(objA) && isMeasureObject(objB) ? 0 : isMeasureObject(objA) ? -1 : 1
+                            {measureObjects.map((obj, idx) =>
+                                obj.drawKind === "vertex" ? (
+                                    <MeasurementPoint
+                                        key={getMeasureObjectPathId(obj)}
+                                        id={getMeasureObjectPathId(obj)}
+                                        r={5}
+                                        disabled={true}
+                                        fill="green"
+                                        stroke="black"
+                                        strokeWidth={2}
+                                    />
+                                ) : (
+                                    <Fragment key={`${getMeasureObjectPathId(obj)}_${idx}`}>
+                                        <defs id={"gr_def_" + obj.ObjectId}>
+                                            <linearGradient id={"gr_" + obj.ObjectId} x1={0} x2={0} y1={0} y2={1}>
+                                                <stop offset="0%" stopColor="green" />
+                                                <stop offset="100%" stopColor="red" />
+                                            </linearGradient>
+                                        </defs>
+                                        {Array.from({ length: 3 }).map((_, idx) => (
+                                            <path
+                                                key={`${getMeasureObjectPathId(obj)}_${idx}`}
+                                                id={`${getMeasureObjectPathId(obj)}_${idx}`}
+                                                d=""
+                                                stroke={"yellow"}
+                                                strokeWidth="2"
+                                                fill={"blue"}
+                                            />
+                                        ))}
+                                    </Fragment>
                                 )
-                                .map((obj, idx) =>
-                                    isMeasureObject(obj) ? (
-                                        <Fragment key={`${getMeasureObjectPathId(obj)}_${idx}`}>
-                                            <defs id={"gr_def_" + obj.id}>
-                                                <linearGradient id={"gr_" + obj.id} x1={0} x2={0} y1={0} y2={1}>
-                                                    <stop offset="0%" stopColor="green" />
-                                                    <stop offset="100%" stopColor="red" />
-                                                </linearGradient>
-                                            </defs>
-                                            {Array.from({ length: 3 }).map((_, idx) => (
-                                                <path
-                                                    key={`${getMeasureObjectPathId(obj)}_${idx}`}
-                                                    id={`${getMeasureObjectPathId(obj)}_${idx}`}
-                                                    d=""
-                                                    stroke={"yellow"}
-                                                    strokeWidth="2"
-                                                    fill={"blue"}
-                                                />
-                                            ))}
-                                        </Fragment>
-                                    ) : (
-                                        <MeasurementPoint
-                                            key={getMeasureObjectPathId(obj)}
-                                            id={getMeasureObjectPathId(obj)}
-                                            r={5}
-                                            disabled={true}
-                                            fill="blue"
-                                        />
-                                    )
-                                )}
+                            )}
                             {measure.duoMeasurementValues?.normalPoints ? (
                                 <>
                                     <path id="normalDistance" d="" stroke="black" strokeWidth={3} fill="none" />
@@ -1757,6 +1785,8 @@ export function Render3D({ onInit }: Props) {
                                         r={5}
                                         disabled={true}
                                         fill="black"
+                                        stroke="white"
+                                        strokeWidth={2}
                                     />
                                     <MeasurementPoint
                                         name={`normal end`}
@@ -1764,26 +1794,14 @@ export function Render3D({ onInit }: Props) {
                                         r={5}
                                         disabled={true}
                                         fill="black"
+                                        stroke="white"
+                                        strokeWidth={2}
                                     />
                                     <AxisText id={`normalDistanceText`} />
                                 </>
                             ) : null}
                             {measure.duoMeasurementValues?.pointA && measure.duoMeasurementValues?.pointB ? (
                                 <>
-                                    <MeasurementPoint
-                                        name={`measure start`}
-                                        id={`measure_0`}
-                                        r={5}
-                                        disabled={true}
-                                        fill="green"
-                                    />
-                                    <MeasurementPoint
-                                        name={`measure end`}
-                                        id={`measure_1`}
-                                        r={5}
-                                        disabled={true}
-                                        fill="green"
-                                    />
                                     <path id="brepDistance" d="" stroke="green" strokeWidth={2} fill="none" />
                                     <path id="brepPathX" d="" stroke="red" strokeWidth={2} fill="none" />
                                     <path id="brepPathY" d="" stroke="lightgreen" strokeWidth={2} fill="none" />
@@ -1800,15 +1818,7 @@ export function Render3D({ onInit }: Props) {
                                 </>
                             ) : null}
                             {heightProfileMeasureObject ? (
-                                isMeasureObject(heightProfileMeasureObject) ? (
-                                    <path
-                                        id={"heightProfileMeasureObject"}
-                                        d=""
-                                        stroke="yellow"
-                                        strokeWidth={2}
-                                        fill="none"
-                                    />
-                                ) : (
+                                heightProfileMeasureObject.drawKind === "vertex" ? (
                                     <MeasurementPoint
                                         id={"heightProfileMeasureObject"}
                                         r={5}
@@ -1817,7 +1827,21 @@ export function Render3D({ onInit }: Props) {
                                         stroke="black"
                                         strokeWidth={2}
                                     />
+                                ) : (
+                                    <path
+                                        id={"heightProfileMeasureObject"}
+                                        d=""
+                                        stroke="yellow"
+                                        strokeWidth={2}
+                                        fill="none"
+                                    />
                                 )
+                            ) : null}
+                            {manhole ? (
+                                <>
+                                    <path id={"manhole"} d="" stroke="yellow" strokeWidth={2} fill="none" />
+                                    <path id={"manhole_filled"} d="" stroke="yellow" strokeWidth={2} fill="none" />
+                                </>
                             ) : null}
                             {myLocationPoint ? (
                                 <path
@@ -1949,8 +1973,11 @@ function SceneError({ id, error }: { id: string; error: Exclude<Status, Status.I
     );
 }
 
-function getMeasureObjectPathId(obj: { id: number; pos: vec3 }): string {
-    return obj.id + vec3.str(obj.pos);
+function getMeasureObjectPathId(obj: MeasureEntity): string {
+    return (
+        obj.ObjectId +
+        (obj.drawKind === "vertex" ? vec3.str(obj.parameter as vec3) : `${obj.instanceIndex}_${obj.pathIndex}`)
+    );
 }
 
 function isSceneError(status: Status): status is Exclude<Status, Status.Initial> {

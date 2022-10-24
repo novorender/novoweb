@@ -20,6 +20,7 @@ import { pointLineReducer } from "features/pointLine";
 import { heightProfileReducer } from "features/heightProfile";
 import { myLocationReducer } from "features/myLocation";
 import { jiraApi, jiraReducer } from "features/jira";
+import { manholeReducer } from "features/manhole/manholeSlice";
 
 const rootReducer = combineReducers({
     explorer: explorerReducer,
@@ -32,6 +33,7 @@ const rootReducer = combineReducers({
     deviations: deviationsReducer,
     measure: measureReducer,
     area: areaReducer,
+    manhole: manholeReducer,
     pointLine: pointLineReducer,
     myLocation: myLocationReducer,
     bimCollab: bimCollabReducer,

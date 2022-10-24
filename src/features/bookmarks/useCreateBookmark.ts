@@ -20,6 +20,7 @@ import { selectMeasure } from "features/measure";
 import { selectFollowPath } from "features/followPath";
 import { selectAreaPoints } from "features/area";
 import { selectPointLinePoints } from "features/pointLine";
+import { selectManholeMeasureValues } from "features/manhole";
 
 export function useCreateBookmark() {
     const measurement = useAppSelector(selectMeasure);
@@ -30,6 +31,7 @@ export function useCreateBookmark() {
     const areaPts = useAppSelector(selectAreaPoints);
     const pointLinePts = useAppSelector(selectPointLinePoints);
     const subtrees = useAppSelector(selectSubtrees);
+    const manhole = useAppSelector(selectManholeMeasureValues);
 
     const {
         state: { view },
@@ -111,6 +113,7 @@ export function useCreateBookmark() {
             ...(measurement.selected.length > 0 ? { objectMeasurement: measurement.selected } : {}),
             ...(areaPts.length ? { area: { pts: areaPts } } : {}),
             ...(pointLinePts.length ? { pointLine: { pts: pointLinePts } } : {}),
+            ...(manhole ? { manhole: { id: manhole.ObjectId } } : {}),
             ...(subtrees
                 ? {
                       subtrees: {
@@ -118,6 +121,7 @@ export function useCreateBookmark() {
                           points: subtrees.points === SubtreeStatus.Shown,
                           terrain: subtrees.terrain === SubtreeStatus.Shown,
                           lines: subtrees.lines === SubtreeStatus.Shown,
+                          documents: subtrees.documents === SubtreeStatus.Shown,
                       },
                   }
                 : {}),

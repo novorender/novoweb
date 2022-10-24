@@ -30,6 +30,7 @@ import {
     VisibilityOff,
     VrpanoOutlined,
     LinearScale,
+    FiberSmartRecord,
 } from "@mui/icons-material";
 
 import { ReactComponent as Clipping } from "media/icons/clipping.svg";
@@ -65,6 +66,13 @@ export const featuresConfig = {
         key: "pointLine",
         name: "Point line",
         Icon: LinearScale,
+        type: FeatureType.Widget,
+        defaultLocked: false,
+    },
+    manhole: {
+        key: "manhole",
+        name: "Manhole",
+        Icon: FiberSmartRecord,
         type: FeatureType.Widget,
         defaultLocked: false,
     },
