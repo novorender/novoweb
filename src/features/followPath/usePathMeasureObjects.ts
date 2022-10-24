@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { FollowParametricObject, MeasureObject } from "@novorender/measure-api";
+import { FollowParametricObject, MeasureEntity } from "@novorender/measure-api";
 import { vec3 } from "gl-matrix";
 
 import { useExplorerGlobals } from "contexts/explorerGlobals";
@@ -10,7 +10,7 @@ import { AsyncState, AsyncStatus } from "types/misc";
 type ExtendedMeasureObject = {
     fp?: FollowParametricObject;
     pos: vec3;
-} & MeasureObject;
+} & MeasureEntity;
 
 export function usePathMeasureObjects() {
     const {
@@ -37,24 +37,18 @@ export function usePathMeasureObjects() {
                 await Promise.all(
                     selected.map((obj) =>
                         measureScene
-                            .downloadMeasureObject(obj.id, obj.pos)
+                            .pickMeasureEntity(obj.id, obj.pos)
                             .then((_mObj) => {
                                 const mObj = _mObj as ExtendedMeasureObject;
-
-                                if (!mObj.selectedEntity || mObj.selectedEntity.kind === "vertex") {
-                                    return;
-                                } else {
-                                    mObj.pos = obj.pos;
-                                    return mObj;
-                                }
+                                mObj.pos = obj.pos;
+                                return mObj;
                             })
                             .then(async (mObj) => {
-                                if (!mObj) {
+                                if (mObj.drawKind === "vertex") {
                                     return;
                                 }
-
                                 mObj.fp = await measureScene.followParametricObjectFromPosition(obj.id, obj.pos);
-
+                                mObj.pos = obj.pos;
                                 return mObj;
                             })
                             .catch(() => undefined)

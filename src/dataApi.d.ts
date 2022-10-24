@@ -37,5 +37,8 @@ declare module "@novorender/data-js-api" {
         options?: {
             addSelectedToSelectionBasket?: boolean;
         };
+        manhole?: {
+            id: number;
+        };
     }
 }

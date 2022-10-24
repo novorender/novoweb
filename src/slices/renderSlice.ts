@@ -95,6 +95,7 @@ export enum Picker {
     Area,
     PointLine,
     HeightProfileEntity,
+    Manhole,
 }
 
 export type Subtree = keyof NonNullable<State["subtrees"]>;

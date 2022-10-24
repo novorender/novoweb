@@ -15,6 +15,7 @@ const initialState = {
     forcePoint: false,
     pinned: undefined as undefined | number,
     duoMeasurementValues: undefined as undefined | DuoMeasurementValues,
+    loadingBrep: false,
 };
 
 type State = typeof initialState;
@@ -50,6 +51,9 @@ export const measureSlice = createSlice({
             state.selected = state.selected.map((obj, idx) =>
                 idx === action.payload.idx ? { ...obj, settings: action.payload.settings } : obj
             );
+        },
+        setLoadingBrep: (state, action: PayloadAction<State["loadingBrep"]>) => {
+            state.loadingBrep = action.payload;
         },
     },
 });

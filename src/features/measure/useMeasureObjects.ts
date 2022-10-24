@@ -1,22 +1,14 @@
 import { useEffect, useState } from "react";
-import { DuoMeasurementValues, MeasureObject, MeasureSettings } from "@novorender/measure-api";
-import { vec3 } from "gl-matrix";
+import { DuoMeasurementValues, MeasureSettings } from "@novorender/measure-api";
 
 import { useExplorerGlobals } from "contexts/explorerGlobals";
 import { useAppDispatch, useAppSelector } from "app/store";
 
 import { measureActions, selectMeasure } from "./measureSlice";
+import { MeasureEntity } from "@novorender/measure-api";
 
-export type ExtendedMeasureObject = MeasureObject & {
-    pos: vec3;
+export type ExtendedMeasureEntity = MeasureEntity & {
     settings?: MeasureSettings;
-};
-
-type MeasurePoint = {
-    pos: vec3;
-    id: number;
-    settings?: any;
-    selectedEntity?: any;
 };
 
 export function useMeasureObjects() {
@@ -27,7 +19,7 @@ export function useMeasureObjects() {
     const measure = useAppSelector(selectMeasure);
     const dispatch = useAppDispatch();
 
-    const [measureObjects, setMeasureObjects] = useState([] as (ExtendedMeasureObject | MeasurePoint)[]);
+    const [measureObjects, setMeasureObjects] = useState([] as ExtendedMeasureEntity[]);
 
     useEffect(() => {
         getMeasureObjects();
@@ -37,38 +29,40 @@ export function useMeasureObjects() {
                 return;
             }
 
+            dispatch(measureActions.setLoadingBrep(true));
             const mObjects = (await Promise.all(
                 measure.selected.map((obj) =>
                     obj.id === -1
-                        ? obj
+                        ? { ObjectId: -1, drawKind: "vertex", parameter: obj.pos }
                         : measureScene
-                              .downloadMeasureObject(obj.id, obj.pos)
+                              .pickMeasureEntity(obj.id, obj.pos)
                               .then(async (_mObj) => {
-                                  const mObj = _mObj as ExtendedMeasureObject;
                                   if (obj.settings?.cylinderMeasure === "top") {
-                                      await mObj.swapCylinder("outer");
-                                  } else if (obj.settings?.cylinderMeasure === "bottom") {
-                                      await mObj.swapCylinder("inner");
-                                  }
-
-                                  if (mObj.selectedEntity) {
-                                      if (mObj.selectedEntity.kind === "vertex") {
-                                          return { ...obj, pos: mObj.selectedEntity.parameter };
+                                      const swappedEnt = await measureScene.swapCylinder(_mObj, "outer");
+                                      if (swappedEnt) {
+                                          _mObj = swappedEnt;
                                       }
-
-                                      mObj.pos = obj.pos;
-                                      mObj.settings = obj.settings;
+                                  } else if (obj.settings?.cylinderMeasure === "bottom") {
+                                      const swappedEnt = await measureScene.swapCylinder(_mObj, "inner");
+                                      if (swappedEnt) {
+                                          _mObj = swappedEnt;
+                                      }
                                   }
 
-                                  return mObj.selectedEntity ? mObj : obj;
+                                  let mObj = _mObj as ExtendedMeasureEntity;
+                                  mObj.settings = obj.settings;
+                                  return mObj;
                               })
-                              .catch(() => obj)
+                              .catch(() => {
+                                  return { ObjectId: obj.id, drawKind: "vertex", parameter: obj.pos };
+                              })
                 )
-            )) as (ExtendedMeasureObject | MeasurePoint)[];
+            )) as ExtendedMeasureEntity[];
 
             if (mObjects.length !== 2) {
                 dispatch(measureActions.setDuoMeasurementValues(undefined));
                 setMeasureObjects(mObjects);
+                dispatch(measureActions.setLoadingBrep(false));
                 return;
             }
 
@@ -76,22 +70,13 @@ export function useMeasureObjects() {
 
             let res: DuoMeasurementValues | undefined;
 
-            if (obj1.selectedEntity && obj2.selectedEntity) {
-                res = (await measureScene
-                    .measure(obj1.selectedEntity!, obj2.selectedEntity, obj1.settings, obj2.settings)
-                    .catch((e) => console.warn(e))) as DuoMeasurementValues | undefined;
-            } else if (obj1.selectedEntity || obj2.selectedEntity) {
-                const obj = obj1.selectedEntity ? obj1 : obj2;
-                const pt = obj === obj1 ? obj2 : obj1;
-                res = (await measureScene.measureToPoint(obj.selectedEntity, pt.pos, obj.settings)) as
-                    | DuoMeasurementValues
-                    | undefined;
-            } else {
-                res = measureScene.pointToPoint(obj1.pos, obj2.pos) as DuoMeasurementValues | undefined;
-            }
+            res = (await measureScene
+                .measure(obj1, obj2, obj1.settings, obj2.settings)
+                .catch((e) => console.warn(e))) as DuoMeasurementValues | undefined;
 
             dispatch(measureActions.setDuoMeasurementValues(res));
             setMeasureObjects(mObjects);
+            dispatch(measureActions.setLoadingBrep(false));
         }
     }, [measureScene, setMeasureObjects, measure.selected, dispatch]);
 
