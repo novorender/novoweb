@@ -6,7 +6,7 @@ import { useAppSelector } from "app/store";
 import { Divider, LinearProgress, ScrollBox } from "components";
 import { selectProjectSettings } from "slices/renderSlice";
 
-import { useGetIssuesQuery } from "../jiraApi";
+import { useGetIssuesQuery, useGetPermissionsQuery } from "../jiraApi";
 
 export function Issues() {
     const theme = useTheme();
@@ -15,13 +15,22 @@ export function Issues() {
     const { jira: jiraSettings } = useAppSelector(selectProjectSettings);
     const settings = jiraSettings || { project: "", component: "", space: "" }; // TODO(OLA): set default
     const {
-        data: { issues } = { issues: [] },
+        data: issues = [],
         isFetching: isFetchingIssues,
         isLoading: isLoadingIssues,
         isError: isErrorIssues,
     } = useGetIssuesQuery({
         project: settings.project,
         component: settings.component,
+    });
+
+    const {
+        data: _permissions,
+        isFetching: _isFetchingPermissions,
+        isLoading: _isLoadingPermissions,
+        isError: _isErrorPermissions,
+    } = useGetPermissionsQuery({
+        project: settings.project,
     });
 
     return (

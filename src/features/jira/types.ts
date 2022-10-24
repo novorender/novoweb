@@ -69,3 +69,12 @@ export type Issue = {
         summary: string;
     };
 };
+
+export type Permission = {
+    id: string;
+    key: string;
+    name: string;
+    type: string;
+    description: string;
+    havePermission: boolean;
+};
