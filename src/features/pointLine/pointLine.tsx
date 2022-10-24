@@ -19,15 +19,15 @@ import { WidgetList } from "features/widgetList";
 import { useToggle } from "hooks/useToggle";
 import { Picker, renderActions, selectPicker } from "slices/renderSlice";
 import { selectMinimized, selectMaximized } from "slices/explorerSlice";
+import { VertexTable } from "features/measure/tables";
 
 import { pointLineActions, selectPointLine } from "./pointLineSlice";
-import { VertexTable } from "features/measure/tables";
 
 export function PointLine() {
     const [menuOpen, toggleMenu] = useToggle();
 
-    const minimized = useAppSelector(selectMinimized) === featuresConfig.area.key;
-    const maximized = useAppSelector(selectMaximized) === featuresConfig.area.key;
+    const minimized = useAppSelector(selectMinimized) === featuresConfig.pointLine.key;
+    const maximized = useAppSelector(selectMaximized) === featuresConfig.pointLine.key;
 
     const selecting = useAppSelector(selectPicker) === Picker.PointLine;
     const { points, lockElevation, result } = useAppSelector(selectPointLine);
