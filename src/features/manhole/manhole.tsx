@@ -201,13 +201,13 @@ export function Manhole() {
                                 </Accordion>
                             ) : null}
                         </>
-                    ) : (
+                    ) : !isLoading ? (
                         <Box p={1}>
                             {selectedObj !== undefined
                                 ? `Object with ID ${selectedObj} is not a manhole.`
                                 : "No object selected."}
                         </Box>
-                    )}
+                    ) : null}
                 </ScrollBox>
 
                 <WidgetList
