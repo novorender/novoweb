@@ -205,7 +205,7 @@ export function Render3D({ onInit }: Props) {
     const visibleObjects = useVisible();
     const { state: customGroups, dispatch: dispatchCustomGroups } = useCustomGroups();
     const {
-        state: { view, scene, canvas, measureScene },
+        state: { view, scene, canvas, measureScene, size },
         dispatch: dispatchGlobals,
     } = useExplorerGlobals();
     const selectBookmark = useSelectBookmark();
@@ -263,7 +263,6 @@ export function Render3D({ onInit }: Props) {
     const isTouchPointer = useRef(false);
     const camX = useRef(vec3.create());
     const camY = useRef(vec3.create());
-    const [size, setSize] = useState({ width: 0, height: 0 });
 
     const heightProfileMeasureObject = useHeightProfileMeasureObject();
     const measureObjects = useMeasureObjects();
@@ -835,7 +834,9 @@ export function Render3D({ onInit }: Props) {
                         _view.applySettings({
                             display: { width: canvas.width, height: canvas.height },
                         });
-                        setSize({ width: canvas.width, height: canvas.height });
+                        dispatchGlobals(
+                            explorerGlobalsActions.update({ size: { width: canvas.width, height: canvas.height } })
+                        );
                     }
                 });
 
@@ -882,7 +883,6 @@ export function Render3D({ onInit }: Props) {
         dispatchHidden,
         dispatchHighlighted,
         dispatchVisible,
-        setSize,
     ]);
 
     useEffect(() => {
