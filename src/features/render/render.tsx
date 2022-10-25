@@ -507,7 +507,8 @@ export function Render3D({ onInit }: Props) {
         dispatchObjectGroups,
         dispatchHidden,
         dispatchHighlighted,
-        dispatchSelectionBasket,
+        dispatchVisible,
+        setSize,
     ]);
 
     useEffect(() => {

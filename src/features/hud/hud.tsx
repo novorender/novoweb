@@ -6,8 +6,11 @@ import { Widgets } from "features/widgets";
 import { useAppSelector } from "app/store";
 import { NavigationCube } from "features/navigationCube";
 import { selectAdvancedSettings } from "slices/renderSlice";
+import { Minimap } from "features/minimap";
 
 const largeFabButtonDiameter = 40;
+
+const minimap = true; // todo
 
 export function Hud() {
     const theme = useTheme();
@@ -17,6 +20,7 @@ export function Hud() {
     return (
         <>
             {navigationCube ? <NavigationCube /> : null}
+            {minimap ? <Minimap /> : null}
             <Box
                 position="absolute"
                 bottom={0}
