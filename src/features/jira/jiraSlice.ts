@@ -2,7 +2,7 @@ import { createSelector, createSlice, PayloadAction } from "@reduxjs/toolkit";
 
 import { RootState } from "app/store";
 import { AsyncState, AsyncStatus } from "types/misc";
-import { Space } from "./types";
+import { IssueType, Space } from "./types";
 
 export enum JiraStatus {
     Initial,
@@ -19,6 +19,7 @@ const initialState = {
     space: undefined as undefined | Space,
     accessToken: { status: AsyncStatus.Initial } as AsyncState<string>,
     availableSpaces: { status: AsyncStatus.Initial } as AsyncState<Space[]>,
+    issueType: undefined as undefined | IssueType,
 };
 
 // TODO (flytt inn i jira component)
@@ -44,6 +45,9 @@ export const jiraSlice = createSlice({
         deleteOAuthCode: (state) => {
             state.oAuthCode = "";
         },
+        setIssueType: (state, action: PayloadAction<State["issueType"]>) => {
+            state.issueType = action.payload;
+        },
     },
 });
 
@@ -54,6 +58,7 @@ export const selectJiraAccessTokenData = createSelector(selectJiraAccessToken, (
 export const selectOAuthCode = (state: RootState) => state.jira.oAuthCode;
 export const selectJiraSpace = (state: RootState) => state.jira.space;
 export const selectAvailableJiraSpaces = (state: RootState) => state.jira.availableSpaces;
+export const selectIssueType = (state: RootState) => state.jira.issueType;
 
 const { actions, reducer } = jiraSlice;
 export { actions as jiraActions, reducer as jiraReducer };

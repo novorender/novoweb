@@ -15,6 +15,7 @@ import { Issues } from "./routes/issues";
 import { Settings } from "./routes/settings";
 import { Filters } from "./routes/filters";
 import { Issue } from "./routes/issue";
+import { CreateIssue } from "./routes/create";
 
 export function Jira() {
     const sceneId = useSceneId();
@@ -51,6 +52,9 @@ export function Jira() {
                             </Route>
                             <Route path="/issue/:key">
                                 <Issue />
+                            </Route>
+                            <Route path="/create">
+                                <CreateIssue />
                             </Route>
                         </Switch>
                     </MemoryRouter>

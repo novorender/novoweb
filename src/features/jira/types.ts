@@ -78,3 +78,23 @@ export type Permission = {
     description: string;
     havePermission: boolean;
 };
+
+export type IssueType = {
+    self: string;
+    id: string;
+    description: string;
+    iconUrl: string;
+    name: string;
+    subtask: boolean;
+    avatarId: number;
+    entityId: string;
+    hierarchyLevel: number;
+    scope?: {
+        type: string;
+        project: {
+            id: string;
+            key: string;
+            name: string;
+        };
+    };
+};

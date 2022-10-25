@@ -2,11 +2,24 @@ import { ArrowBack } from "@mui/icons-material";
 import { Box, Button, useTheme } from "@mui/material";
 import { Divider, ScrollBox } from "components";
 import { useHistory, useParams } from "react-router-dom";
+import { useGetIssueQuery } from "../jiraApi";
 
 export function Issue() {
     const theme = useTheme();
     const history = useHistory();
     const key = useParams<{ key: string }>().key;
+
+    const {
+        data: issues = [],
+        isFetching: isFetchingIssues,
+        isLoading: isLoadingIssues,
+        isError: isErrorIssues,
+    } = useGetIssueQuery(
+        {
+            key,
+        },
+        { skip: !key }
+    );
 
     return (
         <>

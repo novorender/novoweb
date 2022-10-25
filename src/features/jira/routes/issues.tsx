@@ -1,5 +1,5 @@
-import { FilterAlt } from "@mui/icons-material";
-import { Link, useHistory } from "react-router-dom";
+import { AddCircle, FilterAlt } from "@mui/icons-material";
+import { useHistory } from "react-router-dom";
 import { Box, Button, List, ListItemButton, useTheme } from "@mui/material";
 
 import { useAppSelector } from "app/store";
@@ -13,7 +13,7 @@ export function Issues() {
     const history = useHistory();
 
     const { jira: jiraSettings } = useAppSelector(selectProjectSettings);
-    const settings = jiraSettings || { project: "", component: "", space: "" }; // TODO(OLA): set default
+    const settings = jiraSettings || { project: "", component: "", space: "" }; // TODO(OLA): set default && validate before
     const {
         data: issues = [],
         isFetching: isFetchingIssues,
@@ -25,13 +25,15 @@ export function Issues() {
     });
 
     const {
-        data: _permissions,
+        data: permissions = [],
         isFetching: _isFetchingPermissions,
         isLoading: _isLoadingPermissions,
         isError: _isErrorPermissions,
     } = useGetPermissionsQuery({
         project: settings.project,
     });
+
+    console.log(permissions);
 
     return (
         <>
@@ -40,11 +42,27 @@ export function Issues() {
                     <Box px={1}>
                         <Divider />
                     </Box>
-                    <Box display="flex">
-                        <Button component={Link} to={`/filters`} color="grey">
+                    <Box display="flex" justifyContent="space-between">
+                        <Button
+                            onClick={() => {
+                                history.push("/filters");
+                            }}
+                            color="grey"
+                        >
                             <FilterAlt sx={{ mr: 1 }} />
                             Filters
                         </Button>
+                        {permissions.includes("CREATE_ISSUES") && (
+                            <Button
+                                onClick={() => {
+                                    history.push("/create");
+                                }}
+                                color="grey"
+                            >
+                                <AddCircle sx={{ mr: 1 }} />
+                                Create
+                            </Button>
+                        )}
                     </Box>
                 </>
             </Box>
