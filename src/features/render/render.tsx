@@ -59,7 +59,7 @@ const Canvas = styled("canvas")(
         bottom: 0;
         left: 0;
         z-index: 0;
-    `
+    `,
 );
 
 const Svg = styled("svg")(
@@ -75,7 +75,7 @@ const Svg = styled("svg")(
         g {
             will-change: transform;
         }
-    `
+    `,
 );
 
 export function Render3D() {
@@ -103,7 +103,7 @@ export function Render3D() {
         (el) => {
             dispatchGlobals(explorerGlobalsActions.update({ canvas: el }));
         },
-        [dispatchGlobals]
+        [dispatchGlobals],
     );
 
     useHandleInit();

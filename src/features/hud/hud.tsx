@@ -2,6 +2,7 @@ import { Box, useTheme } from "@mui/material";
 
 import { useAppSelector } from "app/redux-store-interactions";
 import LocationHud from "features/locationHud/locationHud";
+import { Minimap } from "features/minimap";
 import { NavigationCube } from "features/navigationCube";
 import { PickerEscSnackbar } from "features/pickerEscSnackbar/pickerEscSnackbar";
 import { PrimaryMenu, PrimaryMenuNew } from "features/primaryMenu";
@@ -14,6 +15,8 @@ import { useHandleWidgetLayout } from "features/widgets/useHandleWidgetLayout";
 import { selectNewDesign, selectWidgetLayout } from "slices/explorer";
 
 import GlobalSnackbar from "./globalSnackbar";
+
+const minimap = true; // todo
 
 export function Hud() {
     const newDesign = useAppSelector(selectNewDesign);
@@ -35,6 +38,7 @@ function HudNew() {
     return (
         <>
             {navigationCube.enabled && <NavigationCube />}
+            {minimap && <Minimap />}
             <Box
                 sx={{
                     position: "absolute",
