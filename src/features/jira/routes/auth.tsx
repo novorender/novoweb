@@ -102,7 +102,8 @@ export function Auth() {
                 if (!jiraSettings?.space && isAdmin) {
                     history.push("/settings");
                 } else {
-                    history.push("/issues");
+                    // history.push("/issues"); // TODO
+                    history.push("/create");
                 }
 
                 return;

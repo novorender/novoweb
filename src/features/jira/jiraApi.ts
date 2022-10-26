@@ -3,7 +3,7 @@ import { RootState } from "app/store";
 import { AsyncStatus } from "types/misc";
 
 import { selectJiraAccessToken, selectJiraSpace } from "./jiraSlice";
-import { Component, Issue, IssueType, Permission, Project, Space } from "./types";
+import { Component, CreateIssueMetadata, Issue, IssueType, Permission, Project, Space } from "./types";
 
 export const jiraIdentityServer = "https://auth.atlassian.com/authorize";
 export const jiraClientId = window.jiraClientId || process.env.REACT_APP_JIRA_CLIENT_ID || "";
@@ -51,26 +51,27 @@ export const jiraApi = createApi({
     baseQuery: dynamicBaseQuery,
     endpoints: (builder) => ({
         getPermissions: builder.query<string[], { project: string }>({
-            query: ({ project }) =>
-                `mypermissions?projectKey=${project}&permissions=${encodeURIComponent("CREATE_ISSUES")}`,
+            query: ({ project }) => `mypermissions?projectKey=${project}&permissions=CREATE_ISSUES,EDIT_ISSUES`,
             transformResponse: (res: { permissions: { [key: string]: Permission } }) =>
                 Object.values(res.permissions)
                     .filter((permission) => permission.havePermission)
                     .map((permission) => permission.key),
         }),
         getIssues: builder.query<Issue[], { project: string; component: string }>({
-            query: ({ project, component }) =>
-                `search?jql=${encodeURIComponent(`project = ${project} AND component = ${component}`)}`,
+            query: ({ project, component }) => `search?jql=${`project = "${project}" AND component = "${component}"`}`,
             transformResponse: (res: { issues: Issue[] }) => res.issues,
         }),
         getIssue: builder.query<Issue, { key: string }>({
             query: ({ key }) => `issue/${key}`,
         }),
-
-        // TODO lag type, transform, filter type @ project
-        getCreateIssueMetadata: builder.query<any, { issueTypeId: string }>({
+        getIssueTypeScreenScheme: builder.query<Issue, { issueTypeId: string }>({
+            query: ({ issueTypeId: _ }) => `issuetypescreenscheme`, // todo: kan sikkert slettes
+        }),
+        getCreateIssueMetadata: builder.query<CreateIssueMetadata["fields"], { issueTypeId: string }>({
             query: ({ issueTypeId }) =>
                 `issue/createmeta?expand=projects.issuetypes.fields&issuetypeIds=${issueTypeId}`,
+            transformResponse: (res: { projects: { issuetypes: CreateIssueMetadata[] }[] }) =>
+                res.projects[0]?.issuetypes[0]?.fields,
         }),
         getIssueTypes: builder.query<IssueType[], { project: string }>({
             query: () => `issuetype`,
@@ -216,6 +217,7 @@ export const {
     useGetIssueQuery,
     useGetPermissionsQuery,
     useGetIssueTypesQuery,
+    useGetIssueTypeScreenSchemeQuery,
     useGetCreateIssueMetadataQuery,
 } = jiraApi;
 

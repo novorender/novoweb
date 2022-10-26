@@ -10,10 +10,10 @@ export function Issue() {
     const key = useParams<{ key: string }>().key;
 
     const {
-        data: issues = [],
-        isFetching: isFetchingIssues,
-        isLoading: isLoadingIssues,
-        isError: isErrorIssues,
+        data: issue,
+        isFetching: _isFetchingIssues,
+        isLoading: _isLoadingIssues,
+        isError: _isErrorIssues,
     } = useGetIssueQuery(
         {
             key,
@@ -27,12 +27,14 @@ export function Issue() {
                 <Box px={1}>
                     <Divider />
                 </Box>
-                <Button onClick={() => history.goBack()} color="grey">
+                <Button onClick={() => history.push("/issues")} color="grey">
                     <ArrowBack sx={{ mr: 1 }} />
                     Back
                 </Button>
             </Box>
-            <ScrollBox p={1}>ISSUE - {key} </ScrollBox>
+            <ScrollBox p={1}>
+                ISSUE - {key} {issue && `-> ${issue.fields.summary}`}
+            </ScrollBox>
         </>
     );
 }

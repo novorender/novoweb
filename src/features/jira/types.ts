@@ -98,3 +98,51 @@ export type IssueType = {
         };
     };
 };
+
+export type CreateIssueMetadata = {
+    self: string;
+    id: string;
+    description: string;
+    iconUrl: string;
+    name: string;
+    untranslatedName: string;
+    subtask: boolean;
+    expand: string;
+    fields: {
+        [key: string]: CreateIssueMetadataField;
+    };
+};
+
+type CreateIssueMetadataField = {
+    required: boolean;
+    schema: { type: string; system: string };
+    name: string;
+    key: string;
+    hasDefaultValue: boolean;
+    operations: string[];
+    autoCompleteUrl?: string;
+    defaultValue?: CreateIssueMetadataFieldValue;
+    allowedValues: CreateIssueMetadataFieldValue[];
+};
+
+type CreateIssueMetadataFieldValue = {
+    self: string;
+    id: string;
+    name: string;
+    key?: string;
+    description?: string;
+    iconUrl?: string;
+    projectTypeKey?: string;
+    simplified?: boolean;
+    hierarchyLevel?: number;
+    subtask?: boolean;
+    avatarId?: number;
+    avatarUrls?: {
+        [key: string]: string;
+    };
+};
+
+const x = {
+    expand: "projects",
+    projects: [],
+};

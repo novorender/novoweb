@@ -200,9 +200,17 @@ const initialState = {
     projectSettings: {
         [ProjectSetting.TmZone]: "",
         [ProjectSetting.DitioProjectNumber]: "",
-        [ProjectSetting.Jira]: { space: "novorender-test", project: "TI", component: "novorender" } as
-            | undefined
-            | { space: string; project: string; component: string }, // TODO
+        [ProjectSetting.Jira]: { space: "novorender-test", project: "TI", component: "novorender" } as {
+            space: string;
+            project: string;
+            component: string;
+        }, // TODO
+        // [ProjectSetting.Jira]: { space: "cowigroup", project: "NBF14", component: "novorender" } as {
+        //     space: string;
+        //     project: string;
+        //     component: string;
+        // }, // TODO
+        // [ProjectSetting.Jira]: undefined as undefined | { space: string; project: string; component: string }, // TODO
     },
     picker: Picker.Object,
 };
