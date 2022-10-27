@@ -583,7 +583,8 @@ export function initAdvancedSettings(view: View, customProperties: Record<string
 
     store.dispatch(
         renderActions.setAdvancedSettings({
-            [AdvancedSetting.ShowPerformance]: Boolean(customProperties?.showStats),
+            [AdvancedSetting.ShowPerformance]:
+                Boolean(customProperties?.showStats) || window.location.search.includes("debug=true"),
             [AdvancedSetting.AutoFps]: view.settings.quality.resolution.autoAdjust.enabled,
             [AdvancedSetting.TriangleBudget]: view.settings.quality.detail.autoAdjust.enabled,
             [AdvancedSetting.ShowBoundingBoxes]: diagnostics.showBoundingBoxes,
