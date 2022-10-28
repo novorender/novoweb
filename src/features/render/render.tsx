@@ -1,4 +1,4 @@
-import { glMatrix, mat4, quat, vec2, vec3, vec4 } from "gl-matrix";
+import { glMatrix, mat3, mat4, quat, vec2, vec3, vec4 } from "gl-matrix";
 import {
     useEffect,
     useState,
@@ -301,11 +301,11 @@ export function Render3D({ onInit }: Props) {
             renderMeasurePoints({ svg, ...params });
 
         const renderObject = (
-            params: Omit<Parameters<typeof renderMeasureObject>[0], "svg" | "view" | "size" | "measureScene">
-        ) => renderMeasureObject({ svg, view, size, measureScene, ...params });
+            params: Omit<Parameters<typeof renderMeasureObject>[0], "svg" | "view" | "measureScene">
+        ) => renderMeasureObject({ svg, view, measureScene, ...params });
 
-        const pathPoints = (params: Omit<Parameters<typeof getPathPoints>[0], "view" | "size">) =>
-            getPathPoints({ view, size, ...params });
+        const pathPoints = (params: Omit<Parameters<typeof getPathPoints>[0], "view">) =>
+            getPathPoints({ view, ...params });
 
         if (drawSelectedPaths && pathMeasureObjects.status === AsyncStatus.Success) {
             pathMeasureObjects.data.forEach((obj) => {
@@ -626,7 +626,6 @@ export function Render3D({ onInit }: Props) {
         pointLinePoints,
         pointLineResult,
         heightProfileMeasureObject,
-        size,
         svg,
         areaValue,
         myLocationPoint,
@@ -1097,6 +1096,8 @@ export function Render3D({ onInit }: Props) {
         [view, deviation]
     );
 
+    window.view = view;
+
     useEffect(
         function handleCameraStateChange() {
             const controller = flightController.current;
@@ -1115,29 +1116,57 @@ export function Render3D({ onInit }: Props) {
                 } else if (cameraState.zoomTo) {
                     view.camera.controller.zoomTo(cameraState.zoomTo);
                 }
-            } else if (cameraState.type === CameraType.Orthographic && cameraState.params) {
-                // copy non-primitives
-                const safeParams: OrthoControllerParams = {
-                    ...cameraState.params,
-                    referenceCoordSys: cameraState.params.referenceCoordSys
-                        ? (Array.from(cameraState.params.referenceCoordSys) as mat4)
-                        : undefined,
-                    position: cameraState.params.position
-                        ? (Array.from(cameraState.params.position) as vec3)
-                        : undefined,
-                };
-
-                if (!safeParams.referenceCoordSys) {
-                    delete safeParams.referenceCoordSys;
+            } else if (cameraState.type === CameraType.Orthographic) {
+                let orthoController: CameraController;
+                if (cameraState.params) {
+                    orthoController = api.createCameraController(cameraState.params, canvas);
+                } else if (cameraState.goTo) {
+                    const rot = mat3.fromQuat(mat3.create(), cameraState.goTo.rotation);
+                    const pos = cameraState.goTo.position;
+                    const referenceCoordSys = mat4.fromValues(
+                        rot[0],
+                        rot[1],
+                        rot[2],
+                        0,
+                        rot[3],
+                        rot[4],
+                        rot[5],
+                        0,
+                        rot[6],
+                        rot[7],
+                        rot[8],
+                        0,
+                        pos[0],
+                        pos[1],
+                        pos[2],
+                        1
+                    );
+                    orthoController = api.createCameraController({ kind: "ortho", referenceCoordSys }, canvas);
+                } else {
+                    orthoController = api.createCameraController({ kind: "ortho" }, canvas);
                 }
 
-                if (!safeParams.position) {
-                    delete safeParams.position;
-                }
+                const mat = (orthoController.params as OrthoControllerParams).referenceCoordSys;
+                (orthoController.params as OrthoControllerParams).near = -0.001;
 
-                const orthoController = api.createCameraController(safeParams, canvas);
+                if (mat) {
+                    const right = vec3.fromValues(mat[0], mat[1], mat[2]);
+                    const up = vec3.fromValues(mat[4], mat[5], mat[6]);
+                    const pt = vec3.fromValues(mat[12], mat[13], mat[14]);
+                    const squareSize = 1 * (gridDefaults.minorLineCount + 1);
+
+                    dispatch(
+                        renderActions.setGrid({
+                            origo: pt,
+                            axisY: vec3.scale(vec3.create(), up, squareSize),
+                            axisX: vec3.scale(vec3.create(), right, squareSize),
+                        })
+                    );
+                }
 
                 if (view.camera.controller.params.kind === "ortho") {
+                    (orthoController.params as OrthoControllerParams).fieldOfView =
+                        view.camera.controller.params.fieldOfView;
                     orthoController.fingersMap = { ...view.camera.controller.fingersMap };
                     orthoController.mouseButtonsMap = { ...view.camera.controller.mouseButtonsMap };
                 }
@@ -1146,7 +1175,7 @@ export function Render3D({ onInit }: Props) {
                 view.camera.controller = orthoController;
             }
         },
-        [cameraState, view, canvas, dispatch]
+        [cameraState, view, canvas, dispatch, gridDefaults.minorLineCount]
     );
 
     useEffect(
@@ -1348,6 +1377,10 @@ export function Render3D({ onInit }: Props) {
 
         switch (picker) {
             case Picker.Object:
+                if (result.objectId === -1) {
+                    return;
+                }
+
                 const alreadySelected = highlightedObjects.ids[result.objectId] === true;
 
                 if (selectMultiple) {
@@ -1388,27 +1421,14 @@ export function Render3D({ onInit }: Props) {
             case Picker.OrthoPlane:
                 const orthoController = api.createCameraController({ kind: "ortho" }, canvas);
                 (orthoController as any).init(result.position, normal, view.camera);
-                flightController.current = view.camera.controller;
-                flightController.current.enabled = false;
-
-                view.camera.controller = orthoController;
-                dispatch(renderActions.setCamera({ type: CameraType.Orthographic }));
-                dispatch(renderActions.setPicker(Picker.Object));
-                (orthoController as any).near = -0.001;
-
-                const mat = (orthoController.params as any).referenceCoordSys;
-                const right = vec3.fromValues(mat[0], mat[1], mat[2]);
-                const up = vec3.fromValues(mat[4], mat[5], mat[6]);
-                const pt = vec3.fromValues(mat[12], mat[13], mat[14]);
-                const squareSize = 1 * (gridDefaults.minorLineCount + 1);
-
                 dispatch(
-                    renderActions.setGrid({
-                        origo: pt,
-                        axisY: vec3.scale(vec3.create(), up, squareSize),
-                        axisX: vec3.scale(vec3.create(), right, squareSize),
+                    renderActions.setCamera({
+                        type: CameraType.Orthographic,
+                        params: orthoController.params as OrthoControllerParams,
                     })
                 );
+                dispatch(renderActions.setPicker(Picker.Object));
+
                 break;
             case Picker.Measurement:
                 dispatch(
@@ -1416,10 +1436,18 @@ export function Render3D({ onInit }: Props) {
                 );
                 break;
             case Picker.Manhole:
+                if (result.objectId === -1) {
+                    return;
+                }
+
                 dispatch(manholeActions.selectObj(result.objectId));
                 break;
 
             case Picker.FollowPathObject: {
+                if (result.objectId === -1) {
+                    return;
+                }
+
                 dispatch(followPathActions.setSelectedPositions([{ id: result.objectId, pos: result.position }]));
                 break;
             }
@@ -1432,6 +1460,10 @@ export function Render3D({ onInit }: Props) {
                 break;
             }
             case Picker.HeightProfileEntity: {
+                if (result.objectId === -1) {
+                    return;
+                }
+
                 dispatch(heightProfileActions.selectPoint({ id: result.objectId, pos: result.position }));
                 break;
             }
