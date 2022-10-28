@@ -89,8 +89,7 @@ export function PerformanceStats() {
                     <tr>
                         <td>Device:</td>
                         <td>
-                            {deviceProfile.name}; weak: {String(deviceProfile.weakDevice)}; API v{api.version}; Debug
-                            profile: {String((api as any).deviceProfile.debugProfile === true)}
+                            {deviceProfile.name}; API v{api.version};
                         </td>
                     </tr>
                     <tr>
@@ -106,12 +105,12 @@ export function PerformanceStats() {
                         <td ref={activeQualityRef}>1</td>
                     </tr>
                     <tr>
-                        <td>Resolution:</td>
-                        <td ref={resolutionRef}>69x420</td>
-                    </tr>
-                    <tr>
                         <td>FPS:</td>
                         <td ref={fpsRef}>123</td>
+                    </tr>
+                    <tr>
+                        <td>Resolution:</td>
+                        <td ref={resolutionRef}>69x420</td>
                     </tr>
                     <tr>
                         <td>Triangles:</td>
