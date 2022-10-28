@@ -69,7 +69,7 @@ export function PerformanceStats() {
                     const w = canvas.clientWidth * scale * devicePixelRatio;
                     const h = canvas.clientHeight * scale * devicePixelRatio;
 
-                    resolutionRef.current.innerText = `${w.toFixed(0)}x${h.toFixed(0)} - scale: ${scale}`;
+                    resolutionRef.current.innerText = `${w.toFixed(0)}x${h.toFixed(0)} - scale: ${scale.toFixed(2)}`;
                 }
 
                 if (jsMemoryRef.current && "memory" in performance) {
