@@ -999,7 +999,9 @@ export function Render3D({ onInit }: Props) {
         ]
     );
 
+    //todo
     window.view = view;
+    (window as any).api = api;
 
     useEffect(
         function handleSubtreeChanges() {
