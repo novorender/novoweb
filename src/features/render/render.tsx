@@ -301,11 +301,11 @@ export function Render3D({ onInit }: Props) {
             renderMeasurePoints({ svg, ...params });
 
         const renderObject = (
-            params: Omit<Parameters<typeof renderMeasureObject>[0], "svg" | "view" | "size" | "measureScene">
-        ) => renderMeasureObject({ svg, view, size, measureScene, ...params });
+            params: Omit<Parameters<typeof renderMeasureObject>[0], "svg" | "view" | "measureScene">
+        ) => renderMeasureObject({ svg, view, measureScene, ...params });
 
-        const pathPoints = (params: Omit<Parameters<typeof getPathPoints>[0], "view" | "size">) =>
-            getPathPoints({ view, size, ...params });
+        const pathPoints = (params: Omit<Parameters<typeof getPathPoints>[0], "view">) =>
+            getPathPoints({ view, ...params });
 
         if (drawSelectedPaths && pathMeasureObjects.status === AsyncStatus.Success) {
             pathMeasureObjects.data.forEach((obj) => {
@@ -626,7 +626,6 @@ export function Render3D({ onInit }: Props) {
         pointLinePoints,
         pointLineResult,
         heightProfileMeasureObject,
-        size,
         svg,
         areaValue,
         myLocationPoint,
