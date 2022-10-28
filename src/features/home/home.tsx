@@ -90,8 +90,8 @@ export function Home({ position, ...speedDialProps }: Props) {
 
             view.applySettings(toApply);
             initClippingBox(toApply.clippingPlanes);
-            initClippingPlanes(toApply.clippingVolume);
-            initDeviation(toApply.points.deviation);
+            initClippingPlanes(toApply.clippingVolume ?? { enabled: false, mode: "union", planes: [] });
+            initDeviation(toApply.points.deviation ?? { mode: "off", colors: [] });
         }
 
         if (camera.kind === "ortho") {
