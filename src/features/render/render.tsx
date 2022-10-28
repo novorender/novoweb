@@ -45,10 +45,9 @@ import {
     PanoramaStatus,
     useHandlePanoramaChanges,
 } from "features/panoramas";
-import { Loading } from "components";
+import { Accordion, AccordionDetails, AccordionSummary, Loading } from "components";
 
 import { api, dataApi, measureApi } from "app";
-import { useMountedState } from "hooks/useMountedState";
 import { useSceneId } from "hooks/useSceneId";
 import { enabledFeaturesToFeatureKeys, getEnabledFeatures } from "utils/misc";
 import { AsyncStatus } from "types/misc";
@@ -269,7 +268,7 @@ export function Render3D({ onInit }: Props) {
     const measureObjects = useMeasureObjects();
     const pathMeasureObjects = usePathMeasureObjects();
     const [svg, setSvg] = useState<null | SVGSVGElement>(null);
-    const [status, setStatus] = useMountedState(Status.Initial);
+    const [status, setStatus] = useState<{ status: Status; msg?: string }>({ status: Status.Initial });
 
     const [deviationStamp, setDeviationStamp] = useState<{
         mouseX: number;
@@ -857,14 +856,17 @@ export function Render3D({ onInit }: Props) {
                     const error = (e as { error: string }).error;
 
                     if (error === "Not authorized") {
-                        setStatus(Status.AuthError);
+                        setStatus({ status: Status.AuthError });
                     } else if (error === "Scene not found") {
-                        setStatus(Status.NoSceneError);
+                        setStatus({ status: Status.NoSceneError });
                     } else {
-                        setStatus(Status.ServerError);
+                        setStatus({ status: Status.ServerError, msg: error });
                     }
-                } else {
-                    setStatus(Status.ServerError);
+                } else if (e instanceof Error) {
+                    setStatus({
+                        status: Status.ServerError,
+                        msg: e.stack ? e.stack : typeof e.cause === "string" ? e.cause : `${e.name}: ${e.message}`,
+                    });
                 }
             }
         }
@@ -1096,8 +1098,6 @@ export function Render3D({ onInit }: Props) {
         [view, deviation]
     );
 
-    window.view = view;
-
     useEffect(
         function handleCameraStateChange() {
             const controller = flightController.current;
@@ -1192,7 +1192,7 @@ export function Render3D({ onInit }: Props) {
                 window.removeEventListener("blur", exitPointerLock);
                 dispatchGlobals(explorerGlobalsActions.update({ view: undefined, scene: undefined }));
                 dispatch(renderActions.resetState());
-                setStatus(Status.Initial);
+                setStatus({ status: Status.Initial });
             };
         },
         [id, dispatch, setStatus, dispatchGlobals]
@@ -1665,8 +1665,8 @@ export function Render3D({ onInit }: Props) {
 
     return (
         <Box position="relative" width="100%" height="100%" sx={{ userSelect: "none" }}>
-            {isSceneError(status) ? (
-                <SceneError error={status} id={id} />
+            {isSceneError(status.status) ? (
+                <SceneError error={status.status} msg={status.msg} id={id} />
             ) : (
                 <>
                     {advancedSettings.showPerformance && view && canvas ? <PerformanceStats /> : null}
@@ -1952,7 +1952,7 @@ export function Render3D({ onInit }: Props) {
     );
 }
 
-function SceneError({ id, error }: { id: string; error: Exclude<Status, Status.Initial> }) {
+function SceneError({ id, error, msg }: { id: string; error: Exclude<Status, Status.Initial>; msg?: string }) {
     const theme = useTheme();
     const loginUrl = `${window.location.origin}/login/${id}${window.location.search}`;
 
@@ -1978,8 +1978,8 @@ function SceneError({ id, error }: { id: string; error: Exclude<Status, Status.I
             {error === Status.AuthError ? (
                 <CircularProgress />
             ) : (
-                <Paper>
-                    <Box minWidth={320} p={2}>
+                <Paper sx={{ minWidth: 320, maxWidth: `min(600px, 90%)`, wordBreak: "break-word", p: 2 }}>
+                    <Box>
                         <Typography paragraph variant="h4" component="h1" align="center">
                             {error === Status.ServerError
                                 ? "An error occured"
@@ -2000,6 +2000,24 @@ function SceneError({ id, error }: { id: string; error: Exclude<Status, Status.I
                                 </>
                             )}
                         </Typography>
+                        <Accordion>
+                            <AccordionSummary>Details</AccordionSummary>
+                            <AccordionDetails>
+                                <Box p={1}>
+                                    <>
+                                        Timestamp: {new Date().toISOString()} <br />
+                                        API: {api.version} <br />
+                                        Dataserver: {(dataApi as any).serviceUrl}
+                                        {msg ? (
+                                            <Box mt={2}>
+                                                ERROR: <br />
+                                                {msg}
+                                            </Box>
+                                        ) : null}
+                                    </>
+                                </Box>
+                            </AccordionDetails>
+                        </Accordion>
                     </Box>
                 </Paper>
             )}
