@@ -79,6 +79,7 @@ export function OrthoCam() {
         pos[1] = Math.min(pos[1], maxY);
         (orthoController as any).init(pos, [0, 1, 0], view.camera);
         const mat = (orthoController.params as any).referenceCoordSys;
+
         const right = vec3.fromValues(mat[0], mat[1], mat[2]);
         const up = vec3.fromValues(mat[4], mat[5], mat[6]);
         const pt = vec3.fromValues(mat[12], mat[13], mat[14]);

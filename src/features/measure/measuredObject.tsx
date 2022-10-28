@@ -1,6 +1,12 @@
 import { vec3 } from "gl-matrix";
 import { useEffect, useState } from "react";
-import { MeasureEntity, MeasurementValues, MeasureSettings, PointEntity } from "@novorender/measure-api";
+import {
+    DuoMeasurementValues,
+    MeasureEntity,
+    MeasurementValues,
+    MeasureSettings,
+    PointEntity,
+} from "@novorender/measure-api";
 import {
     Box,
     Checkbox,
@@ -126,9 +132,7 @@ export function MeasuredObject({ obj, idx }: { obj: SelectedMeasureObj; idx: num
     );
 }
 
-export function MeasuredResult() {
-    const { duoMeasurementValues } = useAppSelector(selectMeasure);
-
+export function MeasuredResult({ duoMeasurementValues }: { duoMeasurementValues: DuoMeasurementValues | undefined }) {
     if (!duoMeasurementValues) {
         return null;
     }
@@ -488,6 +492,6 @@ export function MeasurementData({
     }
 }
 
-function getMeasurementValueKind(val: MeasurementValues): string {
+export function getMeasurementValueKind(val: MeasurementValues): string {
     return "kind" in val ? val.kind : "";
 }

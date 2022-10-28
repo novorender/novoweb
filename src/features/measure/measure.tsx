@@ -17,6 +17,7 @@ export function Measure() {
     const [menuOpen, toggleMenu] = useToggle();
     const minimized = useAppSelector(selectMinimized) === featuresConfig.measure.key;
     const maximized = useAppSelector(selectMaximized) === featuresConfig.measure.key;
+    const { duoMeasurementValues } = useAppSelector(selectMeasure);
 
     const dispatch = useAppDispatch();
     const { selected, forcePoint, loadingBrep } = useAppSelector(selectMeasure);
@@ -91,7 +92,7 @@ export function Measure() {
                     {selected.map((obj, idx) => (
                         <MeasuredObject obj={obj} idx={idx} key={idx} />
                     ))}
-                    <MeasuredResult />
+                    <MeasuredResult duoMeasurementValues={duoMeasurementValues} />
                 </ScrollBox>
                 <WidgetList
                     display={menuOpen ? "block" : "none"}

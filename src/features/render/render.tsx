@@ -83,7 +83,12 @@ import { explorerActions, selectUrlBookmarkId } from "slices/explorerSlice";
 import { selectDeviations } from "features/deviations";
 import { bookmarksActions, selectBookmarks, useSelectBookmark } from "features/bookmarks";
 import { measureActions, selectMeasure } from "features/measure";
-import { manholeActions, selectManholeMeasureValues, useHandleManholeUpdates } from "features/manhole";
+import {
+    manholeActions,
+    selectIsManholePinned,
+    selectManholeMeasureValues,
+    useHandleManholeUpdates,
+} from "features/manhole";
 import { ditioActions, selectMarkers, selectShowMarkers } from "features/ditio";
 import { useAppDispatch, useAppSelector } from "app/store";
 import { followPathActions, selectDrawSelectedPositions, usePathMeasureObjects } from "features/followPath";
@@ -244,6 +249,7 @@ export function Render3D({ onInit }: Props) {
     const areaValue = useAppSelector(selectArea);
     const { points: pointLinePoints, result: pointLineResult } = useAppSelector(selectPointLine);
     const manhole = useAppSelector(selectManholeMeasureValues);
+    const manholePinned = useAppSelector(selectIsManholePinned);
 
     const dispatch = useAppDispatch();
 
@@ -1414,7 +1420,9 @@ export function Render3D({ onInit }: Props) {
                 );
                 break;
             case Picker.Manhole:
-                dispatch(manholeActions.selectObj(result.objectId));
+                manholePinned
+                    ? dispatch(manholeActions.setMeasureManholeAgainst({ id: result.objectId, pos: result.position }))
+                    : dispatch(manholeActions.selectObj(result.objectId));
                 break;
 
             case Picker.FollowPathObject: {
