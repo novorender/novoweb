@@ -749,6 +749,7 @@ export function Render3D({ onInit }: Props) {
                 const urlData = getDataFromUrlHash();
                 const camera = { kind: "flight", ...sceneData.camera, ...urlData.camera } as CameraControllerParams;
                 const { display: _display, ...settings } = { ...sceneData.settings, ...urlData.settings };
+
                 const _view = await api.createView(undefined, canvas);
 
                 const grey = vec4.fromValues(0.75, 0.75, 0.75, 1);
@@ -768,7 +769,7 @@ export function Render3D({ onInit }: Props) {
                     quality: {
                         detail: {
                             ..._view.settings.quality.detail,
-                            value: 1,
+                            value: Math.pow(10, 1),
                         },
                         resolution: {
                             value: 1,
@@ -780,6 +781,7 @@ export function Render3D({ onInit }: Props) {
                     },
                 });
                 _view.scene = await api.loadScene(url, db);
+
                 const assetUrl = new URL((_view.scene as any).assetUrl);
                 const measureScene = await measureApi.loadScene(assetUrl);
 
@@ -823,6 +825,7 @@ export function Render3D({ onInit }: Props) {
 
                 rendering.current = createRendering(canvas, _view);
                 rendering.current.start();
+
                 window.document.title = `${title} - Novorender`;
                 window.addEventListener("blur", exitPointerLock);
                 canvas.focus();
@@ -839,8 +842,15 @@ export function Render3D({ onInit }: Props) {
 
                 resizeObserver.observe(canvas);
 
+                dispatch(renderActions.setDefaultDeviceProfile({ ...((api as any).deviceProfile ?? {}) }));
+                if (customProperties?.triangleLimit) {
+                    (api as any).deviceProfile.triangleLimit = Math.min(
+                        (api as any).deviceProfile.triangleLimit,
+                        customProperties?.triangleLimit
+                    );
+                }
                 onInit({ customProperties });
-                initAdvancedSettings(_view, customProperties);
+                initAdvancedSettings(_view, customProperties, api);
                 initProjectSettings({ sceneData: sceneResponse });
 
                 dispatchGlobals(
@@ -1265,7 +1275,7 @@ export function Render3D({ onInit }: Props) {
                 initHidden(objectGroups, dispatchHidden);
                 initCustomGroups(objectGroups, dispatchCustomGroups);
                 initHighlighted(objectGroups, dispatchHighlighted);
-                initAdvancedSettings(view, customProperties);
+                initAdvancedSettings(view, customProperties, api);
                 dispatch(bookmarksActions.resetState());
 
                 return { title, customProperties };

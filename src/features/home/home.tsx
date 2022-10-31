@@ -1,7 +1,7 @@
 import { SceneData } from "@novorender/data-js-api";
 import { SpeedDialActionProps, Box, CircularProgress } from "@mui/material";
 
-import { dataApi } from "app";
+import { api, dataApi } from "app";
 import { SpeedDialAction } from "components";
 import { featuresConfig } from "config/features";
 import {
@@ -22,6 +22,7 @@ import {
     CameraType,
     renderActions,
     SceneEditStatus,
+    selectAdvancedSettings,
     selectEditingScene,
     selectHomeCameraPosition,
 } from "slices/renderSlice";
@@ -55,6 +56,7 @@ export function Home({ position, ...speedDialProps }: Props) {
 
     const editingScene = useAppSelector(selectEditingScene);
     const homeCameraPos = useAppSelector(selectHomeCameraPosition);
+    const { triangleLimit } = useAppSelector(selectAdvancedSettings);
     const { state: customGroups, dispatch: dispatchCustomGroups } = useCustomGroups();
     const dispatchVisible = useDispatchVisible();
     const dispatchHighlighted = useDispatchHighlighted();
@@ -113,7 +115,7 @@ export function Home({ position, ...speedDialProps }: Props) {
         dispatchVisible(visibleActions.set([]));
         initHidden(objectGroups, dispatchHidden);
         initHighlighted(objectGroups, dispatchHighlighted);
-        initAdvancedSettings(view, customProperties);
+        initAdvancedSettings(view, { ...customProperties, triangleLimit }, api);
         dispatch(panoramasActions.setStatus(PanoramaStatus.Initial));
         initSubtrees(view, scene);
 

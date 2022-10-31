@@ -74,6 +74,7 @@ export enum AdvancedSetting {
     MouseButtonMap = "mouseButtonMap",
     FingerMap = "fingerMap",
     BackgroundColor = "backgroundColor",
+    TriangleLimit = "triangleLimit",
 }
 
 export enum ProjectSetting {
@@ -182,7 +183,9 @@ const initialState = {
         [AdvancedSetting.FingerMap]: defaultFlightControls.touch,
         [AdvancedSetting.MouseButtonMap]: defaultFlightControls.mouse,
         [AdvancedSetting.BackgroundColor]: [0.75, 0.75, 0.75, 1] as VecRGBA,
+        [AdvancedSetting.TriangleLimit]: 0,
     },
+    defaultDeviceProfile: {} as any,
     gridDefaults: {
         enabled: false,
         majorLineCount: 1001,
@@ -280,6 +283,9 @@ export const renderSlice = createSlice({
         setHomeCameraPos: (state, action: PayloadAction<CameraPosition>) => {
             state.savedCameraPositions.positions[0] = action.payload;
         },
+        setDefaultDeviceProfile: (state, action: PayloadAction<State["defaultDeviceProfile"]>) => {
+            state.defaultDeviceProfile = action.payload;
+        },
         setSubtrees: (state, action: PayloadAction<State["subtrees"]>) => {
             state.subtrees = action.payload;
         },
@@ -363,6 +369,7 @@ export const renderSlice = createSlice({
         resetState: (state) => {
             return {
                 ...initialState,
+                defaultDeviceProfile: state.defaultDeviceProfile,
                 environments: state.environments,
                 viewerSceneEditing: state.viewerSceneEditing,
                 projectSettings: state.projectSettings,
@@ -475,6 +482,7 @@ export const selectProjectSettings = (state: RootState) => state.render.projectS
 export const selectGridDefaults = (state: RootState) => state.render.gridDefaults;
 export const selectGrid = (state: RootState) => state.render.grid as RenderSettings["grid"];
 export const selectPicker = (state: RootState) => state.render.picker;
+export const selectDefaultDeviceProfile = (state: RootState) => state.render.defaultDeviceProfile;
 
 const { reducer, actions } = renderSlice;
 export { reducer as renderReducer, actions as renderActions };

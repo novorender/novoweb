@@ -1,6 +1,7 @@
 import { MutableRefObject } from "react";
 import { ObjectGroup, SceneData } from "@novorender/data-js-api";
 import {
+    API,
     CameraController,
     CameraControllerParams,
     EnvironmentDescription,
@@ -592,7 +593,7 @@ export function initDeviation(deviation: RenderSettings["points"]["deviation"]):
     );
 }
 
-export function initAdvancedSettings(view: View, customProperties: Record<string, any>): void {
+export function initAdvancedSettings(view: View, customProperties: Record<string, any>, api: API): void {
     const { diagnostics, advanced, points, light, terrain, background } = view.settings as Internal.RenderSettingsExt;
     const cameraParams = view.camera.controller.params as FlightControllerParams | OrthoControllerParams;
 
@@ -618,6 +619,8 @@ export function initAdvancedSettings(view: View, customProperties: Record<string
             [AdvancedSetting.NavigationCube]: Boolean(customProperties?.navigationCube),
             [AdvancedSetting.TerrainAsBackground]: Boolean(terrain.asBackground),
             [AdvancedSetting.BackgroundColor]: background.color as VecRGBA,
+            [AdvancedSetting.TriangleLimit]:
+                customProperties?.triangleLimit ?? (api as any).deviceProfile?.triangleLimit ?? 5_000_000,
             ...(customProperties?.flightMouseButtonMap
                 ? { [AdvancedSetting.MouseButtonMap]: customProperties?.flightMouseButtonMap }
                 : {}),
