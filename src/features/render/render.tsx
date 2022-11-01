@@ -769,7 +769,12 @@ export function Render3D({ onInit }: Props) {
                     quality: {
                         detail: {
                             ..._view.settings.quality.detail,
-                            value: Math.pow(10, 1),
+                            autoAdjust: {
+                                enabled: true,
+                                min: -1,
+                                max: 3,
+                            },
+                            value: Math.pow(10, 3),
                         },
                         resolution: {
                             value: 1,
