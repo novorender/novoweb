@@ -1130,7 +1130,24 @@ export function Render3D({ onInit }: Props) {
             } else if (cameraState.type === CameraType.Orthographic) {
                 let orthoController: CameraController;
                 if (cameraState.params) {
-                    orthoController = api.createCameraController(cameraState.params, canvas);
+                    const safeParams: OrthoControllerParams = {
+                        ...cameraState.params,
+                        referenceCoordSys: cameraState.params.referenceCoordSys
+                            ? (Array.from(cameraState.params.referenceCoordSys) as mat4)
+                            : undefined,
+                        position: cameraState.params.position
+                            ? (Array.from(cameraState.params.position) as vec3)
+                            : undefined,
+                    };
+
+                    if (!safeParams.referenceCoordSys) {
+                        delete safeParams.referenceCoordSys;
+                    }
+                    if (!safeParams.position) {
+                        delete safeParams.position;
+                    }
+
+                    orthoController = api.createCameraController(safeParams, canvas);
                 } else if (cameraState.goTo) {
                     const rot = mat3.fromQuat(mat3.create(), cameraState.goTo.rotation);
                     const pos = cameraState.goTo.position;
