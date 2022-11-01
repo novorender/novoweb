@@ -99,26 +99,26 @@ export function Manhole() {
                         <>
                             <Box p={1}>
                                 <Typography>
-                                    <Box sx={{ minWidth: 110 }} display="inline-block">
+                                    <Box component="span" sx={{ minWidth: 110 }} display="inline-block">
                                         Elevation top:
                                     </Box>
                                     {manhole.topElevation.toFixed(3)} m
                                 </Typography>
                                 <Typography>
-                                    <Box sx={{ minWidth: 110 }} display="inline-block">
+                                    <Box component="span" sx={{ minWidth: 110 }} display="inline-block">
                                         Elevation bot:
                                     </Box>
                                     {manhole.bottomElevation.toFixed(3)} m
                                 </Typography>
                                 <Typography>
-                                    <Box sx={{ minWidth: 110 }} display="inline-block">
+                                    <Box component="span" sx={{ minWidth: 110 }} display="inline-block">
                                         Radius outer:
                                     </Box>
                                     {manhole.outerRadius.toFixed(3)} m
                                 </Typography>
                                 {manhole.innerRadius ? (
                                     <Typography>
-                                        <Box sx={{ minWidth: 110 }} display="inline-block">
+                                        <Box component="span" sx={{ minWidth: 110 }} display="inline-block">
                                             Radius inner:
                                         </Box>
                                         {manhole.innerRadius.toFixed(3)} m

@@ -9,7 +9,7 @@ import { WidgetList } from "features/widgetList";
 import { useToggle } from "hooks/useToggle";
 import { useExplorerGlobals } from "contexts/explorerGlobals";
 import { useAppDispatch, useAppSelector } from "app/store";
-import { selectProjectSettings } from "slices/renderSlice";
+import { renderActions, selectCameraType, selectProjectSettings } from "slices/renderSlice";
 import { selectMinimized, selectMaximized } from "slices/explorerSlice";
 
 import {
@@ -34,11 +34,20 @@ export function MyLocation() {
     const showMarker = useAppSelector(selectShowLocationMarker);
     const accuracy = useAppSelector(selectLocationAccuracy);
     const status = useAppSelector(selectLocationStatus);
+    const cameraType = useAppSelector(selectCameraType);
     const dispatch = useAppDispatch();
 
     const goToPos = () => {
         if (showMarker && currentLocation) {
-            view.camera.controller.moveTo(currentLocation, view.camera.rotation);
+            dispatch(
+                renderActions.setCamera({
+                    type: cameraType,
+                    goTo: {
+                        position: currentLocation,
+                        rotation: view.camera.rotation,
+                    },
+                })
+            );
             return;
         }
 
@@ -66,9 +75,14 @@ export function MyLocation() {
                 return;
             }
 
-            view.camera.controller.moveTo(
-                [scenePos[0], pos.coords.altitude ?? view.camera.position[1], scenePos[2]],
-                view.camera.rotation
+            dispatch(
+                renderActions.setCamera({
+                    type: cameraType,
+                    goTo: {
+                        position: [scenePos[0], pos.coords.altitude ?? view.camera.position[1], scenePos[2]],
+                        rotation: view.camera.rotation,
+                    },
+                })
             );
 
             dispatch(myLocationActions.setAccuracy(pos.coords.accuracy));

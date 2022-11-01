@@ -9,7 +9,7 @@ import type {
 } from "@novorender/webgl-api";
 import type { Bookmark, ObjectGroup } from "@novorender/data-js-api";
 import { createSlice, createAsyncThunk, PayloadAction } from "@reduxjs/toolkit";
-import { quat, vec3, vec4 } from "gl-matrix";
+import { mat4, quat, vec3, vec4 } from "gl-matrix";
 
 import type { RootState } from "app/store";
 import type { WidgetKey } from "config/features";
@@ -74,6 +74,7 @@ export enum AdvancedSetting {
     MouseButtonMap = "mouseButtonMap",
     FingerMap = "fingerMap",
     BackgroundColor = "backgroundColor",
+    TriangleLimit = "triangleLimit",
 }
 
 export enum ProjectSetting {
@@ -108,7 +109,11 @@ export type ClippingPlanes = Omit<RenderSettings["clippingPlanes"], "bounds"> & 
 // unless we cast the types to writable ones.
 export type DeepWritable<T> = { -readonly [P in keyof T]: DeepWritable<T[P]> };
 type CameraState =
-    | { type: CameraType.Orthographic; params?: OrthoControllerParams }
+    | {
+          type: CameraType.Orthographic;
+          params?: OrthoControllerParams;
+          goTo?: { position: Camera["position"]; rotation: Camera["rotation"] };
+      }
     | {
           type: CameraType.Flight;
           goTo?: { position: Camera["position"]; rotation: Camera["rotation"] };
@@ -178,7 +183,9 @@ const initialState = {
         [AdvancedSetting.FingerMap]: defaultFlightControls.touch,
         [AdvancedSetting.MouseButtonMap]: defaultFlightControls.mouse,
         [AdvancedSetting.BackgroundColor]: [0.75, 0.75, 0.75, 1] as VecRGBA,
+        [AdvancedSetting.TriangleLimit]: 0,
     },
+    defaultDeviceProfile: {} as any,
     gridDefaults: {
         enabled: false,
         majorLineCount: 1001,
@@ -276,6 +283,9 @@ export const renderSlice = createSlice({
         setHomeCameraPos: (state, action: PayloadAction<CameraPosition>) => {
             state.savedCameraPositions.positions[0] = action.payload;
         },
+        setDefaultDeviceProfile: (state, action: PayloadAction<State["defaultDeviceProfile"]>) => {
+            state.defaultDeviceProfile = action.payload;
+        },
         setSubtrees: (state, action: PayloadAction<State["subtrees"]>) => {
             state.subtrees = action.payload;
         },
@@ -359,6 +369,7 @@ export const renderSlice = createSlice({
         resetState: (state) => {
             return {
                 ...initialState,
+                defaultDeviceProfile: state.defaultDeviceProfile,
                 environments: state.environments,
                 viewerSceneEditing: state.viewerSceneEditing,
                 projectSettings: state.projectSettings,
@@ -381,10 +392,22 @@ export const renderSlice = createSlice({
                       }
                     : undefined;
 
+            const params =
+                "params" in payload && payload.params
+                    ? {
+                          ...payload.params,
+                          ...(payload.params.referenceCoordSys
+                              ? { referenceCoordSys: Array.from(payload.params.referenceCoordSys) as mat4 }
+                              : {}),
+                          ...(payload.params.position ? { position: Array.from(payload.params.position) as vec3 } : {}),
+                      }
+                    : undefined;
+
             state.camera = {
                 ...payload,
                 ...(goTo ? { goTo } : {}),
                 ...(zoomTo ? { zoomTo } : {}),
+                ...(params ? { params } : {}),
             } as WritableCameraState;
         },
         setBaseCameraSpeed: (state, { payload }: PayloadAction<number>) => {
@@ -419,7 +442,7 @@ export const renderSlice = createSlice({
             state.grid = { ...state.grid, ...state.gridDefaults };
         },
         setGrid: (state, action: PayloadAction<Partial<State["grid"]>>) => {
-            state.grid = { ...state.gridDefaults, ...action.payload } as WritableGrid;
+            state.grid = { ...state.gridDefaults, enabled: state.grid.enabled, ...action.payload } as WritableGrid;
         },
         setPicker: (state, action: PayloadAction<State["picker"]>) => {
             state.picker = action.payload;
@@ -459,6 +482,7 @@ export const selectProjectSettings = (state: RootState) => state.render.projectS
 export const selectGridDefaults = (state: RootState) => state.render.gridDefaults;
 export const selectGrid = (state: RootState) => state.render.grid as RenderSettings["grid"];
 export const selectPicker = (state: RootState) => state.render.picker;
+export const selectDefaultDeviceProfile = (state: RootState) => state.render.defaultDeviceProfile;
 
 const { reducer, actions } = renderSlice;
 export { reducer as renderReducer, actions as renderActions };

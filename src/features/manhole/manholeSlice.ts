@@ -19,7 +19,7 @@ export const manholeSlice = createSlice({
             state.selectedId = action.payload;
         },
         setManholeValues: (state, action: PayloadAction<State["measureValues"]>) => {
-            state.measureValues = action.payload;
+            state.measureValues = action.payload as any;
         },
         setLoadingBrep: (state, action: PayloadAction<State["loadingBrep"]>) => {
             state.loadingBrep = action.payload;

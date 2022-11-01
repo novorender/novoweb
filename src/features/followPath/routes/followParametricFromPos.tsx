@@ -9,26 +9,36 @@ import { AsyncStatus } from "types/misc";
 import { Follow } from "../follow";
 import { followPathActions } from "../followPathSlice";
 import { usePathMeasureObjects } from "../usePathMeasureObjects";
+import { useHistory } from "react-router-dom";
 
 export function FollowParametricFromPos() {
+    const history = useHistory();
     const objects = usePathMeasureObjects();
     const [following, setFollowing] = useState(undefined as undefined | FollowParametricObject);
     const dispatch = useAppDispatch();
 
     useEffect(() => {
-        if (following || objects.status !== AsyncStatus.Success || !objects.data.length) {
+        if (following) {
+            return;
+        }
+
+        if (
+            objects.status === AsyncStatus.Error ||
+            (objects.status === AsyncStatus.Success && (!objects.data.length || !objects.data[0].fp))
+        ) {
+            history.push("/");
+            return;
+        }
+
+        if (objects.status !== AsyncStatus.Success) {
             return;
         }
 
         const fp = objects.data[0].fp;
-        if (!fp) {
-            return;
-        }
-
         dispatch(renderActions.stopPicker(Picker.FollowPathObject));
         dispatch(followPathActions.toggleDrawSelectedPositions(false));
         setFollowing(fp);
-    }, [objects, following, dispatch]);
+    }, [objects, following, dispatch, history]);
 
     return following ? <Follow fpObj={following} /> : <LinearProgress />;
 }

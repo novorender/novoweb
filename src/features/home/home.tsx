@@ -1,7 +1,7 @@
 import { SceneData } from "@novorender/data-js-api";
 import { SpeedDialActionProps, Box, CircularProgress } from "@mui/material";
 
-import { dataApi } from "app";
+import { api, dataApi } from "app";
 import { SpeedDialAction } from "components";
 import { featuresConfig } from "config/features";
 import {
@@ -22,6 +22,7 @@ import {
     CameraType,
     renderActions,
     SceneEditStatus,
+    selectAdvancedSettings,
     selectEditingScene,
     selectHomeCameraPosition,
 } from "slices/renderSlice";
@@ -34,6 +35,7 @@ import { useDispatchVisible, visibleActions } from "contexts/visible";
 import { measureActions } from "features/measure";
 import { areaActions } from "features/area";
 import { pointLineActions } from "features/pointLine";
+import { manholeActions } from "features/manhole";
 
 type Props = SpeedDialActionProps & {
     position?: { top?: number; right?: number; bottom?: number; left?: number };
@@ -54,6 +56,7 @@ export function Home({ position, ...speedDialProps }: Props) {
 
     const editingScene = useAppSelector(selectEditingScene);
     const homeCameraPos = useAppSelector(selectHomeCameraPosition);
+    const { triangleLimit } = useAppSelector(selectAdvancedSettings);
     const { state: customGroups, dispatch: dispatchCustomGroups } = useCustomGroups();
     const dispatchVisible = useDispatchVisible();
     const dispatchHighlighted = useDispatchHighlighted();
@@ -78,6 +81,7 @@ export function Home({ position, ...speedDialProps }: Props) {
         dispatch(measureActions.clear());
         dispatch(areaActions.setPoints([]));
         dispatch(pointLineActions.setPoints([]));
+        dispatch(manholeActions.selectObj(undefined));
 
         if (settings) {
             const { display: _display, environment: _env, light: _light, ...toApply } = settings;
@@ -88,8 +92,8 @@ export function Home({ position, ...speedDialProps }: Props) {
 
             view.applySettings(toApply);
             initClippingBox(toApply.clippingPlanes);
-            initClippingPlanes(toApply.clippingVolume);
-            initDeviation(toApply.points.deviation);
+            initClippingPlanes(toApply.clippingVolume ?? { enabled: false, mode: "union", planes: [] });
+            initDeviation(toApply.points.deviation ?? { mode: "off", colors: [] });
         }
 
         if (camera.kind === "ortho") {
@@ -111,7 +115,7 @@ export function Home({ position, ...speedDialProps }: Props) {
         dispatchVisible(visibleActions.set([]));
         initHidden(objectGroups, dispatchHidden);
         initHighlighted(objectGroups, dispatchHighlighted);
-        initAdvancedSettings(view, customProperties);
+        initAdvancedSettings(view, { ...customProperties, triangleLimit }, api);
         dispatch(panoramasActions.setStatus(PanoramaStatus.Initial));
         initSubtrees(view, scene);
 
