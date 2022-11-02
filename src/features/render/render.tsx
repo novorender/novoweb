@@ -780,7 +780,6 @@ export function Render3D({ onInit }: Props) {
                     },
                 });
                 _view.scene = await api.loadScene(url, db);
-
                 const assetUrl = new URL((_view.scene as any).assetUrl);
                 const measureScene = await measureApi.loadScene(assetUrl);
 
