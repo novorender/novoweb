@@ -1,4 +1,4 @@
-import { glMatrix, mat4, quat, vec2, vec3, vec4 } from "gl-matrix";
+import { glMatrix, mat3, mat4, quat, vec2, vec3, vec4 } from "gl-matrix";
 import {
     useEffect,
     useState,
@@ -45,10 +45,9 @@ import {
     PanoramaStatus,
     useHandlePanoramaChanges,
 } from "features/panoramas";
-import { Loading } from "components";
+import { Accordion, AccordionDetails, AccordionSummary, Loading } from "components";
 
 import { api, dataApi, measureApi } from "app";
-import { useMountedState } from "hooks/useMountedState";
 import { useSceneId } from "hooks/useSceneId";
 import { enabledFeaturesToFeatureKeys, getEnabledFeatures } from "utils/misc";
 import { AsyncStatus } from "types/misc";
@@ -275,7 +274,7 @@ export function Render3D({ onInit }: Props) {
     const measureObjects = useMeasureObjects();
     const pathMeasureObjects = usePathMeasureObjects();
     const [svg, setSvg] = useState<null | SVGSVGElement>(null);
-    const [status, setStatus] = useMountedState(Status.Initial);
+    const [status, setStatus] = useState<{ status: Status; msg?: string }>({ status: Status.Initial });
 
     const [deviationStamp, setDeviationStamp] = useState<{
         mouseX: number;
@@ -307,11 +306,11 @@ export function Render3D({ onInit }: Props) {
             renderMeasurePoints({ svg, ...params });
 
         const renderObject = (
-            params: Omit<Parameters<typeof renderMeasureObject>[0], "svg" | "view" | "size" | "measureScene">
-        ) => renderMeasureObject({ svg, view, size, measureScene, ...params });
+            params: Omit<Parameters<typeof renderMeasureObject>[0], "svg" | "view" | "measureScene">
+        ) => renderMeasureObject({ svg, view, measureScene, ...params });
 
-        const pathPoints = (params: Omit<Parameters<typeof getPathPoints>[0], "view" | "size">) =>
-            getPathPoints({ view, size, ...params });
+        const pathPoints = (params: Omit<Parameters<typeof getPathPoints>[0], "view">) =>
+            getPathPoints({ view, ...params });
 
         if (drawSelectedPaths && pathMeasureObjects.status === AsyncStatus.Success) {
             pathMeasureObjects.data.forEach((obj) => {
@@ -632,7 +631,6 @@ export function Render3D({ onInit }: Props) {
         pointLinePoints,
         pointLineResult,
         heightProfileMeasureObject,
-        size,
         svg,
         areaValue,
         myLocationPoint,
@@ -757,6 +755,7 @@ export function Render3D({ onInit }: Props) {
                 const urlData = getDataFromUrlHash();
                 const camera = { kind: "flight", ...sceneData.camera, ...urlData.camera } as CameraControllerParams;
                 const { display: _display, ...settings } = { ...sceneData.settings, ...urlData.settings };
+
                 const _view = await api.createView(undefined, canvas);
 
                 const grey = vec4.fromValues(0.75, 0.75, 0.75, 1);
@@ -776,7 +775,12 @@ export function Render3D({ onInit }: Props) {
                     quality: {
                         detail: {
                             ..._view.settings.quality.detail,
-                            value: 1,
+                            autoAdjust: {
+                                enabled: true,
+                                min: -1,
+                                max: 3,
+                            },
+                            value: Math.pow(10, 3),
                         },
                         resolution: {
                             value: 1,
@@ -788,6 +792,7 @@ export function Render3D({ onInit }: Props) {
                     },
                 });
                 _view.scene = await api.loadScene(url, db);
+
                 const assetUrl = new URL((_view.scene as any).assetUrl);
                 const measureScene = await measureApi.loadScene(assetUrl);
 
@@ -831,6 +836,7 @@ export function Render3D({ onInit }: Props) {
 
                 rendering.current = createRendering(canvas, _view);
                 rendering.current.start();
+
                 window.document.title = `${title} - Novorender`;
                 window.addEventListener("blur", exitPointerLock);
                 canvas.focus();
@@ -847,8 +853,15 @@ export function Render3D({ onInit }: Props) {
 
                 resizeObserver.observe(canvas);
 
+                dispatch(renderActions.setDefaultDeviceProfile({ ...((api as any).deviceProfile ?? {}) }));
+                if (customProperties?.triangleLimit) {
+                    (api as any).deviceProfile.triangleLimit = Math.min(
+                        (api as any).deviceProfile.triangleLimit,
+                        customProperties?.triangleLimit
+                    );
+                }
                 onInit({ customProperties });
-                initAdvancedSettings(_view, customProperties);
+                initAdvancedSettings(_view, customProperties, api);
                 initProjectSettings({ sceneData: sceneResponse });
 
                 dispatchGlobals(
@@ -864,14 +877,17 @@ export function Render3D({ onInit }: Props) {
                     const error = (e as { error: string }).error;
 
                     if (error === "Not authorized") {
-                        setStatus(Status.AuthError);
+                        setStatus({ status: Status.AuthError });
                     } else if (error === "Scene not found") {
-                        setStatus(Status.NoSceneError);
+                        setStatus({ status: Status.NoSceneError });
                     } else {
-                        setStatus(Status.ServerError);
+                        setStatus({ status: Status.ServerError, msg: error });
                     }
-                } else {
-                    setStatus(Status.ServerError);
+                } else if (e instanceof Error) {
+                    setStatus({
+                        status: Status.ServerError,
+                        msg: e.stack ? e.stack : typeof e.cause === "string" ? e.cause : `${e.name}: ${e.message}`,
+                    });
                 }
             }
         }
@@ -1005,8 +1021,6 @@ export function Render3D({ onInit }: Props) {
         ]
     );
 
-    window.view = view;
-
     useEffect(
         function handleSubtreeChanges() {
             if (!view || !("advanced" in view.settings) || !subtrees) {
@@ -1119,29 +1133,74 @@ export function Render3D({ onInit }: Props) {
                 } else if (cameraState.zoomTo) {
                     view.camera.controller.zoomTo(cameraState.zoomTo);
                 }
-            } else if (cameraState.type === CameraType.Orthographic && cameraState.params) {
-                // copy non-primitives
-                const safeParams: OrthoControllerParams = {
-                    ...cameraState.params,
-                    referenceCoordSys: cameraState.params.referenceCoordSys
-                        ? (Array.from(cameraState.params.referenceCoordSys) as mat4)
-                        : undefined,
-                    position: cameraState.params.position
-                        ? (Array.from(cameraState.params.position) as vec3)
-                        : undefined,
-                };
+            } else if (cameraState.type === CameraType.Orthographic) {
+                let orthoController: CameraController;
+                if (cameraState.params) {
+                    const safeParams: OrthoControllerParams = {
+                        ...cameraState.params,
+                        referenceCoordSys: cameraState.params.referenceCoordSys
+                            ? (Array.from(cameraState.params.referenceCoordSys) as mat4)
+                            : undefined,
+                        position: cameraState.params.position
+                            ? (Array.from(cameraState.params.position) as vec3)
+                            : undefined,
+                    };
 
-                if (!safeParams.referenceCoordSys) {
-                    delete safeParams.referenceCoordSys;
+                    if (!safeParams.referenceCoordSys) {
+                        delete safeParams.referenceCoordSys;
+                    }
+                    if (!safeParams.position) {
+                        delete safeParams.position;
+                    }
+
+                    orthoController = api.createCameraController(safeParams, canvas);
+                } else if (cameraState.goTo) {
+                    const rot = mat3.fromQuat(mat3.create(), cameraState.goTo.rotation);
+                    const pos = cameraState.goTo.position;
+                    const referenceCoordSys = mat4.fromValues(
+                        rot[0],
+                        rot[1],
+                        rot[2],
+                        0,
+                        rot[3],
+                        rot[4],
+                        rot[5],
+                        0,
+                        rot[6],
+                        rot[7],
+                        rot[8],
+                        0,
+                        pos[0],
+                        pos[1],
+                        pos[2],
+                        1
+                    );
+                    orthoController = api.createCameraController({ kind: "ortho", referenceCoordSys }, canvas);
+                } else {
+                    orthoController = api.createCameraController({ kind: "ortho" }, canvas);
                 }
 
-                if (!safeParams.position) {
-                    delete safeParams.position;
-                }
+                const mat = (orthoController.params as OrthoControllerParams).referenceCoordSys;
+                (orthoController.params as OrthoControllerParams).near = -0.001;
 
-                const orthoController = api.createCameraController(safeParams, canvas);
+                if (mat) {
+                    const right = vec3.fromValues(mat[0], mat[1], mat[2]);
+                    const up = vec3.fromValues(mat[4], mat[5], mat[6]);
+                    const pt = vec3.fromValues(mat[12], mat[13], mat[14]);
+                    const squareSize = 1 * (gridDefaults.minorLineCount + 1);
+
+                    dispatch(
+                        renderActions.setGrid({
+                            origo: pt,
+                            axisY: vec3.scale(vec3.create(), up, squareSize),
+                            axisX: vec3.scale(vec3.create(), right, squareSize),
+                        })
+                    );
+                }
 
                 if (view.camera.controller.params.kind === "ortho") {
+                    (orthoController.params as OrthoControllerParams).fieldOfView =
+                        view.camera.controller.params.fieldOfView;
                     orthoController.fingersMap = { ...view.camera.controller.fingersMap };
                     orthoController.mouseButtonsMap = { ...view.camera.controller.mouseButtonsMap };
                 }
@@ -1150,7 +1209,7 @@ export function Render3D({ onInit }: Props) {
                 view.camera.controller = orthoController;
             }
         },
-        [cameraState, view, canvas, dispatch]
+        [cameraState, view, canvas, dispatch, gridDefaults.minorLineCount]
     );
 
     useEffect(
@@ -1167,7 +1226,7 @@ export function Render3D({ onInit }: Props) {
                 window.removeEventListener("blur", exitPointerLock);
                 dispatchGlobals(explorerGlobalsActions.update({ view: undefined, scene: undefined }));
                 dispatch(renderActions.resetState());
-                setStatus(Status.Initial);
+                setStatus({ status: Status.Initial });
             };
         },
         [id, dispatch, setStatus, dispatchGlobals]
@@ -1244,7 +1303,7 @@ export function Render3D({ onInit }: Props) {
                 initHidden(objectGroups, dispatchHidden);
                 initCustomGroups(objectGroups, dispatchCustomGroups);
                 initHighlighted(objectGroups, dispatchHighlighted);
-                initAdvancedSettings(view, customProperties);
+                initAdvancedSettings(view, customProperties, api);
                 dispatch(bookmarksActions.resetState());
 
                 return { title, customProperties };
@@ -1352,6 +1411,10 @@ export function Render3D({ onInit }: Props) {
 
         switch (picker) {
             case Picker.Object:
+                if (result.objectId === -1) {
+                    return;
+                }
+
                 const alreadySelected = highlightedObjects.ids[result.objectId] === true;
 
                 if (selectMultiple) {
@@ -1392,27 +1455,14 @@ export function Render3D({ onInit }: Props) {
             case Picker.OrthoPlane:
                 const orthoController = api.createCameraController({ kind: "ortho" }, canvas);
                 (orthoController as any).init(result.position, normal, view.camera);
-                flightController.current = view.camera.controller;
-                flightController.current.enabled = false;
-
-                view.camera.controller = orthoController;
-                dispatch(renderActions.setCamera({ type: CameraType.Orthographic }));
-                dispatch(renderActions.setPicker(Picker.Object));
-                (orthoController as any).near = -0.001;
-
-                const mat = (orthoController.params as any).referenceCoordSys;
-                const right = vec3.fromValues(mat[0], mat[1], mat[2]);
-                const up = vec3.fromValues(mat[4], mat[5], mat[6]);
-                const pt = vec3.fromValues(mat[12], mat[13], mat[14]);
-                const squareSize = 1 * (gridDefaults.minorLineCount + 1);
-
                 dispatch(
-                    renderActions.setGrid({
-                        origo: pt,
-                        axisY: vec3.scale(vec3.create(), up, squareSize),
-                        axisX: vec3.scale(vec3.create(), right, squareSize),
+                    renderActions.setCamera({
+                        type: CameraType.Orthographic,
+                        params: orthoController.params as OrthoControllerParams,
                     })
                 );
+                dispatch(renderActions.setPicker(Picker.Object));
+
                 break;
             case Picker.Measurement:
                 dispatch(
@@ -1420,12 +1470,19 @@ export function Render3D({ onInit }: Props) {
                 );
                 break;
             case Picker.Manhole:
+                if (result.objectId === -1) {
+                    return;
+                }
                 manholePinned
                     ? dispatch(manholeActions.setMeasureManholeAgainst({ id: result.objectId, pos: result.position }))
                     : dispatch(manholeActions.selectObj(result.objectId));
                 break;
 
             case Picker.FollowPathObject: {
+                if (result.objectId === -1) {
+                    return;
+                }
+
                 dispatch(followPathActions.setSelectedPositions([{ id: result.objectId, pos: result.position }]));
                 break;
             }
@@ -1438,6 +1495,10 @@ export function Render3D({ onInit }: Props) {
                 break;
             }
             case Picker.HeightProfileEntity: {
+                if (result.objectId === -1) {
+                    return;
+                }
+
                 dispatch(heightProfileActions.selectPoint({ id: result.objectId, pos: result.position }));
                 break;
             }
@@ -1639,8 +1700,8 @@ export function Render3D({ onInit }: Props) {
 
     return (
         <Box position="relative" width="100%" height="100%" sx={{ userSelect: "none" }}>
-            {isSceneError(status) ? (
-                <SceneError error={status} id={id} />
+            {isSceneError(status.status) ? (
+                <SceneError error={status.status} msg={status.msg} id={id} />
             ) : (
                 <>
                     {advancedSettings.showPerformance && view && canvas ? <PerformanceStats /> : null}
@@ -1926,7 +1987,7 @@ export function Render3D({ onInit }: Props) {
     );
 }
 
-function SceneError({ id, error }: { id: string; error: Exclude<Status, Status.Initial> }) {
+function SceneError({ id, error, msg }: { id: string; error: Exclude<Status, Status.Initial>; msg?: string }) {
     const theme = useTheme();
     const loginUrl = `${window.location.origin}/login/${id}${window.location.search}`;
 
@@ -1952,8 +2013,8 @@ function SceneError({ id, error }: { id: string; error: Exclude<Status, Status.I
             {error === Status.AuthError ? (
                 <CircularProgress />
             ) : (
-                <Paper>
-                    <Box minWidth={320} p={2}>
+                <Paper sx={{ minWidth: 320, maxWidth: `min(600px, 90%)`, wordBreak: "break-word", p: 2 }}>
+                    <Box>
                         <Typography paragraph variant="h4" component="h1" align="center">
                             {error === Status.ServerError
                                 ? "An error occured"
@@ -1974,6 +2035,24 @@ function SceneError({ id, error }: { id: string; error: Exclude<Status, Status.I
                                 </>
                             )}
                         </Typography>
+                        <Accordion>
+                            <AccordionSummary>Details</AccordionSummary>
+                            <AccordionDetails>
+                                <Box p={1}>
+                                    <>
+                                        Timestamp: {new Date().toISOString()} <br />
+                                        API: {api.version} <br />
+                                        Dataserver: {(dataApi as any).serviceUrl}
+                                        {msg ? (
+                                            <Box mt={2}>
+                                                ERROR: <br />
+                                                {msg}
+                                            </Box>
+                                        ) : null}
+                                    </>
+                                </Box>
+                            </AccordionDetails>
+                        </Accordion>
                     </Box>
                 </Paper>
             )}

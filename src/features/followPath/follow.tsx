@@ -18,7 +18,7 @@ import { useHistory } from "react-router-dom";
 
 import { IosSwitch, Divider, ScrollBox } from "components";
 import { useAppDispatch, useAppSelector } from "app/store";
-import { CameraType, renderActions, selectGridDefaults } from "slices/renderSlice";
+import { CameraType, renderActions } from "slices/renderSlice";
 import { useExplorerGlobals } from "contexts/explorerGlobals";
 
 import {
@@ -45,7 +45,6 @@ export function Follow({ fpObj }: { fpObj: FollowParametricObject }) {
         state: { view },
     } = useExplorerGlobals(true);
 
-    const gridDefaults = useAppSelector(selectGridDefaults);
     const currentCenter = useAppSelector(selectCurrentCenter);
     const view2d = useAppSelector(selectView2d);
     const showGrid = useAppSelector(selectShowGrid);
@@ -111,16 +110,6 @@ export function Follow({ fpObj }: { fpObj: FollowParametricObject }) {
                 const mat = mat4.fromRotationTranslation(mat4.create(), rotation, offsetPt);
 
                 dispatch(
-                    renderActions.setGrid({
-                        ...gridDefaults,
-                        enabled: showGrid,
-                        origo: pt as vec3,
-                        axisY: vec3.scale(vec3.create(), up, 5),
-                        axisX: vec3.scale(vec3.create(), right, 5),
-                    })
-                );
-
-                dispatch(
                     renderActions.setCamera({
                         type: CameraType.Orthographic,
                         params: {
@@ -130,6 +119,12 @@ export function Follow({ fpObj }: { fpObj: FollowParametricObject }) {
                             near: -0.001,
                             far: clipping,
                         },
+                    })
+                );
+
+                dispatch(
+                    renderActions.setGrid({
+                        enabled: showGrid,
                     })
                 );
             } else {
@@ -148,7 +143,7 @@ export function Follow({ fpObj }: { fpObj: FollowParametricObject }) {
             dispatch(followPathActions.setCurrentCenter(pt as [number, number, number]));
             dispatch(followPathActions.setPtHeight(pt[1]));
         },
-        [clipping, currentCenter, dispatch, fpObj, gridDefaults, view]
+        [clipping, currentCenter, dispatch, fpObj, view]
     );
 
     useEffect(() => {
