@@ -1501,7 +1501,7 @@ export function Render3D({ onInit }: Props) {
     };
 
     const handleDown = async (x: number, y: number) => {
-        if (!view) {
+        if (!view || !(clippingBox.defining || clippingBox.showBox)) {
             return;
         }
 
