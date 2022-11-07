@@ -1,10 +1,11 @@
-import { mat4, quat, vec2, vec3 } from "gl-matrix";
-import * as GLTF from "./gltf_types";
+import { Scene } from "@novorender/webgl-api";
+import { quat, vec2, vec3 } from "gl-matrix";
+import { searchByPatterns } from "./search";
 
 interface MinimapInfo {
     aspect: number;
     elevation: number;
-    image: Blob;
+    image: string;
     corner: vec3;
     dx: number;
     dy: number;
@@ -85,190 +86,60 @@ export class MinimapHelper {
     }
 }
 
-function getImageBlob(image: GLTF.Image, gltf: GLTF.GlTf, buffers: ArrayBuffer) {
-    const bufferView = gltf.bufferViews![image.bufferView!];
-    const begin = bufferView.byteOffset ?? 0;
-    const end = bufferView.byteLength ? begin + bufferView.byteLength : undefined;
-    const buffer = buffers.slice(begin, end);
-    return new Blob([buffer]);
-}
-
-const BINARY_HEADER_MAGIC = "glTF";
-const BINARY_HEADER_LENGTH = 12;
-const BINARY_CHUNK_TYPES = { JSON: 0x4e4f534a, BIN: 0x004e4942 };
-
-export async function downloadMinimap(assetUrl: string): Promise<MinimapHelper> {
-    const pdfGlbUrl = new URL(assetUrl);
-    pdfGlbUrl.pathname += "gltf/03.glb";
-    const response = await fetch(pdfGlbUrl.toString(), { mode: "cors" });
-    if (!response.ok) {
-        throw new Error(`HTTP Error: ${response.status}: ${response.statusText}`);
-    }
-    const glb = await response.arrayBuffer();
-    const { json, buffer } = parseGLB(glb);
-    const gltf = JSON.parse(json) as GLTF.GlTf;
-
-    const images =
-        gltf.images?.map((img) => {
-            let blob = getImageBlob(img, gltf, buffer);
-            if (img.mimeType) {
-                blob = new Blob([blob], { type: img.mimeType });
-            }
-            return blob;
-        }) ?? [];
-
+export async function downloadMinimap(scene: Scene): Promise<MinimapHelper> {
     const minimaps: MinimapInfo[] = [];
 
-    if (gltf.nodes) {
-        for (let i = 0; i < gltf.nodes.length; ++i) {
-            let transform = mat4.identity(mat4.create());
-            const dirX = vec3.create();
-            const dirY = vec3.create();
-
-            if (gltf.nodes[0].matrix) {
-                const mat = gltf.nodes[0].matrix;
-                transform = mat4.fromValues(
-                    mat[0],
-                    mat[1],
-                    mat[2],
-                    mat[3],
-                    mat[4],
-                    mat[5],
-                    mat[6],
-                    mat[7],
-                    mat[8],
-                    mat[9],
-                    mat[10],
-                    mat[11],
-                    mat[12],
-                    mat[13],
-                    mat[14],
-                    mat[15]
-                );
-            }
-            const meshIdx = gltf.nodes[0].mesh;
-            if (meshIdx !== undefined && gltf.meshes) {
-                const mesh = gltf.meshes[meshIdx];
-                if (mesh.primitives.length > 0) {
-                    const primitive = mesh.primitives[0];
-                    if (primitive.indices !== undefined && gltf.accessors && gltf.bufferViews) {
-                        const idxAcc = gltf.accessors[primitive.indices];
-                        if (idxAcc.count > 2) {
-                            const bufferView = gltf.bufferViews[idxAcc!.bufferView as number];
-                            const begin = bufferView.byteOffset ?? 0;
-                            const end = bufferView.byteLength ? begin + bufferView.byteLength : undefined;
-                            const idxBuffer = new Uint32Array(buffer.slice(begin, end));
-                            for (const attribute in primitive.attributes) {
-                                if (attribute === "POSITION") {
-                                    const val = primitive.attributes[attribute];
-                                    const posAcc = gltf.accessors[val];
-                                    const posBufferView = gltf.bufferViews[posAcc!.bufferView as number];
-                                    const posBegin = posBufferView.byteOffset ?? 0;
-                                    const posEnd = posBufferView.byteLength
-                                        ? posBegin + posBufferView.byteLength
-                                        : undefined;
-                                    const posBuffer = new Float32Array(buffer.slice(posBegin, posEnd));
-                                    const idxA = idxBuffer[0];
-                                    const idxB = idxBuffer[1] * 3;
-                                    const idxC = idxBuffer[2] * 3;
-
-                                    const a = vec3.fromValues(
-                                        posBuffer[idxA],
-                                        posBuffer[idxA + 1],
-                                        posBuffer[idxA + 2]
-                                    );
-                                    const b = vec3.fromValues(
-                                        posBuffer[idxB],
-                                        posBuffer[idxB + 1],
-                                        posBuffer[idxB + 2]
-                                    );
-                                    const c = vec3.fromValues(
-                                        posBuffer[idxC],
-                                        posBuffer[idxC + 1],
-                                        posBuffer[idxC + 2]
-                                    );
-                                    vec3.sub(dirX, b, a);
-                                    const dx = vec3.len(dirX);
-                                    vec3.normalize(dirX, dirX);
-                                    vec3.sub(dirY, c, b);
-                                    const dy = vec3.len(dirY);
-                                    vec3.normalize(dirY, dirY);
-                                    const corner = vec3.clone(a);
-                                    vec3.transformMat4(corner, corner, transform);
-                                    const aspect = dx / dy;
-                                    minimaps.push({
-                                        aspect,
-                                        image: images[0],
-                                        dx,
-                                        dy,
-                                        corner,
-                                        dirX,
-                                        dirY,
-                                        elevation: a[1],
-                                    });
-                                    break;
-                                }
-                            }
-                        }
+    await searchByPatterns({
+        scene,
+        searchPatterns: [{ property: "Novorender/Document/Corners", exact: true }],
+        callback: async (refs) => {
+            for (const ref of refs) {
+                const data = await ref.loadMetaData();
+                let corner = vec3.create();
+                const dirX = vec3.create();
+                const dirY = vec3.create();
+                let dx = 0;
+                let dy = 0;
+                let aspect = 0;
+                let elevation = 0;
+                let image = "";
+                for (const prop of data.properties) {
+                    if (prop[0] === "Novorender/Document/Corners") {
+                        const points = prop[1].split("]");
+                        const c1 = points[0].replaceAll("[", "").split(",");
+                        const c2 = points[1].replaceAll("[", "").split(",");
+                        const c3 = points[2].replaceAll("[", "").split(",");
+                        const a = vec3.fromValues(Number(c1[0]), Number(c1[1]), Number(c1[2]));
+                        const b = vec3.fromValues(Number(c2[1]), Number(c2[2]), Number(c2[3]));
+                        const c = vec3.fromValues(Number(c3[1]), Number(c3[2]), Number(c3[3]));
+                        vec3.sub(dirX, b, a);
+                        dx = vec3.len(dirX);
+                        vec3.normalize(dirX, dirX);
+                        vec3.sub(dirY, c, b);
+                        dy = vec3.len(dirY);
+                        vec3.normalize(dirY, dirY);
+                        corner = vec3.clone(a);
+                        elevation = a[1];
+                        aspect = dx / dy;
+                    } else if (prop[0] === "Novorender/Document/Preview") {
+                        image = prop[1];
                     }
                 }
+                minimaps.push({
+                    aspect,
+                    image,
+                    dx,
+                    dy,
+                    corner,
+                    dirX,
+                    dirY,
+                    elevation,
+                });
             }
-        }
-    }
+        },
+        full: true,
+    });
 
     minimaps.sort((a, b) => a.elevation - b.elevation);
-
-    // const childImages: Blob[] = [];
-    // childImages.push(...(await loadChildImage(assetUrl, "gltf/030.glb")));
-    // childImages.push(...(await loadChildImage(assetUrl, "gltf/031.glb")));
-    // childImages.push(...(await loadChildImage(assetUrl, "gltf/032.glb")));
-    // childImages.push(...(await loadChildImage(assetUrl, "gltf/033.glb")));
     return new MinimapHelper(minimaps);
-}
-
-function parseGLB(data: ArrayBuffer) {
-    const headerView = new DataView(data, 0, BINARY_HEADER_LENGTH);
-    const decoder = new TextDecoder();
-
-    const header = {
-        magic: decoder.decode(new Uint8Array(data, 0, 4)),
-        version: headerView.getUint32(4, true),
-        length: headerView.getUint32(8, true),
-    };
-
-    if (header.magic !== BINARY_HEADER_MAGIC) {
-        throw new Error("Unsupported glTF-Binary header.");
-    } else if (header.version < 2.0) {
-        throw new Error("Unsupported legacy gltf file detected.");
-    }
-
-    let json: string | undefined;
-    let buffer: ArrayBuffer | undefined;
-    const chunkView = new DataView(data, BINARY_HEADER_LENGTH);
-    let chunkIndex = 0;
-    while (chunkIndex < chunkView.byteLength) {
-        const chunkLength = chunkView.getUint32(chunkIndex, true);
-        chunkIndex += 4;
-        const chunkType = chunkView.getUint32(chunkIndex, true);
-        chunkIndex += 4;
-        if (chunkType === BINARY_CHUNK_TYPES.JSON) {
-            const contentArray = new Uint8Array(data, BINARY_HEADER_LENGTH + chunkIndex, chunkLength);
-            json = decoder.decode(contentArray);
-            json = json.substr(0, json.lastIndexOf("}") + 1);
-        } else if (chunkType === BINARY_CHUNK_TYPES.BIN) {
-            const contentArray = new Uint8Array(data, BINARY_HEADER_LENGTH + chunkIndex, chunkLength);
-            const binaryChunk = new Uint8Array(chunkLength);
-            binaryChunk.set(contentArray);
-            buffer = binaryChunk.buffer;
-        }
-        chunkIndex += chunkLength; // Clients must ignore chunks with unknown types.
-    }
-
-    if (!json) {
-        throw new Error("glTF-Binary: JSON content not found.");
-    }
-    if (!buffer) {
-        throw new Error("glTF-Binary: Binary chunk not found.");
-    }
-    return { json, buffer };
 }
