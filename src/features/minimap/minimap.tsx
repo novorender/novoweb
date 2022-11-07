@@ -33,7 +33,7 @@ export function Minimap() {
 
     useEffect(() => {
         const downloadFunc = async () => {
-            setMinimap(await downloadMinimap((scene as any).assetUrl));
+            setMinimap(await downloadMinimap(scene));
             setCtx(canvas?.getContext("2d"));
         };
         downloadFunc();
@@ -48,7 +48,7 @@ export function Minimap() {
                 }
             };
 
-            img.src = URL.createObjectURL(minimap.getMinimapImage());
+            img.src = minimap.getMinimapImage();
             minimap.pixelHeight = height; //Set canvas height in minimap helper
             minimap.pixelWidth = width; //Set canvas width in minimap helper
         }
@@ -101,7 +101,7 @@ export function Minimap() {
                             ctx.fill();
                         }
                     };
-                    img.src = URL.createObjectURL(minimap.getMinimapImage());
+                    img.src = minimap.getMinimapImage();
                 }
             }
 
