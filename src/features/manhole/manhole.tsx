@@ -1,6 +1,6 @@
 import { DeleteSweep, PushPin } from "@mui/icons-material";
 import { useRef, useEffect, useState } from "react";
-import { Box, Button, capitalize, Checkbox, FormControlLabel, Typography } from "@mui/material";
+import { Box, Button, capitalize, Checkbox, FormControlLabel, Grid, List, ListItem, Typography } from "@mui/material";
 
 import { useAppDispatch, useAppSelector } from "app/store";
 import {
@@ -20,7 +20,7 @@ import { useToggle } from "hooks/useToggle";
 import { featuresConfig } from "config/features";
 import { selectMinimized, selectMaximized } from "slices/explorerSlice";
 import { Picker, renderActions, selectPicker } from "slices/renderSlice";
-import { getMeasurementValueKind, MeasuredResult, MeasurementData } from "features/measure/measuredObject";
+import { getMeasurementValueKind, MeasurementData } from "features/measure/measuredObject";
 
 import {
     manholeActions,
@@ -29,12 +29,13 @@ import {
     selectIsLoadingManholeBrep,
     selectIsManholePinned,
     selectManholeMeasureAgainst,
-    selectManholeDuoMeasure,
+    selectCollisionValues,
 } from "./manholeSlice";
-import { VertexTable } from "features/measure/tables";
-import { MeasureEntity, MeasurementValues, PointEntity } from "@novorender/measure-api";
+import { MeasurementTable, VertexTable } from "features/measure/tables";
+import { MeasureEntity, MeasurementValues, MeasureSettings, PointEntity } from "@novorender/measure-api";
 import { useExplorerGlobals } from "contexts/explorerGlobals";
 import { useManholeMeasure } from "./useHandleManholeUpdates";
+import { vec3 } from "gl-matrix";
 
 export function Manhole() {
     const {
@@ -50,7 +51,7 @@ export function Manhole() {
     const selectedObj = useAppSelector(selectManholeId);
     const selectedMeasureEntity = useAppSelector(selectManholeMeasureAgainst);
     const selectedMeasureObject = useManholeMeasure();
-    const duoMeasurementValues = useAppSelector(selectManholeDuoMeasure);
+    const collisionValues = useAppSelector(selectCollisionValues);
     const isLoading = useAppSelector(selectIsLoadingManholeBrep);
     const isPinned = useAppSelector(selectIsManholePinned);
     const selecting = useAppSelector(selectPicker) === Picker.Manhole;
@@ -97,10 +98,6 @@ export function Manhole() {
         return measureObject ? measureObject.drawKind === "vertex" : false;
     };
 
-    const useCylinderMeasureSettings =
-        duoMeasurementValues &&
-        (!duoMeasurementValues.validMeasureSettings || duoMeasurementValues.validMeasureSettings.a);
-
     return (
         <>
             <WidgetContainer minimized={minimized} maximized={maximized}>
@@ -125,7 +122,10 @@ export function Manhole() {
                             <Button
                                 color="grey"
                                 disabled={selectedObj === undefined}
-                                onClick={() => dispatch(manholeActions.selectObj(undefined))}
+                                onClick={() => {
+                                    dispatch(manholeActions.setPinned(false));
+                                    dispatch(manholeActions.selectObj(undefined));
+                                }}
                             >
                                 <DeleteSweep sx={{ mr: 1 }} />
                                 Clear
@@ -202,8 +202,14 @@ export function Manhole() {
                                         <MeasurementData
                                             settings={undefined}
                                             measureValues={manhole.top}
-                                            idx={0}
                                             useCylinderMeasureSettings={false}
+                                            setSettingsFunc={(settings: MeasureSettings) => {
+                                                dispatch(
+                                                    manholeActions.setSettings({
+                                                        settings,
+                                                    })
+                                                );
+                                            }}
                                         />
                                     </AccordionDetails>
                                 </Accordion>
@@ -220,10 +226,14 @@ export function Manhole() {
                                         <MeasurementData
                                             settings={undefined}
                                             measureValues={manhole.bottom}
-                                            idx={1}
-                                            useCylinderMeasureSettings={
-                                                useCylinderMeasureSettings ? useCylinderMeasureSettings : false
-                                            }
+                                            useCylinderMeasureSettings={false}
+                                            setSettingsFunc={(settings: MeasureSettings) => {
+                                                dispatch(
+                                                    manholeActions.setSettings({
+                                                        settings,
+                                                    })
+                                                );
+                                            }}
                                         />
                                     </AccordionDetails>
                                 </Accordion>
@@ -240,9 +250,15 @@ export function Manhole() {
                                         <MeasurementData
                                             settings={undefined}
                                             measureValues={manhole.outer}
-                                            idx={2}
                                             simpleCylinder={true}
                                             useCylinderMeasureSettings={false}
+                                            setSettingsFunc={(settings: MeasureSettings) => {
+                                                dispatch(
+                                                    manholeActions.setSettings({
+                                                        settings,
+                                                    })
+                                                );
+                                            }}
                                         />
                                     </AccordionDetails>
                                 </Accordion>
@@ -259,9 +275,15 @@ export function Manhole() {
                                             <MeasurementData
                                                 settings={undefined}
                                                 measureValues={manhole.inner}
-                                                idx={3}
                                                 useCylinderMeasureSettings={false}
                                                 simpleCylinder={true}
+                                                setSettingsFunc={(settings: MeasureSettings) => {
+                                                    dispatch(
+                                                        manholeActions.setSettings({
+                                                            settings,
+                                                        })
+                                                    );
+                                                }}
                                             />
                                         </AccordionDetails>
                                     </Accordion>
@@ -277,7 +299,7 @@ export function Manhole() {
                     ) : null}
                     {selectedMeasureObject ? (
                         <>
-                            <Accordion defaultExpanded={true}>
+                            <Accordion defaultExpanded={false}>
                                 <AccordionSummary>
                                     <Box width={0} flex="1 1 auto" overflow="hidden">
                                         <Box overflow="hidden" whiteSpace="nowrap" textOverflow="ellipsis">
@@ -295,7 +317,13 @@ export function Manhole() {
                                             measureValues={measureValues}
                                             settings={selectedMeasureEntity.settings}
                                             useCylinderMeasureSettings={false}
-                                            idx={0}
+                                            setSettingsFunc={(settings: MeasureSettings) => {
+                                                dispatch(
+                                                    manholeActions.setSettings({
+                                                        settings,
+                                                    })
+                                                );
+                                            }}
                                         />
                                     ) : isVertex(selectedMeasureObject) ? (
                                         <Box p={2}>
@@ -304,7 +332,30 @@ export function Manhole() {
                                     ) : null}
                                 </AccordionDetails>
                             </Accordion>
-                            <MeasuredResult duoMeasurementValues={duoMeasurementValues} />
+                        </>
+                    ) : null}
+                    {collisionValues ? (
+                        <>
+                            <List>
+                                <ListItem>
+                                    <Grid container>
+                                        <Grid item xs={4}>
+                                            Distance from manhole bottom
+                                        </Grid>
+                                        <Grid item xs={6}>
+                                            {vec3.distance(collisionValues[0], collisionValues[1]).toFixed(3)} m
+                                        </Grid>
+                                    </Grid>
+                                </ListItem>
+                            </List>
+                            <Box p={1}>
+                                <Accordion defaultExpanded={false}>
+                                    <AccordionSummary>Components</AccordionSummary>
+                                    <AccordionDetails>
+                                        {<MeasurementTable start={collisionValues[0]} end={collisionValues[1]} />}
+                                    </AccordionDetails>
+                                </Accordion>
+                            </Box>
                         </>
                     ) : null}
                 </ScrollBox>

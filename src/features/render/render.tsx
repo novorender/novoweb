@@ -84,6 +84,7 @@ import { bookmarksActions, selectBookmarks, useSelectBookmark } from "features/b
 import { measureActions, selectMeasure } from "features/measure";
 import {
     manholeActions,
+    selectCollisionValues,
     selectIsManholePinned,
     selectManholeMeasureValues,
     useHandleManholeUpdates,
@@ -133,6 +134,7 @@ import {
     renderMeasurePoints,
     renderSingleMeasurePoint,
 } from "./svgUtils";
+import { useManholeMeasure } from "features/manhole/useHandleManholeUpdates";
 
 glMatrix.setMatrixArrayType(Array);
 
@@ -249,6 +251,8 @@ export function Render3D({ onInit }: Props) {
     const { points: pointLinePoints, result: pointLineResult } = useAppSelector(selectPointLine);
     const manhole = useAppSelector(selectManholeMeasureValues);
     const manholePinned = useAppSelector(selectIsManholePinned);
+    const manholeCollision = useAppSelector(selectCollisionValues);
+    const manholeColEntity = useManholeMeasure();
 
     const dispatch = useAppDispatch();
 
@@ -376,6 +380,31 @@ export function Render3D({ onInit }: Props) {
                 advancedDrawing: false,
                 measureSettings: undefined,
             });
+            if (manholeColEntity) {
+                renderObject({
+                    fillColor: "rgba(0, 255, 38, 0.5)",
+                    pathName: "manholeColEntity",
+                    entity: manholeColEntity,
+                    advancedDrawing: false,
+                    measureSettings: undefined,
+                });
+            } else {
+                resetSVG({ svg, pathName: "manholeColEntity" });
+            }
+            if (manholeCollision) {
+                renderPoints({
+                    points: pathPoints({ points: manholeCollision }),
+                    svgNames: { path: "manholeCollision", point: "manhole_col" },
+                    text: {
+                        textName: "manholeCollisionText",
+                        value: vec3.len(vec3.sub(vec3.create(), manholeCollision[0], manholeCollision[1])),
+                        type: "distance",
+                    },
+                });
+            }
+        } else {
+            resetSVG({ svg, pathName: "manholeColEntity" });
+            resetSVG({ svg, pathName: "manhole" });
         }
 
         const normalPoints = measure.duoMeasurementValues?.normalPoints;
@@ -635,7 +664,9 @@ export function Render3D({ onInit }: Props) {
         areaValue,
         myLocationPoint,
         manhole,
+        manholeCollision,
         measureScene,
+        manholeColEntity,
     ]);
     useEffect(() => {
         renderParametricMeasure();
@@ -1910,6 +1941,25 @@ export function Render3D({ onInit }: Props) {
                                 <>
                                     <path id={"manhole"} d="" stroke="yellow" strokeWidth={2} fill="none" />
                                     <path id={"manhole_filled"} d="" stroke="yellow" strokeWidth={2} fill="none" />
+                                    <path id={"manholeColEntity"} d="" stroke="orange" strokeWidth={2} fill="none" />
+                                    <path id={"manholeCollision"} d="" stroke="blue" strokeWidth={2} fill="none" />
+                                    <MeasurementPoint
+                                        id={"manhole_col_0"}
+                                        r={5}
+                                        disabled={true}
+                                        fill="yellow"
+                                        stroke="black"
+                                        strokeWidth={2}
+                                    />
+                                    <MeasurementPoint
+                                        id={"manhole_col_1"}
+                                        r={5}
+                                        disabled={true}
+                                        fill="yellow"
+                                        stroke="black"
+                                        strokeWidth={2}
+                                    />
+                                    <AxisText id={`manholeCollisionText`} />
                                 </>
                             ) : null}
                             {myLocationPoint ? (

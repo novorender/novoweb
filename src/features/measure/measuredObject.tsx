@@ -120,7 +120,14 @@ export function MeasuredObject({ obj, idx }: { obj: SelectedMeasureObj; idx: num
                         measureValues={measureValues}
                         settings={obj.settings}
                         useCylinderMeasureSettings={useCylinderMeasureSettings ? useCylinderMeasureSettings : false}
-                        idx={idx}
+                        setSettingsFunc={(settings: MeasureSettings) => {
+                            dispatch(
+                                measureActions.setSettings({
+                                    idx,
+                                    settings,
+                                })
+                            );
+                        }}
                     />
                 ) : isVertex(measureObject) ? (
                     <Box p={2}>
@@ -214,17 +221,16 @@ export function MeasuredResult({ duoMeasurementValues }: { duoMeasurementValues:
 export function MeasurementData({
     measureValues,
     useCylinderMeasureSettings,
-    idx,
     simpleCylinder,
     settings,
+    setSettingsFunc,
 }: {
     measureValues: MeasurementValues;
     useCylinderMeasureSettings: boolean;
-    idx: number;
     settings?: MeasureSettings;
     simpleCylinder?: boolean;
+    setSettingsFunc: (settings: MeasureSettings) => void;
 }) {
-    const dispatch = useAppDispatch();
     if (!("kind" in measureValues)) {
         return null;
     }
@@ -445,15 +451,10 @@ export function MeasurementData({
                                 size="small"
                                 value={settings?.cylinderMeasure ? settings.cylinderMeasure : "center"}
                                 onChange={(e) => {
-                                    dispatch(
-                                        measureActions.setSettings({
-                                            idx,
-                                            settings: {
-                                                ...settings,
-                                                cylinderMeasure: e.target.value as MeasureSettings["cylinderMeasure"],
-                                            },
-                                        })
-                                    );
+                                    setSettingsFunc({
+                                        ...settings,
+                                        cylinderMeasure: e.target.value as MeasureSettings["cylinderMeasure"],
+                                    });
                                 }}
                                 input={<OutlinedInput fullWidth />}
                             >

@@ -10,7 +10,8 @@ import {
     selectManholeMeasureAgainst,
     selectManholeMeasureValues,
 } from "./manholeSlice";
-import { DuoMeasurementValues, MeasureEntity, MeasureSettings } from "@novorender/measure-api";
+import { CollisionValues, MeasureEntity, MeasureSettings } from "@novorender/measure-api";
+import { vec3 } from "gl-matrix";
 
 export type ExtendedMeasureEntity = MeasureEntity & {
     settings?: MeasureSettings;
@@ -61,7 +62,7 @@ export function useManholeMeasure() {
 
     useEffect(() => {
         if (!obj) {
-            dispatch(manholeActions.setDuoMeasurementValues(undefined));
+            dispatch(manholeActions.setCollisionValues(undefined));
             setMeasureEntity(undefined);
             return;
         }
@@ -88,14 +89,25 @@ export function useManholeMeasure() {
                       return _mObj;
                   }))) as ExtendedMeasureEntity;
 
-            const res = (await measureScene
-                .measure(entity, manhole?.bottom.entity, entity.settings)
-                .catch((e) => console.warn(e))) as DuoMeasurementValues | undefined;
+            if (entity.drawKind === "face" && manhole) {
+                const res = (await measureScene
+                    .collision(entity, manhole.outer.entity, obj.settings)
+                    .catch((e) => console.warn(e))) as CollisionValues | undefined;
+                if (res) {
+                    dispatch(
+                        manholeActions.setCollisionValues([
+                            res.point,
+                            vec3.fromValues(res.point[0], manhole.bottomElevation, res.point[2]),
+                        ])
+                    );
+                } else {
+                    dispatch(manholeActions.setCollisionValues(undefined));
+                }
+            }
 
-            dispatch(manholeActions.setDuoMeasurementValues(res));
             setMeasureEntity(entity);
         }
-    }, [measureScene, setMeasureEntity, dispatch, manhole?.bottom, obj]);
+    }, [measureScene, setMeasureEntity, dispatch, manhole?.bottom, obj, manhole]);
 
     return measureEntity;
 }

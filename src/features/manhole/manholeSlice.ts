@@ -1,15 +1,16 @@
-import { DuoMeasurementValues, ManholeMeasureValues } from "@novorender/measure-api";
+import { ManholeMeasureValues, MeasureSettings } from "@novorender/measure-api";
 import { createSlice, PayloadAction } from "@reduxjs/toolkit";
 
 import { RootState } from "app/store";
 import { SelectedMeasureObj } from "features/measure";
+import { vec3 } from "gl-matrix";
 
 const initialState = {
     selectedId: undefined as number | undefined,
     measureValues: undefined as ManholeMeasureValues | undefined,
     loadingBrep: false,
     pinned: false,
-    duoMeasurementValues: undefined as undefined | DuoMeasurementValues,
+    collisionValues: undefined as undefined | [vec3, vec3],
     measureAgainst: undefined as SelectedMeasureObj | undefined,
 };
 
@@ -37,8 +38,13 @@ export const manholeSlice = createSlice({
         setMeasureManholeAgainst: (state, action: PayloadAction<State["measureAgainst"]>) => {
             state.measureAgainst = action.payload;
         },
-        setDuoMeasurementValues: (state, action: PayloadAction<State["duoMeasurementValues"]>) => {
-            state.duoMeasurementValues = action.payload;
+        setCollisionValues: (state, action: PayloadAction<State["collisionValues"]>) => {
+            state.collisionValues = action.payload;
+        },
+        setSettings: (state, action: PayloadAction<{ settings: MeasureSettings }>) => {
+            if (state.measureAgainst) {
+                state.measureAgainst = { ...state.measureAgainst, settings: action.payload.settings };
+            }
         },
     },
 });
@@ -46,7 +52,7 @@ export const manholeSlice = createSlice({
 export const selectManholeId = (state: RootState) => state.manhole.selectedId;
 export const selectManholeMeasureValues = (state: RootState) => state.manhole.measureValues;
 export const selectManholeMeasureAgainst = (state: RootState) => state.manhole.measureAgainst;
-export const selectManholeDuoMeasure = (state: RootState) => state.manhole.duoMeasurementValues;
+export const selectCollisionValues = (state: RootState) => state.manhole.collisionValues;
 export const selectIsLoadingManholeBrep = (state: RootState) => state.manhole.loadingBrep;
 export const selectIsManholePinned = (state: RootState) => state.manhole.pinned;
 
