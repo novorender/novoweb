@@ -20,7 +20,6 @@ import {
     selectCameraType,
     selectSubtrees,
     SubtreeStatus,
-    selectGridDefaults,
     selectGrid,
     selectPicker,
     Picker,
@@ -28,6 +27,7 @@ import {
 import { selectMinimized, selectMaximized } from "slices/explorerSlice";
 import { ColorPicker } from "features/colorPicker";
 import { rgbToVec, VecRGBA, vecToRgb } from "utils/color";
+import { OrthoControllerParams } from "@novorender/webgl-api";
 
 export function OrthoCam() {
     const [menuOpen, toggleMenu] = useToggle();
@@ -37,7 +37,6 @@ export function OrthoCam() {
         state: { view, canvas },
     } = useExplorerGlobals(true);
 
-    const gridDefaults = useAppSelector(selectGridDefaults);
     const grid = useAppSelector(selectGrid);
     const cameraType = useAppSelector(selectCameraType);
     const selectingOrthoPoint = useAppSelector(selectPicker) === Picker.OrthoPlane;
@@ -78,31 +77,17 @@ export function OrthoCam() {
         const pos = vec3.copy(vec3.create(), view.camera.position);
         pos[1] = Math.min(pos[1], maxY);
         (orthoController as any).init(pos, [0, 1, 0], view.camera);
-        const mat = (orthoController.params as any).referenceCoordSys;
-        const right = vec3.fromValues(mat[0], mat[1], mat[2]);
-        const up = vec3.fromValues(mat[4], mat[5], mat[6]);
-        const pt = vec3.fromValues(mat[12], mat[13], mat[14]);
-
-        const squareSize = 1 * (gridDefaults.minorLineCount + 1);
 
         dispatch(
             renderActions.setCamera({
                 type: CameraType.Orthographic,
                 params: {
                     kind: "ortho",
-                    referenceCoordSys: mat,
+                    referenceCoordSys: (orthoController.params as OrthoControllerParams).referenceCoordSys,
                     fieldOfView: 100,
                     near: -0.001,
                     far: (view.camera.controller.params as any).far,
                 },
-            })
-        );
-
-        dispatch(
-            renderActions.setGrid({
-                origo: pt,
-                axisY: vec3.scale(vec3.create(), up, squareSize),
-                axisX: vec3.scale(vec3.create(), right, squareSize),
             })
         );
     };

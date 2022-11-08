@@ -1,5 +1,5 @@
 import { useState, ChangeEvent, SyntheticEvent } from "react";
-import { useTheme, Box, Button, FormControlLabel, Slider, Typography } from "@mui/material";
+import { useTheme, Box, Button, FormControlLabel, Slider, Typography, FormHelperText } from "@mui/material";
 import { Internal } from "@novorender/webgl-api";
 import { useHistory } from "react-router-dom";
 import { ArrowBack, Save } from "@mui/icons-material";
@@ -14,8 +14,10 @@ import {
     selectSubtrees,
     SubtreeStatus,
     Subtree,
+    selectDefaultDeviceProfile,
 } from "slices/renderSlice";
 import { selectUser } from "slices/authSlice";
+import { api } from "app";
 
 import {
     toggleAutoFps,
@@ -32,7 +34,8 @@ type SliderSettings =
     | AdvancedSetting.PointSize
     | AdvancedSetting.MaxPointSize
     | AdvancedSetting.PointToleranceFactor
-    | AdvancedSetting.AmbientLight;
+    | AdvancedSetting.AmbientLight
+    | AdvancedSetting.TriangleLimit;
 
 export function RenderSettings({ save, saving }: { save: () => Promise<void>; saving: boolean }) {
     const history = useHistory();
@@ -44,6 +47,7 @@ export function RenderSettings({ save, saving }: { save: () => Promise<void>; sa
     const dispatch = useAppDispatch();
     const user = useAppSelector(selectUser);
     const subtrees = useAppSelector(selectSubtrees);
+    const defaultDeviceProfile = useAppSelector(selectDefaultDeviceProfile);
     const settings = useAppSelector(selectAdvancedSettings);
     const {
         taa,
@@ -60,12 +64,14 @@ export function RenderSettings({ save, saving }: { save: () => Promise<void>; sa
         pointToleranceFactor,
         ambientLight,
         terrainAsBackground,
+        triangleLimit,
     } = settings;
 
     const [size, setSize] = useState(pointSize);
     const [maxSize, setMaxSize] = useState(maxPointSize);
     const [toleranceFactor, setToleranceFactor] = useState(pointToleranceFactor);
     const [ambLight, setAmbLight] = useState(ambientLight);
+    const [maxTris, setMaxTris] = useState(triangleLimit);
 
     const handleSubtreeToggle = (subtree: Subtree) => () => {
         dispatch(renderActions.toggleSubtree({ subtree }));
@@ -123,6 +129,9 @@ export function RenderSettings({ save, saving }: { save: () => Promise<void>; sa
                     light.ambient.brightness = value;
                     view.performanceStatistics.cameraGeneration++;
                     return;
+                case AdvancedSetting.TriangleLimit:
+                    setMaxTris(value);
+                    return;
             }
         };
 
@@ -137,6 +146,10 @@ export function RenderSettings({ save, saving }: { save: () => Promise<void>; sa
                 case AdvancedSetting.MaxPointSize:
                 case AdvancedSetting.PointToleranceFactor:
                 case AdvancedSetting.AmbientLight:
+                    dispatch(renderActions.setAdvancedSettings({ [kind]: value }));
+                    return;
+                case AdvancedSetting.TriangleLimit:
+                    (api as any).deviceProfile.triangleLimit = Math.min(value, defaultDeviceProfile.triangleLimit);
                     dispatch(renderActions.setAdvancedSettings({ [kind]: value }));
             }
         };
@@ -295,6 +308,35 @@ export function RenderSettings({ save, saving }: { save: () => Promise<void>; sa
                                         </Box>
                                     }
                                 />
+
+                                <Divider sx={{ borderColor: theme.palette.grey[300], my: 2 }} />
+
+                                <Box display="flex" sx={{ mb: 0 }} alignItems="center">
+                                    <Typography
+                                        sx={{
+                                            width: 160,
+                                            flexShrink: 0,
+                                        }}
+                                    >
+                                        Triangle limit
+                                    </Typography>
+                                    <Slider
+                                        sx={{ mx: 2, flex: "1 1 100%" }}
+                                        min={500_000}
+                                        max={20_000_000}
+                                        step={500_000}
+                                        valueLabelFormat={(value) => value / 1_000_000}
+                                        name={AdvancedSetting.TriangleLimit}
+                                        value={maxTris}
+                                        valueLabelDisplay="auto"
+                                        onChange={handleSliderChange(AdvancedSetting.TriangleLimit)}
+                                        onChangeCommitted={handleSliderCommit(AdvancedSetting.TriangleLimit)}
+                                    />
+                                </Box>
+                                <FormHelperText>
+                                    Value is in millions. Max for this device is{" "}
+                                    {defaultDeviceProfile.triangleLimit / 1_000_000} million.
+                                </FormHelperText>
                             </Box>
                         </AccordionDetails>
                     </Accordion>
