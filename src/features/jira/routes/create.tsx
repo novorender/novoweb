@@ -76,8 +76,14 @@ export function CreateIssue() {
         [issueType, issueTypes, dispatch]
     );
 
-    const { summary, description, components, reporter, assignee, ...fields } =
-        createIssueMetadata ?? ({} as CreateIssueMetadata["fields"]);
+    const {
+        summary,
+        description,
+        components,
+        reporter: _reporter,
+        assignee: _assignee,
+        ..._fields
+    } = createIssueMetadata ?? ({} as CreateIssueMetadata["fields"]);
 
     if (!space || !project || !component) {
         // todo
