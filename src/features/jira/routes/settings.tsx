@@ -1,28 +1,41 @@
 import { Autocomplete, Box, Button, CircularProgress, Typography, useTheme } from "@mui/material";
 import { LoadingButton } from "@mui/lab";
-import { Redirect, useHistory } from "react-router-dom";
+import { useHistory } from "react-router-dom";
 import { FormEventHandler, SyntheticEvent, useState } from "react";
+import { SceneData } from "@novorender/data-js-api";
 
+import { dataApi } from "app";
+import { selectIsAdminScene } from "slices/explorerSlice";
+import { useExplorerGlobals } from "contexts/explorerGlobals";
 import { useAppDispatch, useAppSelector } from "app/store";
 import { AsyncState, AsyncStatus } from "types/misc";
 import { renderActions, selectProjectSettings } from "slices/renderSlice";
 import { ScrollBox, TextField } from "components";
 
 import { Component, Project, Space } from "../types";
-import { jiraActions, selectAvailableJiraSpaces, selectJiraAccessTokenData } from "../jiraSlice";
-import { useGetComponentsQuery, useGetProjectsQuery } from "../jiraApi";
+import { jiraActions, selectJiraAccessTokenData } from "../jiraSlice";
+import { useGetAccessibleResourcesQuery, useGetComponentsQuery, useGetProjectsQuery } from "../jiraApi";
 
-export function Settings() {
+export function Settings({ sceneId }: { sceneId: string }) {
     const history = useHistory();
     const theme = useTheme();
+    const {
+        state: { scene },
+    } = useExplorerGlobals(true);
 
     const dispatch = useAppDispatch();
+    const isAdminScene = useAppSelector(selectIsAdminScene);
     const { jira: settings } = useAppSelector(selectProjectSettings);
     const accessToken = useAppSelector(selectJiraAccessTokenData);
-    const availableSpaces = useAppSelector(selectAvailableJiraSpaces);
+
+    const { data: accessibleResources } = useGetAccessibleResourcesQuery(
+        { accessToken: accessToken },
+        { skip: !accessToken }
+    );
+
     const [space, setSpace] = useState(
-        availableSpaces.status === AsyncStatus.Success
-            ? availableSpaces.data.find((s) => s.name === settings?.space) ?? availableSpaces.data[0]
+        accessibleResources
+            ? accessibleResources.find((resource) => resource.name === settings?.space) ?? accessibleResources[0]
             : undefined
     );
     const [project, setProject] = useState<Project | null>(null);
@@ -38,10 +51,6 @@ export function Settings() {
         { space: space?.id ?? "", project: project?.key ?? "", accessToken },
         { skip: !space || !accessToken || !project }
     );
-
-    if (availableSpaces.status !== AsyncStatus.Success) {
-        return <Redirect to="/" />;
-    }
 
     const handleSpaceChange = (e: SyntheticEvent, value: Space | null) => {
         if (!value) {
@@ -62,7 +71,7 @@ export function Settings() {
         setComponent(null);
     };
 
-    const handleSubmit: FormEventHandler = (e) => {
+    const handleSubmit: FormEventHandler = async (e) => {
         e.preventDefault();
 
         if (saving.status === AsyncStatus.Loading || !space || !project || !component) {
@@ -70,19 +79,41 @@ export function Settings() {
         }
 
         setSaving({ status: AsyncStatus.Loading });
+        const jiraSettings = {
+            space: space.name,
+            project: project.key,
+            component: component.name,
+        };
+
         dispatch(
             renderActions.setProjectSettings({
-                jira: {
-                    space: space.id,
-                    project: project.key,
-                    component: component.name,
-                },
+                jira: jiraSettings,
             })
         );
         dispatch(jiraActions.setSpace(space));
+        dispatch(jiraActions.setProject(project));
+        dispatch(jiraActions.setComponent(component));
+
+        try {
+            const {
+                url: _url,
+                customProperties = {},
+                ...originalScene
+            } = (await dataApi.loadScene(sceneId)) as SceneData;
+
+            dataApi.putScene({
+                ...originalScene,
+                url: isAdminScene ? scene.id : `${sceneId}:${scene.id}`,
+                customProperties: {
+                    ...customProperties,
+                    jiraSettings,
+                },
+            });
+        } catch {
+            console.warn("Failed to save Jira settings.");
+        }
 
         history.push("/issues");
-        /// TODO(SAVE)
     };
 
     return (
@@ -100,7 +131,7 @@ export function Settings() {
                     sx={{ mb: 3 }}
                     id="jiraSpace"
                     fullWidth
-                    options={availableSpaces.data}
+                    options={accessibleResources ?? []}
                     getOptionLabel={(opt) => opt.name}
                     value={space}
                     onChange={handleSpaceChange}
@@ -145,7 +176,7 @@ export function Settings() {
 
                 <Box display="flex" justifyContent="space-between">
                     <Button color="grey" variant="outlined" disabled={!settings}>
-                        Cancel
+                        Cancel todo
                     </Button>
                     <LoadingButton
                         type="submit"

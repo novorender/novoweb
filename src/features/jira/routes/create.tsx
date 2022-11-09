@@ -9,24 +9,23 @@ import {
     MenuItem,
     OutlinedInput,
     Select,
-    Typography,
     useTheme,
 } from "@mui/material";
 import { useHistory } from "react-router-dom";
 
 import { Divider, ScrollBox } from "components";
-import { selectProjectSettings } from "slices/renderSlice";
 import { useAppDispatch, useAppSelector } from "app/store";
 
+import { useGetComponentsQuery, useGetCreateIssueMetadataQuery, useGetIssueTypesQuery } from "../jiraApi";
 import {
-    useGetComponentsQuery,
-    useGetCreateIssueMetadataQuery,
-    useGetIssueTypeScreenSchemeQuery,
-    useGetIssueTypesQuery,
-} from "../jiraApi";
-import { jiraActions, selectIssueType, selectJiraAccessTokenData } from "../jiraSlice";
+    jiraActions,
+    selectIssueType,
+    selectJiraAccessTokenData,
+    selectJiraComponent,
+    selectJiraProject,
+    selectJiraSpace,
+} from "../jiraSlice";
 import { CreateIssueMetadata } from "../types";
-import e from "express";
 
 export function CreateIssue() {
     const theme = useTheme();
@@ -35,9 +34,9 @@ export function CreateIssue() {
 
     const issueType = useAppSelector(selectIssueType);
     const accessToken = useAppSelector(selectJiraAccessTokenData);
-    const { jira: jiraSettings } = useAppSelector(selectProjectSettings);
-    // TODO(OLA): set default && validate at earlier stage && use full objects, keep only ids in settings
-    const settings = jiraSettings || { project: "", component: "", space: "" };
+    const space = useAppSelector(selectJiraSpace);
+    const project = useAppSelector(selectJiraProject);
+    const component = useAppSelector(selectJiraComponent);
     const [formValues, setFormValues] = useState({} as { [key: string]: any });
 
     const {
@@ -46,7 +45,7 @@ export function CreateIssue() {
         isLoading: _isLoadingIssuesTypes,
         isError: _isErrorIssuesTypes,
     } = useGetIssueTypesQuery({
-        project: settings.project,
+        project: project?.key ?? "",
     });
 
     const {
@@ -61,12 +60,10 @@ export function CreateIssue() {
         { skip: !issueType }
     );
 
-    const { data: componentOptions, isFetching: isFetchingComponents } = useGetComponentsQuery(
-        { space: settings.space, project: settings.project, accessToken },
-        { skip: !settings.space || !settings.project || !accessToken }
+    const { data: componentOptions } = useGetComponentsQuery(
+        { space: space?.id ?? "", project: project?.key ?? "", accessToken },
+        { skip: !space || !project || !accessToken }
     );
-
-    console.table(createIssueMetadata);
 
     useEffect(
         function initIssueType() {
@@ -81,6 +78,11 @@ export function CreateIssue() {
 
     const { summary, description, components, reporter, assignee, ...fields } =
         createIssueMetadata ?? ({} as CreateIssueMetadata["fields"]);
+
+    if (!space || !project || !component) {
+        // todo
+        return null;
+    }
 
     return (
         <>
@@ -105,8 +107,10 @@ export function CreateIssue() {
                         </FormLabel>
                     </Box>
 
-                    <Select readOnly value={settings.project} id={"project"}>
-                        <MenuItem value={settings.project}>{settings.project}</MenuItem>
+                    <Select readOnly value={project.key} id={"project"}>
+                        <MenuItem value={project.key}>
+                            {project.key} - {project.name}
+                        </MenuItem>
                     </Select>
                     <FormHelperText>Can only be changed by admins in settings.</FormHelperText>
                 </FormControl>
@@ -199,13 +203,28 @@ export function CreateIssue() {
                         </FormLabel>
                     </Box>
 
-                    <Select multiple value={[]} id={"issueComponents"} onChange={() => {}}>
+                    <Select
+                        multiple
+                        value={[component.id, ...(components ? formValues["issueComponents"] ?? [] : [])]}
+                        id={"issueComponents"}
+                        onChange={({ target: { value } }) => {
+                            if (!Array.isArray(value)) {
+                                return;
+                            }
+
+                            setFormValues((state) => ({
+                                ...state,
+                                issueComponents: value.filter((comp) => comp !== component.id),
+                            }));
+                        }}
+                    >
                         {(componentOptions ?? []).map((option) => (
-                            <MenuItem key={option.id} value={option.id}>
+                            <MenuItem disabled={option.id === component.id} key={option.id} value={option.id}>
                                 {option.name}
                             </MenuItem>
                         ))}
                     </Select>
+                    <FormHelperText>Default component can only be changed by admins in settings.</FormHelperText>
                 </FormControl>
             </ScrollBox>
         </>

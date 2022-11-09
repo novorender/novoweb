@@ -2,24 +2,14 @@ import { createSelector, createSlice, PayloadAction } from "@reduxjs/toolkit";
 
 import { RootState } from "app/store";
 import { AsyncState, AsyncStatus } from "types/misc";
-import { Component, IssueType, Project, Space } from "./types";
 
-export enum JiraStatus {
-    Initial,
-    CheckingSession,
-    LoadingCsrfToken,
-    Unauthenticated,
-    LoadingLogin,
-    Authenticated,
-    Error,
-}
+import { Component, IssueType, Project, Space } from "./types";
 
 const initialState = {
     space: undefined as undefined | Space,
     project: undefined as undefined | Project,
     component: undefined as undefined | Component,
     accessToken: { status: AsyncStatus.Initial } as AsyncState<string>,
-    availableSpaces: { status: AsyncStatus.Initial } as AsyncState<Space[]>,
     issueType: undefined as undefined | IssueType,
 };
 
@@ -35,8 +25,11 @@ export const jiraSlice = createSlice({
         setSpace: (state, action: PayloadAction<State["space"]>) => {
             state.space = action.payload;
         },
-        setAvailableSpaces: (state, action: PayloadAction<State["availableSpaces"]>) => {
-            state.availableSpaces = action.payload;
+        setProject: (state, action: PayloadAction<State["project"]>) => {
+            state.project = action.payload;
+        },
+        setComponent: (state, action: PayloadAction<State["component"]>) => {
+            state.component = action.payload;
         },
         setIssueType: (state, action: PayloadAction<State["issueType"]>) => {
             state.issueType = action.payload;
@@ -49,7 +42,8 @@ export const selectJiraAccessTokenData = createSelector(selectJiraAccessToken, (
     token.status === AsyncStatus.Success ? token.data : ""
 );
 export const selectJiraSpace = (state: RootState) => state.jira.space;
-export const selectAvailableJiraSpaces = (state: RootState) => state.jira.availableSpaces;
+export const selectJiraProject = (state: RootState) => state.jira.project;
+export const selectJiraComponent = (state: RootState) => state.jira.component;
 export const selectIssueType = (state: RootState) => state.jira.issueType;
 
 const { actions, reducer } = jiraSlice;

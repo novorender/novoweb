@@ -45,7 +45,7 @@ export function Jira() {
                                 <Issues />
                             </Route>
                             <Route path="/settings">
-                                <Settings />
+                                <Settings sceneId={sceneId} />
                             </Route>
                             <Route path="/filters">
                                 <Filters />

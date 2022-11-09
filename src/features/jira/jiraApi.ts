@@ -82,7 +82,7 @@ export const jiraApi = createApi({
                         issueType.hierarchyLevel === 0 // No sub-tasks or epic type tasks
                 ),
         }),
-        getAccessibleResources: builder.mutation<Space[], { accessToken: string }>({
+        getAccessibleResources: builder.query<Space[], { accessToken: string }>({
             queryFn: async ({ accessToken }) => {
                 return fetch("https://api.atlassian.com/oauth/token/accessible-resources", {
                     headers: { Authorization: `Bearer ${accessToken}` },
@@ -208,7 +208,7 @@ export const jiraApi = createApi({
 
 export const {
     useLazyGetTokensQuery,
-    useGetAccessibleResourcesMutation,
+    useGetAccessibleResourcesQuery,
     useRefreshTokensMutation,
     useGetProjectsQuery,
     useGetComponentsQuery,

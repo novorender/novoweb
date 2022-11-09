@@ -815,6 +815,8 @@ export function Render3D({ onInit }: Props) {
                 initHidden(objectGroups, dispatchHidden);
                 initCustomGroups(objectGroups, dispatchCustomGroups);
                 initHighlighted(objectGroups, dispatchHighlighted);
+                initAdvancedSettings(_view, customProperties, api);
+                initProjectSettings({ sceneData: sceneResponse });
 
                 if (urlData.mainObject !== undefined) {
                     dispatchHighlighted(highlightActions.add([urlData.mainObject]));
@@ -855,8 +857,6 @@ export function Render3D({ onInit }: Props) {
                     );
                 }
                 onInit({ customProperties });
-                initAdvancedSettings(_view, customProperties, api);
-                initProjectSettings({ sceneData: sceneResponse });
 
                 dispatchGlobals(
                     explorerGlobalsActions.update({
