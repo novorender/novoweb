@@ -142,7 +142,16 @@ type CreateIssueMetadataFieldValue = {
     };
 };
 
-const x = {
-    expand: "projects",
-    projects: [],
+export type Assignee = {
+    self: string;
+    accountId: string;
+    accountType: string;
+    emailAddress: string;
+    avatarUrls: {
+        [key: string]: string;
+    };
+    displayName: string;
+    active: boolean;
+    timeZone: string;
+    locale: string;
 };
