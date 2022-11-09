@@ -8,18 +8,12 @@ import { AsyncStatus } from "types/misc";
 import { selectProjectSettings } from "slices/renderSlice";
 import { deleteFromStorage, getFromStorage, saveToStorage } from "utils/storage";
 import { StorageKey } from "config/storage";
-
-import {
-    jiraActions,
-    selectJiraSpace,
-    selectJiraAccessToken,
-    selectOAuthCode,
-    selectAvailableJiraSpaces,
-} from "../jiraSlice";
-import { useGetAccessibleResourcesMutation, useGetTokenMutation, useRefreshTokensMutation } from "../jiraApi";
 import { selectHasAdminCapabilities } from "slices/explorerSlice";
 
-let codeExhangeInitialisedAt = 0;
+import { jiraActions, selectJiraSpace, selectJiraAccessToken, selectAvailableJiraSpaces } from "../jiraSlice";
+import { useGetAccessibleResourcesMutation, useLazyGetTokensQuery, useRefreshTokensMutation } from "../jiraApi";
+
+let getTokensRequestInitialized = false;
 
 export function Auth() {
     const history = useHistory();
@@ -27,72 +21,61 @@ export function Auth() {
 
     const isAdmin = useAppSelector(selectHasAdminCapabilities);
     const accessToken = useAppSelector(selectJiraAccessToken);
-    const code = useAppSelector(selectOAuthCode);
     const space = useAppSelector(selectJiraSpace);
     const availableSpaces = useAppSelector(selectAvailableJiraSpaces);
     const { jira: jiraSettings } = useAppSelector(selectProjectSettings);
 
-    const [getToken] = useGetTokenMutation();
+    const [getTokens, { data: tokensResponse, error: tokensError }] = useLazyGetTokensQuery();
     const [refreshTokens] = useRefreshTokensMutation();
     const [getAccessibleResources] = useGetAccessibleResourcesMutation();
 
     useEffect(() => {
-        exchangeCodeForToken();
+        tryAuthenticating();
 
-        async function exchangeCodeForToken() {
-            const now = Date.now();
-
-            // TODO(OLA): Sjekk med useLazyQuery...() heller enn mutation
-            // NOTE(OLA): React strict mode double mounts quicker than any store updates.
-            // Attempting to exchange twice results in a race condition.
-            if (!code || now - codeExhangeInitialisedAt < 3000) {
-                return;
-            }
-
-            codeExhangeInitialisedAt = now;
-            dispatch(jiraActions.setAccessToken({ status: AsyncStatus.Loading }));
-            dispatch(jiraActions.deleteOAuthCode());
-            const res = await getToken({ code });
-
-            if ("data" in res) {
-                dispatch(jiraActions.setAccessToken({ status: AsyncStatus.Success, data: res.data.access_token }));
-                saveToStorage(StorageKey.JiraRefreshToken, res.data.refresh_token);
-            } else {
-                console.warn(res.error);
-                dispatch(jiraActions.setAccessToken({ status: AsyncStatus.Error, msg: "An error occured." }));
-            }
-        }
-    }, [code, getToken, dispatch]);
-
-    useEffect(() => {
-        initRefreshTokens();
-
-        async function initRefreshTokens() {
+        async function tryAuthenticating() {
+            // todo keepalive
+            const code = new URLSearchParams(window.location.search).get("code");
             const refreshToken = getFromStorage(StorageKey.JiraRefreshToken);
 
-            if (code || accessToken.status !== AsyncStatus.Initial) {
+            if (getTokensRequestInitialized) {
                 return;
-            }
+            } else if (code) {
+                window.history.replaceState(null, "", window.location.pathname);
+                dispatch(jiraActions.setAccessToken({ status: AsyncStatus.Loading }));
+                getTokensRequestInitialized = true;
+                getTokens({ code });
+            } else if (refreshToken) {
+                dispatch(jiraActions.setAccessToken({ status: AsyncStatus.Loading }));
 
-            if (!refreshToken) {
-                history.push("/login");
-                return;
-            }
+                const res = await refreshTokens({ refreshToken });
 
-            dispatch(jiraActions.setAccessToken({ status: AsyncStatus.Loading }));
-
-            const res = await refreshTokens({ refreshToken });
-
-            if ("data" in res) {
-                saveToStorage(StorageKey.JiraRefreshToken, res.data.refresh_token);
-                dispatch(jiraActions.setAccessToken({ status: AsyncStatus.Success, data: res.data.access_token }));
+                if ("data" in res) {
+                    saveToStorage(StorageKey.JiraRefreshToken, res.data.refresh_token);
+                    dispatch(jiraActions.setAccessToken({ status: AsyncStatus.Success, data: res.data.access_token }));
+                } else {
+                    console.warn(res.error);
+                    deleteFromStorage(StorageKey.JiraRefreshToken);
+                    history.push("/login");
+                }
             } else {
-                console.warn(res.error);
-                deleteFromStorage(StorageKey.JiraRefreshToken);
                 history.push("/login");
             }
         }
-    }, [code, accessToken, refreshTokens, dispatch, history]);
+    }, [getTokens, dispatch, history, refreshTokens]);
+
+    useEffect(() => {
+        if (accessToken.status !== AsyncStatus.Loading || !(tokensResponse || tokensError)) {
+            return;
+        }
+
+        if (tokensResponse) {
+            dispatch(jiraActions.setAccessToken({ status: AsyncStatus.Success, data: tokensResponse.access_token }));
+            saveToStorage(StorageKey.JiraRefreshToken, tokensResponse.refresh_token);
+        } else {
+            console.warn(tokensError);
+            dispatch(jiraActions.setAccessToken({ status: AsyncStatus.Error, msg: "An error occured." }));
+        }
+    }, [accessToken, tokensResponse, tokensError, dispatch]);
 
     useEffect(() => {
         initAccessibleResources();
@@ -124,6 +107,7 @@ export function Auth() {
             }
 
             dispatch(jiraActions.setAvailableSpaces({ status: AsyncStatus.Loading }));
+            // TODO
             const res = await getAccessibleResources({ accessToken: accessToken.data });
 
             if ("data" in res) {

@@ -128,7 +128,7 @@ export function Settings() {
                     sx={{ mb: 3 }}
                     id="jiraSpace"
                     fullWidth
-                    options={!components || isFetchingComponents ? [] : components}
+                    options={!components || !project || isFetchingComponents ? [] : components}
                     getOptionLabel={(opt) => opt.name}
                     value={component}
                     loading={isFetchingComponents}

@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { ArrowBack } from "@mui/icons-material";
 import {
     Box,
@@ -18,9 +18,15 @@ import { Divider, ScrollBox } from "components";
 import { selectProjectSettings } from "slices/renderSlice";
 import { useAppDispatch, useAppSelector } from "app/store";
 
-import { useGetCreateIssueMetadataQuery, useGetIssueTypeScreenSchemeQuery, useGetIssueTypesQuery } from "../jiraApi";
-import { jiraActions, selectIssueType } from "../jiraSlice";
+import {
+    useGetComponentsQuery,
+    useGetCreateIssueMetadataQuery,
+    useGetIssueTypeScreenSchemeQuery,
+    useGetIssueTypesQuery,
+} from "../jiraApi";
+import { jiraActions, selectIssueType, selectJiraAccessTokenData } from "../jiraSlice";
 import { CreateIssueMetadata } from "../types";
+import e from "express";
 
 export function CreateIssue() {
     const theme = useTheme();
@@ -28,8 +34,11 @@ export function CreateIssue() {
     const dispatch = useAppDispatch();
 
     const issueType = useAppSelector(selectIssueType);
+    const accessToken = useAppSelector(selectJiraAccessTokenData);
     const { jira: jiraSettings } = useAppSelector(selectProjectSettings);
-    const settings = jiraSettings || { project: "", component: "", space: "" }; // TODO(OLA): set default && validate before
+    // TODO(OLA): set default && validate at earlier stage && use full objects, keep only ids in settings
+    const settings = jiraSettings || { project: "", component: "", space: "" };
+    const [formValues, setFormValues] = useState({} as { [key: string]: any });
 
     const {
         data: issueTypes = [],
@@ -51,6 +60,12 @@ export function CreateIssue() {
         },
         { skip: !issueType }
     );
+
+    const { data: componentOptions, isFetching: isFetchingComponents } = useGetComponentsQuery(
+        { space: settings.space, project: settings.project, accessToken },
+        { skip: !settings.space || !settings.project || !accessToken }
+    );
+
     console.table(createIssueMetadata);
 
     useEffect(
@@ -138,13 +153,60 @@ export function CreateIssue() {
                         <OutlinedInput
                             autoComplete="off"
                             required={summary.required && !summary.hasDefaultValue}
-                            value={""}
-                            onChange={(evt) => {}}
-                            maxRows={5}
+                            value={formValues["summary"] ?? summary.defaultValue ?? ""}
+                            onChange={(evt) => {
+                                setFormValues((state) => ({ ...state, summary: evt.target.value }));
+                            }}
                             id={"summary"}
                         />
                     </FormControl>
                 )}
+
+                {description && (
+                    <FormControl component="fieldset" fullWidth size="small" sx={{ pb: 1 }}>
+                        <Box width={1} display="flex" justifyContent="space-between" alignItems="center">
+                            <FormLabel
+                                component="legend"
+                                sx={{ fontWeight: 600, color: "text.secondary" }}
+                                htmlFor={"description"}
+                            >
+                                {description.name}
+                            </FormLabel>
+                        </Box>
+                        <OutlinedInput
+                            autoComplete="off"
+                            multiline={true}
+                            required={description.required && !description.hasDefaultValue}
+                            value={formValues["description"] ?? description.defaultValue ?? ""}
+                            onChange={(evt) => {
+                                setFormValues((state) => ({ ...state, description: evt.target.value }));
+                            }}
+                            maxRows={5}
+                            minRows={5}
+                            id={"description"}
+                        />
+                    </FormControl>
+                )}
+
+                <FormControl component="fieldset" fullWidth size="small" sx={{ mb: 1 }}>
+                    <Box width={1} display="flex" justifyContent="space-between" alignItems="center">
+                        <FormLabel
+                            component="legend"
+                            sx={{ fontWeight: 600, mb: 0.5, color: "text.secondary" }}
+                            htmlFor={"issueComponents"}
+                        >
+                            Components
+                        </FormLabel>
+                    </Box>
+
+                    <Select multiple value={[]} id={"issueComponents"} onChange={() => {}}>
+                        {(componentOptions ?? []).map((option) => (
+                            <MenuItem key={option.id} value={option.id}>
+                                {option.name}
+                            </MenuItem>
+                        ))}
+                    </Select>
+                </FormControl>
             </ScrollBox>
         </>
     );

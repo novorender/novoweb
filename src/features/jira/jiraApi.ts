@@ -142,37 +142,36 @@ export const jiraApi = createApi({
                     .catch((error) => ({ error }));
             },
         }),
-        getToken: builder.mutation<
-            { access_token: string; refresh_token: string; expires_in: number },
-            { code: string }
-        >({
-            queryFn: async ({ code }) => {
-                return fetch("https://auth.atlassian.com/oauth/token", {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({
-                        grant_type: "authorization_code",
-                        client_id: jiraClientId,
-                        client_secret: jiraClientSecret,
-                        code: code,
-                        redirect_uri: window.location.origin,
-                    }),
-                })
-                    .then((res) => {
-                        if (!res.ok) {
-                            throw res.statusText;
-                        }
-                        return res.json();
+        getTokens: builder.query<{ access_token: string; refresh_token: string; expires_in: number }, { code: string }>(
+            {
+                queryFn: async ({ code }) => {
+                    return fetch("https://auth.atlassian.com/oauth/token", {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({
+                            grant_type: "authorization_code",
+                            client_id: jiraClientId,
+                            client_secret: jiraClientSecret,
+                            code: code,
+                            redirect_uri: window.location.origin,
+                        }),
                     })
-                    .then((data) => {
-                        if (data.error) {
-                            return { error: data.error };
-                        }
-                        return { data };
-                    })
-                    .catch((error) => ({ error }));
-            },
-        }),
+                        .then((res) => {
+                            if (!res.ok) {
+                                throw res.statusText;
+                            }
+                            return res.json();
+                        })
+                        .then((data) => {
+                            if (data.error) {
+                                return { error: data.error };
+                            }
+                            return { data };
+                        })
+                        .catch((error) => ({ error }));
+                },
+            }
+        ),
         refreshTokens: builder.mutation<
             { access_token: string; refresh_token: string; expires_in: number },
             { refreshToken: string }
@@ -208,7 +207,7 @@ export const jiraApi = createApi({
 });
 
 export const {
-    useGetTokenMutation,
+    useLazyGetTokensQuery,
     useGetAccessibleResourcesMutation,
     useRefreshTokensMutation,
     useGetProjectsQuery,
