@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useHistory } from "react-router-dom";
+import { Redirect, useHistory } from "react-router-dom";
 import { Box, Typography, useTheme } from "@mui/material";
 
 import { useAppDispatch, useAppSelector } from "app/store";
@@ -171,7 +171,9 @@ export function Auth() {
         setError(`An error occured while loading Jira ${kind}.`);
     }, [accessibleResourcesError, projectsError, componentsError, error]);
 
-    if (error) {
+    if (space && project && component && accessTokenStr) {
+        return <Redirect to="/issues" />;
+    } else if (error) {
         return <ErrorMsg>{error}</ErrorMsg>;
     } else if (accessToken.status === AsyncStatus.Error) {
         return <ErrorMsg>{accessToken.msg}</ErrorMsg>;

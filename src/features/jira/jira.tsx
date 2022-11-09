@@ -54,7 +54,7 @@ export function Jira() {
                                 <Issue />
                             </Route>
                             <Route path="/create">
-                                <CreateIssue />
+                                <CreateIssue sceneId={sceneId} />
                             </Route>
                         </Switch>
                     </MemoryRouter>

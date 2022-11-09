@@ -6,7 +6,7 @@ import { useAppSelector } from "app/store";
 import { Divider, LinearProgress, ScrollBox } from "components";
 
 import { useGetIssuesQuery, useGetPermissionsQuery } from "../jiraApi";
-import { selectJiraComponent, selectJiraProject } from "../jiraSlice";
+import { selectJiraAccessTokenData, selectJiraComponent, selectJiraProject } from "../jiraSlice";
 
 export function Issues() {
     const theme = useTheme();
@@ -14,7 +14,9 @@ export function Issues() {
 
     const project = useAppSelector(selectJiraProject);
     const component = useAppSelector(selectJiraComponent);
+    const accessToken = useAppSelector(selectJiraAccessTokenData);
 
+    // todo pagination / load on scroll whatever
     const {
         data: issues = [],
         isFetching: isFetchingIssues,
@@ -22,10 +24,10 @@ export function Issues() {
         isError: isErrorIssues,
     } = useGetIssuesQuery(
         {
-            project: project?.id ?? "",
+            project: project?.key ?? "",
             component: component?.id ?? "",
         },
-        { skip: !project || !component, refetchOnMountOrArgChange: true }
+        { skip: !project || !component || !accessToken, refetchOnMountOrArgChange: true }
     );
 
     const {
@@ -37,7 +39,7 @@ export function Issues() {
         {
             project: project?.key ?? "",
         },
-        { skip: !project }
+        { skip: !project || !accessToken }
     );
 
     console.log(permissions);

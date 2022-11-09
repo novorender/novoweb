@@ -14,9 +14,14 @@ import {
     TextField,
 } from "@mui/material";
 import { useHistory } from "react-router-dom";
+import { v4 as uuidv4 } from "uuid";
 
+import { dataApi } from "app";
 import { Divider, LinearProgress, ScrollBox } from "components";
 import { useAppDispatch, useAppSelector } from "app/store";
+import { sleep } from "utils/timers";
+import { AsyncStatus } from "types/misc";
+import { useCreateBookmark } from "features/bookmarks";
 
 import {
     useCreateIssueMutation,
@@ -33,10 +38,8 @@ import {
     selectJiraSpace,
 } from "../jiraSlice";
 import { Assignee, CreateIssueMetadata } from "../types";
-import { sleep } from "utils/timers";
-import { AsyncStatus } from "types/misc";
 
-export function CreateIssue() {
+export function CreateIssue({ sceneId }: { sceneId: string }) {
     const theme = useTheme();
     const history = useHistory();
     const dispatch = useAppDispatch();
@@ -53,6 +56,7 @@ export function CreateIssue() {
     const autoCompleteRef = useRef(0);
     const [saveStatus, setSaveStatus] = useState(AsyncStatus.Initial);
     const [createIssue] = useCreateIssueMutation();
+    const createBookmark = useCreateBookmark();
 
     const {
         data: issueTypes = [],
@@ -117,6 +121,15 @@ export function CreateIssue() {
         }
 
         setSaveStatus(AsyncStatus.Loading);
+        const bmId = uuidv4();
+        const bm = createBookmark();
+
+        const saved = await dataApi.saveBookmarks(sceneId, [{ ...bm, id: bmId, name: bmId }], { group: bmId });
+
+        if (!saved) {
+            setSaveStatus(AsyncStatus.Error);
+            return;
+        }
 
         const body = {
             fields: {
@@ -127,12 +140,12 @@ export function CreateIssue() {
                     key: project.key,
                 },
                 summary: formValues.summary,
-                ...(formValues.description
-                    ? {
-                          description: {
-                              type: "doc",
-                              version: 1,
-                              content: [
+                description: {
+                    type: "doc",
+                    version: 1,
+                    content: [
+                        ...(formValues.description
+                            ? [
                                   {
                                       type: "paragraph",
                                       content: [
@@ -142,10 +155,30 @@ export function CreateIssue() {
                                           },
                                       ],
                                   },
-                              ],
-                          },
-                      }
-                    : {}),
+                              ]
+                            : []),
+                        {
+                            type: "heading",
+                            attrs: {
+                                level: 3,
+                            },
+                            content: [
+                                {
+                                    type: "text",
+                                    text: "Novorender link",
+                                    marks: [
+                                        {
+                                            type: "link",
+                                            attrs: {
+                                                href: `${window.location.origin}${window.location.pathname}?bookmarkId=${bmId}`,
+                                            },
+                                        },
+                                    ],
+                                },
+                            ],
+                        },
+                    ],
+                },
                 ...(formValues.assignee ? { assignee: { id: formValues.assignee.accountId } } : {}),
                 ...(formValues.issueComponents
                     ? { components: [component.id, ...formValues.issueComponents].map((id) => ({ id })) }
