@@ -16,6 +16,7 @@ import { Settings } from "./routes/settings";
 import { Filters } from "./routes/filters";
 import { Issue } from "./routes/issue";
 import { CreateIssue } from "./routes/create";
+import { CreateComment } from "./routes/createComment";
 
 export function Jira() {
     const sceneId = useSceneId();
@@ -51,10 +52,13 @@ export function Jira() {
                                 <Filters />
                             </Route>
                             <Route path="/issue/:key">
-                                <Issue />
+                                <Issue sceneId={sceneId} />
                             </Route>
                             <Route path="/create">
                                 <CreateIssue sceneId={sceneId} />
+                            </Route>
+                            <Route path="/createComment/:key">
+                                <CreateComment />
                             </Route>
                         </Switch>
                     </MemoryRouter>

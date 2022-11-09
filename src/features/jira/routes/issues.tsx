@@ -42,9 +42,6 @@ export function Issues() {
         { skip: !project || !accessToken }
     );
 
-    // TODO
-    history.push("/issue/TI-15");
-
     return (
         <>
             <Box boxShadow={theme.customShadows.widgetHeader}>
@@ -53,14 +50,16 @@ export function Issues() {
                         <Divider />
                     </Box>
                     <Box display="flex" justifyContent="space-between">
+                        {/* todo */}
                         <Button
+                            disabled={true}
                             onClick={() => {
                                 history.push("/filters");
                             }}
                             color="grey"
                         >
                             <FilterAlt sx={{ mr: 1 }} />
-                            Filters todo
+                            Filters
                         </Button>
                         {permissions.includes("CREATE_ISSUES") && (
                             <Button

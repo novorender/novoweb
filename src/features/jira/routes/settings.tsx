@@ -175,8 +175,9 @@ export function Settings({ sceneId }: { sceneId: string }) {
                 />
 
                 <Box display="flex" justifyContent="space-between">
-                    <Button color="grey" variant="outlined" disabled={!settings}>
-                        Cancel todo
+                    {/* todo */}
+                    <Button disabled={true} color="grey" variant="outlined">
+                        Cancel
                     </Button>
                     <LoadingButton
                         type="submit"

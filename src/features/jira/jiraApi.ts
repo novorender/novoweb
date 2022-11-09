@@ -76,6 +76,17 @@ export const jiraApi = createApi({
                 body,
             }),
         }),
+        createComment: builder.mutation<any, { body: any; issueKey: string }>({
+            query: ({ body, issueKey }) => ({
+                url: `issue/${issueKey}/comment`,
+                method: "POST",
+                headers: {
+                    Accept: "application/json",
+                    "Content-Type": "application/json",
+                },
+                body,
+            }),
+        }),
         getIssueTypeScreenScheme: builder.query<Issue, { issueTypeId: string }>({
             query: ({ issueTypeId: _ }) => `issuetypescreenscheme`, // todo: kan sikkert slettes
         }),
@@ -221,6 +232,7 @@ export const jiraApi = createApi({
 export const {
     useLazyGetTokensQuery,
     useCreateIssueMutation,
+    useCreateCommentMutation,
     useGetAccessibleResourcesQuery,
     useRefreshTokensMutation,
     useGetProjectsQuery,
