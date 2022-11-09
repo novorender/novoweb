@@ -42,7 +42,8 @@ export function Issues() {
         { skip: !project || !accessToken }
     );
 
-    console.log(permissions);
+    // TODO
+    history.push("/issue/TI-15");
 
     return (
         <>
@@ -59,7 +60,7 @@ export function Issues() {
                             color="grey"
                         >
                             <FilterAlt sx={{ mr: 1 }} />
-                            Filters
+                            Filters todo
                         </Button>
                         {permissions.includes("CREATE_ISSUES") && (
                             <Button

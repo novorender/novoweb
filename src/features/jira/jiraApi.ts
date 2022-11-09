@@ -51,7 +51,8 @@ export const jiraApi = createApi({
     baseQuery: dynamicBaseQuery,
     endpoints: (builder) => ({
         getPermissions: builder.query<string[], { project: string }>({
-            query: ({ project }) => `mypermissions?projectKey=${project}&permissions=CREATE_ISSUES,EDIT_ISSUES`,
+            query: ({ project }) =>
+                `mypermissions?projectKey=${project}&permissions=CREATE_ISSUES,EDIT_ISSUES,ADD_COMMENTS`,
             transformResponse: (res: { permissions: { [key: string]: Permission } }) =>
                 Object.values(res.permissions)
                     .filter((permission) => permission.havePermission)

@@ -47,7 +47,7 @@ export type Component = {
               displayName: string;
               active: boolean;
           }
-        | "UNASSIGNED";
+        | string;
     realAssigneeType: string;
     realAssignee?: {
         self: string;
@@ -61,13 +61,6 @@ export type Component = {
     isAssigneeTypeValid: boolean;
     project: string;
     projectId: number;
-};
-
-export type Issue = {
-    key: string;
-    fields: {
-        summary: string;
-    };
 };
 
 export type Permission = {
@@ -155,3 +148,167 @@ export type Assignee = {
     timeZone: string;
     locale: string;
 };
+
+export type Issue = {
+    expand: string;
+    id: string;
+    self: string;
+    key: string;
+    fields: {
+        statuscategorychangedate: string;
+        issuetype: {
+            self: string;
+            id: string;
+            description: string;
+            iconUrl: string;
+            name: string;
+            subtask: boolean;
+            avatarId: number;
+            hierarchyLevel: number;
+        };
+        timespent: null;
+        customfield_10030: null;
+        project: Project;
+        customfield_10031: [];
+        customfield_10032: null;
+        fixVersions: [];
+        customfield_10033: null;
+        aggregatetimespent: null;
+        customfield_10034: null;
+        resolution: null;
+        customfield_10036: null;
+        customfield_10027: null;
+        customfield_10028: null;
+        customfield_10029: null;
+        resolutiondate: null;
+        workratio: number;
+        lastViewed: string;
+        issuerestriction: { issuerestrictions: {}; shouldDisplay: boolean };
+        watches: {
+            self: string;
+            watchCount: number;
+            isWatching: true;
+        };
+        created: string;
+        customfield_10020: null;
+        customfield_10021: null;
+        customfield_10022: null;
+        priority: {
+            self: string;
+            iconUrl: string;
+            name: string;
+            id: string;
+        };
+        customfield_10023: null;
+        customfield_10024: null;
+        customfield_10025: null;
+        customfield_10026: null;
+        labels: [];
+        customfield_10016: null;
+        customfield_10017: null;
+        customfield_10018: {
+            hasEpicLinkFieldDependency: boolean;
+            showField: boolean;
+            nonEditableReason: {
+                reason: string;
+                message: string;
+            };
+        };
+        customfield_10019: string;
+        aggregatetimeoriginalestimate: null;
+        timeestimate: null;
+        versions: [];
+        issuelinks: [];
+        assignee: Assignee;
+        updated: string;
+        status: {
+            self: string;
+            description: string;
+            iconUrl: string;
+            name: string;
+            id: string;
+            statusCategory: {
+                self: string;
+                id: number;
+                key: string;
+                colorName: string;
+                name: string;
+            };
+        };
+        components: Component[];
+        timeoriginalestimate: null;
+        description: AtlassianDocumentFormat;
+        customfield_10010: null;
+        customfield_10014: null;
+        customfield_10015: string;
+        timetracking: {};
+        customfield_10005: null;
+        customfield_10006: null;
+        customfield_10007: null;
+        security: null;
+        customfield_10008: null;
+        aggregatetimeestimate: null;
+        customfield_10009: null;
+        attachment: {
+            self: string;
+            id: string;
+            filename: string;
+            author: {
+                self: string;
+                accountId: string;
+                emailAddress: string;
+                avatarUrls: {};
+                displayName: string;
+                active: true;
+                timeZone: string;
+                accountType: string;
+            };
+            created: string;
+            size: 4658;
+            mimeType: string;
+            content: string;
+            thumbnail: string;
+        }[];
+        summary: string;
+        creator: Assignee;
+        subtasks: [];
+        customfield_10040: string;
+        customfield_10041: null;
+        customfield_10042: null;
+        reporter: Assignee;
+        aggregateprogress: { progress: number; total: number };
+        customfield_10001: null;
+        customfield_10002: null;
+        customfield_10003: null;
+        customfield_10004: null;
+        environment: null;
+        duedate: null;
+        progress: { progress: number; total: number };
+        votes: {
+            self: string;
+            votes: number;
+            hasVoted: boolean;
+        };
+        comment: {
+            comments: Comment[];
+            self: string;
+            maxResults: number;
+            total: number;
+            startAt: number;
+        };
+        worklog: { startAt: number; maxResults: number; total: number; worklogs: [] };
+    };
+};
+
+type Comment = {
+    self: string;
+    id: string;
+    author: Assignee;
+    body: AtlassianDocumentFormat;
+    updateAuthor: Assignee;
+    created: string;
+    updated: string;
+    jsdPublic: true;
+};
+
+type AtlassianDocumentFormat = any;
