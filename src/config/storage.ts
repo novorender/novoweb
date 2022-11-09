@@ -14,10 +14,10 @@ export enum StorageKey {
 
 export const storageConfig = {
     [StorageKey.JiraAccessToken]: {
-        storage: sessionStorage,
+        storage: localStorage,
     },
     [StorageKey.JiraRefreshToken]: {
-        storage: sessionStorage,
+        storage: localStorage,
     },
     [StorageKey.BimCollabRefreshToken]: {
         storage: sessionStorage,
