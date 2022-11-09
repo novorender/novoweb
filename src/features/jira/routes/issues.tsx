@@ -4,34 +4,41 @@ import { Box, Button, List, ListItemButton, useTheme } from "@mui/material";
 
 import { useAppSelector } from "app/store";
 import { Divider, LinearProgress, ScrollBox } from "components";
-import { selectProjectSettings } from "slices/renderSlice";
 
 import { useGetIssuesQuery, useGetPermissionsQuery } from "../jiraApi";
+import { selectJiraComponent, selectJiraProject } from "../jiraSlice";
 
 export function Issues() {
     const theme = useTheme();
     const history = useHistory();
 
-    const { jira: jiraSettings } = useAppSelector(selectProjectSettings);
-    const settings = jiraSettings || { project: "", component: "", space: "" }; // TODO(OLA): set default && validate before
+    const project = useAppSelector(selectJiraProject);
+    const component = useAppSelector(selectJiraComponent);
+
     const {
         data: issues = [],
         isFetching: isFetchingIssues,
         isLoading: isLoadingIssues,
         isError: isErrorIssues,
-    } = useGetIssuesQuery({
-        project: settings.project,
-        component: settings.component,
-    });
+    } = useGetIssuesQuery(
+        {
+            project: project?.id ?? "",
+            component: component?.id ?? "",
+        },
+        { skip: !project || !component, refetchOnMountOrArgChange: true }
+    );
 
     const {
         data: permissions = [],
         isFetching: _isFetchingPermissions,
         isLoading: _isLoadingPermissions,
         isError: _isErrorPermissions,
-    } = useGetPermissionsQuery({
-        project: settings.project,
-    });
+    } = useGetPermissionsQuery(
+        {
+            project: project?.key ?? "",
+        },
+        { skip: !project }
+    );
 
     console.log(permissions);
 

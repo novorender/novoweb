@@ -18,7 +18,12 @@ import { useHistory } from "react-router-dom";
 import { Divider, LinearProgress, ScrollBox } from "components";
 import { useAppDispatch, useAppSelector } from "app/store";
 
-import { useGetComponentsQuery, useGetCreateIssueMetadataQuery, useGetIssueTypesQuery } from "../jiraApi";
+import {
+    useCreateIssueMutation,
+    useGetComponentsQuery,
+    useGetCreateIssueMetadataQuery,
+    useGetIssueTypesQuery,
+} from "../jiraApi";
 import {
     jiraActions,
     selectIssueType,
@@ -47,6 +52,7 @@ export function CreateIssue() {
     const [assigneeInputValue, setAssigneeInputValue] = useState("");
     const autoCompleteRef = useRef(0);
     const [saveStatus, setSaveStatus] = useState(AsyncStatus.Initial);
+    const [createIssue] = useCreateIssueMutation();
 
     const {
         data: issueTypes = [],
@@ -97,13 +103,65 @@ export function CreateIssue() {
         [issueType, issueTypes, dispatch]
     );
 
-    const { summary, description, components, assignee, ...fields } =
+    const { summary, description, components, assignee, ..._fields } =
         createIssueMetadata ?? ({} as CreateIssueMetadata["fields"]);
 
     if (!space || !project || !component) {
         // todo
         return null;
     }
+
+    const handleCreate = async () => {
+        if (!issueType || !project) {
+            return;
+        }
+
+        setSaveStatus(AsyncStatus.Loading);
+
+        const body = {
+            fields: {
+                issuetype: {
+                    name: issueType.name,
+                },
+                project: {
+                    key: project.key,
+                },
+                summary: formValues.summary,
+                ...(formValues.description
+                    ? {
+                          description: {
+                              type: "doc",
+                              version: 1,
+                              content: [
+                                  {
+                                      type: "paragraph",
+                                      content: [
+                                          {
+                                              type: "text",
+                                              text: formValues.description,
+                                          },
+                                      ],
+                                  },
+                              ],
+                          },
+                      }
+                    : {}),
+                ...(formValues.assignee ? { assignee: { id: formValues.assignee.accountId } } : {}),
+                ...(formValues.issueComponents
+                    ? { components: [component.id, ...formValues.issueComponents].map((id) => ({ id })) }
+                    : { components: [{ id: component.id }] }),
+            },
+        };
+
+        try {
+            await createIssue({ body });
+            setSaveStatus(AsyncStatus.Success);
+            history.goBack();
+        } catch (e) {
+            console.warn(e);
+            setSaveStatus(AsyncStatus.Error);
+        }
+    };
 
     const loadingFormMeta = isUninitializedCreateIssueMetadata || isFetchingCreateIssueMetadata;
 
@@ -120,7 +178,7 @@ export function CreateIssue() {
                     </Button>
                     <Button
                         disabled={saveStatus === AsyncStatus.Loading || !formValues.summary || !project || !issueType}
-                        onClick={() => history.goBack()}
+                        onClick={() => handleCreate()}
                         color="grey"
                     >
                         <Save sx={{ mr: 1 }} />

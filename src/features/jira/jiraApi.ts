@@ -64,6 +64,17 @@ export const jiraApi = createApi({
         getIssue: builder.query<Issue, { key: string }>({
             query: ({ key }) => `issue/${key}`,
         }),
+        createIssue: builder.mutation<any, { body: any }>({
+            query: ({ body }) => ({
+                url: "issue",
+                method: "POST",
+                headers: {
+                    Accept: "application/json",
+                    "Content-Type": "application/json",
+                },
+                body,
+            }),
+        }),
         getIssueTypeScreenScheme: builder.query<Issue, { issueTypeId: string }>({
             query: ({ issueTypeId: _ }) => `issuetypescreenscheme`, // todo: kan sikkert slettes
         }),
@@ -208,6 +219,7 @@ export const jiraApi = createApi({
 
 export const {
     useLazyGetTokensQuery,
+    useCreateIssueMutation,
     useGetAccessibleResourcesQuery,
     useRefreshTokensMutation,
     useGetProjectsQuery,
