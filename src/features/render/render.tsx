@@ -91,7 +91,12 @@ import {
 } from "features/manhole";
 import { ditioActions, selectMarkers, selectShowMarkers } from "features/ditio";
 import { useAppDispatch, useAppSelector } from "app/store";
-import { followPathActions, selectDrawSelectedPositions, usePathMeasureObjects } from "features/followPath";
+import {
+    followPathActions,
+    selectDrawSelectedPositions,
+    selectFollowCylindersFrom,
+    usePathMeasureObjects,
+} from "features/followPath";
 import { useMeasureObjects } from "features/measure";
 import { areaActions, selectArea, selectAreaDrawPoints } from "features/area";
 import { useHandleAreaPoints } from "features/area";
@@ -244,6 +249,7 @@ export function Render3D({ onInit }: Props) {
     const showDitioMarkers = useAppSelector(selectShowMarkers);
     const ditioMarkers = useAppSelector(selectMarkers);
     const drawSelectedPaths = useAppSelector(selectDrawSelectedPositions);
+    const drawPathSettings = useAppSelector(selectFollowCylindersFrom);
     const picker = useAppSelector(selectPicker);
     const areaPoints = useAppSelector(selectAreaDrawPoints);
     const myLocationPoint = useAppSelector(selectCurrentLocation);
@@ -323,7 +329,9 @@ export function Render3D({ onInit }: Props) {
                     pathName: "fp_" + getMeasureObjectPathId(obj),
                     entity: obj,
                     advancedDrawing: false,
-                    measureSettings: undefined,
+                    measureSettings: {
+                        cylinderMeasure: drawPathSettings,
+                    },
                 });
             });
         }
@@ -667,6 +675,7 @@ export function Render3D({ onInit }: Props) {
         manholeCollision,
         measureScene,
         manholeColEntity,
+        drawPathSettings,
     ]);
     useEffect(() => {
         renderParametricMeasure();

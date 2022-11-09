@@ -106,8 +106,9 @@ export function PathList() {
         : selectedById.status === AsyncStatus.Success;
 
     const canUseCylinderOptions =
-        selectedById.status === AsyncStatus.Success &&
-        (selectedById.data.type === "cylinders" || selectedById.data.type === "cylinder");
+        (selectedById.status === AsyncStatus.Success &&
+            (selectedById.data.type === "cylinders" || selectedById.data.type === "cylinder")) ||
+        (selectedByPos.status === AsyncStatus.Success && selectedByPos.data.some((obj) => obj.drawKind === "face"));
 
     return (
         <>
