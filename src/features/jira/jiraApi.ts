@@ -4,7 +4,7 @@ import { AsyncStatus } from "types/misc";
 import { handleImageResponse } from "utils/bcf";
 
 import { selectJiraAccessToken, selectJiraSpace } from "./jiraSlice";
-import { Component, CreateIssueMetadata, Issue, IssueType, Permission, Project, Space } from "./types";
+import { Component, CreateIssueMetadata, CurrentUser, Issue, IssueType, Permission, Project, Space } from "./types";
 
 export const jiraIdentityServer = "https://auth.atlassian.com/authorize";
 export const jiraClientId = window.jiraClientId || process.env.REACT_APP_JIRA_CLIENT_ID || "";
@@ -51,6 +51,9 @@ export const jiraApi = createApi({
     reducerPath: "jiraApi",
     baseQuery: dynamicBaseQuery,
     endpoints: (builder) => ({
+        getCurrentUser: builder.query<CurrentUser, void>({
+            query: () => `myself`,
+        }),
         getPermissions: builder.query<string[], { project: string }>({
             query: ({ project }) =>
                 `mypermissions?projectKey=${project}&permissions=CREATE_ISSUES,EDIT_ISSUES,ADD_COMMENTS`,
@@ -59,8 +62,11 @@ export const jiraApi = createApi({
                     .filter((permission) => permission.havePermission)
                     .map((permission) => permission.key),
         }),
-        getIssues: builder.query<Issue[], { project: string; component: string }>({
-            query: ({ project, component }) => `search?jql=${`project = "${project}" AND component = "${component}"`}`,
+        getIssues: builder.query<Issue[], { project: string; component: string; userId: string }>({
+            query: ({ project, component, userId }) =>
+                `search?jql=${`project = "${project}" AND component = "${component}" AND resolution = "Unresolved" ${
+                    userId ? `AND (assignee = "${userId}" OR reporter = "${userId}")` : ""
+                }&maxResults=150`}`,
             transformResponse: (res: { issues: Issue[] }) => res.issues,
         }),
         getIssue: builder.query<Issue, { key: string }>({
@@ -265,6 +271,7 @@ export const jiraApi = createApi({
 });
 
 export const {
+    useGetCurrentUserQuery,
     useLazyGetTokensQuery,
     useCreateIssueMutation,
     useCreateCommentMutation,

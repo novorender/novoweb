@@ -2,11 +2,18 @@ import { AddCircle, FilterAlt } from "@mui/icons-material";
 import { useHistory } from "react-router-dom";
 import { Box, Button, List, ListItemButton, useTheme } from "@mui/material";
 
-import { useAppSelector } from "app/store";
+import { useAppDispatch, useAppSelector } from "app/store";
 import { Divider, LinearProgress, ScrollBox } from "components";
 
-import { useGetIssuesQuery, useGetPermissionsQuery } from "../jiraApi";
-import { selectJiraAccessTokenData, selectJiraComponent, selectJiraProject } from "../jiraSlice";
+import { useGetCurrentUserQuery, useGetIssuesQuery, useGetPermissionsQuery } from "../jiraApi";
+import {
+    jiraActions,
+    selectJiraAccessTokenData,
+    selectJiraComponent,
+    selectJiraProject,
+    selectJiraUser,
+} from "../jiraSlice";
+import { useEffect } from "react";
 
 export function Issues() {
     const theme = useTheme();
@@ -15,6 +22,8 @@ export function Issues() {
     const project = useAppSelector(selectJiraProject);
     const component = useAppSelector(selectJiraComponent);
     const accessToken = useAppSelector(selectJiraAccessTokenData);
+    const currentUser = useAppSelector(selectJiraUser);
+    const dispatch = useAppDispatch();
 
     // todo pagination / load on scroll whatever
     const {
@@ -26,6 +35,7 @@ export function Issues() {
         {
             project: project?.key ?? "",
             component: component?.id ?? "",
+            userId: currentUser?.accountId ?? "",
         },
         { skip: !project || !component || !accessToken, refetchOnMountOrArgChange: true }
     );
@@ -41,6 +51,18 @@ export function Issues() {
         },
         { skip: !project || !accessToken }
     );
+
+    const { data: user } = useGetCurrentUserQuery(undefined, {
+        skip: !accessToken,
+    });
+
+    useEffect(() => {
+        if (!user || currentUser) {
+            return;
+        }
+
+        dispatch(jiraActions.setUser(user));
+    }, [dispatch, user, currentUser]);
 
     return (
         <>

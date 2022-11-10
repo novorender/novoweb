@@ -149,6 +149,29 @@ export type Assignee = {
     locale: string;
 };
 
+export type CurrentUser = {
+    self: string;
+    key: string;
+    accountId: string;
+    accountType: string;
+    name: string;
+    emailAddress: string;
+    avatarUrls: {
+        [key: string]: string;
+    };
+    displayName: string;
+    active: true;
+    timeZone: string;
+    groups: {
+        size: number;
+        items: [];
+    };
+    applicationRoles: {
+        size: number;
+        items: [];
+    };
+};
+
 export type Issue = {
     expand: string;
     id: string;

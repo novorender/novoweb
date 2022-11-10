@@ -17,10 +17,12 @@ import {
     selectJiraAccessTokenData,
     selectJiraProject,
     selectJiraComponent,
+    selectJiraUser,
 } from "../jiraSlice";
 import {
     useGetAccessibleResourcesQuery,
     useGetComponentsQuery,
+    useGetCurrentUserQuery,
     useGetProjectsQuery,
     useLazyGetTokensQuery,
     useRefreshTokensMutation,
@@ -35,6 +37,7 @@ export function Auth() {
     const isAdmin = useAppSelector(selectHasAdminCapabilities);
     const accessToken = useAppSelector(selectJiraAccessToken);
     const accessTokenStr = useAppSelector(selectJiraAccessTokenData);
+    const currentUser = useAppSelector(selectJiraUser);
     const space = useAppSelector(selectJiraSpace);
     const project = useAppSelector(selectJiraProject);
     const component = useAppSelector(selectJiraComponent);
@@ -49,14 +52,16 @@ export function Auth() {
         { skip: !accessTokenStr }
     );
 
+    const { data: user, error: userError } = useGetCurrentUserQuery(undefined, { skip: !accessTokenStr || !space });
+
     const { data: projects, error: projectsError } = useGetProjectsQuery(
         { space: space?.id ?? "", accessToken: accessTokenStr },
-        { skip: !space || !accessToken }
+        { skip: !space || !user || !accessTokenStr }
     );
 
     const { data: components, error: componentsError } = useGetComponentsQuery(
         { space: space?.id ?? "", project: project?.key ?? "", accessToken: accessTokenStr },
-        { skip: !space || !accessToken || !project }
+        { skip: !space || !accessTokenStr || !project }
     );
 
     useEffect(() => {
@@ -106,6 +111,14 @@ export function Auth() {
             dispatch(jiraActions.setAccessToken({ status: AsyncStatus.Error, msg: "An error occured." }));
         }
     }, [accessToken, tokensResponse, tokensError, dispatch]);
+
+    useEffect(() => {
+        if (!user || currentUser) {
+            return;
+        }
+
+        dispatch(jiraActions.setUser(user));
+    }, [dispatch, user, currentUser]);
 
     useEffect(() => {
         if (!accessibleResources || space) {
@@ -163,15 +176,21 @@ export function Auth() {
     }, [components, history, isAdmin, dispatch, jiraSettings, component]);
 
     useEffect(() => {
-        if (error || !(accessibleResourcesError || projectsError || componentsError)) {
+        if (error || !(accessibleResourcesError || projectsError || componentsError || userError)) {
             return;
         }
 
-        const kind = accessibleResourcesError ? "spaces" : projectsError ? "projects" : "components";
+        const kind = accessibleResourcesError
+            ? "spaces"
+            : projectsError
+            ? "projects"
+            : componentsError
+            ? "components"
+            : "user";
         setError(`An error occured while loading Jira ${kind}.`);
-    }, [accessibleResourcesError, projectsError, componentsError, error]);
+    }, [accessibleResourcesError, projectsError, componentsError, userError, error]);
 
-    if (space && project && component && accessTokenStr) {
+    if (space && project && component && user && accessTokenStr) {
         return <Redirect to="/issues" />;
     } else if (error) {
         return <ErrorMsg>{error}</ErrorMsg>;

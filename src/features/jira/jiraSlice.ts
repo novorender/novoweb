@@ -3,7 +3,7 @@ import { createSelector, createSlice, PayloadAction } from "@reduxjs/toolkit";
 import { RootState } from "app/store";
 import { AsyncState, AsyncStatus } from "types/misc";
 
-import { Component, IssueType, Project, Space } from "./types";
+import { Component, CurrentUser, IssueType, Project, Space } from "./types";
 
 const initialState = {
     space: undefined as undefined | Space,
@@ -11,6 +11,7 @@ const initialState = {
     component: undefined as undefined | Component,
     accessToken: { status: AsyncStatus.Initial } as AsyncState<string>,
     issueType: undefined as undefined | IssueType,
+    user: undefined as undefined | CurrentUser,
 };
 
 type State = typeof initialState;
@@ -34,6 +35,9 @@ export const jiraSlice = createSlice({
         setIssueType: (state, action: PayloadAction<State["issueType"]>) => {
             state.issueType = action.payload;
         },
+        setUser: (state, action: PayloadAction<State["user"]>) => {
+            state.user = action.payload;
+        },
     },
 });
 
@@ -44,6 +48,7 @@ export const selectJiraAccessTokenData = createSelector(selectJiraAccessToken, (
 export const selectJiraSpace = (state: RootState) => state.jira.space;
 export const selectJiraProject = (state: RootState) => state.jira.project;
 export const selectJiraComponent = (state: RootState) => state.jira.component;
+export const selectJiraUser = (state: RootState) => state.jira.user;
 export const selectIssueType = (state: RootState) => state.jira.issueType;
 
 const { actions, reducer } = jiraSlice;
