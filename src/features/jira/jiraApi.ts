@@ -90,9 +90,12 @@ export const jiraApi = createApi({
         getIssueTypeScreenScheme: builder.query<Issue, { issueTypeId: string }>({
             query: ({ issueTypeId: _ }) => `issuetypescreenscheme`, // todo: kan sikkert slettes
         }),
-        getCreateIssueMetadata: builder.query<CreateIssueMetadata["fields"], { issueTypeId: string }>({
-            query: ({ issueTypeId }) =>
-                `issue/createmeta?expand=projects.issuetypes.fields&issuetypeIds=${issueTypeId}`,
+        getCreateIssueMetadata: builder.query<
+            CreateIssueMetadata["fields"],
+            { issueTypeId: string; projectKey: string }
+        >({
+            query: ({ issueTypeId, projectKey }) =>
+                `issue/createmeta?expand=projects.issuetypes.fields&issuetypeIds=${issueTypeId}&projectKeys=${projectKey}`,
             transformResponse: (res: { projects: { issuetypes: CreateIssueMetadata[] }[] }) =>
                 res.projects[0]?.issuetypes[0]?.fields,
         }),

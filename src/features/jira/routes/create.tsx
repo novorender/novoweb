@@ -76,8 +76,9 @@ export function CreateIssue({ sceneId }: { sceneId: string }) {
     } = useGetCreateIssueMetadataQuery(
         {
             issueTypeId: issueType?.id ?? "",
+            projectKey: project?.key ?? "",
         },
-        { skip: !issueType }
+        { skip: !issueType || !project }
     );
 
     const { data: componentOptions } = useGetComponentsQuery(
@@ -148,12 +149,27 @@ export function CreateIssue({ sceneId }: { sceneId: string }) {
                             ? [
                                   {
                                       type: "paragraph",
-                                      content: [
-                                          {
-                                              type: "text",
-                                              text: formValues.description,
-                                          },
-                                      ],
+                                      content: formValues.description
+                                          .split("\n")
+                                          .map((node: string, idx: number, arr: any[]) => {
+                                              let res: any[] = node
+                                                  ? [
+                                                        {
+                                                            type: "text",
+                                                            text: node,
+                                                        },
+                                                    ]
+                                                  : [];
+
+                                              if (idx !== arr.length - 1) {
+                                                  res = res.concat({
+                                                      type: "hardBreak",
+                                                  });
+                                              }
+
+                                              return res;
+                                          })
+                                          .flat(),
                                   },
                               ]
                             : []),
@@ -371,6 +387,13 @@ export function CreateIssue({ sceneId }: { sceneId: string }) {
                                         const res = await fetch(assignee.autoCompleteUrl + value!, {
                                             headers: { authorization: `Bearer ${accessToken}` },
                                         })
+                                            .then((r) => {
+                                                if (r.ok) {
+                                                    return r;
+                                                } else {
+                                                    throw r;
+                                                }
+                                            })
                                             .then((r) => r.json())
                                             .catch((err) => {
                                                 console.warn(err);

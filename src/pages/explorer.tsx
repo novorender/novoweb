@@ -87,6 +87,8 @@ function ExplorerBase() {
                 dispatch(explorerActions.setWidgets([featuresConfig.bimTrack.key]));
             } else if (oAuthState.service === featuresConfig.ditio.key) {
                 dispatch(explorerActions.setWidgets([featuresConfig.ditio.key]));
+            } else if (oAuthState.service === featuresConfig.jira.key) {
+                dispatch(explorerActions.setWidgets([featuresConfig.jira.key]));
             }
         } else {
             const searchParams = new URLSearchParams(window.location.search);

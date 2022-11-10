@@ -28,12 +28,27 @@ export function CreateComment() {
                     content: [
                         {
                             type: "paragraph",
-                            content: [
-                                {
-                                    type: "text",
-                                    text: comment,
-                                },
-                            ],
+                            content: comment
+                                .split("\n")
+                                .map((node: string, idx: number, arr: any[]) => {
+                                    let res: any[] = node
+                                        ? [
+                                              {
+                                                  type: "text",
+                                                  text: node,
+                                              },
+                                          ]
+                                        : [];
+
+                                    if (idx !== arr.length - 1) {
+                                        res = res.concat({
+                                            type: "hardBreak",
+                                        });
+                                    }
+
+                                    return res;
+                                })
+                                .flat(),
                         },
                     ],
                 },
