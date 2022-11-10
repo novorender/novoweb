@@ -85,6 +85,7 @@ export function createRendering(
             settings.moving !== updatedSettings.moving
         ) {
             settings = updatedSettings;
+            (view as any).settings.generation++;
         }
     }
 
