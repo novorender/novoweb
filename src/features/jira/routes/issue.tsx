@@ -1,26 +1,35 @@
 import { useEffect, useState, Fragment } from "react";
-import { Add, ArrowBack, FlightTakeoff } from "@mui/icons-material";
+import { AddCircle, ArrowBack, FlightTakeoff, OpenInNew } from "@mui/icons-material";
 import { Box, Button, Typography, useTheme } from "@mui/material";
 import { useHistory, useParams } from "react-router-dom";
+import { format } from "date-fns";
 
-import { Divider, LinearProgress, ScrollBox } from "components";
+import { Divider, ImgModal, LinearProgress, ScrollBox } from "components";
 import { useAppSelector } from "app/store";
 import { useSelectBookmark } from "features/bookmarks";
 import { dataApi } from "app";
+import { useToggle } from "hooks/useToggle";
 
-import { useGetIssueQuery, useGetPermissionsQuery } from "../jiraApi";
-import { selectJiraProject } from "../jiraSlice";
-import { format } from "date-fns";
+import {
+    useGetAttachmentContentQuery,
+    useGetAttachmentThumbnailQuery,
+    useGetIssueQuery,
+    useGetPermissionsQuery,
+} from "../jiraApi";
+import { selectJiraProject, selectJiraSpace } from "../jiraSlice";
 
 export function Issue({ sceneId }: { sceneId: string }) {
     const theme = useTheme();
     const history = useHistory();
     const key = useParams<{ key: string }>().key;
 
+    const space = useAppSelector(selectJiraSpace);
     const project = useAppSelector(selectJiraProject);
     const [bookmarkId, setBookmarkId] = useState("");
     const selectBookmark = useSelectBookmark();
     const [loadingBookmark, setLoadingBookmark] = useState(false);
+    const [modalOpen, toggleModal] = useToggle();
+    const [imageAttachmentId, setImageAttachmentId] = useState("");
 
     const {
         data: issue,
@@ -40,6 +49,26 @@ export function Issue({ sceneId }: { sceneId: string }) {
         },
         { skip: !project }
     );
+
+    const { data: thumbnail } = useGetAttachmentThumbnailQuery({ id: imageAttachmentId }, { skip: !imageAttachmentId });
+    const { data: fullImage, isLoading: isLoadingFullImage } = useGetAttachmentContentQuery(
+        { id: imageAttachmentId },
+        { skip: !imageAttachmentId || !modalOpen }
+    );
+
+    useEffect(() => {
+        if (!issue || imageAttachmentId) {
+            return;
+        }
+
+        const nrImage = issue
+            ? issue.fields.attachment.find((attachment) => attachment.filename === "Novorender model image")
+            : undefined;
+
+        if (nrImage) {
+            setImageAttachmentId(nrImage.id);
+        }
+    }, [imageAttachmentId, issue]);
 
     useEffect(() => {
         if (!issue || bookmarkId) {
@@ -90,6 +119,10 @@ export function Issue({ sceneId }: { sceneId: string }) {
         setLoadingBookmark(false);
     };
 
+    const handleThumbnailClick = async () => {
+        toggleModal();
+    };
+
     return (
         <>
             <Box boxShadow={theme.customShadows.widgetHeader}>
@@ -101,12 +134,18 @@ export function Issue({ sceneId }: { sceneId: string }) {
                         <ArrowBack sx={{ mr: 1 }} />
                         Back
                     </Button>
-                    {permissions.includes("ADD_COMMENTS") && (
-                        <Button onClick={() => history.push(`/createComment/${key}`)} color="grey">
-                            <Add sx={{ mr: 1 }} />
-                            Comment
+                    {space && (
+                        <Button
+                            disabled={!issue}
+                            href={`${space.url}/browse/${issue?.key}`}
+                            target="_blank"
+                            color="grey"
+                        >
+                            <OpenInNew sx={{ mr: 1 }} />
+                            Jira
                         </Button>
                     )}
+
                     {bookmarkId && (
                         <Button disabled={loadingBookmark} onClick={handleGoToBookmark} color="grey">
                             <FlightTakeoff sx={{ mr: 1 }} />
@@ -116,7 +155,7 @@ export function Issue({ sceneId }: { sceneId: string }) {
                 </Box>
             </Box>
 
-            {(isLoadingIssue || loadingBookmark) && (
+            {(isLoadingIssue || loadingBookmark || isLoadingFullImage) && (
                 <Box>
                     <LinearProgress />
                 </Box>
@@ -126,7 +165,22 @@ export function Issue({ sceneId }: { sceneId: string }) {
                 <>An error occured while loading issue {key}</>
             ) : (
                 issue && (
-                    <ScrollBox p={1} pt={2} pb={3}>
+                    <ScrollBox p={1} pt={1} pb={4}>
+                        {thumbnail && (
+                            <Box
+                                sx={{
+                                    mb: 1,
+                                    "& > img": {
+                                        width: "100%",
+                                        maxHeight: 150,
+                                        objectFit: "cover",
+                                        cursor: "pointer",
+                                    },
+                                }}
+                            >
+                                <img onClick={handleThumbnailClick} src={thumbnail} alt="" />
+                            </Box>
+                        )}
                         <Typography variant="h6" fontWeight={600} mb={2}>
                             {issue.fields.summary}
                         </Typography>
@@ -154,39 +208,66 @@ export function Issue({ sceneId }: { sceneId: string }) {
                             })}
                         </Box>
 
-                        <Typography fontWeight={600}>Comments:</Typography>
-                        <Box>
-                            {issue.fields.comment.comments.map((comment, idx, arr) => (
-                                <Fragment key={comment.id}>
-                                    <Box>
-                                        <Typography component="em">
-                                            {comment.author.displayName} -{" "}
-                                            {format(new Date(comment.updated ?? comment.created), "dd.MM.yyyy - HH:mm")}
-                                        </Typography>
-                                        {(comment.body.content ?? [])?.map((doc: any, idx: number) => {
-                                            if (doc.type === "paragraph") {
-                                                return (
-                                                    <Typography key={idx}>
-                                                        {(doc.content ?? []).map((pc: any, pcIdx: number) => {
-                                                            if (pc.type === "text") {
-                                                                return pc.text;
-                                                            } else if (pc.type === "hardBreak") {
-                                                                return <br key={pcIdx} />;
-                                                            } else {
-                                                                return null;
-                                                            }
-                                                        })}
-                                                    </Typography>
-                                                );
-                                            } else {
-                                                return null;
-                                            }
-                                        })}
-                                    </Box>
-                                    {idx !== arr.length - 1 ? <Divider sx={{ my: 0.5 }} /> : null}
-                                </Fragment>
-                            ))}
+                        <Typography fontWeight={600}>Status:</Typography>
+                        <Box mb={2}>{issue.fields.status ? issue.fields.status.name : "None"}</Box>
+
+                        <Typography fontWeight={600}>Assignee:</Typography>
+                        <Box mb={2}>{issue.fields.assignee ? issue.fields.assignee.displayName : "Unassigned"}</Box>
+
+                        <Typography fontWeight={600}>Reporter:</Typography>
+                        <Box mb={2}>{issue.fields.reporter ? issue.fields.reporter.displayName : "None"}</Box>
+
+                        <Box display="flex" justifyContent="space-between" alignItems="center">
+                            <Typography fontWeight={600}>Comments:</Typography>
+                            {permissions.includes("ADD_COMMENTS") && (
+                                <Button onClick={() => history.push(`/createComment/${key}`)} color="grey">
+                                    <AddCircle sx={{ mr: 1 }} />
+                                    Add
+                                </Button>
+                            )}
                         </Box>
+                        <Box>
+                            {issue.fields.comment.comments.length
+                                ? issue.fields.comment.comments.map((comment, idx, arr) => (
+                                      <Fragment key={comment.id}>
+                                          <Box>
+                                              <Typography component="em">
+                                                  {comment.author.displayName} -{" "}
+                                                  {format(
+                                                      new Date(comment.updated ?? comment.created),
+                                                      "dd.MM.yyyy - HH:mm"
+                                                  )}
+                                              </Typography>
+                                              {(comment.body.content ?? [])?.map((doc: any, idx: number) => {
+                                                  if (doc.type === "paragraph") {
+                                                      return (
+                                                          <Typography key={idx}>
+                                                              {(doc.content ?? []).map((pc: any, pcIdx: number) => {
+                                                                  if (pc.type === "text") {
+                                                                      return pc.text;
+                                                                  } else if (pc.type === "hardBreak") {
+                                                                      return <br key={pcIdx} />;
+                                                                  } else {
+                                                                      return null;
+                                                                  }
+                                                              })}
+                                                          </Typography>
+                                                      );
+                                                  } else {
+                                                      return null;
+                                                  }
+                                              })}
+                                          </Box>
+                                          {idx !== arr.length - 1 ? <Divider sx={{ my: 0.5 }} /> : null}
+                                      </Fragment>
+                                  ))
+                                : "No comments"}
+                        </Box>
+                        <ImgModal
+                            src={fullImage ?? thumbnail ?? ""}
+                            open={modalOpen && !isLoadingFullImage}
+                            onClose={toggleModal}
+                        />
                     </ScrollBox>
                 )
             )}

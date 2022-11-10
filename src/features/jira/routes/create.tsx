@@ -22,8 +22,11 @@ import { useAppDispatch, useAppSelector } from "app/store";
 import { sleep } from "utils/timers";
 import { AsyncStatus } from "types/misc";
 import { useCreateBookmark } from "features/bookmarks";
+import { createCanvasSnapshot } from "utils/misc";
+import { useExplorerGlobals } from "contexts/explorerGlobals";
 
 import {
+    useAddAttachmentMutation,
     useCreateIssueMutation,
     useGetComponentsQuery,
     useGetCreateIssueMetadataQuery,
@@ -42,6 +45,9 @@ import { Assignee, CreateIssueMetadata } from "../types";
 export function CreateIssue({ sceneId }: { sceneId: string }) {
     const theme = useTheme();
     const history = useHistory();
+    const {
+        state: { canvas },
+    } = useExplorerGlobals(true);
     const dispatch = useAppDispatch();
 
     const issueType = useAppSelector(selectIssueType);
@@ -56,6 +62,7 @@ export function CreateIssue({ sceneId }: { sceneId: string }) {
     const autoCompleteRef = useRef(0);
     const [saveStatus, setSaveStatus] = useState(AsyncStatus.Initial);
     const [createIssue] = useCreateIssueMutation();
+    const [addAttachment] = useAddAttachmentMutation();
     const createBookmark = useCreateBookmark();
 
     const {
@@ -124,6 +131,7 @@ export function CreateIssue({ sceneId }: { sceneId: string }) {
         setSaveStatus(AsyncStatus.Loading);
         const bmId = uuidv4();
         const bm = createBookmark();
+        const snapshot = await createCanvasSnapshot(canvas, 5000, 5000);
 
         const saved = await dataApi.saveBookmarks(sceneId, [{ ...bm, id: bmId, name: bmId }], { group: bmId });
 
@@ -203,7 +211,34 @@ export function CreateIssue({ sceneId }: { sceneId: string }) {
         };
 
         try {
-            await createIssue({ body });
+            const res = await createIssue({ body });
+
+            if ("error" in res) {
+                throw res.error;
+            }
+
+            if (snapshot) {
+                const formData = new FormData();
+
+                // https://stackoverflow.com/a/61321728
+                function DataURIToBlob(dataURI: string) {
+                    const splitDataURI = dataURI.split(",");
+                    const byteString =
+                        splitDataURI[0].indexOf("base64") >= 0 ? atob(splitDataURI[1]) : decodeURI(splitDataURI[1]);
+                    const mimeString = splitDataURI[0].split(":")[1].split(";")[0];
+
+                    const ia = new Uint8Array(byteString.length);
+                    for (let i = 0; i < byteString.length; i++) {
+                        ia[i] = byteString.charCodeAt(i);
+                    }
+
+                    return new Blob([ia], { type: mimeString });
+                }
+
+                formData.append("file", DataURIToBlob(snapshot), "Novorender model image");
+                await addAttachment({ issueId: res.data.id, form: formData });
+            }
+
             setSaveStatus(AsyncStatus.Success);
             history.goBack();
         } catch (e) {

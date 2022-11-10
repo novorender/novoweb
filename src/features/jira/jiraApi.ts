@@ -1,6 +1,7 @@
 import { BaseQueryFn, createApi, FetchArgs, fetchBaseQuery, FetchBaseQueryError } from "@reduxjs/toolkit/query/react";
 import { RootState } from "app/store";
 import { AsyncStatus } from "types/misc";
+import { handleImageResponse } from "utils/bcf";
 
 import { selectJiraAccessToken, selectJiraSpace } from "./jiraSlice";
 import { Component, CreateIssueMetadata, Issue, IssueType, Permission, Project, Space } from "./types";
@@ -65,7 +66,7 @@ export const jiraApi = createApi({
         getIssue: builder.query<Issue, { key: string }>({
             query: ({ key }) => `issue/${key}`,
         }),
-        createIssue: builder.mutation<any, { body: any }>({
+        createIssue: builder.mutation<{ id: string; key: string; self: string }, { body: any }>({
             query: ({ body }) => ({
                 url: "issue",
                 method: "POST",
@@ -74,6 +75,37 @@ export const jiraApi = createApi({
                     "Content-Type": "application/json",
                 },
                 body,
+            }),
+        }),
+        addAttachment: builder.mutation<{ id: string; key: string; self: string }, { issueId: string; form: FormData }>(
+            {
+                query: ({ issueId, form }) => ({
+                    url: `issue/${issueId}/attachments`,
+                    method: "POST",
+                    headers: {
+                        Accept: "application/json",
+                        "X-Atlassian-Token": "no-check",
+                    },
+                    body: form,
+                }),
+            }
+        ),
+        getAttachmentThumbnail: builder.query<string, { id: string }>({
+            query: ({ id }) => ({
+                url: `attachment/thumbnail/${id}`,
+                headers: {
+                    Accept: "application/json",
+                },
+                responseHandler: handleImageResponse,
+            }),
+        }),
+        getAttachmentContent: builder.query<string, { id: string }>({
+            query: ({ id }) => ({
+                url: `attachment/content/${id}`,
+                headers: {
+                    Accept: "application/json",
+                },
+                responseHandler: handleImageResponse,
             }),
         }),
         createComment: builder.mutation<any, { body: any; issueKey: string }>({
@@ -236,6 +268,9 @@ export const {
     useLazyGetTokensQuery,
     useCreateIssueMutation,
     useCreateCommentMutation,
+    useAddAttachmentMutation,
+    useGetAttachmentThumbnailQuery,
+    useGetAttachmentContentQuery,
     useGetAccessibleResourcesQuery,
     useRefreshTokensMutation,
     useGetProjectsQuery,
