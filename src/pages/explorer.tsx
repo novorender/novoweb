@@ -90,6 +90,10 @@ function ExplorerBase() {
             } else if (oAuthState.service === featuresConfig.jira.key) {
                 dispatch(explorerActions.setWidgets([featuresConfig.jira.key]));
             }
+
+            if (oAuthState.localBookmarkId) {
+                dispatch(explorerActions.setLocalBookmarkId(oAuthState.localBookmarkId));
+            }
         } else {
             const searchParams = new URLSearchParams(window.location.search);
 

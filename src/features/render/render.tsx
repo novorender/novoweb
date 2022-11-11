@@ -78,7 +78,7 @@ import {
     selectPicker,
     Picker,
 } from "slices/renderSlice";
-import { explorerActions, selectUrlBookmarkId } from "slices/explorerSlice";
+import { explorerActions, selectLocalBookmarkId, selectUrlBookmarkId } from "slices/explorerSlice";
 import { selectDeviations } from "features/deviations";
 import { bookmarksActions, selectBookmarks, useSelectBookmark } from "features/bookmarks";
 import { measureActions, selectMeasure } from "features/measure";
@@ -234,6 +234,7 @@ export function Render3D({ onInit }: Props) {
     const gridDefaults = useAppSelector(selectGridDefaults);
     const activePanorama = useAppSelector(selectActivePanorama);
     const urlBookmarkId = useAppSelector(selectUrlBookmarkId);
+    const localBookmarkId = useAppSelector(selectLocalBookmarkId);
     const showDitioMarkers = useAppSelector(selectShowMarkers);
     const ditioMarkers = useAppSelector(selectMarkers);
     const drawSelectedPaths = useAppSelector(selectDrawSelectedPositions);
@@ -1353,6 +1354,37 @@ export function Render3D({ onInit }: Props) {
             }
         }
     }, [view, id, dispatch, selectBookmark, urlBookmarkId]);
+
+    useEffect(() => {
+        handleLocalBookmark();
+
+        function handleLocalBookmark() {
+            if (!view || !localBookmarkId) {
+                return;
+            }
+
+            dispatch(explorerActions.setLocalBookmarkId(undefined));
+
+            try {
+                const storedBm = localStorage.getItem(localBookmarkId);
+
+                if (!storedBm) {
+                    return;
+                }
+
+                localStorage.removeItem(localBookmarkId);
+                const bookmark = JSON.parse(storedBm);
+
+                if (!bookmark) {
+                    return;
+                }
+
+                selectBookmark(bookmark);
+            } catch (e) {
+                console.warn(e);
+            }
+        }
+    }, [view, id, dispatch, selectBookmark, localBookmarkId]);
 
     const exitPointerLock = () => {
         if ("exitPointerLock" in window.document) {

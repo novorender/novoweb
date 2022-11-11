@@ -1,22 +1,35 @@
 import { useState } from "react";
 import { useTheme, Box, Typography, CircularProgress } from "@mui/material";
 import { LoadingButton } from "@mui/lab";
+import { v4 as uuidv4 } from "uuid";
 
 import { ScrollBox } from "components";
 import { featuresConfig } from "config/features";
 import { createOAuthStateString } from "utils/auth";
+import { useCreateBookmark } from "features/bookmarks";
 
 import { jiraClientId, jiraIdentityServer } from "../jiraApi";
 
 export function Login({ sceneId }: { sceneId: string }) {
     const theme = useTheme();
     const [loading, setLoading] = useState(false);
+    const createBookmark = useCreateBookmark();
 
     const handleLoginRedirect = () => {
+        const id = uuidv4();
         const state = createOAuthStateString({
-            service: featuresConfig.jira.key,
             sceneId,
+            service: featuresConfig.jira.key,
+            localBookmarkId: id,
         });
+
+        const bm = createBookmark();
+
+        try {
+            localStorage.setItem(id, JSON.stringify(bm));
+        } catch {
+            // nada
+        }
 
         setLoading(true);
 
