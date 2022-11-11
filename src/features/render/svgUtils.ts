@@ -173,7 +173,7 @@ export function renderMeasurePoints({
 }: {
     svg: SVGSVGElement;
     svgNames: { path?: string; point?: string };
-    text?: { textName: string; value: number; type: "distance" | "center"; unit?: string };
+    text?: { textName: string; value: number[]; type: "distance" | "center"; unit?: string; multitext?: boolean };
     points: { pixel: vec2[]; path: vec2[] } | undefined;
     closed?: boolean;
 }) {
@@ -217,6 +217,57 @@ export function renderMeasurePoints({
         }
     }
     if (text) {
+        for (let i = 0; i < text.value.length; ++i) {
+            const textEl =
+                text.multitext === true
+                    ? svg.children.namedItem(`${text.textName}_${i}`)
+                    : svg.children.namedItem(text.textName);
+            if (!textEl) {
+                return;
+            }
+            if (points === undefined) {
+                textEl.innerHTML = "";
+                return;
+            }
+            if (text.type === "distance") {
+                if (points.path.length < i + 1) {
+                    textEl.innerHTML = "";
+                    return;
+                }
+                const _text = `${+text.value[i].toFixed(3)} ${text.unit ? text.unit : "m"}`;
+                let dir =
+                    points.path[i][0] > points.path[i + 1][0]
+                        ? vec2.sub(vec2.create(), points.path[0], points.path[1])
+                        : vec2.sub(vec2.create(), points.path[1], points.path[0]);
+                const pixLen = _text.length * 12 + 20;
+                if (vec2.sqrLen(dir) > pixLen * pixLen) {
+                    const angle = (Math.asin(dir[1] / vec2.len(dir)) * 180) / Math.PI;
+                    const off = vec3.fromValues(0, 0, -1);
+                    vec3.scale(off, vec3.normalize(off, vec3.cross(off, off, vec3.fromValues(dir[0], dir[1], 0))), 5);
+                    const center = vec2.create();
+                    vec2.lerp(center, points.path[i], points.path[i + 1], 0.5);
+                    textEl.setAttribute("x", (center[0] + off[0]).toFixed(1));
+                    textEl.setAttribute("y", (center[1] + off[1]).toFixed(1));
+                    textEl.setAttribute("transform", `rotate(${angle} ${center[0] + off[0]},${center[1] + off[1]})`);
+                    textEl.innerHTML = _text;
+                } else {
+                    textEl.innerHTML = "";
+                }
+            } else if (text.type === "center") {
+                if (points.path.length < 2 || text.value[0] === 0) {
+                    textEl.innerHTML = "";
+                    return;
+                }
+                const _text = `${text.value[0].toFixed(3)} ${text.unit ? text.unit : "m"}`;
+                const center = vec2.create();
+                for (const p of points.path) {
+                    vec2.add(center, center, p);
+                }
+                textEl.setAttribute("x", (center[0] / points.path.length).toFixed(1));
+                textEl.setAttribute("y", (center[1] / points.path.length).toFixed(1));
+                textEl.innerHTML = _text;
+            }
+        }
         const textEl = svg.children.namedItem(text.textName);
         if (!textEl) {
             return;
@@ -230,7 +281,7 @@ export function renderMeasurePoints({
                 textEl.innerHTML = "";
                 return;
             }
-            const _text = `${+text.value.toFixed(3)} ${text.unit ? text.unit : "m"}`;
+            const _text = `${+text.value[0].toFixed(3)} ${text.unit ? text.unit : "m"}`;
             let dir =
                 points.path[0][0] > points.path[1][0]
                     ? vec2.sub(vec2.create(), points.path[0], points.path[1])
@@ -250,11 +301,11 @@ export function renderMeasurePoints({
                 textEl.innerHTML = "";
             }
         } else if (text.type === "center") {
-            if (points.path.length < 2 || text.value === 0) {
+            if (points.path.length < 2 || text.value[0] === 0) {
                 textEl.innerHTML = "";
                 return;
             }
-            const _text = `${text.value.toFixed(3)} ${text.unit ? text.unit : "m"}`;
+            const _text = `${text.value[0].toFixed(3)} ${text.unit ? text.unit : "m"}`;
             const center = vec2.create();
             for (const p of points.path) {
                 vec2.add(center, center, p);

@@ -405,7 +405,7 @@ export function Render3D({ onInit }: Props) {
                     svgNames: { path: "manholeCollision", point: "manhole_col" },
                     text: {
                         textName: "manholeCollisionText",
-                        value: vec3.len(vec3.sub(vec3.create(), manholeCollision[0], manholeCollision[1])),
+                        value: [vec3.len(vec3.sub(vec3.create(), manholeCollision[0], manholeCollision[1]))],
                         type: "distance",
                     },
                 });
@@ -422,7 +422,7 @@ export function Render3D({ onInit }: Props) {
                 svgNames: { path: "normalDistance", point: "normal" },
                 text: {
                     textName: "normalDistanceText",
-                    value: vec3.len(vec3.sub(vec3.create(), normalPoints[0], normalPoints[1])),
+                    value: [vec3.len(vec3.sub(vec3.create(), normalPoints[0], normalPoints[1]))],
                     type: "distance",
                 },
             });
@@ -446,7 +446,7 @@ export function Render3D({ onInit }: Props) {
                 svgNames: { path: "brepDistance", point: "measure" },
                 text: {
                     textName: "distanceText",
-                    value: measureLen,
+                    value: [measureLen],
                     type: "distance",
                 },
             });
@@ -464,7 +464,7 @@ export function Render3D({ onInit }: Props) {
                 svgNames: { path: "brepPathX" },
                 text: {
                     textName: "brepTextX",
-                    value: Math.abs(diff[0]),
+                    value: [Math.abs(diff[0])],
                     type: "distance",
                 },
             });
@@ -475,7 +475,7 @@ export function Render3D({ onInit }: Props) {
                 svgNames: { path: "brepPathY" },
                 text: {
                     textName: "brepTextY",
-                    value: Math.abs(diff[2]),
+                    value: [Math.abs(diff[2])],
                     type: "distance",
                 },
             });
@@ -487,7 +487,7 @@ export function Render3D({ onInit }: Props) {
                 svgNames: { path: "brepPathZ" },
                 text: {
                     textName: "brepTextZ",
-                    value: Math.abs(diff[1]),
+                    value: [Math.abs(diff[1])],
                     type: "distance",
                 },
             });
@@ -533,7 +533,7 @@ export function Render3D({ onInit }: Props) {
                     svgNames: { path: "brepPathXZ" },
                     text: {
                         textName: "brepTextXZ",
-                        value: planarDiff,
+                        value: [planarDiff],
                         type: "distance",
                     },
                 });
@@ -571,7 +571,7 @@ export function Render3D({ onInit }: Props) {
                     svgNames: { path: "area-path", point: "area-pt" },
                     text: {
                         textName: "areaText",
-                        value: areaValue,
+                        value: [areaValue],
                         type: "center",
                         unit: "&#13217",
                     },
@@ -607,16 +607,17 @@ export function Render3D({ onInit }: Props) {
             }
         }
 
-        if (pointLinePoints.length) {
+        if (pointLinePoints.length && pointLineResult) {
             const pointLinePts = pathPoints({ points: pointLinePoints });
             if (pointLinePts) {
                 renderPoints({
                     points: pointLinePts,
                     svgNames: { path: "line-path", point: "line-pt" },
                     text: {
-                        textName: "lineText",
-                        value: pointLineResult?.totalLength ?? 0,
-                        type: "center",
+                        textName: "line-txt",
+                        value: pointLineResult.segmentLengts,
+                        type: "distance",
+                        multitext: true,
                     },
                     closed: false,
                 });
@@ -1822,7 +1823,6 @@ export function Render3D({ onInit }: Props) {
                                         strokeWidth={1}
                                         fill="none"
                                     />
-                                    <AxisText id={`lineText`} />
                                     {pointLinePoints.map((_pt, idx, arr) => (
                                         <Fragment key={idx}>
                                             <MeasurementPoint
@@ -1837,6 +1837,9 @@ export function Render3D({ onInit }: Props) {
                                             {idx === 0 || idx === arr.length - 1 ? null : <g id={`line-an_${idx}`} />}
                                         </Fragment>
                                     ))}
+                                    {pointLinePoints.map((_pt, idx) =>
+                                        idx !== pointLinePoints.length - 1 ? <AxisText id={`line-txt_${idx}`} /> : null
+                                    )}
                                 </>
                             ) : null}
 
