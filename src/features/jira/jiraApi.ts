@@ -3,7 +3,7 @@ import { RootState } from "app/store";
 import { AsyncStatus } from "types/misc";
 import { handleImageResponse } from "utils/bcf";
 
-import { selectJiraAccessToken, selectJiraSpace } from "./jiraSlice";
+import { initialFilters, selectJiraAccessToken, selectJiraSpace } from "./jiraSlice";
 import { Component, CreateIssueMetadata, CurrentUser, Issue, IssueType, Permission, Project, Space } from "./types";
 
 export const jiraIdentityServer = "https://auth.atlassian.com/authorize";
@@ -62,10 +62,21 @@ export const jiraApi = createApi({
                     .filter((permission) => permission.havePermission)
                     .map((permission) => permission.key),
         }),
-        getIssues: builder.query<Issue[], { project: string; component: string; userId: string }>({
-            query: ({ project, component, userId }) =>
-                `search?jql=${`project = "${project}" AND component = "${component}" AND resolution = "Unresolved" ${
-                    userId ? `AND (assignee = "${userId}" OR reporter = "${userId}")` : ""
+        getIssues: builder.query<
+            Issue[],
+            { project: string; component: string; userId: string; filters: typeof initialFilters }
+        >({
+            query: ({ project, component, userId, filters }) =>
+                `search?jql=${`project = "${project}" AND component = "${component}" ${
+                    filters.unresolved ? `AND resolution = "Unresolved"` : ""
+                } ${
+                    userId && (filters.reportedByMe || filters.assignedToMe)
+                        ? filters.reportedByMe && filters.assignedToMe
+                            ? `AND (assignee = "${userId}" OR reporter = "${userId}")`
+                            : filters.assignedToMe
+                            ? `AND assignee = "${userId}"`
+                            : `AND reporter = "${userId}"`
+                        : ""
                 }&maxResults=150`}`,
             transformResponse: (res: { issues: Issue[] }) => res.issues,
         }),

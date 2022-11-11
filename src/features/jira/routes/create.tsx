@@ -34,7 +34,7 @@ import {
 } from "../jiraApi";
 import {
     jiraActions,
-    selectIssueType,
+    selectJiraIssueType,
     selectJiraAccessTokenData,
     selectJiraComponent,
     selectJiraProject,
@@ -50,7 +50,7 @@ export function CreateIssue({ sceneId }: { sceneId: string }) {
     } = useExplorerGlobals(true);
     const dispatch = useAppDispatch();
 
-    const issueType = useAppSelector(selectIssueType);
+    const issueType = useAppSelector(selectJiraIssueType);
     const accessToken = useAppSelector(selectJiraAccessTokenData);
     const space = useAppSelector(selectJiraSpace);
     const project = useAppSelector(selectJiraProject);

@@ -1,6 +1,7 @@
 import { AddCircle, FilterAlt } from "@mui/icons-material";
 import { useHistory } from "react-router-dom";
-import { Box, Button, List, ListItemButton, useTheme } from "@mui/material";
+import { Box, Button, List, ListItemButton, Typography, useTheme } from "@mui/material";
+import { useEffect } from "react";
 
 import { useAppDispatch, useAppSelector } from "app/store";
 import { Divider, LinearProgress, ScrollBox } from "components";
@@ -10,10 +11,10 @@ import {
     jiraActions,
     selectJiraAccessTokenData,
     selectJiraComponent,
+    selectJiraFilters,
     selectJiraProject,
     selectJiraUser,
 } from "../jiraSlice";
-import { useEffect } from "react";
 
 export function Issues() {
     const theme = useTheme();
@@ -23,6 +24,7 @@ export function Issues() {
     const component = useAppSelector(selectJiraComponent);
     const accessToken = useAppSelector(selectJiraAccessTokenData);
     const currentUser = useAppSelector(selectJiraUser);
+    const filters = useAppSelector(selectJiraFilters);
     const dispatch = useAppDispatch();
 
     // todo pagination / load on scroll whatever
@@ -36,6 +38,7 @@ export function Issues() {
             project: project?.key ?? "",
             component: component?.id ?? "",
             userId: currentUser?.accountId ?? "",
+            filters,
         },
         { skip: !project || !component || !accessToken, refetchOnMountOrArgChange: true }
     );
@@ -72,9 +75,7 @@ export function Issues() {
                         <Divider />
                     </Box>
                     <Box display="flex" justifyContent="space-between">
-                        {/* todo */}
                         <Button
-                            disabled={true}
                             onClick={() => {
                                 history.push("/filters");
                             }}
@@ -105,7 +106,7 @@ export function Issues() {
             <ScrollBox p={1} pb={3}>
                 {isErrorIssues ? (
                     "An error occured."
-                ) : isLoadingIssues ? null : (
+                ) : isLoadingIssues ? null : issues.length ? (
                     <List sx={{ mx: -1 }} dense disablePadding>
                         {issues.map((issue) => (
                             <ListItemButton
@@ -118,6 +119,24 @@ export function Issues() {
                             </ListItemButton>
                         ))}
                     </List>
+                ) : (
+                    <Box flex={"1 1 100%"}>
+                        <Typography textAlign={"center"} mt={1}>
+                            No issues found.
+                        </Typography>
+                        {Object.values(filters).some((val) => val === true) && (
+                            <Box width={1} mt={3} display="flex" justifyContent="center">
+                                <Button
+                                    variant="contained"
+                                    onClick={() => {
+                                        dispatch(jiraActions.clearFilters());
+                                    }}
+                                >
+                                    Clear filters
+                                </Button>
+                            </Box>
+                        )}
+                    </Box>
                 )}
             </ScrollBox>
         </>
