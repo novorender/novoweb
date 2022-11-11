@@ -38,6 +38,9 @@ export const jiraSlice = createSlice({
         setUser: (state, action: PayloadAction<State["user"]>) => {
             state.user = action.payload;
         },
+        logOut: () => {
+            return initialState;
+        },
     },
 });
 

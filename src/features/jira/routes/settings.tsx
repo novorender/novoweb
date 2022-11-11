@@ -3,6 +3,7 @@ import { LoadingButton } from "@mui/lab";
 import { useHistory } from "react-router-dom";
 import { FormEventHandler, SyntheticEvent, useState } from "react";
 import { SceneData } from "@novorender/data-js-api";
+import { ArrowBack } from "@mui/icons-material";
 
 import { dataApi } from "app";
 import { selectIsAdminScene } from "slices/explorerSlice";
@@ -10,10 +11,16 @@ import { useExplorerGlobals } from "contexts/explorerGlobals";
 import { useAppDispatch, useAppSelector } from "app/store";
 import { AsyncState, AsyncStatus } from "types/misc";
 import { renderActions, selectProjectSettings } from "slices/renderSlice";
-import { ScrollBox, TextField } from "components";
+import { Divider, ScrollBox, TextField } from "components";
 
 import { Component, Project, Space } from "../types";
-import { jiraActions, selectJiraAccessTokenData } from "../jiraSlice";
+import {
+    jiraActions,
+    selectJiraAccessTokenData,
+    selectJiraComponent,
+    selectJiraProject,
+    selectJiraSpace,
+} from "../jiraSlice";
 import { useGetAccessibleResourcesQuery, useGetComponentsQuery, useGetProjectsQuery } from "../jiraApi";
 
 export function Settings({ sceneId }: { sceneId: string }) {
@@ -27,6 +34,9 @@ export function Settings({ sceneId }: { sceneId: string }) {
     const isAdminScene = useAppSelector(selectIsAdminScene);
     const { jira: settings } = useAppSelector(selectProjectSettings);
     const accessToken = useAppSelector(selectJiraAccessTokenData);
+    const currentProject = useAppSelector(selectJiraProject);
+    const currentSpace = useAppSelector(selectJiraSpace);
+    const currentComponent = useAppSelector(selectJiraComponent);
 
     const { data: accessibleResources } = useGetAccessibleResourcesQuery(
         { accessToken: accessToken },
@@ -34,12 +44,14 @@ export function Settings({ sceneId }: { sceneId: string }) {
     );
 
     const [space, setSpace] = useState(
-        accessibleResources
+        currentSpace
+            ? currentSpace
+            : accessibleResources
             ? accessibleResources.find((resource) => resource.name === settings?.space) ?? accessibleResources[0]
-            : undefined
+            : null
     );
-    const [project, setProject] = useState<Project | null>(null);
-    const [component, setComponent] = useState<Component | null>(null);
+    const [project, setProject] = useState<Project | null>(currentProject ?? null);
+    const [component, setComponent] = useState<Component | null>(currentComponent ?? null);
     const [saving, setSaving] = useState<AsyncState<true>>({ status: AsyncStatus.Initial });
 
     const { data: projects, isFetching: isFetchingProjects } = useGetProjectsQuery(
@@ -118,11 +130,21 @@ export function Settings({ sceneId }: { sceneId: string }) {
 
     return (
         <>
-            <Box
-                boxShadow={theme.customShadows.widgetHeader}
-                sx={{ height: 5, width: 1, mt: "-5px" }}
-                position="absolute"
-            />
+            <Box boxShadow={theme.customShadows.widgetHeader}>
+                <Box px={1}>
+                    <Divider />
+                </Box>
+                <Box display="flex">
+                    <Button
+                        onClick={() => history.goBack()}
+                        disabled={!currentSpace || !currentProject || !currentComponent}
+                        color="grey"
+                    >
+                        <ArrowBack sx={{ mr: 1 }} />
+                        Back
+                    </Button>
+                </Box>
+            </Box>
             <ScrollBox p={1} component="form" onSubmit={handleSubmit}>
                 <Typography fontWeight={600} mb={2}>
                     Settings
@@ -134,6 +156,7 @@ export function Settings({ sceneId }: { sceneId: string }) {
                     options={accessibleResources ?? []}
                     getOptionLabel={(opt) => opt.name}
                     value={space}
+                    isOptionEqualToValue={(opt, val) => opt.id === val.id}
                     onChange={handleSpaceChange}
                     size="medium"
                     includeInputInList
@@ -147,6 +170,7 @@ export function Settings({ sceneId }: { sceneId: string }) {
                     options={!projects || isFetchingProjects ? [] : projects}
                     getOptionLabel={(opt) => `${opt.key} - ${opt.name}`}
                     value={project}
+                    isOptionEqualToValue={(opt, val) => opt.id === val.id}
                     loading={isFetchingProjects}
                     loadingText="Loading projects..."
                     onChange={handleProjectChange}
@@ -162,6 +186,7 @@ export function Settings({ sceneId }: { sceneId: string }) {
                     options={!components || !project || isFetchingComponents ? [] : components}
                     getOptionLabel={(opt) => opt.name}
                     value={component}
+                    isOptionEqualToValue={(opt, val) => opt.id === val.id}
                     loading={isFetchingComponents}
                     loadingText="Loading components..."
                     onChange={(_e, value) => {
@@ -175,8 +200,14 @@ export function Settings({ sceneId }: { sceneId: string }) {
                 />
 
                 <Box display="flex" justifyContent="space-between">
-                    {/* todo */}
-                    <Button disabled={true} color="grey" variant="outlined">
+                    <Button
+                        disabled={!currentSpace || !currentProject || !currentComponent}
+                        color="grey"
+                        variant="outlined"
+                        onClick={() => {
+                            history.goBack();
+                        }}
+                    >
                         Cancel
                     </Button>
                     <LoadingButton

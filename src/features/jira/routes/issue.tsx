@@ -50,7 +50,10 @@ export function Issue({ sceneId }: { sceneId: string }) {
         { skip: !project }
     );
 
-    const { data: thumbnail } = useGetAttachmentThumbnailQuery({ id: imageAttachmentId }, { skip: !imageAttachmentId });
+    const { data: thumbnail, isLoading: isLoadingThumbnail } = useGetAttachmentThumbnailQuery(
+        { id: imageAttachmentId },
+        { skip: !imageAttachmentId }
+    );
     const { data: fullImage, isLoading: isLoadingFullImage } = useGetAttachmentContentQuery(
         { id: imageAttachmentId },
         { skip: !imageAttachmentId || !modalOpen }
@@ -155,7 +158,7 @@ export function Issue({ sceneId }: { sceneId: string }) {
                 </Box>
             </Box>
 
-            {(isLoadingIssue || loadingBookmark || isLoadingFullImage) && (
+            {(isLoadingIssue || loadingBookmark || isLoadingFullImage || isLoadingThumbnail) && (
                 <Box>
                     <LinearProgress />
                 </Box>
@@ -164,7 +167,8 @@ export function Issue({ sceneId }: { sceneId: string }) {
             {isErrorIssue || (!isLoadingIssue && !issue) ? (
                 <>An error occured while loading issue {key}</>
             ) : (
-                issue && (
+                issue &&
+                !isLoadingThumbnail && (
                     <ScrollBox p={1} pt={1} pb={4}>
                         {thumbnail && (
                             <Box
