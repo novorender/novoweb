@@ -153,13 +153,14 @@ const Svg = styled("svg")(
     `
 );
 
-const MeasurementPoint = styled("circle", { shouldForwardProp: (prop) => prop !== "disabled" })<
-    SVGProps<SVGCircleElement> & { disabled?: boolean }
->(
-    ({ disabled, fill }) => css`
+const MeasurementPoint = styled(
+    // inline for snapshots
+    (props: SVGProps<SVGCircleElement>) => <circle fill={props.fill ? props.fill : "green"} {...props} />,
+    { shouldForwardProp: (prop) => prop !== "disabled" }
+)<SVGProps<SVGCircleElement> & { disabled?: boolean }>(
+    ({ disabled }) => css`
         pointer-events: ${disabled ? "none" : "all"};
         cursor: pointer;
-        fill: ${fill ?? "green"};
     `
 );
 
@@ -171,13 +172,20 @@ const PanoramaMarker = styled((props: any) => <CameraAlt color="primary" height=
     `
 );
 
-const AxisText = styled((props: SVGProps<SVGTextElement>) => <text alignmentBaseline="middle" {...props} />)(
+const AxisText = styled((props: SVGProps<SVGTextElement>) => (
+    // inline for snapshots
+    <text
+        alignmentBaseline="middle"
+        fill="white"
+        fontSize={16}
+        fontWeight="bold"
+        textAnchor="middle"
+        fontFamily="Open Sans, sans-serif"
+        {...props}
+    />
+))(
     () => css`
-        fill: white;
-        font-size: 16px;
         user-select: none;
-        font-weight: bold;
-        text-anchor: middle;
     `
 );
 

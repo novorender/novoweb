@@ -140,6 +140,24 @@ export async function createCanvasSnapshot(
 
         ctx.drawImage(bitmap, 0, 0);
 
+        const svgElement = document.querySelector("svg") as SVGSVGElement;
+        const svgURL = new XMLSerializer().serializeToString(svgElement);
+        const img = new Image();
+
+        const drawnSvg = new Promise((resolve) => {
+            img.onload = async function () {
+                ctx.drawImage(img, 0, 0);
+                resolve(true);
+            };
+            img.onerror = async () => {
+                resolve(false);
+            };
+        });
+
+        img.src = "data:image/svg+xml; charset=utf8, " + encodeURIComponent(svgURL);
+
+        await drawnSvg;
+
         return dist.toDataURL("image/png");
     } catch (e) {
         console.warn(e);

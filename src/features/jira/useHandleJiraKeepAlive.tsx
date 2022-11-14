@@ -15,7 +15,16 @@ export function useHandleJiraKeepAlive() {
     const timeoutId = useRef<number>();
 
     useEffect(() => {
-        if (!refreshToken || timeoutId.current !== undefined) {
+        if (!refreshToken) {
+            if (timeoutId.current !== undefined) {
+                window.clearTimeout(timeoutId.current);
+                timeoutId.current = undefined;
+            }
+
+            return;
+        }
+
+        if (timeoutId.current !== undefined) {
             return;
         }
 

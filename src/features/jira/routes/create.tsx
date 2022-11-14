@@ -123,7 +123,6 @@ export function CreateIssue({ sceneId }: { sceneId: string }) {
         const bmId = uuidv4();
         const bm = createBookmark();
         const snapshot = await createCanvasSnapshot(canvas, 5000, 5000);
-
         const saved = await dataApi.saveBookmarks(sceneId, [{ ...bm, id: bmId, name: bmId }], { group: bmId });
 
         if (!saved) {
