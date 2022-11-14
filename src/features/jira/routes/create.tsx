@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { ArrowBack, Save } from "@mui/icons-material";
+import { ArrowBack, Close, Save } from "@mui/icons-material";
 import {
     Autocomplete,
     Box,
@@ -12,6 +12,8 @@ import {
     Select,
     useTheme,
     TextField,
+    Snackbar,
+    IconButton,
 } from "@mui/material";
 import { useHistory } from "react-router-dom";
 import { v4 as uuidv4 } from "uuid";
@@ -92,17 +94,6 @@ export function CreateIssue({ sceneId }: { sceneId: string }) {
         { space: space?.id ?? "", project: project?.key ?? "", accessToken },
         { skip: !space || !project || !accessToken }
     );
-
-    // todo slett
-    useEffect(() => {
-        if (createIssueMetadata) {
-            for (const key in createIssueMetadata) {
-                if (createIssueMetadata[key].required) {
-                    console.log(key, createIssueMetadata[key].hasDefaultValue);
-                }
-            }
-        }
-    }, [createIssueMetadata]);
 
     useEffect(
         function initIssueType() {
@@ -261,7 +252,7 @@ export function CreateIssue({ sceneId }: { sceneId: string }) {
                         Back
                     </Button>
                     <Button
-                        disabled={saveStatus === AsyncStatus.Loading || !formValues.summary || !project || !issueType}
+                        disabled={saveStatus !== AsyncStatus.Initial || !formValues.summary || !project || !issueType}
                         onClick={() => handleCreate()}
                         color="grey"
                     >
@@ -493,6 +484,28 @@ export function CreateIssue({ sceneId }: { sceneId: string }) {
                     </>
                 )}
             </ScrollBox>
+            <Snackbar
+                anchorOrigin={{ vertical: "bottom", horizontal: "center" }}
+                sx={{
+                    width: { xs: "auto", sm: 350 },
+                    bottom: { xs: "auto", sm: 24 },
+                    top: { xs: 24, sm: "auto" },
+                }}
+                autoHideDuration={2500}
+                open={saveStatus === AsyncStatus.Error}
+                onClose={() => setSaveStatus(AsyncStatus.Initial)}
+                message={"Failed to create Jira issue."}
+                action={
+                    <IconButton
+                        size="small"
+                        aria-label="close"
+                        color="inherit"
+                        onClick={() => setSaveStatus(AsyncStatus.Initial)}
+                    >
+                        <Close fontSize="small" />
+                    </IconButton>
+                }
+            />
         </>
     );
 }

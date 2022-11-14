@@ -104,7 +104,7 @@ export function Issues() {
                 </Box>
             ) : null}
             <ScrollBox p={1} pb={3}>
-                {isErrorIssues ? (
+                {isErrorIssues && !issues ? (
                     "An error occured."
                 ) : isLoadingIssues ? null : issues.length ? (
                     <List sx={{ mx: -1 }} dense disablePadding>

@@ -58,7 +58,7 @@ export function CreateComment() {
         history.goBack();
     };
 
-    const disabled = creatingComment;
+    const loading = creatingComment;
 
     return (
         <>
@@ -71,7 +71,13 @@ export function CreateComment() {
                     Back
                 </Button>
             </Box>
-            <Box position="relative">{disabled ? <LinearProgress /> : null}</Box>
+
+            {loading && (
+                <Box>
+                    <LinearProgress />
+                </Box>
+            )}
+
             <ScrollBox py={1} height={1}>
                 <Box sx={{ px: 1, my: 1 }}>
                     <form onSubmit={handleSubmit}>
@@ -92,12 +98,18 @@ export function CreateComment() {
                                 color="grey"
                                 type="button"
                                 fullWidth
-                                disabled={disabled}
+                                disabled={loading}
                                 onClick={() => history.goBack()}
                             >
                                 Cancel
                             </Button>
-                            <Button sx={{ ml: 2 }} fullWidth variant="contained" type="submit" disabled={disabled}>
+                            <Button
+                                sx={{ ml: 2 }}
+                                fullWidth
+                                variant="contained"
+                                type="submit"
+                                disabled={loading || !comment}
+                            >
                                 Add comment
                             </Button>
                         </Box>

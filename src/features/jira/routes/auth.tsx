@@ -68,7 +68,10 @@ export function Auth() {
         tryAuthenticating();
 
         async function tryAuthenticating() {
-            // todo keepalive
+            if (accessToken.status !== AsyncStatus.Initial) {
+                return;
+            }
+
             const code = new URLSearchParams(window.location.search).get("code");
             const refreshToken = getFromStorage(StorageKey.JiraRefreshToken);
 
@@ -87,16 +90,20 @@ export function Auth() {
                 if ("data" in res) {
                     saveToStorage(StorageKey.JiraRefreshToken, res.data.refresh_token);
                     dispatch(jiraActions.setAccessToken({ status: AsyncStatus.Success, data: res.data.access_token }));
+                    dispatch(
+                        jiraActions.setRefreshToken({ token: res.data.refresh_token, refreshIn: res.data.expires_in })
+                    );
                 } else {
                     console.warn(res.error);
                     deleteFromStorage(StorageKey.JiraRefreshToken);
+                    dispatch(jiraActions.setRefreshToken(undefined));
                     history.push("/login");
                 }
             } else {
                 history.push("/login");
             }
         }
-    }, [getTokens, dispatch, history, refreshTokens]);
+    }, [accessToken, getTokens, dispatch, history, refreshTokens]);
 
     useEffect(() => {
         if (accessToken.status !== AsyncStatus.Loading || !(tokensResponse || tokensError)) {

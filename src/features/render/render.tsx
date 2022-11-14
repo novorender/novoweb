@@ -128,6 +128,7 @@ import {
     renderMeasurePoints,
     renderSingleMeasurePoint,
 } from "./svgUtils";
+import { useHandleJiraKeepAlive } from "features/jira";
 
 glMatrix.setMatrixArrayType(Array);
 
@@ -1328,6 +1329,7 @@ export function Render3D({ onInit }: Props) {
     useHandleLocationMarker();
     useHandleManholeUpdates();
     useHandlePointLineUpdates();
+    useHandleJiraKeepAlive();
 
     useEffect(() => {
         handleUrlBookmark();
