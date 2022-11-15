@@ -194,18 +194,31 @@ export function Issue({ sceneId }: { sceneId: string }) {
                             {(issue.fields.description?.content ?? [])?.map((doc: any, idx: number) => {
                                 if (doc.type === "paragraph") {
                                     return (
-                                        <Typography key={idx}>
-                                            {(doc.content ?? []).map((pc: any, pcIdx: number) => {
-                                                if (pc.type === "text") {
-                                                    return pc.text;
-                                                } else if (pc.type === "hardBreak") {
-                                                    return <br key={pcIdx} />;
-                                                } else if (pc.type === "mention" || pc.type === "emoji") {
-                                                    return pc.attrs?.text ?? "";
-                                                } else {
-                                                    return null;
+                                        <Typography mb={2} key={idx}>
+                                            {(doc.content?.length ? doc.content : [{ type: "hardBreak" }]).map(
+                                                (pc: any, pcIdx: number) => {
+                                                    if (pc.type === "text") {
+                                                        const link = pc.marks?.find(
+                                                            (mark: any) => mark.type === "link"
+                                                        );
+                                                        if (link) {
+                                                            return (
+                                                                <a key={pcIdx} href={link.attrs.href} target="blank">
+                                                                    {pc.text}
+                                                                </a>
+                                                            );
+                                                        } else {
+                                                            return pc.text;
+                                                        }
+                                                    } else if (pc.type === "hardBreak") {
+                                                        return <br key={pcIdx} />;
+                                                    } else if (pc.type === "mention" || pc.type === "emoji") {
+                                                        return pc.attrs?.text ?? "";
+                                                    } else {
+                                                        return null;
+                                                    }
                                                 }
-                                            })}
+                                            )}
                                         </Typography>
                                     );
                                 } else {
@@ -247,10 +260,28 @@ export function Issue({ sceneId }: { sceneId: string }) {
                                               {(comment.body.content ?? [])?.map((doc: any, idx: number) => {
                                                   if (doc.type === "paragraph") {
                                                       return (
-                                                          <Typography key={idx}>
-                                                              {(doc.content ?? []).map((pc: any, pcIdx: number) => {
+                                                          <Typography mb={2} key={idx}>
+                                                              {(doc.content?.length
+                                                                  ? doc.content
+                                                                  : [{ type: "hardBreak" }]
+                                                              ).map((pc: any, pcIdx: number) => {
                                                                   if (pc.type === "text") {
-                                                                      return pc.text;
+                                                                      const link = pc.marks?.find(
+                                                                          (mark: any) => mark.type === "link"
+                                                                      );
+                                                                      if (link) {
+                                                                          return (
+                                                                              <a
+                                                                                  key={pcIdx}
+                                                                                  href={link.attrs.href}
+                                                                                  target="blank"
+                                                                              >
+                                                                                  {pc.text}
+                                                                              </a>
+                                                                          );
+                                                                      } else {
+                                                                          return pc.text;
+                                                                      }
                                                                   } else if (pc.type === "hardBreak") {
                                                                       return <br key={pcIdx} />;
                                                                   } else if (
