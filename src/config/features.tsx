@@ -52,8 +52,7 @@ export const featuresConfig = {
         name: "Jira",
         Icon: Jira,
         type: FeatureType.Widget,
-        // TODO(OLA)
-        defaultLocked: false,
+        defaultLocked: true,
     },
     area: {
         key: "area",
@@ -339,8 +338,7 @@ export type WidgetKey = {
 
 export type Widget = Config[WidgetKey];
 
-// TODO
-export const defaultEnabledWidgets = [featuresConfig.user.key, featuresConfig.jira.key] as WidgetKey[];
+export const defaultEnabledWidgets = [featuresConfig.user.key] as WidgetKey[];
 export const allWidgets = Object.values(featuresConfig)
     .filter((widget) => [FeatureType.AdminWidget, FeatureType.Widget].includes(widget.type))
     .map((widget) => widget.key as WidgetKey);

@@ -109,13 +109,8 @@ export function CreateIssue({ sceneId }: { sceneId: string }) {
     const { summary, description, components, assignee, ..._fields } =
         createIssueMetadata ?? ({} as CreateIssueMetadata["fields"]);
 
-    if (!space || !project || !component) {
-        // todo
-        return null;
-    }
-
     const handleCreate = async () => {
-        if (!issueType || !project) {
+        if (!issueType || !project || !space || !component) {
             return;
         }
 
@@ -237,6 +232,10 @@ export function CreateIssue({ sceneId }: { sceneId: string }) {
         }
     };
 
+    if (!space || !project || !component) {
+        return null;
+    }
+
     const loadingFormMeta = isUninitializedCreateIssueMetadata || isFetchingCreateIssueMetadata;
 
     return (
@@ -268,219 +267,249 @@ export function CreateIssue({ sceneId }: { sceneId: string }) {
             )}
 
             <ScrollBox p={1} pb={3}>
-                <FormControl component="fieldset" fullWidth size="small" sx={{ mb: 1 }}>
-                    <Box width={1} display="flex" justifyContent="space-between" alignItems="center">
-                        <FormLabel
-                            component="legend"
-                            sx={{ fontWeight: 600, mb: 0.5, color: "text.secondary" }}
-                            htmlFor={"project"}
-                        >
-                            Project
-                        </FormLabel>
-                    </Box>
-
-                    <Select readOnly value={project.key} id={"project"}>
-                        <MenuItem value={project.key}>
-                            {project.key} - {project.name}
-                        </MenuItem>
-                    </Select>
-                    <FormHelperText>Can only be changed by admins in settings.</FormHelperText>
-                </FormControl>
-
-                <FormControl component="fieldset" fullWidth size="small" sx={{ mb: 1 }}>
-                    <Box width={1} display="flex" justifyContent="space-between" alignItems="center">
-                        <FormLabel
-                            component="legend"
-                            sx={{ fontWeight: 600, mb: 0.5, color: "text.secondary" }}
-                            htmlFor={"issueType"}
-                        >
-                            Type
-                        </FormLabel>
-                    </Box>
-
-                    <Select
-                        value={issueType?.id ?? ""}
-                        id={"issueType"}
-                        onChange={(e) =>
-                            dispatch(jiraActions.setIssueType(issueTypes.find((type) => type.id === e.target.value)))
-                        }
-                    >
-                        {issueTypes.map((option) => (
-                            <MenuItem key={option.id} value={option.id}>
-                                {option.name}
-                            </MenuItem>
-                        ))}
-                    </Select>
-                </FormControl>
-
-                <Divider sx={{ my: 1 }} />
-
-                {!loadingFormMeta && (
+                {space && project && component ? (
                     <>
-                        {summary && (
-                            <FormControl component="fieldset" fullWidth size="small" sx={{ mb: 2 }}>
-                                <Box width={1} display="flex" justifyContent="space-between" alignItems="center">
-                                    <FormLabel
-                                        component="legend"
-                                        sx={{ fontWeight: 600, color: "text.secondary" }}
-                                        htmlFor={"summary"}
-                                    >
-                                        {summary.name}
-                                    </FormLabel>
-                                </Box>
-                                <OutlinedInput
-                                    autoComplete="off"
-                                    required={summary.required && !summary.hasDefaultValue}
-                                    value={formValues["summary"] ?? summary.defaultValue ?? ""}
-                                    onChange={(evt) => {
-                                        setFormValues((state) => ({ ...state, summary: evt.target.value }));
-                                    }}
-                                    id={"summary"}
-                                />
-                            </FormControl>
-                        )}
-
-                        {description && (
-                            <FormControl component="fieldset" fullWidth size="small" sx={{ mb: 2 }}>
-                                <Box width={1} display="flex" justifyContent="space-between" alignItems="center">
-                                    <FormLabel
-                                        component="legend"
-                                        sx={{ fontWeight: 600, color: "text.secondary" }}
-                                        htmlFor={"description"}
-                                    >
-                                        {description.name}
-                                    </FormLabel>
-                                </Box>
-                                <OutlinedInput
-                                    autoComplete="off"
-                                    multiline={true}
-                                    required={description.required && !description.hasDefaultValue}
-                                    value={formValues["description"] ?? description.defaultValue ?? ""}
-                                    onChange={(evt) => {
-                                        setFormValues((state) => ({ ...state, description: evt.target.value }));
-                                    }}
-                                    maxRows={5}
-                                    minRows={5}
-                                    id={"description"}
-                                />
-                            </FormControl>
-                        )}
-
-                        {assignee && assignee.autoCompleteUrl && (
-                            <FormControl component="fieldset" fullWidth size="small" sx={{ mb: 2 }}>
-                                <Box width={1} display="flex" justifyContent="space-between" alignItems="center">
-                                    <FormLabel
-                                        component="legend"
-                                        sx={{ fontWeight: 600, color: "text.secondary" }}
-                                        htmlFor={"jiraAssignee"}
-                                    >
-                                        {assignee.name}
-                                    </FormLabel>
-                                </Box>
-                                <Autocomplete
-                                    id="jiraAssignee"
-                                    fullWidth
-                                    options={assigneeOptions}
-                                    getOptionLabel={(opt) => opt.displayName}
-                                    isOptionEqualToValue={(option, value) => option.id === value.id}
-                                    value={formValues.assignee ?? null}
-                                    loading={!assigneeInputValue || loadingAssignees}
-                                    loadingText={
-                                        assigneeInputValue ? "Loading users..." : "Start typing to load users."
-                                    }
-                                    size="small"
-                                    onChange={(_e, value) => {
-                                        setFormValues((state) => ({ ...state, assignee: value }));
-                                    }}
-                                    onInputChange={async (_evt, value) => {
-                                        const id = ++autoCompleteRef.current;
-                                        setAssigneeInputValue(value);
-
-                                        if (!value) {
-                                            setAssigneeOptions([]);
-                                            setLoadingAssignees(false);
-                                            return;
-                                        }
-
-                                        setLoadingAssignees(true);
-                                        await sleep(250);
-
-                                        if (id !== autoCompleteRef.current) {
-                                            return;
-                                        }
-
-                                        const res = await fetch(assignee.autoCompleteUrl + value!, {
-                                            headers: { authorization: `Bearer ${accessToken}` },
-                                        })
-                                            .then((r) => {
-                                                if (r.ok) {
-                                                    return r;
-                                                } else {
-                                                    throw r;
-                                                }
-                                            })
-                                            .then((r) => r.json())
-                                            .catch((err) => {
-                                                console.warn(err);
-                                                return [];
-                                            });
-
-                                        if (id !== autoCompleteRef.current) {
-                                            return;
-                                        }
-
-                                        setAssigneeOptions(res);
-                                        setLoadingAssignees(false);
-                                    }}
-                                    renderInput={(params) => (
-                                        <TextField
-                                            required={assignee.required && !assignee.hasDefaultValue}
-                                            variant="outlined"
-                                            value={assigneeInputValue}
-                                            {...params}
-                                        />
-                                    )}
-                                />
-                            </FormControl>
-                        )}
-
-                        <FormControl component="fieldset" fullWidth size="small" sx={{ mb: 2 }}>
+                        <FormControl component="fieldset" fullWidth size="small" sx={{ mb: 1 }}>
                             <Box width={1} display="flex" justifyContent="space-between" alignItems="center">
                                 <FormLabel
                                     component="legend"
                                     sx={{ fontWeight: 600, mb: 0.5, color: "text.secondary" }}
-                                    htmlFor={"issueComponents"}
+                                    htmlFor={"project"}
                                 >
-                                    Components
+                                    Project
+                                </FormLabel>
+                            </Box>
+
+                            <Select readOnly value={project.key} id={"project"}>
+                                <MenuItem value={project.key}>
+                                    {project.key} - {project.name}
+                                </MenuItem>
+                            </Select>
+                            <FormHelperText>Can only be changed by admins in settings.</FormHelperText>
+                        </FormControl>
+
+                        <FormControl component="fieldset" fullWidth size="small" sx={{ mb: 1 }}>
+                            <Box width={1} display="flex" justifyContent="space-between" alignItems="center">
+                                <FormLabel
+                                    component="legend"
+                                    sx={{ fontWeight: 600, mb: 0.5, color: "text.secondary" }}
+                                    htmlFor={"issueType"}
+                                >
+                                    Type
                                 </FormLabel>
                             </Box>
 
                             <Select
-                                multiple
-                                value={[component.id, ...(components ? formValues["issueComponents"] ?? [] : [])]}
-                                id={"issueComponents"}
-                                onChange={({ target: { value } }) => {
-                                    if (!Array.isArray(value)) {
-                                        return;
-                                    }
-
-                                    setFormValues((state) => ({
-                                        ...state,
-                                        issueComponents: value.filter((comp) => comp !== component.id),
-                                    }));
-                                }}
+                                value={issueType?.id ?? ""}
+                                id={"issueType"}
+                                onChange={(e) =>
+                                    dispatch(
+                                        jiraActions.setIssueType(issueTypes.find((type) => type.id === e.target.value))
+                                    )
+                                }
                             >
-                                {(componentOptions ?? []).map((option) => (
-                                    <MenuItem disabled={option.id === component.id} key={option.id} value={option.id}>
+                                {issueTypes.map((option) => (
+                                    <MenuItem key={option.id} value={option.id}>
                                         {option.name}
                                     </MenuItem>
                                 ))}
                             </Select>
-                            <FormHelperText>
-                                Default component can only be changed by admins in settings.
-                            </FormHelperText>
                         </FormControl>
+
+                        <Divider sx={{ my: 1 }} />
+
+                        {!loadingFormMeta && (
+                            <>
+                                {summary && (
+                                    <FormControl component="fieldset" fullWidth size="small" sx={{ mb: 2 }}>
+                                        <Box
+                                            width={1}
+                                            display="flex"
+                                            justifyContent="space-between"
+                                            alignItems="center"
+                                        >
+                                            <FormLabel
+                                                component="legend"
+                                                sx={{ fontWeight: 600, color: "text.secondary" }}
+                                                htmlFor={"summary"}
+                                            >
+                                                {summary.name}
+                                            </FormLabel>
+                                        </Box>
+                                        <OutlinedInput
+                                            autoComplete="off"
+                                            required={summary.required && !summary.hasDefaultValue}
+                                            value={formValues["summary"] ?? summary.defaultValue ?? ""}
+                                            onChange={(evt) => {
+                                                setFormValues((state) => ({ ...state, summary: evt.target.value }));
+                                            }}
+                                            id={"summary"}
+                                        />
+                                    </FormControl>
+                                )}
+
+                                {description && (
+                                    <FormControl component="fieldset" fullWidth size="small" sx={{ mb: 2 }}>
+                                        <Box
+                                            width={1}
+                                            display="flex"
+                                            justifyContent="space-between"
+                                            alignItems="center"
+                                        >
+                                            <FormLabel
+                                                component="legend"
+                                                sx={{ fontWeight: 600, color: "text.secondary" }}
+                                                htmlFor={"description"}
+                                            >
+                                                {description.name}
+                                            </FormLabel>
+                                        </Box>
+                                        <OutlinedInput
+                                            autoComplete="off"
+                                            multiline={true}
+                                            required={description.required && !description.hasDefaultValue}
+                                            value={formValues["description"] ?? description.defaultValue ?? ""}
+                                            onChange={(evt) => {
+                                                setFormValues((state) => ({ ...state, description: evt.target.value }));
+                                            }}
+                                            maxRows={5}
+                                            minRows={5}
+                                            id={"description"}
+                                        />
+                                    </FormControl>
+                                )}
+
+                                {assignee && assignee.autoCompleteUrl && (
+                                    <FormControl component="fieldset" fullWidth size="small" sx={{ mb: 2 }}>
+                                        <Box
+                                            width={1}
+                                            display="flex"
+                                            justifyContent="space-between"
+                                            alignItems="center"
+                                        >
+                                            <FormLabel
+                                                component="legend"
+                                                sx={{ fontWeight: 600, color: "text.secondary" }}
+                                                htmlFor={"jiraAssignee"}
+                                            >
+                                                {assignee.name}
+                                            </FormLabel>
+                                        </Box>
+                                        <Autocomplete
+                                            id="jiraAssignee"
+                                            fullWidth
+                                            options={assigneeOptions}
+                                            getOptionLabel={(opt) => opt.displayName}
+                                            isOptionEqualToValue={(option, value) => option.id === value.id}
+                                            value={formValues.assignee ?? null}
+                                            loading={!assigneeInputValue || loadingAssignees}
+                                            loadingText={
+                                                assigneeInputValue ? "Loading users..." : "Start typing to load users."
+                                            }
+                                            size="small"
+                                            onChange={(_e, value) => {
+                                                setFormValues((state) => ({ ...state, assignee: value }));
+                                            }}
+                                            onInputChange={async (_evt, value) => {
+                                                const id = ++autoCompleteRef.current;
+                                                setAssigneeInputValue(value);
+
+                                                if (!value) {
+                                                    setAssigneeOptions([]);
+                                                    setLoadingAssignees(false);
+                                                    return;
+                                                }
+
+                                                setLoadingAssignees(true);
+                                                await sleep(250);
+
+                                                if (id !== autoCompleteRef.current) {
+                                                    return;
+                                                }
+
+                                                const res = await fetch(assignee.autoCompleteUrl + value!, {
+                                                    headers: { authorization: `Bearer ${accessToken}` },
+                                                })
+                                                    .then((r) => {
+                                                        if (r.ok) {
+                                                            return r;
+                                                        } else {
+                                                            throw r;
+                                                        }
+                                                    })
+                                                    .then((r) => r.json())
+                                                    .catch((err) => {
+                                                        console.warn(err);
+                                                        return [];
+                                                    });
+
+                                                if (id !== autoCompleteRef.current) {
+                                                    return;
+                                                }
+
+                                                setAssigneeOptions(res);
+                                                setLoadingAssignees(false);
+                                            }}
+                                            renderInput={(params) => (
+                                                <TextField
+                                                    required={assignee.required && !assignee.hasDefaultValue}
+                                                    variant="outlined"
+                                                    value={assigneeInputValue}
+                                                    {...params}
+                                                />
+                                            )}
+                                        />
+                                    </FormControl>
+                                )}
+
+                                <FormControl component="fieldset" fullWidth size="small" sx={{ mb: 2 }}>
+                                    <Box width={1} display="flex" justifyContent="space-between" alignItems="center">
+                                        <FormLabel
+                                            component="legend"
+                                            sx={{ fontWeight: 600, mb: 0.5, color: "text.secondary" }}
+                                            htmlFor={"issueComponents"}
+                                        >
+                                            Components
+                                        </FormLabel>
+                                    </Box>
+
+                                    <Select
+                                        multiple
+                                        value={[
+                                            component.id,
+                                            ...(components ? formValues["issueComponents"] ?? [] : []),
+                                        ]}
+                                        id={"issueComponents"}
+                                        onChange={({ target: { value } }) => {
+                                            if (!Array.isArray(value)) {
+                                                return;
+                                            }
+
+                                            setFormValues((state) => ({
+                                                ...state,
+                                                issueComponents: value.filter((comp) => comp !== component.id),
+                                            }));
+                                        }}
+                                    >
+                                        {(componentOptions ?? []).map((option) => (
+                                            <MenuItem
+                                                disabled={option.id === component.id}
+                                                key={option.id}
+                                                value={option.id}
+                                            >
+                                                {option.name}
+                                            </MenuItem>
+                                        ))}
+                                    </Select>
+                                    <FormHelperText>
+                                        Default component can only be changed by admins in settings.
+                                    </FormHelperText>
+                                </FormControl>
+                            </>
+                        )}
                     </>
+                ) : (
+                    "An error occurred."
                 )}
             </ScrollBox>
             <Snackbar
