@@ -200,6 +200,8 @@ export function Issue({ sceneId }: { sceneId: string }) {
                                                     return pc.text;
                                                 } else if (pc.type === "hardBreak") {
                                                     return <br key={pcIdx} />;
+                                                } else if (pc.type === "mention" || pc.type === "emoji") {
+                                                    return pc.attrs?.text ?? "";
                                                 } else {
                                                     return null;
                                                 }
@@ -251,6 +253,11 @@ export function Issue({ sceneId }: { sceneId: string }) {
                                                                       return pc.text;
                                                                   } else if (pc.type === "hardBreak") {
                                                                       return <br key={pcIdx} />;
+                                                                  } else if (
+                                                                      pc.type === "mention" ||
+                                                                      pc.type === "emoji"
+                                                                  ) {
+                                                                      return pc.attrs?.text ?? "";
                                                                   } else {
                                                                       return null;
                                                                   }
