@@ -132,9 +132,8 @@ export function moveSvgCursor({
     g.setAttribute("transform", `translate(${x},${y})`);
 }
 
-export function getPathPoints({ view, size, points }: { view: View; size: Size; points: vec3[] }) {
-    const { width, height } = size;
-    const pts = measureApi.toPathPoints(points, view, width, height);
+export function getPathPoints({ view, points }: { view: View; points: vec3[] }) {
+    const pts = measureApi.toPathPoints(points, view);
 
     if (pts && pts.flat(2).every((num) => !Number.isNaN(num) && Number.isFinite(num))) {
         const [_pathPoints, _pixelPoints] = pts;
@@ -270,7 +269,6 @@ export function renderMeasurePoints({
 export async function renderMeasureObject({
     svg,
     view,
-    size,
     measureScene,
     fillColor,
     pathName,
@@ -280,7 +278,6 @@ export async function renderMeasureObject({
 }: {
     svg: SVGSVGElement;
     view: View;
-    size: Size;
     measureScene: MeasureScene;
     fillColor: string;
     pathName: string;
@@ -296,17 +293,7 @@ export async function renderMeasureObject({
 
     const topZCol = "green";
     const botZCol = "red";
-
-    const { width, height } = size;
-
-    const drawProduct = await measureApi.getDrawMeasureEntity(
-        view,
-        width,
-        height,
-        measureScene,
-        entity,
-        measureSettings
-    );
+    const drawProduct = await measureApi.getDrawMeasureEntity(view, measureScene, entity, measureSettings);
     if (drawProduct) {
         for (let i = 0; i < 3; ++i) {
             const cleanPath = svg.children.namedItem(pathName + "_" + i);

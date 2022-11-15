@@ -1,6 +1,7 @@
 import { MutableRefObject } from "react";
 import { ObjectGroup, SceneData } from "@novorender/data-js-api";
 import {
+    API,
     CameraController,
     CameraControllerParams,
     EnvironmentDescription,
@@ -152,11 +153,6 @@ export function createRendering(
                 break;
             }
 
-            const badPerf = view.performanceStatistics.weakDevice || settings.moving;
-            if (settings.ssaoEnabled && !badPerf) {
-                await output.applyPostEffect({ kind: "ssao", samples: 64, radius: 1, reset: true });
-            }
-
             if (settings.outlineRenderingEnabled && view.camera.controller.params.kind === "ortho") {
                 await output.applyPostEffect({ kind: "outline", color: [0, 0, 0, 0] });
             }
@@ -192,31 +188,52 @@ export function createRendering(
             }
             startRender = now;
 
-            let run = settings.taaEnabled && view.camera.controller.params.kind !== "ortho";
-            let reset = true;
+            let runPostEffects =
+                // !view.performanceStatistics.weakDevice &&
+                !settings.moving &&
+                output.statistics.sceneResolved &&
+                view.camera.controller.params.kind !== "ortho" &&
+                (settings.taaEnabled || settings.ssaoEnabled);
 
-            while (run && running.current) {
+            let reset = true;
+            let postEffectTimeout = true;
+
+            while (runPostEffects && running.current) {
                 if (output.hasViewChanged) {
                     break;
                 }
 
                 await (api as any).waitFrame();
 
-                run = (await output.applyPostEffect({ kind: "taa", reset })) || false;
-
                 if (!running.current) {
                     break;
                 }
 
-                if (settings.ssaoEnabled) {
-                    output.applyPostEffect({ kind: "ssao", samples: 64, radius: 1, reset: reset && badPerf });
+                const postEffectNow = performance.now();
+
+                if (postEffectNow - now >= 200) {
+                    postEffectTimeout = false;
                 }
 
-                reset = false;
-                startRender = 0;
-                const image = await output.getImage();
-                if (ctx && image) {
-                    ctx.transferFromImageBitmap(image); // display in canvas
+                if (!postEffectTimeout) {
+                    if (settings.taaEnabled) {
+                        runPostEffects = (await output.applyPostEffect({ kind: "taa", reset })) || false;
+                    }
+
+                    if (settings.ssaoEnabled) {
+                        await output.applyPostEffect({ kind: "ssao", samples: 64, radius: 1, reset: reset });
+
+                        if (!settings.taaEnabled) {
+                            runPostEffects = false;
+                        }
+                    }
+
+                    reset = false;
+                    startRender = 0;
+                    const image = await output.getImage();
+                    if (ctx && image) {
+                        ctx.transferFromImageBitmap(image); // display in canvas
+                    }
                 }
             }
         }
@@ -577,13 +594,14 @@ export function initDeviation(deviation: RenderSettings["points"]["deviation"]):
     );
 }
 
-export function initAdvancedSettings(view: View, customProperties: Record<string, any>): void {
+export function initAdvancedSettings(view: View, customProperties: Record<string, any>, api: API): void {
     const { diagnostics, advanced, points, light, terrain, background } = view.settings as Internal.RenderSettingsExt;
     const cameraParams = view.camera.controller.params as FlightControllerParams | OrthoControllerParams;
 
     store.dispatch(
         renderActions.setAdvancedSettings({
-            [AdvancedSetting.ShowPerformance]: Boolean(customProperties?.showStats),
+            [AdvancedSetting.ShowPerformance]:
+                Boolean(customProperties?.showStats) || window.location.search.includes("debug=true"),
             [AdvancedSetting.AutoFps]: view.settings.quality.resolution.autoAdjust.enabled,
             [AdvancedSetting.TriangleBudget]: view.settings.quality.detail.autoAdjust.enabled,
             [AdvancedSetting.ShowBoundingBoxes]: diagnostics.showBoundingBoxes,
@@ -602,6 +620,8 @@ export function initAdvancedSettings(view: View, customProperties: Record<string
             [AdvancedSetting.NavigationCube]: Boolean(customProperties?.navigationCube),
             [AdvancedSetting.TerrainAsBackground]: Boolean(terrain.asBackground),
             [AdvancedSetting.BackgroundColor]: background.color as VecRGBA,
+            [AdvancedSetting.TriangleLimit]:
+                customProperties?.triangleLimit ?? (api as any).deviceProfile?.triangleLimit ?? 5_000_000,
             ...(customProperties?.flightMouseButtonMap
                 ? { [AdvancedSetting.MouseButtonMap]: customProperties?.flightMouseButtonMap }
                 : {}),

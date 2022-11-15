@@ -140,6 +140,7 @@ export function AdvancedSettings() {
                     ditioProjectNumber: projectSettings.ditioProjectNumber,
                     flightMouseButtonMap: settings.mouseButtonMap,
                     flightFingerMap: settings.fingerMap,
+                    triangleLimit: settings.triangleLimit,
                     enabledFeatures: {
                         ...Object.fromEntries(
                             enabledWidgets
