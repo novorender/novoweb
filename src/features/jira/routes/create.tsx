@@ -101,7 +101,11 @@ export function CreateIssue({ sceneId }: { sceneId: string }) {
                 return;
             }
 
-            dispatch(jiraActions.setIssueType(issueTypes[0]));
+            dispatch(
+                jiraActions.setIssueType(
+                    issueTypes.find((type) => /model[l]?[\s_-]?task/gi.test(type.name)) ?? issueTypes[0]
+                )
+            );
         },
         [issueType, issueTypes, dispatch]
     );
@@ -300,6 +304,7 @@ export function CreateIssue({ sceneId }: { sceneId: string }) {
                             </Box>
 
                             <Select
+                                MenuProps={{ sx: { maxHeight: 300 } }}
                                 value={issueType?.id ?? ""}
                                 id={"issueType"}
                                 onChange={(e) =>
@@ -474,6 +479,7 @@ export function CreateIssue({ sceneId }: { sceneId: string }) {
                                     </Box>
 
                                     <Select
+                                        MenuProps={{ sx: { maxHeight: 300 } }}
                                         multiple
                                         value={[
                                             component.id,
