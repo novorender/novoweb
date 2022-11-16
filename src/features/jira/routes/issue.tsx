@@ -2,7 +2,7 @@ import { useEffect, useState, Fragment } from "react";
 import { AddCircle, ArrowBack, FlightTakeoff, OpenInNew } from "@mui/icons-material";
 import { Box, Button, Typography, useTheme } from "@mui/material";
 import { useHistory, useParams } from "react-router-dom";
-import { format } from "date-fns";
+import { format, parse } from "date-fns";
 
 import { Divider, ImgModal, LinearProgress, ScrollBox } from "components";
 import { useAppSelector } from "app/store";
@@ -235,6 +235,17 @@ export function Issue({ sceneId }: { sceneId: string }) {
 
                         <Typography fontWeight={600}>Reporter:</Typography>
                         <Box mb={2}>{issue.fields.reporter ? issue.fields.reporter.displayName : "None"}</Box>
+
+                        {issue.fields.duedate && (
+                            <>
+                                <Typography fontWeight={600}>Due date:</Typography>
+                                <Box mb={2}>
+                                    {issue.fields.duedate
+                                        ? format(parse(issue.fields.duedate, "yyyy-MM-dd", new Date()), "MMM dd, yyyy")
+                                        : "None"}
+                                </Box>
+                            </>
+                        )}
 
                         <Box display="flex" justifyContent="space-between" alignItems="center">
                             <Typography fontWeight={600}>Comments:</Typography>

@@ -305,7 +305,7 @@ export type Issue = {
         customfield_10003: null;
         customfield_10004: null;
         environment: null;
-        duedate: null;
+        duedate: string | null;
         progress: { progress: number; total: number };
         votes: {
             self: string;
