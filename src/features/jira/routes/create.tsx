@@ -17,6 +17,8 @@ import {
 } from "@mui/material";
 import { useHistory } from "react-router-dom";
 import { v4 as uuidv4 } from "uuid";
+import { DatePicker } from "@mui/lab";
+import { format, isValid } from "date-fns";
 
 import { dataApi } from "app";
 import { Divider, LinearProgress, ScrollBox } from "components";
@@ -66,6 +68,7 @@ export function CreateIssue({ sceneId }: { sceneId: string }) {
     const [createIssue] = useCreateIssueMutation();
     const [addAttachment] = useAddAttachmentMutation();
     const createBookmark = useCreateBookmark();
+    const today = useRef(new Date());
 
     const {
         data: issueTypes = [],
@@ -101,13 +104,14 @@ export function CreateIssue({ sceneId }: { sceneId: string }) {
                 return;
             }
 
-            dispatch(jiraActions.setIssueType(issueTypes[0]));
+            dispatch(
+                jiraActions.setIssueType(
+                    issueTypes.find((type) => /model[l]?[\s_-]?task/gi.test(type.name)) ?? issueTypes[0]
+                )
+            );
         },
         [issueType, issueTypes, dispatch]
     );
-
-    const { summary, description, components, assignee, ..._fields } =
-        createIssueMetadata ?? ({} as CreateIssueMetadata["fields"]);
 
     const handleCreate = async () => {
         if (!issueType || !project || !space || !component) {
@@ -192,6 +196,7 @@ export function CreateIssue({ sceneId }: { sceneId: string }) {
                 ...(formValues.issueComponents
                     ? { components: [component.id, ...formValues.issueComponents].map((id) => ({ id })) }
                     : { components: [{ id: component.id }] }),
+                ...(formValues.duedate ? { duedate: format(new Date(formValues.duedate), "yyyy-MM-dd") } : {}),
             },
         };
 
@@ -236,6 +241,9 @@ export function CreateIssue({ sceneId }: { sceneId: string }) {
         return null;
     }
 
+    const { summary, description, components, assignee, duedate } =
+        createIssueMetadata ?? ({} as CreateIssueMetadata["fields"]);
+
     const loadingFormMeta = isUninitializedCreateIssueMetadata || isFetchingCreateIssueMetadata;
 
     return (
@@ -272,7 +280,6 @@ export function CreateIssue({ sceneId }: { sceneId: string }) {
                         <FormControl component="fieldset" fullWidth size="small" sx={{ mb: 1 }}>
                             <Box width={1} display="flex" justifyContent="space-between" alignItems="center">
                                 <FormLabel
-                                    component="legend"
                                     sx={{ fontWeight: 600, mb: 0.5, color: "text.secondary" }}
                                     htmlFor={"project"}
                                 >
@@ -291,7 +298,6 @@ export function CreateIssue({ sceneId }: { sceneId: string }) {
                         <FormControl component="fieldset" fullWidth size="small" sx={{ mb: 1 }}>
                             <Box width={1} display="flex" justifyContent="space-between" alignItems="center">
                                 <FormLabel
-                                    component="legend"
                                     sx={{ fontWeight: 600, mb: 0.5, color: "text.secondary" }}
                                     htmlFor={"issueType"}
                                 >
@@ -300,6 +306,7 @@ export function CreateIssue({ sceneId }: { sceneId: string }) {
                             </Box>
 
                             <Select
+                                MenuProps={{ sx: { maxHeight: 300 } }}
                                 value={issueType?.id ?? ""}
                                 id={"issueType"}
                                 onChange={(e) =>
@@ -329,7 +336,6 @@ export function CreateIssue({ sceneId }: { sceneId: string }) {
                                             alignItems="center"
                                         >
                                             <FormLabel
-                                                component="legend"
                                                 sx={{ fontWeight: 600, color: "text.secondary" }}
                                                 htmlFor={"summary"}
                                             >
@@ -357,7 +363,6 @@ export function CreateIssue({ sceneId }: { sceneId: string }) {
                                             alignItems="center"
                                         >
                                             <FormLabel
-                                                component="legend"
                                                 sx={{ fontWeight: 600, color: "text.secondary" }}
                                                 htmlFor={"description"}
                                             >
@@ -388,7 +393,6 @@ export function CreateIssue({ sceneId }: { sceneId: string }) {
                                             alignItems="center"
                                         >
                                             <FormLabel
-                                                component="legend"
                                                 sx={{ fontWeight: 600, color: "text.secondary" }}
                                                 htmlFor={"jiraAssignee"}
                                             >
@@ -465,7 +469,6 @@ export function CreateIssue({ sceneId }: { sceneId: string }) {
                                 <FormControl component="fieldset" fullWidth size="small" sx={{ mb: 2 }}>
                                     <Box width={1} display="flex" justifyContent="space-between" alignItems="center">
                                         <FormLabel
-                                            component="legend"
                                             sx={{ fontWeight: 600, mb: 0.5, color: "text.secondary" }}
                                             htmlFor={"issueComponents"}
                                         >
@@ -474,6 +477,7 @@ export function CreateIssue({ sceneId }: { sceneId: string }) {
                                     </Box>
 
                                     <Select
+                                        MenuProps={{ sx: { maxHeight: 300 } }}
                                         multiple
                                         value={[
                                             component.id,
@@ -505,6 +509,47 @@ export function CreateIssue({ sceneId }: { sceneId: string }) {
                                         Default component can only be changed by admins in settings.
                                     </FormHelperText>
                                 </FormControl>
+
+                                {duedate && (
+                                    <FormControl size="small" sx={{ width: 1, mb: 2 }}>
+                                        <Box
+                                            width={1}
+                                            display="flex"
+                                            justifyContent="space-between"
+                                            alignItems="center"
+                                        >
+                                            <FormLabel
+                                                sx={{ fontWeight: 600, color: "text.secondary" }}
+                                                htmlFor={"jiraDueDate"}
+                                            >
+                                                {duedate.name}
+                                            </FormLabel>
+                                        </Box>
+                                        <DatePicker
+                                            value={formValues.duedate ?? null}
+                                            minDate={today.current}
+                                            onChange={(newDate: Date | null) => {
+                                                setFormValues((state) => ({
+                                                    ...state,
+                                                    duedate: newDate
+                                                        ? isValid(newDate)
+                                                            ? newDate.toISOString()
+                                                            : ""
+                                                        : "",
+                                                }));
+                                            }}
+                                            renderInput={(params) => (
+                                                <TextField
+                                                    {...params}
+                                                    id="jiraDueDate"
+                                                    variant={"outlined"}
+                                                    size="small"
+                                                    required={duedate.required && !duedate.defaultValue}
+                                                />
+                                            )}
+                                        />
+                                    </FormControl>
+                                )}
                             </>
                         )}
                     </>
