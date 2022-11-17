@@ -1877,11 +1877,9 @@ export function Render3D({ onInit }: Props) {
                                                 r={5}
                                             />
                                             {idx === 0 || idx === arr.length - 1 ? null : <g id={`line-an_${idx}`} />}
+                                            {idx !== arr.length - 1 ? <AxisText id={`line-txt_${idx}`} /> : null}
                                         </Fragment>
                                     ))}
-                                    {pointLinePoints.map((_pt, idx) =>
-                                        idx !== pointLinePoints.length - 1 ? <AxisText id={`line-txt_${idx}`} /> : null
-                                    )}
                                 </>
                             ) : null}
 
@@ -1995,25 +1993,44 @@ export function Render3D({ onInit }: Props) {
                                 <>
                                     <path id={"manhole"} d="" stroke="yellow" strokeWidth={2} fill="none" />
                                     <path id={"manhole_filled"} d="" stroke="yellow" strokeWidth={2} fill="none" />
-                                    <path id={"manholeColEntity"} d="" stroke="orange" strokeWidth={2} fill="none" />
-                                    <path id={"manholeCollision"} d="" stroke="blue" strokeWidth={2} fill="none" />
-                                    <MeasurementPoint
-                                        id={"manhole_col_0"}
-                                        r={5}
-                                        disabled={true}
-                                        fill="yellow"
-                                        stroke="black"
-                                        strokeWidth={2}
-                                    />
-                                    <MeasurementPoint
-                                        id={"manhole_col_1"}
-                                        r={5}
-                                        disabled={true}
-                                        fill="yellow"
-                                        stroke="black"
-                                        strokeWidth={2}
-                                    />
-                                    <AxisText id={`manholeCollisionText`} />
+                                    {manholeColEntity && (
+                                        <path
+                                            id={"manholeColEntity"}
+                                            d=""
+                                            stroke="orange"
+                                            strokeWidth={2}
+                                            fill="none"
+                                        />
+                                    )}
+                                    {manholeCollision && (
+                                        <>
+                                            <path
+                                                id={"manholeCollision"}
+                                                d=""
+                                                stroke="blue"
+                                                strokeWidth={2}
+                                                fill="none"
+                                            />
+
+                                            <MeasurementPoint
+                                                id={"manhole_col_0"}
+                                                r={5}
+                                                disabled={true}
+                                                fill="yellow"
+                                                stroke="black"
+                                                strokeWidth={2}
+                                            />
+                                            <MeasurementPoint
+                                                id={"manhole_col_1"}
+                                                r={5}
+                                                disabled={true}
+                                                fill="yellow"
+                                                stroke="black"
+                                                strokeWidth={2}
+                                            />
+                                            <AxisText id={`manholeCollisionText`} />
+                                        </>
+                                    )}
                                 </>
                             ) : null}
                             {myLocationPoint ? (

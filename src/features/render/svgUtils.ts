@@ -200,22 +200,19 @@ export function renderMeasurePoints({
         }
     }
     if (svgNames.point) {
-        if (points && points.pixel.length) {
-            points.pixel.forEach((p, i) => {
-                const circle = svg.children.namedItem(`${svgNames.point}_${i}`);
-                if (circle) {
-                    circle.setAttribute("cx", p[0].toFixed(1));
-                    circle.setAttribute("cy", p[1].toFixed(1));
-                }
-            });
-        } else {
-            const circles = svg.querySelectorAll(`[id^='${svgNames.point}_']`);
-            circles.forEach((circle) => {
+        const circles = svg.querySelectorAll(`[id^='${svgNames.point}_']`);
+        circles.forEach((circle, idx) => {
+            const p = points?.pixel[idx];
+            if (p) {
+                circle.setAttribute("cx", p[0].toFixed(1));
+                circle.setAttribute("cy", p[1].toFixed(1));
+            } else {
                 circle.removeAttribute("cx");
                 circle.removeAttribute("cy");
-            });
-        }
+            }
+        });
     }
+
     if (text) {
         for (let i = 0; i < text.value.length; ++i) {
             const textEl =
@@ -230,15 +227,15 @@ export function renderMeasurePoints({
                 return;
             }
             if (text.type === "distance") {
-                if (points.path.length < i + 1) {
+                if (points.path.length < i + 1 || i >= points.path.length - 1) {
                     textEl.innerHTML = "";
                     return;
                 }
                 const _text = `${+text.value[i].toFixed(3)} ${text.unit ? text.unit : "m"}`;
                 let dir =
                     points.path[i][0] > points.path[i + 1][0]
-                        ? vec2.sub(vec2.create(), points.path[0], points.path[1])
-                        : vec2.sub(vec2.create(), points.path[1], points.path[0]);
+                        ? vec2.sub(vec2.create(), points.path[i], points.path[i + 1])
+                        : vec2.sub(vec2.create(), points.path[i + 1], points.path[i]);
                 const pixLen = _text.length * 12 + 20;
                 if (vec2.sqrLen(dir) > pixLen * pixLen) {
                     const angle = (Math.asin(dir[1] / vec2.len(dir)) * 180) / Math.PI;
