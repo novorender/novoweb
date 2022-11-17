@@ -31,6 +31,7 @@ import {
     MenuItem,
     popoverClasses,
     CircularProgress,
+    Alert,
 } from "@mui/material";
 import { css } from "@mui/styled-engine";
 import { CameraAlt } from "@mui/icons-material";
@@ -2057,6 +2058,9 @@ function SceneError({ id, error, msg }: { id: string; error: Exclude<Status, Sta
                                 ? `Scene not found`
                                 : "Unable to load scene"}
                         </Typography>
+                        <Alert severity="error" sx={{ mb: 1 }}>
+                            We are currently experiencing timeouts from Azure. Solving this issue has our top priority.
+                        </Alert>
                         <Typography paragraph>
                             {error === Status.ServerError ? (
                                 "Failed to download the scene. Please try again later."
