@@ -78,7 +78,7 @@ import {
     selectPicker,
     Picker,
 } from "slices/renderSlice";
-import { explorerActions, selectUrlBookmarkId } from "slices/explorerSlice";
+import { explorerActions, selectLocalBookmarkId, selectUrlBookmarkId } from "slices/explorerSlice";
 import { selectDeviations } from "features/deviations";
 import { bookmarksActions, selectBookmarks, useSelectBookmark } from "features/bookmarks";
 import { measureActions, selectMeasure } from "features/measure";
@@ -140,6 +140,7 @@ import {
     renderSingleMeasurePoint,
 } from "./svgUtils";
 import { useManholeMeasure } from "features/manhole/useHandleManholeUpdates";
+import { useHandleJiraKeepAlive } from "features/jira";
 
 glMatrix.setMatrixArrayType(Array);
 
@@ -164,13 +165,14 @@ const Svg = styled("svg")(
     `
 );
 
-const MeasurementPoint = styled("circle", { shouldForwardProp: (prop) => prop !== "disabled" })<
-    SVGProps<SVGCircleElement> & { disabled?: boolean }
->(
-    ({ disabled, fill }) => css`
+const MeasurementPoint = styled(
+    // inline for snapshots
+    (props: SVGProps<SVGCircleElement>) => <circle fill={props.fill ? props.fill : "green"} {...props} />,
+    { shouldForwardProp: (prop) => prop !== "disabled" }
+)<SVGProps<SVGCircleElement> & { disabled?: boolean }>(
+    ({ disabled }) => css`
         pointer-events: ${disabled ? "none" : "all"};
         cursor: pointer;
-        fill: ${fill ?? "green"};
     `
 );
 
@@ -182,13 +184,20 @@ const PanoramaMarker = styled((props: any) => <CameraAlt color="primary" height=
     `
 );
 
-const AxisText = styled((props: SVGProps<SVGTextElement>) => <text alignmentBaseline="middle" {...props} />)(
+const AxisText = styled((props: SVGProps<SVGTextElement>) => (
+    // inline for snapshots
+    <text
+        alignmentBaseline="middle"
+        fill="white"
+        fontSize={16}
+        fontWeight="bold"
+        textAnchor="middle"
+        fontFamily="Open Sans, sans-serif"
+        {...props}
+    />
+))(
     () => css`
-        fill: white;
-        font-size: 16px;
         user-select: none;
-        font-weight: bold;
-        text-anchor: middle;
     `
 );
 
@@ -246,6 +255,7 @@ export function Render3D({ onInit }: Props) {
     const gridDefaults = useAppSelector(selectGridDefaults);
     const activePanorama = useAppSelector(selectActivePanorama);
     const urlBookmarkId = useAppSelector(selectUrlBookmarkId);
+    const localBookmarkId = useAppSelector(selectLocalBookmarkId);
     const showDitioMarkers = useAppSelector(selectShowMarkers);
     const ditioMarkers = useAppSelector(selectMarkers);
     const drawSelectedPaths = useAppSelector(selectDrawSelectedPositions);
@@ -862,6 +872,8 @@ export function Render3D({ onInit }: Props) {
                 initHidden(objectGroups, dispatchHidden);
                 initCustomGroups(objectGroups, dispatchCustomGroups);
                 initHighlighted(objectGroups, dispatchHighlighted);
+                initAdvancedSettings(_view, customProperties, api);
+                initProjectSettings({ sceneData: sceneResponse });
 
                 if (urlData.mainObject !== undefined) {
                     dispatchHighlighted(highlightActions.add([urlData.mainObject]));
@@ -902,8 +914,6 @@ export function Render3D({ onInit }: Props) {
                     );
                 }
                 onInit({ customProperties });
-                initAdvancedSettings(_view, customProperties, api);
-                initProjectSettings({ sceneData: sceneResponse });
 
                 dispatchGlobals(
                     explorerGlobalsActions.update({
@@ -1374,6 +1384,7 @@ export function Render3D({ onInit }: Props) {
     useHandleLocationMarker();
     useHandleManholeUpdates();
     useHandlePointLineUpdates();
+    useHandleJiraKeepAlive();
 
     useEffect(() => {
         handleUrlBookmark();
@@ -1400,6 +1411,37 @@ export function Render3D({ onInit }: Props) {
             }
         }
     }, [view, id, dispatch, selectBookmark, urlBookmarkId]);
+
+    useEffect(() => {
+        handleLocalBookmark();
+
+        function handleLocalBookmark() {
+            if (!view || !localBookmarkId) {
+                return;
+            }
+
+            dispatch(explorerActions.setLocalBookmarkId(undefined));
+
+            try {
+                const storedBm = localStorage.getItem(localBookmarkId);
+
+                if (!storedBm) {
+                    return;
+                }
+
+                localStorage.removeItem(localBookmarkId);
+                const bookmark = JSON.parse(storedBm);
+
+                if (!bookmark) {
+                    return;
+                }
+
+                selectBookmark(bookmark);
+            } catch (e) {
+                console.warn(e);
+            }
+        }
+    }, [view, id, dispatch, selectBookmark, localBookmarkId]);
 
     const exitPointerLock = () => {
         if ("exitPointerLock" in window.document) {
@@ -1549,7 +1591,7 @@ export function Render3D({ onInit }: Props) {
     };
 
     const handleDown = async (x: number, y: number) => {
-        if (!view) {
+        if (!view || !(clippingBox.defining || clippingBox.showBox)) {
             return;
         }
 

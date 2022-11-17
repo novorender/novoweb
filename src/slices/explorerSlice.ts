@@ -30,6 +30,7 @@ const initialState = {
     minimized: undefined as undefined | WidgetKey,
     urlSearchQuery: undefined as undefined | string | SearchPattern[],
     urlBookmarkId: undefined as undefined | string,
+    localBookmarkId: undefined as undefined | string,
 };
 
 type State = typeof initialState;
@@ -97,6 +98,9 @@ export const explorerSlice = createSlice({
         setUrlBookmarkId: (state, action: PayloadAction<State["urlBookmarkId"]>) => {
             state.urlBookmarkId = action.payload;
         },
+        setLocalBookmarkId: (state, action: PayloadAction<State["localBookmarkId"]>) => {
+            state.localBookmarkId = action.payload;
+        },
         setUrlSearchQuery: (
             state,
             action: PayloadAction<{ query: State["urlSearchQuery"]; selectionOnly: string } | undefined>
@@ -138,6 +142,7 @@ export const explorerSlice = createSlice({
 
 export const selectWidgets = (state: RootState) => state.explorer.widgets;
 export const selectLockedWidgets = (state: RootState) => state.explorer.lockedWidgets;
+export const selectLocalBookmarkId = (state: RootState) => state.explorer.localBookmarkId;
 export const selectUrlBookmarkId = (state: RootState) => state.explorer.urlBookmarkId;
 export const selectUrlSearchQuery = (state: RootState) => state.explorer.urlSearchQuery;
 export const selectSceneType = (state: RootState) => state.explorer.sceneType;

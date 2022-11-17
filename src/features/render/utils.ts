@@ -85,6 +85,7 @@ export function createRendering(
             settings.moving !== updatedSettings.moving
         ) {
             settings = updatedSettings;
+            (view as any).settings.generation++;
         }
     }
 
@@ -636,6 +637,9 @@ export function initProjectSettings({ sceneData }: { sceneData: SceneData }): vo
         renderActions.setProjectSettings({
             [ProjectSetting.TmZone]: sceneData.tmZone ?? "",
             [ProjectSetting.DitioProjectNumber]: sceneData.customProperties?.ditioProjectNumber ?? "",
+            ...(sceneData.customProperties?.jiraSettings
+                ? { [ProjectSetting.Jira]: { ...sceneData.customProperties?.jiraSettings } }
+                : {}),
         })
     );
 }

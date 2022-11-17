@@ -194,6 +194,7 @@ type OAuthState = {
     service?: string;
     sceneId?: string;
     space?: string;
+    localBookmarkId?: string;
 };
 
 export function getOAuthState(): OAuthState | undefined {

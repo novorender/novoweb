@@ -11,16 +11,15 @@ import { panoramasReducer } from "features/panoramas";
 import { followPathReducer } from "features/followPath";
 import { deviationsReducer } from "features/deviations";
 import { measureReducer } from "features/measure";
-import { bimCollabReducer } from "features/bimCollab/bimCollabSlice";
-import { bimCollabApi } from "features/bimCollab/bimCollabApi";
-import { bimTrackReducer } from "features/bimTrack/bimTrackSlice";
-import { bimTrackApi } from "features/bimTrack/bimTrackApi";
+import { bimCollabReducer, bimCollabApi } from "features/bimCollab";
+import { bimTrackReducer, bimTrackApi } from "features/bimTrack";
 import { ditioReducer } from "features/ditio";
 import { ditioApi } from "features/ditio";
 import { areaReducer } from "features/area";
 import { pointLineReducer } from "features/pointLine";
 import { heightProfileReducer } from "features/heightProfile";
 import { myLocationReducer } from "features/myLocation";
+import { jiraApi, jiraReducer } from "features/jira";
 import { manholeReducer } from "features/manhole/manholeSlice";
 
 const rootReducer = combineReducers({
@@ -44,6 +43,8 @@ const rootReducer = combineReducers({
     [bimTrackApi.reducerPath]: bimTrackApi.reducer,
     ditio: ditioReducer,
     [ditioApi.reducerPath]: ditioApi.reducer,
+    jira: jiraReducer,
+    [jiraApi.reducerPath]: jiraApi.reducer,
 });
 
 export const store = configureStore({
@@ -53,7 +54,8 @@ export const store = configureStore({
         getDefaultMiddleware()
             .concat(bimCollabApi.middleware)
             .concat(bimTrackApi.middleware)
-            .concat(ditioApi.middleware),
+            .concat(ditioApi.middleware)
+            .concat(jiraApi.middleware),
 });
 
 setupListeners(store.dispatch);
