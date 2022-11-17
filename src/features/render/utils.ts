@@ -637,6 +637,9 @@ export function initProjectSettings({ sceneData }: { sceneData: SceneData }): vo
         renderActions.setProjectSettings({
             [ProjectSetting.TmZone]: sceneData.tmZone ?? "",
             [ProjectSetting.DitioProjectNumber]: sceneData.customProperties?.ditioProjectNumber ?? "",
+            ...(sceneData.customProperties?.jiraSettings
+                ? { [ProjectSetting.Jira]: { ...sceneData.customProperties?.jiraSettings } }
+                : {}),
         })
     );
 }

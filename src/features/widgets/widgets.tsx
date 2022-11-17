@@ -31,6 +31,7 @@ import { User } from "features/user";
 import { HeightProfile } from "features/heightProfile";
 import { Area } from "features/area";
 import { PointLine } from "features/pointLine";
+import { Jira } from "features/jira";
 import { Manhole } from "features/manhole";
 
 export function Widgets() {
@@ -124,6 +125,8 @@ function getWidgetByKey(key: WidgetKey): JSX.Element | string {
             return <Area />;
         case featuresConfig.pointLine.key:
             return <PointLine />;
+        case featuresConfig.jira.key:
+            return <Jira />;
         case featuresConfig.manhole.key:
             return <Manhole />;
         default:

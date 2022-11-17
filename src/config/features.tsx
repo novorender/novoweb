@@ -37,6 +37,7 @@ import { ReactComponent as Clipping } from "media/icons/clipping.svg";
 import { ReactComponent as Run } from "media/icons/run.svg";
 import { ReactComponent as BimTrack } from "media/icons/bimtrack.svg";
 import { ReactComponent as Ditio } from "media/icons/ditio.svg";
+import { ReactComponent as Jira } from "media/icons/jira-software.svg";
 
 export enum FeatureType {
     SelectionModifier,
@@ -46,6 +47,13 @@ export enum FeatureType {
 }
 
 export const featuresConfig = {
+    jira: {
+        key: "jira",
+        name: "Jira",
+        Icon: Jira,
+        type: FeatureType.Widget,
+        defaultLocked: true,
+    },
     area: {
         key: "area",
         name: "Area",

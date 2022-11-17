@@ -7,5 +7,8 @@ interface Window {
     ditioClientId?: string;
     ditioClientSecret?: string;
     dataServerUrl?: string;
+    jiraClientId?: string;
+    jiraClientSecret?: string;
     view?: any;
+    api?: any;
 }
