@@ -9,6 +9,7 @@ const initialState = {
     scene: undefined as undefined | Scene,
     canvas: null as null | HTMLCanvasElement,
     measureScene: undefined as undefined | MeasureScene,
+    size: { width: 0, height: 0 },
 };
 
 type State = typeof initialState;

@@ -1,17 +1,6 @@
 import { glMatrix, mat3, mat4, quat, vec2, vec3, vec4 } from "gl-matrix";
-import {
-    useEffect,
-    useState,
-    useRef,
-    MouseEvent,
-    PointerEvent,
-    useCallback,
-    SVGProps,
-    RefCallback,
-    Fragment,
-} from "react";
+import { useEffect, useState, useRef, MouseEvent, PointerEvent, useCallback, RefCallback } from "react";
 import { SceneData } from "@novorender/data-js-api";
-import { MeasureEntity } from "@novorender/measure-api";
 import {
     View,
     EnvironmentDescription,
@@ -50,7 +39,6 @@ import { Accordion, AccordionDetails, AccordionSummary, Loading } from "componen
 import { api, dataApi, measureApi } from "app";
 import { useSceneId } from "hooks/useSceneId";
 import { enabledFeaturesToFeatureKeys, getEnabledFeatures } from "utils/misc";
-import { AsyncStatus } from "types/misc";
 
 import {
     fetchEnvironments,
@@ -82,27 +70,15 @@ import { explorerActions, selectLocalBookmarkId, selectUrlBookmarkId } from "sli
 import { selectDeviations } from "features/deviations";
 import { bookmarksActions, selectBookmarks, useSelectBookmark } from "features/bookmarks";
 import { measureActions, selectMeasure } from "features/measure";
-import {
-    manholeActions,
-    selectManholeCollisionValues,
-    selectManholeCollisionTarget,
-    selectManholeMeasureValues,
-    useHandleManholeUpdates,
-} from "features/manhole";
+
+import { manholeActions, useHandleManholeUpdates } from "features/manhole";
 import { ditioActions, selectMarkers, selectShowMarkers } from "features/ditio";
 import { useAppDispatch, useAppSelector } from "app/store";
-import {
-    followPathActions,
-    selectDrawSelectedPositions,
-    selectFollowCylindersFrom,
-    usePathMeasureObjects,
-} from "features/followPath";
-import { useMeasureObjects } from "features/measure";
-import { areaActions, selectArea, selectAreaDrawPoints } from "features/area";
+import { followPathActions } from "features/followPath";
+import { areaActions } from "features/area";
 import { useHandleAreaPoints } from "features/area";
-import { useHeightProfileMeasureObject } from "features/heightProfile";
 import { heightProfileActions } from "features/heightProfile";
-import { pointLineActions, selectPointLine, useHandlePointLineUpdates } from "features/pointLine";
+import { pointLineActions, useHandlePointLineUpdates } from "features/pointLine";
 import { selectCurrentLocation, useHandleLocationMarker } from "features/myLocation";
 import { useHandleJiraKeepAlive } from "features/jira";
 
@@ -131,15 +107,8 @@ import {
 import { xAxis, yAxis, axis, MAX_FLOAT } from "./consts";
 import { useHandleGridChanges } from "./useHandleGridChanges";
 import { useHandleCameraControls } from "./useHandleCameraControls";
-import {
-    getPathPoints,
-    moveSvgCursor,
-    resetSVG,
-    renderAngles,
-    renderMeasureObject,
-    renderMeasurePoints,
-    renderSingleMeasurePoint,
-} from "./svgUtils";
+import { getPathPoints, moveSvgCursor } from "./svgUtils";
+import { Engine2D } from "features/engine2D";
 
 glMatrix.setMatrixArrayType(Array);
 
@@ -164,17 +133,6 @@ const Svg = styled("svg")(
     `
 );
 
-const MeasurementPoint = styled(
-    // inline for snapshots
-    (props: SVGProps<SVGCircleElement>) => <circle fill={props.fill ? props.fill : "green"} {...props} />,
-    { shouldForwardProp: (prop) => prop !== "disabled" }
-)<SVGProps<SVGCircleElement> & { disabled?: boolean }>(
-    ({ disabled }) => css`
-        pointer-events: ${disabled ? "none" : "all"};
-        cursor: pointer;
-    `
-);
-
 const PanoramaMarker = styled((props: any) => <CameraAlt color="primary" height="50px" width="50px" {...props} />)(
     () => css`
         cursor: pointer;
@@ -182,25 +140,6 @@ const PanoramaMarker = styled((props: any) => <CameraAlt color="primary" height=
         filter: drop-shadow(3px 3px 2px rgba(0, 0, 0, 0.3));
     `
 );
-
-const AxisText = styled((props: SVGProps<SVGTextElement>) => (
-    // inline for snapshots
-    <text
-        alignmentBaseline="middle"
-        fill="white"
-        fontSize={16}
-        fontWeight="bold"
-        textAnchor="middle"
-        fontFamily="Open Sans, sans-serif"
-        {...props}
-    />
-))(
-    () => css`
-        user-select: none;
-    `
-);
-
-const measurementFillColor = "rgba(0, 191, 255, 0.5)";
 
 enum Status {
     Initial,
@@ -224,7 +163,7 @@ export function Render3D({ onInit }: Props) {
     const visibleObjects = useVisible();
     const { state: customGroups, dispatch: dispatchCustomGroups } = useCustomGroups();
     const {
-        state: { view, scene, canvas, measureScene },
+        state: { view, scene, canvas, measureScene, size },
         dispatch: dispatchGlobals,
     } = useExplorerGlobals();
     const selectBookmark = useSelectBookmark();
@@ -257,16 +196,9 @@ export function Render3D({ onInit }: Props) {
     const localBookmarkId = useAppSelector(selectLocalBookmarkId);
     const showDitioMarkers = useAppSelector(selectShowMarkers);
     const ditioMarkers = useAppSelector(selectMarkers);
-    const drawSelectedPaths = useAppSelector(selectDrawSelectedPositions);
-    const drawPathSettings = useAppSelector(selectFollowCylindersFrom);
+
     const picker = useAppSelector(selectPicker);
-    const areaPoints = useAppSelector(selectAreaDrawPoints);
     const myLocationPoint = useAppSelector(selectCurrentLocation);
-    const areaValue = useAppSelector(selectArea);
-    const { points: pointLinePoints, result: pointLineResult } = useAppSelector(selectPointLine);
-    const manhole = useAppSelector(selectManholeMeasureValues);
-    const manholeCollisionValues = useAppSelector(selectManholeCollisionValues);
-    const manholeCollisionEntity = useAppSelector(selectManholeCollisionTarget)?.entity;
 
     const dispatch = useAppDispatch();
 
@@ -286,11 +218,7 @@ export function Render3D({ onInit }: Props) {
     const isTouchPointer = useRef(false);
     const camX = useRef(vec3.create());
     const camY = useRef(vec3.create());
-    const [size, setSize] = useState({ width: 0, height: 0 });
 
-    const heightProfileMeasureObject = useHeightProfileMeasureObject();
-    const measureObjects = useMeasureObjects();
-    const pathMeasureObjects = usePathMeasureObjects();
     const [svg, setSvg] = useState<null | SVGSVGElement>(null);
     const [status, setStatus] = useState<{ status: Status; msg?: string }>({ status: Status.Initial });
 
@@ -318,346 +246,8 @@ export function Render3D({ onInit }: Props) {
             return;
         }
 
-        const { camera } = view;
-
-        const renderPoints = (params: Omit<Parameters<typeof renderMeasurePoints>[0], "svg">) =>
-            renderMeasurePoints({ svg, ...params });
-
-        const renderObject = (
-            params: Omit<Parameters<typeof renderMeasureObject>[0], "svg" | "view" | "measureScene">
-        ) => renderMeasureObject({ svg, view, measureScene, ...params });
-
         const pathPoints = (params: Omit<Parameters<typeof getPathPoints>[0], "view">) =>
             getPathPoints({ view, ...params });
-
-        if (drawSelectedPaths && pathMeasureObjects.status === AsyncStatus.Success) {
-            pathMeasureObjects.data.forEach((obj) => {
-                renderObject({
-                    fillColor: measurementFillColor,
-                    pathName: "fp_" + getMeasureObjectPathId(obj),
-                    entity: obj,
-                    advancedDrawing: false,
-                    measureSettings: {
-                        cylinderMeasure: drawPathSettings,
-                    },
-                });
-            });
-        }
-
-        if (heightProfileMeasureObject) {
-            if (heightProfileMeasureObject.drawKind === "vertex") {
-                const pts = pathPoints({ points: [heightProfileMeasureObject.pos] });
-                if (pts) {
-                    renderSingleMeasurePoint({
-                        svg,
-                        pixelPoint: pts.pixel[0],
-                        pointName: "heightProfileMeasureObject",
-                    });
-                }
-            } else {
-                renderObject({
-                    fillColor: "rgba(0, 255, 38, 0.5)",
-                    pathName: "heightProfileMeasureObject",
-                    entity: heightProfileMeasureObject,
-                    advancedDrawing: false,
-                    measureSettings: undefined,
-                });
-            }
-        }
-
-        measureObjects.forEach((obj) => {
-            if (obj.drawKind === "vertex") {
-                const pts = pathPoints({ points: [obj.parameter as vec3] });
-                if (pts) {
-                    renderSingleMeasurePoint({
-                        svg,
-                        pixelPoint: pts.pixel[0],
-                        pointName: getMeasureObjectPathId(obj),
-                    });
-                } else {
-                    resetSVG({ svg, pathName: getMeasureObjectPathId(obj) });
-                }
-            } else {
-                renderObject({
-                    fillColor: measurementFillColor,
-                    pathName: getMeasureObjectPathId(obj),
-                    entity: obj,
-                    advancedDrawing: true,
-                    measureSettings: obj.settings,
-                });
-            }
-        });
-
-        if (manhole) {
-            renderObject({
-                fillColor: "rgba(0, 255, 38, 0.5)",
-                pathName: "manhole",
-                entity: manhole,
-                advancedDrawing: false,
-                measureSettings: undefined,
-            });
-            if (manholeCollisionEntity) {
-                renderObject({
-                    fillColor: "rgba(0, 255, 38, 0.5)",
-                    pathName: "manholeColEntity",
-                    entity: manholeCollisionEntity,
-                    advancedDrawing: false,
-                    measureSettings: undefined,
-                });
-            } else {
-                resetSVG({ svg, pathName: "manholeColEntity" });
-            }
-            if (manholeCollisionValues) {
-                const mcv = manholeCollisionValues.inner ?? manholeCollisionValues.outer;
-                if (mcv) {
-                    renderPoints({
-                        points: pathPoints({ points: mcv }),
-                        svgNames: { path: "manholeCollision", point: "manhole_col" },
-                        text: {
-                            textName: "manholeCollisionText",
-                            value: [vec3.len(vec3.sub(vec3.create(), mcv[0], mcv[1]))],
-                            type: "distance",
-                        },
-                    });
-                }
-            }
-        } else {
-            resetSVG({ svg, pathName: "manholeColEntity" });
-            resetSVG({ svg, pathName: "manhole" });
-        }
-
-        const normalPoints = measure.duoMeasurementValues?.normalPoints;
-        if (normalPoints) {
-            renderPoints({
-                points: pathPoints({ points: normalPoints }),
-                svgNames: { path: "normalDistance", point: "normal" },
-                text: {
-                    textName: "normalDistanceText",
-                    value: [vec3.len(vec3.sub(vec3.create(), normalPoints[0], normalPoints[1]))],
-                    type: "distance",
-                },
-            });
-        }
-
-        const measurePoints =
-            measure.duoMeasurementValues?.pointA && measure.duoMeasurementValues?.pointB
-                ? [measure.duoMeasurementValues.pointA, measure.duoMeasurementValues.pointB]
-                : undefined;
-
-        if (measurePoints) {
-            const flip = measurePoints[0][1] > measurePoints[1][1];
-            let pts = flip ? [measurePoints[1], measurePoints[0]] : [measurePoints[0], measurePoints[1]];
-            const diff = vec3.sub(vec3.create(), pts[0], pts[1]);
-            const measureLen = vec3.len(diff);
-
-            const measurePathPoints = pathPoints({ points: measurePoints });
-
-            renderPoints({
-                points: measurePathPoints,
-                svgNames: { path: "brepDistance", point: "measure" },
-                text: {
-                    textName: "distanceText",
-                    value: [measureLen],
-                    type: "distance",
-                },
-            });
-
-            pts = [
-                pts[0],
-                vec3.fromValues(pts[1][0], pts[0][1], pts[0][2]),
-                vec3.fromValues(pts[1][0], pts[0][1], pts[1][2]),
-                pts[1],
-            ];
-
-            const xPathPoints = pathPoints({ points: [pts[0], pts[1]] });
-            renderPoints({
-                points: xPathPoints,
-                svgNames: { path: "brepPathX" },
-                text: {
-                    textName: "brepTextX",
-                    value: [Math.abs(diff[0])],
-                    type: "distance",
-                },
-            });
-
-            const yPathPoints = pathPoints({ points: [pts[1], pts[2]] });
-            renderPoints({
-                points: yPathPoints,
-                svgNames: { path: "brepPathY" },
-                text: {
-                    textName: "brepTextY",
-                    value: [Math.abs(diff[2])],
-                    type: "distance",
-                },
-            });
-
-            const zPathPoints = pathPoints({ points: [pts[2], pts[3]] });
-
-            renderPoints({
-                points: zPathPoints,
-                svgNames: { path: "brepPathZ" },
-                text: {
-                    textName: "brepTextZ",
-                    value: [Math.abs(diff[1])],
-                    type: "distance",
-                },
-            });
-
-            if (measurePathPoints && zPathPoints) {
-                if (vec3.distance(camera.position, pts[3]) < measureLen * 2) {
-                    const zDiff = vec3.sub(vec3.create(), pts[2], pts[3]);
-                    const fromP = flip ? measurePathPoints.path[1] : measurePathPoints.path[0];
-                    renderAngles({
-                        svg,
-                        anglePoint: zPathPoints.path[1],
-                        fromP,
-                        toP: zPathPoints.path[0],
-                        diffA: diff,
-                        diffB: zDiff,
-                        pathName: `angle_measureToZ`,
-                    });
-                } else {
-                    resetSVG({ svg, pathName: `angle_measureToZ` });
-                }
-            } else {
-                resetSVG({ svg, pathName: `angle_measureToZ` });
-            }
-
-            const planarDiff = vec2.len(vec2.fromValues(diff[0], diff[2]));
-            const pdPt1 = vec3.fromValues(pts[0][0], Math.min(pts[0][1], pts[3][1]), pts[0][2]);
-            const pdPt2 = vec3.fromValues(pts[3][0], Math.min(pts[0][1], pts[3][1]), pts[3][2]);
-
-            const xzPathPoints = pathPoints({ points: [pdPt1, pdPt2] });
-            if (xPathPoints && yPathPoints && measurePathPoints && xzPathPoints) {
-                const pixelDiffX =
-                    vec2.dist(xPathPoints.path[0], xzPathPoints.path[0]) +
-                    vec2.dist(xPathPoints.path[1], xzPathPoints.path[1]);
-                const pixelDiffY =
-                    vec2.dist(yPathPoints.path[0], xzPathPoints.path[0]) +
-                    vec2.dist(yPathPoints.path[1], xzPathPoints.path[1]);
-                const pixelMesureDiff =
-                    vec2.dist(measurePathPoints.path[0], xzPathPoints.path[0]) +
-                    vec2.dist(measurePathPoints.path[1], xzPathPoints.path[1]);
-                const skipXZ = pixelDiffX < 20 || pixelDiffY < 20 || pixelMesureDiff < 20;
-                renderPoints({
-                    points: skipXZ ? undefined : xzPathPoints,
-                    svgNames: { path: "brepPathXZ" },
-                    text: {
-                        textName: "brepTextXZ",
-                        value: [planarDiff],
-                        type: "distance",
-                    },
-                });
-            } else {
-                resetSVG({ svg, pathName: `brepPathXZ` });
-                resetSVG({ svg, pathName: `brepTextXZ` });
-            }
-
-            if (measurePathPoints && xzPathPoints) {
-                if (vec3.distance(camera.position, pdPt2) < measureLen * 2) {
-                    const xzDiff = vec3.sub(vec3.create(), pdPt1, pdPt2);
-                    const fromP = flip ? measurePathPoints.path[0] : measurePathPoints.path[1];
-                    renderAngles({
-                        svg,
-                        anglePoint: xzPathPoints.path[0],
-                        fromP,
-                        toP: xzPathPoints.path[1],
-                        diffA: diff,
-                        diffB: xzDiff,
-                        pathName: `angle_measureToXZ`,
-                    });
-                } else {
-                    resetSVG({ svg, pathName: `angle_measureToXZ` });
-                }
-            } else {
-                resetSVG({ svg, pathName: `angle_measureToXZ` });
-            }
-        }
-
-        if (areaPoints.length) {
-            const areaPts = pathPoints({ points: areaPoints });
-            if (areaPts) {
-                renderPoints({
-                    points: areaPts,
-                    svgNames: { path: "area-path", point: "area-pt" },
-                    text: {
-                        textName: "areaText",
-                        value: [areaValue],
-                        type: "center",
-                        unit: "&#13217",
-                    },
-                });
-                if (areaPoints.length > 2) {
-                    const asqt = Math.sqrt(areaValue) * 5;
-                    for (let i = 0; i < areaPoints.length; ++i) {
-                        const anglePt = areaPoints[i];
-                        if (
-                            areaPts.path.length === areaPoints.length &&
-                            vec3.distance(camera.position, anglePt) < asqt
-                        ) {
-                            const fromPIdx = i === 0 ? areaPoints.length - 1 : i - 1;
-                            const toPIdx = i === areaPoints.length - 1 ? 0 : i + 1;
-                            const fromP = areaPts.path[fromPIdx];
-                            const toP = areaPts.path[toPIdx];
-                            const diffA = vec3.sub(vec3.create(), areaPoints[fromPIdx], anglePt);
-                            const diffB = vec3.sub(vec3.create(), areaPoints[toPIdx], anglePt);
-                            renderAngles({
-                                svg,
-                                anglePoint: areaPts.path[i],
-                                fromP,
-                                toP,
-                                diffA,
-                                diffB,
-                                pathName: `area-an_${i}`,
-                            });
-                        } else {
-                            resetSVG({ svg, pathName: `area-an_${i}` });
-                        }
-                    }
-                }
-            }
-        }
-
-        if (pointLinePoints.length && pointLineResult) {
-            const pointLinePts = pathPoints({ points: pointLinePoints });
-            if (pointLinePts) {
-                renderPoints({
-                    points: pointLinePts,
-                    svgNames: { path: "line-path", point: "line-pt" },
-                    text: {
-                        textName: "line-txt",
-                        value: pointLineResult.segmentLengts,
-                        type: "distance",
-                        multitext: true,
-                    },
-                    closed: false,
-                });
-                if (pointLinePoints.length > 2) {
-                    for (let i = 1; i < pointLinePoints.length - 1; ++i) {
-                        const anglePt = pointLinePoints[i];
-                        if (pointLinePts.path.length === pointLinePoints.length) {
-                            const fromPIdx = i - 1;
-                            const toPIdx = i + 1;
-                            const fromP = pointLinePts.path[fromPIdx];
-                            const toP = pointLinePts.path[toPIdx];
-                            const diffA = vec3.sub(vec3.create(), pointLinePoints[fromPIdx], anglePt);
-                            const diffB = vec3.sub(vec3.create(), pointLinePoints[toPIdx], anglePt);
-                            renderAngles({
-                                svg,
-                                anglePoint: pointLinePts.path[i],
-                                fromP,
-                                toP,
-                                diffA,
-                                diffB,
-                                pathName: `line-an_${i}`,
-                            });
-                        } else {
-                            resetSVG({ svg, pathName: `line-an_${i}` });
-                        }
-                    }
-                }
-            }
-        }
 
         if (myLocationPoint !== undefined) {
             const myLocationPt = pathPoints({ points: [myLocationPoint] });
@@ -670,26 +260,8 @@ export function Render3D({ onInit }: Props) {
                 );
             }
         }
-    }, [
-        view,
-        measureObjects,
-        measure.duoMeasurementValues,
-        pathMeasureObjects,
-        drawSelectedPaths,
-        areaPoints,
-        pointLinePoints,
-        pointLineResult,
-        heightProfileMeasureObject,
-        svg,
-        areaValue,
-        myLocationPoint,
-        manhole,
-        manholeCollisionValues,
-        measureScene,
-        manholeCollisionEntity,
-        drawPathSettings,
-        size,
-    ]);
+    }, [view, svg, myLocationPoint, size, measureScene]);
+
     useEffect(() => {
         renderParametricMeasure();
     }, [renderParametricMeasure]);
@@ -902,7 +474,9 @@ export function Render3D({ onInit }: Props) {
                         _view.applySettings({
                             display: { width: canvas.width, height: canvas.height },
                         });
-                        setSize({ width: canvas.width, height: canvas.height });
+                        dispatchGlobals(
+                            explorerGlobalsActions.update({ size: { width: canvas.width, height: canvas.height } })
+                        );
                     }
                 });
 
@@ -957,7 +531,6 @@ export function Render3D({ onInit }: Props) {
         dispatchHidden,
         dispatchHighlighted,
         dispatchVisible,
-        setSize,
     ]);
 
     useEffect(() => {
@@ -1803,6 +1376,7 @@ export function Render3D({ onInit }: Props) {
                             }
                         }}
                     />
+                    <Engine2D />
                     <Menu
                         open={deviationStamp !== null}
                         onClose={closeDeviationStamp}
@@ -1830,209 +1404,6 @@ export function Render3D({ onInit }: Props) {
                     </Menu>
                     {canvas !== null && (
                         <Svg width={canvas.width} height={canvas.height} ref={setSvg}>
-                            {areaPoints.length ? (
-                                <>
-                                    <path
-                                        name={`area-path`}
-                                        id={`area-path`}
-                                        fill={measurementFillColor}
-                                        stroke="yellow"
-                                        strokeWidth={1}
-                                    />
-                                    <AxisText id={`areaText`} />
-                                    {areaPoints.map((_pt, idx, array) => (
-                                        <Fragment key={idx}>
-                                            <MeasurementPoint
-                                                disabled
-                                                name={`area-pt_${idx}`}
-                                                id={`area-pt_${idx}`}
-                                                stroke="black"
-                                                fill={idx === 0 ? "green" : idx === array.length - 1 ? "blue" : "white"}
-                                                strokeWidth={2}
-                                                r={5}
-                                            />
-                                            {array.length > 2 ? <g id={`area-an_${idx}`} /> : null}
-                                        </Fragment>
-                                    ))}
-                                </>
-                            ) : null}
-                            {pointLinePoints.length ? (
-                                <>
-                                    <path
-                                        name={`line-path`}
-                                        id={`line-path`}
-                                        stroke="yellow"
-                                        strokeWidth={1}
-                                        fill="none"
-                                    />
-                                    {pointLinePoints.map((_pt, idx, arr) => (
-                                        <Fragment key={idx}>
-                                            <MeasurementPoint
-                                                disabled
-                                                name={`line-pt_${idx}`}
-                                                id={`line-pt_${idx}`}
-                                                stroke="black"
-                                                strokeWidth={2}
-                                                fill={idx === 0 ? "green" : idx === arr.length - 1 ? "blue" : "white"}
-                                                r={5}
-                                            />
-                                            {idx === 0 || idx === arr.length - 1 ? null : <g id={`line-an_${idx}`} />}
-                                            {idx !== arr.length - 1 ? <AxisText id={`line-txt_${idx}`} /> : null}
-                                        </Fragment>
-                                    ))}
-                                </>
-                            ) : null}
-
-                            {drawSelectedPaths
-                                ? pathMeasureObjects.status === AsyncStatus.Success &&
-                                  pathMeasureObjects.data.map((obj) => (
-                                      <path
-                                          key={getMeasureObjectPathId(obj)}
-                                          id={"fp_" + getMeasureObjectPathId(obj)}
-                                          d=""
-                                          stroke="yellow"
-                                          strokeWidth=""
-                                          fill="none"
-                                      />
-                                  ))
-                                : null}
-                            {measureObjects.map((obj, idx) =>
-                                obj.drawKind === "vertex" ? (
-                                    <MeasurementPoint
-                                        key={getMeasureObjectPathId(obj)}
-                                        id={getMeasureObjectPathId(obj)}
-                                        r={5}
-                                        disabled={true}
-                                        fill="green"
-                                        stroke="black"
-                                        strokeWidth={2}
-                                    />
-                                ) : (
-                                    <Fragment key={`${getMeasureObjectPathId(obj)}_${idx}`}>
-                                        <defs id={"gr_def_" + obj.ObjectId}>
-                                            <linearGradient id={"gr_" + obj.ObjectId} x1={0} x2={0} y1={0} y2={1}>
-                                                <stop offset="0%" stopColor="green" />
-                                                <stop offset="100%" stopColor="red" />
-                                            </linearGradient>
-                                        </defs>
-                                        {Array.from({ length: 3 }).map((_, idx) => (
-                                            <path
-                                                key={`${getMeasureObjectPathId(obj)}_${idx}`}
-                                                id={`${getMeasureObjectPathId(obj)}_${idx}`}
-                                                d=""
-                                                stroke={"yellow"}
-                                                strokeWidth="2"
-                                                fill={"blue"}
-                                            />
-                                        ))}
-                                    </Fragment>
-                                )
-                            )}
-                            {measure.duoMeasurementValues?.normalPoints ? (
-                                <>
-                                    <path id="normalDistance" d="" stroke="black" strokeWidth={3} fill="none" />
-                                    <MeasurementPoint
-                                        name={`normal start`}
-                                        id={`normal_0`}
-                                        r={5}
-                                        disabled={true}
-                                        fill="black"
-                                        stroke="white"
-                                        strokeWidth={2}
-                                    />
-                                    <MeasurementPoint
-                                        name={`normal end`}
-                                        id={`normal_1`}
-                                        r={5}
-                                        disabled={true}
-                                        fill="black"
-                                        stroke="white"
-                                        strokeWidth={2}
-                                    />
-                                    <AxisText id={`normalDistanceText`} />
-                                </>
-                            ) : null}
-                            {measure.duoMeasurementValues?.pointA && measure.duoMeasurementValues?.pointB ? (
-                                <>
-                                    <path id="brepDistance" d="" stroke="green" strokeWidth={2} fill="none" />
-                                    <path id="brepPathX" d="" stroke="red" strokeWidth={2} fill="none" />
-                                    <path id="brepPathY" d="" stroke="lightgreen" strokeWidth={2} fill="none" />
-                                    <path id="brepPathZ" d="" stroke="blue" strokeWidth={2} fill="none" />
-                                    <path id="brepPathXZ" d="" stroke="purple" strokeWidth={2} fill="none" />
-                                    <g id={`angle_measureToZ`}></g>
-                                    <g id={`angle_measureToXZ`}></g>
-                                    <AxisText id="brepTextX" />
-                                    <AxisText id="brepTextY" />
-                                    <AxisText id="brepTextZ" />
-                                    <AxisText id="brepTextXZ" />
-                                    <AxisText id={`distanceText`} />
-                                    <AxisText id={`areaText`} />
-                                </>
-                            ) : null}
-                            {heightProfileMeasureObject ? (
-                                heightProfileMeasureObject.drawKind === "vertex" ? (
-                                    <MeasurementPoint
-                                        id={"heightProfileMeasureObject"}
-                                        r={5}
-                                        disabled={true}
-                                        fill="yellow"
-                                        stroke="black"
-                                        strokeWidth={2}
-                                    />
-                                ) : (
-                                    <path
-                                        id={"heightProfileMeasureObject"}
-                                        d=""
-                                        stroke="yellow"
-                                        strokeWidth={2}
-                                        fill="none"
-                                    />
-                                )
-                            ) : null}
-                            {manhole ? (
-                                <>
-                                    <path id={"manhole"} d="" stroke="yellow" strokeWidth={2} fill="none" />
-                                    <path id={"manhole_filled"} d="" stroke="yellow" strokeWidth={2} fill="none" />
-                                    {manholeCollisionEntity && (
-                                        <path
-                                            id={"manholeColEntity"}
-                                            d=""
-                                            stroke="orange"
-                                            strokeWidth={2}
-                                            fill="none"
-                                        />
-                                    )}
-                                    {manholeCollisionValues && (
-                                        <>
-                                            <path
-                                                id={"manholeCollision"}
-                                                d=""
-                                                stroke="blue"
-                                                strokeWidth={2}
-                                                fill="none"
-                                            />
-
-                                            <MeasurementPoint
-                                                id={"manhole_col_0"}
-                                                r={5}
-                                                disabled={true}
-                                                fill="yellow"
-                                                stroke="black"
-                                                strokeWidth={2}
-                                            />
-                                            <MeasurementPoint
-                                                id={"manhole_col_1"}
-                                                r={5}
-                                                disabled={true}
-                                                fill="yellow"
-                                                stroke="black"
-                                                strokeWidth={2}
-                                            />
-                                            <AxisText id={`manholeCollisionText`} />
-                                        </>
-                                    )}
-                                </>
-                            ) : null}
                             {myLocationPoint ? (
                                 <path
                                     id="myLocationPoint"
@@ -2178,13 +1549,6 @@ function SceneError({ id, error, msg }: { id: string; error: Exclude<Status, Sta
                 </Paper>
             )}
         </Box>
-    );
-}
-
-function getMeasureObjectPathId(obj: MeasureEntity): string {
-    return (
-        obj.ObjectId +
-        (obj.drawKind === "vertex" ? vec3.str(obj.parameter as vec3) : `${obj.instanceIndex}_${obj.pathIndex}`)
     );
 }
 
