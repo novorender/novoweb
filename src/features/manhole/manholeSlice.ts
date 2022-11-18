@@ -1,9 +1,10 @@
+import { vec3 } from "gl-matrix";
 import { ManholeMeasureValues, MeasureSettings } from "@novorender/measure-api";
 import { createSlice, PayloadAction } from "@reduxjs/toolkit";
+import { Bookmark } from "@novorender/data-js-api";
 
 import { RootState } from "app/store";
 import { SelectedMeasureObj } from "features/measure";
-import { vec3 } from "gl-matrix";
 
 const initialState = {
     selectedId: undefined as number | undefined,
@@ -11,7 +12,7 @@ const initialState = {
     loadingBrep: false,
     pinned: false,
     collisionValues: undefined as undefined | [vec3, vec3],
-    measureAgainst: undefined as SelectedMeasureObj | undefined,
+    measureAgainst: undefined as undefined | { selected: SelectedMeasureObj; entity?: any },
 };
 
 type State = typeof initialState;
@@ -20,11 +21,21 @@ export const manholeSlice = createSlice({
     name: "manhole",
     initialState: initialState,
     reducers: {
-        selectObj: (state, action: PayloadAction<State["selectedId"]>) => {
-            state.selectedId = action.payload;
-            if (state.selectedId === undefined) {
+        selectObj: (state, action: PayloadAction<{ id: number; pos: vec3 } | undefined>) => {
+            if (state.pinned) {
+                state.measureAgainst = action.payload ? { selected: action.payload } : undefined;
+            } else {
+                state.selectedId = action.payload?.id;
                 state.measureAgainst = undefined;
             }
+        },
+        initFromBookmark: (state, action: PayloadAction<Bookmark["manhole"]>) => {
+            if (!action.payload) {
+                return initialState;
+            }
+
+            state.selectedId = action.payload.id;
+            state.measureAgainst = action.payload.collisionTarget ? action.payload.collisionTarget : undefined;
         },
         setManholeValues: (state, action: PayloadAction<State["measureValues"]>) => {
             state.measureValues = action.payload as any;
@@ -35,15 +46,19 @@ export const manholeSlice = createSlice({
         setPinned: (state, action: PayloadAction<State["pinned"]>) => {
             state.pinned = action.payload;
         },
-        setMeasureManholeAgainst: (state, action: PayloadAction<State["measureAgainst"]>) => {
-            state.measureAgainst = action.payload;
-        },
         setCollisionValues: (state, action: PayloadAction<State["collisionValues"]>) => {
             state.collisionValues = action.payload;
         },
-        setSettings: (state, action: PayloadAction<{ settings: MeasureSettings }>) => {
+        setMeasureAgainstEntity: (state, action: PayloadAction<NonNullable<State["measureAgainst"]>["entity"]>) => {
             if (state.measureAgainst) {
-                state.measureAgainst = { ...state.measureAgainst, settings: action.payload.settings };
+                state.measureAgainst.entity = action.payload;
+            }
+        },
+        setMeasureAgainstSettings: (state, action: PayloadAction<MeasureSettings>) => {
+            if (state.measureAgainst) {
+                state.measureAgainst = {
+                    selected: { ...state.measureAgainst.selected, settings: action.payload },
+                };
             }
         },
     },

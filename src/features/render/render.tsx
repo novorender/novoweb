@@ -85,7 +85,7 @@ import { measureActions, selectMeasure } from "features/measure";
 import {
     manholeActions,
     selectCollisionValues,
-    selectIsManholePinned,
+    selectManholeMeasureAgainst,
     selectManholeMeasureValues,
     useHandleManholeUpdates,
 } from "features/manhole";
@@ -104,6 +104,7 @@ import { useHeightProfileMeasureObject } from "features/heightProfile";
 import { heightProfileActions } from "features/heightProfile";
 import { pointLineActions, selectPointLine, useHandlePointLineUpdates } from "features/pointLine";
 import { selectCurrentLocation, useHandleLocationMarker } from "features/myLocation";
+import { useHandleJiraKeepAlive } from "features/jira";
 
 import { useHighlighted, highlightActions, useDispatchHighlighted } from "contexts/highlighted";
 import { useHidden, useDispatchHidden } from "contexts/hidden";
@@ -139,8 +140,6 @@ import {
     renderMeasurePoints,
     renderSingleMeasurePoint,
 } from "./svgUtils";
-import { useManholeMeasure } from "features/manhole/useHandleManholeUpdates";
-import { useHandleJiraKeepAlive } from "features/jira";
 
 glMatrix.setMatrixArrayType(Array);
 
@@ -266,9 +265,8 @@ export function Render3D({ onInit }: Props) {
     const areaValue = useAppSelector(selectArea);
     const { points: pointLinePoints, result: pointLineResult } = useAppSelector(selectPointLine);
     const manhole = useAppSelector(selectManholeMeasureValues);
-    const manholePinned = useAppSelector(selectIsManholePinned);
     const manholeCollision = useAppSelector(selectCollisionValues);
-    const manholeColEntity = useManholeMeasure();
+    const manholeColEntity = useAppSelector(selectManholeMeasureAgainst)?.entity;
 
     const dispatch = useAppDispatch();
 
@@ -316,7 +314,7 @@ export function Render3D({ onInit }: Props) {
     );
 
     const renderParametricMeasure = useCallback(() => {
-        if (!view || !svg || !measureScene) {
+        if (!view || !svg || !measureScene || !size) {
             return;
         }
 
@@ -687,6 +685,7 @@ export function Render3D({ onInit }: Props) {
         measureScene,
         manholeColEntity,
         drawPathSettings,
+        size,
     ]);
     useEffect(() => {
         renderParametricMeasure();
@@ -1556,9 +1555,7 @@ export function Render3D({ onInit }: Props) {
                 if (result.objectId === -1) {
                     return;
                 }
-                manholePinned
-                    ? dispatch(manholeActions.setMeasureManholeAgainst({ id: result.objectId, pos: result.position }))
-                    : dispatch(manholeActions.selectObj(result.objectId));
+                dispatch(manholeActions.selectObj({ id: result.objectId, pos: result.position }));
                 break;
 
             case Picker.FollowPathObject: {
