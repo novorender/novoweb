@@ -1,6 +1,8 @@
 import { DeleteSweep, PushPin } from "@mui/icons-material";
 import { useRef, useEffect, useState } from "react";
 import { Box, Button, capitalize, Checkbox, FormControlLabel, Grid, List, ListItem, Typography } from "@mui/material";
+import { vec3 } from "gl-matrix";
+import { MeasureEntity, MeasurementValues, MeasureSettings, PointEntity } from "@novorender/measure-api";
 
 import { useAppDispatch, useAppSelector } from "app/store";
 import {
@@ -14,6 +16,8 @@ import {
     ScrollBox,
     WidgetContainer,
     WidgetHeader,
+    MeasurementTable,
+    VertexTable,
 } from "components";
 import { WidgetList } from "features/widgetList";
 import { useToggle } from "hooks/useToggle";
@@ -21,6 +25,7 @@ import { featuresConfig } from "config/features";
 import { selectMinimized, selectMaximized } from "slices/explorerSlice";
 import { Picker, renderActions, selectPicker } from "slices/renderSlice";
 import { getMeasurementValueKind, MeasurementData } from "features/measure/measuredObject";
+import { useExplorerGlobals } from "contexts/explorerGlobals";
 
 import {
     manholeActions,
@@ -31,11 +36,7 @@ import {
     selectManholeMeasureAgainst,
     selectCollisionValues,
 } from "./manholeSlice";
-import { MeasurementTable, VertexTable } from "features/measure/tables";
-import { MeasureEntity, MeasurementValues, MeasureSettings, PointEntity } from "@novorender/measure-api";
-import { useExplorerGlobals } from "contexts/explorerGlobals";
 import { useManholeMeasure } from "./useHandleManholeUpdates";
-import { vec3 } from "gl-matrix";
 
 export function Manhole() {
     const {

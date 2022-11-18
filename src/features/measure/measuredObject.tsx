@@ -23,13 +23,12 @@ import {
 } from "@mui/material";
 import { PushPin } from "@mui/icons-material";
 
-import { Accordion, AccordionDetails, AccordionSummary } from "components";
+import { Accordion, AccordionDetails, AccordionSummary, VertexTable, MeasurementTable } from "components";
 import { useAppDispatch, useAppSelector } from "app/store";
 import { useExplorerGlobals } from "contexts/explorerGlobals";
 
 import { measureActions, SelectedMeasureObj, selectMeasure } from "./measureSlice";
 import { Slope } from "./slope";
-import { VertexTable, MeasurementTable } from "./tables";
 import { PlanarDiff } from "./planarDiff";
 import { useMeasureObjects } from "./useMeasureObjects";
 import { cylinderOptions } from "./config";
