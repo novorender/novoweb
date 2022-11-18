@@ -1,12 +1,6 @@
 import { vec3 } from "gl-matrix";
 import { useEffect, useState } from "react";
-import {
-    DuoMeasurementValues,
-    MeasureEntity,
-    MeasurementValues,
-    MeasureSettings,
-    PointEntity,
-} from "@novorender/measure-api";
+import { DuoMeasurementValues, MeasurementValues, MeasureSettings } from "@novorender/measure-api";
 import {
     Box,
     Checkbox,
@@ -26,6 +20,7 @@ import { PushPin } from "@mui/icons-material";
 import { Accordion, AccordionDetails, AccordionSummary, VertexTable, MeasurementTable } from "components";
 import { useAppDispatch, useAppSelector } from "app/store";
 import { useExplorerGlobals } from "contexts/explorerGlobals";
+import { getMeasurementValueKind, measureObjectIsVertex } from "utils/misc";
 
 import { measureActions, SelectedMeasureObj, selectMeasure } from "./measureSlice";
 import { Slope } from "./slope";
@@ -82,9 +77,6 @@ export function MeasuredObject({ obj, idx }: { obj: SelectedMeasureObj; idx: num
         duoMeasurementValues &&
         (!duoMeasurementValues.validMeasureSettings || duoMeasurementValues.validMeasureSettings[_idx]);
 
-    const isVertex = (measureObject: MeasureEntity | undefined): measureObject is PointEntity => {
-        return measureObject ? measureObject.drawKind === "vertex" : false;
-    };
     return (
         <Accordion defaultExpanded={true}>
             <AccordionSummary>
@@ -128,7 +120,7 @@ export function MeasuredObject({ obj, idx }: { obj: SelectedMeasureObj; idx: num
                             );
                         }}
                     />
-                ) : isVertex(measureObject) ? (
+                ) : measureObjectIsVertex(measureObject) ? (
                     <Box p={2}>
                         <VertexTable vertices={[measureObject.parameter]} />
                     </Box>
@@ -490,8 +482,4 @@ export function MeasurementData({
         default:
             return null;
     }
-}
-
-export function getMeasurementValueKind(val: MeasurementValues): string {
-    return "kind" in val ? val.kind : "";
 }

@@ -1,5 +1,5 @@
 import { vec3 } from "gl-matrix";
-import { ManholeMeasureValues, MeasureSettings } from "@novorender/measure-api";
+import { ManholeMeasureValues, MeasureEntity, MeasureSettings } from "@novorender/measure-api";
 import { createSlice, PayloadAction } from "@reduxjs/toolkit";
 import { Bookmark } from "@novorender/data-js-api";
 
@@ -12,7 +12,7 @@ const initialState = {
     loadingBrep: false,
     pinned: false,
     collisionValues: undefined as undefined | [vec3, vec3],
-    measureAgainst: undefined as undefined | { selected: SelectedMeasureObj; entity?: any },
+    collisionTarget: undefined as undefined | { selected: SelectedMeasureObj; entity?: MeasureEntity },
 };
 
 type State = typeof initialState;
@@ -23,10 +23,10 @@ export const manholeSlice = createSlice({
     reducers: {
         selectObj: (state, action: PayloadAction<{ id: number; pos: vec3 } | undefined>) => {
             if (state.pinned) {
-                state.measureAgainst = action.payload ? { selected: action.payload } : undefined;
+                state.collisionTarget = action.payload ? { selected: action.payload } : undefined;
             } else {
                 state.selectedId = action.payload?.id;
-                state.measureAgainst = undefined;
+                state.collisionTarget = undefined;
             }
         },
         initFromBookmark: (state, action: PayloadAction<Bookmark["manhole"]>) => {
@@ -35,7 +35,7 @@ export const manholeSlice = createSlice({
             }
 
             state.selectedId = action.payload.id;
-            state.measureAgainst = action.payload.collisionTarget ? action.payload.collisionTarget : undefined;
+            state.collisionTarget = action.payload.collisionTarget ? action.payload.collisionTarget : undefined;
         },
         setManholeValues: (state, action: PayloadAction<State["measureValues"]>) => {
             state.measureValues = action.payload as any;
@@ -49,16 +49,14 @@ export const manholeSlice = createSlice({
         setCollisionValues: (state, action: PayloadAction<State["collisionValues"]>) => {
             state.collisionValues = action.payload;
         },
-        setMeasureAgainstEntity: (state, action: PayloadAction<NonNullable<State["measureAgainst"]>["entity"]>) => {
-            if (state.measureAgainst) {
-                state.measureAgainst.entity = action.payload;
+        setCollisionEntity: (state, action: PayloadAction<MeasureEntity | undefined>) => {
+            if (state.collisionTarget) {
+                state.collisionTarget.entity = action.payload as any;
             }
         },
-        setMeasureAgainstSettings: (state, action: PayloadAction<MeasureSettings>) => {
-            if (state.measureAgainst) {
-                state.measureAgainst = {
-                    selected: { ...state.measureAgainst.selected, settings: action.payload },
-                };
+        setCollisionSettings: (state, action: PayloadAction<MeasureSettings>) => {
+            if (state.collisionTarget) {
+                state.collisionTarget.selected.settings = action.payload;
             }
         },
     },
@@ -66,7 +64,7 @@ export const manholeSlice = createSlice({
 
 export const selectManholeId = (state: RootState) => state.manhole.selectedId;
 export const selectManholeMeasureValues = (state: RootState) => state.manhole.measureValues;
-export const selectManholeMeasureAgainst = (state: RootState) => state.manhole.measureAgainst;
+export const selectManholeCollisionTarget = (state: RootState) => state.manhole.collisionTarget;
 export const selectCollisionValues = (state: RootState) => state.manhole.collisionValues;
 export const selectIsLoadingManholeBrep = (state: RootState) => state.manhole.loadingBrep;
 export const selectIsManholePinned = (state: RootState) => state.manhole.pinned;

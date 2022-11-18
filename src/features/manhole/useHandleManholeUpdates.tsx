@@ -1,9 +1,9 @@
-import { useHandleManholeCollision } from "./useHandleManholeCollision";
-import { useHandleManholeConnectedCylinder } from "./useHandleManholeConnectedCylinder";
-import { useHandleManholeInspect } from "./useHandleManholeInspect";
+import { useLoadManhole } from "./useLoadManhole";
+import { useLoadCollisionTarget } from "./useLoadCollisionTarget";
+import { useLoadCollisionResult } from "./useLoadCollisionResult";
 
 export function useHandleManholeUpdates() {
-    useHandleManholeInspect();
-    useHandleManholeConnectedCylinder();
-    useHandleManholeCollision();
+    useLoadManhole();
+    useLoadCollisionTarget();
+    useLoadCollisionResult();
 }

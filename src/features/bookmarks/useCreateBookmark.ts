@@ -20,7 +20,7 @@ import { selectMeasure } from "features/measure";
 import { selectFollowPath } from "features/followPath";
 import { selectAreaPoints } from "features/area";
 import { selectPointLinePoints } from "features/pointLine";
-import { selectManholeMeasureAgainst, selectManholeMeasureValues } from "features/manhole";
+import { selectManholeCollisionTarget, selectManholeMeasureValues } from "features/manhole";
 
 export function useCreateBookmark() {
     const measurement = useAppSelector(selectMeasure);
@@ -32,7 +32,7 @@ export function useCreateBookmark() {
     const pointLinePts = useAppSelector(selectPointLinePoints);
     const subtrees = useAppSelector(selectSubtrees);
     const manhole = useAppSelector(selectManholeMeasureValues);
-    const manholeCollisionTarget = useAppSelector(selectManholeMeasureAgainst);
+    const manholeCollisionTarget = useAppSelector(selectManholeCollisionTarget);
 
     const {
         state: { view },

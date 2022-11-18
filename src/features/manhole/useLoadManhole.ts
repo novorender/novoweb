@@ -5,7 +5,7 @@ import { useExplorerGlobals } from "contexts/explorerGlobals";
 
 import { manholeActions, selectIsManholePinned, selectManholeId } from "./manholeSlice";
 
-export function useHandleManholeInspect() {
+export function useLoadManhole() {
     const {
         state: { measureScene },
     } = useExplorerGlobals();

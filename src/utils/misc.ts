@@ -1,3 +1,4 @@
+import { MeasureEntity, MeasurementValues, PointEntity } from "@novorender/measure-api";
 import { WidgetKey, featuresConfig, defaultEnabledWidgets } from "config/features";
 
 export function uniqueArray<T>(arr: T[]): T[] {
@@ -163,4 +164,12 @@ export async function createCanvasSnapshot(
         console.warn(e);
         return;
     }
+}
+
+export function measureObjectIsVertex(measureObject: MeasureEntity | undefined): measureObject is PointEntity {
+    return measureObject ? measureObject.drawKind === "vertex" : false;
+}
+
+export function getMeasurementValueKind(val: MeasurementValues): string {
+    return "kind" in val ? val.kind : "";
 }

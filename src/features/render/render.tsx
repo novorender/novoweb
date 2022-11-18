@@ -85,7 +85,7 @@ import { measureActions, selectMeasure } from "features/measure";
 import {
     manholeActions,
     selectCollisionValues,
-    selectManholeMeasureAgainst,
+    selectManholeCollisionTarget,
     selectManholeMeasureValues,
     useHandleManholeUpdates,
 } from "features/manhole";
@@ -265,8 +265,8 @@ export function Render3D({ onInit }: Props) {
     const areaValue = useAppSelector(selectArea);
     const { points: pointLinePoints, result: pointLineResult } = useAppSelector(selectPointLine);
     const manhole = useAppSelector(selectManholeMeasureValues);
-    const manholeCollision = useAppSelector(selectCollisionValues);
-    const manholeColEntity = useAppSelector(selectManholeMeasureAgainst)?.entity;
+    const manholeCollisionValues = useAppSelector(selectCollisionValues);
+    const manholeCollisionEntity = useAppSelector(selectManholeCollisionTarget)?.entity;
 
     const dispatch = useAppDispatch();
 
@@ -396,24 +396,26 @@ export function Render3D({ onInit }: Props) {
                 advancedDrawing: false,
                 measureSettings: undefined,
             });
-            if (manholeColEntity) {
+            if (manholeCollisionEntity) {
                 renderObject({
                     fillColor: "rgba(0, 255, 38, 0.5)",
                     pathName: "manholeColEntity",
-                    entity: manholeColEntity,
+                    entity: manholeCollisionEntity,
                     advancedDrawing: false,
                     measureSettings: undefined,
                 });
             } else {
                 resetSVG({ svg, pathName: "manholeColEntity" });
             }
-            if (manholeCollision) {
+            if (manholeCollisionValues) {
                 renderPoints({
-                    points: pathPoints({ points: manholeCollision }),
+                    points: pathPoints({ points: manholeCollisionValues }),
                     svgNames: { path: "manholeCollision", point: "manhole_col" },
                     text: {
                         textName: "manholeCollisionText",
-                        value: [vec3.len(vec3.sub(vec3.create(), manholeCollision[0], manholeCollision[1]))],
+                        value: [
+                            vec3.len(vec3.sub(vec3.create(), manholeCollisionValues[0], manholeCollisionValues[1])),
+                        ],
                         type: "distance",
                     },
                 });
@@ -681,9 +683,9 @@ export function Render3D({ onInit }: Props) {
         areaValue,
         myLocationPoint,
         manhole,
-        manholeCollision,
+        manholeCollisionValues,
         measureScene,
-        manholeColEntity,
+        manholeCollisionEntity,
         drawPathSettings,
         size,
     ]);
@@ -1990,7 +1992,7 @@ export function Render3D({ onInit }: Props) {
                                 <>
                                     <path id={"manhole"} d="" stroke="yellow" strokeWidth={2} fill="none" />
                                     <path id={"manhole_filled"} d="" stroke="yellow" strokeWidth={2} fill="none" />
-                                    {manholeColEntity && (
+                                    {manholeCollisionEntity && (
                                         <path
                                             id={"manholeColEntity"}
                                             d=""
@@ -1999,7 +2001,7 @@ export function Render3D({ onInit }: Props) {
                                             fill="none"
                                         />
                                     )}
-                                    {manholeCollision && (
+                                    {manholeCollisionValues && (
                                         <>
                                             <path
                                                 id={"manholeCollision"}

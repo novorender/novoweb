@@ -4,14 +4,14 @@ import { useAppDispatch, useAppSelector } from "app/store";
 import { useExplorerGlobals } from "contexts/explorerGlobals";
 import { ExtendedMeasureEntity } from "types/misc";
 
-import { manholeActions, selectManholeMeasureAgainst, selectManholeMeasureValues } from "./manholeSlice";
+import { manholeActions, selectManholeCollisionTarget, selectManholeMeasureValues } from "./manholeSlice";
 
-export function useHandleManholeConnectedCylinder() {
+export function useLoadCollisionTarget() {
     const {
         state: { measureScene },
     } = useExplorerGlobals();
 
-    const obj = useAppSelector(selectManholeMeasureAgainst)?.selected;
+    const obj = useAppSelector(selectManholeCollisionTarget)?.selected;
     const manhole = useAppSelector(selectManholeMeasureValues);
     const dispatch = useAppDispatch();
 
@@ -39,7 +39,7 @@ export function useHandleManholeConnectedCylinder() {
                       return _mObj;
                   }))) as ExtendedMeasureEntity;
 
-            dispatch(manholeActions.setMeasureAgainstEntity(entity));
+            dispatch(manholeActions.setCollisionEntity(entity));
         }
     }, [measureScene, dispatch, manhole?.bottom, obj, manhole]);
 

@@ -2,7 +2,7 @@ import { DeleteSweep, PushPin } from "@mui/icons-material";
 import { useRef, useEffect, useState } from "react";
 import { Box, Button, capitalize, Checkbox, FormControlLabel, Grid, List, ListItem, Typography } from "@mui/material";
 import { vec3 } from "gl-matrix";
-import { MeasureEntity, MeasurementValues, MeasureSettings, PointEntity } from "@novorender/measure-api";
+import { MeasurementValues, MeasureSettings } from "@novorender/measure-api";
 
 import { useAppDispatch, useAppSelector } from "app/store";
 import {
@@ -24,8 +24,9 @@ import { useToggle } from "hooks/useToggle";
 import { featuresConfig } from "config/features";
 import { selectMinimized, selectMaximized } from "slices/explorerSlice";
 import { Picker, renderActions, selectPicker } from "slices/renderSlice";
-import { getMeasurementValueKind, MeasurementData } from "features/measure/measuredObject";
+import { MeasurementData } from "features/measure/measuredObject";
 import { useExplorerGlobals } from "contexts/explorerGlobals";
+import { measureObjectIsVertex, getMeasurementValueKind } from "utils/misc";
 
 import {
     manholeActions,
@@ -33,7 +34,7 @@ import {
     selectManholeId,
     selectIsLoadingManholeBrep,
     selectIsManholePinned,
-    selectManholeMeasureAgainst,
+    selectManholeCollisionTarget,
     selectCollisionValues,
 } from "./manholeSlice";
 
@@ -49,7 +50,7 @@ export function Manhole() {
     const manhole = useAppSelector(selectManholeMeasureValues);
 
     const selectedObj = useAppSelector(selectManholeId);
-    const selectedMeasureEntity = useAppSelector(selectManholeMeasureAgainst);
+    const collisionTarget = useAppSelector(selectManholeCollisionTarget);
     const collisionValues = useAppSelector(selectCollisionValues);
     const isLoading = useAppSelector(selectIsLoadingManholeBrep);
     const isPinned = useAppSelector(selectIsManholePinned);
@@ -77,29 +78,21 @@ export function Manhole() {
         getMeasureValues();
 
         async function getMeasureValues() {
-            if (selectedMeasureEntity?.entity) {
+            if (collisionTarget?.entity) {
                 setMeasureValues(
-                    await measureScene.measure(
-                        selectedMeasureEntity.entity,
-                        undefined,
-                        selectedMeasureEntity.selected.settings
-                    )
+                    await measureScene.measure(collisionTarget.entity, undefined, collisionTarget.selected.settings)
                 );
             } else {
                 setMeasureValues(undefined);
             }
         }
-    }, [selectedMeasureEntity, measureScene]);
+    }, [collisionTarget, measureScene]);
 
-    const measureAgainstKind = !selectedMeasureEntity
+    const collisionTargetKind = !collisionTarget
         ? ""
         : measureValues
         ? getMeasurementValueKind(measureValues)
         : "point";
-
-    const isVertex = (measureObject: MeasureEntity | undefined): measureObject is PointEntity => {
-        return measureObject ? measureObject.drawKind === "vertex" : false;
-    };
 
     return (
         <>
@@ -207,7 +200,7 @@ export function Manhole() {
                                             measureValues={manhole.top}
                                             useCylinderMeasureSettings={false}
                                             setSettingsFunc={(settings: MeasureSettings) => {
-                                                dispatch(manholeActions.setMeasureAgainstSettings(settings));
+                                                dispatch(manholeActions.setCollisionSettings(settings));
                                             }}
                                         />
                                     </AccordionDetails>
@@ -227,7 +220,7 @@ export function Manhole() {
                                             measureValues={manhole.bottom}
                                             useCylinderMeasureSettings={false}
                                             setSettingsFunc={(settings: MeasureSettings) => {
-                                                dispatch(manholeActions.setMeasureAgainstSettings(settings));
+                                                dispatch(manholeActions.setCollisionSettings(settings));
                                             }}
                                         />
                                     </AccordionDetails>
@@ -248,7 +241,7 @@ export function Manhole() {
                                             simpleCylinder={true}
                                             useCylinderMeasureSettings={false}
                                             setSettingsFunc={(settings: MeasureSettings) => {
-                                                dispatch(manholeActions.setMeasureAgainstSettings(settings));
+                                                dispatch(manholeActions.setCollisionSettings(settings));
                                             }}
                                         />
                                     </AccordionDetails>
@@ -269,7 +262,7 @@ export function Manhole() {
                                                 useCylinderMeasureSettings={false}
                                                 simpleCylinder={true}
                                                 setSettingsFunc={(settings: MeasureSettings) => {
-                                                    dispatch(manholeActions.setMeasureAgainstSettings(settings));
+                                                    dispatch(manholeActions.setCollisionSettings(settings));
                                                 }}
                                             />
                                         </AccordionDetails>
@@ -284,33 +277,33 @@ export function Manhole() {
                                 : "No object selected."}
                         </Box>
                     ) : null}
-                    {selectedMeasureEntity ? (
+                    {collisionTarget ? (
                         <>
                             <Accordion defaultExpanded={false}>
                                 <AccordionSummary>
                                     <Box width={0} flex="1 1 auto" overflow="hidden">
                                         <Box overflow="hidden" whiteSpace="nowrap" textOverflow="ellipsis">
-                                            {measureAgainstKind
-                                                ? measureAgainstKind === "lineStrip"
+                                            {collisionTargetKind
+                                                ? collisionTargetKind === "lineStrip"
                                                     ? "Line strip"
-                                                    : capitalize(measureAgainstKind)
+                                                    : capitalize(collisionTargetKind)
                                                 : "Loading..."}
                                         </Box>
                                     </Box>
                                 </AccordionSummary>
                                 <AccordionDetails>
-                                    {!selectedMeasureEntity ? null : measureValues ? (
+                                    {!collisionTarget ? null : measureValues ? (
                                         <MeasurementData
                                             measureValues={measureValues}
-                                            settings={selectedMeasureEntity.selected.settings}
+                                            settings={collisionTarget.selected.settings}
                                             useCylinderMeasureSettings={false}
                                             setSettingsFunc={(settings: MeasureSettings) => {
-                                                dispatch(manholeActions.setMeasureAgainstSettings(settings));
+                                                dispatch(manholeActions.setCollisionSettings(settings));
                                             }}
                                         />
-                                    ) : isVertex(selectedMeasureEntity.entity) ? (
+                                    ) : measureObjectIsVertex(collisionTarget.entity) ? (
                                         <Box p={2}>
-                                            <VertexTable vertices={[selectedMeasureEntity.entity.parameter]} />
+                                            <VertexTable vertices={[collisionTarget.entity.parameter]} />
                                         </Box>
                                     ) : null}
                                 </AccordionDetails>
