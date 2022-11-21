@@ -1,22 +1,20 @@
 import { DeleteSweep, PushPin } from "@mui/icons-material";
 import { useRef, useEffect, useState } from "react";
-import { Box, Button, capitalize, Checkbox, FormControlLabel, Grid, List, ListItem, Typography } from "@mui/material";
+import { Box, Button, capitalize, Checkbox, FormControlLabel, Grid } from "@mui/material";
 import { vec3 } from "gl-matrix";
-import { MeasurementValues, MeasureSettings } from "@novorender/measure-api";
+import { MeasurementValues } from "@novorender/measure-api";
 
 import { useAppDispatch, useAppSelector } from "app/store";
 import {
     Accordion,
     AccordionDetails,
     AccordionSummary,
-    Divider,
     IosSwitch,
     LinearProgress,
     LogoSpeedDial,
     ScrollBox,
     WidgetContainer,
     WidgetHeader,
-    MeasurementTable,
     VertexTable,
 } from "components";
 import { WidgetList } from "features/widgetList";
@@ -35,7 +33,8 @@ import {
     selectIsLoadingManholeBrep,
     selectIsManholePinned,
     selectManholeCollisionTarget,
-    selectCollisionValues,
+    selectManholeCollisionValues,
+    selectManholeCollisionSettings,
 } from "./manholeSlice";
 
 export function Manhole() {
@@ -51,7 +50,8 @@ export function Manhole() {
 
     const selectedObj = useAppSelector(selectManholeId);
     const collisionTarget = useAppSelector(selectManholeCollisionTarget);
-    const collisionValues = useAppSelector(selectCollisionValues);
+    const collisionValues = useAppSelector(selectManholeCollisionValues);
+    const collisionSettings = useAppSelector(selectManholeCollisionSettings);
     const isLoading = useAppSelector(selectIsLoadingManholeBrep);
     const isPinned = useAppSelector(selectIsManholePinned);
     const selecting = useAppSelector(selectPicker) === Picker.Manhole;
@@ -79,14 +79,12 @@ export function Manhole() {
 
         async function getMeasureValues() {
             if (collisionTarget?.entity) {
-                setMeasureValues(
-                    await measureScene.measure(collisionTarget.entity, undefined, collisionTarget.selected.settings)
-                );
+                setMeasureValues(await measureScene.measure(collisionTarget.entity, undefined, collisionSettings));
             } else {
                 setMeasureValues(undefined);
             }
         }
-    }, [collisionTarget, measureScene]);
+    }, [collisionTarget, collisionSettings, measureScene]);
 
     const collisionTargetKind = !collisionTarget
         ? ""
@@ -138,7 +136,6 @@ export function Manhole() {
                     {manhole ? (
                         <Accordion defaultExpanded={true}>
                             <AccordionSummary>
-                                Manhole
                                 <Box flex="0 0 auto">
                                     <Checkbox
                                         aria-label="pin measured object"
@@ -154,40 +151,54 @@ export function Manhole() {
                                         onFocus={(event) => event.stopPropagation()}
                                     />
                                 </Box>
+                                Manhole
                             </AccordionSummary>
 
                             <AccordionDetails>
                                 <Box p={1}>
-                                    <Typography>
-                                        <Box component="span" sx={{ minWidth: 110 }} display="inline-block">
+                                    <Grid container>
+                                        <Grid item xs={5}>
                                             Elevation top:
-                                        </Box>
-                                        {manhole.topElevation.toFixed(3)} m
-                                    </Typography>
-                                    <Typography>
-                                        <Box component="span" sx={{ minWidth: 110 }} display="inline-block">
+                                        </Grid>
+                                        <Grid item xs={5}>
+                                            {manhole.topElevation.toFixed(3)} m
+                                        </Grid>
+
+                                        <Grid item xs={5}>
                                             Elevation bot:
-                                        </Box>
-                                        {manhole.bottomElevation.toFixed(3)} m
-                                    </Typography>
-                                    <Typography>
-                                        <Box component="span" sx={{ minWidth: 110 }} display="inline-block">
-                                            Radius outer:
-                                        </Box>
-                                        {manhole.outerRadius.toFixed(3)} m
-                                    </Typography>
-                                    {manhole.innerRadius ? (
-                                        <Typography>
-                                            <Box component="span" sx={{ minWidth: 110 }} display="inline-block">
-                                                Radius inner:
-                                            </Box>
-                                            {manhole.innerRadius.toFixed(3)} m
-                                        </Typography>
-                                    ) : null}
+                                        </Grid>
+                                        <Grid item xs={5}>
+                                            {manhole.bottomElevation.toFixed(3)} m
+                                        </Grid>
+
+                                        <Grid item xs={5}>
+                                            Elevation inner bot:
+                                        </Grid>
+                                        <Grid item xs={5}>
+                                            {manhole.bottomElevation.toFixed(3)} m todo
+                                        </Grid>
+
+                                        <Grid item xs={5}>
+                                            Diameter outer:{" "}
+                                        </Grid>
+                                        <Grid item xs={5}>
+                                            {(manhole.outerRadius * 2).toFixed(3)} m
+                                        </Grid>
+
+                                        {manhole.innerRadius && (
+                                            <>
+                                                <Grid item xs={5}>
+                                                    Diameter inner:
+                                                </Grid>
+                                                <Grid item xs={5}>
+                                                    {(manhole.innerRadius * 2).toFixed(3)} m
+                                                </Grid>
+                                            </>
+                                        )}
+                                    </Grid>
                                 </Box>
-                                <Divider />
-                                <Accordion defaultExpanded={false}>
-                                    <AccordionSummary>
+                                <Accordion defaultExpanded={false} level={2}>
+                                    <AccordionSummary level={2}>
                                         <Box width={0} flex="1 1 auto" overflow="hidden">
                                             <Box overflow="hidden" whiteSpace="nowrap" textOverflow="ellipsis">
                                                 Top
@@ -195,19 +206,12 @@ export function Manhole() {
                                         </Box>
                                     </AccordionSummary>
                                     <AccordionDetails sx={{ mx: -1 }}>
-                                        <MeasurementData
-                                            settings={undefined}
-                                            measureValues={manhole.top}
-                                            useCylinderMeasureSettings={false}
-                                            setSettingsFunc={(settings: MeasureSettings) => {
-                                                dispatch(manholeActions.setCollisionSettings(settings));
-                                            }}
-                                        />
+                                        <MeasurementData measureValues={manhole.top} />
                                     </AccordionDetails>
                                 </Accordion>
 
-                                <Accordion defaultExpanded={false}>
-                                    <AccordionSummary>
+                                <Accordion defaultExpanded={false} level={2}>
+                                    <AccordionSummary level={2}>
                                         <Box width={0} flex="1 1 auto" overflow="hidden">
                                             <Box overflow="hidden" whiteSpace="nowrap" textOverflow="ellipsis">
                                                 Bottom
@@ -215,19 +219,12 @@ export function Manhole() {
                                         </Box>
                                     </AccordionSummary>
                                     <AccordionDetails sx={{ mx: -1 }}>
-                                        <MeasurementData
-                                            settings={undefined}
-                                            measureValues={manhole.bottom}
-                                            useCylinderMeasureSettings={false}
-                                            setSettingsFunc={(settings: MeasureSettings) => {
-                                                dispatch(manholeActions.setCollisionSettings(settings));
-                                            }}
-                                        />
+                                        <MeasurementData measureValues={manhole.bottom} />
                                     </AccordionDetails>
                                 </Accordion>
 
-                                <Accordion defaultExpanded={false}>
-                                    <AccordionSummary>
+                                <Accordion defaultExpanded={false} level={2}>
+                                    <AccordionSummary level={2}>
                                         <Box width={0} flex="1 1 auto" overflow="hidden">
                                             <Box overflow="hidden" whiteSpace="nowrap" textOverflow="ellipsis">
                                                 Outer
@@ -235,20 +232,12 @@ export function Manhole() {
                                         </Box>
                                     </AccordionSummary>
                                     <AccordionDetails sx={{ mx: -1 }}>
-                                        <MeasurementData
-                                            settings={undefined}
-                                            measureValues={manhole.outer}
-                                            simpleCylinder={true}
-                                            useCylinderMeasureSettings={false}
-                                            setSettingsFunc={(settings: MeasureSettings) => {
-                                                dispatch(manholeActions.setCollisionSettings(settings));
-                                            }}
-                                        />
+                                        <MeasurementData measureValues={manhole.outer} />
                                     </AccordionDetails>
                                 </Accordion>
                                 {manhole.inner && manhole.innerRadius ? (
-                                    <Accordion defaultExpanded={false}>
-                                        <AccordionSummary>
+                                    <Accordion defaultExpanded={false} level={2}>
+                                        <AccordionSummary level={2}>
                                             <Box width={0} flex="1 1 auto" overflow="hidden">
                                                 <Box overflow="hidden" whiteSpace="nowrap" textOverflow="ellipsis">
                                                     Inner
@@ -256,15 +245,7 @@ export function Manhole() {
                                             </Box>
                                         </AccordionSummary>
                                         <AccordionDetails sx={{ mx: -1 }}>
-                                            <MeasurementData
-                                                settings={undefined}
-                                                measureValues={manhole.inner}
-                                                useCylinderMeasureSettings={false}
-                                                simpleCylinder={true}
-                                                setSettingsFunc={(settings: MeasureSettings) => {
-                                                    dispatch(manholeActions.setCollisionSettings(settings));
-                                                }}
-                                            />
+                                            <MeasurementData measureValues={manhole.inner} />
                                         </AccordionDetails>
                                     </Accordion>
                                 ) : null}
@@ -279,7 +260,7 @@ export function Manhole() {
                     ) : null}
                     {collisionTarget ? (
                         <>
-                            <Accordion defaultExpanded={false}>
+                            <Accordion defaultExpanded={true}>
                                 <AccordionSummary>
                                     <Box width={0} flex="1 1 auto" overflow="hidden">
                                         <Box overflow="hidden" whiteSpace="nowrap" textOverflow="ellipsis">
@@ -292,13 +273,34 @@ export function Manhole() {
                                     </Box>
                                 </AccordionSummary>
                                 <AccordionDetails>
+                                    {collisionValues ? (
+                                        <Box px={2} mb={-0.5}>
+                                            <Grid container>
+                                                <Grid item xs={5}>
+                                                    To outer bot:
+                                                </Grid>
+                                                <Grid item xs={5} mb={1}>
+                                                    {vec3.distance(collisionValues[0], collisionValues[1]).toFixed(3)} m
+                                                </Grid>
+
+                                                <Grid item xs={5}>
+                                                    To inner bot:
+                                                </Grid>
+                                                <Grid item xs={5}>
+                                                    {vec3.distance(collisionValues[0], collisionValues[1]).toFixed(3)} m
+                                                    todo
+                                                </Grid>
+                                            </Grid>
+                                        </Box>
+                                    ) : null}
                                     {!collisionTarget ? null : measureValues ? (
                                         <MeasurementData
                                             measureValues={measureValues}
-                                            settings={collisionTarget.selected.settings}
-                                            useCylinderMeasureSettings={false}
-                                            setSettingsFunc={(settings: MeasureSettings) => {
-                                                dispatch(manholeActions.setCollisionSettings(settings));
+                                            settings={collisionSettings}
+                                            onSettingsChange={(newValue) => {
+                                                dispatch(
+                                                    manholeActions.setCollisionSettings({ cylinderMeasure: newValue })
+                                                );
                                             }}
                                         />
                                     ) : measureObjectIsVertex(collisionTarget.entity) ? (
@@ -308,30 +310,6 @@ export function Manhole() {
                                     ) : null}
                                 </AccordionDetails>
                             </Accordion>
-                        </>
-                    ) : null}
-                    {collisionValues ? (
-                        <>
-                            <List>
-                                <ListItem>
-                                    <Grid container>
-                                        <Grid item xs={4}>
-                                            Distance from manhole bottom
-                                        </Grid>
-                                        <Grid item xs={6}>
-                                            {vec3.distance(collisionValues[0], collisionValues[1]).toFixed(3)} m
-                                        </Grid>
-                                    </Grid>
-                                </ListItem>
-                            </List>
-                            <Box p={1}>
-                                <Accordion defaultExpanded={false}>
-                                    <AccordionSummary>Components</AccordionSummary>
-                                    <AccordionDetails>
-                                        {<MeasurementTable start={collisionValues[0]} end={collisionValues[1]} />}
-                                    </AccordionDetails>
-                                </Accordion>
-                            </Box>
                         </>
                     ) : null}
                 </ScrollBox>

@@ -109,13 +109,15 @@ export function MeasuredObject({ obj, idx }: { obj: SelectedMeasureObj; idx: num
                 {!measureObject ? null : measureValues ? (
                     <MeasurementData
                         measureValues={measureValues}
+                        useCylinderRelativeMeasureSettings={useCylinderMeasureSettings}
                         settings={obj.settings}
-                        useCylinderMeasureSettings={useCylinderMeasureSettings ? useCylinderMeasureSettings : false}
-                        setSettingsFunc={(settings: MeasureSettings) => {
+                        onSettingsChange={(newValue) => {
                             dispatch(
                                 measureActions.setSettings({
                                     idx,
-                                    settings,
+                                    settings: {
+                                        cylinderMeasure: newValue,
+                                    },
                                 })
                             );
                         }}
@@ -151,10 +153,10 @@ export function MeasuredResult({ duoMeasurementValues }: { duoMeasurementValues:
                         {duoMeasurementValues.distance ? (
                             <ListItem>
                                 <Grid container>
-                                    <Grid item xs={4}>
+                                    <Grid item xs={5}>
                                         Distance
                                     </Grid>
-                                    <Grid item xs={6}>
+                                    <Grid item xs={5}>
                                         {duoMeasurementValues.distance.toFixed(3)} m
                                     </Grid>
                                 </Grid>
@@ -163,10 +165,10 @@ export function MeasuredResult({ duoMeasurementValues }: { duoMeasurementValues:
                         {duoMeasurementValues.angle ? (
                             <ListItem>
                                 <Grid container>
-                                    <Grid item xs={4}>
+                                    <Grid item xs={5}>
                                         Angle
                                     </Grid>
-                                    <Grid item xs={6}>
+                                    <Grid item xs={5}>
                                         {(duoMeasurementValues.angle * (180 / Math.PI)).toFixed(3)} °
                                     </Grid>
                                 </Grid>
@@ -175,10 +177,10 @@ export function MeasuredResult({ duoMeasurementValues }: { duoMeasurementValues:
                         {duoMeasurementValues.normalDistance ? (
                             <ListItem>
                                 <Grid container>
-                                    <Grid item xs={4}>
+                                    <Grid item xs={5}>
                                         Normal distance
                                     </Grid>
-                                    <Grid item xs={6}>
+                                    <Grid item xs={5}>
                                         {duoMeasurementValues.normalDistance.toFixed(3)} m
                                     </Grid>
                                 </Grid>
@@ -211,16 +213,14 @@ export function MeasuredResult({ duoMeasurementValues }: { duoMeasurementValues:
 
 export function MeasurementData({
     measureValues,
-    useCylinderMeasureSettings,
-    simpleCylinder,
+    useCylinderRelativeMeasureSettings,
     settings,
-    setSettingsFunc,
+    onSettingsChange,
 }: {
     measureValues: MeasurementValues;
-    useCylinderMeasureSettings: boolean;
+    useCylinderRelativeMeasureSettings?: boolean;
     settings?: MeasureSettings;
-    simpleCylinder?: boolean;
-    setSettingsFunc: (settings: MeasureSettings) => void;
+    onSettingsChange?: (newValue: string) => void;
 }) {
     if (!("kind" in measureValues)) {
         return null;
@@ -233,10 +233,10 @@ export function MeasurementData({
                     <List dense>
                         <ListItem>
                             <Grid container>
-                                <Grid item xs={4}>
+                                <Grid item xs={5}>
                                     Length
                                 </Grid>
-                                <Grid item xs={6}>
+                                <Grid item xs={5}>
                                     {measureValues.distance.toFixed(3)} m
                                 </Grid>
                             </Grid>
@@ -263,10 +263,10 @@ export function MeasurementData({
                         {measureValues.totalLength ? (
                             <ListItem>
                                 <Grid container>
-                                    <Grid item xs={4}>
+                                    <Grid item xs={5}>
                                         Length
                                     </Grid>
-                                    <Grid item xs={6}>
+                                    <Grid item xs={5}>
                                         {measureValues.totalLength.toFixed(3)} m
                                     </Grid>
                                 </Grid>
@@ -281,16 +281,16 @@ export function MeasurementData({
                 <List dense>
                     <ListItem>
                         <Grid container>
-                            <Grid item xs={4}>
+                            <Grid item xs={5}>
                                 Radius
                             </Grid>
-                            <Grid item xs={6}>
+                            <Grid item xs={5}>
                                 {measureValues.radius.toFixed(3)} m
                             </Grid>
-                            <Grid item xs={4}>
+                            <Grid item xs={5}>
                                 Total angle
                             </Grid>
-                            <Grid item xs={6}>
+                            <Grid item xs={5}>
                                 {Math.round(measureValues.totalAngle * (180 / Math.PI))} deg
                             </Grid>
                         </Grid>
@@ -305,10 +305,10 @@ export function MeasurementData({
                         {measureValues.height ? (
                             <ListItem>
                                 <Grid container>
-                                    <Grid item xs={4}>
+                                    <Grid item xs={5}>
                                         Height
                                     </Grid>
-                                    <Grid item xs={6}>
+                                    <Grid item xs={5}>
                                         {measureValues.height.toFixed(3)} m
                                     </Grid>
                                 </Grid>
@@ -317,10 +317,10 @@ export function MeasurementData({
                         {measureValues.width ? (
                             <ListItem>
                                 <Grid container>
-                                    <Grid item xs={4}>
+                                    <Grid item xs={5}>
                                         Width
                                     </Grid>
-                                    <Grid item xs={6}>
+                                    <Grid item xs={5}>
                                         {measureValues.width.toFixed(3)} m
                                     </Grid>
                                 </Grid>
@@ -329,10 +329,10 @@ export function MeasurementData({
                         {measureValues.area ? (
                             <ListItem>
                                 <Grid container>
-                                    <Grid item xs={4}>
+                                    <Grid item xs={5}>
                                         Area
                                     </Grid>
-                                    <Grid item xs={6}>
+                                    <Grid item xs={5}>
                                         {measureValues.area.toFixed(3)} &#13217;
                                     </Grid>
                                 </Grid>
@@ -341,10 +341,10 @@ export function MeasurementData({
                         {measureValues.innerRadius ? (
                             <ListItem>
                                 <Grid container>
-                                    <Grid item xs={4}>
+                                    <Grid item xs={5}>
                                         {measureValues.outerRadius ? "Inner radius" : "Radius"}
                                     </Grid>
-                                    <Grid item xs={6}>
+                                    <Grid item xs={5}>
                                         {(measureValues.outerRadius
                                             ? Math.min(
                                                   measureValues.outerRadius as number,
@@ -360,10 +360,10 @@ export function MeasurementData({
                         {measureValues.outerRadius ? (
                             <ListItem>
                                 <Grid container>
-                                    <Grid item xs={4}>
+                                    <Grid item xs={5}>
                                         {measureValues.innerRadius ? "Outer radius" : "Radius"}
                                     </Grid>
-                                    <Grid item xs={6}>
+                                    <Grid item xs={5}>
                                         {(measureValues.innerRadius
                                             ? Math.max(
                                                   measureValues.outerRadius as number,
@@ -379,10 +379,10 @@ export function MeasurementData({
                         {measureValues.heightAboveXyPlane !== undefined ? (
                             <ListItem>
                                 <Grid container>
-                                    <Grid item xs={4}>
+                                    <Grid item xs={5}>
                                         Elevation
                                     </Grid>
-                                    <Grid item xs={6}>
+                                    <Grid item xs={5}>
                                         {measureValues.heightAboveXyPlane.toFixed(3)} m
                                     </Grid>
                                 </Grid>
@@ -409,50 +409,43 @@ export function MeasurementData({
                     <List dense>
                         <ListItem>
                             <Grid container>
-                                <Grid item xs={4}>
+                                <Grid item xs={5}>
                                     Diameter
                                 </Grid>
-                                <Grid item xs={6}>
+                                <Grid item xs={5}>
                                     {(measureValues.radius * 2).toFixed(3)} m
                                 </Grid>
                             </Grid>
                         </ListItem>
                         <ListItem>
                             <Grid container>
-                                <Grid item xs={4}>
+                                <Grid item xs={5}>
                                     Length
                                 </Grid>
-                                <Grid item xs={6}>
+                                <Grid item xs={5}>
                                     {distance.toFixed(3)} m
                                 </Grid>
                             </Grid>
                         </ListItem>
-                        {simpleCylinder ? null : (
-                            <ListItem>
-                                <Slope start={measureValues.centerLineStart} end={measureValues.centerLineEnd} />
-                            </ListItem>
-                        )}
+                        <ListItem>
+                            <Slope start={measureValues.centerLineStart} end={measureValues.centerLineEnd} />
+                        </ListItem>
                     </List>
-                    {simpleCylinder ? null : (
+                    {onSettingsChange && (
                         <Box px={2} flex="1 1 auto" overflow="hidden">
-                            <InputLabel sx={{ color: "text.primary" }}>Measure from: </InputLabel>
+                            <InputLabel sx={{ color: "text.primary", fontWeight: 600 }}>Measure from: </InputLabel>
                             <Select
                                 fullWidth
                                 name="pivot"
                                 size="small"
                                 value={settings?.cylinderMeasure ? settings.cylinderMeasure : "center"}
-                                onChange={(e) => {
-                                    setSettingsFunc({
-                                        ...settings,
-                                        cylinderMeasure: e.target.value as MeasureSettings["cylinderMeasure"],
-                                    });
-                                }}
+                                onChange={(event) => onSettingsChange(event.target.value)}
                                 input={<OutlinedInput fullWidth />}
                             >
                                 {cylinderOptions.map((opt) => (
                                     <MenuItem
                                         disabled={
-                                            useCylinderMeasureSettings
+                                            useCylinderRelativeMeasureSettings
                                                 ? false
                                                 : opt.val === "closest" || opt.val === "furthest"
                                         }

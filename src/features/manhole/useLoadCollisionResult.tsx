@@ -5,7 +5,12 @@ import { useEffect } from "react";
 import { useAppDispatch, useAppSelector } from "app/store";
 import { useExplorerGlobals } from "contexts/explorerGlobals";
 
-import { manholeActions, selectManholeCollisionTarget, selectManholeMeasureValues } from "./manholeSlice";
+import {
+    manholeActions,
+    selectManholeCollisionSettings,
+    selectManholeCollisionTarget,
+    selectManholeMeasureValues,
+} from "./manholeSlice";
 
 export function useLoadCollisionResult() {
     const {
@@ -14,6 +19,7 @@ export function useLoadCollisionResult() {
 
     const collisionTarget = useAppSelector(selectManholeCollisionTarget);
     const manhole = useAppSelector(selectManholeMeasureValues);
+    const settings = useAppSelector(selectManholeCollisionSettings);
     const dispatch = useAppDispatch();
 
     useEffect(() => {
@@ -25,11 +31,11 @@ export function useLoadCollisionResult() {
                 return;
             }
 
-            const { selected, entity } = collisionTarget;
+            const { entity } = collisionTarget;
 
             if (entity.drawKind === "face" && manhole) {
                 const res = (await measureScene
-                    .collision(entity, manhole.outer.entity, selected.settings)
+                    .collision(entity, manhole.outer.entity, settings)
                     .catch((e) => console.warn(e))) as CollisionValues | undefined;
                 if (res) {
                     dispatch(
@@ -43,7 +49,7 @@ export function useLoadCollisionResult() {
                 }
             }
         }
-    }, [measureScene, dispatch, manhole?.bottom, collisionTarget, manhole]);
+    }, [measureScene, dispatch, manhole?.bottom, collisionTarget, manhole, settings]);
 
     return;
 }

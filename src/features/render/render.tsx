@@ -84,7 +84,7 @@ import { bookmarksActions, selectBookmarks, useSelectBookmark } from "features/b
 import { measureActions, selectMeasure } from "features/measure";
 import {
     manholeActions,
-    selectCollisionValues,
+    selectManholeCollisionValues,
     selectManholeCollisionTarget,
     selectManholeMeasureValues,
     useHandleManholeUpdates,
@@ -265,7 +265,7 @@ export function Render3D({ onInit }: Props) {
     const areaValue = useAppSelector(selectArea);
     const { points: pointLinePoints, result: pointLineResult } = useAppSelector(selectPointLine);
     const manhole = useAppSelector(selectManholeMeasureValues);
-    const manholeCollisionValues = useAppSelector(selectCollisionValues);
+    const manholeCollisionValues = useAppSelector(selectManholeCollisionValues);
     const manholeCollisionEntity = useAppSelector(selectManholeCollisionTarget)?.entity;
 
     const dispatch = useAppDispatch();
