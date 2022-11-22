@@ -408,17 +408,18 @@ export function Render3D({ onInit }: Props) {
                 resetSVG({ svg, pathName: "manholeColEntity" });
             }
             if (manholeCollisionValues) {
-                renderPoints({
-                    points: pathPoints({ points: manholeCollisionValues }),
-                    svgNames: { path: "manholeCollision", point: "manhole_col" },
-                    text: {
-                        textName: "manholeCollisionText",
-                        value: [
-                            vec3.len(vec3.sub(vec3.create(), manholeCollisionValues[0], manholeCollisionValues[1])),
-                        ],
-                        type: "distance",
-                    },
-                });
+                const mcv = manholeCollisionValues.inner ?? manholeCollisionValues.outer;
+                if (mcv) {
+                    renderPoints({
+                        points: pathPoints({ points: mcv }),
+                        svgNames: { path: "manholeCollision", point: "manhole_col" },
+                        text: {
+                            textName: "manholeCollisionText",
+                            value: [vec3.len(vec3.sub(vec3.create(), mcv[0], mcv[1]))],
+                            type: "distance",
+                        },
+                    });
+                }
             }
         } else {
             resetSVG({ svg, pathName: "manholeColEntity" });

@@ -56,6 +56,7 @@ export function Manhole() {
     const isPinned = useAppSelector(selectIsManholePinned);
     const selecting = useAppSelector(selectPicker) === Picker.Manhole;
     const isInitial = useRef(true);
+    const [measureValues, setMeasureValues] = useState<MeasurementValues>();
 
     useEffect(() => {
         if (isInitial.current) {
@@ -73,7 +74,6 @@ export function Manhole() {
         };
     }, [dispatch]);
 
-    const [measureValues, setMeasureValues] = useState<MeasurementValues>();
     useEffect(() => {
         getMeasureValues();
 
@@ -90,7 +90,9 @@ export function Manhole() {
         ? ""
         : measureValues
         ? getMeasurementValueKind(measureValues)
-        : "point";
+        : isLoading
+        ? "Loading"
+        : "Point";
 
     return (
         <>
@@ -157,44 +159,48 @@ export function Manhole() {
                             <AccordionDetails>
                                 <Box p={1}>
                                     <Grid container>
-                                        <Grid item xs={5}>
+                                        <Grid item xs={6}>
                                             Elevation top:
                                         </Grid>
-                                        <Grid item xs={5}>
+                                        <Grid item xs={4} mb={1}>
                                             {manhole.topElevation.toFixed(3)} m
                                         </Grid>
 
-                                        <Grid item xs={5}>
-                                            Elevation bot:
-                                        </Grid>
-                                        <Grid item xs={5}>
-                                            {manhole.bottomElevation.toFixed(3)} m
-                                        </Grid>
+                                        {manhole.bottomInnerElevation && (
+                                            <>
+                                                <Grid item xs={6} mb={1}>
+                                                    Elevation inner bottom:
+                                                </Grid>
+                                                <Grid item xs={4}>
+                                                    {manhole.bottomInnerElevation.toFixed(3)} m
+                                                </Grid>
+                                            </>
+                                        )}
 
-                                        <Grid item xs={5}>
-                                            Elevation inner bot:
+                                        <Grid item xs={6} mb={1}>
+                                            Elevation outer bottom:
                                         </Grid>
-                                        <Grid item xs={5}>
-                                            {manhole.bottomElevation.toFixed(3)} m todo
-                                        </Grid>
-
-                                        <Grid item xs={5}>
-                                            Diameter outer:{" "}
-                                        </Grid>
-                                        <Grid item xs={5}>
-                                            {(manhole.outerRadius * 2).toFixed(3)} m
+                                        <Grid item xs={4}>
+                                            {manhole.bottomOuterElevation.toFixed(3)} m
                                         </Grid>
 
                                         {manhole.innerRadius && (
                                             <>
-                                                <Grid item xs={5}>
-                                                    Diameter inner:
+                                                <Grid item xs={6} mb={1}>
+                                                    Diameter inner cylinder:
                                                 </Grid>
-                                                <Grid item xs={5}>
+                                                <Grid item xs={4}>
                                                     {(manhole.innerRadius * 2).toFixed(3)} m
                                                 </Grid>
                                             </>
                                         )}
+
+                                        <Grid item xs={6} mb={1}>
+                                            Diameter outer cylinder:{" "}
+                                        </Grid>
+                                        <Grid item xs={4}>
+                                            {(manhole.outerRadius * 2).toFixed(3)} m
+                                        </Grid>
                                     </Grid>
                                 </Box>
                                 <Accordion defaultExpanded={false} level={2}>
@@ -210,37 +216,42 @@ export function Manhole() {
                                     </AccordionDetails>
                                 </Accordion>
 
-                                <Accordion defaultExpanded={false} level={2}>
-                                    <AccordionSummary level={2}>
-                                        <Box width={0} flex="1 1 auto" overflow="hidden">
-                                            <Box overflow="hidden" whiteSpace="nowrap" textOverflow="ellipsis">
-                                                Bottom
-                                            </Box>
-                                        </Box>
-                                    </AccordionSummary>
-                                    <AccordionDetails sx={{ mx: -1 }}>
-                                        <MeasurementData measureValues={manhole.bottom} />
-                                    </AccordionDetails>
-                                </Accordion>
+                                {manhole.bottomInner && (
+                                    <>
+                                        <Accordion defaultExpanded={false} level={2}>
+                                            <AccordionSummary level={2}>
+                                                <Box width={0} flex="1 1 auto" overflow="hidden">
+                                                    <Box overflow="hidden" whiteSpace="nowrap" textOverflow="ellipsis">
+                                                        Inner bottom
+                                                    </Box>
+                                                </Box>
+                                            </AccordionSummary>
+                                            <AccordionDetails sx={{ mx: -1 }}>
+                                                <MeasurementData measureValues={manhole.bottomInner} />
+                                            </AccordionDetails>
+                                        </Accordion>
+                                    </>
+                                )}
 
                                 <Accordion defaultExpanded={false} level={2}>
                                     <AccordionSummary level={2}>
                                         <Box width={0} flex="1 1 auto" overflow="hidden">
                                             <Box overflow="hidden" whiteSpace="nowrap" textOverflow="ellipsis">
-                                                Outer
+                                                Outer bottom
                                             </Box>
                                         </Box>
                                     </AccordionSummary>
                                     <AccordionDetails sx={{ mx: -1 }}>
-                                        <MeasurementData measureValues={manhole.outer} />
+                                        <MeasurementData measureValues={manhole.bottomOuter} />
                                     </AccordionDetails>
                                 </Accordion>
+
                                 {manhole.inner && manhole.innerRadius ? (
                                     <Accordion defaultExpanded={false} level={2}>
                                         <AccordionSummary level={2}>
                                             <Box width={0} flex="1 1 auto" overflow="hidden">
                                                 <Box overflow="hidden" whiteSpace="nowrap" textOverflow="ellipsis">
-                                                    Inner
+                                                    Inner cylinder
                                                 </Box>
                                             </Box>
                                         </AccordionSummary>
@@ -249,6 +260,19 @@ export function Manhole() {
                                         </AccordionDetails>
                                     </Accordion>
                                 ) : null}
+
+                                <Accordion defaultExpanded={false} level={2}>
+                                    <AccordionSummary level={2}>
+                                        <Box width={0} flex="1 1 auto" overflow="hidden">
+                                            <Box overflow="hidden" whiteSpace="nowrap" textOverflow="ellipsis">
+                                                Outer cylinder
+                                            </Box>
+                                        </Box>
+                                    </AccordionSummary>
+                                    <AccordionDetails sx={{ mx: -1 }}>
+                                        <MeasurementData measureValues={manhole.outer} />
+                                    </AccordionDetails>
+                                </Accordion>
                             </AccordionDetails>
                         </Accordion>
                     ) : !isLoading ? (
@@ -273,26 +297,46 @@ export function Manhole() {
                                     </Box>
                                 </AccordionSummary>
                                 <AccordionDetails>
-                                    {collisionValues ? (
+                                    {collisionValues && (
                                         <Box px={2} mb={-0.5}>
                                             <Grid container>
-                                                <Grid item xs={5}>
-                                                    To outer bot:
-                                                </Grid>
-                                                <Grid item xs={5} mb={1}>
-                                                    {vec3.distance(collisionValues[0], collisionValues[1]).toFixed(3)} m
-                                                </Grid>
+                                                {collisionValues.outer && (
+                                                    <>
+                                                        <Grid item xs={5}>
+                                                            To outer bottom:
+                                                        </Grid>
+                                                        <Grid item xs={5}>
+                                                            {vec3
+                                                                .distance(
+                                                                    collisionValues.outer[0],
+                                                                    collisionValues.outer[1]
+                                                                )
+                                                                .toFixed(3)}{" "}
+                                                            m
+                                                        </Grid>
+                                                    </>
+                                                )}
 
-                                                <Grid item xs={5}>
-                                                    To inner bot:
-                                                </Grid>
-                                                <Grid item xs={5}>
-                                                    {vec3.distance(collisionValues[0], collisionValues[1]).toFixed(3)} m
-                                                    todo
-                                                </Grid>
+                                                {collisionValues.inner && (
+                                                    <>
+                                                        <Grid item xs={5}>
+                                                            To inner bottom:
+                                                        </Grid>
+                                                        <Grid item xs={5} my={1}>
+                                                            {vec3
+                                                                .distance(
+                                                                    collisionValues.inner[0],
+                                                                    collisionValues.inner[1]
+                                                                )
+                                                                .toFixed(3)}{" "}
+                                                            m
+                                                        </Grid>
+                                                    </>
+                                                )}
                                             </Grid>
                                         </Box>
-                                    ) : null}
+                                    )}
+
                                     {!collisionTarget ? null : measureValues ? (
                                         <MeasurementData
                                             measureValues={measureValues}

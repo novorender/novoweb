@@ -28,6 +28,8 @@ export function useLoadCollisionTarget() {
             if (!measureScene || !obj) {
                 return;
             }
+
+            dispatch(manholeActions.setLoadingBrep(true));
             const entity = (await (obj.id === -1
                 ? { ObjectId: -1, drawKind: "vertex", parameter: obj.pos }
                 : measureScene.pickMeasureEntity(obj.id, obj.pos).then(async (_mObj) => {
@@ -46,8 +48,9 @@ export function useLoadCollisionTarget() {
                   }))) as ExtendedMeasureEntity;
 
             dispatch(manholeActions.setCollisionEntity(entity));
+            dispatch(manholeActions.setLoadingBrep(false));
         }
-    }, [measureScene, dispatch, manhole?.bottom, obj, manhole, settings]);
+    }, [measureScene, dispatch, obj, manhole, settings]);
 
     return;
 }

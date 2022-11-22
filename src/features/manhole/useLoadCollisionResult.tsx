@@ -1,4 +1,3 @@
-import { CollisionValues } from "@novorender/measure-api";
 import { vec3 } from "gl-matrix";
 import { useEffect } from "react";
 
@@ -34,22 +33,47 @@ export function useLoadCollisionResult() {
             const { entity } = collisionTarget;
 
             if (entity.drawKind === "face" && manhole) {
-                const res = (await measureScene
-                    .collision(entity, manhole.outer.entity, settings)
-                    .catch((e) => console.warn(e))) as CollisionValues | undefined;
-                if (res) {
-                    dispatch(
-                        manholeActions.setCollisionValues([
-                            res.point,
-                            vec3.fromValues(res.point[0], manhole.bottomElevation, res.point[2]),
-                        ])
-                    );
-                } else {
+                dispatch(manholeActions.setLoadingBrep(true));
+                const [outerCollision, innerCollision] = await Promise.all([
+                    measureScene.collision(entity, manhole.outer.entity, settings),
+                    ...(manhole.inner ? [measureScene.collision(entity, manhole.inner.entity, settings)] : []),
+                ]);
+
+                if (!outerCollision && !innerCollision) {
                     dispatch(manholeActions.setCollisionValues(undefined));
+                    dispatch(manholeActions.setLoadingBrep(false));
+                    return;
                 }
+
+                dispatch(
+                    manholeActions.setCollisionValues({
+                        outer: outerCollision
+                            ? [
+                                  outerCollision.point,
+                                  vec3.fromValues(
+                                      outerCollision.point[0],
+                                      manhole.bottomOuterElevation,
+                                      outerCollision.point[2]
+                                  ),
+                              ]
+                            : undefined,
+                        inner:
+                            innerCollision && manhole.bottomInnerElevation
+                                ? [
+                                      innerCollision.point,
+                                      vec3.fromValues(
+                                          innerCollision.point[0],
+                                          manhole.bottomInnerElevation,
+                                          innerCollision.point[2]
+                                      ),
+                                  ]
+                                : undefined,
+                    })
+                );
+                dispatch(manholeActions.setLoadingBrep(false));
             }
         }
-    }, [measureScene, dispatch, manhole?.bottom, collisionTarget, manhole, settings]);
+    }, [measureScene, dispatch, collisionTarget, manhole, settings]);
 
     return;
 }
