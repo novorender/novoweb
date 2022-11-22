@@ -81,7 +81,7 @@ export function Home({ position, ...speedDialProps }: Props) {
         dispatch(measureActions.clear());
         dispatch(areaActions.setPoints([]));
         dispatch(pointLineActions.setPoints([]));
-        dispatch(manholeActions.selectObj(undefined));
+        dispatch(manholeActions.initFromBookmark(undefined));
 
         if (settings) {
             const { display: _display, environment: _env, light: _light, ...toApply } = settings;

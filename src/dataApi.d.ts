@@ -1,5 +1,6 @@
 declare module "@novorender/data-js-api" {
     import { vec3 } from "gl-matrix";
+    import { MeasureSettings } from "@novorender/measure-api";
 
     interface Bookmark {
         followPath?:
@@ -39,6 +40,9 @@ declare module "@novorender/data-js-api" {
         };
         manhole?: {
             id: number;
+            collisionTarget?: {
+                selected: { id: number; pos: vec3; settings?: MeasureSettings };
+            };
         };
     }
 }

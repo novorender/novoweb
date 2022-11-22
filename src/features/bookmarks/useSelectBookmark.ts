@@ -143,11 +143,7 @@ export function useSelectBookmark() {
             dispatch(pointLineActions.setPoints([]));
         }
 
-        if (bookmark.manhole) {
-            dispatch(manholeActions.selectObj(bookmark.manhole.id));
-        } else {
-            dispatch(manholeActions.selectObj(undefined));
-        }
+        dispatch(manholeActions.initFromBookmark(bookmark.manhole));
 
         if (bookmark.clippingPlanes) {
             view?.applySettings({ clippingPlanes: { ...bookmark.clippingPlanes, highlight: -1 } });

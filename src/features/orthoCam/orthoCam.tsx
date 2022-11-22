@@ -27,7 +27,6 @@ import {
 import { selectMinimized, selectMaximized } from "slices/explorerSlice";
 import { ColorPicker } from "features/colorPicker";
 import { rgbToVec, VecRGBA, vecToRgb } from "utils/color";
-import { OrthoControllerParams } from "@novorender/webgl-api";
 
 export function OrthoCam() {
     const [menuOpen, toggleMenu] = useToggle();
@@ -77,13 +76,14 @@ export function OrthoCam() {
         const pos = vec3.copy(vec3.create(), view.camera.position);
         pos[1] = Math.min(pos[1], maxY);
         (orthoController as any).init(pos, [0, 1, 0], view.camera);
+        const mat = (orthoController.params as any).referenceCoordSys;
 
         dispatch(
             renderActions.setCamera({
                 type: CameraType.Orthographic,
                 params: {
                     kind: "ortho",
-                    referenceCoordSys: (orthoController.params as OrthoControllerParams).referenceCoordSys,
+                    referenceCoordSys: mat,
                     fieldOfView: 100,
                     near: -0.001,
                     far: (view.camera.controller.params as any).far,
