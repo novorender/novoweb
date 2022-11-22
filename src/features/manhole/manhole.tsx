@@ -311,7 +311,7 @@ export function Manhole() {
                                 </AccordionSummary>
                                 <AccordionDetails>
                                     {collisionValues && (
-                                        <Box px={2} mb={-0.5}>
+                                        <Box px={1} mb={-0.5}>
                                             <Grid container>
                                                 {collisionValues.inner && (
                                                     <>
@@ -351,17 +351,21 @@ export function Manhole() {
                                     )}
 
                                     {!collisionTarget ? null : measureValues ? (
-                                        <MeasurementData
-                                            measureValues={measureValues}
-                                            settings={collisionSettings}
-                                            onSettingsChange={(newValue) => {
-                                                dispatch(
-                                                    manholeActions.setCollisionSettings({ cylinderMeasure: newValue })
-                                                );
-                                            }}
-                                        />
+                                        <Box mx={-1}>
+                                            <MeasurementData
+                                                measureValues={measureValues}
+                                                settings={collisionSettings}
+                                                onSettingsChange={(newValue) => {
+                                                    dispatch(
+                                                        manholeActions.setCollisionSettings({
+                                                            cylinderMeasure: newValue,
+                                                        })
+                                                    );
+                                                }}
+                                            />
+                                        </Box>
                                     ) : measureObjectIsVertex(collisionTarget.entity) ? (
-                                        <Box p={2}>
+                                        <Box p={1}>
                                             <VertexTable vertices={[collisionTarget.entity.parameter]} />
                                         </Box>
                                     ) : null}
