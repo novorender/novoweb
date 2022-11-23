@@ -32,20 +32,26 @@ export function useLoadCollisionTarget() {
             dispatch(manholeActions.setLoadingBrep(true));
             const entity = (await (obj.id === -1
                 ? { ObjectId: -1, drawKind: "vertex", parameter: obj.pos }
-                : measureScene.pickMeasureEntity(obj.id, obj.pos).then(async (_mObj) => {
-                      if (settings?.cylinderMeasure === "top") {
-                          const swappedEnt = await measureScene.swapCylinder(_mObj, "outer");
-                          if (swappedEnt) {
-                              _mObj = swappedEnt;
+                : measureScene
+                      .pickMeasureEntity(obj.id, obj.pos)
+                      .then(async (_mObj) => {
+                          if (settings?.cylinderMeasure === "top") {
+                              const swappedEnt = await measureScene.swapCylinder(_mObj, "outer");
+                              if (swappedEnt) {
+                                  _mObj = swappedEnt;
+                              }
+                          } else if (settings?.cylinderMeasure === "bottom") {
+                              const swappedEnt = await measureScene.swapCylinder(_mObj, "inner");
+                              if (swappedEnt) {
+                                  _mObj = swappedEnt;
+                              }
                           }
-                      } else if (settings?.cylinderMeasure === "bottom") {
-                          const swappedEnt = await measureScene.swapCylinder(_mObj, "inner");
-                          if (swappedEnt) {
-                              _mObj = swappedEnt;
-                          }
-                      }
-                      return _mObj;
-                  }))) as ExtendedMeasureEntity;
+                          return _mObj;
+                      })
+                      .catch((e) => {
+                          console.warn(e);
+                          return { ObjectId: -1, drawKind: "vertex", parameter: obj.pos };
+                      }))) as ExtendedMeasureEntity;
 
             dispatch(manholeActions.setCollisionEntity(entity));
             dispatch(manholeActions.setLoadingBrep(false));
