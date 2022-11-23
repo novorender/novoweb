@@ -111,19 +111,23 @@ export function moveSvgCursor({
         const { width, height } = size;
         const { camera } = view;
 
-        const angleX = (y / height - 0.5) * camera.fieldOfView;
-        const angleY = ((x - width * 0.5) / height) * camera.fieldOfView;
-        vec3.transformQuat(normal, normal, quat.fromEuler(quat.create(), angleX, angleY, 0));
-        let style = "";
         if (normal[2] < 1) {
-            const rot = vec3.cross(vec3.create(), normal, vec3.fromValues(0, 0, 1));
-            vec3.normalize(rot, rot);
-            const angle = (Math.acos(normal[2]) * 180) / Math.PI;
-            style = `style="transform:rotate3d(${rot[0]},${-rot[1]},${rot[2]},${angle}deg)"`;
+            const angleX = (y / height - 0.5) * camera.fieldOfView;
+            const angleY = ((x - width * 0.5) / height) * camera.fieldOfView;
+            vec3.transformQuat(normal, normal, quat.fromEuler(quat.create(), angleX, angleY, 0));
+            let style = "";
+            if (normal[2] < 1) {
+                const rot = vec3.cross(vec3.create(), normal, vec3.fromValues(0, 0, 1));
+                vec3.normalize(rot, rot);
+                const angle = (Math.acos(normal[2]) * 180) / Math.PI;
+                style = `style="transform:rotate3d(${rot[0]},${-rot[1]},${rot[2]},${angle}deg)"`;
+            }
+            g.innerHTML = `<circle r="20" fill="rgba(255,255,255,0.25)" ${style}/><line x2="${(normal[0] * 20).toFixed(
+                1
+            )}" y2="${(normal[1] * -20).toFixed(1)}" stroke="lightblue" stroke-width="2" stroke-linecap="round" />`;
+        } else {
+            g.innerHTML = `<circle r="20" fill="rgba(255,255,255,0.25)" /><circle r="2" fill="lightblue" />`;
         }
-        g.innerHTML = `<circle r="20" fill="rgba(255,255,255,0.25)" ${style}/><line x2="${(normal[0] * 20).toFixed(
-            1
-        )}" y2="${(normal[1] * -20).toFixed(1)}" stroke="lightblue" stroke-width="2" stroke-linecap="round" />`;
     } else {
         g.innerHTML = `<path d="M-10,-10L10,10M-10,10L10,-10" stroke-width="2" stroke-linecap="round" stroke="${
             measurement ? "lightgreen" : "red"
@@ -173,7 +177,7 @@ export function renderMeasurePoints({
 }: {
     svg: SVGSVGElement;
     svgNames: { path?: string; point?: string };
-    text?: { textName: string; value: number; type: "distance" | "center"; unit?: string };
+    text?: { textName: string; value: number[]; type: "distance" | "center"; unit?: string; multitext?: boolean };
     points: { pixel: vec2[]; path: vec2[] } | undefined;
     closed?: boolean;
 }) {
@@ -200,23 +204,71 @@ export function renderMeasurePoints({
         }
     }
     if (svgNames.point) {
-        if (points && points.pixel.length) {
-            points.pixel.forEach((p, i) => {
-                const circle = svg.children.namedItem(`${svgNames.point}_${i}`);
-                if (circle) {
-                    circle.setAttribute("cx", p[0].toFixed(1));
-                    circle.setAttribute("cy", p[1].toFixed(1));
-                }
-            });
-        } else {
-            const circles = svg.querySelectorAll(`[id^='${svgNames.point}_']`);
-            circles.forEach((circle) => {
+        const circles = svg.querySelectorAll(`[id^='${svgNames.point}_']`);
+        circles.forEach((circle, idx) => {
+            const p = points?.pixel[idx];
+            if (p) {
+                circle.setAttribute("cx", p[0].toFixed(1));
+                circle.setAttribute("cy", p[1].toFixed(1));
+            } else {
                 circle.removeAttribute("cx");
                 circle.removeAttribute("cy");
-            });
-        }
+            }
+        });
     }
+
     if (text) {
+        for (let i = 0; i < text.value.length; ++i) {
+            const textEl =
+                text.multitext === true
+                    ? svg.children.namedItem(`${text.textName}_${i}`)
+                    : svg.children.namedItem(text.textName);
+            if (!textEl) {
+                return;
+            }
+            if (points === undefined) {
+                textEl.innerHTML = "";
+                return;
+            }
+            if (text.type === "distance") {
+                if (points.path.length < i + 1 || i >= points.path.length - 1) {
+                    textEl.innerHTML = "";
+                    return;
+                }
+                const _text = `${+text.value[i].toFixed(3)} ${text.unit ? text.unit : "m"}`;
+                let dir =
+                    points.path[i][0] > points.path[i + 1][0]
+                        ? vec2.sub(vec2.create(), points.path[i], points.path[i + 1])
+                        : vec2.sub(vec2.create(), points.path[i + 1], points.path[i]);
+                const pixLen = _text.length * 12 + 20;
+                if (vec2.sqrLen(dir) > pixLen * pixLen) {
+                    const angle = (Math.asin(dir[1] / vec2.len(dir)) * 180) / Math.PI;
+                    const off = vec3.fromValues(0, 0, -1);
+                    vec3.scale(off, vec3.normalize(off, vec3.cross(off, off, vec3.fromValues(dir[0], dir[1], 0))), 5);
+                    const center = vec2.create();
+                    vec2.lerp(center, points.path[i], points.path[i + 1], 0.5);
+                    textEl.setAttribute("x", (center[0] + off[0]).toFixed(1));
+                    textEl.setAttribute("y", (center[1] + off[1]).toFixed(1));
+                    textEl.setAttribute("transform", `rotate(${angle} ${center[0] + off[0]},${center[1] + off[1]})`);
+                    textEl.innerHTML = _text;
+                } else {
+                    textEl.innerHTML = "";
+                }
+            } else if (text.type === "center") {
+                if (points.path.length < 2 || text.value[0] === 0) {
+                    textEl.innerHTML = "";
+                    return;
+                }
+                const _text = `${text.value[0].toFixed(3)} ${text.unit ? text.unit : "m"}`;
+                const center = vec2.create();
+                for (const p of points.path) {
+                    vec2.add(center, center, p);
+                }
+                textEl.setAttribute("x", (center[0] / points.path.length).toFixed(1));
+                textEl.setAttribute("y", (center[1] / points.path.length).toFixed(1));
+                textEl.innerHTML = _text;
+            }
+        }
         const textEl = svg.children.namedItem(text.textName);
         if (!textEl) {
             return;
@@ -230,7 +282,7 @@ export function renderMeasurePoints({
                 textEl.innerHTML = "";
                 return;
             }
-            const _text = `${+text.value.toFixed(3)} ${text.unit ? text.unit : "m"}`;
+            const _text = `${+text.value[0].toFixed(3)} ${text.unit ? text.unit : "m"}`;
             let dir =
                 points.path[0][0] > points.path[1][0]
                     ? vec2.sub(vec2.create(), points.path[0], points.path[1])
@@ -250,11 +302,11 @@ export function renderMeasurePoints({
                 textEl.innerHTML = "";
             }
         } else if (text.type === "center") {
-            if (points.path.length < 2 || text.value === 0) {
+            if (points.path.length < 2 || text.value[0] === 0) {
                 textEl.innerHTML = "";
                 return;
             }
-            const _text = `${text.value.toFixed(3)} ${text.unit ? text.unit : "m"}`;
+            const _text = `${text.value[0].toFixed(3)} ${text.unit ? text.unit : "m"}`;
             const center = vec2.create();
             for (const p of points.path) {
                 vec2.add(center, center, p);

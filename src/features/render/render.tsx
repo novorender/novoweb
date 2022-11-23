@@ -31,6 +31,7 @@ import {
     MenuItem,
     popoverClasses,
     CircularProgress,
+    Alert,
 } from "@mui/material";
 import { css } from "@mui/styled-engine";
 import { CameraAlt } from "@mui/icons-material";
@@ -82,10 +83,21 @@ import { explorerActions, selectLocalBookmarkId, selectUrlBookmarkId } from "sli
 import { selectDeviations } from "features/deviations";
 import { bookmarksActions, selectBookmarks, useSelectBookmark } from "features/bookmarks";
 import { measureActions, selectMeasure } from "features/measure";
-import { manholeActions, selectManholeMeasureValues, useHandleManholeUpdates } from "features/manhole";
+import {
+    manholeActions,
+    selectManholeCollisionValues,
+    selectManholeCollisionTarget,
+    selectManholeMeasureValues,
+    useHandleManholeUpdates,
+} from "features/manhole";
 import { ditioActions, selectMarkers, selectShowMarkers } from "features/ditio";
 import { useAppDispatch, useAppSelector } from "app/store";
-import { followPathActions, selectDrawSelectedPositions, usePathMeasureObjects } from "features/followPath";
+import {
+    followPathActions,
+    selectDrawSelectedPositions,
+    selectFollowCylindersFrom,
+    usePathMeasureObjects,
+} from "features/followPath";
 import { useMeasureObjects } from "features/measure";
 import { areaActions, selectArea, selectAreaDrawPoints } from "features/area";
 import { useHandleAreaPoints } from "features/area";
@@ -93,6 +105,7 @@ import { useHeightProfileMeasureObject } from "features/heightProfile";
 import { heightProfileActions } from "features/heightProfile";
 import { pointLineActions, selectPointLine, useHandlePointLineUpdates } from "features/pointLine";
 import { selectCurrentLocation, useHandleLocationMarker } from "features/myLocation";
+import { useHandleJiraKeepAlive } from "features/jira";
 
 import { useHighlighted, highlightActions, useDispatchHighlighted } from "contexts/highlighted";
 import { useHidden, useDispatchHidden } from "contexts/hidden";
@@ -128,7 +141,6 @@ import {
     renderMeasurePoints,
     renderSingleMeasurePoint,
 } from "./svgUtils";
-import { useHandleJiraKeepAlive } from "features/jira";
 
 glMatrix.setMatrixArrayType(Array);
 
@@ -247,12 +259,15 @@ export function Render3D({ onInit }: Props) {
     const showDitioMarkers = useAppSelector(selectShowMarkers);
     const ditioMarkers = useAppSelector(selectMarkers);
     const drawSelectedPaths = useAppSelector(selectDrawSelectedPositions);
+    const drawPathSettings = useAppSelector(selectFollowCylindersFrom);
     const picker = useAppSelector(selectPicker);
     const areaPoints = useAppSelector(selectAreaDrawPoints);
     const myLocationPoint = useAppSelector(selectCurrentLocation);
     const areaValue = useAppSelector(selectArea);
     const { points: pointLinePoints, result: pointLineResult } = useAppSelector(selectPointLine);
     const manhole = useAppSelector(selectManholeMeasureValues);
+    const manholeCollisionValues = useAppSelector(selectManholeCollisionValues);
+    const manholeCollisionEntity = useAppSelector(selectManholeCollisionTarget)?.entity;
 
     const dispatch = useAppDispatch();
 
@@ -300,7 +315,7 @@ export function Render3D({ onInit }: Props) {
     );
 
     const renderParametricMeasure = useCallback(() => {
-        if (!view || !svg || !measureScene) {
+        if (!view || !svg || !measureScene || !size) {
             return;
         }
 
@@ -323,7 +338,9 @@ export function Render3D({ onInit }: Props) {
                     pathName: "fp_" + getMeasureObjectPathId(obj),
                     entity: obj,
                     advancedDrawing: false,
-                    measureSettings: undefined,
+                    measureSettings: {
+                        cylinderMeasure: drawPathSettings,
+                    },
                 });
             });
         }
@@ -380,6 +397,34 @@ export function Render3D({ onInit }: Props) {
                 advancedDrawing: false,
                 measureSettings: undefined,
             });
+            if (manholeCollisionEntity) {
+                renderObject({
+                    fillColor: "rgba(0, 255, 38, 0.5)",
+                    pathName: "manholeColEntity",
+                    entity: manholeCollisionEntity,
+                    advancedDrawing: false,
+                    measureSettings: undefined,
+                });
+            } else {
+                resetSVG({ svg, pathName: "manholeColEntity" });
+            }
+            if (manholeCollisionValues) {
+                const mcv = manholeCollisionValues.inner ?? manholeCollisionValues.outer;
+                if (mcv) {
+                    renderPoints({
+                        points: pathPoints({ points: mcv }),
+                        svgNames: { path: "manholeCollision", point: "manhole_col" },
+                        text: {
+                            textName: "manholeCollisionText",
+                            value: [vec3.len(vec3.sub(vec3.create(), mcv[0], mcv[1]))],
+                            type: "distance",
+                        },
+                    });
+                }
+            }
+        } else {
+            resetSVG({ svg, pathName: "manholeColEntity" });
+            resetSVG({ svg, pathName: "manhole" });
         }
 
         const normalPoints = measure.duoMeasurementValues?.normalPoints;
@@ -389,7 +434,7 @@ export function Render3D({ onInit }: Props) {
                 svgNames: { path: "normalDistance", point: "normal" },
                 text: {
                     textName: "normalDistanceText",
-                    value: vec3.len(vec3.sub(vec3.create(), normalPoints[0], normalPoints[1])),
+                    value: [vec3.len(vec3.sub(vec3.create(), normalPoints[0], normalPoints[1]))],
                     type: "distance",
                 },
             });
@@ -413,7 +458,7 @@ export function Render3D({ onInit }: Props) {
                 svgNames: { path: "brepDistance", point: "measure" },
                 text: {
                     textName: "distanceText",
-                    value: measureLen,
+                    value: [measureLen],
                     type: "distance",
                 },
             });
@@ -431,7 +476,7 @@ export function Render3D({ onInit }: Props) {
                 svgNames: { path: "brepPathX" },
                 text: {
                     textName: "brepTextX",
-                    value: Math.abs(diff[0]),
+                    value: [Math.abs(diff[0])],
                     type: "distance",
                 },
             });
@@ -442,7 +487,7 @@ export function Render3D({ onInit }: Props) {
                 svgNames: { path: "brepPathY" },
                 text: {
                     textName: "brepTextY",
-                    value: Math.abs(diff[2]),
+                    value: [Math.abs(diff[2])],
                     type: "distance",
                 },
             });
@@ -454,7 +499,7 @@ export function Render3D({ onInit }: Props) {
                 svgNames: { path: "brepPathZ" },
                 text: {
                     textName: "brepTextZ",
-                    value: Math.abs(diff[1]),
+                    value: [Math.abs(diff[1])],
                     type: "distance",
                 },
             });
@@ -500,7 +545,7 @@ export function Render3D({ onInit }: Props) {
                     svgNames: { path: "brepPathXZ" },
                     text: {
                         textName: "brepTextXZ",
-                        value: planarDiff,
+                        value: [planarDiff],
                         type: "distance",
                     },
                 });
@@ -538,7 +583,7 @@ export function Render3D({ onInit }: Props) {
                     svgNames: { path: "area-path", point: "area-pt" },
                     text: {
                         textName: "areaText",
-                        value: areaValue,
+                        value: [areaValue],
                         type: "center",
                         unit: "&#13217",
                     },
@@ -574,16 +619,17 @@ export function Render3D({ onInit }: Props) {
             }
         }
 
-        if (pointLinePoints.length) {
+        if (pointLinePoints.length && pointLineResult) {
             const pointLinePts = pathPoints({ points: pointLinePoints });
             if (pointLinePts) {
                 renderPoints({
                     points: pointLinePts,
                     svgNames: { path: "line-path", point: "line-pt" },
                     text: {
-                        textName: "lineText",
-                        value: pointLineResult?.totalLength ?? 0,
-                        type: "center",
+                        textName: "line-txt",
+                        value: pointLineResult.segmentLengts,
+                        type: "distance",
+                        multitext: true,
                     },
                     closed: false,
                 });
@@ -639,7 +685,11 @@ export function Render3D({ onInit }: Props) {
         areaValue,
         myLocationPoint,
         manhole,
+        manholeCollisionValues,
         measureScene,
+        manholeCollisionEntity,
+        drawPathSettings,
+        size,
     ]);
     useEffect(() => {
         renderParametricMeasure();
@@ -1509,8 +1559,7 @@ export function Render3D({ onInit }: Props) {
                 if (result.objectId === -1) {
                     return;
                 }
-
-                dispatch(manholeActions.selectObj(result.objectId));
+                dispatch(manholeActions.selectObj({ id: result.objectId, pos: result.position }));
                 break;
 
             case Picker.FollowPathObject: {
@@ -1817,7 +1866,6 @@ export function Render3D({ onInit }: Props) {
                                         strokeWidth={1}
                                         fill="none"
                                     />
-                                    <AxisText id={`lineText`} />
                                     {pointLinePoints.map((_pt, idx, arr) => (
                                         <Fragment key={idx}>
                                             <MeasurementPoint
@@ -1830,6 +1878,7 @@ export function Render3D({ onInit }: Props) {
                                                 r={5}
                                             />
                                             {idx === 0 || idx === arr.length - 1 ? null : <g id={`line-an_${idx}`} />}
+                                            {idx !== arr.length - 1 ? <AxisText id={`line-txt_${idx}`} /> : null}
                                         </Fragment>
                                     ))}
                                 </>
@@ -1945,6 +1994,44 @@ export function Render3D({ onInit }: Props) {
                                 <>
                                     <path id={"manhole"} d="" stroke="yellow" strokeWidth={2} fill="none" />
                                     <path id={"manhole_filled"} d="" stroke="yellow" strokeWidth={2} fill="none" />
+                                    {manholeCollisionEntity && (
+                                        <path
+                                            id={"manholeColEntity"}
+                                            d=""
+                                            stroke="orange"
+                                            strokeWidth={2}
+                                            fill="none"
+                                        />
+                                    )}
+                                    {manholeCollisionValues && (
+                                        <>
+                                            <path
+                                                id={"manholeCollision"}
+                                                d=""
+                                                stroke="blue"
+                                                strokeWidth={2}
+                                                fill="none"
+                                            />
+
+                                            <MeasurementPoint
+                                                id={"manhole_col_0"}
+                                                r={5}
+                                                disabled={true}
+                                                fill="yellow"
+                                                stroke="black"
+                                                strokeWidth={2}
+                                            />
+                                            <MeasurementPoint
+                                                id={"manhole_col_1"}
+                                                r={5}
+                                                disabled={true}
+                                                fill="yellow"
+                                                stroke="black"
+                                                strokeWidth={2}
+                                            />
+                                            <AxisText id={`manholeCollisionText`} />
+                                        </>
+                                    )}
                                 </>
                             ) : null}
                             {myLocationPoint ? (
@@ -2057,6 +2144,9 @@ function SceneError({ id, error, msg }: { id: string; error: Exclude<Status, Sta
                                 ? `Scene not found`
                                 : "Unable to load scene"}
                         </Typography>
+                        <Alert severity="error" sx={{ mb: 1 }}>
+                            We are currently experiencing timeouts from Azure. Solving this issue has our top priority.
+                        </Alert>
                         <Typography paragraph>
                             {error === Status.ServerError ? (
                                 "Failed to download the scene. Please try again later."

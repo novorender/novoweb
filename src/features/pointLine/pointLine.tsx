@@ -13,13 +13,13 @@ import {
     AccordionSummary,
     AccordionDetails,
     Divider,
+    VertexTable,
 } from "components";
 import { featuresConfig } from "config/features";
 import { WidgetList } from "features/widgetList";
 import { useToggle } from "hooks/useToggle";
 import { Picker, renderActions, selectPicker } from "slices/renderSlice";
 import { selectMinimized, selectMaximized } from "slices/explorerSlice";
-import { VertexTable } from "features/measure/tables";
 
 import { pointLineActions, selectPointLine } from "./pointLineSlice";
 
@@ -109,26 +109,7 @@ export function PointLine() {
                         <>
                             <Divider sx={{ py: 0 }} />
                             <Box p={1}>Total length: {result.totalLength.toFixed(3)} m</Box>
-                            <Accordion defaultExpanded={false}>
-                                <AccordionSummary>Segment lengths</AccordionSummary>
-                                <AccordionDetails>
-                                    {result.segmentLengts.map((l, idx) => (
-                                        <Box key={idx} p={1}>
-                                            {l.toFixed(3)} m
-                                        </Box>
-                                    ))}
-                                </AccordionDetails>
-                            </Accordion>
-                            <Accordion defaultExpanded={false}>
-                                <AccordionSummary>Angles between segments</AccordionSummary>
-                                <AccordionDetails>
-                                    {result.angles.map((a, idx) => (
-                                        <Box key={idx} p={1}>
-                                            {(a * (180 / Math.PI)).toFixed(3)} °
-                                        </Box>
-                                    ))}
-                                </AccordionDetails>
-                            </Accordion>
+
                             {points.length > 0 ? (
                                 <Accordion defaultExpanded={false}>
                                     <AccordionSummary>Points</AccordionSummary>

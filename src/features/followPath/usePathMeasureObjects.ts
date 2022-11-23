@@ -4,7 +4,7 @@ import { vec3 } from "gl-matrix";
 
 import { useExplorerGlobals } from "contexts/explorerGlobals";
 import { useAppDispatch, useAppSelector } from "app/store";
-import { selectSelectedPositions } from "./followPathSlice";
+import { selectFollowCylindersFrom, selectSelectedPositions } from "./followPathSlice";
 import { AsyncState, AsyncStatus } from "types/misc";
 
 type ExtendedMeasureObject = {
@@ -18,6 +18,7 @@ export function usePathMeasureObjects() {
     } = useExplorerGlobals();
 
     const selected = useAppSelector(selectSelectedPositions);
+    const followFrom = useAppSelector(selectFollowCylindersFrom);
     const dispatch = useAppDispatch();
 
     const [measureObjects, setMeasureObjects] = useState<AsyncState<ExtendedMeasureObject[]>>({
@@ -47,7 +48,9 @@ export function usePathMeasureObjects() {
                                 if (mObj.drawKind === "vertex") {
                                     return;
                                 }
-                                mObj.fp = await measureScene.followParametricObjectFromPosition(obj.id, obj.pos);
+                                mObj.fp = await measureScene.followParametricObjectFromPosition(obj.id, obj.pos, {
+                                    cylinderMeasure: followFrom,
+                                });
                                 mObj.pos = obj.pos;
                                 return mObj;
                             })
@@ -58,7 +61,7 @@ export function usePathMeasureObjects() {
 
             setMeasureObjects({ status: AsyncStatus.Success, data: mObjects });
         }
-    }, [measureScene, selected, dispatch]);
+    }, [measureScene, selected, dispatch, followFrom]);
 
     return measureObjects;
 }

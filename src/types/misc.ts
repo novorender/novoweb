@@ -1,3 +1,5 @@
+import { MeasureEntity, MeasureSettings } from "@novorender/measure-api";
+
 export enum AsyncStatus {
     Initial,
     Loading,
@@ -13,3 +15,7 @@ export type AsyncState<T> = AsyncEmpty | AsyncError | AsyncSuccess<T>;
 export function hasFinished<T>(state: AsyncState<T>): state is AsyncError | AsyncSuccess<T> {
     return state.status === AsyncStatus.Success || state.status === AsyncStatus.Error;
 }
+
+export type ExtendedMeasureEntity = MeasureEntity & {
+    settings?: MeasureSettings;
+};
