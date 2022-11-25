@@ -62,7 +62,7 @@ export function Engine2D() {
     const measure = useAppSelector(selectMeasure);
 
     const renderParametricMeasure = useCallback(async () => {
-        if (view && context2D && measureScene && measureApi && canvas2D) {
+        if (view && context2D && measureScene && measureApi && canvas2D && size) {
             const { camera } = view;
             const cameraDirection = vec3.transformQuat(vec3.create(), vec3.fromValues(0, 0, -1), camera.rotation);
             const camSettings = { pos: camera.position, dir: cameraDirection };
@@ -298,6 +298,7 @@ export function Engine2D() {
         manholeCollisionEntity,
         manholeCollisionValues,
         drawPathSettings,
+        size,
     ]);
 
     useEffect(() => {
