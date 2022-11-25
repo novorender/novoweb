@@ -15,9 +15,14 @@ export interface TextSettings {
     customText?: string[];
 }
 
+export interface CameraSettings {
+    pos: ReadonlyVec3;
+    dir: ReadonlyVec3;
+}
+
 export function drawProduct(
     ctx: CanvasRenderingContext2D,
-    cameraPos: ReadonlyVec3,
+    camera: CameraSettings,
     product: DrawProduct,
     colorSettings: ColorSettings,
     pixelWidth: number
@@ -38,16 +43,16 @@ export function drawProduct(
                 const gradient = ctx.createLinearGradient(gradX[0], gradY[0], gradX[1], gradY[1]);
                 gradient.addColorStop(0, startCol);
                 gradient.addColorStop(1, endCol);
-                drawPart(ctx, cameraPos, cylinderLine, { lineColor: gradient }, pixelWidth);
+                drawPart(ctx, camera, cylinderLine, { lineColor: gradient }, pixelWidth);
             }
 
             for (let i = 1; i < 3; ++i) {
                 const col = i === 1 ? startCol : endCol;
-                drawPart(ctx, cameraPos, obj.parts[i], { lineColor: col }, pixelWidth);
+                drawPart(ctx, camera, obj.parts[i], { lineColor: col }, pixelWidth);
             }
         } else {
             obj.parts.forEach((part) => {
-                drawPart(ctx, cameraPos, part, colorSettings, pixelWidth);
+                drawPart(ctx, camera, part, colorSettings, pixelWidth);
             });
         }
     }
@@ -55,7 +60,7 @@ export function drawProduct(
 
 export function drawPart(
     ctx: CanvasRenderingContext2D,
-    cameraPos: ReadonlyVec3,
+    camera: CameraSettings,
     part: DrawPart,
     colorSettings: ColorSettings,
     pixelWidth: number,
@@ -67,7 +72,7 @@ export function drawPart(
         ctx.strokeStyle = colorSettings.lineColor ?? "black";
         ctx.fillStyle = colorSettings.fillColor ?? "transparent";
         if (part.drawType === "angle" && part.vertices2D.length === 3 && part.text) {
-            drawAngle(ctx, cameraPos, part);
+            drawAngle(ctx, camera, part);
         } else if (part.drawType === "lines" || part.drawType === "filled") {
             drawLinesOrPolygon(ctx, part, colorSettings, textSettings);
         } else if (part.drawType === "vertex") {
@@ -76,7 +81,7 @@ export function drawPart(
     }
 }
 
-function drawAngle(ctx: CanvasRenderingContext2D, cameraPos: ReadonlyVec3, part: DrawPart) {
+function drawAngle(ctx: CanvasRenderingContext2D, camera: CameraSettings, part: DrawPart) {
     if (part.vertices2D) {
         ctx.fillStyle = "transparent";
         const anglePoint = part.vertices2D[0];
@@ -86,8 +91,26 @@ function drawAngle(ctx: CanvasRenderingContext2D, cameraPos: ReadonlyVec3, part:
         const d1 = vec2.sub(vec2.create(), toP, anglePoint);
         const l0 = vec2.len(d0);
         const l1 = vec2.len(d1);
-        const camDist = vec3.distance(cameraPos, part.vertices3D[0]);
+        const camDist = vec3.distance(camera.pos, part.vertices3D[0]);
         console.log(part.text);
+
+        const dirA = vec3.sub(vec3.create(), part.vertices3D[1], part.vertices3D[0]);
+        vec3.normalize(dirA, dirA);
+        const dirB = vec3.sub(vec3.create(), part.vertices3D[2], part.vertices3D[0]);
+        vec3.normalize(dirB, dirB);
+        const dirCamA = vec3.sub(vec3.create(), part.vertices3D[1], camera.pos);
+        const dirCamB = vec3.sub(vec3.create(), part.vertices3D[2], camera.pos);
+        const dirCamP = vec3.sub(vec3.create(), part.vertices3D[0], camera.pos);
+        const norm = vec3.cross(vec3.create(), dirA, dirB);
+        vec3.normalize(dirCamA, dirCamA);
+        vec3.normalize(dirCamB, dirCamB);
+        vec3.normalize(dirCamP, dirCamP);
+        console.log(vec3.dot(camera.dir, dirA));
+        console.log(vec3.dot(camera.dir, dirB));
+        console.log(vec3.dot(camera.dir, norm));
+        if (Math.abs(vec3.dot(dirCamP, norm)) < 0.15) {
+            return;
+        }
 
         if (camDist > (l0 + l1) / 10) {
             return;
@@ -108,16 +131,6 @@ function drawAngle(ctx: CanvasRenderingContext2D, cameraPos: ReadonlyVec3, part:
         let angleA = Math.atan2(d0[1], d0[0]);
         let angleB = Math.atan2(d1[1], d1[0]);
 
-        // if (d0[0] < 0) {
-        //     if (angleB < 0 && angleA > 0) {
-        //         angleB = angleB + Math.PI * 2;
-        //     } else if (angleA < 0 && angleB > 0) {
-        //         angleA = angleA + Math.PI * 2;
-        //     }
-        // }
-
-        // let startAngle = angleA < angleB ? angleA : angleB;
-        // let endAngle = angleB > angleA ? angleB : angleA;
         const sw = d0[0] * d1[1] - d0[1] * d1[0];
 
         if (sw < 0) {
@@ -127,23 +140,9 @@ function drawAngle(ctx: CanvasRenderingContext2D, cameraPos: ReadonlyVec3, part:
         }
 
         ctx.beginPath();
-        // ctx.moveTo(anglePoint[0] + d0[0] * 30, anglePoint[1] + d0[1] * 30);
-        // ctx.arcTo(anglePoint[0] + dir[0] * 60, anglePoint[1] + dir[1] * 60, anglePoint[0] + d1[0] * 30, anglePoint[1] + d1[1] * 30, 30);
+
         ctx.arc(anglePoint[0], anglePoint[1], 50, angleA, angleB);
         ctx.stroke();
-
-        // ctx.fillStyle = "red";
-        // ctx.beginPath();
-        // ctx.arc(anglePoint[0] + d0[0] * 30, anglePoint[1] + d0[1] * 30, 5, 0, 2 * Math.PI);
-        // ctx.fill();
-        // ctx.fillStyle = "green";
-        // ctx.beginPath();
-        // ctx.arc(anglePoint[0] + dir[0] * 30, anglePoint[1] + dir[1] * 30, 5, 0, 2 * Math.PI);
-        // ctx.fill();
-        // ctx.fillStyle = "yellow";
-        // ctx.beginPath();
-        // ctx.arc(anglePoint[0] + d1[0] * 30, anglePoint[1] + d1[1] * 30, 5, 0, 2 * Math.PI);
-        // ctx.fill();
 
         ctx.fillStyle = "white";
         ctx.font = "bold 16px Open-Sans, sans-serif";
@@ -228,7 +227,7 @@ function drawLinesOrPolygon(
                         points[i][0] > points[i + 1][0]
                             ? vec2.sub(vec2.create(), points[i], points[i + 1])
                             : vec2.sub(vec2.create(), points[i + 1], points[i]);
-                    const pixLen = textStr.length * 12 + 20;
+                    const pixLen = ctx.measureText(textStr).width;
                     if (vec2.sqrLen(dir) > pixLen * pixLen) {
                         const off = vec3.fromValues(0, 0, -1);
                         vec3.scale(

@@ -64,6 +64,8 @@ export function Engine2D() {
     const renderParametricMeasure = useCallback(async () => {
         if (view && context2D && measureScene && measureApi && canvas2D) {
             const { camera } = view;
+            const cameraDirection = vec3.transformQuat(vec3.create(), vec3.fromValues(0, 0, -1), camera.rotation);
+            const camSettings = { pos: camera.position, dir: cameraDirection };
             const getDrawMeasureEntity = async (entity?: DrawableEntity, settings?: MeasureSettings) =>
                 entity && measureApi.getDrawMeasureEntity(view, measureScene, entity, settings);
 
@@ -96,7 +98,7 @@ export function Engine2D() {
                     prod &&
                     drawProduct(
                         context2D,
-                        camera.position,
+                        camSettings,
                         prod,
                         { lineColor: "yellow", fillColor: measurementFillColor, complexCylinder: true },
                         3
@@ -108,42 +110,42 @@ export function Engine2D() {
                 for (const part of obj.parts) {
                     switch (part.name) {
                         case "result":
-                            drawPart(context2D, camera.position, part, { lineColor: "green", pointColor: "green" }, 3, {
+                            drawPart(context2D, camSettings, part, { lineColor: "green", pointColor: "green" }, 3, {
                                 type: "distance",
                             });
                             break;
                         case "normal":
-                            drawPart(context2D, camera.position, part, { lineColor: "black", pointColor: "black" }, 3, {
+                            drawPart(context2D, camSettings, part, { lineColor: "black", pointColor: "black" }, 3, {
                                 type: "distance",
                             });
                             break;
                         case "x-axis":
-                            drawPart(context2D, camera.position, part, { lineColor: "red" }, 3, {
+                            drawPart(context2D, camSettings, part, { lineColor: "red" }, 3, {
                                 type: "distance",
                             });
                             break;
                         case "y-axis":
-                            drawPart(context2D, camera.position, part, { lineColor: "lightgreen" }, 3, {
+                            drawPart(context2D, camSettings, part, { lineColor: "lightgreen" }, 3, {
                                 type: "distance",
                             });
                             break;
                         case "z-axis":
-                            drawPart(context2D, camera.position, part, { lineColor: "blue" }, 3, {
+                            drawPart(context2D, camSettings, part, { lineColor: "blue" }, 3, {
                                 type: "distance",
                             });
                             break;
                         case "xy-plane":
-                            drawPart(context2D, camera.position, part, { lineColor: "purple" }, 3, {
+                            drawPart(context2D, camSettings, part, { lineColor: "purple" }, 3, {
                                 type: "distance",
                             });
                             break;
                         case "z-angle":
-                            drawPart(context2D, camera.position, part, { lineColor: "blue" }, 2, {
+                            drawPart(context2D, camSettings, part, { lineColor: "blue" }, 2, {
                                 type: "distance",
                             });
                             break;
                         case "xz-angle":
-                            drawPart(context2D, camera.position, part, { lineColor: "purple" }, 2, {
+                            drawPart(context2D, camSettings, part, { lineColor: "purple" }, 2, {
                                 type: "distance",
                             });
                             break;
@@ -156,7 +158,7 @@ export function Engine2D() {
                     prod &&
                     drawProduct(
                         context2D,
-                        camera.position,
+                        camSettings,
                         prod,
                         { lineColor: "yellow", fillColor: measurementFillColor },
                         3
@@ -166,7 +168,7 @@ export function Engine2D() {
             if (heightProfileDrawResult) {
                 drawProduct(
                     context2D,
-                    camera.position,
+                    camSettings,
                     heightProfileDrawResult,
                     { lineColor: "yellow", fillColor: measurementFillColor },
                     3
@@ -176,7 +178,7 @@ export function Engine2D() {
             if (manholeDrawResult) {
                 drawProduct(
                     context2D,
-                    camera.position,
+                    camSettings,
                     manholeDrawResult,
                     { lineColor: "yellow", fillColor: measurementFillColor },
                     3
@@ -186,7 +188,7 @@ export function Engine2D() {
             if (manholeCollisionEntityDrawResult) {
                 drawProduct(
                     context2D,
-                    camera.position,
+                    camSettings,
                     manholeCollisionEntityDrawResult,
                     { lineColor: "yellow", fillColor: measurementFillColor },
                     3
@@ -200,7 +202,7 @@ export function Engine2D() {
                         obj.parts.forEach((part) => {
                             drawPart(
                                 context2D,
-                                camera.position,
+                                camSettings,
                                 part,
                                 {
                                     lineColor: "blue",
@@ -234,7 +236,7 @@ export function Engine2D() {
                         obj.parts.forEach((part) => {
                             drawPart(
                                 context2D,
-                                camera.position,
+                                camSettings,
                                 part,
                                 {
                                     lineColor: "yellow",
@@ -261,7 +263,7 @@ export function Engine2D() {
                         obj.parts.forEach((part) => {
                             drawPart(
                                 context2D,
-                                camera.position,
+                                camSettings,
                                 part,
                                 {
                                     lineColor: "yellow",
