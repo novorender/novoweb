@@ -43,16 +43,16 @@ export function drawProduct(
                 const gradient = ctx.createLinearGradient(gradX[0], gradY[0], gradX[1], gradY[1]);
                 gradient.addColorStop(0, startCol);
                 gradient.addColorStop(1, endCol);
-                drawPart(ctx, camera, cylinderLine, { lineColor: gradient }, pixelWidth * devicePixelRatio);
+                drawPart(ctx, camera, cylinderLine, { lineColor: gradient }, pixelWidth);
             }
 
             for (let i = 1; i < 3; ++i) {
                 const col = i === 1 ? startCol : endCol;
-                drawPart(ctx, camera, obj.parts[i], { lineColor: col }, pixelWidth * devicePixelRatio);
+                drawPart(ctx, camera, obj.parts[i], { lineColor: col }, pixelWidth);
             }
         } else {
             obj.parts.forEach((part) => {
-                drawPart(ctx, camera, part, colorSettings, pixelWidth * devicePixelRatio);
+                drawPart(ctx, camera, part, colorSettings, pixelWidth);
             });
         }
     }
@@ -124,7 +124,7 @@ function drawAngle(ctx: CanvasRenderingContext2D, camera: CameraSettings, part: 
         } else {
             vec2.scale(dir, dir, 1 / dirLen);
         }
-        const angle = Math.atan2(dir[1], dir[0]);
+
         let angleA = Math.atan2(d0[1], d0[0]);
         let angleB = Math.atan2(d1[1], d1[0]);
 
@@ -141,14 +141,16 @@ function drawAngle(ctx: CanvasRenderingContext2D, camera: CameraSettings, part: 
         ctx.arc(anglePoint[0], anglePoint[1], 50, angleA, angleB);
         ctx.stroke();
 
-        ctx.fillStyle = "white";
-        ctx.font = `bold ${16 * devicePixelRatio}px Open-Sans, sans-serif`;
-
         if (part.text) {
+            ctx.fillStyle = "white";
+            ctx.strokeStyle = "black";
+            ctx.lineWidth = 2 * devicePixelRatio;
+            ctx.font = `bold ${16 * devicePixelRatio}px "Open Sans", sans-serif`;
+
             const textX = anglePoint[0] + dir[0] * 25;
             const textY = anglePoint[1] + dir[1] * 25;
             ctx.translate(textX, textY);
-            ctx.rotate(dir[0] < 0 ? -angle : angle);
+            ctx.strokeText(part.text, 0, 0);
             ctx.fillText(part.text, 0, 0);
             ctx.resetTransform();
         }
@@ -199,7 +201,7 @@ function drawLinesOrPolygon(
                     ctx.fillStyle = colorSettings.pointColor.middle;
                 }
 
-                ctx.lineWidth = 1;
+                ctx.lineWidth = 2 * devicePixelRatio;
                 ctx.strokeStyle = "black";
                 ctx.beginPath();
                 ctx.arc(part.vertices2D[i][0], part.vertices2D[i][1], 5 * devicePixelRatio, 0, 2 * Math.PI);
@@ -208,10 +210,12 @@ function drawLinesOrPolygon(
             }
         }
 
-        if (text) {
+        if (text && (text.customText?.length || part.text)) {
+            ctx.strokeStyle = "black";
             ctx.fillStyle = "white";
-            ctx.font = `bold ${16 * devicePixelRatio}px Open-Sans, sans-serif`;
-            ctx.textBaseline = "middle";
+            ctx.lineWidth = 2 * devicePixelRatio;
+            ctx.font = `bold ${16 * devicePixelRatio}px "Open Sans", sans-serif`;
+            ctx.textBaseline = "bottom";
             ctx.textAlign = "center";
 
             if (text.type === "distance") {
@@ -226,20 +230,15 @@ function drawLinesOrPolygon(
                             : vec2.sub(vec2.create(), points[i + 1], points[i]);
                     const pixLen = ctx.measureText(textStr).width + 20;
                     if (vec2.sqrLen(dir) > pixLen * pixLen) {
-                        const off = vec3.fromValues(0, 0, -1);
-                        vec3.scale(
-                            off,
-                            vec3.normalize(off, vec3.cross(off, off, vec3.fromValues(dir[0], dir[1], 0))),
-                            5
-                        );
                         const center = vec2.create();
                         vec2.lerp(center, points[i], points[i + 1], 0.5);
-                        const x = center[0] + off[0];
-                        const y = center[1] + off[1];
+                        const x = center[0];
+                        const y = center[1];
                         vec2.normalize(dir, dir);
                         const angle = Math.atan2(dir[1], dir[0]);
                         ctx.translate(x, y);
                         ctx.rotate(angle);
+                        ctx.strokeText(textStr, 0, 0);
                         ctx.fillText(textStr, 0, 0);
                         ctx.resetTransform();
                     }
@@ -252,6 +251,7 @@ function drawLinesOrPolygon(
                 const textStr = `${
                     text.customText && text.customText.length > 0 ? text.customText : part.text ? part.text : ""
                 } ${text.unit ? text.unit : "m"}`;
+                ctx.strokeText(textStr, center[0] / part.vertices2D.length, center[1] / part.vertices2D.length);
                 ctx.fillText(textStr, center[0] / part.vertices2D.length, center[1] / part.vertices2D.length);
             }
         }
@@ -265,7 +265,7 @@ function drawPoints(ctx: CanvasRenderingContext2D, part: DrawPart, colorSettings
                 colorSettings.pointColor && typeof colorSettings.pointColor === "string"
                     ? colorSettings.pointColor
                     : colorSettings.fillColor ?? "black";
-            ctx.lineWidth = devicePixelRatio;
+            ctx.lineWidth = 2 * devicePixelRatio;
             ctx.strokeStyle = "black";
             ctx.beginPath();
             ctx.arc(part.vertices2D[i][0], part.vertices2D[i][1], 5 * devicePixelRatio, 0, 2 * Math.PI);
