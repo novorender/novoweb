@@ -92,7 +92,6 @@ function drawAngle(ctx: CanvasRenderingContext2D, camera: CameraSettings, part: 
         const l0 = vec2.len(d0);
         const l1 = vec2.len(d1);
         const camDist = vec3.distance(camera.pos, part.vertices3D[0]);
-        console.log(part.text);
 
         const dirA = vec3.sub(vec3.create(), part.vertices3D[1], part.vertices3D[0]);
         vec3.normalize(dirA, dirA);
@@ -105,9 +104,7 @@ function drawAngle(ctx: CanvasRenderingContext2D, camera: CameraSettings, part: 
         vec3.normalize(dirCamA, dirCamA);
         vec3.normalize(dirCamB, dirCamB);
         vec3.normalize(dirCamP, dirCamP);
-        console.log(vec3.dot(camera.dir, dirA));
-        console.log(vec3.dot(camera.dir, dirB));
-        console.log(vec3.dot(camera.dir, norm));
+
         if (Math.abs(vec3.dot(dirCamP, norm)) < 0.15) {
             return;
         }
