@@ -267,7 +267,7 @@ export function Engine2D() {
                                 part,
                                 {
                                     lineColor: "yellow",
-                                    pointColor: "yellow",
+                                    pointColor: { start: "green", middle: "white", end: "blue" },
                                 },
                                 2,
                                 {
