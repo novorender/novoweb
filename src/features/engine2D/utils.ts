@@ -87,6 +87,8 @@ function drawAngle(ctx: CanvasRenderingContext2D, cameraPos: ReadonlyVec3, part:
         const l0 = vec2.len(d0);
         const l1 = vec2.len(d1);
         const camDist = vec3.distance(cameraPos, part.vertices3D[0]);
+        console.log(part.text);
+
         if (camDist > (l0 + l1) / 10) {
             return;
         }
@@ -106,20 +108,42 @@ function drawAngle(ctx: CanvasRenderingContext2D, cameraPos: ReadonlyVec3, part:
         let angleA = Math.atan2(d0[1], d0[0]);
         let angleB = Math.atan2(d1[1], d1[0]);
 
-        if (d0[0] < 0) {
-            if (angleB < 0 && angleA > 0) {
-                angleB = angleB + Math.PI * 2;
-            } else if (angleA < 0 && angleB > 0) {
-                angleA = angleA + Math.PI * 2;
-            }
+        // if (d0[0] < 0) {
+        //     if (angleB < 0 && angleA > 0) {
+        //         angleB = angleB + Math.PI * 2;
+        //     } else if (angleA < 0 && angleB > 0) {
+        //         angleA = angleA + Math.PI * 2;
+        //     }
+        // }
+
+        // let startAngle = angleA < angleB ? angleA : angleB;
+        // let endAngle = angleB > angleA ? angleB : angleA;
+        const sw = d0[0] * d1[1] - d0[1] * d1[0];
+
+        if (sw < 0) {
+            const tmp = angleA;
+            angleA = angleB;
+            angleB = tmp;
         }
 
-        let startAngle = angleA < angleB ? angleA : angleB;
-        let endAngle = angleB > angleA ? angleB : angleA;
-
         ctx.beginPath();
-        ctx.arc(anglePoint[0], anglePoint[1], 50, startAngle, endAngle);
+        // ctx.moveTo(anglePoint[0] + d0[0] * 30, anglePoint[1] + d0[1] * 30);
+        // ctx.arcTo(anglePoint[0] + dir[0] * 60, anglePoint[1] + dir[1] * 60, anglePoint[0] + d1[0] * 30, anglePoint[1] + d1[1] * 30, 30);
+        ctx.arc(anglePoint[0], anglePoint[1], 50, angleA, angleB);
         ctx.stroke();
+
+        // ctx.fillStyle = "red";
+        // ctx.beginPath();
+        // ctx.arc(anglePoint[0] + d0[0] * 30, anglePoint[1] + d0[1] * 30, 5, 0, 2 * Math.PI);
+        // ctx.fill();
+        // ctx.fillStyle = "green";
+        // ctx.beginPath();
+        // ctx.arc(anglePoint[0] + dir[0] * 30, anglePoint[1] + dir[1] * 30, 5, 0, 2 * Math.PI);
+        // ctx.fill();
+        // ctx.fillStyle = "yellow";
+        // ctx.beginPath();
+        // ctx.arc(anglePoint[0] + d1[0] * 30, anglePoint[1] + d1[1] * 30, 5, 0, 2 * Math.PI);
+        // ctx.fill();
 
         ctx.fillStyle = "white";
         ctx.font = "bold 16px Open-Sans, sans-serif";
@@ -128,7 +152,7 @@ function drawAngle(ctx: CanvasRenderingContext2D, cameraPos: ReadonlyVec3, part:
             const textX = anglePoint[0] + dir[0] * 25;
             const textY = anglePoint[1] + dir[1] * 25;
             ctx.translate(textX, textY);
-            ctx.rotate(angle);
+            ctx.rotate(dir[0] < 0 ? -angle : angle);
             ctx.fillText(part.text, 0, 0);
             ctx.resetTransform();
         }
@@ -201,9 +225,9 @@ function drawLinesOrPolygon(
                         text.customText && i < text.customText.length ? text.customText[i] : part.text
                     } ${text.unit ? text.unit : "m"}`;
                     let dir =
-                        points[0][0] > points[1][0]
-                            ? vec2.sub(vec2.create(), points[i], points[1])
-                            : vec2.sub(vec2.create(), points[i + 1], points[0]);
+                        points[i][0] > points[i + 1][0]
+                            ? vec2.sub(vec2.create(), points[i], points[i + 1])
+                            : vec2.sub(vec2.create(), points[i + 1], points[i]);
                     const pixLen = textStr.length * 12 + 20;
                     if (vec2.sqrLen(dir) > pixLen * pixLen) {
                         const off = vec3.fromValues(0, 0, -1);
