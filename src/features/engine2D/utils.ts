@@ -1,5 +1,5 @@
 import { DrawPart, DrawProduct } from "@novorender/measure-api";
-import { ReadonlyVec3, vec2, vec3 } from "gl-matrix";
+import { ReadonlyVec2, ReadonlyVec3, vec2, vec3 } from "gl-matrix";
 import { inversePixelRatio } from "../render/utils";
 
 export interface ColorSettings {
@@ -275,5 +275,11 @@ function drawPoints(ctx: CanvasRenderingContext2D, part: DrawPart, colorSettings
             ctx.fill();
             ctx.stroke();
         }
+    }
+}
+
+export function drawTexts(ctx: CanvasRenderingContext2D, positions: ReadonlyVec2[], texts: string[]) {
+    for (let i = 0; i < positions.length; ++i) {
+        ctx.fillText(texts[i], positions[i][0], positions[i][1]);
     }
 }

@@ -18,7 +18,8 @@ import {
 import { measureApi } from "app";
 import { AsyncStatus } from "types/misc";
 
-import { drawPart, drawProduct } from "../engine2D/utils";
+import { drawPart, drawProduct, drawTexts } from "../engine2D/utils";
+import { selectGrid } from "slices/renderSlice";
 
 const Canvas2D = styled("canvas")(
     () => css`
@@ -60,6 +61,8 @@ export function Engine2D() {
     const drawSelectedPaths = useAppSelector(selectDrawSelectedPositions);
     const drawPathSettings = useAppSelector(selectFollowCylindersFrom);
     const measure = useAppSelector(selectMeasure);
+
+    const grid = useAppSelector(selectGrid);
 
     const renderParametricMeasure = useCallback(async () => {
         if (view && context2D && measureScene && measureApi && canvas2D) {
@@ -308,6 +311,36 @@ export function Engine2D() {
         setContext2D(canvas2D?.getContext("2d"));
     }, [scene, canvas2D]);
 
+    const renderGrid = useCallback(() => {
+        if (grid.enabled && context2D) {
+            if (grid.axisX === undefined || grid.axisY === undefined) {
+                return;
+            }
+            const xLen = vec3.len(grid.axisX);
+            const yLen = vec3.len(grid.axisY);
+            const pts3d: vec3[] = [];
+            const labels: string[] = [];
+            const numLables = Math.min(10, grid.majorLineCount);
+            for (let i = 0; i < numLables; ++i) {
+                const xLabel = (xLen * i).toFixed(1);
+                const yLabel = (yLen * i).toFixed(1);
+                pts3d.push(vec3.scaleAndAdd(vec3.create(), grid.origo, grid.axisX, i));
+                labels.push(xLabel);
+                pts3d.push(vec3.scaleAndAdd(vec3.create(), grid.origo, grid.axisX, -i));
+                labels.push(`-${xLabel}`);
+
+                pts3d.push(vec3.scaleAndAdd(vec3.create(), grid.origo, grid.axisY, i));
+                labels.push(yLabel);
+                pts3d.push(vec3.scaleAndAdd(vec3.create(), grid.origo, grid.axisY, -i));
+                labels.push(`-${yLabel}`);
+            }
+            const pts = measureApi.toPathPoints(pts3d, view);
+            if (pts) {
+                drawTexts(context2D, pts[0], labels);
+            }
+        }
+    }, [grid, context2D, view]);
+
     useEffect(() => {
         animate();
         function animate() {
@@ -321,13 +354,14 @@ export function Engine2D() {
                     prevCamRot.current = quat.clone(view.camera.rotation);
                     prevCamPos.current = vec3.clone(view.camera.position);
                     renderParametricMeasure();
+                    renderGrid();
                 }
             }
 
             animationFrameId.current = requestAnimationFrame(() => animate());
         }
         return () => cancelAnimationFrame(animationFrameId.current);
-    }, [view, renderParametricMeasure]);
+    }, [view, renderParametricMeasure, grid, renderGrid]);
 
     return <Canvas2D ref={setCanvas2D} width={size.width} height={size.height}></Canvas2D>;
 }
