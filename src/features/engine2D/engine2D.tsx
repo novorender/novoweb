@@ -1,9 +1,10 @@
+import { DrawableEntity, MeasureSettings } from "@novorender/measure-api";
 import { css, styled } from "@mui/material";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { useAppSelector } from "app/store";
-
-import { useExplorerGlobals } from "contexts/explorerGlobals";
 import { quat, vec3 } from "gl-matrix";
+
+import { useAppSelector } from "app/store";
+import { useExplorerGlobals } from "contexts/explorerGlobals";
 import { useHeightProfileMeasureObject } from "features/heightProfile";
 import { selectMeasure, useMeasureObjects } from "features/measure";
 import { selectDrawSelectedPositions, selectFollowCylindersFrom, usePathMeasureObjects } from "features/followPath";
@@ -14,9 +15,10 @@ import {
     selectManholeCollisionValues,
     selectManholeMeasureValues,
 } from "features/manhole";
-import { drawPart, drawProduct } from "../engine2D/utils";
 import { measureApi } from "app";
 import { AsyncStatus } from "types/misc";
+
+import { drawPart, drawProduct } from "../engine2D/utils";
 
 const Canvas2D = styled("canvas")(
     () => css`
@@ -47,6 +49,8 @@ export function Engine2D() {
     const heightProfileMeasureObject = useHeightProfileMeasureObject();
     const measureObjects = useMeasureObjects();
     const pathMeasureObjects = usePathMeasureObjects();
+    const pathMeasureObjectsData =
+        pathMeasureObjects.status === AsyncStatus.Success ? pathMeasureObjects.data : undefined;
     const areaValue = useAppSelector(selectArea);
     const { points: pointLinePoints, result: pointLineResult } = useAppSelector(selectPointLine);
     const manhole = useAppSelector(selectManholeMeasureValues);
@@ -59,89 +63,169 @@ export function Engine2D() {
 
     const renderParametricMeasure = useCallback(async () => {
         if (view && context2D && measureScene && measureApi && canvas2D) {
-            context2D.clearRect(0, 0, canvas2D.width, canvas2D.height);
             const { camera } = view;
-            if (measure.duoMeasurementValues) {
-                const resultDraw = await measureApi.getDrawMeasureEntity(
-                    view,
-                    measureScene,
-                    measure.duoMeasurementValues
-                );
-                if (resultDraw && resultDraw.objects.length === 1) {
-                    const obj = resultDraw.objects[0];
-                    for (const part of obj.parts) {
-                        switch (part.name) {
-                            case "result":
-                                drawPart(
-                                    context2D,
-                                    camera.position,
-                                    part,
-                                    { lineColor: "green", pointColor: "green" },
-                                    3,
-                                    {
-                                        type: "distance",
-                                    }
-                                );
-                                break;
-                            case "normal":
-                                drawPart(
-                                    context2D,
-                                    camera.position,
-                                    part,
-                                    { lineColor: "black", pointColor: "black" },
-                                    3,
-                                    {
-                                        type: "distance",
-                                    }
-                                );
-                                break;
-                            case "x-axis":
-                                drawPart(context2D, camera.position, part, { lineColor: "red" }, 3, {
-                                    type: "distance",
-                                });
-                                break;
-                            case "y-axis":
-                                drawPart(context2D, camera.position, part, { lineColor: "lightgreen" }, 3, {
-                                    type: "distance",
-                                });
-                                break;
-                            case "z-axis":
-                                drawPart(context2D, camera.position, part, { lineColor: "blue" }, 3, {
-                                    type: "distance",
-                                });
-                                break;
-                            case "xy-plane":
-                                drawPart(context2D, camera.position, part, { lineColor: "purple" }, 3, {
-                                    type: "distance",
-                                });
-                                break;
-                            case "z-angle":
-                                drawPart(context2D, camera.position, part, { lineColor: "blue" }, 2, {
-                                    type: "distance",
-                                });
-                                break;
-                            case "xz-angle":
-                                drawPart(context2D, camera.position, part, { lineColor: "purple" }, 2, {
-                                    type: "distance",
-                                });
-                                break;
-                        }
-                    }
-                }
-            }
+            const getDrawMeasureEntity = async (entity?: DrawableEntity, settings?: MeasureSettings) =>
+                entity && measureApi.getDrawMeasureEntity(view, measureScene, entity, settings);
 
-            measureObjects.forEach(async (obj) => {
-                const prod = await measureApi.getDrawMeasureEntity(view, measureScene, obj, obj.settings);
-                if (prod) {
+            const [
+                duoDrawResult,
+                measureObjectsDrawResult,
+                followPathDrawResult,
+                heightProfileDrawResult,
+                manholeDrawResult,
+                manholeCollisionEntityDrawResult,
+            ] = await Promise.all([
+                getDrawMeasureEntity(measure.duoMeasurementValues),
+                Promise.all(measureObjects.map((obj) => getDrawMeasureEntity(obj, obj.settings))),
+                Promise.all(
+                    (drawSelectedPaths ? pathMeasureObjectsData ?? [] : []).map((obj) =>
+                        getDrawMeasureEntity(obj, {
+                            cylinderMeasure: drawPathSettings,
+                        })
+                    )
+                ),
+                getDrawMeasureEntity(heightProfileMeasureObject),
+                getDrawMeasureEntity(manhole),
+                getDrawMeasureEntity(manholeCollisionEntity),
+            ]);
+
+            context2D.clearRect(0, 0, canvas2D.width, canvas2D.height);
+
+            measureObjectsDrawResult.forEach(
+                (prod) =>
+                    prod &&
                     drawProduct(
                         context2D,
                         camera.position,
                         prod,
                         { lineColor: "yellow", fillColor: measurementFillColor, complexCylinder: true },
                         3
-                    );
+                    )
+            );
+
+            if (duoDrawResult && duoDrawResult.objects.length === 1) {
+                const obj = duoDrawResult.objects[0];
+                for (const part of obj.parts) {
+                    switch (part.name) {
+                        case "result":
+                            drawPart(context2D, camera.position, part, { lineColor: "green", pointColor: "green" }, 3, {
+                                type: "distance",
+                            });
+                            break;
+                        case "normal":
+                            drawPart(context2D, camera.position, part, { lineColor: "black", pointColor: "black" }, 3, {
+                                type: "distance",
+                            });
+                            break;
+                        case "x-axis":
+                            drawPart(context2D, camera.position, part, { lineColor: "red" }, 3, {
+                                type: "distance",
+                            });
+                            break;
+                        case "y-axis":
+                            drawPart(context2D, camera.position, part, { lineColor: "lightgreen" }, 3, {
+                                type: "distance",
+                            });
+                            break;
+                        case "z-axis":
+                            drawPart(context2D, camera.position, part, { lineColor: "blue" }, 3, {
+                                type: "distance",
+                            });
+                            break;
+                        case "xy-plane":
+                            drawPart(context2D, camera.position, part, { lineColor: "purple" }, 3, {
+                                type: "distance",
+                            });
+                            break;
+                        case "z-angle":
+                            drawPart(context2D, camera.position, part, { lineColor: "blue" }, 2, {
+                                type: "distance",
+                            });
+                            break;
+                        case "xz-angle":
+                            drawPart(context2D, camera.position, part, { lineColor: "purple" }, 2, {
+                                type: "distance",
+                            });
+                            break;
+                    }
                 }
-            });
+            }
+
+            followPathDrawResult.forEach(
+                (prod) =>
+                    prod &&
+                    drawProduct(
+                        context2D,
+                        camera.position,
+                        prod,
+                        { lineColor: "yellow", fillColor: measurementFillColor },
+                        3
+                    )
+            );
+
+            if (heightProfileDrawResult) {
+                drawProduct(
+                    context2D,
+                    camera.position,
+                    heightProfileDrawResult,
+                    { lineColor: "yellow", fillColor: measurementFillColor },
+                    3
+                );
+            }
+
+            if (manholeDrawResult) {
+                drawProduct(
+                    context2D,
+                    camera.position,
+                    manholeDrawResult,
+                    { lineColor: "yellow", fillColor: measurementFillColor },
+                    3
+                );
+            }
+
+            if (manholeCollisionEntityDrawResult) {
+                drawProduct(
+                    context2D,
+                    camera.position,
+                    manholeCollisionEntityDrawResult,
+                    { lineColor: "yellow", fillColor: measurementFillColor },
+                    3
+                );
+            }
+
+            if (manholeCollisionValues && manholeCollisionValues.outer) {
+                const colVal = measureApi.getDrawObjectFromPoints(view, manholeCollisionValues.outer, false, true);
+                if (colVal) {
+                    colVal.objects.forEach((obj) => {
+                        obj.parts.forEach((part) => {
+                            drawPart(
+                                context2D,
+                                camera.position,
+                                part,
+                                {
+                                    lineColor: "blue",
+                                    pointColor: "black",
+                                },
+                                2,
+                                {
+                                    type: "distance",
+                                    customText: [
+                                        vec3
+                                            .len(
+                                                vec3.sub(
+                                                    vec3.create(),
+                                                    manholeCollisionValues.outer![0],
+                                                    manholeCollisionValues.outer![1]
+                                                )
+                                            )
+                                            .toFixed(2),
+                                    ],
+                                }
+                            );
+                        });
+                    });
+                }
+            }
 
             if (areaPoints.length) {
                 const drawProd = measureApi.getDrawObjectFromPoints(view, areaPoints);
@@ -193,92 +277,6 @@ export function Engine2D() {
                     });
                 }
             }
-            if (drawSelectedPaths && pathMeasureObjects.status === AsyncStatus.Success) {
-                pathMeasureObjects.data.forEach(async (obj) => {
-                    const prod = await measureApi.getDrawMeasureEntity(view, measureScene, obj, {
-                        cylinderMeasure: drawPathSettings,
-                    });
-                    if (prod) {
-                        drawProduct(
-                            context2D,
-                            camera.position,
-                            prod,
-                            { lineColor: "yellow", fillColor: measurementFillColor },
-                            3
-                        );
-                    }
-                });
-            }
-            if (heightProfileMeasureObject) {
-                const prod = await measureApi.getDrawMeasureEntity(view, measureScene, heightProfileMeasureObject);
-                if (prod) {
-                    drawProduct(
-                        context2D,
-                        camera.position,
-                        prod,
-                        { lineColor: "yellow", fillColor: measurementFillColor },
-                        3
-                    );
-                }
-            }
-            if (manhole) {
-                const manholeDrawObj = await measureApi.getDrawMeasureEntity(view, measureScene, manhole);
-                if (manholeDrawObj) {
-                    drawProduct(
-                        context2D,
-                        camera.position,
-                        manholeDrawObj,
-                        { lineColor: "yellow", fillColor: measurementFillColor },
-                        3
-                    );
-                }
-
-                if (manholeCollisionEntity) {
-                    const colEnt = await measureApi.getDrawMeasureEntity(view, measureScene, manholeCollisionEntity);
-                    if (colEnt) {
-                        drawProduct(
-                            context2D,
-                            camera.position,
-                            colEnt,
-                            { lineColor: "yellow", fillColor: measurementFillColor },
-                            3
-                        );
-                    }
-                }
-                if (manholeCollisionValues && manholeCollisionValues.outer) {
-                    const colVal = measureApi.getDrawObjectFromPoints(view, manholeCollisionValues.outer, false, true);
-                    if (colVal) {
-                        colVal.objects.forEach((obj) => {
-                            obj.parts.forEach((part) => {
-                                drawPart(
-                                    context2D,
-                                    camera.position,
-                                    part,
-                                    {
-                                        lineColor: "blue",
-                                        pointColor: "black",
-                                    },
-                                    2,
-                                    {
-                                        type: "distance",
-                                        customText: [
-                                            vec3
-                                                .len(
-                                                    vec3.sub(
-                                                        vec3.create(),
-                                                        manholeCollisionValues.outer![0],
-                                                        manholeCollisionValues.outer![1]
-                                                    )
-                                                )
-                                                .toFixed(2),
-                                        ],
-                                    }
-                                );
-                            });
-                        });
-                    }
-                }
-            }
         }
     }, [
         view,
@@ -292,7 +290,7 @@ export function Engine2D() {
         pointLinePoints,
         pointLineResult,
         drawSelectedPaths,
-        pathMeasureObjects,
+        pathMeasureObjectsData,
         heightProfileMeasureObject,
         manhole,
         manholeCollisionEntity,
