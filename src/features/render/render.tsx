@@ -817,7 +817,7 @@ export function Render3D({ onInit }: Props) {
 
                     dispatch(
                         renderActions.setGrid({
-                            origo: pt,
+                            origo: cameraState.gridOrigo ?? pt,
                             axisY: vec3.scale(vec3.create(), up, squareSize),
                             axisX: vec3.scale(vec3.create(), right, squareSize),
                         })

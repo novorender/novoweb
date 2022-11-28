@@ -114,6 +114,7 @@ type CameraState =
           type: CameraType.Orthographic;
           params?: OrthoControllerParams;
           goTo?: { position: Camera["position"]; rotation: Camera["rotation"] };
+          gridOrigo?: vec3;
       }
     | {
           type: CameraType.Flight;

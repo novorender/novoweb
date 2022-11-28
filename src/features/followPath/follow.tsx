@@ -119,6 +119,7 @@ export function Follow({ fpObj }: { fpObj: FollowParametricObject }) {
                             near: -0.001,
                             far: clipping,
                         },
+                        gridOrigo: pt as vec3,
                     })
                 );
 
