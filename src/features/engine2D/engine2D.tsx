@@ -64,7 +64,43 @@ export function Engine2D() {
     const cameraType = useAppSelector(selectCameraType);
     const grid = useAppSelector(selectGrid);
 
-    const renderParametricMeasure = useCallback(async () => {
+    const renderGridLabels = useCallback(() => {
+        if (
+            grid.enabled &&
+            (view?.camera?.fieldOfView ?? 250) <= 35 &&
+            context2D &&
+            cameraType === CameraType.Orthographic
+        ) {
+            const xLen = vec3.len(grid.axisX);
+            const yLen = vec3.len(grid.axisY);
+            const pts3d: vec3[] = [];
+            const labels: string[] = [];
+            const numLables = Math.min(10, grid.majorLineCount);
+            for (let i = 0; i < numLables; ++i) {
+                const xLabel = (xLen * i).toFixed(1);
+                const yLabel = (yLen * i).toFixed(1);
+                pts3d.push(vec3.scaleAndAdd(vec3.create(), grid.origo, grid.axisX, i));
+                labels.push(xLabel);
+                if (i === 0) {
+                    continue;
+                }
+
+                pts3d.push(vec3.scaleAndAdd(vec3.create(), grid.origo, grid.axisX, -i));
+                labels.push(`-${xLabel}`);
+
+                pts3d.push(vec3.scaleAndAdd(vec3.create(), grid.origo, grid.axisY, i));
+                labels.push(yLabel);
+                pts3d.push(vec3.scaleAndAdd(vec3.create(), grid.origo, grid.axisY, -i));
+                labels.push(`-${yLabel}`);
+            }
+            const pts = measureApi.toPathPoints(pts3d, view);
+            if (pts) {
+                drawTexts(context2D, pts[0], labels);
+            }
+        }
+    }, [grid, context2D, view, cameraType]);
+
+    const render = useCallback(async () => {
         if (view && context2D && measureScene && measureApi && canvas2D && size) {
             const { camera } = view;
             const cameraDirection = vec3.transformQuat(vec3.create(), vec3.fromValues(0, 0, -1), camera.rotation);
@@ -95,6 +131,8 @@ export function Engine2D() {
             ]);
 
             context2D.clearRect(0, 0, canvas2D.width, canvas2D.height);
+
+            renderGridLabels();
 
             measureObjectsDrawResult.forEach(
                 (prod) =>
@@ -302,48 +340,12 @@ export function Engine2D() {
         manholeCollisionValues,
         drawPathSettings,
         size,
+        renderGridLabels,
     ]);
-
-    const renderGridLabels = useCallback(() => {
-        if (
-            grid.enabled &&
-            (view?.camera?.fieldOfView ?? 250) <= 100 &&
-            context2D &&
-            cameraType === CameraType.Orthographic
-        ) {
-            const xLen = vec3.len(grid.axisX);
-            const yLen = vec3.len(grid.axisY);
-            const pts3d: vec3[] = [];
-            const labels: string[] = [];
-            const numLables = Math.min(10, grid.majorLineCount);
-            for (let i = 1; i < numLables; ++i) {
-                const xLabel = (xLen * i).toFixed(1);
-                const yLabel = (yLen * i).toFixed(1);
-                pts3d.push(vec3.scaleAndAdd(vec3.create(), grid.origo, grid.axisX, i));
-                labels.push(xLabel);
-                pts3d.push(vec3.scaleAndAdd(vec3.create(), grid.origo, grid.axisX, -i));
-                labels.push(`-${xLabel}`);
-
-                pts3d.push(vec3.scaleAndAdd(vec3.create(), grid.origo, grid.axisY, i));
-                labels.push(yLabel);
-                pts3d.push(vec3.scaleAndAdd(vec3.create(), grid.origo, grid.axisY, -i));
-                labels.push(`-${yLabel}`);
-            }
-            const pts = measureApi.toPathPoints(pts3d, view);
-            if (pts) {
-                drawTexts(context2D, pts[0], labels);
-            }
-        }
-    }, [grid, context2D, view, cameraType]);
 
     useEffect(() => {
         render();
-
-        async function render() {
-            await renderParametricMeasure();
-            renderGridLabels();
-        }
-    }, [renderParametricMeasure, renderGridLabels]);
+    }, [render]);
 
     useEffect(() => {
         setContext2D(canvas2D?.getContext("2d"));
@@ -362,14 +364,14 @@ export function Engine2D() {
                 ) {
                     prevCamRot.current = quat.clone(view.camera.rotation);
                     prevCamPos.current = vec3.clone(view.camera.position);
-                    renderParametricMeasure().then(() => renderGridLabels());
+                    render();
                 }
             }
 
             animationFrameId.current = requestAnimationFrame(() => animate());
         }
         return () => cancelAnimationFrame(animationFrameId.current);
-    }, [view, renderParametricMeasure, grid, renderGridLabels, cameraType]);
+    }, [view, render, grid, renderGridLabels, cameraType]);
 
     return <Canvas2D id="canvas2D" ref={setCanvas2D} width={size.width} height={size.height} />;
 }
