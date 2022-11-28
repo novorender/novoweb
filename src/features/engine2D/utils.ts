@@ -276,7 +276,15 @@ function drawPoints(ctx: CanvasRenderingContext2D, part: DrawPart, colorSettings
 }
 
 export function drawTexts(ctx: CanvasRenderingContext2D, positions: ReadonlyVec2[], texts: string[]) {
+    ctx.strokeStyle = "black";
+    ctx.fillStyle = "white";
+    ctx.lineWidth = 2 * devicePixelRatio;
+    ctx.font = `bold ${16 * devicePixelRatio}px "Open Sans", sans-serif`;
+    ctx.textBaseline = "top";
+    ctx.textAlign = "center";
+
     for (let i = 0; i < positions.length; ++i) {
+        ctx.strokeText(texts[i], positions[i][0], positions[i][1]);
         ctx.fillText(texts[i], positions[i][0], positions[i][1]);
     }
 }

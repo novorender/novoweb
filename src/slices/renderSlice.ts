@@ -444,7 +444,12 @@ export const renderSlice = createSlice({
             state.grid = { ...state.grid, ...state.gridDefaults };
         },
         setGrid: (state, action: PayloadAction<Partial<State["grid"]>>) => {
-            state.grid = { ...state.gridDefaults, enabled: state.grid.enabled, ...action.payload } as WritableGrid;
+            state.grid = {
+                ...state.grid,
+                ...state.gridDefaults,
+                enabled: state.grid.enabled,
+                ...action.payload,
+            } as WritableGrid;
         },
         setPicker: (state, action: PayloadAction<State["picker"]>) => {
             state.picker = action.payload;

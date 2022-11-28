@@ -17,9 +17,9 @@ import {
 } from "features/manhole";
 import { measureApi } from "app";
 import { AsyncStatus } from "types/misc";
+import { CameraType, selectCameraType, selectGrid } from "slices/renderSlice";
 
 import { drawPart, drawProduct, drawTexts } from "../engine2D/utils";
-import { selectGrid } from "slices/renderSlice";
 
 const Canvas2D = styled("canvas")(
     () => css`
@@ -61,7 +61,7 @@ export function Engine2D() {
     const drawSelectedPaths = useAppSelector(selectDrawSelectedPositions);
     const drawPathSettings = useAppSelector(selectFollowCylindersFrom);
     const measure = useAppSelector(selectMeasure);
-
+    const cameraType = useAppSelector(selectCameraType);
     const grid = useAppSelector(selectGrid);
 
     const renderParametricMeasure = useCallback(async () => {
@@ -304,25 +304,19 @@ export function Engine2D() {
         size,
     ]);
 
-    useEffect(() => {
-        renderParametricMeasure();
-    }, [renderParametricMeasure]);
-
-    useEffect(() => {
-        setContext2D(canvas2D?.getContext("2d"));
-    }, [scene, canvas2D]);
-
-    const renderGrid = useCallback(() => {
-        if (grid.enabled && context2D) {
-            if (grid.axisX === undefined || grid.axisY === undefined) {
-                return;
-            }
+    const renderGridLabels = useCallback(() => {
+        if (
+            grid.enabled &&
+            (view?.camera?.fieldOfView ?? 250) <= 100 &&
+            context2D &&
+            cameraType === CameraType.Orthographic
+        ) {
             const xLen = vec3.len(grid.axisX);
             const yLen = vec3.len(grid.axisY);
             const pts3d: vec3[] = [];
             const labels: string[] = [];
             const numLables = Math.min(10, grid.majorLineCount);
-            for (let i = 0; i < numLables; ++i) {
+            for (let i = 1; i < numLables; ++i) {
                 const xLabel = (xLen * i).toFixed(1);
                 const yLabel = (yLen * i).toFixed(1);
                 pts3d.push(vec3.scaleAndAdd(vec3.create(), grid.origo, grid.axisX, i));
@@ -340,13 +334,27 @@ export function Engine2D() {
                 drawTexts(context2D, pts[0], labels);
             }
         }
-    }, [grid, context2D, view]);
+    }, [grid, context2D, view, cameraType]);
+
+    useEffect(() => {
+        render();
+
+        async function render() {
+            await renderParametricMeasure();
+            renderGridLabels();
+        }
+    }, [renderParametricMeasure, renderGridLabels]);
+
+    useEffect(() => {
+        setContext2D(canvas2D?.getContext("2d"));
+    }, [scene, canvas2D]);
 
     useEffect(() => {
         animate();
         function animate() {
             if (view) {
                 if (
+                    cameraType === CameraType.Orthographic ||
                     !prevCamRot.current ||
                     !quat.exactEquals(prevCamRot.current, view.camera.rotation) ||
                     !prevCamPos.current ||
@@ -354,15 +362,14 @@ export function Engine2D() {
                 ) {
                     prevCamRot.current = quat.clone(view.camera.rotation);
                     prevCamPos.current = vec3.clone(view.camera.position);
-                    renderParametricMeasure();
-                    renderGrid();
+                    renderParametricMeasure().then(() => renderGridLabels());
                 }
             }
 
             animationFrameId.current = requestAnimationFrame(() => animate());
         }
         return () => cancelAnimationFrame(animationFrameId.current);
-    }, [view, renderParametricMeasure, grid, renderGrid]);
+    }, [view, renderParametricMeasure, grid, renderGridLabels, cameraType]);
 
-    return <Canvas2D ref={setCanvas2D} width={size.width} height={size.height}></Canvas2D>;
+    return <Canvas2D ref={setCanvas2D} width={size.width} height={size.height} />;
 }
