@@ -371,5 +371,5 @@ export function Engine2D() {
         return () => cancelAnimationFrame(animationFrameId.current);
     }, [view, renderParametricMeasure, grid, renderGridLabels, cameraType]);
 
-    return <Canvas2D ref={setCanvas2D} width={size.width} height={size.height} />;
+    return <Canvas2D id="canvas2D" ref={setCanvas2D} width={size.width} height={size.height} />;
 }
