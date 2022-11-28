@@ -6,6 +6,7 @@ export interface ColorSettings {
     lineColor?: string | CanvasGradient;
     fillColor?: string;
     pointColor?: string | { start: string; middle: string; end: string };
+    outlineColor?: string;
     complexCylinder?: boolean;
 }
 
@@ -30,7 +31,7 @@ export function drawProduct(
     for (const obj of product.objects) {
         if (colorSettings.complexCylinder && obj.kind === "cylinder" && obj.parts.length === 3) {
             let startCol = "red";
-            let endCol = "green";
+            let endCol = "lime";
             const cylinderLine = obj.parts[0];
             if (cylinderLine.elevation && cylinderLine.vertices2D) {
                 if (cylinderLine.elevation.from > cylinderLine.elevation.to) {
@@ -43,12 +44,24 @@ export function drawProduct(
                 const gradient = ctx.createLinearGradient(gradX[0], gradY[0], gradX[1], gradY[1]);
                 gradient.addColorStop(0, startCol);
                 gradient.addColorStop(1, endCol);
-                drawPart(ctx, camera, cylinderLine, { lineColor: gradient }, pixelWidth);
+                drawPart(
+                    ctx,
+                    camera,
+                    cylinderLine,
+                    { lineColor: gradient, outlineColor: "rgba(80, 80, 80, .8)" },
+                    pixelWidth
+                );
             }
 
             for (let i = 1; i < 3; ++i) {
                 const col = i === 1 ? startCol : endCol;
-                drawPart(ctx, camera, obj.parts[i], { lineColor: col }, pixelWidth);
+                drawPart(
+                    ctx,
+                    camera,
+                    obj.parts[i],
+                    { lineColor: col, outlineColor: "rgba(80, 80, 80, .8)" },
+                    pixelWidth
+                );
             }
         } else {
             obj.parts.forEach((part) => {
@@ -187,6 +200,18 @@ function drawLinesOrPolygon(
             ctx.closePath();
             ctx.fill();
         }
+
+        if (colorSettings.outlineColor && colorSettings.lineColor) {
+            const tmpWidth = ctx.lineWidth;
+            ctx.lineWidth *= 2;
+            ctx.strokeStyle = colorSettings.outlineColor;
+            ctx.lineCap = "round";
+            ctx.stroke();
+            ctx.lineWidth = tmpWidth;
+            ctx.strokeStyle = colorSettings.lineColor;
+            ctx.lineCap = "butt";
+        }
+
         ctx.stroke();
 
         if (colorSettings.pointColor) {
