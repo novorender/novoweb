@@ -802,6 +802,10 @@ export function Render3D({ onInit }: Props) {
                         1
                     );
                     orthoController = api.createCameraController({ kind: "ortho", referenceCoordSys }, canvas);
+
+                    if (cameraState.goTo.fieldOfView) {
+                        (orthoController.params as OrthoControllerParams).fieldOfView = cameraState.goTo.fieldOfView;
+                    }
                 } else {
                     orthoController = api.createCameraController({ kind: "ortho" }, canvas);
                 }
@@ -825,8 +829,6 @@ export function Render3D({ onInit }: Props) {
                 }
 
                 if (view.camera.controller.params.kind === "ortho") {
-                    (orthoController.params as OrthoControllerParams).fieldOfView =
-                        view.camera.controller.params.fieldOfView;
                     orthoController.fingersMap = { ...view.camera.controller.fingersMap };
                     orthoController.mouseButtonsMap = { ...view.camera.controller.mouseButtonsMap };
                 }

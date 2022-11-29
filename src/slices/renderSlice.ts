@@ -113,12 +113,12 @@ type CameraState =
     | {
           type: CameraType.Orthographic;
           params?: OrthoControllerParams;
-          goTo?: { position: Camera["position"]; rotation: Camera["rotation"] };
+          goTo?: { position: Camera["position"]; rotation: Camera["rotation"]; fieldOfView?: number };
           gridOrigo?: vec3;
       }
     | {
           type: CameraType.Flight;
-          goTo?: { position: Camera["position"]; rotation: Camera["rotation"] };
+          goTo?: { position: Camera["position"]; rotation: Camera["rotation"]; fieldOfView?: number };
           zoomTo?: BoundingSphere;
       };
 type WritableCameraState = DeepWritable<CameraState>;
@@ -382,6 +382,7 @@ export const renderSlice = createSlice({
             const goTo =
                 "goTo" in payload && payload.goTo
                     ? {
+                          ...payload.goTo,
                           position: Array.from(payload.goTo.position) as vec3,
                           rotation: Array.from(payload.goTo.rotation) as quat,
                       }

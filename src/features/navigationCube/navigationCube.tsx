@@ -438,12 +438,14 @@ export function NavigationCube() {
         vec3.transformMat3(ab, ab, mat);
         const target = vec3.add(vec3.create(), pt, dir);
 
-        console.log(target, mat);
-
         dispatch(
             renderActions.setCamera({
                 type: cameraType,
-                goTo: { position: target, rotation: quat.fromMat3(quat.create(), mat) },
+                goTo: {
+                    position: target,
+                    rotation: quat.fromMat3(quat.create(), mat),
+                    fieldOfView: (view.camera.controller.params as { fieldOfView?: number }).fieldOfView,
+                },
             })
         );
     };
