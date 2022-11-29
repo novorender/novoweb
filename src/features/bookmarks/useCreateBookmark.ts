@@ -1,6 +1,6 @@
 import { Bookmark } from "@novorender/data-js-api";
 import { OrthoControllerParams } from "@novorender/webgl-api";
-import { quat, vec3 } from "gl-matrix";
+import { mat4, quat, vec3 } from "gl-matrix";
 
 import { useAppSelector } from "app/store";
 import { useCustomGroups } from "contexts/customGroups";
@@ -152,10 +152,25 @@ export function useCreateBookmark() {
                 },
             };
         } else {
-            const ortho = camera.controller.params as OrthoControllerParams;
+            const params = camera.controller.params as OrthoControllerParams;
+            const safeParams: OrthoControllerParams = {
+                ...params,
+                referenceCoordSys: params.referenceCoordSys
+                    ? (Array.from(params.referenceCoordSys) as mat4)
+                    : undefined,
+                position: params.position ? (Array.from(params.position) as vec3) : undefined,
+            };
+
+            if (!safeParams.referenceCoordSys) {
+                delete safeParams.referenceCoordSys;
+            }
+            if (!safeParams.position) {
+                delete safeParams.position;
+            }
+
             return {
                 ...base,
-                ortho,
+                ortho: safeParams,
             };
         }
     };
