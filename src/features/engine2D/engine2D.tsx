@@ -236,8 +236,13 @@ export function Engine2D() {
                 );
             }
 
-            if (manholeCollisionValues && manholeCollisionValues.outer) {
-                const colVal = measureApi.getDrawObjectFromPoints(view, manholeCollisionValues.outer, false, true);
+            if (manholeCollisionValues && (manholeCollisionValues.outer || manholeCollisionValues.inner)) {
+                const colVal = measureApi.getDrawObjectFromPoints(
+                    view,
+                    manholeCollisionValues.inner ?? manholeCollisionValues.outer!,
+                    false,
+                    true
+                );
                 if (colVal) {
                     colVal.objects.forEach((obj) => {
                         obj.parts.forEach((part) => {
