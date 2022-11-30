@@ -18,7 +18,13 @@ import {
     selectSubtrees,
     SubtreeStatus,
 } from "slices/renderSlice";
-import { selectEnabledWidgets, selectIsAdminScene, selectMaximized, selectMinimized } from "slices/explorerSlice";
+import {
+    selectEnabledWidgets,
+    selectIsAdminScene,
+    selectMaximized,
+    selectMinimized,
+    selectPrimaryMenu,
+} from "slices/explorerSlice";
 
 import { useMountedState } from "hooks/useMountedState";
 import { useSceneId } from "hooks/useSceneId";
@@ -50,6 +56,7 @@ export function AdvancedSettings() {
     const projectSettings = useAppSelector(selectProjectSettings);
     const baseCameraSpeed = useAppSelector(selectBaseCameraSpeed);
     const enabledWidgets = useAppSelector(selectEnabledWidgets);
+    const primaryMenu = useAppSelector(selectPrimaryMenu);
     const [menuOpen, toggleMenu] = useToggle();
     const minimized = useAppSelector(selectMinimized) === featuresConfig.advancedSettings.key;
     const maximized = useAppSelector(selectMaximized) === featuresConfig.advancedSettings.key;
@@ -135,6 +142,7 @@ export function AdvancedSettings() {
                           },
                 customProperties: {
                     ...customProperties,
+                    primaryMenu,
                     showStats: settings.showPerformance,
                     navigationCube: settings.navigationCube,
                     ditioProjectNumber: projectSettings.ditioProjectNumber,

@@ -18,7 +18,7 @@ import { Render3D } from "features/render";
 import { Consent } from "features/consent";
 
 import { useAppSelector, useAppDispatch } from "app/store";
-import { explorerActions, SceneType, UserRole } from "slices/explorerSlice";
+import { explorerActions, PrimaryMenuConfigType, SceneType, UserRole } from "slices/explorerSlice";
 import { selectUser } from "slices/authSlice";
 import { HiddenProvider } from "contexts/hidden";
 import { CustomGroupsProvider } from "contexts/customGroups";
@@ -76,6 +76,11 @@ function ExplorerBase() {
             );
         } else if (enabledFeatures) {
             dispatch(explorerActions.setEnabledWidgets(enabledFeaturesToFeatureKeys(enabledFeatures)));
+        }
+
+        const primaryMenu = getPrimaryMenu(customProperties);
+        if (primaryMenu) {
+            dispatch(explorerActions.setPrimaryMenu(primaryMenu));
         }
 
         const oAuthState = getOAuthState();
@@ -175,6 +180,12 @@ function getUserRole(customProperties: unknown): UserRole {
             : UserRole.Viewer;
 
     return role === "owner" ? UserRole.Owner : role === "administrator" ? UserRole.Admin : UserRole.Viewer;
+}
+
+function getPrimaryMenu(customProperties: unknown): PrimaryMenuConfigType | undefined {
+    return customProperties && typeof customProperties === "object" && "primaryMenu" in customProperties
+        ? (customProperties as { primaryMenu: PrimaryMenuConfigType }).primaryMenu
+        : undefined;
 }
 
 function ContextProviders({ children }: { children: ReactNode }) {
