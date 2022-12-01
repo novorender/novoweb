@@ -72,7 +72,7 @@ export class MinimapHelper {
         for (let i = 1; i < this.minimaps.length; ++i) {
             if (camPos[1] - 0.5 < this.minimaps[i].elevation) {
                 if (i !== this.currentIndex) {
-                    this.currentIndex = i;
+                    this.currentIndex = i - 1;
                     return true;
                 }
                 return false;
