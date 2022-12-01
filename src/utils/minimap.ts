@@ -70,7 +70,7 @@ export class MinimapHelper {
 
     update(camPos: vec3): boolean {
         for (let i = 1; i < this.minimaps.length; ++i) {
-            if (camPos[1] < this.minimaps[i].elevation) {
+            if (camPos[1] - 0.5 < this.minimaps[i].elevation) {
                 if (i !== this.currentIndex) {
                     this.currentIndex = i;
                     return true;
