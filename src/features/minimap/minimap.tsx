@@ -19,7 +19,7 @@ export function Minimap() {
     } = useExplorerGlobals(true);
 
     let width = Math.min(500, size.width / devicePixelRatio);
-    let height = Math.min(500, size.height / devicePixelRatio / 2);
+    let height = size.height;
     const [minimap, setMinimap] = useState<MinimapHelper | undefined>(undefined);
     const [ctx, setCtx] = useState<CanvasRenderingContext2D | null | undefined>(null);
     const animationFrameId = useRef<number>(-1);
@@ -33,8 +33,10 @@ export function Minimap() {
 
     useEffect(() => {
         const downloadFunc = async () => {
-            setMinimap(await downloadMinimap(scene));
-            setCtx(canvas?.getContext("2d"));
+            if (canvas) {
+                setMinimap(await downloadMinimap(scene));
+                setCtx(canvas?.getContext("2d"));
+            }
         };
         downloadFunc();
     }, [scene, canvas]);
@@ -43,14 +45,17 @@ export function Minimap() {
         if (minimap && ctx) {
             const img = new Image();
             img.onload = function () {
+                minimap.pixelHeight = img.height; //Set canvas height in minimap helper
+                minimap.pixelWidth = img.width; //Set canvas width in minimap helper
                 if (ctx && minimap) {
-                    ctx.drawImage(img, 0, 0, width, height);
+                    //ctx.drawImage(img, 450, 200, img.width * 0.7, img.height * 0.7, 0, 0, width, height);
+                    ctx.drawImage(img, 450, 200, img.width, img.height, 0, 0, width, height);
                 }
+                //minimap.pixelHeight = height; //Set canvas height in minimap helper
+                //minimap.pixelWidth = width; //Set canvas width in minimap helper
             };
 
             img.src = minimap.getMinimapImage();
-            minimap.pixelHeight = height; //Set canvas height in minimap helper
-            minimap.pixelWidth = width; //Set canvas width in minimap helper
         }
     }, [canvas, width, height, ctx, minimap]);
 
@@ -59,7 +64,11 @@ export function Minimap() {
             const rect = canvas.getBoundingClientRect();
             const x = event.clientX - rect.left;
             const y = event.clientY - rect.top;
-            view.camera.controller.moveTo(minimap.toWorld(vec2.fromValues(x, y)), view.camera.rotation);
+            // view.camera.controller.moveTo(
+            //     minimap.toWorld(vec2.fromValues(x * (1 / 0.7) + 300, y * (1 / 0.7) + 200)),
+            //     view.camera.rotation
+            // );
+            view.camera.controller.moveTo(minimap.toWorld(vec2.fromValues(x + 275, y)), view.camera.rotation);
         }
     };
     useEffect(() => {
@@ -80,19 +89,25 @@ export function Minimap() {
                     const img = new Image();
                     img.onload = function () {
                         if (ctx && minimap) {
-                            //Redraw the image for the minimap
-                            ctx.drawImage(img, 0, 0, width, height);
+                            //Redraw the image for te minimap
+
+                            //ctx.drawImage(img, 450, 200, img.width * 0.7, img.height * 0.7, 0, 0, width, height);
+                            ctx.drawImage(img, 275, 0, img.width, img.height, 0, 0, img.width, img.height);
 
                             //Gets the camera position in minimap space
                             const minimapPos = minimap.toMinimap(view.camera.position);
+                            //minimapPos[0] *= 1 / 0.7;
+                            //minimapPos[1] *= 1 / 0.7;
+                            minimapPos[0] -= 275;
+                            //minimapPos[1] -= 200;
                             //Gets a cone of the camera direction in minimap space, point[0] is the camera position
                             const dirPath = minimap.directionPoints(view.camera.position, view.camera.rotation);
-                            ctx.strokeStyle = "blue";
+                            ctx.strokeStyle = "green";
                             for (let i = 1; i < dirPath.length; ++i) {
                                 ctx.beginPath();
                                 ctx.lineWidth = 3;
-                                ctx.moveTo(dirPath[0][0], dirPath[0][1]);
-                                ctx.lineTo(dirPath[i][0], dirPath[i][1]);
+                                ctx.moveTo(dirPath[0][0] - 275, dirPath[0][1]);
+                                ctx.lineTo(dirPath[i][0] - 275, dirPath[i][1]);
                                 ctx.stroke();
                             }
                             ctx.fillStyle = "green";
@@ -110,5 +125,5 @@ export function Minimap() {
         return () => cancelAnimationFrame(animationFrameId.current);
     }, [view, minimap, ctx, height, width]);
 
-    return <Canvas ref={setCanvas} width={width} height={height} onClick={(e) => clickMinimap(e)} />;
+    return <Canvas ref={setCanvas} width={width / 2} height={height} onClick={(e) => clickMinimap(e)} />;
 }
