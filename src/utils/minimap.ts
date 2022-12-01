@@ -33,7 +33,7 @@ export class MinimapHelper {
         const diffX = minimapPos[0] / this.pixelWidth;
         const diffY = 1 - minimapPos[1] / this.pixelHeight;
         const pos = vec3.clone(curInfo.corner);
-        pos[1] += 2;
+        pos[1] += 0.75;
         vec3.scaleAndAdd(pos, pos, curInfo.dirX, curInfo.dx * diffX);
         vec3.scaleAndAdd(pos, pos, curInfo.dirY, curInfo.dy * diffY);
         return pos;
