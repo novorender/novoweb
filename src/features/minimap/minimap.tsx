@@ -45,11 +45,11 @@ export function Minimap() {
         if (minimap && ctx) {
             const img = new Image();
             img.onload = function () {
-                minimap.pixelHeight = img.height; //Set canvas height in minimap helper
-                minimap.pixelWidth = img.width; //Set canvas width in minimap helper
+                minimap.pixelHeight = img.height * 1.5; //Set canvas height in minimap helper
+                minimap.pixelWidth = img.width * 1.5; //Set canvas width in minimap helper
                 if (ctx && minimap) {
                     //ctx.drawImage(img, 450, 200, img.width * 0.7, img.height * 0.7, 0, 0, width, height);
-                    ctx.drawImage(img, 450, 200, img.width, img.height, 0, 0, width, height);
+                    ctx.drawImage(img, 300, 0, img.width, img.height, 0, 0, img.width * 1.5, img.height * 1.5);
                 }
                 //minimap.pixelHeight = height; //Set canvas height in minimap helper
                 //minimap.pixelWidth = width; //Set canvas width in minimap helper
@@ -68,7 +68,7 @@ export function Minimap() {
             //     minimap.toWorld(vec2.fromValues(x * (1 / 0.7) + 300, y * (1 / 0.7) + 200)),
             //     view.camera.rotation
             // );
-            view.camera.controller.moveTo(minimap.toWorld(vec2.fromValues(x + 275, y)), view.camera.rotation);
+            view.camera.controller.moveTo(minimap.toWorld(vec2.fromValues(x + 300 * 1.5, y)), view.camera.rotation);
         }
     };
     useEffect(() => {
@@ -90,15 +90,14 @@ export function Minimap() {
                     img.onload = function () {
                         if (ctx && minimap) {
                             //Redraw the image for te minimap
+                            ctx.clearRect(0, 0, width / 2, height);
 
                             //ctx.drawImage(img, 450, 200, img.width * 0.7, img.height * 0.7, 0, 0, width, height);
-                            ctx.drawImage(img, 275, 0, img.width, img.height, 0, 0, img.width, img.height);
+                            ctx.drawImage(img, 300, 0, img.width, img.height, 0, 0, img.width * 1.5, img.height * 1.5);
 
                             //Gets the camera position in minimap space
                             const minimapPos = minimap.toMinimap(view.camera.position);
-                            //minimapPos[0] *= 1 / 0.7;
-                            //minimapPos[1] *= 1 / 0.7;
-                            minimapPos[0] -= 275;
+                            minimapPos[0] -= 300 * 1.5;
                             //minimapPos[1] -= 200;
                             //Gets a cone of the camera direction in minimap space, point[0] is the camera position
                             const dirPath = minimap.directionPoints(view.camera.position, view.camera.rotation);
@@ -106,8 +105,8 @@ export function Minimap() {
                             for (let i = 1; i < dirPath.length; ++i) {
                                 ctx.beginPath();
                                 ctx.lineWidth = 3;
-                                ctx.moveTo(dirPath[0][0] - 275, dirPath[0][1]);
-                                ctx.lineTo(dirPath[i][0] - 275, dirPath[i][1]);
+                                ctx.moveTo(dirPath[0][0] - 300 * 1.5, dirPath[0][1]);
+                                ctx.lineTo(dirPath[i][0] - 300 * 1.5, dirPath[i][1]);
                                 ctx.stroke();
                             }
                             ctx.fillStyle = "green";
