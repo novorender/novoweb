@@ -1,7 +1,7 @@
 import { DrawableEntity, MeasureSettings } from "@novorender/measure-api";
 import { css, styled } from "@mui/material";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { quat, vec3 } from "gl-matrix";
+import { quat, ReadonlyVec2, vec2, vec3 } from "gl-matrix";
 
 import { useAppSelector } from "app/store";
 import { useExplorerGlobals } from "contexts/explorerGlobals";
@@ -148,7 +148,28 @@ export function Engine2D() {
 
             if (duoDrawResult && duoDrawResult.objects.length === 1) {
                 const obj = duoDrawResult.objects[0];
+                const lines: [ReadonlyVec2, ReadonlyVec2][] = [];
                 for (const part of obj.parts) {
+                    if (part.vertices2D === undefined) {
+                        continue;
+                    }
+                    let skip = false;
+                    if (part.vertices2D.length === 2) {
+                        for (const l of lines) {
+                            const a =
+                                vec2.dist(l[0], part.vertices2D[0]) < 10 && vec2.dist(l[1], part.vertices2D[1]) < 10;
+                            const b =
+                                vec2.dist(l[0], part.vertices2D[1]) < 10 && vec2.dist(l[1], part.vertices2D[0]) < 10;
+                            if (a || b) {
+                                skip = true;
+                            }
+                        }
+                        lines.push([part.vertices2D[0], part.vertices2D[1]]);
+                    }
+                    if (skip) {
+                        continue;
+                    }
+
                     switch (part.name) {
                         case "result":
                             drawPart(context2D, camSettings, part, { lineColor: "green", pointColor: "green" }, 3, {
