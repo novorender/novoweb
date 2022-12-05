@@ -16,7 +16,7 @@ import {
     Scene,
     View,
 } from "@novorender/webgl-api";
-import { vec2 } from "gl-matrix";
+import { vec2, vec3 } from "gl-matrix";
 
 import { api, dataApi } from "app";
 import { offscreenCanvas } from "config";
@@ -568,6 +568,14 @@ export function initClippingBox(clipping: RenderSettings["clippingPlanes"]): voi
             enabled: clipping.enabled,
             inside: clipping.inside,
             showBox: clipping.showBox,
+            bounds: {
+                min: vec3.clone(clipping.bounds.min),
+                max: vec3.clone(clipping.bounds.max),
+            },
+            baseBounds: {
+                min: vec3.clone(clipping.bounds.min),
+                max: vec3.clone(clipping.bounds.max),
+            },
         })
     );
 }

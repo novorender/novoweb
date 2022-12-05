@@ -216,6 +216,7 @@ export function Render3D({ onInit }: Props) {
     const flightController = useRef<CameraController>();
     const pointerDown = useRef(false);
     const isTouchPointer = useRef(false);
+    const movingClippingBox = useRef(false);
     const camX = useRef(vec3.create());
     const camY = useRef(vec3.create());
 
@@ -696,7 +697,7 @@ export function Render3D({ onInit }: Props) {
                 return;
             }
 
-            view.applySettings({ clippingPlanes: { ...clippingBox, bounds: view.settings.clippingPlanes.bounds } });
+            view.applySettings({ clippingPlanes: { ...clippingBox } });
         },
         [view, clippingBox]
     );
@@ -1180,7 +1181,14 @@ export function Render3D({ onInit }: Props) {
 
         const { position: point } = result;
         const { position, rotation, fieldOfView } = view.camera;
-        camera2pointDistance.current = vec3.dist(point, position);
+        const dist = vec3.dist(point, position);
+        camera2pointDistance.current = dist;
+
+        //  picked plane with no objects behind
+        if (camera2pointDistance.current > 5000) {
+            camera2pointDistance.current = 100;
+        }
+
         vec3.transformQuat(camX.current, xAxis, rotation);
         vec3.transformQuat(camY.current, yAxis, rotation);
 
@@ -1193,15 +1201,14 @@ export function Render3D({ onInit }: Props) {
                 max: vec3.fromValues(point[0] + size, point[1] + size, point[2] + size),
             };
 
-            view.applySettings({ clippingPlanes: { ...clippingBox, bounds } });
+            dispatch(renderActions.setClippingBox({ bounds, baseBounds: bounds }));
         } else if (result.objectId > 0xfffffffe || result.objectId < 0xfffffff9) {
             camera2pointDistance.current = 0;
         } else if (clippingBox.enabled && clippingBox.showBox) {
             view.camera.controller.enabled = false;
 
             const highlight = 0xfffffffe - result.objectId;
-
-            dispatch(renderActions.setClippingBox({ ...clippingBox, highlight }));
+            dispatch(renderActions.setClippingBox({ highlight }));
         }
     };
 
@@ -1229,9 +1236,21 @@ export function Render3D({ onInit }: Props) {
         }
 
         if (camera2pointDistance.current > 0 && clippingBox.defining) {
-            dispatch(renderActions.setClippingBox({ ...clippingBox, defining: false }));
+            const bounds = {
+                min: vec3.clone(view.settings.clippingPlanes.bounds.min),
+                max: vec3.clone(view.settings.clippingPlanes.bounds.max),
+            };
+            dispatch(renderActions.setClippingBox({ defining: false, bounds, baseBounds: bounds }));
+        } else if (movingClippingBox.current) {
+            const bounds = {
+                min: vec3.clone(view.settings.clippingPlanes.bounds.min),
+                max: vec3.clone(view.settings.clippingPlanes.bounds.max),
+            };
+
+            dispatch(renderActions.setClippingBox({ bounds, baseBounds: bounds }));
         }
 
+        movingClippingBox.current = false;
         pointerDown.current = false;
         camera2pointDistance.current = 0;
         exitPointerLock();
@@ -1329,6 +1348,7 @@ export function Render3D({ onInit }: Props) {
             vec3.add(max, max, delta);
             vec3.sub(min, min, delta);
         } else {
+            movingClippingBox.current = true;
             const dir = vec3.scale(vec3.create(), camX.current, x);
             vec3.sub(dir, dir, vec3.scale(vec3.create(), camY.current, y));
             const axisIdx = activeSide % 3;
