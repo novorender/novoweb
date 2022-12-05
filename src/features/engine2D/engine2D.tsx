@@ -172,9 +172,16 @@ export function Engine2D() {
 
                     switch (part.name) {
                         case "result":
-                            drawPart(context2D, camSettings, part, { lineColor: "green", pointColor: "green" }, 3, {
-                                type: "distance",
-                            });
+                            drawPart(
+                                context2D,
+                                camSettings,
+                                part,
+                                { lineColor: "lightgreen", pointColor: "lightgreen" },
+                                3,
+                                {
+                                    type: "distance",
+                                }
+                            );
                             break;
                         case "normal":
                             drawPart(context2D, camSettings, part, { lineColor: "black", pointColor: "black" }, 3, {
@@ -187,12 +194,12 @@ export function Engine2D() {
                             });
                             break;
                         case "y-axis":
-                            drawPart(context2D, camSettings, part, { lineColor: "lightgreen" }, 3, {
+                            drawPart(context2D, camSettings, part, { lineColor: "blue" }, 3, {
                                 type: "distance",
                             });
                             break;
                         case "z-axis":
-                            drawPart(context2D, camSettings, part, { lineColor: "blue" }, 3, {
+                            drawPart(context2D, camSettings, part, { lineColor: "green" }, 3, {
                                 type: "distance",
                             });
                             break;
@@ -272,7 +279,7 @@ export function Engine2D() {
                                 camSettings,
                                 part,
                                 {
-                                    lineColor: "blue",
+                                    lineColor: "#55802b",
                                     pointColor: "black",
                                 },
                                 2,
