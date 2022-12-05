@@ -7,10 +7,10 @@ export function PlanarDiff({ start, end }: { start: ReadonlyVec3; end: ReadonlyV
 
     return (
         <Grid container>
-            <Grid item xs={4}>
+            <Grid item xs={5}>
                 Planar dist.
             </Grid>
-            <Grid item xs={6}>
+            <Grid item xs={5}>
                 {planarDiff.toFixed(3)} m
             </Grid>
         </Grid>
