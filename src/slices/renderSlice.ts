@@ -364,12 +364,20 @@ export const renderSlice = createSlice({
             state.selectionBasketColor = { ...state.selectionBasketColor, ...action.payload };
         },
         setClippingBox: (state, action: PayloadAction<Partial<ClippingBox>>) => {
+            if (action.payload.enabled) {
+                state.clippingPlanes.enabled = false;
+            }
+
             state.clippingBox = { ...state.clippingBox, ...action.payload } as WritableClippingBox;
         },
         resetClippingBox: (state) => {
             state.clippingBox = initialState.clippingBox;
         },
         setClippingPlanes: (state, action: PayloadAction<Partial<typeof initialState["clippingPlanes"]>>) => {
+            if (action.payload.enabled) {
+                state.clippingBox.enabled = false;
+            }
+
             state.clippingPlanes = { ...state.clippingPlanes, ...action.payload };
         },
         resetClippingPlanes: (state) => {
