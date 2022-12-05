@@ -1181,7 +1181,14 @@ export function Render3D({ onInit }: Props) {
 
         const { position: point } = result;
         const { position, rotation, fieldOfView } = view.camera;
-        camera2pointDistance.current = vec3.dist(point, position);
+        const dist = vec3.dist(point, position);
+        camera2pointDistance.current = dist;
+
+        //  picked plane with no objects behind
+        if (camera2pointDistance.current > 5000) {
+            camera2pointDistance.current = 100;
+        }
+
         vec3.transformQuat(camX.current, xAxis, rotation);
         vec3.transformQuat(camY.current, yAxis, rotation);
 
@@ -1342,8 +1349,8 @@ export function Render3D({ onInit }: Props) {
             vec3.sub(min, min, delta);
         } else {
             movingClippingBox.current = true;
-            const dir = vec3.scale(vec3.create(), camX.current, x + 0.001);
-            vec3.sub(dir, dir, vec3.scale(vec3.create(), camY.current, y + 0.001));
+            const dir = vec3.scale(vec3.create(), camX.current, x);
+            vec3.sub(dir, dir, vec3.scale(vec3.create(), camY.current, y));
             const axisIdx = activeSide % 3;
             const currentAxis = axis[axisIdx];
             const dist = vec3.len(dir) * Math.sign(vec3.dot(currentAxis, dir));
