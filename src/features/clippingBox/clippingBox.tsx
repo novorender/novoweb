@@ -150,7 +150,7 @@ export function ClippingBox() {
                         </>
                     ) : null}
                 </WidgetHeader>
-                <ScrollBox p={1}>
+                <ScrollBox p={1} pb={3} display={menuOpen || minimized ? "none" : "block"}>
                     {[0, 3, 2, 5, 1, 4].map((plane) => {
                         const sliderProps = {
                             min: flatBaseBounds[plane] - 20,
@@ -167,10 +167,14 @@ export function ClippingBox() {
                                 key={plane}
                                 mt={1}
                                 onMouseEnter={() => {
-                                    dispatch(renderActions.setClippingBox({ highlight: plane }));
+                                    if (!disableSliders) {
+                                        dispatch(renderActions.setClippingBox({ highlight: plane }));
+                                    }
                                 }}
                                 onMouseLeave={() => {
-                                    dispatch(renderActions.setClippingBox({ highlight: -1 }));
+                                    if (!disableSliders) {
+                                        dispatch(renderActions.setClippingBox({ highlight: -1 }));
+                                    }
                                 }}
                             >
                                 Position ({axisNames[plane]}):

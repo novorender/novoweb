@@ -147,7 +147,14 @@ export function useSelectBookmark() {
 
         if (bookmark.clippingPlanes) {
             view?.applySettings({ clippingPlanes: { ...bookmark.clippingPlanes, highlight: -1 } });
-            dispatch(renderActions.setClippingBox({ ...bookmark.clippingPlanes, highlight: -1, defining: false }));
+            dispatch(
+                renderActions.setClippingBox({
+                    ...bookmark.clippingPlanes,
+                    baseBounds: bookmark.clippingPlanes.bounds,
+                    highlight: -1,
+                    defining: false,
+                })
+            );
         } else {
             dispatch(renderActions.resetClippingBox());
         }
