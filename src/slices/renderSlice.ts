@@ -104,7 +104,6 @@ export type Subtree = keyof NonNullable<State["subtrees"]>;
 
 type CameraPosition = Pick<Camera, "position" | "rotation">;
 export type ObjectGroups = { default: ObjectGroup; defaultHidden: ObjectGroup; custom: ObjectGroup[] };
-export type ClippingPlanes = Omit<RenderSettings["clippingPlanes"], "bounds"> & { defining: boolean };
 
 // Redux toolkit with immer removes readonly modifier of state in the reducer so we get ts errors
 // unless we cast the types to writable ones.
@@ -123,6 +122,11 @@ type CameraState =
       };
 type WritableCameraState = DeepWritable<CameraState>;
 type WritableGrid = DeepWritable<RenderSettings["grid"]>;
+export type ClippingBox = RenderSettings["clippingPlanes"] & {
+    defining: boolean;
+    baseBounds: RenderSettings["clippingPlanes"]["bounds"];
+};
+type WritableClippingBox = DeepWritable<ClippingBox>;
 
 const initialState = {
     environments: [] as EnvironmentDescription[],
@@ -153,7 +157,9 @@ const initialState = {
         inside: true,
         showBox: false,
         highlight: -1,
-    } as ClippingPlanes,
+        bounds: { min: [0, 0, 0], max: [0, 0, 0] },
+        baseBounds: { min: [0, 0, 0], max: [0, 0, 0] },
+    } as WritableClippingBox,
     clippingPlanes: {
         enabled: false,
         mode: "union" as "union" | "intersection",
@@ -357,8 +363,8 @@ export const renderSlice = createSlice({
         setSelectionBasketColor: (state, action: PayloadAction<Partial<State["selectionBasketColor"]>>) => {
             state.selectionBasketColor = { ...state.selectionBasketColor, ...action.payload };
         },
-        setClippingBox: (state, action: PayloadAction<Partial<ClippingPlanes>>) => {
-            state.clippingBox = { ...state.clippingBox, ...action.payload };
+        setClippingBox: (state, action: PayloadAction<Partial<ClippingBox>>) => {
+            state.clippingBox = { ...state.clippingBox, ...action.payload } as WritableClippingBox;
         },
         resetClippingBox: (state) => {
             state.clippingBox = initialState.clippingBox;
@@ -481,7 +487,7 @@ export const selectHomeCameraPosition = (state: RootState) => state.render.saved
 export const selectSubtrees = (state: RootState) => state.render.subtrees;
 export const selectSelectionBasketMode = (state: RootState) => state.render.selectionBasketMode;
 export const selectSelectionBasketColor = (state: RootState) => state.render.selectionBasketColor;
-export const selectClippingBox = (state: RootState) => state.render.clippingBox;
+export const selectClippingBox = (state: RootState) => state.render.clippingBox as ClippingBox;
 export const selectClippingPlanes = (state: RootState) => state.render.clippingPlanes;
 export const selectCamera = (state: RootState) => state.render.camera as CameraState;
 export const selectCameraType = (state: RootState) => state.render.camera.type;
