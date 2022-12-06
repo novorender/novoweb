@@ -535,7 +535,6 @@ export function Render3D({ onInit }: Props) {
                     moveSvg();
                     renderParametricMeasure();
                     setDeviationStamp(null);
-                    rendering.current.update({ moving: true });
 
                     if (movementTimer.current) {
                         clearTimeout(movementTimer.current);
@@ -556,8 +555,6 @@ export function Render3D({ onInit }: Props) {
                         ) {
                             return;
                         }
-
-                        rendering.current.update({ moving: false });
 
                         dispatch(
                             renderActions.saveCameraPosition({

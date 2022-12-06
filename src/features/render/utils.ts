@@ -203,7 +203,7 @@ export function createRendering(
 
             let runPostEffects =
                 !view.performanceStatistics.weakDevice &&
-                !settings.moving &&
+                // !settings.moving &&
                 output.statistics.sceneResolved &&
                 view.camera.controller.params.kind !== "ortho" &&
                 (settings.taaEnabled || settings.ssaoEnabled);
