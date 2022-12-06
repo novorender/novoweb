@@ -180,7 +180,10 @@ export function Engine2D() {
                                 context2D,
                                 camSettings,
                                 part,
-                                { lineColor: "lightgreen", pointColor: "lightgreen" },
+                                {
+                                    lineColor: "lightgreen",
+                                    pointColor: { start: "green", middle: "white", end: "blue" },
+                                },
                                 3,
                                 {
                                     type: "distance",
@@ -213,7 +216,7 @@ export function Engine2D() {
                             });
                             break;
                         case "z-angle":
-                            drawPart(context2D, camSettings, part, { lineColor: "blue" }, 2, {
+                            drawPart(context2D, camSettings, part, { lineColor: "green" }, 2, {
                                 type: "distance",
                             });
                             break;
