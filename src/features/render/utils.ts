@@ -99,7 +99,7 @@ export function createRendering(
         });
 
         if (pickBufferUpdated || performance.now() - lastPickBufferUpdate < 1000) {
-            cb(await view.pick(x, y));
+            cb(await view.lastRenderOutput?.pick(x, y));
         } else {
             hook = async () => {
                 await view.updatePickBuffers();
@@ -120,7 +120,7 @@ export function createRendering(
         });
 
         if (pickBufferUpdated || performance.now() - lastPickBufferUpdate < 1000) {
-            cb(await view.measure(x, y));
+            cb(await view.lastRenderOutput?.measure(x, y));
         } else {
             hook = async () => {
                 await view.updatePickBuffers();
