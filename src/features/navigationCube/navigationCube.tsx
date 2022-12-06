@@ -1,5 +1,5 @@
 import { Fragment, useEffect, useRef, useState } from "react";
-import { mat3, quat, vec2, vec3 } from "gl-matrix";
+import { mat3, quat, ReadonlyVec3, vec2, vec3 } from "gl-matrix";
 import { css, styled, useTheme } from "@mui/material";
 
 import { useExplorerGlobals } from "contexts/explorerGlobals";
@@ -359,7 +359,7 @@ export function NavigationCube() {
         state: { view, scene },
     } = useExplorerGlobals(true);
     const highlighted = useHighlighted().idArr;
-    const prevPivotPt = useRef<vec3>();
+    const prevPivotPt = useRef<ReadonlyVec3>();
     const [circlePaths, setCirclePaths] = useState([] as Path[]);
     const [cubePaths, setCubePaths] = useState([] as Path[]);
     const [trianglePaths, setTrianglePath] = useState([] as Path[]);
@@ -368,7 +368,7 @@ export function NavigationCube() {
     const cameraType = useAppSelector(selectCameraType);
     const dispatch = useAppDispatch();
 
-    const highlightedBoundingSphereCenter = useRef<vec3>();
+    const highlightedBoundingSphereCenter = useRef<ReadonlyVec3>();
     const prevRotation = useRef<quat>();
     const animationFrameId = useRef<number>(-1);
 
@@ -383,7 +383,7 @@ export function NavigationCube() {
             return;
         }
 
-        let pt: vec3 | undefined;
+        let pt: ReadonlyVec3 | undefined;
 
         if (highlighted.length) {
             const abortSignal = abortController.current.signal;

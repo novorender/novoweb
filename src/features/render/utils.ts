@@ -12,6 +12,7 @@ import {
     ObjectId,
     OrthoControllerParams,
     PickInfo,
+    RenderOutput,
     RenderSettings,
     Scene,
     View,
@@ -23,7 +24,6 @@ import { offscreenCanvas } from "config";
 import { featuresConfig, WidgetKey } from "config/features";
 import { groupsActions, selectLoadingIds } from "features/groups";
 import { DeviationMode, deviationsActions } from "features/deviations";
-
 import { store } from "app/store";
 import { CustomGroup, customGroupsActions, DispatchCustomGroups } from "contexts/customGroups";
 import { hiddenGroupActions, DispatchHidden } from "contexts/hidden";
@@ -39,14 +39,15 @@ import {
     SubtreeStatus,
 } from "slices/renderSlice";
 import { explorerActions } from "slices/explorerSlice";
-
 import { VecRGB, VecRGBA } from "utils/color";
 import { sleep } from "utils/timers";
+
 import { MAX_FLOAT } from "./consts";
 
 type Settings = {
     taaEnabled: boolean;
     ssaoEnabled: boolean;
+    autoFpsEnabled: boolean;
     outlineRenderingEnabled: boolean;
     moving: boolean;
 };
@@ -58,13 +59,14 @@ export function createRendering(
     start: () => Promise<void>;
     update: (updated: Partial<Settings>) => void;
     stop: () => void;
-    pick: typeof view.pick;
-    measure: typeof view.measure;
+    pick: RenderOutput["pick"];
+    measure: RenderOutput["measure"];
 } {
     const running = { current: false };
     let settings: Settings = {
         ssaoEnabled: true,
         taaEnabled: true,
+        autoFpsEnabled: true,
         moving: false,
         outlineRenderingEnabled: true,
     };
@@ -81,11 +83,12 @@ export function createRendering(
         if (
             settings.ssaoEnabled !== updatedSettings.ssaoEnabled ||
             settings.taaEnabled !== updatedSettings.taaEnabled ||
+            settings.autoFpsEnabled !== updatedSettings.autoFpsEnabled ||
             settings.outlineRenderingEnabled !== updatedSettings.outlineRenderingEnabled ||
             settings.moving !== updatedSettings.moving
         ) {
             settings = updatedSettings;
-            (view as any).settings.generation++;
+            view.invalidateCamera();
         }
     }
 
@@ -102,9 +105,9 @@ export function createRendering(
                 await view.updatePickBuffers();
                 lastPickBufferUpdate = performance.now();
                 pickBufferUpdated = true;
-                cb(await view.pick(x, y));
+                cb(await view.lastRenderOutput?.pick(x, y));
             };
-            (view as any).settings.generation++;
+            view.invalidateCamera();
         }
 
         return prom;
@@ -123,9 +126,10 @@ export function createRendering(
                 await view.updatePickBuffers();
                 lastPickBufferUpdate = performance.now();
                 pickBufferUpdated = true;
-                cb(await view.measure(x, y));
+                cb(await view.lastRenderOutput?.measure(x, y));
             };
-            (view as any).settings.generation++;
+            // todo (flytt invalidate te handler? trenge vel ikkje alltid invalidate)
+            view.invalidateCamera();
         }
 
         return prom;
@@ -152,6 +156,13 @@ export function createRendering(
             if (!running.current) {
                 break;
             }
+
+            if (settings.autoFpsEnabled) {
+                view.adjustQuality();
+            }
+
+            // todo
+            (window as any).output = output;
 
             if (settings.outlineRenderingEnabled && view.camera.controller.params.kind === "ortho") {
                 await output.applyPostEffect({ kind: "outline", color: [0, 0, 0, 0] });
@@ -188,8 +199,10 @@ export function createRendering(
             }
             startRender = now;
 
+            (view.performanceStatistics as any).resolutionScale = output.renderSettings.quality.resolution.value;
+
             let runPostEffects =
-                // !view.performanceStatistics.weakDevice &&
+                !view.performanceStatistics.weakDevice &&
                 !settings.moving &&
                 output.statistics.sceneResolved &&
                 view.camera.controller.params.kind !== "ortho" &&
@@ -199,7 +212,7 @@ export function createRendering(
             let postEffectTimeout = true;
 
             while (runPostEffects && running.current) {
-                if (output.hasViewChanged) {
+                if (await output.hasChanged()) {
                     break;
                 }
 
@@ -610,8 +623,6 @@ export function initAdvancedSettings(view: View, customProperties: Record<string
         renderActions.setAdvancedSettings({
             [AdvancedSetting.ShowPerformance]:
                 Boolean(customProperties?.showStats) || window.location.search.includes("debug=true"),
-            [AdvancedSetting.AutoFps]: view.settings.quality.resolution.autoAdjust.enabled,
-            [AdvancedSetting.TriangleBudget]: view.settings.quality.detail.autoAdjust.enabled,
             [AdvancedSetting.ShowBoundingBoxes]: diagnostics.showBoundingBoxes,
             [AdvancedSetting.HoldDynamic]: diagnostics.holdDynamic,
             [AdvancedSetting.DoubleSidedMaterials]: advanced.doubleSided.opaque,
@@ -628,6 +639,7 @@ export function initAdvancedSettings(view: View, customProperties: Record<string
             [AdvancedSetting.NavigationCube]: Boolean(customProperties?.navigationCube),
             [AdvancedSetting.TerrainAsBackground]: Boolean(terrain.asBackground),
             [AdvancedSetting.BackgroundColor]: background.color as VecRGBA,
+            [AdvancedSetting.AutoFps]: customProperties?.autoFps ?? true,
             [AdvancedSetting.TriangleLimit]:
                 customProperties?.triangleLimit ?? (api as any).deviceProfile?.triangleLimit ?? 5_000_000,
             ...(customProperties?.flightMouseButtonMap

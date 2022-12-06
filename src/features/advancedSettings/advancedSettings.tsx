@@ -127,6 +127,7 @@ export function AdvancedSettings() {
                               asBackground: settings.terrainAsBackground,
                           },
                           background: {
+                              ...originalSettings.background,
                               color: settings.backgroundColor,
                           },
                           ...(currentEnvironment ? { environment: currentEnvironment.name } : {}),

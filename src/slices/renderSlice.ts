@@ -58,7 +58,6 @@ export enum AdvancedSetting {
     DoubleSidedMaterials = "doubleSidedMaterials",
     DoubleSidedTransparentMaterials = "doubleSidedTransparentMaterials",
     HoldDynamic = "holdDynamic",
-    TriangleBudget = "triangleBudget",
     ShowPerformance = "showPerformance",
     CameraNearClipping = "cameraNearClipping",
     CameraFarClipping = "cameraFarClipping",
@@ -127,6 +126,8 @@ export type ClippingBox = RenderSettings["clippingPlanes"] & {
     baseBounds: RenderSettings["clippingPlanes"]["bounds"];
 };
 type WritableClippingBox = DeepWritable<ClippingBox>;
+type SavedCameraPositions = { currentIndex: number; positions: CameraPosition[] };
+type WritableSavedCameraPositions = DeepWritable<SavedCameraPositions>;
 
 const initialState = {
     environments: [] as EnvironmentDescription[],
@@ -136,7 +137,7 @@ const initialState = {
     selectMultiple: false,
     baseCameraSpeed: 0.03,
     cameraSpeedMultiplier: CameraSpeedMultiplier.Normal,
-    savedCameraPositions: { currentIndex: -1, positions: [] as CameraPosition[] },
+    savedCameraPositions: { currentIndex: -1, positions: [] } as WritableSavedCameraPositions,
     subtrees: undefined as
         | undefined
         | {
@@ -175,7 +176,6 @@ const initialState = {
         [AdvancedSetting.DoubleSidedMaterials]: false,
         [AdvancedSetting.DoubleSidedTransparentMaterials]: false,
         [AdvancedSetting.HoldDynamic]: false,
-        [AdvancedSetting.TriangleBudget]: false,
         [AdvancedSetting.ShowPerformance]: false,
         [AdvancedSetting.CameraNearClipping]: 0,
         [AdvancedSetting.CameraFarClipping]: 0,
@@ -280,7 +280,10 @@ export const renderSlice = createSlice({
         saveCameraPosition: (state, action: PayloadAction<CameraPosition>) => {
             state.savedCameraPositions.positions = state.savedCameraPositions.positions
                 .slice(0, state.savedCameraPositions.currentIndex + 1)
-                .concat(action.payload);
+                .concat({
+                    position: vec3.clone(action.payload.position),
+                    rotation: vec4.clone(action.payload.rotation),
+                });
             state.savedCameraPositions.currentIndex = state.savedCameraPositions.positions.length - 1;
         },
         undoCameraPosition: (state) => {
@@ -290,7 +293,10 @@ export const renderSlice = createSlice({
             state.savedCameraPositions.currentIndex = state.savedCameraPositions.currentIndex + 1;
         },
         setHomeCameraPos: (state, action: PayloadAction<CameraPosition>) => {
-            state.savedCameraPositions.positions[0] = action.payload;
+            state.savedCameraPositions.positions[0] = {
+                position: vec3.clone(action.payload.position),
+                rotation: vec4.clone(action.payload.rotation),
+            };
         },
         setDefaultDeviceProfile: (state, action: PayloadAction<State["defaultDeviceProfile"]>) => {
             state.defaultDeviceProfile = action.payload;
@@ -490,8 +496,10 @@ export const selectDefaultVisibility = (state: RootState) => state.render.defaul
 export const selectSelectMultiple = (state: RootState) => state.render.selectMultiple;
 export const selectCameraSpeedMultiplier = (state: RootState) => state.render.cameraSpeedMultiplier;
 export const selectBaseCameraSpeed = (state: RootState) => state.render.baseCameraSpeed;
-export const selectSavedCameraPositions = (state: RootState) => state.render.savedCameraPositions;
-export const selectHomeCameraPosition = (state: RootState) => state.render.savedCameraPositions.positions[0];
+export const selectSavedCameraPositions = (state: RootState) =>
+    state.render.savedCameraPositions as SavedCameraPositions;
+export const selectHomeCameraPosition = (state: RootState) =>
+    state.render.savedCameraPositions.positions[0] as CameraPosition;
 export const selectSubtrees = (state: RootState) => state.render.subtrees;
 export const selectSelectionBasketMode = (state: RootState) => state.render.selectionBasketMode;
 export const selectSelectionBasketColor = (state: RootState) => state.render.selectionBasketColor;

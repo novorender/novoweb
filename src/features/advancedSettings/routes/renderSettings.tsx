@@ -20,12 +20,10 @@ import { selectUser } from "slices/authSlice";
 import { api } from "app";
 
 import {
-    toggleAutoFps,
     toggleShowBoundingBox,
     toggleDoubleSidedMaterials,
     toggleDoubleSidedTransparentMaterials,
     toggleHoldDynamic,
-    toggleTriangleBudget,
     toggleQualityPoints,
     toggleTerrainAsBackground,
 } from "../utils";
@@ -57,7 +55,6 @@ export function RenderSettings({ save, saving }: { save: () => Promise<void>; sa
         doubleSidedMaterials,
         doubleSidedTransparentMaterials,
         holdDynamic,
-        triangleBudget,
         qualityPoints,
         pointSize,
         maxPointSize,
@@ -82,7 +79,8 @@ export function RenderSettings({ save, saving }: { save: () => Promise<void>; sa
 
         switch (name) {
             case AdvancedSetting.AutoFps:
-                return toggleAutoFps(view);
+                // todo
+                return;
             case AdvancedSetting.ShowBoundingBoxes:
                 return toggleShowBoundingBox(view);
             case AdvancedSetting.DoubleSidedMaterials:
@@ -91,8 +89,6 @@ export function RenderSettings({ save, saving }: { save: () => Promise<void>; sa
                 return toggleDoubleSidedTransparentMaterials(view);
             case AdvancedSetting.HoldDynamic:
                 return toggleHoldDynamic(view);
-            case AdvancedSetting.TriangleBudget:
-                return toggleTriangleBudget(view);
             case AdvancedSetting.QualityPoints:
                 return toggleQualityPoints(view);
             case AdvancedSetting.TerrainAsBackground:
@@ -127,7 +123,7 @@ export function RenderSettings({ save, saving }: { save: () => Promise<void>; sa
                 case AdvancedSetting.AmbientLight:
                     setAmbLight(value);
                     light.ambient.brightness = value;
-                    view.performanceStatistics.cameraGeneration++;
+                    view.invalidateCamera();
                     return;
                 case AdvancedSetting.TriangleLimit:
                     setMaxTris(value);
@@ -189,7 +185,7 @@ export function RenderSettings({ save, saving }: { save: () => Promise<void>; sa
                         control={<Switch name={AdvancedSetting.AutoFps} checked={autoFps} onChange={handleToggle} />}
                         label={
                             <Box ml={1} fontSize={16}>
-                                Dynamic resolution scaling
+                                Dynamic resolution scaling (todo)
                             </Box>
                         }
                     />
@@ -293,21 +289,6 @@ export function RenderSettings({ save, saving }: { save: () => Promise<void>; sa
                                         }
                                     />
                                 ) : null}
-                                <FormControlLabel
-                                    sx={{ ml: 0 }}
-                                    control={
-                                        <Switch
-                                            name={AdvancedSetting.TriangleBudget}
-                                            checked={triangleBudget}
-                                            onChange={handleToggle}
-                                        />
-                                    }
-                                    label={
-                                        <Box ml={1} fontSize={16}>
-                                            Triangle budget
-                                        </Box>
-                                    }
-                                />
 
                                 <Divider sx={{ borderColor: theme.palette.grey[300], my: 2 }} />
 

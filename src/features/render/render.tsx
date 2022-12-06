@@ -398,24 +398,6 @@ export function Render3D({ onInit }: Props) {
                         ...settings.background,
                         color: bgColor,
                     },
-                    quality: {
-                        detail: {
-                            ..._view.settings.quality.detail,
-                            autoAdjust: {
-                                enabled: true,
-                                min: -1,
-                                max: 3,
-                            },
-                            value: Math.pow(10, 3),
-                        },
-                        resolution: {
-                            value: 1,
-                            autoAdjust: {
-                                ..._view.settings.quality.resolution.autoAdjust,
-                                max: window.devicePixelRatio,
-                            },
-                        },
-                    },
                 });
                 _view.scene = await api.loadScene(url, db);
 
@@ -1067,8 +1049,9 @@ export function Render3D({ onInit }: Props) {
             return;
         }
 
-        const { normal: _normal, position } = result;
-        const normal = _normal.some((n) => Number.isNaN(n)) ? undefined : result.normal;
+        const { normal: _normal, position: _position } = result;
+        const normal = _normal.some((n) => Number.isNaN(n)) ? undefined : vec3.clone(result.normal);
+        const position = vec3.clone(_position);
 
         switch (picker) {
             case Picker.Object:
@@ -1115,7 +1098,7 @@ export function Render3D({ onInit }: Props) {
                 break;
             case Picker.OrthoPlane:
                 const orthoController = api.createCameraController({ kind: "ortho" }, canvas);
-                (orthoController as any).init(result.position, normal, view.camera);
+                (orthoController as any).init(position, normal, view.camera);
                 dispatch(
                     renderActions.setCamera({
                         type: CameraType.Orthographic,
@@ -1126,15 +1109,13 @@ export function Render3D({ onInit }: Props) {
 
                 break;
             case Picker.Measurement:
-                dispatch(
-                    measureActions.selectObj({ id: measure.forcePoint ? -1 : result.objectId, pos: result.position })
-                );
+                dispatch(measureActions.selectObj({ id: measure.forcePoint ? -1 : result.objectId, pos: position }));
                 break;
             case Picker.Manhole:
                 if (result.objectId === -1) {
                     return;
                 }
-                dispatch(manholeActions.selectObj({ id: result.objectId, pos: result.position }));
+                dispatch(manholeActions.selectObj({ id: result.objectId, pos: position }));
                 break;
 
             case Picker.FollowPathObject: {
@@ -1142,15 +1123,15 @@ export function Render3D({ onInit }: Props) {
                     return;
                 }
 
-                dispatch(followPathActions.setSelectedPositions([{ id: result.objectId, pos: result.position }]));
+                dispatch(followPathActions.setSelectedPositions([{ id: result.objectId, pos: position }]));
                 break;
             }
             case Picker.Area: {
-                dispatch(areaActions.addPoint([result.position, normal ?? [0, 0, 0]]));
+                dispatch(areaActions.addPoint([position, normal ?? [0, 0, 0]]));
                 break;
             }
             case Picker.PointLine: {
-                dispatch(pointLineActions.addPoint(result.position));
+                dispatch(pointLineActions.addPoint(position));
                 break;
             }
             case Picker.HeightProfileEntity: {
@@ -1158,7 +1139,7 @@ export function Render3D({ onInit }: Props) {
                     return;
                 }
 
-                dispatch(heightProfileActions.selectPoint({ id: result.objectId, pos: result.position }));
+                dispatch(heightProfileActions.selectPoint({ id: result.objectId, pos: vec3.clone(position) }));
                 break;
             }
             default:

@@ -105,7 +105,11 @@ export function moveSvgCursor({
         g.innerHTML = "";
         return;
     }
-    const normal = measurement?.normalVS?.some((v) => Number.isNaN(v)) ? undefined : measurement?.normalVS;
+
+    let normal =
+        measurement &&
+        measurement.normalVS &&
+        (measurement?.normalVS?.some((v) => Number.isNaN(v)) ? undefined : vec3.clone(measurement.normalVS));
     if (normal) {
         const { width, height } = size;
         const { camera } = view;
