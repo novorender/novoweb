@@ -462,7 +462,7 @@ export function Render3D({ onInit }: Props) {
                 resizeObserver.observe(canvas);
 
                 dispatch(renderActions.setDefaultDeviceProfile({ ...((api as any).deviceProfile ?? {}) }));
-                if (customProperties?.triangleLimit) {
+                if (customProperties?.triangleLimit && !(api.deviceProfile as any).debugProfile) {
                     (api as any).deviceProfile.triangleLimit = Math.min(
                         (api as any).deviceProfile.triangleLimit,
                         customProperties?.triangleLimit
