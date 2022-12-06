@@ -285,11 +285,7 @@ export function Render3D({ onInit }: Props) {
         mat4.invert(camMatrix, camMatrix);
         const toScreen = (p: vec3) => {
             const _p = vec4.transformMat4(vec4.create(), vec4.fromValues(p[0], p[1], p[2], 1), proj);
-            return vec2.scale(
-                vec2.create(),
-                vec2.fromValues(((_p[0] * 0.5) / _p[3] + 0.5) * width, (0.5 - (_p[1] * 0.5) / _p[3]) * height),
-                1 / devicePixelRatio
-            );
+            return vec2.fromValues(((_p[0] * 0.5) / _p[3] + 0.5) * width, (0.5 - (_p[1] * 0.5) / _p[3]) * height);
         };
 
         if (panoramas?.length) {
@@ -452,8 +448,8 @@ export function Render3D({ onInit }: Props) {
                 canvas.focus();
                 const resizeObserver = new ResizeObserver((entries) => {
                     for (const entry of entries) {
-                        canvas.width = entry.contentRect.width * devicePixelRatio;
-                        canvas.height = entry.contentRect.height * devicePixelRatio;
+                        canvas.width = entry.contentRect.width;
+                        canvas.height = entry.contentRect.height;
                         _view.applySettings({
                             display: { width: canvas.width, height: canvas.height },
                         });
@@ -1014,18 +1010,15 @@ export function Render3D({ onInit }: Props) {
             return;
         }
 
-        const result = await rendering.current.pick(
-            e.nativeEvent.offsetX * devicePixelRatio,
-            e.nativeEvent.offsetY * devicePixelRatio
-        );
+        const result = await rendering.current.pick(e.nativeEvent.offsetX, e.nativeEvent.offsetY);
 
         if (deviation.mode !== "off" && cameraState.type === CameraType.Orthographic) {
             const pickSize = isTouchPointer.current ? 16 : 0;
             const deviation = await pickDeviationArea({
                 measure: rendering.current.measure,
                 size: pickSize,
-                clickX: e.nativeEvent.offsetX * devicePixelRatio,
-                clickY: e.nativeEvent.offsetY * devicePixelRatio,
+                clickX: e.nativeEvent.offsetX,
+                clickY: e.nativeEvent.offsetY,
             });
 
             if (deviation) {
@@ -1200,7 +1193,7 @@ export function Render3D({ onInit }: Props) {
         }
 
         isTouchPointer.current = true;
-        handleDown(e.nativeEvent.offsetX * devicePixelRatio, e.nativeEvent.offsetY * devicePixelRatio);
+        handleDown(e.nativeEvent.offsetX, e.nativeEvent.offsetY);
     };
 
     const handleMouseDown = (e: MouseEvent) => {
@@ -1208,7 +1201,7 @@ export function Render3D({ onInit }: Props) {
             return;
         }
 
-        handleDown(e.nativeEvent.offsetX * devicePixelRatio, e.nativeEvent.offsetY * devicePixelRatio);
+        handleDown(e.nativeEvent.offsetX, e.nativeEvent.offsetY);
     };
 
     const handleUp = () => {
@@ -1257,10 +1250,7 @@ export function Render3D({ onInit }: Props) {
             ].includes(picker);
 
         if (useSvgCursor) {
-            const measurement = await rendering.current.measure(
-                e.nativeEvent.offsetX * devicePixelRatio,
-                e.nativeEvent.offsetY * devicePixelRatio
-            );
+            const measurement = await rendering.current.measure(e.nativeEvent.offsetX, e.nativeEvent.offsetY);
             canvas.style.cursor = "none";
 
             moveSvgCursor({ svg, view, size, measurement, x: e.nativeEvent.offsetX, y: e.nativeEvent.offsetY });
@@ -1276,10 +1266,7 @@ export function Render3D({ onInit }: Props) {
             e.buttons === 0 &&
             subtrees?.points === SubtreeStatus.Shown
         ) {
-            const measurement = await rendering.current.measure(
-                e.nativeEvent.offsetX * devicePixelRatio,
-                e.nativeEvent.offsetY * devicePixelRatio
-            );
+            const measurement = await rendering.current.measure(e.nativeEvent.offsetX, e.nativeEvent.offsetY);
 
             if (measurement?.deviation) {
                 setDeviationStamp({

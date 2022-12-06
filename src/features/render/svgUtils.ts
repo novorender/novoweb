@@ -3,8 +3,6 @@ import { quat, vec2, vec3 } from "gl-matrix";
 
 import { measureApi } from "app";
 
-import { inversePixelRatio } from "./utils";
-
 type Size = {
     width: number;
     height: number;
@@ -143,10 +141,8 @@ export function getPathPoints({ view, points }: { view: View; points: vec3[] }) 
     const pts = measureApi.toPathPoints(points, view);
 
     if (pts && pts.flat(2).every((num) => !Number.isNaN(num) && Number.isFinite(num))) {
-        const [_pathPoints, _pixelPoints] = pts;
-        const path = inversePixelRatio(_pathPoints as vec2[]);
-        const pixel = inversePixelRatio(_pixelPoints as vec2[]);
-        return { pixel, path } as const;
+        const [pathPoints, pixelPoints] = pts;
+        return { pixel: pixelPoints, path: pathPoints } as const;
     }
     return undefined;
 }

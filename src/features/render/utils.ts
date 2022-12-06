@@ -17,7 +17,7 @@ import {
     Scene,
     View,
 } from "@novorender/webgl-api";
-import { vec2, vec3 } from "gl-matrix";
+import { vec3 } from "gl-matrix";
 
 import { api, dataApi } from "app";
 import { offscreenCanvas } from "config";
@@ -704,8 +704,4 @@ export async function pickDeviationArea({
                 return deviation + measureInfo!.deviation!;
             }
         }, 0);
-}
-
-export function inversePixelRatio(points: vec2[]): vec2[] {
-    return points.map((pts) => vec2.scale(vec2.create(), pts, 1 / devicePixelRatio));
 }
