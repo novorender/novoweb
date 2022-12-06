@@ -77,19 +77,20 @@ export function drawPart(
     colorSettings: ColorSettings,
     pixelWidth: number,
     textSettings?: TextSettings
-) {
+): boolean {
     if (part.vertices2D) {
         ctx.lineWidth = pixelWidth;
         ctx.strokeStyle = colorSettings.lineColor ?? "black";
         ctx.fillStyle = colorSettings.fillColor ?? "transparent";
         if (part.drawType === "angle" && part.vertices2D.length === 3 && part.text) {
-            drawAngle(ctx, camera, part);
+            return drawAngle(ctx, camera, part);
         } else if (part.drawType === "lines" || part.drawType === "filled") {
-            drawLinesOrPolygon(ctx, part, colorSettings, textSettings);
+            return drawLinesOrPolygon(ctx, part, colorSettings, textSettings);
         } else if (part.drawType === "vertex") {
-            drawPoints(ctx, part, colorSettings);
+            return drawPoints(ctx, part, colorSettings);
         }
     }
+    return false;
 }
 
 function drawAngle(ctx: CanvasRenderingContext2D, camera: CameraSettings, part: DrawPart) {
@@ -117,14 +118,14 @@ function drawAngle(ctx: CanvasRenderingContext2D, camera: CameraSettings, part: 
         vec3.normalize(dirCamP, dirCamP);
 
         if (Math.abs(vec3.dot(dirCamP, norm)) < 0.15) {
-            return;
+            return false;
         }
 
         if (camDist > (l0 + l1) / 10) {
-            return;
+            return false;
         }
         if (l0 < 40 || l1 < 40) {
-            return;
+            return false;
         }
         vec2.scale(d0, d0, 1 / l0);
         vec2.scale(d1, d1, 1 / l1);
@@ -165,7 +166,9 @@ function drawAngle(ctx: CanvasRenderingContext2D, camera: CameraSettings, part: 
             ctx.fillText(part.text, 0, 0);
             ctx.resetTransform();
         }
+        return true;
     }
+    return false;
 }
 
 function drawLinesOrPolygon(
@@ -214,16 +217,7 @@ function drawLinesOrPolygon(
 
         if (colorSettings.pointColor) {
             for (let i = 0; i < part.vertices2D.length; ++i) {
-                if (typeof colorSettings.pointColor == "string") {
-                    ctx.fillStyle = colorSettings.pointColor;
-                } else if (i === 0) {
-                    ctx.fillStyle = colorSettings.pointColor.start;
-                } else if (i === part.vertices2D.length - 1) {
-                    ctx.fillStyle = colorSettings.pointColor.end;
-                } else {
-                    ctx.fillStyle = colorSettings.pointColor.middle;
-                }
-
+                ctx.fillStyle = getPointColor(colorSettings.pointColor, i, part.vertices2D.length);
                 ctx.lineWidth = 2;
                 ctx.strokeStyle = "black";
                 ctx.beginPath();
@@ -278,16 +272,33 @@ function drawLinesOrPolygon(
                 ctx.fillText(textStr, center[0] / part.vertices2D.length, center[1] / part.vertices2D.length);
             }
         }
+        return true;
     }
+    return false;
+}
+
+function getPointColor(
+    pointColor: string | { start: string; middle: string; end: string },
+    idx: number,
+    length: number
+) {
+    if (typeof pointColor === "string") {
+        return pointColor;
+    }
+    if (idx === 0) {
+        return pointColor.start;
+    } else if (idx === length - 1) {
+        return pointColor.end;
+    }
+    return pointColor.middle;
 }
 
 function drawPoints(ctx: CanvasRenderingContext2D, part: DrawPart, colorSettings: ColorSettings) {
     if (part.vertices2D) {
         for (let i = 0; i < part.vertices2D.length; ++i) {
-            ctx.fillStyle =
-                colorSettings.pointColor && typeof colorSettings.pointColor === "string"
-                    ? colorSettings.pointColor
-                    : colorSettings.fillColor ?? "black";
+            ctx.fillStyle = colorSettings.pointColor
+                ? getPointColor(colorSettings.pointColor, i, part.vertices2D.length)
+                : colorSettings.fillColor ?? "black";
             ctx.lineWidth = 2;
             ctx.strokeStyle = "black";
             ctx.beginPath();
@@ -295,7 +306,9 @@ function drawPoints(ctx: CanvasRenderingContext2D, part: DrawPart, colorSettings
             ctx.fill();
             ctx.stroke();
         }
+        return true;
     }
+    return false;
 }
 
 export function drawTexts(ctx: CanvasRenderingContext2D, positions: ReadonlyVec2[], texts: string[]) {

@@ -130,6 +130,9 @@ export function Engine2D() {
                 getDrawMeasureEntity(manholeCollisionEntity),
             ]);
 
+            if (measure.duoMeasurementValues) {
+                getDrawMeasureEntity(measure.duoMeasurementValues);
+            }
             context2D.clearRect(0, 0, canvas2D.width, canvas2D.height);
 
             renderGridLabels();
@@ -149,6 +152,7 @@ export function Engine2D() {
             if (duoDrawResult && duoDrawResult.objects.length === 1) {
                 const obj = duoDrawResult.objects[0];
                 const lines: [ReadonlyVec2, ReadonlyVec2][] = [];
+                let cylinderAngleDrawn = false;
                 for (const part of obj.parts) {
                     if (part.vertices2D === undefined) {
                         continue;
@@ -176,7 +180,10 @@ export function Engine2D() {
                                 context2D,
                                 camSettings,
                                 part,
-                                { lineColor: "lightgreen", pointColor: "lightgreen" },
+                                {
+                                    lineColor: "lightgreen",
+                                    pointColor: { start: "green", middle: "white", end: "blue" },
+                                },
                                 3,
                                 {
                                     type: "distance",
@@ -209,7 +216,7 @@ export function Engine2D() {
                             });
                             break;
                         case "z-angle":
-                            drawPart(context2D, camSettings, part, { lineColor: "blue" }, 2, {
+                            drawPart(context2D, camSettings, part, { lineColor: "green" }, 2, {
                                 type: "distance",
                             });
                             break;
@@ -217,6 +224,18 @@ export function Engine2D() {
                             drawPart(context2D, camSettings, part, { lineColor: "purple" }, 2, {
                                 type: "distance",
                             });
+                            break;
+                        case "cylinder-angle":
+                            cylinderAngleDrawn = drawPart(context2D, camSettings, part, { lineColor: "blue" }, 2, {
+                                type: "distance",
+                            });
+                            break;
+                        case "cylinder-angle-line":
+                            if (cylinderAngleDrawn) {
+                                drawPart(context2D, camSettings, part, { lineColor: "blue" }, 2, {
+                                    type: "distance",
+                                });
+                            }
                             break;
                     }
                 }

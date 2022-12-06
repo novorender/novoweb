@@ -169,7 +169,7 @@ export function MeasuredResult({ duoMeasurementValues }: { duoMeasurementValues:
                                         Angle
                                     </Grid>
                                     <Grid item xs={5}>
-                                        {(duoMeasurementValues.angle * (180 / Math.PI)).toFixed(3)} °
+                                        {(duoMeasurementValues.angle.radians * (180 / Math.PI)).toFixed(3)} °
                                     </Grid>
                                 </Grid>
                             </ListItem>
