@@ -1,8 +1,8 @@
 import { Box } from "@mui/material";
 import { useEffect, useRef } from "react";
 
-import { api } from "app";
 import { useExplorerGlobals } from "contexts/explorerGlobals";
+import { api } from "app";
 
 const canvas: HTMLCanvasElement = document.createElement("CANVAS") as HTMLCanvasElement;
 canvas.width = 1;
@@ -23,13 +23,12 @@ export function PerformanceStats() {
     } = useExplorerGlobals(true);
 
     const fpsRef = useRef<HTMLTableCellElement | null>(null);
-    const activeQualityRef = useRef<HTMLTableCellElement | null>(null);
     const trianglesRef = useRef<HTMLTableCellElement | null>(null);
     const pointsRef = useRef<HTMLTableCellElement | null>(null);
     const renderCallsRef = useRef<HTMLTableCellElement | null>(null);
     const resolutionRef = useRef<HTMLTableCellElement | null>(null);
     const jsMemoryRef = useRef<HTMLTableCellElement | null>(null);
-    const deviceProfile = (api as any).deviceProfile ?? {};
+    const gpuMemoryRef = useRef<HTMLTableCellElement | null>(null);
 
     useEffect(
         function startPerformanceStats() {
@@ -40,19 +39,15 @@ export function PerformanceStats() {
             };
 
             function update() {
-                const { settings, performanceStatistics: stats } = view;
+                const { performanceStatistics: stats } = view;
 
                 if (fpsRef.current) {
                     fpsRef.current.innerText = (stats as { fps?: number }).fps?.toFixed(0) ?? "0";
                 }
 
-                if (activeQualityRef.current) {
-                    activeQualityRef.current.innerText = settings.quality.detail.value.toFixed(2);
-                }
-
                 if (trianglesRef.current) {
                     trianglesRef.current.innerText = `${formatNumber(stats.triangles)} / ${formatNumber(
-                        deviceProfile.triangleLimit
+                        api.deviceProfile.triangleLimit
                     )}`;
                 }
 
@@ -65,11 +60,11 @@ export function PerformanceStats() {
                 }
 
                 if (resolutionRef.current) {
-                    const scale = settings.quality.resolution.value;
+                    const scale = (stats as any).resolutionScale ?? 1;
                     const w = canvas.clientWidth * scale;
                     const h = canvas.clientHeight * scale;
 
-                    resolutionRef.current.innerText = `${w.toFixed(0)}x${h.toFixed(0)} - scale: ${scale.toFixed(2)}`;
+                    resolutionRef.current.innerText = `${w.toFixed(0)}x${h.toFixed(0)} - scale: ${scale}`;
                 }
 
                 if (jsMemoryRef.current && "memory" in performance) {
@@ -77,9 +72,15 @@ export function PerformanceStats() {
                         0
                     )} / ${((performance as any).memory.jsHeapSizeLimit / 1e6).toFixed(0)} MB`;
                 }
+
+                if (gpuMemoryRef.current && stats.gpuBytes !== undefined) {
+                    gpuMemoryRef.current.innerText = `${Math.round(stats.gpuBytes / 1e6)} MB / ${
+                        api.deviceProfile.gpuBytesLimit / 1e6
+                    } MB`;
+                }
             }
         },
-        [view, canvas, deviceProfile.triangleLimit]
+        [view, canvas]
     );
 
     return (
@@ -89,7 +90,8 @@ export function PerformanceStats() {
                     <tr>
                         <td>Device:</td>
                         <td>
-                            {deviceProfile.name}; API v{api.version};
+                            {api.deviceProfile.name}; weak: {String(api.deviceProfile.weakDevice)}; API v{api.version};
+                            Debug profile: {String((api as any).deviceProfile.debugProfile === true)}
                         </td>
                     </tr>
                     <tr>
@@ -101,16 +103,16 @@ export function PerformanceStats() {
                         <td>{navigator.userAgent}</td>
                     </tr>
                     <tr>
-                        <td>Active quality:</td>
-                        <td ref={activeQualityRef}>1</td>
-                    </tr>
-                    <tr>
-                        <td>FPS:</td>
-                        <td ref={fpsRef}>123</td>
+                        <td>Detail bias:</td>
+                        <td>{api.deviceProfile.detailBias}</td>
                     </tr>
                     <tr>
                         <td>Resolution:</td>
                         <td ref={resolutionRef}>69x420</td>
+                    </tr>
+                    <tr>
+                        <td>FPS:</td>
+                        <td ref={fpsRef}>123</td>
                     </tr>
                     <tr>
                         <td>Triangles:</td>
@@ -127,6 +129,10 @@ export function PerformanceStats() {
                     <tr>
                         <td>JS memory:</td>
                         <td ref={jsMemoryRef}>666</td>
+                    </tr>
+                    <tr>
+                        <td>GPU memory</td>
+                        <td ref={gpuMemoryRef}>??? / {api.deviceProfile.gpuBytesLimit / 1e6} MB</td>
                     </tr>
                 </tbody>
             </Box>

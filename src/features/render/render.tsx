@@ -827,6 +827,13 @@ export function Render3D({ onInit }: Props) {
     );
 
     useEffect(
+        function handleAutoFpsChange() {
+            rendering.current.update({ autoFpsEnabled: advancedSettings.autoFps });
+        },
+        [advancedSettings.autoFps]
+    );
+
+    useEffect(
         function cleanUpPreviousScene() {
             return () => {
                 rendering.current.stop();
