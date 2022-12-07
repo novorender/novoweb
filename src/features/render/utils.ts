@@ -40,7 +40,6 @@ import {
 } from "slices/renderSlice";
 import { explorerActions } from "slices/explorerSlice";
 import { VecRGB, VecRGBA } from "utils/color";
-import { sleep } from "utils/timers";
 
 import { MAX_FLOAT } from "./consts";
 
@@ -202,7 +201,7 @@ export function createRendering(
             (view.performanceStatistics as any).resolutionScale = output.renderSettings.quality.resolution.value;
 
             let runPostEffects =
-                !view.performanceStatistics.weakDevice &&
+                !api.deviceProfile.weakDevice &&
                 // !settings.moving &&
                 output.statistics.sceneResolved &&
                 view.camera.controller.params.kind !== "ortho" &&
@@ -377,12 +376,6 @@ export function getEnvironmentDescription(
     environments: EnvironmentDescription[]
 ): EnvironmentDescription {
     return environments.find((env) => env.name === name) ?? environments[0];
-}
-
-export async function waitForSceneToRender(view: View): Promise<void> {
-    while (!view.performanceStatistics.renderResolved) {
-        await sleep(100);
-    }
 }
 
 export async function getSubtrees(view: View, scene: Scene): Promise<NonNullable<RenderState["subtrees"]>> {
@@ -670,7 +663,7 @@ export async function pickDeviationArea({
     clickX,
     clickY,
 }: {
-    measure: View["measure"];
+    measure: RenderOutput["measure"];
     size: number;
     clickX: number;
     clickY: number;
