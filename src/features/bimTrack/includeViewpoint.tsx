@@ -8,7 +8,7 @@ import { ObjectVisibility, selectDefaultVisibility } from "slices/renderSlice";
 import { useLazyHidden } from "contexts/hidden";
 import { useLazyHighlighted } from "contexts/highlighted";
 import { useLazyVisible } from "contexts/visible";
-import { useLazyCustomGroups } from "contexts/customGroups";
+import { useLazyObjectGroups } from "contexts/objectGroups";
 import { useExplorerGlobals } from "contexts/explorerGlobals";
 
 import { useAbortController } from "hooks/useAbortController";
@@ -43,7 +43,7 @@ export function IncludeViewpoint({
     const hidden = useLazyHidden();
     const visible = useLazyVisible();
     const highlighted = useLazyHighlighted();
-    const customGroups = useLazyCustomGroups();
+    const objectGroups = useLazyObjectGroups();
     const {
         state: { view, scene, canvas },
     } = useExplorerGlobals(true);
@@ -116,7 +116,7 @@ export function IncludeViewpoint({
         abortController,
         abort,
         setLoading,
-        customGroups,
+        objectGroups,
         canvas,
     ]);
 

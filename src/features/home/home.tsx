@@ -30,7 +30,7 @@ import {
 import { useExplorerGlobals } from "contexts/explorerGlobals";
 import { useDispatchHighlighted } from "contexts/highlighted";
 import { useDispatchHidden } from "contexts/hidden";
-import { customGroupsActions, useCustomGroups } from "contexts/customGroups";
+import { objectGroupsActions, useDispatchObjectGroups, useLazyObjectGroups } from "contexts/objectGroups";
 import { useDispatchVisible, visibleActions } from "contexts/visible";
 import { measureActions } from "features/measure";
 import { areaActions } from "features/area";
@@ -57,7 +57,8 @@ export function Home({ position, ...speedDialProps }: Props) {
     const editingScene = useAppSelector(selectEditingScene);
     const homeCameraPos = useAppSelector(selectHomeCameraPosition);
     const { triangleLimit } = useAppSelector(selectAdvancedSettings);
-    const { state: customGroups, dispatch: dispatchCustomGroups } = useCustomGroups();
+    const objectGroups = useLazyObjectGroups();
+    const dispatchObjectGroups = useDispatchObjectGroups();
     const dispatchVisible = useDispatchVisible();
     const dispatchHighlighted = useDispatchHighlighted();
     const dispatchHidden = useDispatchHidden();
@@ -73,7 +74,7 @@ export function Home({ position, ...speedDialProps }: Props) {
         const {
             settings,
             customProperties,
-            objectGroups = [],
+            objectGroups: savedObjectGroups = [],
             camera = { kind: "flight" },
         } = (await dataApi.loadScene(editingScene?.id || id)) as SceneData;
 
@@ -113,17 +114,17 @@ export function Home({ position, ...speedDialProps }: Props) {
         }
 
         dispatchVisible(visibleActions.set([]));
-        initHidden(objectGroups, dispatchHidden);
-        initHighlighted(objectGroups, dispatchHighlighted);
+        initHidden(savedObjectGroups, dispatchHidden);
+        initHighlighted(savedObjectGroups, dispatchHighlighted);
         initAdvancedSettings(view, { ...customProperties, triangleLimit }, api);
         dispatch(panoramasActions.setStatus(PanoramaStatus.Initial));
         initSubtrees(view, scene);
 
-        dispatchCustomGroups(
-            customGroupsActions.set(
+        dispatchObjectGroups(
+            objectGroupsActions.set(
                 [
-                    ...customGroups.map((group) => {
-                        const originalGrpSettings = objectGroups.find((grp) => group.id === grp.id);
+                    ...objectGroups.current.map((group) => {
+                        const originalGrpSettings = savedObjectGroups.find((grp) => group.id === grp.id);
 
                         group.selected = originalGrpSettings?.selected ?? false;
                         group.hidden = originalGrpSettings?.hidden ?? false;
@@ -132,8 +133,8 @@ export function Home({ position, ...speedDialProps }: Props) {
                     }),
                 ].sort(
                     (a, b) =>
-                        objectGroups.findIndex((grp) => grp.id === a.id) -
-                        objectGroups.findIndex((grp) => grp.id === b.id)
+                        savedObjectGroups.findIndex((grp) => grp.id === a.id) -
+                        savedObjectGroups.findIndex((grp) => grp.id === b.id)
                 )
             )
         );

@@ -34,7 +34,7 @@ import { useAbortController } from "hooks/useAbortController";
 import { batchedPropertySearch } from "utils/search";
 import { uniqueArray } from "utils/misc";
 
-import { customGroupsActions, useCustomGroups } from "contexts/customGroups";
+import { objectGroupsActions, useObjectGroups, useDispatchObjectGroups } from "contexts/objectGroups";
 import { highlightActions, useDispatchHighlighted, useHighlighted } from "contexts/highlighted";
 import { useDispatchVisible, useVisible, visibleActions } from "contexts/visible";
 import {
@@ -69,7 +69,8 @@ export function SelectionBasket() {
     const mode = useAppSelector(selectSelectionBasketMode);
     const { idArr: highlighted } = useHighlighted();
     const { idArr: visible } = useVisible();
-    const { state: customGroups, dispatch: dispatchCustomGroups } = useCustomGroups();
+    const objectGroups = useObjectGroups();
+    const dispatchObjectGroups = useDispatchObjectGroups();
 
     const dispatchHighlighted = useDispatchHighlighted();
     const dispatchVisible = useDispatchVisible();
@@ -86,7 +87,7 @@ export function SelectionBasket() {
     const [exportStatus, setExportStatus] = useMountedState(ExportStatus.Idle);
     const [abortController] = useAbortController();
 
-    const selectedGroups = customGroups.filter((group) => group.selected);
+    const selectedGroups = objectGroups.filter((group) => group.selected);
     const hasHighlighted = highlighted.length || selectedGroups.length;
 
     useEffect(() => {
@@ -100,7 +101,7 @@ export function SelectionBasket() {
 
         dispatchVisible(visibleActions.add(highlighted.concat(fromGroup)));
         dispatchHighlighted(highlightActions.setIds([]));
-        dispatchCustomGroups(customGroupsActions.set(customGroups.map((group) => ({ ...group, selected: false }))));
+        dispatchObjectGroups(objectGroupsActions.set(objectGroups.map((group) => ({ ...group, selected: false }))));
     };
 
     const handleRemove = () => {
@@ -108,7 +109,7 @@ export function SelectionBasket() {
 
         dispatchVisible(visibleActions.remove(highlighted.concat(fromGroup)));
         dispatchHighlighted(highlightActions.setIds([]));
-        dispatchCustomGroups(customGroupsActions.set(customGroups.map((group) => ({ ...group, selected: false }))));
+        dispatchObjectGroups(objectGroupsActions.set(objectGroups.map((group) => ({ ...group, selected: false }))));
     };
 
     const handleClear = () => {

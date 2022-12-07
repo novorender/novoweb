@@ -1,5 +1,5 @@
 import { MutableRefObject } from "react";
-import { ObjectGroup, SceneData } from "@novorender/data-js-api";
+import { ObjectGroup as BaseObjectGroup, SceneData } from "@novorender/data-js-api";
 import {
     API,
     CameraController,
@@ -25,7 +25,7 @@ import { groupsActions, selectLoadingIds } from "features/groups";
 import { DeviationMode, deviationsActions } from "features/deviations";
 
 import { store } from "app/store";
-import { CustomGroup, customGroupsActions, DispatchCustomGroups } from "contexts/customGroups";
+import { ObjectGroup, objectGroupsActions, DispatchObjectGroups } from "contexts/objectGroups";
 import { hiddenGroupActions, DispatchHidden } from "contexts/hidden";
 import { highlightActions, DispatchHighlighted } from "contexts/highlighted";
 import {
@@ -426,12 +426,12 @@ export async function initSubtrees(view: View, scene: Scene) {
     store.dispatch(explorerActions.lockWidgets(toLock as WidgetKey[]));
 }
 
-export function serializeableObjectGroups(groups: ObjectGroup[]): CustomGroup[] {
+export function serializeableObjectGroups(groups: BaseObjectGroup[]): ObjectGroup[] {
     return groups.map((group) =>
         group.color instanceof Float32Array
             ? { ...group, color: [group.color[0], group.color[1], group.color[2]] }
             : group
-    ) as CustomGroup[];
+    ) as ObjectGroup[];
 }
 
 function getHighlightByObjectVisibility(visibility: ObjectVisibility): Highlight {
@@ -445,7 +445,7 @@ function getHighlightByObjectVisibility(visibility: ObjectVisibility): Highlight
     }
 }
 
-export function initHighlighted(groups: ObjectGroup[], dispatch: DispatchHighlighted): void {
+export function initHighlighted(groups: BaseObjectGroup[], dispatch: DispatchHighlighted): void {
     const defaultGroup = groups.find((group) => !group.id && group.selected);
 
     if (defaultGroup) {
@@ -466,7 +466,7 @@ export function initHighlighted(groups: ObjectGroup[], dispatch: DispatchHighlig
     }
 }
 
-export function initHidden(groups: ObjectGroup[], dispatch: DispatchHidden): void {
+export function initHidden(groups: BaseObjectGroup[], dispatch: DispatchHidden): void {
     const defaultHiddenGroup = groups.find((group) => !group.id && group.hidden);
 
     if (defaultHiddenGroup) {
@@ -476,13 +476,13 @@ export function initHidden(groups: ObjectGroup[], dispatch: DispatchHidden): voi
     }
 }
 
-export function initCustomGroups(groups: ObjectGroup[], dispatch: DispatchCustomGroups): void {
-    const customGroups = groups.filter((group) => group.id);
+export function initCustomGroups(groups: BaseObjectGroup[], dispatch: DispatchObjectGroups): void {
+    const objectGroups = groups.filter((group) => group.id);
 
-    if (customGroups.length) {
-        dispatch(customGroupsActions.set(serializeableObjectGroups(customGroups)));
+    if (objectGroups.length) {
+        dispatch(objectGroupsActions.set(serializeableObjectGroups(objectGroups)));
     } else {
-        dispatch(customGroupsActions.set([]));
+        dispatch(objectGroupsActions.set([]));
     }
 }
 

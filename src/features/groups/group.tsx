@@ -20,7 +20,7 @@ import { Tooltip } from "components";
 import { ColorPicker } from "features/colorPicker";
 import { useAppSelector } from "app/store";
 import { selectHasAdminCapabilities } from "slices/explorerSlice";
-import { CustomGroup, customGroupsActions, useCustomGroups } from "contexts/customGroups";
+import { ObjectGroup, objectGroupsActions, useDispatchObjectGroups } from "contexts/objectGroups";
 import { rgbToVec, vecToRgb } from "utils/color";
 
 export const StyledListItemButton = styled(ListItemButton)<ListItemButtonProps>(
@@ -36,10 +36,10 @@ export const StyledCheckbox = styled(Checkbox)`
     padding-bottom: 0;
 `;
 
-export function Group({ group, disabled }: { group: CustomGroup; disabled: boolean }) {
+export function Group({ group, disabled }: { group: ObjectGroup; disabled: boolean }) {
     const history = useHistory();
     const isAdmin = useAppSelector(selectHasAdminCapabilities);
-    const { dispatch: dispatchCustomGroups } = useCustomGroups();
+    const dispatchObjectGroups = useDispatchObjectGroups();
 
     const [menuAnchor, setMenuAnchor] = useState<HTMLElement | null>(null);
     const [colorPickerAnchor, setColorPickerAnchor] = useState<HTMLElement | null>(null);
@@ -65,8 +65,8 @@ export function Group({ group, disabled }: { group: CustomGroup; disabled: boole
                 disableRipple
                 disabled={disabled}
                 onClick={() =>
-                    dispatchCustomGroups(
-                        customGroupsActions.update(group.id, {
+                    dispatchObjectGroups(
+                        objectGroupsActions.update(group.id, {
                             selected: !group.selected,
                             hidden: !group.selected ? false : group.hidden,
                         })
@@ -87,8 +87,8 @@ export function Group({ group, disabled }: { group: CustomGroup; disabled: boole
                             disabled={disabled}
                             onClick={(event) => event.stopPropagation()}
                             onChange={() =>
-                                dispatchCustomGroups(
-                                    customGroupsActions.update(group.id, {
+                                dispatchObjectGroups(
+                                    objectGroupsActions.update(group.id, {
                                         selected: !group.selected,
                                         hidden: !group.selected ? false : group.hidden,
                                     })
@@ -107,8 +107,8 @@ export function Group({ group, disabled }: { group: CustomGroup; disabled: boole
                             disabled={disabled}
                             onClick={(event) => event.stopPropagation()}
                             onChange={() =>
-                                dispatchCustomGroups(
-                                    customGroupsActions.update(group.id, {
+                                dispatchObjectGroups(
+                                    objectGroupsActions.update(group.id, {
                                         hidden: !group.hidden,
                                         selected: !group.hidden ? false : group.selected,
                                     })
@@ -136,7 +136,7 @@ export function Group({ group, disabled }: { group: CustomGroup; disabled: boole
                 onClose={() => toggleColorPicker()}
                 color={group.color}
                 onChangeComplete={({ rgb }) =>
-                    dispatchCustomGroups(customGroupsActions.update(group.id, { color: rgbToVec(rgb) }))
+                    dispatchObjectGroups(objectGroupsActions.update(group.id, { color: rgbToVec(rgb) }))
                 }
             />
             <Menu
@@ -163,7 +163,7 @@ export function Group({ group, disabled }: { group: CustomGroup; disabled: boole
                           <MenuItem
                               key="duplicate"
                               onClick={() => {
-                                  dispatchCustomGroups(customGroupsActions.copy(group.id));
+                                  dispatchObjectGroups(objectGroupsActions.copy(group.id));
                                   closeMenu();
                               }}
                           >

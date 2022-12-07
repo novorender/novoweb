@@ -30,7 +30,7 @@ import { renderActions, selectCurrentEnvironment, selectEditingScene } from "sli
 import { useExplorerGlobals } from "contexts/explorerGlobals";
 import { useHighlighted } from "contexts/highlighted";
 import { useHidden } from "contexts/hidden";
-import { useCustomGroups } from "contexts/customGroups";
+import { useObjectGroups } from "contexts/objectGroups";
 import { explorerActions } from "slices/explorerSlice";
 import { selectBookmarks } from "features/bookmarks";
 
@@ -46,7 +46,7 @@ export function CreateViewerScene({ open, onClose }: { open: boolean; onClose: (
     const {
         state: { scene, view },
     } = useExplorerGlobals(true);
-    const { state: customGroups } = useCustomGroups();
+    const objectGroups = useObjectGroups();
     const highlighted = useHighlighted();
     const hidden = useHidden();
 
@@ -75,7 +75,7 @@ export function CreateViewerScene({ open, onClose }: { open: boolean; onClose: (
             settings: settings as RenderSettings,
             url: `${id}:${scene.id}`,
             camera: view.camera.controller.params,
-            objectGroups: customGroups.concat([
+            objectGroups: objectGroups.concat([
                 {
                     id: "",
                     name: "highlighted",

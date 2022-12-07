@@ -3,7 +3,7 @@ import { OrthoControllerParams } from "@novorender/webgl-api";
 import { mat4, quat, vec3 } from "gl-matrix";
 
 import { useAppSelector } from "app/store";
-import { useCustomGroups } from "contexts/customGroups";
+import { useLazyObjectGroups } from "contexts/objectGroups";
 import { useExplorerGlobals } from "contexts/explorerGlobals";
 import { useLazyHidden } from "contexts/hidden";
 import { useLazyHighlighted } from "contexts/highlighted";
@@ -37,7 +37,7 @@ export function useCreateBookmark() {
     const {
         state: { view },
     } = useExplorerGlobals(true);
-    const { state: customGroups } = useCustomGroups();
+    const objectGroups = useLazyObjectGroups();
     const highlighted = useLazyHighlighted();
     const hidden = useLazyHidden();
     const visible = useLazyVisible();
@@ -55,7 +55,7 @@ export function useCreateBookmark() {
               }
             : undefined;
 
-        const objectGroups = customGroups
+        const groups = objectGroups.current
             .map(({ id, selected, hidden, ids }) => ({
                 id,
                 selected,
@@ -97,7 +97,7 @@ export function useCreateBookmark() {
 
         const base = {
             img,
-            objectGroups,
+            objectGroups: groups,
             selectedOnly,
             clippingVolume,
             selectionBasket,

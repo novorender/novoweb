@@ -84,7 +84,7 @@ import { useHandleJiraKeepAlive } from "features/jira";
 
 import { useHighlighted, highlightActions, useDispatchHighlighted } from "contexts/highlighted";
 import { useHidden, useDispatchHidden } from "contexts/hidden";
-import { useCustomGroups } from "contexts/customGroups";
+import { useObjectGroups, useDispatchObjectGroups } from "contexts/objectGroups";
 import { useDispatchVisible, useVisible, visibleActions } from "contexts/visible";
 import { explorerGlobalsActions, useExplorerGlobals } from "contexts/explorerGlobals";
 
@@ -161,7 +161,8 @@ export function Render3D({ onInit }: Props) {
     const dispatchHidden = useDispatchHidden();
     const dispatchVisible = useDispatchVisible();
     const visibleObjects = useVisible();
-    const { state: customGroups, dispatch: dispatchCustomGroups } = useCustomGroups();
+    const objectGroups = useObjectGroups();
+    const dispatchObjectGroups = useDispatchObjectGroups();
     const {
         state: { view, scene, canvas, measureScene, size },
         dispatch: dispatchGlobals,
@@ -445,7 +446,7 @@ export function Render3D({ onInit }: Props) {
 
                 dispatchVisible(visibleActions.set([]));
                 initHidden(objectGroups, dispatchHidden);
-                initCustomGroups(objectGroups, dispatchCustomGroups);
+                initCustomGroups(objectGroups, dispatchObjectGroups);
                 initHighlighted(objectGroups, dispatchHighlighted);
                 initAdvancedSettings(_view, customProperties, api);
                 initProjectSettings({ sceneData: sceneResponse });
@@ -528,7 +529,7 @@ export function Render3D({ onInit }: Props) {
         id,
         dispatchGlobals,
         setStatus,
-        dispatchCustomGroups,
+        dispatchObjectGroups,
         dispatchHidden,
         dispatchHighlighted,
         dispatchVisible,
@@ -620,7 +621,7 @@ export function Render3D({ onInit }: Props) {
                             selected: true,
                             ...(selectionBasketColor.use ? { color: selectionBasketColor.color } : { neutral: true }),
                         },
-                        ...customGroups,
+                        ...objectGroups,
                         {
                             id: "",
                             ids: highlightedObjects.idArr,
@@ -639,7 +640,7 @@ export function Render3D({ onInit }: Props) {
             view,
             defaultVisibility,
             mainObject,
-            customGroups,
+            objectGroups,
             highlightedObjects,
             hiddenObjects,
             visibleObjects,
@@ -930,7 +931,7 @@ export function Render3D({ onInit }: Props) {
 
                 dispatchVisible(visibleActions.set([]));
                 initHidden(objectGroups, dispatchHidden);
-                initCustomGroups(objectGroups, dispatchCustomGroups);
+                initCustomGroups(objectGroups, dispatchObjectGroups);
                 initHighlighted(objectGroups, dispatchHighlighted);
                 initAdvancedSettings(view, customProperties, api);
                 dispatch(bookmarksActions.resetState());
@@ -945,10 +946,10 @@ export function Render3D({ onInit }: Props) {
             environments,
             canvas,
             bookmarks,
-            customGroups,
+            objectGroups,
             dispatch,
             dispatchHidden,
-            dispatchCustomGroups,
+            dispatchObjectGroups,
             dispatchHighlighted,
             dispatchVisible,
             env,

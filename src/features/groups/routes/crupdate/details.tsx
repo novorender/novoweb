@@ -6,7 +6,7 @@ import { Autocomplete, Box, Button, useTheme } from "@mui/material";
 import { v4 as uuidv4 } from "uuid";
 
 import { Divider, ScrollBox, TextField } from "components";
-import { CustomGroup, customGroupsActions, useCustomGroups } from "contexts/customGroups";
+import { ObjectGroup, objectGroupsActions, useObjectGroups, useDispatchObjectGroups } from "contexts/objectGroups";
 import { highlightActions, useDispatchHighlighted } from "contexts/highlighted";
 
 export function Details({
@@ -15,13 +15,14 @@ export function Details({
     ids,
 }: {
     savedInputs: SearchPattern[];
-    groupToEdit?: CustomGroup;
+    groupToEdit?: ObjectGroup;
     ids: ObjectId[];
 }) {
     const theme = useTheme();
     const history = useHistory();
     const dispatchHighlighted = useDispatchHighlighted();
-    const { state: groups, dispatch: dispatchCustomGroups } = useCustomGroups();
+    const objectGroups = useObjectGroups();
+    const dispatchObjectGroups = useDispatchObjectGroups();
     const [name, setName] = useState(
         groupToEdit
             ? groupToEdit.name
@@ -29,7 +30,7 @@ export function Details({
     );
     const [collection, setCollection] = useState(groupToEdit?.grouping ?? "");
     const collections = Array.from(
-        groups.reduce((set, grp) => {
+        objectGroups.reduce((set, grp) => {
             if (grp.grouping) {
                 grp.grouping.split("/").forEach((_collection, idx, arr) => {
                     set.add(arr.slice(0, -idx).join("/"));
@@ -57,7 +58,7 @@ export function Details({
     };
 
     const createGroup = () => {
-        const newGroup: CustomGroup = {
+        const newGroup: ObjectGroup = {
             name,
             ids,
             grouping: collection,
@@ -68,7 +69,7 @@ export function Details({
             color: [1, 0, 0, 1],
         };
 
-        dispatchCustomGroups(customGroupsActions.add([newGroup]));
+        dispatchObjectGroups(objectGroupsActions.add([newGroup]));
         dispatchHighlighted(highlightActions.remove(ids));
     };
 
@@ -77,8 +78,8 @@ export function Details({
             return;
         }
 
-        dispatchCustomGroups(
-            customGroupsActions.update(groupToEdit.id, { ids, name, grouping: collection, search: [...savedInputs] })
+        dispatchObjectGroups(
+            objectGroupsActions.update(groupToEdit.id, { ids, name, grouping: collection, search: [...savedInputs] })
         );
         dispatchHighlighted(highlightActions.remove(ids));
     };

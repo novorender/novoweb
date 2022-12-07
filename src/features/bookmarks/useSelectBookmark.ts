@@ -1,8 +1,9 @@
 import { vec4 } from "gl-matrix";
 import { Bookmark } from "@novorender/data-js-api";
 
+import { dataApi } from "app";
 import { useAppDispatch } from "app/store";
-import { CustomGroup, customGroupsActions, useCustomGroups } from "contexts/customGroups";
+import { ObjectGroup, objectGroupsActions, useDispatchObjectGroups, useLazyObjectGroups } from "contexts/objectGroups";
 import { useExplorerGlobals } from "contexts/explorerGlobals";
 import { hiddenGroupActions, useDispatchHidden } from "contexts/hidden";
 import { highlightActions, useDispatchHighlighted } from "contexts/highlighted";
@@ -13,7 +14,6 @@ import { CameraType, DeepWritable, ObjectVisibility, renderActions, SelectionBas
 import { areaActions } from "features/area";
 import { pointLineActions } from "features/pointLine";
 import { groupsActions } from "features/groups";
-import { dataApi } from "app";
 import { useSceneId } from "hooks/useSceneId";
 import { manholeActions } from "features/manhole";
 
@@ -22,7 +22,9 @@ export function useSelectBookmark() {
     const dispatchVisible = useDispatchVisible();
     const dispatchHighlighted = useDispatchHighlighted();
     const dispatchHidden = useDispatchHidden();
-    const { state: customGroups, dispatch: dispatchCustomGroups } = useCustomGroups();
+    const objectGroups = useLazyObjectGroups();
+    const dispatchObjectGroups = useDispatchObjectGroups();
+
     const {
         state: { view, scene },
     } = useExplorerGlobals();
@@ -34,7 +36,7 @@ export function useSelectBookmark() {
         dispatchHidden(hiddenGroupActions.setIds((bmHiddenGroup?.ids as number[] | undefined) ?? []));
 
         const bmDefaultGroup = bookmark.objectGroups?.find((group) => !group.id && group.selected);
-        const updatedCustomGroups = customGroups.map((group) => {
+        const updatedObjectGroups = objectGroups.current.map((group) => {
             const bookmarked = bookmark.objectGroups?.find((bmGroup) => bmGroup.id === group.id);
 
             return {
@@ -50,7 +52,7 @@ export function useSelectBookmark() {
             dispatch(renderActions.setSelectionBasketMode(bookmark.selectionBasket?.mode ?? SelectionBasketMode.Loose));
 
             const highlighted = bmDefaultGroup?.ids ?? [];
-            const [toAdd, toLoad] = updatedCustomGroups.reduce(
+            const [toAdd, toLoad] = updatedObjectGroups.reduce(
                 (prev, group) => {
                     if (!group.selected) {
                         return prev;
@@ -64,7 +66,7 @@ export function useSelectBookmark() {
 
                     return prev;
                 },
-                [[], []] as [CustomGroup[], CustomGroup[]]
+                [[], []] as [ObjectGroup[], ObjectGroup[]]
             );
 
             dispatchVisible(visibleActions.add([...highlighted, ...toAdd.flatMap((group) => group.ids)]));
@@ -84,20 +86,20 @@ export function useSelectBookmark() {
 
             dispatchVisible(visibleActions.add(toLoad.flatMap((group) => group.ids)));
             dispatch(renderActions.setDefaultVisibility(ObjectVisibility.Transparent));
-            dispatchCustomGroups(
-                customGroupsActions.set(updatedCustomGroups.map((group) => ({ ...group, selected: false })))
+            dispatchObjectGroups(
+                objectGroupsActions.set(updatedObjectGroups.map((group) => ({ ...group, selected: false })))
             );
             dispatchHighlighted(highlightActions.setIds([]));
         } else {
             if (bookmark.objectGroups) {
                 const groups = bookmark.objectGroups;
-                updatedCustomGroups.sort(
+                updatedObjectGroups.sort(
                     (a, b) => groups.findIndex((grp) => grp.id === a.id) - groups.findIndex((grp) => grp.id === b.id)
                 );
             }
 
             dispatchHighlighted(highlightActions.setIds((bmDefaultGroup?.ids as number[] | undefined) ?? []));
-            dispatchCustomGroups(customGroupsActions.set(updatedCustomGroups));
+            dispatchObjectGroups(objectGroupsActions.set(updatedObjectGroups));
 
             if (bookmark.selectionBasket) {
                 dispatchVisible(visibleActions.set(bookmark.selectionBasket.ids));

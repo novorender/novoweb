@@ -21,7 +21,7 @@ import { useAppSelector, useAppDispatch } from "app/store";
 import { explorerActions, PrimaryMenuConfigType, SceneType, UserRole } from "slices/explorerSlice";
 import { selectUser } from "slices/authSlice";
 import { HiddenProvider } from "contexts/hidden";
-import { CustomGroupsProvider } from "contexts/customGroups";
+import { ObjectGroupsProvider } from "contexts/objectGroups";
 import { HighlightedProvider } from "contexts/highlighted";
 import { VisibleProvider } from "contexts/visible";
 import { explorerGlobalsActions, ExplorerGlobalsProvider, useExplorerGlobals } from "contexts/explorerGlobals";
@@ -194,7 +194,7 @@ function ContextProviders({ children }: { children: ReactNode }) {
             <HighlightedProvider>
                 <HiddenProvider>
                     <VisibleProvider>
-                        <CustomGroupsProvider>{children}</CustomGroupsProvider>
+                        <ObjectGroupsProvider>{children}</ObjectGroupsProvider>
                     </VisibleProvider>
                 </HiddenProvider>
             </HighlightedProvider>
