@@ -1,7 +1,9 @@
 import { ObjectId } from "@novorender/webgl-api";
-import { createContext, Dispatch, ReactNode, useContext, useEffect, useReducer, useRef } from "react";
+import { createContext, Dispatch, MutableRefObject, ReactNode, useContext, useReducer, useRef } from "react";
 
 import { toIdObj, toIdArr } from "utils/objectData";
+
+// todo rename denne
 
 const initialState = {
     ids: {} as Record<ObjectId, true | undefined>,
@@ -40,9 +42,12 @@ function set(ids: ObjectId[]) {
 const actions = { add, remove, set };
 
 type Actions = ReturnType<typeof actions[keyof typeof actions]>;
+type DispatchVisible = Dispatch<Actions>;
+type LazyState = MutableRefObject<State>;
 
 const StateContext = createContext<State>(undefined as any);
-const DispatchContext = createContext<Dispatch<Actions>>(undefined as any);
+const LazyStateContext = createContext<LazyState>(undefined as any);
+const DispatchContext = createContext<DispatchVisible>(undefined as any);
 
 function reducer(state: State, action: Actions): State {
     switch (action.type) {
@@ -78,10 +83,14 @@ function reducer(state: State, action: Actions): State {
 
 function VisibleProvider({ children }: { children: ReactNode }) {
     const [state, dispatch] = useReducer(reducer, initialState);
+    const lazyValue = useRef(state);
+    lazyValue.current = state;
 
     return (
         <StateContext.Provider value={state}>
-            <DispatchContext.Provider value={dispatch}>{children}</DispatchContext.Provider>
+            <LazyStateContext.Provider value={lazyValue}>
+                <DispatchContext.Provider value={dispatch}>{children}</DispatchContext.Provider>
+            </LazyStateContext.Provider>
         </StateContext.Provider>
     );
 }
@@ -96,18 +105,17 @@ function useVisible(): State {
     return context;
 }
 
-function useLazyVisible() {
-    const state = useVisible();
-    const ref = useRef(state);
+function useLazyVisible(): LazyState {
+    const context = useContext(LazyStateContext);
 
-    useEffect(() => {
-        ref.current = state;
-    }, [state]);
+    if (context === undefined) {
+        throw new Error("useLazyVisible must be used within a LazyVisibleProvider");
+    }
 
-    return ref;
+    return context;
 }
 
-function useDispatchVisible(): Dispatch<Actions> {
+function useDispatchVisible(): DispatchVisible {
     const context = useContext(DispatchContext);
 
     if (context === undefined) {

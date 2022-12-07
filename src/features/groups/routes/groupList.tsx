@@ -21,6 +21,7 @@ export function GroupList() {
     const objectGroups = useObjectGroups();
     const dispatchObjectGroups = useDispatchObjectGroups();
 
+    // todo filter internal
     const collections = Array.from(
         objectGroups.reduce((set, grp) => {
             if (grp.grouping) {

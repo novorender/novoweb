@@ -42,6 +42,8 @@ export function useCreateBookmark() {
     const hidden = useLazyHidden();
     const visible = useLazyVisible();
 
+    console.log("todo update");
+
     const create = (img?: string): Omit<Bookmark, "name" | "description" | "img"> & { img?: string } => {
         const camera = view.camera;
         const { highlight: _highlight, ...clippingPlanes } = view.settings.clippingPlanes;

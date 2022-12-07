@@ -29,6 +29,8 @@ const sorting = [
     featuresConfig.advancedSettings.key,
 ] as WidgetKey[];
 
+// todo
+
 export function WidgetList({ display, widgetKey, onSelect }: Props) {
     const enabledWidgets = useAppSelector(selectEnabledWidgets);
     const lockedWidgets = useAppSelector(selectLockedWidgets);
