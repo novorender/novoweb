@@ -1,7 +1,7 @@
 import { Box, css, List, ListItem, styled, Typography, useTheme } from "@mui/material";
 import { Link } from "react-router-dom";
 
-import { ScrollBox } from "components";
+import { LinearProgress, ScrollBox } from "components";
 import { Project } from "types/bcf";
 
 import { useGetProjectsQuery } from "../bimTrackApi";
@@ -10,12 +10,17 @@ import fallbackImage from "media/img/bimtrack.png";
 
 export function Projects() {
     const theme = useTheme();
-    const { data: projects = [] } = useGetProjectsQuery();
+    const { data: projects = [], isLoading } = useGetProjectsQuery();
 
     return (
         <>
+            <Box boxShadow={theme.customShadows.widgetHeader} sx={{ height: 5, width: 1 }} position="absolute" />
+            {isLoading ? (
+                <Box position="relative">
+                    <LinearProgress />
+                </Box>
+            ) : null}
             <ScrollBox p={1} height={1} position="relative">
-                <Box position="absolute" height={5} top={-5} width={1} boxShadow={theme.customShadows.widgetHeader} />
                 <List>
                     {projects.map((project) => (
                         <ProjectListItem project={project} key={project.project_id} />

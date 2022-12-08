@@ -10,9 +10,17 @@ export enum StorageKey {
     DitioCodeVerifier = "ditio_code_verifier",
     LeicaSessionId = "leica_session_id",
     LeicaCsrfToken = "leica_csrf_token",
+    JiraAccessToken = "jira_access_token",
+    JiraRefreshToken = "jira_refresh_token",
 }
 
 export const storageConfig = {
+    [StorageKey.JiraAccessToken]: {
+        storage: localStorage,
+    },
+    [StorageKey.JiraRefreshToken]: {
+        storage: localStorage,
+    },
     [StorageKey.BimCollabRefreshToken]: {
         storage: sessionStorage,
     },

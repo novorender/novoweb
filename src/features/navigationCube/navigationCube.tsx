@@ -7,6 +7,8 @@ import { useMountedState } from "hooks/useMountedState";
 import { useAbortController } from "hooks/useAbortController";
 import { objIdsToTotalBoundingSphere } from "utils/objectData";
 import { useHighlighted } from "contexts/highlighted";
+import { useAppDispatch, useAppSelector } from "app/store";
+import { renderActions, selectCameraType } from "slices/renderSlice";
 
 // prettier-ignore
 const top = [
@@ -363,6 +365,8 @@ export function NavigationCube() {
     const [trianglePaths, setTrianglePath] = useState([] as Path[]);
     const [loading, setLoading] = useMountedState(false);
     const [abortController, abort] = useAbortController();
+    const cameraType = useAppSelector(selectCameraType);
+    const dispatch = useAppDispatch();
 
     const highlightedBoundingSphereCenter = useRef<vec3>();
     const prevRotation = useRef<quat>();
@@ -434,7 +438,16 @@ export function NavigationCube() {
         vec3.transformMat3(ab, ab, mat);
         const target = vec3.add(vec3.create(), pt, dir);
 
-        view.camera.controller.moveTo(target, quat.fromMat3(quat.create(), mat));
+        dispatch(
+            renderActions.setCamera({
+                type: cameraType,
+                goTo: {
+                    position: target,
+                    rotation: quat.fromMat3(quat.create(), mat),
+                    fieldOfView: (view.camera.controller.params as { fieldOfView?: number }).fieldOfView,
+                },
+            })
+        );
     };
 
     useEffect(() => {
@@ -464,7 +477,7 @@ export function NavigationCube() {
     return (
         <CubeContainer loading={loading} height={cubeSize * 2} width={cubeSize * 2}>
             <defs>
-                <linearGradient id="gradient" x1="0%" y1="0%" x2="100%" y2="0%">
+                <linearGradient id="navigation-cube-gradient" x1="0%" y1="0%" x2="100%" y2="0%">
                     <stop offset="0%" style={{ stopColor: theme.palette.secondary.dark, stopOpacity: 1 }} />
                     <stop
                         offset="100%"
@@ -485,7 +498,7 @@ export function NavigationCube() {
                                 <path
                                     stroke={theme.palette.secondary.light}
                                     strokeWidth={1}
-                                    fill={"url(#gradient)"}
+                                    fill={"url(#navigation-cube-gradient)"}
                                     id={path.id}
                                     d={path.path}
                                 />

@@ -94,6 +94,12 @@ let theme = createTheme({
                     overscroll-behavior: contain;
                     overflow: hidden;
                     background: transparent;
+
+                    
+                }
+
+                *, *::before, *::after {
+                    touch-action: pan-x pan-y;    
                 }
 
                 label {

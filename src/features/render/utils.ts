@@ -1,6 +1,7 @@
 import { MutableRefObject } from "react";
 import { ObjectGroup, SceneData } from "@novorender/data-js-api";
 import {
+    API,
     CameraController,
     CameraControllerParams,
     EnvironmentDescription,
@@ -15,7 +16,7 @@ import {
     Scene,
     View,
 } from "@novorender/webgl-api";
-import { vec2 } from "gl-matrix";
+import { vec2, vec3 } from "gl-matrix";
 
 import { api, dataApi } from "app";
 import { offscreenCanvas } from "config";
@@ -70,6 +71,7 @@ export function createRendering(
 
     let hook = undefined as undefined | (() => any);
     let pickBufferUpdated = false;
+    let lastPickBufferUpdate = 0;
 
     return { start, stop, update, pick, measure };
 
@@ -93,11 +95,12 @@ export function createRendering(
             cb = res;
         });
 
-        if (pickBufferUpdated) {
+        if (pickBufferUpdated || performance.now() - lastPickBufferUpdate < 1000) {
             cb(await view.pick(x, y));
         } else {
             hook = async () => {
                 await view.updatePickBuffers();
+                lastPickBufferUpdate = performance.now();
                 pickBufferUpdated = true;
                 cb(await view.pick(x, y));
             };
@@ -113,11 +116,12 @@ export function createRendering(
             cb = res;
         });
 
-        if (pickBufferUpdated) {
+        if (pickBufferUpdated || performance.now() - lastPickBufferUpdate < 1000) {
             cb(await view.measure(x, y));
         } else {
             hook = async () => {
                 await view.updatePickBuffers();
+                lastPickBufferUpdate = performance.now();
                 pickBufferUpdated = true;
                 cb(await view.measure(x, y));
             };
@@ -147,11 +151,6 @@ export function createRendering(
 
             if (!running.current) {
                 break;
-            }
-
-            const badPerf = view.performanceStatistics.weakDevice || settings.moving;
-            if (settings.ssaoEnabled && !badPerf) {
-                await output.applyPostEffect({ kind: "ssao", samples: 64, radius: 1, reset: true });
             }
 
             if (settings.outlineRenderingEnabled && view.camera.controller.params.kind === "ortho") {
@@ -189,31 +188,52 @@ export function createRendering(
             }
             startRender = now;
 
-            let run = settings.taaEnabled && view.camera.controller.params.kind !== "ortho";
-            let reset = true;
+            let runPostEffects =
+                // !view.performanceStatistics.weakDevice &&
+                !settings.moving &&
+                output.statistics.sceneResolved &&
+                view.camera.controller.params.kind !== "ortho" &&
+                (settings.taaEnabled || settings.ssaoEnabled);
 
-            while (run && running.current) {
+            let reset = true;
+            let postEffectTimeout = true;
+
+            while (runPostEffects && running.current) {
                 if (output.hasViewChanged) {
                     break;
                 }
 
                 await (api as any).waitFrame();
 
-                run = (await output.applyPostEffect({ kind: "taa", reset })) || false;
-
                 if (!running.current) {
                     break;
                 }
 
-                if (settings.ssaoEnabled) {
-                    output.applyPostEffect({ kind: "ssao", samples: 64, radius: 1, reset: reset && badPerf });
+                const postEffectNow = performance.now();
+
+                if (postEffectNow - now >= 200) {
+                    postEffectTimeout = false;
                 }
 
-                reset = false;
-                startRender = 0;
-                const image = await output.getImage();
-                if (ctx && image) {
-                    ctx.transferFromImageBitmap(image); // display in canvas
+                if (!postEffectTimeout) {
+                    if (settings.taaEnabled) {
+                        runPostEffects = (await output.applyPostEffect({ kind: "taa", reset })) || false;
+                    }
+
+                    if (settings.ssaoEnabled) {
+                        await output.applyPostEffect({ kind: "ssao", samples: 64, radius: 1, reset: reset });
+
+                        if (!settings.taaEnabled) {
+                            runPostEffects = false;
+                        }
+                    }
+
+                    reset = false;
+                    startRender = 0;
+                    const image = await output.getImage();
+                    if (ctx && image) {
+                        ctx.transferFromImageBitmap(image); // display in canvas
+                    }
                 }
             }
         }
@@ -223,6 +243,7 @@ export function createRendering(
 /**
  * Applies highlights and hides objects in the 3d view based on the object groups provided
  */
+let refillId = 0;
 export async function refillObjects({
     sceneId,
     scene,
@@ -235,8 +256,15 @@ export async function refillObjects({
     scene: Scene;
     view: View;
     objectGroups: (
-        | { id: string; ids: ObjectId[]; color: VecRGB | VecRGBA; selected: boolean; hidden: boolean }
-        | { id: string; ids: ObjectId[]; neutral: true; hidden: false; selected: true }
+        | {
+              id: string;
+              ids: ObjectId[];
+              color: VecRGB | VecRGBA;
+              selected: boolean;
+              hidden: boolean;
+              highlightIdx?: number;
+          }
+        | { id: string; ids: ObjectId[]; neutral: true; hidden: false; selected: true; highlightIdx?: number }
     )[];
     selectionBasket: {
         ids: Record<number, true | undefined>;
@@ -249,58 +277,82 @@ export async function refillObjects({
         return;
     }
 
+    const id = ++refillId;
     const { objectHighlighter } = scene;
 
     objectHighlighter.objectHighlightIndices.fill(defaultVisibility === ObjectVisibility.Transparent ? 255 : 0);
 
-    const proms: Promise<void>[] = objectGroups
-        .filter((group) => group.hidden)
-        .map(async (group) => {
-            if (!group.ids) {
-                store.dispatch(groupsActions.setLoadingIds(true));
-                group.ids = await dataApi.getGroupIds(sceneId, group.id);
-            }
-            for (const id of group.ids) {
-                objectHighlighter.objectHighlightIndices[id] = 255;
-            }
-        });
+    const proms: Promise<void>[] = objectGroups.map(async (group) => {
+        if ((group.selected || group.hidden) && !group.ids) {
+            store.dispatch(groupsActions.setLoadingIds(true));
+            group.ids = await dataApi.getGroupIds(sceneId, group.id).catch(() => {
+                console.warn("failed to load ids for group - ", group.id);
+                return [];
+            });
+        }
+    });
 
-    proms.push(
-        ...objectGroups.map(async (group, index) => {
-            if (group.selected) {
-                if (!group.ids) {
-                    store.dispatch(groupsActions.setLoadingIds(true));
-                    group.ids = await dataApi.getGroupIds(sceneId, group.id);
-                }
+    await Promise.all(proms);
 
-                if (selectionBasket.mode === SelectionBasketMode.Loose) {
-                    for (const id of group.ids) {
-                        objectHighlighter.objectHighlightIndices[id] = index + 1;
-                    }
+    if (id !== refillId) {
+        return;
+    }
+
+    let index = 1; // 0 is default visibility
+    const [hidden, _highlights] = objectGroups.reduce(
+        (prev, group) => {
+            delete group.highlightIdx;
+            if (group.hidden) {
+                return [[...prev[0], ...group.ids], prev[1]];
+            }
+
+            if (group.selected && group.ids.length) {
+                const neutral = "neutral" in group;
+                const color = neutral ? "neutral" : String(group.color);
+
+                if (!prev[1][color]) {
+                    prev[1][color] = {
+                        color,
+                        idx: index,
+                        highlight: neutral
+                            ? getHighlightByObjectVisibility(ObjectVisibility.Neutral)
+                            : api.createHighlight({ kind: "color", color: group.color }),
+                    };
+
+                    group.highlightIdx = index;
+                    index = index + 1;
+
+                    return [prev[0], prev[1]];
                 } else {
-                    for (const id of group.ids) {
-                        if (selectionBasket.ids[id]) {
-                            objectHighlighter.objectHighlightIndices[id] = index + 1;
-                        }
-                    }
+                    group.highlightIdx = prev[1][color].idx;
                 }
             }
-        })
+
+            return prev;
+        },
+        [[], {}] as [number[], { [color: string]: { color: string; idx: number; highlight: Highlight } }]
     );
 
-    await Promise.all(proms).finally(() => {
-        objectHighlighter.commit();
-        view.settings.objectHighlights = [
-            getHighlightByObjectVisibility(defaultVisibility),
-            ...objectGroups.map((group) => {
-                if ("color" in group) {
-                    return api.createHighlight({ kind: "color", color: group.color });
-                }
+    const highlights = Object.values(_highlights);
+    hidden.forEach((id) => (objectHighlighter.objectHighlightIndices[id] = 255));
 
-                return getHighlightByObjectVisibility(ObjectVisibility.Neutral);
-            }),
-        ];
+    objectGroups.forEach((group) => {
+        const { highlightIdx } = group;
+        if (group.selected && group.ids.length && highlightIdx) {
+            group.ids.forEach((id) => {
+                if (selectionBasket.mode === SelectionBasketMode.Loose || selectionBasket.ids[id]) {
+                    objectHighlighter.objectHighlightIndices[id] = highlightIdx;
+                }
+            });
+        }
     });
+
+    view.settings.objectHighlights = [
+        getHighlightByObjectVisibility(defaultVisibility),
+        ...highlights.sort((a, b) => a.idx - b.idx).map((selected) => selected.highlight),
+    ];
+
+    objectHighlighter.commit();
 
     if (selectLoadingIds(store.getState())) {
         store.dispatch(groupsActions.setLoadingIds(false));
@@ -342,6 +394,11 @@ export async function getSubtrees(view: View, scene: Scene): Promise<NonNullable
             : SubtreeStatus.Unavailable,
         triangles: subtrees.includes("triangles")
             ? advancedSettings.hideTriangles
+                ? SubtreeStatus.Hidden
+                : SubtreeStatus.Shown
+            : SubtreeStatus.Unavailable,
+        documents: subtrees.includes("documents")
+            ? advancedSettings.hideDocuments
                 ? SubtreeStatus.Hidden
                 : SubtreeStatus.Shown
             : SubtreeStatus.Unavailable,
@@ -464,6 +521,9 @@ export function initCamera({
     }
 
     if (controller.params.kind === "flight") {
+        if (controller.params.near <= 0) {
+            controller.params.near = 0.1;
+        }
         flightControllerRef.current = controller;
     } else if (!flightControllerRef.current) {
         flightControllerRef.current = {
@@ -508,6 +568,14 @@ export function initClippingBox(clipping: RenderSettings["clippingPlanes"]): voi
             enabled: clipping.enabled,
             inside: clipping.inside,
             showBox: clipping.showBox,
+            bounds: {
+                min: vec3.clone(clipping.bounds.min),
+                max: vec3.clone(clipping.bounds.max),
+            },
+            baseBounds: {
+                min: vec3.clone(clipping.bounds.min),
+                max: vec3.clone(clipping.bounds.max),
+            },
         })
     );
 }
@@ -534,13 +602,14 @@ export function initDeviation(deviation: RenderSettings["points"]["deviation"]):
     );
 }
 
-export function initAdvancedSettings(view: View, customProperties: Record<string, any>): void {
-    const { diagnostics, advanced, points, light, terrain } = view.settings as Internal.RenderSettingsExt;
+export function initAdvancedSettings(view: View, customProperties: Record<string, any>, api: API): void {
+    const { diagnostics, advanced, points, light, terrain, background } = view.settings as Internal.RenderSettingsExt;
     const cameraParams = view.camera.controller.params as FlightControllerParams | OrthoControllerParams;
 
     store.dispatch(
         renderActions.setAdvancedSettings({
-            [AdvancedSetting.ShowPerformance]: Boolean(customProperties?.showStats),
+            [AdvancedSetting.ShowPerformance]:
+                Boolean(customProperties?.showStats) || window.location.search.includes("debug=true"),
             [AdvancedSetting.AutoFps]: view.settings.quality.resolution.autoAdjust.enabled,
             [AdvancedSetting.TriangleBudget]: view.settings.quality.detail.autoAdjust.enabled,
             [AdvancedSetting.ShowBoundingBoxes]: diagnostics.showBoundingBoxes,
@@ -548,7 +617,7 @@ export function initAdvancedSettings(view: View, customProperties: Record<string
             [AdvancedSetting.DoubleSidedMaterials]: advanced.doubleSided.opaque,
             [AdvancedSetting.DoubleSidedTransparentMaterials]: advanced.doubleSided.transparent,
             [AdvancedSetting.CameraFarClipping]: cameraParams.far,
-            [AdvancedSetting.CameraNearClipping]: cameraParams.near,
+            [AdvancedSetting.CameraNearClipping]: cameraParams.kind === "flight" ? cameraParams.near : 0.1,
             [AdvancedSetting.QualityPoints]: points.shape === "disc",
             [AdvancedSetting.PointSize]: points.size.pixel ?? 1,
             [AdvancedSetting.MaxPointSize]: points.size.maxPixel ?? 20,
@@ -558,6 +627,9 @@ export function initAdvancedSettings(view: View, customProperties: Record<string
             [AdvancedSetting.AmbientLight]: light.ambient.brightness,
             [AdvancedSetting.NavigationCube]: Boolean(customProperties?.navigationCube),
             [AdvancedSetting.TerrainAsBackground]: Boolean(terrain.asBackground),
+            [AdvancedSetting.BackgroundColor]: background.color as VecRGBA,
+            [AdvancedSetting.TriangleLimit]:
+                customProperties?.triangleLimit ?? (api as any).deviceProfile?.triangleLimit ?? 5_000_000,
             ...(customProperties?.flightMouseButtonMap
                 ? { [AdvancedSetting.MouseButtonMap]: customProperties?.flightMouseButtonMap }
                 : {}),
@@ -574,6 +646,9 @@ export function initProjectSettings({ sceneData }: { sceneData: SceneData }): vo
             [ProjectSetting.TmZone]: sceneData.tmZone ?? "",
             [ProjectSetting.DitioProjectNumber]: sceneData.customProperties?.ditioProjectNumber ?? "",
             [ProjectSetting.LeicaProjectId]: sceneData.customProperties?.leicaProjectId ?? "",
+            ...(sceneData.customProperties?.jiraSettings
+                ? { [ProjectSetting.Jira]: { ...sceneData.customProperties?.jiraSettings } }
+                : {}),
         })
     );
 }

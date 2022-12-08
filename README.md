@@ -1,7 +1,7 @@
 <a href="https://novorender.com/" target="_blank" rel="noopener noreferrer"><img width="233px" src="https://novorender.com/wp-content/uploads/2021/06/novorender_logo_RGB_2021.png" alt="Novorender logo"></a>
 
 <br />
-
+ 
 # Novoweb
 
 ## Getting started
@@ -39,33 +39,14 @@ export const featuresConfig = {
 };
 ```
 
-We have the option to toggle features on/off upon viewer scene creation.\
+We have the option to toggle features on/off per scene.\
 You have to add your new widget to the list of enabled features for it to appear in the widget menu.
 
 ```ts
-// src/pages/explorer.tsx
+// src/config/features.tsx
 
 // Always enabled
-function enabledFeaturesToFeatureKeys(enabledFeatures: Record<string, boolean>): FeatureKey[] {
-    // ...
-
-    return (
-        Object.keys(enabledFeatures)
-            // ...
-            .concat(featuresConfig.myWidget.key)
-    );
-}
-
-// Enable only if the selected property in the dictionary is set to enabled by admin upon scene creation.
-function enabledFeaturesToFeatureKeys(enabledFeatures: Record<string, boolean>): FeatureKey[] {
-    // The old viewer (and admin) apps handles feature toggling slightly different,
-    // so we use a dictionary to map our feature keys to theirs for now.
-    const dictionary: Record<string, string | string[] | undefined> = {
-        // ...
-        // was properties: featuresConfig.properties.key,
-        properties: [featuresConfig.myWidget.key, featuresConfig.properties.key],
-    };
-}
+export const defaultEnabledWidgets = [/* ..., */ featuresConfig.myWidget.key] as WidgetKey[];
 ```
 
 Render the component inside the widget wrapper when it is open.

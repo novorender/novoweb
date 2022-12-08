@@ -1,6 +1,6 @@
 import { useState, MouseEvent } from "react";
 import { IconButton, Menu, SpeedDialActionProps, Typography } from "@mui/material";
-import { Grain, LineAxis, Terrain, Token } from "@mui/icons-material";
+import { Grain, LineAxis, PictureAsPdf, Terrain, Token } from "@mui/icons-material";
 
 import { SpeedDialAction, WidgetMenuButtonWrapper } from "components";
 import { featuresConfig } from "config/features";
@@ -103,6 +103,20 @@ export function ToggleSubtrees(speedDialProps: SpeedDialActionProps) {
                                 <Grain />
                             </IconButton>
                             <Typography>Points</Typography>
+                        </WidgetMenuButtonWrapper>
+                    </li>
+                ) : null}
+                {subtrees.documents !== SubtreeStatus.Unavailable ? (
+                    <li>
+                        <WidgetMenuButtonWrapper
+                            mr={3}
+                            activeCurrent={subtrees.documents === SubtreeStatus.Shown}
+                            onClick={() => dispatch(renderActions.toggleSubtree({ subtree: "documents" }))}
+                        >
+                            <IconButton size="large" color="primary">
+                                <PictureAsPdf />
+                            </IconButton>
+                            <Typography>PDF</Typography>
                         </WidgetMenuButtonWrapper>
                     </li>
                 ) : null}

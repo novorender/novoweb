@@ -29,6 +29,11 @@ import { MyLocation } from "features/myLocation";
 import { RangeSearch } from "features/rangeSearch";
 import { User } from "features/user";
 import { Leica } from "features/leica";
+import { HeightProfile } from "features/heightProfile";
+import { Area } from "features/area";
+import { PointLine } from "features/pointLine";
+import { Jira } from "features/jira";
+import { Manhole } from "features/manhole";
 
 export function Widgets() {
     const theme = useTheme();
@@ -117,6 +122,16 @@ function getWidgetByKey(key: WidgetKey): JSX.Element | string {
             return <User />;
         case featuresConfig.leica.key:
             return <Leica />;
+        case featuresConfig.heightProfile.key:
+            return <HeightProfile />;
+        case featuresConfig.area.key:
+            return <Area />;
+        case featuresConfig.pointLine.key:
+            return <PointLine />;
+        case featuresConfig.jira.key:
+            return <Jira />;
+        case featuresConfig.manhole.key:
+            return <Manhole />;
         default:
             return key;
     }

@@ -39,13 +39,15 @@ export function AdvancedSearchInputs({
     inputs,
     setInputs,
     setFocusedInputIdx,
+    maxHeight = 92,
 }: {
     inputs: SearchPattern[];
     setInputs: Dispatch<SetStateAction<SearchPattern[]>>;
     setFocusedInputIdx?: (idx: number) => void;
+    maxHeight?: number | string;
 }) {
     return (
-        <ScrollBox maxHeight={92} mb={2} pt={1} mx={-1} px={1}>
+        <ScrollBox maxHeight={maxHeight} mb={2} pt={1} mx={-1} px={1}>
             {inputs.map((input, index, array) => (
                 <AdvancedInput
                     key={index}

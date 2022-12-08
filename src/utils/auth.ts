@@ -1,5 +1,5 @@
 import { AuthenticationHeader } from "@novorender/data-js-api";
-import { AccountInfo, NavigationClient, NavigationOptions } from "@azure/msal-browser";
+import { AccountInfo, InteractionRequiredAuthError, NavigationClient, NavigationOptions } from "@azure/msal-browser";
 import { History } from "history";
 
 import { msalInstance } from "app";
@@ -12,16 +12,56 @@ import { StorageKey } from "config/storage";
 import { dataServerBaseUrl } from "config";
 
 export async function getAuthHeader(): Promise<AuthenticationHeader> {
-    const { auth } = store.getState();
+    const {
+        auth: { accessToken, msalAccount },
+    } = store.getState();
 
-    if (auth.msalAccount) {
+    if (msalAccount) {
         // checks expiry and refreshes token if needed
         try {
             const response = await msalInstance
-                .acquireTokenSilent({ ...loginRequest, account: auth.msalAccount })
+                .acquireTokenSilent({
+                    ...loginRequest,
+                    account: msalAccount,
+                    authority: msalAccount.tenantId
+                        ? `https://login.microsoftonline.com/${msalAccount.tenantId}`
+                        : loginRequest.authority,
+                })
                 .catch(() => {
-                    return msalInstance.ssoSilent({ ...loginRequest, account: auth.msalAccount ?? undefined });
+                    return msalInstance.ssoSilent({
+                        ...loginRequest,
+                        sid: msalAccount.idTokenClaims?.sid,
+                        loginHint: msalAccount.idTokenClaims?.login_hint,
+                        account: msalAccount,
+                        authority: msalAccount.tenantId
+                            ? `https://login.microsoftonline.com/${msalAccount.tenantId}`
+                            : loginRequest.authority,
+                    });
+                })
+                .catch((e) => {
+                    if (e instanceof InteractionRequiredAuthError) {
+                        return msalInstance
+                            .acquireTokenPopup({
+                                ...loginRequest,
+                                sid: msalAccount.idTokenClaims?.sid,
+                                loginHint: msalAccount.idTokenClaims?.login_hint,
+                                account: msalAccount,
+                                authority: msalAccount.tenantId
+                                    ? `https://login.microsoftonline.com/${msalAccount.tenantId}`
+                                    : loginRequest.authority,
+                            })
+                            .catch(() => {
+                                store.dispatch(authActions.setMsalInteractionRequired(true));
+                                return { accessToken: "" };
+                            });
+                    } else {
+                        throw e;
+                    }
                 });
+
+            if (!response) {
+                throw new Error("failed to acquire access token");
+            }
 
             return { header: "Authorization", value: `Bearer ${response.accessToken}` };
         } catch (e) {
@@ -33,11 +73,11 @@ export async function getAuthHeader(): Promise<AuthenticationHeader> {
         }
     }
 
-    if (!auth.accessToken) {
+    if (!accessToken) {
         return { header: "", value: "" };
     }
 
-    return { header: "Authorization", value: `Bearer ${auth.accessToken}` };
+    return { header: "Authorization", value: `Bearer ${accessToken}` };
 }
 
 type SuccessfulLoginResponse = { token: string };
@@ -154,6 +194,7 @@ type OAuthState = {
     service?: string;
     sceneId?: string;
     space?: string;
+    localBookmarkId?: string;
 };
 
 export function getOAuthState(): OAuthState | undefined {

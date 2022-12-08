@@ -148,10 +148,18 @@ export function CameraSettings({
                     );
                     return;
                 case AdvancedSetting.HeadlightIntensity:
-                    //
+                    dispatch(
+                        renderActions.setAdvancedSettings({
+                            [AdvancedSetting.HeadlightIntensity]: value,
+                        })
+                    );
                     return;
                 case AdvancedSetting.HeadlightDistance:
-                    //
+                    dispatch(
+                        renderActions.setAdvancedSettings({
+                            [AdvancedSetting.HeadlightDistance]: scaleHeadlightDistance(value),
+                        })
+                    );
                     return;
             }
         };
@@ -331,7 +339,6 @@ export function CameraSettings({
                                     min={180}
                                     max={400}
                                     step={1}
-                                    disabled={cameraType !== CameraType.Flight}
                                     scale={scaleFarClipping}
                                     name={AdvancedSetting.CameraFarClipping}
                                     value={far}
@@ -567,6 +574,3 @@ function scaleFarClipping(value: number): number {
 }
 
 const scaleHeadlightDistance = scaleFarClipping;
-
-// view.camera.controller.mouseButtonsMap
-// {rotate: 1, pan: 4, orbit: 2, pivot: 2}

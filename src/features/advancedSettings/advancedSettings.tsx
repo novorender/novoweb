@@ -13,11 +13,18 @@ import { useExplorerGlobals } from "contexts/explorerGlobals";
 import {
     selectAdvancedSettings,
     selectBaseCameraSpeed,
+    selectCurrentEnvironment,
     selectProjectSettings,
     selectSubtrees,
     SubtreeStatus,
 } from "slices/renderSlice";
-import { selectEnabledWidgets, selectIsAdminScene, selectMaximized, selectMinimized } from "slices/explorerSlice";
+import {
+    selectEnabledWidgets,
+    selectIsAdminScene,
+    selectMaximized,
+    selectMinimized,
+    selectPrimaryMenu,
+} from "slices/explorerSlice";
 
 import { useMountedState } from "hooks/useMountedState";
 import { useSceneId } from "hooks/useSceneId";
@@ -27,6 +34,7 @@ import { CameraSettings } from "./routes/cameraSettings";
 import { FeatureSettings } from "./routes/featureSettings";
 import { RenderSettings } from "./routes/renderSettings";
 import { ProjectSettings } from "./routes/projectSettings";
+import { SceneSettings } from "./routes/sceneSettings";
 
 enum Status {
     Idle,
@@ -44,9 +52,11 @@ export function AdvancedSettings() {
     const isAdminScene = useAppSelector(selectIsAdminScene);
     const subtrees = useAppSelector(selectSubtrees);
     const settings = useAppSelector(selectAdvancedSettings);
+    const currentEnvironment = useAppSelector(selectCurrentEnvironment);
     const projectSettings = useAppSelector(selectProjectSettings);
     const baseCameraSpeed = useAppSelector(selectBaseCameraSpeed);
     const enabledWidgets = useAppSelector(selectEnabledWidgets);
+    const primaryMenu = useAppSelector(selectPrimaryMenu);
     const [menuOpen, toggleMenu] = useToggle();
     const minimized = useAppSelector(selectMinimized) === featuresConfig.advancedSettings.key;
     const maximized = useAppSelector(selectMaximized) === featuresConfig.advancedSettings.key;
@@ -79,6 +89,7 @@ export function AdvancedSettings() {
                               hidePoints: subtrees?.points === SubtreeStatus.Hidden,
                               hideTerrain: subtrees?.terrain === SubtreeStatus.Hidden,
                               hideLines: subtrees?.lines === SubtreeStatus.Hidden,
+                              hideDocuments: subtrees?.documents === SubtreeStatus.Hidden,
                               doubleSided: {
                                   opaque: settings.doubleSidedMaterials,
                                   transparent: settings.doubleSidedTransparentMaterials,
@@ -111,6 +122,14 @@ export function AdvancedSettings() {
                                   toleranceFactor: settings.pointToleranceFactor,
                               },
                           },
+                          terrain: {
+                              ...originalSettings.terrain,
+                              asBackground: settings.terrainAsBackground,
+                          },
+                          background: {
+                              color: settings.backgroundColor,
+                          },
+                          ...(currentEnvironment ? { environment: currentEnvironment.name } : {}),
                       } as Internal.RenderSettingsExt),
                 camera:
                     !camera || !["flight", "ortho"].includes(camera.kind)
@@ -123,12 +142,14 @@ export function AdvancedSettings() {
                           },
                 customProperties: {
                     ...customProperties,
+                    primaryMenu,
                     showStats: settings.showPerformance,
                     navigationCube: settings.navigationCube,
                     ditioProjectNumber: projectSettings.ditioProjectNumber,
                     leicaProjectId: projectSettings.leicaProjectId,
                     flightMouseButtonMap: settings.mouseButtonMap,
                     flightFingerMap: settings.fingerMap,
+                    triangleLimit: settings.triangleLimit,
                     enabledFeatures: {
                         ...Object.fromEntries(
                             enabledWidgets
@@ -225,6 +246,9 @@ export function AdvancedSettings() {
                             <Route path="/" exact>
                                 <Root save={save} saving={saving} />
                             </Route>
+                            <Route path="/scene" exact>
+                                <SceneSettings save={save} saveCameraPos={saveCameraPos} saving={saving} />
+                            </Route>
                             <Route path="/camera" exact>
                                 <CameraSettings save={save} saveCameraPos={saveCameraPos} saving={saving} />
                             </Route>
@@ -279,6 +303,9 @@ function Root({ save, saving }: { save: () => Promise<void>; saving: boolean }) 
             ) : null}
             <Box height={1} mt={1} pb={3} display="flex" flexDirection="column">
                 <List disablePadding>
+                    <ListItemButton sx={{ pl: 1, fontWeight: 600 }} disableGutters component={Link} to="/scene">
+                        Scene
+                    </ListItemButton>
                     <ListItemButton sx={{ pl: 1, fontWeight: 600 }} disableGutters component={Link} to="/features">
                         Features
                     </ListItemButton>

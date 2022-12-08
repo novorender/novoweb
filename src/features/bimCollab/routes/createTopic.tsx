@@ -140,8 +140,8 @@ export function CreateTopic() {
                     />
                 </Tooltip>
             </Box>
-            <ScrollBox py={1} height={1} position="relative">
-                {disabled ? <LinearProgress /> : null}
+            <Box position="relative">{disabled ? <LinearProgress /> : null}</Box>
+            <ScrollBox py={1} height={1}>
                 <Box sx={{ px: 1, my: 1 }}>
                     <IncludeViewpoint include={includeViewpoint} viewpoint={viewpoint} setViewpoint={setViewpoint} />
 

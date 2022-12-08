@@ -22,22 +22,26 @@ import {
     Search,
     Settings,
     Share,
+    SquareFoot,
     Star,
     Straighten,
+    Timeline,
     Undo,
     Visibility,
     VisibilityOff,
     VrpanoOutlined,
+    LinearScale,
+    FiberSmartRecord,
 } from "@mui/icons-material";
 
 import { ReactComponent as Clipping } from "media/icons/clipping.svg";
 import { ReactComponent as Run } from "media/icons/run.svg";
 import { ReactComponent as BimTrack } from "media/icons/bimtrack.svg";
 import { ReactComponent as Ditio } from "media/icons/ditio.svg";
+import { ReactComponent as Jira } from "media/icons/jira-software.svg";
 
 export enum FeatureType {
-    SelectionModifier,
-    CameraNavigation,
+    Button,
     Widget,
     AdminWidget,
 }
@@ -48,7 +52,41 @@ export const featuresConfig = {
         name: "Leica",
         Icon: GpsFixed,
         type: FeatureType.Widget,
-        // todo(OLA)
+        defaultLocked: false, // todo(OLA)
+    },
+    jira: {
+        key: "jira",
+        name: "Jira",
+        Icon: Jira,
+        type: FeatureType.Widget,
+        defaultLocked: true,
+    },
+    area: {
+        key: "area",
+        name: "Area",
+        Icon: SquareFoot,
+        type: FeatureType.Widget,
+        defaultLocked: false,
+    },
+    pointLine: {
+        key: "pointLine",
+        name: "Point line",
+        Icon: LinearScale,
+        type: FeatureType.Widget,
+        defaultLocked: false,
+    },
+    manhole: {
+        key: "manhole",
+        name: "Manhole",
+        Icon: FiberSmartRecord,
+        type: FeatureType.Widget,
+        defaultLocked: false,
+    },
+    heightProfile: {
+        key: "heightProfile",
+        name: "Ht. profile",
+        Icon: Timeline,
+        type: FeatureType.Widget,
         defaultLocked: false,
     },
     user: {
@@ -222,77 +260,84 @@ export const featuresConfig = {
         key: "home",
         name: "Home",
         Icon: Home,
-        type: FeatureType.CameraNavigation,
+        type: FeatureType.Button,
         defaultLocked: false,
     },
     stepBack: {
         key: "stepBack",
         name: "Step back",
         Icon: Undo,
-        type: FeatureType.CameraNavigation,
+        type: FeatureType.Button,
         defaultLocked: false,
     },
     stepForwards: {
         key: "stepForwards",
         name: "Step forwards",
         Icon: Redo,
-        type: FeatureType.CameraNavigation,
+        type: FeatureType.Button,
+        defaultLocked: false,
+    },
+    orthoShortcut: {
+        key: "orthoShortcut",
+        name: "2D shortcut",
+        Icon: Cameraswitch,
+        type: FeatureType.Button,
         defaultLocked: false,
     },
     cameraSpeed: {
         key: "cameraSpeed",
         name: "Camera speed",
         Icon: Run,
-        type: FeatureType.CameraNavigation,
+        type: FeatureType.Button,
         defaultLocked: false,
     },
     flyToSelected: {
         key: "flyToSelected",
         name: "Fly to selected",
         Icon: FlightTakeoff,
-        type: FeatureType.CameraNavigation,
+        type: FeatureType.Button,
         defaultLocked: false,
     },
     multipleSelection: {
         key: "multipleSelection",
         name: "Multiple selection",
         Icon: Layers,
-        type: FeatureType.SelectionModifier,
+        type: FeatureType.Button,
         defaultLocked: false,
     },
     selectionColor: {
         key: "selectionColor",
         name: "Selection color",
         Icon: ColorLens,
-        type: FeatureType.SelectionModifier,
+        type: FeatureType.Button,
         defaultLocked: false,
     },
     viewOnlySelected: {
         key: "viewOnlySelected",
         name: "View only selected",
         Icon: Visibility,
-        type: FeatureType.SelectionModifier,
+        type: FeatureType.Button,
         defaultLocked: false,
     },
     hideSelected: {
         key: "hideSelected",
         name: "Hide selected",
         Icon: VisibilityOff,
-        type: FeatureType.SelectionModifier,
+        type: FeatureType.Button,
         defaultLocked: false,
     },
     clearSelection: {
         key: "clearSelection",
         name: "Clear selection",
         Icon: CheckBox,
-        type: FeatureType.SelectionModifier,
+        type: FeatureType.Button,
         defaultLocked: false,
     },
     toggleSubtrees: {
         key: "toggleSubtrees",
         name: "Toggle render types",
         Icon: Gradient,
-        type: FeatureType.SelectionModifier,
+        type: FeatureType.Button,
         defaultLocked: false,
     },
 } as const;
@@ -304,10 +349,13 @@ export type FeatureKey = keyof Config;
 export type WidgetKey = {
     [K in keyof Config]: Config[K]["type"] extends FeatureType.Widget | FeatureType.AdminWidget ? K : never;
 }[keyof Config];
+export type ButtonKey = {
+    [K in keyof Config]: Config[K]["type"] extends FeatureType.Button ? K : never;
+}[keyof Config];
 
 export type Widget = Config[WidgetKey];
 
-export const defaultEnabledWidgets = [featuresConfig.user.key] as WidgetKey[];
+export const defaultEnabledWidgets = [featuresConfig.user.key, featuresConfig.leica.key] as WidgetKey[];
 export const allWidgets = Object.values(featuresConfig)
     .filter((widget) => [FeatureType.AdminWidget, FeatureType.Widget].includes(widget.type))
     .map((widget) => widget.key as WidgetKey);

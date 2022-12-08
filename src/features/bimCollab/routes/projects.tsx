@@ -3,7 +3,7 @@ import { Link } from "react-router-dom";
 import { ReactEventHandler, useState } from "react";
 
 import { useAppSelector } from "app/store";
-import { ImgModal, ImgTooltip, ScrollBox } from "components";
+import { ImgModal, ImgTooltip, LinearProgress, ScrollBox } from "components";
 import { useToggle } from "hooks/useToggle";
 import { Project } from "types/bcf";
 
@@ -14,12 +14,17 @@ import fallbackImage from "media/img/bimcollab_fallback.png";
 
 export function Projects() {
     const theme = useTheme();
-    const { data: projects = [] } = useGetProjectsQuery();
+    const { data: projects = [], isLoading } = useGetProjectsQuery();
 
     return (
         <>
+            <Box boxShadow={theme.customShadows.widgetHeader} sx={{ height: 5, width: 1 }} position="absolute" />
+            {isLoading ? (
+                <Box position="relative">
+                    <LinearProgress />
+                </Box>
+            ) : null}
             <ScrollBox p={1} height={1} position="relative">
-                <Box position="absolute" height={5} top={-5} width={1} boxShadow={theme.customShadows.widgetHeader} />
                 <List>
                     {projects.map((project) => (
                         <ProjectListItem project={project} key={project.project_id} />

@@ -3,7 +3,7 @@ import { vec3, mat3, quat, vec4, mat4 } from "gl-matrix";
 
 import { ObjectVisibility } from "slices/renderSlice";
 import { VecRGB, VecRGBA, vecToHex } from "utils/color";
-import { base64UrlEncodeImg, uniqueArray } from "utils/misc";
+import { base64UrlEncodeImg, createCanvasSnapshot, uniqueArray } from "utils/misc";
 import { Viewpoint } from "types/bcf";
 
 type Point = {
@@ -131,9 +131,8 @@ export function translateOrthogonalCamera(
 export function createPerspectiveCamera(
     camera: Pick<Camera, "position" | "rotation" | "fieldOfView">
 ): PerspectiveCamera {
-    const matrix3 = mat3.fromQuat(mat3.create(), camera.rotation);
-    const cameraDirection = vec3.transformMat3(vec3.create(), vec3.fromValues(0, 0, -1), matrix3);
-    const cameraUp = vec3.transformMat3(vec3.create(), vec3.fromValues(0, 1, 0), matrix3);
+    const cameraDirection = vec3.transformQuat(vec3.create(), vec3.fromValues(0, 0, -1), camera.rotation);
+    const cameraUp = vec3.transformQuat(vec3.create(), vec3.fromValues(0, 1, 0), camera.rotation);
 
     // in BCF Z is Y
     return {
@@ -159,9 +158,8 @@ export function createPerspectiveCamera(
 export function createOrthogonalCamera(
     camera: Pick<Camera, "position" | "rotation" | "fieldOfView">
 ): OrthogonalCamera {
-    const matrix3 = mat3.fromQuat(mat3.create(), camera.rotation);
-    const cameraDirection = vec3.transformMat3(vec3.create(), vec3.fromValues(0, 0, -1), matrix3);
-    const cameraUp = vec3.transformMat3(vec3.create(), vec3.fromValues(0, 1, 0), matrix3);
+    const cameraDirection = vec3.transformQuat(vec3.create(), vec3.fromValues(0, 0, -1), camera.rotation);
+    const cameraUp = vec3.transformQuat(vec3.create(), vec3.fromValues(0, 1, 0), camera.rotation);
 
     // in BCF Z is Y
     return {
@@ -220,17 +218,14 @@ export function createBcfClippingPlanes(
     });
 }
 
-export function createBcfSnapshot(canvas: HTMLCanvasElement): Viewpoint["snapshot"] | undefined {
-    const dist = document.createElement("canvas");
-    const width = Math.min(canvas.width, 1500);
-    const height = Math.min(canvas.height, 1500);
+export async function createBcfSnapshot(canvas: HTMLCanvasElement): Promise<Viewpoint["snapshot"] | undefined> {
+    const snapshot = await createCanvasSnapshot(canvas, 1500, 1500);
 
-    dist.height = height;
-    dist.width = width;
-    const ctx = dist.getContext("2d", { alpha: false, desynchronized: false })!;
-    ctx.drawImage(canvas, (canvas.width - width) / 2, (canvas.height - height) / 2, width, height, 0, 0, width, height);
+    if (!snapshot) {
+        return;
+    }
 
-    return { snapshot_type: "png", snapshot_data: dist.toDataURL("image/png").split(";base64,")[1] };
+    return { snapshot_type: "png", snapshot_data: snapshot.split(";base64,")[1] };
 }
 
 export async function createBcfViewpointComponents({

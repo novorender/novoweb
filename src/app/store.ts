@@ -11,13 +11,17 @@ import { panoramasReducer } from "features/panoramas";
 import { followPathReducer } from "features/followPath";
 import { deviationsReducer } from "features/deviations";
 import { measureReducer } from "features/measure";
-import { bimCollabReducer } from "features/bimCollab/bimCollabSlice";
-import { bimCollabApi } from "features/bimCollab/bimCollabApi";
-import { bimTrackReducer } from "features/bimTrack/bimTrackSlice";
-import { bimTrackApi } from "features/bimTrack/bimTrackApi";
+import { bimCollabReducer, bimCollabApi } from "features/bimCollab";
+import { bimTrackReducer, bimTrackApi } from "features/bimTrack";
 import { ditioReducer } from "features/ditio";
 import { ditioApi } from "features/ditio";
 import { leicaApi, leicaReducer } from "features/leica";
+import { areaReducer } from "features/area";
+import { pointLineReducer } from "features/pointLine";
+import { heightProfileReducer } from "features/heightProfile";
+import { myLocationReducer } from "features/myLocation";
+import { jiraApi, jiraReducer } from "features/jira";
+import { manholeReducer } from "features/manhole/manholeSlice";
 
 const rootReducer = combineReducers({
     explorer: explorerReducer,
@@ -29,7 +33,12 @@ const rootReducer = combineReducers({
     followPath: followPathReducer,
     deviations: deviationsReducer,
     measure: measureReducer,
+    area: areaReducer,
+    manhole: manholeReducer,
+    pointLine: pointLineReducer,
+    myLocation: myLocationReducer,
     bimCollab: bimCollabReducer,
+    heightProfile: heightProfileReducer,
     [bimCollabApi.reducerPath]: bimCollabApi.reducer,
     bimTrack: bimTrackReducer,
     [bimTrackApi.reducerPath]: bimTrackApi.reducer,
@@ -37,6 +46,8 @@ const rootReducer = combineReducers({
     [ditioApi.reducerPath]: ditioApi.reducer,
     leica: leicaReducer,
     [leicaApi.reducerPath]: leicaApi.reducer,
+    jira: jiraReducer,
+    [jiraApi.reducerPath]: jiraApi.reducer,
 });
 
 export const store = configureStore({
@@ -47,7 +58,8 @@ export const store = configureStore({
             .concat(bimCollabApi.middleware)
             .concat(bimTrackApi.middleware)
             .concat(ditioApi.middleware)
-            .concat(leicaApi.middleware),
+            .concat(leicaApi.middleware)
+            .concat(jiraApi.middleware),
 });
 
 setupListeners(store.dispatch);

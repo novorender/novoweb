@@ -61,7 +61,7 @@ export function IncludeViewpoint({
         }
 
         async function createNewViewpoint() {
-            const snapshot = createBcfSnapshot(canvas);
+            const snapshot = await createBcfSnapshot(canvas);
 
             if (!snapshot) {
                 return;
@@ -123,7 +123,7 @@ export function IncludeViewpoint({
     return (
         <>
             {viewpoint?.snapshot ? (
-                <Box sx={{ img: { width: "100%", height: 200, objectFit: "cover" } }}>
+                <Box sx={{ img: { width: "100%", height: 200, objectFit: "contain" } }}>
                     <img
                         alt=""
                         src={`data:image/${viewpoint.snapshot.snapshot_type};base64,${viewpoint.snapshot.snapshot_data}`}

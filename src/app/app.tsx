@@ -8,7 +8,7 @@ import { createAPI } from "@novorender/webgl-api";
 import { createMeasureAPI } from "@novorender/measure-api";
 import { createAPI as createDataAPI } from "@novorender/data-js-api";
 import { MsalProvider } from "@azure/msal-react";
-import { PublicClientApplication } from "@azure/msal-browser";
+import { InteractionRequiredAuthError, PublicClientApplication } from "@azure/msal-browser";
 import { Route, useHistory, Switch } from "react-router-dom";
 
 import { theme } from "app/theme";
@@ -65,9 +65,11 @@ export function App() {
             if (!(await verifyToken())) {
                 await handleMsalReturn();
             } else {
-                history.replace(history.location.pathname.replace("login/", "") + window.location.search);
+                const query = new URLSearchParams(window.location.search);
+                if (!query.get("force-login")) {
+                    history.replace(history.location.pathname.replace("login/", "") + window.location.search);
+                }
             }
-
             setStatus(Status.Ready);
         }
 
@@ -85,22 +87,49 @@ export function App() {
                     }
 
                     return msalInstance
-                        .acquireTokenSilent({ ...loginRequest, account: getStoredActiveMsalAccount() })
+                        .ssoSilent({
+                            ...loginRequest,
+                            account,
+                            sid: account.idTokenClaims?.sid,
+                            loginHint: account.idTokenClaims?.login_hint,
+                            authority: account.tenantId
+                                ? `https://login.microsoftonline.com/${account.tenantId}`
+                                : loginRequest.authority,
+                        })
                         .catch(() => {
-                            return msalInstance.ssoSilent({
+                            return msalInstance.acquireTokenSilent({
                                 ...loginRequest,
-                                account: getStoredActiveMsalAccount(),
+                                account,
+                                authority: account.tenantId
+                                    ? `https://login.microsoftonline.com/${account.tenantId}`
+                                    : loginRequest.authority,
                             });
+                        })
+                        .catch((e) => {
+                            if (e instanceof InteractionRequiredAuthError) {
+                                return msalInstance
+                                    .acquireTokenPopup({
+                                        ...loginRequest,
+                                        account,
+                                        sid: account.idTokenClaims?.sid,
+                                        loginHint: account.idTokenClaims?.login_hint,
+                                        authority: account.tenantId
+                                            ? `https://login.microsoftonline.com/${account.tenantId}`
+                                            : loginRequest.authority,
+                                    })
+                                    .catch(() => {
+                                        dispatch(authActions.setMsalInteractionRequired(true));
+                                    });
+                            } else {
+                                throw e;
+                            }
                         });
                 });
 
                 if (res) {
-                    msalInstance.setActiveAccount(res.account);
-                    storeActiveAccount(res.account);
-
                     const accessToken = await getAccessToken(res.accessToken);
                     if (!accessToken) {
-                        return;
+                        throw new Error("Failed to get access token.");
                     }
 
                     const user = await getUser(accessToken);
@@ -108,8 +137,9 @@ export function App() {
                         throw new Error("Failed to get user.");
                     }
 
+                    msalInstance.setActiveAccount(res.account);
+                    storeActiveAccount(res.account);
                     dispatch(authActions.login({ accessToken: res.accessToken, msalAccount: res.account, user }));
-                    history.replace(history.location.pathname.replace("login/", "") + window.location.search);
                 }
             } catch (e) {
                 console.warn(e);

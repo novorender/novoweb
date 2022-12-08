@@ -1,7 +1,7 @@
 import { Box, useMediaQuery, useTheme } from "@mui/material";
 
 import { SelectionModifierMenu } from "features/selectionModifierMenu";
-import { CameraNavigationMenu } from "features/cameraNavigationMenu";
+import { PrimaryMenu } from "features/primaryMenu";
 import { Widgets } from "features/widgets";
 import { useAppSelector } from "app/store";
 import { NavigationCube } from "features/navigationCube";
@@ -31,7 +31,7 @@ export function Hud() {
                 sx={{ pointerEvents: "none" }}
             >
                 <SelectionModifierMenu />
-                <CameraNavigationMenu />
+                <PrimaryMenu />
                 {isSmall ? <Widgets /> : null}
             </Box>
             {!isSmall ? (

@@ -1,30 +1,32 @@
 import { vec3 } from "gl-matrix";
-import { useEffect } from "react";
-import { MeasurementValues, MeasureObject, MeasureSettings } from "@novorender/measure-api";
+import { useEffect, useState } from "react";
+import { DuoMeasurementValues, MeasurementValues, MeasureSettings } from "@novorender/measure-api";
 import {
     Box,
-    FormControlLabel,
     Checkbox,
-    RadioGroup,
-    Radio,
     capitalize,
     Grid,
     List,
     ListItem,
     css,
     styled,
+    Select,
+    InputLabel,
+    OutlinedInput,
+    MenuItem,
 } from "@mui/material";
 import { PushPin } from "@mui/icons-material";
 
-import { Accordion, AccordionDetails, AccordionSummary } from "components";
+import { Accordion, AccordionDetails, AccordionSummary, VertexTable, MeasurementTable } from "components";
 import { useAppDispatch, useAppSelector } from "app/store";
 import { useExplorerGlobals } from "contexts/explorerGlobals";
-import { useMountedState } from "hooks/useMountedState";
+import { getMeasurementValueKind, measureObjectIsVertex } from "utils/misc";
 
 import { measureActions, SelectedMeasureObj, selectMeasure } from "./measureSlice";
 import { Slope } from "./slope";
-import { VertexTable, MeasurementTable } from "./tables";
 import { PlanarDiff } from "./planarDiff";
+import { useMeasureObjects } from "./useMeasureObjects";
+import { cylinderOptions } from "./config";
 
 const NestedAccordionSummary = styled(AccordionSummary)(
     ({ theme }) => css`
@@ -53,34 +55,25 @@ export function MeasuredObject({ obj, idx }: { obj: SelectedMeasureObj; idx: num
     const { pinned, duoMeasurementValues } = useAppSelector(selectMeasure);
     const isPinned = pinned === idx;
 
-    const [measurement, setMeasurement] = useMountedState<
-        { obj: MeasureObject; val: MeasurementValues } | vec3 | undefined
-    >(undefined);
+    const measureObject = useMeasureObjects()[idx];
+    const [measureValues, setMeasureValues] = useState<MeasurementValues>();
 
     useEffect(() => {
-        initMeasureObj();
+        getMeasureValues();
 
-        async function initMeasureObj() {
-            if (measureScene) {
-                const measureObj = await measureScene.downloadMeasureObject(obj.id, obj.pos).catch(() => undefined);
-                const measureVal = measureObj?.selectedEntity
-                    ? await measureScene.measure(measureObj.selectedEntity)
-                    : undefined;
-
-                if (measureObj && measureObj.selectedEntity?.kind === "vertex") {
-                    setMeasurement(measureObj.selectedEntity.parameter as vec3);
-                } else if (measureObj && measureVal) {
-                    setMeasurement({ obj: measureObj, val: measureVal });
-                } else {
-                    setMeasurement(obj.pos);
-                }
+        async function getMeasureValues() {
+            if (measureObject) {
+                setMeasureValues(await measureScene.measure(measureObject, undefined, measureObject.settings));
+            } else {
+                setMeasureValues(undefined);
             }
         }
-    }, [measureScene, obj, setMeasurement, idx, dispatch]);
+    }, [measureObject, measureScene]);
 
-    const kind = !measurement ? "" : "obj" in measurement ? getMeasurementValueKind(measurement.val) : "point";
+    const kind = !measureObject ? "" : measureValues ? getMeasurementValueKind(measureValues) : "point";
+
     const _idx = idx === 0 ? "a" : "b";
-    const enableSettings =
+    const useCylinderMeasureSettings =
         duoMeasurementValues &&
         (!duoMeasurementValues.validMeasureSettings || duoMeasurementValues.validMeasureSettings[_idx]);
 
@@ -108,52 +101,38 @@ export function MeasuredObject({ obj, idx }: { obj: SelectedMeasureObj; idx: num
                 </Box>
                 <Box width={0} flex="1 1 auto" overflow="hidden">
                     <Box overflow="hidden" whiteSpace="nowrap" textOverflow="ellipsis">
-                        {kind ? (kind === "lineStrip" ? "Line strip" : capitalize(kind)) : obj.id}
+                        {kind ? (kind === "lineStrip" ? "Line strip" : capitalize(kind)) : "Loading..."}
                     </Box>
                 </Box>
             </AccordionSummary>
             <AccordionDetails>
-                {kind === "cylinder" && enableSettings ? (
-                    <>
-                        <RadioGroup
-                            row
-                            aria-label="Cylinder measure point position"
-                            onChange={(e, value) => {
-                                dispatch(
-                                    measureActions.setSettings({
-                                        idx,
-                                        settings: {
-                                            ...obj.settings,
-                                            cylinderMeasure: value as MeasureSettings["cylinderMeasure"],
-                                        },
-                                    })
-                                );
-                            }}
-                            value={!obj.settings?.cylinderMeasure ? "center" : obj.settings.cylinderMeasure}
-                            name="radio-buttons-group"
-                            sx={{ px: 1.8, mb: 0.5 }}
-                        >
-                            <FormControlLabel value={"furthest"} control={<Radio size="small" />} label="Furthest" />
-                            <FormControlLabel value={"center"} control={<Radio size="small" />} label="Center" />
-                            <FormControlLabel value={"closest"} control={<Radio size="small" />} label="Closest" />
-                        </RadioGroup>
-                    </>
-                ) : null}
-                {!measurement ? null : "obj" in measurement ? (
-                    <MeasurementData measureValues={measurement.val} />
-                ) : (
+                {!measureObject ? null : measureValues ? (
+                    <MeasurementData
+                        measureValues={measureValues}
+                        useCylinderRelativeMeasureSettings={useCylinderMeasureSettings}
+                        settings={obj.settings}
+                        onSettingsChange={(newValue) => {
+                            dispatch(
+                                measureActions.setSettings({
+                                    idx,
+                                    settings: {
+                                        cylinderMeasure: newValue,
+                                    },
+                                })
+                            );
+                        }}
+                    />
+                ) : measureObjectIsVertex(measureObject) ? (
                     <Box p={2}>
-                        <VertexTable vertices={[measurement]} />
+                        <VertexTable vertices={[measureObject.parameter]} />
                     </Box>
-                )}
+                ) : null}
             </AccordionDetails>
         </Accordion>
     );
 }
 
-export function MeasuredResult() {
-    const { duoMeasurementValues } = useAppSelector(selectMeasure);
-
+export function MeasuredResult({ duoMeasurementValues }: { duoMeasurementValues: DuoMeasurementValues | undefined }) {
     if (!duoMeasurementValues) {
         return null;
     }
@@ -165,7 +144,6 @@ export function MeasuredResult() {
 
     const showSlope = duoMeasurementValues.pointA && duoMeasurementValues.pointB;
     const showPlanarDiff = duoMeasurementValues.pointA && duoMeasurementValues.pointB;
-
     return (
         <Accordion defaultExpanded={true}>
             <AccordionSummary sx={{ fontWeight: 600 }}>Result</AccordionSummary>
@@ -175,11 +153,23 @@ export function MeasuredResult() {
                         {duoMeasurementValues.distance ? (
                             <ListItem>
                                 <Grid container>
-                                    <Grid item xs={4}>
+                                    <Grid item xs={5}>
                                         Distance
                                     </Grid>
-                                    <Grid item xs={6}>
+                                    <Grid item xs={5}>
                                         {duoMeasurementValues.distance.toFixed(3)} m
+                                    </Grid>
+                                </Grid>
+                            </ListItem>
+                        ) : null}
+                        {duoMeasurementValues.angle ? (
+                            <ListItem>
+                                <Grid container>
+                                    <Grid item xs={5}>
+                                        Angle
+                                    </Grid>
+                                    <Grid item xs={5}>
+                                        {(duoMeasurementValues.angle.radians * (180 / Math.PI)).toFixed(3)} °
                                     </Grid>
                                 </Grid>
                             </ListItem>
@@ -187,10 +177,10 @@ export function MeasuredResult() {
                         {duoMeasurementValues.normalDistance ? (
                             <ListItem>
                                 <Grid container>
-                                    <Grid item xs={4}>
+                                    <Grid item xs={5}>
                                         Normal distance
                                     </Grid>
-                                    <Grid item xs={6}>
+                                    <Grid item xs={5}>
                                         {duoMeasurementValues.normalDistance.toFixed(3)} m
                                     </Grid>
                                 </Grid>
@@ -221,7 +211,17 @@ export function MeasuredResult() {
     );
 }
 
-function MeasurementData({ measureValues }: { measureValues: MeasurementValues }) {
+export function MeasurementData({
+    measureValues,
+    useCylinderRelativeMeasureSettings,
+    settings,
+    onSettingsChange,
+}: {
+    measureValues: MeasurementValues;
+    useCylinderRelativeMeasureSettings?: boolean;
+    settings?: MeasureSettings;
+    onSettingsChange?: (newValue: string) => void;
+}) {
     if (!("kind" in measureValues)) {
         return null;
     }
@@ -233,10 +233,10 @@ function MeasurementData({ measureValues }: { measureValues: MeasurementValues }
                     <List dense>
                         <ListItem>
                             <Grid container>
-                                <Grid item xs={4}>
+                                <Grid item xs={5}>
                                     Length
                                 </Grid>
-                                <Grid item xs={6}>
+                                <Grid item xs={5}>
                                     {measureValues.distance.toFixed(3)} m
                                 </Grid>
                             </Grid>
@@ -260,16 +260,18 @@ function MeasurementData({ measureValues }: { measureValues: MeasurementValues }
             return (
                 <>
                     <List dense>
-                        <ListItem>
-                            <Grid container>
-                                <Grid item xs={4}>
-                                    Length
+                        {measureValues.totalLength ? (
+                            <ListItem>
+                                <Grid container>
+                                    <Grid item xs={5}>
+                                        Length
+                                    </Grid>
+                                    <Grid item xs={5}>
+                                        {measureValues.totalLength.toFixed(3)} m
+                                    </Grid>
                                 </Grid>
-                                <Grid item xs={6}>
-                                    {measureValues.totalLength.toFixed(3)} m
-                                </Grid>
-                            </Grid>
-                        </ListItem>
+                            </ListItem>
+                        ) : null}
                     </List>
                 </>
             );
@@ -279,16 +281,16 @@ function MeasurementData({ measureValues }: { measureValues: MeasurementValues }
                 <List dense>
                     <ListItem>
                         <Grid container>
-                            <Grid item xs={4}>
+                            <Grid item xs={5}>
                                 Radius
                             </Grid>
-                            <Grid item xs={6}>
+                            <Grid item xs={5}>
                                 {measureValues.radius.toFixed(3)} m
                             </Grid>
-                            <Grid item xs={4}>
+                            <Grid item xs={5}>
                                 Total angle
                             </Grid>
-                            <Grid item xs={6}>
+                            <Grid item xs={5}>
                                 {Math.round(measureValues.totalAngle * (180 / Math.PI))} deg
                             </Grid>
                         </Grid>
@@ -303,10 +305,10 @@ function MeasurementData({ measureValues }: { measureValues: MeasurementValues }
                         {measureValues.height ? (
                             <ListItem>
                                 <Grid container>
-                                    <Grid item xs={4}>
+                                    <Grid item xs={5}>
                                         Height
                                     </Grid>
-                                    <Grid item xs={6}>
+                                    <Grid item xs={5}>
                                         {measureValues.height.toFixed(3)} m
                                     </Grid>
                                 </Grid>
@@ -315,10 +317,10 @@ function MeasurementData({ measureValues }: { measureValues: MeasurementValues }
                         {measureValues.width ? (
                             <ListItem>
                                 <Grid container>
-                                    <Grid item xs={4}>
+                                    <Grid item xs={5}>
                                         Width
                                     </Grid>
-                                    <Grid item xs={6}>
+                                    <Grid item xs={5}>
                                         {measureValues.width.toFixed(3)} m
                                     </Grid>
                                 </Grid>
@@ -327,10 +329,10 @@ function MeasurementData({ measureValues }: { measureValues: MeasurementValues }
                         {measureValues.area ? (
                             <ListItem>
                                 <Grid container>
-                                    <Grid item xs={4}>
+                                    <Grid item xs={5}>
                                         Area
                                     </Grid>
-                                    <Grid item xs={6}>
+                                    <Grid item xs={5}>
                                         {measureValues.area.toFixed(3)} &#13217;
                                     </Grid>
                                 </Grid>
@@ -339,10 +341,10 @@ function MeasurementData({ measureValues }: { measureValues: MeasurementValues }
                         {measureValues.innerRadius ? (
                             <ListItem>
                                 <Grid container>
-                                    <Grid item xs={4}>
+                                    <Grid item xs={5}>
                                         {measureValues.outerRadius ? "Inner radius" : "Radius"}
                                     </Grid>
-                                    <Grid item xs={6}>
+                                    <Grid item xs={5}>
                                         {(measureValues.outerRadius
                                             ? Math.min(
                                                   measureValues.outerRadius as number,
@@ -358,10 +360,10 @@ function MeasurementData({ measureValues }: { measureValues: MeasurementValues }
                         {measureValues.outerRadius ? (
                             <ListItem>
                                 <Grid container>
-                                    <Grid item xs={4}>
+                                    <Grid item xs={5}>
                                         {measureValues.innerRadius ? "Outer radius" : "Radius"}
                                     </Grid>
-                                    <Grid item xs={6}>
+                                    <Grid item xs={5}>
                                         {(measureValues.innerRadius
                                             ? Math.max(
                                                   measureValues.outerRadius as number,
@@ -377,10 +379,10 @@ function MeasurementData({ measureValues }: { measureValues: MeasurementValues }
                         {measureValues.heightAboveXyPlane !== undefined ? (
                             <ListItem>
                                 <Grid container>
-                                    <Grid item xs={4}>
+                                    <Grid item xs={5}>
                                         Elevation
                                     </Grid>
-                                    <Grid item xs={6}>
+                                    <Grid item xs={5}>
                                         {measureValues.heightAboveXyPlane.toFixed(3)} m
                                     </Grid>
                                 </Grid>
@@ -407,20 +409,20 @@ function MeasurementData({ measureValues }: { measureValues: MeasurementValues }
                     <List dense>
                         <ListItem>
                             <Grid container>
-                                <Grid item xs={4}>
+                                <Grid item xs={5}>
                                     Diameter
                                 </Grid>
-                                <Grid item xs={6}>
+                                <Grid item xs={5}>
                                     {(measureValues.radius * 2).toFixed(3)} m
                                 </Grid>
                             </Grid>
                         </ListItem>
                         <ListItem>
                             <Grid container>
-                                <Grid item xs={4}>
+                                <Grid item xs={5}>
                                     Length
                                 </Grid>
-                                <Grid item xs={6}>
+                                <Grid item xs={5}>
                                     {distance.toFixed(3)} m
                                 </Grid>
                             </Grid>
@@ -429,6 +431,33 @@ function MeasurementData({ measureValues }: { measureValues: MeasurementValues }
                             <Slope start={measureValues.centerLineStart} end={measureValues.centerLineEnd} />
                         </ListItem>
                     </List>
+                    {onSettingsChange && (
+                        <Box px={2} flex="1 1 auto" overflow="hidden">
+                            <InputLabel sx={{ color: "text.primary", fontWeight: 600 }}>Measure from: </InputLabel>
+                            <Select
+                                fullWidth
+                                name="pivot"
+                                size="small"
+                                value={settings?.cylinderMeasure ? settings.cylinderMeasure : "center"}
+                                onChange={(event) => onSettingsChange(event.target.value)}
+                                input={<OutlinedInput fullWidth />}
+                            >
+                                {cylinderOptions.map((opt) => (
+                                    <MenuItem
+                                        disabled={
+                                            useCylinderRelativeMeasureSettings
+                                                ? false
+                                                : opt.val === "closest" || opt.val === "furthest"
+                                        }
+                                        key={opt.val}
+                                        value={opt.val}
+                                    >
+                                        {opt.label}
+                                    </MenuItem>
+                                ))}
+                            </Select>
+                        </Box>
+                    )}
                     <Box p={1}>
                         <Accordion defaultExpanded={false}>
                             <NestedAccordionSummary>Components</NestedAccordionSummary>
@@ -446,12 +475,4 @@ function MeasurementData({ measureValues }: { measureValues: MeasurementValues }
         default:
             return null;
     }
-}
-
-export function isMeasureObject(obj: any): obj is MeasureObject {
-    return obj && "selectedEntity" in obj && "id" in obj;
-}
-
-function getMeasurementValueKind(val: MeasurementValues): string {
-    return "kind" in val ? val.kind : "";
 }

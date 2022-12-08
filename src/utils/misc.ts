@@ -1,3 +1,4 @@
+import { MeasureEntity, MeasurementValues, PointEntity } from "@novorender/measure-api";
 import { WidgetKey, featuresConfig, defaultEnabledWidgets } from "config/features";
 
 export function uniqueArray<T>(arr: T[]): T[] {
@@ -107,4 +108,62 @@ export function base64UrlEncodeImg(arrayBuffer: ArrayBuffer): string {
 
 export function capitalize(str: string): string {
     return str[0].toUpperCase() + str.slice(1);
+}
+
+export async function createCanvasSnapshot(
+    canvas: HTMLCanvasElement,
+    maxWidth: number,
+    maxHeight: number
+): Promise<string | undefined> {
+    let { width, height } = canvas.getBoundingClientRect();
+
+    if (width > maxWidth) {
+        height = height * (maxWidth / width);
+        width = maxWidth;
+    }
+
+    if (height > maxHeight) {
+        width = width * (maxHeight / height);
+        height = maxHeight;
+    }
+
+    const dist = document.createElement("canvas");
+    dist.height = height;
+    dist.width = width;
+    const ctx = dist.getContext("2d")!;
+
+    try {
+        {
+            const bitmap = await createImageBitmap(canvas, {
+                resizeHeight: height,
+                resizeWidth: width,
+                resizeQuality: "high",
+            });
+
+            ctx.drawImage(bitmap, 0, 0);
+        }
+
+        const canvas2D = document.getElementById("canvas2D") as HTMLCanvasElement | null;
+        if (canvas2D) {
+            const bitmap = await createImageBitmap(canvas2D, {
+                resizeHeight: height,
+                resizeWidth: width,
+                resizeQuality: "high",
+            });
+            ctx.drawImage(bitmap, 0, 0);
+        }
+
+        return dist.toDataURL("image/png");
+    } catch (e) {
+        console.warn(e);
+        return;
+    }
+}
+
+export function measureObjectIsVertex(measureObject: MeasureEntity | undefined): measureObject is PointEntity {
+    return measureObject ? measureObject.drawKind === "vertex" : false;
+}
+
+export function getMeasurementValueKind(val: MeasurementValues): string {
+    return "kind" in val ? val.kind : "";
 }

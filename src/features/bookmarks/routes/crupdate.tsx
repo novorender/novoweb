@@ -1,14 +1,14 @@
-import { FormEventHandler, useRef, useState } from "react";
-import { Box, Button, Checkbox, FormControlLabel, TextField } from "@mui/material";
+import { FormEventHandler, useEffect, useState } from "react";
+import { Box, Button, Checkbox, FormControlLabel } from "@mui/material";
 import { useHistory, useParams } from "react-router-dom";
+import { v4 as uuidv4 } from "uuid";
 
 import { useAppDispatch, useAppSelector } from "app/store";
 import { selectHasAdminCapabilities } from "slices/explorerSlice";
 import { useExplorerGlobals } from "contexts/explorerGlobals";
 
-import { ScrollBox } from "components";
+import { ScrollBox, TextField } from "components";
 import { useToggle } from "hooks/useToggle";
-import { v4 as uuidv4 } from "uuid";
 
 import { useCreateBookmark } from "../useCreateBookmark";
 import { BookmarkAccess, selectBookmarks, bookmarksActions } from "../bookmarksSlice";
@@ -32,7 +32,22 @@ export function Crupdate() {
     const [description, setDescription] = useState(bmToEdit?.description ?? "");
     const [collection, setCollection] = useState(bmToEdit?.grouping ?? "");
     const [personal, togglePersonal] = useToggle(bmToEdit ? bmToEdit.access === BookmarkAccess.Personal : true);
-    const imgRef = useRef(bmToEdit ? bmToEdit.img ?? "" : createBookmarkImg(canvas));
+    const [addToSelectionBasket, toggleAddToSelectionBasket] = useToggle(
+        bmToEdit ? bmToEdit.options?.addSelectedToSelectionBasket : false
+    );
+    const [bmImg, setBmImg] = useState("");
+
+    useEffect(() => {
+        if (bmImg) {
+            return;
+        }
+
+        if (bmToEdit) {
+            setBmImg(bmToEdit.img ?? "");
+        } else {
+            createBookmarkImg(canvas).then((img) => setBmImg(img));
+        }
+    }, [bmImg, bmToEdit, canvas]);
 
     const handleSubmit: FormEventHandler = (e) => {
         e.preventDefault();
@@ -46,12 +61,12 @@ export function Crupdate() {
         history.goBack();
     };
 
-    const create = () => {
+    const create = async () => {
         if (!bookmarks) {
             return;
         }
 
-        const bm = createBookmark(createBookmarkImg(canvas));
+        const bm = createBookmark(await createBookmarkImg(canvas));
 
         const newBookmarks = bookmarks.concat({
             ...bm,
@@ -60,25 +75,29 @@ export function Crupdate() {
             description,
             grouping: collection,
             access: personal ? BookmarkAccess.Personal : BookmarkAccess.Public,
+            options: { addSelectedToSelectionBasket: addToSelectionBasket },
         });
 
         dispatch(bookmarksActions.setBookmarks(newBookmarks));
     };
 
-    const update = () => {
+    const update = async () => {
         if (!bookmarks) {
             return;
         }
 
+        const img = await createBookmarkImg(canvas);
+
         const newBookmarks = bookmarks.map((bm) =>
             bm === bmToEdit
                 ? {
-                      ...createBookmark(createBookmarkImg(canvas)),
+                      ...createBookmark(img),
                       id: bmToEdit.id,
                       name,
                       description,
                       grouping: collection,
                       access: personal ? BookmarkAccess.Personal : BookmarkAccess.Public,
+                      options: { addSelectedToSelectionBasket: addToSelectionBasket },
                   }
                 : bm
         );
@@ -88,8 +107,13 @@ export function Crupdate() {
 
     return (
         <ScrollBox width={1} px={1} mt={1} display="flex" flexDirection="column" height={1} pb={2}>
-            <Box sx={{ img: { width: "100%", height: 200, objectFit: "cover" } }}>
-                <img alt="" src={imgRef.current} />
+            <Box
+                display="flex"
+                justifyContent="center"
+                width={1}
+                sx={{ img: { maxHeight: 200, objectFit: "contain" } }}
+            >
+                {bmImg ? <img alt="" src={bmImg} /> : null}
             </Box>
             <form onSubmit={handleSubmit}>
                 <TextField
@@ -127,6 +151,18 @@ export function Crupdate() {
                         <option key={coll} value={coll} />
                     ))}
                 </datalist>
+                <Box>
+                    <FormControlLabel
+                        control={
+                            <Checkbox
+                                color="primary"
+                                checked={addToSelectionBasket}
+                                onChange={toggleAddToSelectionBasket}
+                            />
+                        }
+                        label={<Box mr={0.5}>Add selected to selection basket</Box>}
+                    />
+                </Box>
                 {isAdmin ? (
                     <FormControlLabel
                         sx={{ mb: 2 }}
@@ -155,15 +191,34 @@ export function Crupdate() {
     );
 }
 
-function createBookmarkImg(canvas: HTMLCanvasElement): string {
+async function createBookmarkImg(canvas: HTMLCanvasElement): Promise<string> {
+    const isWindows = /\bWindows\b/.test(navigator.userAgent);
+    let width = isWindows ? canvas.width : canvas.clientWidth;
+    let height = isWindows ? canvas.height : canvas.clientHeight;
+    let dx = 0;
+    let dy = 0;
+
+    if (height / width < 0.7) {
+        dx = width - Math.round((height * 10) / 7);
+    } else {
+        dy = height - Math.round(width * 0.7);
+    }
+
     const dist = document.createElement("canvas");
-    const width = canvas.width;
-    const height = canvas.height;
-
-    dist.height = 350;
-    dist.width = (350 * height) / width;
+    dist.height = 70;
+    dist.width = 100;
     const ctx = dist.getContext("2d", { alpha: true, desynchronized: false })!;
-    ctx.drawImage(canvas, 0, 0, width, height, 0, 0, dist.width, dist.height);
+    ctx.drawImage(
+        canvas,
+        Math.round(dx / 2),
+        Math.round(dy / 2),
+        width - dx,
+        height - dy,
+        0,
+        0,
+        dist.width,
+        dist.height
+    );
 
-    return dist.toDataURL("image/png");
+    return dist.toDataURL("image/jpeg");
 }

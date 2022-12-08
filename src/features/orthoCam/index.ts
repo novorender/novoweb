@@ -1,2 +1,2 @@
 export { OrthoCam } from "./orthoCam";
-export * from "./orthoCamSlice";
+export { getTopDownParams } from "./utils";

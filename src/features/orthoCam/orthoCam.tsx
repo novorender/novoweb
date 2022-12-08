@@ -1,9 +1,7 @@
-import { ChangeEvent } from "react";
+import { ChangeEvent, useState, MouseEvent } from "react";
 import { Box, Button, FormControlLabel } from "@mui/material";
-import { ArrowDownward } from "@mui/icons-material";
-import { vec3 } from "gl-matrix";
+import { ArrowDownward, ColorLens } from "@mui/icons-material";
 
-import { api } from "app";
 import { useAppDispatch, useAppSelector } from "app/store";
 import { IosSwitch, LogoSpeedDial, ScrollBox, Switch, WidgetContainer, WidgetHeader } from "components";
 import { featuresConfig } from "config/features";
@@ -18,13 +16,17 @@ import {
     renderActions,
     selectAdvancedSettings,
     selectCameraType,
-    selectSelectiongOrthoPoint,
     selectSubtrees,
     SubtreeStatus,
-    selectGridDefaults,
     selectGrid,
+    selectPicker,
+    Picker,
 } from "slices/renderSlice";
 import { selectMinimized, selectMaximized } from "slices/explorerSlice";
+import { ColorPicker } from "features/colorPicker";
+import { rgbToVec, VecRGBA, vecToRgb } from "utils/color";
+
+import { getTopDownParams } from "./utils";
 
 export function OrthoCam() {
     const [menuOpen, toggleMenu] = useToggle();
@@ -34,20 +36,26 @@ export function OrthoCam() {
         state: { view, canvas },
     } = useExplorerGlobals(true);
 
-    const gridDefaults = useAppSelector(selectGridDefaults);
     const grid = useAppSelector(selectGrid);
     const cameraType = useAppSelector(selectCameraType);
-    const selectingOrthoPoint = useAppSelector(selectSelectiongOrthoPoint);
+    const selectingOrthoPoint = useAppSelector(selectPicker) === Picker.OrthoPlane;
     const { terrainAsBackground } = useAppSelector(selectAdvancedSettings);
     const subtrees = useAppSelector(selectSubtrees);
+    const backgroundColor = useAppSelector(selectAdvancedSettings).backgroundColor;
     const dispatch = useAppDispatch();
+
+    const [colorPickerAnchor, setColorPickerAnchor] = useState<HTMLElement | null>(null);
+    const toggleColorPicker = (event?: MouseEvent<HTMLElement>) => {
+        setColorPickerAnchor(!colorPickerAnchor && event?.currentTarget ? event.currentTarget : null);
+    };
+    const { r, g, b } = vecToRgb(backgroundColor);
 
     const togglePick = () => {
         if (cameraType === CameraType.Orthographic || selectingOrthoPoint) {
-            dispatch(renderActions.setSelectingOrthoPoint(false));
+            dispatch(renderActions.setPicker(Picker.Object));
             dispatch(renderActions.setCamera({ type: CameraType.Flight }));
         } else {
-            dispatch(renderActions.setSelectingOrthoPoint(true));
+            dispatch(renderActions.setPicker(Picker.OrthoPlane));
         }
     };
 
@@ -62,33 +70,12 @@ export function OrthoCam() {
     };
 
     const handleTopDown = () => {
-        const orthoController = api.createCameraController({ kind: "ortho" }, canvas);
-        (orthoController as any).init(view.camera.position, [0, 1, 0], view.camera);
-        const mat = (orthoController.params as any).referenceCoordSys;
-        const right = vec3.fromValues(mat[0], mat[1], mat[2]);
-        const up = vec3.fromValues(mat[4], mat[5], mat[6]);
-        const pt = vec3.fromValues(mat[12], mat[13], mat[14]);
-
-        const squareSize = 1 * (gridDefaults.minorLineCount + 1);
+        const params = getTopDownParams({ view, canvas });
 
         dispatch(
             renderActions.setCamera({
                 type: CameraType.Orthographic,
-                params: {
-                    kind: "ortho",
-                    referenceCoordSys: mat,
-                    fieldOfView: 100,
-                    near: -0.001,
-                    far: 1000,
-                },
-            })
-        );
-
-        dispatch(
-            renderActions.setGrid({
-                origo: pt,
-                axisY: vec3.scale(vec3.create(), up, squareSize),
-                axisX: vec3.scale(vec3.create(), right, squareSize),
+                params,
             })
         );
     };
@@ -122,10 +109,10 @@ export function OrthoCam() {
                         </Box>
                     ) : null}
                 </WidgetHeader>
-                <ScrollBox display={menuOpen || minimized ? "none" : "flex"} flexDirection="column" p={1}>
+                <ScrollBox display={menuOpen || minimized ? "none" : "flex"} flexDirection="column" p={1} pt={2}>
                     {subtrees?.terrain !== SubtreeStatus.Unavailable ? (
                         <FormControlLabel
-                            sx={{ ml: 0, mb: 1 }}
+                            sx={{ ml: 0, mb: 2 }}
                             control={
                                 <Switch
                                     name={AdvancedSetting.TerrainAsBackground}
@@ -141,15 +128,23 @@ export function OrthoCam() {
                         />
                     ) : null}
                     {cameraType === CameraType.Orthographic ? (
-                        <FormControlLabel
-                            sx={{ ml: 0, mb: 1 }}
-                            control={<Switch name={"Show grid"} checked={grid.enabled} onChange={toggleGrid} />}
-                            label={
-                                <Box ml={1} fontSize={16}>
-                                    Show grid
-                                </Box>
-                            }
-                        />
+                        <>
+                            <FormControlLabel
+                                sx={{ ml: 0, mb: 2 }}
+                                control={<Switch name={"Show grid"} checked={grid.enabled} onChange={toggleGrid} />}
+                                label={
+                                    <Box ml={1} fontSize={16}>
+                                        Show grid
+                                    </Box>
+                                }
+                            />
+                            <Box>
+                                <Button variant="outlined" color="grey" onClick={toggleColorPicker}>
+                                    <ColorLens sx={{ mr: 1, color: `rgb(${r}, ${g}, ${b})` }} fontSize="small" />
+                                    Background color
+                                </Button>
+                            </Box>
+                        </>
                     ) : null}
                 </ScrollBox>
                 <WidgetList
@@ -158,6 +153,21 @@ export function OrthoCam() {
                     onSelect={toggleMenu}
                 />
             </WidgetContainer>
+            <ColorPicker
+                open={Boolean(colorPickerAnchor)}
+                anchorEl={colorPickerAnchor}
+                onClose={() => toggleColorPicker()}
+                color={backgroundColor}
+                onChangeComplete={({ rgb }) => {
+                    const rgba = rgbToVec(rgb) as VecRGBA;
+                    view.applySettings({ background: { color: rgba } });
+                    dispatch(
+                        renderActions.setAdvancedSettings({
+                            [AdvancedSetting.BackgroundColor]: rgba,
+                        })
+                    );
+                }}
+            />
             <LogoSpeedDial
                 open={menuOpen}
                 toggle={toggleMenu}

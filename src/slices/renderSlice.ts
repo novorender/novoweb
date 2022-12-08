@@ -1,14 +1,15 @@
 import type {
     API,
+    BoundingSphere,
     Camera,
     EnvironmentDescription,
     ObjectId,
     OrthoControllerParams,
     RenderSettings,
 } from "@novorender/webgl-api";
-import type { ObjectGroup } from "@novorender/data-js-api";
+import type { Bookmark, ObjectGroup } from "@novorender/data-js-api";
 import { createSlice, createAsyncThunk, PayloadAction } from "@reduxjs/toolkit";
-import { quat, vec3, vec4 } from "gl-matrix";
+import { mat4, quat, vec3, vec4 } from "gl-matrix";
 
 import type { RootState } from "app/store";
 import type { WidgetKey } from "config/features";
@@ -72,12 +73,15 @@ export enum AdvancedSetting {
     TerrainAsBackground = "terrainAsBackground",
     MouseButtonMap = "mouseButtonMap",
     FingerMap = "fingerMap",
+    BackgroundColor = "backgroundColor",
+    TriangleLimit = "triangleLimit",
 }
 
 export enum ProjectSetting {
     TmZone = "tmZone",
     DitioProjectNumber = "ditioProjectNumber",
     LeicaProjectId = "leicaProjectId",
+    Jira = "jira",
 }
 
 export enum SelectionBasketMode {
@@ -85,20 +89,45 @@ export enum SelectionBasketMode {
     Strict,
 }
 
+export enum Picker {
+    Object,
+    Measurement,
+    FollowPathObject,
+    ClippingPlane,
+    OrthoPlane,
+    Area,
+    PointLine,
+    HeightProfileEntity,
+    Manhole,
+}
+
 export type Subtree = keyof NonNullable<State["subtrees"]>;
 
 type CameraPosition = Pick<Camera, "position" | "rotation">;
 export type ObjectGroups = { default: ObjectGroup; defaultHidden: ObjectGroup; custom: ObjectGroup[] };
-export type ClippingPlanes = Omit<RenderSettings["clippingPlanes"], "bounds"> & { defining: boolean };
 
 // Redux toolkit with immer removes readonly modifier of state in the reducer so we get ts errors
 // unless we cast the types to writable ones.
 export type DeepWritable<T> = { -readonly [P in keyof T]: DeepWritable<T[P]> };
 type CameraState =
-    | { type: CameraType.Orthographic; params?: OrthoControllerParams }
-    | { type: CameraType.Flight; goTo?: { position: Camera["position"]; rotation: Camera["rotation"] } };
+    | {
+          type: CameraType.Orthographic;
+          params?: OrthoControllerParams;
+          goTo?: { position: Camera["position"]; rotation: Camera["rotation"]; fieldOfView?: number };
+          gridOrigo?: vec3;
+      }
+    | {
+          type: CameraType.Flight;
+          goTo?: { position: Camera["position"]; rotation: Camera["rotation"]; fieldOfView?: number };
+          zoomTo?: BoundingSphere;
+      };
 type WritableCameraState = DeepWritable<CameraState>;
 type WritableGrid = DeepWritable<RenderSettings["grid"]>;
+export type ClippingBox = RenderSettings["clippingPlanes"] & {
+    defining: boolean;
+    baseBounds: RenderSettings["clippingPlanes"]["bounds"];
+};
+type WritableClippingBox = DeepWritable<ClippingBox>;
 
 const initialState = {
     environments: [] as EnvironmentDescription[],
@@ -116,6 +145,7 @@ const initialState = {
               lines: SubtreeStatus;
               terrain: SubtreeStatus;
               points: SubtreeStatus;
+              documents: SubtreeStatus;
           },
     selectionBasketMode: SelectionBasketMode.Loose,
     selectionBasketColor: {
@@ -128,16 +158,16 @@ const initialState = {
         inside: true,
         showBox: false,
         highlight: -1,
-    } as ClippingPlanes,
+        bounds: { min: [0, 0, 0], max: [0, 0, 0] },
+        baseBounds: { min: [0, 0, 0], max: [0, 0, 0] },
+    } as WritableClippingBox,
     clippingPlanes: {
-        defining: false,
         enabled: false,
         mode: "union" as "union" | "intersection",
         planes: [] as vec4[],
         baseW: 0,
     },
     camera: { type: CameraType.Flight } as WritableCameraState,
-    selectingOrthoPoint: false,
     advancedSettings: {
         [AdvancedSetting.Taa]: true,
         [AdvancedSetting.Ssao]: true,
@@ -161,7 +191,10 @@ const initialState = {
         [AdvancedSetting.TerrainAsBackground]: false,
         [AdvancedSetting.FingerMap]: defaultFlightControls.touch,
         [AdvancedSetting.MouseButtonMap]: defaultFlightControls.mouse,
+        [AdvancedSetting.BackgroundColor]: [0.75, 0.75, 0.75, 1] as VecRGBA,
+        [AdvancedSetting.TriangleLimit]: 0,
     },
+    defaultDeviceProfile: {} as any,
     gridDefaults: {
         enabled: false,
         majorLineCount: 1001,
@@ -183,7 +216,9 @@ const initialState = {
         [ProjectSetting.TmZone]: "",
         [ProjectSetting.DitioProjectNumber]: "",
         [ProjectSetting.LeicaProjectId]: "",
+        [ProjectSetting.Jira]: { space: "", project: "", component: "" },
     },
+    picker: Picker.Object,
 };
 
 type State = typeof initialState & {
@@ -259,6 +294,9 @@ export const renderSlice = createSlice({
         setHomeCameraPos: (state, action: PayloadAction<CameraPosition>) => {
             state.savedCameraPositions.positions[0] = action.payload;
         },
+        setDefaultDeviceProfile: (state, action: PayloadAction<State["defaultDeviceProfile"]>) => {
+            state.defaultDeviceProfile = action.payload;
+        },
         setSubtrees: (state, action: PayloadAction<State["subtrees"]>) => {
             state.subtrees = action.payload;
         },
@@ -272,12 +310,53 @@ export const renderSlice = createSlice({
                     ? SubtreeStatus.Hidden
                     : SubtreeStatus.Shown;
         },
+        setSubtreesFromBookmark: (state, action: PayloadAction<Required<Bookmark>["subtrees"]>) => {
+            if (!state.subtrees) {
+                return;
+            }
+
+            state.subtrees.lines =
+                state.subtrees.lines !== SubtreeStatus.Unavailable
+                    ? action.payload.lines
+                        ? SubtreeStatus.Shown
+                        : SubtreeStatus.Hidden
+                    : state.subtrees.lines;
+
+            state.subtrees.points =
+                state.subtrees.points !== SubtreeStatus.Unavailable
+                    ? action.payload.points
+                        ? SubtreeStatus.Shown
+                        : SubtreeStatus.Hidden
+                    : state.subtrees.points;
+
+            state.subtrees.terrain =
+                state.subtrees.terrain !== SubtreeStatus.Unavailable
+                    ? action.payload.terrain
+                        ? SubtreeStatus.Shown
+                        : SubtreeStatus.Hidden
+                    : state.subtrees.terrain;
+
+            state.subtrees.triangles =
+                state.subtrees.triangles !== SubtreeStatus.Unavailable
+                    ? action.payload.triangles
+                        ? SubtreeStatus.Shown
+                        : SubtreeStatus.Hidden
+                    : state.subtrees.triangles;
+
+            state.subtrees.documents =
+                state.subtrees.documents !== SubtreeStatus.Unavailable
+                    ? action.payload.documents
+                        ? SubtreeStatus.Shown
+                        : SubtreeStatus.Hidden
+                    : state.subtrees.documents;
+        },
         disableAllSubtrees: (state) => {
             state.subtrees = {
                 terrain: SubtreeStatus.Unavailable,
                 triangles: SubtreeStatus.Unavailable,
                 lines: SubtreeStatus.Unavailable,
                 points: SubtreeStatus.Unavailable,
+                documents: SubtreeStatus.Unavailable,
             };
         },
         setSelectionBasketMode: (state, action: PayloadAction<State["selectionBasketMode"]>) => {
@@ -286,13 +365,21 @@ export const renderSlice = createSlice({
         setSelectionBasketColor: (state, action: PayloadAction<Partial<State["selectionBasketColor"]>>) => {
             state.selectionBasketColor = { ...state.selectionBasketColor, ...action.payload };
         },
-        setClippingBox: (state, action: PayloadAction<Partial<ClippingPlanes>>) => {
-            state.clippingBox = { ...state.clippingBox, ...action.payload };
+        setClippingBox: (state, action: PayloadAction<Partial<ClippingBox>>) => {
+            if (action.payload.enabled) {
+                state.clippingPlanes.enabled = false;
+            }
+
+            state.clippingBox = { ...state.clippingBox, ...action.payload } as WritableClippingBox;
         },
         resetClippingBox: (state) => {
             state.clippingBox = initialState.clippingBox;
         },
         setClippingPlanes: (state, action: PayloadAction<Partial<typeof initialState["clippingPlanes"]>>) => {
+            if (action.payload.enabled) {
+                state.clippingBox.enabled = false;
+            }
+
             state.clippingPlanes = { ...state.clippingPlanes, ...action.payload };
         },
         resetClippingPlanes: (state) => {
@@ -301,6 +388,7 @@ export const renderSlice = createSlice({
         resetState: (state) => {
             return {
                 ...initialState,
+                defaultDeviceProfile: state.defaultDeviceProfile,
                 environments: state.environments,
                 viewerSceneEditing: state.viewerSceneEditing,
                 projectSettings: state.projectSettings,
@@ -308,19 +396,42 @@ export const renderSlice = createSlice({
         },
         setCamera: (state, { payload }: PayloadAction<CameraState>) => {
             const goTo =
-                "goTo" in payload
+                "goTo" in payload && payload.goTo
                     ? {
-                          position: Array.from(payload.goTo!.position) as vec3,
-                          rotation: Array.from(payload.goTo!.rotation) as quat,
+                          ...payload.goTo,
+                          position: Array.from(payload.goTo.position) as vec3,
+                          rotation: Array.from(payload.goTo.rotation) as quat,
                       }
                     : undefined;
-            state.camera = { ...payload, goTo } as WritableCameraState;
+
+            const zoomTo =
+                "zoomTo" in payload && payload.zoomTo
+                    ? {
+                          center: Array.from(payload.zoomTo.center) as vec3,
+                          radius: payload.zoomTo.radius,
+                      }
+                    : undefined;
+
+            const params =
+                "params" in payload && payload.params
+                    ? {
+                          ...payload.params,
+                          ...(payload.params.referenceCoordSys
+                              ? { referenceCoordSys: Array.from(payload.params.referenceCoordSys) as mat4 }
+                              : {}),
+                          ...(payload.params.position ? { position: Array.from(payload.params.position) as vec3 } : {}),
+                      }
+                    : undefined;
+
+            state.camera = {
+                ...payload,
+                ...(goTo ? { goTo } : {}),
+                ...(zoomTo ? { zoomTo } : {}),
+                ...(params ? { params } : {}),
+            } as WritableCameraState;
         },
         setBaseCameraSpeed: (state, { payload }: PayloadAction<number>) => {
             state.baseCameraSpeed = payload;
-        },
-        setSelectingOrthoPoint: (state, action: PayloadAction<boolean>) => {
-            state.selectingOrthoPoint = action.payload;
         },
         initViewerSceneEditing: (state, action: PayloadAction<string>) => {
             const { environments } = state;
@@ -351,7 +462,20 @@ export const renderSlice = createSlice({
             state.grid = { ...state.grid, ...state.gridDefaults };
         },
         setGrid: (state, action: PayloadAction<Partial<State["grid"]>>) => {
-            state.grid = { ...state.gridDefaults, ...action.payload } as WritableGrid;
+            state.grid = {
+                ...state.grid,
+                ...state.gridDefaults,
+                enabled: state.grid.enabled,
+                ...action.payload,
+            } as WritableGrid;
+        },
+        setPicker: (state, action: PayloadAction<State["picker"]>) => {
+            state.picker = action.payload;
+        },
+        stopPicker: (state, action: PayloadAction<State["picker"]>) => {
+            if (action.payload === state.picker) {
+                state.picker = Picker.Object;
+            }
         },
     },
     extraReducers: (builder) => {
@@ -373,16 +497,17 @@ export const selectHomeCameraPosition = (state: RootState) => state.render.saved
 export const selectSubtrees = (state: RootState) => state.render.subtrees;
 export const selectSelectionBasketMode = (state: RootState) => state.render.selectionBasketMode;
 export const selectSelectionBasketColor = (state: RootState) => state.render.selectionBasketColor;
-export const selectClippingBox = (state: RootState) => state.render.clippingBox;
+export const selectClippingBox = (state: RootState) => state.render.clippingBox as ClippingBox;
 export const selectClippingPlanes = (state: RootState) => state.render.clippingPlanes;
 export const selectCamera = (state: RootState) => state.render.camera as CameraState;
 export const selectCameraType = (state: RootState) => state.render.camera.type;
-export const selectSelectiongOrthoPoint = (state: RootState) => state.render.selectingOrthoPoint;
 export const selectEditingScene = (state: RootState) => state.render.viewerSceneEditing;
 export const selectAdvancedSettings = (state: RootState) => state.render.advancedSettings;
 export const selectProjectSettings = (state: RootState) => state.render.projectSettings;
 export const selectGridDefaults = (state: RootState) => state.render.gridDefaults;
 export const selectGrid = (state: RootState) => state.render.grid as RenderSettings["grid"];
+export const selectPicker = (state: RootState) => state.render.picker;
+export const selectDefaultDeviceProfile = (state: RootState) => state.render.defaultDeviceProfile;
 
 const { reducer, actions } = renderSlice;
 export { reducer as renderReducer, actions as renderActions };

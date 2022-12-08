@@ -11,11 +11,11 @@ export type SelectedMeasureObj = {
 };
 
 const initialState = {
-    selecting: false,
     selected: [] as SelectedMeasureObj[],
     forcePoint: false,
     pinned: undefined as undefined | number,
     duoMeasurementValues: undefined as undefined | DuoMeasurementValues,
+    loadingBrep: false,
 };
 
 type State = typeof initialState;
@@ -44,12 +44,6 @@ export const measureSlice = createSlice({
         toggleForcePoint: (state) => {
             state.forcePoint = !state.forcePoint;
         },
-        toggleSelecting: (state) => {
-            state.selecting = !state.selecting;
-        },
-        setSelecting: (state, action: PayloadAction<State["selecting"]>) => {
-            state.selecting = action.payload;
-        },
         setDuoMeasurementValues: (state, action: PayloadAction<State["duoMeasurementValues"]>) => {
             state.duoMeasurementValues = action.payload;
         },
@@ -57,6 +51,9 @@ export const measureSlice = createSlice({
             state.selected = state.selected.map((obj, idx) =>
                 idx === action.payload.idx ? { ...obj, settings: action.payload.settings } : obj
             );
+        },
+        setLoadingBrep: (state, action: PayloadAction<State["loadingBrep"]>) => {
+            state.loadingBrep = action.payload;
         },
     },
 });

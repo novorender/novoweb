@@ -16,7 +16,7 @@ export function WidgetHeader({
     widget: Widget;
     children?: ReactNode;
     disableShadow?: boolean;
-    WidgetMenu?: (props: MenuProps) => JSX.Element;
+    WidgetMenu?: (props: MenuProps) => JSX.Element | null;
 }) {
     const theme = useTheme();
     const isSmall = useMediaQuery(theme.breakpoints.down("sm"));
@@ -57,7 +57,7 @@ export function WidgetHeader({
         <Box boxShadow={!disableShadow ? theme.customShadows.widgetHeader : undefined}>
             <Box p={1} display="flex">
                 <Box display="flex" alignItems="center">
-                    {WidgetMenu ? (
+                    {WidgetMenu && WidgetMenu({ open: false }) ? (
                         <>
                             <IconButton size="small" onClick={openMenu}>
                                 <MoreVert fontSize="small" />

@@ -1,5 +1,6 @@
 import { ObjectGroup } from "@novorender/data-js-api";
 import { createContext, Dispatch, ReactNode, useContext, useEffect, useReducer, useRef } from "react";
+import { v4 as uuidv4 } from "uuid";
 
 import { VecRGB, VecRGBA } from "utils/color";
 
@@ -22,6 +23,8 @@ enum ActionTypes {
     Add,
     Delete,
     Reset,
+    Copy,
+    GroupSelected,
 }
 
 function update(groupId: string, updates: Partial<CustomGroup>) {
@@ -59,7 +62,20 @@ function add(toAdd: State) {
     };
 }
 
-const actions = { update, set, add, reset, delete: deleteGroup };
+function copy(id: string) {
+    return {
+        type: ActionTypes.Copy as const,
+        id,
+    };
+}
+
+function groupSelected() {
+    return {
+        type: ActionTypes.GroupSelected as const,
+    };
+}
+
+const actions = { update, set, add, copy, reset, groupSelected, delete: deleteGroup };
 
 type Actions = ReturnType<typeof actions[keyof typeof actions]>;
 type DispatchCustomGroups = Dispatch<Actions>;
@@ -89,6 +105,58 @@ function reducer(state: State, action: Actions): CustomGroup[] {
         }
         case ActionTypes.Add: {
             return state.concat(action.toAdd);
+        }
+        case ActionTypes.Copy: {
+            const toCopy = state.find((group) => group.id === action.id);
+
+            if (!toCopy) {
+                return state;
+            }
+
+            let copyNumber = 1;
+            let name = `${toCopy.name} - COPY ${copyNumber}`;
+            let runLoop = state.find((group) => group.name === name) !== undefined;
+
+            while (runLoop) {
+                const newName = `${toCopy.name} - COPY ${++copyNumber}`;
+                name = newName;
+                runLoop = state.find((group) => group.name === newName) !== undefined;
+            }
+
+            const copy = {
+                name,
+                id: uuidv4(),
+                grouping: toCopy.grouping,
+                search: toCopy.search ? [...toCopy.search] : undefined,
+                ids: [],
+                color: [...toCopy.color] as CustomGroup["color"],
+                selected: false,
+                hidden: false,
+            };
+
+            return state.concat(copy);
+        }
+        case ActionTypes.GroupSelected: {
+            let collectionNumber = 1;
+            let name = `Collection ${collectionNumber}`;
+            let runLoop = state.find((group) => group.grouping === name) !== undefined;
+
+            while (runLoop) {
+                const newName = `Collection ${++collectionNumber}`;
+                name = newName;
+                runLoop = state.find((group) => group.grouping === newName) !== undefined;
+            }
+
+            return state.map((group) => {
+                if (group.grouping || !group.selected) {
+                    return group;
+                }
+
+                return {
+                    ...group,
+                    grouping: name,
+                };
+            });
         }
         case ActionTypes.Reset: {
             return state

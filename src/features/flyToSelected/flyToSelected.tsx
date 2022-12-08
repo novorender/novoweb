@@ -11,6 +11,7 @@ import { useMountedState } from "hooks/useMountedState";
 import { objIdsToTotalBoundingSphere } from "utils/objectData";
 import { useExplorerGlobals } from "contexts/explorerGlobals";
 import { useAppDispatch } from "app/store";
+import { CameraType, renderActions } from "slices/renderSlice";
 
 enum Status {
     Initial,
@@ -25,7 +26,7 @@ export function FlyToSelected({ position, ...speedDialProps }: Props) {
     const { name, Icon } = featuresConfig.flyToSelected;
     const highlighted = useHighlighted().idArr;
     const {
-        state: { view, scene },
+        state: { scene },
     } = useExplorerGlobals(true);
     const dispatch = useAppDispatch();
 
@@ -46,7 +47,8 @@ export function FlyToSelected({ position, ...speedDialProps }: Props) {
         }
 
         if (previousBoundingSphere.current) {
-            return view.camera.controller.zoomTo(previousBoundingSphere.current);
+            dispatch(renderActions.setCamera({ type: CameraType.Flight, zoomTo: previousBoundingSphere.current }));
+            return;
         }
 
         setStatus(Status.Loading);
@@ -57,7 +59,7 @@ export function FlyToSelected({ position, ...speedDialProps }: Props) {
 
             if (boundingSphere) {
                 previousBoundingSphere.current = boundingSphere;
-                view.camera.controller.zoomTo(boundingSphere);
+                dispatch(renderActions.setCamera({ type: CameraType.Flight, zoomTo: boundingSphere }));
                 dispatch(panoramasActions.setStatus(PanoramaStatus.Initial));
             }
         } finally {
