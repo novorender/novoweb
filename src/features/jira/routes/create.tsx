@@ -14,6 +14,7 @@ import {
     TextField,
     Snackbar,
     IconButton,
+    TextFieldProps,
 } from "@mui/material";
 import { useHistory } from "react-router-dom";
 import { v4 as uuidv4 } from "uuid";
@@ -538,7 +539,7 @@ export function CreateIssue({ sceneId }: { sceneId: string }) {
                                                         : "",
                                                 }));
                                             }}
-                                            renderInput={(params) => (
+                                            renderInput={(params: TextFieldProps) => (
                                                 <TextField
                                                     {...params}
                                                     id="jiraDueDate"

@@ -1,6 +1,6 @@
 import { CSSProperties, FormEvent, useCallback, useRef, useState } from "react";
 import { ListOnScrollProps } from "react-window";
-import { Box, Button, FormControl, FormControlLabel } from "@mui/material";
+import { Box, Button, FormControl, FormControlLabel, TextFieldProps } from "@mui/material";
 import { HierarcicalObjectReference, SearchPattern } from "@novorender/webgl-api";
 import { DatePicker } from "@mui/lab";
 import { format, isValid, parse } from "date-fns";
@@ -8,13 +8,10 @@ import { format, isValid, parse } from "date-fns";
 import { LinearProgress, ScrollBox, WidgetContainer, WidgetHeader, LogoSpeedDial, TextField, Switch } from "components";
 import { NodeList } from "features/nodeList";
 import { WidgetList } from "features/widgetList";
-
 import { useToggle } from "hooks/useToggle";
 import { useMountedState } from "hooks/useMountedState";
 import { useAbortController } from "hooks/useAbortController";
-
 import { useExplorerGlobals } from "contexts/explorerGlobals";
-
 import { iterateAsync } from "utils/search";
 import { featuresConfig } from "config/features";
 import { CustomParentNode } from "features/search";
@@ -153,7 +150,7 @@ export function RangeSearch() {
                                             <DatePicker
                                                 label="Min"
                                                 value={min ? parse(String(min), dateFormat, new Date()) : null}
-                                                onChange={(newDate: Date | null, keyboardInput) =>
+                                                onChange={(newDate: Date | null, keyboardInput: string) =>
                                                     setMin(
                                                         newDate
                                                             ? isValid(newDate)
@@ -164,14 +161,16 @@ export function RangeSearch() {
                                                 }
                                                 inputFormat={dateFormat}
                                                 disableMaskedInput={true}
-                                                renderInput={(params) => <TextField {...params} size="small" />}
+                                                renderInput={(params: TextFieldProps) => (
+                                                    <TextField {...params} size="small" />
+                                                )}
                                             />
                                         </FormControl>
                                         <FormControl size="small" sx={{ width: 1 }}>
                                             <DatePicker
                                                 label="Max"
                                                 value={max ? parse(String(max), dateFormat, new Date()) : null}
-                                                onChange={(newDate: Date | null, keyboardInput) =>
+                                                onChange={(newDate: Date | null, keyboardInput: string) =>
                                                     setMax(
                                                         newDate
                                                             ? isValid(newDate)
@@ -182,7 +181,9 @@ export function RangeSearch() {
                                                 }
                                                 inputFormat={dateFormat}
                                                 disableMaskedInput={true}
-                                                renderInput={(params) => <TextField {...params} size="small" />}
+                                                renderInput={(params: TextFieldProps) => (
+                                                    <TextField {...params} size="small" />
+                                                )}
                                             />
                                         </FormControl>
                                     </>

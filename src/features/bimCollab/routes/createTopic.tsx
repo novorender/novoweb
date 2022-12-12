@@ -10,6 +10,7 @@ import {
     Select,
     Checkbox,
     ListItemText,
+    TextFieldProps,
 } from "@mui/material";
 import { DatePicker } from "@mui/lab";
 import { useParams, useHistory } from "react-router-dom";
@@ -336,7 +337,7 @@ export function CreateTopic() {
                                             : "",
                                     })
                                 }
-                                renderInput={(params) => <TextField {...params} size="small" />}
+                                renderInput={(params: TextFieldProps) => <TextField {...params} size="small" />}
                             />
                         </FormControl>
 
