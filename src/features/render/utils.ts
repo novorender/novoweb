@@ -71,8 +71,6 @@ export function createRendering(
     };
 
     let hook = undefined as undefined | (() => any);
-    let pickBufferUpdated = false;
-    let lastPickBufferUpdate = 0;
 
     return { start, stop, update, pick, measure };
 
@@ -92,46 +90,13 @@ export function createRendering(
     }
 
     async function pick(x: number, y: number): Promise<PickInfo | undefined> {
-        let cb: (value: PickInfo | undefined) => void = () => {};
-        const prom = new Promise<PickInfo | undefined>((res) => {
-            cb = res;
-        });
-
-        if (pickBufferUpdated || performance.now() - lastPickBufferUpdate < 1000) {
-            cb(await view.lastRenderOutput?.pick(x, y));
-        } else {
-            hook = async () => {
-                await view.updatePickBuffers();
-                lastPickBufferUpdate = performance.now();
-                pickBufferUpdated = true;
-                cb(await view.lastRenderOutput?.pick(x, y));
-            };
-            view.invalidateCamera();
-        }
-
-        return prom;
+        // await view.updatePickBuffers();
+        return view.lastRenderOutput?.pick(x, y);
     }
 
     async function measure(x: number, y: number): Promise<MeasureInfo | undefined> {
-        let cb: (value: MeasureInfo | undefined) => void = () => {};
-        const prom = new Promise<MeasureInfo | undefined>((res) => {
-            cb = res;
-        });
-
-        if (pickBufferUpdated || performance.now() - lastPickBufferUpdate < 1000) {
-            cb(await view.lastRenderOutput?.measure(x, y));
-        } else {
-            hook = async () => {
-                await view.updatePickBuffers();
-                lastPickBufferUpdate = performance.now();
-                pickBufferUpdated = true;
-                cb(await view.lastRenderOutput?.measure(x, y));
-            };
-            // todo (flytt invalidate te handler? trenge vel ikkje alltid invalidate)
-            view.invalidateCamera();
-        }
-
-        return prom;
+        // await view.updatePickBuffers();
+        return view.lastRenderOutput?.measure(x, y);
     }
 
     function stop() {
@@ -150,7 +115,6 @@ export function createRendering(
 
         while (running.current) {
             const output = await view.render();
-            pickBufferUpdated = false;
 
             if (!running.current) {
                 break;
