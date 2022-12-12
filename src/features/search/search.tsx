@@ -23,7 +23,7 @@ import { useAbortController } from "hooks/useAbortController";
 
 import { useAppDispatch, useAppSelector } from "app/store";
 import { useExplorerGlobals } from "contexts/explorerGlobals";
-import { visibleActions, useDispatchVisible } from "contexts/visible";
+import { selectionBasketActions, useDispatchSelectionBasket } from "contexts/selectionBasket";
 import { hiddenGroupActions, useDispatchHidden } from "contexts/hidden";
 import { highlightActions, useDispatchHighlighted, useLazyHighlighted } from "contexts/highlighted";
 import { ObjectVisibility, renderActions } from "slices/renderSlice";
@@ -46,7 +46,7 @@ export function Search() {
     const dispatch = useAppDispatch();
     const highlighted = useLazyHighlighted();
     const dispatchHighlighted = useDispatchHighlighted();
-    const dispatchVisible = useDispatchVisible();
+    const dispatchSelectionBasket = useDispatchSelectionBasket();
     const {
         state: { view, scene },
     } = useExplorerGlobals(true);
@@ -184,7 +184,7 @@ export function Search() {
             } else if (selectionOnly === "2") {
                 dispatch(renderActions.setDefaultVisibility(ObjectVisibility.Transparent));
             } else if (selectionOnly === "3") {
-                dispatchVisible(visibleActions.add(highlighted.current.idArr));
+                dispatchSelectionBasket(selectionBasketActions.add(highlighted.current.idArr));
                 dispatchHighlighted(highlightActions.setIds([]));
                 dispatch(renderActions.setDefaultVisibility(ObjectVisibility.Transparent));
             } else {
@@ -201,7 +201,7 @@ export function Search() {
         highlighted,
         search,
         dispatch,
-        dispatchVisible,
+        dispatchSelectionBasket,
         view,
         abortController,
         dispatchHighlighted,

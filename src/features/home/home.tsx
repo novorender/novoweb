@@ -24,7 +24,7 @@ import { useExplorerGlobals } from "contexts/explorerGlobals";
 import { useDispatchHighlighted } from "contexts/highlighted";
 import { useDispatchHidden } from "contexts/hidden";
 import { objectGroupsActions, useDispatchObjectGroups, useLazyObjectGroups } from "contexts/objectGroups";
-import { useDispatchVisible, visibleActions } from "contexts/visible";
+import { useDispatchSelectionBasket, selectionBasketActions } from "contexts/selectionBasket";
 import { measureActions } from "features/measure";
 import { areaActions } from "features/area";
 import { pointLineActions } from "features/pointLine";
@@ -51,7 +51,7 @@ export function Home({ position, ...speedDialProps }: Props) {
     const { triangleLimit } = useAppSelector(selectAdvancedSettings);
     const objectGroups = useLazyObjectGroups();
     const dispatchObjectGroups = useDispatchObjectGroups();
-    const dispatchVisible = useDispatchVisible();
+    const dispatchSelectionBasket = useDispatchSelectionBasket();
     const dispatchHighlighted = useDispatchHighlighted();
     const dispatchHidden = useDispatchHidden();
     const dispatch = useAppDispatch();
@@ -105,7 +105,7 @@ export function Home({ position, ...speedDialProps }: Props) {
             dispatch(renderActions.setBaseCameraSpeed(cameraSpeed));
         }
 
-        dispatchVisible(visibleActions.set([]));
+        dispatchSelectionBasket(selectionBasketActions.set([]));
         initHidden(savedObjectGroups, dispatchHidden);
         initHighlighted(savedObjectGroups, dispatchHighlighted);
         initAdvancedSettings(view, { ...customProperties, triangleLimit }, api);

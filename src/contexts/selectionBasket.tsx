@@ -3,8 +3,6 @@ import { createContext, Dispatch, MutableRefObject, ReactNode, useContext, useRe
 
 import { toIdObj, toIdArr } from "utils/objectData";
 
-// todo rename denne
-
 const initialState = {
     ids: {} as Record<ObjectId, true | undefined>,
     idArr: [] as ObjectId[],
@@ -42,12 +40,12 @@ function set(ids: ObjectId[]) {
 const actions = { add, remove, set };
 
 type Actions = ReturnType<typeof actions[keyof typeof actions]>;
-type DispatchVisible = Dispatch<Actions>;
+type DispatchSelectionBasket = Dispatch<Actions>;
 type LazyState = MutableRefObject<State>;
 
 const StateContext = createContext<State>(undefined as any);
 const LazyStateContext = createContext<LazyState>(undefined as any);
-const DispatchContext = createContext<DispatchVisible>(undefined as any);
+const DispatchContext = createContext<DispatchSelectionBasket>(undefined as any);
 
 function reducer(state: State, action: Actions): State {
     switch (action.type) {
@@ -81,7 +79,7 @@ function reducer(state: State, action: Actions): State {
     }
 }
 
-function VisibleProvider({ children }: { children: ReactNode }) {
+function SelectionBasketProvider({ children }: { children: ReactNode }) {
     const [state, dispatch] = useReducer(reducer, initialState);
     const lazyValue = useRef(state);
     lazyValue.current = state;
@@ -95,34 +93,40 @@ function VisibleProvider({ children }: { children: ReactNode }) {
     );
 }
 
-function useVisible(): State {
+function useSelectionBasket(): State {
     const context = useContext(StateContext);
 
     if (context === undefined) {
-        throw new Error("useVisible must be used within a VisibleProvider");
+        throw new Error("useSelectionBasket must be used within a SelectionBasketProvider");
     }
 
     return context;
 }
 
-function useLazyVisible(): LazyState {
+function useLazySelectionBasket(): LazyState {
     const context = useContext(LazyStateContext);
 
     if (context === undefined) {
-        throw new Error("useLazyVisible must be used within a LazyVisibleProvider");
+        throw new Error("useLazySelectionBasket must be used within a LazySelectionBasketProvider");
     }
 
     return context;
 }
 
-function useDispatchVisible(): DispatchVisible {
+function useDispatchSelectionBasket(): DispatchSelectionBasket {
     const context = useContext(DispatchContext);
 
     if (context === undefined) {
-        throw new Error("useDispatchVisible must be used within a VisibleProvider");
+        throw new Error("useDispatchSelectionBasket must be used within a SelectionBasketProvider");
     }
 
     return context;
 }
 
-export { VisibleProvider, useVisible, useLazyVisible, useDispatchVisible, actions as visibleActions };
+export {
+    SelectionBasketProvider,
+    useSelectionBasket,
+    useLazySelectionBasket,
+    useDispatchSelectionBasket,
+    actions as selectionBasketActions,
+};

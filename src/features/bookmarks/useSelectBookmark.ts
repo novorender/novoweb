@@ -7,7 +7,7 @@ import { ObjectGroup, objectGroupsActions, useDispatchObjectGroups, useLazyObjec
 import { useExplorerGlobals } from "contexts/explorerGlobals";
 import { hiddenGroupActions, useDispatchHidden } from "contexts/hidden";
 import { highlightActions, useDispatchHighlighted } from "contexts/highlighted";
-import { useDispatchVisible, visibleActions } from "contexts/visible";
+import { useDispatchSelectionBasket, selectionBasketActions } from "contexts/selectionBasket";
 import { followPathActions } from "features/followPath";
 import { measureActions } from "features/measure";
 import { CameraType, DeepWritable, ObjectVisibility, renderActions, SelectionBasketMode } from "slices/renderSlice";
@@ -19,7 +19,7 @@ import { manholeActions } from "features/manhole";
 
 export function useSelectBookmark() {
     const sceneId = useSceneId();
-    const dispatchVisible = useDispatchVisible();
+    const dispatchSelectionBasket = useDispatchSelectionBasket();
     const dispatchHighlighted = useDispatchHighlighted();
     const dispatchHidden = useDispatchHidden();
     const objectGroups = useLazyObjectGroups();
@@ -48,7 +48,7 @@ export function useSelectBookmark() {
 
         const add = Boolean(bookmark?.options?.addSelectedToSelectionBasket);
         if (add) {
-            dispatchVisible(visibleActions.set(bookmark.selectionBasket?.ids ?? []));
+            dispatchSelectionBasket(selectionBasketActions.set(bookmark.selectionBasket?.ids ?? []));
             dispatch(renderActions.setSelectionBasketMode(bookmark.selectionBasket?.mode ?? SelectionBasketMode.Loose));
 
             const highlighted = bmDefaultGroup?.ids ?? [];
@@ -69,7 +69,9 @@ export function useSelectBookmark() {
                 [[], []] as [ObjectGroup[], ObjectGroup[]]
             );
 
-            dispatchVisible(visibleActions.add([...highlighted, ...toAdd.flatMap((group) => group.ids)]));
+            dispatchSelectionBasket(
+                selectionBasketActions.add([...highlighted, ...toAdd.flatMap((group) => group.ids)])
+            );
 
             dispatch(groupsActions.setLoadingIds(true));
             await Promise.all(
@@ -84,7 +86,7 @@ export function useSelectBookmark() {
             );
             dispatch(groupsActions.setLoadingIds(false));
 
-            dispatchVisible(visibleActions.add(toLoad.flatMap((group) => group.ids)));
+            dispatchSelectionBasket(selectionBasketActions.add(toLoad.flatMap((group) => group.ids)));
             dispatch(renderActions.setDefaultVisibility(ObjectVisibility.Transparent));
             dispatchObjectGroups(
                 objectGroupsActions.set(updatedObjectGroups.map((group) => ({ ...group, selected: false })))
@@ -102,10 +104,10 @@ export function useSelectBookmark() {
             dispatchObjectGroups(objectGroupsActions.set(updatedObjectGroups));
 
             if (bookmark.selectionBasket) {
-                dispatchVisible(visibleActions.set(bookmark.selectionBasket.ids));
+                dispatchSelectionBasket(selectionBasketActions.set(bookmark.selectionBasket.ids));
                 dispatch(renderActions.setSelectionBasketMode(bookmark.selectionBasket.mode));
             } else {
-                dispatchVisible(visibleActions.set([]));
+                dispatchSelectionBasket(selectionBasketActions.set([]));
                 dispatch(renderActions.setSelectionBasketMode(SelectionBasketMode.Loose));
             }
 

@@ -81,7 +81,7 @@ import { useHandleJiraKeepAlive } from "features/jira";
 import { useHighlighted, highlightActions, useDispatchHighlighted } from "contexts/highlighted";
 import { useHidden, useDispatchHidden } from "contexts/hidden";
 import { useObjectGroups, useDispatchObjectGroups } from "contexts/objectGroups";
-import { useDispatchVisible, useVisible, visibleActions } from "contexts/visible";
+import { useDispatchSelectionBasket, useSelectionBasket, selectionBasketActions } from "contexts/selectionBasket";
 import { explorerGlobalsActions, useExplorerGlobals } from "contexts/explorerGlobals";
 
 import {
@@ -155,8 +155,8 @@ export function Render3D({ onInit }: Props) {
     const dispatchHighlighted = useDispatchHighlighted();
     const hiddenObjects = useHidden();
     const dispatchHidden = useDispatchHidden();
-    const dispatchVisible = useDispatchVisible();
-    const visibleObjects = useVisible();
+    const dispatchSelectionBasket = useDispatchSelectionBasket();
+    const selectionBasket = useSelectionBasket();
     const objectGroups = useObjectGroups();
     const dispatchObjectGroups = useDispatchObjectGroups();
     const {
@@ -430,7 +430,7 @@ export function Render3D({ onInit }: Props) {
                 initClippingPlanes(_view.settings.clippingVolume);
                 initDeviation(_view.settings.points.deviation);
 
-                dispatchVisible(visibleActions.set([]));
+                dispatchSelectionBasket(selectionBasketActions.set([]));
                 initHidden(objectGroups, dispatchHidden);
                 initCustomGroups(objectGroups, dispatchObjectGroups);
                 initHighlighted(objectGroups, dispatchHighlighted);
@@ -514,7 +514,7 @@ export function Render3D({ onInit }: Props) {
         dispatchObjectGroups,
         dispatchHidden,
         dispatchHighlighted,
-        dispatchVisible,
+        dispatchSelectionBasket,
     ]);
 
     useEffect(() => {
@@ -598,7 +598,7 @@ export function Render3D({ onInit }: Props) {
                         { id: "", ids: hiddenObjects.idArr, hidden: true, selected: false, color: [0, 0, 0] },
                         {
                             id: "",
-                            ids: visibleObjects.idArr,
+                            ids: selectionBasket.idArr,
                             hidden: false,
                             selected: true,
                             ...(selectionBasketColor.use ? { color: selectionBasketColor.color } : { neutral: true }),
@@ -612,7 +612,7 @@ export function Render3D({ onInit }: Props) {
                             selected: true,
                         },
                     ],
-                    selectionBasket: { ...visibleObjects, mode: selectionBasketMode },
+                    selectionBasket: { ...selectionBasket, mode: selectionBasketMode },
                 });
             }
         },
@@ -625,7 +625,7 @@ export function Render3D({ onInit }: Props) {
             objectGroups,
             highlightedObjects,
             hiddenObjects,
-            visibleObjects,
+            selectionBasket,
             selectionBasketMode,
             selectionBasketColor,
         ]

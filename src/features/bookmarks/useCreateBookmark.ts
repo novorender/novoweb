@@ -7,7 +7,7 @@ import { isInternalGroup, useLazyObjectGroups } from "contexts/objectGroups";
 import { useExplorerGlobals } from "contexts/explorerGlobals";
 import { useLazyHidden } from "contexts/hidden";
 import { useLazyHighlighted } from "contexts/highlighted";
-import { useLazyVisible } from "contexts/visible";
+import { useLazySelectionBasket } from "contexts/selectionBasket";
 import {
     ObjectVisibility,
     selectDefaultVisibility,
@@ -40,7 +40,7 @@ export function useCreateBookmark() {
     const objectGroups = useLazyObjectGroups();
     const highlighted = useLazyHighlighted();
     const hidden = useLazyHidden();
-    const visible = useLazyVisible();
+    const selectionBasket = useLazySelectionBasket();
 
     const create = (img?: string): Omit<Bookmark, "name" | "description" | "img"> & { img?: string } => {
         const camera = view.camera;
@@ -48,9 +48,9 @@ export function useCreateBookmark() {
         const { ...clippingVolume } = view.settings.clippingVolume;
         const selectedOnly = defaultVisibility !== ObjectVisibility.Neutral;
 
-        const selectionBasket: Bookmark["selectionBasket"] = visible.current.idArr.length
+        const selBasket: Bookmark["selectionBasket"] = selectionBasket.current.idArr.length
             ? {
-                  ids: visible.current.idArr,
+                  ids: selectionBasket.current.idArr,
                   mode: selectionBasketMode,
               }
             : undefined;
@@ -100,7 +100,7 @@ export function useCreateBookmark() {
             objectGroups: groups,
             selectedOnly,
             clippingVolume,
-            selectionBasket,
+            selectionBasket: selBasket,
             defaultVisibility,
             followPath: fp,
             clippingPlanes: {

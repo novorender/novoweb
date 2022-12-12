@@ -19,7 +19,7 @@ import { useAppDispatch } from "app/store";
 import { renderActions, ObjectVisibility, CameraType } from "slices/renderSlice";
 import { useDispatchHidden, hiddenGroupActions } from "contexts/hidden";
 import { useDispatchHighlighted, highlightActions } from "contexts/highlighted";
-import { useDispatchVisible, visibleActions } from "contexts/visible";
+import { useDispatchSelectionBasket, selectionBasketActions } from "contexts/selectionBasket";
 import { objectGroupsActions, InternalTemporaryGroup, useDispatchObjectGroups } from "contexts/objectGroups";
 import { useExplorerGlobals } from "contexts/explorerGlobals";
 
@@ -243,7 +243,7 @@ function CommentListItem({
     const dispatch = useAppDispatch();
     const dispatchHighlighted = useDispatchHighlighted();
     const dispatchHidden = useDispatchHidden();
-    const dispatchVisible = useDispatchVisible();
+    const dispatchSelectionBasket = useDispatchSelectionBasket();
     const dispatchObjectGroups = useDispatchObjectGroups();
     const {
         state: { scene },
@@ -325,7 +325,7 @@ function CommentListItem({
         } else {
             dispatch(renderActions.setDefaultVisibility(ObjectVisibility.Transparent));
             dispatchHidden(hiddenGroupActions.setIds([]));
-            dispatchVisible(visibleActions.set(visibilityExceptionIds));
+            dispatchSelectionBasket(selectionBasketActions.set(visibilityExceptionIds));
         }
 
         dispatchHighlighted(highlightActions.setIds(selectionIds));

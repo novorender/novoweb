@@ -23,7 +23,7 @@ import { selectUser } from "slices/authSlice";
 import { HiddenProvider } from "contexts/hidden";
 import { ObjectGroupsProvider } from "contexts/objectGroups";
 import { HighlightedProvider } from "contexts/highlighted";
-import { VisibleProvider } from "contexts/visible";
+import { SelectionBasketProvider } from "contexts/selectionBasket";
 import { explorerGlobalsActions, ExplorerGlobalsProvider, useExplorerGlobals } from "contexts/explorerGlobals";
 import { MsalInteraction } from "features/msalInteraction";
 
@@ -193,9 +193,9 @@ function ContextProviders({ children }: { children: ReactNode }) {
         <ExplorerGlobalsProvider>
             <HighlightedProvider>
                 <HiddenProvider>
-                    <VisibleProvider>
+                    <SelectionBasketProvider>
                         <ObjectGroupsProvider>{children}</ObjectGroupsProvider>
-                    </VisibleProvider>
+                    </SelectionBasketProvider>
                 </HiddenProvider>
             </HighlightedProvider>
         </ExplorerGlobalsProvider>

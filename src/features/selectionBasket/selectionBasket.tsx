@@ -36,7 +36,7 @@ import { uniqueArray } from "utils/misc";
 
 import { objectGroupsActions, useObjectGroups, useDispatchObjectGroups } from "contexts/objectGroups";
 import { highlightActions, useDispatchHighlighted, useHighlighted } from "contexts/highlighted";
-import { useDispatchVisible, useVisible, visibleActions } from "contexts/visible";
+import { useDispatchSelectionBasket, useSelectionBasket, selectionBasketActions } from "contexts/selectionBasket";
 import {
     ObjectVisibility,
     renderActions,
@@ -68,12 +68,12 @@ export function SelectionBasket() {
     const defaultVisibility = useAppSelector(selectDefaultVisibility);
     const mode = useAppSelector(selectSelectionBasketMode);
     const { idArr: highlighted } = useHighlighted();
-    const { idArr: visible } = useVisible();
+    const { idArr: visible } = useSelectionBasket();
     const objectGroups = useObjectGroups();
     const dispatchObjectGroups = useDispatchObjectGroups();
 
     const dispatchHighlighted = useDispatchHighlighted();
-    const dispatchVisible = useDispatchVisible();
+    const dispatchSelectionBasket = useDispatchSelectionBasket();
     const dispatch = useAppDispatch();
 
     const color = useAppSelector(selectSelectionBasketColor);
@@ -99,7 +99,7 @@ export function SelectionBasket() {
     const handleAdd = () => {
         const fromGroup = selectedGroups.map((grp) => grp.ids).flat();
 
-        dispatchVisible(visibleActions.add(highlighted.concat(fromGroup)));
+        dispatchSelectionBasket(selectionBasketActions.add(highlighted.concat(fromGroup)));
         dispatchHighlighted(highlightActions.setIds([]));
         dispatchObjectGroups(objectGroupsActions.set(objectGroups.map((group) => ({ ...group, selected: false }))));
     };
@@ -107,13 +107,13 @@ export function SelectionBasket() {
     const handleRemove = () => {
         const fromGroup = selectedGroups.map((grp) => grp.ids).flat();
 
-        dispatchVisible(visibleActions.remove(highlighted.concat(fromGroup)));
+        dispatchSelectionBasket(selectionBasketActions.remove(highlighted.concat(fromGroup)));
         dispatchHighlighted(highlightActions.setIds([]));
         dispatchObjectGroups(objectGroupsActions.set(objectGroups.map((group) => ({ ...group, selected: false }))));
     };
 
     const handleClear = () => {
-        dispatchVisible(visibleActions.set([]));
+        dispatchSelectionBasket(selectionBasketActions.set([]));
     };
 
     const handleViewTypeChange = (_: any, value: string) => {
