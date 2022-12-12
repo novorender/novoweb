@@ -206,8 +206,6 @@ export function Render3D({ onInit }: Props) {
         start: () => Promise.resolve(),
         stop: () => {},
         update: () => {},
-        pick: () => Promise.resolve(),
-        measure: () => Promise.resolve(),
     } as ReturnType<typeof createRendering>);
     const movementTimer = useRef<ReturnType<typeof setTimeout>>();
     const cameraGeneration = useRef<number>();
@@ -1014,16 +1012,16 @@ export function Render3D({ onInit }: Props) {
     };
 
     const handleClick = async (e: MouseEvent | PointerEvent) => {
-        if (!view || clippingBox.defining || !canvas) {
+        if (!view?.lastRenderOutput || clippingBox.defining || !canvas) {
             return;
         }
 
-        const result = await rendering.current.pick(e.nativeEvent.offsetX, e.nativeEvent.offsetY);
+        const result = await view.lastRenderOutput.pick(e.nativeEvent.offsetX, e.nativeEvent.offsetY);
 
         if (deviation.mode !== "off" && cameraState.type === CameraType.Orthographic) {
             const pickSize = isTouchPointer.current ? 16 : 0;
             const deviation = await pickDeviationArea({
-                measure: rendering.current.measure,
+                measure: view.lastRenderOutput.measure,
                 size: pickSize,
                 clickX: e.nativeEvent.offsetX,
                 clickY: e.nativeEvent.offsetY,
@@ -1050,9 +1048,8 @@ export function Render3D({ onInit }: Props) {
             return;
         }
 
-        const { normal: _normal, position: _position } = result;
-        const normal = _normal.some((n) => Number.isNaN(n)) ? undefined : vec3.clone(result.normal);
-        const position = vec3.clone(_position);
+        const normal = result.normal.some((n) => Number.isNaN(n)) ? undefined : vec3.clone(result.normal);
+        const position = vec3.clone(result.position);
 
         switch (picker) {
             case Picker.Object:
@@ -1155,7 +1152,7 @@ export function Render3D({ onInit }: Props) {
 
         pointerDown.current = true;
 
-        const result = await rendering.current.pick(x, y);
+        const result = await view.lastRenderOutput?.pick(x, y);
 
         if (!result || !pointerDown.current) {
             return;
@@ -1258,7 +1255,7 @@ export function Render3D({ onInit }: Props) {
             ].includes(picker);
 
         if (useSvgCursor) {
-            const measurement = await rendering.current.measure(e.nativeEvent.offsetX, e.nativeEvent.offsetY);
+            const measurement = await view.lastRenderOutput?.measure(e.nativeEvent.offsetX, e.nativeEvent.offsetY);
             canvas.style.cursor = "none";
 
             moveSvgCursor({ svg, view, size, measurement, x: e.nativeEvent.offsetX, y: e.nativeEvent.offsetY });
@@ -1274,7 +1271,7 @@ export function Render3D({ onInit }: Props) {
             e.buttons === 0 &&
             subtrees?.points === SubtreeStatus.Shown
         ) {
-            const measurement = await rendering.current.measure(e.nativeEvent.offsetX, e.nativeEvent.offsetY);
+            const measurement = await view.lastRenderOutput?.measure(e.nativeEvent.offsetX, e.nativeEvent.offsetY);
 
             if (measurement?.deviation) {
                 setDeviationStamp({

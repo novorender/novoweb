@@ -11,7 +11,6 @@ import {
     MeasureInfo,
     ObjectId,
     OrthoControllerParams,
-    PickInfo,
     RenderOutput,
     RenderSettings,
     Scene,
@@ -48,7 +47,6 @@ type Settings = {
     ssaoEnabled: boolean;
     autoFpsEnabled: boolean;
     outlineRenderingEnabled: boolean;
-    moving: boolean;
 };
 
 export function createRendering(
@@ -58,21 +56,16 @@ export function createRendering(
     start: () => Promise<void>;
     update: (updated: Partial<Settings>) => void;
     stop: () => void;
-    pick: RenderOutput["pick"];
-    measure: RenderOutput["measure"];
 } {
     const running = { current: false };
     let settings: Settings = {
         ssaoEnabled: true,
         taaEnabled: true,
         autoFpsEnabled: true,
-        moving: false,
         outlineRenderingEnabled: true,
     };
 
-    let hook = undefined as undefined | (() => any);
-
-    return { start, stop, update, pick, measure };
+    return { start, stop, update };
 
     function update(updated: Partial<Settings>) {
         const updatedSettings = { ...settings, ...updated };
@@ -81,22 +74,11 @@ export function createRendering(
             settings.ssaoEnabled !== updatedSettings.ssaoEnabled ||
             settings.taaEnabled !== updatedSettings.taaEnabled ||
             settings.autoFpsEnabled !== updatedSettings.autoFpsEnabled ||
-            settings.outlineRenderingEnabled !== updatedSettings.outlineRenderingEnabled ||
-            settings.moving !== updatedSettings.moving
+            settings.outlineRenderingEnabled !== updatedSettings.outlineRenderingEnabled
         ) {
             settings = updatedSettings;
             view.invalidateCamera();
         }
-    }
-
-    async function pick(x: number, y: number): Promise<PickInfo | undefined> {
-        // await view.updatePickBuffers();
-        return view.lastRenderOutput?.pick(x, y);
-    }
-
-    async function measure(x: number, y: number): Promise<MeasureInfo | undefined> {
-        // await view.updatePickBuffers();
-        return view.lastRenderOutput?.measure(x, y);
     }
 
     function stop() {
@@ -131,11 +113,6 @@ export function createRendering(
                 await output.applyPostEffect({ kind: "outline", color: [0, 0, 0, 0] });
             }
 
-            if (hook) {
-                hook();
-                hook = undefined;
-            }
-
             const image = await output.getImage();
 
             if (!running.current) {
@@ -166,7 +143,6 @@ export function createRendering(
 
             let runPostEffects =
                 !api.deviceProfile.weakDevice &&
-                // !settings.moving &&
                 output.statistics.sceneResolved &&
                 view.camera.controller.params.kind !== "ortho" &&
                 (settings.taaEnabled || settings.ssaoEnabled);

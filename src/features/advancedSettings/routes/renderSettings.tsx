@@ -78,9 +78,6 @@ export function RenderSettings({ save, saving }: { save: () => Promise<void>; sa
         dispatch(renderActions.setAdvancedSettings({ [name]: checked }));
 
         switch (name) {
-            case AdvancedSetting.AutoFps:
-                // todo
-                return;
             case AdvancedSetting.ShowBoundingBoxes:
                 return toggleShowBoundingBox(view);
             case AdvancedSetting.DoubleSidedMaterials:
@@ -185,7 +182,7 @@ export function RenderSettings({ save, saving }: { save: () => Promise<void>; sa
                         control={<Switch name={AdvancedSetting.AutoFps} checked={autoFps} onChange={handleToggle} />}
                         label={
                             <Box ml={1} fontSize={16}>
-                                Dynamic resolution scaling (todo)
+                                Dynamic resolution scaling
                             </Box>
                         }
                     />
