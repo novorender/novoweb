@@ -18,14 +18,7 @@ import { useMountedState } from "hooks/useMountedState";
 import { useSceneId } from "hooks/useSceneId";
 
 import { useAppDispatch, useAppSelector } from "app/store";
-import {
-    CameraType,
-    renderActions,
-    SceneEditStatus,
-    selectAdvancedSettings,
-    selectEditingScene,
-    selectHomeCameraPosition,
-} from "slices/renderSlice";
+import { CameraType, renderActions, selectAdvancedSettings, selectHomeCameraPosition } from "slices/renderSlice";
 
 import { useExplorerGlobals } from "contexts/explorerGlobals";
 import { useDispatchHighlighted } from "contexts/highlighted";
@@ -54,7 +47,6 @@ export function Home({ position, ...speedDialProps }: Props) {
 
     const { name, Icon } = featuresConfig["home"];
 
-    const editingScene = useAppSelector(selectEditingScene);
     const homeCameraPos = useAppSelector(selectHomeCameraPosition);
     const { triangleLimit } = useAppSelector(selectAdvancedSettings);
     const objectGroups = useLazyObjectGroups();
@@ -66,7 +58,7 @@ export function Home({ position, ...speedDialProps }: Props) {
 
     const [status, setStatus] = useMountedState(Status.Initial);
 
-    const disabled = status === Status.Loading || (editingScene && editingScene.status !== SceneEditStatus.Editing);
+    const disabled = status === Status.Loading;
 
     const handleClick = async () => {
         setStatus(Status.Loading);
@@ -76,7 +68,7 @@ export function Home({ position, ...speedDialProps }: Props) {
             customProperties,
             objectGroups: savedObjectGroups = [],
             camera = { kind: "flight" },
-        } = (await dataApi.loadScene(editingScene?.id || id)) as SceneData;
+        } = (await dataApi.loadScene(id)) as SceneData;
 
         dispatch(renderActions.resetState());
         dispatch(measureActions.clear());

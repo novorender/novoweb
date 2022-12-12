@@ -14,7 +14,6 @@ import { ClippingBox } from "features/clippingBox";
 import { Measure } from "features/measure";
 import { Groups } from "features/groups";
 import { ClippingPlanes } from "features/clippingPlanes";
-import { ViewerScenes } from "features/viewerScenes";
 import { OrthoCam } from "features/orthoCam";
 import { Panoramas } from "features/panoramas";
 import { AdvancedSettings } from "features/advancedSettings";
@@ -95,8 +94,6 @@ function getWidgetByKey(key: WidgetKey): JSX.Element | string {
             return <BimCollab />;
         case featuresConfig.bimTrack.key:
             return <BimTrack />;
-        case featuresConfig.viewerScenes.key:
-            return <ViewerScenes />;
         case featuresConfig.clippingPlanes.key:
             return <ClippingPlanes />;
         case featuresConfig.orthoCam.key:

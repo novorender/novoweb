@@ -1,6 +1,5 @@
 import { glMatrix, mat3, mat4, quat, vec2, vec3, vec4 } from "gl-matrix";
 import { useEffect, useState, useRef, MouseEvent, PointerEvent, useCallback, RefCallback } from "react";
-import { SceneData } from "@novorender/data-js-api";
 import {
     View,
     EnvironmentDescription,
@@ -38,7 +37,6 @@ import { Accordion, AccordionDetails, AccordionSummary, Loading } from "componen
 
 import { api, dataApi, measureApi } from "app";
 import { useSceneId } from "hooks/useSceneId";
-import { enabledFeaturesToFeatureKeys, getEnabledFeatures } from "utils/misc";
 
 import {
     fetchEnvironments,
@@ -55,8 +53,6 @@ import {
     selectClippingPlanes,
     CameraType,
     selectCamera,
-    selectEditingScene,
-    SceneEditStatus,
     selectAdvancedSettings,
     selectSelectionBasketMode,
     SubtreeStatus,
@@ -68,7 +64,7 @@ import {
 } from "slices/renderSlice";
 import { explorerActions, selectLocalBookmarkId, selectUrlBookmarkId } from "slices/explorerSlice";
 import { selectDeviations } from "features/deviations";
-import { bookmarksActions, selectBookmarks, useSelectBookmark } from "features/bookmarks";
+import { useSelectBookmark } from "features/bookmarks";
 import { measureActions, selectMeasure } from "features/measure";
 
 import { manholeActions, useHandleManholeUpdates } from "features/manhole";
@@ -173,8 +169,6 @@ export function Render3D({ onInit }: Props) {
     const environments = useAppSelector(selectEnvironments);
     const mainObject = useAppSelector(selectMainObject);
 
-    const editingScene = useAppSelector(selectEditingScene);
-    const bookmarks = useAppSelector(selectBookmarks);
     const defaultVisibility = useAppSelector(selectDefaultVisibility);
     const cameraSpeedMultiplier = useAppSelector(selectCameraSpeedMultiplier);
     const baseCameraSpeed = useAppSelector(selectBaseCameraSpeed);
@@ -369,15 +363,7 @@ export function Render3D({ onInit }: Props) {
                     throw sceneResponse;
                 }
 
-                const {
-                    url,
-                    db,
-                    objectGroups = [],
-                    customProperties,
-                    title,
-                    viewerScenes,
-                    ...sceneData
-                } = sceneResponse;
+                const { url, db, objectGroups = [], customProperties, title, ...sceneData } = sceneResponse;
 
                 const urlData = getDataFromUrlHash();
                 const camera = { kind: "flight", ...sceneData.camera, ...urlData.camera } as CameraControllerParams;
@@ -454,10 +440,6 @@ export function Render3D({ onInit }: Props) {
                 if (urlData.mainObject !== undefined) {
                     dispatchHighlighted(highlightActions.add([urlData.mainObject]));
                     dispatch(renderActions.setMainObject(urlData.mainObject));
-                }
-
-                if (viewerScenes) {
-                    dispatch(explorerActions.setViewerScenes(viewerScenes));
                 }
 
                 const organization = (sceneData as { organization?: string }).organization ?? "";
@@ -847,113 +829,6 @@ export function Render3D({ onInit }: Props) {
             rendering.current.update({ taaEnabled: advancedSettings.taa, ssaoEnabled: advancedSettings.ssao });
         },
         [advancedSettings]
-    );
-
-    useEffect(
-        function cleanUpPreviousScene() {
-            return () => {
-                rendering.current.stop();
-                window.removeEventListener("blur", exitPointerLock);
-                dispatchGlobals(explorerGlobalsActions.update({ view: undefined, scene: undefined }));
-                dispatch(renderActions.resetState());
-                setStatus({ status: Status.Initial });
-            };
-        },
-        [id, dispatch, setStatus, dispatchGlobals]
-    );
-
-    useEffect(
-        function handleEditingScene() {
-            if (!view || !canvas || editingScene?.status !== SceneEditStatus.Init) {
-                return;
-            }
-
-            dispatch(renderActions.setViewerSceneEditing({ ...editingScene, status: SceneEditStatus.Loading }));
-
-            if (!editingScene.id) {
-                restoreAdminScene(id, view, canvas);
-            } else {
-                applyViewerScene(editingScene.id, view, canvas);
-            }
-
-            async function restoreAdminScene(sceneId: string, view: View, canvas: HTMLCanvasElement) {
-                await applyScene(sceneId, view, canvas);
-                dispatch(renderActions.setViewerSceneEditing(undefined));
-            }
-
-            async function applyViewerScene(sceneId: string, view: View, canvas: HTMLCanvasElement) {
-                const { title, customProperties } = await applyScene(sceneId, view, canvas);
-                const enabledFeatures = getEnabledFeatures(customProperties);
-                const requireAuth = customProperties?.enabledFeatures?.enabledOrgs !== undefined;
-                const expiration = customProperties?.enabledFeatures?.expiration;
-
-                dispatch(
-                    renderActions.setViewerSceneEditing({
-                        title,
-                        requireAuth,
-                        expiration,
-                        status: SceneEditStatus.Editing,
-                        id: sceneId,
-                        enabledFeatures: enabledFeatures ? enabledFeaturesToFeatureKeys(enabledFeatures) : [],
-                    })
-                );
-            }
-
-            async function applyScene(
-                sceneId: string,
-                view: View,
-                canvas: HTMLCanvasElement
-            ): Promise<Pick<SceneData, "title" | "customProperties">> {
-                const {
-                    settings,
-                    title,
-                    customProperties,
-                    camera = { kind: "flight" },
-                    objectGroups = [],
-                } = (await dataApi.loadScene(sceneId)) as SceneData;
-
-                if (settings) {
-                    const { display: _display, light: _light, ...viewerSceneSettings } = settings;
-                    view.applySettings({ ...viewerSceneSettings, light: view.settings.light });
-
-                    initClippingBox(settings.clippingPlanes);
-                    initClippingPlanes(settings.clippingVolume);
-                    initDeviation(settings.points.deviation);
-                    initEnvironment(settings.environment as unknown as EnvironmentDescription, environments, view);
-                }
-
-                const controller = initCamera({ view, canvas, camera, flightControllerRef: flightController });
-                dispatch(
-                    renderActions.setCamera({
-                        type: controller.params.kind === "ortho" ? CameraType.Orthographic : CameraType.Flight,
-                    })
-                );
-
-                dispatchVisible(visibleActions.set([]));
-                initHidden(objectGroups, dispatchHidden);
-                initCustomGroups(objectGroups, dispatchObjectGroups);
-                initHighlighted(objectGroups, dispatchHighlighted);
-                initAdvancedSettings(view, customProperties, api);
-                dispatch(bookmarksActions.resetState());
-
-                return { title, customProperties };
-            }
-        },
-        [
-            id,
-            editingScene,
-            view,
-            environments,
-            canvas,
-            bookmarks,
-            objectGroups,
-            dispatch,
-            dispatchHidden,
-            dispatchObjectGroups,
-            dispatchHighlighted,
-            dispatchVisible,
-            env,
-        ]
     );
 
     useHandleGridChanges();

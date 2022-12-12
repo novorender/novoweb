@@ -1,6 +1,5 @@
 import { createSelector, createSlice, PayloadAction } from "@reduxjs/toolkit";
 import { SearchPattern } from "@novorender/webgl-api";
-import { ScenePreview } from "@novorender/data-js-api";
 
 import {
     featuresConfig,
@@ -31,7 +30,6 @@ const initialState = {
     userRole: UserRole.Viewer,
     requireConsent: false,
     organization: "",
-    viewerScenes: [] as ScenePreview[],
     widgets: [] as WidgetKey[],
     maximized: undefined as undefined | WidgetKey,
     minimized: undefined as undefined | WidgetKey,
@@ -68,20 +66,6 @@ export const explorerSlice = createSlice({
         },
         setUserRole: (state, action: PayloadAction<UserRole>) => {
             state.userRole = action.payload;
-        },
-        setViewerScenes: (state, action: PayloadAction<ScenePreview[]>) => {
-            state.viewerScenes = action.payload;
-        },
-        addViewerScene: (state, action: PayloadAction<ScenePreview>) => {
-            state.viewerScenes = state.viewerScenes.concat(action.payload);
-        },
-        updateViewerScene: (state, action: PayloadAction<ScenePreview>) => {
-            state.viewerScenes = state.viewerScenes.map((scene) =>
-                scene.id === action.payload.id ? action.payload : scene
-            );
-        },
-        deleteViewerScene: (state, action: PayloadAction<ScenePreview["id"]>) => {
-            state.viewerScenes = state.viewerScenes.filter((scene) => scene.id !== action.payload);
         },
         setWidgets: (state, action: PayloadAction<WidgetKey[]>) => {
             state.widgets = action.payload;
@@ -165,7 +149,6 @@ export const selectUrlBookmarkId = (state: RootState) => state.explorer.urlBookm
 export const selectUrlSearchQuery = (state: RootState) => state.explorer.urlSearchQuery;
 export const selectSceneType = (state: RootState) => state.explorer.sceneType;
 export const selectUserRole = (state: RootState) => state.explorer.userRole;
-export const selectViewerScenes = (state: RootState) => state.explorer.viewerScenes;
 export const selectRequireConsent = (state: RootState) => state.explorer.requireConsent;
 export const selectOrganization = (state: RootState) => state.explorer.organization;
 export const selectMaximized = (state: RootState) => state.explorer.maximized;

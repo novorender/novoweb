@@ -28,7 +28,6 @@ import { rgbToVec, VecRGBA, vecToRgb } from "utils/color";
 
 import { useAppDispatch, useAppSelector } from "app/store";
 import { useExplorerGlobals } from "contexts/explorerGlobals";
-import { selectEditingScene } from "slices/renderSlice";
 import { selectHasAdminCapabilities, selectIsAdminScene, selectMaximized, selectMinimized } from "slices/explorerSlice";
 
 import {
@@ -54,7 +53,6 @@ export function Deviations() {
         state: { scene },
     } = useExplorerGlobals(true);
     const sceneId = useSceneId();
-    const editingScene = useAppSelector(selectEditingScene);
     const isAdmin = useAppSelector(selectHasAdminCapabilities);
     const isAdminScene = useAppSelector(selectIsAdminScene);
 
@@ -116,7 +114,7 @@ export function Deviations() {
         );
 
     const handleSave = async () => {
-        const id = editingScene && editingScene.id ? editingScene.id : sceneId;
+        const id = sceneId;
 
         dispatch(deviationsActions.setStatus({ status: DeviationsStatus.Saving }));
 

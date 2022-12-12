@@ -13,7 +13,6 @@ import {
     Home,
     Layers,
     List,
-    Movie,
     MyLocation,
     Person,
     Redo,
@@ -129,13 +128,6 @@ export const featuresConfig = {
         Icon: Settings,
         type: FeatureType.AdminWidget,
         defaultLocked: false,
-    },
-    viewerScenes: {
-        key: "viewerScenes",
-        name: "Viewer scenes",
-        Icon: Movie,
-        type: FeatureType.AdminWidget,
-        defaultLocked: true,
     },
     selectionBasket: {
         key: "selectionBasket",
