@@ -112,7 +112,7 @@ export function moveSvgCursor({
         const { width, height } = size;
         const { camera } = view;
 
-        if (normal[2] < 1) {
+        if (normal[2] < 0.98) {
             const angleX = (y / height - 0.5) * camera.fieldOfView;
             const angleY = ((x - width * 0.5) / height) * camera.fieldOfView;
             vec3.transformQuat(normal, normal, quat.fromEuler(quat.create(), angleX, angleY, 0));

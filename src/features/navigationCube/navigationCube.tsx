@@ -418,7 +418,6 @@ export function NavigationCube() {
             if (sceneCenterDist <= 500) {
                 pt = scene.boundingSphere.center;
             } else {
-                await view.updatePickBuffers();
                 pt = (
                     await view.lastRenderOutput?.pick(view.settings.display.width / 2, view.settings.display.width / 2)
                 )?.position;
