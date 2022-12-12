@@ -3,7 +3,7 @@ import { Box, Button, IconButton, Typography, useTheme } from "@mui/material";
 import { useHistory } from "react-router-dom";
 
 import { Divider, LinearProgress, ScrollBox } from "components";
-import { objectGroupsActions, useObjectGroups, useDispatchObjectGroups } from "contexts/objectGroups";
+import { objectGroupsActions, useObjectGroups, useDispatchObjectGroups, isInternalGroup } from "contexts/objectGroups";
 import { selectHasAdminCapabilities } from "slices/explorerSlice";
 import { useAppSelector } from "app/store";
 import { AsyncStatus } from "types/misc";
@@ -18,10 +18,9 @@ export function GroupList() {
     const isAdmin = useAppSelector(selectHasAdminCapabilities);
     const loadingIds = useAppSelector(selectLoadingIds);
     const saveStatus = useAppSelector(selectSaveStatus);
-    const objectGroups = useObjectGroups();
+    const objectGroups = useObjectGroups().filter((grp) => !isInternalGroup(grp));
     const dispatchObjectGroups = useDispatchObjectGroups();
 
-    // todo filter internal
     const collections = Array.from(
         objectGroups.reduce((set, grp) => {
             if (grp.grouping) {
