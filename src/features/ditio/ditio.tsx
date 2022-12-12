@@ -198,11 +198,7 @@ export function Ditio() {
                         </Box>
                     ) : null}
                 </Box>
-                <WidgetList
-                    display={menuOpen ? "block" : "none"}
-                    widgetKey={featuresConfig.ditio.key}
-                    onSelect={toggleMenu}
-                />
+                {menuOpen && <WidgetList widgetKey={featuresConfig.ditio.key} onSelect={toggleMenu} />}
             </WidgetContainer>
             <LogoSpeedDial open={menuOpen} toggle={toggleMenu} testId={`${featuresConfig.ditio.key}-widget-menu-fab`} />
         </>

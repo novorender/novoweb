@@ -193,11 +193,13 @@ export function BimTrack() {
                         <LinearProgress />
                     )}
                 </Box>
-                <WidgetList
-                    display={menuOpen ? "block" : "none"}
-                    widgetKey={featuresConfig.bimTrack.key}
-                    onSelect={toggleMenu}
-                />
+                {menuOpen && (
+                    <WidgetList
+                        display={menuOpen ? "block" : "none"}
+                        widgetKey={featuresConfig.bimTrack.key}
+                        onSelect={toggleMenu}
+                    />
+                )}
             </WidgetContainer>
             <LogoSpeedDial
                 open={menuOpen}

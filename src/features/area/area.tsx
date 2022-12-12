@@ -82,11 +82,13 @@ export function Area() {
                 <ScrollBox display={menuOpen || minimized ? "none" : "flex"}>
                     <Box p={1}>{area > 0 ? <>Area: {area.toFixed(3)} &#13217;</> : null}</Box>
                 </ScrollBox>
-                <WidgetList
-                    display={menuOpen ? "block" : "none"}
-                    widgetKey={featuresConfig.area.key}
-                    onSelect={toggleMenu}
-                />
+                {menuOpen && (
+                    <WidgetList
+                        display={menuOpen ? "block" : "none"}
+                        widgetKey={featuresConfig.area.key}
+                        onSelect={toggleMenu}
+                    />
+                )}
             </WidgetContainer>
             <LogoSpeedDial open={menuOpen} toggle={toggleMenu} testId={`${featuresConfig.area.key}-widget-menu-fab`} />
         </>

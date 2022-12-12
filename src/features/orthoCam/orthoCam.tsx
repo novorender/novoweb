@@ -147,11 +147,7 @@ export function OrthoCam() {
                         </>
                     ) : null}
                 </ScrollBox>
-                <WidgetList
-                    display={menuOpen ? "block" : "none"}
-                    widgetKey={featuresConfig.orthoCam.key}
-                    onSelect={toggleMenu}
-                />
+                {menuOpen && <WidgetList widgetKey={featuresConfig.orthoCam.key} onSelect={toggleMenu} />}
             </WidgetContainer>
             <ColorPicker
                 open={Boolean(colorPickerAnchor)}

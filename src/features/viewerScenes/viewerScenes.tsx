@@ -80,11 +80,7 @@ export function ViewerScenes() {
                     open={modalOpen}
                     onClose={toggleModalOpen}
                 />
-                <WidgetList
-                    display={menuOpen ? "block" : "none"}
-                    widgetKey={featuresConfig.viewerScenes.key}
-                    onSelect={toggleMenu}
-                />
+                {menuOpen && <WidgetList widgetKey={featuresConfig.viewerScenes.key} onSelect={toggleMenu} />}
             </WidgetContainer>
             <LogoSpeedDial
                 open={menuOpen}
