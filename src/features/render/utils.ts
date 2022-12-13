@@ -110,7 +110,7 @@ export function createRendering(
             (window as any).output = output;
 
             if (settings.outlineRenderingEnabled && view.camera.controller.params.kind === "ortho") {
-                await output.applyPostEffect({ kind: "outline", color: [0, 0, 0, 0] });
+                await output.applyPostEffect({ kind: "outline", color: [0, 0, 0, 0], waitForIdleFrame: false });
             }
 
             const image = await output.getImage();
@@ -148,7 +148,6 @@ export function createRendering(
                 (settings.taaEnabled || settings.ssaoEnabled);
 
             let reset = true;
-            let postEffectTimeout = true;
 
             while (runPostEffects && running.current) {
                 if (await output.hasChanged()) {
@@ -161,31 +160,30 @@ export function createRendering(
                     break;
                 }
 
-                const postEffectNow = performance.now();
-
-                if (postEffectNow - now >= 200) {
-                    postEffectTimeout = false;
+                if (settings.taaEnabled) {
+                    runPostEffects =
+                        (await output.applyPostEffect({ kind: "taa", reset, waitForIdleFrame: true })) || false;
                 }
 
-                if (!postEffectTimeout) {
-                    if (settings.taaEnabled) {
-                        runPostEffects = (await output.applyPostEffect({ kind: "taa", reset })) || false;
-                    }
+                if (settings.ssaoEnabled) {
+                    await output.applyPostEffect({
+                        kind: "ssao",
+                        samples: 64,
+                        radius: 1,
+                        reset: reset,
+                        waitForIdleFrame: true,
+                    });
 
-                    if (settings.ssaoEnabled) {
-                        await output.applyPostEffect({ kind: "ssao", samples: 64, radius: 1, reset: reset });
-
-                        if (!settings.taaEnabled) {
-                            runPostEffects = false;
-                        }
+                    if (!settings.taaEnabled) {
+                        runPostEffects = false;
                     }
+                }
 
-                    reset = false;
-                    startRender = 0;
-                    const image = await output.getImage();
-                    if (ctx && image) {
-                        ctx.transferFromImageBitmap(image); // display in canvas
-                    }
+                reset = false;
+                startRender = 0;
+                const image = await output.getImage();
+                if (ctx && image) {
+                    ctx.transferFromImageBitmap(image); // display in canvas
                 }
             }
         }
