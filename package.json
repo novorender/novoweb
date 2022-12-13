@@ -47,6 +47,7 @@
         "@mui/icons-material": "^5.8.0",
         "@mui/lab": "^5.0.0-alpha.58",
         "@mui/material": "^5.8.0",
+        "@mui/x-date-pickers": "^5.0.10",
         "@novorender/data-js-api": "^0.2.24",
         "@novorender/measure-api": "^0.0.99",
         "@novorender/webgl-api": "file:../NovoRender-API/dist",

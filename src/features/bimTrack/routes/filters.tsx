@@ -16,7 +16,7 @@ import {
     TextFieldProps,
 } from "@mui/material";
 import { ArrowBack } from "@mui/icons-material";
-import { DatePicker } from "@mui/lab";
+import { DatePicker } from "@mui/x-date-pickers";
 import { isValid, set } from "date-fns";
 
 import { LinearProgress, ScrollBox, Divider } from "components";

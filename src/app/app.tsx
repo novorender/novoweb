@@ -1,8 +1,8 @@
 import { useEffect } from "react";
 import { CssBaseline } from "@mui/material";
 import { ThemeProvider, StyledEngineProvider } from "@mui/material/styles";
-import { LocalizationProvider } from "@mui/lab";
-import AdapterDateFns from "@mui/lab/AdapterDateFns";
+import { LocalizationProvider } from "@mui/x-date-pickers";
+import { AdapterDateFns } from "@mui/x-date-pickers/AdapterDateFns";
 import enLocale from "date-fns/locale/en-GB";
 import { createAPI } from "@novorender/webgl-api";
 import { createMeasureAPI } from "@novorender/measure-api";
@@ -200,7 +200,7 @@ export function App() {
 
     return (
         <>
-            <LocalizationProvider dateAdapter={AdapterDateFns} locale={enLocale}>
+            <LocalizationProvider dateAdapter={AdapterDateFns} adapterLocale={enLocale}>
                 <MsalProvider instance={msalInstance}>
                     <StyledEngineProvider injectFirst>
                         <ThemeProvider theme={theme}>

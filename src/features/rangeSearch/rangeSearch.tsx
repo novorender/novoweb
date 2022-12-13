@@ -2,7 +2,7 @@ import { CSSProperties, FormEvent, useCallback, useRef, useState } from "react";
 import { ListOnScrollProps } from "react-window";
 import { Box, Button, FormControl, FormControlLabel, TextFieldProps } from "@mui/material";
 import { HierarcicalObjectReference, SearchPattern } from "@novorender/webgl-api";
-import { DatePicker } from "@mui/lab";
+import { DatePicker } from "@mui/x-date-pickers";
 import { format, isValid, parse } from "date-fns";
 
 import { LinearProgress, ScrollBox, WidgetContainer, WidgetHeader, LogoSpeedDial, TextField, Switch } from "components";
@@ -150,7 +150,7 @@ export function RangeSearch() {
                                             <DatePicker
                                                 label="Min"
                                                 value={min ? parse(String(min), dateFormat, new Date()) : null}
-                                                onChange={(newDate: Date | null, keyboardInput: string) =>
+                                                onChange={(newDate: Date | null, keyboardInput) =>
                                                     setMin(
                                                         newDate
                                                             ? isValid(newDate)
@@ -170,7 +170,7 @@ export function RangeSearch() {
                                             <DatePicker
                                                 label="Max"
                                                 value={max ? parse(String(max), dateFormat, new Date()) : null}
-                                                onChange={(newDate: Date | null, keyboardInput: string) =>
+                                                onChange={(newDate: Date | null, keyboardInput) =>
                                                     setMax(
                                                         newDate
                                                             ? isValid(newDate)

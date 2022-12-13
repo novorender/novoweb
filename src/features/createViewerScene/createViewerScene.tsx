@@ -13,7 +13,8 @@ import {
     TextFieldProps,
 } from "@mui/material";
 import Close from "@mui/icons-material/Close";
-import { DatePicker, LoadingButton } from "@mui/lab";
+import { DatePicker } from "@mui/x-date-pickers";
+import { LoadingButton } from "@mui/lab";
 import { FormEventHandler, useState } from "react";
 import { format } from "date-fns";
 import { v4 as uuidv4 } from "uuid";

@@ -3,7 +3,7 @@ import { useHistory } from "react-router-dom";
 import { Box, Button, FormControl, FormControlLabel, TextFieldProps, useTheme } from "@mui/material";
 import { ArrowBack } from "@mui/icons-material";
 import { isValid, set } from "date-fns";
-import { DatePicker } from "@mui/lab";
+import { DatePicker } from "@mui/x-date-pickers";
 
 import { ScrollBox, Divider, TextField, Switch as SwitchInput } from "components";
 import { useAppDispatch, useAppSelector } from "app/store";
