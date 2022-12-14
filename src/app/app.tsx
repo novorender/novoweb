@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { CssBaseline } from "@mui/material";
 import { ThemeProvider, StyledEngineProvider } from "@mui/material/styles";
 import { LocalizationProvider } from "@mui/x-date-pickers";
@@ -10,6 +10,7 @@ import { createAPI as createDataAPI } from "@novorender/data-js-api";
 import { MsalProvider } from "@azure/msal-react";
 import { InteractionRequiredAuthError, PublicClientApplication } from "@azure/msal-browser";
 import { Route, useHistory, Switch } from "react-router-dom";
+import { getGPUTier } from "detect-gpu";
 
 import { theme } from "app/theme";
 import { useAppDispatch } from "app/store";
@@ -28,7 +29,6 @@ import {
     storeActiveAccount,
 } from "utils/auth";
 import { getAuthHeader } from "utils/auth";
-import { useMountedState } from "hooks/useMountedState";
 import { StorageKey } from "config/storage";
 import { deleteFromStorage, getFromStorage } from "utils/storage";
 
@@ -58,7 +58,8 @@ enum Status {
 
 export function App() {
     const history = useHistory();
-    const [status, setStatus] = useMountedState(Status.Initial);
+    const [authStatus, setAuthStatus] = useState(Status.Initial);
+    const [deviceProfileStatus, setDeviceProfileStatus] = useState(Status.Initial);
     const dispatch = useAppDispatch();
 
     useEffect(() => {
@@ -66,14 +67,14 @@ export function App() {
     }, [history]);
 
     useEffect(() => {
-        if (status !== Status.Initial) {
+        if (authStatus !== Status.Initial) {
             return;
         }
 
         auth();
 
         async function auth() {
-            setStatus(Status.Loading);
+            setAuthStatus(Status.Loading);
 
             if (!(await verifyToken())) {
                 await handleMsalReturn();
@@ -83,7 +84,7 @@ export function App() {
                     history.replace(history.location.pathname.replace("login/", "") + window.location.search);
                 }
             }
-            setStatus(Status.Ready);
+            setAuthStatus(Status.Ready);
         }
 
         async function handleMsalReturn() {
@@ -188,7 +189,56 @@ export function App() {
                 return true;
             }
         }
-    }, [status, setStatus, dispatch, history]);
+    }, [authStatus, dispatch, history]);
+
+    useEffect(() => {
+        loadDeviceProfile();
+
+        async function loadDeviceProfile() {
+            if (deviceProfileStatus !== Status.Initial) {
+                return;
+            }
+
+            setDeviceProfileStatus(Status.Loading);
+
+            try {
+                const gpuTier = await getGPUTier({
+                    mobileTiers: [0, 20, 60, 120, 240],
+                    desktopTiers: [0, 20, 60, 120, 240],
+                });
+
+                if (gpuTier.tier === 0) {
+                    return;
+                }
+
+                if (gpuTier.tier === 1) {
+                    api.deviceProfile = {
+                        ...api.deviceProfile,
+                        weakDevice: false,
+                    };
+                }
+
+                if (gpuTier.tier >= 2) {
+                    const apple = gpuTier.device?.includes("apple");
+
+                    api.deviceProfile = {
+                        ...api.deviceProfile,
+                        triangleLimit: Math.max(7_500_000, api.deviceProfile.triangleLimit),
+                        gpuBytesLimit: Math.max(
+                            apple && gpuTier.isMobile ? 750_000_000 : 1_000_000_000,
+                            api.deviceProfile.gpuBytesLimit
+                        ),
+                        renderResolution: 1,
+                        weakDevice: false,
+                    };
+                }
+            } catch (e) {
+                console.warn(e);
+            } finally {
+                setDeviceProfileStatus(Status.Ready);
+            }
+        }
+    }, [deviceProfileStatus]);
 
     useEffect(() => {
         const state = getOAuthState();
@@ -205,7 +255,7 @@ export function App() {
                     <StyledEngineProvider injectFirst>
                         <ThemeProvider theme={theme}>
                             <CssBaseline />
-                            {status !== Status.Ready ? (
+                            {[authStatus, deviceProfileStatus].some((status) => status !== Status.Ready) ? (
                                 <Loading />
                             ) : (
                                 <Switch>

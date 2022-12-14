@@ -57,6 +57,7 @@
         "@visx/visx": "^2.16.0",
         "d3-array": "^3.2.0",
         "date-fns": "^2.27.0",
+        "detect-gpu": "^5.0.2",
         "express": "^4.17.1",
         "express-static-gzip": "^2.1.1",
         "gl-matrix": "^3.3.0",
