@@ -103,7 +103,7 @@ export function createRendering(
             }
 
             if (settings.autoFpsEnabled) {
-                view.adjustQuality(40);
+                view.adjustQuality(50);
             }
 
             // todo

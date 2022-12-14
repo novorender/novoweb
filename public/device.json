@@ -1,0 +1,82 @@
+{
+    "profiles": [
+        {
+            "userAgent": {
+                "pattern": "\\bMacintosh\\b.+\\bMobile\\b]",
+                "flags": ""
+            },
+            "renderer": null,
+            "profile": {
+                "name": "Apple mobile",
+                "renderResolution": 1,
+                "renderResolutionIdle": 1,
+                "textureResolution": 1,
+                "throttleFrames": 0,
+                "detailBias": 2,
+                "gpuBytesLimit": 750000000,
+                "triangleLimit": 8000000,
+                "weakDevice": false
+            }
+        },
+        {
+            "userAgent": {
+                "pattern": "\\bMacintosh\\b",
+                "flags": ""
+            },
+            "renderer": {
+                "pattern": "\\bM[1-9]\\b",
+                "flags": ""
+            },
+            "profile": {
+                "name": "Mac - Silicon",
+                "renderResolution": 1,
+                "renderResolutionIdle": 1,
+                "textureResolution": 1,
+                "throttleFrames": 0,
+                "detailBias": 5,
+                "gpuBytesLimit": 5000000000,
+                "triangleLimit": 15000000,
+                "weakDevice": false
+            }
+        },
+        {
+            "userAgent": {
+                "pattern": "\\bWindows\\b",
+                "flags": ""
+            },
+            "renderer": {
+                "pattern": "\\bNVIDIA\\b.+\\bRTX 30[6-9]0\\b",
+                "flags": "i"
+            },
+            "profile": {
+                "name": "Windows - RTX 3060+",
+                "renderResolution": 1,
+                "renderResolutionIdle": 1,
+                "textureResolution": 1,
+                "throttleFrames": 0,
+                "detailBias": 10,
+                "gpuBytesLimit": 8000000000,
+                "triangleLimit": 20000000,
+                "weakDevice": false
+            }
+        },
+        {
+            "userAgent": ["Windows"],
+            "renderer": {
+                "pattern": "\\bNVIDIA\\b.+\\bRTX 40[\\d]0\\b",
+                "flags": "i"
+            },
+            "profile": {
+                "name": "Windows - RTX 40 series",
+                "renderResolution": 1,
+                "renderResolutionIdle": 1,
+                "textureResolution": 1,
+                "throttleFrames": 0,
+                "detailBias": 5,
+                "gpuBytesLimit": 8000000000,
+                "triangleLimit": 20000000,
+                "weakDevice": false
+            }
+        }
+    ]
+}
