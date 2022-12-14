@@ -110,7 +110,7 @@ export function createRendering(
             (window as any).output = output;
 
             if (settings.outlineRenderingEnabled && view.camera.controller.params.kind === "ortho") {
-                await output.applyPostEffect({ kind: "outline", color: [0, 0, 0, 0], waitForIdleFrame: false });
+                await output.applyPostEffect({ kind: "outline", color: [0, 0, 0, 0] });
             }
 
             const image = await output.getImage();
@@ -149,11 +149,7 @@ export function createRendering(
 
             let reset = true;
 
-            while (runPostEffects && running.current) {
-                if (await output.hasChanged()) {
-                    break;
-                }
-
+            while (runPostEffects && running.current && output.isIdleFrame()) {
                 await (api as any).waitFrame();
 
                 if (!running.current) {
@@ -161,8 +157,7 @@ export function createRendering(
                 }
 
                 if (settings.taaEnabled) {
-                    runPostEffects =
-                        (await output.applyPostEffect({ kind: "taa", reset, waitForIdleFrame: true })) || false;
+                    runPostEffects = (await output.applyPostEffect({ kind: "taa", reset })) || false;
                 }
 
                 if (settings.ssaoEnabled) {
@@ -171,7 +166,6 @@ export function createRendering(
                         samples: 64,
                         radius: 1,
                         reset: reset,
-                        waitForIdleFrame: true,
                     });
 
                     if (!settings.taaEnabled) {
