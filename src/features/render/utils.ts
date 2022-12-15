@@ -92,7 +92,6 @@ export function createRendering(
         const ctx = offscreenCanvas ? canvas.getContext("bitmaprenderer") : undefined;
 
         const fpsTable: number[] = [];
-        let startRender = 0;
         let fps = 0;
 
         while (running.current) {
@@ -123,10 +122,8 @@ export function createRendering(
                 ctx.transferFromImageBitmap(image); // display in canvas
             }
 
-            const now = performance.now();
-            if (startRender > 0) {
-                const dt = now - startRender;
-                fpsTable.splice(0, 0, dt);
+            if (view.performanceStatistics.frameInterval) {
+                fpsTable.splice(0, 0, view.performanceStatistics.frameInterval);
                 if (fpsTable.length > 50) {
                     fpsTable.length = 50;
                 }
@@ -137,7 +134,6 @@ export function createRendering(
                 fps = (1000 * fpsTable.length) / fps;
                 (view.performanceStatistics as any).fps = fps;
             }
-            startRender = now;
 
             (view.performanceStatistics as any).resolutionScale = output.renderSettings.quality.resolution.value;
 
@@ -174,7 +170,6 @@ export function createRendering(
                 }
 
                 reset = false;
-                startRender = 0;
                 const image = await output.getImage();
                 if (ctx && image) {
                     ctx.transferFromImageBitmap(image); // display in canvas
