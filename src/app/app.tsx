@@ -44,7 +44,7 @@ try {
 } catch (e) {
     console.warn(e);
 }
-const deviceProfileInitialized = loadDeviceProfile();
+const deviceProfileInitialized = (api.deviceProfile as any).debugProfile ? Promise.resolve() : loadDeviceProfile();
 
 export const dataApi = createDataAPI({ authHeader: getAuthHeader, serviceUrl: dataServerBaseUrl });
 export const measureApi = createMeasureAPI();
@@ -196,11 +196,6 @@ export function App() {
 
         async function loadDeviceProfile() {
             if (deviceProfileStatus !== Status.Initial) {
-                return;
-            }
-
-            if ((api.deviceProfile as any).debugProfile) {
-                setDeviceProfileStatus(Status.Ready);
                 return;
             }
 
