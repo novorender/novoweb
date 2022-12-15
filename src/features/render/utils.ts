@@ -11,7 +11,6 @@ import {
     MeasureInfo,
     ObjectId,
     OrthoControllerParams,
-    RenderOutput,
     RenderSettings,
     Scene,
     View,
@@ -590,17 +589,20 @@ export function initProjectSettings({ sceneData }: { sceneData: SceneData }): vo
 }
 
 export async function pickDeviationArea({
-    measure,
+    view,
     size,
     clickX,
     clickY,
 }: {
-    measure: RenderOutput["measure"];
+    view: View;
     size: number;
     clickX: number;
     clickY: number;
 }): Promise<number | undefined> {
-    const center = await measure(clickX, clickY);
+    if (!view.lastRenderOutput) {
+        return;
+    }
+    const center = await view.lastRenderOutput.measure(clickX, clickY);
 
     if (center?.deviation) {
         return center.deviation;
@@ -612,7 +614,7 @@ export async function pickDeviationArea({
 
     for (let x = 1; x <= size; x++) {
         for (let y = 1; y <= size; y++) {
-            res.push(measure(startX + x, startY + y));
+            res.push(view.lastRenderOutput.measure(startX + x, startY + y));
         }
     }
 

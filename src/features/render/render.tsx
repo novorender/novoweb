@@ -1021,7 +1021,7 @@ export function Render3D({ onInit }: Props) {
         if (deviation.mode !== "off" && cameraState.type === CameraType.Orthographic) {
             const pickSize = isTouchPointer.current ? 16 : 0;
             const deviation = await pickDeviationArea({
-                measure: view.lastRenderOutput.measure,
+                view,
                 size: pickSize,
                 clickX: e.nativeEvent.offsetX,
                 clickY: e.nativeEvent.offsetY,
