@@ -136,12 +136,13 @@ export function createRendering(
             }
 
             (view.performanceStatistics as any).resolutionScale = output.renderSettings.quality.resolution.value;
+            let taaEnabled = !api.deviceProfile.weakDevice && settings.taaEnabled;
 
             let runPostEffects =
                 !api.deviceProfile.weakDevice &&
                 output.statistics.sceneResolved &&
                 view.camera.controller.params.kind !== "ortho" &&
-                (settings.taaEnabled || settings.ssaoEnabled);
+                (taaEnabled || settings.ssaoEnabled);
 
             let reset = true;
 
@@ -152,7 +153,7 @@ export function createRendering(
                     break;
                 }
 
-                if (settings.taaEnabled) {
+                if (taaEnabled) {
                     runPostEffects = (await output.applyPostEffect({ kind: "taa", reset })) || false;
                 }
 
@@ -164,7 +165,7 @@ export function createRendering(
                         reset: reset,
                     });
 
-                    if (!settings.taaEnabled) {
+                    if (!taaEnabled) {
                         runPostEffects = false;
                     }
                 }
