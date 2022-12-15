@@ -200,6 +200,7 @@ export function App() {
             }
 
             if ((api.deviceProfile as any).debugProfile) {
+                setDeviceProfileStatus(Status.Ready);
                 return;
             }
 
@@ -272,6 +273,7 @@ async function loadDeviceProfile(): Promise<void> {
                 ...api.deviceProfile,
                 weakDevice: false,
                 renderResolution: gpuTier.isMobile ? 1 : api.deviceProfile.renderResolution,
+                detailBias: gpuTier.isMobile ? api.deviceProfile.renderResolution : 0.5,
             };
         }
 
@@ -282,6 +284,7 @@ async function loadDeviceProfile(): Promise<void> {
                 ...api.deviceProfile,
                 triangleLimit: Math.max(7_500_000, api.deviceProfile.triangleLimit),
                 gpuBytesLimit: Math.max(apple ? 750_000_000 : 1_000_000_000, api.deviceProfile.gpuBytesLimit),
+                detailBias: gpuTier.isMobile ? api.deviceProfile.renderResolution : 0.75,
             };
         }
 
