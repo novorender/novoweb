@@ -249,48 +249,77 @@ export function App() {
 async function loadDeviceProfile(): Promise<void> {
     try {
         const tiers = [0, 50, 75, 300];
-        const gpuTier = await getGPUTier({
+        const { tier, isMobile, device } = await getGPUTier({
             mobileTiers: tiers,
             desktopTiers: tiers,
         });
 
+        const { name } = api.deviceProfile;
         api.deviceProfile = {
             ...api.deviceProfile,
-            name: `${api.deviceProfile.name} - Tier ${gpuTier.tier} - ${gpuTier.isMobile ? "Mobile" : "PC"}`,
+            name: `${api.deviceProfile.name}${/tier/i.test(name) ? "" : `; tier${tier}`}${
+                /(pc|mobile)/i.test(name) ? "" : `; ${isMobile ? "Mobile" : "PC"}`
+            }`,
         };
 
-        if (gpuTier.tier === 0) {
-            return;
-        }
+        switch (tier) {
+            case 0:
+                return;
+            case 1:
+                if (isMobile) {
+                    api.deviceProfile = {
+                        ...api.deviceProfile,
+                        renderResolution: 1,
+                        gpuBytesLimit: Math.max(750_000_000, api.deviceProfile.gpuBytesLimit),
+                    };
+                } else {
+                    api.deviceProfile = {
+                        ...api.deviceProfile,
+                        gpuBytesLimit: Math.max(1_000_000, api.deviceProfile.gpuBytesLimit),
+                        detailBias: Math.max(0.4, api.deviceProfile.detailBias),
+                    };
+                }
+                return;
+            case 2:
+                if (isMobile) {
+                    api.deviceProfile = {
+                        ...api.deviceProfile,
+                        triangleLimit: Math.max(7_500_000, api.deviceProfile.triangleLimit),
+                        weakDevice: false,
+                    };
 
-        if (gpuTier.tier === 1) {
-            api.deviceProfile = {
-                ...api.deviceProfile,
-                weakDevice: false,
-                renderResolution: gpuTier.isMobile ? 1 : api.deviceProfile.renderResolution,
-                detailBias: gpuTier.isMobile ? api.deviceProfile.renderResolution : 0.5,
-            };
-        }
-
-        if (gpuTier.isMobile && gpuTier.tier >= 2) {
-            const apple = gpuTier.device?.includes("apple");
-
-            api.deviceProfile = {
-                ...api.deviceProfile,
-                triangleLimit: Math.max(7_500_000, api.deviceProfile.triangleLimit),
-                gpuBytesLimit: Math.max(apple ? 750_000_000 : 1_000_000_000, api.deviceProfile.gpuBytesLimit),
-                detailBias: gpuTier.isMobile ? api.deviceProfile.renderResolution : 0.75,
-            };
-        }
-
-        if (!gpuTier.isMobile && gpuTier.tier >= 3) {
-            api.deviceProfile = {
-                ...api.deviceProfile,
-                detailBias: Math.max(1.5, api.deviceProfile.detailBias),
-                triangleLimit: Math.max(20_000_000, api.deviceProfile.triangleLimit),
-                gpuBytesLimit: Math.max(4_000_000_000, api.deviceProfile.gpuBytesLimit),
-                renderResolution: 1,
-            };
+                    const apple = device?.includes("apple");
+                    if (apple) {
+                        api.deviceProfile = {
+                            ...api.deviceProfile,
+                            gpuBytesLimit: Math.max(750_000_000, api.deviceProfile.gpuBytesLimit),
+                        };
+                    } else {
+                        api.deviceProfile = {
+                            ...api.deviceProfile,
+                            gpuBytesLimit: Math.max(1_000_000_000, api.deviceProfile.gpuBytesLimit),
+                            detailBias: Math.max(0.5, api.deviceProfile.detailBias),
+                        };
+                    }
+                } else {
+                    api.deviceProfile = {
+                        ...api.deviceProfile,
+                        weakDevice: false,
+                    };
+                }
+                return;
+            case 3:
+                if (isMobile) {
+                    // skip
+                } else {
+                    api.deviceProfile = {
+                        ...api.deviceProfile,
+                        detailBias: Math.max(1.5, api.deviceProfile.detailBias),
+                        triangleLimit: Math.max(20_000_000, api.deviceProfile.triangleLimit),
+                        gpuBytesLimit: Math.max(4_000_000_000, api.deviceProfile.gpuBytesLimit),
+                        renderResolution: 1,
+                    };
+                }
         }
     } catch (e) {
         console.warn(e);
