@@ -138,7 +138,6 @@ export function createRendering(
             let taaEnabled = !api.deviceProfile.weakDevice && settings.taaEnabled;
 
             let runPostEffects =
-                !api.deviceProfile.weakDevice &&
                 output.statistics.sceneResolved &&
                 view.camera.controller.params.kind !== "ortho" &&
                 (taaEnabled || settings.ssaoEnabled);
