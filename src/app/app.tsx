@@ -264,6 +264,15 @@ async function loadDeviceProfile(): Promise<void> {
 
         switch (tier) {
             case 0:
+                const fhd = 1920 * 1080;
+                const screen = window.screen.width * window.screen.height;
+
+                if (screen > fhd) {
+                    api.deviceProfile = {
+                        ...api.deviceProfile,
+                        renderResolution: fhd / screen,
+                    };
+                }
                 return;
             case 1:
                 if (isMobile) {
@@ -320,6 +329,7 @@ async function loadDeviceProfile(): Promise<void> {
                         renderResolution: 1,
                     };
                 }
+                return;
         }
     } catch (e) {
         console.warn(e);
