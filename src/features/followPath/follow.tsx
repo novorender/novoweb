@@ -118,6 +118,7 @@ export function Follow({ fpObj }: { fpObj: FollowParametricObject }) {
                             fieldOfView: view.camera.fieldOfView,
                             near: -0.001,
                             far: clipping,
+                            position: [0, 0, 0],
                         },
                         gridOrigo: pt as vec3,
                     })
