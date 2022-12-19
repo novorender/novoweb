@@ -104,9 +104,6 @@ export function createRendering(
                 view.adjustQuality({ lowerBound: 40, upperBound: 30 });
             }
 
-            // todo
-            (window as any).output = output;
-
             if (settings.outlineRenderingEnabled && view.camera.controller.params.kind === "ortho") {
                 await output.applyPostEffect({ kind: "outline", color: [0, 0, 0, 0] });
             }
@@ -118,7 +115,7 @@ export function createRendering(
             }
 
             if (ctx && image) {
-                ctx.transferFromImageBitmap(image); // display in canvas
+                ctx.transferFromImageBitmap(image);
             }
 
             if (view.performanceStatistics.frameInterval) {
@@ -171,7 +168,7 @@ export function createRendering(
                 reset = false;
                 const image = await output.getImage();
                 if (ctx && image) {
-                    ctx.transferFromImageBitmap(image); // display in canvas
+                    ctx.transferFromImageBitmap(image);
                 }
             }
         }
