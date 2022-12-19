@@ -48,7 +48,7 @@ const rootNode = {
 
 type RootNode = typeof rootNode;
 
-export function ModelTree() {
+export default function ModelTree() {
     const mainObject = useAppSelector(selectMainObject);
     const dispatch = useAppDispatch();
 

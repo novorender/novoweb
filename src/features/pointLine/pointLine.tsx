@@ -23,7 +23,7 @@ import { selectMinimized, selectMaximized } from "slices/explorerSlice";
 
 import { pointLineActions, selectPointLine } from "./pointLineSlice";
 
-export function PointLine() {
+export default function PointLine() {
     const [menuOpen, toggleMenu] = useToggle();
 
     const minimized = useAppSelector(selectMinimized) === featuresConfig.pointLine.key;

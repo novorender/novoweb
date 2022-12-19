@@ -1,1 +1,2 @@
-export { Search, CustomParentNode } from "./search";
+import { CustomParentNode } from "./search";
+export { CustomParentNode };

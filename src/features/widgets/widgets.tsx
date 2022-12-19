@@ -1,37 +1,38 @@
-import { Fragment, useEffect } from "react";
+import { Fragment, useEffect, lazy, Suspense } from "react";
 import { Box, useMediaQuery, useTheme } from "@mui/material";
 
 import { explorerActions, selectMaximized, selectWidgets } from "slices/explorerSlice";
 import { useAppDispatch, useAppSelector } from "app/store";
 import { featuresConfig, WidgetKey } from "config/features";
-
-import { Properties } from "features/properties";
-import { PropertiesTree } from "features/propertiesTree";
-import { Bookmarks } from "features/bookmarks";
-import { ModelTree } from "features/modelTree";
-import { Search } from "features/search";
-import { ClippingBox } from "features/clippingBox";
-import { Measure } from "features/measure";
-import { Groups } from "features/groups";
-import { ClippingPlanes } from "features/clippingPlanes";
-import { OrthoCam } from "features/orthoCam";
-import { Panoramas } from "features/panoramas";
-import { AdvancedSettings } from "features/advancedSettings";
-import { BimCollab } from "features/bimCollab";
-import { SelectionBasket } from "features/selectionBasket";
+import { WidgetErrorBoundary, WidgetSkeleton } from "components";
 import { MenuWidget } from "features/menuWidget";
-import { Deviations } from "features/deviations";
-import { FollowPath } from "features/followPath";
-import { BimTrack } from "features/bimTrack";
-import { Ditio } from "features/ditio";
-import { MyLocation } from "features/myLocation";
-import { RangeSearch } from "features/rangeSearch";
-import { User } from "features/user";
-import { HeightProfile } from "features/heightProfile";
-import { Area } from "features/area";
-import { PointLine } from "features/pointLine";
-import { Jira } from "features/jira";
-import { Manhole } from "features/manhole";
+
+const Properties = lazy(() => import("features/properties/properties"));
+const PropertiesTree = lazy(() => import("features/propertiesTree/propertiesTree"));
+const Bookmarks = lazy(() => import("features/bookmarks/bookmarksWidget"));
+const ModelTree = lazy(() => import("features/modelTree/modelTree"));
+const Search = lazy(() => import("features/search/search"));
+const ClippingBox = lazy(() => import("features/clippingBox/clippingBox"));
+const Measure = lazy(() => import("features/measure/measure"));
+const Groups = lazy(() => import("features/groups/groups"));
+const ClippingPlanes = lazy(() => import("features/clippingPlanes/clippingPlanes"));
+const OrthoCam = lazy(() => import("features/orthoCam/orthoCam"));
+const Panoramas = lazy(() => import("features/panoramas/panoramas"));
+const AdvancedSettings = lazy(() => import("features/advancedSettings/advancedSettings"));
+const BimCollab = lazy(() => import("features/bimCollab/bimCollab"));
+const SelectionBasket = lazy(() => import("features/selectionBasket/selectionBasket"));
+const Deviations = lazy(() => import("features/deviations/deviations"));
+const FollowPath = lazy(() => import("features/followPath/followPath"));
+const BimTrack = lazy(() => import("features/bimTrack/bimTrack"));
+const Ditio = lazy(() => import("features/ditio/ditio"));
+const MyLocation = lazy(() => import("features/myLocation/myLocation"));
+const RangeSearch = lazy(() => import("features/rangeSearch/rangeSearch"));
+const User = lazy(() => import("features/user/user"));
+const HeightProfile = lazy(() => import("features/heightProfile/heightProfile"));
+const Area = lazy(() => import("features/area/area"));
+const PointLine = lazy(() => import("features/pointLine/pointLine"));
+const Jira = lazy(() => import("features/jira/jira"));
+const Manhole = lazy(() => import("features/manhole/manhole"));
 
 export function Widgets() {
     const theme = useTheme();
@@ -73,60 +74,96 @@ export function Widgets() {
 }
 
 function getWidgetByKey(key: WidgetKey): JSX.Element | string {
+    let Widget: React.LazyExoticComponent<() => JSX.Element>;
+
     switch (key) {
         case featuresConfig.properties.key:
-            return <Properties />;
+            Widget = Properties;
+            break;
         case featuresConfig.propertyTree.key:
-            return <PropertiesTree />;
+            Widget = PropertiesTree;
+            break;
         case featuresConfig.bookmarks.key:
-            return <Bookmarks />;
+            Widget = Bookmarks;
+            break;
         case featuresConfig.groups.key:
-            return <Groups />;
+            Widget = Groups;
+            break;
         case featuresConfig.modelTree.key:
-            return <ModelTree />;
+            Widget = ModelTree;
+            break;
         case featuresConfig.search.key:
-            return <Search />;
+            Widget = Search;
+            break;
         case featuresConfig.clippingBox.key:
-            return <ClippingBox />;
+            Widget = ClippingBox;
+            break;
         case featuresConfig.measure.key:
-            return <Measure />;
+            Widget = Measure;
+            break;
         case featuresConfig.bimcollab.key:
-            return <BimCollab />;
+            Widget = BimCollab;
+            break;
         case featuresConfig.bimTrack.key:
-            return <BimTrack />;
+            Widget = BimTrack;
+            break;
         case featuresConfig.clippingPlanes.key:
-            return <ClippingPlanes />;
+            Widget = ClippingPlanes;
+            break;
         case featuresConfig.orthoCam.key:
-            return <OrthoCam />;
+            Widget = OrthoCam;
+            break;
         case featuresConfig.panoramas.key:
-            return <Panoramas />;
+            Widget = Panoramas;
+            break;
         case featuresConfig.advancedSettings.key:
-            return <AdvancedSettings />;
+            Widget = AdvancedSettings;
+            break;
         case featuresConfig.selectionBasket.key:
-            return <SelectionBasket />;
+            Widget = SelectionBasket;
+            break;
         case featuresConfig.deviations.key:
-            return <Deviations />;
+            Widget = Deviations;
+            break;
         case featuresConfig.followPath.key:
-            return <FollowPath />;
+            Widget = FollowPath;
+            break;
         case featuresConfig.ditio.key:
-            return <Ditio />;
+            Widget = Ditio;
+            break;
         case featuresConfig.myLocation.key:
-            return <MyLocation />;
+            Widget = MyLocation;
+            break;
         case featuresConfig.rangeSearch.key:
-            return <RangeSearch />;
+            Widget = RangeSearch;
+            break;
         case featuresConfig.user.key:
-            return <User />;
+            Widget = User;
+            break;
         case featuresConfig.heightProfile.key:
-            return <HeightProfile />;
+            Widget = HeightProfile;
+            break;
         case featuresConfig.area.key:
-            return <Area />;
+            Widget = Area;
+            break;
         case featuresConfig.pointLine.key:
-            return <PointLine />;
+            Widget = PointLine;
+            break;
         case featuresConfig.jira.key:
-            return <Jira />;
+            Widget = Jira;
+            break;
         case featuresConfig.manhole.key:
-            return <Manhole />;
+            Widget = Manhole;
+            break;
         default:
             return key;
     }
+
+    return (
+        <WidgetErrorBoundary widgetKey={key}>
+            <Suspense fallback={<WidgetSkeleton widgetKey={key} />}>
+                <Widget />
+            </Suspense>
+        </WidgetErrorBoundary>
+    );
 }

@@ -43,7 +43,7 @@ enum Status {
     SaveError,
 }
 
-export function AdvancedSettings() {
+export default function AdvancedSettings() {
     const sceneId = useSceneId();
     const {
         state: { scene, view },

@@ -14,7 +14,7 @@ import { useExplorerGlobals } from "contexts/explorerGlobals";
 
 const axisNames = ["-X", "-Z", "-Y", "+X", "+Z", "+Y"];
 
-export function ClippingBox() {
+export default function ClippingBox() {
     const {
         state: { view },
     } = useExplorerGlobals(true);

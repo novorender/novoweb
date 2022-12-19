@@ -11,7 +11,7 @@ import { WidgetList } from "features/widgetList";
 import { selectMinimized, selectMaximized } from "slices/explorerSlice";
 import { useExplorerGlobals } from "contexts/explorerGlobals";
 
-export function ClippingPlanes() {
+export default function ClippingPlanes() {
     const {
         state: { view },
     } = useExplorerGlobals(true);

@@ -38,7 +38,7 @@ import {
     useRefreshTokenMutation,
 } from "./bimTrackApi";
 
-export function BimTrack() {
+export default function BimTrack() {
     const sceneId = useSceneId();
     const status = useAppSelector(selectStatus);
     const authInfo = useAppSelector(selectAuthInfo);

@@ -60,7 +60,7 @@ const Img = styled("img")(
     `
 );
 
-export function Panoramas() {
+export default function Panoramas() {
     const {
         state: { scene },
     } = useExplorerGlobals(true);

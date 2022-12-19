@@ -12,7 +12,7 @@ import { StorageKey } from "config/storage";
 import { msalInstance } from "app";
 import { selectMaximized, selectMinimized, selectUserRole, UserRole } from "slices/explorerSlice";
 
-export function User() {
+export default function User() {
     const [menuOpen, toggleMenu] = useToggle();
 
     const minimized = useAppSelector(selectMinimized) === featuresConfig.user.key;

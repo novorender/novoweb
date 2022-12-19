@@ -12,7 +12,7 @@ import { selectMinimized, selectMaximized } from "slices/explorerSlice";
 
 import { areaActions, selectArea, selectAreaPoints } from "./areaSlice";
 
-export function Area() {
+export default function Area() {
     const [menuOpen, toggleMenu] = useToggle();
 
     const minimized = useAppSelector(selectMinimized) === featuresConfig.area.key;

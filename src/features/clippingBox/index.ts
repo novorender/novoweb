@@ -1,1 +1,1 @@
-export { ClippingBox } from "./clippingBox";
+export {};

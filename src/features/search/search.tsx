@@ -42,7 +42,7 @@ enum Status {
     Error,
 }
 
-export function Search() {
+export default function Search() {
     const dispatch = useAppDispatch();
     const highlighted = useLazyHighlighted();
     const dispatchHighlighted = useDispatchHighlighted();

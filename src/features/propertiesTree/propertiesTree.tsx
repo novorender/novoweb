@@ -22,7 +22,7 @@ type TreeLevel = {
     values?: string[];
 };
 
-export function PropertiesTree() {
+export default function PropertiesTree() {
     const {
         state: { scene },
     } = useExplorerGlobals(true);

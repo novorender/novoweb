@@ -29,7 +29,7 @@ enum Status {
 
 const dateFormat = "yyyyMMdd'z'";
 
-export function RangeSearch() {
+export default function RangeSearch() {
     const {
         state: { scene },
     } = useExplorerGlobals(true);

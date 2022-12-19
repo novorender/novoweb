@@ -36,7 +36,7 @@ import { Feed } from "./routes/feed";
 import { Post } from "./routes/post";
 import { Filters } from "./routes/filters";
 
-export function Ditio() {
+export default function Ditio() {
     const sceneId = useSceneId();
     const [menuOpen, toggleMenu] = useToggle();
     const minimized = useAppSelector(selectMinimized) === featuresConfig.ditio.key;

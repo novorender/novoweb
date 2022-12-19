@@ -21,7 +21,7 @@ import {
     selectLocationAccuracy,
 } from "./myLocationSlice";
 
-export function MyLocation() {
+export default function MyLocation() {
     const [menuOpen, toggleMenu] = useToggle();
     const minimized = useAppSelector(selectMinimized) === featuresConfig.myLocation.key;
     const maximized = useAppSelector(selectMaximized) === featuresConfig.myLocation.key;

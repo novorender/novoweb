@@ -22,7 +22,7 @@ import { CreateIssue } from "./routes/create";
 import { CreateComment } from "./routes/createComment";
 import { jiraActions, selectJiraAccessTokenData } from "./jiraSlice";
 
-export function Jira() {
+export default function Jira() {
     const sceneId = useSceneId();
     const [menuOpen, toggleMenu] = useToggle();
     const minimized = useAppSelector(selectMinimized) === featuresConfig.jira.key;

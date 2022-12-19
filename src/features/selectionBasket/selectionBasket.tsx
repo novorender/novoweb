@@ -57,7 +57,7 @@ enum ExportStatus {
     Error,
 }
 
-export function SelectionBasket() {
+export default function SelectionBasket() {
     const {
         state: { scene },
     } = useExplorerGlobals(true);

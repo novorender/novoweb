@@ -39,7 +39,7 @@ import {
     useRefreshTokenMutation,
 } from "./bimCollabApi";
 
-export function BimCollab() {
+export default function BimCollab() {
     const sceneId = useSceneId();
     const space = useAppSelector(selectSpace);
     const apiVersion = useAppSelector(selectVersion);

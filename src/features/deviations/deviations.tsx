@@ -43,7 +43,7 @@ import {
 import { CreateDeviation } from "./createDeviation";
 import { SceneData } from "@novorender/data-js-api";
 
-export function Deviations() {
+export default function Deviations() {
     const status = useAppSelector(selectDeviationsStatus);
     const calculationStatus = useAppSelector(selectDeviationCalculationStatus);
     const deviations = useAppSelector(selectDeviations);

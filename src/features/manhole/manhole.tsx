@@ -37,7 +37,7 @@ import {
     selectManholeCollisionSettings,
 } from "./manholeSlice";
 
-export function Manhole() {
+export default function Manhole() {
     const {
         state: { measureScene },
     } = useExplorerGlobals(true);
