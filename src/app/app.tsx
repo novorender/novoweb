@@ -249,7 +249,7 @@ export function App() {
 async function loadDeviceProfile(): Promise<void> {
     try {
         const tiers = [0, 50, 75, 300];
-        const { tier, isMobile, device } = await getGPUTier({
+        const { tier, isMobile, device, fps } = await getGPUTier({
             mobileTiers: tiers,
             desktopTiers: tiers,
         });
@@ -257,7 +257,7 @@ async function loadDeviceProfile(): Promise<void> {
         const { name } = api.deviceProfile;
         api.deviceProfile = {
             ...api.deviceProfile,
-            name: `${api.deviceProfile.name}${/tier/i.test(name) ? "" : `; tier${tier}`}${
+            name: `${api.deviceProfile.name}${/tier/i.test(name) ? "" : `; tier${tier} (${fps})`}${
                 /(pc|mobile)/i.test(name) ? "" : `; ${isMobile ? "Mobile" : "PC"}`
             }`,
         };
