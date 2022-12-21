@@ -24,7 +24,9 @@ export function VersionAlert() {
         toggleModal();
     };
 
-    const match = navigator.userAgent.match(/(?<device>iPad|iPhone) OS (?<major>[\d]{2})_(?<minor>[\d]{1,2})/i)?.groups;
+    const match = navigator.userAgent.match(
+        /(?<device>iPad|iPhone);.+OS (?<major>[\d]{2})_(?<minor>[\d]{1,2})/i
+    )?.groups;
 
     if (!match) {
         return null;
