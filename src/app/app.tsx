@@ -249,10 +249,17 @@ export function App() {
 async function loadDeviceProfile(): Promise<void> {
     try {
         const tiers = [0, 50, 75, 300];
-        const { tier, isMobile, device, fps } = await getGPUTier({
+        const { isMobile, device, fps, ...gpuTier } = await getGPUTier({
             mobileTiers: tiers,
             desktopTiers: tiers,
         });
+        const isApple = device?.includes("apple");
+        let { tier } = gpuTier;
+
+        // GPU is obscured on apple mobile devices and the result is usually much worse than the actual device's GPU.
+        if (isMobile && isApple) {
+            tier = Math.max(1, tier);
+        }
 
         const { name } = api.deviceProfile;
         api.deviceProfile = {
@@ -297,8 +304,7 @@ async function loadDeviceProfile(): Promise<void> {
                         weakDevice: false,
                     };
 
-                    const apple = device?.includes("apple");
-                    if (apple) {
+                    if (isApple) {
                         api.deviceProfile = {
                             ...api.deviceProfile,
                             gpuBytesLimit: Math.max(750_000_000, api.deviceProfile.gpuBytesLimit),
