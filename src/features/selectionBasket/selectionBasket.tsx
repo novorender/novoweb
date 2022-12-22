@@ -34,9 +34,9 @@ import { useAbortController } from "hooks/useAbortController";
 import { batchedPropertySearch } from "utils/search";
 import { uniqueArray } from "utils/misc";
 
-import { customGroupsActions, useCustomGroups } from "contexts/customGroups";
+import { objectGroupsActions, useObjectGroups, useDispatchObjectGroups } from "contexts/objectGroups";
 import { highlightActions, useDispatchHighlighted, useHighlighted } from "contexts/highlighted";
-import { useDispatchVisible, useVisible, visibleActions } from "contexts/visible";
+import { useDispatchSelectionBasket, useSelectionBasket, selectionBasketActions } from "contexts/selectionBasket";
 import {
     ObjectVisibility,
     renderActions,
@@ -57,7 +57,7 @@ enum ExportStatus {
     Error,
 }
 
-export function SelectionBasket() {
+export default function SelectionBasket() {
     const {
         state: { scene },
     } = useExplorerGlobals(true);
@@ -68,11 +68,12 @@ export function SelectionBasket() {
     const defaultVisibility = useAppSelector(selectDefaultVisibility);
     const mode = useAppSelector(selectSelectionBasketMode);
     const { idArr: highlighted } = useHighlighted();
-    const { idArr: visible } = useVisible();
-    const { state: customGroups, dispatch: dispatchCustomGroups } = useCustomGroups();
+    const { idArr: visible } = useSelectionBasket();
+    const objectGroups = useObjectGroups();
+    const dispatchObjectGroups = useDispatchObjectGroups();
 
     const dispatchHighlighted = useDispatchHighlighted();
-    const dispatchVisible = useDispatchVisible();
+    const dispatchSelectionBasket = useDispatchSelectionBasket();
     const dispatch = useAppDispatch();
 
     const color = useAppSelector(selectSelectionBasketColor);
@@ -86,7 +87,7 @@ export function SelectionBasket() {
     const [exportStatus, setExportStatus] = useMountedState(ExportStatus.Idle);
     const [abortController] = useAbortController();
 
-    const selectedGroups = customGroups.filter((group) => group.selected);
+    const selectedGroups = objectGroups.filter((group) => group.selected);
     const hasHighlighted = highlighted.length || selectedGroups.length;
 
     useEffect(() => {
@@ -98,21 +99,21 @@ export function SelectionBasket() {
     const handleAdd = () => {
         const fromGroup = selectedGroups.map((grp) => grp.ids).flat();
 
-        dispatchVisible(visibleActions.add(highlighted.concat(fromGroup)));
+        dispatchSelectionBasket(selectionBasketActions.add(highlighted.concat(fromGroup)));
         dispatchHighlighted(highlightActions.setIds([]));
-        dispatchCustomGroups(customGroupsActions.set(customGroups.map((group) => ({ ...group, selected: false }))));
+        dispatchObjectGroups(objectGroupsActions.set(objectGroups.map((group) => ({ ...group, selected: false }))));
     };
 
     const handleRemove = () => {
         const fromGroup = selectedGroups.map((grp) => grp.ids).flat();
 
-        dispatchVisible(visibleActions.remove(highlighted.concat(fromGroup)));
+        dispatchSelectionBasket(selectionBasketActions.remove(highlighted.concat(fromGroup)));
         dispatchHighlighted(highlightActions.setIds([]));
-        dispatchCustomGroups(customGroupsActions.set(customGroups.map((group) => ({ ...group, selected: false }))));
+        dispatchObjectGroups(objectGroupsActions.set(objectGroups.map((group) => ({ ...group, selected: false }))));
     };
 
     const handleClear = () => {
-        dispatchVisible(visibleActions.set([]));
+        dispatchSelectionBasket(selectionBasketActions.set([]));
     };
 
     const handleViewTypeChange = (_: any, value: string) => {
@@ -348,11 +349,7 @@ export function SelectionBasket() {
                         }
                     />
                 </ScrollBox>
-                <WidgetList
-                    display={menuOpen ? "block" : "none"}
-                    widgetKey={featuresConfig.selectionBasket.key}
-                    onSelect={toggleMenu}
-                />
+                {menuOpen && <WidgetList widgetKey={featuresConfig.selectionBasket.key} onSelect={toggleMenu} />}
             </WidgetContainer>
             <LogoSpeedDial
                 open={menuOpen}

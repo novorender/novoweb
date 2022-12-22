@@ -37,7 +37,7 @@ import {
     selectManholeCollisionSettings,
 } from "./manholeSlice";
 
-export function Manhole() {
+export default function Manhole() {
     const {
         state: { measureScene },
     } = useExplorerGlobals(true);
@@ -375,11 +375,7 @@ export function Manhole() {
                     ) : null}
                 </ScrollBox>
 
-                <WidgetList
-                    display={menuOpen ? "block" : "none"}
-                    widgetKey={featuresConfig.manhole.key}
-                    onSelect={toggleMenu}
-                />
+                {menuOpen && <WidgetList widgetKey={featuresConfig.manhole.key} onSelect={toggleMenu} />}
             </WidgetContainer>
             <LogoSpeedDial
                 open={menuOpen}

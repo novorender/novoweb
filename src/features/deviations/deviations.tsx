@@ -28,7 +28,6 @@ import { rgbToVec, VecRGBA, vecToRgb } from "utils/color";
 
 import { useAppDispatch, useAppSelector } from "app/store";
 import { useExplorerGlobals } from "contexts/explorerGlobals";
-import { selectEditingScene } from "slices/renderSlice";
 import { selectHasAdminCapabilities, selectIsAdminScene, selectMaximized, selectMinimized } from "slices/explorerSlice";
 
 import {
@@ -44,7 +43,7 @@ import {
 import { CreateDeviation } from "./createDeviation";
 import { SceneData } from "@novorender/data-js-api";
 
-export function Deviations() {
+export default function Deviations() {
     const status = useAppSelector(selectDeviationsStatus);
     const calculationStatus = useAppSelector(selectDeviationCalculationStatus);
     const deviations = useAppSelector(selectDeviations);
@@ -54,7 +53,6 @@ export function Deviations() {
         state: { scene },
     } = useExplorerGlobals(true);
     const sceneId = useSceneId();
-    const editingScene = useAppSelector(selectEditingScene);
     const isAdmin = useAppSelector(selectHasAdminCapabilities);
     const isAdminScene = useAppSelector(selectIsAdminScene);
 
@@ -116,7 +114,7 @@ export function Deviations() {
         );
 
     const handleSave = async () => {
-        const id = editingScene && editingScene.id ? editingScene.id : sceneId;
+        const id = sceneId;
 
         dispatch(deviationsActions.setStatus({ status: DeviationsStatus.Saving }));
 
@@ -243,11 +241,7 @@ export function Deviations() {
                         </>
                     )}
                 </ScrollBox>
-                <WidgetList
-                    display={menuOpen ? "block" : "none"}
-                    widgetKey={featuresConfig.deviations.key}
-                    onSelect={toggleMenu}
-                />
+                {menuOpen && <WidgetList widgetKey={featuresConfig.deviations.key} onSelect={toggleMenu} />}
             </WidgetContainer>
             <LogoSpeedDial
                 open={menuOpen}

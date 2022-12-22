@@ -3,7 +3,6 @@ import { useHistory, useParams } from "react-router-dom";
 import { Confirmation } from "components";
 
 import { useAppDispatch, useAppSelector } from "app/store";
-import { selectEditingScene } from "slices/renderSlice";
 
 import { dataApi } from "app";
 import { useSceneId } from "hooks/useSceneId";
@@ -15,7 +14,6 @@ export function Delete() {
     const history = useHistory();
     const sceneId = useSceneId();
 
-    const editingScene = useAppSelector(selectEditingScene);
     const bookmarks = useAppSelector(selectBookmarks);
     const dispatch = useAppDispatch();
 
@@ -32,7 +30,7 @@ export function Delete() {
 
         dispatch(bookmarksActions.setBookmarks(newBookmarks));
         dataApi.saveBookmarks(
-            editingScene?.id ? editingScene.id : sceneId,
+            sceneId,
             newBookmarks
                 .filter((bm) =>
                     personal ? bm.access === BookmarkAccess.Personal : bm.access === BookmarkAccess.Public

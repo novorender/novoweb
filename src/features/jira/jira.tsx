@@ -22,7 +22,7 @@ import { CreateIssue } from "./routes/create";
 import { CreateComment } from "./routes/createComment";
 import { jiraActions, selectJiraAccessTokenData } from "./jiraSlice";
 
-export function Jira() {
+export default function Jira() {
     const sceneId = useSceneId();
     const [menuOpen, toggleMenu] = useToggle();
     const minimized = useAppSelector(selectMinimized) === featuresConfig.jira.key;
@@ -69,11 +69,7 @@ export function Jira() {
                         </Route>
                     </Switch>
                 </Box>
-                <WidgetList
-                    display={menuOpen ? "block" : "none"}
-                    widgetKey={featuresConfig.jira.key}
-                    onSelect={toggleMenu}
-                />
+                {menuOpen && <WidgetList widgetKey={featuresConfig.jira.key} onSelect={toggleMenu} />}
             </WidgetContainer>
             <LogoSpeedDial open={menuOpen} toggle={toggleMenu} testId={`${featuresConfig.jira.key}-widget-menu-fab`} />
         </MemoryRouter>

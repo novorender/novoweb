@@ -21,9 +21,9 @@ import { useAppSelector, useAppDispatch } from "app/store";
 import { explorerActions, PrimaryMenuConfigType, SceneType, UserRole } from "slices/explorerSlice";
 import { selectUser } from "slices/authSlice";
 import { HiddenProvider } from "contexts/hidden";
-import { CustomGroupsProvider } from "contexts/customGroups";
+import { ObjectGroupsProvider } from "contexts/objectGroups";
 import { HighlightedProvider } from "contexts/highlighted";
-import { VisibleProvider } from "contexts/visible";
+import { SelectionBasketProvider } from "contexts/selectionBasket";
 import { explorerGlobalsActions, ExplorerGlobalsProvider, useExplorerGlobals } from "contexts/explorerGlobals";
 import { MsalInteraction } from "features/msalInteraction";
 import { VersionAlert } from "features/versionAlert";
@@ -195,9 +195,9 @@ function ContextProviders({ children }: { children: ReactNode }) {
         <ExplorerGlobalsProvider>
             <HighlightedProvider>
                 <HiddenProvider>
-                    <VisibleProvider>
-                        <CustomGroupsProvider>{children}</CustomGroupsProvider>
-                    </VisibleProvider>
+                    <SelectionBasketProvider>
+                        <ObjectGroupsProvider>{children}</ObjectGroupsProvider>
+                    </SelectionBasketProvider>
                 </HiddenProvider>
             </HighlightedProvider>
         </ExplorerGlobalsProvider>

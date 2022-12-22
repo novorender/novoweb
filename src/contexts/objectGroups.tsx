@@ -1,20 +1,24 @@
-import { ObjectGroup } from "@novorender/data-js-api";
-import { createContext, Dispatch, ReactNode, useContext, useEffect, useReducer, useRef } from "react";
+import { ObjectGroup as BaseObjectGroup } from "@novorender/data-js-api";
+import { createContext, Dispatch, MutableRefObject, ReactNode, useContext, useReducer, useRef } from "react";
 import { v4 as uuidv4 } from "uuid";
 
 import { VecRGB, VecRGBA } from "utils/color";
 
-export interface CustomGroup extends ObjectGroup {
+export interface ObjectGroup extends BaseObjectGroup {
     ids: number[];
     color: VecRGB | VecRGBA;
 }
 
-const initialState = [] as CustomGroup[];
+const initialState = [] as ObjectGroup[];
 
 type State = typeof initialState;
 
-export enum TempGroup {
-    BIMcollab = "Temporary BIMcollab viewpoint groups",
+export enum InternalGroup {
+    Checklist = "NOVORENDER_INTERNAL/Checklists",
+}
+
+export enum InternalTemporaryGroup {
+    BIMcollab = "NOVORENDER_INTERNAL_TMP/BIMcollab temporary",
 }
 
 enum ActionTypes {
@@ -27,7 +31,7 @@ enum ActionTypes {
     GroupSelected,
 }
 
-function update(groupId: string, updates: Partial<CustomGroup>) {
+function update(groupId: string, updates: Partial<ObjectGroup>) {
     return {
         type: ActionTypes.Update as const,
         groupId,
@@ -78,12 +82,14 @@ function groupSelected() {
 const actions = { update, set, add, copy, reset, groupSelected, delete: deleteGroup };
 
 type Actions = ReturnType<typeof actions[keyof typeof actions]>;
-type DispatchCustomGroups = Dispatch<Actions>;
-type ContextType = { state: State; dispatch: DispatchCustomGroups };
+type DispatchObjectGroups = Dispatch<Actions>;
+type LazyContextType = MutableRefObject<State>;
 
-const Context = createContext<ContextType>(undefined as any);
+const StateContext = createContext<State>(undefined as any);
+const LazyStateContext = createContext<LazyContextType>(undefined as any);
+const DispatchContext = createContext<DispatchObjectGroups>(undefined as any);
 
-function reducer(state: State, action: Actions): CustomGroup[] {
+function reducer(state: State, action: Actions): ObjectGroup[] {
     switch (action.type) {
         case ActionTypes.Delete: {
             return state.filter((group) => group.id !== action.groupId);
@@ -129,7 +135,7 @@ function reducer(state: State, action: Actions): CustomGroup[] {
                 grouping: toCopy.grouping,
                 search: toCopy.search ? [...toCopy.search] : undefined,
                 ids: [],
-                color: [...toCopy.color] as CustomGroup["color"],
+                color: [...toCopy.color] as ObjectGroup["color"],
                 selected: false,
                 hidden: false,
             };
@@ -160,7 +166,7 @@ function reducer(state: State, action: Actions): CustomGroup[] {
         }
         case ActionTypes.Reset: {
             return state
-                .filter((group) => group.grouping !== TempGroup.BIMcollab)
+                .filter((group) => !isInternalTemporaryGroup(group))
                 .map((group) => ({ ...group, selected: false, hidden: false }));
         }
         default: {
@@ -169,34 +175,65 @@ function reducer(state: State, action: Actions): CustomGroup[] {
     }
 }
 
-function CustomGroupsProvider({ children }: { children: ReactNode }) {
+function ObjectGroupsProvider({ children }: { children: ReactNode }) {
     const [state, dispatch] = useReducer(reducer, initialState);
+    const lazyValue = useRef(state);
+    lazyValue.current = state;
 
-    const value = { state, dispatch };
-
-    return <Context.Provider value={value}>{children}</Context.Provider>;
+    return (
+        <StateContext.Provider value={state}>
+            <LazyStateContext.Provider value={lazyValue}>
+                <DispatchContext.Provider value={dispatch}>{children}</DispatchContext.Provider>
+            </LazyStateContext.Provider>
+        </StateContext.Provider>
+    );
 }
 
-function useCustomGroups(): ContextType {
-    const context = useContext(Context);
+function useObjectGroups(): State {
+    const context = useContext(StateContext);
 
     if (context === undefined) {
-        throw new Error("useCustomGroups must be used within a CustomGroupsProvider");
+        throw new Error("useObjectGroups must be used within a ObjectGroupsProvider");
     }
 
     return context;
 }
 
-function useLazyCustomGroups() {
-    const state = useCustomGroups();
-    const ref = useRef(state.state);
+function useLazyObjectGroups(): LazyContextType {
+    const context = useContext(LazyStateContext);
 
-    useEffect(() => {
-        ref.current = state.state;
-    }, [state]);
+    if (context === undefined) {
+        throw new Error("useLazyObjectGroups must be used within a ObjectGroupsProvider");
+    }
 
-    return ref;
+    return context;
 }
 
-export { CustomGroupsProvider, useCustomGroups, useLazyCustomGroups, actions as customGroupsActions };
-export type { DispatchCustomGroups };
+function useDispatchObjectGroups(): DispatchObjectGroups {
+    const context = useContext(DispatchContext);
+
+    if (context === undefined) {
+        throw new Error("useDispatchObjectGroups must be used within a ObjectGroupsProvider");
+    }
+
+    return context;
+}
+
+function isInternalTemporaryGroup(group: ObjectGroup): boolean {
+    return Boolean(group.grouping?.startsWith("NOVORENDER_INTERNAL_TMP"));
+}
+
+function isInternalGroup(group: ObjectGroup): boolean {
+    return Boolean(group.grouping?.startsWith("NOVORENDER_INTERNAL"));
+}
+
+export {
+    ObjectGroupsProvider,
+    useObjectGroups,
+    useDispatchObjectGroups,
+    useLazyObjectGroups,
+    actions as objectGroupsActions,
+    isInternalTemporaryGroup,
+    isInternalGroup,
+};
+export type { DispatchObjectGroups };

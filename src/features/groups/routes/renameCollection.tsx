@@ -3,7 +3,7 @@ import { Autocomplete, Box, useTheme } from "@mui/material";
 import { useHistory, useLocation } from "react-router-dom";
 
 import { Confirmation, TextField } from "components";
-import { customGroupsActions, useCustomGroups } from "contexts/customGroups";
+import { objectGroupsActions, useObjectGroups, useDispatchObjectGroups } from "contexts/objectGroups";
 import { useAppDispatch } from "app/store";
 
 import { groupsActions } from "../groupsSlice";
@@ -13,7 +13,8 @@ export function RenameCollection() {
     const history = useHistory();
     const dispatch = useAppDispatch();
     const { collection: originalCollection } = useLocation<{ collection?: string }>().state;
-    const { state: groups, dispatch: dispatchCustomGroups } = useCustomGroups();
+    const groups = useObjectGroups();
+    const dispatchObjectGroups = useDispatchObjectGroups();
     const [collection, setCollection] = useState(originalCollection ?? "");
     const collections = Array.from(
         groups.reduce((set, grp) => {
@@ -46,8 +47,8 @@ export function RenameCollection() {
         groups
             .filter((group) => group.grouping?.startsWith(originalCollection))
             .forEach((group) =>
-                dispatchCustomGroups(
-                    customGroupsActions.update(group.id, {
+                dispatchObjectGroups(
+                    objectGroupsActions.update(group.id, {
                         grouping: group.grouping?.replace(originalCollection, collection),
                     })
                 )

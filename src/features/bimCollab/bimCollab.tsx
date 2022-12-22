@@ -39,7 +39,7 @@ import {
     useRefreshTokenMutation,
 } from "./bimCollabApi";
 
-export function BimCollab() {
+export default function BimCollab() {
     const sceneId = useSceneId();
     const space = useAppSelector(selectSpace);
     const apiVersion = useAppSelector(selectVersion);
@@ -228,11 +228,7 @@ export function BimCollab() {
                         <LinearProgress />
                     )}
                 </Box>
-                <WidgetList
-                    display={menuOpen ? "block" : "none"}
-                    widgetKey={featuresConfig.bimcollab.key}
-                    onSelect={toggleMenu}
-                />
+                {menuOpen && <WidgetList widgetKey={featuresConfig.bimcollab.key} onSelect={toggleMenu} />}
             </WidgetContainer>
             <LogoSpeedDial
                 open={menuOpen}

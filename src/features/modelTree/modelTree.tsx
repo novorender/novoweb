@@ -48,7 +48,7 @@ const rootNode = {
 
 type RootNode = typeof rootNode;
 
-export function ModelTree() {
+export default function ModelTree() {
     const mainObject = useAppSelector(selectMainObject);
     const dispatch = useAppDispatch();
 
@@ -300,11 +300,7 @@ export function ModelTree() {
                         </>
                     ) : null}
                 </Box>
-                <WidgetList
-                    display={menuOpen ? "block" : "none"}
-                    widgetKey={featuresConfig.modelTree.key}
-                    onSelect={toggleMenu}
-                />
+                {menuOpen && <WidgetList widgetKey={featuresConfig.modelTree.key} onSelect={toggleMenu} />}
             </WidgetContainer>
             <LogoSpeedDial
                 open={menuOpen}

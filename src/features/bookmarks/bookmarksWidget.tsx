@@ -26,7 +26,7 @@ import { BookmarkList } from "./routes/bookmarkList";
 import { Delete } from "./routes/delete";
 import { Crupdate } from "./routes/crupdate";
 
-export function Bookmarks() {
+export default function Bookmarks() {
     const [menuOpen, toggleMenu] = useToggle();
     const minimized = useAppSelector(selectMinimized) === featuresConfig.bookmarks.key;
     const maximized = useAppSelector(selectMaximized) === featuresConfig.bookmarks.key;
@@ -93,11 +93,7 @@ export function Bookmarks() {
                         </Switch>
                     </MemoryRouter>
                 </Box>
-                <WidgetList
-                    display={menuOpen ? "block" : "none"}
-                    widgetKey={featuresConfig.bookmarks.key}
-                    onSelect={toggleMenu}
-                />
+                {menuOpen && <WidgetList widgetKey={featuresConfig.bookmarks.key} onSelect={toggleMenu} />}
             </WidgetContainer>
             <LogoSpeedDial
                 open={menuOpen}

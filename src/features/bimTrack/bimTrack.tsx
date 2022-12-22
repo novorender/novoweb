@@ -38,7 +38,7 @@ import {
     useRefreshTokenMutation,
 } from "./bimTrackApi";
 
-export function BimTrack() {
+export default function BimTrack() {
     const sceneId = useSceneId();
     const status = useAppSelector(selectStatus);
     const authInfo = useAppSelector(selectAuthInfo);
@@ -193,11 +193,13 @@ export function BimTrack() {
                         <LinearProgress />
                     )}
                 </Box>
-                <WidgetList
-                    display={menuOpen ? "block" : "none"}
-                    widgetKey={featuresConfig.bimTrack.key}
-                    onSelect={toggleMenu}
-                />
+                {menuOpen && (
+                    <WidgetList
+                        display={menuOpen ? "block" : "none"}
+                        widgetKey={featuresConfig.bimTrack.key}
+                        onSelect={toggleMenu}
+                    />
+                )}
             </WidgetContainer>
             <LogoSpeedDial
                 open={menuOpen}

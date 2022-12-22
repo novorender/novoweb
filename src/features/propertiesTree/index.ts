@@ -1,1 +1,1 @@
-export { PropertiesTree } from "./propertiesTree";
+export {};

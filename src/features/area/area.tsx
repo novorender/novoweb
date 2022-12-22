@@ -12,7 +12,7 @@ import { selectMinimized, selectMaximized } from "slices/explorerSlice";
 
 import { areaActions, selectArea, selectAreaPoints } from "./areaSlice";
 
-export function Area() {
+export default function Area() {
     const [menuOpen, toggleMenu] = useToggle();
 
     const minimized = useAppSelector(selectMinimized) === featuresConfig.area.key;
@@ -82,11 +82,13 @@ export function Area() {
                 <ScrollBox display={menuOpen || minimized ? "none" : "flex"}>
                     <Box p={1}>{area > 0 ? <>Area: {area.toFixed(3)} &#13217;</> : null}</Box>
                 </ScrollBox>
-                <WidgetList
-                    display={menuOpen ? "block" : "none"}
-                    widgetKey={featuresConfig.area.key}
-                    onSelect={toggleMenu}
-                />
+                {menuOpen && (
+                    <WidgetList
+                        display={menuOpen ? "block" : "none"}
+                        widgetKey={featuresConfig.area.key}
+                        onSelect={toggleMenu}
+                    />
+                )}
             </WidgetContainer>
             <LogoSpeedDial open={menuOpen} toggle={toggleMenu} testId={`${featuresConfig.area.key}-widget-menu-fab`} />
         </>

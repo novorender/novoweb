@@ -1,5 +1,5 @@
 import { ObjectId } from "@novorender/webgl-api";
-import { createContext, Dispatch, ReactNode, useContext, useEffect, useReducer, useRef } from "react";
+import { createContext, Dispatch, MutableRefObject, ReactNode, useContext, useReducer, useRef } from "react";
 
 import { toIdObj, toIdArr } from "utils/objectData";
 
@@ -40,9 +40,12 @@ function set(ids: ObjectId[]) {
 const actions = { add, remove, set };
 
 type Actions = ReturnType<typeof actions[keyof typeof actions]>;
+type DispatchSelectionBasket = Dispatch<Actions>;
+type LazyState = MutableRefObject<State>;
 
 const StateContext = createContext<State>(undefined as any);
-const DispatchContext = createContext<Dispatch<Actions>>(undefined as any);
+const LazyStateContext = createContext<LazyState>(undefined as any);
+const DispatchContext = createContext<DispatchSelectionBasket>(undefined as any);
 
 function reducer(state: State, action: Actions): State {
     switch (action.type) {
@@ -76,45 +79,54 @@ function reducer(state: State, action: Actions): State {
     }
 }
 
-function VisibleProvider({ children }: { children: ReactNode }) {
+function SelectionBasketProvider({ children }: { children: ReactNode }) {
     const [state, dispatch] = useReducer(reducer, initialState);
+    const lazyValue = useRef(state);
+    lazyValue.current = state;
 
     return (
         <StateContext.Provider value={state}>
-            <DispatchContext.Provider value={dispatch}>{children}</DispatchContext.Provider>
+            <LazyStateContext.Provider value={lazyValue}>
+                <DispatchContext.Provider value={dispatch}>{children}</DispatchContext.Provider>
+            </LazyStateContext.Provider>
         </StateContext.Provider>
     );
 }
 
-function useVisible(): State {
+function useSelectionBasket(): State {
     const context = useContext(StateContext);
 
     if (context === undefined) {
-        throw new Error("useVisible must be used within a VisibleProvider");
+        throw new Error("useSelectionBasket must be used within a SelectionBasketProvider");
     }
 
     return context;
 }
 
-function useLazyVisible() {
-    const state = useVisible();
-    const ref = useRef(state);
+function useLazySelectionBasket(): LazyState {
+    const context = useContext(LazyStateContext);
 
-    useEffect(() => {
-        ref.current = state;
-    }, [state]);
+    if (context === undefined) {
+        throw new Error("useLazySelectionBasket must be used within a LazySelectionBasketProvider");
+    }
 
-    return ref;
+    return context;
 }
 
-function useDispatchVisible(): Dispatch<Actions> {
+function useDispatchSelectionBasket(): DispatchSelectionBasket {
     const context = useContext(DispatchContext);
 
     if (context === undefined) {
-        throw new Error("useDispatchVisible must be used within a VisibleProvider");
+        throw new Error("useDispatchSelectionBasket must be used within a SelectionBasketProvider");
     }
 
     return context;
 }
 
-export { VisibleProvider, useVisible, useLazyVisible, useDispatchVisible, actions as visibleActions };
+export {
+    SelectionBasketProvider,
+    useSelectionBasket,
+    useLazySelectionBasket,
+    useDispatchSelectionBasket,
+    actions as selectionBasketActions,
+};

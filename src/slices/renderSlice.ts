@@ -12,7 +12,6 @@ import { createSlice, createAsyncThunk, PayloadAction } from "@reduxjs/toolkit";
 import { mat4, quat, vec3, vec4 } from "gl-matrix";
 
 import type { RootState } from "app/store";
-import type { WidgetKey } from "config/features";
 import { VecRGB, VecRGBA } from "utils/color";
 import { defaultFlightControls } from "config/camera";
 
@@ -36,12 +35,6 @@ export enum ObjectVisibility {
 export enum CameraType {
     Orthographic,
     Flight,
-}
-
-export enum SceneEditStatus {
-    Init,
-    Loading,
-    Editing,
 }
 
 export enum SubtreeStatus {
@@ -219,16 +212,7 @@ const initialState = {
     picker: Picker.Object,
 };
 
-type State = typeof initialState & {
-    viewerSceneEditing?: {
-        status: SceneEditStatus;
-        id: string;
-        title?: string;
-        enabledFeatures?: WidgetKey[];
-        requireAuth?: boolean;
-        expiration?: string;
-    };
-};
+type State = typeof initialState;
 
 export const renderSlice = createSlice({
     name: "render",
@@ -394,7 +378,6 @@ export const renderSlice = createSlice({
                 ...initialState,
                 defaultDeviceProfile: state.defaultDeviceProfile,
                 environments: state.environments,
-                viewerSceneEditing: state.viewerSceneEditing,
                 projectSettings: state.projectSettings,
             };
         },
@@ -436,18 +419,6 @@ export const renderSlice = createSlice({
         },
         setBaseCameraSpeed: (state, { payload }: PayloadAction<number>) => {
             state.baseCameraSpeed = payload;
-        },
-        initViewerSceneEditing: (state, action: PayloadAction<string>) => {
-            const { environments } = state;
-
-            return {
-                ...initialState,
-                environments,
-                viewerSceneEditing: { status: SceneEditStatus.Init, id: action.payload },
-            };
-        },
-        setViewerSceneEditing: (state, action: PayloadAction<State["viewerSceneEditing"]>) => {
-            state.viewerSceneEditing = action.payload;
         },
         setAdvancedSettings: (state, action: PayloadAction<Partial<State["advancedSettings"]>>) => {
             state.advancedSettings = {
@@ -507,7 +478,6 @@ export const selectClippingBox = (state: RootState) => state.render.clippingBox 
 export const selectClippingPlanes = (state: RootState) => state.render.clippingPlanes;
 export const selectCamera = (state: RootState) => state.render.camera as CameraState;
 export const selectCameraType = (state: RootState) => state.render.camera.type;
-export const selectEditingScene = (state: RootState) => state.render.viewerSceneEditing;
 export const selectAdvancedSettings = (state: RootState) => state.render.advancedSettings;
 export const selectProjectSettings = (state: RootState) => state.render.projectSettings;
 export const selectGridDefaults = (state: RootState) => state.render.gridDefaults;

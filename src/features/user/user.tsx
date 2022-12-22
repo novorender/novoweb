@@ -12,7 +12,7 @@ import { StorageKey } from "config/storage";
 import { msalInstance } from "app";
 import { selectMaximized, selectMinimized, selectUserRole, UserRole } from "slices/explorerSlice";
 
-export function User() {
+export default function User() {
     const [menuOpen, toggleMenu] = useToggle();
 
     const minimized = useAppSelector(selectMinimized) === featuresConfig.user.key;
@@ -27,11 +27,7 @@ export function User() {
                 <ScrollBox p={1} mt={2} display={!menuOpen ? "flex" : "none"} flexDirection="column">
                     {user ? <LoggedIn user={user} /> : <LoggedOut />}
                 </ScrollBox>
-                <WidgetList
-                    display={menuOpen ? "block" : "none"}
-                    widgetKey={featuresConfig.user.key}
-                    onSelect={toggleMenu}
-                />
+                {menuOpen && <WidgetList widgetKey={featuresConfig.user.key} onSelect={toggleMenu} />}
             </WidgetContainer>
             <LogoSpeedDial open={menuOpen} toggle={toggleMenu} testId={`${featuresConfig.user.key}-widget-menu-fab`} />
         </>

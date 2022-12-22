@@ -68,7 +68,7 @@ type SearchPattern = {
     exact?: boolean;
 };
 
-export function Properties() {
+export default function Properties() {
     const mainObject = useAppSelector(selectMainObject);
     const dispatchHighlighted = useDispatchHighlighted();
     const {
@@ -277,17 +277,9 @@ export function Properties() {
                         </>
                     ) : null}
                 </ScrollBox>
-                <WidgetList
-                    display={menuOpen ? "block" : "none"}
-                    widgetKey={featuresConfig.properties.key}
-                    onSelect={toggleMenu}
-                />
+                {menuOpen && <WidgetList widgetKey={featuresConfig.properties.key} onSelect={toggleMenu} />}
             </WidgetContainer>
-            <LogoSpeedDial
-                open={menuOpen}
-                toggle={toggleMenu}
-                testId={`${featuresConfig.properties.key}-widget-menu-fab`}
-            />
+            <LogoSpeedDial open={menuOpen} toggle={toggleMenu} />
         </>
     );
 }

@@ -44,7 +44,7 @@ enum Status {
     SaveError,
 }
 
-export function AdvancedSettings() {
+export default function AdvancedSettings() {
     const sceneId = useSceneId();
     const {
         state: { scene, view },
@@ -268,11 +268,7 @@ export function AdvancedSettings() {
                         </Switch>
                     </MemoryRouter>
                 </Box>
-                <WidgetList
-                    display={menuOpen ? "block" : "none"}
-                    widgetKey={featuresConfig.advancedSettings.key}
-                    onSelect={toggleMenu}
-                />
+                {menuOpen && <WidgetList widgetKey={featuresConfig.advancedSettings.key} onSelect={toggleMenu} />}
             </WidgetContainer>
             <LogoSpeedDial
                 open={menuOpen}

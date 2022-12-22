@@ -18,20 +18,13 @@ import { useMountedState } from "hooks/useMountedState";
 import { useSceneId } from "hooks/useSceneId";
 
 import { useAppDispatch, useAppSelector } from "app/store";
-import {
-    CameraType,
-    renderActions,
-    SceneEditStatus,
-    selectAdvancedSettings,
-    selectEditingScene,
-    selectHomeCameraPosition,
-} from "slices/renderSlice";
+import { CameraType, renderActions, selectAdvancedSettings, selectHomeCameraPosition } from "slices/renderSlice";
 
 import { useExplorerGlobals } from "contexts/explorerGlobals";
 import { useDispatchHighlighted } from "contexts/highlighted";
 import { useDispatchHidden } from "contexts/hidden";
-import { customGroupsActions, useCustomGroups } from "contexts/customGroups";
-import { useDispatchVisible, visibleActions } from "contexts/visible";
+import { objectGroupsActions, useDispatchObjectGroups, useLazyObjectGroups } from "contexts/objectGroups";
+import { useDispatchSelectionBasket, selectionBasketActions } from "contexts/selectionBasket";
 import { measureActions } from "features/measure";
 import { areaActions } from "features/area";
 import { pointLineActions } from "features/pointLine";
@@ -54,18 +47,18 @@ export function Home({ position, ...speedDialProps }: Props) {
 
     const { name, Icon } = featuresConfig["home"];
 
-    const editingScene = useAppSelector(selectEditingScene);
     const homeCameraPos = useAppSelector(selectHomeCameraPosition);
     const { triangleLimit } = useAppSelector(selectAdvancedSettings);
-    const { state: customGroups, dispatch: dispatchCustomGroups } = useCustomGroups();
-    const dispatchVisible = useDispatchVisible();
+    const objectGroups = useLazyObjectGroups();
+    const dispatchObjectGroups = useDispatchObjectGroups();
+    const dispatchSelectionBasket = useDispatchSelectionBasket();
     const dispatchHighlighted = useDispatchHighlighted();
     const dispatchHidden = useDispatchHidden();
     const dispatch = useAppDispatch();
 
     const [status, setStatus] = useMountedState(Status.Initial);
 
-    const disabled = status === Status.Loading || (editingScene && editingScene.status !== SceneEditStatus.Editing);
+    const disabled = status === Status.Loading;
 
     const handleClick = async () => {
         setStatus(Status.Loading);
@@ -73,9 +66,9 @@ export function Home({ position, ...speedDialProps }: Props) {
         const {
             settings,
             customProperties,
-            objectGroups = [],
+            objectGroups: savedObjectGroups = [],
             camera = { kind: "flight" },
-        } = (await dataApi.loadScene(editingScene?.id || id)) as SceneData;
+        } = (await dataApi.loadScene(id)) as SceneData;
 
         dispatch(renderActions.resetState());
         dispatch(measureActions.clear());
@@ -112,18 +105,18 @@ export function Home({ position, ...speedDialProps }: Props) {
             dispatch(renderActions.setBaseCameraSpeed(cameraSpeed));
         }
 
-        dispatchVisible(visibleActions.set([]));
-        initHidden(objectGroups, dispatchHidden);
-        initHighlighted(objectGroups, dispatchHighlighted);
+        dispatchSelectionBasket(selectionBasketActions.set([]));
+        initHidden(savedObjectGroups, dispatchHidden);
+        initHighlighted(savedObjectGroups, dispatchHighlighted);
         initAdvancedSettings(view, { ...customProperties, triangleLimit }, api);
         dispatch(panoramasActions.setStatus(PanoramaStatus.Initial));
         initSubtrees(view, scene);
 
-        dispatchCustomGroups(
-            customGroupsActions.set(
+        dispatchObjectGroups(
+            objectGroupsActions.set(
                 [
-                    ...customGroups.map((group) => {
-                        const originalGrpSettings = objectGroups.find((grp) => group.id === grp.id);
+                    ...objectGroups.current.map((group) => {
+                        const originalGrpSettings = savedObjectGroups.find((grp) => group.id === grp.id);
 
                         group.selected = originalGrpSettings?.selected ?? false;
                         group.hidden = originalGrpSettings?.hidden ?? false;
@@ -132,8 +125,8 @@ export function Home({ position, ...speedDialProps }: Props) {
                     }),
                 ].sort(
                     (a, b) =>
-                        objectGroups.findIndex((grp) => grp.id === a.id) -
-                        objectGroups.findIndex((grp) => grp.id === b.id)
+                        savedObjectGroups.findIndex((grp) => grp.id === a.id) -
+                        savedObjectGroups.findIndex((grp) => grp.id === b.id)
                 )
             )
         );

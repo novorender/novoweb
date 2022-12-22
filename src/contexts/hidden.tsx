@@ -1,5 +1,15 @@
 import { ObjectId } from "@novorender/webgl-api";
-import { createContext, Dispatch, ReactNode, useContext, useEffect, useReducer, useRef, useState } from "react";
+import {
+    createContext,
+    Dispatch,
+    MutableRefObject,
+    ReactNode,
+    useContext,
+    useEffect,
+    useReducer,
+    useRef,
+    useState,
+} from "react";
 
 import { toIdObj, toIdArr } from "utils/objectData";
 
@@ -41,8 +51,10 @@ const actions = { add, remove, setIds };
 
 type Actions = ReturnType<typeof actions[keyof typeof actions]>;
 type DispatchHidden = Dispatch<Actions>;
+type LazyState = MutableRefObject<State>;
 
 const StateContext = createContext<State>(undefined as any);
+const LazyStateContext = createContext<LazyState>(undefined as any);
 const DispatchContext = createContext<DispatchHidden>(undefined as any);
 
 function reducer(state: State, action: Actions): State {
@@ -79,10 +91,14 @@ function reducer(state: State, action: Actions): State {
 
 function HiddenProvider({ children }: { children: ReactNode }) {
     const [state, dispatch] = useReducer(reducer, initialState);
+    const lazyValue = useRef(state);
+    lazyValue.current = state;
 
     return (
         <StateContext.Provider value={state}>
-            <DispatchContext.Provider value={dispatch}>{children}</DispatchContext.Provider>
+            <LazyStateContext.Provider value={lazyValue}>
+                <DispatchContext.Provider value={dispatch}>{children}</DispatchContext.Provider>
+            </LazyStateContext.Provider>
         </StateContext.Provider>
     );
 }
@@ -97,15 +113,14 @@ function useHidden(): State {
     return context;
 }
 
-function useLazyHidden() {
-    const state = useHidden();
-    const ref = useRef(state);
+function useLazyHidden(): LazyState {
+    const context = useContext(LazyStateContext);
 
-    useEffect(() => {
-        ref.current = state;
-    }, [state]);
+    if (context === undefined) {
+        throw new Error("useLazyHidden must be used within a LazyHiddenProvider");
+    }
 
-    return ref;
+    return context;
 }
 
 function useDispatchHidden(): DispatchHidden {

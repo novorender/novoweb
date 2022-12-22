@@ -9,8 +9,6 @@ import { WidgetMenuButtonWrapper } from "components";
 import { useCreateBookmark } from "features/bookmarks";
 import { useMountedState } from "hooks/useMountedState";
 import { useSceneId } from "hooks/useSceneId";
-import { useAppSelector } from "app/store";
-import { selectEditingScene } from "slices/renderSlice";
 
 enum Status {
     Initial,
@@ -23,12 +21,11 @@ export function ShareLink() {
 
     const createBookmark = useCreateBookmark();
     const sceneId = useSceneId();
-    const editingScene = useAppSelector(selectEditingScene);
 
     const [status, setStatus] = useMountedState(Status.Initial);
 
     const createLink = async () => {
-        if (editingScene || status !== Status.Initial) {
+        if (status !== Status.Initial) {
             return;
         }
 
@@ -94,11 +91,7 @@ export function ShareLink() {
                     </IconButton>
                 }
             />
-            <WidgetMenuButtonWrapper
-                activeElsewhere={Boolean(editingScene)}
-                activeCurrent={status !== Status.Initial}
-                onClick={createLink}
-            >
+            <WidgetMenuButtonWrapper activeCurrent={status !== Status.Initial} onClick={createLink}>
                 <IconButton size="large">
                     <Icon />
                 </IconButton>

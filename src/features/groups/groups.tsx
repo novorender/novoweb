@@ -20,7 +20,7 @@ import { groupsActions, selectSaveStatus } from "./groupsSlice";
 
 const crupdatePaths = ["/create", "/edit/:id"];
 
-export function Groups() {
+export default function Groups() {
     const sceneId = useSceneId();
     const [menuOpen, toggleMenu] = useToggle();
     const minimized = useAppSelector(selectMinimized) === featuresConfig.groups.key;
@@ -91,11 +91,7 @@ export function Groups() {
                     </Switch>
                 </Box>
 
-                <WidgetList
-                    display={menuOpen ? "block" : "none"}
-                    widgetKey={featuresConfig.groups.key}
-                    onSelect={toggleMenu}
-                />
+                {menuOpen && <WidgetList widgetKey={featuresConfig.groups.key} onSelect={toggleMenu} />}
             </WidgetContainer>
             <LogoSpeedDial
                 open={menuOpen}

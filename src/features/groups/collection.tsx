@@ -4,7 +4,7 @@ import { useState, MouseEvent } from "react";
 import { useHistory } from "react-router-dom";
 
 import { useAppDispatch, useAppSelector } from "app/store";
-import { customGroupsActions, useCustomGroups } from "contexts/customGroups";
+import { objectGroupsActions, useObjectGroups, useDispatchObjectGroups } from "contexts/objectGroups";
 import { selectHasAdminCapabilities } from "slices/explorerSlice";
 import { Accordion, AccordionDetails, AccordionSummary } from "components";
 
@@ -14,13 +14,14 @@ import { groupsActions, selectIsCollectionExpanded } from "./groupsSlice";
 
 export function Collection({ collection, disabled }: { collection: string; disabled: boolean }) {
     const history = useHistory();
+    const objectGroups = useObjectGroups();
+    const dispatchObjectGroups = useDispatchObjectGroups();
+
     const isAdmin = useAppSelector(selectHasAdminCapabilities);
     const expanded = useAppSelector((state) => selectIsCollectionExpanded(state, collection));
     const dispatch = useAppDispatch();
 
     const [menuAnchor, setMenuAnchor] = useState<HTMLElement | null>(null);
-
-    const { state: groups, dispatch: dispatchCustomGroups } = useCustomGroups();
 
     const openMenu = (e: MouseEvent<HTMLButtonElement>) => {
         e.stopPropagation();
@@ -33,7 +34,7 @@ export function Collection({ collection, disabled }: { collection: string; disab
 
     const currentDepth = collection.split("/").length;
     const nestedCollections = Array.from(
-        groups.reduce((set, grp) => {
+        objectGroups.reduce((set, grp) => {
             if (grp.grouping !== collection && grp.grouping?.startsWith(collection + "/")) {
                 const nestedCollection = grp.grouping
                     .split("/")
@@ -47,8 +48,8 @@ export function Collection({ collection, disabled }: { collection: string; disab
     ).sort((a, b) => a.localeCompare(b, "en", { sensitivity: "accent" }));
 
     const name = collection.split("/").pop() ?? "";
-    const collectionGroups = groups.filter((group) => group.grouping === collection);
-    const nestedGroups = groups.filter((group) => group.grouping?.startsWith(collection));
+    const collectionGroups = objectGroups.filter((group) => group.grouping === collection);
+    const nestedGroups = objectGroups.filter((group) => group.grouping?.startsWith(collection));
     const allGroupedSelected = !nestedGroups.some((group) => !group.selected);
     const allGroupedHidden = !nestedGroups.some((group) => !group.hidden);
 
@@ -77,8 +78,8 @@ export function Collection({ collection, disabled }: { collection: string; disab
                         disabled={disabled}
                         onChange={() =>
                             nestedGroups.forEach((group) =>
-                                dispatchCustomGroups(
-                                    customGroupsActions.update(group.id, {
+                                dispatchObjectGroups(
+                                    objectGroupsActions.update(group.id, {
                                         selected: !allGroupedSelected,
                                         hidden: !allGroupedSelected ? false : group.hidden,
                                     })
@@ -100,8 +101,8 @@ export function Collection({ collection, disabled }: { collection: string; disab
                         disabled={disabled}
                         onChange={() =>
                             nestedGroups.forEach((group) =>
-                                dispatchCustomGroups(
-                                    customGroupsActions.update(group.id, {
+                                dispatchObjectGroups(
+                                    objectGroupsActions.update(group.id, {
                                         hidden: !allGroupedHidden,
                                         selected: !allGroupedHidden ? false : group.selected,
                                     })
@@ -150,8 +151,8 @@ export function Collection({ collection, disabled }: { collection: string; disab
                             const regExp = new RegExp(`(${path.slice(0, -1).join("/")}/?)${toUngroup}/?`);
 
                             nestedGroups.forEach((group) =>
-                                dispatchCustomGroups(
-                                    customGroupsActions.update(group.id, {
+                                dispatchObjectGroups(
+                                    objectGroupsActions.update(group.id, {
                                         grouping: group.grouping?.replace(regExp, "$1").replace(/\/$/, ""),
                                     })
                                 )

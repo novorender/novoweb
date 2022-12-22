@@ -18,7 +18,7 @@ import { renderActions } from "slices/renderSlice";
 
 import FolderIcon from "@mui/icons-material/Folder";
 import VisibilityIcon from "@mui/icons-material/Visibility";
-import { useDispatchVisible, visibleActions } from "contexts/visible";
+import { useDispatchSelectionBasket, selectionBasketActions } from "contexts/selectionBasket";
 
 const StyledFixedSizeList = withCustomScrollbar(FixedSizeList) as typeof FixedSizeList;
 
@@ -105,7 +105,7 @@ function Node({ node, parent, loading, setLoading, abortController, ...props }: 
     const dispatch = useAppDispatch();
     const dispatchHighlighted = useDispatchHighlighted();
     const dispatchHidden = useDispatchHidden();
-    const dispatchVisible = useDispatchVisible();
+    const dispatchSelectionBasket = useDispatchSelectionBasket();
 
     const selected = useIsHighlighted(node.id);
     const hidden = useIsHidden(node.id);
@@ -215,7 +215,7 @@ function Node({ node, parent, loading, setLoading, abortController, ...props }: 
         if (node.type === NodeType.Leaf) {
             dispatchHidden(hiddenGroupActions.add([node.id]));
             dispatchHighlighted(highlightActions.remove([node.id]));
-            dispatchVisible(visibleActions.remove([node.id]));
+            dispatchSelectionBasket(selectionBasketActions.remove([node.id]));
             return;
         }
 
