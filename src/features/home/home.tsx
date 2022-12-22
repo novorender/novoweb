@@ -84,7 +84,7 @@ export function Home({ position, ...speedDialProps }: Props) {
         dispatch(manholeActions.initFromBookmark(undefined));
 
         if (settings) {
-            const { display: _display, environment: _env, light: _light, ...toApply } = settings;
+            const { display: _display, quality: _quality, environment: _env, light: _light, ...toApply } = settings;
 
             if (toApply.terrain.asBackground === undefined) {
                 toApply.terrain.asBackground = false;

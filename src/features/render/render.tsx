@@ -206,8 +206,6 @@ export function Render3D({ onInit }: Props) {
         start: () => Promise.resolve(),
         stop: () => {},
         update: () => {},
-        pick: () => Promise.resolve(),
-        measure: () => Promise.resolve(),
     } as ReturnType<typeof createRendering>);
     const movementTimer = useRef<ReturnType<typeof setTimeout>>();
     const cameraGeneration = useRef<number>();
@@ -285,11 +283,7 @@ export function Render3D({ onInit }: Props) {
         mat4.invert(camMatrix, camMatrix);
         const toScreen = (p: vec3) => {
             const _p = vec4.transformMat4(vec4.create(), vec4.fromValues(p[0], p[1], p[2], 1), proj);
-            return vec2.scale(
-                vec2.create(),
-                vec2.fromValues(((_p[0] * 0.5) / _p[3] + 0.5) * width, (0.5 - (_p[1] * 0.5) / _p[3]) * height),
-                1 / devicePixelRatio
-            );
+            return vec2.fromValues(((_p[0] * 0.5) / _p[3] + 0.5) * width, (0.5 - (_p[1] * 0.5) / _p[3]) * height);
         };
 
         if (panoramas?.length) {
@@ -380,7 +374,11 @@ export function Render3D({ onInit }: Props) {
 
                 const urlData = getDataFromUrlHash();
                 const camera = { kind: "flight", ...sceneData.camera, ...urlData.camera } as CameraControllerParams;
-                const { display: _display, ...settings } = { ...sceneData.settings, ...urlData.settings };
+                const {
+                    display: _display,
+                    quality: _quality,
+                    ...settings
+                } = { ...sceneData.settings, ...urlData.settings };
 
                 const _view = await api.createView(undefined, canvas);
 
@@ -397,24 +395,6 @@ export function Render3D({ onInit }: Props) {
                     background: {
                         ...settings.background,
                         color: bgColor,
-                    },
-                    quality: {
-                        detail: {
-                            ..._view.settings.quality.detail,
-                            autoAdjust: {
-                                enabled: true,
-                                min: -1,
-                                max: 3,
-                            },
-                            value: Math.pow(10, 3),
-                        },
-                        resolution: {
-                            value: 1,
-                            autoAdjust: {
-                                ..._view.settings.quality.resolution.autoAdjust,
-                                max: window.devicePixelRatio,
-                            },
-                        },
                     },
                 });
                 _view.scene = await api.loadScene(url, db);
@@ -470,8 +450,8 @@ export function Render3D({ onInit }: Props) {
                 canvas.focus();
                 const resizeObserver = new ResizeObserver((entries) => {
                     for (const entry of entries) {
-                        canvas.width = entry.contentRect.width * devicePixelRatio;
-                        canvas.height = entry.contentRect.height * devicePixelRatio;
+                        canvas.width = entry.contentRect.width;
+                        canvas.height = entry.contentRect.height;
                         _view.applySettings({
                             display: { width: canvas.width, height: canvas.height },
                         });
@@ -484,7 +464,7 @@ export function Render3D({ onInit }: Props) {
                 resizeObserver.observe(canvas);
 
                 dispatch(renderActions.setDefaultDeviceProfile({ ...((api as any).deviceProfile ?? {}) }));
-                if (customProperties?.triangleLimit) {
+                if (customProperties?.triangleLimit && !(api.deviceProfile as any).debugProfile) {
                     (api as any).deviceProfile.triangleLimit = Math.min(
                         (api as any).deviceProfile.triangleLimit,
                         customProperties?.triangleLimit
@@ -557,7 +537,6 @@ export function Render3D({ onInit }: Props) {
                     moveSvg();
                     renderParametricMeasure();
                     setDeviationStamp(null);
-                    rendering.current.update({ moving: true });
 
                     if (movementTimer.current) {
                         clearTimeout(movementTimer.current);
@@ -578,8 +557,6 @@ export function Render3D({ onInit }: Props) {
                         ) {
                             return;
                         }
-
-                        rendering.current.update({ moving: false });
 
                         dispatch(
                             renderActions.saveCameraPosition({
@@ -849,6 +826,13 @@ export function Render3D({ onInit }: Props) {
     );
 
     useEffect(
+        function handleAutoFpsChange() {
+            rendering.current.update({ autoFpsEnabled: advancedSettings.autoFps });
+        },
+        [advancedSettings.autoFps]
+    );
+
+    useEffect(
         function cleanUpPreviousScene() {
             return () => {
                 rendering.current.stop();
@@ -1028,22 +1012,19 @@ export function Render3D({ onInit }: Props) {
     };
 
     const handleClick = async (e: MouseEvent | PointerEvent) => {
-        if (!view || clippingBox.defining || !canvas) {
+        if (!view?.lastRenderOutput || clippingBox.defining || !canvas) {
             return;
         }
 
-        const result = await rendering.current.pick(
-            e.nativeEvent.offsetX * devicePixelRatio,
-            e.nativeEvent.offsetY * devicePixelRatio
-        );
+        const result = await view.lastRenderOutput.pick(e.nativeEvent.offsetX, e.nativeEvent.offsetY);
 
         if (deviation.mode !== "off" && cameraState.type === CameraType.Orthographic) {
             const pickSize = isTouchPointer.current ? 16 : 0;
             const deviation = await pickDeviationArea({
-                measure: rendering.current.measure,
+                view,
                 size: pickSize,
-                clickX: e.nativeEvent.offsetX * devicePixelRatio,
-                clickY: e.nativeEvent.offsetY * devicePixelRatio,
+                clickX: e.nativeEvent.offsetX,
+                clickY: e.nativeEvent.offsetY,
             });
 
             if (deviation) {
@@ -1067,8 +1048,8 @@ export function Render3D({ onInit }: Props) {
             return;
         }
 
-        const { normal: _normal, position } = result;
-        const normal = _normal.some((n) => Number.isNaN(n)) ? undefined : result.normal;
+        const normal = result.normal.some((n) => Number.isNaN(n)) ? undefined : vec3.clone(result.normal);
+        const position = vec3.clone(result.position);
 
         switch (picker) {
             case Picker.Object:
@@ -1115,7 +1096,7 @@ export function Render3D({ onInit }: Props) {
                 break;
             case Picker.OrthoPlane:
                 const orthoController = api.createCameraController({ kind: "ortho" }, canvas);
-                (orthoController as any).init(result.position, normal, view.camera);
+                (orthoController as any).init(position, normal, view.camera);
                 dispatch(
                     renderActions.setCamera({
                         type: CameraType.Orthographic,
@@ -1126,15 +1107,13 @@ export function Render3D({ onInit }: Props) {
 
                 break;
             case Picker.Measurement:
-                dispatch(
-                    measureActions.selectObj({ id: measure.forcePoint ? -1 : result.objectId, pos: result.position })
-                );
+                dispatch(measureActions.selectObj({ id: measure.forcePoint ? -1 : result.objectId, pos: position }));
                 break;
             case Picker.Manhole:
                 if (result.objectId === -1) {
                     return;
                 }
-                dispatch(manholeActions.selectObj({ id: result.objectId, pos: result.position }));
+                dispatch(manholeActions.selectObj({ id: result.objectId, pos: position }));
                 break;
 
             case Picker.FollowPathObject: {
@@ -1142,15 +1121,15 @@ export function Render3D({ onInit }: Props) {
                     return;
                 }
 
-                dispatch(followPathActions.setSelectedPositions([{ id: result.objectId, pos: result.position }]));
+                dispatch(followPathActions.setSelectedPositions([{ id: result.objectId, pos: position }]));
                 break;
             }
             case Picker.Area: {
-                dispatch(areaActions.addPoint([result.position, normal ?? [0, 0, 0]]));
+                dispatch(areaActions.addPoint([position, normal ?? [0, 0, 0]]));
                 break;
             }
             case Picker.PointLine: {
-                dispatch(pointLineActions.addPoint(result.position));
+                dispatch(pointLineActions.addPoint(position));
                 break;
             }
             case Picker.HeightProfileEntity: {
@@ -1158,7 +1137,7 @@ export function Render3D({ onInit }: Props) {
                     return;
                 }
 
-                dispatch(heightProfileActions.selectPoint({ id: result.objectId, pos: result.position }));
+                dispatch(heightProfileActions.selectPoint({ id: result.objectId, pos: vec3.clone(position) }));
                 break;
             }
             default:
@@ -1173,7 +1152,7 @@ export function Render3D({ onInit }: Props) {
 
         pointerDown.current = true;
 
-        const result = await rendering.current.pick(x, y);
+        const result = await view.lastRenderOutput?.pick(x, y);
 
         if (!result || !pointerDown.current) {
             return;
@@ -1219,7 +1198,7 @@ export function Render3D({ onInit }: Props) {
         }
 
         isTouchPointer.current = true;
-        handleDown(e.nativeEvent.offsetX * devicePixelRatio, e.nativeEvent.offsetY * devicePixelRatio);
+        handleDown(e.nativeEvent.offsetX, e.nativeEvent.offsetY);
     };
 
     const handleMouseDown = (e: MouseEvent) => {
@@ -1227,7 +1206,7 @@ export function Render3D({ onInit }: Props) {
             return;
         }
 
-        handleDown(e.nativeEvent.offsetX * devicePixelRatio, e.nativeEvent.offsetY * devicePixelRatio);
+        handleDown(e.nativeEvent.offsetX, e.nativeEvent.offsetY);
     };
 
     const handleUp = () => {
@@ -1276,10 +1255,7 @@ export function Render3D({ onInit }: Props) {
             ].includes(picker);
 
         if (useSvgCursor) {
-            const measurement = await rendering.current.measure(
-                e.nativeEvent.offsetX * devicePixelRatio,
-                e.nativeEvent.offsetY * devicePixelRatio
-            );
+            const measurement = await view.lastRenderOutput?.measure(e.nativeEvent.offsetX, e.nativeEvent.offsetY);
             canvas.style.cursor = "none";
 
             moveSvgCursor({ svg, view, size, measurement, x: e.nativeEvent.offsetX, y: e.nativeEvent.offsetY });
@@ -1295,10 +1271,7 @@ export function Render3D({ onInit }: Props) {
             e.buttons === 0 &&
             subtrees?.points === SubtreeStatus.Shown
         ) {
-            const measurement = await rendering.current.measure(
-                e.nativeEvent.offsetX * devicePixelRatio,
-                e.nativeEvent.offsetY * devicePixelRatio
-            );
+            const measurement = await view.lastRenderOutput?.measure(e.nativeEvent.offsetX, e.nativeEvent.offsetY);
 
             if (measurement?.deviation) {
                 setDeviationStamp({

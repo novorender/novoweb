@@ -14,10 +14,11 @@ import {
     TextField,
     Snackbar,
     IconButton,
+    TextFieldProps,
 } from "@mui/material";
 import { useHistory } from "react-router-dom";
 import { v4 as uuidv4 } from "uuid";
-import { DatePicker } from "@mui/lab";
+import { DatePicker } from "@mui/x-date-pickers";
 import { format, isValid } from "date-fns";
 
 import { dataApi } from "app";
@@ -538,7 +539,7 @@ export function CreateIssue({ sceneId }: { sceneId: string }) {
                                                         : "",
                                                 }));
                                             }}
-                                            renderInput={(params) => (
+                                            renderInput={(params: TextFieldProps) => (
                                                 <TextField
                                                     {...params}
                                                     id="jiraDueDate"

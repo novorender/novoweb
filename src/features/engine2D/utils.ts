@@ -1,6 +1,5 @@
 import { DrawPart, DrawProduct } from "@novorender/measure-api";
 import { ReadonlyVec2, ReadonlyVec3, vec2, vec3 } from "gl-matrix";
-import { inversePixelRatio } from "../render/utils";
 
 export interface ColorSettings {
     lineColor?: string | CanvasGradient;
@@ -80,8 +79,7 @@ export function drawPart(
     textSettings?: TextSettings
 ): boolean {
     if (part.vertices2D) {
-        inversePixelRatio(part.vertices2D as vec2[]);
-        ctx.lineWidth = pixelWidth * devicePixelRatio;
+        ctx.lineWidth = pixelWidth;
         ctx.strokeStyle = colorSettings.lineColor ?? "black";
         ctx.fillStyle = colorSettings.fillColor ?? "transparent";
         if (part.drawType === "angle" && part.vertices2D.length === 3 && part.text) {
@@ -158,8 +156,8 @@ function drawAngle(ctx: CanvasRenderingContext2D, camera: CameraSettings, part: 
         if (part.text) {
             ctx.fillStyle = "white";
             ctx.strokeStyle = "black";
-            ctx.lineWidth = 2 * devicePixelRatio;
-            ctx.font = `bold ${16 * devicePixelRatio}px "Open Sans", sans-serif`;
+            ctx.lineWidth = 2;
+            ctx.font = `bold ${16}px "Open Sans", sans-serif`;
 
             const textX = anglePoint[0] + dir[0] * 25;
             const textY = anglePoint[1] + dir[1] * 25;
@@ -220,10 +218,10 @@ function drawLinesOrPolygon(
         if (colorSettings.pointColor) {
             for (let i = 0; i < part.vertices2D.length; ++i) {
                 ctx.fillStyle = getPointColor(colorSettings.pointColor, i, part.vertices2D.length);
-                ctx.lineWidth = 2 * devicePixelRatio;
+                ctx.lineWidth = 2;
                 ctx.strokeStyle = "black";
                 ctx.beginPath();
-                ctx.arc(part.vertices2D[i][0], part.vertices2D[i][1], 5 * devicePixelRatio, 0, 2 * Math.PI);
+                ctx.arc(part.vertices2D[i][0], part.vertices2D[i][1], 5, 0, 2 * Math.PI);
                 ctx.fill();
                 ctx.stroke();
             }
@@ -232,8 +230,8 @@ function drawLinesOrPolygon(
         if (text && (text.customText?.length || part.text)) {
             ctx.strokeStyle = "black";
             ctx.fillStyle = "white";
-            ctx.lineWidth = 2 * devicePixelRatio;
-            ctx.font = `bold ${16 * devicePixelRatio}px "Open Sans", sans-serif`;
+            ctx.lineWidth = 2;
+            ctx.font = `bold ${16}px "Open Sans", sans-serif`;
             ctx.textBaseline = "bottom";
             ctx.textAlign = "center";
 
@@ -301,10 +299,10 @@ function drawPoints(ctx: CanvasRenderingContext2D, part: DrawPart, colorSettings
             ctx.fillStyle = colorSettings.pointColor
                 ? getPointColor(colorSettings.pointColor, i, part.vertices2D.length)
                 : colorSettings.fillColor ?? "black";
-            ctx.lineWidth = 2 * devicePixelRatio;
+            ctx.lineWidth = 2;
             ctx.strokeStyle = "black";
             ctx.beginPath();
-            ctx.arc(part.vertices2D[i][0], part.vertices2D[i][1], 5 * devicePixelRatio, 0, 2 * Math.PI);
+            ctx.arc(part.vertices2D[i][0], part.vertices2D[i][1], 5, 0, 2 * Math.PI);
             ctx.fill();
             ctx.stroke();
         }
@@ -316,8 +314,8 @@ function drawPoints(ctx: CanvasRenderingContext2D, part: DrawPart, colorSettings
 export function drawTexts(ctx: CanvasRenderingContext2D, positions: ReadonlyVec2[], texts: string[]) {
     ctx.strokeStyle = "black";
     ctx.fillStyle = "white";
-    ctx.lineWidth = 2 * devicePixelRatio;
-    ctx.font = `bold ${16 * devicePixelRatio}px "Open Sans", sans-serif`;
+    ctx.lineWidth = 2;
+    ctx.font = `bold ${16}px "Open Sans", sans-serif`;
     ctx.textBaseline = "top";
     ctx.textAlign = "center";
 

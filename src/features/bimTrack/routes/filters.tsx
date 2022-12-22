@@ -13,9 +13,10 @@ import {
     TextField,
     Checkbox,
     ListItemText,
+    TextFieldProps,
 } from "@mui/material";
 import { ArrowBack } from "@mui/icons-material";
-import { DatePicker } from "@mui/lab";
+import { DatePicker } from "@mui/x-date-pickers";
 import { isValid, set } from "date-fns";
 
 import { LinearProgress, ScrollBox, Divider } from "components";
@@ -295,7 +296,7 @@ export function Filters() {
                                             : "",
                                     }))
                                 }
-                                renderInput={(params) => <TextField {...params} size="small" />}
+                                renderInput={(params: TextFieldProps) => <TextField {...params} size="small" />}
                             />
                         </FormControl>
                     </Box>

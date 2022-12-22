@@ -11,19 +11,17 @@ import {
     MeasureInfo,
     ObjectId,
     OrthoControllerParams,
-    PickInfo,
     RenderSettings,
     Scene,
     View,
 } from "@novorender/webgl-api";
-import { vec2, vec3 } from "gl-matrix";
+import { vec3 } from "gl-matrix";
 
 import { api, dataApi } from "app";
 import { offscreenCanvas } from "config";
 import { featuresConfig, WidgetKey } from "config/features";
 import { groupsActions, selectLoadingIds } from "features/groups";
 import { DeviationMode, deviationsActions } from "features/deviations";
-
 import { store } from "app/store";
 import { CustomGroup, customGroupsActions, DispatchCustomGroups } from "contexts/customGroups";
 import { hiddenGroupActions, DispatchHidden } from "contexts/hidden";
@@ -39,16 +37,15 @@ import {
     SubtreeStatus,
 } from "slices/renderSlice";
 import { explorerActions } from "slices/explorerSlice";
-
 import { VecRGB, VecRGBA } from "utils/color";
-import { sleep } from "utils/timers";
+
 import { MAX_FLOAT } from "./consts";
 
 type Settings = {
     taaEnabled: boolean;
     ssaoEnabled: boolean;
+    autoFpsEnabled: boolean;
     outlineRenderingEnabled: boolean;
-    moving: boolean;
 };
 
 export function createRendering(
@@ -58,22 +55,16 @@ export function createRendering(
     start: () => Promise<void>;
     update: (updated: Partial<Settings>) => void;
     stop: () => void;
-    pick: typeof view.pick;
-    measure: typeof view.measure;
 } {
     const running = { current: false };
     let settings: Settings = {
         ssaoEnabled: true,
         taaEnabled: true,
-        moving: false,
+        autoFpsEnabled: true,
         outlineRenderingEnabled: true,
     };
 
-    let hook = undefined as undefined | (() => any);
-    let pickBufferUpdated = false;
-    let lastPickBufferUpdate = 0;
-
-    return { start, stop, update, pick, measure };
+    return { start, stop, update };
 
     function update(updated: Partial<Settings>) {
         const updatedSettings = { ...settings, ...updated };
@@ -81,54 +72,12 @@ export function createRendering(
         if (
             settings.ssaoEnabled !== updatedSettings.ssaoEnabled ||
             settings.taaEnabled !== updatedSettings.taaEnabled ||
-            settings.outlineRenderingEnabled !== updatedSettings.outlineRenderingEnabled ||
-            settings.moving !== updatedSettings.moving
+            settings.autoFpsEnabled !== updatedSettings.autoFpsEnabled ||
+            settings.outlineRenderingEnabled !== updatedSettings.outlineRenderingEnabled
         ) {
             settings = updatedSettings;
-            (view as any).settings.generation++;
+            view.invalidateCamera();
         }
-    }
-
-    async function pick(x: number, y: number): Promise<PickInfo | undefined> {
-        let cb: (value: PickInfo | undefined) => void = () => {};
-        const prom = new Promise<PickInfo | undefined>((res) => {
-            cb = res;
-        });
-
-        if (pickBufferUpdated || performance.now() - lastPickBufferUpdate < 1000) {
-            cb(await view.pick(x, y));
-        } else {
-            hook = async () => {
-                await view.updatePickBuffers();
-                lastPickBufferUpdate = performance.now();
-                pickBufferUpdated = true;
-                cb(await view.pick(x, y));
-            };
-            (view as any).settings.generation++;
-        }
-
-        return prom;
-    }
-
-    async function measure(x: number, y: number): Promise<MeasureInfo | undefined> {
-        let cb: (value: MeasureInfo | undefined) => void = () => {};
-        const prom = new Promise<MeasureInfo | undefined>((res) => {
-            cb = res;
-        });
-
-        if (pickBufferUpdated || performance.now() - lastPickBufferUpdate < 1000) {
-            cb(await view.measure(x, y));
-        } else {
-            hook = async () => {
-                await view.updatePickBuffers();
-                lastPickBufferUpdate = performance.now();
-                pickBufferUpdated = true;
-                cb(await view.measure(x, y));
-            };
-            (view as any).settings.generation++;
-        }
-
-        return prom;
     }
 
     function stop() {
@@ -142,24 +91,21 @@ export function createRendering(
         const ctx = offscreenCanvas ? canvas.getContext("bitmaprenderer") : undefined;
 
         const fpsTable: number[] = [];
-        let startRender = 0;
         let fps = 0;
 
         while (running.current) {
             const output = await view.render();
-            pickBufferUpdated = false;
 
             if (!running.current) {
                 break;
             }
 
-            if (settings.outlineRenderingEnabled && view.camera.controller.params.kind === "ortho") {
-                await output.applyPostEffect({ kind: "outline", color: [0, 0, 0, 0] });
+            if (settings.autoFpsEnabled) {
+                view.adjustQuality({ lowerBound: 40, upperBound: 30 });
             }
 
-            if (hook) {
-                hook();
-                hook = undefined;
+            if (settings.outlineRenderingEnabled && view.camera.controller.params.kind === "ortho") {
+                await output.applyPostEffect({ kind: "outline", color: [0, 0, 0, 0] });
             }
 
             const image = await output.getImage();
@@ -169,13 +115,11 @@ export function createRendering(
             }
 
             if (ctx && image) {
-                ctx.transferFromImageBitmap(image); // display in canvas
+                ctx.transferFromImageBitmap(image);
             }
 
-            const now = performance.now();
-            if (startRender > 0) {
-                const dt = now - startRender;
-                fpsTable.splice(0, 0, dt);
+            if (view.performanceStatistics.frameInterval) {
+                fpsTable.splice(0, 0, view.performanceStatistics.frameInterval);
                 if (fpsTable.length > 50) {
                     fpsTable.length = 50;
                 }
@@ -186,54 +130,45 @@ export function createRendering(
                 fps = (1000 * fpsTable.length) / fps;
                 (view.performanceStatistics as any).fps = fps;
             }
-            startRender = now;
+
+            (view.performanceStatistics as any).resolutionScale = output.renderSettings.quality.resolution.value;
+            let taaEnabled = !api.deviceProfile.weakDevice && settings.taaEnabled;
 
             let runPostEffects =
-                // !view.performanceStatistics.weakDevice &&
-                !settings.moving &&
                 output.statistics.sceneResolved &&
                 view.camera.controller.params.kind !== "ortho" &&
-                (settings.taaEnabled || settings.ssaoEnabled);
+                (taaEnabled || settings.ssaoEnabled);
 
             let reset = true;
-            let postEffectTimeout = true;
 
-            while (runPostEffects && running.current) {
-                if (output.hasViewChanged) {
-                    break;
-                }
-
+            while (runPostEffects && running.current && output.isIdleFrame()) {
                 await (api as any).waitFrame();
 
                 if (!running.current) {
                     break;
                 }
 
-                const postEffectNow = performance.now();
-
-                if (postEffectNow - now >= 200) {
-                    postEffectTimeout = false;
+                if (taaEnabled) {
+                    runPostEffects = (await output.applyPostEffect({ kind: "taa", reset })) || false;
                 }
 
-                if (!postEffectTimeout) {
-                    if (settings.taaEnabled) {
-                        runPostEffects = (await output.applyPostEffect({ kind: "taa", reset })) || false;
-                    }
+                if (settings.ssaoEnabled) {
+                    await output.applyPostEffect({
+                        kind: "ssao",
+                        samples: 64,
+                        radius: 1,
+                        reset: reset,
+                    });
 
-                    if (settings.ssaoEnabled) {
-                        await output.applyPostEffect({ kind: "ssao", samples: 64, radius: 1, reset: reset });
-
-                        if (!settings.taaEnabled) {
-                            runPostEffects = false;
-                        }
+                    if (!taaEnabled) {
+                        runPostEffects = false;
                     }
+                }
 
-                    reset = false;
-                    startRender = 0;
-                    const image = await output.getImage();
-                    if (ctx && image) {
-                        ctx.transferFromImageBitmap(image); // display in canvas
-                    }
+                reset = false;
+                const image = await output.getImage();
+                if (ctx && image) {
+                    ctx.transferFromImageBitmap(image);
                 }
             }
         }
@@ -364,12 +299,6 @@ export function getEnvironmentDescription(
     environments: EnvironmentDescription[]
 ): EnvironmentDescription {
     return environments.find((env) => env.name === name) ?? environments[0];
-}
-
-export async function waitForSceneToRender(view: View): Promise<void> {
-    while (!view.performanceStatistics.renderResolved) {
-        await sleep(100);
-    }
 }
 
 export async function getSubtrees(view: View, scene: Scene): Promise<NonNullable<RenderState["subtrees"]>> {
@@ -610,8 +539,6 @@ export function initAdvancedSettings(view: View, customProperties: Record<string
         renderActions.setAdvancedSettings({
             [AdvancedSetting.ShowPerformance]:
                 Boolean(customProperties?.showStats) || window.location.search.includes("debug=true"),
-            [AdvancedSetting.AutoFps]: view.settings.quality.resolution.autoAdjust.enabled,
-            [AdvancedSetting.TriangleBudget]: view.settings.quality.detail.autoAdjust.enabled,
             [AdvancedSetting.ShowBoundingBoxes]: diagnostics.showBoundingBoxes,
             [AdvancedSetting.HoldDynamic]: diagnostics.holdDynamic,
             [AdvancedSetting.DoubleSidedMaterials]: advanced.doubleSided.opaque,
@@ -628,6 +555,7 @@ export function initAdvancedSettings(view: View, customProperties: Record<string
             [AdvancedSetting.NavigationCube]: Boolean(customProperties?.navigationCube),
             [AdvancedSetting.TerrainAsBackground]: Boolean(terrain.asBackground),
             [AdvancedSetting.BackgroundColor]: background.color as VecRGBA,
+            [AdvancedSetting.AutoFps]: customProperties?.autoFps ?? true,
             [AdvancedSetting.TriangleLimit]:
                 customProperties?.triangleLimit ?? (api as any).deviceProfile?.triangleLimit ?? 5_000_000,
             ...(customProperties?.flightMouseButtonMap
@@ -653,17 +581,20 @@ export function initProjectSettings({ sceneData }: { sceneData: SceneData }): vo
 }
 
 export async function pickDeviationArea({
-    measure,
+    view,
     size,
     clickX,
     clickY,
 }: {
-    measure: View["measure"];
+    view: View;
     size: number;
     clickX: number;
     clickY: number;
 }): Promise<number | undefined> {
-    const center = await measure(clickX, clickY);
+    if (!view.lastRenderOutput) {
+        return;
+    }
+    const center = await view.lastRenderOutput.measure(clickX, clickY);
 
     if (center?.deviation) {
         return center.deviation;
@@ -675,7 +606,7 @@ export async function pickDeviationArea({
 
     for (let x = 1; x <= size; x++) {
         for (let y = 1; y <= size; y++) {
-            res.push(measure(startX + x, startY + y));
+            res.push(view.lastRenderOutput.measure(startX + x, startY + y));
         }
     }
 
@@ -692,8 +623,4 @@ export async function pickDeviationArea({
                 return deviation + measureInfo!.deviation!;
             }
         }, 0);
-}
-
-export function inversePixelRatio(points: vec2[]): vec2[] {
-    return points.map((pts) => vec2.scale(vec2.create(), pts, 1 / devicePixelRatio));
 }

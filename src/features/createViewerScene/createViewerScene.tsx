@@ -10,9 +10,11 @@ import {
     Snackbar,
     Alert,
     Box,
+    TextFieldProps,
 } from "@mui/material";
 import Close from "@mui/icons-material/Close";
-import { DatePicker, LoadingButton } from "@mui/lab";
+import { DatePicker } from "@mui/x-date-pickers";
+import { LoadingButton } from "@mui/lab";
 import { FormEventHandler, useState } from "react";
 import { format } from "date-fns";
 import { v4 as uuidv4 } from "uuid";
@@ -148,7 +150,7 @@ export function CreateViewerScene({ open, onClose }: { open: boolean; onClose: (
                             onChange={(newDate: Date | null) =>
                                 setDateLimit(newDate ? format(newDate, "yyyy-MM-dd") : "")
                             }
-                            renderInput={(params) => <TextField {...params} />}
+                            renderInput={(params: TextFieldProps) => <TextField {...params} />}
                         />
                     </Box>
                     <Grid container mb={2}>

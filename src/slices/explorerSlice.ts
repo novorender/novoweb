@@ -13,6 +13,8 @@ import {
 import type { RootState } from "app/store";
 import { uniqueArray } from "utils/misc";
 
+import { DeepWritable } from "./renderSlice";
+
 export enum SceneType {
     Viewer,
     Admin,
@@ -23,6 +25,9 @@ export enum UserRole {
     Admin,
     Owner,
 }
+
+type UrlSearchQuery = undefined | string | SearchPattern[];
+type WritableUrlSearchQuery = DeepWritable<UrlSearchQuery>;
 
 const initialState = {
     enabledWidgets: defaultEnabledWidgets,
@@ -42,7 +47,7 @@ const initialState = {
         button4: featuresConfig.stepBack.key,
         button5: featuresConfig.stepForwards.key as ButtonKey,
     },
-    urlSearchQuery: undefined as undefined | string | SearchPattern[],
+    urlSearchQuery: undefined as WritableUrlSearchQuery,
     urlBookmarkId: undefined as undefined | string,
     localBookmarkId: undefined as undefined | string,
 };
@@ -118,11 +123,11 @@ export const explorerSlice = createSlice({
         },
         setUrlSearchQuery: (
             state,
-            action: PayloadAction<{ query: State["urlSearchQuery"]; selectionOnly: string } | undefined>
+            action: PayloadAction<{ query: UrlSearchQuery; selectionOnly: string } | undefined>
         ) => {
             const patterns = action.payload?.query;
 
-            state.urlSearchQuery = patterns;
+            state.urlSearchQuery = patterns as WritableUrlSearchQuery;
 
             if ((Array.isArray(patterns) && patterns.length) || (!Array.isArray(patterns) && patterns)) {
                 state.widgets = [
@@ -162,7 +167,7 @@ export const selectWidgets = (state: RootState) => state.explorer.widgets;
 export const selectLockedWidgets = (state: RootState) => state.explorer.lockedWidgets;
 export const selectLocalBookmarkId = (state: RootState) => state.explorer.localBookmarkId;
 export const selectUrlBookmarkId = (state: RootState) => state.explorer.urlBookmarkId;
-export const selectUrlSearchQuery = (state: RootState) => state.explorer.urlSearchQuery;
+export const selectUrlSearchQuery = (state: RootState) => state.explorer.urlSearchQuery as UrlSearchQuery;
 export const selectSceneType = (state: RootState) => state.explorer.sceneType;
 export const selectUserRole = (state: RootState) => state.explorer.userRole;
 export const selectViewerScenes = (state: RootState) => state.explorer.viewerScenes;

@@ -102,26 +102,26 @@ export function CameraSettings({
 
                     (view.camera.controller.params as FlightControllerParams | OrthoControllerParams).far =
                         scaleFarClipping(value);
-                    view.performanceStatistics.cameraGeneration++;
+                    view.invalidateCamera();
                     return;
                 case AdvancedSetting.CameraNearClipping:
                     setNear(value);
 
                     (view.camera.controller.params as FlightControllerParams | OrthoControllerParams).near =
                         scaleNearClipping(value);
-                    view.performanceStatistics.cameraGeneration++;
+                    view.invalidateCamera();
                     return;
                 case AdvancedSetting.HeadlightIntensity:
                     setIntensity(value);
 
                     view.settings.light.camera.brightness = value;
-                    view.performanceStatistics.cameraGeneration++;
+                    view.invalidateCamera();
                     return;
                 case AdvancedSetting.HeadlightDistance:
                     setDistance(value);
 
                     view.settings.light.camera.distance = scaleHeadlightDistance(value);
-                    view.performanceStatistics.cameraGeneration++;
+                    view.invalidateCamera();
                     return;
             }
         };
