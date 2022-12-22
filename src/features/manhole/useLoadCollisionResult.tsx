@@ -37,7 +37,10 @@ export function useLoadCollisionResult() {
                 const [outerCollision, innerCollision] = await Promise.all([
                     measureScene.collision(entity, manhole.outer.entity, settings),
                     ...(manhole.inner ? [measureScene.collision(entity, manhole.inner.entity, settings)] : []),
-                ]);
+                ]).catch((e) => {
+                    console.warn(e);
+                    return [];
+                });
 
                 if (!outerCollision && !innerCollision) {
                     dispatch(manholeActions.setCollisionValues(undefined));

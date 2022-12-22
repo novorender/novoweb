@@ -1,8 +1,8 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { CssBaseline } from "@mui/material";
 import { ThemeProvider, StyledEngineProvider } from "@mui/material/styles";
-import { LocalizationProvider } from "@mui/lab";
-import AdapterDateFns from "@mui/lab/AdapterDateFns";
+import { LocalizationProvider } from "@mui/x-date-pickers";
+import { AdapterDateFns } from "@mui/x-date-pickers/AdapterDateFns";
 import enLocale from "date-fns/locale/en-GB";
 import { createAPI } from "@novorender/webgl-api";
 import { createMeasureAPI } from "@novorender/measure-api";
@@ -10,6 +10,7 @@ import { createAPI as createDataAPI } from "@novorender/data-js-api";
 import { MsalProvider } from "@azure/msal-react";
 import { InteractionRequiredAuthError, PublicClientApplication } from "@azure/msal-browser";
 import { Route, useHistory, Switch } from "react-router-dom";
+import { getGPUTier } from "detect-gpu";
 
 import { theme } from "app/theme";
 import { useAppDispatch } from "app/store";
@@ -28,11 +29,23 @@ import {
     storeActiveAccount,
 } from "utils/auth";
 import { getAuthHeader } from "utils/auth";
-import { useMountedState } from "hooks/useMountedState";
 import { StorageKey } from "config/storage";
 import { deleteFromStorage, getFromStorage } from "utils/storage";
 
 export const api = createAPI({ noOffscreenCanvas: !offscreenCanvas });
+try {
+    const debugProfile =
+        new URLSearchParams(window.location.search).get("debugDeviceProfile") ?? localStorage["debugDeviceProfile"];
+
+    if (debugProfile) {
+        api.deviceProfile = { ...api.deviceProfile, ...JSON.parse(debugProfile), debugProfile: true };
+        console.log(api.version, "using debug device profile");
+    }
+} catch (e) {
+    console.warn(e);
+}
+const deviceProfileInitialized = (api.deviceProfile as any).debugProfile ? Promise.resolve() : loadDeviceProfile();
+
 export const dataApi = createDataAPI({ authHeader: getAuthHeader, serviceUrl: dataServerBaseUrl });
 export const measureApi = createMeasureAPI();
 export const msalInstance = new PublicClientApplication(msalConfig);
@@ -45,7 +58,8 @@ enum Status {
 
 export function App() {
     const history = useHistory();
-    const [status, setStatus] = useMountedState(Status.Initial);
+    const [authStatus, setAuthStatus] = useState(Status.Initial);
+    const [deviceProfileStatus, setDeviceProfileStatus] = useState(Status.Initial);
     const dispatch = useAppDispatch();
 
     useEffect(() => {
@@ -53,14 +67,14 @@ export function App() {
     }, [history]);
 
     useEffect(() => {
-        if (status !== Status.Initial) {
+        if (authStatus !== Status.Initial) {
             return;
         }
 
         auth();
 
         async function auth() {
-            setStatus(Status.Loading);
+            setAuthStatus(Status.Loading);
 
             if (!(await verifyToken())) {
                 await handleMsalReturn();
@@ -70,7 +84,7 @@ export function App() {
                     history.replace(history.location.pathname.replace("login/", "") + window.location.search);
                 }
             }
-            setStatus(Status.Ready);
+            setAuthStatus(Status.Ready);
         }
 
         async function handleMsalReturn() {
@@ -175,7 +189,21 @@ export function App() {
                 return true;
             }
         }
-    }, [status, setStatus, dispatch, history]);
+    }, [authStatus, dispatch, history]);
+
+    useEffect(() => {
+        loadDeviceProfile();
+
+        async function loadDeviceProfile() {
+            if (deviceProfileStatus !== Status.Initial) {
+                return;
+            }
+
+            setDeviceProfileStatus(Status.Loading);
+            await deviceProfileInitialized;
+            setDeviceProfileStatus(Status.Ready);
+        }
+    }, [deviceProfileStatus]);
 
     useEffect(() => {
         const state = getOAuthState();
@@ -187,12 +215,12 @@ export function App() {
 
     return (
         <>
-            <LocalizationProvider dateAdapter={AdapterDateFns} locale={enLocale}>
+            <LocalizationProvider dateAdapter={AdapterDateFns} adapterLocale={enLocale}>
                 <MsalProvider instance={msalInstance}>
                     <StyledEngineProvider injectFirst>
                         <ThemeProvider theme={theme}>
                             <CssBaseline />
-                            {status !== Status.Ready ? (
+                            {[authStatus, deviceProfileStatus].some((status) => status !== Status.Ready) ? (
                                 <Loading />
                             ) : (
                                 <Switch>
@@ -216,4 +244,100 @@ export function App() {
             </LocalizationProvider>
         </>
     );
+}
+
+async function loadDeviceProfile(): Promise<void> {
+    try {
+        const tiers = [0, 50, 75, 300];
+        const { isMobile, device, fps, ...gpuTier } = await getGPUTier({
+            mobileTiers: tiers,
+            desktopTiers: tiers,
+        });
+        const isApple = device?.includes("apple");
+        let { tier } = gpuTier;
+
+        // GPU is obscured on apple mobile devices and the result is usually much worse than the actual device's GPU.
+        if (isMobile && isApple) {
+            tier = Math.max(1, tier);
+        }
+
+        const { name } = api.deviceProfile;
+        api.deviceProfile = {
+            ...api.deviceProfile,
+            name: `${api.deviceProfile.name}${/tier/i.test(name) ? "" : `; tier${tier} (${fps})`}${
+                /(pc|mobile)/i.test(name) ? "" : `; ${isMobile ? "Mobile" : "PC"}`
+            }`,
+        };
+
+        switch (tier) {
+            case 0:
+                const fhd = 1920 * 1080;
+                const screen = window.screen.width * window.screen.height;
+
+                if (screen > fhd) {
+                    api.deviceProfile = {
+                        ...api.deviceProfile,
+                        renderResolution: fhd / screen,
+                    };
+                }
+                return;
+            case 1:
+                if (isMobile) {
+                    api.deviceProfile = {
+                        ...api.deviceProfile,
+                        renderResolution: 1,
+                        gpuBytesLimit: Math.max(750_000_000, api.deviceProfile.gpuBytesLimit),
+                    };
+                } else {
+                    api.deviceProfile = {
+                        ...api.deviceProfile,
+                        gpuBytesLimit: Math.max(1_000_000, api.deviceProfile.gpuBytesLimit),
+                        detailBias: Math.max(0.4, api.deviceProfile.detailBias),
+                    };
+                }
+                return;
+            case 2:
+                if (isMobile) {
+                    api.deviceProfile = {
+                        ...api.deviceProfile,
+                        triangleLimit: Math.max(7_500_000, api.deviceProfile.triangleLimit),
+                        weakDevice: false,
+                    };
+
+                    if (isApple) {
+                        api.deviceProfile = {
+                            ...api.deviceProfile,
+                            gpuBytesLimit: Math.max(750_000_000, api.deviceProfile.gpuBytesLimit),
+                        };
+                    } else {
+                        api.deviceProfile = {
+                            ...api.deviceProfile,
+                            gpuBytesLimit: Math.max(1_000_000_000, api.deviceProfile.gpuBytesLimit),
+                            detailBias: Math.max(0.5, api.deviceProfile.detailBias),
+                        };
+                    }
+                } else {
+                    api.deviceProfile = {
+                        ...api.deviceProfile,
+                        weakDevice: false,
+                    };
+                }
+                return;
+            case 3:
+                if (isMobile) {
+                    // skip
+                } else {
+                    api.deviceProfile = {
+                        ...api.deviceProfile,
+                        detailBias: Math.max(1.5, api.deviceProfile.detailBias),
+                        triangleLimit: Math.max(20_000_000, api.deviceProfile.triangleLimit),
+                        gpuBytesLimit: Math.max(4_000_000_000, api.deviceProfile.gpuBytesLimit),
+                        renderResolution: 1,
+                    };
+                }
+                return;
+        }
+    } catch (e) {
+        console.warn(e);
+    }
 }

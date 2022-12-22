@@ -1,1 +1,0 @@
-export { CameraNavigationMenu } from "./cameraNavigationMenu";

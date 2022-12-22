@@ -131,9 +131,8 @@ export function translateOrthogonalCamera(
 export function createPerspectiveCamera(
     camera: Pick<Camera, "position" | "rotation" | "fieldOfView">
 ): PerspectiveCamera {
-    const matrix3 = mat3.fromQuat(mat3.create(), camera.rotation);
-    const cameraDirection = vec3.transformMat3(vec3.create(), vec3.fromValues(0, 0, -1), matrix3);
-    const cameraUp = vec3.transformMat3(vec3.create(), vec3.fromValues(0, 1, 0), matrix3);
+    const cameraDirection = vec3.transformQuat(vec3.create(), vec3.fromValues(0, 0, -1), camera.rotation);
+    const cameraUp = vec3.transformQuat(vec3.create(), vec3.fromValues(0, 1, 0), camera.rotation);
 
     // in BCF Z is Y
     return {
@@ -159,9 +158,8 @@ export function createPerspectiveCamera(
 export function createOrthogonalCamera(
     camera: Pick<Camera, "position" | "rotation" | "fieldOfView">
 ): OrthogonalCamera {
-    const matrix3 = mat3.fromQuat(mat3.create(), camera.rotation);
-    const cameraDirection = vec3.transformMat3(vec3.create(), vec3.fromValues(0, 0, -1), matrix3);
-    const cameraUp = vec3.transformMat3(vec3.create(), vec3.fromValues(0, 1, 0), matrix3);
+    const cameraDirection = vec3.transformQuat(vec3.create(), vec3.fromValues(0, 0, -1), camera.rotation);
+    const cameraUp = vec3.transformQuat(vec3.create(), vec3.fromValues(0, 1, 0), camera.rotation);
 
     // in BCF Z is Y
     return {

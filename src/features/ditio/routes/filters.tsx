@@ -1,9 +1,9 @@
 import { FormEvent, useState } from "react";
 import { useHistory } from "react-router-dom";
-import { Box, Button, FormControl, FormControlLabel, useTheme } from "@mui/material";
+import { Box, Button, FormControl, FormControlLabel, TextFieldProps, useTheme } from "@mui/material";
 import { ArrowBack } from "@mui/icons-material";
 import { isValid, set } from "date-fns";
-import { DatePicker } from "@mui/lab";
+import { DatePicker } from "@mui/x-date-pickers";
 
 import { ScrollBox, Divider, TextField, Switch as SwitchInput } from "components";
 import { useAppDispatch, useAppSelector } from "app/store";
@@ -123,7 +123,7 @@ export function Filters() {
                                     : "",
                             }))
                         }
-                        renderInput={(params) => <TextField {...params} size="small" />}
+                        renderInput={(params: TextFieldProps) => <TextField {...params} size="small" />}
                     />
                 </FormControl>
 
@@ -141,7 +141,7 @@ export function Filters() {
                                     : "",
                             }))
                         }
-                        renderInput={(params) => <TextField {...params} size="small" />}
+                        renderInput={(params: TextFieldProps) => <TextField {...params} size="small" />}
                     />
                 </FormControl>
 

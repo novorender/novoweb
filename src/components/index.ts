@@ -21,3 +21,4 @@ export * from "./confirmation";
 export * from "./tableCell";
 export * from "./vertexTable";
 export * from "./measurementTable";
+export * from "./reverseSlider";

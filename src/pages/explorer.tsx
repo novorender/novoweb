@@ -18,7 +18,7 @@ import { Render3D } from "features/render";
 import { Consent } from "features/consent";
 
 import { useAppSelector, useAppDispatch } from "app/store";
-import { explorerActions, SceneType, UserRole } from "slices/explorerSlice";
+import { explorerActions, PrimaryMenuConfigType, SceneType, UserRole } from "slices/explorerSlice";
 import { selectUser } from "slices/authSlice";
 import { HiddenProvider } from "contexts/hidden";
 import { CustomGroupsProvider } from "contexts/customGroups";
@@ -26,6 +26,7 @@ import { HighlightedProvider } from "contexts/highlighted";
 import { VisibleProvider } from "contexts/visible";
 import { explorerGlobalsActions, ExplorerGlobalsProvider, useExplorerGlobals } from "contexts/explorerGlobals";
 import { MsalInteraction } from "features/msalInteraction";
+import { VersionAlert } from "features/versionAlert";
 
 export function Explorer() {
     return (
@@ -78,6 +79,11 @@ function ExplorerBase() {
             dispatch(explorerActions.setEnabledWidgets(enabledFeaturesToFeatureKeys(enabledFeatures)));
         }
 
+        const primaryMenu = getPrimaryMenu(customProperties);
+        if (primaryMenu) {
+            dispatch(explorerActions.setPrimaryMenu(primaryMenu));
+        }
+
         const oAuthState = getOAuthState();
 
         if (oAuthState) {
@@ -113,6 +119,7 @@ function ExplorerBase() {
             <Render3D onInit={handleInit} />
             {view && scene && !disableHud ? <Hud /> : null}
             <Consent />
+            <VersionAlert />
             <MsalInteraction />
         </>
     );
@@ -175,6 +182,12 @@ function getUserRole(customProperties: unknown): UserRole {
             : UserRole.Viewer;
 
     return role === "owner" ? UserRole.Owner : role === "administrator" ? UserRole.Admin : UserRole.Viewer;
+}
+
+function getPrimaryMenu(customProperties: unknown): PrimaryMenuConfigType | undefined {
+    return customProperties && typeof customProperties === "object" && "primaryMenu" in customProperties
+        ? (customProperties as { primaryMenu: PrimaryMenuConfigType }).primaryMenu
+        : undefined;
 }
 
 function ContextProviders({ children }: { children: ReactNode }) {

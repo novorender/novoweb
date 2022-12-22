@@ -133,31 +133,25 @@ export async function createCanvasSnapshot(
     const ctx = dist.getContext("2d")!;
 
     try {
-        const bitmap = await createImageBitmap(canvas, {
-            resizeHeight: height,
-            resizeWidth: width,
-            resizeQuality: "high",
-        });
+        {
+            const bitmap = await createImageBitmap(canvas, {
+                resizeHeight: height,
+                resizeWidth: width,
+                resizeQuality: "high",
+            });
 
-        ctx.drawImage(bitmap, 0, 0);
+            ctx.drawImage(bitmap, 0, 0);
+        }
 
-        const svgElement = document.querySelector("svg") as SVGSVGElement;
-        const svgURL = new XMLSerializer().serializeToString(svgElement);
-        const img = new Image();
-
-        const drawnSvg = new Promise((resolve) => {
-            img.onload = async function () {
-                ctx.drawImage(img, 0, 0);
-                resolve(true);
-            };
-            img.onerror = async () => {
-                resolve(false);
-            };
-        });
-
-        img.src = "data:image/svg+xml; charset=utf8, " + encodeURIComponent(svgURL);
-
-        await drawnSvg;
+        const canvas2D = document.getElementById("canvas2D") as HTMLCanvasElement | null;
+        if (canvas2D) {
+            const bitmap = await createImageBitmap(canvas2D, {
+                resizeHeight: height,
+                resizeWidth: width,
+                resizeQuality: "high",
+            });
+            ctx.drawImage(bitmap, 0, 0);
+        }
 
         return dist.toDataURL("image/png");
     } catch (e) {

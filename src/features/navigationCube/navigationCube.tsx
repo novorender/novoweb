@@ -1,5 +1,5 @@
 import { Fragment, useEffect, useRef, useState } from "react";
-import { mat3, quat, vec2, vec3 } from "gl-matrix";
+import { mat3, quat, ReadonlyVec3, vec2, vec3 } from "gl-matrix";
 import { css, styled, useTheme } from "@mui/material";
 
 import { useExplorerGlobals } from "contexts/explorerGlobals";
@@ -359,7 +359,7 @@ export function NavigationCube() {
         state: { view, scene },
     } = useExplorerGlobals(true);
     const highlighted = useHighlighted().idArr;
-    const prevPivotPt = useRef<vec3>();
+    const prevPivotPt = useRef<ReadonlyVec3>();
     const [circlePaths, setCirclePaths] = useState([] as Path[]);
     const [cubePaths, setCubePaths] = useState([] as Path[]);
     const [trianglePaths, setTrianglePath] = useState([] as Path[]);
@@ -368,7 +368,7 @@ export function NavigationCube() {
     const cameraType = useAppSelector(selectCameraType);
     const dispatch = useAppDispatch();
 
-    const highlightedBoundingSphereCenter = useRef<vec3>();
+    const highlightedBoundingSphereCenter = useRef<ReadonlyVec3>();
     const prevRotation = useRef<quat>();
     const animationFrameId = useRef<number>(-1);
 
@@ -383,7 +383,7 @@ export function NavigationCube() {
             return;
         }
 
-        let pt: vec3 | undefined;
+        let pt: ReadonlyVec3 | undefined;
 
         if (highlighted.length) {
             const abortSignal = abortController.current.signal;
@@ -418,8 +418,9 @@ export function NavigationCube() {
             if (sceneCenterDist <= 500) {
                 pt = scene.boundingSphere.center;
             } else {
-                await view.updatePickBuffers();
-                pt = (await view.pick(view.settings.display.width / 2, view.settings.display.width / 2))?.position;
+                pt = (
+                    await view.lastRenderOutput?.pick(view.settings.display.width / 2, view.settings.display.width / 2)
+                )?.position;
                 prevPivotPt.current = pt;
             }
         }
@@ -438,12 +439,14 @@ export function NavigationCube() {
         vec3.transformMat3(ab, ab, mat);
         const target = vec3.add(vec3.create(), pt, dir);
 
-        console.log(target, mat);
-
         dispatch(
             renderActions.setCamera({
                 type: cameraType,
-                goTo: { position: target, rotation: quat.fromMat3(quat.create(), mat) },
+                goTo: {
+                    position: target,
+                    rotation: quat.fromMat3(quat.create(), mat),
+                    fieldOfView: (view.camera.controller.params as { fieldOfView?: number }).fieldOfView,
+                },
             })
         );
     };

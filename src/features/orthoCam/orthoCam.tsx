@@ -1,9 +1,7 @@
 import { ChangeEvent, useState, MouseEvent } from "react";
 import { Box, Button, FormControlLabel } from "@mui/material";
 import { ArrowDownward, ColorLens } from "@mui/icons-material";
-import { vec3 } from "gl-matrix";
 
-import { api } from "app";
 import { useAppDispatch, useAppSelector } from "app/store";
 import { IosSwitch, LogoSpeedDial, ScrollBox, Switch, WidgetContainer, WidgetHeader } from "components";
 import { featuresConfig } from "config/features";
@@ -27,6 +25,8 @@ import {
 import { selectMinimized, selectMaximized } from "slices/explorerSlice";
 import { ColorPicker } from "features/colorPicker";
 import { rgbToVec, VecRGBA, vecToRgb } from "utils/color";
+
+import { getTopDownParams } from "./utils";
 
 export function OrthoCam() {
     const [menuOpen, toggleMenu] = useToggle();
@@ -70,24 +70,12 @@ export function OrthoCam() {
     };
 
     const handleTopDown = () => {
-        const bs = view.scene?.boundingSphere;
-        const maxY = bs ? bs.center[1] + bs?.radius : 10000;
-        const orthoController = api.createCameraController({ kind: "ortho" }, canvas);
-        const pos = vec3.copy(vec3.create(), view.camera.position);
-        pos[1] = Math.min(pos[1], maxY);
-        (orthoController as any).init(pos, [0, 1, 0], view.camera);
-        const mat = (orthoController.params as any).referenceCoordSys;
+        const params = getTopDownParams({ view, canvas });
 
         dispatch(
             renderActions.setCamera({
                 type: CameraType.Orthographic,
-                params: {
-                    kind: "ortho",
-                    referenceCoordSys: mat,
-                    fieldOfView: 100,
-                    near: -0.001,
-                    far: (view.camera.controller.params as any).far,
-                },
+                params,
             })
         );
     };

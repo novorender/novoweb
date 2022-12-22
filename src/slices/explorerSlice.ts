@@ -2,9 +2,18 @@ import { createSelector, createSlice, PayloadAction } from "@reduxjs/toolkit";
 import { SearchPattern } from "@novorender/webgl-api";
 import { ScenePreview } from "@novorender/data-js-api";
 
-import { featuresConfig, WidgetKey, Widget, defaultEnabledWidgets, defaultLockedWidgets } from "config/features";
+import {
+    featuresConfig,
+    WidgetKey,
+    Widget,
+    defaultEnabledWidgets,
+    defaultLockedWidgets,
+    ButtonKey,
+} from "config/features";
 import type { RootState } from "app/store";
 import { uniqueArray } from "utils/misc";
+
+import { DeepWritable } from "./renderSlice";
 
 export enum SceneType {
     Viewer,
@@ -17,6 +26,9 @@ export enum UserRole {
     Owner,
 }
 
+type UrlSearchQuery = undefined | string | SearchPattern[];
+type WritableUrlSearchQuery = DeepWritable<UrlSearchQuery>;
+
 const initialState = {
     enabledWidgets: defaultEnabledWidgets,
     lockedWidgets: defaultLockedWidgets,
@@ -28,12 +40,20 @@ const initialState = {
     widgets: [] as WidgetKey[],
     maximized: undefined as undefined | WidgetKey,
     minimized: undefined as undefined | WidgetKey,
-    urlSearchQuery: undefined as undefined | string | SearchPattern[],
+    primaryMenu: {
+        button1: featuresConfig.home.key,
+        button2: featuresConfig.cameraSpeed.key,
+        button3: featuresConfig.flyToSelected.key,
+        button4: featuresConfig.stepBack.key,
+        button5: featuresConfig.stepForwards.key as ButtonKey,
+    },
+    urlSearchQuery: undefined as WritableUrlSearchQuery,
     urlBookmarkId: undefined as undefined | string,
     localBookmarkId: undefined as undefined | string,
 };
 
 type State = typeof initialState;
+export type PrimaryMenuConfigType = State["primaryMenu"];
 
 export const explorerSlice = createSlice({
     name: "explorer",
@@ -103,11 +123,11 @@ export const explorerSlice = createSlice({
         },
         setUrlSearchQuery: (
             state,
-            action: PayloadAction<{ query: State["urlSearchQuery"]; selectionOnly: string } | undefined>
+            action: PayloadAction<{ query: UrlSearchQuery; selectionOnly: string } | undefined>
         ) => {
             const patterns = action.payload?.query;
 
-            state.urlSearchQuery = patterns;
+            state.urlSearchQuery = patterns as WritableUrlSearchQuery;
 
             if ((Array.isArray(patterns) && patterns.length) || (!Array.isArray(patterns) && patterns)) {
                 state.widgets = [
@@ -137,6 +157,9 @@ export const explorerSlice = createSlice({
         setOrganization: (state, action: PayloadAction<State["organization"]>) => {
             state.organization = action.payload;
         },
+        setPrimaryMenu: (state, action: PayloadAction<Partial<State["primaryMenu"]>>) => {
+            state.primaryMenu = { ...state.primaryMenu, ...action.payload };
+        },
     },
 });
 
@@ -144,7 +167,7 @@ export const selectWidgets = (state: RootState) => state.explorer.widgets;
 export const selectLockedWidgets = (state: RootState) => state.explorer.lockedWidgets;
 export const selectLocalBookmarkId = (state: RootState) => state.explorer.localBookmarkId;
 export const selectUrlBookmarkId = (state: RootState) => state.explorer.urlBookmarkId;
-export const selectUrlSearchQuery = (state: RootState) => state.explorer.urlSearchQuery;
+export const selectUrlSearchQuery = (state: RootState) => state.explorer.urlSearchQuery as UrlSearchQuery;
 export const selectSceneType = (state: RootState) => state.explorer.sceneType;
 export const selectUserRole = (state: RootState) => state.explorer.userRole;
 export const selectViewerScenes = (state: RootState) => state.explorer.viewerScenes;
@@ -152,7 +175,7 @@ export const selectRequireConsent = (state: RootState) => state.explorer.require
 export const selectOrganization = (state: RootState) => state.explorer.organization;
 export const selectMaximized = (state: RootState) => state.explorer.maximized;
 export const selectMinimized = (state: RootState) => state.explorer.minimized;
-
+export const selectPrimaryMenu = (state: RootState) => state.explorer.primaryMenu;
 export const selectIsAdminScene = (state: RootState) => state.explorer.sceneType === SceneType.Admin;
 export const selectHasAdminCapabilities = (state: RootState) => state.explorer.userRole !== UserRole.Viewer;
 
