@@ -105,6 +105,8 @@ import { useHandleGridChanges } from "./useHandleGridChanges";
 import { useHandleCameraControls } from "./useHandleCameraControls";
 import { getPathPoints, moveSvgCursor } from "./svgUtils";
 import { Engine2D } from "features/engine2D";
+import { MeasureEntity } from "@novorender/measure-api";
+import { ExtendedMeasureEntity } from "types/misc";
 
 glMatrix.setMatrixArrayType(Array);
 
@@ -976,7 +978,19 @@ export function Render3D({ onInit }: Props) {
 
                 break;
             case Picker.Measurement:
-                dispatch(measureActions.selectObj({ id: measure.forcePoint ? -1 : result.objectId, pos: position }));
+                if (measure.forcePoint) {
+                    dispatch(measureActions.selectEntity({ ObjectId: -1, drawKind: "vertex", parameter: position }));
+                }
+
+                if (measure.hover) {
+                    dispatch(measureActions.selectEntity(measure.hover as ExtendedMeasureEntity));
+                } else {
+                    dispatch(
+                        measureActions.selectEntity(
+                            (await measureScene?.pickMeasureEntity(result.objectId, position)) as ExtendedMeasureEntity
+                        )
+                    );
+                }
                 break;
             case Picker.Manhole:
                 if (result.objectId === -1) {
@@ -1125,10 +1139,21 @@ export function Render3D({ onInit }: Props) {
 
         if (useSvgCursor) {
             const measurement = await view.lastRenderOutput?.measure(e.nativeEvent.offsetX, e.nativeEvent.offsetY);
+
+            let hoverEnt: MeasureEntity | undefined = undefined;
+            if (measureScene && measurement && picker === Picker.Measurement && !measure.forcePoint) {
+                hoverEnt = await measureScene.pickMeasureEntityOnCurrentObject(
+                    measurement.objectId,
+                    measurement.position
+                );
+                dispatch(measureActions.selectHoverObj(hoverEnt));
+            }
             canvas.style.cursor = "none";
-
-            moveSvgCursor({ svg, view, size, measurement, x: e.nativeEvent.offsetX, y: e.nativeEvent.offsetY });
-
+            if (!hoverEnt || hoverEnt.drawKind === "face") {
+                moveSvgCursor({ svg, view, size, measurement, x: e.nativeEvent.offsetX, y: e.nativeEvent.offsetY });
+            } else {
+                moveSvgCursor({ svg, view, size, measurement: undefined, x: -100, y: -100 });
+            }
             return;
         } else {
             moveSvgCursor({ svg, view, size, measurement: undefined, x: -100, y: -100 });

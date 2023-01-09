@@ -12,6 +12,7 @@ import { Picker, renderActions, selectPicker } from "slices/renderSlice";
 
 import { measureActions, selectMeasure } from "./measureSlice";
 import { MeasuredObject, MeasuredResult } from "./measuredObject";
+import { ExtendedMeasureEntity } from "types/misc";
 
 export default function Measure() {
     const [menuOpen, toggleMenu] = useToggle();
@@ -20,19 +21,19 @@ export default function Measure() {
     const { duoMeasurementValues } = useAppSelector(selectMeasure);
 
     const dispatch = useAppDispatch();
-    const { selected, forcePoint, loadingBrep } = useAppSelector(selectMeasure);
+    const { selectedEntity, forcePoint, loadingBrep } = useAppSelector(selectMeasure);
     const selecting = useAppSelector(selectPicker) === Picker.Measurement;
     const isInitial = useRef(true);
 
     useEffect(() => {
         if (isInitial.current) {
-            if (!selecting && !selected.length) {
+            if (!selecting && !selectedEntity.length) {
                 dispatch(renderActions.setPicker(Picker.Measurement));
             }
 
             isInitial.current = false;
         }
-    }, [dispatch, selecting, selected]);
+    }, [dispatch, selecting, selectedEntity]);
 
     useEffect(() => {
         return () => {
@@ -75,7 +76,7 @@ export default function Measure() {
                             <Button
                                 onClick={() => dispatch(measureActions.clear())}
                                 color="grey"
-                                disabled={!selected.length}
+                                disabled={!selectedEntity.length}
                             >
                                 <DeleteSweep sx={{ mr: 1 }} />
                                 Clear
@@ -89,8 +90,8 @@ export default function Measure() {
                     </Box>
                 ) : null}
                 <ScrollBox display={menuOpen || minimized ? "none" : "block"}>
-                    {selected.map((obj, idx) => (
-                        <MeasuredObject obj={obj} idx={idx} key={idx} />
+                    {selectedEntity.map((obj, idx) => (
+                        <MeasuredObject obj={obj as ExtendedMeasureEntity} idx={idx} key={idx} />
                     ))}
                     <MeasuredResult duoMeasurementValues={duoMeasurementValues} />
                 </ScrollBox>

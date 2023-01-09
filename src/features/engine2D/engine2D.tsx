@@ -33,7 +33,12 @@ const Canvas2D = styled("canvas")(
     `
 );
 
-const measurementFillColor = "rgba(0, 191, 255, 0.5)";
+const measurementFillColor = "rgba(0, 191, 255, 0.3)";
+const measurementLineColor = "rgba(255, 255, 0, 1)";
+const measurementInactiveFillColor = "rgba(0, 191, 255, 0.15)";
+const measurementInactiveLineColor = "rgba(255, 255, 0, 0.4)";
+const hoverFillColor = "rgba(0, 170, 200, 0.3)";
+const hoverLineColor = "rgba(255, 165, 0, 1)";
 
 export function Engine2D() {
     const {
@@ -115,6 +120,7 @@ export function Engine2D() {
                 heightProfileDrawResult,
                 manholeDrawResult,
                 manholeCollisionEntityDrawResult,
+                hoverObjectDrawResult,
             ] = await Promise.all([
                 getDrawMeasureEntity(measure.duoMeasurementValues),
                 Promise.all(measureObjects.map((obj) => getDrawMeasureEntity(obj, obj.settings))),
@@ -128,6 +134,7 @@ export function Engine2D() {
                 getDrawMeasureEntity(heightProfileMeasureObject),
                 getDrawMeasureEntity(manhole),
                 getDrawMeasureEntity(manholeCollisionEntity),
+                getDrawMeasureEntity(measure.hover),
             ]);
 
             if (measure.duoMeasurementValues) {
@@ -137,17 +144,22 @@ export function Engine2D() {
 
             renderGridLabels();
 
-            measureObjectsDrawResult.forEach(
-                (prod) =>
-                    prod &&
+            measureObjectsDrawResult.forEach((prod, index) => {
+                if (prod) {
+                    const inaciveDueToHover = hoverObjectDrawResult !== undefined && measure.pinned !== index;
                     drawProduct(
                         context2D,
                         camSettings,
                         prod,
-                        { lineColor: "yellow", fillColor: measurementFillColor, complexCylinder: true },
+                        {
+                            lineColor: inaciveDueToHover ? measurementInactiveLineColor : measurementLineColor,
+                            fillColor: inaciveDueToHover ? measurementInactiveFillColor : measurementFillColor,
+                            complexCylinder: true,
+                        },
                         3
-                    )
-            );
+                    );
+                }
+            });
 
             if (duoDrawResult && duoDrawResult.objects.length === 1) {
                 const obj = duoDrawResult.objects[0];
@@ -253,6 +265,15 @@ export function Engine2D() {
                     )
             );
 
+            if (hoverObjectDrawResult) {
+                drawProduct(
+                    context2D,
+                    camSettings,
+                    hoverObjectDrawResult,
+                    { lineColor: hoverLineColor, fillColor: hoverFillColor },
+                    3
+                );
+            }
             if (heightProfileDrawResult) {
                 drawProduct(
                     context2D,
@@ -393,6 +414,8 @@ export function Engine2D() {
         drawPathSettings,
         size,
         renderGridLabels,
+        measure.hover,
+        measure.pinned,
     ]);
 
     useEffect(() => {

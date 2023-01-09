@@ -1,8 +1,9 @@
-import { DuoMeasurementValues, MeasureSettings } from "@novorender/measure-api";
+import { DuoMeasurementValues, MeasureEntity, MeasureSettings } from "@novorender/measure-api";
 import { createSlice, PayloadAction } from "@reduxjs/toolkit";
 import { vec3 } from "gl-matrix";
 
 import { RootState } from "app/store";
+import { DeepWritable } from "slices/renderSlice";
 
 export type SelectedMeasureObj = {
     id: number;
@@ -10,8 +11,18 @@ export type SelectedMeasureObj = {
     settings?: MeasureSettings;
 };
 
+type WriteableMeasureEntity = DeepWritable<MeasureEntity>;
+
+export type ExtendedMeasureEntity = MeasureEntity & {
+    settings?: MeasureSettings;
+};
+
+type WriteableExtendedMeasureEntity = DeepWritable<ExtendedMeasureEntity>;
+
 const initialState = {
     selected: [] as SelectedMeasureObj[],
+    selectedEntity: [] as WriteableExtendedMeasureEntity[],
+    hover: undefined as WriteableMeasureEntity | undefined,
     forcePoint: false,
     pinned: undefined as undefined | number,
     duoMeasurementValues: undefined as undefined | DuoMeasurementValues,
@@ -28,6 +39,13 @@ export const measureSlice = createSlice({
             const selectIdx = [1, undefined].includes(state.pinned) ? 0 : 1;
             state.selected[selectIdx] = action.payload;
         },
+        selectEntity: (state, action: PayloadAction<ExtendedMeasureEntity>) => {
+            const selectIdx = [1, undefined].includes(state.pinned) ? 0 : 1;
+            state.selectedEntity[selectIdx] = action.payload as WriteableExtendedMeasureEntity;
+        },
+        selectHoverObj: (state, action: PayloadAction<MeasureEntity | undefined>) => {
+            state.hover = action.payload as WriteableMeasureEntity | undefined;
+        },
         setSelected: (state, action: PayloadAction<State["selected"]>) => {
             state.selected = action.payload;
         },
@@ -38,7 +56,7 @@ export const measureSlice = createSlice({
             state.pinned = undefined;
         },
         clear: (state) => {
-            state.selected = [];
+            state.selectedEntity = [];
             state.pinned = undefined;
         },
         toggleForcePoint: (state) => {
@@ -48,7 +66,7 @@ export const measureSlice = createSlice({
             state.duoMeasurementValues = action.payload;
         },
         setSettings: (state, action: PayloadAction<{ idx: number; settings: MeasureSettings }>) => {
-            state.selected = state.selected.map((obj, idx) =>
+            state.selectedEntity = state.selectedEntity.map((obj, idx) =>
                 idx === action.payload.idx ? { ...obj, settings: action.payload.settings } : obj
             );
         },
