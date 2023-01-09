@@ -77,6 +77,7 @@ import { heightProfileActions } from "features/heightProfile";
 import { pointLineActions, useHandlePointLineUpdates } from "features/pointLine";
 import { selectCurrentLocation, useHandleLocationMarker } from "features/myLocation";
 import { useHandleJiraKeepAlive } from "features/jira";
+import { Engine2D } from "features/engine2D";
 
 import { useHighlighted, highlightActions, useDispatchHighlighted } from "contexts/highlighted";
 import { useHidden, useDispatchHidden } from "contexts/hidden";
@@ -104,7 +105,6 @@ import { xAxis, yAxis, axis, MAX_FLOAT } from "./consts";
 import { useHandleGridChanges } from "./useHandleGridChanges";
 import { useHandleCameraControls } from "./useHandleCameraControls";
 import { getPathPoints, moveSvgCursor } from "./svgUtils";
-import { Engine2D } from "features/engine2D";
 
 glMatrix.setMatrixArrayType(Array);
 
@@ -150,7 +150,7 @@ type Props = {
 
 export function Render3D({ onInit }: Props) {
     const theme = useTheme();
-    const id = useSceneId();
+    const sceneId = useSceneId();
     const highlightedObjects = useHighlighted();
     const dispatchHighlighted = useDispatchHighlighted();
     const hiddenObjects = useHidden();
@@ -204,7 +204,7 @@ export function Render3D({ onInit }: Props) {
     } as ReturnType<typeof createRendering>);
     const movementTimer = useRef<ReturnType<typeof setTimeout>>();
     const cameraGeneration = useRef<number>();
-    const previousId = useRef("");
+    const previousSceneId = useRef("");
     const camera2pointDistance = useRef(0);
     const flightController = useRef<CameraController>();
     const pointerDown = useRef(false);
@@ -344,14 +344,14 @@ export function Render3D({ onInit }: Props) {
         initView();
 
         async function initView() {
-            if (previousId.current === id || !canvas || !environments.length) {
+            if (previousSceneId.current === sceneId || !canvas || !environments.length) {
                 return;
             }
 
-            previousId.current = id;
+            previousSceneId.current = sceneId;
 
             try {
-                const sceneResponse = await dataApi.loadScene(id);
+                const sceneResponse = await dataApi.loadScene(sceneId);
 
                 if ("error" in sceneResponse) {
                     throw sceneResponse;
@@ -488,7 +488,7 @@ export function Render3D({ onInit }: Props) {
         dispatch,
         onInit,
         environments,
-        id,
+        sceneId,
         dispatchGlobals,
         setStatus,
         dispatchObjectGroups,
@@ -570,7 +570,7 @@ export function Render3D({ onInit }: Props) {
                     scene,
                     view,
                     defaultVisibility,
-                    sceneId: id,
+                    sceneId: sceneId,
                     objectGroups: [
                         { id: "", ids: hiddenObjects.idArr, hidden: true, selected: false, color: [0, 0, 0] },
                         {
@@ -594,7 +594,7 @@ export function Render3D({ onInit }: Props) {
             }
         },
         [
-            id,
+            sceneId,
             scene,
             view,
             defaultVisibility,
@@ -828,20 +828,25 @@ export function Render3D({ onInit }: Props) {
             dispatch(explorerActions.setUrlBookmarkId(undefined));
 
             try {
-                const bookmark = (await dataApi.getBookmarks(id, { group: urlBookmarkId })).find(
+                const shareLinkBookmark = (await dataApi.getBookmarks(sceneId, { group: urlBookmarkId })).find(
                     (bm) => bm.id === urlBookmarkId
                 );
 
-                if (!bookmark) {
+                if (shareLinkBookmark) {
+                    selectBookmark(shareLinkBookmark);
                     return;
                 }
 
-                selectBookmark(bookmark);
+                const savedPublicBookmark = (await dataApi.getBookmarks(sceneId)).find((bm) => bm.id === urlBookmarkId);
+                if (savedPublicBookmark) {
+                    selectBookmark(savedPublicBookmark);
+                    return;
+                }
             } catch (e) {
                 console.warn(e);
             }
         }
-    }, [view, id, dispatch, selectBookmark, urlBookmarkId]);
+    }, [view, sceneId, dispatch, selectBookmark, urlBookmarkId]);
 
     useEffect(() => {
         handleLocalBookmark();
@@ -872,7 +877,7 @@ export function Render3D({ onInit }: Props) {
                 console.warn(e);
             }
         }
-    }, [view, id, dispatch, selectBookmark, localBookmarkId]);
+    }, [view, sceneId, dispatch, selectBookmark, localBookmarkId]);
 
     const exitPointerLock = () => {
         if ("exitPointerLock" in window.document) {
@@ -1221,7 +1226,7 @@ export function Render3D({ onInit }: Props) {
     return (
         <Box position="relative" width="100%" height="100%" sx={{ userSelect: "none" }}>
             {isSceneError(status.status) ? (
-                <SceneError error={status.status} msg={status.msg} id={id} />
+                <SceneError error={status.status} msg={status.msg} id={sceneId} />
             ) : (
                 <>
                     {advancedSettings.showPerformance && view && canvas ? <PerformanceStats /> : null}
