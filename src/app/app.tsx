@@ -325,7 +325,10 @@ async function loadDeviceProfile(): Promise<void> {
                 return;
             case 3:
                 if (isMobile) {
-                    // skip
+                    api.deviceProfile = {
+                        ...api.deviceProfile,
+                        weakDevice: false,
+                    };
                 } else {
                     api.deviceProfile = {
                         ...api.deviceProfile,
@@ -333,6 +336,7 @@ async function loadDeviceProfile(): Promise<void> {
                         triangleLimit: Math.max(20_000_000, api.deviceProfile.triangleLimit),
                         gpuBytesLimit: Math.max(4_000_000_000, api.deviceProfile.gpuBytesLimit),
                         renderResolution: 1,
+                        weakDevice: false,
                     };
                 }
                 return;

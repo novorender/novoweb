@@ -13,10 +13,12 @@ export function Details({
     savedInputs,
     groupToEdit,
     ids,
+    includeDescendants,
 }: {
     savedInputs: SearchPattern[];
     groupToEdit?: ObjectGroup;
     ids: ObjectId[];
+    includeDescendants: boolean;
 }) {
     const theme = useTheme();
     const history = useHistory();
@@ -61,6 +63,7 @@ export function Details({
         const newGroup: ObjectGroup = {
             name,
             ids,
+            includeDescendants,
             grouping: collection,
             id: uuidv4(),
             selected: true,
@@ -79,7 +82,13 @@ export function Details({
         }
 
         dispatchObjectGroups(
-            objectGroupsActions.update(groupToEdit.id, { ids, name, grouping: collection, search: [...savedInputs] })
+            objectGroupsActions.update(groupToEdit.id, {
+                ids,
+                name,
+                includeDescendants,
+                grouping: collection,
+                search: [...savedInputs],
+            })
         );
         dispatchHighlighted(highlightActions.remove(ids));
     };
