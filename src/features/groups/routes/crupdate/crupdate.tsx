@@ -7,6 +7,7 @@ import { LinearProgress } from "components";
 import { objectGroupsActions, useObjectGroups, useDispatchObjectGroups } from "contexts/objectGroups";
 import { dataApi } from "app";
 import { AsyncState, AsyncStatus } from "types/misc";
+import { useToggle } from "hooks/useToggle";
 
 import { CreateJsonGroup } from "./createJsonGroup";
 import { Details } from "./details";
@@ -21,6 +22,7 @@ export function Crupdate({ sceneId }: { sceneId: string }) {
     const [savedInputs, setSavedInputs] = useState<SearchPattern[]>(
         groupToEdit?.search ?? [{ property: "", value: "", exact: true }]
     );
+    const [includeDescendants, toggleIncludeDescendants] = useToggle(groupToEdit?.includeDescendants ?? true);
 
     const [ids, setIds] = useState((): AsyncState<ObjectId[]> => {
         if (groupToEdit && !groupToEdit.ids) {
@@ -86,10 +88,17 @@ export function Crupdate({ sceneId }: { sceneId: string }) {
                             setSavedInputs={setSavedInputs}
                             ids={ids.data}
                             setIds={setIdsData}
+                            includeDescendants={includeDescendants}
+                            toggleIncludeDescendants={toggleIncludeDescendants}
                         />
                     </Route>
                     <Route path={match.path + "/step2"}>
-                        <Details savedInputs={savedInputs} groupToEdit={groupToEdit} ids={ids.data} />
+                        <Details
+                            savedInputs={savedInputs}
+                            groupToEdit={groupToEdit}
+                            ids={ids.data}
+                            includeDescendants={includeDescendants}
+                        />
                     </Route>
                 </Switch>
             );
