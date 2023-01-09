@@ -195,6 +195,7 @@ export function Engine2D() {
                                 {
                                     lineColor: "lightgreen",
                                     pointColor: { start: "green", middle: "white", end: "blue" },
+                                    displayAllPoints: true,
                                 },
                                 3,
                                 {
@@ -270,8 +271,8 @@ export function Engine2D() {
                     context2D,
                     camSettings,
                     hoverObjectDrawResult,
-                    { lineColor: hoverLineColor, fillColor: hoverFillColor },
-                    3
+                    { lineColor: hoverLineColor, fillColor: hoverFillColor, pointColor: hoverLineColor },
+                    5
                 );
             }
             if (heightProfileDrawResult) {
@@ -321,6 +322,7 @@ export function Engine2D() {
                                 {
                                     lineColor: "#55802b",
                                     pointColor: "black",
+                                    displayAllPoints: true,
                                 },
                                 2,
                                 {
@@ -356,6 +358,7 @@ export function Engine2D() {
                                     lineColor: "yellow",
                                     fillColor: measurementFillColor,
                                     pointColor: { start: "green", middle: "white", end: "blue" },
+                                    displayAllPoints: true,
                                 },
                                 2,
                                 {
@@ -382,6 +385,7 @@ export function Engine2D() {
                                 {
                                     lineColor: "yellow",
                                     pointColor: { start: "green", middle: "white", end: "blue" },
+                                    displayAllPoints: true,
                                 },
                                 2,
                                 {

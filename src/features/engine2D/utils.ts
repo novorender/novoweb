@@ -7,6 +7,7 @@ export interface ColorSettings {
     pointColor?: string | { start: string; middle: string; end: string };
     outlineColor?: string;
     complexCylinder?: boolean;
+    displayAllPoints?: boolean;
 }
 
 export interface TextSettings {
@@ -215,9 +216,11 @@ function drawLinesOrPolygon(
 
         ctx.stroke();
 
-        if (colorSettings.pointColor) {
+        if (colorSettings.displayAllPoints) {
             for (let i = 0; i < part.vertices2D.length; ++i) {
-                ctx.fillStyle = getPointColor(colorSettings.pointColor, i, part.vertices2D.length);
+                ctx.fillStyle = colorSettings.pointColor
+                    ? getPointColor(colorSettings.pointColor, i, part.vertices2D.length)
+                    : colorSettings.fillColor ?? "black";
                 ctx.lineWidth = 2;
                 ctx.strokeStyle = "black";
                 ctx.beginPath();
