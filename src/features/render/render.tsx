@@ -107,6 +107,7 @@ import { getPathPoints, moveSvgCursor } from "./svgUtils";
 import { Engine2D } from "features/engine2D";
 import { MeasureEntity } from "@novorender/measure-api";
 import { ExtendedMeasureEntity } from "types/misc";
+import { useHoverSettings, usePickSettings } from "features/measure/useMeasureObjects";
 
 glMatrix.setMatrixArrayType(Array);
 
@@ -196,6 +197,8 @@ export function Render3D({ onInit }: Props) {
 
     const picker = useAppSelector(selectPicker);
     const myLocationPoint = useAppSelector(selectCurrentLocation);
+    const hoverSettings = useHoverSettings();
+    const pickSettings = usePickSettings();
 
     const dispatch = useAppDispatch();
 
@@ -987,7 +990,11 @@ export function Render3D({ onInit }: Props) {
                 } else {
                     dispatch(
                         measureActions.selectEntity(
-                            (await measureScene?.pickMeasureEntity(result.objectId, position)) as ExtendedMeasureEntity
+                            (await measureScene?.pickMeasureEntity(
+                                result.objectId,
+                                position,
+                                pickSettings
+                            )) as ExtendedMeasureEntity
                         )
                     );
                 }
@@ -1144,7 +1151,8 @@ export function Render3D({ onInit }: Props) {
             if (measureScene && measurement && picker === Picker.Measurement && !measure.forcePoint) {
                 hoverEnt = await measureScene.pickMeasureEntityOnCurrentObject(
                     measurement.objectId,
-                    measurement.position
+                    measurement.position,
+                    hoverSettings
                 );
                 dispatch(measureActions.selectHoverObj(hoverEnt));
             }

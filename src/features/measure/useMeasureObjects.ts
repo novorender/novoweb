@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { DuoMeasurementValues, MeasureSettings } from "@novorender/measure-api";
+import { DuoMeasurementValues, MeasureSettings, SnapTolerance } from "@novorender/measure-api";
 
 import { useExplorerGlobals } from "contexts/explorerGlobals";
 import { useAppDispatch, useAppSelector } from "app/store";
@@ -70,4 +70,48 @@ export function useMeasureObjects() {
     }, [measureScene, setMeasureObjects, measure.selectedEntity, dispatch]);
 
     return measureObjects;
+}
+
+export function useHoverSettings(): SnapTolerance {
+    const measure = useAppSelector(selectMeasure);
+    const [settings, setSettings] = useState<SnapTolerance>({ edge: 0.06, segment: 0.12, face: 0.07, point: 0.06 });
+
+    useEffect(() => {
+        switch (measure.pickSettings) {
+            case "point":
+                setSettings({ point: 0.4 });
+                return;
+            case "curve":
+                setSettings({ edge: 0.25, segment: 0.25 });
+                return;
+            case "surface":
+                setSettings({ face: 0.09 });
+                return;
+        }
+        setSettings({ edge: 0.06, segment: 0.12, face: 0.07, point: 0.1 });
+    }, [measure.pickSettings]);
+
+    return settings;
+}
+
+export function usePickSettings(): SnapTolerance {
+    const measure = useAppSelector(selectMeasure);
+    const [settings, setSettings] = useState<SnapTolerance>({ edge: 0.06, segment: 0.12, face: 0.07, point: 0.06 });
+
+    useEffect(() => {
+        switch (measure.pickSettings) {
+            case "point":
+                setSettings({ point: 0.4 });
+                return;
+            case "curve":
+                setSettings({ edge: 0.25, segment: 0.25 });
+                return;
+            case "surface":
+                setSettings({ face: 0.09 });
+                return;
+        }
+        setSettings({ edge: 0.032, segment: 0.12, face: 0.08, point: 0.06 });
+    }, [measure.pickSettings]);
+
+    return settings;
 }

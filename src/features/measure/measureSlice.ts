@@ -23,6 +23,7 @@ const initialState = {
     selected: [] as SelectedMeasureObj[],
     selectedEntity: [] as WriteableExtendedMeasureEntity[],
     hover: undefined as WriteableMeasureEntity | undefined,
+    pickSettings: "all" as "all" | "point" | "curve" | "surface",
     forcePoint: false,
     pinned: undefined as undefined | number,
     duoMeasurementValues: undefined as undefined | DuoMeasurementValues,
@@ -45,6 +46,9 @@ export const measureSlice = createSlice({
         },
         selectHoverObj: (state, action: PayloadAction<MeasureEntity | undefined>) => {
             state.hover = action.payload as WriteableMeasureEntity | undefined;
+        },
+        selectPickSettings: (state, action: PayloadAction<"all" | "point" | "curve" | "surface">) => {
+            state.pickSettings = action.payload;
         },
         setSelected: (state, action: PayloadAction<State["selected"]>) => {
             state.selected = action.payload;

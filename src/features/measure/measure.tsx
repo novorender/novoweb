@@ -1,6 +1,6 @@
 import { DeleteSweep } from "@mui/icons-material";
 import { useRef, useEffect } from "react";
-import { Box, Button, Checkbox, FormControlLabel } from "@mui/material";
+import { Box, Button, Checkbox, FormControlLabel, MenuItem, OutlinedInput, Select } from "@mui/material";
 
 import { useAppDispatch, useAppSelector } from "app/store";
 import { IosSwitch, LinearProgress, LogoSpeedDial, ScrollBox, WidgetContainer, WidgetHeader } from "components";
@@ -13,6 +13,7 @@ import { Picker, renderActions, selectPicker } from "slices/renderSlice";
 import { measureActions, selectMeasure } from "./measureSlice";
 import { MeasuredObject, MeasuredResult } from "./measuredObject";
 import { ExtendedMeasureEntity } from "types/misc";
+import { selectionOption } from "./config";
 
 export default function Measure() {
     const [menuOpen, toggleMenu] = useToggle();
@@ -21,7 +22,7 @@ export default function Measure() {
     const { duoMeasurementValues } = useAppSelector(selectMeasure);
 
     const dispatch = useAppDispatch();
-    const { selectedEntity, forcePoint, loadingBrep } = useAppSelector(selectMeasure);
+    const { selectedEntity, forcePoint, loadingBrep, pickSettings } = useAppSelector(selectMeasure);
     const selecting = useAppSelector(selectPicker) === Picker.Measurement;
     const isInitial = useRef(true);
 
@@ -40,6 +41,10 @@ export default function Measure() {
             dispatch(renderActions.stopPicker(Picker.Measurement));
         };
     }, [dispatch]);
+
+    const onSelectSettingsChange = (newValue: "all" | "point" | "curve" | "surface") => {
+        dispatch(measureActions.selectPickSettings(newValue));
+    };
 
     return (
         <>
@@ -90,6 +95,22 @@ export default function Measure() {
                     </Box>
                 ) : null}
                 <ScrollBox display={menuOpen || minimized ? "none" : "block"}>
+                    <Select
+                        fullWidth
+                        name="pivot"
+                        size="small"
+                        value={pickSettings}
+                        onChange={(event) =>
+                            onSelectSettingsChange(event.target.value as "all" | "point" | "curve" | "surface")
+                        }
+                        input={<OutlinedInput fullWidth />}
+                    >
+                        {selectionOption.map((opt) => (
+                            <MenuItem key={opt.val} value={opt.val}>
+                                {opt.label}
+                            </MenuItem>
+                        ))}
+                    </Select>
                     {selectedEntity.map((obj, idx) => (
                         <MeasuredObject obj={obj as ExtendedMeasureEntity} idx={idx} key={idx} />
                     ))}
