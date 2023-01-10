@@ -1154,8 +1154,8 @@ export function Render3D({ onInit }: Props) {
                     measurement.position,
                     hoverSettings
                 );
-                dispatch(measureActions.selectHoverObj(hoverEnt));
             }
+            dispatch(measureActions.selectHoverObj(hoverEnt));
             canvas.style.cursor = "none";
             if (!hoverEnt || hoverEnt.drawKind === "face") {
                 moveSvgCursor({ svg, view, size, measurement, x: e.nativeEvent.offsetX, y: e.nativeEvent.offsetY });

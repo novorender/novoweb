@@ -88,7 +88,7 @@ export function useHoverSettings(): SnapTolerance {
                 setSettings({ face: 0.09 });
                 return;
         }
-        setSettings({ edge: 0.06, segment: 0.12, face: 0.07, point: 0.1 });
+        setSettings({ edge: 0.06, segment: 0.12, face: 0.07, point: 0.2 });
     }, [measure.pickSettings]);
 
     return settings;
