@@ -984,6 +984,7 @@ export function Render3D({ onInit }: Props) {
             case Picker.Measurement:
                 if (measure.snapKind === "none") {
                     dispatch(measureActions.selectEntity({ ObjectId: -1, drawKind: "vertex", parameter: position }));
+                    return;
                 }
 
                 if (measure.hover) {
@@ -1146,6 +1147,7 @@ export function Render3D({ onInit }: Props) {
             ].includes(picker);
 
         if (useSvgCursor) {
+            canvas.style.cursor = "none";
             const measurement = await view.lastRenderOutput?.measure(e.nativeEvent.offsetX, e.nativeEvent.offsetY);
 
             let hoverEnt: MeasureEntity | undefined = undefined;
@@ -1157,7 +1159,7 @@ export function Render3D({ onInit }: Props) {
                 );
             }
             dispatch(measureActions.selectHoverObj(hoverEnt));
-            canvas.style.cursor = "none";
+
             if (!hoverEnt || hoverEnt.drawKind === "face") {
                 moveSvgCursor({ svg, view, size, measurement, x: e.nativeEvent.offsetX, y: e.nativeEvent.offsetY });
             } else {
