@@ -126,7 +126,9 @@ export function useSelectBookmark() {
         const main = bmDefaultGroup && bmDefaultGroup.ids?.length ? bmDefaultGroup.ids.slice(-1)[0] : undefined;
         dispatch(renderActions.setMainObject(main));
 
-        if (bookmark.objectMeasurement) {
+        if (bookmark.selectedMeasureEntities) {
+            dispatch(measureActions.setSelectedEntities(bookmark.selectedMeasureEntities));
+        } else if (bookmark.objectMeasurement) {
             if (!measureScene) {
                 return;
             }

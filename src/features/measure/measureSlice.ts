@@ -72,7 +72,11 @@ export const measureSlice = createSlice({
     },
 });
 
-export const selectMeasure = (state: RootState) => state.measure as any;
+export const selectMeasure = (state: RootState) =>
+    state.measure as Omit<State, "selectedEntities" | "hover"> & {
+        selectedEntities: ExtendedMeasureEntity[];
+        hover: ExtendedMeasureEntity | undefined;
+    };
 
 const { actions, reducer } = measureSlice;
 export { actions as measureActions, reducer as measureReducer };
