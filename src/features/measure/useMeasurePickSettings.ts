@@ -10,7 +10,7 @@ export function useMeasurePickSettings(): SnapTolerance {
     const [settings, setSettings] = useState<SnapTolerance>({ edge: 0.06, segment: 0.12, face: 0.07, point: 0.06 });
 
     useEffect(() => {
-        switch (measure.pickSettings) {
+        switch (measure.snapKind) {
             case "point":
                 setSettings({ point: 0.4 });
                 return;
@@ -22,7 +22,7 @@ export function useMeasurePickSettings(): SnapTolerance {
                 return;
         }
         setSettings({ edge: 0.032, segment: 0.12, face: 0.08, point: 0.06 });
-    }, [measure.pickSettings]);
+    }, [measure.snapKind]);
 
     return settings;
 }

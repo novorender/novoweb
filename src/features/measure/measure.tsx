@@ -1,6 +1,6 @@
 import { DeleteSweep } from "@mui/icons-material";
 import { useRef, useEffect } from "react";
-import { Box, Button, Checkbox, FormControlLabel, MenuItem, OutlinedInput, Select } from "@mui/material";
+import { Box, Button, FormControlLabel, ListSubheader, MenuItem, OutlinedInput, Select } from "@mui/material";
 
 import { useAppDispatch, useAppSelector } from "app/store";
 import { IosSwitch, LinearProgress, LogoSpeedDial, ScrollBox, WidgetContainer, WidgetHeader } from "components";
@@ -13,7 +13,7 @@ import { ExtendedMeasureEntity } from "types/misc";
 
 import { measureActions, selectMeasure } from "./measureSlice";
 import { MeasuredObject, MeasuredResult } from "./measuredObject";
-import { selectionOption } from "./config";
+import { snapKinds } from "./config";
 
 export default function Measure() {
     const [menuOpen, toggleMenu] = useToggle();
@@ -22,7 +22,7 @@ export default function Measure() {
     const { duoMeasurementValues } = useAppSelector(selectMeasure);
 
     const dispatch = useAppDispatch();
-    const { selectedEntities, forcePoint, loadingBrep, pickSettings } = useAppSelector(selectMeasure);
+    const { selectedEntities, loadingBrep, snapKind } = useAppSelector(selectMeasure);
     const selecting = useAppSelector(selectPicker) === Picker.Measurement;
     const isInitial = useRef(true);
 
@@ -67,17 +67,24 @@ export default function Measure() {
                                 }
                                 label={<Box fontSize={14}>Selecting</Box>}
                             />
-                            <FormControlLabel
-                                control={
-                                    <Checkbox
-                                        size="medium"
-                                        color="primary"
-                                        checked={forcePoint}
-                                        onChange={() => dispatch(measureActions.toggleForcePoint())}
-                                    />
+                            <Select
+                                sx={{ width: "auto", minWidth: 110, lineHeight: "normal" }}
+                                inputProps={{ sx: { p: 0.8, fontSize: 14 } }}
+                                name="snap to"
+                                size="small"
+                                value={snapKind}
+                                onChange={(event) =>
+                                    onSelectSettingsChange(event.target.value as "all" | "point" | "curve" | "surface")
                                 }
-                                label={<Box fontSize={14}>Force points</Box>}
-                            />
+                                input={<OutlinedInput fullWidth />}
+                            >
+                                <ListSubheader>Snap to</ListSubheader>
+                                {snapKinds.map((opt) => (
+                                    <MenuItem key={opt.val} value={opt.val}>
+                                        {opt.label}
+                                    </MenuItem>
+                                ))}
+                            </Select>
                             <Button
                                 onClick={() => dispatch(measureActions.clear())}
                                 color="grey"
@@ -95,22 +102,6 @@ export default function Measure() {
                     </Box>
                 ) : null}
                 <ScrollBox display={menuOpen || minimized ? "none" : "block"}>
-                    <Select
-                        fullWidth
-                        name="pivot"
-                        size="small"
-                        value={pickSettings}
-                        onChange={(event) =>
-                            onSelectSettingsChange(event.target.value as "all" | "point" | "curve" | "surface")
-                        }
-                        input={<OutlinedInput fullWidth />}
-                    >
-                        {selectionOption.map((opt) => (
-                            <MenuItem key={opt.val} value={opt.val}>
-                                {opt.label}
-                            </MenuItem>
-                        ))}
-                    </Select>
                     {selectedEntities.map((obj, idx) => (
                         <MeasuredObject obj={obj as ExtendedMeasureEntity} idx={idx} key={idx} />
                     ))}

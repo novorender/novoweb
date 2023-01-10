@@ -5,6 +5,7 @@ import { vec3 } from "gl-matrix";
 import { RootState } from "app/store";
 import { DeepWritable } from "slices/renderSlice";
 import { ExtendedMeasureEntity } from "types/misc";
+import { SnapKind } from "./config";
 
 export type SelectedMeasureObj = {
     id: number;
@@ -18,8 +19,7 @@ type WriteableExtendedMeasureEntity = DeepWritable<ExtendedMeasureEntity>;
 const initialState = {
     selectedEntities: [] as WriteableExtendedMeasureEntity[],
     hover: undefined as WriteableMeasureEntity | undefined,
-    pickSettings: "all" as "all" | "point" | "curve" | "surface",
-    forcePoint: false,
+    snapKind: "all" as SnapKind,
     pinned: undefined as undefined | number,
     duoMeasurementValues: undefined as undefined | DuoMeasurementValues,
     loadingBrep: false,
@@ -38,8 +38,8 @@ export const measureSlice = createSlice({
         selectHoverObj: (state, action: PayloadAction<MeasureEntity | undefined>) => {
             state.hover = action.payload as WriteableMeasureEntity | undefined;
         },
-        selectPickSettings: (state, action: PayloadAction<"all" | "point" | "curve" | "surface">) => {
-            state.pickSettings = action.payload;
+        selectPickSettings: (state, action: PayloadAction<SnapKind>) => {
+            state.snapKind = action.payload;
         },
         setSelectedEntities: (state, action: PayloadAction<ExtendedMeasureEntity[]>) => {
             state.selectedEntities = action.payload as WriteableExtendedMeasureEntity[];
@@ -54,9 +54,6 @@ export const measureSlice = createSlice({
             state.selectedEntities = [];
             state.pinned = undefined;
             state.hover = undefined;
-        },
-        toggleForcePoint: (state) => {
-            state.forcePoint = !state.forcePoint;
         },
         setDuoMeasurementValues: (state, action: PayloadAction<State["duoMeasurementValues"]>) => {
             state.duoMeasurementValues = action.payload;
