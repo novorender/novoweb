@@ -379,6 +379,7 @@ export const renderSlice = createSlice({
                 defaultDeviceProfile: state.defaultDeviceProfile,
                 environments: state.environments,
                 projectSettings: state.projectSettings,
+                savedCameraPositions: { currentIndex: 0, positions: [state.savedCameraPositions.positions[0]] },
             };
         },
         setCamera: (state, { payload }: PayloadAction<CameraState>) => {
