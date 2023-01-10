@@ -55,7 +55,7 @@ export function useHeightProfileMeasureObject() {
                 dispatch(heightProfileActions.setSelectedEntity({ status: AsyncStatus.Loading }));
 
                 const mObject = await measureScene.pickMeasureEntity(point.id, point.pos).then((_mObj) => {
-                    const mObj = _mObj as ExtendedMeasureEntity;
+                    const mObj = _mObj.entity as ExtendedMeasureEntity;
                     mObj.pos = point.pos;
 
                     return mObj;

@@ -40,7 +40,7 @@ export function usePathMeasureObjects() {
                         measureScene
                             .pickMeasureEntity(obj.id, obj.pos)
                             .then((_mObj) => {
-                                const mObj = _mObj as ExtendedMeasureObject;
+                                const mObj = _mObj.entity as ExtendedMeasureObject;
                                 mObj.pos = obj.pos;
                                 return mObj;
                             })

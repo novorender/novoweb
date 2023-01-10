@@ -138,7 +138,7 @@ export function useSelectBookmark() {
                 bookmark.objectMeasurement.map(async (obj) => {
                     const entity = await measureScene?.pickMeasureEntity(obj.id, obj.pos, legacySnapTolerance);
                     return {
-                        ...entity,
+                        ...entity.entity,
                         settings: obj.settings,
                     } as ExtendedMeasureEntity;
                 })

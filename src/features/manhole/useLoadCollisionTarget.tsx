@@ -36,14 +36,14 @@ export function useLoadCollisionTarget() {
                       .pickMeasureEntity(obj.id, obj.pos)
                       .then(async (_mObj) => {
                           if (settings?.cylinderMeasure === "top") {
-                              const swappedEnt = await measureScene.swapCylinder(_mObj, "outer");
+                              const swappedEnt = await measureScene.swapCylinder(_mObj.entity, "outer");
                               if (swappedEnt) {
-                                  _mObj = swappedEnt;
+                                  _mObj.entity = swappedEnt;
                               }
                           } else if (settings?.cylinderMeasure === "bottom") {
-                              const swappedEnt = await measureScene.swapCylinder(_mObj, "inner");
+                              const swappedEnt = await measureScene.swapCylinder(_mObj.entity, "inner");
                               if (swappedEnt) {
-                                  _mObj = swappedEnt;
+                                  _mObj.entity = swappedEnt;
                               }
                           }
                           return _mObj;

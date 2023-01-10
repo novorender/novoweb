@@ -8,7 +8,7 @@ import {
     OrthoControllerParams,
     CameraControllerParams,
 } from "@novorender/webgl-api";
-import { MeasureEntity } from "@novorender/measure-api";
+import { BrepStatus, MeasureEntity } from "@novorender/measure-api";
 
 import {
     Box,
@@ -992,11 +992,8 @@ export function Render3D({ onInit }: Props) {
                 } else {
                     dispatch(
                         measureActions.selectEntity(
-                            (await measureScene?.pickMeasureEntity(
-                                result.objectId,
-                                position,
-                                measurePickSettings
-                            )) as ExtendedMeasureEntity
+                            (await measureScene?.pickMeasureEntity(result.objectId, position, measurePickSettings))
+                                ?.entity as ExtendedMeasureEntity
                         )
                     );
                 }
@@ -1150,7 +1147,7 @@ export function Render3D({ onInit }: Props) {
             canvas.style.cursor = "none";
             const measurement = await view.lastRenderOutput?.measure(e.nativeEvent.offsetX, e.nativeEvent.offsetY);
 
-            let hoverEnt: MeasureEntity | undefined = undefined;
+            let hoverEnt: { entity: MeasureEntity | undefined; status: BrepStatus } | undefined = undefined;
             if (measureScene && measurement && picker === Picker.Measurement && measure.snapKind !== "none") {
                 hoverEnt = await measureScene.pickMeasureEntityOnCurrentObject(
                     measurement.objectId,
@@ -1158,16 +1155,31 @@ export function Render3D({ onInit }: Props) {
                     measureHoverSettings
                 );
             }
-            dispatch(measureActions.selectHoverObj(hoverEnt));
+            dispatch(measureActions.selectHoverObj(hoverEnt?.entity));
 
-            if (!hoverEnt || hoverEnt.drawKind === "face") {
-                moveSvgCursor({ svg, view, size, measurement, x: e.nativeEvent.offsetX, y: e.nativeEvent.offsetY });
+            if (!hoverEnt?.entity || hoverEnt.entity.drawKind === "face") {
+                console.log(hoverEnt?.status);
+                const color =
+                    hoverEnt === undefined || hoverEnt.status === "unknown"
+                        ? "blue"
+                        : hoverEnt.status === "loaded"
+                        ? "lightgreen"
+                        : "yellow";
+                moveSvgCursor({
+                    svg,
+                    view,
+                    size,
+                    measurement,
+                    x: e.nativeEvent.offsetX,
+                    y: e.nativeEvent.offsetY,
+                    color,
+                });
             } else {
-                moveSvgCursor({ svg, view, size, measurement: undefined, x: -100, y: -100 });
+                moveSvgCursor({ svg, view, size, measurement: undefined, x: -100, y: -100, color: "" });
             }
             return;
         } else {
-            moveSvgCursor({ svg, view, size, measurement: undefined, x: -100, y: -100 });
+            moveSvgCursor({ svg, view, size, measurement: undefined, x: -100, y: -100, color: "" });
         }
 
         if (
@@ -1272,7 +1284,7 @@ export function Render3D({ onInit }: Props) {
                         onPointerUp={handleUp}
                         onPointerOut={() => {
                             if (svg && view) {
-                                moveSvgCursor({ svg, view, size, measurement: undefined, x: -100, y: -100 });
+                                moveSvgCursor({ svg, view, size, measurement: undefined, x: -100, y: -100, color: "" });
                             }
                         }}
                     />
