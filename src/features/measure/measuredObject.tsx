@@ -21,11 +21,12 @@ import { Accordion, AccordionDetails, AccordionSummary, VertexTable, Measurement
 import { useAppDispatch, useAppSelector } from "app/store";
 import { useExplorerGlobals } from "contexts/explorerGlobals";
 import { getMeasurementValueKind, measureObjectIsVertex } from "utils/misc";
+import { ExtendedMeasureEntity } from "types/misc";
 
 import { measureActions, selectMeasure } from "./measureSlice";
 import { Slope } from "./slope";
 import { PlanarDiff } from "./planarDiff";
-import { ExtendedMeasureEntity, useMeasureObjects } from "./useMeasureObjects";
+import { useMeasureObjects } from "./useMeasureObjects";
 import { cylinderOptions } from "./config";
 
 const NestedAccordionSummary = styled(AccordionSummary)(

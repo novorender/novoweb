@@ -111,7 +111,9 @@ export function useCreateBookmark() {
                 },
             },
             grid: { ...view.settings.grid },
-            ...(measurement.selected.length > 0 ? { objectMeasurement: measurement.selected } : {}),
+            ...(measurement.selectedEntities.length > 0
+                ? { selectedMeasureEntities: measurement.selectedEntities }
+                : {}),
             ...(areaPts.length ? { area: { pts: areaPts } } : {}),
             ...(pointLinePts.length ? { pointLine: { pts: pointLinePts } } : {}),
             ...(manhole

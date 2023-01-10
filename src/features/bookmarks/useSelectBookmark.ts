@@ -16,6 +16,7 @@ import { pointLineActions } from "features/pointLine";
 import { groupsActions } from "features/groups";
 import { useSceneId } from "hooks/useSceneId";
 import { manholeActions } from "features/manhole";
+import { ExtendedMeasureEntity } from "types/misc";
 
 export function useSelectBookmark() {
     const sceneId = useSceneId();
@@ -26,7 +27,7 @@ export function useSelectBookmark() {
     const dispatchObjectGroups = useDispatchObjectGroups();
 
     const {
-        state: { view, scene },
+        state: { view, scene, measureScene },
     } = useExplorerGlobals();
 
     const dispatch = useAppDispatch();
@@ -126,13 +127,30 @@ export function useSelectBookmark() {
         dispatch(renderActions.setMainObject(main));
 
         if (bookmark.objectMeasurement) {
-            dispatch(measureActions.setSelected(bookmark.objectMeasurement));
+            if (!measureScene) {
+                return;
+            }
+
+            const legacySnapTolerance = { edge: 0.032, segment: 0.12, face: 0.07, point: 0.032 };
+            const entities = await Promise.all(
+                bookmark.objectMeasurement.map(async (obj) => {
+                    const entity = await measureScene?.pickMeasureEntity(obj.id, obj.pos, legacySnapTolerance);
+                    return {
+                        ...entity,
+                        settings: obj.settings,
+                    } as ExtendedMeasureEntity;
+                })
+            );
+
+            dispatch(measureActions.setSelectedEntities(entities));
         } else if (bookmark.measurement) {
             dispatch(
-                measureActions.setSelected(bookmark.measurement.slice(0, 2).map((pt, idx) => ({ pos: pt, id: -idx })))
+                measureActions.setSelectedEntities(
+                    bookmark.measurement.slice(0, 2).map((pt) => ({ ObjectId: -1, drawKind: "vertex", parameter: pt }))
+                )
             );
         } else {
-            dispatch(measureActions.setSelected([]));
+            dispatch(measureActions.setSelectedEntities([]));
         }
 
         if (bookmark.area) {

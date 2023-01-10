@@ -4,6 +4,7 @@ import { vec3 } from "gl-matrix";
 
 import { RootState } from "app/store";
 import { DeepWritable } from "slices/renderSlice";
+import { ExtendedMeasureEntity } from "types/misc";
 
 export type SelectedMeasureObj = {
     id: number;
@@ -12,15 +13,9 @@ export type SelectedMeasureObj = {
 };
 
 type WriteableMeasureEntity = DeepWritable<MeasureEntity>;
-
-export type ExtendedMeasureEntity = MeasureEntity & {
-    settings?: MeasureSettings;
-};
-
 type WriteableExtendedMeasureEntity = DeepWritable<ExtendedMeasureEntity>;
 
 const initialState = {
-    selected: [] as SelectedMeasureObj[],
     selectedEntities: [] as WriteableExtendedMeasureEntity[],
     hover: undefined as WriteableMeasureEntity | undefined,
     pickSettings: "all" as "all" | "point" | "curve" | "surface",
@@ -36,10 +31,6 @@ export const measureSlice = createSlice({
     name: "measure",
     initialState: initialState,
     reducers: {
-        selectObj: (state, action: PayloadAction<SelectedMeasureObj>) => {
-            const selectIdx = [1, undefined].includes(state.pinned) ? 0 : 1;
-            state.selected[selectIdx] = action.payload;
-        },
         selectEntity: (state, action: PayloadAction<ExtendedMeasureEntity>) => {
             const selectIdx = [1, undefined].includes(state.pinned) ? 0 : 1;
             state.selectedEntities[selectIdx] = action.payload as WriteableExtendedMeasureEntity;
@@ -50,8 +41,8 @@ export const measureSlice = createSlice({
         selectPickSettings: (state, action: PayloadAction<"all" | "point" | "curve" | "surface">) => {
             state.pickSettings = action.payload;
         },
-        setSelected: (state, action: PayloadAction<State["selected"]>) => {
-            state.selected = action.payload;
+        setSelectedEntities: (state, action: PayloadAction<ExtendedMeasureEntity[]>) => {
+            state.selectedEntities = action.payload as WriteableExtendedMeasureEntity[];
         },
         pin: (state, action: PayloadAction<State["pinned"]>) => {
             state.pinned = action.payload;
@@ -62,6 +53,7 @@ export const measureSlice = createSlice({
         clear: (state) => {
             state.selectedEntities = [];
             state.pinned = undefined;
+            state.hover = undefined;
         },
         toggleForcePoint: (state) => {
             state.forcePoint = !state.forcePoint;
@@ -80,7 +72,7 @@ export const measureSlice = createSlice({
     },
 });
 
-export const selectMeasure = (state: RootState) => state.measure;
+export const selectMeasure = (state: RootState) => state.measure as any;
 
 const { actions, reducer } = measureSlice;
 export { actions as measureActions, reducer as measureReducer };

@@ -204,9 +204,16 @@ export function Engine2D() {
                             );
                             break;
                         case "normal":
-                            drawPart(context2D, camSettings, part, { lineColor: "black", pointColor: "black" }, 3, {
-                                type: "distance",
-                            });
+                            drawPart(
+                                context2D,
+                                camSettings,
+                                part,
+                                { lineColor: "black", pointColor: "black", displayAllPoints: true },
+                                3,
+                                {
+                                    type: "distance",
+                                }
+                            );
                             break;
                         case "x-axis":
                             drawPart(context2D, camSettings, part, { lineColor: "red" }, 3, {

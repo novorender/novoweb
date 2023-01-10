@@ -1,15 +1,11 @@
 import { useEffect, useState } from "react";
-import { DuoMeasurementValues, MeasureSettings } from "@novorender/measure-api";
-import { MeasureEntity } from "@novorender/measure-api";
+import { DuoMeasurementValues } from "@novorender/measure-api";
 
 import { useExplorerGlobals } from "contexts/explorerGlobals";
 import { useAppDispatch, useAppSelector } from "app/store";
+import { ExtendedMeasureEntity } from "types/misc";
 
 import { measureActions, selectMeasure } from "./measureSlice";
-
-export type ExtendedMeasureEntity = MeasureEntity & {
-    settings?: MeasureSettings;
-};
 
 export function useMeasureObjects() {
     const {
