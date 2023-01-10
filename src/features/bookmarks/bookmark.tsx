@@ -144,22 +144,20 @@ export function Bookmark({ bookmark }: { bookmark: ExtendedBookmark }) {
                         <ListItemText>Share</ListItemText>
                     </MenuItem>
                 )}
-                {(isAdmin || (bookmark.access === BookmarkAccess.Personal && user)) && (
-                    <>
-                        <MenuItem onClick={() => history.push(`/edit/${bookmark.id}`)}>
-                            <ListItemIcon>
-                                <Edit fontSize="small" />
-                            </ListItemIcon>
-                            <ListItemText>Edit</ListItemText>
-                        </MenuItem>
-                        <MenuItem onClick={() => history.push(`delete/${bookmark.id}`)}>
-                            <ListItemIcon>
-                                <Delete fontSize="small" />
-                            </ListItemIcon>
-                            <ListItemText>Delete</ListItemText>
-                        </MenuItem>
-                    </>
-                )}
+                {(isAdmin || (bookmark.access === BookmarkAccess.Personal && user)) && [
+                    <MenuItem key="edit" onClick={() => history.push(`/edit/${bookmark.id}`)}>
+                        <ListItemIcon>
+                            <Edit fontSize="small" />
+                        </ListItemIcon>
+                        <ListItemText>Edit</ListItemText>
+                    </MenuItem>,
+                    <MenuItem key="delete" onClick={() => history.push(`delete/${bookmark.id}`)}>
+                        <ListItemIcon>
+                            <Delete fontSize="small" />
+                        </ListItemIcon>
+                        <ListItemText>Delete</ListItemText>
+                    </MenuItem>,
+                ]}
             </Menu>
         </>
     );
