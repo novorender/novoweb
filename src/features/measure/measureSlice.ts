@@ -21,7 +21,7 @@ type WriteableExtendedMeasureEntity = DeepWritable<ExtendedMeasureEntity>;
 
 const initialState = {
     selected: [] as SelectedMeasureObj[],
-    selectedEntity: [] as WriteableExtendedMeasureEntity[],
+    selectedEntities: [] as WriteableExtendedMeasureEntity[],
     hover: undefined as WriteableMeasureEntity | undefined,
     pickSettings: "all" as "all" | "point" | "curve" | "surface",
     forcePoint: false,
@@ -42,7 +42,7 @@ export const measureSlice = createSlice({
         },
         selectEntity: (state, action: PayloadAction<ExtendedMeasureEntity>) => {
             const selectIdx = [1, undefined].includes(state.pinned) ? 0 : 1;
-            state.selectedEntity[selectIdx] = action.payload as WriteableExtendedMeasureEntity;
+            state.selectedEntities[selectIdx] = action.payload as WriteableExtendedMeasureEntity;
         },
         selectHoverObj: (state, action: PayloadAction<MeasureEntity | undefined>) => {
             state.hover = action.payload as WriteableMeasureEntity | undefined;
@@ -60,7 +60,7 @@ export const measureSlice = createSlice({
             state.pinned = undefined;
         },
         clear: (state) => {
-            state.selectedEntity = [];
+            state.selectedEntities = [];
             state.pinned = undefined;
         },
         toggleForcePoint: (state) => {
@@ -70,7 +70,7 @@ export const measureSlice = createSlice({
             state.duoMeasurementValues = action.payload;
         },
         setSettings: (state, action: PayloadAction<{ idx: number; settings: MeasureSettings }>) => {
-            state.selectedEntity = state.selectedEntity.map((obj, idx) =>
+            state.selectedEntities = state.selectedEntities.map((obj, idx) =>
                 idx === action.payload.idx ? { ...obj, settings: action.payload.settings } : obj
             );
         },

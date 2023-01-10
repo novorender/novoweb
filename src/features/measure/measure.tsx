@@ -9,10 +9,10 @@ import { useToggle } from "hooks/useToggle";
 import { featuresConfig } from "config/features";
 import { selectMinimized, selectMaximized } from "slices/explorerSlice";
 import { Picker, renderActions, selectPicker } from "slices/renderSlice";
+import { ExtendedMeasureEntity } from "types/misc";
 
 import { measureActions, selectMeasure } from "./measureSlice";
 import { MeasuredObject, MeasuredResult } from "./measuredObject";
-import { ExtendedMeasureEntity } from "types/misc";
 import { selectionOption } from "./config";
 
 export default function Measure() {
@@ -22,19 +22,19 @@ export default function Measure() {
     const { duoMeasurementValues } = useAppSelector(selectMeasure);
 
     const dispatch = useAppDispatch();
-    const { selectedEntity, forcePoint, loadingBrep, pickSettings } = useAppSelector(selectMeasure);
+    const { selectedEntities, forcePoint, loadingBrep, pickSettings } = useAppSelector(selectMeasure);
     const selecting = useAppSelector(selectPicker) === Picker.Measurement;
     const isInitial = useRef(true);
 
     useEffect(() => {
         if (isInitial.current) {
-            if (!selecting && !selectedEntity.length) {
+            if (!selecting && !selectedEntities.length) {
                 dispatch(renderActions.setPicker(Picker.Measurement));
             }
 
             isInitial.current = false;
         }
-    }, [dispatch, selecting, selectedEntity]);
+    }, [dispatch, selecting, selectedEntities]);
 
     useEffect(() => {
         return () => {
@@ -81,7 +81,7 @@ export default function Measure() {
                             <Button
                                 onClick={() => dispatch(measureActions.clear())}
                                 color="grey"
-                                disabled={!selectedEntity.length}
+                                disabled={!selectedEntities.length}
                             >
                                 <DeleteSweep sx={{ mr: 1 }} />
                                 Clear
@@ -111,7 +111,7 @@ export default function Measure() {
                             </MenuItem>
                         ))}
                     </Select>
-                    {selectedEntity.map((obj, idx) => (
+                    {selectedEntities.map((obj, idx) => (
                         <MeasuredObject obj={obj as ExtendedMeasureEntity} idx={idx} key={idx} />
                     ))}
                     <MeasuredResult duoMeasurementValues={duoMeasurementValues} />

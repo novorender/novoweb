@@ -8,6 +8,7 @@ import {
     OrthoControllerParams,
     CameraControllerParams,
 } from "@novorender/webgl-api";
+import { MeasureEntity } from "@novorender/measure-api";
 
 import {
     Box,
@@ -34,10 +35,8 @@ import {
     useHandlePanoramaChanges,
 } from "features/panoramas";
 import { Accordion, AccordionDetails, AccordionSummary, Loading } from "components";
-
 import { api, dataApi, measureApi } from "app";
 import { useSceneId } from "hooks/useSceneId";
-
 import {
     fetchEnvironments,
     renderActions,
@@ -65,8 +64,7 @@ import {
 import { explorerActions, selectLocalBookmarkId, selectUrlBookmarkId } from "slices/explorerSlice";
 import { selectDeviations } from "features/deviations";
 import { useSelectBookmark } from "features/bookmarks";
-import { measureActions, selectMeasure } from "features/measure";
-
+import { measureActions, selectMeasure, useMeasureHoverSettings, useMeasurePickSettings } from "features/measure";
 import { manholeActions, useHandleManholeUpdates } from "features/manhole";
 import { ditioActions, selectMarkers, selectShowMarkers } from "features/ditio";
 import { useAppDispatch, useAppSelector } from "app/store";
@@ -77,6 +75,8 @@ import { heightProfileActions } from "features/heightProfile";
 import { pointLineActions, useHandlePointLineUpdates } from "features/pointLine";
 import { selectCurrentLocation, useHandleLocationMarker } from "features/myLocation";
 import { useHandleJiraKeepAlive } from "features/jira";
+import { Engine2D } from "features/engine2D";
+import { ExtendedMeasureEntity } from "types/misc";
 
 import { useHighlighted, highlightActions, useDispatchHighlighted } from "contexts/highlighted";
 import { useHidden, useDispatchHidden } from "contexts/hidden";
@@ -104,10 +104,6 @@ import { xAxis, yAxis, axis, MAX_FLOAT } from "./consts";
 import { useHandleGridChanges } from "./useHandleGridChanges";
 import { useHandleCameraControls } from "./useHandleCameraControls";
 import { getPathPoints, moveSvgCursor } from "./svgUtils";
-import { Engine2D } from "features/engine2D";
-import { MeasureEntity } from "@novorender/measure-api";
-import { ExtendedMeasureEntity } from "types/misc";
-import { useHoverSettings, usePickSettings } from "features/measure/useMeasureObjects";
 
 glMatrix.setMatrixArrayType(Array);
 
@@ -197,8 +193,8 @@ export function Render3D({ onInit }: Props) {
 
     const picker = useAppSelector(selectPicker);
     const myLocationPoint = useAppSelector(selectCurrentLocation);
-    const hoverSettings = useHoverSettings();
-    const pickSettings = usePickSettings();
+    const measureHoverSettings = useMeasureHoverSettings();
+    const measurePickSettings = useMeasurePickSettings();
 
     const dispatch = useAppDispatch();
 
@@ -993,7 +989,7 @@ export function Render3D({ onInit }: Props) {
                             (await measureScene?.pickMeasureEntity(
                                 result.objectId,
                                 position,
-                                pickSettings
+                                measurePickSettings
                             )) as ExtendedMeasureEntity
                         )
                     );
@@ -1152,7 +1148,7 @@ export function Render3D({ onInit }: Props) {
                 hoverEnt = await measureScene.pickMeasureEntityOnCurrentObject(
                     measurement.objectId,
                     measurement.position,
-                    hoverSettings
+                    measureHoverSettings
                 );
             }
             dispatch(measureActions.selectHoverObj(hoverEnt));

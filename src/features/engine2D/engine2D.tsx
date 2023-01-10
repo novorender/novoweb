@@ -146,14 +146,14 @@ export function Engine2D() {
 
             measureObjectsDrawResult.forEach((prod, index) => {
                 if (prod) {
-                    const inaciveDueToHover = hoverObjectDrawResult !== undefined && measure.pinned !== index;
+                    const inactiveDueToHover = hoverObjectDrawResult !== undefined && measure.pinned !== index;
                     drawProduct(
                         context2D,
                         camSettings,
                         prod,
                         {
-                            lineColor: inaciveDueToHover ? measurementInactiveLineColor : measurementLineColor,
-                            fillColor: inaciveDueToHover ? measurementInactiveFillColor : measurementFillColor,
+                            lineColor: inactiveDueToHover ? measurementInactiveLineColor : measurementLineColor,
+                            fillColor: inactiveDueToHover ? measurementInactiveFillColor : measurementFillColor,
                             complexCylinder: true,
                         },
                         3
