@@ -261,6 +261,11 @@ async function loadDeviceProfile(): Promise<void> {
             tier = Math.max(1, tier);
         }
 
+        // All RTX cards belong in tier 3+, but some such as A3000 are not benchmarked and returns tier 1.
+        if (gpuTier.gpu && /RTX/gi.test(gpuTier.gpu)) {
+            tier = Math.max(3, tier);
+        }
+
         const { name } = api.deviceProfile;
         api.deviceProfile = {
             ...api.deviceProfile,
