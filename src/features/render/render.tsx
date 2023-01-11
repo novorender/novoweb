@@ -213,6 +213,7 @@ export function Render3D({ onInit }: Props) {
     const movingClippingBox = useRef(false);
     const camX = useRef(vec3.create());
     const camY = useRef(vec3.create());
+    const previousSnapPos = useRef(vec2.create());
 
     const [svg, setSvg] = useState<null | SVGSVGElement>(null);
     const [status, setStatus] = useState<{ status: Status; msg?: string }>({ status: Status.Initial });
@@ -1154,6 +1155,12 @@ export function Render3D({ onInit }: Props) {
                     measurement.position,
                     measureHoverSettings
                 );
+                vec2.copy(previousSnapPos.current, vec2.fromValues(e.nativeEvent.offsetX, e.nativeEvent.offsetY));
+            } else if (!measurement && measure.hover) {
+                const currentPos = vec2.fromValues(e.nativeEvent.offsetX, e.nativeEvent.offsetY);
+                if (vec2.dist(currentPos, previousSnapPos.current) < 25) {
+                    hoverEnt = { entity: measure.hover, status: "loaded" };
+                }
             }
             dispatch(measureActions.selectHoverObj(hoverEnt?.entity));
 
