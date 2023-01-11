@@ -291,7 +291,7 @@ async function loadDeviceProfile(): Promise<void> {
                     api.deviceProfile = {
                         ...api.deviceProfile,
                         renderResolution: 1,
-                        gpuBytesLimit: Math.max(750_000_000, api.deviceProfile.gpuBytesLimit),
+                        gpuBytesLimit: Math.max(700_000_000, api.deviceProfile.gpuBytesLimit),
                     };
                 } else {
                     api.deviceProfile = {
@@ -312,7 +312,7 @@ async function loadDeviceProfile(): Promise<void> {
                     if (isApple) {
                         api.deviceProfile = {
                             ...api.deviceProfile,
-                            gpuBytesLimit: Math.max(750_000_000, api.deviceProfile.gpuBytesLimit),
+                            gpuBytesLimit: Math.max(700_000_000, api.deviceProfile.gpuBytesLimit),
                         };
                     } else {
                         api.deviceProfile = {
