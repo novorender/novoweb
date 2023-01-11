@@ -261,6 +261,11 @@ async function loadDeviceProfile(): Promise<void> {
             tier = Math.max(1, tier);
         }
 
+        // All RTX cards belong in tier 3+, but some such as A3000 are not benchmarked and returns tier 1.
+        if (gpuTier.gpu && /RTX/gi.test(gpuTier.gpu)) {
+            tier = Math.max(3, tier);
+        }
+
         const { name } = api.deviceProfile;
         api.deviceProfile = {
             ...api.deviceProfile,
@@ -286,7 +291,7 @@ async function loadDeviceProfile(): Promise<void> {
                     api.deviceProfile = {
                         ...api.deviceProfile,
                         renderResolution: 1,
-                        gpuBytesLimit: Math.max(750_000_000, api.deviceProfile.gpuBytesLimit),
+                        gpuBytesLimit: Math.max(700_000_000, api.deviceProfile.gpuBytesLimit),
                     };
                 } else {
                     api.deviceProfile = {
@@ -307,7 +312,7 @@ async function loadDeviceProfile(): Promise<void> {
                     if (isApple) {
                         api.deviceProfile = {
                             ...api.deviceProfile,
-                            gpuBytesLimit: Math.max(750_000_000, api.deviceProfile.gpuBytesLimit),
+                            gpuBytesLimit: Math.max(700_000_000, api.deviceProfile.gpuBytesLimit),
                         };
                     } else {
                         api.deviceProfile = {
