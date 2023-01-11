@@ -16,7 +16,6 @@ export const snapKinds = [
     { val: "point", label: "Point" },
     { val: "curve", label: "Curve" },
     { val: "surface", label: "Surface" },
-    { val: "none", label: "None" },
 ] as const;
 
 export type SnapKind = typeof snapKinds[number]["val"];

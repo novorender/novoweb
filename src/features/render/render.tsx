@@ -983,11 +983,6 @@ export function Render3D({ onInit }: Props) {
 
                 break;
             case Picker.Measurement:
-                if (measure.snapKind === "none") {
-                    dispatch(measureActions.selectEntity({ ObjectId: -1, drawKind: "vertex", parameter: position }));
-                    return;
-                }
-
                 if (measure.hover) {
                     dispatch(measureActions.selectEntity(measure.hover as ExtendedMeasureEntity));
                 } else {
@@ -1149,7 +1144,7 @@ export function Render3D({ onInit }: Props) {
             const measurement = await view.lastRenderOutput?.measure(e.nativeEvent.offsetX, e.nativeEvent.offsetY);
 
             let hoverEnt: { entity: MeasureEntity | undefined; status: BrepStatus } | undefined = undefined;
-            if (measureScene && measurement && picker === Picker.Measurement && measure.snapKind !== "none") {
+            if (measureScene && measurement && picker === Picker.Measurement) {
                 hoverEnt = await measureScene.pickMeasureEntityOnCurrentObject(
                     measurement.objectId,
                     measurement.position,
