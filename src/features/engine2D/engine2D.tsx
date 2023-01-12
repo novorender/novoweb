@@ -33,9 +33,9 @@ const Canvas2D = styled("canvas")(
     `
 );
 
-const measurementFillColor = "rgba(0, 191, 255, 0.3)";
+const measurementFillColor = "rgba(0, 191, 255, 0.15)";
 const measurementLineColor = "rgba(255, 255, 0, 1)";
-const measurementInactiveFillColor = "rgba(0, 191, 255, 0.15)";
+const measurementInactiveFillColor = "rgba(0, 191, 255, 0.075)";
 const measurementInactiveLineColor = "rgba(255, 255, 0, 0.4)";
 const hoverFillColor = "rgba(0, 170, 200, 0.3)";
 const hoverLineColor = "rgba(255, 165, 0, 1)";
