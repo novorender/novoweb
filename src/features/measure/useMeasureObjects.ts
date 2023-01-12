@@ -5,14 +5,14 @@ import { useExplorerGlobals } from "contexts/explorerGlobals";
 import { useAppDispatch, useAppSelector } from "app/store";
 import { ExtendedMeasureEntity } from "types/misc";
 
-import { measureActions, selectMeasure } from "./measureSlice";
+import { measureActions, selectMeasureEntities } from "./measureSlice";
 
 export function useMeasureObjects() {
     const {
         state: { measureScene },
     } = useExplorerGlobals();
 
-    const measure = useAppSelector(selectMeasure);
+    const selectedEntities = useAppSelector(selectMeasureEntities);
     const dispatch = useAppDispatch();
 
     const [measureObjects, setMeasureObjects] = useState([] as ExtendedMeasureEntity[]);
@@ -27,7 +27,7 @@ export function useMeasureObjects() {
 
             dispatch(measureActions.setLoadingBrep(true));
             const mObjects = await Promise.all(
-                measure.selectedEntities.map(async (obj) => {
+                selectedEntities.map(async (obj) => {
                     const ent = obj as ExtendedMeasureEntity;
                     if (ent.settings?.cylinderMeasure === "top") {
                         const swappedEnt = await measureScene.swapCylinder(ent, "outer");
@@ -63,7 +63,7 @@ export function useMeasureObjects() {
             setMeasureObjects(mObjects);
             dispatch(measureActions.setLoadingBrep(false));
         }
-    }, [measureScene, setMeasureObjects, measure.selectedEntities, dispatch]);
+    }, [measureScene, setMeasureObjects, selectedEntities, dispatch]);
 
     return measureObjects;
 }

@@ -8,7 +8,7 @@ import {
     OrthoControllerParams,
     CameraControllerParams,
 } from "@novorender/webgl-api";
-import { BrepStatus, MeasureEntity } from "@novorender/measure-api";
+import { MeasureScene } from "@novorender/measure-api";
 
 import {
     Box,
@@ -213,8 +213,6 @@ export function Render3D({ onInit }: Props) {
     const movingClippingBox = useRef(false);
     const camX = useRef(vec3.create());
     const camY = useRef(vec3.create());
-    const previousSnapPos = useRef(vec2.create());
-    const previous3DSnapPos = useRef(vec3.create());
 
     const [svg, setSvg] = useState<null | SVGSVGElement>(null);
     const [status, setStatus] = useState<{ status: Status; msg?: string }>({ status: Status.Initial });
@@ -991,12 +989,12 @@ export function Render3D({ onInit }: Props) {
                     dispatch(measureActions.selectEntity(measure.hover as ExtendedMeasureEntity));
                 } else {
                     dispatch(measureActions.setLoadingBrep(true));
-                    dispatch(
-                        measureActions.selectEntity(
-                            (await measureScene?.pickMeasureEntity(result.objectId, position, measurePickSettings))
-                                ?.entity as ExtendedMeasureEntity
-                        )
+                    const entity = await measureScene?.pickMeasureEntity(
+                        result.objectId,
+                        position,
+                        measurePickSettings
                     );
+                    dispatch(measureActions.selectEntity(entity?.entity as ExtendedMeasureEntity));
                     dispatch(measureActions.setLoadingBrep(false));
                 }
                 break;
@@ -1127,6 +1125,9 @@ export function Render3D({ onInit }: Props) {
         view.camera.controller.enabled = true;
     };
 
+    const prevHoverUpdate = useRef(0);
+    const prevHoverEnt = useRef<Awaited<ReturnType<MeasureScene["pickMeasureEntityOnCurrentObject"]>>>();
+    const previous2dSnapPos = useRef(vec2.create());
     const handleMove = async (e: PointerEvent) => {
         if (!view || !canvas || !svg || (!e.movementY && !e.movementX)) {
             return;
@@ -1149,38 +1150,43 @@ export function Render3D({ onInit }: Props) {
             canvas.style.cursor = "none";
             const measurement = await view.lastRenderOutput?.measure(e.nativeEvent.offsetX, e.nativeEvent.offsetY);
 
-            let hoverEnt:
-                | { entity: MeasureEntity | undefined; status: BrepStatus; connectionPoint?: vec3 }
-                | undefined = undefined;
-            if (measureScene && measurement && picker === Picker.Measurement) {
-                if (measure.hover && vec3.dist(measurement.position, previous3DSnapPos.current) < 0.2) {
-                    hoverEnt = { entity: measure.hover, status: "loaded" };
-                } else {
-                    hoverEnt = await measureScene.pickMeasureEntityOnCurrentObject(
-                        measurement.objectId,
-                        measurement.position,
-                        measureHoverSettings
-                    );
-                    vec2.copy(previousSnapPos.current, vec2.fromValues(e.nativeEvent.offsetX, e.nativeEvent.offsetY));
-                    if (hoverEnt?.connectionPoint) {
-                        vec3.copy(previous3DSnapPos.current, hoverEnt.connectionPoint);
+            let hoverEnt = prevHoverEnt.current;
+            const now = performance.now();
+            const shouldPickHoverEnt = now - prevHoverUpdate.current > 75;
+
+            if (shouldPickHoverEnt) {
+                prevHoverUpdate.current = now;
+
+                if (measureScene && measurement && picker === Picker.Measurement) {
+                    const dist = hoverEnt?.connectionPoint && vec3.dist(measurement.position, hoverEnt.connectionPoint);
+
+                    if (!dist || dist > 0.2) {
+                        hoverEnt = await measureScene.pickMeasureEntityOnCurrentObject(
+                            measurement.objectId,
+                            measurement.position,
+                            measureHoverSettings
+                        );
+                    }
+                    vec2.copy(previous2dSnapPos.current, vec2.fromValues(e.nativeEvent.offsetX, e.nativeEvent.offsetY));
+                } else if (!measurement) {
+                    const currentPos = vec2.fromValues(e.nativeEvent.offsetX, e.nativeEvent.offsetY);
+                    if (vec2.dist(currentPos, previous2dSnapPos.current) > 25) {
+                        hoverEnt = undefined;
                     }
                 }
-            } else if (!measurement && measure.hover) {
-                const currentPos = vec2.fromValues(e.nativeEvent.offsetX, e.nativeEvent.offsetY);
-                if (vec2.dist(currentPos, previousSnapPos.current) < 25) {
-                    hoverEnt = { entity: measure.hover, status: "loaded" };
-                }
-            }
-            dispatch(measureActions.selectHoverObj(hoverEnt?.entity));
 
-            const color = !measurement?.objectId
-                ? "red"
-                : hoverEnt === undefined || hoverEnt.status === "unknown"
-                ? "blue"
-                : hoverEnt.status === "loaded"
-                ? "lightgreen"
-                : "yellow";
+                prevHoverEnt.current = hoverEnt;
+                dispatch(measureActions.selectHoverObj(hoverEnt?.entity));
+            }
+
+            const color =
+                !hoverEnt && !measurement?.objectId
+                    ? "red"
+                    : hoverEnt === undefined || hoverEnt.status === "unknown"
+                    ? "blue"
+                    : hoverEnt.status === "loaded"
+                    ? "lightgreen"
+                    : "yellow";
 
             if (!hoverEnt?.entity || hoverEnt.entity.drawKind === "face") {
                 moveSvgCursor({
