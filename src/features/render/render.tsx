@@ -214,6 +214,7 @@ export function Render3D({ onInit }: Props) {
     const camX = useRef(vec3.create());
     const camY = useRef(vec3.create());
     const previousSnapPos = useRef(vec2.create());
+    const previous3DSnapPos = useRef(vec3.create());
 
     const [svg, setSvg] = useState<null | SVGSVGElement>(null);
     const [status, setStatus] = useState<{ status: Status; msg?: string }>({ status: Status.Initial });
@@ -1145,14 +1146,23 @@ export function Render3D({ onInit }: Props) {
             canvas.style.cursor = "none";
             const measurement = await view.lastRenderOutput?.measure(e.nativeEvent.offsetX, e.nativeEvent.offsetY);
 
-            let hoverEnt: { entity: MeasureEntity | undefined; status: BrepStatus } | undefined = undefined;
+            let hoverEnt:
+                | { entity: MeasureEntity | undefined; status: BrepStatus; connectionPoint?: vec3 }
+                | undefined = undefined;
             if (measureScene && measurement && picker === Picker.Measurement) {
-                hoverEnt = await measureScene.pickMeasureEntityOnCurrentObject(
-                    measurement.objectId,
-                    measurement.position,
-                    measureHoverSettings
-                );
-                vec2.copy(previousSnapPos.current, vec2.fromValues(e.nativeEvent.offsetX, e.nativeEvent.offsetY));
+                if (measure.hover && vec3.dist(measurement.position, previous3DSnapPos.current) < 0.2) {
+                    hoverEnt = { entity: measure.hover, status: "loaded" };
+                } else {
+                    hoverEnt = await measureScene.pickMeasureEntityOnCurrentObject(
+                        measurement.objectId,
+                        measurement.position,
+                        measureHoverSettings
+                    );
+                    vec2.copy(previousSnapPos.current, vec2.fromValues(e.nativeEvent.offsetX, e.nativeEvent.offsetY));
+                    if (hoverEnt?.connectionPoint) {
+                        vec3.copy(previous3DSnapPos.current, hoverEnt.connectionPoint);
+                    }
+                }
             } else if (!measurement && measure.hover) {
                 const currentPos = vec2.fromValues(e.nativeEvent.offsetX, e.nativeEvent.offsetY);
                 if (vec2.dist(currentPos, previousSnapPos.current) < 25) {
