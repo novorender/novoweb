@@ -107,6 +107,7 @@ export function Engine2D() {
         }
     }, [grid, context2D, view, cameraType]);
 
+    const drawId = useRef(0);
     const render = useCallback(async () => {
         if (view && context2D && measureScene && measureApi && canvas2D && size) {
             const { camera } = view;
@@ -114,6 +115,7 @@ export function Engine2D() {
             const camSettings = { pos: camera.position, dir: cameraDirection };
             const getDrawMeasureEntity = async (entity?: DrawableEntity, settings?: MeasureSettings) =>
                 entity && measureApi.getDrawMeasureEntity(view, measureScene, entity, settings);
+            const id = ++drawId.current;
 
             const [
                 duoDrawResult,
@@ -142,6 +144,11 @@ export function Engine2D() {
             if (measure.duoMeasurementValues) {
                 getDrawMeasureEntity(measure.duoMeasurementValues);
             }
+
+            if (id !== drawId.current) {
+                return;
+            }
+
             context2D.clearRect(0, 0, canvas2D.width, canvas2D.height);
 
             renderGridLabels();
