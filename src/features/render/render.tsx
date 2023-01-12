@@ -986,12 +986,14 @@ export function Render3D({ onInit }: Props) {
                 if (measure.hover) {
                     dispatch(measureActions.selectEntity(measure.hover as ExtendedMeasureEntity));
                 } else {
+                    dispatch(measureActions.setLoadingBrep(true));
                     dispatch(
                         measureActions.selectEntity(
                             (await measureScene?.pickMeasureEntity(result.objectId, position, measurePickSettings))
                                 ?.entity as ExtendedMeasureEntity
                         )
                     );
+                    dispatch(measureActions.setLoadingBrep(false));
                 }
                 break;
             case Picker.Manhole:
