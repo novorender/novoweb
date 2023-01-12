@@ -922,6 +922,9 @@ export function Render3D({ onInit }: Props) {
         }
 
         if (!result || result.objectId > 0x1000000) {
+            if (picker === Picker.Measurement && measure.hover) {
+                dispatch(measureActions.selectEntity(measure.hover as ExtendedMeasureEntity));
+            }
             return;
         }
 
