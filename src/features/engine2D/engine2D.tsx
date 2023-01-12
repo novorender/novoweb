@@ -34,8 +34,10 @@ const Canvas2D = styled("canvas")(
 );
 
 const measurementFillColor = "rgba(0, 191, 255, 0.15)";
+const measurementPointColor = "rgba(0, 191, 255, 0.75)";
 const measurementLineColor = "rgba(255, 255, 0, 1)";
 const measurementInactiveFillColor = "rgba(0, 191, 255, 0.075)";
+const measurementInactivePointColor = "rgba(0, 191, 255, 0.25)";
 const measurementInactiveLineColor = "rgba(255, 255, 0, 0.4)";
 const hoverFillColor = "rgba(0, 170, 200, 0.3)";
 const hoverLineColor = "rgba(255, 165, 0, 1)";
@@ -154,6 +156,7 @@ export function Engine2D() {
                         {
                             lineColor: inactiveDueToHover ? measurementInactiveLineColor : measurementLineColor,
                             fillColor: inactiveDueToHover ? measurementInactiveFillColor : measurementFillColor,
+                            pointColor: inactiveDueToHover ? measurementInactivePointColor : measurementPointColor,
                             complexCylinder: true,
                         },
                         3
