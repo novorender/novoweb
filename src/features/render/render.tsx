@@ -1159,14 +1159,15 @@ export function Render3D({ onInit }: Props) {
             }
             dispatch(measureActions.selectHoverObj(hoverEnt?.entity));
 
+            const color = !measurement?.objectId
+                ? "red"
+                : hoverEnt === undefined || hoverEnt.status === "unknown"
+                ? "blue"
+                : hoverEnt.status === "loaded"
+                ? "lightgreen"
+                : "yellow";
+
             if (!hoverEnt?.entity || hoverEnt.entity.drawKind === "face") {
-                console.log(hoverEnt?.status);
-                const color =
-                    hoverEnt === undefined || hoverEnt.status === "unknown"
-                        ? "blue"
-                        : hoverEnt.status === "loaded"
-                        ? "lightgreen"
-                        : "yellow";
                 moveSvgCursor({
                     svg,
                     view,
@@ -1177,7 +1178,15 @@ export function Render3D({ onInit }: Props) {
                     color,
                 });
             } else {
-                moveSvgCursor({ svg, view, size, measurement: undefined, x: -100, y: -100, color: "" });
+                moveSvgCursor({
+                    svg,
+                    view,
+                    size,
+                    measurement: undefined,
+                    x: e.nativeEvent.offsetX,
+                    y: e.nativeEvent.offsetY,
+                    color: color,
+                });
             }
             return;
         } else {

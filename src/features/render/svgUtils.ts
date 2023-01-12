@@ -132,7 +132,7 @@ export function moveSvgCursor({
         }
     } else {
         g.innerHTML = `<path d="M-10,-10L10,10M-10,10L10,-10" stroke-width="2" stroke-linecap="round" stroke="${
-            measurement ? color : "red"
+            color || "red"
         }"/>`;
     }
     g.setAttribute("transform", `translate(${x},${y})`);
