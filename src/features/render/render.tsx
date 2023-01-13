@@ -1182,10 +1182,10 @@ export function Render3D({ onInit }: Props) {
             const color =
                 !hoverEnt?.entity && !measurement?.objectId
                     ? "red"
+                    : hoverEnt?.status === "loaded"
+                    ? "lightgreen"
                     : hoverEnt?.entity === undefined || hoverEnt.status === "unknown"
                     ? "blue"
-                    : hoverEnt.status === "loaded"
-                    ? "lightgreen"
                     : "yellow";
 
             if (!hoverEnt?.entity || hoverEnt.entity.drawKind === "face") {
