@@ -1180,9 +1180,9 @@ export function Render3D({ onInit }: Props) {
             }
 
             const color =
-                !hoverEnt && !measurement?.objectId
+                !hoverEnt?.entity && !measurement?.objectId
                     ? "red"
-                    : hoverEnt === undefined || hoverEnt.status === "unknown"
+                    : hoverEnt?.entity === undefined || hoverEnt.status === "unknown"
                     ? "blue"
                     : hoverEnt.status === "loaded"
                     ? "lightgreen"
