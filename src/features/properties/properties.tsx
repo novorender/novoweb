@@ -317,7 +317,7 @@ function PropertyList({ object, handleChange, searches, nameWidth, resizing }: P
                 <Accordion key={group.name}>
                     <AccordionSummary>
                         <Box fontWeight={600} overflow="hidden" whiteSpace="nowrap" textOverflow="ellipsis">
-                            {group.name}
+                            {decodeURIComponent(group.name)}
                         </Box>
                     </AccordionSummary>
                     <AccordionDetails>
@@ -400,13 +400,14 @@ function PropertyItem({ checked, onChange, property, value, resizing, groupName 
     };
 
     const id = `${property}-${value}`;
+    const decodedPropertyName = decodeURIComponent(property);
 
     return (
         <ListItem button dense disableGutters onClick={handleItemClick}>
             <Box px={1} width={1} display="flex">
                 <Box className="propertyName" flexShrink={0} display="flex" justifyContent="space-between">
-                    <Tooltip title={property}>
-                        <Typography noWrap={true}>{property}</Typography>
+                    <Tooltip title={decodedPropertyName}>
+                        <Typography noWrap={true}>{decodedPropertyName}</Typography>
                     </Tooltip>
                     <ResizeHandle data-resize-handle>|</ResizeHandle>
                 </Box>
@@ -488,11 +489,10 @@ function PropertyItem({ checked, onChange, property, value, resizing, groupName 
 function createPropertiesObject(object: ObjectData): PropertiesObject {
     return object.properties.reduce(
         (result, [property, value]) => {
-            const decodedProperty = decodeURIComponent(property);
-            const path = decodedProperty.split("/");
+            const path = property.split("/");
 
             if (path.length === 1) {
-                return { ...result, base: [...result.base, [decodedProperty, value] as [string, string]] };
+                return { ...result, base: [...result.base, [property, value] as [string, string]] };
             }
 
             const groupName = path.slice(0, path.length - 1).join("/");
