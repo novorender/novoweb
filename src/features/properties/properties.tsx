@@ -488,10 +488,11 @@ function PropertyItem({ checked, onChange, property, value, resizing, groupName 
 function createPropertiesObject(object: ObjectData): PropertiesObject {
     return object.properties.reduce(
         (result, [property, value]) => {
-            const path = property.split("/");
+            const decodedProperty = decodeURIComponent(property);
+            const path = decodedProperty.split("/");
 
             if (path.length === 1) {
-                return { ...result, base: [...result.base, [property, value] as [string, string]] };
+                return { ...result, base: [...result.base, [decodedProperty, value] as [string, string]] };
             }
 
             const groupName = path.slice(0, path.length - 1).join("/");
