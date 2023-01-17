@@ -32,7 +32,10 @@ import { getAuthHeader } from "utils/auth";
 import { StorageKey } from "config/storage";
 import { deleteFromStorage, getFromStorage } from "utils/storage";
 
-export const api = createAPI({ noOffscreenCanvas: !offscreenCanvas });
+export const api = createAPI({
+    noOffscreenCanvas: !offscreenCanvas,
+    scriptBaseUrl: window.location.origin + "/novorender/webgl-api/",
+});
 try {
     const debugProfile =
         new URLSearchParams(window.location.search).get("debugDeviceProfile") ?? localStorage["debugDeviceProfile"];
@@ -47,7 +50,7 @@ try {
 const deviceProfileInitialized = (api.deviceProfile as any).debugProfile ? Promise.resolve() : loadDeviceProfile();
 
 export const dataApi = createDataAPI({ authHeader: getAuthHeader, serviceUrl: dataServerBaseUrl });
-export const measureApi = createMeasureAPI();
+export const measureApi = createMeasureAPI(window.location.origin + "/novorender/measure-api/");
 export const msalInstance = new PublicClientApplication(msalConfig);
 
 enum Status {

@@ -16,7 +16,7 @@
             href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;600;700&display=swap"
             rel="stylesheet"
         />
-        <link rel="icon" href="%PUBLIC_URL%/favicon-32x32.png" />
+        <link rel="icon" href="/favicon-32x32.png" />
         <script>
             window.dataServerUrl;
             window.bimCollabClientSecret;
@@ -28,10 +28,11 @@
             window.jiraClientSecret;
             window.jiraClientId;
         </script>
-        <script src="%PUBLIC_URL%/novorender/webgl-api/index_umd.js"></script>
-        <script src="%PUBLIC_URL%/novorender/measure-api/main_iife.js"></script>
+        <!-- <script src="/novorender/webgl-api/index_umd.js"></script>
+        <script src="/novorender/measure-api/main_iife.js"></script> -->
     </head>
     <body>
         <div id="container"></div>
+        <script type="module" src="/src/index.tsx"></script>
     </body>
 </html>

@@ -5,7 +5,7 @@ const path = require("path");
 const fs = require("fs");
 const app = express();
 
-const index = path.resolve(__dirname, "build/index.html");
+const index = path.resolve(__dirname, "dist/index.html");
 
 function sendIndex(req, res) {
     if (
@@ -121,10 +121,10 @@ app.use(
 );
 
 app.get("/", sendIndex);
-app.use("/", express.static("build"));
+app.use("/", express.static("dist"));
 app.use(
     "/",
-    expressStaticGzip("build", {
+    expressStaticGzip("dist", {
         enableBrotli: true,
         orderPreference: ["br", "gz"],
     })

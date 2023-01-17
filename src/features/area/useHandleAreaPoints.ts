@@ -19,6 +19,12 @@ export function useHandleAreaPoints() {
             return;
         }
 
+        if (!points.length) {
+            dispatch(areaActions.setDrawPoints([]));
+            dispatch(areaActions.setArea(0));
+            return;
+        }
+
         const area = measureScene.areaFromPolygon(
             points.map((pts) => pts[0]),
             points.map((pts) => pts[1])

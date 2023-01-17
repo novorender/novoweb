@@ -12,10 +12,10 @@ import { FeedFilters } from "./ditioSlice";
 import { AuthConfig, Post, Project, RawPost } from "./types";
 
 export const identityServer = "https://identity.ditio.no/";
-export const baseUrl = process.env.NODE_ENV === "development" ? "/ditio" : "https://ditio-api-v3.azurewebsites.net";
+export const baseUrl = import.meta.env.NODE_ENV === "development" ? "/ditio" : "https://ditio-api-v3.azurewebsites.net";
 
-const clientId = window.ditioClientId || process.env.REACT_APP_DITIO_CLIENT_ID || "";
-const clientSecret = window.ditioClientSecret || process.env.REACT_APP_DITIO_CLIENT_SECRET || "";
+const clientId = window.ditioClientId || import.meta.env.REACT_APP_DITIO_CLIENT_ID || "";
+const clientSecret = window.ditioClientSecret || import.meta.env.REACT_APP_DITIO_CLIENT_SECRET || "";
 
 const scope = "openid ditioapiv3 offline_access";
 const callbackUrl = window.location.origin;
