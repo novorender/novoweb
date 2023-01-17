@@ -11,7 +11,12 @@ export default defineConfig(({ mode }) => {
 
     return {
         envPrefix: "REACT_APP_",
-        plugins: [react(), envCompatible(), svgr(), basicSsl()],
+        plugins: [
+            react({ fastRefresh: false }),
+            envCompatible(),
+            svgr({ svgrOptions: { titleProp: true } }),
+            basicSsl(),
+        ],
         define: { ...env },
         server: {
             port: Number(process.env.PORT) || 3000,
