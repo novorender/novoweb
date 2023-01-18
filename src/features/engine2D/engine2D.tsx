@@ -363,7 +363,7 @@ export function Engine2D() {
             }
 
             if (areaPoints.length) {
-                const drawProd = measureApi.getDrawObjectFromPoints(view, areaPoints);
+                const drawProd = measureApi.getDrawObjectFromPoints(view, areaPoints, true, true);
                 if (drawProd) {
                     drawProd.objects.forEach((obj) => {
                         obj.parts.forEach((part) => {
