@@ -157,9 +157,11 @@ export function List() {
                         <Box p={1}>No objects in selection basket.</Box>
                     ) : (
                         <Box>
-                            <Typography sx={{ px: 1, pt: 1, display: "block" }} variant="caption">
-                                Showing {objects.data.length} / {basket.length} objects in basket.
-                            </Typography>
+                            {objects.data.length !== basket.length && (
+                                <Typography sx={{ px: 1, pt: 1, display: "block" }} variant="caption">
+                                    Showing {objects.data.length} / {basket.length} objects in basket.
+                                </Typography>
+                            )}
                             <MuiList disablePadding>
                                 {objects.data.map((obj) => (
                                     <ListItemButton
