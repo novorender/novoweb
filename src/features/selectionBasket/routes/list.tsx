@@ -13,7 +13,7 @@ import {
     Checkbox,
 } from "@mui/material";
 
-import { ScrollBox, Divider, LinearProgress, Tooltip } from "components";
+import { ScrollBox, Divider, LinearProgress } from "components";
 import { useSelectionBasket } from "contexts/selectionBasket";
 import { getObjectNameFromPath, getTotalBoundingSphere } from "utils/objectData";
 import { AsyncState, AsyncStatus, hasFinished } from "types/misc";
@@ -191,11 +191,7 @@ export function List() {
                                                     },
                                                 }}
                                             >
-                                                <Tooltip title={getObjectNameFromPath(obj.path)}>
-                                                    <Typography noWrap={true}>
-                                                        {getObjectNameFromPath(obj.path)}
-                                                    </Typography>
-                                                </Tooltip>
+                                                <Typography noWrap={true}>{getObjectNameFromPath(obj.path)}</Typography>
                                             </Box>
                                         </Box>
                                     </ListItemButton>
