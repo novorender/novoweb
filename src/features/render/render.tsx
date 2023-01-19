@@ -935,7 +935,7 @@ export function Render3D({ onInit }: Props) {
             case Picker.CrossSection:
                 if (crossSectionPoint) {
                     const mat = mat3.fromQuat(mat3.create(), view.camera.rotation);
-                    const up = vec3.fromValues(0, 1, 0);
+                    let up = vec3.fromValues(0, 1, 0);
                     const topDown = vec3.equals(vec3.fromValues(mat[6], mat[7], mat[8]), up);
                     const pos = topDown
                         ? vec3.fromValues(result.position[0], crossSectionPoint[1], result.position[2])
@@ -945,6 +945,7 @@ export function Render3D({ onInit }: Props) {
                     const l = vec3.len(right);
                     vec3.scale(right, right, 1 / l);
                     const p = vec3.scaleAndAdd(vec3.create(), crossSectionPoint, right, l / 2);
+                    let dir = vec3.cross(vec3.create(), up, right);
 
                     if (topDown) {
                         const midPt = getPathPoints({ view: view, points: [p] });
@@ -954,10 +955,14 @@ export function Render3D({ onInit }: Props) {
                                 vec3.copy(p, midPick.position);
                             }
                         }
+                    } else if (right[1] < 0.01) {
+                        right[1] = 0;
+                        dir = vec3.clone(up);
+                        vec3.cross(up, right, dir);
+                        vec3.normalize(up, up);
+                    } else {
+                        vec3.normalize(dir, dir);
                     }
-
-                    const dir = vec3.cross(vec3.create(), up, right);
-                    vec3.normalize(dir, dir);
                     vec3.cross(right, up, dir);
                     vec3.normalize(right, right);
 
@@ -985,6 +990,7 @@ export function Render3D({ onInit }: Props) {
                     dispatch(renderActions.setPicker(Picker.Object));
                     dispatch(orthoCamActions.setCrossSectionPoint(undefined));
                     dispatch(orthoCamActions.setCrossSectionHover(undefined));
+                    dispatch(renderActions.setGrid({ enabled: true }));
                 } else {
                     dispatch(orthoCamActions.setCrossSectionPoint(result.position as vec3));
                 }
