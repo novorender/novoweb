@@ -935,8 +935,9 @@ export function Render3D({ onInit }: Props) {
             case Picker.CrossSection:
                 if (crossSectionPoint) {
                     const mat = mat3.fromQuat(mat3.create(), view.camera.rotation);
-                    const up = vec3.fromValues(mat[6], mat[7], mat[8]);
-                    const pos = vec3.equals(up, vec3.fromValues(0, 1, 0))
+                    const up = vec3.fromValues(0, 1, 0);
+                    const topDown = vec3.equals(vec3.fromValues(mat[6], mat[7], mat[8]), up);
+                    const pos = topDown
                         ? vec3.fromValues(result.position[0], crossSectionPoint[1], result.position[2])
                         : vec3.copy(vec3.create(), result.position);
 
@@ -944,6 +945,16 @@ export function Render3D({ onInit }: Props) {
                     const l = vec3.len(right);
                     vec3.scale(right, right, 1 / l);
                     const p = vec3.scaleAndAdd(vec3.create(), crossSectionPoint, right, l / 2);
+
+                    if (topDown) {
+                        const midPt = getPathPoints({ view: view, points: [p] });
+                        if (midPt) {
+                            const midPick = await view.lastRenderOutput.pick(midPt.pixel[0][0], midPt.pixel[0][1]);
+                            if (midPick) {
+                                vec3.copy(p, midPick.position);
+                            }
+                        }
+                    }
 
                     const dir = vec3.cross(vec3.create(), up, right);
                     vec3.normalize(dir, dir);
