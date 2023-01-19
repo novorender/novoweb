@@ -1,6 +1,6 @@
 import { ChangeEvent, useState, MouseEvent } from "react";
 import { Box, Button, FormControlLabel } from "@mui/material";
-import { ArrowDownward, ColorLens } from "@mui/icons-material";
+import { ArrowDownward, ColorLens, BorderHorizontal } from "@mui/icons-material";
 
 import { useAppDispatch, useAppSelector } from "app/store";
 import { IosSwitch, LogoSpeedDial, ScrollBox, Switch, WidgetContainer, WidgetHeader } from "components";
@@ -80,6 +80,10 @@ export default function OrthoCam() {
         );
     };
 
+    const handleCrossSection = () => {
+        dispatch(renderActions.setPicker(Picker.CrossSection));
+    };
+
     return (
         <>
             <WidgetContainer minimized={minimized} maximized={maximized}>
@@ -138,8 +142,24 @@ export default function OrthoCam() {
                                     </Box>
                                 }
                             />
+                            <Box mb={1}>
+                                <Button
+                                    variant="outlined"
+                                    color="grey"
+                                    onClick={handleCrossSection}
+                                    sx={{ minWidth: 175, display: "flex", justifyContent: "flex-start" }}
+                                >
+                                    <BorderHorizontal sx={{ mr: 1 }} fontSize="small" />
+                                    Cross section
+                                </Button>
+                            </Box>
                             <Box>
-                                <Button variant="outlined" color="grey" onClick={toggleColorPicker}>
+                                <Button
+                                    variant="outlined"
+                                    color="grey"
+                                    onClick={toggleColorPicker}
+                                    sx={{ minWidth: 175, display: "flex", justifyContent: "flex-start" }}
+                                >
                                     <ColorLens sx={{ mr: 1, color: `rgb(${r}, ${g}, ${b})` }} fontSize="small" />
                                     Background color
                                 </Button>

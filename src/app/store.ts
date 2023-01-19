@@ -16,6 +16,7 @@ import { bimTrackReducer, bimTrackApi } from "features/bimTrack";
 import { ditioReducer } from "features/ditio";
 import { ditioApi } from "features/ditio";
 import { areaReducer } from "features/area";
+import { orthoCamReducer } from "features/orthoCam";
 import { pointLineReducer } from "features/pointLine";
 import { heightProfileReducer } from "features/heightProfile";
 import { myLocationReducer } from "features/myLocation";
@@ -34,6 +35,7 @@ const rootReducer = combineReducers({
     deviations: deviationsReducer,
     measure: measureReducer,
     area: areaReducer,
+    orthoCam: orthoCamReducer,
     manhole: manholeReducer,
     pointLine: pointLineReducer,
     myLocation: myLocationReducer,
