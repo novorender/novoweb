@@ -46,7 +46,7 @@ export function useLoadCollisionTarget() {
                                   _mObj.entity = swappedEnt;
                               }
                           }
-                          return _mObj;
+                          return _mObj.entity;
                       })
                       .catch((e) => {
                           console.warn(e);
