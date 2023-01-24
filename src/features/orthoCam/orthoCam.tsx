@@ -1,6 +1,6 @@
 import { ChangeEvent, useState, MouseEvent } from "react";
 import { Box, Button, FormControlLabel } from "@mui/material";
-import { ArrowDownward, ColorLens, BorderHorizontal } from "@mui/icons-material";
+import { ArrowDownward, ColorLens } from "@mui/icons-material";
 
 import { useAppDispatch, useAppSelector } from "app/store";
 import { IosSwitch, LogoSpeedDial, ScrollBox, Switch, WidgetContainer, WidgetHeader } from "components";
@@ -27,6 +27,7 @@ import { ColorPicker } from "features/colorPicker";
 import { rgbToVec, VecRGBA, vecToRgb } from "utils/color";
 
 import { getTopDownParams } from "./utils";
+import { orthoCamActions } from "./orthoCamSlice";
 
 export default function OrthoCam() {
     const [menuOpen, toggleMenu] = useToggle();
@@ -38,7 +39,9 @@ export default function OrthoCam() {
 
     const grid = useAppSelector(selectGrid);
     const cameraType = useAppSelector(selectCameraType);
-    const selectingOrthoPoint = useAppSelector(selectPicker) === Picker.OrthoPlane;
+    const picker = useAppSelector(selectPicker);
+    const selectingCrossSection = picker === Picker.CrossSection;
+    const selectingOrthoPoint = picker === Picker.OrthoPlane;
     const { terrainAsBackground } = useAppSelector(selectAdvancedSettings);
     const subtrees = useAppSelector(selectSubtrees);
     const backgroundColor = useAppSelector(selectAdvancedSettings).backgroundColor;
@@ -80,8 +83,14 @@ export default function OrthoCam() {
         );
     };
 
-    const handleCrossSection = () => {
-        dispatch(renderActions.setPicker(Picker.CrossSection));
+    const handleCrossSection = (_e: ChangeEvent<HTMLInputElement>, checked: boolean) => {
+        if (checked) {
+            dispatch(renderActions.setPicker(Picker.CrossSection));
+        } else {
+            dispatch(renderActions.setPicker(Picker.Object));
+            dispatch(orthoCamActions.setCrossSectionPoint(undefined));
+            dispatch(orthoCamActions.setCrossSectionHover(undefined));
+        }
     };
 
     return (
@@ -143,15 +152,8 @@ export default function OrthoCam() {
                                 }
                             />
                             <Box mb={1}>
-                                <Button
-                                    variant="outlined"
-                                    color="grey"
-                                    onClick={handleCrossSection}
-                                    sx={{ minWidth: 175, display: "flex", justifyContent: "flex-start" }}
-                                >
-                                    <BorderHorizontal sx={{ mr: 1 }} fontSize="small" />
-                                    Cross section
-                                </Button>
+                                <Switch checked={selectingCrossSection} color="primary" onChange={handleCrossSection} />
+                                Cross section
                             </Box>
                             <Box>
                                 <Button
