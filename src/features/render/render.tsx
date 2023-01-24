@@ -104,7 +104,6 @@ import { xAxis, yAxis, axis, MAX_FLOAT } from "./consts";
 import { useHandleGridChanges } from "./useHandleGridChanges";
 import { useHandleCameraControls } from "./useHandleCameraControls";
 import { getPathPoints, moveSvgCursor } from "./svgUtils";
-import { orthoCamActions, selectCrossSectionPoint } from "features/orthoCam";
 
 glMatrix.setMatrixArrayType(Array);
 
@@ -196,7 +195,6 @@ export function Render3D({ onInit }: Props) {
     const myLocationPoint = useAppSelector(selectCurrentLocation);
     const measureHoverSettings = useMeasureHoverSettings();
     const measurePickSettings = useMeasurePickSettings();
-    const crossSectionPoint = useAppSelector(selectCrossSectionPoint);
 
     const dispatch = useAppDispatch();
 
@@ -932,69 +930,6 @@ export function Render3D({ onInit }: Props) {
         const position = vec3.clone(result.position);
 
         switch (picker) {
-            case Picker.CrossSection:
-                if (crossSectionPoint) {
-                    const mat = mat3.fromQuat(mat3.create(), view.camera.rotation);
-                    let up = vec3.fromValues(0, 1, 0);
-                    const topDown = vec3.equals(vec3.fromValues(mat[6], mat[7], mat[8]), up);
-                    const pos = topDown
-                        ? vec3.fromValues(result.position[0], crossSectionPoint[1], result.position[2])
-                        : vec3.copy(vec3.create(), result.position);
-
-                    const right = vec3.sub(vec3.create(), pos, crossSectionPoint);
-                    const l = vec3.len(right);
-                    vec3.scale(right, right, 1 / l);
-                    const p = vec3.scaleAndAdd(vec3.create(), crossSectionPoint, right, l / 2);
-                    let dir = vec3.cross(vec3.create(), up, right);
-
-                    if (topDown) {
-                        const midPt = getPathPoints({ view: view, points: [p] });
-                        if (midPt) {
-                            const midPick = await view.lastRenderOutput.pick(midPt.pixel[0][0], midPt.pixel[0][1]);
-                            if (midPick) {
-                                vec3.copy(p, midPick.position);
-                            }
-                        }
-                    } else if (right[1] < 0.01) {
-                        right[1] = 0;
-                        dir = vec3.clone(up);
-                        vec3.cross(up, right, dir);
-                        vec3.normalize(up, up);
-                    } else {
-                        vec3.normalize(dir, dir);
-                    }
-                    vec3.cross(right, up, dir);
-                    vec3.normalize(right, right);
-
-                    const rotation = quat.fromMat3(
-                        quat.create(),
-                        mat3.fromValues(right[0], right[1], right[2], up[0], up[1], up[2], dir[0], dir[1], dir[2])
-                    );
-
-                    const orthoMat = mat4.fromRotationTranslation(mat4.create(), rotation, p);
-
-                    dispatch(
-                        renderActions.setCamera({
-                            type: CameraType.Orthographic,
-                            params: {
-                                kind: "ortho",
-                                referenceCoordSys: orthoMat,
-                                fieldOfView: 45,
-                                near: -0.001,
-                                far: 0.5,
-                                position: [0, 0, 0],
-                            },
-                            gridOrigo: p as vec3,
-                        })
-                    );
-                    dispatch(renderActions.setPicker(Picker.Object));
-                    dispatch(orthoCamActions.setCrossSectionPoint(undefined));
-                    dispatch(orthoCamActions.setCrossSectionHover(undefined));
-                    dispatch(renderActions.setGrid({ enabled: true }));
-                } else {
-                    dispatch(orthoCamActions.setCrossSectionPoint(result.position as vec3));
-                }
-                break;
             case Picker.Object:
                 if (result.objectId === -1) {
                     return;
@@ -1201,7 +1136,6 @@ export function Render3D({ onInit }: Props) {
         const useSvgCursor =
             e.buttons === 0 &&
             [
-                Picker.CrossSection,
                 Picker.Measurement,
                 Picker.OrthoPlane,
                 Picker.FollowPathObject,
@@ -1223,35 +1157,26 @@ export function Render3D({ onInit }: Props) {
             if (shouldPickHoverEnt) {
                 prevHoverUpdate.current = now;
 
-                if (picker === Picker.Measurement) {
-                    if (measureScene && measurement) {
-                        const dist =
-                            hoverEnt?.connectionPoint && vec3.dist(measurement.position, hoverEnt.connectionPoint);
+                if (measureScene && measurement && picker === Picker.Measurement) {
+                    const dist = hoverEnt?.connectionPoint && vec3.dist(measurement.position, hoverEnt.connectionPoint);
 
-                        if (!dist || dist > 0.2) {
-                            hoverEnt = await measureScene.pickMeasureEntityOnCurrentObject(
-                                measurement.objectId,
-                                measurement.position,
-                                measureHoverSettings
-                            );
-                        }
-                        vec2.copy(
-                            previous2dSnapPos.current,
-                            vec2.fromValues(e.nativeEvent.offsetX, e.nativeEvent.offsetY)
+                    if (!dist || dist > 0.2) {
+                        hoverEnt = await measureScene.pickMeasureEntityOnCurrentObject(
+                            measurement.objectId,
+                            measurement.position,
+                            measureHoverSettings
                         );
-                    } else if (!measurement) {
-                        const currentPos = vec2.fromValues(e.nativeEvent.offsetX, e.nativeEvent.offsetY);
-                        if (vec2.dist(currentPos, previous2dSnapPos.current) > 25) {
-                            hoverEnt = undefined;
-                        }
                     }
-                    dispatch(measureActions.selectHoverObj(hoverEnt?.entity));
-                    prevHoverEnt.current = hoverEnt;
-                } else if (picker === Picker.CrossSection) {
-                    if (crossSectionPoint && measurement) {
-                        dispatch(orthoCamActions.setCrossSectionHover(measurement.position as vec3));
+                    vec2.copy(previous2dSnapPos.current, vec2.fromValues(e.nativeEvent.offsetX, e.nativeEvent.offsetY));
+                } else if (!measurement) {
+                    const currentPos = vec2.fromValues(e.nativeEvent.offsetX, e.nativeEvent.offsetY);
+                    if (vec2.dist(currentPos, previous2dSnapPos.current) > 25) {
+                        hoverEnt = undefined;
                     }
                 }
+
+                prevHoverEnt.current = hoverEnt;
+                dispatch(measureActions.selectHoverObj(hoverEnt?.entity));
             }
 
             const color =

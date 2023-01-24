@@ -27,7 +27,6 @@ import { ColorPicker } from "features/colorPicker";
 import { rgbToVec, VecRGBA, vecToRgb } from "utils/color";
 
 import { getTopDownParams } from "./utils";
-import { orthoCamActions } from "./orthoCamSlice";
 
 export default function OrthoCam() {
     const [menuOpen, toggleMenu] = useToggle();
@@ -39,9 +38,7 @@ export default function OrthoCam() {
 
     const grid = useAppSelector(selectGrid);
     const cameraType = useAppSelector(selectCameraType);
-    const picker = useAppSelector(selectPicker);
-    const selectingCrossSection = picker === Picker.CrossSection;
-    const selectingOrthoPoint = picker === Picker.OrthoPlane;
+    const selectingOrthoPoint = useAppSelector(selectPicker) === Picker.OrthoPlane;
     const { terrainAsBackground } = useAppSelector(selectAdvancedSettings);
     const subtrees = useAppSelector(selectSubtrees);
     const backgroundColor = useAppSelector(selectAdvancedSettings).backgroundColor;
@@ -81,16 +78,6 @@ export default function OrthoCam() {
                 params,
             })
         );
-    };
-
-    const handleCrossSection = (_e: ChangeEvent<HTMLInputElement>, checked: boolean) => {
-        if (checked) {
-            dispatch(renderActions.setPicker(Picker.CrossSection));
-        } else {
-            dispatch(renderActions.setPicker(Picker.Object));
-            dispatch(orthoCamActions.setCrossSectionPoint(undefined));
-            dispatch(orthoCamActions.setCrossSectionHover(undefined));
-        }
     };
 
     return (
@@ -151,30 +138,8 @@ export default function OrthoCam() {
                                     </Box>
                                 }
                             />
-                            <FormControlLabel
-                                sx={{ ml: 0, mb: 2 }}
-                                control={
-                                    <Switch
-                                        name="Cross section"
-                                        checked={selectingCrossSection}
-                                        color="primary"
-                                        onChange={handleCrossSection}
-                                    />
-                                }
-                                label={
-                                    <Box ml={1} fontSize={16}>
-                                        Select cross section
-                                    </Box>
-                                }
-                            />
-                            <Box mb={1}></Box>
                             <Box>
-                                <Button
-                                    variant="outlined"
-                                    color="grey"
-                                    onClick={toggleColorPicker}
-                                    sx={{ minWidth: 175, display: "flex", justifyContent: "flex-start" }}
-                                >
+                                <Button variant="outlined" color="grey" onClick={toggleColorPicker}>
                                     <ColorLens sx={{ mr: 1, color: `rgb(${r}, ${g}, ${b})` }} fontSize="small" />
                                     Background color
                                 </Button>
