@@ -151,10 +151,23 @@ export default function OrthoCam() {
                                     </Box>
                                 }
                             />
-                            <Box mb={1}>
-                                <Switch checked={selectingCrossSection} color="primary" onChange={handleCrossSection} />
-                                Cross section
-                            </Box>
+                            <FormControlLabel
+                                sx={{ ml: 0, mb: 2 }}
+                                control={
+                                    <Switch
+                                        name="Cross section"
+                                        checked={selectingCrossSection}
+                                        color="primary"
+                                        onChange={handleCrossSection}
+                                    />
+                                }
+                                label={
+                                    <Box ml={1} fontSize={16}>
+                                        Select cross section
+                                    </Box>
+                                }
+                            />
+                            <Box mb={1}></Box>
                             <Box>
                                 <Button
                                     variant="outlined"
