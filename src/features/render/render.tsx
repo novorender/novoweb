@@ -1,6 +1,5 @@
 import { glMatrix, mat3, mat4, quat, vec2, vec3, vec4 } from "gl-matrix";
 import { useEffect, useState, useRef, MouseEvent, PointerEvent, useCallback, RefCallback } from "react";
-import { SceneData } from "@novorender/data-js-api";
 import {
     View,
     EnvironmentDescription,
@@ -9,6 +8,7 @@ import {
     OrthoControllerParams,
     CameraControllerParams,
 } from "@novorender/webgl-api";
+import { MeasureScene } from "@novorender/measure-api";
 
 import {
     Box,
@@ -35,11 +35,8 @@ import {
     useHandlePanoramaChanges,
 } from "features/panoramas";
 import { Accordion, AccordionDetails, AccordionSummary, Loading } from "components";
-
 import { api, dataApi, measureApi } from "app";
 import { useSceneId } from "hooks/useSceneId";
-import { enabledFeaturesToFeatureKeys, getEnabledFeatures } from "utils/misc";
-
 import {
     fetchEnvironments,
     renderActions,
@@ -55,8 +52,6 @@ import {
     selectClippingPlanes,
     CameraType,
     selectCamera,
-    selectEditingScene,
-    SceneEditStatus,
     selectAdvancedSettings,
     selectSelectionBasketMode,
     SubtreeStatus,
@@ -68,9 +63,8 @@ import {
 } from "slices/renderSlice";
 import { explorerActions, selectLocalBookmarkId, selectUrlBookmarkId } from "slices/explorerSlice";
 import { selectDeviations } from "features/deviations";
-import { bookmarksActions, selectBookmarks, useSelectBookmark } from "features/bookmarks";
-import { measureActions, selectMeasure } from "features/measure";
-
+import { useSelectBookmark } from "features/bookmarks";
+import { measureActions, selectMeasure, useMeasureHoverSettings, useMeasurePickSettings } from "features/measure";
 import { manholeActions, useHandleManholeUpdates } from "features/manhole";
 import { ditioActions, selectMarkers, selectShowMarkers } from "features/ditio";
 import { useAppDispatch, useAppSelector } from "app/store";
@@ -81,11 +75,13 @@ import { heightProfileActions } from "features/heightProfile";
 import { pointLineActions, useHandlePointLineUpdates } from "features/pointLine";
 import { selectCurrentLocation, useHandleLocationMarker } from "features/myLocation";
 import { useHandleJiraKeepAlive } from "features/jira";
+import { Engine2D } from "features/engine2D";
+import { ExtendedMeasureEntity } from "types/misc";
 
 import { useHighlighted, highlightActions, useDispatchHighlighted } from "contexts/highlighted";
 import { useHidden, useDispatchHidden } from "contexts/hidden";
-import { useCustomGroups } from "contexts/customGroups";
-import { useDispatchVisible, useVisible, visibleActions } from "contexts/visible";
+import { useObjectGroups, useDispatchObjectGroups } from "contexts/objectGroups";
+import { useDispatchSelectionBasket, useSelectionBasket, selectionBasketActions } from "contexts/selectionBasket";
 import { explorerGlobalsActions, useExplorerGlobals } from "contexts/explorerGlobals";
 
 import {
@@ -108,7 +104,6 @@ import { xAxis, yAxis, axis, MAX_FLOAT } from "./consts";
 import { useHandleGridChanges } from "./useHandleGridChanges";
 import { useHandleCameraControls } from "./useHandleCameraControls";
 import { getPathPoints, moveSvgCursor } from "./svgUtils";
-import { Engine2D } from "features/engine2D";
 
 glMatrix.setMatrixArrayType(Array);
 
@@ -154,14 +149,15 @@ type Props = {
 
 export function Render3D({ onInit }: Props) {
     const theme = useTheme();
-    const id = useSceneId();
+    const sceneId = useSceneId();
     const highlightedObjects = useHighlighted();
     const dispatchHighlighted = useDispatchHighlighted();
     const hiddenObjects = useHidden();
     const dispatchHidden = useDispatchHidden();
-    const dispatchVisible = useDispatchVisible();
-    const visibleObjects = useVisible();
-    const { state: customGroups, dispatch: dispatchCustomGroups } = useCustomGroups();
+    const dispatchSelectionBasket = useDispatchSelectionBasket();
+    const selectionBasket = useSelectionBasket();
+    const objectGroups = useObjectGroups();
+    const dispatchObjectGroups = useDispatchObjectGroups();
     const {
         state: { view, scene, canvas, measureScene, size },
         dispatch: dispatchGlobals,
@@ -172,8 +168,6 @@ export function Render3D({ onInit }: Props) {
     const environments = useAppSelector(selectEnvironments);
     const mainObject = useAppSelector(selectMainObject);
 
-    const editingScene = useAppSelector(selectEditingScene);
-    const bookmarks = useAppSelector(selectBookmarks);
     const defaultVisibility = useAppSelector(selectDefaultVisibility);
     const cameraSpeedMultiplier = useAppSelector(selectCameraSpeedMultiplier);
     const baseCameraSpeed = useAppSelector(selectBaseCameraSpeed);
@@ -199,6 +193,8 @@ export function Render3D({ onInit }: Props) {
 
     const picker = useAppSelector(selectPicker);
     const myLocationPoint = useAppSelector(selectCurrentLocation);
+    const measureHoverSettings = useMeasureHoverSettings();
+    const measurePickSettings = useMeasurePickSettings();
 
     const dispatch = useAppDispatch();
 
@@ -209,7 +205,7 @@ export function Render3D({ onInit }: Props) {
     } as ReturnType<typeof createRendering>);
     const movementTimer = useRef<ReturnType<typeof setTimeout>>();
     const cameraGeneration = useRef<number>();
-    const previousId = useRef("");
+    const previousSceneId = useRef("");
     const camera2pointDistance = useRef(0);
     const flightController = useRef<CameraController>();
     const pointerDown = useRef(false);
@@ -349,28 +345,20 @@ export function Render3D({ onInit }: Props) {
         initView();
 
         async function initView() {
-            if (previousId.current === id || !canvas || !environments.length) {
+            if (previousSceneId.current === sceneId || !canvas || !environments.length) {
                 return;
             }
 
-            previousId.current = id;
+            previousSceneId.current = sceneId;
 
             try {
-                const sceneResponse = await dataApi.loadScene(id);
+                const sceneResponse = await dataApi.loadScene(sceneId);
 
                 if ("error" in sceneResponse) {
                     throw sceneResponse;
                 }
 
-                const {
-                    url,
-                    db,
-                    objectGroups = [],
-                    customProperties,
-                    title,
-                    viewerScenes,
-                    ...sceneData
-                } = sceneResponse;
+                const { url, db, objectGroups = [], customProperties, title, ...sceneData } = sceneResponse;
 
                 const urlData = getDataFromUrlHash();
                 const camera = { kind: "flight", ...sceneData.camera, ...urlData.camera } as CameraControllerParams;
@@ -423,9 +411,9 @@ export function Render3D({ onInit }: Props) {
                 initClippingPlanes(_view.settings.clippingVolume);
                 initDeviation(_view.settings.points.deviation);
 
-                dispatchVisible(visibleActions.set([]));
+                dispatchSelectionBasket(selectionBasketActions.set([]));
                 initHidden(objectGroups, dispatchHidden);
-                initCustomGroups(objectGroups, dispatchCustomGroups);
+                initCustomGroups(objectGroups, dispatchObjectGroups);
                 initHighlighted(objectGroups, dispatchHighlighted);
                 initAdvancedSettings(_view, customProperties, api);
                 initProjectSettings({ sceneData: sceneResponse });
@@ -433,10 +421,6 @@ export function Render3D({ onInit }: Props) {
                 if (urlData.mainObject !== undefined) {
                     dispatchHighlighted(highlightActions.add([urlData.mainObject]));
                     dispatch(renderActions.setMainObject(urlData.mainObject));
-                }
-
-                if (viewerScenes) {
-                    dispatch(explorerActions.setViewerScenes(viewerScenes));
                 }
 
                 const organization = (sceneData as { organization?: string }).organization ?? "";
@@ -505,13 +489,13 @@ export function Render3D({ onInit }: Props) {
         dispatch,
         onInit,
         environments,
-        id,
+        sceneId,
         dispatchGlobals,
         setStatus,
-        dispatchCustomGroups,
+        dispatchObjectGroups,
         dispatchHidden,
         dispatchHighlighted,
-        dispatchVisible,
+        dispatchSelectionBasket,
     ]);
 
     useEffect(() => {
@@ -587,17 +571,17 @@ export function Render3D({ onInit }: Props) {
                     scene,
                     view,
                     defaultVisibility,
-                    sceneId: id,
+                    sceneId: sceneId,
                     objectGroups: [
                         { id: "", ids: hiddenObjects.idArr, hidden: true, selected: false, color: [0, 0, 0] },
                         {
                             id: "",
-                            ids: visibleObjects.idArr,
+                            ids: selectionBasket.idArr,
                             hidden: false,
                             selected: true,
                             ...(selectionBasketColor.use ? { color: selectionBasketColor.color } : { neutral: true }),
                         },
-                        ...customGroups,
+                        ...objectGroups,
                         {
                             id: "",
                             ids: highlightedObjects.idArr,
@@ -606,20 +590,20 @@ export function Render3D({ onInit }: Props) {
                             selected: true,
                         },
                     ],
-                    selectionBasket: { ...visibleObjects, mode: selectionBasketMode },
+                    selectionBasket: { ...selectionBasket, mode: selectionBasketMode },
                 });
             }
         },
         [
-            id,
+            sceneId,
             scene,
             view,
             defaultVisibility,
             mainObject,
-            customGroups,
+            objectGroups,
             highlightedObjects,
             hiddenObjects,
-            visibleObjects,
+            selectionBasket,
             selectionBasketMode,
             selectionBasketColor,
         ]
@@ -825,120 +809,6 @@ export function Render3D({ onInit }: Props) {
         [advancedSettings]
     );
 
-    useEffect(
-        function handleAutoFpsChange() {
-            rendering.current.update({ autoFpsEnabled: advancedSettings.autoFps });
-        },
-        [advancedSettings.autoFps]
-    );
-
-    useEffect(
-        function cleanUpPreviousScene() {
-            return () => {
-                rendering.current.stop();
-                window.removeEventListener("blur", exitPointerLock);
-                dispatchGlobals(explorerGlobalsActions.update({ view: undefined, scene: undefined }));
-                dispatch(renderActions.resetState());
-                setStatus({ status: Status.Initial });
-            };
-        },
-        [id, dispatch, setStatus, dispatchGlobals]
-    );
-
-    useEffect(
-        function handleEditingScene() {
-            if (!view || !canvas || editingScene?.status !== SceneEditStatus.Init) {
-                return;
-            }
-
-            dispatch(renderActions.setViewerSceneEditing({ ...editingScene, status: SceneEditStatus.Loading }));
-
-            if (!editingScene.id) {
-                restoreAdminScene(id, view, canvas);
-            } else {
-                applyViewerScene(editingScene.id, view, canvas);
-            }
-
-            async function restoreAdminScene(sceneId: string, view: View, canvas: HTMLCanvasElement) {
-                await applyScene(sceneId, view, canvas);
-                dispatch(renderActions.setViewerSceneEditing(undefined));
-            }
-
-            async function applyViewerScene(sceneId: string, view: View, canvas: HTMLCanvasElement) {
-                const { title, customProperties } = await applyScene(sceneId, view, canvas);
-                const enabledFeatures = getEnabledFeatures(customProperties);
-                const requireAuth = customProperties?.enabledFeatures?.enabledOrgs !== undefined;
-                const expiration = customProperties?.enabledFeatures?.expiration;
-
-                dispatch(
-                    renderActions.setViewerSceneEditing({
-                        title,
-                        requireAuth,
-                        expiration,
-                        status: SceneEditStatus.Editing,
-                        id: sceneId,
-                        enabledFeatures: enabledFeatures ? enabledFeaturesToFeatureKeys(enabledFeatures) : [],
-                    })
-                );
-            }
-
-            async function applyScene(
-                sceneId: string,
-                view: View,
-                canvas: HTMLCanvasElement
-            ): Promise<Pick<SceneData, "title" | "customProperties">> {
-                const {
-                    settings,
-                    title,
-                    customProperties,
-                    camera = { kind: "flight" },
-                    objectGroups = [],
-                } = (await dataApi.loadScene(sceneId)) as SceneData;
-
-                if (settings) {
-                    const { display: _display, light: _light, ...viewerSceneSettings } = settings;
-                    view.applySettings({ ...viewerSceneSettings, light: view.settings.light });
-
-                    initClippingBox(settings.clippingPlanes);
-                    initClippingPlanes(settings.clippingVolume);
-                    initDeviation(settings.points.deviation);
-                    initEnvironment(settings.environment as unknown as EnvironmentDescription, environments, view);
-                }
-
-                const controller = initCamera({ view, canvas, camera, flightControllerRef: flightController });
-                dispatch(
-                    renderActions.setCamera({
-                        type: controller.params.kind === "ortho" ? CameraType.Orthographic : CameraType.Flight,
-                    })
-                );
-
-                dispatchVisible(visibleActions.set([]));
-                initHidden(objectGroups, dispatchHidden);
-                initCustomGroups(objectGroups, dispatchCustomGroups);
-                initHighlighted(objectGroups, dispatchHighlighted);
-                initAdvancedSettings(view, customProperties, api);
-                dispatch(bookmarksActions.resetState());
-
-                return { title, customProperties };
-            }
-        },
-        [
-            id,
-            editingScene,
-            view,
-            environments,
-            canvas,
-            bookmarks,
-            customGroups,
-            dispatch,
-            dispatchHidden,
-            dispatchCustomGroups,
-            dispatchHighlighted,
-            dispatchVisible,
-            env,
-        ]
-    );
-
     useHandleGridChanges();
     useHandlePanoramaChanges();
     useHandleCameraControls();
@@ -959,20 +829,25 @@ export function Render3D({ onInit }: Props) {
             dispatch(explorerActions.setUrlBookmarkId(undefined));
 
             try {
-                const bookmark = (await dataApi.getBookmarks(id, { group: urlBookmarkId })).find(
+                const shareLinkBookmark = (await dataApi.getBookmarks(sceneId, { group: urlBookmarkId })).find(
                     (bm) => bm.id === urlBookmarkId
                 );
 
-                if (!bookmark) {
+                if (shareLinkBookmark) {
+                    selectBookmark(shareLinkBookmark);
                     return;
                 }
 
-                selectBookmark(bookmark);
+                const savedPublicBookmark = (await dataApi.getBookmarks(sceneId)).find((bm) => bm.id === urlBookmarkId);
+                if (savedPublicBookmark) {
+                    selectBookmark(savedPublicBookmark);
+                    return;
+                }
             } catch (e) {
                 console.warn(e);
             }
         }
-    }, [view, id, dispatch, selectBookmark, urlBookmarkId]);
+    }, [view, sceneId, dispatch, selectBookmark, urlBookmarkId]);
 
     useEffect(() => {
         handleLocalBookmark();
@@ -1003,7 +878,7 @@ export function Render3D({ onInit }: Props) {
                 console.warn(e);
             }
         }
-    }, [view, id, dispatch, selectBookmark, localBookmarkId]);
+    }, [view, sceneId, dispatch, selectBookmark, localBookmarkId]);
 
     const exitPointerLock = () => {
         if ("exitPointerLock" in window.document) {
@@ -1045,6 +920,9 @@ export function Render3D({ onInit }: Props) {
         }
 
         if (!result || result.objectId > 0x1000000) {
+            if (picker === Picker.Measurement && measure.hover) {
+                dispatch(measureActions.selectEntity(measure.hover as ExtendedMeasureEntity));
+            }
             return;
         }
 
@@ -1107,7 +985,18 @@ export function Render3D({ onInit }: Props) {
 
                 break;
             case Picker.Measurement:
-                dispatch(measureActions.selectObj({ id: measure.forcePoint ? -1 : result.objectId, pos: position }));
+                if (measure.hover) {
+                    dispatch(measureActions.selectEntity(measure.hover as ExtendedMeasureEntity));
+                } else {
+                    dispatch(measureActions.setLoadingBrep(true));
+                    const entity = await measureScene?.pickMeasureEntity(
+                        result.objectId,
+                        position,
+                        measurePickSettings
+                    );
+                    dispatch(measureActions.selectEntity(entity?.entity as ExtendedMeasureEntity));
+                    dispatch(measureActions.setLoadingBrep(false));
+                }
                 break;
             case Picker.Manhole:
                 if (result.objectId === -1) {
@@ -1236,6 +1125,9 @@ export function Render3D({ onInit }: Props) {
         view.camera.controller.enabled = true;
     };
 
+    const prevHoverUpdate = useRef(0);
+    const prevHoverEnt = useRef<Awaited<ReturnType<MeasureScene["pickMeasureEntityOnCurrentObject"]>>>();
+    const previous2dSnapPos = useRef(vec2.create());
     const handleMove = async (e: PointerEvent) => {
         if (!view || !canvas || !svg || (!e.movementY && !e.movementX)) {
             return;
@@ -1255,14 +1147,71 @@ export function Render3D({ onInit }: Props) {
             ].includes(picker);
 
         if (useSvgCursor) {
-            const measurement = await view.lastRenderOutput?.measure(e.nativeEvent.offsetX, e.nativeEvent.offsetY);
             canvas.style.cursor = "none";
+            const measurement = await view.lastRenderOutput?.measure(e.nativeEvent.offsetX, e.nativeEvent.offsetY);
 
-            moveSvgCursor({ svg, view, size, measurement, x: e.nativeEvent.offsetX, y: e.nativeEvent.offsetY });
+            let hoverEnt = prevHoverEnt.current;
+            const now = performance.now();
+            const shouldPickHoverEnt = now - prevHoverUpdate.current > 75;
 
+            if (shouldPickHoverEnt) {
+                prevHoverUpdate.current = now;
+
+                if (measureScene && measurement && picker === Picker.Measurement) {
+                    const dist = hoverEnt?.connectionPoint && vec3.dist(measurement.position, hoverEnt.connectionPoint);
+
+                    if (!dist || dist > 0.2) {
+                        hoverEnt = await measureScene.pickMeasureEntityOnCurrentObject(
+                            measurement.objectId,
+                            measurement.position,
+                            measureHoverSettings
+                        );
+                    }
+                    vec2.copy(previous2dSnapPos.current, vec2.fromValues(e.nativeEvent.offsetX, e.nativeEvent.offsetY));
+                } else if (!measurement) {
+                    const currentPos = vec2.fromValues(e.nativeEvent.offsetX, e.nativeEvent.offsetY);
+                    if (vec2.dist(currentPos, previous2dSnapPos.current) > 25) {
+                        hoverEnt = undefined;
+                    }
+                }
+
+                prevHoverEnt.current = hoverEnt;
+                dispatch(measureActions.selectHoverObj(hoverEnt?.entity));
+            }
+
+            const color =
+                !hoverEnt?.entity && !measurement?.objectId
+                    ? "red"
+                    : hoverEnt?.status === "loaded"
+                    ? "lightgreen"
+                    : hoverEnt?.entity === undefined || hoverEnt.status === "unknown"
+                    ? "blue"
+                    : "yellow";
+
+            if (!hoverEnt?.entity || hoverEnt.entity.drawKind === "face") {
+                moveSvgCursor({
+                    svg,
+                    view,
+                    size,
+                    measurement,
+                    x: e.nativeEvent.offsetX,
+                    y: e.nativeEvent.offsetY,
+                    color,
+                });
+            } else {
+                moveSvgCursor({
+                    svg,
+                    view,
+                    size,
+                    measurement: undefined,
+                    x: e.nativeEvent.offsetX,
+                    y: e.nativeEvent.offsetY,
+                    color: color,
+                });
+            }
             return;
         } else {
-            moveSvgCursor({ svg, view, size, measurement: undefined, x: -100, y: -100 });
+            moveSvgCursor({ svg, view, size, measurement: undefined, x: -100, y: -100, color: "" });
         }
 
         if (
@@ -1352,7 +1301,7 @@ export function Render3D({ onInit }: Props) {
     return (
         <Box position="relative" width="100%" height="100%" sx={{ userSelect: "none" }}>
             {isSceneError(status.status) ? (
-                <SceneError error={status.status} msg={status.msg} id={id} />
+                <SceneError error={status.status} msg={status.msg} id={sceneId} />
             ) : (
                 <>
                     {advancedSettings.showPerformance && view && canvas ? <PerformanceStats /> : null}
@@ -1367,7 +1316,7 @@ export function Render3D({ onInit }: Props) {
                         onPointerUp={handleUp}
                         onPointerOut={() => {
                             if (svg && view) {
-                                moveSvgCursor({ svg, view, size, measurement: undefined, x: -100, y: -100 });
+                                moveSvgCursor({ svg, view, size, measurement: undefined, x: -100, y: -100, color: "" });
                             }
                         }}
                     />

@@ -20,7 +20,8 @@ import { pointLineReducer } from "features/pointLine";
 import { heightProfileReducer } from "features/heightProfile";
 import { myLocationReducer } from "features/myLocation";
 import { jiraApi, jiraReducer } from "features/jira";
-import { manholeReducer } from "features/manhole/manholeSlice";
+import { manholeReducer } from "features/manhole";
+import { selectionBasketReducer } from "features/selectionBasket";
 
 const rootReducer = combineReducers({
     explorer: explorerReducer,
@@ -38,6 +39,7 @@ const rootReducer = combineReducers({
     myLocation: myLocationReducer,
     bimCollab: bimCollabReducer,
     heightProfile: heightProfileReducer,
+    selectionBasket: selectionBasketReducer,
     [bimCollabApi.reducerPath]: bimCollabApi.reducer,
     bimTrack: bimTrackReducer,
     [bimTrackApi.reducerPath]: bimTrackApi.reducer,
@@ -49,7 +51,7 @@ const rootReducer = combineReducers({
 
 export const store = configureStore({
     reducer: rootReducer,
-    devTools: process.env.NODE_ENV === "development",
+    devTools: import.meta.env.NODE_ENV === "development",
     middleware: (getDefaultMiddleware) =>
         getDefaultMiddleware()
             .concat(bimCollabApi.middleware)

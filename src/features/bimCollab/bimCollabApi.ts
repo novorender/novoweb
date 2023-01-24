@@ -24,8 +24,8 @@ import {
 
 import { NewViewpoint } from "./includeViewpoint";
 
-const clientId = window.bimCollabClientId || process.env.REACT_APP_BIMCOLLAB_CLIENT_ID || "";
-const clientSecret = window.bimCollabClientSecret || process.env.REACT_APP_BIMCOLLAB_CLIENT_SECRET || "";
+const clientId = window.bimCollabClientId || import.meta.env.REACT_APP_BIMCOLLAB_CLIENT_ID || "";
+const clientSecret = window.bimCollabClientSecret || import.meta.env.REACT_APP_BIMCOLLAB_CLIENT_SECRET || "";
 const callbackUrl = window.location.origin + "/";
 const scope = "openid offline_access bcf";
 

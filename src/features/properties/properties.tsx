@@ -68,7 +68,7 @@ type SearchPattern = {
     exact?: boolean;
 };
 
-export function Properties() {
+export default function Properties() {
     const mainObject = useAppSelector(selectMainObject);
     const dispatchHighlighted = useDispatchHighlighted();
     const {
@@ -277,17 +277,9 @@ export function Properties() {
                         </>
                     ) : null}
                 </ScrollBox>
-                <WidgetList
-                    display={menuOpen ? "block" : "none"}
-                    widgetKey={featuresConfig.properties.key}
-                    onSelect={toggleMenu}
-                />
+                {menuOpen && <WidgetList widgetKey={featuresConfig.properties.key} onSelect={toggleMenu} />}
             </WidgetContainer>
-            <LogoSpeedDial
-                open={menuOpen}
-                toggle={toggleMenu}
-                testId={`${featuresConfig.properties.key}-widget-menu-fab`}
-            />
+            <LogoSpeedDial open={menuOpen} toggle={toggleMenu} />
         </>
     );
 }
@@ -325,7 +317,7 @@ function PropertyList({ object, handleChange, searches, nameWidth, resizing }: P
                 <Accordion key={group.name}>
                     <AccordionSummary>
                         <Box fontWeight={600} overflow="hidden" whiteSpace="nowrap" textOverflow="ellipsis">
-                            {group.name}
+                            {decodeURIComponent(group.name)}
                         </Box>
                     </AccordionSummary>
                     <AccordionDetails>
@@ -408,13 +400,14 @@ function PropertyItem({ checked, onChange, property, value, resizing, groupName 
     };
 
     const id = `${property}-${value}`;
+    const decodedPropertyName = decodeURIComponent(property);
 
     return (
         <ListItem button dense disableGutters onClick={handleItemClick}>
             <Box px={1} width={1} display="flex">
                 <Box className="propertyName" flexShrink={0} display="flex" justifyContent="space-between">
-                    <Tooltip title={property}>
-                        <Typography noWrap={true}>{property}</Typography>
+                    <Tooltip title={decodedPropertyName}>
+                        <Typography noWrap={true}>{decodedPropertyName}</Typography>
                     </Tooltip>
                     <ResizeHandle data-resize-handle>|</ResizeHandle>
                 </Box>

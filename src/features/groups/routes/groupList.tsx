@@ -3,7 +3,7 @@ import { Box, Button, IconButton, Typography, useTheme } from "@mui/material";
 import { useHistory } from "react-router-dom";
 
 import { Divider, LinearProgress, ScrollBox } from "components";
-import { customGroupsActions, useCustomGroups } from "contexts/customGroups";
+import { objectGroupsActions, useObjectGroups, useDispatchObjectGroups, isInternalGroup } from "contexts/objectGroups";
 import { selectHasAdminCapabilities } from "slices/explorerSlice";
 import { useAppSelector } from "app/store";
 import { AsyncStatus } from "types/misc";
@@ -18,10 +18,11 @@ export function GroupList() {
     const isAdmin = useAppSelector(selectHasAdminCapabilities);
     const loadingIds = useAppSelector(selectLoadingIds);
     const saveStatus = useAppSelector(selectSaveStatus);
-    const { state: groups, dispatch: dispatchCustomGroups } = useCustomGroups();
+    const objectGroups = useObjectGroups().filter((grp) => !isInternalGroup(grp));
+    const dispatchObjectGroups = useDispatchObjectGroups();
 
     const collections = Array.from(
-        groups.reduce((set, grp) => {
+        objectGroups.reduce((set, grp) => {
             if (grp.grouping) {
                 const collection = grp.grouping.split("/")[0];
                 set.add(collection);
@@ -31,13 +32,13 @@ export function GroupList() {
         }, new Set<string>())
     ).sort((a, b) => a.localeCompare(b, "en", { sensitivity: "accent" }));
 
-    const singles = groups
+    const singles = objectGroups
         .filter((grp) => !grp.grouping)
         .sort((a, b) => a.name.localeCompare(b.name, "en", { sensitivity: "accent" }));
 
     const isLoading = loadingIds || saveStatus === AsyncStatus.Loading;
-    const allSelected = !groups.some((group) => !group.selected);
-    const allHidden = !groups.some((group) => !group.hidden);
+    const allSelected = !objectGroups.some((group) => !group.selected);
+    const allHidden = !objectGroups.some((group) => !group.hidden);
 
     return (
         <>
@@ -53,7 +54,7 @@ export function GroupList() {
                         </Button>
                         <Button
                             color="grey"
-                            onClick={() => dispatchCustomGroups(customGroupsActions.groupSelected())}
+                            onClick={() => dispatchObjectGroups(objectGroupsActions.groupSelected())}
                             disabled={isLoading || singles.filter((group) => group.selected).length < 2}
                         >
                             <CheckCircle sx={{ mr: 1 }} />
@@ -84,9 +85,9 @@ export function GroupList() {
                     disableRipple
                     disabled={isLoading}
                     onClick={() =>
-                        groups.forEach((group) =>
-                            dispatchCustomGroups(
-                                customGroupsActions.update(group.id, {
+                        objectGroups.forEach((group) =>
+                            dispatchObjectGroups(
+                                objectGroupsActions.update(group.id, {
                                     selected: !allSelected,
                                     hidden: !allSelected ? false : group.hidden,
                                 })
@@ -97,10 +98,10 @@ export function GroupList() {
                     <Box display="flex" width={1} alignItems="center">
                         <Box flex={"1 1 100%"}>
                             <Typography color="textSecondary" noWrap={true}>
-                                Groups: {groups.length}
+                                Groups: {objectGroups.length}
                             </Typography>
                         </Box>
-                        {groups.length ? (
+                        {objectGroups.length ? (
                             <>
                                 <StyledCheckbox
                                     aria-label="toggle all groups highlighting"
@@ -109,9 +110,9 @@ export function GroupList() {
                                     disabled={isLoading}
                                     onClick={(event) => event.stopPropagation()}
                                     onChange={() =>
-                                        groups.forEach((group) =>
-                                            dispatchCustomGroups(
-                                                customGroupsActions.update(group.id, {
+                                        objectGroups.forEach((group) =>
+                                            dispatchObjectGroups(
+                                                objectGroupsActions.update(group.id, {
                                                     selected: !allSelected,
                                                     hidden: !allSelected ? false : group.hidden,
                                                 })
@@ -128,9 +129,9 @@ export function GroupList() {
                                     disabled={isLoading}
                                     onClick={(event) => event.stopPropagation()}
                                     onChange={() =>
-                                        groups.forEach((group) =>
-                                            dispatchCustomGroups(
-                                                customGroupsActions.update(group.id, {
+                                        objectGroups.forEach((group) =>
+                                            dispatchObjectGroups(
+                                                objectGroupsActions.update(group.id, {
                                                     hidden: !allHidden,
                                                     selected: !allHidden ? false : group.selected,
                                                 })

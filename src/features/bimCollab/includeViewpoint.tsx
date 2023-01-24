@@ -7,8 +7,8 @@ import { RootState } from "app/store";
 import { ObjectVisibility, selectDefaultVisibility } from "slices/renderSlice";
 import { useLazyHidden } from "contexts/hidden";
 import { useLazyHighlighted } from "contexts/highlighted";
-import { useLazyVisible } from "contexts/visible";
-import { useLazyCustomGroups } from "contexts/customGroups";
+import { useLazySelectionBasket } from "contexts/selectionBasket";
+import { useLazyObjectGroups } from "contexts/objectGroups";
 import { useExplorerGlobals } from "contexts/explorerGlobals";
 
 import { useAbortController } from "hooks/useAbortController";
@@ -40,9 +40,9 @@ export function IncludeViewpoint({
     setViewpoint: (vp: NewViewpoint | undefined) => void;
 }) {
     const hidden = useLazyHidden();
-    const visible = useLazyVisible();
+    const selectionBasket = useLazySelectionBasket();
     const highlighted = useLazyHighlighted();
-    const customGroups = useLazyCustomGroups();
+    const objectGroups = useLazyObjectGroups();
     const {
         state: { view, scene, canvas },
     } = useExplorerGlobals(true);
@@ -75,9 +75,12 @@ export function IncludeViewpoint({
             const getExceptions = idsToGuids({
                 scene,
                 abortSignal,
-                ids: defaultVisibility === ObjectVisibility.Neutral ? hidden.current.idArr : visible.current.idArr,
+                ids:
+                    defaultVisibility === ObjectVisibility.Neutral
+                        ? hidden.current.idArr
+                        : selectionBasket.current.idArr,
             });
-            const getColoring = customGroups.current
+            const getColoring = objectGroups.current
                 .filter((group) => group.selected)
                 .map(async (group) => {
                     return { color: group.color, guids: await idsToGuids({ scene, abortSignal, ids: group.ids }) };
@@ -117,13 +120,13 @@ export function IncludeViewpoint({
         view,
         store,
         hidden,
-        visible,
+        selectionBasket,
         highlighted,
         scene,
         abortController,
         abort,
         setLoading,
-        customGroups,
+        objectGroups,
         canvas,
     ]);
 

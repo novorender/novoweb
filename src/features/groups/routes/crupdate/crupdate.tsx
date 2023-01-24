@@ -4,9 +4,10 @@ import { useCallback, useEffect, useState } from "react";
 import { Box } from "@mui/material";
 
 import { LinearProgress } from "components";
-import { customGroupsActions, useCustomGroups } from "contexts/customGroups";
+import { objectGroupsActions, useObjectGroups, useDispatchObjectGroups } from "contexts/objectGroups";
 import { dataApi } from "app";
 import { AsyncState, AsyncStatus } from "types/misc";
+import { useToggle } from "hooks/useToggle";
 
 import { CreateJsonGroup } from "./createJsonGroup";
 import { Details } from "./details";
@@ -15,11 +16,13 @@ import { Search } from "./search";
 export function Crupdate({ sceneId }: { sceneId: string }) {
     const match = useRouteMatch();
     const id = useParams<{ id?: string }>().id;
-    const { state: customGroups, dispatch: dispatchCustomGroups } = useCustomGroups();
-    const groupToEdit = id ? customGroups.find((group) => group.id === id) : undefined;
+    const objectGroups = useObjectGroups();
+    const dispatchObjectGroups = useDispatchObjectGroups();
+    const groupToEdit = id ? objectGroups.find((group) => group.id === id) : undefined;
     const [savedInputs, setSavedInputs] = useState<SearchPattern[]>(
         groupToEdit?.search ?? [{ property: "", value: "", exact: true }]
     );
+    const [includeDescendants, toggleIncludeDescendants] = useToggle(groupToEdit?.includeDescendants ?? true);
 
     const [ids, setIds] = useState((): AsyncState<ObjectId[]> => {
         if (groupToEdit && !groupToEdit.ids) {
@@ -53,14 +56,14 @@ export function Crupdate({ sceneId }: { sceneId: string }) {
             try {
                 const _ids = await dataApi.getGroupIds(sceneId, groupToEdit.id);
 
-                dispatchCustomGroups(customGroupsActions.update(groupToEdit.id, { ids: _ids }));
+                dispatchObjectGroups(objectGroupsActions.update(groupToEdit.id, { ids: _ids }));
                 setIds({ status: AsyncStatus.Success, data: _ids });
             } catch (e) {
                 console.warn(e);
                 setIds({ status: AsyncStatus.Error, msg: "Failed to load group data." });
             }
         }
-    }, [groupToEdit, ids, sceneId, dispatchCustomGroups]);
+    }, [groupToEdit, ids, sceneId, dispatchObjectGroups]);
 
     switch (ids.status) {
         case AsyncStatus.Initial:
@@ -85,10 +88,17 @@ export function Crupdate({ sceneId }: { sceneId: string }) {
                             setSavedInputs={setSavedInputs}
                             ids={ids.data}
                             setIds={setIdsData}
+                            includeDescendants={includeDescendants}
+                            toggleIncludeDescendants={toggleIncludeDescendants}
                         />
                     </Route>
                     <Route path={match.path + "/step2"}>
-                        <Details savedInputs={savedInputs} groupToEdit={groupToEdit} ids={ids.data} />
+                        <Details
+                            savedInputs={savedInputs}
+                            groupToEdit={groupToEdit}
+                            ids={ids.data}
+                            includeDescendants={includeDescendants}
+                        />
                     </Route>
                 </Switch>
             );

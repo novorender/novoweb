@@ -7,8 +7,8 @@ import { initialFilters, selectJiraAccessToken, selectJiraSpace } from "./jiraSl
 import { Component, CreateIssueMetadata, CurrentUser, Issue, IssueType, Permission, Project, Space } from "./types";
 
 export const jiraIdentityServer = "https://auth.atlassian.com/authorize";
-export const jiraClientId = window.jiraClientId || process.env.REACT_APP_JIRA_CLIENT_ID || "";
-export const jiraClientSecret = window.jiraClientSecret || process.env.REACT_APP_JIRA_CLIENT_SECRET || "";
+export const jiraClientId = window.jiraClientId || import.meta.env.REACT_APP_JIRA_CLIENT_ID || "";
+export const jiraClientSecret = window.jiraClientSecret || import.meta.env.REACT_APP_JIRA_CLIENT_SECRET || "";
 
 const rawBaseQuery = fetchBaseQuery({
     baseUrl: "/",

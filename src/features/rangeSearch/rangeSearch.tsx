@@ -26,7 +26,7 @@ enum Status {
 
 const dateFormat = "yyyyMMdd'z'";
 
-export function RangeSearch() {
+export default function RangeSearch() {
     const {
         state: { scene },
     } = useExplorerGlobals(true);
@@ -279,11 +279,7 @@ export function RangeSearch() {
                         ) : null}
                     </ScrollBox>
                 </Box>
-                <WidgetList
-                    display={menuOpen ? "block" : "none"}
-                    widgetKey={featuresConfig.rangeSearch.key}
-                    onSelect={toggleMenu}
-                />
+                {menuOpen && <WidgetList widgetKey={featuresConfig.rangeSearch.key} onSelect={toggleMenu} />}
             </WidgetContainer>
             <LogoSpeedDial
                 open={menuOpen}

@@ -46,7 +46,7 @@ import {
 
 const maxObjects = 50;
 
-export function HeightProfile() {
+export default function HeightProfile() {
     const theme = useTheme();
     const [menuOpen, toggleMenu] = useToggle();
     const minimized = useAppSelector(selectMinimized) === featuresConfig.heightProfile.key;
@@ -330,11 +330,7 @@ export function HeightProfile() {
                         </>
                     )}
                 </ScrollBox>
-                <WidgetList
-                    display={menuOpen ? "block" : "none"}
-                    widgetKey={featuresConfig.heightProfile.key}
-                    onSelect={toggleMenu}
-                />
+                {menuOpen && <WidgetList widgetKey={featuresConfig.heightProfile.key} onSelect={toggleMenu} />}
             </WidgetContainer>
             <LogoSpeedDial
                 open={menuOpen}

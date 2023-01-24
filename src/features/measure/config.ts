@@ -10,3 +10,12 @@ export const multiCylinderOptions = [
 ] as const;
 
 export const cylinderOptions = [...singleCylinderOptions, ...multiCylinderOptions];
+
+export const snapKinds = [
+    { val: "all", label: "All" },
+    { val: "point", label: "Point" },
+    { val: "curve", label: "Curve" },
+    { val: "surface", label: "Surface" },
+] as const;
+
+export type SnapKind = typeof snapKinds[number]["val"];

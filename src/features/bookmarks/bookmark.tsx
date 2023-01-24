@@ -14,7 +14,7 @@ import {
     ListItemIcon,
     ListItemText,
 } from "@mui/material";
-import { Delete, Edit, MoreVert } from "@mui/icons-material";
+import { Delete, Edit, MoreVert, Share } from "@mui/icons-material";
 import { css } from "@mui/styled-engine";
 
 import { Tooltip } from "components";
@@ -100,7 +100,9 @@ export function Bookmark({ bookmark }: { bookmark: ExtendedBookmark }) {
                                 {bookmark.name}
                             </Typography>
                         </Tooltip>
-                        {isAdmin || (bookmark.access === BookmarkAccess.Personal && user) ? (
+                        {isAdmin ||
+                        (bookmark.access === BookmarkAccess.Personal && user) ||
+                        bookmark.access === BookmarkAccess.Public ? (
                             <IconButton
                                 color={Boolean(menuAnchor) ? "primary" : "default"}
                                 size="small"
@@ -127,18 +129,35 @@ export function Bookmark({ bookmark }: { bookmark: ExtendedBookmark }) {
                 id={`${bookmark.name}-menu`}
                 MenuListProps={{ sx: { maxWidth: "100%" } }}
             >
-                <MenuItem onClick={() => history.push(`/edit/${bookmark.id}`)}>
-                    <ListItemIcon>
-                        <Edit fontSize="small" />
-                    </ListItemIcon>
-                    <ListItemText>Edit</ListItemText>
-                </MenuItem>
-                <MenuItem onClick={() => history.push(`delete/${bookmark.id}`)}>
-                    <ListItemIcon>
-                        <Delete fontSize="small" />
-                    </ListItemIcon>
-                    <ListItemText>Delete</ListItemText>
-                </MenuItem>
+                {bookmark.access === BookmarkAccess.Public && (
+                    <MenuItem
+                        onClick={() => {
+                            navigator.clipboard.writeText(
+                                `${window.location.origin}${window.location.pathname}?bookmarkId=${bookmark.id}`
+                            );
+                            closeMenu();
+                        }}
+                    >
+                        <ListItemIcon>
+                            <Share fontSize="small" />
+                        </ListItemIcon>
+                        <ListItemText>Share</ListItemText>
+                    </MenuItem>
+                )}
+                {(isAdmin || (bookmark.access === BookmarkAccess.Personal && user)) && [
+                    <MenuItem key="edit" onClick={() => history.push(`/edit/${bookmark.id}`)}>
+                        <ListItemIcon>
+                            <Edit fontSize="small" />
+                        </ListItemIcon>
+                        <ListItemText>Edit</ListItemText>
+                    </MenuItem>,
+                    <MenuItem key="delete" onClick={() => history.push(`delete/${bookmark.id}`)}>
+                        <ListItemIcon>
+                            <Delete fontSize="small" />
+                        </ListItemIcon>
+                        <ListItemText>Delete</ListItemText>
+                    </MenuItem>,
+                ]}
             </Menu>
         </>
     );

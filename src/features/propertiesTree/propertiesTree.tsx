@@ -22,7 +22,7 @@ type TreeLevel = {
     values?: string[];
 };
 
-export function PropertiesTree() {
+export default function PropertiesTree() {
     const {
         state: { scene },
     } = useExplorerGlobals(true);
@@ -92,11 +92,7 @@ export function PropertiesTree() {
                         )}
                     </List>
                 </ScrollBox>
-                <WidgetList
-                    display={menuOpen ? "block" : "none"}
-                    widgetKey={featuresConfig.propertyTree.key}
-                    onSelect={toggleMenu}
-                />
+                {menuOpen && <WidgetList widgetKey={featuresConfig.propertyTree.key} onSelect={toggleMenu} />}
             </WidgetContainer>
             <LogoSpeedDial
                 open={menuOpen}

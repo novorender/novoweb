@@ -14,7 +14,7 @@ import { PathList } from "./routes/pathList";
 import { FollowParametricFromPos } from "./routes/followParametricFromPos";
 import { FollowParametricFromIds } from "./routes/followParametrcFromId";
 
-export function FollowPath() {
+export default function FollowPath() {
     const [menuOpen, toggleMenu] = useToggle();
     const minimized = useAppSelector(selectMinimized) === featuresConfig.followPath.key;
     const maximized = useAppSelector(selectMaximized) === featuresConfig.followPath.key;
@@ -45,11 +45,7 @@ export function FollowPath() {
                     </MemoryRouter>
                 </Box>
 
-                <WidgetList
-                    display={menuOpen ? "block" : "none"}
-                    widgetKey={featuresConfig.followPath.key}
-                    onSelect={toggleMenu}
-                />
+                {menuOpen && <WidgetList widgetKey={featuresConfig.followPath.key} onSelect={toggleMenu} />}
             </WidgetContainer>
             <LogoSpeedDial
                 open={menuOpen}

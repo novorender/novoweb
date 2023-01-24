@@ -254,13 +254,13 @@ export async function batchedPropertySearch<T = HierarcicalObjectReference>({
 
     const batchSize = 100;
     const batches = value.reduce(
-        (acc, guid) => {
+        (acc, val) => {
             const lastBatch = acc.slice(-1)[0];
 
             if (lastBatch.length < batchSize) {
-                lastBatch.push(guid);
+                lastBatch.push(val);
             } else {
-                acc.push([guid]);
+                acc.push([val]);
             }
 
             return acc;
@@ -272,6 +272,7 @@ export async function batchedPropertySearch<T = HierarcicalObjectReference>({
     const callback = (refs: (HierarcicalObjectReference | ObjectData)[]) => {
         result = result.concat(transformResult ? transformResult(refs) : (refs as unknown as T));
     };
+
     for (let i = 0; i < batches.length / concurrentRequests; i++) {
         await Promise.all(
             batches.slice(i * concurrentRequests, i * concurrentRequests + concurrentRequests).map((batch) => {

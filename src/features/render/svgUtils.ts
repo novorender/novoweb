@@ -84,6 +84,7 @@ export function moveSvgCursor({
     x,
     y,
     measurement,
+    color,
 }: {
     svg: SVGSVGElement;
     view: View;
@@ -91,6 +92,7 @@ export function moveSvgCursor({
     x: number;
     y: number;
     measurement: MeasureInfo | undefined;
+    color: string;
 }) {
     if (!svg || !view) {
         return;
@@ -103,7 +105,6 @@ export function moveSvgCursor({
         g.innerHTML = "";
         return;
     }
-
     let normal =
         measurement &&
         measurement.normalVS &&
@@ -125,13 +126,13 @@ export function moveSvgCursor({
             }
             g.innerHTML = `<circle r="20" fill="rgba(255,255,255,0.25)" ${style}/><line x2="${(normal[0] * 20).toFixed(
                 1
-            )}" y2="${(normal[1] * -20).toFixed(1)}" stroke="lightblue" stroke-width="2" stroke-linecap="round" />`;
+            )}" y2="${(normal[1] * -20).toFixed(1)}" stroke=${color} stroke-width="2" stroke-linecap="round" />`;
         } else {
-            g.innerHTML = `<circle r="20" fill="rgba(255,255,255,0.25)" /><circle r="2" fill="lightblue" />`;
+            g.innerHTML = `<circle r="20" fill="rgba(255,255,255,0.25)" /><circle r="2" fill=${color} />`;
         }
     } else {
         g.innerHTML = `<path d="M-10,-10L10,10M-10,10L10,-10" stroke-width="2" stroke-linecap="round" stroke="${
-            measurement ? "lightgreen" : "red"
+            color || "red"
         }"/>`;
     }
     g.setAttribute("transform", `translate(${x},${y})`);

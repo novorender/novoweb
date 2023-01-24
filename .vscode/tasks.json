@@ -3,7 +3,7 @@
     "tasks": [
         {
             "type": "npm",
-            "script": "http-dev",
+            "script": "dev",
             "group": "build",
             "options": { "env": { "HTTPS": "true" } },
             "presentation": {

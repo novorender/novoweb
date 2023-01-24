@@ -22,8 +22,8 @@ import {
 } from "types/bcf";
 import { NewViewpoint } from "./includeViewpoint";
 
-const clientId = window.bimTrackClientId || process.env.REACT_APP_BIMTRACK_CLIENT_ID || "";
-const clientSecret = window.bimTrackClientSecret || process.env.REACT_APP_BIMTRACK_CLIENT_SECRET || "";
+const clientId = window.bimTrackClientId || import.meta.env.REACT_APP_BIMTRACK_CLIENT_ID || "";
+const clientSecret = window.bimTrackClientSecret || import.meta.env.REACT_APP_BIMTRACK_CLIENT_SECRET || "";
 const callbackUrl = window.location.origin + "/";
 const scope = "openid offline_access BcfWebApi";
 

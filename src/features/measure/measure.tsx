@@ -1,6 +1,6 @@
 import { DeleteSweep } from "@mui/icons-material";
 import { useRef, useEffect } from "react";
-import { Box, Button, Checkbox, FormControlLabel } from "@mui/material";
+import { Box, Button, FormControlLabel, ListSubheader, MenuItem, OutlinedInput, Select } from "@mui/material";
 
 import { useAppDispatch, useAppSelector } from "app/store";
 import { IosSwitch, LinearProgress, LogoSpeedDial, ScrollBox, WidgetContainer, WidgetHeader } from "components";
@@ -9,36 +9,42 @@ import { useToggle } from "hooks/useToggle";
 import { featuresConfig } from "config/features";
 import { selectMinimized, selectMaximized } from "slices/explorerSlice";
 import { Picker, renderActions, selectPicker } from "slices/renderSlice";
+import { ExtendedMeasureEntity } from "types/misc";
 
 import { measureActions, selectMeasure } from "./measureSlice";
 import { MeasuredObject, MeasuredResult } from "./measuredObject";
+import { snapKinds } from "./config";
 
-export function Measure() {
+export default function Measure() {
     const [menuOpen, toggleMenu] = useToggle();
     const minimized = useAppSelector(selectMinimized) === featuresConfig.measure.key;
     const maximized = useAppSelector(selectMaximized) === featuresConfig.measure.key;
     const { duoMeasurementValues } = useAppSelector(selectMeasure);
 
     const dispatch = useAppDispatch();
-    const { selected, forcePoint, loadingBrep } = useAppSelector(selectMeasure);
+    const { selectedEntities, loadingBrep, snapKind } = useAppSelector(selectMeasure);
     const selecting = useAppSelector(selectPicker) === Picker.Measurement;
     const isInitial = useRef(true);
 
     useEffect(() => {
         if (isInitial.current) {
-            if (!selecting && !selected.length) {
+            if (!selecting && !selectedEntities.length) {
                 dispatch(renderActions.setPicker(Picker.Measurement));
             }
 
             isInitial.current = false;
         }
-    }, [dispatch, selecting, selected]);
+    }, [dispatch, selecting, selectedEntities]);
 
     useEffect(() => {
         return () => {
             dispatch(renderActions.stopPicker(Picker.Measurement));
         };
     }, [dispatch]);
+
+    const onSelectSettingsChange = (newValue: "all" | "point" | "curve" | "surface") => {
+        dispatch(measureActions.selectPickSettings(newValue));
+    };
 
     return (
         <>
@@ -61,21 +67,28 @@ export function Measure() {
                                 }
                                 label={<Box fontSize={14}>Selecting</Box>}
                             />
-                            <FormControlLabel
-                                control={
-                                    <Checkbox
-                                        size="medium"
-                                        color="primary"
-                                        checked={forcePoint}
-                                        onChange={() => dispatch(measureActions.toggleForcePoint())}
-                                    />
+                            <Select
+                                sx={{ width: "auto", minWidth: 110, lineHeight: "normal" }}
+                                inputProps={{ sx: { p: 0.8, fontSize: 14 } }}
+                                name="snap to"
+                                size="small"
+                                value={snapKind}
+                                onChange={(event) =>
+                                    onSelectSettingsChange(event.target.value as "all" | "point" | "curve" | "surface")
                                 }
-                                label={<Box fontSize={14}>Force points</Box>}
-                            />
+                                input={<OutlinedInput fullWidth />}
+                            >
+                                <ListSubheader>Snap to</ListSubheader>
+                                {snapKinds.map((opt) => (
+                                    <MenuItem key={opt.val} value={opt.val}>
+                                        {opt.label}
+                                    </MenuItem>
+                                ))}
+                            </Select>
                             <Button
                                 onClick={() => dispatch(measureActions.clear())}
                                 color="grey"
-                                disabled={!selected.length}
+                                disabled={!selectedEntities.length}
                             >
                                 <DeleteSweep sx={{ mr: 1 }} />
                                 Clear
@@ -89,16 +102,12 @@ export function Measure() {
                     </Box>
                 ) : null}
                 <ScrollBox display={menuOpen || minimized ? "none" : "block"}>
-                    {selected.map((obj, idx) => (
-                        <MeasuredObject obj={obj} idx={idx} key={idx} />
+                    {selectedEntities.map((obj, idx) => (
+                        <MeasuredObject obj={obj as ExtendedMeasureEntity} idx={idx} key={idx} />
                     ))}
                     <MeasuredResult duoMeasurementValues={duoMeasurementValues} />
                 </ScrollBox>
-                <WidgetList
-                    display={menuOpen ? "block" : "none"}
-                    widgetKey={featuresConfig.measure.key}
-                    onSelect={toggleMenu}
-                />
+                {menuOpen && <WidgetList widgetKey={featuresConfig.measure.key} onSelect={toggleMenu} />}
             </WidgetContainer>
             <LogoSpeedDial
                 open={menuOpen}

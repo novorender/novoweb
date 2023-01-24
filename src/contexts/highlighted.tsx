@@ -1,5 +1,15 @@
 import { ObjectId } from "@novorender/webgl-api";
-import { createContext, Dispatch, ReactNode, useContext, useEffect, useReducer, useRef, useState } from "react";
+import {
+    createContext,
+    Dispatch,
+    MutableRefObject,
+    ReactNode,
+    useContext,
+    useEffect,
+    useReducer,
+    useRef,
+    useState,
+} from "react";
 
 import { VecRGB, VecRGBA } from "utils/color";
 import { toIdObj, toIdArr } from "utils/objectData";
@@ -62,8 +72,10 @@ const actions = { add, remove, setIds, setColor, set };
 
 type Actions = ReturnType<typeof actions[keyof typeof actions]>;
 type DispatchHighlighted = Dispatch<Actions>;
+type LazyState = MutableRefObject<State>;
 
 const StateContext = createContext<State>(undefined as any);
+const LazyStateContext = createContext<LazyState>(undefined as any);
 const DispatchContext = createContext<DispatchHighlighted>(undefined as any);
 
 function reducer(state: State, action: Actions): State {
@@ -117,10 +129,14 @@ function reducer(state: State, action: Actions): State {
 
 function HighlightedProvider({ children }: { children: ReactNode }) {
     const [state, dispatch] = useReducer(reducer, initialState);
+    const lazyValue = useRef(state);
+    lazyValue.current = state;
 
     return (
         <StateContext.Provider value={state}>
-            <DispatchContext.Provider value={dispatch}>{children}</DispatchContext.Provider>
+            <LazyStateContext.Provider value={lazyValue}>
+                <DispatchContext.Provider value={dispatch}>{children}</DispatchContext.Provider>
+            </LazyStateContext.Provider>
         </StateContext.Provider>
     );
 }
@@ -135,15 +151,14 @@ function useHighlighted(): State {
     return context;
 }
 
-function useLazyHighlighted() {
-    const state = useHighlighted();
-    const ref = useRef(state);
+function useLazyHighlighted(): LazyState {
+    const context = useContext(LazyStateContext);
 
-    useEffect(() => {
-        ref.current = state;
-    }, [state]);
+    if (context === undefined) {
+        throw new Error("useLazyHighlighted must be used within a LazyHighlightedProvider");
+    }
 
-    return ref;
+    return context;
 }
 
 function useDispatchHighlighted(): DispatchHighlighted {

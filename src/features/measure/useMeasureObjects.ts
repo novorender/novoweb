@@ -1,22 +1,18 @@
 import { useEffect, useState } from "react";
-import { DuoMeasurementValues, MeasureSettings } from "@novorender/measure-api";
+import { DuoMeasurementValues } from "@novorender/measure-api";
 
 import { useExplorerGlobals } from "contexts/explorerGlobals";
 import { useAppDispatch, useAppSelector } from "app/store";
+import { ExtendedMeasureEntity } from "types/misc";
 
-import { measureActions, selectMeasure } from "./measureSlice";
-import { MeasureEntity } from "@novorender/measure-api";
-
-export type ExtendedMeasureEntity = MeasureEntity & {
-    settings?: MeasureSettings;
-};
+import { measureActions, selectMeasureEntities } from "./measureSlice";
 
 export function useMeasureObjects() {
     const {
         state: { measureScene },
     } = useExplorerGlobals();
 
-    const measure = useAppSelector(selectMeasure);
+    const selectedEntities = useAppSelector(selectMeasureEntities);
     const dispatch = useAppDispatch();
 
     const [measureObjects, setMeasureObjects] = useState([] as ExtendedMeasureEntity[]);
@@ -30,34 +26,23 @@ export function useMeasureObjects() {
             }
 
             dispatch(measureActions.setLoadingBrep(true));
-            const mObjects = (await Promise.all(
-                measure.selected.map((obj) =>
-                    obj.id === -1
-                        ? { ObjectId: -1, drawKind: "vertex", parameter: obj.pos }
-                        : measureScene
-                              .pickMeasureEntity(obj.id, obj.pos)
-                              .then(async (_mObj) => {
-                                  if (obj.settings?.cylinderMeasure === "top") {
-                                      const swappedEnt = await measureScene.swapCylinder(_mObj, "outer");
-                                      if (swappedEnt) {
-                                          _mObj = swappedEnt;
-                                      }
-                                  } else if (obj.settings?.cylinderMeasure === "bottom") {
-                                      const swappedEnt = await measureScene.swapCylinder(_mObj, "inner");
-                                      if (swappedEnt) {
-                                          _mObj = swappedEnt;
-                                      }
-                                  }
-
-                                  let mObj = _mObj as ExtendedMeasureEntity;
-                                  mObj.settings = obj.settings;
-                                  return mObj;
-                              })
-                              .catch(() => {
-                                  return { ObjectId: obj.id, drawKind: "vertex", parameter: obj.pos };
-                              })
-                )
-            )) as ExtendedMeasureEntity[];
+            const mObjects = await Promise.all(
+                selectedEntities.map(async (obj) => {
+                    const ent = obj as ExtendedMeasureEntity;
+                    if (ent.settings?.cylinderMeasure === "top") {
+                        const swappedEnt = await measureScene.swapCylinder(ent, "outer");
+                        if (swappedEnt) {
+                            return { ...swappedEnt, settings: ent.settings };
+                        }
+                    } else if (ent.settings?.cylinderMeasure === "bottom") {
+                        const swappedEnt = await measureScene.swapCylinder(ent, "inner");
+                        if (swappedEnt) {
+                            return { ...swappedEnt, settings: ent.settings };
+                        }
+                    }
+                    return ent;
+                })
+            );
 
             if (mObjects.length !== 2) {
                 dispatch(measureActions.setDuoMeasurementValues(undefined));
@@ -78,7 +63,7 @@ export function useMeasureObjects() {
             setMeasureObjects(mObjects);
             dispatch(measureActions.setLoadingBrep(false));
         }
-    }, [measureScene, setMeasureObjects, measure.selected, dispatch]);
+    }, [measureScene, setMeasureObjects, selectedEntities, dispatch]);
 
     return measureObjects;
 }

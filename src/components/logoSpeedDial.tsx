@@ -19,7 +19,7 @@ export function LogoSpeedDial({
     testId,
     ariaLabel = "toggle widget menu",
     ...props
-}: Omit<SpeedDialProps, "ariaLabel"> & { ariaLabel?: string; testId: string; toggle: () => void }) {
+}: Omit<SpeedDialProps, "ariaLabel"> & { ariaLabel?: string; testId?: string; toggle: () => void }) {
     const theme = useTheme();
     const isSmall = useMediaQuery(theme.breakpoints.down("md"));
 
@@ -41,6 +41,7 @@ export function LogoSpeedDial({
             sx={{ ...props.sx, zIndex: 1052 }}
             FabProps={
                 {
+                    ...props.FabProps,
                     color: open ? "secondary" : "primary",
                     size: isSmall ? "small" : "large",
                     "data-test": testId,

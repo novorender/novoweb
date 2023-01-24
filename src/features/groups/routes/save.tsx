@@ -5,7 +5,7 @@ import { SceneData } from "@novorender/data-js-api";
 
 import { dataApi } from "app";
 import { useAppDispatch, useAppSelector } from "app/store";
-import { useCustomGroups } from "contexts/customGroups";
+import { isInternalGroup, useLazyObjectGroups } from "contexts/objectGroups";
 import { useExplorerGlobals } from "contexts/explorerGlobals";
 import { useToggle } from "hooks/useToggle";
 import { Confirmation } from "components";
@@ -19,7 +19,7 @@ export function Save({ sceneId }: { sceneId: string }) {
     const {
         state: { scene },
     } = useExplorerGlobals(true);
-    const { state: customGroups } = useCustomGroups();
+    const objectGroups = useLazyObjectGroups();
     const [saveState, toggleSaveState] = useToggle();
     const status = useAppSelector(selectSaveStatus);
 
@@ -35,7 +35,9 @@ export function Save({ sceneId }: { sceneId: string }) {
                 ...originalScene
             } = (await dataApi.loadScene(sceneId)) as SceneData;
 
-            let updated = originalGroups.filter((group) => !group.id).concat(customGroups);
+            let updated = originalGroups
+                .filter((group) => !group.id)
+                .concat(objectGroups.current.filter((grp) => !isInternalGroup(grp)));
 
             if (!saveState) {
                 updated = updated

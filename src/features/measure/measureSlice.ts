@@ -1,8 +1,11 @@
-import { DuoMeasurementValues, MeasureSettings } from "@novorender/measure-api";
+import { DuoMeasurementValues, MeasureEntity, MeasureSettings } from "@novorender/measure-api";
 import { createSlice, PayloadAction } from "@reduxjs/toolkit";
 import { vec3 } from "gl-matrix";
 
 import { RootState } from "app/store";
+import { DeepWritable } from "slices/renderSlice";
+import { ExtendedMeasureEntity } from "types/misc";
+import { SnapKind } from "./config";
 
 export type SelectedMeasureObj = {
     id: number;
@@ -10,9 +13,13 @@ export type SelectedMeasureObj = {
     settings?: MeasureSettings;
 };
 
+type WriteableMeasureEntity = DeepWritable<MeasureEntity>;
+type WriteableExtendedMeasureEntity = DeepWritable<ExtendedMeasureEntity>;
+
 const initialState = {
-    selected: [] as SelectedMeasureObj[],
-    forcePoint: false,
+    selectedEntities: [] as WriteableExtendedMeasureEntity[],
+    hover: undefined as WriteableMeasureEntity | undefined,
+    snapKind: "all" as SnapKind,
     pinned: undefined as undefined | number,
     duoMeasurementValues: undefined as undefined | DuoMeasurementValues,
     loadingBrep: false,
@@ -24,12 +31,18 @@ export const measureSlice = createSlice({
     name: "measure",
     initialState: initialState,
     reducers: {
-        selectObj: (state, action: PayloadAction<SelectedMeasureObj>) => {
+        selectEntity: (state, action: PayloadAction<ExtendedMeasureEntity>) => {
             const selectIdx = [1, undefined].includes(state.pinned) ? 0 : 1;
-            state.selected[selectIdx] = action.payload;
+            state.selectedEntities[selectIdx] = action.payload as WriteableExtendedMeasureEntity;
         },
-        setSelected: (state, action: PayloadAction<State["selected"]>) => {
-            state.selected = action.payload;
+        selectHoverObj: (state, action: PayloadAction<MeasureEntity | undefined>) => {
+            state.hover = action.payload as WriteableMeasureEntity | undefined;
+        },
+        selectPickSettings: (state, action: PayloadAction<SnapKind>) => {
+            state.snapKind = action.payload;
+        },
+        setSelectedEntities: (state, action: PayloadAction<ExtendedMeasureEntity[]>) => {
+            state.selectedEntities = action.payload as WriteableExtendedMeasureEntity[];
         },
         pin: (state, action: PayloadAction<State["pinned"]>) => {
             state.pinned = action.payload;
@@ -38,17 +51,15 @@ export const measureSlice = createSlice({
             state.pinned = undefined;
         },
         clear: (state) => {
-            state.selected = [];
+            state.selectedEntities = [];
             state.pinned = undefined;
-        },
-        toggleForcePoint: (state) => {
-            state.forcePoint = !state.forcePoint;
+            state.hover = undefined;
         },
         setDuoMeasurementValues: (state, action: PayloadAction<State["duoMeasurementValues"]>) => {
             state.duoMeasurementValues = action.payload;
         },
         setSettings: (state, action: PayloadAction<{ idx: number; settings: MeasureSettings }>) => {
-            state.selected = state.selected.map((obj, idx) =>
+            state.selectedEntities = state.selectedEntities.map((obj, idx) =>
                 idx === action.payload.idx ? { ...obj, settings: action.payload.settings } : obj
             );
         },
@@ -58,7 +69,12 @@ export const measureSlice = createSlice({
     },
 });
 
-export const selectMeasure = (state: RootState) => state.measure;
+export const selectMeasure = (state: RootState) =>
+    state.measure as Omit<State, "selectedEntities" | "hover"> & {
+        selectedEntities: ExtendedMeasureEntity[];
+        hover: ExtendedMeasureEntity | undefined;
+    };
+export const selectMeasureEntities = (state: RootState) => state.measure.selectedEntities as ExtendedMeasureEntity[];
 
 const { actions, reducer } = measureSlice;
 export { actions as measureActions, reducer as measureReducer };

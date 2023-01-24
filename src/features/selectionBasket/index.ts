@@ -1,1 +1,1 @@
-export { SelectionBasket } from "./selectionBasket";
+export * from "./selectionBasketSlice";

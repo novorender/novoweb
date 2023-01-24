@@ -8,7 +8,6 @@ import { api } from "app";
 import { ScrollBox, TextField, Switch } from "components";
 import { useExplorerGlobals } from "contexts/explorerGlobals";
 import { highlightActions, useDispatchHighlighted } from "contexts/highlighted";
-import { useToggle } from "hooks/useToggle";
 import { useAbortController } from "hooks/useAbortController";
 import { useMountedState } from "hooks/useMountedState";
 import { searchByPatterns, searchDeepByPatterns } from "utils/search";
@@ -27,11 +26,15 @@ export function CreateJsonGroup({
     setSavedInputs,
     ids,
     setIds,
+    includeDescendants,
+    toggleIncludeDescendants,
 }: {
     savedInputs: SearchPattern[];
     setSavedInputs: React.Dispatch<React.SetStateAction<SearchPattern[]>>;
     ids: ObjectId[];
     setIds: (arg: number[] | ((_ids: ObjectId[]) => ObjectId[])) => void;
+    includeDescendants: boolean;
+    toggleIncludeDescendants: () => void;
 }) {
     const history = useHistory();
     const match = useRouteMatch();
@@ -43,7 +46,6 @@ export function CreateJsonGroup({
 
     const [status, setStatus] = useMountedState(Status.Initial);
     const [json, setJson] = useState(JSON.stringify({ searchPattern: savedInputs }, undefined, 2));
-    const [includeDescendants, toggleIncludeDescendants] = useToggle(true);
 
     const [abortController] = useAbortController();
 

@@ -18,7 +18,11 @@ export function useHandlePointLineUpdates() {
             return;
         }
 
-        dispatch(pointLineActions.setResult(measureScene.measureLineStrip(points)));
+        if (!points.length) {
+            dispatch(pointLineActions.setResult(undefined));
+        } else {
+            dispatch(pointLineActions.setResult(measureScene.measureLineStrip(points)));
+        }
     }, [points, dispatch, measureScene]);
 
     return;

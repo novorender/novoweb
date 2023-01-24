@@ -28,7 +28,7 @@ import { rgbToVec, VecRGBA, vecToRgb } from "utils/color";
 
 import { getTopDownParams } from "./utils";
 
-export function OrthoCam() {
+export default function OrthoCam() {
     const [menuOpen, toggleMenu] = useToggle();
     const minimized = useAppSelector(selectMinimized) === featuresConfig.orthoCam.key;
     const maximized = useAppSelector(selectMaximized) === featuresConfig.orthoCam.key;
@@ -147,11 +147,7 @@ export function OrthoCam() {
                         </>
                     ) : null}
                 </ScrollBox>
-                <WidgetList
-                    display={menuOpen ? "block" : "none"}
-                    widgetKey={featuresConfig.orthoCam.key}
-                    onSelect={toggleMenu}
-                />
+                {menuOpen && <WidgetList widgetKey={featuresConfig.orthoCam.key} onSelect={toggleMenu} />}
             </WidgetContainer>
             <ColorPicker
                 open={Boolean(colorPickerAnchor)}

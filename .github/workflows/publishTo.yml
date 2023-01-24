@@ -18,7 +18,7 @@ on:
 env:
     AZURE_WEBAPP_NAME: novorender-explorer # set this to your application's name
     AZURE_WEBAPP_PACKAGE_PATH: "." # set this to the path to your web app project, defaults to the repository root
-    NODE_VERSION: "16.13.2" # set this to the node version to use
+    NODE_VERSION: "18.13.0" # set this to the node version to use
 
 jobs:
     build-and-deploy:

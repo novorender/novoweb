@@ -1,1 +1,1 @@
-export { Properties } from "./properties";
+export {};

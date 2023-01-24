@@ -6,7 +6,7 @@ import { renderActions, selectMainObject } from "slices/renderSlice";
 import { useAppDispatch, useAppSelector } from "app/store";
 import { highlightActions, useDispatchHighlighted, useHighlighted } from "contexts/highlighted";
 import { hiddenGroupActions, useDispatchHidden, useHidden } from "contexts/hidden";
-import { useDispatchVisible, visibleActions } from "contexts/visible";
+import { useDispatchSelectionBasket, selectionBasketActions } from "contexts/selectionBasket";
 
 type Props = SpeedDialActionProps;
 
@@ -18,7 +18,7 @@ export function HideSelected(props: Props) {
     const { idArr: hidden } = useHidden();
     const dispatchHighlighted = useDispatchHighlighted();
     const dispatchHidden = useDispatchHidden();
-    const dispatchVisible = useDispatchVisible();
+    const dispatchSelectionBasket = useDispatchSelectionBasket();
 
     const selected = mainObject !== undefined ? highlighted.concat(mainObject) : highlighted;
     const disabled = !selected.length && !hidden.length;
@@ -31,7 +31,7 @@ export function HideSelected(props: Props) {
 
             dispatch(renderActions.setMainObject(undefined));
             dispatchHighlighted(highlightActions.setIds([]));
-            dispatchVisible(visibleActions.remove(selected));
+            dispatchSelectionBasket(selectionBasketActions.remove(selected));
         } else if (hidden.length) {
             dispatchHidden(hiddenGroupActions.setIds([]));
         }

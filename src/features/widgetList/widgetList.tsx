@@ -25,7 +25,6 @@ const sorting = [
     featuresConfig.propertyTree.key,
     featuresConfig.deviations.key,
     featuresConfig.followPath.key,
-    featuresConfig.viewerScenes.key,
     featuresConfig.advancedSettings.key,
 ] as WidgetKey[];
 

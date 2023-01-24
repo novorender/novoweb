@@ -60,7 +60,7 @@ const Img = styled("img")(
     `
 );
 
-export function Panoramas() {
+export default function Panoramas() {
     const {
         state: { scene },
     } = useExplorerGlobals(true);
@@ -134,11 +134,7 @@ export function Panoramas() {
                         <LinearProgress />
                     )}
                 </ScrollBox>
-                <WidgetList
-                    display={menuOpen ? "block" : "none"}
-                    widgetKey={featuresConfig.panoramas.key}
-                    onSelect={toggleMenu}
-                />
+                {menuOpen && <WidgetList widgetKey={featuresConfig.panoramas.key} onSelect={toggleMenu} />}
             </WidgetContainer>
             <LogoSpeedDial
                 open={menuOpen}

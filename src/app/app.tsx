@@ -32,7 +32,10 @@ import { getAuthHeader } from "utils/auth";
 import { StorageKey } from "config/storage";
 import { deleteFromStorage, getFromStorage } from "utils/storage";
 
-export const api = createAPI({ noOffscreenCanvas: !offscreenCanvas });
+export const api = createAPI({
+    noOffscreenCanvas: !offscreenCanvas,
+    scriptBaseUrl: window.location.origin + "/novorender/webgl-api/",
+});
 try {
     const debugProfile =
         new URLSearchParams(window.location.search).get("debugDeviceProfile") ?? localStorage["debugDeviceProfile"];
@@ -47,7 +50,7 @@ try {
 const deviceProfileInitialized = (api.deviceProfile as any).debugProfile ? Promise.resolve() : loadDeviceProfile();
 
 export const dataApi = createDataAPI({ authHeader: getAuthHeader, serviceUrl: dataServerBaseUrl });
-export const measureApi = createMeasureAPI();
+export const measureApi = createMeasureAPI(window.location.origin + "/novorender/measure-api/");
 export const msalInstance = new PublicClientApplication(msalConfig);
 
 enum Status {
@@ -261,6 +264,11 @@ async function loadDeviceProfile(): Promise<void> {
             tier = Math.max(1, tier);
         }
 
+        // All RTX cards belong in tier 3+, but some such as A3000 are not benchmarked and returns tier 1.
+        if (gpuTier.gpu && /RTX/gi.test(gpuTier.gpu)) {
+            tier = Math.max(3, tier);
+        }
+
         const { name } = api.deviceProfile;
         api.deviceProfile = {
             ...api.deviceProfile,
@@ -286,7 +294,7 @@ async function loadDeviceProfile(): Promise<void> {
                     api.deviceProfile = {
                         ...api.deviceProfile,
                         renderResolution: 1,
-                        gpuBytesLimit: Math.max(750_000_000, api.deviceProfile.gpuBytesLimit),
+                        gpuBytesLimit: Math.max(700_000_000, api.deviceProfile.gpuBytesLimit),
                     };
                 } else {
                     api.deviceProfile = {
@@ -307,7 +315,7 @@ async function loadDeviceProfile(): Promise<void> {
                     if (isApple) {
                         api.deviceProfile = {
                             ...api.deviceProfile,
-                            gpuBytesLimit: Math.max(750_000_000, api.deviceProfile.gpuBytesLimit),
+                            gpuBytesLimit: Math.max(700_000_000, api.deviceProfile.gpuBytesLimit),
                         };
                     } else {
                         api.deviceProfile = {
@@ -325,7 +333,10 @@ async function loadDeviceProfile(): Promise<void> {
                 return;
             case 3:
                 if (isMobile) {
-                    // skip
+                    api.deviceProfile = {
+                        ...api.deviceProfile,
+                        weakDevice: false,
+                    };
                 } else {
                     api.deviceProfile = {
                         ...api.deviceProfile,
@@ -333,6 +344,7 @@ async function loadDeviceProfile(): Promise<void> {
                         triangleLimit: Math.max(20_000_000, api.deviceProfile.triangleLimit),
                         gpuBytesLimit: Math.max(4_000_000_000, api.deviceProfile.gpuBytesLimit),
                         renderResolution: 1,
+                        weakDevice: false,
                     };
                 }
                 return;

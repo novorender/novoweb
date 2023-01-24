@@ -21,8 +21,9 @@ import { Accordion, AccordionDetails, AccordionSummary, VertexTable, Measurement
 import { useAppDispatch, useAppSelector } from "app/store";
 import { useExplorerGlobals } from "contexts/explorerGlobals";
 import { getMeasurementValueKind, measureObjectIsVertex } from "utils/misc";
+import { ExtendedMeasureEntity } from "types/misc";
 
-import { measureActions, SelectedMeasureObj, selectMeasure } from "./measureSlice";
+import { measureActions, selectMeasure } from "./measureSlice";
 import { Slope } from "./slope";
 import { PlanarDiff } from "./planarDiff";
 import { useMeasureObjects } from "./useMeasureObjects";
@@ -46,7 +47,7 @@ const NestedAccordionDetails = styled(AccordionDetails)(
     `
 );
 
-export function MeasuredObject({ obj, idx }: { obj: SelectedMeasureObj; idx: number }) {
+export function MeasuredObject({ obj, idx }: { obj: ExtendedMeasureEntity; idx: number }) {
     const {
         state: { measureScene },
     } = useExplorerGlobals(true);

@@ -19,8 +19,8 @@ import { useAppDispatch } from "app/store";
 import { renderActions, ObjectVisibility, CameraType } from "slices/renderSlice";
 import { useDispatchHidden, hiddenGroupActions } from "contexts/hidden";
 import { useDispatchHighlighted, highlightActions } from "contexts/highlighted";
-import { useDispatchVisible, visibleActions } from "contexts/visible";
-import { customGroupsActions, TempGroup, useCustomGroups } from "contexts/customGroups";
+import { useDispatchSelectionBasket, selectionBasketActions } from "contexts/selectionBasket";
+import { objectGroupsActions, InternalTemporaryGroup, useDispatchObjectGroups } from "contexts/objectGroups";
 import { useExplorerGlobals } from "contexts/explorerGlobals";
 
 import { useAbortController } from "hooks/useAbortController";
@@ -243,8 +243,8 @@ function CommentListItem({
     const dispatch = useAppDispatch();
     const dispatchHighlighted = useDispatchHighlighted();
     const dispatchHidden = useDispatchHidden();
-    const dispatchVisible = useDispatchVisible();
-    const { dispatch: dispatchCustomGroups } = useCustomGroups();
+    const dispatchSelectionBasket = useDispatchSelectionBasket();
+    const dispatchObjectGroups = useDispatchObjectGroups();
     const {
         state: { scene },
     } = useExplorerGlobals(true);
@@ -325,22 +325,22 @@ function CommentListItem({
         } else {
             dispatch(renderActions.setDefaultVisibility(ObjectVisibility.Transparent));
             dispatchHidden(hiddenGroupActions.setIds([]));
-            dispatchVisible(visibleActions.set(visibilityExceptionIds));
+            dispatchSelectionBasket(selectionBasketActions.set(visibilityExceptionIds));
         }
 
         dispatchHighlighted(highlightActions.setIds(selectionIds));
 
-        dispatchCustomGroups(customGroupsActions.reset());
+        dispatchObjectGroups(objectGroupsActions.reset());
         if (colorGroups.length) {
-            dispatchCustomGroups(
-                customGroupsActions.add(
+            dispatchObjectGroups(
+                objectGroupsActions.add(
                     colorGroups.map((item, index) => ({
                         id: `Temporary BIMcollab viewpoint group ${index}`,
                         ids: item.ids,
                         color: item.color,
                         selected: true,
                         hidden: false,
-                        grouping: TempGroup.BIMcollab,
+                        grouping: InternalTemporaryGroup.BIMcollab,
                         name: `BIMcollab ${index + 1}`,
                     }))
                 )

@@ -33,7 +33,14 @@ const Canvas2D = styled("canvas")(
     `
 );
 
-const measurementFillColor = "rgba(0, 191, 255, 0.5)";
+const measurementFillColor = "rgba(0, 191, 255, 0.15)";
+const measurementPointColor = "rgba(0, 191, 255, 0.75)";
+const measurementLineColor = "rgba(255, 255, 0, 1)";
+const measurementInactiveFillColor = "rgba(0, 191, 255, 0.075)";
+const measurementInactivePointColor = "rgba(0, 191, 255, 0.25)";
+const measurementInactiveLineColor = "rgba(255, 255, 0, 0.4)";
+const hoverFillColor = "rgba(0, 170, 200, 0.3)";
+const hoverLineColor = "rgba(255, 165, 0, 1)";
 
 export function Engine2D() {
     const {
@@ -100,6 +107,7 @@ export function Engine2D() {
         }
     }, [grid, context2D, view, cameraType]);
 
+    const drawId = useRef(0);
     const render = useCallback(async () => {
         if (view && context2D && measureScene && measureApi && canvas2D && size) {
             const { camera } = view;
@@ -107,6 +115,7 @@ export function Engine2D() {
             const camSettings = { pos: camera.position, dir: cameraDirection };
             const getDrawMeasureEntity = async (entity?: DrawableEntity, settings?: MeasureSettings) =>
                 entity && measureApi.getDrawMeasureEntity(view, measureScene, entity, settings);
+            const id = ++drawId.current;
 
             const [
                 duoDrawResult,
@@ -115,6 +124,7 @@ export function Engine2D() {
                 heightProfileDrawResult,
                 manholeDrawResult,
                 manholeCollisionEntityDrawResult,
+                hoverObjectDrawResult,
             ] = await Promise.all([
                 getDrawMeasureEntity(measure.duoMeasurementValues),
                 Promise.all(measureObjects.map((obj) => getDrawMeasureEntity(obj, obj.settings))),
@@ -128,26 +138,38 @@ export function Engine2D() {
                 getDrawMeasureEntity(heightProfileMeasureObject),
                 getDrawMeasureEntity(manhole),
                 getDrawMeasureEntity(manholeCollisionEntity),
+                getDrawMeasureEntity(measure.hover),
             ]);
 
             if (measure.duoMeasurementValues) {
                 getDrawMeasureEntity(measure.duoMeasurementValues);
             }
+
+            if (id !== drawId.current) {
+                return;
+            }
+
             context2D.clearRect(0, 0, canvas2D.width, canvas2D.height);
 
             renderGridLabels();
 
-            measureObjectsDrawResult.forEach(
-                (prod) =>
-                    prod &&
+            measureObjectsDrawResult.forEach((prod, index) => {
+                if (prod) {
+                    const inactiveDueToHover = hoverObjectDrawResult !== undefined && measure.pinned !== index;
                     drawProduct(
                         context2D,
                         camSettings,
                         prod,
-                        { lineColor: "yellow", fillColor: measurementFillColor, complexCylinder: true },
+                        {
+                            lineColor: inactiveDueToHover ? measurementInactiveLineColor : measurementLineColor,
+                            fillColor: inactiveDueToHover ? measurementInactiveFillColor : measurementFillColor,
+                            pointColor: inactiveDueToHover ? measurementInactivePointColor : measurementPointColor,
+                            complexCylinder: true,
+                        },
                         3
-                    )
-            );
+                    );
+                }
+            });
 
             if (duoDrawResult && duoDrawResult.objects.length === 1) {
                 const obj = duoDrawResult.objects[0];
@@ -183,6 +205,7 @@ export function Engine2D() {
                                 {
                                     lineColor: "lightgreen",
                                     pointColor: { start: "green", middle: "white", end: "blue" },
+                                    displayAllPoints: true,
                                 },
                                 3,
                                 {
@@ -191,9 +214,16 @@ export function Engine2D() {
                             );
                             break;
                         case "normal":
-                            drawPart(context2D, camSettings, part, { lineColor: "black", pointColor: "black" }, 3, {
-                                type: "distance",
-                            });
+                            drawPart(
+                                context2D,
+                                camSettings,
+                                part,
+                                { lineColor: "black", pointColor: "black", displayAllPoints: true },
+                                3,
+                                {
+                                    type: "distance",
+                                }
+                            );
                             break;
                         case "x-axis":
                             drawPart(context2D, camSettings, part, { lineColor: "red" }, 3, {
@@ -253,6 +283,15 @@ export function Engine2D() {
                     )
             );
 
+            if (hoverObjectDrawResult) {
+                drawProduct(
+                    context2D,
+                    camSettings,
+                    hoverObjectDrawResult,
+                    { lineColor: hoverLineColor, fillColor: hoverFillColor, pointColor: hoverLineColor },
+                    5
+                );
+            }
             if (heightProfileDrawResult) {
                 drawProduct(
                     context2D,
@@ -300,6 +339,7 @@ export function Engine2D() {
                                 {
                                     lineColor: "#55802b",
                                     pointColor: "black",
+                                    displayAllPoints: true,
                                 },
                                 2,
                                 {
@@ -323,7 +363,7 @@ export function Engine2D() {
             }
 
             if (areaPoints.length) {
-                const drawProd = measureApi.getDrawObjectFromPoints(view, areaPoints);
+                const drawProd = measureApi.getDrawObjectFromPoints(view, areaPoints, true, true);
                 if (drawProd) {
                     drawProd.objects.forEach((obj) => {
                         obj.parts.forEach((part) => {
@@ -335,6 +375,7 @@ export function Engine2D() {
                                     lineColor: "yellow",
                                     fillColor: measurementFillColor,
                                     pointColor: { start: "green", middle: "white", end: "blue" },
+                                    displayAllPoints: true,
                                 },
                                 2,
                                 {
@@ -361,6 +402,7 @@ export function Engine2D() {
                                 {
                                     lineColor: "yellow",
                                     pointColor: { start: "green", middle: "white", end: "blue" },
+                                    displayAllPoints: true,
                                 },
                                 2,
                                 {
@@ -393,6 +435,8 @@ export function Engine2D() {
         drawPathSettings,
         size,
         renderGridLabels,
+        measure.hover,
+        measure.pinned,
     ]);
 
     useEffect(() => {

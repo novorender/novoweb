@@ -7,7 +7,6 @@ import { dataApi } from "app";
 import { Accordion, AccordionSummary, AccordionDetails, Divider, LinearProgress, ScrollBox } from "components";
 import { useAppDispatch, useAppSelector } from "app/store";
 import { selectUser } from "slices/authSlice";
-import { selectEditingScene } from "slices/renderSlice";
 import { useSceneId } from "hooks/useSceneId";
 
 import {
@@ -18,11 +17,11 @@ import {
     selectBookmarksStatus,
     BookmarkAccess,
     ExtendedBookmark,
+    bookmarksActions,
 } from "../bookmarksSlice";
 import { FilterMenu } from "../filterMenu";
 import { Bookmark } from "../bookmark";
 import { useSelectBookmark } from "../useSelectBookmark";
-import { bookmarksActions } from "..";
 
 const filterMenuId = "bm-filter-menu";
 
@@ -33,7 +32,6 @@ export function BookmarkList() {
     const sceneId = useSceneId();
 
     const status = useAppSelector(selectBookmarksStatus);
-    const editingScene = useAppSelector(selectEditingScene);
     const user = useAppSelector(selectUser);
     const bookmarks = useAppSelector(selectBookmarks);
     const filters = useAppSelector(selectBookmarkFilters);
@@ -63,13 +61,13 @@ export function BookmarkList() {
 
         try {
             const publicBmks = dataApi.saveBookmarks(
-                editingScene?.id ? editingScene.id : sceneId,
+                sceneId,
                 bookmarks.filter((bm) => bm.access !== BookmarkAccess.Personal).map(({ access: _access, ...bm }) => bm),
                 { personal: false }
             );
 
             const personalBmks = dataApi.saveBookmarks(
-                editingScene?.id ? editingScene.id : sceneId,
+                sceneId,
                 bookmarks.filter((bm) => bm.access === BookmarkAccess.Personal).map(({ access: _access, ...bm }) => bm),
                 { personal: true }
             );
