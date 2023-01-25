@@ -20,6 +20,7 @@ import { AsyncStatus } from "types/misc";
 import { CameraType, selectCameraType, selectGrid } from "slices/renderSlice";
 
 import { drawPart, drawProduct, drawTexts } from "../engine2D/utils";
+import { selectCrossSectionPoints } from "features/orthoCam";
 
 const Canvas2D = styled("canvas")(
     () => css`
@@ -61,6 +62,7 @@ export function Engine2D() {
         pathMeasureObjects.status === AsyncStatus.Success ? pathMeasureObjects.data : undefined;
     const areaValue = useAppSelector(selectArea);
     const { points: pointLinePoints, result: pointLineResult } = useAppSelector(selectPointLine);
+    const crossSection = useAppSelector(selectCrossSectionPoints);
     const manhole = useAppSelector(selectManholeMeasureValues);
     const manholeCollisionValues = useAppSelector(selectManholeCollisionValues);
     const manholeCollisionEntity = useAppSelector(selectManholeCollisionTarget)?.entity;
@@ -414,6 +416,27 @@ export function Engine2D() {
                     });
                 }
             }
+
+            if (crossSection) {
+                const drawProd = measureApi.getDrawObjectFromPoints(view, crossSection, false, false);
+                if (drawProd) {
+                    drawProd.objects.forEach((obj) => {
+                        obj.parts.forEach((part) => {
+                            drawPart(
+                                context2D,
+                                camSettings,
+                                part,
+                                {
+                                    lineColor: "black",
+                                    pointColor: "black",
+                                    displayAllPoints: true,
+                                },
+                                2
+                            );
+                        });
+                    });
+                }
+            }
         }
     }, [
         view,
@@ -437,6 +460,7 @@ export function Engine2D() {
         renderGridLabels,
         measure.hover,
         measure.pinned,
+        crossSection,
     ]);
 
     useEffect(() => {
