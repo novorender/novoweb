@@ -104,7 +104,7 @@ import { xAxis, yAxis, axis, MAX_FLOAT } from "./consts";
 import { useHandleGridChanges } from "./useHandleGridChanges";
 import { useHandleCameraControls } from "./useHandleCameraControls";
 import { getPathPoints, moveSvgCursor } from "./svgUtils";
-import { orthoCamActions, selectCrossSectionPoint } from "features/orthoCam";
+import { orthoCamActions, selectCrossSectionPoint, useHandleCrossSection } from "features/orthoCam";
 
 glMatrix.setMatrixArrayType(Array);
 
@@ -815,6 +815,7 @@ export function Render3D({ onInit }: Props) {
     useHandlePanoramaChanges();
     useHandleCameraControls();
     useHandleAreaPoints();
+    useHandleCrossSection();
     useHandleLocationMarker();
     useHandleManholeUpdates();
     useHandlePointLineUpdates();
