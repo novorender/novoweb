@@ -130,6 +130,7 @@ export default function AdvancedSettings() {
                           background: {
                               ...originalSettings.background,
                               color: settings.backgroundColor,
+                              skyBoxBlur: settings.skyBoxBlur,
                           },
                           ...(currentEnvironment ? { environment: currentEnvironment.name } : {}),
                       } as Internal.RenderSettingsExt),

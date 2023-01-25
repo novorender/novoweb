@@ -67,6 +67,7 @@ export enum AdvancedSetting {
     FingerMap = "fingerMap",
     BackgroundColor = "backgroundColor",
     TriangleLimit = "triangleLimit",
+    SkyBoxBlur = "skyBoxBlur",
 }
 
 export enum ProjectSetting {
@@ -186,6 +187,7 @@ const initialState = {
         [AdvancedSetting.MouseButtonMap]: defaultFlightControls.mouse,
         [AdvancedSetting.BackgroundColor]: [0.75, 0.75, 0.75, 1] as VecRGBA,
         [AdvancedSetting.TriangleLimit]: 0,
+        [AdvancedSetting.SkyBoxBlur]: 0,
     },
     defaultDeviceProfile: {} as any,
     gridDefaults: {

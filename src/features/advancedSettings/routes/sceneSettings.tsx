@@ -1,7 +1,7 @@
-import { ChangeEvent, MouseEvent, useState } from "react";
+import { ChangeEvent, MouseEvent, SyntheticEvent, useState } from "react";
 import { quat, vec3 } from "gl-matrix";
 import { FlightControllerParams } from "@novorender/webgl-api";
-import { useTheme, Box, Button, Autocomplete, FormControlLabel } from "@mui/material";
+import { useTheme, Box, Button, Autocomplete, FormControlLabel, Typography, Slider } from "@mui/material";
 import { useHistory } from "react-router-dom";
 import { ArrowBack, ColorLens, Save } from "@mui/icons-material";
 
@@ -54,21 +54,38 @@ export function SceneSettings({
     const subtrees = useAppSelector(selectSubtrees);
     const cameraType = useAppSelector(selectCameraType);
     const settings = useAppSelector(selectAdvancedSettings);
-    const { terrainAsBackground, backgroundColor } = settings;
+    const { terrainAsBackground, backgroundColor, skyBoxBlur } = settings;
 
+    const [blur, setBlur] = useState(skyBoxBlur);
     const [colorPickerAnchor, setColorPickerAnchor] = useState<HTMLElement | null>(null);
     const toggleColorPicker = (event?: MouseEvent<HTMLElement>) => {
         setColorPickerAnchor(!colorPickerAnchor && event?.currentTarget ? event.currentTarget : null);
     };
-    const { r, g, b } = vecToRgb(backgroundColor);
-
-    const showTerrainSettings = subtrees?.terrain !== SubtreeStatus.Unavailable;
 
     const handleToggleTerrainAsBackground = ({ target: { checked } }: ChangeEvent<HTMLInputElement>) => {
         dispatch(renderActions.setAdvancedSettings({ [AdvancedSetting.TerrainAsBackground]: checked }));
         return toggleTerrainAsBackground(view);
     };
 
+    const handleBlurChange = (_event: Event, value: number | number[]): void => {
+        if (Array.isArray(value)) {
+            return;
+        }
+
+        setBlur(value);
+        view.applySettings({ background: { skyBoxBlur: value } });
+    };
+
+    const handleBlurCommit = (_event: Event | SyntheticEvent<Element, Event>, value: number | number[]) => {
+        if (Array.isArray(value)) {
+            return;
+        }
+
+        dispatch(renderActions.setAdvancedSettings({ skyBoxBlur: value }));
+    };
+
+    const showTerrainSettings = subtrees?.terrain !== SubtreeStatus.Unavailable;
+    const { r, g, b } = vecToRgb(backgroundColor);
     return (
         <>
             <Box boxShadow={theme.customShadows.widgetHeader}>
@@ -95,7 +112,7 @@ export function SceneSettings({
                 <Accordion>
                     <AccordionSummary>Environment</AccordionSummary>
                     <AccordionDetails>
-                        <Box p={1} display="flex" flexDirection="column">
+                        <Box p={1} pr={3} display="flex" flexDirection="column">
                             <Autocomplete
                                 id="scene-environment"
                                 fullWidth
@@ -112,6 +129,27 @@ export function SceneSettings({
                                 }}
                                 size="small"
                                 renderInput={(params) => <TextField {...params} label="Environment" />}
+                            />
+                        </Box>
+                        <Box display="flex" alignItems="center" sx={{ p: 1, mb: 2 }}>
+                            <Typography
+                                sx={{
+                                    minWidth: 50,
+                                    flexShrink: 0,
+                                }}
+                            >
+                                Blur
+                            </Typography>
+                            <Slider
+                                sx={{ mx: 2, flex: "1 1 100%" }}
+                                min={0}
+                                max={1}
+                                step={0.01}
+                                name={AdvancedSetting.SkyBoxBlur}
+                                value={blur}
+                                valueLabelDisplay="auto"
+                                onChange={handleBlurChange}
+                                onChangeCommitted={handleBlurCommit}
                             />
                         </Box>
                     </AccordionDetails>

@@ -555,6 +555,7 @@ export function initAdvancedSettings(view: View, customProperties: Record<string
             [AdvancedSetting.NavigationCube]: Boolean(customProperties?.navigationCube),
             [AdvancedSetting.TerrainAsBackground]: Boolean(terrain.asBackground),
             [AdvancedSetting.BackgroundColor]: background.color as VecRGBA,
+            [AdvancedSetting.SkyBoxBlur]: background.skyBoxBlur,
             [AdvancedSetting.AutoFps]: customProperties?.autoFps ?? true,
             [AdvancedSetting.TriangleLimit]:
                 customProperties?.triangleLimit ?? (api as any).deviceProfile?.triangleLimit ?? 5_000_000,
