@@ -37,7 +37,7 @@ export function useHandlePanoramaChanges() {
             }
 
             const currentObj = currentPanoramaObj.current;
-            if (currentObj && currentObj.id !== activePanorama?.guid) {
+            if (currentObj && currentObj.id !== activePanorama?.name) {
                 currentObj.obj.dispose();
                 abortPanorama();
             }
@@ -92,10 +92,10 @@ export function useHandlePanoramaChanges() {
                 }
 
                 const panoramaObj = scene.createDynamicObject(asset);
-                currentPanoramaObj.current = { id: panorama.guid, obj: panoramaObj };
+                currentPanoramaObj.current = { id: panorama.name, obj: panoramaObj };
                 panoramaObj.position = panorama.position;
                 panoramaObj.visible = true;
-                dispatch(panoramasActions.setStatus([PanoramaStatus.Active, panorama.guid]));
+                dispatch(panoramasActions.setStatus([PanoramaStatus.Active, panorama.name]));
                 dispatch(renderActions.disableAllSubtrees());
             }
         },

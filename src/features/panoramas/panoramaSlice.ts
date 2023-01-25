@@ -55,7 +55,7 @@ export const selectActivePanorama = (state: RootState) => {
     }
 
     const panoramas = selectPanoramas(state);
-    return panoramas?.find((pano) => pano.guid === status[1]);
+    return panoramas?.find((pano) => pano.name === status[1]);
 };
 
 const { actions, reducer } = panoramasSlice;

@@ -155,12 +155,12 @@ function Panorama({ panorama }: { panorama: PanoramaType }) {
     const dispatch = useAppDispatch();
     const status = useAppSelector(selectPanoramaStatus);
 
-    const isCurrent = Array.isArray(status) && status[1] === panorama.guid;
+    const isCurrent = Array.isArray(status) && status[1] === panorama.name;
     const loading = isCurrent && status[0] === PanoramaStatus.Loading;
 
     const viewPanorama = (ev: MouseEvent<HTMLButtonElement>) => {
         ev.stopPropagation();
-        dispatch(panoramasActions.setStatus([PanoramaStatus.Loading, panorama.guid]));
+        dispatch(panoramasActions.setStatus([PanoramaStatus.Loading, panorama.name]));
     };
 
     function goToScanPosition() {
