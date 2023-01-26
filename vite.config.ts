@@ -41,6 +41,11 @@ export default defineConfig(({ mode }) => {
                     rewrite: (path) => path.replace(/^\/ditio/, ""),
                     changeOrigin: true,
                 },
+                "/xsitemanage": {
+                    target: "https://api.prod.xsitemanage.com",
+                    rewrite: (path) => path.replace(/^\/xsitemanage/, ""),
+                    changeOrigin: true,
+                },
             },
         },
         preview: {

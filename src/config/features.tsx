@@ -30,6 +30,7 @@ import {
     VrpanoOutlined,
     LinearScale,
     FiberSmartRecord,
+    GpsFixed,
 } from "@mui/icons-material";
 
 import { ReactComponent as Clipping } from "media/icons/clipping.svg";
@@ -45,6 +46,13 @@ export enum FeatureType {
 }
 
 export const featuresConfig = {
+    xsiteManage: {
+        key: "xsiteManage",
+        name: "Xsite Manage",
+        Icon: GpsFixed,
+        type: FeatureType.Widget,
+        defaultLocked: true,
+    },
     jira: {
         key: "jira",
         name: "Jira",

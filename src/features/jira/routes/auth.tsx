@@ -115,7 +115,7 @@ export function Auth() {
             saveToStorage(StorageKey.JiraRefreshToken, tokensResponse.refresh_token);
         } else {
             console.warn(tokensError);
-            dispatch(jiraActions.setAccessToken({ status: AsyncStatus.Error, msg: "An error occured." }));
+            dispatch(jiraActions.setAccessToken({ status: AsyncStatus.Error, msg: "An error occurred." }));
         }
     }, [accessToken, tokensResponse, tokensError, dispatch]);
 
@@ -194,7 +194,7 @@ export function Auth() {
             : componentsError
             ? "components"
             : "user";
-        setError(`An error occured while loading Jira ${kind}.`);
+        setError(`An error occurred while loading Jira ${kind}.`);
     }, [accessibleResourcesError, projectsError, componentsError, userError, error]);
 
     if (space && project && component && user && accessTokenStr) {

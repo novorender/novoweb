@@ -1,5 +1,5 @@
 import { glMatrix, mat3, mat4, quat, vec2, vec3, vec4 } from "gl-matrix";
-import { useEffect, useState, useRef, MouseEvent, PointerEvent, useCallback, RefCallback } from "react";
+import { useEffect, useState, useRef, MouseEvent, PointerEvent, useCallback, RefCallback, SVGProps } from "react";
 import {
     View,
     EnvironmentDescription,
@@ -9,7 +9,6 @@ import {
     CameraControllerParams,
 } from "@novorender/webgl-api";
 import { MeasureScene } from "@novorender/measure-api";
-
 import {
     Box,
     Paper,
@@ -20,9 +19,10 @@ import {
     MenuItem,
     popoverClasses,
     CircularProgress,
+    IconButton,
 } from "@mui/material";
 import { css } from "@mui/styled-engine";
-import { CameraAlt } from "@mui/icons-material";
+import { CameraAlt, Close } from "@mui/icons-material";
 
 import { PerformanceStats } from "features/performanceStats";
 import { getDataFromUrlHash } from "features/shareLink";
@@ -34,7 +34,7 @@ import {
     PanoramaStatus,
     useHandlePanoramaChanges,
 } from "features/panoramas";
-import { Accordion, AccordionDetails, AccordionSummary, Loading } from "components";
+import { Accordion, AccordionDetails, AccordionSummary, Divider, Loading } from "components";
 import { api, dataApi, measureApi } from "app";
 import { useSceneId } from "hooks/useSceneId";
 import {
@@ -76,6 +76,7 @@ import { pointLineActions, useHandlePointLineUpdates } from "features/pointLine"
 import { selectCurrentLocation, useHandleLocationMarker } from "features/myLocation";
 import { useHandleJiraKeepAlive } from "features/jira";
 import { Engine2D } from "features/engine2D";
+import { LogPoint, useXsiteManageLogPointMarkers, useHandleXsiteManageKeepAlive } from "features/xsiteManage";
 import { ExtendedMeasureEntity } from "types/misc";
 
 import { useHighlighted, highlightActions, useDispatchHighlighted } from "contexts/highlighted";
@@ -137,6 +138,25 @@ const PanoramaMarker = styled((props: any) => <CameraAlt color="primary" height=
     `
 );
 
+const LogPointMarker = styled((props: SVGProps<SVGSVGElement>) => (
+    <svg viewBox="0 0 24 24" {...props}>
+        <path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z" strokeWidth="0.4"></path>
+    </svg>
+))(
+    ({ theme }) => css`
+        path {
+            stroke: ${theme.palette.secondary.dark};
+            fill: ${theme.palette.common.white};
+        }
+
+        :hover {
+            path {
+                fill: ${theme.palette.primary.light};
+            }
+        }
+    `
+);
+
 enum Status {
     Initial,
     NoSceneError,
@@ -191,6 +211,7 @@ export function Render3D({ onInit }: Props) {
     const localBookmarkId = useAppSelector(selectLocalBookmarkId);
     const showDitioMarkers = useAppSelector(selectShowMarkers);
     const ditioMarkers = useAppSelector(selectMarkers);
+    const logPoints = useXsiteManageLogPointMarkers();
 
     const picker = useAppSelector(selectPicker);
     const myLocationPoint = useAppSelector(selectCurrentLocation);
@@ -231,6 +252,18 @@ export function Render3D({ onInit }: Props) {
         setDeviationStamp(null);
     };
 
+    const [logPointStamp, setLogPointStamp] = useState<{
+        mouseX: number;
+        mouseY: number;
+        data: {
+            logPoint: LogPoint;
+        };
+    } | null>(null);
+
+    const closeLogPointStamp = () => {
+        setLogPointStamp(null);
+    };
+
     const canvasRef: RefCallback<HTMLCanvasElement> = useCallback(
         (el) => {
             dispatchGlobals(explorerGlobalsActions.update({ canvas: el }));
@@ -257,14 +290,31 @@ export function Render3D({ onInit }: Props) {
                 );
             }
         }
-    }, [view, svg, myLocationPoint, size, measureScene]);
+
+        logPoints
+            .map((logPoint) => pathPoints({ points: [[logPoint.x, logPoint.y, logPoint.z]] }))
+            .forEach((pos, idx) => {
+                const marker = svg.children.namedItem(`logPoint-${idx}`) as SVGGElement;
+
+                if (!marker) {
+                    return;
+                }
+
+                if (!pos) {
+                    marker.setAttribute("transform", "translate(-100 -100)");
+                    return;
+                }
+
+                marker?.setAttribute("transform", `translate(${pos.pixel[0][0] - 25} ${pos.pixel[0][1] - 20})`);
+            });
+    }, [view, svg, myLocationPoint, size, measureScene, logPoints]);
 
     useEffect(() => {
         renderParametricMeasure();
     }, [renderParametricMeasure]);
 
     const moveSvg = useCallback(() => {
-        if (!svg || !view || (!panoramas?.length && !ditioMarkers.length)) {
+        if (!svg || !view || (!panoramas?.length && !ditioMarkers.length && !logPoints.length)) {
             return;
         }
 
@@ -331,7 +381,7 @@ export function Render3D({ onInit }: Props) {
                 marker.setAttribute("x", Number.isNaN(Number(x)) || !Number.isFinite(Number(x)) ? "-100" : x);
                 marker.setAttribute("y", Number.isNaN(Number(y)) || !Number.isFinite(Number(x)) ? "-100" : y);
             });
-    }, [svg, view, size, panoramas, ditioMarkers]);
+    }, [svg, view, size, panoramas, ditioMarkers, logPoints]);
 
     useEffect(() => {
         moveSvg();
@@ -820,6 +870,7 @@ export function Render3D({ onInit }: Props) {
     useHandleManholeUpdates();
     useHandlePointLineUpdates();
     useHandleJiraKeepAlive();
+    useHandleXsiteManageKeepAlive();
 
     useEffect(() => {
         handleUrlBookmark();
@@ -863,19 +914,18 @@ export function Render3D({ onInit }: Props) {
             dispatch(explorerActions.setLocalBookmarkId(undefined));
 
             try {
-                const storedBm = localStorage.getItem(localBookmarkId);
+                const storedBm = sessionStorage.getItem(localBookmarkId);
 
                 if (!storedBm) {
                     return;
                 }
 
-                localStorage.removeItem(localBookmarkId);
+                sessionStorage.removeItem(localBookmarkId);
                 const bookmark = JSON.parse(storedBm);
 
                 if (!bookmark) {
                     return;
                 }
-
                 selectBookmark(bookmark);
             } catch (e) {
                 console.warn(e);
@@ -1422,6 +1472,42 @@ export function Render3D({ onInit }: Props) {
                             </MenuItem>
                         </Box>
                     </Menu>
+                    <Menu
+                        open={logPointStamp !== null}
+                        onClose={closeLogPointStamp}
+                        sx={{
+                            [`&.${popoverClasses.root}`]: {
+                                pointerEvents: "none",
+                            },
+                        }}
+                        anchorReference="anchorPosition"
+                        anchorPosition={
+                            logPointStamp !== null
+                                ? { top: logPointStamp.mouseY, left: logPointStamp.mouseX }
+                                : undefined
+                        }
+                        transitionDuration={{ exit: 0 }}
+                    >
+                        {" "}
+                        {logPointStamp && (
+                            <Box px={2} pb={1} sx={{ pointerEvents: "auto" }}>
+                                <Box display="flex" alignItems={"center"} justifyContent={"space-between"}>
+                                    <Typography fontWeight={600}>
+                                        {logPointStamp.data.logPoint.name ??
+                                            logPointStamp.data.logPoint.type ??
+                                            "Log point"}
+                                    </Typography>
+                                    <IconButton size="small" onClick={closeLogPointStamp}>
+                                        <Close />
+                                    </IconButton>
+                                </Box>
+                                <Divider />
+                                Number: {logPointStamp.data.logPoint.sequenceId} <br />
+                                Code: {logPointStamp.data.logPoint.code} <br />
+                                Uploaded: {new Date(logPointStamp.data.logPoint.timestampMs).toLocaleString()}
+                            </Box>
+                        )}
+                    </Menu>
                     {canvas !== null && (
                         <Svg width={canvas.width} height={canvas.height} ref={setSvg}>
                             {myLocationPoint ? (
@@ -1489,6 +1575,33 @@ export function Render3D({ onInit }: Props) {
                                       />
                                   ))
                                 : null}
+
+                            {logPoints.map((pt, idx) => (
+                                <Box
+                                    id={`logPoint-${idx}`}
+                                    name={`logPoint-${idx}`}
+                                    key={idx}
+                                    component="g"
+                                    sx={{ cursor: "pointer", pointerEvents: "bounding-box" }}
+                                    onClick={(e) =>
+                                        setLogPointStamp({
+                                            mouseX: e.clientX,
+                                            mouseY: e.clientY,
+                                            data: { logPoint: pt },
+                                        })
+                                    }
+                                    onMouseEnter={(e) =>
+                                        setLogPointStamp({
+                                            mouseX: e.clientX,
+                                            mouseY: e.clientY,
+                                            data: { logPoint: pt },
+                                        })
+                                    }
+                                    onMouseLeave={closeLogPointStamp}
+                                >
+                                    <LogPointMarker height="50px" width="50px" />
+                                </Box>
+                            ))}
                             <g id="cursor" />
                         </Svg>
                     )}
@@ -1529,7 +1642,7 @@ function SceneError({ id, error, msg }: { id: string; error: Exclude<Status, Sta
                     <Box>
                         <Typography paragraph variant="h4" component="h1" align="center">
                             {error === Status.ServerError
-                                ? "An error occured"
+                                ? "An error occurred"
                                 : error === Status.NoSceneError
                                 ? `Scene not found`
                                 : "Unable to load scene"}

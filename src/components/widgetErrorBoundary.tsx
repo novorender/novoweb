@@ -43,7 +43,7 @@ function WidgetError({ widgetKey }: { widgetKey: WidgetKey }) {
             <WidgetContainer minimized={minimized} maximized={maximized}>
                 <WidgetHeader widget={config} />
                 <ScrollBox display={menuOpen || minimized ? "none" : "block"}>
-                    An error occured while loading {config.name}
+                    An error occurred while loading {config.name}
                 </ScrollBox>
                 {menuOpen && <WidgetList widgetKey={config.key} onSelect={toggleMenu} />}
             </WidgetContainer>

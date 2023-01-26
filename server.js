@@ -17,7 +17,8 @@ function sendIndex(req, res) {
         process.env.DITIO_CLIENT_ID ||
         process.env.DATA_SERVER_URL ||
         process.env.JIRA_CLIENT_ID ||
-        process.env.JIRA_CLIENT_SECRET
+        process.env.JIRA_CLIENT_SECRET ||
+        process.env.XSITEMANAGE_CLIENT_ID
     ) {
         fs.readFile(index, "utf8", function (err, data) {
             if (err) {
@@ -90,6 +91,13 @@ function sendIndex(req, res) {
                 );
             }
 
+            if (process.env.XSITEMANAGE_CLIENT_ID) {
+                indexHtml = indexHtml.replace(
+                    "window.xsiteManageClientId",
+                    `window.xsiteManageClientId="${process.env.XSITEMANAGE_CLIENT_ID}"`
+                );
+            }
+
             res.send(indexHtml);
         });
     } else {
@@ -115,6 +123,17 @@ app.use(
         target: "https://bcfrestapi-bt02.bimtrackapp.co/bcf/2.1/",
         pathRewrite: {
             "^/bimtrack/bcf/2.1": "", // remove base path
+        },
+        changeOrigin: true,
+    })
+);
+
+app.use(
+    "/xsitemanage",
+    createProxyMiddleware({
+        target: "https://api.prod.xsitemanage.com",
+        pathRewrite: {
+            "^/xsitemanage/": "", // remove base path
         },
         changeOrigin: true,
     })

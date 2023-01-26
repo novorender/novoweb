@@ -87,14 +87,8 @@ function ExplorerBase() {
         const oAuthState = getOAuthState();
 
         if (oAuthState) {
-            if (oAuthState.service === featuresConfig.bimcollab.key) {
-                dispatch(explorerActions.setWidgets([featuresConfig.bimcollab.key]));
-            } else if (oAuthState.service === featuresConfig.bimTrack.key) {
-                dispatch(explorerActions.setWidgets([featuresConfig.bimTrack.key]));
-            } else if (oAuthState.service === featuresConfig.ditio.key) {
-                dispatch(explorerActions.setWidgets([featuresConfig.ditio.key]));
-            } else if (oAuthState.service === featuresConfig.jira.key) {
-                dispatch(explorerActions.setWidgets([featuresConfig.jira.key]));
+            if (oAuthState.service) {
+                dispatch(explorerActions.setWidgets([oAuthState.service]));
             }
 
             if (oAuthState.localBookmarkId) {

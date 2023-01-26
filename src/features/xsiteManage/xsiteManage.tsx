@@ -1,6 +1,5 @@
-import { MemoryRouter, Route, Switch, useHistory } from "react-router-dom";
+import { MemoryRouter, Route, Switch, useHistory, useRouteMatch } from "react-router-dom";
 import { Box, ListItemIcon, ListItemText, Menu, MenuItem, MenuProps } from "@mui/material";
-import { Logout, SettingsRounded } from "@mui/icons-material";
 
 import { useAppDispatch, useAppSelector } from "app/store";
 import { LogoSpeedDial, WidgetContainer, WidgetHeader } from "components";
@@ -9,31 +8,32 @@ import { WidgetList } from "features/widgetList";
 import { useToggle } from "hooks/useToggle";
 import { selectMinimized, selectMaximized, selectHasAdminCapabilities } from "slices/explorerSlice";
 import { useSceneId } from "hooks/useSceneId";
-import { deleteFromStorage } from "utils/storage";
-import { StorageKey } from "config/storage";
 
 import { Auth } from "./routes/auth";
 import { Login } from "./routes/login";
-import { Issues } from "./routes/issues";
+import { Machines } from "./routes/machines";
 import { Settings } from "./routes/settings";
-import { Filters } from "./routes/filters";
-import { Issue } from "./routes/issue";
-import { CreateIssue } from "./routes/create";
-import { CreateComment } from "./routes/createComment";
-import { jiraActions, selectJiraAccessTokenData } from "./jiraSlice";
+import { LogPoints } from "./routes/logPoints";
+import { LogPoint } from "./routes/logPoint";
+import { Machine } from "./routes/machine";
+import { selectXsiteManageAccessToken, xsiteManageActions } from "./slice";
+import { AsyncStatus } from "types/misc";
+import { StorageKey } from "config/storage";
+import { deleteFromStorage } from "utils/storage";
+import { Logout, SettingsRounded } from "@mui/icons-material";
 
-export default function Jira() {
-    const sceneId = useSceneId();
+export default function XsiteManage() {
     const [menuOpen, toggleMenu] = useToggle();
-    const minimized = useAppSelector(selectMinimized) === featuresConfig.jira.key;
-    const maximized = useAppSelector(selectMaximized) === featuresConfig.jira.key;
+    const minimized = useAppSelector(selectMinimized) === featuresConfig.xsiteManage.key;
+    const maximized = useAppSelector(selectMaximized) === featuresConfig.xsiteManage.key;
+    const sceneId = useSceneId();
 
     return (
         <MemoryRouter>
             <WidgetContainer minimized={minimized} maximized={maximized}>
                 <WidgetHeader
                     WidgetMenu={WidgetMenu}
-                    widget={featuresConfig.jira}
+                    widget={featuresConfig.xsiteManage}
                     disableShadow={!menuOpen && !minimized}
                 />
                 <Box
@@ -46,42 +46,39 @@ export default function Jira() {
                         <Route path="/" exact>
                             <Auth />
                         </Route>
-                        <Route path="/login">
+                        <Route path="/login" exact>
                             <Login sceneId={sceneId} />
                         </Route>
-                        <Route path="/issues">
-                            <Issues />
+                        <Route path="/machines" exact>
+                            <Machines />
                         </Route>
-                        <Route path="/settings">
+                        <Route path="/machine/:id" exact>
+                            <Machine />
+                        </Route>
+                        <Route path="/log-points" exact>
+                            <LogPoints />
+                        </Route>
+                        <Route path="/log-point/:id" exact>
+                            <LogPoint />
+                        </Route>
+                        <Route path="/settings" exact>
                             <Settings sceneId={sceneId} />
-                        </Route>
-                        <Route path="/filters">
-                            <Filters />
-                        </Route>
-                        <Route path="/issue/:key">
-                            <Issue sceneId={sceneId} />
-                        </Route>
-                        <Route path="/create">
-                            <CreateIssue sceneId={sceneId} />
-                        </Route>
-                        <Route path="/createComment/:key">
-                            <CreateComment />
                         </Route>
                     </Switch>
                 </Box>
-                {menuOpen && <WidgetList widgetKey={featuresConfig.jira.key} onSelect={toggleMenu} />}
+                {menuOpen && <WidgetList widgetKey={featuresConfig.xsiteManage.key} onSelect={toggleMenu} />}
             </WidgetContainer>
-            <LogoSpeedDial open={menuOpen} toggle={toggleMenu} testId={`${featuresConfig.jira.key}-widget-menu-fab`} />
+            <LogoSpeedDial open={menuOpen} toggle={toggleMenu} />
         </MemoryRouter>
     );
 }
 
 function WidgetMenu(props: MenuProps) {
     const settingsPaths = ["/*"];
-    const accessToken = useAppSelector(selectJiraAccessTokenData);
+    const accessToken = useAppSelector(selectXsiteManageAccessToken);
     const isAdmin = useAppSelector(selectHasAdminCapabilities);
 
-    if (!accessToken) {
+    if (accessToken.status !== AsyncStatus.Success) {
         return null;
     }
 
@@ -107,8 +104,8 @@ function LogoutMenuItem({ onClose }: { onClose: MenuProps["onClose"] }) {
         <div>
             <MenuItem
                 onClick={() => {
-                    deleteFromStorage(StorageKey.JiraRefreshToken);
-                    dispatch(jiraActions.logOut());
+                    deleteFromStorage(StorageKey.XsiteManageRefreshToken);
+                    dispatch(xsiteManageActions.logOut());
                     history.push("/login");
 
                     if (onClose) {
@@ -129,6 +126,11 @@ function LogoutMenuItem({ onClose }: { onClose: MenuProps["onClose"] }) {
 
 function SettingsMenuItem({ onClose }: { onClose: MenuProps["onClose"] }) {
     const history = useHistory();
+    const match = useRouteMatch();
+
+    if (match.url === "/settings") {
+        return null;
+    }
 
     return (
         <div>

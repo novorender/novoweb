@@ -23,6 +23,7 @@ import { myLocationReducer } from "features/myLocation";
 import { jiraApi, jiraReducer } from "features/jira";
 import { manholeReducer } from "features/manhole";
 import { selectionBasketReducer } from "features/selectionBasket";
+import { xsiteManageReducer, xsiteManageApi } from "features/xsiteManage";
 
 const rootReducer = combineReducers({
     explorer: explorerReducer,
@@ -49,6 +50,8 @@ const rootReducer = combineReducers({
     [ditioApi.reducerPath]: ditioApi.reducer,
     jira: jiraReducer,
     [jiraApi.reducerPath]: jiraApi.reducer,
+    xsiteManage: xsiteManageReducer,
+    [xsiteManageApi.reducerPath]: xsiteManageApi.reducer,
 });
 
 export const store = configureStore({
@@ -59,7 +62,8 @@ export const store = configureStore({
             .concat(bimCollabApi.middleware)
             .concat(bimTrackApi.middleware)
             .concat(ditioApi.middleware)
-            .concat(jiraApi.middleware),
+            .concat(jiraApi.middleware)
+            .concat(xsiteManageApi.middleware),
 });
 
 setupListeners(store.dispatch);

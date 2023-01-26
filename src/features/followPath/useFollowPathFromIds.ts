@@ -36,7 +36,7 @@ export function useFollowPathFromIds() {
 
                 setObjects({ status: AsyncStatus.Success, data: fp });
             } catch (e) {
-                setObjects({ status: AsyncStatus.Error, msg: "An error occured." });
+                setObjects({ status: AsyncStatus.Error, msg: "An error occurred." });
             }
         }
     }, [toFollow, measureScene, dispatch, followFrom]);

@@ -577,6 +577,9 @@ export function initProjectSettings({ sceneData }: { sceneData: SceneData }): vo
             ...(sceneData.customProperties?.jiraSettings
                 ? { [ProjectSetting.Jira]: { ...sceneData.customProperties?.jiraSettings } }
                 : {}),
+            ...(sceneData.customProperties?.xsiteManageSettings
+                ? { [ProjectSetting.XsiteManage]: { ...sceneData.customProperties?.xsiteManageSettings } }
+                : {}),
         })
     );
 }

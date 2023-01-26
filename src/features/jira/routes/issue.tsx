@@ -165,7 +165,7 @@ export function Issue({ sceneId }: { sceneId: string }) {
             )}
 
             {(isErrorIssue && !issue) || (!isLoadingIssue && !issue) ? (
-                <>An error occured while loading issue {key}</>
+                <>An error occurred while loading issue {key}</>
             ) : (
                 issue &&
                 !isLoadingThumbnail && (

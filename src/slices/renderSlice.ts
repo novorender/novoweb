@@ -74,6 +74,7 @@ export enum ProjectSetting {
     TmZone = "tmZone",
     DitioProjectNumber = "ditioProjectNumber",
     Jira = "jira",
+    XsiteManage = "xsiteManage",
 }
 
 export enum SelectionBasketMode {
@@ -211,6 +212,7 @@ const initialState = {
         [ProjectSetting.TmZone]: "",
         [ProjectSetting.DitioProjectNumber]: "",
         [ProjectSetting.Jira]: { space: "", project: "", component: "" },
+        [ProjectSetting.XsiteManage]: { siteId: "" },
     },
     picker: Picker.Object,
 };

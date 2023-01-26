@@ -9,6 +9,7 @@ interface Window {
     dataServerUrl?: string;
     jiraClientId?: string;
     jiraClientSecret?: string;
+    xsiteManageClientId?: string;
     view?: any;
     api?: any;
 }
