@@ -7,7 +7,6 @@ export type PanoramaType = {
     guid: string;
     position: [number, number, number];
     rotation: [number, number, number, number];
-    preview: string;
     gltf: string;
 };
 

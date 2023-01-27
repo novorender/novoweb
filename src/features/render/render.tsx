@@ -78,6 +78,7 @@ import { useHandleJiraKeepAlive } from "features/jira";
 import { Engine2D } from "features/engine2D";
 import { LogPoint, useXsiteManageLogPointMarkers, useHandleXsiteManageKeepAlive } from "features/xsiteManage";
 import { ExtendedMeasureEntity } from "types/misc";
+import { orthoCamActions, selectCrossSectionPoint, useHandleCrossSection } from "features/orthoCam";
 
 import { useHighlighted, highlightActions, useDispatchHighlighted } from "contexts/highlighted";
 import { useHidden, useDispatchHidden } from "contexts/hidden";
@@ -104,8 +105,7 @@ import {
 import { xAxis, yAxis, axis, MAX_FLOAT } from "./consts";
 import { useHandleGridChanges } from "./useHandleGridChanges";
 import { useHandleCameraControls } from "./useHandleCameraControls";
-import { getPathPoints, moveSvgCursor } from "./svgUtils";
-import { orthoCamActions, selectCrossSectionPoint, useHandleCrossSection } from "features/orthoCam";
+import { getPixelPoints, moveSvgCursor } from "./svgUtils";
 
 glMatrix.setMatrixArrayType(Array);
 
@@ -127,6 +127,10 @@ const Svg = styled("svg")(
         height: 100%;
         overflow: visible;
         pointer-events: none;
+
+        g {
+            will-change: transform;
+        }
     `
 );
 
@@ -271,121 +275,65 @@ export function Render3D({ onInit }: Props) {
         [dispatchGlobals]
     );
 
-    const renderParametricMeasure = useCallback(() => {
+    const moveSvgMarkers = useCallback(() => {
         if (!view || !svg || !measureScene || !size) {
             return;
         }
 
-        const pathPoints = (params: Omit<Parameters<typeof getPathPoints>[0], "view">) =>
-            getPathPoints({ view, ...params });
-
         if (myLocationPoint !== undefined) {
-            const myLocationPt = pathPoints({ points: [myLocationPoint] });
+            const myLocationPt = (getPixelPoints(view, [myLocationPoint]) ?? [])[0];
             if (myLocationPt) {
                 const marker = svg.children.namedItem("myLocationPoint");
 
                 marker?.setAttribute(
                     "transform",
-                    `translate(${myLocationPt.pixel[0][0] - 25} ${myLocationPt.pixel[0][1] - 40}) scale(2)`
+                    `translate(${myLocationPt[0] - 25} ${myLocationPt[1] - 40}) scale(2)`
                 );
             }
         }
 
-        logPoints
-            .map((logPoint) => pathPoints({ points: [[logPoint.x, logPoint.y, logPoint.z]] }))
-            .forEach((pos, idx) => {
-                const marker = svg.children.namedItem(`logPoint-${idx}`) as SVGGElement;
+        (
+            getPixelPoints(
+                view,
+                logPoints.map((lpt) => vec3.fromValues(lpt.x, lpt.y, lpt.z))
+            ) ?? []
+        ).forEach((pos, idx) => {
+            svg.children
+                .namedItem(`logPoint-${idx}`)
+                ?.setAttribute("transform", pos ? `translate(${pos[0] - 25} ${pos[1] - 20})` : "translate(-100 -100)");
+        });
 
-                if (!marker) {
-                    return;
-                }
-
-                if (!pos) {
-                    marker.setAttribute("transform", "translate(-100 -100)");
-                    return;
-                }
-
-                marker?.setAttribute("transform", `translate(${pos.pixel[0][0] - 25} ${pos.pixel[0][1] - 20})`);
+        if (panoramas) {
+            (
+                getPixelPoints(
+                    view,
+                    panoramas.map((panorama) => panorama.position)
+                ) ?? []
+            ).forEach((pos, idx) => {
+                svg.children
+                    .namedItem(`panorama-${idx}`)
+                    ?.setAttribute(
+                        "transform",
+                        pos ? `translate(${pos[0] - 25} ${pos[1] - 25})` : "translate(-100 -100)"
+                    );
             });
-    }, [view, svg, myLocationPoint, size, measureScene, logPoints]);
-
-    useEffect(() => {
-        renderParametricMeasure();
-    }, [renderParametricMeasure]);
-
-    const moveSvg = useCallback(() => {
-        if (!svg || !view || (!panoramas?.length && !ditioMarkers.length && !logPoints.length)) {
-            return;
         }
 
-        const { width, height } = size;
-        const { camera } = view;
-        const proj = mat4.perspective(
-            mat4.create(),
-            glMatrix.toRadian(camera.fieldOfView),
-            width / height,
-            camera.near,
-            camera.far
-        );
-        const camMatrix = mat4.fromRotationTranslation(mat4.create(), camera.rotation, camera.position);
-        mat4.invert(camMatrix, camMatrix);
-        const toScreen = (p: vec3) => {
-            const _p = vec4.transformMat4(vec4.create(), vec4.fromValues(p[0], p[1], p[2], 1), proj);
-            return vec2.fromValues(((_p[0] * 0.5) / _p[3] + 0.5) * width, (0.5 - (_p[1] * 0.5) / _p[3]) * height);
-        };
-
-        if (panoramas?.length) {
-            panoramas
-                .map((p) => vec3.transformMat4(vec3.create(), p.position, camMatrix))
-                .forEach((pos, idx) => {
-                    const marker = svg.children.namedItem(`panorama-${idx}`);
-
-                    if (!marker) {
-                        return;
-                    }
-
-                    const hide = pos[2] > 0 || pos.some((num) => Number.isNaN(num) || !Number.isFinite(num));
-
-                    if (hide) {
-                        marker.setAttribute("x", "-100");
-                        return;
-                    }
-
-                    const p = toScreen(pos);
-                    const x = p[0].toFixed(1);
-                    const y = p[1].toFixed(1);
-                    marker.setAttribute("x", Number.isNaN(Number(x)) || !Number.isFinite(Number(x)) ? "-100" : x);
-                    marker.setAttribute("y", Number.isNaN(Number(y)) || !Number.isFinite(Number(x)) ? "-100" : y);
-                });
-        }
-
-        ditioMarkers
-            .map((marker) => vec3.transformMat4(vec3.create(), marker.position, camMatrix))
-            .forEach((pos, idx) => {
-                const marker = svg.children.namedItem(`ditioMarker-${idx}`);
-
-                if (!marker) {
-                    return;
-                }
-
-                const hide = pos[2] > 0 || pos.some((num) => Number.isNaN(num) || !Number.isFinite(num));
-
-                if (hide) {
-                    marker.setAttribute("x", "-100");
-                    return;
-                }
-
-                const p = toScreen(pos);
-                const x = p[0].toFixed(1);
-                const y = p[1].toFixed(1);
-                marker.setAttribute("x", Number.isNaN(Number(x)) || !Number.isFinite(Number(x)) ? "-100" : x);
-                marker.setAttribute("y", Number.isNaN(Number(y)) || !Number.isFinite(Number(x)) ? "-100" : y);
-            });
-    }, [svg, view, size, panoramas, ditioMarkers, logPoints]);
+        (
+            getPixelPoints(
+                view,
+                ditioMarkers.map((marker) => marker.position)
+            ) ?? []
+        ).forEach((pos, idx) => {
+            svg.children
+                .namedItem(`ditioMarker-${idx}`)
+                ?.setAttribute("transform", pos ? `translate(${pos[0] - 25} ${pos[1] - 25})` : "translate(-100 -100)");
+        });
+    }, [view, svg, myLocationPoint, size, measureScene, logPoints, ditioMarkers, panoramas]);
 
     useEffect(() => {
-        moveSvg();
-    }, [moveSvg, showDitioMarkers, showPanoramaMarkers]);
+        moveSvgMarkers();
+    }, [moveSvgMarkers]);
 
     useEffect(() => {
         if (!environments.length) {
@@ -570,8 +518,7 @@ export function Render3D({ onInit }: Props) {
                 if (cameraGeneration.current !== view.performanceStatistics.cameraGeneration) {
                     cameraGeneration.current = view.performanceStatistics.cameraGeneration ?? 0;
 
-                    moveSvg();
-                    renderParametricMeasure();
+                    moveSvgMarkers();
                     setDeviationStamp(null);
 
                     if (movementTimer.current) {
@@ -604,16 +551,7 @@ export function Render3D({ onInit }: Props) {
                 }
             }
         },
-        [
-            view,
-            moveSvg,
-            dispatch,
-            savedCameraPositions,
-            cameraState,
-            advancedSettings,
-            activePanorama,
-            renderParametricMeasure,
-        ]
+        [view, dispatch, savedCameraPositions, cameraState, advancedSettings, activePanorama, moveSvgMarkers]
     );
 
     useEffect(
@@ -999,9 +937,9 @@ export function Render3D({ onInit }: Props) {
                     let dir = vec3.cross(vec3.create(), up, right);
 
                     if (topDown) {
-                        const midPt = getPathPoints({ view: view, points: [p] });
+                        const midPt = (getPixelPoints(view, [p]) ?? [])[0];
                         if (midPt) {
-                            const midPick = await view.lastRenderOutput.pick(midPt.pixel[0][0], midPt.pixel[0][1]);
+                            const midPick = await view.lastRenderOutput.pick(midPt[0], midPt[1]);
                             if (midPick) {
                                 vec3.copy(p, midPick.position);
                             }
@@ -1522,41 +1460,45 @@ export function Render3D({ onInit }: Props) {
                                 ? panoramas.map((panorama, idx) => {
                                       if (!activePanorama) {
                                           return (
-                                              <PanoramaMarker
+                                              <g
                                                   id={`panorama-${idx}`}
                                                   name={`panorama-${idx}`}
-                                                  key={panorama.guid}
+                                                  key={panorama.name}
                                                   onClick={() =>
                                                       dispatch(
                                                           panoramasActions.setStatus([
                                                               PanoramaStatus.Loading,
-                                                              panorama.guid,
+                                                              panorama.name,
                                                           ])
                                                       )
                                                   }
-                                              />
+                                              >
+                                                  <PanoramaMarker />
+                                              </g>
                                           );
                                       }
 
                                       const activeIdx = panoramas.findIndex(
-                                          (pano) => pano.guid === activePanorama.guid
+                                          (pano) => pano.name === activePanorama.name
                                       );
 
                                       if (Math.abs(idx - activeIdx) === 1) {
                                           return (
-                                              <PanoramaMarker
+                                              <g
                                                   id={`panorama-${idx}`}
                                                   name={`panorama-${idx}`}
-                                                  key={panorama.guid}
+                                                  key={panorama.name}
                                                   onClick={() =>
                                                       dispatch(
                                                           panoramasActions.setStatus([
                                                               PanoramaStatus.Loading,
-                                                              panorama.guid,
+                                                              panorama.name,
                                                           ])
                                                       )
                                                   }
-                                              />
+                                              >
+                                                  <PanoramaMarker />
+                                              </g>
                                           );
                                       }
 
@@ -1565,14 +1507,14 @@ export function Render3D({ onInit }: Props) {
                                 : null}
                             {showDitioMarkers && ditioMarkers
                                 ? ditioMarkers.map((marker, idx) => (
-                                      <PanoramaMarker
-                                          height="32px"
-                                          width="32px"
+                                      <g
                                           id={`ditioMarker-${idx}`}
                                           name={`ditioMarker-${idx}`}
                                           key={marker.id}
                                           onClick={() => dispatch(ditioActions.setClickedMarker(marker.id))}
-                                      />
+                                      >
+                                          <PanoramaMarker height="32px" width="32px" />
+                                      </g>
                                   ))
                                 : null}
 
