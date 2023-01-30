@@ -132,7 +132,7 @@ export function Auth() {
         } else if (!ditioProjectNumber) {
             setError(`${featuresConfig.ditio.name} has not yet been set up for this project.`);
         } else {
-            setError(`You do not have access to the ${ditioProjectNumber} ${featuresConfig.ditio.name} site.`);
+            setError(`You do not have access to the ${ditioProjectNumber} ${featuresConfig.ditio.name} project.`);
         }
     }, [projects, project, history, isAdmin, dispatch, ditioProjectNumber]);
 
