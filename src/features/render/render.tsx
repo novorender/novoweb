@@ -66,7 +66,7 @@ import { selectDeviations } from "features/deviations";
 import { useSelectBookmark } from "features/bookmarks";
 import { measureActions, selectMeasure, useMeasureHoverSettings, useMeasurePickSettings } from "features/measure";
 import { manholeActions, useHandleManholeUpdates } from "features/manhole";
-import { ditioActions, selectMarkers, selectShowMarkers } from "features/ditio";
+import { ditioActions, useDitioMarkers, useHandleDitioKeepAlive } from "features/ditio";
 import { useAppDispatch, useAppSelector } from "app/store";
 import { followPathActions } from "features/followPath";
 import { areaActions } from "features/area";
@@ -134,11 +134,18 @@ const Svg = styled("svg")(
     `
 );
 
-const PanoramaMarker = styled((props: any) => <CameraAlt color="primary" height="50px" width="50px" {...props} />)(
+const PanoramaMarker = styled((props: SVGProps<SVGGElement>) => (
+    <g {...props}>
+        <CameraAlt color="primary" height="32px" width="32px" />
+    </g>
+))(
     () => css`
         cursor: pointer;
-        pointer-events: auto;
-        filter: drop-shadow(3px 3px 2px rgba(0, 0, 0, 0.3));
+        pointer-events: bounding-box;
+
+        svg {
+            filter: drop-shadow(3px 3px 2px rgba(0, 0, 0, 0.3));
+        }
     `
 );
 
@@ -213,8 +220,7 @@ export function Render3D({ onInit }: Props) {
     const activePanorama = useAppSelector(selectActivePanorama);
     const urlBookmarkId = useAppSelector(selectUrlBookmarkId);
     const localBookmarkId = useAppSelector(selectLocalBookmarkId);
-    const showDitioMarkers = useAppSelector(selectShowMarkers);
-    const ditioMarkers = useAppSelector(selectMarkers);
+    const ditioMarkers = useDitioMarkers();
     const logPoints = useXsiteManageLogPointMarkers();
 
     const picker = useAppSelector(selectPicker);
@@ -809,6 +815,7 @@ export function Render3D({ onInit }: Props) {
     useHandlePointLineUpdates();
     useHandleJiraKeepAlive();
     useHandleXsiteManageKeepAlive();
+    useHandleDitioKeepAlive();
 
     useEffect(() => {
         handleUrlBookmark();
@@ -1456,11 +1463,12 @@ export function Render3D({ onInit }: Props) {
                                     d="M12 2C8.14 2 5 5.14 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.86-3.14-7-7-7zm0 2c1.1 0 2 .9 2 2 0 1.11-.9 2-2 2s-2-.89-2-2c0-1.1.9-2 2-2zm0 10c-1.67 0-3.14-.85-4-2.15.02-1.32 2.67-2.05 4-2.05s3.98.73 4 2.05c-.86 1.3-2.33 2.15-4 2.15z"
                                 ></path>
                             ) : null}
+
                             {panoramas && showPanoramaMarkers
                                 ? panoramas.map((panorama, idx) => {
                                       if (!activePanorama) {
                                           return (
-                                              <g
+                                              <PanoramaMarker
                                                   id={`panorama-${idx}`}
                                                   name={`panorama-${idx}`}
                                                   key={panorama.name}
@@ -1472,9 +1480,7 @@ export function Render3D({ onInit }: Props) {
                                                           ])
                                                       )
                                                   }
-                                              >
-                                                  <PanoramaMarker />
-                                              </g>
+                                              />
                                           );
                                       }
 
@@ -1484,7 +1490,7 @@ export function Render3D({ onInit }: Props) {
 
                                       if (Math.abs(idx - activeIdx) === 1) {
                                           return (
-                                              <g
+                                              <PanoramaMarker
                                                   id={`panorama-${idx}`}
                                                   name={`panorama-${idx}`}
                                                   key={panorama.name}
@@ -1496,27 +1502,24 @@ export function Render3D({ onInit }: Props) {
                                                           ])
                                                       )
                                                   }
-                                              >
-                                                  <PanoramaMarker />
-                                              </g>
+                                              />
                                           );
                                       }
 
                                       return null;
                                   })
                                 : null}
-                            {showDitioMarkers && ditioMarkers
-                                ? ditioMarkers.map((marker, idx) => (
-                                      <g
-                                          id={`ditioMarker-${idx}`}
-                                          name={`ditioMarker-${idx}`}
-                                          key={marker.id}
-                                          onClick={() => dispatch(ditioActions.setClickedMarker(marker.id))}
-                                      >
-                                          <PanoramaMarker height="32px" width="32px" />
-                                      </g>
-                                  ))
-                                : null}
+
+                            {ditioMarkers.map((marker, idx) => (
+                                <PanoramaMarker
+                                    id={`ditioMarker-${idx}`}
+                                    name={`ditioMarker-${idx}`}
+                                    key={marker.id}
+                                    onClick={() => dispatch(ditioActions.setClickedMarker(marker.id))}
+                                    height="32px"
+                                    width="32px"
+                                />
+                            ))}
 
                             {logPoints.map((pt, idx) => (
                                 <Box
@@ -1544,6 +1547,7 @@ export function Render3D({ onInit }: Props) {
                                     <LogPointMarker height="50px" width="50px" />
                                 </Box>
                             ))}
+
                             <g id="cursor" />
                         </Svg>
                     )}

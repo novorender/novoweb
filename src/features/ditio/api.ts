@@ -2,22 +2,18 @@ import { createApi, fetchBaseQuery } from "@reduxjs/toolkit/query/react";
 
 import { RootState } from "app/store";
 import { StorageKey } from "config/storage";
+import { AsyncStatus } from "types/misc";
 
-import { generateCodeChallenge } from "utils/auth";
-import { generateRandomString } from "utils/misc";
-import { getFromStorage, saveToStorage } from "utils/storage";
-import { sleep } from "utils/timers";
-import { FeedFilters } from "./ditioSlice";
+import { getFromStorage } from "utils/storage";
+import { FeedFilters } from "./slice";
 
 import { AuthConfig, Post, Project, RawPost } from "./types";
 
 export const identityServer = "https://identity.ditio.no/";
 export const baseUrl = import.meta.env.NODE_ENV === "development" ? "/ditio" : "https://ditio-api-v3.azurewebsites.net";
 
-const clientId = window.ditioClientId || import.meta.env.REACT_APP_DITIO_CLIENT_ID || "";
+export const ditioClientId = window.ditioClientId || import.meta.env.REACT_APP_DITIO_CLIENT_ID || "";
 const clientSecret = window.ditioClientSecret || import.meta.env.REACT_APP_DITIO_CLIENT_SECRET || "";
-
-const scope = "openid ditioapiv3 offline_access";
 const callbackUrl = window.location.origin;
 
 const rawBaseQuery = fetchBaseQuery({
@@ -25,8 +21,8 @@ const rawBaseQuery = fetchBaseQuery({
     prepareHeaders: (headers, { getState }) => {
         const token = (getState() as RootState).ditio.accessToken;
 
-        if (token) {
-            headers.set("authorization", `Bearer ${token}`);
+        if (token.status === AsyncStatus.Success) {
+            headers.set("authorization", `Bearer ${token.data}`);
         }
 
         return headers;
@@ -74,10 +70,10 @@ export const ditioApi = createApi({
         getPost: builder.query<Post, { postId: string }>({
             query: ({ postId }) => `/v2/feedweb/${postId}`,
         }),
-        getProject: builder.mutation<Project, string | number>({
-            query: (projectNumber) => `/v4/integration/projects/by-project-number/${projectNumber}`,
+        getProjects: builder.query<Project[], void>({
+            query: () => `/v4/integration/projects`,
         }),
-        getAuthConfig: builder.mutation<AuthConfig, void>({
+        getAuthConfig: builder.query<AuthConfig, void>({
             queryFn: () => {
                 return fetch(`${identityServer}/.well-known/openid-configuration`)
                     .then((res) => res.json())
@@ -85,14 +81,14 @@ export const ditioApi = createApi({
                     .catch((error) => ({ error }));
             },
         }),
-        getToken: builder.mutation<
-            { access_token: string; refresh_token: string },
+        getTokens: builder.query<
+            { access_token: string; refresh_token: string; expires_in: number },
             { tokenEndpoint: string; code: string }
         >({
             queryFn: ({ code, tokenEndpoint }) => {
                 const body = new URLSearchParams();
                 body.set("code", code);
-                body.set("client_id", clientId);
+                body.set("client_id", ditioClientId);
                 body.set("client_secret", clientSecret);
                 body.set("grant_type", "authorization_code");
                 body.set("redirect_uri", callbackUrl);
@@ -103,19 +99,25 @@ export const ditioApi = createApi({
                     headers: { "Content-Type": "application/x-www-form-urlencoded" },
                     body,
                 })
-                    .then((res) => res.json())
+                    .then((res) => {
+                        if (res.ok) {
+                            return res.json();
+                        } else {
+                            throw res.status;
+                        }
+                    })
                     .then((data) => ({ data }))
                     .catch((error) => ({ error }));
             },
         }),
-        refreshToken: builder.mutation<
-            { access_token: string; refresh_token: string },
+        refreshTokens: builder.mutation<
+            { access_token: string; refresh_token: string; expires_in: number },
             { tokenEndpoint: string; refreshToken: string }
         >({
             queryFn: ({ refreshToken, tokenEndpoint }) => {
                 const body = new URLSearchParams();
                 body.set("refresh_token", refreshToken);
-                body.set("client_id", clientId);
+                body.set("client_id", ditioClientId);
                 body.set("client_secret", clientSecret);
                 body.set("grant_type", "refresh_token");
 
@@ -124,7 +126,13 @@ export const ditioApi = createApi({
                     method: "POST",
                     headers: { "Content-Type": "application/x-www-form-urlencoded" },
                 })
-                    .then((r) => r.json())
+                    .then((res) => {
+                        if (res.ok) {
+                            return res.json();
+                        } else {
+                            throw res.status;
+                        }
+                    })
                     .then((data) => ({ data }))
                     .catch((error) => ({ error }));
             },
@@ -132,31 +140,11 @@ export const ditioApi = createApi({
     }),
 });
 
-// Export hooks for usage in functional components, which are
-// auto-generated based on the defined endpoints
 export const {
     useFeedWebRawQuery,
     useGetPostQuery,
-    useRefreshTokenMutation,
-    useGetTokenMutation,
-    useGetAuthConfigMutation,
-    useGetProjectMutation,
+    useRefreshTokensMutation,
+    useLazyGetTokensQuery,
+    useGetAuthConfigQuery,
+    useGetProjectsQuery,
 } = ditioApi;
-
-export async function getCode(authUrl: string, state: string) {
-    const verifier = generateRandomString();
-    const challenge = await generateCodeChallenge(verifier);
-    saveToStorage(StorageKey.DitioCodeVerifier, verifier);
-
-    window.location.href =
-        authUrl +
-        `?response_type=code` +
-        `&client_id=${clientId}` +
-        `&scope=${scope}` +
-        `&redirect_uri=${callbackUrl}` +
-        `&code_challenge=${challenge}` +
-        `&code_challenge_method=S256` +
-        `&state=${state}`;
-
-    await sleep(10000);
-}

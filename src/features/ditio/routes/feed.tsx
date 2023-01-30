@@ -8,15 +8,15 @@ import { FilterAlt } from "@mui/icons-material";
 import { Tooltip, ImgTooltip, Divider, IosSwitch, LinearProgress, withCustomScrollbar } from "components";
 import { useAppDispatch, useAppSelector } from "app/store";
 
-import { baseUrl, useFeedWebRawQuery } from "../ditioApi";
+import { baseUrl, useFeedWebRawQuery } from "../api";
 import {
     ditioActions,
     initialFilters,
     selectFeedScrollOffset,
     selectFilters,
-    selectProjectId,
-    selectShowMarkers,
-} from "../ditioSlice";
+    selectDitioProject,
+    selectShowDitioMarkers,
+} from "../slice";
 
 const StyledFixedSizeList = withCustomScrollbar(FixedSizeList) as typeof FixedSizeList;
 
@@ -24,11 +24,11 @@ export function Feed() {
     const theme = useTheme();
 
     const dispatch = useAppDispatch();
-    const showMarkers = useAppSelector(selectShowMarkers);
+    const showMarkers = useAppSelector(selectShowDitioMarkers);
     const feedScrollOffset = useAppSelector(selectFeedScrollOffset);
     const filters = useAppSelector(selectFilters);
 
-    const projId = useAppSelector(selectProjectId);
+    const projId = useAppSelector(selectDitioProject)?.id ?? "";
     const { data: feed, isLoading } = useFeedWebRawQuery({ projId, filters }, { skip: !projId });
 
     const scrollPos = useRef(feedScrollOffset);
@@ -58,24 +58,22 @@ export function Feed() {
                             <FilterAlt sx={{ mr: 1 }} />
                             Filters
                         </Button>
-                        {false ? (
-                            <FormControlLabel
-                                sx={{ ml: 4 }}
-                                control={
-                                    <IosSwitch
-                                        size="medium"
-                                        color="primary"
-                                        checked={showMarkers}
-                                        onChange={toggleShowMarkers}
-                                    />
-                                }
-                                label={
-                                    <Box fontSize={14} sx={{ userSelect: "none" }}>
-                                        Show markers
-                                    </Box>
-                                }
-                            />
-                        ) : null}
+                        <FormControlLabel
+                            sx={{ ml: 4 }}
+                            control={
+                                <IosSwitch
+                                    size="medium"
+                                    color="primary"
+                                    checked={showMarkers}
+                                    onChange={toggleShowMarkers}
+                                />
+                            }
+                            label={
+                                <Box fontSize={14} sx={{ userSelect: "none" }}>
+                                    Show 2D markers
+                                </Box>
+                            }
+                        />
                     </Box>
                 </>
             </Box>

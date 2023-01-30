@@ -8,7 +8,7 @@ import { DatePicker } from "@mui/x-date-pickers";
 import { ScrollBox, Divider, TextField, Switch as SwitchInput } from "components";
 import { useAppDispatch, useAppSelector } from "app/store";
 
-import { ditioActions, FilterType, initialFilters, selectFilters } from "../ditioSlice";
+import { ditioActions, FilterType, initialFilters, selectFilters } from "../slice";
 
 export function Filters() {
     const theme = useTheme();

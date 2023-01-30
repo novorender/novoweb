@@ -1,5 +1,6 @@
 import { MemoryRouter, Route, Switch, useHistory, useRouteMatch } from "react-router-dom";
 import { Box, ListItemIcon, ListItemText, Menu, MenuItem, MenuProps } from "@mui/material";
+import { Logout, SettingsRounded } from "@mui/icons-material";
 
 import { useAppDispatch, useAppSelector } from "app/store";
 import { LogoSpeedDial, WidgetContainer, WidgetHeader } from "components";
@@ -8,6 +9,9 @@ import { WidgetList } from "features/widgetList";
 import { useToggle } from "hooks/useToggle";
 import { selectMinimized, selectMaximized, selectHasAdminCapabilities } from "slices/explorerSlice";
 import { useSceneId } from "hooks/useSceneId";
+import { AsyncStatus } from "types/misc";
+import { StorageKey } from "config/storage";
+import { deleteFromStorage } from "utils/storage";
 
 import { Auth } from "./routes/auth";
 import { Login } from "./routes/login";
@@ -17,10 +21,6 @@ import { LogPoints } from "./routes/logPoints";
 import { LogPoint } from "./routes/logPoint";
 import { Machine } from "./routes/machine";
 import { selectXsiteManageAccessToken, xsiteManageActions } from "./slice";
-import { AsyncStatus } from "types/misc";
-import { StorageKey } from "config/storage";
-import { deleteFromStorage } from "utils/storage";
-import { Logout, SettingsRounded } from "@mui/icons-material";
 
 export default function XsiteManage() {
     const [menuOpen, toggleMenu] = useToggle();
