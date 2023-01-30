@@ -1,8 +1,6 @@
 import { MeasureInfo, View } from "@novorender/webgl-api";
 import { quat, vec2, vec3 } from "gl-matrix";
 
-import { measureApi } from "app";
-
 type Size = {
     width: number;
     height: number;
@@ -136,10 +134,4 @@ export function moveSvgCursor({
         }"/>`;
     }
     g.setAttribute("transform", `translate(${x},${y})`);
-}
-
-export function getPixelPoints(view: View, points: vec3[]): [number, number][] | undefined {
-    const pts = measureApi.toPathPoints(points, view);
-
-    return pts ? (pts[1] as [number, number][]) : undefined;
 }

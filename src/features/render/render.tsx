@@ -105,7 +105,7 @@ import {
 import { xAxis, yAxis, axis, MAX_FLOAT } from "./consts";
 import { useHandleGridChanges } from "./useHandleGridChanges";
 import { useHandleCameraControls } from "./useHandleCameraControls";
-import { getPixelPoints, moveSvgCursor } from "./svgUtils";
+import { moveSvgCursor } from "./svgUtils";
 
 glMatrix.setMatrixArrayType(Array);
 
@@ -287,7 +287,7 @@ export function Render3D({ onInit }: Props) {
         }
 
         if (myLocationPoint !== undefined) {
-            const myLocationPt = (getPixelPoints(view, [myLocationPoint]) ?? [])[0];
+            const myLocationPt = (measureApi.toMarkerPoints(view, [myLocationPoint]) ?? [])[0];
             if (myLocationPt) {
                 const marker = svg.children.namedItem("myLocationPoint");
 
@@ -299,7 +299,7 @@ export function Render3D({ onInit }: Props) {
         }
 
         (
-            getPixelPoints(
+            measureApi.toMarkerPoints(
                 view,
                 logPoints.map((lpt) => vec3.fromValues(lpt.x, lpt.y, lpt.z))
             ) ?? []
@@ -311,7 +311,7 @@ export function Render3D({ onInit }: Props) {
 
         if (panoramas) {
             (
-                getPixelPoints(
+                measureApi.toMarkerPoints(
                     view,
                     panoramas.map((panorama) => panorama.position)
                 ) ?? []
@@ -326,7 +326,7 @@ export function Render3D({ onInit }: Props) {
         }
 
         (
-            getPixelPoints(
+            measureApi.toMarkerPoints(
                 view,
                 ditioMarkers.map((marker) => marker.position)
             ) ?? []
@@ -944,7 +944,7 @@ export function Render3D({ onInit }: Props) {
                     let dir = vec3.cross(vec3.create(), up, right);
 
                     if (topDown) {
-                        const midPt = (getPixelPoints(view, [p]) ?? [])[0];
+                        const midPt = (measureApi.toMarkerPoints(view, [p]) ?? [])[0];
                         if (midPt) {
                             const midPick = await view.lastRenderOutput.pick(midPt[0], midPt[1]);
                             if (midPick) {

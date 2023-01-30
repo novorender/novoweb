@@ -10,6 +10,9 @@ export default defineConfig(({ mode }) => {
     const env = loadEnv(mode, process.cwd());
 
     return {
+        optimizeDeps: {
+            exclude: ["@novorender/measure-api"],
+        },
         envPrefix: "REACT_APP_",
         plugins: [
             react({ fastRefresh: false }),
