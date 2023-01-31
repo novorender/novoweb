@@ -168,7 +168,10 @@ export default function HeightProfile() {
     return (
         <>
             <WidgetContainer minimized={minimized} maximized={maximized}>
-                <WidgetHeader widget={{ ...featuresConfig.heightProfile, name: "Height profile" as any }}>
+                <WidgetHeader
+                    widget={{ ...featuresConfig.heightProfile, name: "Height profile" as any }}
+                    disableShadow={menuOpen}
+                >
                     {!menuOpen && !minimized ? (
                         <Box mx={-1} display="flex" justifyContent="space-between">
                             <Button

@@ -64,7 +64,7 @@ export default function Panoramas() {
     return (
         <>
             <WidgetContainer minimized={minimized} maximized={maximized}>
-                <WidgetHeader widget={featuresConfig.panoramas}>
+                <WidgetHeader widget={featuresConfig.panoramas} disableShadow={menuOpen}>
                     {!menuOpen && !minimized && panoramas?.length ? (
                         <Box display="flex">
                             <FormControlLabel

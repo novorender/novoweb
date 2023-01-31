@@ -31,11 +31,7 @@ export default function Jira() {
     return (
         <MemoryRouter>
             <WidgetContainer minimized={minimized} maximized={maximized}>
-                <WidgetHeader
-                    WidgetMenu={WidgetMenu}
-                    widget={featuresConfig.jira}
-                    disableShadow={!menuOpen && !minimized}
-                />
+                <WidgetHeader WidgetMenu={WidgetMenu} widget={featuresConfig.jira} disableShadow />
                 <Box
                     display={menuOpen || minimized ? "none" : "flex"}
                     flexDirection="column"

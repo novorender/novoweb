@@ -31,11 +31,7 @@ export default function XsiteManage() {
     return (
         <MemoryRouter>
             <WidgetContainer minimized={minimized} maximized={maximized}>
-                <WidgetHeader
-                    WidgetMenu={WidgetMenu}
-                    widget={featuresConfig.xsiteManage}
-                    disableShadow={!menuOpen && !minimized}
-                />
+                <WidgetHeader WidgetMenu={WidgetMenu} widget={featuresConfig.xsiteManage} disableShadow />
                 <Box
                     display={menuOpen || minimized ? "none" : "flex"}
                     flexDirection="column"

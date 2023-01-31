@@ -233,7 +233,7 @@ export default function Properties() {
     return (
         <>
             <WidgetContainer minimized={minimized} maximized={maximized}>
-                <WidgetHeader widget={featuresConfig.properties} />
+                <WidgetHeader disableShadow={menuOpen} widget={featuresConfig.properties} />
                 <ScrollBox
                     display={menuOpen || minimized ? "none" : "flex"}
                     flexDirection={"column"}

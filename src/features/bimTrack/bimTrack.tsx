@@ -156,7 +156,7 @@ export default function BimTrack() {
     return (
         <>
             <WidgetContainer minimized={minimized} maximized={maximized}>
-                <WidgetHeader widget={featuresConfig.bimTrack} disableShadow={!menuOpen} />
+                <WidgetHeader widget={featuresConfig.bimTrack} disableShadow />
                 <Box
                     display={menuOpen || minimized ? "none" : "flex"}
                     flexGrow={1}
@@ -193,13 +193,7 @@ export default function BimTrack() {
                         <LinearProgress />
                     )}
                 </Box>
-                {menuOpen && (
-                    <WidgetList
-                        display={menuOpen ? "block" : "none"}
-                        widgetKey={featuresConfig.bimTrack.key}
-                        onSelect={toggleMenu}
-                    />
-                )}
+                {menuOpen && <WidgetList widgetKey={featuresConfig.bimTrack.key} onSelect={toggleMenu} />}
             </WidgetContainer>
             <LogoSpeedDial
                 open={menuOpen}

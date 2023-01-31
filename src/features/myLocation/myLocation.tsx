@@ -98,7 +98,7 @@ export default function MyLocation() {
     return (
         <>
             <WidgetContainer minimized={minimized} maximized={maximized}>
-                <WidgetHeader widget={featuresConfig.myLocation}>
+                <WidgetHeader widget={featuresConfig.myLocation} disableShadow={menuOpen}>
                     {!menuOpen && !minimized ? (
                         <Box mx={-1}>
                             <Button

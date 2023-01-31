@@ -28,7 +28,7 @@ export default function Ditio() {
     return (
         <>
             <WidgetContainer minimized={minimized} maximized={maximized}>
-                <WidgetHeader widget={featuresConfig.ditio} disableShadow={!menuOpen} />
+                <WidgetHeader widget={featuresConfig.ditio} disableShadow />
                 <Box
                     display={menuOpen || minimized ? "none" : "flex"}
                     flexGrow={1}

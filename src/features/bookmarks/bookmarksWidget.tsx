@@ -69,7 +69,7 @@ export default function Bookmarks() {
     return (
         <>
             <WidgetContainer minimized={minimized} maximized={maximized}>
-                <WidgetHeader widget={featuresConfig.bookmarks} disableShadow={!menuOpen} />
+                <WidgetHeader widget={featuresConfig.bookmarks} disableShadow />
                 <Box
                     display={menuOpen || minimized ? "none" : "flex"}
                     flexGrow={1}

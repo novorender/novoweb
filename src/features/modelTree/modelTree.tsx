@@ -243,6 +243,7 @@ export default function ModelTree() {
         <>
             <WidgetContainer minimized={minimized} maximized={maximized}>
                 <WidgetHeader
+                    disableShadow
                     widget={featuresConfig.modelTree}
                     WidgetMenu={(props) => (
                         <Menu {...props}>
