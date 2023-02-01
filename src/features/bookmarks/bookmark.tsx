@@ -13,6 +13,7 @@ import {
     MenuItem,
     ListItemIcon,
     ListItemText,
+    ListItemButton,
 } from "@mui/material";
 import { Delete, Edit, MoreVert, Share } from "@mui/icons-material";
 import { css } from "@mui/styled-engine";
@@ -24,6 +25,7 @@ import { selectHasAdminCapabilities } from "slices/explorerSlice";
 import { selectUser } from "slices/authSlice";
 
 import { BookmarkAccess, ExtendedBookmark } from "./bookmarksSlice";
+import { useSelectBookmark } from "./useSelectBookmark";
 
 const Description = styled(Typography)(
     () => css`
@@ -63,6 +65,7 @@ export function Bookmark({ bookmark }: { bookmark: ExtendedBookmark }) {
     const theme = useTheme();
     const history = useHistory();
     const [menuAnchor, setMenuAnchor] = useState<HTMLElement | null>(null);
+    const selectBookmark = useSelectBookmark();
 
     const isAdmin = useAppSelector(selectHasAdminCapabilities);
     const user = useAppSelector(selectUser);
@@ -77,7 +80,10 @@ export function Bookmark({ bookmark }: { bookmark: ExtendedBookmark }) {
     };
 
     return (
-        <>
+        <ListItemButton
+            sx={{ padding: `${theme.spacing(0.5)} ${theme.spacing(1)}` }}
+            onClick={() => selectBookmark(bookmark)}
+        >
             <Box width={1} maxHeight={70} height={70} display="flex" alignItems="flex-start" overflow="hidden">
                 <Box bgcolor={theme.palette.grey[200]} height={70} width={100} flexShrink={0} flexGrow={0}>
                     {bookmark.img ? (
@@ -145,7 +151,13 @@ export function Bookmark({ bookmark }: { bookmark: ExtendedBookmark }) {
                     </MenuItem>
                 )}
                 {(isAdmin || (bookmark.access === BookmarkAccess.Personal && user)) && [
-                    <MenuItem key="edit" onClick={() => history.push(`/edit/${bookmark.id}`)}>
+                    <MenuItem
+                        key="edit"
+                        onClick={async () => {
+                            selectBookmark({ ...bookmark, options: { addSelectedToSelectionBasket: false } });
+                            history.push(`/edit/${bookmark.id}`);
+                        }}
+                    >
                         <ListItemIcon>
                             <Edit fontSize="small" />
                         </ListItemIcon>
@@ -159,6 +171,6 @@ export function Bookmark({ bookmark }: { bookmark: ExtendedBookmark }) {
                     </MenuItem>,
                 ]}
             </Menu>
-        </>
+        </ListItemButton>
     );
 }
