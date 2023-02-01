@@ -7,6 +7,7 @@ import {
     CameraController,
     OrthoControllerParams,
     CameraControllerParams,
+    FlightControllerParams,
 } from "@novorender/webgl-api";
 import { MeasureScene } from "@novorender/measure-api";
 import {
@@ -710,13 +711,25 @@ export function Render3D({ onInit }: Props) {
             if (cameraState.type === CameraType.Flight) {
                 dispatch(renderActions.setGrid({ enabled: false }));
                 controller.enabled = true;
-                view.camera.controller = controller;
 
                 if (cameraState.goTo) {
-                    view.camera.controller.moveTo(cameraState.goTo.position, cameraState.goTo.rotation);
+                    controller.moveTo(cameraState.goTo.position, cameraState.goTo.rotation);
                 } else if (cameraState.zoomTo) {
-                    view.camera.controller.zoomTo(cameraState.zoomTo);
+                    controller.zoomTo(cameraState.zoomTo);
+                } else if (view.camera.controller.params.kind === "ortho") {
+                    const pos: vec3 | undefined = (view.camera.controller as any).outputPosition;
+                    const rot: quat | undefined = (view.camera.controller as any).outputRotation;
+
+                    if (pos && rot) {
+                        const params = controller.params as FlightControllerParams;
+                        const tmp = params.flightTime;
+                        params.flightTime = 0;
+                        controller.moveTo(vec3.clone(pos), quat.clone(rot));
+                        params.flightTime = tmp;
+                    }
                 }
+
+                view.camera.controller = controller;
             } else if (cameraState.type === CameraType.Orthographic) {
                 let orthoController: CameraController;
                 if (cameraState.params) {
