@@ -99,8 +99,9 @@ export function PerformanceStats() {
                     <tr>
                         <td>Device:</td>
                         <td>
-                            {api.deviceProfile.name}; weak: {String(api.deviceProfile.weakDevice)}; API v{api.version};
-                            Debug profile: {String((api as any).deviceProfile.debugProfile === true)}
+                            {api.deviceProfile.name}; weak: {String(api.deviceProfile.weakDevice)}; APP v
+                            {import.meta.env.REACT_APP_VERSION}; API v{api.version}; Debug profile:{" "}
+                            {String((api as any).deviceProfile.debugProfile === true)}
                         </td>
                     </tr>
                     <tr>
