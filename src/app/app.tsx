@@ -36,6 +36,7 @@ export const api = createAPI({
     noOffscreenCanvas: !offscreenCanvas,
     scriptBaseUrl: window.location.origin + "/novorender/webgl-api/",
 });
+
 try {
     const debugProfile =
         new URLSearchParams(window.location.search).get("debugDeviceProfile") ?? localStorage["debugDeviceProfile"];
