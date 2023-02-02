@@ -21,9 +21,10 @@ import {
     popoverClasses,
     CircularProgress,
     IconButton,
+    Button,
 } from "@mui/material";
 import { css } from "@mui/styled-engine";
-import { CameraAlt, Close } from "@mui/icons-material";
+import { CameraAlt, Close, FlightTakeoff } from "@mui/icons-material";
 
 import { PerformanceStats } from "features/performanceStats";
 import { getDataFromUrlHash } from "features/shareLink";
@@ -150,15 +151,18 @@ const PanoramaMarker = styled((props: SVGProps<SVGGElement>) => (
     `
 );
 
-const LogPointMarker = styled((props: SVGProps<SVGSVGElement>) => (
-    <svg viewBox="0 0 24 24" {...props}>
-        <path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z" strokeWidth="0.4"></path>
-    </svg>
-))(
-    ({ theme }) => css`
+const LogPointMarker = styled(
+    (props: SVGProps<SVGSVGElement>) => (
+        <svg viewBox="0 0 24 24" {...props}>
+            <path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z" strokeWidth="0.4"></path>
+        </svg>
+    ),
+    { shouldForwardProp: (prop) => prop !== "active" }
+)<{ active?: boolean }>(
+    ({ theme, active }) => css`
         path {
             stroke: ${theme.palette.secondary.dark};
-            fill: ${theme.palette.common.white};
+            fill: ${active ? theme.palette.primary.light : theme.palette.common.white};
         }
 
         :hover {
@@ -266,6 +270,7 @@ export function Render3D({ onInit }: Props) {
     const [logPointStamp, setLogPointStamp] = useState<{
         mouseX: number;
         mouseY: number;
+        pinned: boolean;
         data: {
             logPoint: LogPoint;
         };
@@ -527,6 +532,7 @@ export function Render3D({ onInit }: Props) {
 
                     moveSvgMarkers();
                     setDeviationStamp(null);
+                    setLogPointStamp(null);
 
                     if (movementTimer.current) {
                         clearTimeout(movementTimer.current);
@@ -1447,7 +1453,7 @@ export function Render3D({ onInit }: Props) {
                         transitionDuration={{ exit: 0 }}
                     >
                         {" "}
-                        {logPointStamp && (
+                        {view && logPointStamp && (
                             <Box px={2} pb={1} sx={{ pointerEvents: "auto" }}>
                                 <Box display="flex" alignItems={"center"} justifyContent={"space-between"}>
                                     <Typography fontWeight={600}>
@@ -1463,6 +1469,30 @@ export function Render3D({ onInit }: Props) {
                                 Number: {logPointStamp.data.logPoint.sequenceId} <br />
                                 Code: {logPointStamp.data.logPoint.code} <br />
                                 Uploaded: {new Date(logPointStamp.data.logPoint.timestampMs).toLocaleString()}
+                                <Box mt={1}>
+                                    <Button
+                                        variant="outlined"
+                                        color="secondary"
+                                        onClick={() =>
+                                            dispatch(
+                                                renderActions.setCamera({
+                                                    type: CameraType.Flight,
+                                                    goTo: {
+                                                        position: [
+                                                            logPointStamp.data.logPoint.x,
+                                                            logPointStamp.data.logPoint.y,
+                                                            logPointStamp.data.logPoint.z,
+                                                        ],
+                                                        rotation: quat.clone(view.camera.rotation),
+                                                    },
+                                                })
+                                            )
+                                        }
+                                    >
+                                        <FlightTakeoff sx={{ mr: 2 }} />
+                                        Fly to point
+                                    </Button>
+                                </Box>
                             </Box>
                         )}
                     </Menu>
@@ -1541,23 +1571,39 @@ export function Render3D({ onInit }: Props) {
                                     key={idx}
                                     component="g"
                                     sx={{ cursor: "pointer", pointerEvents: "bounding-box" }}
-                                    onClick={(e) =>
+                                    onClick={(e) => {
                                         setLogPointStamp({
                                             mouseX: e.clientX,
                                             mouseY: e.clientY,
+                                            pinned: true,
                                             data: { logPoint: pt },
-                                        })
-                                    }
-                                    onMouseEnter={(e) =>
+                                        });
+                                    }}
+                                    onMouseEnter={(e) => {
+                                        if (logPointStamp?.pinned) {
+                                            return;
+                                        }
+
                                         setLogPointStamp({
                                             mouseX: e.clientX,
                                             mouseY: e.clientY,
+                                            pinned: false,
                                             data: { logPoint: pt },
-                                        })
-                                    }
-                                    onMouseLeave={closeLogPointStamp}
+                                        });
+                                    }}
+                                    onMouseLeave={() => {
+                                        if (logPointStamp?.pinned) {
+                                            return;
+                                        }
+
+                                        closeLogPointStamp();
+                                    }}
                                 >
-                                    <LogPointMarker height="50px" width="50px" />
+                                    <LogPointMarker
+                                        active={pt.sequenceId === logPointStamp?.data.logPoint.sequenceId}
+                                        height="50px"
+                                        width="50px"
+                                    />
                                 </Box>
                             ))}
 
