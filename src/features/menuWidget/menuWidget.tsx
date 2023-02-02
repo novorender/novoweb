@@ -17,7 +17,7 @@ export function MenuWidget() {
             {open ? (
                 <WidgetContainer data-test="menu-widget" sx={{ height: 1, display: "flex", flexDirection: "column" }}>
                     <Box height="100%" display="flex" flexDirection="column">
-                        <Box display="flex" p={1} boxShadow={theme.customShadows.widgetHeader}>
+                        <Box display="flex" p={1}>
                             <Box display="flex" alignItems="center">
                                 <NovorenderIcon
                                     style={{ fill: theme.palette.primary.main, marginRight: theme.spacing(1) }}
@@ -32,7 +32,6 @@ export function MenuWidget() {
                                 </IconButton>
                             </Box>
                         </Box>
-
                         <WidgetList onSelect={toggle} />
                     </Box>
                 </WidgetContainer>

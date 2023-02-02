@@ -131,7 +131,7 @@ export default function RangeSearch() {
     return (
         <>
             <WidgetContainer minimized={minimized} maximized={maximized}>
-                <WidgetHeader widget={featuresConfig.rangeSearch}>
+                <WidgetHeader widget={featuresConfig.rangeSearch} disableShadow={menuOpen}>
                     {!menuOpen && !minimized ? (
                         <Box component="form" mt={1} onSubmit={handleSubmit}>
                             <TextField

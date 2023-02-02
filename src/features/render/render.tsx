@@ -1,5 +1,5 @@
 import { glMatrix, mat3, mat4, quat, vec2, vec3, vec4 } from "gl-matrix";
-import { useEffect, useState, useRef, MouseEvent, PointerEvent, useCallback, RefCallback } from "react";
+import { useEffect, useState, useRef, MouseEvent, PointerEvent, useCallback, RefCallback, SVGProps } from "react";
 import {
     View,
     EnvironmentDescription,
@@ -7,9 +7,9 @@ import {
     CameraController,
     OrthoControllerParams,
     CameraControllerParams,
+    FlightControllerParams,
 } from "@novorender/webgl-api";
 import { MeasureScene } from "@novorender/measure-api";
-
 import {
     Box,
     Paper,
@@ -20,9 +20,10 @@ import {
     MenuItem,
     popoverClasses,
     CircularProgress,
+    IconButton,
 } from "@mui/material";
 import { css } from "@mui/styled-engine";
-import { CameraAlt } from "@mui/icons-material";
+import { CameraAlt, Close } from "@mui/icons-material";
 
 import { PerformanceStats } from "features/performanceStats";
 import { getDataFromUrlHash } from "features/shareLink";
@@ -34,7 +35,7 @@ import {
     PanoramaStatus,
     useHandlePanoramaChanges,
 } from "features/panoramas";
-import { Accordion, AccordionDetails, AccordionSummary, Loading } from "components";
+import { Accordion, AccordionDetails, AccordionSummary, Divider, Loading } from "components";
 import { api, dataApi, measureApi } from "app";
 import { useSceneId } from "hooks/useSceneId";
 import {
@@ -66,7 +67,7 @@ import { selectDeviations } from "features/deviations";
 import { useSelectBookmark } from "features/bookmarks";
 import { measureActions, selectMeasure, useMeasureHoverSettings, useMeasurePickSettings } from "features/measure";
 import { manholeActions, useHandleManholeUpdates } from "features/manhole";
-import { ditioActions, selectMarkers, selectShowMarkers } from "features/ditio";
+import { ditioActions, useDitioMarkers, useHandleDitioKeepAlive } from "features/ditio";
 import { useAppDispatch, useAppSelector } from "app/store";
 import { followPathActions } from "features/followPath";
 import { areaActions } from "features/area";
@@ -76,7 +77,9 @@ import { pointLineActions, useHandlePointLineUpdates } from "features/pointLine"
 import { selectCurrentLocation, useHandleLocationMarker } from "features/myLocation";
 import { useHandleJiraKeepAlive } from "features/jira";
 import { Engine2D } from "features/engine2D";
+import { LogPoint, useXsiteManageLogPointMarkers, useHandleXsiteManageKeepAlive } from "features/xsiteManage";
 import { ExtendedMeasureEntity } from "types/misc";
+import { orthoCamActions, selectCrossSectionPoint, useHandleCrossSection } from "features/orthoCam";
 
 import { useHighlighted, highlightActions, useDispatchHighlighted } from "contexts/highlighted";
 import { useHidden, useDispatchHidden } from "contexts/hidden";
@@ -103,7 +106,7 @@ import {
 import { xAxis, yAxis, axis, MAX_FLOAT } from "./consts";
 import { useHandleGridChanges } from "./useHandleGridChanges";
 import { useHandleCameraControls } from "./useHandleCameraControls";
-import { getPathPoints, moveSvgCursor } from "./svgUtils";
+import { moveSvgCursor } from "./svgUtils";
 
 glMatrix.setMatrixArrayType(Array);
 
@@ -125,14 +128,44 @@ const Svg = styled("svg")(
         height: 100%;
         overflow: visible;
         pointer-events: none;
+
+        g {
+            will-change: transform;
+        }
     `
 );
 
-const PanoramaMarker = styled((props: any) => <CameraAlt color="primary" height="50px" width="50px" {...props} />)(
+const PanoramaMarker = styled((props: SVGProps<SVGGElement>) => (
+    <g {...props}>
+        <CameraAlt color="primary" height="32px" width="32px" />
+    </g>
+))(
     () => css`
         cursor: pointer;
-        pointer-events: auto;
-        filter: drop-shadow(3px 3px 2px rgba(0, 0, 0, 0.3));
+        pointer-events: bounding-box;
+
+        svg {
+            filter: drop-shadow(3px 3px 2px rgba(0, 0, 0, 0.3));
+        }
+    `
+);
+
+const LogPointMarker = styled((props: SVGProps<SVGSVGElement>) => (
+    <svg viewBox="0 0 24 24" {...props}>
+        <path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z" strokeWidth="0.4"></path>
+    </svg>
+))(
+    ({ theme }) => css`
+        path {
+            stroke: ${theme.palette.secondary.dark};
+            fill: ${theme.palette.common.white};
+        }
+
+        :hover {
+            path {
+                fill: ${theme.palette.primary.light};
+            }
+        }
     `
 );
 
@@ -188,13 +221,14 @@ export function Render3D({ onInit }: Props) {
     const activePanorama = useAppSelector(selectActivePanorama);
     const urlBookmarkId = useAppSelector(selectUrlBookmarkId);
     const localBookmarkId = useAppSelector(selectLocalBookmarkId);
-    const showDitioMarkers = useAppSelector(selectShowMarkers);
-    const ditioMarkers = useAppSelector(selectMarkers);
+    const ditioMarkers = useDitioMarkers();
+    const logPoints = useXsiteManageLogPointMarkers();
 
     const picker = useAppSelector(selectPicker);
     const myLocationPoint = useAppSelector(selectCurrentLocation);
     const measureHoverSettings = useMeasureHoverSettings();
     const measurePickSettings = useMeasurePickSettings();
+    const crossSectionPoint = useAppSelector(selectCrossSectionPoint);
 
     const dispatch = useAppDispatch();
 
@@ -229,6 +263,18 @@ export function Render3D({ onInit }: Props) {
         setDeviationStamp(null);
     };
 
+    const [logPointStamp, setLogPointStamp] = useState<{
+        mouseX: number;
+        mouseY: number;
+        data: {
+            logPoint: LogPoint;
+        };
+    } | null>(null);
+
+    const closeLogPointStamp = () => {
+        setLogPointStamp(null);
+    };
+
     const canvasRef: RefCallback<HTMLCanvasElement> = useCallback(
         (el) => {
             dispatchGlobals(explorerGlobalsActions.update({ canvas: el }));
@@ -236,104 +282,65 @@ export function Render3D({ onInit }: Props) {
         [dispatchGlobals]
     );
 
-    const renderParametricMeasure = useCallback(() => {
+    const moveSvgMarkers = useCallback(() => {
         if (!view || !svg || !measureScene || !size) {
             return;
         }
 
-        const pathPoints = (params: Omit<Parameters<typeof getPathPoints>[0], "view">) =>
-            getPathPoints({ view, ...params });
-
         if (myLocationPoint !== undefined) {
-            const myLocationPt = pathPoints({ points: [myLocationPoint] });
+            const myLocationPt = (measureApi.toMarkerPoints(view, [myLocationPoint]) ?? [])[0];
             if (myLocationPt) {
                 const marker = svg.children.namedItem("myLocationPoint");
 
                 marker?.setAttribute(
                     "transform",
-                    `translate(${myLocationPt.pixel[0][0] - 25} ${myLocationPt.pixel[0][1] - 40}) scale(2)`
+                    `translate(${myLocationPt[0] - 25} ${myLocationPt[1] - 40}) scale(2)`
                 );
             }
         }
-    }, [view, svg, myLocationPoint, size, measureScene]);
 
-    useEffect(() => {
-        renderParametricMeasure();
-    }, [renderParametricMeasure]);
+        (
+            measureApi.toMarkerPoints(
+                view,
+                logPoints.map((lpt) => vec3.fromValues(lpt.x, lpt.y, lpt.z))
+            ) ?? []
+        ).forEach((pos, idx) => {
+            svg.children
+                .namedItem(`logPoint-${idx}`)
+                ?.setAttribute("transform", pos ? `translate(${pos[0] - 25} ${pos[1] - 20})` : "translate(-100 -100)");
+        });
 
-    const moveSvg = useCallback(() => {
-        if (!svg || !view || (!panoramas?.length && !ditioMarkers.length)) {
-            return;
-        }
-
-        const { width, height } = size;
-        const { camera } = view;
-        const proj = mat4.perspective(
-            mat4.create(),
-            glMatrix.toRadian(camera.fieldOfView),
-            width / height,
-            camera.near,
-            camera.far
-        );
-        const camMatrix = mat4.fromRotationTranslation(mat4.create(), camera.rotation, camera.position);
-        mat4.invert(camMatrix, camMatrix);
-        const toScreen = (p: vec3) => {
-            const _p = vec4.transformMat4(vec4.create(), vec4.fromValues(p[0], p[1], p[2], 1), proj);
-            return vec2.fromValues(((_p[0] * 0.5) / _p[3] + 0.5) * width, (0.5 - (_p[1] * 0.5) / _p[3]) * height);
-        };
-
-        if (panoramas?.length) {
-            panoramas
-                .map((p) => vec3.transformMat4(vec3.create(), p.position, camMatrix))
-                .forEach((pos, idx) => {
-                    const marker = svg.children.namedItem(`panorama-${idx}`);
-
-                    if (!marker) {
-                        return;
-                    }
-
-                    const hide = pos[2] > 0 || pos.some((num) => Number.isNaN(num) || !Number.isFinite(num));
-
-                    if (hide) {
-                        marker.setAttribute("x", "-100");
-                        return;
-                    }
-
-                    const p = toScreen(pos);
-                    const x = p[0].toFixed(1);
-                    const y = p[1].toFixed(1);
-                    marker.setAttribute("x", Number.isNaN(Number(x)) || !Number.isFinite(Number(x)) ? "-100" : x);
-                    marker.setAttribute("y", Number.isNaN(Number(y)) || !Number.isFinite(Number(x)) ? "-100" : y);
-                });
-        }
-
-        ditioMarkers
-            .map((marker) => vec3.transformMat4(vec3.create(), marker.position, camMatrix))
-            .forEach((pos, idx) => {
-                const marker = svg.children.namedItem(`ditioMarker-${idx}`);
-
-                if (!marker) {
-                    return;
-                }
-
-                const hide = pos[2] > 0 || pos.some((num) => Number.isNaN(num) || !Number.isFinite(num));
-
-                if (hide) {
-                    marker.setAttribute("x", "-100");
-                    return;
-                }
-
-                const p = toScreen(pos);
-                const x = p[0].toFixed(1);
-                const y = p[1].toFixed(1);
-                marker.setAttribute("x", Number.isNaN(Number(x)) || !Number.isFinite(Number(x)) ? "-100" : x);
-                marker.setAttribute("y", Number.isNaN(Number(y)) || !Number.isFinite(Number(x)) ? "-100" : y);
+        if (panoramas) {
+            (
+                measureApi.toMarkerPoints(
+                    view,
+                    panoramas.map((panorama) => panorama.position)
+                ) ?? []
+            ).forEach((pos, idx) => {
+                svg.children
+                    .namedItem(`panorama-${idx}`)
+                    ?.setAttribute(
+                        "transform",
+                        pos ? `translate(${pos[0] - 25} ${pos[1] - 25})` : "translate(-100 -100)"
+                    );
             });
-    }, [svg, view, size, panoramas, ditioMarkers]);
+        }
+
+        (
+            measureApi.toMarkerPoints(
+                view,
+                ditioMarkers.map((marker) => marker.position)
+            ) ?? []
+        ).forEach((pos, idx) => {
+            svg.children
+                .namedItem(`ditioMarker-${idx}`)
+                ?.setAttribute("transform", pos ? `translate(${pos[0] - 25} ${pos[1] - 25})` : "translate(-100 -100)");
+        });
+    }, [view, svg, myLocationPoint, size, measureScene, logPoints, ditioMarkers, panoramas]);
 
     useEffect(() => {
-        moveSvg();
-    }, [moveSvg, showDitioMarkers, showPanoramaMarkers]);
+        moveSvgMarkers();
+    }, [moveSvgMarkers]);
 
     useEffect(() => {
         if (!environments.length) {
@@ -518,8 +525,7 @@ export function Render3D({ onInit }: Props) {
                 if (cameraGeneration.current !== view.performanceStatistics.cameraGeneration) {
                     cameraGeneration.current = view.performanceStatistics.cameraGeneration ?? 0;
 
-                    moveSvg();
-                    renderParametricMeasure();
+                    moveSvgMarkers();
                     setDeviationStamp(null);
 
                     if (movementTimer.current) {
@@ -552,16 +558,7 @@ export function Render3D({ onInit }: Props) {
                 }
             }
         },
-        [
-            view,
-            moveSvg,
-            dispatch,
-            savedCameraPositions,
-            cameraState,
-            advancedSettings,
-            activePanorama,
-            renderParametricMeasure,
-        ]
+        [view, dispatch, savedCameraPositions, cameraState, advancedSettings, activePanorama, moveSvgMarkers]
     );
 
     useEffect(
@@ -714,13 +711,25 @@ export function Render3D({ onInit }: Props) {
             if (cameraState.type === CameraType.Flight) {
                 dispatch(renderActions.setGrid({ enabled: false }));
                 controller.enabled = true;
-                view.camera.controller = controller;
 
                 if (cameraState.goTo) {
-                    view.camera.controller.moveTo(cameraState.goTo.position, cameraState.goTo.rotation);
+                    controller.moveTo(cameraState.goTo.position, cameraState.goTo.rotation);
                 } else if (cameraState.zoomTo) {
-                    view.camera.controller.zoomTo(cameraState.zoomTo);
+                    controller.zoomTo(cameraState.zoomTo);
+                } else if (view.camera.controller.params.kind === "ortho") {
+                    const pos: vec3 | undefined = (view.camera.controller as any).outputPosition;
+                    const rot: quat | undefined = (view.camera.controller as any).outputRotation;
+
+                    if (pos && rot) {
+                        const params = controller.params as FlightControllerParams;
+                        const tmp = params.flightTime;
+                        params.flightTime = 0;
+                        controller.moveTo(vec3.clone(pos), quat.clone(rot));
+                        params.flightTime = tmp;
+                    }
                 }
+
+                view.camera.controller = controller;
             } else if (cameraState.type === CameraType.Orthographic) {
                 let orthoController: CameraController;
                 if (cameraState.params) {
@@ -813,10 +822,13 @@ export function Render3D({ onInit }: Props) {
     useHandlePanoramaChanges();
     useHandleCameraControls();
     useHandleAreaPoints();
+    useHandleCrossSection();
     useHandleLocationMarker();
     useHandleManholeUpdates();
     useHandlePointLineUpdates();
     useHandleJiraKeepAlive();
+    useHandleXsiteManageKeepAlive();
+    useHandleDitioKeepAlive();
 
     useEffect(() => {
         handleUrlBookmark();
@@ -860,19 +872,18 @@ export function Render3D({ onInit }: Props) {
             dispatch(explorerActions.setLocalBookmarkId(undefined));
 
             try {
-                const storedBm = localStorage.getItem(localBookmarkId);
+                const storedBm = sessionStorage.getItem(localBookmarkId);
 
                 if (!storedBm) {
                     return;
                 }
 
-                localStorage.removeItem(localBookmarkId);
+                sessionStorage.removeItem(localBookmarkId);
                 const bookmark = JSON.parse(storedBm);
 
                 if (!bookmark) {
                     return;
                 }
-
                 selectBookmark(bookmark);
             } catch (e) {
                 console.warn(e);
@@ -930,6 +941,69 @@ export function Render3D({ onInit }: Props) {
         const position = vec3.clone(result.position);
 
         switch (picker) {
+            case Picker.CrossSection:
+                if (crossSectionPoint) {
+                    const mat = mat3.fromQuat(mat3.create(), view.camera.rotation);
+                    let up = vec3.fromValues(0, 1, 0);
+                    const topDown = vec3.equals(vec3.fromValues(mat[6], mat[7], mat[8]), up);
+                    const pos = topDown
+                        ? vec3.fromValues(result.position[0], crossSectionPoint[1], result.position[2])
+                        : vec3.copy(vec3.create(), result.position);
+
+                    const right = vec3.sub(vec3.create(), pos, crossSectionPoint);
+                    const l = vec3.len(right);
+                    vec3.scale(right, right, 1 / l);
+                    const p = vec3.scaleAndAdd(vec3.create(), crossSectionPoint, right, l / 2);
+                    let dir = vec3.cross(vec3.create(), up, right);
+
+                    if (topDown) {
+                        const midPt = (measureApi.toMarkerPoints(view, [p]) ?? [])[0];
+                        if (midPt) {
+                            const midPick = await view.lastRenderOutput.pick(midPt[0], midPt[1]);
+                            if (midPick) {
+                                vec3.copy(p, midPick.position);
+                            }
+                        }
+                    } else if (right[1] < 0.01) {
+                        right[1] = 0;
+                        dir = vec3.clone(up);
+                        vec3.cross(up, right, dir);
+                        vec3.normalize(up, up);
+                    } else {
+                        vec3.normalize(dir, dir);
+                    }
+                    vec3.cross(right, up, dir);
+                    vec3.normalize(right, right);
+
+                    const rotation = quat.fromMat3(
+                        quat.create(),
+                        mat3.fromValues(right[0], right[1], right[2], up[0], up[1], up[2], dir[0], dir[1], dir[2])
+                    );
+
+                    const orthoMat = mat4.fromRotationTranslation(mat4.create(), rotation, p);
+
+                    dispatch(
+                        renderActions.setCamera({
+                            type: CameraType.Orthographic,
+                            params: {
+                                kind: "ortho",
+                                referenceCoordSys: orthoMat,
+                                fieldOfView: 45,
+                                near: -0.001,
+                                far: 0.5,
+                                position: [0, 0, 0],
+                            },
+                            gridOrigo: p as vec3,
+                        })
+                    );
+                    dispatch(renderActions.setPicker(Picker.Object));
+                    dispatch(orthoCamActions.setCrossSectionPoint(undefined));
+                    dispatch(orthoCamActions.setCrossSectionHover(undefined));
+                    dispatch(renderActions.setGrid({ enabled: true }));
+                } else {
+                    dispatch(orthoCamActions.setCrossSectionPoint(result.position as vec3));
+                }
+                break;
             case Picker.Object:
                 if (result.objectId === -1) {
                     return;
@@ -1136,6 +1210,7 @@ export function Render3D({ onInit }: Props) {
         const useSvgCursor =
             e.buttons === 0 &&
             [
+                Picker.CrossSection,
                 Picker.Measurement,
                 Picker.OrthoPlane,
                 Picker.FollowPathObject,
@@ -1157,26 +1232,35 @@ export function Render3D({ onInit }: Props) {
             if (shouldPickHoverEnt) {
                 prevHoverUpdate.current = now;
 
-                if (measureScene && measurement && picker === Picker.Measurement) {
-                    const dist = hoverEnt?.connectionPoint && vec3.dist(measurement.position, hoverEnt.connectionPoint);
+                if (picker === Picker.Measurement) {
+                    if (measureScene && measurement) {
+                        const dist =
+                            hoverEnt?.connectionPoint && vec3.dist(measurement.position, hoverEnt.connectionPoint);
 
-                    if (!dist || dist > 0.2) {
-                        hoverEnt = await measureScene.pickMeasureEntityOnCurrentObject(
-                            measurement.objectId,
-                            measurement.position,
-                            measureHoverSettings
+                        if (!dist || dist > 0.2) {
+                            hoverEnt = await measureScene.pickMeasureEntityOnCurrentObject(
+                                measurement.objectId,
+                                measurement.position,
+                                measureHoverSettings
+                            );
+                        }
+                        vec2.copy(
+                            previous2dSnapPos.current,
+                            vec2.fromValues(e.nativeEvent.offsetX, e.nativeEvent.offsetY)
                         );
+                    } else if (!measurement) {
+                        const currentPos = vec2.fromValues(e.nativeEvent.offsetX, e.nativeEvent.offsetY);
+                        if (vec2.dist(currentPos, previous2dSnapPos.current) > 25) {
+                            hoverEnt = undefined;
+                        }
                     }
-                    vec2.copy(previous2dSnapPos.current, vec2.fromValues(e.nativeEvent.offsetX, e.nativeEvent.offsetY));
-                } else if (!measurement) {
-                    const currentPos = vec2.fromValues(e.nativeEvent.offsetX, e.nativeEvent.offsetY);
-                    if (vec2.dist(currentPos, previous2dSnapPos.current) > 25) {
-                        hoverEnt = undefined;
+                    dispatch(measureActions.selectHoverObj(hoverEnt?.entity));
+                    prevHoverEnt.current = hoverEnt;
+                } else if (picker === Picker.CrossSection) {
+                    if (crossSectionPoint && measurement) {
+                        dispatch(orthoCamActions.setCrossSectionHover(measurement.position as vec3));
                     }
                 }
-
-                prevHoverEnt.current = hoverEnt;
-                dispatch(measureActions.selectHoverObj(hoverEnt?.entity));
             }
 
             const color =
@@ -1346,6 +1430,42 @@ export function Render3D({ onInit }: Props) {
                             </MenuItem>
                         </Box>
                     </Menu>
+                    <Menu
+                        open={logPointStamp !== null}
+                        onClose={closeLogPointStamp}
+                        sx={{
+                            [`&.${popoverClasses.root}`]: {
+                                pointerEvents: "none",
+                            },
+                        }}
+                        anchorReference="anchorPosition"
+                        anchorPosition={
+                            logPointStamp !== null
+                                ? { top: logPointStamp.mouseY, left: logPointStamp.mouseX }
+                                : undefined
+                        }
+                        transitionDuration={{ exit: 0 }}
+                    >
+                        {" "}
+                        {logPointStamp && (
+                            <Box px={2} pb={1} sx={{ pointerEvents: "auto" }}>
+                                <Box display="flex" alignItems={"center"} justifyContent={"space-between"}>
+                                    <Typography fontWeight={600}>
+                                        {logPointStamp.data.logPoint.name ??
+                                            logPointStamp.data.logPoint.type ??
+                                            "Log point"}
+                                    </Typography>
+                                    <IconButton size="small" onClick={closeLogPointStamp}>
+                                        <Close />
+                                    </IconButton>
+                                </Box>
+                                <Divider />
+                                Number: {logPointStamp.data.logPoint.sequenceId} <br />
+                                Code: {logPointStamp.data.logPoint.code} <br />
+                                Uploaded: {new Date(logPointStamp.data.logPoint.timestampMs).toLocaleString()}
+                            </Box>
+                        )}
+                    </Menu>
                     {canvas !== null && (
                         <Svg width={canvas.width} height={canvas.height} ref={setSvg}>
                             {myLocationPoint ? (
@@ -1356,6 +1476,7 @@ export function Render3D({ onInit }: Props) {
                                     d="M12 2C8.14 2 5 5.14 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.86-3.14-7-7-7zm0 2c1.1 0 2 .9 2 2 0 1.11-.9 2-2 2s-2-.89-2-2c0-1.1.9-2 2-2zm0 10c-1.67 0-3.14-.85-4-2.15.02-1.32 2.67-2.05 4-2.05s3.98.73 4 2.05c-.86 1.3-2.33 2.15-4 2.15z"
                                 ></path>
                             ) : null}
+
                             {panoramas && showPanoramaMarkers
                                 ? panoramas.map((panorama, idx) => {
                                       if (!activePanorama) {
@@ -1363,12 +1484,12 @@ export function Render3D({ onInit }: Props) {
                                               <PanoramaMarker
                                                   id={`panorama-${idx}`}
                                                   name={`panorama-${idx}`}
-                                                  key={panorama.guid}
+                                                  key={panorama.name}
                                                   onClick={() =>
                                                       dispatch(
                                                           panoramasActions.setStatus([
                                                               PanoramaStatus.Loading,
-                                                              panorama.guid,
+                                                              panorama.name,
                                                           ])
                                                       )
                                                   }
@@ -1377,7 +1498,7 @@ export function Render3D({ onInit }: Props) {
                                       }
 
                                       const activeIdx = panoramas.findIndex(
-                                          (pano) => pano.guid === activePanorama.guid
+                                          (pano) => pano.name === activePanorama.name
                                       );
 
                                       if (Math.abs(idx - activeIdx) === 1) {
@@ -1385,12 +1506,12 @@ export function Render3D({ onInit }: Props) {
                                               <PanoramaMarker
                                                   id={`panorama-${idx}`}
                                                   name={`panorama-${idx}`}
-                                                  key={panorama.guid}
+                                                  key={panorama.name}
                                                   onClick={() =>
                                                       dispatch(
                                                           panoramasActions.setStatus([
                                                               PanoramaStatus.Loading,
-                                                              panorama.guid,
+                                                              panorama.name,
                                                           ])
                                                       )
                                                   }
@@ -1401,18 +1522,45 @@ export function Render3D({ onInit }: Props) {
                                       return null;
                                   })
                                 : null}
-                            {showDitioMarkers && ditioMarkers
-                                ? ditioMarkers.map((marker, idx) => (
-                                      <PanoramaMarker
-                                          height="32px"
-                                          width="32px"
-                                          id={`ditioMarker-${idx}`}
-                                          name={`ditioMarker-${idx}`}
-                                          key={marker.id}
-                                          onClick={() => dispatch(ditioActions.setClickedMarker(marker.id))}
-                                      />
-                                  ))
-                                : null}
+
+                            {ditioMarkers.map((marker, idx) => (
+                                <PanoramaMarker
+                                    id={`ditioMarker-${idx}`}
+                                    name={`ditioMarker-${idx}`}
+                                    key={marker.id}
+                                    onClick={() => dispatch(ditioActions.setClickedMarker(marker.id))}
+                                    height="32px"
+                                    width="32px"
+                                />
+                            ))}
+
+                            {logPoints.map((pt, idx) => (
+                                <Box
+                                    id={`logPoint-${idx}`}
+                                    name={`logPoint-${idx}`}
+                                    key={idx}
+                                    component="g"
+                                    sx={{ cursor: "pointer", pointerEvents: "bounding-box" }}
+                                    onClick={(e) =>
+                                        setLogPointStamp({
+                                            mouseX: e.clientX,
+                                            mouseY: e.clientY,
+                                            data: { logPoint: pt },
+                                        })
+                                    }
+                                    onMouseEnter={(e) =>
+                                        setLogPointStamp({
+                                            mouseX: e.clientX,
+                                            mouseY: e.clientY,
+                                            data: { logPoint: pt },
+                                        })
+                                    }
+                                    onMouseLeave={closeLogPointStamp}
+                                >
+                                    <LogPointMarker height="50px" width="50px" />
+                                </Box>
+                            ))}
+
                             <g id="cursor" />
                         </Svg>
                     )}
@@ -1453,7 +1601,7 @@ function SceneError({ id, error, msg }: { id: string; error: Exclude<Status, Sta
                     <Box>
                         <Typography paragraph variant="h4" component="h1" align="center">
                             {error === Status.ServerError
-                                ? "An error occured"
+                                ? "An error occurred"
                                 : error === Status.NoSceneError
                                 ? `Scene not found`
                                 : "Unable to load scene"}

@@ -49,7 +49,7 @@ export default function Measure() {
     return (
         <>
             <WidgetContainer minimized={minimized} maximized={maximized}>
-                <WidgetHeader widget={featuresConfig.measure}>
+                <WidgetHeader disableShadow={menuOpen} widget={featuresConfig.measure}>
                     {!menuOpen && !minimized ? (
                         <Box display="flex" justifyContent="space-between" alignItems="center">
                             <FormControlLabel

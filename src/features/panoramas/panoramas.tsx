@@ -2,14 +2,10 @@ import {
     Box,
     Button,
     CircularProgress,
-    css,
     FormControlLabel,
     IconButton,
     List,
     ListItem,
-    styled,
-    tooltipClasses,
-    TooltipProps,
     Typography,
     useTheme,
 } from "@mui/material";
@@ -37,28 +33,9 @@ import { panoramasActions, PanoramaStatus, selectPanoramaStatus, selectShow3dMar
 import { CameraType, renderActions } from "slices/renderSlice";
 import { selectMinimized, selectMaximized } from "slices/explorerSlice";
 
-const ImgTooltip = styled(({ className, ...props }: TooltipProps) => (
-    <ImgTooltip {...props} classes={{ popper: className }} />
-))(
-    ({ theme }) => css`
-        & .${tooltipClasses.tooltip} {
-            max-width: none;
-            background: ${theme.palette.common.white};
-            padding: ${theme.spacing(1)};
-            border-radius: 4px;
-            border: 1px solid ${theme.palette.grey.A400};
-        }
-    `
-);
-
-const Img = styled("img")(
-    () => css`
-        height: 100%;
-        width: 100%;
-        object-fit: cover;
-        display: block;
-    `
-);
+// NOTE(OLA):
+// Panorama GUIDs are not unique.
+// Panorama names are unique.
 
 export default function Panoramas() {
     const {
@@ -87,7 +64,7 @@ export default function Panoramas() {
     return (
         <>
             <WidgetContainer minimized={minimized} maximized={maximized}>
-                <WidgetHeader widget={featuresConfig.panoramas}>
+                <WidgetHeader widget={featuresConfig.panoramas} disableShadow={menuOpen}>
                     {!menuOpen && !minimized && panoramas?.length ? (
                         <Box display="flex">
                             <FormControlLabel
@@ -148,19 +125,15 @@ export default function Panoramas() {
 
 function Panorama({ panorama }: { panorama: PanoramaType }) {
     const theme = useTheme();
-
-    const {
-        state: { scene },
-    } = useExplorerGlobals(true);
     const dispatch = useAppDispatch();
-    const status = useAppSelector(selectPanoramaStatus);
 
-    const isCurrent = Array.isArray(status) && status[1] === panorama.guid;
+    const status = useAppSelector(selectPanoramaStatus);
+    const isCurrent = Array.isArray(status) && status[1] === panorama.name;
     const loading = isCurrent && status[0] === PanoramaStatus.Loading;
 
     const viewPanorama = (ev: MouseEvent<HTMLButtonElement>) => {
         ev.stopPropagation();
-        dispatch(panoramasActions.setStatus([PanoramaStatus.Loading, panorama.guid]));
+        dispatch(panoramasActions.setStatus([PanoramaStatus.Loading, panorama.name]));
     };
 
     function goToScanPosition() {
@@ -173,15 +146,9 @@ function Panorama({ panorama }: { panorama: PanoramaType }) {
         );
     }
 
-    const url = new URL((scene as any).assetUrl);
-    url.pathname += panorama.preview;
-
     return (
         <ListItem sx={{ padding: `${theme.spacing(0.5)} ${theme.spacing(1)}` }} button onClick={goToScanPosition}>
             <Box width={1} maxHeight={80} display="flex" alignItems="flex-start" overflow="hidden">
-                <Box bgcolor={theme.palette.grey[200]} height={52} width={80} flexShrink={0} flexGrow={0}>
-                    <Img src={url.toString()} />
-                </Box>
                 <Box ml={1} flexDirection="column" flexGrow={1} width={0}>
                     <Typography noWrap variant="body1" sx={{ fontWeight: 600 }}>
                         {panorama.name}
@@ -220,7 +187,6 @@ async function loadPanoramas(scene: Scene) {
     try {
         for await (const p of scene.search({
             searchPattern: [
-                { property: "Panorama/Preview", value: "", exact: true },
                 { property: "Panorama/Rotation", value: "", exact: true },
                 { property: "Panorama/Position", value: "", exact: true },
                 { property: "Panorama/Gltf", value: "", exact: true },
@@ -232,10 +198,9 @@ async function loadPanoramas(scene: Scene) {
             const guid = panorama.properties.filter((pr) => pr[0] === "GUID")[0][1];
             const position = JSON.parse(panorama.properties.filter((pr) => pr[0] === "Panorama/Position")[0][1]);
             const rotation = JSON.parse(panorama.properties.filter((pr) => pr[0] === "Panorama/Rotation")[0][1]);
-            const preview = panorama.properties.filter((pr) => pr[0] === "Panorama/Preview")[0][1];
             const gltf = panorama.properties.filter((pr) => pr[0] === "Panorama/Gltf")[0][1];
 
-            panoramas.push({ name, guid, position, rotation, preview, gltf });
+            panoramas.push({ name, guid, position, rotation, gltf });
         }
     } catch {
         // go on

@@ -44,7 +44,7 @@ export default function Area() {
     return (
         <>
             <WidgetContainer minimized={minimized} maximized={maximized}>
-                <WidgetHeader widget={featuresConfig.area}>
+                <WidgetHeader widget={featuresConfig.area} disableShadow={menuOpen}>
                     {!menuOpen && !minimized ? (
                         <Box display="flex" justifyContent="space-between">
                             <FormControlLabel
@@ -82,13 +82,7 @@ export default function Area() {
                 <ScrollBox display={menuOpen || minimized ? "none" : "flex"}>
                     <Box p={1}>{area > 0 ? <>Area: {area.toFixed(3)} &#13217;</> : null}</Box>
                 </ScrollBox>
-                {menuOpen && (
-                    <WidgetList
-                        display={menuOpen ? "block" : "none"}
-                        widgetKey={featuresConfig.area.key}
-                        onSelect={toggleMenu}
-                    />
-                )}
+                {menuOpen && <WidgetList widgetKey={featuresConfig.area.key} onSelect={toggleMenu} />}
             </WidgetContainer>
             <LogoSpeedDial open={menuOpen} toggle={toggleMenu} testId={`${featuresConfig.area.key}-widget-menu-fab`} />
         </>

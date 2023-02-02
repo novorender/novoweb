@@ -105,7 +105,7 @@ export function Issues() {
             ) : null}
             <ScrollBox p={1} pb={3}>
                 {isErrorIssues && !issues ? (
-                    "An error occured."
+                    "An error occurred."
                 ) : isLoadingIssues ? null : issues.length ? (
                     <List sx={{ mx: -1 }} dense disablePadding>
                         {issues.map((issue) => (

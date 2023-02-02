@@ -1,8 +1,9 @@
 import { createSlice, PayloadAction } from "@reduxjs/toolkit";
-import { vec3 } from "gl-matrix";
 
 import { RootState } from "app/store";
-import { AuthConfig } from "./types";
+import { AsyncState, AsyncStatus } from "types/misc";
+
+import { AuthConfig, Project } from "./types";
 
 export enum DitioStatus {
     Initial,
@@ -18,17 +19,13 @@ export enum FilterType {
 }
 
 const initialState = {
-    status: DitioStatus.Initial,
     authConfig: undefined as AuthConfig | undefined,
-    accessToken: "",
-    markers: [] as {
-        position: vec3;
-        id: string;
-    }[],
+    accessToken: { status: AsyncStatus.Initial } as AsyncState<string>,
+    refreshToken: undefined as undefined | { token: string; refreshIn: number },
     showMarkers: false,
     clickedMarker: "",
     lastViewedPath: "/",
-    projectId: "",
+    project: undefined as undefined | Project,
     feedScrollOffset: 0,
     filters: {
         [FilterType.Posts]: true,
@@ -50,14 +47,11 @@ export const ditioSlice = createSlice({
         setAccessToken: (state, action: PayloadAction<State["accessToken"]>) => {
             state.accessToken = action.payload;
         },
-        setStatus: (state, action: PayloadAction<State["status"]>) => {
-            state.status = action.payload;
+        setRefreshToken: (state, action: PayloadAction<State["refreshToken"]>) => {
+            state.refreshToken = action.payload;
         },
         setAuthConfig: (state, action: PayloadAction<State["authConfig"]>) => {
             state.authConfig = action.payload;
-        },
-        setMarkers: (state, action: PayloadAction<State["markers"]>) => {
-            state.markers = action.payload;
         },
         toggleShowMarkers: (state, action: PayloadAction<State["showMarkers"] | undefined>) => {
             if (action.payload === undefined) {
@@ -72,8 +66,8 @@ export const ditioSlice = createSlice({
         setClickedMarker: (state, action: PayloadAction<State["clickedMarker"]>) => {
             state.clickedMarker = action.payload;
         },
-        setProjectId: (state, action: PayloadAction<State["projectId"]>) => {
-            state.projectId = action.payload;
+        setProject: (state, action: PayloadAction<State["project"]>) => {
+            state.project = action.payload;
         },
         setFeedScrollOffset: (state, action: PayloadAction<State["feedScrollOffset"]>) => {
             state.feedScrollOffset = action.payload;
@@ -91,13 +85,12 @@ export const ditioSlice = createSlice({
 });
 
 export const selectAccessToken = (state: RootState) => state.ditio.accessToken;
+export const selectDitioRefreshToken = (state: RootState) => state.ditio.refreshToken;
 export const selectAuthConfig = (state: RootState) => state.ditio.authConfig;
-export const selectStatus = (state: RootState) => state.ditio.status;
-export const selectMarkers = (state: RootState) => state.ditio.markers;
-export const selectShowMarkers = (state: RootState) => state.ditio.showMarkers;
+export const selectShowDitioMarkers = (state: RootState) => state.ditio.showMarkers;
 export const selectClickedMarker = (state: RootState) => state.ditio.clickedMarker;
 export const selectLastViewedPath = (state: RootState) => state.ditio.lastViewedPath;
-export const selectProjectId = (state: RootState) => state.ditio.projectId;
+export const selectDitioProject = (state: RootState) => state.ditio.project;
 export const selectFeedScrollOffset = (state: RootState) => state.ditio.feedScrollOffset;
 export const selectFilters = (state: RootState) => state.ditio.filters;
 

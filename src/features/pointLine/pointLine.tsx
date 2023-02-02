@@ -54,7 +54,7 @@ export default function PointLine() {
     return (
         <>
             <WidgetContainer minimized={minimized} maximized={maximized}>
-                <WidgetHeader widget={featuresConfig.pointLine}>
+                <WidgetHeader widget={featuresConfig.pointLine} disableShadow={menuOpen}>
                     {!menuOpen && !minimized ? (
                         <Box display="flex" justifyContent="space-between">
                             <FormControlLabel

@@ -29,6 +29,7 @@ import { measureActions } from "features/measure";
 import { areaActions } from "features/area";
 import { pointLineActions } from "features/pointLine";
 import { manholeActions } from "features/manhole";
+import { xsiteManageActions } from "features/xsiteManage";
 
 type Props = SpeedDialActionProps & {
     position?: { top?: number; right?: number; bottom?: number; left?: number };
@@ -75,6 +76,7 @@ export function Home({ position, ...speedDialProps }: Props) {
         dispatch(areaActions.setPoints([]));
         dispatch(pointLineActions.setPoints([]));
         dispatch(manholeActions.initFromBookmark(undefined));
+        dispatch(xsiteManageActions.clearLogPoints(undefined));
 
         if (settings) {
             const { display: _display, quality: _quality, environment: _env, light: _light, ...toApply } = settings;

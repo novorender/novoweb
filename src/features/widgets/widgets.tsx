@@ -33,6 +33,7 @@ const Area = lazy(() => import("features/area/area"));
 const PointLine = lazy(() => import("features/pointLine/pointLine"));
 const Jira = lazy(() => import("features/jira/jira"));
 const Manhole = lazy(() => import("features/manhole/manhole"));
+const XsiteManage = lazy(() => import("features/xsiteManage/xsiteManage"));
 
 export function Widgets() {
     const theme = useTheme();
@@ -154,6 +155,9 @@ function getWidgetByKey(key: WidgetKey): JSX.Element | string {
             break;
         case featuresConfig.manhole.key:
             Widget = Manhole;
+            break;
+        case featuresConfig.xsiteManage.key:
+            Widget = XsiteManage;
             break;
         default:
             return key;

@@ -10,7 +10,7 @@ import { useExplorerGlobals } from "contexts/explorerGlobals";
 import { useAppDispatch, useAppSelector } from "app/store";
 import { CameraType, renderActions, selectProjectSettings } from "slices/renderSlice";
 
-import { baseUrl, useGetPostQuery } from "../ditioApi";
+import { baseUrl, useGetPostQuery } from "../api";
 import { newLineToHtmlBr } from "./feed";
 
 export function Post() {
@@ -25,7 +25,7 @@ export function Post() {
     const dispatch = useAppDispatch();
     const [modalImg, setModalImg] = useState("");
 
-    const { data: post, isLoading } = useGetPostQuery({ postId });
+    const { data: post, isFetching } = useGetPostQuery({ postId });
 
     const handleGoTo = () => {
         if (!post?.GeoCoordinate) {
@@ -68,7 +68,7 @@ export function Post() {
                     ) : null}
                 </Box>
             </Box>
-            {isLoading ? (
+            {isFetching ? (
                 <Box position="relative">
                     <LinearProgress />
                 </Box>

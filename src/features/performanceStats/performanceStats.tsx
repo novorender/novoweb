@@ -22,6 +22,7 @@ export function PerformanceStats() {
         state: { canvas, view },
     } = useExplorerGlobals(true);
 
+    const detailBiasRef = useRef<HTMLTableCellElement | null>(null);
     const fpsRef = useRef<HTMLTableCellElement | null>(null);
     const trianglesRef = useRef<HTMLTableCellElement | null>(null);
     const pointsRef = useRef<HTMLTableCellElement | null>(null);
@@ -40,6 +41,14 @@ export function PerformanceStats() {
 
             function update() {
                 const { performanceStatistics: stats } = view;
+
+                if (detailBiasRef.current) {
+                    detailBiasRef.current.innerText = `${
+                        api.deviceProfile.detailBias
+                    } (active: ${view.settings.quality.detail.value.toFixed(
+                        2
+                    )}, idle: ${view.lastRenderOutput?.isIdleFrame()})`;
+                }
 
                 if (fpsRef.current) {
                     fpsRef.current.innerText = (stats as { fps?: number }).fps?.toFixed(0) ?? "0";
@@ -104,7 +113,7 @@ export function PerformanceStats() {
                     </tr>
                     <tr>
                         <td>Detail bias:</td>
-                        <td>{api.deviceProfile.detailBias}</td>
+                        <td ref={detailBiasRef}>{api.deviceProfile.detailBias}</td>
                     </tr>
                     <tr>
                         <td>Resolution:</td>

@@ -132,7 +132,7 @@ export default function SelectionBasket() {
                             </div>
                         </Menu>
                     )}
-                    disableShadow={!menuOpen && !minimized}
+                    disableShadow
                 />
 
                 {exportStatus === ExportStatus.Exporting ? (

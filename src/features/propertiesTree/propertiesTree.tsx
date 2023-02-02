@@ -80,7 +80,7 @@ export default function PropertiesTree() {
     return (
         <>
             <WidgetContainer minimized={minimized} maximized={maximized}>
-                <WidgetHeader widget={featuresConfig.propertyTree} />
+                <WidgetHeader widget={featuresConfig.propertyTree} disableShadow={menuOpen} />
                 <ScrollBox display={!menuOpen && !minimized ? "block" : "none"} height={1} pb={2}>
                     <List>
                         {root === undefined ? (

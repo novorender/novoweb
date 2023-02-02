@@ -1,6 +1,6 @@
 import { useHistory } from "react-router-dom";
 import { FilterAlt, AddCircle, Save } from "@mui/icons-material";
-import { Box, Button, List, ListItem, useTheme } from "@mui/material";
+import { Box, Button, List, useTheme } from "@mui/material";
 import { useState, MouseEvent, useEffect } from "react";
 
 import { dataApi } from "app";
@@ -21,14 +21,12 @@ import {
 } from "../bookmarksSlice";
 import { FilterMenu } from "../filterMenu";
 import { Bookmark } from "../bookmark";
-import { useSelectBookmark } from "../useSelectBookmark";
 
 const filterMenuId = "bm-filter-menu";
 
 export function BookmarkList() {
     const theme = useTheme();
     const history = useHistory();
-    const handleSelect = useSelectBookmark();
     const sceneId = useSceneId();
 
     const status = useAppSelector(selectBookmarksStatus);
@@ -127,14 +125,7 @@ export function BookmarkList() {
                         !collection.name ? (
                             <List key="ungrouped">
                                 {collection.bookmarks.map((bookmark, index) => (
-                                    <ListItem
-                                        key={bookmark.name + index}
-                                        sx={{ padding: `${theme.spacing(0.5)} ${theme.spacing(1)}` }}
-                                        button
-                                        onClick={() => handleSelect(bookmark)}
-                                    >
-                                        <Bookmark bookmark={bookmark} />
-                                    </ListItem>
+                                    <Bookmark bookmark={bookmark} key={bookmark.name + index} />
                                 ))}
                             </List>
                         ) : (
@@ -142,14 +133,7 @@ export function BookmarkList() {
                                 <AccordionSummary>{collection.name}</AccordionSummary>
                                 <AccordionDetails>
                                     {collection.bookmarks.map((bookmark, index) => (
-                                        <ListItem
-                                            key={bookmark.name + index}
-                                            sx={{ padding: `${theme.spacing(0.5)} ${theme.spacing(1)}` }}
-                                            button
-                                            onClick={() => handleSelect(bookmark)}
-                                        >
-                                            <Bookmark bookmark={bookmark} />
-                                        </ListItem>
+                                        <Bookmark bookmark={bookmark} key={bookmark.name + index} />
                                     ))}
                                 </AccordionDetails>
                             </Accordion>

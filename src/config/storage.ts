@@ -8,12 +8,12 @@ export enum StorageKey {
     BimTrackCodeVerifier = "BIMtrack_code_verifier",
     DitioRefreshToken = "ditio_refresh_token",
     DitioCodeVerifier = "ditio_code_verifier",
-    JiraAccessToken = "jira_access_token",
     JiraRefreshToken = "jira_refresh_token",
+    XsiteManageRefreshToken = "xsitemanage_refresh_token",
 }
 
 export const storageConfig = {
-    [StorageKey.JiraAccessToken]: {
+    [StorageKey.XsiteManageRefreshToken]: {
         storage: localStorage,
     },
     [StorageKey.JiraRefreshToken]: {

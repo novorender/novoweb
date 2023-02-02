@@ -100,7 +100,7 @@ export default function ClippingBox() {
     return (
         <>
             <WidgetContainer minimized={minimized} maximized={maximized}>
-                <WidgetHeader widget={featuresConfig.clippingBox}>
+                <WidgetHeader widget={featuresConfig.clippingBox} disableShadow={menuOpen}>
                     {!menuOpen && !minimized ? (
                         <>
                             <Box mt={1} mb={1} display="flex" justifyContent="space-between">

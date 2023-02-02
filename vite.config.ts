@@ -10,6 +10,9 @@ export default defineConfig(({ mode }) => {
     const env = loadEnv(mode, process.cwd());
 
     return {
+        optimizeDeps: {
+            exclude: ["@novorender/measure-api"],
+        },
         envPrefix: "REACT_APP_",
         plugins: [
             react({ fastRefresh: false }),
@@ -39,6 +42,11 @@ export default defineConfig(({ mode }) => {
                     target: "https://ditio-api-v3.azurewebsites.net",
                     // target: "https://ditio-api-test.azurewebsites.net",
                     rewrite: (path) => path.replace(/^\/ditio/, ""),
+                    changeOrigin: true,
+                },
+                "/xsitemanage": {
+                    target: "https://api.prod.xsitemanage.com",
+                    rewrite: (path) => path.replace(/^\/xsitemanage/, ""),
                     changeOrigin: true,
                 },
             },

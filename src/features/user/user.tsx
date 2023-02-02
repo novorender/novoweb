@@ -23,8 +23,8 @@ export default function User() {
     return (
         <>
             <WidgetContainer minimized={minimized} maximized={maximized}>
-                <WidgetHeader widget={featuresConfig.user} />
-                <ScrollBox p={1} mt={2} display={!menuOpen ? "flex" : "none"} flexDirection="column">
+                <WidgetHeader widget={featuresConfig.user} disableShadow={menuOpen} />
+                <ScrollBox p={1} mt={2} display={!menuOpen && !minimized ? "flex" : "none"} flexDirection="column">
                     {user ? <LoggedIn user={user} /> : <LoggedOut />}
                 </ScrollBox>
                 {menuOpen && <WidgetList widgetKey={featuresConfig.user.key} onSelect={toggleMenu} />}

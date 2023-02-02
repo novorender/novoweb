@@ -1,4 +1,5 @@
-import { Box, styled, BoxTypeMap } from "@mui/material";
+import { Box, styled, Theme } from "@mui/material";
+import { BoxTypeMap } from "@mui/system";
 import { OverridableComponent } from "@mui/material/OverridableComponent";
 import { css } from "@mui/styled-engine";
 
@@ -26,4 +27,6 @@ export const withCustomScrollbar = (component: any): unknown =>
         `
     );
 
-export const ScrollBox = withCustomScrollbar(Box) as OverridableComponent<BoxTypeMap<{ horizontal?: boolean }, "div">>;
+export const ScrollBox = withCustomScrollbar(Box) as OverridableComponent<
+    BoxTypeMap<{ horizontal?: boolean }, "div", Theme>
+>;

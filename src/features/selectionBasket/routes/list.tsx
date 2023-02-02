@@ -86,7 +86,7 @@ export function List() {
                 }
 
                 console.warn(e);
-                setObjects({ status: AsyncStatus.Error, msg: "An error occured while loading object data." });
+                setObjects({ status: AsyncStatus.Error, msg: "An error occurred while loading object data." });
             }
         }
     }, [basket, scene, abortController, objects]);

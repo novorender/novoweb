@@ -16,12 +16,14 @@ import { bimTrackReducer, bimTrackApi } from "features/bimTrack";
 import { ditioReducer } from "features/ditio";
 import { ditioApi } from "features/ditio";
 import { areaReducer } from "features/area";
+import { orthoCamReducer } from "features/orthoCam";
 import { pointLineReducer } from "features/pointLine";
 import { heightProfileReducer } from "features/heightProfile";
 import { myLocationReducer } from "features/myLocation";
 import { jiraApi, jiraReducer } from "features/jira";
 import { manholeReducer } from "features/manhole";
 import { selectionBasketReducer } from "features/selectionBasket";
+import { xsiteManageReducer, xsiteManageApi } from "features/xsiteManage";
 
 const rootReducer = combineReducers({
     explorer: explorerReducer,
@@ -34,6 +36,7 @@ const rootReducer = combineReducers({
     deviations: deviationsReducer,
     measure: measureReducer,
     area: areaReducer,
+    orthoCam: orthoCamReducer,
     manhole: manholeReducer,
     pointLine: pointLineReducer,
     myLocation: myLocationReducer,
@@ -47,6 +50,8 @@ const rootReducer = combineReducers({
     [ditioApi.reducerPath]: ditioApi.reducer,
     jira: jiraReducer,
     [jiraApi.reducerPath]: jiraApi.reducer,
+    xsiteManage: xsiteManageReducer,
+    [xsiteManageApi.reducerPath]: xsiteManageApi.reducer,
 });
 
 export const store = configureStore({
@@ -57,7 +62,8 @@ export const store = configureStore({
             .concat(bimCollabApi.middleware)
             .concat(bimTrackApi.middleware)
             .concat(ditioApi.middleware)
-            .concat(jiraApi.middleware),
+            .concat(jiraApi.middleware)
+            .concat(xsiteManageApi.middleware),
 });
 
 setupListeners(store.dispatch);

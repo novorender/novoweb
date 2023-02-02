@@ -10,6 +10,7 @@ import { sha256, base64UrlEncode } from "utils/misc";
 import { deleteFromStorage, getFromStorage, saveToStorage } from "./storage";
 import { StorageKey } from "config/storage";
 import { dataServerBaseUrl } from "config";
+import { WidgetKey } from "config/features";
 
 export async function getAuthHeader(): Promise<AuthenticationHeader> {
     const {
@@ -191,26 +192,38 @@ export async function generateCodeChallenge(verifier: string): Promise<string> {
 }
 
 type OAuthState = {
-    service?: string;
+    service?: WidgetKey;
     sceneId?: string;
     space?: string;
     localBookmarkId?: string;
 };
 
 export function getOAuthState(): OAuthState | undefined {
-    const state = new URLSearchParams(window.location.search).get("state");
+    const stateKey = new URLSearchParams(window.location.search).get("state");
+
+    if (!stateKey) {
+        return;
+    }
+
+    const state = sessionStorage.getItem(stateKey);
 
     if (!state) {
+        console.warn("OAuth state mismatch.");
         return;
     }
 
     try {
         return JSON.parse(state);
-    } catch {
+    } catch (e) {
+        console.warn(e);
         return;
     }
 }
 
 export function createOAuthStateString(state: OAuthState): string {
-    return JSON.stringify(state);
+    const id = window.crypto.randomUUID();
+    const stateStr = JSON.stringify(state);
+    sessionStorage.setItem(id, stateStr);
+
+    return id;
 }

@@ -1,5 +1,5 @@
 import { FormEventHandler, useEffect, useState } from "react";
-import { Box, Button, Checkbox, FormControlLabel } from "@mui/material";
+import { Box, Button, Checkbox, FormControlLabel, useTheme } from "@mui/material";
 import { useHistory, useParams } from "react-router-dom";
 import { v4 as uuidv4 } from "uuid";
 
@@ -16,6 +16,7 @@ import { BookmarkAccess, selectBookmarks, bookmarksActions } from "../bookmarksS
 export function Crupdate() {
     const { id } = useParams<{ id?: string }>();
     const history = useHistory();
+    const theme = useTheme();
 
     const bookmarks = useAppSelector(selectBookmarks);
     const bmToEdit = bookmarks.find((bm) => bm.id === id);
@@ -106,88 +107,104 @@ export function Crupdate() {
     };
 
     return (
-        <ScrollBox width={1} px={1} mt={1} display="flex" flexDirection="column" height={1} pb={2}>
+        <>
             <Box
-                display="flex"
-                justifyContent="center"
-                width={1}
-                sx={{ img: { maxHeight: 200, objectFit: "contain" } }}
-            >
-                {bmImg ? <img alt="" src={bmImg} /> : null}
-            </Box>
-            <form onSubmit={handleSubmit}>
-                <TextField
-                    name="title"
-                    value={name}
-                    onChange={(e) => setName(e.target.value)}
-                    id={"bookmark-title"}
-                    label={"Title"}
-                    fullWidth
-                    required
-                    sx={{ mt: 1, mb: 2 }}
-                />
-                <TextField
-                    value={description}
-                    onChange={(e) => setDescription(e.target.value)}
-                    id={"bookmark-description"}
-                    label={"Description"}
-                    fullWidth
-                    multiline
-                    rows={4}
-                    sx={{ mb: 2 }}
-                />
-                <TextField
-                    value={collection}
-                    onChange={(e) => setCollection(e.target.value)}
-                    id={"bookmark-collection"}
-                    label={"Collection"}
-                    fullWidth
-                    autoComplete="off"
-                    inputProps={{ list: "collections" }}
-                    sx={{ mb: 1 }}
-                />
-                <datalist id="collections">
-                    {Array.from(new Set(bookmarks.filter((bm) => bm.grouping).map((bm) => bm.grouping))).map((coll) => (
-                        <option key={coll} value={coll} />
-                    ))}
-                </datalist>
-                <Box>
-                    <FormControlLabel
-                        control={
-                            <Checkbox
-                                color="primary"
-                                checked={addToSelectionBasket}
-                                onChange={toggleAddToSelectionBasket}
-                            />
-                        }
-                        label={<Box mr={0.5}>Add selected to selection basket</Box>}
-                    />
+                boxShadow={theme.customShadows.widgetHeader}
+                sx={{ height: 5, width: 1, mt: "-5px" }}
+                position="absolute"
+            />
+            <ScrollBox width={1} px={1} mt={1} display="flex" flexDirection="column" height={1} pb={2}>
+                <Box
+                    display="flex"
+                    justifyContent="center"
+                    width={1}
+                    sx={{ img: { maxHeight: 200, objectFit: "contain" } }}
+                >
+                    {bmImg ? <img alt="" src={bmImg} /> : null}
                 </Box>
-                {isAdmin ? (
-                    <FormControlLabel
-                        sx={{ mb: 2 }}
-                        control={<Checkbox color="primary" checked={!personal} onChange={togglePersonal} />}
-                        label={<Box mr={0.5}>Public</Box>}
-                    />
-                ) : null}
-                <Box display="flex">
-                    <Button
-                        color="grey"
-                        type="button"
-                        variant="outlined"
-                        onClick={() => history.goBack()}
+                <form onSubmit={handleSubmit}>
+                    <TextField
+                        name="title"
+                        value={name}
+                        onChange={(e) => setName(e.target.value)}
+                        id={"bookmark-title"}
+                        label={"Title"}
                         fullWidth
-                        size="large"
-                        sx={{ marginRight: 1 }}
-                    >
-                        Cancel
-                    </Button>
-                    <Button type="submit" fullWidth disabled={!name} color="primary" variant="contained" size="large">
-                        {bmToEdit ? "Save" : "Add"} bookmark
-                    </Button>
-                </Box>
-            </form>
-        </ScrollBox>
+                        required
+                        sx={{ mt: 1, mb: 2 }}
+                    />
+                    <TextField
+                        value={description}
+                        onChange={(e) => setDescription(e.target.value)}
+                        id={"bookmark-description"}
+                        label={"Description"}
+                        fullWidth
+                        multiline
+                        rows={4}
+                        sx={{ mb: 2 }}
+                    />
+                    <TextField
+                        value={collection}
+                        onChange={(e) => setCollection(e.target.value)}
+                        id={"bookmark-collection"}
+                        label={"Collection"}
+                        fullWidth
+                        autoComplete="off"
+                        inputProps={{ list: "collections" }}
+                        sx={{ mb: 1 }}
+                    />
+                    <datalist id="collections">
+                        {Array.from(new Set(bookmarks.filter((bm) => bm.grouping).map((bm) => bm.grouping))).map(
+                            (coll) => (
+                                <option key={coll} value={coll} />
+                            )
+                        )}
+                    </datalist>
+                    <Box>
+                        <FormControlLabel
+                            control={
+                                <Checkbox
+                                    color="primary"
+                                    checked={addToSelectionBasket}
+                                    onChange={toggleAddToSelectionBasket}
+                                />
+                            }
+                            label={<Box mr={0.5}>Add selected to selection basket</Box>}
+                        />
+                    </Box>
+                    {isAdmin ? (
+                        <FormControlLabel
+                            sx={{ mb: 2 }}
+                            control={<Checkbox color="primary" checked={!personal} onChange={togglePersonal} />}
+                            label={<Box mr={0.5}>Public</Box>}
+                        />
+                    ) : null}
+                    <Box display="flex">
+                        <Button
+                            color="grey"
+                            type="button"
+                            variant="outlined"
+                            onClick={() => history.goBack()}
+                            fullWidth
+                            size="large"
+                            sx={{ marginRight: 1 }}
+                        >
+                            Cancel
+                        </Button>
+                        <Button
+                            type="submit"
+                            fullWidth
+                            disabled={!name}
+                            color="primary"
+                            variant="contained"
+                            size="large"
+                        >
+                            {bmToEdit ? "Save" : "Add"} bookmark
+                        </Button>
+                    </Box>
+                </form>
+            </ScrollBox>
+        </>
     );
 }
 

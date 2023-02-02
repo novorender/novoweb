@@ -30,6 +30,7 @@ import {
     VrpanoOutlined,
     LinearScale,
     FiberSmartRecord,
+    GpsFixed,
 } from "@mui/icons-material";
 
 import { ReactComponent as Clipping } from "media/icons/clipping.svg";
@@ -42,9 +43,26 @@ export enum FeatureType {
     Button,
     Widget,
     AdminWidget,
+    Tag,
 }
 
+export const featureTags = {
+    review: {
+        key: "review",
+        name: "Review",
+        Icon: Straighten,
+        type: FeatureType.Tag,
+    },
+} as const;
+
 export const featuresConfig = {
+    xsiteManage: {
+        key: "xsiteManage",
+        name: "Xsite Manage",
+        Icon: GpsFixed,
+        type: FeatureType.Widget,
+        defaultLocked: true,
+    },
     jira: {
         key: "jira",
         name: "Jira",
@@ -58,6 +76,7 @@ export const featuresConfig = {
         Icon: SquareFoot,
         type: FeatureType.Widget,
         defaultLocked: false,
+        tags: [featureTags.review.key],
     },
     pointLine: {
         key: "pointLine",
@@ -65,6 +84,7 @@ export const featuresConfig = {
         Icon: LinearScale,
         type: FeatureType.Widget,
         defaultLocked: false,
+        tags: [featureTags.review.key],
     },
     manhole: {
         key: "manhole",
@@ -72,6 +92,7 @@ export const featuresConfig = {
         Icon: FiberSmartRecord,
         type: FeatureType.Widget,
         defaultLocked: false,
+        tags: [featureTags.review.key],
     },
     heightProfile: {
         key: "heightProfile",
@@ -79,6 +100,7 @@ export const featuresConfig = {
         Icon: Timeline,
         type: FeatureType.Widget,
         defaultLocked: false,
+        tags: [featureTags.review.key],
     },
     user: {
         key: "user",
@@ -191,6 +213,7 @@ export const featuresConfig = {
         Icon: Straighten,
         type: FeatureType.Widget,
         defaultLocked: false,
+        tags: [featureTags.review.key],
     },
     shareLink: {
         key: "shareLink",
@@ -229,6 +252,7 @@ export const featuresConfig = {
         Icon: BlurOn,
         type: FeatureType.Widget,
         defaultLocked: false,
+        tags: [featureTags.review.key],
         dependencies: {
             subtrees: [["points", "triangles"]],
         },
@@ -239,6 +263,7 @@ export const featuresConfig = {
         Icon: RouteOutlined,
         type: FeatureType.Widget,
         defaultLocked: false,
+        tags: [featureTags.review.key],
     },
     home: {
         key: "home",
@@ -327,8 +352,10 @@ export const featuresConfig = {
 } as const;
 
 type Config = typeof featuresConfig;
+type Tags = typeof featureTags;
 
 export type FeatureKey = keyof Config;
+export type FeatureTagKey = keyof Tags;
 
 export type WidgetKey = {
     [K in keyof Config]: Config[K]["type"] extends FeatureType.Widget | FeatureType.AdminWidget ? K : never;
@@ -338,6 +365,7 @@ export type ButtonKey = {
 }[keyof Config];
 
 export type Widget = Config[WidgetKey];
+export type FeatureTag = Tags[FeatureTagKey];
 
 export const defaultEnabledWidgets = [featuresConfig.user.key] as WidgetKey[];
 export const allWidgets = Object.values(featuresConfig)

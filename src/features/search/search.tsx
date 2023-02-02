@@ -268,7 +268,7 @@ export default function Search() {
     return (
         <>
             <WidgetContainer minimized={minimized} maximized={maximized}>
-                <WidgetHeader widget={featuresConfig.search}>
+                <WidgetHeader widget={featuresConfig.search} disableShadow={menuOpen}>
                     {!menuOpen && !minimized ? (
                         <Box component="form" sx={{ mt: 1 }} onSubmit={handleSubmit}>
                             {advanced ? (
