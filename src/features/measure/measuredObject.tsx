@@ -283,10 +283,10 @@ export function MeasurementData({
                     <ListItem>
                         <Grid container>
                             <Grid item xs={5}>
-                                Radius
+                                Diameter
                             </Grid>
                             <Grid item xs={5}>
-                                {measureValues.radius.toFixed(3)} m
+                                {(measureValues.radius * 2).toFixed(3)} m
                             </Grid>
                             <Grid item xs={5}>
                                 Total angle
@@ -343,15 +343,16 @@ export function MeasurementData({
                             <ListItem>
                                 <Grid container>
                                     <Grid item xs={5}>
-                                        {measureValues.outerRadius ? "Inner radius" : "Radius"}
+                                        {measureValues.outerRadius ? "Inner diameter" : "Diameter"}
                                     </Grid>
                                     <Grid item xs={5}>
-                                        {(measureValues.outerRadius
-                                            ? Math.min(
-                                                  measureValues.outerRadius as number,
-                                                  measureValues.innerRadius as number
-                                              )
-                                            : measureValues.innerRadius
+                                        {(
+                                            (measureValues.outerRadius
+                                                ? Math.min(
+                                                      measureValues.outerRadius as number,
+                                                      measureValues.innerRadius as number
+                                                  )
+                                                : measureValues.innerRadius) * 2
                                         ).toFixed(3)}{" "}
                                         m
                                     </Grid>
@@ -362,15 +363,16 @@ export function MeasurementData({
                             <ListItem>
                                 <Grid container>
                                     <Grid item xs={5}>
-                                        {measureValues.innerRadius ? "Outer radius" : "Radius"}
+                                        {measureValues.innerRadius ? "Outer diameter" : "Diameter"}
                                     </Grid>
                                     <Grid item xs={5}>
-                                        {(measureValues.innerRadius
-                                            ? Math.max(
-                                                  measureValues.outerRadius as number,
-                                                  measureValues.innerRadius as number
-                                              )
-                                            : measureValues.outerRadius
+                                        {(
+                                            (measureValues.innerRadius
+                                                ? Math.max(
+                                                      measureValues.outerRadius as number,
+                                                      measureValues.innerRadius as number
+                                                  )
+                                                : measureValues.outerRadius) * 2
                                         ).toFixed(3)}{" "}
                                         m
                                     </Grid>
