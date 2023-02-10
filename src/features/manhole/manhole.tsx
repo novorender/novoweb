@@ -160,46 +160,54 @@ export default function Manhole() {
                                 <Box p={1}>
                                     <Grid container>
                                         <Grid item xs={6}>
-                                            Elevation top:
+                                            Elevation lid:
                                         </Grid>
                                         <Grid item xs={4} mb={1}>
                                             {manhole.topElevation.toFixed(3)} m
                                         </Grid>
 
-                                        {manhole.bottomInnerElevation && (
+                                        <Grid item xs={6} mb={1}>
+                                            Elevation inner bottom:
+                                        </Grid>
+                                        <Grid item xs={4}>
+                                            {manhole.bottomInnerElevation
+                                                ? manhole.bottomInnerElevation.toFixed(3)
+                                                : manhole.bottomOuterElevation.toFixed(3)}{" "}
+                                            m
+                                        </Grid>
+
+                                        {manhole.top.outerRadius && (
                                             <>
                                                 <Grid item xs={6} mb={1}>
-                                                    Elevation inner bottom:
+                                                    Diameter lid:
                                                 </Grid>
                                                 <Grid item xs={4}>
-                                                    {manhole.bottomInnerElevation.toFixed(3)} m
+                                                    {(manhole.top.outerRadius * 2).toFixed(3)} m
                                                 </Grid>
                                             </>
                                         )}
 
                                         <Grid item xs={6} mb={1}>
-                                            Elevation outer bottom:
+                                            Diameter inner cylinder:
                                         </Grid>
                                         <Grid item xs={4}>
-                                            {manhole.bottomOuterElevation.toFixed(3)} m
+                                            {(
+                                                (manhole.innerRadius ? manhole.innerRadius : manhole.outerRadius) * 2
+                                            ).toFixed(3)}{" "}
+                                            m
                                         </Grid>
-
-                                        {manhole.innerRadius && (
-                                            <>
-                                                <Grid item xs={6} mb={1}>
-                                                    Diameter inner cylinder:
-                                                </Grid>
-                                                <Grid item xs={4}>
-                                                    {(manhole.innerRadius * 2).toFixed(3)} m
-                                                </Grid>
-                                            </>
-                                        )}
 
                                         <Grid item xs={6} mb={1}>
-                                            Diameter outer cylinder:{" "}
+                                            Depth:
                                         </Grid>
                                         <Grid item xs={4}>
-                                            {(manhole.outerRadius * 2).toFixed(3)} m
+                                            {(
+                                                manhole.topElevation -
+                                                (manhole.bottomInnerElevation
+                                                    ? manhole.bottomInnerElevation
+                                                    : manhole.bottomOuterElevation)
+                                            ).toFixed(3)}{" "}
+                                            m
                                         </Grid>
                                     </Grid>
                                 </Box>
