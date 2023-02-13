@@ -35,7 +35,8 @@ export const manholeSlice = createSlice({
             }
 
             state.selectedId = action.payload.id;
-            state.collisionTarget = action.payload.collisionTarget ? action.payload.collisionTarget : undefined;
+            state.collisionTarget = action.payload.collisionTarget;
+            state.collisionSettings = action.payload.collisionSettings;
         },
         setManholeValues: (state, action: PayloadAction<State["measureValues"]>) => {
             state.measureValues = action.payload as any;

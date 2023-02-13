@@ -42,8 +42,9 @@ declare module "@novorender/data-js-api" {
         manhole?: {
             id: number;
             collisionTarget?: {
-                selected: { id: number; pos: vec3; settings?: MeasureSettings };
+                selected: { id: number; pos: vec3 };
             };
+            collisionSettings?: MeasureSettings;
         };
         selectedMeasureEntities?: ExtendedMeasureEntity[];
     }
