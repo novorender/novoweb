@@ -85,11 +85,19 @@ export function drawPart(
         ctx.strokeStyle = getLineColor(colorSettings.lineColor, 0);
         if (part.drawType === "angle" && part.vertices2D.length === 3 && part.text) {
             return drawAngle(ctx, camera, part);
+        } else if (part.drawType === "text") {
+            return drawTextPart(ctx, part);
         } else if (part.drawType === "lines" || part.drawType === "filled") {
             return drawLinesOrPolygon(ctx, part, colorSettings, textSettings);
         } else if (part.drawType === "vertex") {
             return drawPoints(ctx, part, colorSettings);
         }
+    }
+    return false;
+}
+function drawTextPart(ctx: CanvasRenderingContext2D, part: DrawPart) {
+    if (part.drawType === "text" && part.text && part.vertices2D) {
+        return drawText(ctx, part.vertices2D, part.text);
     }
     return false;
 }
@@ -239,13 +247,6 @@ function drawLinesOrPolygon(
         }
 
         if (text && (text.customText?.length || part.text)) {
-            ctx.strokeStyle = "black";
-            ctx.fillStyle = "white";
-            ctx.lineWidth = 2;
-            ctx.font = `bold ${16}px "Open Sans", sans-serif`;
-            ctx.textBaseline = "bottom";
-            ctx.textAlign = "center";
-
             if (text.type === "centerOfLine") {
                 const points = part.vertices2D;
                 for (let i = 0; i < points.length - 1; ++i) {
@@ -254,35 +255,13 @@ function drawLinesOrPolygon(
                         continue;
                     }
                     textStr += `${text.unit ? text.unit : "m"}`;
-                    let dir =
-                        points[i][0] > points[i + 1][0]
-                            ? vec2.sub(vec2.create(), points[i], points[i + 1])
-                            : vec2.sub(vec2.create(), points[i + 1], points[i]);
-                    const pixLen = ctx.measureText(textStr).width + 20;
-                    if (vec2.sqrLen(dir) > pixLen * pixLen) {
-                        const center = vec2.create();
-                        vec2.lerp(center, points[i], points[i + 1], 0.5);
-                        const x = center[0];
-                        const y = center[1];
-                        vec2.normalize(dir, dir);
-                        const angle = Math.atan2(dir[1], dir[0]);
-                        ctx.translate(x, y);
-                        ctx.rotate(angle);
-                        ctx.strokeText(textStr, 0, 0);
-                        ctx.fillText(textStr, 0, 0);
-                        ctx.resetTransform();
-                    }
+                    drawText(ctx, [points[i], points[i + 1]], textStr);
                 }
             } else if (text.type === "center" && part.vertices2D.length > 2) {
-                const center = vec2.create();
-                for (const p of part.vertices2D) {
-                    vec2.add(center, center, p);
-                }
                 const textStr = `${
                     text.customText && text.customText.length > 0 ? text.customText : part.text ? part.text : ""
                 } ${text.unit ? text.unit : "m"}`;
-                ctx.strokeText(textStr, center[0] / part.vertices2D.length, center[1] / part.vertices2D.length);
-                ctx.fillText(textStr, center[0] / part.vertices2D.length, center[1] / part.vertices2D.length);
+                drawText(ctx, part.vertices2D, textStr);
             }
         }
         return true;
@@ -347,4 +326,44 @@ export function drawTexts(ctx: CanvasRenderingContext2D, positions: ReadonlyVec2
         ctx.strokeText(texts[i], positions[i][0], positions[i][1]);
         ctx.fillText(texts[i], positions[i][0], positions[i][1]);
     }
+}
+
+export function drawText(ctx: CanvasRenderingContext2D, vertices2D: ReadonlyVec2[], text: string) {
+    ctx.strokeStyle = "black";
+    ctx.fillStyle = "white";
+    ctx.lineWidth = 2;
+    ctx.font = `bold ${16}px "Open Sans", sans-serif`;
+    ctx.textBaseline = "bottom";
+    ctx.textAlign = "center";
+    if (vertices2D.length === 1) {
+        ctx.strokeText(text, vertices2D[0][0], vertices2D[0][1]);
+        ctx.fillText(text, vertices2D[0][0], vertices2D[0][1]);
+    } else if (vertices2D.length === 2) {
+        let dir =
+            vertices2D[0][0] > vertices2D[1][0]
+                ? vec2.sub(vec2.create(), vertices2D[0], vertices2D[1])
+                : vec2.sub(vec2.create(), vertices2D[1], vertices2D[0]);
+        const pixLen = ctx.measureText(text).width + 20;
+        if (vec2.sqrLen(dir) > pixLen * pixLen) {
+            const center = vec2.create();
+            vec2.lerp(center, vertices2D[0], vertices2D[1], 0.5);
+            const x = center[0];
+            const y = center[1];
+            vec2.normalize(dir, dir);
+            const angle = Math.atan2(dir[1], dir[0]);
+            ctx.translate(x, y);
+            ctx.rotate(angle);
+            ctx.strokeText(text, 0, 0);
+            ctx.fillText(text, 0, 0);
+            ctx.resetTransform();
+        }
+    } else {
+        const center = vec2.create();
+        for (const p of vertices2D) {
+            vec2.add(center, center, p);
+        }
+        ctx.strokeText(text, center[0] / vertices2D.length, center[1] / vertices2D.length);
+        ctx.fillText(text, center[0] / vertices2D.length, center[1] / vertices2D.length);
+    }
+    return true;
 }

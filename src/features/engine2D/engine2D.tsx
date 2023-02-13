@@ -430,16 +430,6 @@ export function Engine2D() {
             }
             if (roadCrossSectionData) {
                 roadCrossSectionData.forEach((section) => {
-                    const centerIdx = section.codes.findIndex((c) => c === 10);
-                    const textList = section.codes.map((c, i) => {
-                        if (i === centerIdx - 1) {
-                            return (section.slopes.left * 100).toFixed(1);
-                        }
-                        if (i === centerIdx) {
-                            return (section.slopes.right * 100).toFixed(1);
-                        }
-                        return "";
-                    });
                     const colorList: string[] = [];
                     section.codes.forEach((c) => {
                         switch (c) {
@@ -472,15 +462,24 @@ export function Engine2D() {
                                     {
                                         lineColor: colorList,
                                     },
-                                    2,
-                                    {
-                                        type: "centerOfLine",
-                                        customText: textList,
-                                        unit: "%",
-                                    }
+                                    2
                                 );
                             });
                         });
+                    }
+                    const slopeL = measureApi.getDrawText(
+                        view,
+                        [section.slopes.left.start, section.slopes.left.end],
+                        (section.slopes.left.slope * 100).toFixed(1) + "%"
+                    );
+                    const slopeR = measureApi.getDrawText(
+                        view,
+                        [section.slopes.right.start, section.slopes.right.end],
+                        (section.slopes.right.slope * 100).toFixed(1) + "%"
+                    );
+                    if (slopeL && slopeR) {
+                        drawProduct(context2D, camSettings, slopeL, {}, 3);
+                        drawProduct(context2D, camSettings, slopeR, {}, 3);
                     }
                 });
             }
