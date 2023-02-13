@@ -24,6 +24,7 @@ import { jiraApi, jiraReducer } from "features/jira";
 import { manholeReducer } from "features/manhole";
 import { selectionBasketReducer } from "features/selectionBasket";
 import { xsiteManageReducer, xsiteManageApi } from "features/xsiteManage";
+import { roadProfileReducer } from "features/roadProfile";
 
 const rootReducer = combineReducers({
     explorer: explorerReducer,
@@ -42,6 +43,7 @@ const rootReducer = combineReducers({
     myLocation: myLocationReducer,
     bimCollab: bimCollabReducer,
     heightProfile: heightProfileReducer,
+    roadProfile: roadProfileReducer,
     selectionBasket: selectionBasketReducer,
     [bimCollabApi.reducerPath]: bimCollabApi.reducer,
     bimTrack: bimTrackReducer,
