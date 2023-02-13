@@ -80,16 +80,14 @@ export function useLoadCollisionResult() {
                                       innerCollision.point[2]
                                   ),
                               ]
-                            : outerCollision
-                            ? [
-                                  outerCollision.point,
+                            : [
+                                  outerCollision!.point,
                                   vec3.fromValues(
-                                      outerCollision.point[0],
+                                      outerCollision!.point[0],
                                       manhole.topElevation,
-                                      outerCollision.point[2]
+                                      outerCollision!.point[2]
                                   ),
-                              ]
-                            : undefined,
+                              ],
                     })
                 );
                 dispatch(manholeActions.setLoadingBrep(false));

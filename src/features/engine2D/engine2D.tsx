@@ -325,12 +325,7 @@ export function Engine2D() {
             }
 
             if (manholeCollisionValues && (manholeCollisionValues.outer || manholeCollisionValues.inner)) {
-                const colVal = measureApi.getDrawObjectFromPoints(
-                    view,
-                    manholeCollisionValues.inner ?? manholeCollisionValues.outer!,
-                    false,
-                    true
-                );
+                const colVal = measureApi.getDrawObjectFromPoints(view, manholeCollisionValues.lid, false, true);
                 if (colVal) {
                     colVal.objects.forEach((obj) => {
                         obj.parts.forEach((part) => {
@@ -351,8 +346,8 @@ export function Engine2D() {
                                             .len(
                                                 vec3.sub(
                                                     vec3.create(),
-                                                    manholeCollisionValues.outer![0],
-                                                    manholeCollisionValues.outer![1]
+                                                    manholeCollisionValues.lid[0],
+                                                    manholeCollisionValues.lid![1]
                                                 )
                                             )
                                             .toFixed(2),

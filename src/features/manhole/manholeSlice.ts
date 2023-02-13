@@ -10,7 +10,7 @@ const initialState = {
     measureValues: undefined as ManholeMeasureValues | undefined,
     loadingBrep: false,
     pinned: false,
-    collisionValues: undefined as undefined | { outer?: [vec3, vec3]; inner?: [vec3, vec3]; lid?: [vec3, vec3] },
+    collisionValues: undefined as undefined | { outer?: [vec3, vec3]; inner?: [vec3, vec3]; lid: [vec3, vec3] },
     collisionTarget: undefined as undefined | { selected: { id: number; pos: vec3 }; entity?: MeasureEntity },
     collisionSettings: undefined as undefined | MeasureSettings,
 };

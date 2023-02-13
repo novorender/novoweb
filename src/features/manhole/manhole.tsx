@@ -209,6 +209,25 @@ export default function Manhole() {
                                             ).toFixed(3)}{" "}
                                             m
                                         </Grid>
+                                        {collisionValues && (
+                                            <>
+                                                <Grid item xs={6} mb={1}>
+                                                    Collision depth from lid:
+                                                </Grid>
+                                                <Grid item xs={4}>
+                                                    {vec3
+                                                        .len(
+                                                            vec3.sub(
+                                                                vec3.create(),
+                                                                collisionValues.lid[0],
+                                                                collisionValues.lid[1]
+                                                            )
+                                                        )
+                                                        .toFixed(2)}{" "}
+                                                    m
+                                                </Grid>
+                                            </>
+                                        )}
                                     </Grid>
                                 </Box>
                                 <Accordion defaultExpanded={false} level={2}>
