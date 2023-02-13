@@ -237,7 +237,7 @@ export default function Manhole() {
                                             <AccordionSummary level={3}>
                                                 <Box width={0} flex="1 1 auto" overflow="hidden">
                                                     <Box overflow="hidden" whiteSpace="nowrap" textOverflow="ellipsis">
-                                                        Top
+                                                        Lid
                                                     </Box>
                                                 </Box>
                                             </AccordionSummary>
