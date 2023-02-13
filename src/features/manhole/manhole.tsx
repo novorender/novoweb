@@ -223,7 +223,7 @@ export default function Manhole() {
                                                                 collisionValues.lid[1]
                                                             )
                                                         )
-                                                        .toFixed(2)}{" "}
+                                                        .toFixed(3)}{" "}
                                                     m
                                                 </Grid>
                                             </>
@@ -340,12 +340,29 @@ export default function Manhole() {
                                     {collisionValues && (
                                         <Box px={1} mb={-0.5}>
                                             <Grid container>
-                                                {collisionValues.inner && (
+                                                {collisionValues.lid && (
                                                     <>
                                                         <Grid item xs={5}>
-                                                            To inner bottom:
+                                                            To lid:
                                                         </Grid>
                                                         <Grid item xs={5}>
+                                                            {vec3
+                                                                .distance(
+                                                                    collisionValues.lid[0],
+                                                                    collisionValues.lid[1]
+                                                                )
+                                                                .toFixed(3)}{" "}
+                                                            m
+                                                        </Grid>
+                                                    </>
+                                                )}
+
+                                                {collisionValues.inner && (
+                                                    <>
+                                                        <Grid item xs={5} mt={1}>
+                                                            To inner bottom:
+                                                        </Grid>
+                                                        <Grid item xs={5} mt={1}>
                                                             {vec3
                                                                 .distance(
                                                                     collisionValues.inner[0],
