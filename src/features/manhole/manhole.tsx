@@ -160,47 +160,74 @@ export default function Manhole() {
                                 <Box p={1}>
                                     <Grid container>
                                         <Grid item xs={6}>
-                                            Elevation top:
+                                            Elevation lid:
                                         </Grid>
                                         <Grid item xs={4} mb={1}>
                                             {manhole.topElevation.toFixed(3)} m
                                         </Grid>
 
-                                        {manhole.bottomInnerElevation && (
+                                        <Grid item xs={6} mb={1}>
+                                            Elevation inner bottom:
+                                        </Grid>
+                                        <Grid item xs={4}>
+                                            {manhole.bottomInnerElevation
+                                                ? manhole.bottomInnerElevation.toFixed(3)
+                                                : manhole.bottomOuterElevation.toFixed(3)}{" "}
+                                            m
+                                        </Grid>
+
+                                        {manhole.top.outerRadius && (
                                             <>
                                                 <Grid item xs={6} mb={1}>
-                                                    Elevation inner bottom:
+                                                    Diameter lid:
                                                 </Grid>
                                                 <Grid item xs={4}>
-                                                    {manhole.bottomInnerElevation.toFixed(3)} m
+                                                    {(manhole.top.outerRadius * 2).toFixed(3)} m
                                                 </Grid>
                                             </>
                                         )}
 
                                         <Grid item xs={6} mb={1}>
-                                            Elevation outer bottom:
+                                            Diameter inner cylinder:
                                         </Grid>
                                         <Grid item xs={4}>
-                                            {manhole.bottomOuterElevation.toFixed(3)} m
+                                            {(
+                                                (manhole.innerRadius ? manhole.innerRadius : manhole.outerRadius) * 2
+                                            ).toFixed(3)}{" "}
+                                            m
                                         </Grid>
 
-                                        {manhole.innerRadius && (
+                                        <Grid item xs={6} mb={1}>
+                                            Depth:
+                                        </Grid>
+                                        <Grid item xs={4}>
+                                            {(
+                                                manhole.topElevation -
+                                                (manhole.bottomInnerElevation
+                                                    ? manhole.bottomInnerElevation
+                                                    : manhole.bottomOuterElevation)
+                                            ).toFixed(3)}{" "}
+                                            m
+                                        </Grid>
+                                        {collisionValues && (
                                             <>
                                                 <Grid item xs={6} mb={1}>
-                                                    Diameter inner cylinder:
+                                                    Collision depth from lid:
                                                 </Grid>
                                                 <Grid item xs={4}>
-                                                    {(manhole.innerRadius * 2).toFixed(3)} m
+                                                    {vec3
+                                                        .len(
+                                                            vec3.sub(
+                                                                vec3.create(),
+                                                                collisionValues.lid[0],
+                                                                collisionValues.lid[1]
+                                                            )
+                                                        )
+                                                        .toFixed(3)}{" "}
+                                                    m
                                                 </Grid>
                                             </>
                                         )}
-
-                                        <Grid item xs={6} mb={1}>
-                                            Diameter outer cylinder:{" "}
-                                        </Grid>
-                                        <Grid item xs={4}>
-                                            {(manhole.outerRadius * 2).toFixed(3)} m
-                                        </Grid>
                                     </Grid>
                                 </Box>
                                 <Accordion defaultExpanded={false} level={2}>
@@ -210,7 +237,7 @@ export default function Manhole() {
                                             <AccordionSummary level={3}>
                                                 <Box width={0} flex="1 1 auto" overflow="hidden">
                                                     <Box overflow="hidden" whiteSpace="nowrap" textOverflow="ellipsis">
-                                                        Top
+                                                        Lid
                                                     </Box>
                                                 </Box>
                                             </AccordionSummary>
@@ -313,12 +340,29 @@ export default function Manhole() {
                                     {collisionValues && (
                                         <Box px={1} mb={-0.5}>
                                             <Grid container>
-                                                {collisionValues.inner && (
+                                                {collisionValues.lid && (
                                                     <>
                                                         <Grid item xs={5}>
-                                                            To inner bottom:
+                                                            To lid:
                                                         </Grid>
                                                         <Grid item xs={5}>
+                                                            {vec3
+                                                                .distance(
+                                                                    collisionValues.lid[0],
+                                                                    collisionValues.lid[1]
+                                                                )
+                                                                .toFixed(3)}{" "}
+                                                            m
+                                                        </Grid>
+                                                    </>
+                                                )}
+
+                                                {collisionValues.inner && (
+                                                    <>
+                                                        <Grid item xs={5} mt={1}>
+                                                            To inner bottom:
+                                                        </Grid>
+                                                        <Grid item xs={5} mt={1}>
                                                             {vec3
                                                                 .distance(
                                                                     collisionValues.inner[0],

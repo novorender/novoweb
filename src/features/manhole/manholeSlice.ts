@@ -10,7 +10,7 @@ const initialState = {
     measureValues: undefined as ManholeMeasureValues | undefined,
     loadingBrep: false,
     pinned: false,
-    collisionValues: undefined as undefined | { outer?: [vec3, vec3]; inner?: [vec3, vec3] },
+    collisionValues: undefined as undefined | { outer?: [vec3, vec3]; inner?: [vec3, vec3]; lid: [vec3, vec3] },
     collisionTarget: undefined as undefined | { selected: { id: number; pos: vec3 }; entity?: MeasureEntity },
     collisionSettings: undefined as undefined | MeasureSettings,
 };
@@ -35,7 +35,8 @@ export const manholeSlice = createSlice({
             }
 
             state.selectedId = action.payload.id;
-            state.collisionTarget = action.payload.collisionTarget ? action.payload.collisionTarget : undefined;
+            state.collisionTarget = action.payload.collisionTarget;
+            state.collisionSettings = action.payload.collisionSettings;
         },
         setManholeValues: (state, action: PayloadAction<State["measureValues"]>) => {
             state.measureValues = action.payload as any;
