@@ -2,7 +2,7 @@ import { DrawPart, DrawProduct } from "@novorender/measure-api";
 import { ReadonlyVec2, ReadonlyVec3, vec2, vec3 } from "gl-matrix";
 
 export interface ColorSettings {
-    lineColor?: string | CanvasGradient;
+    lineColor?: string | CanvasGradient | string[];
     fillColor?: string;
     pointColor?: string | { start: string; middle: string; end: string };
     outlineColor?: string;
@@ -11,7 +11,7 @@ export interface ColorSettings {
 }
 
 export interface TextSettings {
-    type: "distance" | "center";
+    type: "centerOfLine" | "center";
     unit?: string;
     customText?: string[];
 }
@@ -81,8 +81,8 @@ export function drawPart(
 ): boolean {
     if (part.vertices2D) {
         ctx.lineWidth = pixelWidth;
-        ctx.strokeStyle = colorSettings.lineColor ?? "black";
         ctx.fillStyle = colorSettings.fillColor ?? "transparent";
+        ctx.strokeStyle = getLineColor(colorSettings.lineColor, 0);
         if (part.drawType === "angle" && part.vertices2D.length === 3 && part.text) {
             return drawAngle(ctx, camera, part);
         } else if (part.drawType === "lines" || part.drawType === "filled") {
@@ -178,11 +178,19 @@ function drawLinesOrPolygon(
     colorSettings: ColorSettings,
     text?: TextSettings
 ) {
+    const lineColArray = colorSettings.lineColor !== undefined && Array.isArray(colorSettings.lineColor);
     if (part.vertices2D) {
         ctx.beginPath();
         ctx.moveTo(part.vertices2D[0][0], part.vertices2D[0][1]);
         for (let i = 1; i < part.vertices2D.length; ++i) {
             ctx.lineTo(part.vertices2D[i][0], part.vertices2D[i][1]);
+            if (lineColArray) {
+                ctx.strokeStyle = getLineColor(colorSettings.lineColor, i - 1);
+                ctx.lineCap = "butt";
+                ctx.stroke();
+                ctx.beginPath();
+                ctx.moveTo(part.vertices2D[i][0], part.vertices2D[i][1]);
+            }
         }
 
         if (part.voids) {
@@ -203,14 +211,14 @@ function drawLinesOrPolygon(
             ctx.fill();
         }
 
-        if (colorSettings.outlineColor && colorSettings.lineColor) {
+        if (colorSettings.outlineColor && colorSettings.lineColor && !lineColArray) {
             const tmpWidth = ctx.lineWidth;
             ctx.lineWidth *= 2;
             ctx.strokeStyle = colorSettings.outlineColor;
             ctx.lineCap = "round";
             ctx.stroke();
             ctx.lineWidth = tmpWidth;
-            ctx.strokeStyle = colorSettings.lineColor;
+            ctx.strokeStyle = getLineColor(colorSettings.lineColor, 0);
             ctx.lineCap = "butt";
         }
 
@@ -238,12 +246,14 @@ function drawLinesOrPolygon(
             ctx.textBaseline = "bottom";
             ctx.textAlign = "center";
 
-            if (text.type === "distance") {
+            if (text.type === "centerOfLine") {
                 const points = part.vertices2D;
                 for (let i = 0; i < points.length - 1; ++i) {
-                    const textStr = `${
-                        text.customText && i < text.customText.length ? text.customText[i] : part.text
-                    } ${text.unit ? text.unit : "m"}`;
+                    let textStr = `${text.customText && i < text.customText.length ? text.customText[i] : part.text}`;
+                    if (textStr.length === 0) {
+                        continue;
+                    }
+                    textStr += `${text.unit ? text.unit : "m"}`;
                     let dir =
                         points[i][0] > points[i + 1][0]
                             ? vec2.sub(vec2.create(), points[i], points[i + 1])
@@ -278,6 +288,17 @@ function drawLinesOrPolygon(
         return true;
     }
     return false;
+}
+
+function getLineColor(lineColor: string | CanvasGradient | string[] | undefined, idx: number) {
+    if (lineColor) {
+        return Array.isArray(lineColor)
+            ? idx < lineColor.length
+                ? lineColor[idx]
+                : lineColor[lineColor.length - 1]
+            : lineColor;
+    }
+    return "black";
 }
 
 function getPointColor(

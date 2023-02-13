@@ -34,7 +34,10 @@ import {
     selectCurrentCenter,
     selectAutoStepSize,
     selectResetPositionOnInit,
+    selectSelectedPath,
+    selectLandXmlPaths,
 } from "./followPathSlice";
+import { AsyncStatus } from "types/misc";
 
 const profileFractionDigits = 3;
 
@@ -55,6 +58,8 @@ export function Follow({ fpObj }: { fpObj: FollowParametricObject }) {
     const ptHeight = useAppSelector(selectPtHeight);
     const profileRange = useAppSelector(selectProfileRange);
     const resetPosition = useAppSelector(selectResetPositionOnInit);
+    const selectedPath = useAppSelector(selectSelectedPath);
+    const paths = useAppSelector(selectLandXmlPaths);
     const _clipping = useAppSelector(selectClipping);
 
     const [clipping, setClipping] = useState(_clipping);
@@ -107,6 +112,12 @@ export function Follow({ fpObj }: { fpObj: FollowParametricObject }) {
             );
 
             if (view2d) {
+                if (selectedPath !== undefined && paths.status === AsyncStatus.Success) {
+                    const roadIds = paths.data[selectedPath].roadIds;
+                    if (roadIds) {
+                        dispatch(followPathActions.setDrawRoadId(roadIds));
+                    }
+                }
                 const mat = mat4.fromRotationTranslation(mat4.create(), rotation, offsetPt);
 
                 dispatch(
@@ -145,7 +156,7 @@ export function Follow({ fpObj }: { fpObj: FollowParametricObject }) {
             dispatch(followPathActions.setCurrentCenter(pt as [number, number, number]));
             dispatch(followPathActions.setPtHeight(pt[1]));
         },
-        [clipping, currentCenter, dispatch, fpObj, view]
+        [clipping, currentCenter, dispatch, fpObj, view, selectedPath, paths]
     );
 
     useEffect(() => {

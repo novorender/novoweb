@@ -21,6 +21,7 @@ import { CameraType, selectCameraType, selectGrid } from "slices/renderSlice";
 
 import { drawPart, drawProduct, drawTexts } from "../engine2D/utils";
 import { selectCrossSectionPoints } from "features/orthoCam";
+import { useCrossSection } from "features/followPath/useCrossSection";
 
 const Canvas2D = styled("canvas")(
     () => css`
@@ -58,6 +59,8 @@ export function Engine2D() {
     const heightProfileMeasureObject = useHeightProfileMeasureObject();
     const measureObjects = useMeasureObjects();
     const pathMeasureObjects = usePathMeasureObjects();
+    const roadCrossSection = useCrossSection();
+    const roadCrossSectionData = roadCrossSection.status === AsyncStatus.Success ? roadCrossSection.data : undefined;
     const pathMeasureObjectsData =
         pathMeasureObjects.status === AsyncStatus.Success ? pathMeasureObjects.data : undefined;
     const areaValue = useAppSelector(selectArea);
@@ -211,7 +214,7 @@ export function Engine2D() {
                                 },
                                 3,
                                 {
-                                    type: "distance",
+                                    type: "centerOfLine",
                                 }
                             );
                             break;
@@ -223,49 +226,49 @@ export function Engine2D() {
                                 { lineColor: "black", pointColor: "black", displayAllPoints: true },
                                 3,
                                 {
-                                    type: "distance",
+                                    type: "centerOfLine",
                                 }
                             );
                             break;
                         case "x-axis":
                             drawPart(context2D, camSettings, part, { lineColor: "red" }, 3, {
-                                type: "distance",
+                                type: "centerOfLine",
                             });
                             break;
                         case "y-axis":
                             drawPart(context2D, camSettings, part, { lineColor: "blue" }, 3, {
-                                type: "distance",
+                                type: "centerOfLine",
                             });
                             break;
                         case "z-axis":
                             drawPart(context2D, camSettings, part, { lineColor: "green" }, 3, {
-                                type: "distance",
+                                type: "centerOfLine",
                             });
                             break;
                         case "xy-plane":
                             drawPart(context2D, camSettings, part, { lineColor: "purple" }, 3, {
-                                type: "distance",
+                                type: "centerOfLine",
                             });
                             break;
                         case "z-angle":
                             drawPart(context2D, camSettings, part, { lineColor: "green" }, 2, {
-                                type: "distance",
+                                type: "centerOfLine",
                             });
                             break;
                         case "xz-angle":
                             drawPart(context2D, camSettings, part, { lineColor: "purple" }, 2, {
-                                type: "distance",
+                                type: "centerOfLine",
                             });
                             break;
                         case "cylinder-angle":
                             cylinderAngleDrawn = drawPart(context2D, camSettings, part, { lineColor: "blue" }, 2, {
-                                type: "distance",
+                                type: "centerOfLine",
                             });
                             break;
                         case "cylinder-angle-line":
                             if (cylinderAngleDrawn) {
                                 drawPart(context2D, camSettings, part, { lineColor: "blue" }, 2, {
-                                    type: "distance",
+                                    type: "centerOfLine",
                                 });
                             }
                             break;
@@ -325,12 +328,8 @@ export function Engine2D() {
             }
 
             if (manholeCollisionValues && (manholeCollisionValues.outer || manholeCollisionValues.inner)) {
-                const colVal = measureApi.getDrawObjectFromPoints(
-                    view,
-                    manholeCollisionValues.inner ?? manholeCollisionValues.outer!,
-                    false,
-                    true
-                );
+                const colPoint = manholeCollisionValues.inner ?? manholeCollisionValues.outer!;
+                const colVal = measureApi.getDrawObjectFromPoints(view, colPoint, false, true);
                 if (colVal) {
                     colVal.objects.forEach((obj) => {
                         obj.parts.forEach((part) => {
@@ -345,17 +344,9 @@ export function Engine2D() {
                                 },
                                 2,
                                 {
-                                    type: "distance",
+                                    type: "centerOfLine",
                                     customText: [
-                                        vec3
-                                            .len(
-                                                vec3.sub(
-                                                    vec3.create(),
-                                                    manholeCollisionValues.outer![0],
-                                                    manholeCollisionValues.outer![1]
-                                                )
-                                            )
-                                            .toFixed(2),
+                                        vec3.len(vec3.sub(vec3.create(), colPoint[0], colPoint[1])).toFixed(2),
                                     ],
                                 }
                             );
@@ -408,7 +399,7 @@ export function Engine2D() {
                                 },
                                 2,
                                 {
-                                    type: "distance",
+                                    type: "centerOfLine",
                                     customText: textList,
                                 }
                             );
@@ -437,6 +428,62 @@ export function Engine2D() {
                     });
                 }
             }
+            if (roadCrossSectionData) {
+                roadCrossSectionData.forEach((section) => {
+                    const centerIdx = section.codes.findIndex((c) => c === 10);
+                    const textList = section.codes.map((c, i) => {
+                        if (i === centerIdx - 1) {
+                            return (section.slopes.left * 100).toFixed(1);
+                        }
+                        if (i === centerIdx) {
+                            return (section.slopes.right * 100).toFixed(1);
+                        }
+                        return "";
+                    });
+                    const colorList: string[] = [];
+                    section.codes.forEach((c) => {
+                        switch (c) {
+                            case 10:
+                                return;
+                            case 0:
+                                colorList.push("green");
+                                break;
+                            case 1:
+                                colorList.push("#333232");
+                                break;
+                            case 2:
+                                colorList.push("black");
+                                break;
+                            case 3:
+                                colorList.push("blue");
+                                break;
+                            default:
+                                colorList.push("brown");
+                        }
+                    });
+                    const drawProd = measureApi.getDrawObjectFromPoints(view, section.points, false, false);
+                    if (drawProd) {
+                        drawProd.objects.forEach((obj) => {
+                            obj.parts.forEach((part) => {
+                                drawPart(
+                                    context2D,
+                                    camSettings,
+                                    part,
+                                    {
+                                        lineColor: colorList,
+                                    },
+                                    2,
+                                    {
+                                        type: "centerOfLine",
+                                        customText: textList,
+                                        unit: "%",
+                                    }
+                                );
+                            });
+                        });
+                    }
+                });
+            }
         }
     }, [
         view,
@@ -461,6 +508,7 @@ export function Engine2D() {
         measure.hover,
         measure.pinned,
         crossSection,
+        roadCrossSectionData,
     ]);
 
     useEffect(() => {
