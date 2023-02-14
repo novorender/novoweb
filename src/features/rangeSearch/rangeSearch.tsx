@@ -6,8 +6,8 @@ import { DatePicker } from "@mui/x-date-pickers";
 import { format, isValid, parse } from "date-fns";
 
 import { LinearProgress, ScrollBox, WidgetContainer, WidgetHeader, LogoSpeedDial, TextField, Switch } from "components";
-import { NodeList } from "features/nodeList";
-import { WidgetList } from "features/widgetList";
+import { NodeList } from "features/nodeList/nodeList";
+import WidgetList from "features/widgetList/widgetList";
 import { useToggle } from "hooks/useToggle";
 import { useMountedState } from "hooks/useMountedState";
 import { useAbortController } from "hooks/useAbortController";

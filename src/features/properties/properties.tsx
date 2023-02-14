@@ -45,7 +45,7 @@ import { highlightActions, useDispatchHighlighted } from "contexts/highlighted";
 import { NodeType } from "features/modelTree/modelTree";
 import { useExplorerGlobals } from "contexts/explorerGlobals";
 import { featuresConfig } from "config/features";
-import { WidgetList } from "features/widgetList";
+import WidgetList from "features/widgetList/widgetList";
 import { selectMaximized, selectMinimized } from "slices/explorerSlice";
 
 enum Status {

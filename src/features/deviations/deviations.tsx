@@ -18,7 +18,7 @@ import { ColorResult } from "react-color";
 
 import { dataApi } from "app";
 import { featuresConfig } from "config/features";
-import { WidgetList } from "features/widgetList";
+import WidgetList from "features/widgetList/widgetList";
 import { ColorPicker } from "features/colorPicker";
 import { LinearProgress, LogoSpeedDial, ScrollBox, Tooltip, WidgetContainer, WidgetHeader } from "components";
 

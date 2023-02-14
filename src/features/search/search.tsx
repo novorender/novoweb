@@ -14,8 +14,8 @@ import {
     LogoSpeedDial,
     AdvancedSearchInputs,
 } from "components";
-import { NodeList } from "features/nodeList";
-import { WidgetList } from "features/widgetList";
+import { NodeList } from "features/nodeList/nodeList";
+import WidgetList from "features/widgetList/widgetList";
 
 import { useToggle } from "hooks/useToggle";
 import { useMountedState } from "hooks/useMountedState";

@@ -3,7 +3,7 @@ import { Box, Button, Grid } from "@mui/material";
 import { LogoSpeedDial, ScrollBox, WidgetContainer, WidgetHeader } from "components";
 import { useToggle } from "hooks/useToggle";
 import { featuresConfig } from "config/features";
-import { WidgetList } from "features/widgetList";
+import WidgetList from "features/widgetList/widgetList";
 import { useAppSelector } from "app/store";
 import { selectMsalAccount, selectUser, User as UserType } from "slices/authSlice";
 import { useSceneId } from "hooks/useSceneId";

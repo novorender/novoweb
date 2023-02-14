@@ -5,7 +5,7 @@ import { DeleteSweep, Undo } from "@mui/icons-material";
 import { useAppDispatch, useAppSelector } from "app/store";
 import { IosSwitch, ScrollBox, LogoSpeedDial, WidgetContainer, WidgetHeader } from "components";
 import { featuresConfig } from "config/features";
-import { WidgetList } from "features/widgetList";
+import WidgetList from "features/widgetList/widgetList";
 import { useToggle } from "hooks/useToggle";
 import { Picker, renderActions, selectPicker } from "slices/renderSlice";
 import { selectMinimized, selectMaximized } from "slices/explorerSlice";

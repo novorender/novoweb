@@ -14,7 +14,7 @@ import { Fragment, useEffect, MouseEvent } from "react";
 import { CancelPresentation, VrpanoOutlined } from "@mui/icons-material";
 
 import { featuresConfig } from "config/features";
-import { WidgetList } from "features/widgetList";
+import WidgetList from "features/widgetList/widgetList";
 import {
     ScrollBox,
     Divider,

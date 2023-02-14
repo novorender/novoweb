@@ -6,7 +6,7 @@ import { format, parse } from "date-fns";
 
 import { Divider, ImgModal, LinearProgress, ScrollBox } from "components";
 import { useAppSelector } from "app/store";
-import { useSelectBookmark } from "features/bookmarks";
+import { useSelectBookmark } from "features/bookmarks/useSelectBookmark";
 import { dataApi } from "app";
 import { useToggle } from "hooks/useToggle";
 

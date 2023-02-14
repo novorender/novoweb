@@ -16,7 +16,7 @@ import {
     VertexTable,
 } from "components";
 import { featuresConfig } from "config/features";
-import { WidgetList } from "features/widgetList";
+import WidgetList from "features/widgetList/widgetList";
 import { useToggle } from "hooks/useToggle";
 import { Picker, renderActions, selectPicker } from "slices/renderSlice";
 import { selectMinimized, selectMaximized } from "slices/explorerSlice";

@@ -10,7 +10,7 @@ import { selectMaximized, selectMinimized } from "slices/explorerSlice";
 
 import { featuresConfig } from "config/features";
 import { WidgetContainer, LogoSpeedDial, WidgetHeader } from "components";
-import { WidgetList } from "features/widgetList";
+import WidgetList from "features/widgetList/widgetList";
 
 import { useToggle } from "hooks/useToggle";
 import { useSceneId } from "hooks/useSceneId";

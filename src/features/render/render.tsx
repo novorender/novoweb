@@ -65,7 +65,7 @@ import {
 } from "slices/renderSlice";
 import { explorerActions, selectLocalBookmarkId, selectUrlBookmarkId } from "slices/explorerSlice";
 import { selectDeviations } from "features/deviations";
-import { useSelectBookmark } from "features/bookmarks";
+import { useSelectBookmark } from "features/bookmarks/useSelectBookmark";
 import { measureActions, selectMeasure, useMeasureHoverSettings, useMeasurePickSettings } from "features/measure";
 import { manholeActions, useHandleManholeUpdates } from "features/manhole";
 import { ditioActions, useDitioMarkers, useHandleDitioKeepAlive } from "features/ditio";

@@ -31,7 +31,7 @@ export const sorting = [
     featuresConfig.advancedSettings.key,
 ] as WidgetKey[];
 
-export function WidgetList({ widgetKey, onSelect }: Props) {
+export default function WidgetList({ widgetKey, onSelect }: Props) {
     const activeWidgets = useAppSelector(selectWidgets);
     const dispatch = useAppDispatch();
 

@@ -6,7 +6,7 @@ import { Box, IconButton, ListItemIcon, ListItemText, Menu, MenuItem, Snackbar }
 import { unparse } from "papaparse";
 
 import { WidgetContainer, LogoSpeedDial, WidgetHeader, LinearProgress } from "components";
-import { WidgetList } from "features/widgetList";
+import WidgetList from "features/widgetList/widgetList";
 import { useAppSelector } from "app/store";
 import { selectMinimized, selectMaximized } from "slices/explorerSlice";
 import { featuresConfig } from "config/features";

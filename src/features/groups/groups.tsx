@@ -3,7 +3,7 @@ import { Menu, MenuItem, ListItemIcon, ListItemText, MenuProps, Box, Snackbar, I
 import { Close, Code } from "@mui/icons-material";
 
 import { WidgetContainer, LogoSpeedDial, WidgetHeader } from "components";
-import { WidgetList } from "features/widgetList";
+import WidgetList from "features/widgetList/widgetList";
 import { useAppDispatch, useAppSelector } from "app/store";
 import { selectMinimized, selectMaximized } from "slices/explorerSlice";
 import { featuresConfig } from "config/features";

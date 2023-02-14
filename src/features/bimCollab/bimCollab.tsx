@@ -3,7 +3,7 @@ import { FormEventHandler, useCallback, useEffect, useState } from "react";
 import { MemoryRouter, Switch, Route } from "react-router-dom";
 
 import { AuthInfo } from "types/bcf";
-import { WidgetList } from "features/widgetList";
+import WidgetList from "features/widgetList/widgetList";
 import { LinearProgress, LogoSpeedDial, TextField, WidgetContainer, WidgetHeader } from "components";
 import { useAppDispatch, useAppSelector } from "app/store";
 import { StorageKey } from "config/storage";
