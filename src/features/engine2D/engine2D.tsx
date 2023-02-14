@@ -16,8 +16,8 @@ import {
     selectManholeMeasureValues,
 } from "features/manhole";
 import { measureApi } from "app";
-import { AsyncStatus } from "types/misc";
-import { CameraType, selectCameraType, selectGrid } from "slices/renderSlice";
+import { AsyncStatus, ViewMode } from "types/misc";
+import { CameraType, selectCameraType, selectGrid, selectViewMode } from "slices/renderSlice";
 
 import { drawPart, drawProduct, drawTexts } from "../engine2D/utils";
 import { selectCrossSectionPoints } from "features/orthoCam";
@@ -75,6 +75,7 @@ export function Engine2D() {
     const measure = useAppSelector(selectMeasure);
     const cameraType = useAppSelector(selectCameraType);
     const grid = useAppSelector(selectGrid);
+    const viewMode = useAppSelector(selectViewMode);
 
     const renderGridLabels = useCallback(() => {
         if (
@@ -428,7 +429,7 @@ export function Engine2D() {
                     });
                 }
             }
-            if (roadCrossSectionData) {
+            if (roadCrossSectionData && viewMode === ViewMode.FollowPath) {
                 roadCrossSectionData.forEach((section) => {
                     const colorList: string[] = [];
                     section.codes.forEach((c) => {
@@ -508,6 +509,7 @@ export function Engine2D() {
         measure.pinned,
         crossSection,
         roadCrossSectionData,
+        viewMode,
     ]);
 
     useEffect(() => {

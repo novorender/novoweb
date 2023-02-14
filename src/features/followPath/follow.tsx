@@ -37,7 +37,7 @@ import {
     selectSelectedPath,
     selectLandXmlPaths,
 } from "./followPathSlice";
-import { AsyncStatus } from "types/misc";
+import { AsyncStatus, ViewMode } from "types/misc";
 
 const profileFractionDigits = 3;
 
@@ -84,6 +84,13 @@ export function Follow({ fpObj }: { fpObj: FollowParametricObject }) {
                 return;
             }
 
+            if (selectedPath !== undefined && paths.status === AsyncStatus.Success) {
+                const roadIds = paths.data[selectedPath].roadIds;
+                if (roadIds) {
+                    dispatch(followPathActions.setDrawRoadId(roadIds));
+                }
+            }
+
             const { position: pt, normal: dir } = pos;
 
             const offset =
@@ -112,12 +119,6 @@ export function Follow({ fpObj }: { fpObj: FollowParametricObject }) {
             );
 
             if (view2d) {
-                if (selectedPath !== undefined && paths.status === AsyncStatus.Success) {
-                    const roadIds = paths.data[selectedPath].roadIds;
-                    if (roadIds) {
-                        dispatch(followPathActions.setDrawRoadId(roadIds));
-                    }
-                }
                 const mat = mat4.fromRotationTranslation(mat4.create(), rotation, offsetPt);
 
                 dispatch(
@@ -158,6 +159,7 @@ export function Follow({ fpObj }: { fpObj: FollowParametricObject }) {
         },
         [clipping, currentCenter, dispatch, fpObj, view, selectedPath, paths]
     );
+    dispatch(renderActions.setViewMode(ViewMode.FollowPath));
 
     useEffect(() => {
         dispatch(
@@ -300,6 +302,12 @@ export function Follow({ fpObj }: { fpObj: FollowParametricObject }) {
             dispatch(followPathActions.setStep(String(newValue)));
         }
     };
+
+    useEffect(() => {
+        return () => {
+            dispatch(renderActions.setViewMode(ViewMode.Regular));
+        };
+    }, [dispatch]);
 
     return (
         <>
