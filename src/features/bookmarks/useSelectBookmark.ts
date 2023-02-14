@@ -252,6 +252,10 @@ export function useSelectBookmark() {
         if (bookmark.subtrees) {
             dispatch(renderActions.setSubtreesFromBookmark(bookmark.subtrees));
         }
+
+        if (bookmark.viewMode) {
+            dispatch(renderActions.setViewMode(bookmark.viewMode));
+        }
     };
 
     return select;
