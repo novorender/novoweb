@@ -158,6 +158,13 @@ export function Minimap() {
                         modelPos[0],
                         vec2.fromValues(pixelPosA[0] * scale, pixelPosA[1] * scale)
                     );
+
+                    console.log("angleAroundZ");
+                    console.log(angleAroundZ);
+                    console.log("pdfScale");
+                    console.log(pdfScale);
+                    console.log("zeroWorld");
+                    console.log(zeroWorld);
                     //calulations
                 }
             }
