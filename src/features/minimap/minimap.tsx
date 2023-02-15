@@ -2,8 +2,12 @@ import { styled } from "@mui/material";
 import { useEffect, useRef, useState } from "react";
 
 import { useExplorerGlobals } from "contexts/explorerGlobals";
-import { downloadMinimap, MinimapHelper } from "utils/minimap";
-import { quat, vec2, vec3 } from "gl-matrix";
+import { downloadMinimap, downloadPdfPreview, getElevation, MinimapHelper, PDFPreview } from "utils/minimap";
+import { quat, ReadonlyVec2, ReadonlyVec3, vec2, vec3 } from "gl-matrix";
+import { SceneData } from "@novorender/data-js-api";
+import { dataApi } from "app";
+import { useMeasureObjects } from "features/measure";
+import { PixOutlined } from "@mui/icons-material";
 
 const Canvas = styled("canvas")`
     background-color: rgba(255, 255, 255, 0.8);
@@ -18,49 +22,78 @@ export function Minimap() {
         state: { size, scene, view },
     } = useExplorerGlobals(true);
 
-    let width = Math.min(500, size.width / devicePixelRatio);
+    let width = size.width / 2;
     let height = size.height;
-    const [minimap, setMinimap] = useState<MinimapHelper | undefined>(undefined);
+    const [pdfPreview, setPdfPreview] = useState<PDFPreview | undefined>(undefined);
     const [ctx, setCtx] = useState<CanvasRenderingContext2D | null | undefined>(null);
-    const animationFrameId = useRef<number>(-1);
 
-    const prevCamPos = useRef<vec3>();
-    const prevCamRot = useRef<quat>();
+    const measureObjects = useMeasureObjects();
 
-    if (minimap) {
-        width = height * minimap.getAspect(); // If aspect changes between pdfs then this needs to be updated
-    }
+    let pdfPosA: vec2 | undefined = undefined;
+    let pdfPosB: vec2 | undefined = undefined;
+    let imgHeight = useRef<number>(0);
+    let imgWidth = useRef<number>(0);
+    let selectingA = true;
 
     useEffect(() => {
-        const downloadFunc = async () => {
-            if (canvas) {
-                setMinimap(await downloadMinimap(scene));
-                setCtx(canvas?.getContext("2d"));
-            }
+        const loadPdfScene = async () => {
+            const pdfScene = (await dataApi.loadScene("bad260f94a5340b9b767ea2756392be4")) as SceneData;
+            //setPdfScene(pdfScene);
+            const elevation = await getElevation(view!.scene);
+            const preview = await downloadPdfPreview(pdfScene);
+            setPdfPreview(preview);
+            setCtx(canvas?.getContext("2d"));
         };
-        downloadFunc();
-    }, [scene, canvas]);
+        loadPdfScene();
+    }, [canvas]);
 
     useEffect(() => {
-        if (minimap && ctx) {
+        if (pdfPreview && ctx) {
             const img = new Image();
             img.onload = function () {
-                minimap.pixelHeight = img.height * 1.5; //Set canvas height in minimap helper
-                minimap.pixelWidth = img.width * 1.5; //Set canvas width in minimap helper
-                if (ctx && minimap) {
+                if (ctx && pdfPreview) {
                     //ctx.drawImage(img, 450, 200, img.width * 0.7, img.height * 0.7, 0, 0, width, height);
-                    ctx.drawImage(img, 300, 0, img.width, img.height, 0, 0, img.width * 1.5, img.height * 1.5);
+                    ctx.drawImage(img, 0, 0, img.width, img.height, 0, 0, img.width, img.height);
+                    imgHeight.current = img.height;
+                    imgWidth.current = img.width;
                 }
                 //minimap.pixelHeight = height; //Set canvas height in minimap helper
                 //minimap.pixelWidth = width; //Set canvas width in minimap helper
             };
 
-            img.src = minimap.getMinimapImage();
+            img.src = pdfPreview.image;
         }
-    }, [canvas, width, height, ctx, minimap]);
+    }, [canvas, width, height, ctx, pdfPreview]);
 
-    const clickMinimap = (event: React.MouseEvent<HTMLCanvasElement, MouseEvent>) => {
-        if (canvas && minimap) {
+    useEffect(() => {
+        if (pdfPreview && ctx) {
+            const img = new Image();
+            img.onload = function () {
+                if (ctx && pdfPreview) {
+                    ctx.drawImage(img, 0, 0, img.width, img.height, 0, 0, img.width, img.height);
+                }
+            };
+
+            img.src = pdfPreview.image;
+        }
+    }, [canvas, width, height, ctx, pdfPreview]);
+
+    useEffect(() => {
+        if (pdfPosA && pdfPosB && measureObjects) {
+            const modelPos: vec2[] = [];
+            measureObjects.forEach((mobj) => {
+                if (mobj.drawKind === "vertex") {
+                    modelPos.push(vec2.fromValues(mobj.parameter[0], mobj.parameter[2]));
+                }
+                if (modelPos.length === 2) {
+                    //calulations
+                }
+            });
+        }
+    }, [pdfPosA, pdfPosB, measureObjects]);
+
+    const clickPdf = (event: React.MouseEvent<HTMLCanvasElement, MouseEvent>) => {
+        if (canvas && pdfPreview && ctx) {
             const rect = canvas.getBoundingClientRect();
             const x = event.clientX - rect.left;
             const y = event.clientY - rect.top;
@@ -68,61 +101,69 @@ export function Minimap() {
             //     minimap.toWorld(vec2.fromValues(x * (1 / 0.7) + 300, y * (1 / 0.7) + 200)),
             //     view.camera.rotation
             // );
-            view.camera.controller.moveTo(minimap.toWorld(vec2.fromValues(x + 300 * 1.5, y)), view.camera.rotation);
-        }
-    };
-    useEffect(() => {
-        animate();
-        function animate() {
-            // Run every frame to check if the camera has changed
-            if (
-                !prevCamRot.current ||
-                !quat.exactEquals(prevCamRot.current, view.camera.rotation) ||
-                !prevCamPos.current ||
-                !vec3.exactEquals(prevCamPos.current, view.camera.position)
-            ) {
-                prevCamRot.current = quat.clone(view.camera.rotation);
-                prevCamPos.current = vec3.clone(view.camera.position);
-                if (minimap && ctx) {
-                    //Update minimap info based on camera position. Returns true if it changed the pdf to another floor
-                    minimap.update(view.camera.position);
-                    const img = new Image();
-                    img.onload = function () {
-                        if (ctx && minimap) {
-                            //Redraw the image for te minimap
-                            ctx.clearRect(0, 0, width / 2, height);
+            if (selectingA) {
+                pdfPosA = vec2.fromValues(x, y);
+            } else {
+                pdfPosB = vec2.fromValues(x, y);
+            }
+            selectingA = !selectingA;
+            if (pdfPreview && ctx) {
+                const img = new Image();
+                img.onload = function () {
+                    if (ctx && pdfPreview) {
+                        //Redraw the image for te minimap
+                        ctx.clearRect(0, 0, width, height);
 
-                            //ctx.drawImage(img, 450, 200, img.width * 0.7, img.height * 0.7, 0, 0, width, height);
-                            ctx.drawImage(img, 300, 0, img.width, img.height, 0, 0, img.width * 1.5, img.height * 1.5);
-
-                            //Gets the camera position in minimap space
-                            const minimapPos = minimap.toMinimap(view.camera.position);
-                            minimapPos[0] -= 300 * 1.5;
-                            //minimapPos[1] -= 200;
-                            //Gets a cone of the camera direction in minimap space, point[0] is the camera position
-                            const dirPath = minimap.directionPoints(view.camera.position, view.camera.rotation);
-                            ctx.strokeStyle = "green";
-                            for (let i = 1; i < dirPath.length; ++i) {
-                                ctx.beginPath();
-                                ctx.lineWidth = 3;
-                                ctx.moveTo(dirPath[0][0] - 300 * 1.5, dirPath[0][1]);
-                                ctx.lineTo(dirPath[i][0] - 300 * 1.5, dirPath[i][1]);
-                                ctx.stroke();
-                            }
+                        //ctx.drawImage(img, 450, 200, img.width * 0.7, img.height * 0.7, 0, 0, width, height);
+                        ctx.drawImage(img, 0, 0, img.width, img.height, 0, 0, img.width, img.height);
+                        imgHeight.current = img.height;
+                        imgWidth.current = img.width;
+                        if (pdfPosA) {
                             ctx.fillStyle = "green";
                             ctx.beginPath();
-                            ctx.ellipse(minimapPos[0], minimapPos[1], 5, 5, 0, 0, Math.PI * 2);
+                            ctx.ellipse(pdfPosA[0], pdfPosA[1], 5, 5, 0, 0, Math.PI * 2);
                             ctx.fill();
                         }
-                    };
-                    img.src = minimap.getMinimapImage();
+                        if (pdfPosB) {
+                            ctx.fillStyle = "blue";
+                            ctx.beginPath();
+                            ctx.ellipse(pdfPosB[0], pdfPosB[1], 5, 5, 0, 0, Math.PI * 2);
+                            ctx.fill();
+                        }
+                    }
+                };
+                img.src = pdfPreview.image;
+            }
+            if (pdfPosA && pdfPosB && measureObjects) {
+                const modelPos: vec2[] = [];
+                measureObjects.forEach((mobj) => {
+                    if (mobj.drawKind === "vertex") {
+                        modelPos.push(vec2.fromValues(mobj.parameter[0], mobj.parameter[2] * -1));
+                    }
+                });
+                if (modelPos.length === 2) {
+                    const pixelPosA = vec2.fromValues(pdfPosA[0], imgHeight.current - pdfPosA[1]);
+                    const picelPosB = vec2.fromValues(pdfPosB[0], imgHeight.current - pdfPosB[1]);
+                    const pixelLength = vec2.dist(pixelPosA, picelPosB);
+                    const modelLength = vec2.dist(modelPos[0], modelPos[1]);
+                    const modelDir = vec2.sub(vec2.create(), modelPos[1], modelPos[0]);
+                    vec2.normalize(modelDir, modelDir);
+                    const pixDir = vec2.sub(vec2.create(), pixelPosA, picelPosB);
+                    vec2.normalize(pixDir, pixDir);
+                    const scale = modelLength / pixelLength;
+                    const angleAroundZ = vec2.dot(modelDir, pixDir);
+                    const pdfScale = imgHeight.current * scale;
+                    const zeroWorld = vec2.sub(
+                        vec2.create(),
+                        modelPos[0],
+                        vec2.fromValues(pixelPosA[0] * scale, pixelPosA[1] * scale)
+                    );
+                    //calulations
                 }
             }
-
-            animationFrameId.current = requestAnimationFrame(() => animate());
         }
-        return () => cancelAnimationFrame(animationFrameId.current);
-    }, [view, minimap, ctx, height, width]);
+    };
 
-    return <Canvas ref={setCanvas} width={width / 2} height={height} onClick={(e) => clickMinimap(e)} />;
+    //return <Canvas ref={setCanvas} width={width} height={height} />;
+    return <Canvas ref={setCanvas} width={width} height={height} onClick={(e) => clickPdf(e)} />;
 }

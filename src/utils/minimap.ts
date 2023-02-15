@@ -1,6 +1,53 @@
+import { SceneData } from "@novorender/data-js-api";
 import { Scene } from "@novorender/webgl-api";
-import { quat, vec2, vec3 } from "gl-matrix";
-import { searchByPatterns } from "./search";
+import { quat, ReadonlyQuat, ReadonlyVec3, vec2, vec3 } from "gl-matrix";
+import { iterateAsync, searchByPatterns } from "./search";
+import { sleep } from "./timers";
+
+export class PDFPreview {
+    constructor(readonly image: string) { };
+}
+
+export async function getElevation(scene: Scene): Promise<number> {
+    const iterator = scene.search({ searchPattern: [{ property: "IfcClass", value: "IfcBuildingStorey", exact: true }] }, undefined);
+    let done = false;
+    while (!done) {
+        const [result, _done] = await iterateAsync({ iterator, count: 10000 });
+        done = _done;
+        for (const ref of result) {
+            const data = await ref.loadMetaData();
+            for (const prop of data.properties) {
+                if (prop[0] === "Novorender/Elevation") {
+                    return Number(prop[1]);
+                }
+            }
+        }
+        await sleep(1);
+    }
+    return 0;
+}
+
+export async function downloadPdfPreview(scene: SceneData): Promise<PDFPreview | undefined> {
+    if (scene.db) {
+        const iterator = scene.db.search({ searchPattern: [{ property: "Novorender/Document/Preview", exact: true }] }, undefined);
+        let done = false;
+
+        while (!done) {
+            const [result, _done] = await iterateAsync({ iterator, count: 10000 });
+            done = _done;
+            for (const ref of result) {
+                const data = await ref.loadMetaData();
+                for (const prop of data.properties) {
+                    if (prop[0] === "Novorender/Document/Preview") {
+                        return new PDFPreview(prop[1]);
+                    }
+                }
+            }
+            await sleep(1);
+        }
+    }
+    return undefined;
+}
 
 interface MinimapInfo {
     aspect: number;
@@ -17,8 +64,8 @@ export class MinimapHelper {
     pixelWidth = 0;
     pixelHeight = 0;
     currentIndex = 0;
-    constructor(readonly minimaps: MinimapInfo[]) {}
-    toMinimap(worldPos: vec3): vec2 {
+    constructor(readonly minimaps: MinimapInfo[]) { }
+    toMinimap(worldPos: ReadonlyVec3): vec2 {
         const curInfo = this.getCurrentInfo();
         const diff = vec3.sub(vec3.create(), worldPos, curInfo.corner);
         const diffX = vec3.dot(diff, curInfo.dirX);
@@ -39,7 +86,7 @@ export class MinimapHelper {
         return pos;
     }
 
-    directionPoints(worldPos: vec3, rot: quat): vec2[] {
+    directionPoints(worldPos: ReadonlyVec3, rot: ReadonlyQuat): vec2[] {
         const path: vec2[] = [];
         path.push(this.toMinimap(worldPos));
         const rotA = quat.rotateY(quat.create(), rot, Math.PI / 8);
@@ -68,7 +115,7 @@ export class MinimapHelper {
         return this.getCurrentInfo().aspect;
     }
 
-    update(camPos: vec3): boolean {
+    update(camPos: ReadonlyVec3): boolean {
         for (let i = 1; i < this.minimaps.length; ++i) {
             if (camPos[1] - 0.5 < this.minimaps[i].elevation) {
                 if (i !== this.currentIndex) {
@@ -85,6 +132,7 @@ export class MinimapHelper {
         return false;
     }
 }
+
 
 export async function downloadMinimap(scene: Scene): Promise<MinimapHelper> {
     const minimaps: MinimapInfo[] = [];
