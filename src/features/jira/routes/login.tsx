@@ -6,7 +6,7 @@ import { v4 as uuidv4 } from "uuid";
 import { ScrollBox } from "components";
 import { featuresConfig } from "config/features";
 import { createOAuthStateString } from "utils/auth";
-import { useCreateBookmark } from "features/bookmarks";
+import { useCreateBookmark } from "features/bookmarks/useCreateBookmark";
 
 import { jiraClientId, jiraIdentityServer } from "../jiraApi";
 

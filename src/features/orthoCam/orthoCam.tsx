@@ -7,7 +7,7 @@ import { IosSwitch, LogoSpeedDial, ScrollBox, Switch, WidgetContainer, WidgetHea
 import { featuresConfig } from "config/features";
 import { useExplorerGlobals } from "contexts/explorerGlobals";
 import { toggleTerrainAsBackground } from "features/advancedSettings";
-import { WidgetList } from "features/widgetList";
+import WidgetList from "features/widgetList/widgetList";
 import { useToggle } from "hooks/useToggle";
 
 import {

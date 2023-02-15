@@ -8,7 +8,7 @@ import { renderActions, selectClippingBox } from "slices/renderSlice";
 import { LogoSpeedDial, ReverseSlider, ScrollBox, WidgetContainer, WidgetHeader } from "components";
 import { featuresConfig } from "config/features";
 import { useToggle } from "hooks/useToggle";
-import { WidgetList } from "features/widgetList";
+import WidgetList from "features/widgetList/widgetList";
 import { selectMinimized, selectMaximized } from "slices/explorerSlice";
 import { useExplorerGlobals } from "contexts/explorerGlobals";
 

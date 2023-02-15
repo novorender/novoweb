@@ -8,7 +8,7 @@ import { dataApi } from "app";
 import { useAppSelector } from "app/store";
 import { featuresConfig, FeatureType } from "config/features";
 import { Divider, LinearProgress, LogoSpeedDial, WidgetContainer, WidgetHeader } from "components";
-import { WidgetList } from "features/widgetList";
+import WidgetList from "features/widgetList/widgetList";
 import { useExplorerGlobals } from "contexts/explorerGlobals";
 import {
     selectAdvancedSettings,

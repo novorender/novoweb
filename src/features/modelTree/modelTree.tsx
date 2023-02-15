@@ -5,8 +5,8 @@ import { HierarcicalObjectReference } from "@novorender/webgl-api";
 
 import { Divider, LinearProgress, LogoSpeedDial, WidgetContainer, WidgetHeader } from "components";
 import { Breadcrumbs } from "features/breadcrumbs";
-import { NodeList } from "features/nodeList";
-import { WidgetList } from "features/widgetList";
+import { NodeList } from "features/nodeList/nodeList";
+import WidgetList from "features/widgetList/widgetList";
 
 import { useAppDispatch, useAppSelector } from "app/store";
 import { renderActions, selectMainObject } from "slices/renderSlice";

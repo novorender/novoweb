@@ -5,7 +5,7 @@ import { featuresConfig, WidgetKey } from "config/features";
 import { useAppSelector } from "app/store";
 import { selectMaximized, selectMinimized } from "slices/explorerSlice";
 import { useToggle } from "hooks/useToggle";
-import { WidgetList } from "features/widgetList";
+import WidgetList from "features/widgetList/widgetList";
 
 import { ScrollBox } from "./scrollBox";
 

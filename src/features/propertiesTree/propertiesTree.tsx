@@ -11,7 +11,7 @@ import { highlightActions, useDispatchHighlighted } from "contexts/highlighted";
 import { useAbortController } from "hooks/useAbortController";
 import { useToggle } from "hooks/useToggle";
 import { featuresConfig } from "config/features";
-import { WidgetList } from "features/widgetList";
+import WidgetList from "features/widgetList/widgetList";
 import { useAppSelector } from "app/store";
 import { selectMinimized, selectMaximized } from "slices/explorerSlice";
 

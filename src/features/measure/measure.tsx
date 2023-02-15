@@ -4,7 +4,7 @@ import { Box, Button, FormControlLabel, ListSubheader, MenuItem, OutlinedInput, 
 
 import { useAppDispatch, useAppSelector } from "app/store";
 import { IosSwitch, LinearProgress, LogoSpeedDial, ScrollBox, WidgetContainer, WidgetHeader } from "components";
-import { WidgetList } from "features/widgetList";
+import WidgetList from "features/widgetList/widgetList";
 import { useToggle } from "hooks/useToggle";
 import { featuresConfig } from "config/features";
 import { selectMinimized, selectMaximized } from "slices/explorerSlice";

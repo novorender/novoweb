@@ -5,7 +5,7 @@ import { LoadingButton } from "@mui/lab";
 import { ScrollBox } from "components";
 import { featuresConfig } from "config/features";
 import { createOAuthStateString } from "utils/auth";
-import { useCreateBookmark } from "features/bookmarks";
+import { useCreateBookmark } from "features/bookmarks/useCreateBookmark";
 
 import { xsiteManageAuthServer, xsiteManageClientId } from "../api";
 

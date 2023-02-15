@@ -45,7 +45,7 @@ import { highlightActions, useDispatchHighlighted } from "contexts/highlighted";
 import { NodeType } from "features/modelTree/modelTree";
 import { useExplorerGlobals } from "contexts/explorerGlobals";
 import { featuresConfig } from "config/features";
-import { WidgetList } from "features/widgetList";
+import WidgetList from "features/widgetList/widgetList";
 import { selectMaximized, selectMinimized } from "slices/explorerSlice";
 
 enum Status {
@@ -400,14 +400,21 @@ function PropertyItem({ checked, onChange, property, value, resizing, groupName 
     };
 
     const id = `${property}-${value}`;
-    const decodedPropertyName = decodeURIComponent(property);
+
+    let decodedPropertyName: string | undefined = undefined;
+
+    try {
+        decodedPropertyName = decodeURIComponent(property);
+    } catch (e) {
+        console.warn(`Failed to decode property "${property}".`);
+    }
 
     return (
         <ListItem button dense disableGutters onClick={handleItemClick}>
             <Box px={1} width={1} display="flex">
                 <Box className="propertyName" flexShrink={0} display="flex" justifyContent="space-between">
-                    <Tooltip title={decodedPropertyName}>
-                        <Typography noWrap={true}>{decodedPropertyName}</Typography>
+                    <Tooltip title={decodedPropertyName ?? property}>
+                        <Typography noWrap={true}>{decodedPropertyName ?? property}</Typography>
                     </Tooltip>
                     <ResizeHandle data-resize-handle>|</ResizeHandle>
                 </Box>

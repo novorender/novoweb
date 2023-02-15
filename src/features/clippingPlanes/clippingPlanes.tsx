@@ -7,7 +7,7 @@ import { IosSwitch, LogoSpeedDial, WidgetContainer, WidgetHeader } from "compone
 import { Picker, renderActions, selectClippingPlanes, selectPicker } from "slices/renderSlice";
 import { useToggle } from "hooks/useToggle";
 import { featuresConfig } from "config/features";
-import { WidgetList } from "features/widgetList";
+import WidgetList from "features/widgetList/widgetList";
 import { selectMinimized, selectMaximized } from "slices/explorerSlice";
 import { useExplorerGlobals } from "contexts/explorerGlobals";
 

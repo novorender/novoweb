@@ -3,7 +3,7 @@ import { useCallback, useEffect } from "react";
 import { MemoryRouter, Switch, Route } from "react-router-dom";
 
 import { LinearProgress, LogoSpeedDial, WidgetContainer, WidgetHeader } from "components";
-import { WidgetList } from "features/widgetList";
+import WidgetList from "features/widgetList/widgetList";
 import { useAppDispatch, useAppSelector } from "app/store";
 import { StorageKey } from "config/storage";
 import { featuresConfig } from "config/features";

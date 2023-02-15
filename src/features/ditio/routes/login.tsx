@@ -5,7 +5,7 @@ import { LoadingButton } from "@mui/lab";
 import { LinearProgress, ScrollBox } from "components";
 import { featuresConfig } from "config/features";
 import { createOAuthStateString, generateCodeChallenge } from "utils/auth";
-import { useCreateBookmark } from "features/bookmarks";
+import { useCreateBookmark } from "features/bookmarks/useCreateBookmark";
 import { generateRandomString } from "utils/misc";
 import { saveToStorage } from "utils/storage";
 import { StorageKey } from "config/storage";

@@ -26,7 +26,7 @@ import { Divider, LinearProgress, ScrollBox } from "components";
 import { useAppDispatch, useAppSelector } from "app/store";
 import { sleep } from "utils/timers";
 import { AsyncStatus } from "types/misc";
-import { useCreateBookmark } from "features/bookmarks";
+import { useCreateBookmark } from "features/bookmarks/useCreateBookmark";
 import { createCanvasSnapshot } from "utils/misc";
 import { useExplorerGlobals } from "contexts/explorerGlobals";
 

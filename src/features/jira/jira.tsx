@@ -5,7 +5,7 @@ import { Logout, SettingsRounded } from "@mui/icons-material";
 import { useAppDispatch, useAppSelector } from "app/store";
 import { LogoSpeedDial, WidgetContainer, WidgetHeader } from "components";
 import { featuresConfig } from "config/features";
-import { WidgetList } from "features/widgetList";
+import WidgetList from "features/widgetList/widgetList";
 import { useToggle } from "hooks/useToggle";
 import { selectMinimized, selectMaximized, selectHasAdminCapabilities } from "slices/explorerSlice";
 import { useSceneId } from "hooks/useSceneId";
