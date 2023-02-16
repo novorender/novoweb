@@ -14,6 +14,7 @@ import { mat4, quat, vec3, vec4 } from "gl-matrix";
 import type { RootState } from "app/store";
 import { VecRGB, VecRGBA } from "utils/color";
 import { defaultFlightControls } from "config/camera";
+import { ViewMode } from "types/misc";
 
 export const fetchEnvironments = createAsyncThunk("novorender/fetchEnvironments", async (api: API) => {
     const envs = await api.availableEnvironments("https://api.novorender.com/assets/env/index.json");
@@ -215,6 +216,7 @@ const initialState = {
         [ProjectSetting.XsiteManage]: { siteId: "" },
     },
     picker: Picker.Object,
+    viewMode: ViewMode.Regular,
 };
 
 type State = typeof initialState;
@@ -368,7 +370,7 @@ export const renderSlice = createSlice({
         resetClippingBox: (state) => {
             state.clippingBox = initialState.clippingBox;
         },
-        setClippingPlanes: (state, action: PayloadAction<Partial<typeof initialState["clippingPlanes"]>>) => {
+        setClippingPlanes: (state, action: PayloadAction<Partial<(typeof initialState)["clippingPlanes"]>>) => {
             if (action.payload.enabled) {
                 state.clippingBox.enabled = false;
             }
@@ -458,6 +460,9 @@ export const renderSlice = createSlice({
                 state.picker = Picker.Object;
             }
         },
+        setViewMode: (state, action: PayloadAction<State["viewMode"]>) => {
+            state.viewMode = action.payload;
+        },
     },
     extraReducers: (builder) => {
         builder.addCase(fetchEnvironments.fulfilled, (state, action) => {
@@ -490,6 +495,7 @@ export const selectGridDefaults = (state: RootState) => state.render.gridDefault
 export const selectGrid = (state: RootState) => state.render.grid as RenderSettings["grid"];
 export const selectPicker = (state: RootState) => state.render.picker;
 export const selectDefaultDeviceProfile = (state: RootState) => state.render.defaultDeviceProfile;
+export const selectViewMode = (state: RootState) => state.render.viewMode;
 
 const { reducer, actions } = renderSlice;
 export { reducer as renderReducer, actions as renderActions };

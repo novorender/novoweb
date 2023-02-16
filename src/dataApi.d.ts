@@ -1,7 +1,7 @@
 declare module "@novorender/data-js-api" {
     import { vec3 } from "gl-matrix";
     import { MeasureSettings } from "@novorender/measure-api";
-    import { ExtendedMeasureEntity } from "types/misc";
+    import { ExtendedMeasureEntity, ViewMode } from "types/misc";
 
     interface Bookmark {
         followPath?:
@@ -47,5 +47,6 @@ declare module "@novorender/data-js-api" {
             collisionSettings?: MeasureSettings;
         };
         selectedMeasureEntities?: ExtendedMeasureEntity[];
+        viewMode?: ViewMode;
     }
 }

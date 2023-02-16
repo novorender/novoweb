@@ -62,6 +62,7 @@ import {
     selectSelectionBasketColor,
     selectPicker,
     Picker,
+    selectViewMode,
 } from "slices/renderSlice";
 import { explorerActions, selectLocalBookmarkId, selectUrlBookmarkId } from "slices/explorerSlice";
 import { selectDeviations } from "features/deviations";
@@ -79,7 +80,7 @@ import { selectCurrentLocation, useHandleLocationMarker } from "features/myLocat
 import { useHandleJiraKeepAlive } from "features/jira";
 import { Engine2D } from "features/engine2D";
 import { LogPoint, useXsiteManageLogPointMarkers, useHandleXsiteManageKeepAlive } from "features/xsiteManage";
-import { ExtendedMeasureEntity } from "types/misc";
+import { ExtendedMeasureEntity, ViewMode } from "types/misc";
 import { orthoCamActions, selectCrossSectionPoint, useHandleCrossSection } from "features/orthoCam";
 
 import { useHighlighted, highlightActions, useDispatchHighlighted } from "contexts/highlighted";
@@ -233,6 +234,7 @@ export function Render3D({ onInit }: Props) {
     const measureHoverSettings = useMeasureHoverSettings();
     const measurePickSettings = useMeasurePickSettings();
     const crossSectionPoint = useAppSelector(selectCrossSectionPoint);
+    const viewMode = useAppSelector(selectViewMode);
 
     const dispatch = useAppDispatch();
 
@@ -908,7 +910,11 @@ export function Render3D({ onInit }: Props) {
             return;
         }
 
-        const result = await view.lastRenderOutput.pick(e.nativeEvent.offsetX, e.nativeEvent.offsetY);
+        const pickCameraPlane =
+            cameraState.type === CameraType.Orthographic &&
+            (viewMode === ViewMode.CrossSection || viewMode === ViewMode.FollowPath);
+
+        const result = await view.lastRenderOutput.pick(e.nativeEvent.offsetX, e.nativeEvent.offsetY, pickCameraPlane);
 
         if (deviation.mode !== "off" && cameraState.type === CameraType.Orthographic) {
             const pickSize = isTouchPointer.current ? 16 : 0;
@@ -949,6 +955,7 @@ export function Render3D({ onInit }: Props) {
         switch (picker) {
             case Picker.CrossSection:
                 if (crossSectionPoint) {
+                    dispatch(renderActions.setViewMode(ViewMode.CrossSection));
                     const mat = mat3.fromQuat(mat3.create(), view.camera.rotation);
                     let up = vec3.fromValues(0, 1, 0);
                     const topDown = vec3.equals(vec3.fromValues(mat[6], mat[7], mat[8]), up);

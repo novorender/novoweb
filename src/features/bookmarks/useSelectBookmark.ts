@@ -16,7 +16,7 @@ import { pointLineActions } from "features/pointLine";
 import { groupsActions } from "features/groups";
 import { useSceneId } from "hooks/useSceneId";
 import { manholeActions } from "features/manhole";
-import { ExtendedMeasureEntity } from "types/misc";
+import { ExtendedMeasureEntity, ViewMode } from "types/misc";
 
 export function useSelectBookmark() {
     const sceneId = useSceneId();
@@ -251,6 +251,12 @@ export function useSelectBookmark() {
 
         if (bookmark.subtrees) {
             dispatch(renderActions.setSubtreesFromBookmark(bookmark.subtrees));
+        }
+
+        if (bookmark.viewMode) {
+            dispatch(renderActions.setViewMode(bookmark.viewMode));
+        } else {
+            dispatch(renderActions.setViewMode(ViewMode.Regular));
         }
     };
 

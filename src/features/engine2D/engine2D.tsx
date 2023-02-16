@@ -16,11 +16,12 @@ import {
     selectManholeMeasureValues,
 } from "features/manhole";
 import { measureApi } from "app";
-import { AsyncStatus } from "types/misc";
-import { CameraType, selectCameraType, selectGrid } from "slices/renderSlice";
+import { AsyncStatus, ViewMode } from "types/misc";
+import { CameraType, selectCameraType, selectGrid, selectViewMode } from "slices/renderSlice";
 
 import { drawPart, drawProduct, drawTexts } from "../engine2D/utils";
 import { selectCrossSectionPoints } from "features/orthoCam";
+import { useCrossSection } from "features/followPath/useCrossSection";
 
 const Canvas2D = styled("canvas")(
     () => css`
@@ -58,6 +59,8 @@ export function Engine2D() {
     const heightProfileMeasureObject = useHeightProfileMeasureObject();
     const measureObjects = useMeasureObjects();
     const pathMeasureObjects = usePathMeasureObjects();
+    const roadCrossSection = useCrossSection();
+    const roadCrossSectionData = roadCrossSection.status === AsyncStatus.Success ? roadCrossSection.data : undefined;
     const pathMeasureObjectsData =
         pathMeasureObjects.status === AsyncStatus.Success ? pathMeasureObjects.data : undefined;
     const areaValue = useAppSelector(selectArea);
@@ -72,6 +75,7 @@ export function Engine2D() {
     const measure = useAppSelector(selectMeasure);
     const cameraType = useAppSelector(selectCameraType);
     const grid = useAppSelector(selectGrid);
+    const viewMode = useAppSelector(selectViewMode);
 
     const renderGridLabels = useCallback(() => {
         if (
@@ -211,7 +215,7 @@ export function Engine2D() {
                                 },
                                 3,
                                 {
-                                    type: "distance",
+                                    type: "centerOfLine",
                                 }
                             );
                             break;
@@ -223,49 +227,49 @@ export function Engine2D() {
                                 { lineColor: "black", pointColor: "black", displayAllPoints: true },
                                 3,
                                 {
-                                    type: "distance",
+                                    type: "centerOfLine",
                                 }
                             );
                             break;
                         case "x-axis":
                             drawPart(context2D, camSettings, part, { lineColor: "red" }, 3, {
-                                type: "distance",
+                                type: "centerOfLine",
                             });
                             break;
                         case "y-axis":
                             drawPart(context2D, camSettings, part, { lineColor: "blue" }, 3, {
-                                type: "distance",
+                                type: "centerOfLine",
                             });
                             break;
                         case "z-axis":
                             drawPart(context2D, camSettings, part, { lineColor: "green" }, 3, {
-                                type: "distance",
+                                type: "centerOfLine",
                             });
                             break;
                         case "xy-plane":
                             drawPart(context2D, camSettings, part, { lineColor: "purple" }, 3, {
-                                type: "distance",
+                                type: "centerOfLine",
                             });
                             break;
                         case "z-angle":
                             drawPart(context2D, camSettings, part, { lineColor: "green" }, 2, {
-                                type: "distance",
+                                type: "centerOfLine",
                             });
                             break;
                         case "xz-angle":
                             drawPart(context2D, camSettings, part, { lineColor: "purple" }, 2, {
-                                type: "distance",
+                                type: "centerOfLine",
                             });
                             break;
                         case "cylinder-angle":
                             cylinderAngleDrawn = drawPart(context2D, camSettings, part, { lineColor: "blue" }, 2, {
-                                type: "distance",
+                                type: "centerOfLine",
                             });
                             break;
                         case "cylinder-angle-line":
                             if (cylinderAngleDrawn) {
                                 drawPart(context2D, camSettings, part, { lineColor: "blue" }, 2, {
-                                    type: "distance",
+                                    type: "centerOfLine",
                                 });
                             }
                             break;
@@ -340,7 +344,7 @@ export function Engine2D() {
                                 },
                                 2,
                                 {
-                                    type: "distance",
+                                    type: "centerOfLine",
                                     customText: [
                                         vec3
                                             .len(
@@ -403,7 +407,7 @@ export function Engine2D() {
                                 },
                                 2,
                                 {
-                                    type: "distance",
+                                    type: "centerOfLine",
                                     customText: textList,
                                 }
                             );
@@ -432,6 +436,61 @@ export function Engine2D() {
                     });
                 }
             }
+            if (roadCrossSectionData && viewMode === ViewMode.FollowPath) {
+                roadCrossSectionData.forEach((section) => {
+                    const colorList: string[] = [];
+                    section.codes.forEach((c) => {
+                        switch (c) {
+                            case 10:
+                                return;
+                            case 0:
+                                colorList.push("green");
+                                break;
+                            case 1:
+                                colorList.push("#333232");
+                                break;
+                            case 2:
+                                colorList.push("black");
+                                break;
+                            case 3:
+                                colorList.push("blue");
+                                break;
+                            default:
+                                colorList.push("brown");
+                        }
+                    });
+                    const drawProd = measureApi.getDrawObjectFromPoints(view, section.points, false, false);
+                    if (drawProd) {
+                        drawProd.objects.forEach((obj) => {
+                            obj.parts.forEach((part) => {
+                                drawPart(
+                                    context2D,
+                                    camSettings,
+                                    part,
+                                    {
+                                        lineColor: colorList,
+                                    },
+                                    2
+                                );
+                            });
+                        });
+                    }
+                    const slopeL = measureApi.getDrawText(
+                        view,
+                        [section.slopes.left.start, section.slopes.left.end],
+                        (section.slopes.left.slope * 100).toFixed(1) + "%"
+                    );
+                    const slopeR = measureApi.getDrawText(
+                        view,
+                        [section.slopes.right.start, section.slopes.right.end],
+                        (section.slopes.right.slope * 100).toFixed(1) + "%"
+                    );
+                    if (slopeL && slopeR) {
+                        drawProduct(context2D, camSettings, slopeL, {}, 3);
+                        drawProduct(context2D, camSettings, slopeR, {}, 3);
+                    }
+                });
+            }
         }
     }, [
         view,
@@ -456,6 +515,8 @@ export function Engine2D() {
         measure.hover,
         measure.pinned,
         crossSection,
+        roadCrossSectionData,
+        viewMode,
     ]);
 
     useEffect(() => {

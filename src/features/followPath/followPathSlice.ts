@@ -8,6 +8,7 @@ import { ObjectId } from "@novorender/webgl-api";
 export type LandXmlPath = {
     id: number;
     name: string;
+    roadIds: string[] | undefined;
 };
 
 export type ParametricPath = {
@@ -34,6 +35,8 @@ const initialState = {
     selectedIds: [] as ObjectId[],
     resetPositionOnInit: false,
     followCylindersFrom: "center" as "center" | "top" | "bottom",
+    drawRoadIds: undefined as string[] | undefined,
+    selectedPath: undefined as undefined | number,
 };
 
 type State = typeof initialState;
@@ -96,6 +99,12 @@ export const followPathSlice = createSlice({
         setFollowFrom: (state, action: PayloadAction<State["followCylindersFrom"]>) => {
             state.followCylindersFrom = action.payload;
         },
+        setDrawRoadId: (state, action: PayloadAction<State["drawRoadIds"]>) => {
+            state.drawRoadIds = action.payload;
+        },
+        setSelectedPath: (state, action: PayloadAction<State["selectedPath"]>) => {
+            state.selectedPath = action.payload;
+        },
     },
 });
 
@@ -118,6 +127,8 @@ export const selectDrawSelectedPositions = (state: RootState) => state.followPat
 export const selectSelectedIds = (state: RootState) => state.followPath.selectedIds;
 export const selectResetPositionOnInit = (state: RootState) => state.followPath.resetPositionOnInit;
 export const selectFollowCylindersFrom = (state: RootState) => state.followPath.followCylindersFrom;
+export const selectSelectedPath = (state: RootState) => state.followPath.selectedPath;
+export const selectDrawRoadIds = (state: RootState) => state.followPath.drawRoadIds;
 
 const { actions, reducer } = followPathSlice;
 export { actions as followPathActions, reducer as followPathReducer };

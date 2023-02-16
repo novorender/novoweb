@@ -24,9 +24,10 @@ import { Picker, renderActions, selectPicker } from "slices/renderSlice";
 import { highlightActions, useDispatchHighlighted, useHighlighted } from "contexts/highlighted";
 import { singleCylinderOptions } from "features/measure";
 
-import { selectFollowCylindersFrom, followPathActions, LandXmlPath, selectLandXmlPaths } from "../followPathSlice";
+import { selectFollowCylindersFrom, followPathActions, selectLandXmlPaths } from "../followPathSlice";
 import { usePathMeasureObjects } from "../usePathMeasureObjects";
 import { useFollowPathFromIds } from "../useFollowPathFromIds";
+import { HierarcicalObjectReference } from "@novorender/webgl-api";
 
 export function PathList() {
     const theme = useTheme();
@@ -70,7 +71,10 @@ export function PathList() {
             dispatch(followPathActions.setPaths({ status: AsyncStatus.Loading }));
 
             try {
-                let paths = [] as LandXmlPath[];
+                let paths = [] as {
+                    id: number;
+                    name: string;
+                }[];
 
                 await searchByPatterns({
                     scene,
@@ -81,7 +85,29 @@ export function PathList() {
                         )),
                 });
 
-                dispatch(followPathActions.setPaths({ status: AsyncStatus.Success, data: paths }));
+                let landXmlPaths = await Promise.all(
+                    paths.map(async (p) => {
+                        let roadIds: string[] = [];
+                        let references = [] as HierarcicalObjectReference[];
+                        await searchByPatterns({
+                            scene,
+                            searchPatterns: [{ property: "Centerline", value: p.name, exact: true }],
+                            callback: (refs) => (references = references.concat(refs)),
+                        });
+                        await Promise.all(
+                            references.map(async (r) => {
+                                const data = await r.loadMetaData();
+                                const prop = data.properties.find((p) => p[0] === "Novorender/road");
+                                if (prop) {
+                                    roadIds.push(prop[1]);
+                                }
+                            })
+                        );
+                        return { ...p, roadIds: roadIds.length === 0 ? undefined : roadIds };
+                    })
+                );
+
+                dispatch(followPathActions.setPaths({ status: AsyncStatus.Success, data: landXmlPaths }));
             } catch (e) {
                 console.warn(e);
                 dispatch(
@@ -190,11 +216,12 @@ export function PathList() {
                         ""
                     ) : (
                         <List disablePadding>
-                            {landXmlPaths.data.map((path) => (
+                            {landXmlPaths.data.map((path, idx) => (
                                 <ListItemButton
                                     disabled={selectingPos}
                                     key={path.id}
                                     onClick={() => {
+                                        dispatch(followPathActions.setSelectedPath(idx));
                                         dispatch(followPathActions.toggleResetPositionOnInit(true));
                                         dispatch(renderActions.setMainObject(path.id));
                                         dispatch(followPathActions.setSelectedIds([path.id]));

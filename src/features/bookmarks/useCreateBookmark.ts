@@ -14,6 +14,7 @@ import {
     selectMainObject,
     selectSelectionBasketMode,
     selectSubtrees,
+    selectViewMode,
     SubtreeStatus,
 } from "slices/renderSlice";
 import { selectMeasure } from "features/measure";
@@ -37,6 +38,7 @@ export function useCreateBookmark() {
     const subtrees = useAppSelector(selectSubtrees);
     const manhole = useAppSelector(selectManholeMeasureValues);
     const manholeCollisionTarget = useAppSelector(selectManholeCollisionTarget);
+    const viewMode = useAppSelector(selectViewMode);
     const manholeCollisionSettings = useAppSelector(selectManholeCollisionSettings);
 
     const {
@@ -115,6 +117,7 @@ export function useCreateBookmark() {
                     max: Array.from(clippingPlanes.bounds.max) as [number, number, number],
                 },
             },
+            viewMode: viewMode,
             grid: { ...view.settings.grid },
             ...(measurement.selectedEntities.length > 0
                 ? { selectedMeasureEntities: measurement.selectedEntities }
