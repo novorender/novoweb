@@ -20,7 +20,7 @@ import { useExplorerGlobals } from "contexts/explorerGlobals";
 import { AsyncStatus, hasFinished } from "types/misc";
 import { getObjectNameFromPath, getParentPath } from "utils/objectData";
 import { searchByPatterns } from "utils/search";
-import { Picker, renderActions, selectPicker } from "slices/renderSlice";
+import { Picker, renderActions, selectPicker } from "features/render/renderSlice";
 import { highlightActions, useDispatchHighlighted, useHighlighted } from "contexts/highlighted";
 import { singleCylinderOptions } from "features/measure";
 

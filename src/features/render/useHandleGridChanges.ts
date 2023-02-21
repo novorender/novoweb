@@ -2,7 +2,7 @@ import { useEffect } from "react";
 
 import { useAppSelector } from "app/store";
 import { useExplorerGlobals } from "contexts/explorerGlobals";
-import { selectGrid } from "slices/renderSlice";
+import { selectGrid } from "features/render/renderSlice";
 
 export function useHandleGridChanges() {
     const {

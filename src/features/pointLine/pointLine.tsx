@@ -18,7 +18,7 @@ import {
 import { featuresConfig } from "config/features";
 import WidgetList from "features/widgetList/widgetList";
 import { useToggle } from "hooks/useToggle";
-import { Picker, renderActions, selectPicker } from "slices/renderSlice";
+import { Picker, renderActions, selectPicker } from "features/render/renderSlice";
 import { selectMinimized, selectMaximized } from "slices/explorerSlice";
 
 import { pointLineActions, selectPointLine } from "./pointLineSlice";

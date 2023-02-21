@@ -35,7 +35,7 @@ import {
     RenderState,
     SelectionBasketMode,
     SubtreeStatus,
-} from "slices/renderSlice";
+} from "features/render/renderSlice";
 import { explorerActions } from "slices/explorerSlice";
 import { VecRGB, VecRGBA } from "utils/color";
 
@@ -355,14 +355,6 @@ export async function initSubtrees(view: View, scene: Scene) {
     store.dispatch(explorerActions.lockWidgets(toLock as WidgetKey[]));
 }
 
-export function serializeableObjectGroups(groups: BaseObjectGroup[]): ObjectGroup[] {
-    return groups.map((group) =>
-        group.color instanceof Float32Array
-            ? { ...group, color: [group.color[0], group.color[1], group.color[2]] }
-            : group
-    ) as ObjectGroup[];
-}
-
 function getHighlightByObjectVisibility(visibility: ObjectVisibility): Highlight {
     switch (visibility) {
         case ObjectVisibility.Neutral:
@@ -374,45 +366,27 @@ function getHighlightByObjectVisibility(visibility: ObjectVisibility): Highlight
     }
 }
 
-export function initHighlighted(groups: BaseObjectGroup[], dispatch: DispatchHighlighted): void {
-    const defaultGroup = groups.find((group) => !group.id && group.selected);
-
-    if (defaultGroup) {
-        dispatch(
-            highlightActions.set({
-                ids: defaultGroup.ids as number[],
-                color: [defaultGroup.color[0], defaultGroup.color[1], defaultGroup.color[2]],
-            })
-        );
-
-        const lastHighlighted = defaultGroup.ids?.slice(-1)[0];
-        if (lastHighlighted) {
-            store.dispatch(renderActions.setMainObject(lastHighlighted));
-        }
-    } else {
-        dispatch(highlightActions.setIds([]));
-        store.dispatch(renderActions.setMainObject(undefined));
+export function initHighlighted(dispatch: DispatchHighlighted, color?: VecRGBA): void {
+    dispatch(highlightActions.setIds([]));
+    if (color) {
+        dispatch(highlightActions.setColor(color));
     }
 }
 
-export function initHidden(groups: BaseObjectGroup[], dispatch: DispatchHidden): void {
-    const defaultHiddenGroup = groups.find((group) => !group.id && group.hidden);
-
-    if (defaultHiddenGroup) {
-        dispatch(hiddenGroupActions.setIds(defaultHiddenGroup.ids as number[]));
-    } else {
-        dispatch(hiddenGroupActions.setIds([]));
-    }
+export function initHidden(dispatch: DispatchHidden): void {
+    dispatch(hiddenGroupActions.setIds([]));
 }
 
-export function initCustomGroups(groups: BaseObjectGroup[], dispatch: DispatchObjectGroups): void {
-    const objectGroups = groups.filter((group) => group.id);
+function serializeableObjectGroups(groups: BaseObjectGroup[]): ObjectGroup[] {
+    return groups.map((group) =>
+        group.color instanceof Float32Array
+            ? { ...group, color: [group.color[0], group.color[1], group.color[2]] }
+            : group
+    ) as ObjectGroup[];
+}
 
-    if (objectGroups.length) {
-        dispatch(objectGroupsActions.set(serializeableObjectGroups(objectGroups)));
-    } else {
-        dispatch(objectGroupsActions.set([]));
-    }
+export function initObjectGroups(groups: BaseObjectGroup[], dispatch: DispatchObjectGroups): void {
+    dispatch(objectGroupsActions.set(serializeableObjectGroups(groups.filter((group) => group.id))));
 }
 
 export async function initEnvironment(
@@ -557,6 +531,7 @@ export function initAdvancedSettings(view: View, customProperties: Record<string
             [AdvancedSetting.BackgroundColor]: background.color as VecRGBA,
             [AdvancedSetting.SkyBoxBlur]: background.skyBoxBlur,
             [AdvancedSetting.AutoFps]: customProperties?.autoFps ?? true,
+            [AdvancedSetting.SecondaryHighlight]: { property: customProperties?.highlights?.secondary?.property ?? "" },
             [AdvancedSetting.TriangleLimit]:
                 customProperties?.triangleLimit ?? (api as any).deviceProfile?.triangleLimit ?? 5_000_000,
             ...(customProperties?.flightMouseButtonMap

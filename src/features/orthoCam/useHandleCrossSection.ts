@@ -3,7 +3,7 @@ import { useEffect } from "react";
 import { useAppDispatch, useAppSelector } from "app/store";
 
 import { orthoCamActions } from "./orthoCamSlice";
-import { CameraType, renderActions, selectCameraType, selectViewMode } from "slices/renderSlice";
+import { CameraType, renderActions, selectCameraType, selectViewMode } from "features/render/renderSlice";
 import { ViewMode } from "types/misc";
 
 export function useHandleCrossSection() {

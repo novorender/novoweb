@@ -8,7 +8,7 @@ import { useAbortController } from "hooks/useAbortController";
 import { objIdsToTotalBoundingSphere } from "utils/objectData";
 import { useHighlighted } from "contexts/highlighted";
 import { useAppDispatch, useAppSelector } from "app/store";
-import { renderActions, selectCameraType } from "slices/renderSlice";
+import { renderActions, selectCameraType } from "features/render/renderSlice";
 
 // prettier-ignore
 const top = [

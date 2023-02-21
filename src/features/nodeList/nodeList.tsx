@@ -14,7 +14,7 @@ import { extractObjectIds, getObjectNameFromPath } from "utils/objectData";
 import { highlightActions, useDispatchHighlighted, useIsHighlighted } from "contexts/highlighted";
 import { hiddenGroupActions, useDispatchHidden, useIsHidden } from "contexts/hidden";
 import { useExplorerGlobals } from "contexts/explorerGlobals";
-import { renderActions } from "slices/renderSlice";
+import { renderActions } from "features/render/renderSlice";
 
 import FolderIcon from "@mui/icons-material/Folder";
 import VisibilityIcon from "@mui/icons-material/Visibility";

@@ -10,7 +10,13 @@ import { highlightActions, useDispatchHighlighted } from "contexts/highlighted";
 import { useDispatchSelectionBasket, selectionBasketActions } from "contexts/selectionBasket";
 import { followPathActions } from "features/followPath";
 import { measureActions } from "features/measure";
-import { CameraType, DeepWritable, ObjectVisibility, renderActions, SelectionBasketMode } from "slices/renderSlice";
+import {
+    CameraType,
+    DeepWritable,
+    ObjectVisibility,
+    renderActions,
+    SelectionBasketMode,
+} from "features/render/renderSlice";
 import { areaActions } from "features/area";
 import { pointLineActions } from "features/pointLine";
 import { groupsActions } from "features/groups";

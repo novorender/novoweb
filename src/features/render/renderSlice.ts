@@ -69,6 +69,7 @@ export enum AdvancedSetting {
     BackgroundColor = "backgroundColor",
     TriangleLimit = "triangleLimit",
     SkyBoxBlur = "skyBoxBlur",
+    SecondaryHighlight = "secondaryHighlight",
 }
 
 export enum ProjectSetting {
@@ -190,6 +191,7 @@ const initialState = {
         [AdvancedSetting.BackgroundColor]: [0.75, 0.75, 0.75, 1] as VecRGBA,
         [AdvancedSetting.TriangleLimit]: 0,
         [AdvancedSetting.SkyBoxBlur]: 0,
+        [AdvancedSetting.SecondaryHighlight]: { property: "" },
     },
     defaultDeviceProfile: {} as any,
     gridDefaults: {
@@ -217,6 +219,14 @@ const initialState = {
     },
     picker: Picker.Object,
     viewMode: ViewMode.Regular,
+    loadingHandles: [] as number[],
+    deviationStamp: null as null | {
+        mouseX: number;
+        mouseY: number;
+        data: {
+            deviation: number;
+        };
+    },
 };
 
 type State = typeof initialState;
@@ -463,6 +473,15 @@ export const renderSlice = createSlice({
         setViewMode: (state, action: PayloadAction<State["viewMode"]>) => {
             state.viewMode = action.payload;
         },
+        addLoadingHandle: (state, action: PayloadAction<State["loadingHandles"][number]>) => {
+            state.loadingHandles.push(action.payload);
+        },
+        removeLoadingHandle: (state, action: PayloadAction<State["loadingHandles"][number]>) => {
+            state.loadingHandles = state.loadingHandles.filter((handle) => handle !== action.payload);
+        },
+        setDeviationStamp: (state, action: PayloadAction<State["deviationStamp"]>) => {
+            state.deviationStamp = action.payload;
+        },
     },
     extraReducers: (builder) => {
         builder.addCase(fetchEnvironments.fulfilled, (state, action) => {
@@ -490,12 +509,16 @@ export const selectClippingPlanes = (state: RootState) => state.render.clippingP
 export const selectCamera = (state: RootState) => state.render.camera as CameraState;
 export const selectCameraType = (state: RootState) => state.render.camera.type;
 export const selectAdvancedSettings = (state: RootState) => state.render.advancedSettings;
+export const selectSecondaryHighlightProperty = (state: RootState) =>
+    state.render.advancedSettings.secondaryHighlight.property;
 export const selectProjectSettings = (state: RootState) => state.render.projectSettings;
 export const selectGridDefaults = (state: RootState) => state.render.gridDefaults;
 export const selectGrid = (state: RootState) => state.render.grid as RenderSettings["grid"];
 export const selectPicker = (state: RootState) => state.render.picker;
 export const selectDefaultDeviceProfile = (state: RootState) => state.render.defaultDeviceProfile;
 export const selectViewMode = (state: RootState) => state.render.viewMode;
+export const selectLoadingHandles = (state: RootState) => state.render.loadingHandles;
+export const selectDeviationStamp = (state: RootState) => state.render.deviationStamp;
 
 const { reducer, actions } = renderSlice;
 export { reducer as renderReducer, actions as renderActions };

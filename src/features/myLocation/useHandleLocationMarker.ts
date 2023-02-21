@@ -3,7 +3,7 @@ import { vec3 } from "gl-matrix";
 
 import { dataApi } from "app";
 import { useAppDispatch, useAppSelector } from "app/store";
-import { selectProjectSettings } from "slices/renderSlice";
+import { selectProjectSettings } from "features/render/renderSlice";
 import { useExplorerGlobals } from "contexts/explorerGlobals";
 
 import { LocationStatus, myLocationActions, selectShowLocationMarker } from "./myLocationSlice";

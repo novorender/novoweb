@@ -2,7 +2,7 @@ import type { SpeedDialActionProps } from "@mui/material";
 
 import { SpeedDialAction } from "components";
 import { featuresConfig } from "config/features";
-import { selectSavedCameraPositions, renderActions, CameraType, selectCameraType } from "slices/renderSlice";
+import { selectSavedCameraPositions, renderActions, CameraType, selectCameraType } from "features/render/renderSlice";
 import { useAppDispatch, useAppSelector } from "app/store";
 import { useExplorerGlobals } from "contexts/explorerGlobals";
 import { selectActivePanorama } from "features/panoramas";

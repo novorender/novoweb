@@ -3,7 +3,7 @@ import { useEffect, useState } from "react";
 
 import { useAppDispatch } from "app/store";
 import { LinearProgress } from "components";
-import { Picker, renderActions } from "slices/renderSlice";
+import { Picker, renderActions } from "features/render/renderSlice";
 import { AsyncStatus } from "types/misc";
 
 import { Follow } from "../follow";

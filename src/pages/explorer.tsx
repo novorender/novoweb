@@ -25,6 +25,7 @@ import { ObjectGroupsProvider } from "contexts/objectGroups";
 import { HighlightedProvider } from "contexts/highlighted";
 import { SelectionBasketProvider } from "contexts/selectionBasket";
 import { explorerGlobalsActions, ExplorerGlobalsProvider, useExplorerGlobals } from "contexts/explorerGlobals";
+import { HighlightCollectionsProvider } from "contexts/highlightCollections";
 import { MsalInteraction } from "features/msalInteraction";
 import { VersionAlert } from "features/versionAlert";
 
@@ -188,11 +189,13 @@ function ContextProviders({ children }: { children: ReactNode }) {
     return (
         <ExplorerGlobalsProvider>
             <HighlightedProvider>
-                <HiddenProvider>
-                    <SelectionBasketProvider>
-                        <ObjectGroupsProvider>{children}</ObjectGroupsProvider>
-                    </SelectionBasketProvider>
-                </HiddenProvider>
+                <HighlightCollectionsProvider>
+                    <HiddenProvider>
+                        <SelectionBasketProvider>
+                            <ObjectGroupsProvider>{children}</ObjectGroupsProvider>
+                        </SelectionBasketProvider>
+                    </HiddenProvider>
+                </HighlightCollectionsProvider>
             </HighlightedProvider>
         </ExplorerGlobalsProvider>
     );

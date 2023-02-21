@@ -16,7 +16,7 @@ import { ArrowBack, Save } from "@mui/icons-material";
 
 import { Accordion, AccordionDetails, AccordionSummary, Divider, LinearProgress, ScrollBox, Switch } from "components";
 import { useAppDispatch, useAppSelector } from "app/store";
-import { AdvancedSetting, selectAdvancedSettings, renderActions } from "slices/renderSlice";
+import { AdvancedSetting, selectAdvancedSettings, renderActions } from "features/render/renderSlice";
 import { ButtonKey, defaultEnabledWidgets, featuresConfig, viewerWidgets, WidgetKey } from "config/features";
 import {
     explorerActions,

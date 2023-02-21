@@ -9,7 +9,7 @@ import { deleteFromStorage, getFromStorage, saveToStorage } from "utils/storage"
 import { StorageKey } from "config/storage";
 import { featuresConfig } from "config/features";
 import { selectHasAdminCapabilities } from "slices/explorerSlice";
-import { selectProjectSettings } from "slices/renderSlice";
+import { selectProjectSettings } from "features/render/renderSlice";
 
 import { selectAccessToken, ditioActions, selectDitioProject } from "../slice";
 import { useGetAuthConfigQuery, useGetProjectsQuery, useLazyGetTokensQuery, useRefreshTokensMutation } from "../api";

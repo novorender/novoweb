@@ -3,7 +3,7 @@ import { createSlice, PayloadAction } from "@reduxjs/toolkit";
 import { vec3 } from "gl-matrix";
 
 import { RootState } from "app/store";
-import { DeepWritable } from "slices/renderSlice";
+import { DeepWritable } from "features/render/renderSlice";
 import { ExtendedMeasureEntity } from "types/misc";
 import { SnapKind } from "./config";
 

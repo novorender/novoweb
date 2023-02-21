@@ -1,7 +1,7 @@
 import { Camera, OrthoControllerParams, RenderSettings } from "@novorender/webgl-api";
 import { vec3, mat3, quat, vec4, mat4 } from "gl-matrix";
 
-import { ObjectVisibility } from "slices/renderSlice";
+import { ObjectVisibility } from "features/render/renderSlice";
 import { VecRGB, VecRGBA, vecToHex } from "utils/color";
 import { base64UrlEncodeImg, createCanvasSnapshot, uniqueArray } from "utils/misc";
 import { Viewpoint } from "types/bcf";

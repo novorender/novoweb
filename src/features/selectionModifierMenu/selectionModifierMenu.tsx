@@ -9,7 +9,7 @@ import { HideSelected } from "features/hideSelected";
 import { ToggleSubtrees } from "features/toggleSubtrees";
 import { useAppSelector } from "app/store";
 import { useToggle } from "hooks/useToggle";
-import { selectMainObject } from "slices/renderSlice";
+import { selectMainObject } from "features/render/renderSlice";
 
 import ArrowUpwardIcon from "@mui/icons-material/ArrowUpward";
 import ArrowDownwardIcon from "@mui/icons-material/ArrowDownward";

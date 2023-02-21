@@ -8,7 +8,7 @@ import { dataApi } from "app";
 import { ScrollBox, Tooltip, Divider, ImgModal, LinearProgress } from "components";
 import { useExplorerGlobals } from "contexts/explorerGlobals";
 import { useAppDispatch, useAppSelector } from "app/store";
-import { CameraType, renderActions, selectProjectSettings } from "slices/renderSlice";
+import { CameraType, renderActions, selectProjectSettings } from "features/render/renderSlice";
 
 import { baseUrl, useGetPostQuery } from "../api";
 import { newLineToHtmlBr } from "./feed";

@@ -8,7 +8,7 @@ import WidgetList from "features/widgetList/widgetList";
 import { useToggle } from "hooks/useToggle";
 import { featuresConfig } from "config/features";
 import { selectMinimized, selectMaximized } from "slices/explorerSlice";
-import { Picker, renderActions, selectPicker } from "slices/renderSlice";
+import { Picker, renderActions, selectPicker } from "features/render/renderSlice";
 import { ExtendedMeasureEntity } from "types/misc";
 
 import { measureActions, selectMeasure } from "./measureSlice";

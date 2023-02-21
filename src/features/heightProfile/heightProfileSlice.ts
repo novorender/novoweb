@@ -4,7 +4,7 @@ import { MeasureEntity } from "@novorender/measure-api";
 
 import { RootState } from "app/store";
 import { AsyncState, AsyncStatus } from "types/misc";
-import { DeepWritable } from "slices/renderSlice";
+import { DeepWritable } from "features/render/renderSlice";
 
 type SelectedEntity = AsyncState<MeasureEntity | undefined>;
 type WritableSelectedEntity = DeepWritable<SelectedEntity>;

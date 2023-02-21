@@ -4,7 +4,7 @@ import { useStore } from "react-redux";
 import { useEffect } from "react";
 
 import { RootState } from "app/store";
-import { ObjectVisibility, selectDefaultVisibility } from "slices/renderSlice";
+import { ObjectVisibility, selectDefaultVisibility } from "features/render/renderSlice";
 import { useLazyHidden } from "contexts/hidden";
 import { useLazyHighlighted } from "contexts/highlighted";
 import { useLazySelectionBasket } from "contexts/selectionBasket";

@@ -29,7 +29,7 @@ import {
     WidgetHeader,
     LogoSpeedDial,
 } from "components";
-import { selectMainObject } from "slices/renderSlice";
+import { selectMainObject } from "features/render/renderSlice";
 import { useAppSelector } from "app/store";
 import { useAbortController } from "hooks/useAbortController";
 import { useMountedState } from "hooks/useMountedState";

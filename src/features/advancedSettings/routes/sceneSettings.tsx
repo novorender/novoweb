@@ -26,7 +26,7 @@ import {
     SubtreeStatus,
     selectCameraType,
     CameraType,
-} from "slices/renderSlice";
+} from "features/render/renderSlice";
 import { useExplorerGlobals } from "contexts/explorerGlobals";
 import { rgbToVec, VecRGBA, vecToRgb } from "utils/color";
 import { ColorPicker } from "features/colorPicker";

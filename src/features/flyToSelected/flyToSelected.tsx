@@ -11,7 +11,7 @@ import { useMountedState } from "hooks/useMountedState";
 import { objIdsToTotalBoundingSphere } from "utils/objectData";
 import { useExplorerGlobals } from "contexts/explorerGlobals";
 import { useAppDispatch } from "app/store";
-import { CameraType, renderActions } from "slices/renderSlice";
+import { CameraType, renderActions } from "features/render/renderSlice";
 
 enum Status {
     Initial,

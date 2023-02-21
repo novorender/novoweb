@@ -2,11 +2,16 @@ import type { SpeedDialActionProps } from "@mui/material";
 
 import { SpeedDialAction } from "components";
 import { featuresConfig } from "config/features";
-import { renderActions, selectMainObject } from "slices/renderSlice";
+import { renderActions, selectMainObject } from "features/render/renderSlice";
 import { useAppDispatch, useAppSelector } from "app/store";
 import { highlightActions, useDispatchHighlighted, useHighlighted } from "contexts/highlighted";
 import { hiddenGroupActions, useDispatchHidden, useHidden } from "contexts/hidden";
 import { useDispatchSelectionBasket, selectionBasketActions } from "contexts/selectionBasket";
+import {
+    HighlightCollection,
+    highlightCollectionsActions,
+    useDispatchHighlightCollections,
+} from "contexts/highlightCollections";
 
 type Props = SpeedDialActionProps;
 
@@ -17,6 +22,7 @@ export function HideSelected(props: Props) {
     const { idArr: highlighted } = useHighlighted();
     const { idArr: hidden } = useHidden();
     const dispatchHighlighted = useDispatchHighlighted();
+    const dispatchHighlightCollections = useDispatchHighlightCollections();
     const dispatchHidden = useDispatchHidden();
     const dispatchSelectionBasket = useDispatchSelectionBasket();
 
@@ -31,6 +37,9 @@ export function HideSelected(props: Props) {
 
             dispatch(renderActions.setMainObject(undefined));
             dispatchHighlighted(highlightActions.setIds([]));
+            dispatchHighlightCollections(
+                highlightCollectionsActions.setIds(HighlightCollection.SecondaryHighlight, [])
+            );
             dispatchSelectionBasket(selectionBasketActions.remove(selected));
         } else if (hidden.length) {
             dispatchHidden(hiddenGroupActions.setIds([]));

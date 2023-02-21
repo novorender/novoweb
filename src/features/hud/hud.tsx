@@ -5,7 +5,7 @@ import { PrimaryMenu } from "features/primaryMenu";
 import { Widgets } from "features/widgets";
 import { useAppSelector } from "app/store";
 import { NavigationCube } from "features/navigationCube";
-import { selectAdvancedSettings } from "slices/renderSlice";
+import { selectAdvancedSettings } from "features/render/renderSlice";
 
 const largeFabButtonDiameter = 40;
 

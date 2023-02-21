@@ -5,7 +5,7 @@ import { api } from "app";
 import { useAppDispatch, useAppSelector } from "app/store";
 import { useExplorerGlobals } from "contexts/explorerGlobals";
 import { useAbortController } from "hooks/useAbortController";
-import { CameraType, renderActions, selectSubtrees } from "slices/renderSlice";
+import { CameraType, renderActions, selectSubtrees } from "features/render/renderSlice";
 import { sleep } from "utils/timers";
 
 import {

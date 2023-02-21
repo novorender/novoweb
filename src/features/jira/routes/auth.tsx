@@ -5,7 +5,7 @@ import { Box, Typography, useTheme } from "@mui/material";
 import { useAppDispatch, useAppSelector } from "app/store";
 import { LinearProgress, ScrollBox } from "components";
 import { AsyncStatus } from "types/misc";
-import { selectProjectSettings } from "slices/renderSlice";
+import { selectProjectSettings } from "features/render/renderSlice";
 import { deleteFromStorage, getFromStorage, saveToStorage } from "utils/storage";
 import { StorageKey } from "config/storage";
 import { selectHasAdminCapabilities } from "slices/explorerSlice";

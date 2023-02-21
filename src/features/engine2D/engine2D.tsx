@@ -17,7 +17,7 @@ import {
 } from "features/manhole";
 import { measureApi } from "app";
 import { AsyncStatus, ViewMode } from "types/misc";
-import { CameraType, selectCameraType, selectGrid, selectViewMode } from "slices/renderSlice";
+import { CameraType, selectCameraType, selectGrid, selectViewMode } from "features/render/renderSlice";
 
 import { drawPart, drawProduct, drawTexts } from "../engine2D/utils";
 import { selectCrossSectionPoints } from "features/orthoCam";

@@ -16,7 +16,7 @@ import {
     selectSubtrees,
     selectViewMode,
     SubtreeStatus,
-} from "slices/renderSlice";
+} from "features/render/renderSlice";
 import { selectMeasure } from "features/measure";
 import { selectFollowPath } from "features/followPath";
 import { selectAreaPoints } from "features/area";

@@ -18,13 +18,19 @@ import { useMountedState } from "hooks/useMountedState";
 import { useSceneId } from "hooks/useSceneId";
 
 import { useAppDispatch, useAppSelector } from "app/store";
-import { CameraType, renderActions, selectAdvancedSettings, selectHomeCameraPosition } from "slices/renderSlice";
+import {
+    CameraType,
+    renderActions,
+    selectAdvancedSettings,
+    selectHomeCameraPosition,
+} from "features/render/renderSlice";
 
 import { useExplorerGlobals } from "contexts/explorerGlobals";
 import { useDispatchHighlighted } from "contexts/highlighted";
 import { useDispatchHidden } from "contexts/hidden";
 import { objectGroupsActions, useDispatchObjectGroups, useLazyObjectGroups } from "contexts/objectGroups";
 import { useDispatchSelectionBasket, selectionBasketActions } from "contexts/selectionBasket";
+import { highlightCollectionsActions, useDispatchHighlightCollections } from "contexts/highlightCollections";
 import { measureActions } from "features/measure";
 import { areaActions } from "features/area";
 import { pointLineActions } from "features/pointLine";
@@ -54,6 +60,7 @@ export function Home({ position, ...speedDialProps }: Props) {
     const dispatchObjectGroups = useDispatchObjectGroups();
     const dispatchSelectionBasket = useDispatchSelectionBasket();
     const dispatchHighlighted = useDispatchHighlighted();
+    const dispatchHighlightCollections = useDispatchHighlightCollections();
     const dispatchHidden = useDispatchHidden();
     const dispatch = useAppDispatch();
 
@@ -108,8 +115,9 @@ export function Home({ position, ...speedDialProps }: Props) {
         }
 
         dispatchSelectionBasket(selectionBasketActions.set([]));
-        initHidden(savedObjectGroups, dispatchHidden);
-        initHighlighted(savedObjectGroups, dispatchHighlighted);
+        dispatchHighlightCollections(highlightCollectionsActions.clearAll());
+        initHidden(dispatchHidden);
+        initHighlighted(dispatchHighlighted, customProperties.highlights?.primary?.color);
         initAdvancedSettings(view, { ...customProperties, triangleLimit }, api);
         dispatch(panoramasActions.setStatus(PanoramaStatus.Initial));
         initSubtrees(view, scene);

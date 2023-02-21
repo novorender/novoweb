@@ -13,10 +13,6 @@ const initialState = [] as ObjectGroup[];
 
 type State = typeof initialState;
 
-export enum InternalGroup {
-    Checklist = "NOVORENDER_INTERNAL/Checklists",
-}
-
 export enum InternalTemporaryGroup {
     BIMcollab = "NOVORENDER_INTERNAL_TMP/BIMcollab temporary",
 }
@@ -81,7 +77,7 @@ function groupSelected() {
 
 const actions = { update, set, add, copy, reset, groupSelected, delete: deleteGroup };
 
-type Actions = ReturnType<typeof actions[keyof typeof actions]>;
+type Actions = ReturnType<(typeof actions)[keyof typeof actions]>;
 type DispatchObjectGroups = Dispatch<Actions>;
 type LazyContextType = MutableRefObject<State>;
 

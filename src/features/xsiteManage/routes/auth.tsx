@@ -11,7 +11,7 @@ import { StorageKey } from "config/storage";
 import { selectXsiteManageAccessToken, selectXsiteManageSite, xsiteManageActions } from "../slice";
 import { useGetSitesQuery, useLazyGetTokensQuery, useRefreshTokensMutation } from "../api";
 import { featuresConfig } from "config/features";
-import { selectProjectSettings } from "slices/renderSlice";
+import { selectProjectSettings } from "features/render/renderSlice";
 import { selectHasAdminCapabilities } from "slices/explorerSlice";
 
 let getTokensRequestInitialized = false;

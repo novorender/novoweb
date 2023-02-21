@@ -21,7 +21,7 @@ import WidgetList from "features/widgetList/widgetList";
 import { useToggle } from "hooks/useToggle";
 import { featuresConfig } from "config/features";
 import { selectMinimized, selectMaximized } from "slices/explorerSlice";
-import { Picker, renderActions, selectPicker } from "slices/renderSlice";
+import { Picker, renderActions, selectPicker } from "features/render/renderSlice";
 import { MeasurementData } from "features/measure/measuredObject";
 import { useExplorerGlobals } from "contexts/explorerGlobals";
 import { measureObjectIsVertex, getMeasurementValueKind } from "utils/misc";

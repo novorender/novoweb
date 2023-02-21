@@ -18,7 +18,7 @@ import { useHistory } from "react-router-dom";
 
 import { IosSwitch, Divider, ScrollBox } from "components";
 import { useAppDispatch, useAppSelector } from "app/store";
-import { CameraType, renderActions } from "slices/renderSlice";
+import { CameraType, renderActions } from "features/render/renderSlice";
 import { useExplorerGlobals } from "contexts/explorerGlobals";
 
 import {

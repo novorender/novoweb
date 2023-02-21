@@ -9,7 +9,7 @@ import WidgetList from "features/widgetList/widgetList";
 import { useToggle } from "hooks/useToggle";
 import { useExplorerGlobals } from "contexts/explorerGlobals";
 import { useAppDispatch, useAppSelector } from "app/store";
-import { renderActions, selectCameraType, selectProjectSettings } from "slices/renderSlice";
+import { renderActions, selectCameraType, selectProjectSettings } from "features/render/renderSlice";
 import { selectMinimized, selectMaximized } from "slices/explorerSlice";
 
 import {
