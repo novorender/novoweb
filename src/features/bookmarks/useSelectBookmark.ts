@@ -23,11 +23,17 @@ import { groupsActions } from "features/groups";
 import { useSceneId } from "hooks/useSceneId";
 import { manholeActions } from "features/manhole";
 import { ExtendedMeasureEntity, ViewMode } from "types/misc";
+import {
+    HighlightCollection,
+    highlightCollectionsActions,
+    useDispatchHighlightCollections,
+} from "contexts/highlightCollections";
 
 export function useSelectBookmark() {
     const sceneId = useSceneId();
     const dispatchSelectionBasket = useDispatchSelectionBasket();
     const dispatchHighlighted = useDispatchHighlighted();
+    const dispatchHighlightCollections = useDispatchHighlightCollections();
     const dispatchHidden = useDispatchHidden();
     const objectGroups = useLazyObjectGroups();
     const dispatchObjectGroups = useDispatchObjectGroups();
@@ -99,6 +105,7 @@ export function useSelectBookmark() {
                 objectGroupsActions.set(updatedObjectGroups.map((group) => ({ ...group, selected: false })))
             );
             dispatchHighlighted(highlightActions.setIds([]));
+            dispatchHighlightCollections(highlightCollectionsActions.clearAll());
         } else {
             if (bookmark.objectGroups) {
                 const groups = bookmark.objectGroups;
@@ -109,6 +116,19 @@ export function useSelectBookmark() {
 
             dispatchHighlighted(highlightActions.setIds((bmDefaultGroup?.ids as number[] | undefined) ?? []));
             dispatchObjectGroups(objectGroupsActions.set(updatedObjectGroups));
+
+            if (bookmark.highlightCollections?.secondaryHighlight) {
+                dispatchHighlightCollections(
+                    highlightCollectionsActions.setIds(
+                        HighlightCollection.SecondaryHighlight,
+                        bookmark.highlightCollections.secondaryHighlight.ids
+                    )
+                );
+            } else {
+                dispatchHighlightCollections(
+                    highlightCollectionsActions.setIds(HighlightCollection.SecondaryHighlight, [])
+                );
+            }
 
             if (bookmark.selectionBasket) {
                 dispatchSelectionBasket(selectionBasketActions.set(bookmark.selectionBasket.ids));

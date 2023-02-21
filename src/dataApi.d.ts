@@ -48,5 +48,10 @@ declare module "@novorender/data-js-api" {
         };
         selectedMeasureEntities?: ExtendedMeasureEntity[];
         viewMode?: ViewMode;
+        highlightCollections?: {
+            secondaryHighlight: {
+                ids: number[];
+            };
+        };
     }
 }

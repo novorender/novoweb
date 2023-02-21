@@ -26,6 +26,7 @@ import {
     selectManholeCollisionTarget,
     selectManholeMeasureValues,
 } from "features/manhole";
+import { HighlightCollection, useLazyHighlightCollections } from "contexts/highlightCollections";
 
 export function useCreateBookmark() {
     const measurement = useAppSelector(selectMeasure);
@@ -46,6 +47,7 @@ export function useCreateBookmark() {
     } = useExplorerGlobals(true);
     const objectGroups = useLazyObjectGroups();
     const highlighted = useLazyHighlighted();
+    const highlightCollections = useLazyHighlightCollections();
     const hidden = useLazyHidden();
     const selectionBasket = useLazySelectionBasket();
 
@@ -110,6 +112,11 @@ export function useCreateBookmark() {
             selectionBasket: selBasket,
             defaultVisibility,
             followPath: fp,
+            highlightCollections: {
+                [HighlightCollection.SecondaryHighlight]: {
+                    ids: highlightCollections.current[HighlightCollection.SecondaryHighlight].idArr,
+                },
+            },
             clippingPlanes: {
                 ...clippingPlanes,
                 bounds: {
