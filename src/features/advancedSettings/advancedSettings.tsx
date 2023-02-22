@@ -132,6 +132,9 @@ export default function AdvancedSettings() {
                               color: settings.backgroundColor,
                               skyBoxBlur: settings.skyBoxBlur,
                           },
+                          pickBuffer: {
+                              includeTransparent: settings.pickSemiTransparentObjects,
+                          },
                           ...(currentEnvironment ? { environment: currentEnvironment.name } : {}),
                       } as Internal.RenderSettingsExt),
                 camera:

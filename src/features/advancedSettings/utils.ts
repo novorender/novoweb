@@ -36,3 +36,9 @@ export function toggleTerrainAsBackground(view: View): void {
     const { terrain } = view.settings;
     terrain.asBackground = !terrain.asBackground;
 }
+
+export function togglePickSemiTransparentObjects(view: View): void {
+    const { pickBuffer } = view.settings;
+    pickBuffer.includeTransparent = !pickBuffer.includeTransparent;
+    view.invalidateCamera();
+}
