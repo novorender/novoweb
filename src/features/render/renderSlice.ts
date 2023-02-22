@@ -70,6 +70,7 @@ export enum AdvancedSetting {
     TriangleLimit = "triangleLimit",
     SkyBoxBlur = "skyBoxBlur",
     SecondaryHighlight = "secondaryHighlight",
+    PickSemiTransparentObjects = "pickSemiTransparentObjects",
 }
 
 export enum ProjectSetting {
@@ -192,6 +193,7 @@ const initialState = {
         [AdvancedSetting.TriangleLimit]: 0,
         [AdvancedSetting.SkyBoxBlur]: 0,
         [AdvancedSetting.SecondaryHighlight]: { property: "" },
+        [AdvancedSetting.PickSemiTransparentObjects]: false,
     },
     defaultDeviceProfile: {} as any,
     gridDefaults: {

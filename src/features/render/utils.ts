@@ -506,7 +506,8 @@ export function initDeviation(deviation: RenderSettings["points"]["deviation"]):
 }
 
 export function initAdvancedSettings(view: View, customProperties: Record<string, any>, api: API): void {
-    const { diagnostics, advanced, points, light, terrain, background } = view.settings as Internal.RenderSettingsExt;
+    const { diagnostics, advanced, points, light, terrain, background, pickBuffer } =
+        view.settings as Internal.RenderSettingsExt;
     const cameraParams = view.camera.controller.params as FlightControllerParams | OrthoControllerParams;
 
     store.dispatch(
@@ -532,6 +533,7 @@ export function initAdvancedSettings(view: View, customProperties: Record<string
             [AdvancedSetting.SkyBoxBlur]: background.skyBoxBlur,
             [AdvancedSetting.AutoFps]: customProperties?.autoFps ?? true,
             [AdvancedSetting.SecondaryHighlight]: { property: customProperties?.highlights?.secondary?.property ?? "" },
+            [AdvancedSetting.PickSemiTransparentObjects]: pickBuffer?.includeTransparent ?? false,
             [AdvancedSetting.TriangleLimit]:
                 customProperties?.triangleLimit ?? (api as any).deviceProfile?.triangleLimit ?? 5_000_000,
             ...(customProperties?.flightMouseButtonMap
