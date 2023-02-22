@@ -159,6 +159,7 @@ export default function AdvancedSettings() {
                                 .map((widget) => [widget.key, true]) as [string, any]
                         ),
                         enabledOrgs: customProperties?.enabledFeatures?.enabledOrgs,
+                        admins: customProperties?.enabledFeatures?.admins,
                         expiration: customProperties?.enabledFeatures?.expiration,
                         transparentBackground: customProperties?.enabledFeatures?.transparentBackground,
                         requireConsent: customProperties?.enabledFeatures?.requireConsent,
