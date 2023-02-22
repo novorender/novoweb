@@ -132,6 +132,9 @@ export default function AdvancedSettings() {
                               color: settings.backgroundColor,
                               skyBoxBlur: settings.skyBoxBlur,
                           },
+                          pickBuffer: {
+                              includeTransparent: settings.pickSemiTransparentObjects,
+                          },
                           ...(currentEnvironment ? { environment: currentEnvironment.name } : {}),
                       } as Internal.RenderSettingsExt),
                 camera:
@@ -159,6 +162,7 @@ export default function AdvancedSettings() {
                                 .map((widget) => [widget.key, true]) as [string, any]
                         ),
                         enabledOrgs: customProperties?.enabledFeatures?.enabledOrgs,
+                        admins: customProperties?.enabledFeatures?.admins,
                         expiration: customProperties?.enabledFeatures?.expiration,
                         transparentBackground: customProperties?.enabledFeatures?.transparentBackground,
                         requireConsent: customProperties?.enabledFeatures?.requireConsent,

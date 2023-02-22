@@ -68,6 +68,7 @@ export enum AdvancedSetting {
     BackgroundColor = "backgroundColor",
     TriangleLimit = "triangleLimit",
     SkyBoxBlur = "skyBoxBlur",
+    PickSemiTransparentObjects = "pickSemiTransparentObjects",
 }
 
 export enum ProjectSetting {
@@ -189,6 +190,7 @@ const initialState = {
         [AdvancedSetting.BackgroundColor]: [0.75, 0.75, 0.75, 1] as VecRGBA,
         [AdvancedSetting.TriangleLimit]: 0,
         [AdvancedSetting.SkyBoxBlur]: 0,
+        [AdvancedSetting.PickSemiTransparentObjects]: false,
     },
     defaultDeviceProfile: {} as any,
     gridDefaults: {
@@ -368,7 +370,7 @@ export const renderSlice = createSlice({
         resetClippingBox: (state) => {
             state.clippingBox = initialState.clippingBox;
         },
-        setClippingPlanes: (state, action: PayloadAction<Partial<typeof initialState["clippingPlanes"]>>) => {
+        setClippingPlanes: (state, action: PayloadAction<Partial<(typeof initialState)["clippingPlanes"]>>) => {
             if (action.payload.enabled) {
                 state.clippingBox.enabled = false;
             }

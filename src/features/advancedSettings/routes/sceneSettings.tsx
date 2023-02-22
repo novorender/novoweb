@@ -31,7 +31,7 @@ import { useExplorerGlobals } from "contexts/explorerGlobals";
 import { rgbToVec, VecRGBA, vecToRgb } from "utils/color";
 import { ColorPicker } from "features/colorPicker";
 
-import { toggleTerrainAsBackground } from "../utils";
+import { toggleTerrainAsBackground, togglePickSemiTransparentObjects } from "../utils";
 
 export function SceneSettings({
     save,
@@ -54,7 +54,7 @@ export function SceneSettings({
     const subtrees = useAppSelector(selectSubtrees);
     const cameraType = useAppSelector(selectCameraType);
     const settings = useAppSelector(selectAdvancedSettings);
-    const { terrainAsBackground, backgroundColor, skyBoxBlur } = settings;
+    const { terrainAsBackground, backgroundColor, skyBoxBlur, pickSemiTransparentObjects } = settings;
 
     const [blur, setBlur] = useState(skyBoxBlur);
     const [colorPickerAnchor, setColorPickerAnchor] = useState<HTMLElement | null>(null);
@@ -65,6 +65,11 @@ export function SceneSettings({
     const handleToggleTerrainAsBackground = ({ target: { checked } }: ChangeEvent<HTMLInputElement>) => {
         dispatch(renderActions.setAdvancedSettings({ [AdvancedSetting.TerrainAsBackground]: checked }));
         return toggleTerrainAsBackground(view);
+    };
+
+    const handleTogglePickSemiTransparentObjects = ({ target: { checked } }: ChangeEvent<HTMLInputElement>) => {
+        dispatch(renderActions.setAdvancedSettings({ [AdvancedSetting.PickSemiTransparentObjects]: checked }));
+        return togglePickSemiTransparentObjects(view);
     };
 
     const handleBlurChange = (_event: Event, value: number | number[]): void => {
@@ -178,6 +183,28 @@ export function SceneSettings({
                         </AccordionDetails>
                     </Accordion>
                 ) : null}
+                <Accordion>
+                    <AccordionSummary>Object picking</AccordionSummary>
+                    <AccordionDetails>
+                        <Box p={1} display="flex" flexDirection="column">
+                            <FormControlLabel
+                                sx={{ ml: 0, mb: 1 }}
+                                control={
+                                    <Switch
+                                        name={AdvancedSetting.PickSemiTransparentObjects}
+                                        checked={pickSemiTransparentObjects}
+                                        onChange={handleTogglePickSemiTransparentObjects}
+                                    />
+                                }
+                                label={
+                                    <Box ml={1} fontSize={16}>
+                                        Pick semi-transparent objects
+                                    </Box>
+                                }
+                            />
+                        </Box>
+                    </AccordionDetails>
+                </Accordion>
                 <Box p={1} mt={1}>
                     <Box>
                         <Button sx={{ mb: 2 }} variant="outlined" color="grey" onClick={toggleColorPicker}>
