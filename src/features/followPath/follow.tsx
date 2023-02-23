@@ -85,29 +85,6 @@ export function Follow({ fpObj }: { fpObj: FollowParametricObject }) {
                 return;
             }
 
-            if (selectedPath !== undefined && paths.status === AsyncStatus.Success) {
-                const pathName = paths.data[selectedPath].name;
-                let roadIds: string[] = [];
-                let references = [] as HierarcicalObjectReference[];
-                await searchByPatterns({
-                    scene,
-                    searchPatterns: [{ property: "Centerline", value: pathName, exact: true }],
-                    callback: (refs) => (references = references.concat(refs)),
-                });
-                await Promise.all(
-                    references.map(async (r) => {
-                        const data = await r.loadMetaData();
-                        const prop = data.properties.find((p) => p[0] === "Novorender/road");
-                        if (prop) {
-                            roadIds.push(prop[1]);
-                        }
-                    })
-                );
-                if (roadIds.length !== 0) {
-                    dispatch(followPathActions.setDrawRoadId(roadIds));
-                }
-            }
-
             const { position: pt, normal: dir } = pos;
 
             const offset =
@@ -174,7 +151,7 @@ export function Follow({ fpObj }: { fpObj: FollowParametricObject }) {
             dispatch(followPathActions.setCurrentCenter(pt as [number, number, number]));
             dispatch(followPathActions.setPtHeight(pt[1]));
         },
-        [clipping, currentCenter, dispatch, fpObj, view, selectedPath, paths, scene]
+        [clipping, currentCenter, dispatch, fpObj, view]
     );
 
     useEffect(() => {
@@ -191,7 +168,44 @@ export function Follow({ fpObj }: { fpObj: FollowParametricObject }) {
         dispatch(followPathActions.toggleResetPositionOnInit(false));
         dispatch(followPathActions.setProfile(fpObj.parameterBounds.start.toFixed(3)));
         goToProfile({ view2d, showGrid, keepOffset: false, p: fpObj.parameterBounds.start });
-    }, [view2d, showGrid, profile, goToProfile, autoRecenter, resetPosition, dispatch, fpObj]);
+        const loadCrossSection = async () => {
+            if (selectedPath !== undefined && paths.status === AsyncStatus.Success) {
+                const pathName = paths.data[selectedPath].name;
+                let roadIds: string[] = [];
+                let references = [] as HierarcicalObjectReference[];
+                await searchByPatterns({
+                    scene,
+                    searchPatterns: [{ property: "Centerline", value: pathName, exact: true }],
+                    callback: (refs) => (references = references.concat(refs)),
+                });
+                await Promise.all(
+                    references.map(async (r) => {
+                        const data = await r.loadMetaData();
+                        const prop = data.properties.find((p) => p[0] === "Novorender/road");
+                        if (prop) {
+                            roadIds.push(prop[1]);
+                        }
+                    })
+                );
+                if (roadIds.length !== 0) {
+                    dispatch(followPathActions.setDrawRoadId(roadIds));
+                }
+            }
+        };
+        loadCrossSection();
+    }, [
+        view2d,
+        showGrid,
+        profile,
+        goToProfile,
+        autoRecenter,
+        resetPosition,
+        dispatch,
+        fpObj,
+        paths,
+        scene,
+        selectedPath,
+    ]);
 
     const handle2dChange = () => {
         const newState = !view2d;
