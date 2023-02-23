@@ -25,6 +25,7 @@ import {
 import { BookmarkList } from "./routes/bookmarkList";
 import { Delete } from "./routes/delete";
 import { Crupdate } from "./routes/crupdate";
+import { RenameCollection } from "./routes/renameCollection";
 
 export default function Bookmarks() {
     const [menuOpen, toggleMenu] = useToggle();
@@ -89,6 +90,9 @@ export default function Bookmarks() {
                             </Route>
                             <Route path="/delete/:id" exact>
                                 <Delete />
+                            </Route>
+                            <Route path="/renameCollection">
+                                <RenameCollection />
                             </Route>
                         </Switch>
                     </MemoryRouter>
