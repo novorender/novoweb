@@ -12,7 +12,7 @@ import {
     useTheme,
 } from "@mui/material";
 import { ArrowBack, ArrowForward, Edit, RestartAlt } from "@mui/icons-material";
-import { FlightControllerParams, OrthoControllerParams } from "@novorender/webgl-api";
+import { FlightControllerParams, HierarcicalObjectReference, OrthoControllerParams } from "@novorender/webgl-api";
 import { vec3, quat, mat3, mat4, glMatrix } from "gl-matrix";
 import { useHistory } from "react-router-dom";
 
@@ -38,6 +38,7 @@ import {
     selectLandXmlPaths,
 } from "./followPathSlice";
 import { AsyncStatus, ViewMode } from "types/misc";
+import { searchByPatterns } from "utils/search";
 
 const profileFractionDigits = 3;
 
@@ -45,7 +46,7 @@ export function Follow({ fpObj }: { fpObj: FollowParametricObject }) {
     const theme = useTheme();
     const history = useHistory();
     const {
-        state: { view },
+        state: { view, scene },
     } = useExplorerGlobals(true);
 
     const currentCenter = useAppSelector(selectCurrentCenter);
@@ -85,8 +86,24 @@ export function Follow({ fpObj }: { fpObj: FollowParametricObject }) {
             }
 
             if (selectedPath !== undefined && paths.status === AsyncStatus.Success) {
-                const roadIds = paths.data[selectedPath].roadIds;
-                if (roadIds) {
+                const pathName = paths.data[selectedPath].name;
+                let roadIds: string[] = [];
+                let references = [] as HierarcicalObjectReference[];
+                await searchByPatterns({
+                    scene,
+                    searchPatterns: [{ property: "Centerline", value: pathName, exact: true }],
+                    callback: (refs) => (references = references.concat(refs)),
+                });
+                await Promise.all(
+                    references.map(async (r) => {
+                        const data = await r.loadMetaData();
+                        const prop = data.properties.find((p) => p[0] === "Novorender/road");
+                        if (prop) {
+                            roadIds.push(prop[1]);
+                        }
+                    })
+                );
+                if (roadIds.length !== 0) {
                     dispatch(followPathActions.setDrawRoadId(roadIds));
                 }
             }
@@ -157,7 +174,7 @@ export function Follow({ fpObj }: { fpObj: FollowParametricObject }) {
             dispatch(followPathActions.setCurrentCenter(pt as [number, number, number]));
             dispatch(followPathActions.setPtHeight(pt[1]));
         },
-        [clipping, currentCenter, dispatch, fpObj, view, selectedPath, paths]
+        [clipping, currentCenter, dispatch, fpObj, view, selectedPath, paths, scene]
     );
 
     useEffect(() => {

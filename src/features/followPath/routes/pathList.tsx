@@ -27,7 +27,6 @@ import { singleCylinderOptions } from "features/measure";
 import { selectFollowCylindersFrom, followPathActions, selectLandXmlPaths } from "../followPathSlice";
 import { usePathMeasureObjects } from "../usePathMeasureObjects";
 import { useFollowPathFromIds } from "../useFollowPathFromIds";
-import { HierarcicalObjectReference } from "@novorender/webgl-api";
 
 export function PathList() {
     const theme = useTheme();
@@ -85,29 +84,7 @@ export function PathList() {
                         )),
                 });
 
-                let landXmlPaths = await Promise.all(
-                    paths.map(async (p) => {
-                        let roadIds: string[] = [];
-                        let references = [] as HierarcicalObjectReference[];
-                        await searchByPatterns({
-                            scene,
-                            searchPatterns: [{ property: "Centerline", value: p.name, exact: true }],
-                            callback: (refs) => (references = references.concat(refs)),
-                        });
-                        await Promise.all(
-                            references.map(async (r) => {
-                                const data = await r.loadMetaData();
-                                const prop = data.properties.find((p) => p[0] === "Novorender/road");
-                                if (prop) {
-                                    roadIds.push(prop[1]);
-                                }
-                            })
-                        );
-                        return { ...p, roadIds: roadIds.length === 0 ? undefined : roadIds };
-                    })
-                );
-
-                dispatch(followPathActions.setPaths({ status: AsyncStatus.Success, data: landXmlPaths }));
+                dispatch(followPathActions.setPaths({ status: AsyncStatus.Success, data: paths }));
             } catch (e) {
                 console.warn(e);
                 dispatch(
