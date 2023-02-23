@@ -159,7 +159,6 @@ export function Follow({ fpObj }: { fpObj: FollowParametricObject }) {
         },
         [clipping, currentCenter, dispatch, fpObj, view, selectedPath, paths]
     );
-    dispatch(renderActions.setViewMode(ViewMode.FollowPath));
 
     useEffect(() => {
         dispatch(
@@ -304,6 +303,8 @@ export function Follow({ fpObj }: { fpObj: FollowParametricObject }) {
     };
 
     useEffect(() => {
+        dispatch(renderActions.setViewMode(ViewMode.FollowPath));
+
         return () => {
             dispatch(renderActions.setViewMode(ViewMode.Regular));
         };
