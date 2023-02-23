@@ -78,7 +78,7 @@ export function useCanvasClickHandler() {
             pickCameraPlane
         );
 
-        if (deviation.mode !== "off" && cameraState.type === CameraType.Orthographic) {
+        if (picker === Picker.Object && deviation.mode !== "off" && cameraState.type === CameraType.Orthographic) {
             const isTouch = evt.nativeEvent instanceof PointerEvent && evt.nativeEvent.pointerType === "touch";
             const pickSize = isTouch ? 16 : 0;
             const deviation = await pickDeviationArea({
