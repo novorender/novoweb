@@ -28,7 +28,14 @@ export function Details({
     const [name, setName] = useState(
         groupToEdit
             ? groupToEdit.name
-            : savedInputs.map((input) => `${input.property?.split("/").pop()} ${input.value}`).join(" + ")
+            : savedInputs
+                  .map(
+                      (input) =>
+                          `${input.property?.split("/").pop()} ${
+                              input.value ? input.value : input.range ? `${input.range.min}-${input.range.max}` : ""
+                          }`
+                  )
+                  .join(" + ")
     );
     const [collection, setCollection] = useState(groupToEdit?.grouping ?? "");
     const collections = Array.from(

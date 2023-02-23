@@ -103,7 +103,7 @@ export function CreateJsonGroup({
 
     const disableNext =
         ![Status.Initial, Status.SearchSuccess].includes(status) ||
-        !savedInputs.filter((input) => input.property && input.value).length;
+        !savedInputs.filter((input) => input.property && (input.value || input.range)).length;
 
     return (
         <Modal open={true} onClose={() => history.goBack()}>
