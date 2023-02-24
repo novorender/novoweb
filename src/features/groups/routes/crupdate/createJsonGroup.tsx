@@ -47,9 +47,10 @@ export function CreateJsonGroup({
     const [status, setStatus] = useMountedState(Status.Initial);
     const [json, setJson] = useState(JSON.stringify({ searchPattern: savedInputs }, undefined, 2));
 
-    const [abortController] = useAbortController();
+    const [abortController, abort] = useAbortController();
 
     const search = async () => {
+        abort();
         const abortSignal = abortController.current.signal;
 
         setIds([]);
@@ -88,6 +89,10 @@ export function CreateJsonGroup({
                     dispatchHighlighted(highlightActions.add(idArr));
                 },
             }).catch(() => {});
+        }
+
+        if (abortSignal.aborted) {
+            return;
         }
 
         setSavedInputs(searchPatterns);
