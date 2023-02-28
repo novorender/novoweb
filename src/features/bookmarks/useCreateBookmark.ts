@@ -97,6 +97,7 @@ export function useCreateBookmark() {
                 ? {
                       ...fpBase,
                       ids: followPath.selectedIds,
+                      ...(followPath.drawRoadIds ? { roadIds: followPath.drawRoadIds } : {}),
                   }
                 : {
                       ...fpBase,
