@@ -4,7 +4,7 @@ import { ArrowBack, LocationOnOutlined } from "@mui/icons-material";
 
 import { LinearProgress, ScrollBox, Divider } from "components";
 import { useAppDispatch, useAppSelector } from "app/store";
-import { CameraType, renderActions } from "slices/renderSlice";
+import { CameraType, renderActions } from "features/render/renderSlice";
 import { useExplorerGlobals } from "contexts/explorerGlobals";
 import { featuresConfig } from "config/features";
 

@@ -14,6 +14,7 @@ import { mat4, quat, vec3, vec4 } from "gl-matrix";
 import type { RootState } from "app/store";
 import { VecRGB, VecRGBA } from "utils/color";
 import { defaultFlightControls } from "config/camera";
+import { ViewMode } from "types/misc";
 
 export const fetchEnvironments = createAsyncThunk("novorender/fetchEnvironments", async (api: API) => {
     const envs = await api.availableEnvironments("https://api.novorender.com/assets/env/index.json");
@@ -68,6 +69,7 @@ export enum AdvancedSetting {
     BackgroundColor = "backgroundColor",
     TriangleLimit = "triangleLimit",
     SkyBoxBlur = "skyBoxBlur",
+    SecondaryHighlight = "secondaryHighlight",
     PickSemiTransparentObjects = "pickSemiTransparentObjects",
 }
 
@@ -190,6 +192,7 @@ const initialState = {
         [AdvancedSetting.BackgroundColor]: [0.75, 0.75, 0.75, 1] as VecRGBA,
         [AdvancedSetting.TriangleLimit]: 0,
         [AdvancedSetting.SkyBoxBlur]: 0,
+        [AdvancedSetting.SecondaryHighlight]: { property: "" },
         [AdvancedSetting.PickSemiTransparentObjects]: false,
     },
     defaultDeviceProfile: {} as any,
@@ -217,6 +220,15 @@ const initialState = {
         [ProjectSetting.XsiteManage]: { siteId: "" },
     },
     picker: Picker.Object,
+    viewMode: ViewMode.Default,
+    loadingHandles: [] as number[],
+    deviationStamp: null as null | {
+        mouseX: number;
+        mouseY: number;
+        data: {
+            deviation: number;
+        };
+    },
 };
 
 type State = typeof initialState;
@@ -460,6 +472,18 @@ export const renderSlice = createSlice({
                 state.picker = Picker.Object;
             }
         },
+        setViewMode: (state, action: PayloadAction<State["viewMode"]>) => {
+            state.viewMode = action.payload;
+        },
+        addLoadingHandle: (state, action: PayloadAction<State["loadingHandles"][number]>) => {
+            state.loadingHandles.push(action.payload);
+        },
+        removeLoadingHandle: (state, action: PayloadAction<State["loadingHandles"][number]>) => {
+            state.loadingHandles = state.loadingHandles.filter((handle) => handle !== action.payload);
+        },
+        setDeviationStamp: (state, action: PayloadAction<State["deviationStamp"]>) => {
+            state.deviationStamp = action.payload;
+        },
     },
     extraReducers: (builder) => {
         builder.addCase(fetchEnvironments.fulfilled, (state, action) => {
@@ -487,11 +511,16 @@ export const selectClippingPlanes = (state: RootState) => state.render.clippingP
 export const selectCamera = (state: RootState) => state.render.camera as CameraState;
 export const selectCameraType = (state: RootState) => state.render.camera.type;
 export const selectAdvancedSettings = (state: RootState) => state.render.advancedSettings;
+export const selectSecondaryHighlightProperty = (state: RootState) =>
+    state.render.advancedSettings.secondaryHighlight.property;
 export const selectProjectSettings = (state: RootState) => state.render.projectSettings;
 export const selectGridDefaults = (state: RootState) => state.render.gridDefaults;
 export const selectGrid = (state: RootState) => state.render.grid as RenderSettings["grid"];
 export const selectPicker = (state: RootState) => state.render.picker;
 export const selectDefaultDeviceProfile = (state: RootState) => state.render.defaultDeviceProfile;
+export const selectViewMode = (state: RootState) => state.render.viewMode;
+export const selectLoadingHandles = (state: RootState) => state.render.loadingHandles;
+export const selectDeviationStamp = (state: RootState) => state.render.deviationStamp;
 
 const { reducer, actions } = renderSlice;
 export { reducer as renderReducer, actions as renderActions };

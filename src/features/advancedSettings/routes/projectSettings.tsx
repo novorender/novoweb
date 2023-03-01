@@ -1,14 +1,14 @@
 import { useTheme, Box, Button, Autocomplete, createFilterOptions } from "@mui/material";
 import { useHistory } from "react-router-dom";
 import { ArrowBack, Save } from "@mui/icons-material";
+import { useState } from "react";
 
 import { dataApi } from "app";
 import { Divider, LinearProgress, ScrollBox, TextField } from "components";
 import { useAppDispatch, useAppSelector } from "app/store";
-import { ProjectSetting, renderActions, selectProjectSettings } from "slices/renderSlice";
+import { ProjectSetting, renderActions, selectProjectSettings } from "features/render/renderSlice";
 import { selectLockedWidgets } from "slices/explorerSlice";
 import { featuresConfig } from "config/features";
-import { useState } from "react";
 
 const filter = createFilterOptions<string>();
 

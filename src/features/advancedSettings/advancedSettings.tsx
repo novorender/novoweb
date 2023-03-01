@@ -7,7 +7,7 @@ import { FlightControllerParams, Internal, OrthoControllerParams } from "@novore
 import { dataApi } from "app";
 import { useAppSelector } from "app/store";
 import { featuresConfig, FeatureType } from "config/features";
-import { Divider, LinearProgress, LogoSpeedDial, WidgetContainer, WidgetHeader } from "components";
+import { Divider, LinearProgress, LogoSpeedDial, ScrollBox, WidgetContainer, WidgetHeader } from "components";
 import WidgetList from "features/widgetList/widgetList";
 import { useExplorerGlobals } from "contexts/explorerGlobals";
 import {
@@ -17,7 +17,7 @@ import {
     selectProjectSettings,
     selectSubtrees,
     SubtreeStatus,
-} from "slices/renderSlice";
+} from "features/render/renderSlice";
 import {
     selectEnabledWidgets,
     selectIsAdminScene,
@@ -36,6 +36,9 @@ import { RenderSettings } from "./routes/renderSettings";
 import { ProjectSettings } from "./routes/projectSettings";
 import { SceneSettings } from "./routes/sceneSettings";
 import { PerformanceSettings } from "./routes/performanceSettings";
+import { ObjectSelectionSettings } from "./routes/objectSelectionSettings";
+import { useHighlighted } from "contexts/highlighted";
+import { useHighlightCollections } from "contexts/highlightCollections";
 
 enum Status {
     Idle,
@@ -58,6 +61,9 @@ export default function AdvancedSettings() {
     const baseCameraSpeed = useAppSelector(selectBaseCameraSpeed);
     const enabledWidgets = useAppSelector(selectEnabledWidgets);
     const primaryMenu = useAppSelector(selectPrimaryMenu);
+    const primaryHighlightColor = useHighlighted().color;
+    const secondaryHighlightColor = useHighlightCollections().secondaryHighlight.color;
+
     const [menuOpen, toggleMenu] = useToggle();
     const minimized = useAppSelector(selectMinimized) === featuresConfig.advancedSettings.key;
     const maximized = useAppSelector(selectMaximized) === featuresConfig.advancedSettings.key;
@@ -167,6 +173,15 @@ export default function AdvancedSettings() {
                         transparentBackground: customProperties?.enabledFeatures?.transparentBackground,
                         requireConsent: customProperties?.enabledFeatures?.requireConsent,
                     },
+                    highlights: {
+                        primary: {
+                            color: primaryHighlightColor,
+                        },
+                        secondary: {
+                            color: secondaryHighlightColor,
+                            property: settings.secondaryHighlight.property,
+                        },
+                    },
                 },
                 tmZone: projectSettings.tmZone,
             });
@@ -255,14 +270,17 @@ export default function AdvancedSettings() {
                             <Route path="/scene" exact>
                                 <SceneSettings save={save} saveCameraPos={saveCameraPos} saving={saving} />
                             </Route>
-                            <Route path="/camera" exact>
-                                <CameraSettings save={save} saveCameraPos={saveCameraPos} saving={saving} />
-                            </Route>
                             <Route path="/features" exact>
                                 <FeatureSettings save={save} saving={saving} />
                             </Route>
                             <Route path="/project" exact>
                                 <ProjectSettings save={save} saving={saving} />
+                            </Route>
+                            <Route path="/objectSelection" exact>
+                                <ObjectSelectionSettings save={save} saving={saving} />
+                            </Route>
+                            <Route path="/camera" exact>
+                                <CameraSettings save={save} saveCameraPos={saveCameraPos} saving={saving} />
                             </Route>
                             <Route path="/render" exact>
                                 <RenderSettings save={save} saving={saving} />
@@ -306,7 +324,7 @@ function Root({ save, saving }: { save: () => Promise<void>; saving: boolean }) 
                     <LinearProgress />
                 </Box>
             ) : null}
-            <Box height={1} mt={1} pb={3} display="flex" flexDirection="column">
+            <ScrollBox height={1} mt={1} pb={3} display="flex" flexDirection="column">
                 <List disablePadding>
                     <ListItemButton sx={{ pl: 1, fontWeight: 600 }} disableGutters component={Link} to="/scene">
                         Scene
@@ -316,6 +334,14 @@ function Root({ save, saving }: { save: () => Promise<void>; saving: boolean }) 
                     </ListItemButton>
                     <ListItemButton sx={{ pl: 1, fontWeight: 600 }} disableGutters component={Link} to="/project">
                         Project
+                    </ListItemButton>
+                    <ListItemButton
+                        sx={{ pl: 1, fontWeight: 600 }}
+                        disableGutters
+                        component={Link}
+                        to="/objectSelection"
+                    >
+                        Object selection
                     </ListItemButton>
                     <ListItemButton sx={{ pl: 1, fontWeight: 600 }} disableGutters component={Link} to="/camera">
                         Camera
@@ -327,7 +353,7 @@ function Root({ save, saving }: { save: () => Promise<void>; saving: boolean }) 
                         Performance
                     </ListItemButton>
                 </List>
-            </Box>
+            </ScrollBox>
         </>
     );
 }

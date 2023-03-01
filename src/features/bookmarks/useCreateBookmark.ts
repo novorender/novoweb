@@ -14,8 +14,9 @@ import {
     selectMainObject,
     selectSelectionBasketMode,
     selectSubtrees,
+    selectViewMode,
     SubtreeStatus,
-} from "slices/renderSlice";
+} from "features/render/renderSlice";
 import { selectMeasure } from "features/measure";
 import { selectFollowPath } from "features/followPath";
 import { selectAreaPoints } from "features/area";
@@ -25,6 +26,7 @@ import {
     selectManholeCollisionTarget,
     selectManholeMeasureValues,
 } from "features/manhole";
+import { HighlightCollection, useLazyHighlightCollections } from "contexts/highlightCollections";
 
 export function useCreateBookmark() {
     const measurement = useAppSelector(selectMeasure);
@@ -37,6 +39,7 @@ export function useCreateBookmark() {
     const subtrees = useAppSelector(selectSubtrees);
     const manhole = useAppSelector(selectManholeMeasureValues);
     const manholeCollisionTarget = useAppSelector(selectManholeCollisionTarget);
+    const viewMode = useAppSelector(selectViewMode);
     const manholeCollisionSettings = useAppSelector(selectManholeCollisionSettings);
 
     const {
@@ -44,6 +47,7 @@ export function useCreateBookmark() {
     } = useExplorerGlobals(true);
     const objectGroups = useLazyObjectGroups();
     const highlighted = useLazyHighlighted();
+    const highlightCollections = useLazyHighlightCollections();
     const hidden = useLazyHidden();
     const selectionBasket = useLazySelectionBasket();
 
@@ -93,6 +97,7 @@ export function useCreateBookmark() {
                 ? {
                       ...fpBase,
                       ids: followPath.selectedIds,
+                      ...(followPath.drawRoadIds ? { roadIds: followPath.drawRoadIds } : {}),
                   }
                 : {
                       ...fpBase,
@@ -108,6 +113,11 @@ export function useCreateBookmark() {
             selectionBasket: selBasket,
             defaultVisibility,
             followPath: fp,
+            highlightCollections: {
+                [HighlightCollection.SecondaryHighlight]: {
+                    ids: highlightCollections.current[HighlightCollection.SecondaryHighlight].idArr,
+                },
+            },
             clippingPlanes: {
                 ...clippingPlanes,
                 bounds: {
@@ -115,6 +125,7 @@ export function useCreateBookmark() {
                     max: Array.from(clippingPlanes.bounds.max) as [number, number, number],
                 },
             },
+            viewMode: viewMode,
             grid: { ...view.settings.grid },
             ...(measurement.selectedEntities.length > 0
                 ? { selectedMeasureEntities: measurement.selectedEntities }

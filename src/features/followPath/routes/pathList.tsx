@@ -20,11 +20,11 @@ import { useExplorerGlobals } from "contexts/explorerGlobals";
 import { AsyncStatus, hasFinished } from "types/misc";
 import { getObjectNameFromPath, getParentPath } from "utils/objectData";
 import { searchByPatterns } from "utils/search";
-import { Picker, renderActions, selectPicker } from "slices/renderSlice";
+import { Picker, renderActions, selectPicker } from "features/render/renderSlice";
 import { highlightActions, useDispatchHighlighted, useHighlighted } from "contexts/highlighted";
 import { singleCylinderOptions } from "features/measure";
 
-import { selectFollowCylindersFrom, followPathActions, LandXmlPath, selectLandXmlPaths } from "../followPathSlice";
+import { selectFollowCylindersFrom, followPathActions, selectLandXmlPaths } from "../followPathSlice";
 import { usePathMeasureObjects } from "../usePathMeasureObjects";
 import { useFollowPathFromIds } from "../useFollowPathFromIds";
 
@@ -70,7 +70,10 @@ export function PathList() {
             dispatch(followPathActions.setPaths({ status: AsyncStatus.Loading }));
 
             try {
-                let paths = [] as LandXmlPath[];
+                let paths = [] as {
+                    id: number;
+                    name: string;
+                }[];
 
                 await searchByPatterns({
                     scene,
@@ -190,11 +193,12 @@ export function PathList() {
                         ""
                     ) : (
                         <List disablePadding>
-                            {landXmlPaths.data.map((path) => (
+                            {landXmlPaths.data.map((path, idx) => (
                                 <ListItemButton
                                     disabled={selectingPos}
                                     key={path.id}
                                     onClick={() => {
+                                        dispatch(followPathActions.setSelectedPath(idx));
                                         dispatch(followPathActions.toggleResetPositionOnInit(true));
                                         dispatch(renderActions.setMainObject(path.id));
                                         dispatch(followPathActions.setSelectedIds([path.id]));

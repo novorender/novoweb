@@ -9,7 +9,7 @@ import { NodeList } from "features/nodeList/nodeList";
 import WidgetList from "features/widgetList/widgetList";
 
 import { useAppDispatch, useAppSelector } from "app/store";
-import { renderActions, selectMainObject } from "slices/renderSlice";
+import { renderActions, selectMainObject } from "features/render/renderSlice";
 import { useExplorerGlobals } from "contexts/explorerGlobals";
 
 import { useAbortController } from "hooks/useAbortController";

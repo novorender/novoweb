@@ -26,7 +26,7 @@ import { useExplorerGlobals } from "contexts/explorerGlobals";
 import { selectionBasketActions, useDispatchSelectionBasket } from "contexts/selectionBasket";
 import { hiddenGroupActions, useDispatchHidden } from "contexts/hidden";
 import { highlightActions, useDispatchHighlighted, useLazyHighlighted } from "contexts/highlighted";
-import { ObjectVisibility, renderActions } from "slices/renderSlice";
+import { ObjectVisibility, renderActions } from "features/render/renderSlice";
 import { explorerActions, selectMaximized, selectMinimized, selectUrlSearchQuery } from "slices/explorerSlice";
 
 import { iterateAsync, searchDeepByPatterns, batchedPropertySearch } from "utils/search";

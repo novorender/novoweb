@@ -10,7 +10,7 @@ import { selectIsAdminScene } from "slices/explorerSlice";
 import { useExplorerGlobals } from "contexts/explorerGlobals";
 import { useAppDispatch, useAppSelector } from "app/store";
 import { AsyncState, AsyncStatus } from "types/misc";
-import { renderActions, selectProjectSettings } from "slices/renderSlice";
+import { renderActions, selectProjectSettings } from "features/render/renderSlice";
 import { Divider, ScrollBox, TextField } from "components";
 import { featuresConfig } from "config/features";
 

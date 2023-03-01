@@ -20,7 +20,7 @@ import { AsyncState, AsyncStatus, hasFinished } from "types/misc";
 import { useExplorerGlobals } from "contexts/explorerGlobals";
 import { useAbortController } from "hooks/useAbortController";
 import { useAppDispatch, useAppSelector } from "app/store";
-import { CameraType, renderActions, selectCameraType, selectMainObject } from "slices/renderSlice";
+import { CameraType, renderActions, selectCameraType, selectMainObject } from "features/render/renderSlice";
 import { highlightActions, useDispatchHighlighted } from "contexts/highlighted";
 
 import { selectFlyOnSelect, selectionBasketSliceActions } from "../selectionBasketSlice";

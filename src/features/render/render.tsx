@@ -36,7 +36,7 @@ import {
     PanoramaStatus,
     useHandlePanoramaChanges,
 } from "features/panoramas";
-import { Accordion, AccordionDetails, AccordionSummary, Divider, Loading } from "components";
+import { Accordion, AccordionDetails, AccordionSummary, Divider, LinearProgress, Loading } from "components";
 import { api, dataApi, measureApi } from "app";
 import { useSceneId } from "hooks/useSceneId";
 import {
@@ -49,7 +49,6 @@ import {
     selectEnvironments,
     selectMainObject,
     selectSavedCameraPositions,
-    selectSelectMultiple,
     selectDefaultVisibility,
     selectClippingPlanes,
     CameraType,
@@ -62,24 +61,22 @@ import {
     selectSelectionBasketColor,
     selectPicker,
     Picker,
-} from "slices/renderSlice";
+    selectLoadingHandles,
+    selectDeviationStamp,
+} from "features/render/renderSlice";
 import { explorerActions, selectLocalBookmarkId, selectUrlBookmarkId } from "slices/explorerSlice";
 import { selectDeviations } from "features/deviations";
 import { useSelectBookmark } from "features/bookmarks/useSelectBookmark";
-import { measureActions, selectMeasure, useMeasureHoverSettings, useMeasurePickSettings } from "features/measure";
-import { manholeActions, useHandleManholeUpdates } from "features/manhole";
+import { measureActions, useMeasureHoverSettings } from "features/measure";
+import { useHandleManholeUpdates } from "features/manhole";
 import { ditioActions, useDitioMarkers, useHandleDitioKeepAlive } from "features/ditio";
 import { useAppDispatch, useAppSelector } from "app/store";
-import { followPathActions } from "features/followPath";
-import { areaActions } from "features/area";
 import { useHandleAreaPoints } from "features/area";
-import { heightProfileActions } from "features/heightProfile";
-import { pointLineActions, useHandlePointLineUpdates } from "features/pointLine";
+import { useHandlePointLineUpdates } from "features/pointLine";
 import { selectCurrentLocation, useHandleLocationMarker } from "features/myLocation";
 import { useHandleJiraKeepAlive } from "features/jira";
 import { Engine2D } from "features/engine2D";
 import { LogPoint, useXsiteManageLogPointMarkers, useHandleXsiteManageKeepAlive } from "features/xsiteManage";
-import { ExtendedMeasureEntity } from "types/misc";
 import { orthoCamActions, selectCrossSectionPoint, useHandleCrossSection } from "features/orthoCam";
 
 import { useHighlighted, highlightActions, useDispatchHighlighted } from "contexts/highlighted";
@@ -87,20 +84,25 @@ import { useHidden, useDispatchHidden } from "contexts/hidden";
 import { useObjectGroups, useDispatchObjectGroups } from "contexts/objectGroups";
 import { useDispatchSelectionBasket, useSelectionBasket, selectionBasketActions } from "contexts/selectionBasket";
 import { explorerGlobalsActions, useExplorerGlobals } from "contexts/explorerGlobals";
+import {
+    HighlightCollection,
+    highlightCollectionsActions,
+    useDispatchHighlightCollections,
+    useHighlightCollections,
+} from "contexts/highlightCollections";
 
 import {
     refillObjects,
     createRendering,
     initHighlighted,
     initHidden,
-    initCustomGroups,
+    initObjectGroups,
     initEnvironment,
     initCamera,
     initClippingBox,
     initClippingPlanes,
     initAdvancedSettings,
     initDeviation,
-    pickDeviationArea,
     initSubtrees,
     initProjectSettings,
 } from "./utils";
@@ -108,6 +110,8 @@ import { xAxis, yAxis, axis, MAX_FLOAT } from "./consts";
 import { useHandleGridChanges } from "./useHandleGridChanges";
 import { useHandleCameraControls } from "./useHandleCameraControls";
 import { moveSvgCursor } from "./svgUtils";
+import { useCanvasClickHandler } from "./useCanvasClickHandler";
+import { useHandleCanvasCursor } from "./useHandleCanvasCursor";
 
 glMatrix.setMatrixArrayType(Array);
 
@@ -189,6 +193,8 @@ export function Render3D({ onInit }: Props) {
     const sceneId = useSceneId();
     const highlightedObjects = useHighlighted();
     const dispatchHighlighted = useDispatchHighlighted();
+    const highlightCollections = useHighlightCollections();
+    const dispatchHighlightCollections = useDispatchHighlightCollections();
     const hiddenObjects = useHidden();
     const dispatchHidden = useDispatchHidden();
     const dispatchSelectionBasket = useDispatchSelectionBasket();
@@ -209,7 +215,6 @@ export function Render3D({ onInit }: Props) {
     const cameraSpeedMultiplier = useAppSelector(selectCameraSpeedMultiplier);
     const baseCameraSpeed = useAppSelector(selectBaseCameraSpeed);
     const savedCameraPositions = useAppSelector(selectSavedCameraPositions);
-    const selectMultiple = useAppSelector(selectSelectMultiple);
     const subtrees = useAppSelector(selectSubtrees);
     const selectionBasketMode = useAppSelector(selectSelectionBasketMode);
     const selectionBasketColor = useAppSelector(selectSelectionBasketColor);
@@ -217,7 +222,6 @@ export function Render3D({ onInit }: Props) {
     const clippingPlanes = useAppSelector(selectClippingPlanes);
     const cameraState = useAppSelector(selectCamera);
     const advancedSettings = useAppSelector(selectAdvancedSettings);
-    const measure = useAppSelector(selectMeasure);
     const panoramas = useAppSelector(selectPanoramas);
     const deviation = useAppSelector(selectDeviations);
     const showPanoramaMarkers = useAppSelector(selectShow3dMarkers);
@@ -225,13 +229,16 @@ export function Render3D({ onInit }: Props) {
     const activePanorama = useAppSelector(selectActivePanorama);
     const urlBookmarkId = useAppSelector(selectUrlBookmarkId);
     const localBookmarkId = useAppSelector(selectLocalBookmarkId);
+    const loadingHandles = useAppSelector(selectLoadingHandles);
+    const deviationStamp = useAppSelector(selectDeviationStamp);
     const ditioMarkers = useDitioMarkers();
     const logPoints = useXsiteManageLogPointMarkers();
+    const canvasClickHandler = useCanvasClickHandler();
+    const usingSvgCursor = useHandleCanvasCursor();
 
     const picker = useAppSelector(selectPicker);
     const myLocationPoint = useAppSelector(selectCurrentLocation);
     const measureHoverSettings = useMeasureHoverSettings();
-    const measurePickSettings = useMeasurePickSettings();
     const crossSectionPoint = useAppSelector(selectCrossSectionPoint);
 
     const dispatch = useAppDispatch();
@@ -255,16 +262,8 @@ export function Render3D({ onInit }: Props) {
     const [svg, setSvg] = useState<null | SVGSVGElement>(null);
     const [status, setStatus] = useState<{ status: Status; msg?: string }>({ status: Status.Initial });
 
-    const [deviationStamp, setDeviationStamp] = useState<{
-        mouseX: number;
-        mouseY: number;
-        data: {
-            deviation: number;
-        };
-    } | null>(null);
-
     const closeDeviationStamp = () => {
-        setDeviationStamp(null);
+        dispatch(renderActions.setDeviationStamp(null));
     };
 
     const [logPointStamp, setLogPointStamp] = useState<{
@@ -370,7 +369,7 @@ export function Render3D({ onInit }: Props) {
                     throw sceneResponse;
                 }
 
-                const { url, db, objectGroups = [], customProperties, title, ...sceneData } = sceneResponse;
+                const { url, db, objectGroups = [], customProperties = {}, title, ...sceneData } = sceneResponse;
 
                 const urlData = getDataFromUrlHash();
                 const camera = { kind: "flight", ...sceneData.camera, ...urlData.camera } as CameraControllerParams;
@@ -424,9 +423,17 @@ export function Render3D({ onInit }: Props) {
                 initDeviation(_view.settings.points.deviation);
 
                 dispatchSelectionBasket(selectionBasketActions.set([]));
-                initHidden(objectGroups, dispatchHidden);
-                initCustomGroups(objectGroups, dispatchObjectGroups);
-                initHighlighted(objectGroups, dispatchHighlighted);
+                initHidden(dispatchHidden);
+                initObjectGroups(objectGroups, dispatchObjectGroups);
+                initHighlighted(dispatchHighlighted, customProperties.highlights?.primary?.color);
+                if (customProperties.highlights?.secondary?.color) {
+                    dispatchHighlightCollections(
+                        highlightCollectionsActions.setColor(
+                            HighlightCollection.SecondaryHighlight,
+                            customProperties.highlights?.secondary?.color
+                        )
+                    );
+                }
                 initAdvancedSettings(_view, customProperties, api);
                 initProjectSettings({ sceneData: sceneResponse });
 
@@ -508,6 +515,7 @@ export function Render3D({ onInit }: Props) {
         dispatchHidden,
         dispatchHighlighted,
         dispatchSelectionBasket,
+        dispatchHighlightCollections,
     ]);
 
     useEffect(() => {
@@ -531,7 +539,7 @@ export function Render3D({ onInit }: Props) {
                     cameraGeneration.current = view.performanceStatistics.cameraGeneration ?? 0;
 
                     moveSvgMarkers();
-                    setDeviationStamp(null);
+                    dispatch(renderActions.setDeviationStamp(null));
                     setLogPointStamp(null);
 
                     if (movementTimer.current) {
@@ -587,6 +595,13 @@ export function Render3D({ onInit }: Props) {
                         ...objectGroups,
                         {
                             id: "",
+                            ids: highlightCollections.secondaryHighlight.idArr,
+                            color: highlightCollections.secondaryHighlight.color,
+                            hidden: false,
+                            selected: true,
+                        },
+                        {
+                            id: "",
                             ids: highlightedObjects.idArr,
                             color: highlightedObjects.color,
                             hidden: false,
@@ -609,6 +624,7 @@ export function Render3D({ onInit }: Props) {
             selectionBasket,
             selectionBasketMode,
             selectionBasketColor,
+            highlightCollections,
         ]
     );
 
@@ -903,217 +919,6 @@ export function Render3D({ onInit }: Props) {
         }
     };
 
-    const handleClick = async (e: MouseEvent | PointerEvent) => {
-        if (!view?.lastRenderOutput || clippingBox.defining || !canvas) {
-            return;
-        }
-
-        const result = await view.lastRenderOutput.pick(e.nativeEvent.offsetX, e.nativeEvent.offsetY);
-
-        if (deviation.mode !== "off" && cameraState.type === CameraType.Orthographic) {
-            const pickSize = isTouchPointer.current ? 16 : 0;
-            const deviation = await pickDeviationArea({
-                view,
-                size: pickSize,
-                clickX: e.nativeEvent.offsetX,
-                clickY: e.nativeEvent.offsetY,
-            });
-
-            if (deviation) {
-                setDeviationStamp({
-                    mouseX: e.nativeEvent.offsetX,
-                    mouseY: e.nativeEvent.offsetY,
-                    data: {
-                        deviation: deviation,
-                    },
-                });
-
-                return;
-            } else {
-                setDeviationStamp(null);
-            }
-        } else {
-            setDeviationStamp(null);
-        }
-
-        if (!result || result.objectId > 0x1000000) {
-            if (picker === Picker.Measurement && measure.hover) {
-                dispatch(measureActions.selectEntity(measure.hover as ExtendedMeasureEntity));
-            }
-            return;
-        }
-
-        const normal = result.normal.some((n) => Number.isNaN(n)) ? undefined : vec3.clone(result.normal);
-        const position = vec3.clone(result.position);
-
-        switch (picker) {
-            case Picker.CrossSection:
-                if (crossSectionPoint) {
-                    const mat = mat3.fromQuat(mat3.create(), view.camera.rotation);
-                    let up = vec3.fromValues(0, 1, 0);
-                    const topDown = vec3.equals(vec3.fromValues(mat[6], mat[7], mat[8]), up);
-                    const pos = topDown
-                        ? vec3.fromValues(result.position[0], crossSectionPoint[1], result.position[2])
-                        : vec3.copy(vec3.create(), result.position);
-
-                    const right = vec3.sub(vec3.create(), pos, crossSectionPoint);
-                    const l = vec3.len(right);
-                    vec3.scale(right, right, 1 / l);
-                    const p = vec3.scaleAndAdd(vec3.create(), crossSectionPoint, right, l / 2);
-                    let dir = vec3.cross(vec3.create(), up, right);
-
-                    if (topDown) {
-                        const midPt = (measureApi.toMarkerPoints(view, [p]) ?? [])[0];
-                        if (midPt) {
-                            const midPick = await view.lastRenderOutput.pick(midPt[0], midPt[1]);
-                            if (midPick) {
-                                vec3.copy(p, midPick.position);
-                            }
-                        }
-                    } else if (right[1] < 0.01) {
-                        right[1] = 0;
-                        dir = vec3.clone(up);
-                        vec3.cross(up, right, dir);
-                        vec3.normalize(up, up);
-                    } else {
-                        vec3.normalize(dir, dir);
-                    }
-                    vec3.cross(right, up, dir);
-                    vec3.normalize(right, right);
-
-                    const rotation = quat.fromMat3(
-                        quat.create(),
-                        mat3.fromValues(right[0], right[1], right[2], up[0], up[1], up[2], dir[0], dir[1], dir[2])
-                    );
-
-                    const orthoMat = mat4.fromRotationTranslation(mat4.create(), rotation, p);
-
-                    dispatch(
-                        renderActions.setCamera({
-                            type: CameraType.Orthographic,
-                            params: {
-                                kind: "ortho",
-                                referenceCoordSys: orthoMat,
-                                fieldOfView: 45,
-                                near: -0.001,
-                                far: 0.5,
-                                position: [0, 0, 0],
-                            },
-                            gridOrigo: p as vec3,
-                        })
-                    );
-                    dispatch(renderActions.setPicker(Picker.Object));
-                    dispatch(orthoCamActions.setCrossSectionPoint(undefined));
-                    dispatch(orthoCamActions.setCrossSectionHover(undefined));
-                    dispatch(renderActions.setGrid({ enabled: true }));
-                } else {
-                    dispatch(orthoCamActions.setCrossSectionPoint(result.position as vec3));
-                }
-                break;
-            case Picker.Object:
-                if (result.objectId === -1) {
-                    return;
-                }
-
-                const alreadySelected = highlightedObjects.ids[result.objectId] === true;
-
-                if (selectMultiple) {
-                    if (alreadySelected) {
-                        if (result.objectId === mainObject) {
-                            dispatch(renderActions.setMainObject(undefined));
-                        }
-                        dispatchHighlighted(highlightActions.remove([result.objectId]));
-                    } else {
-                        dispatch(renderActions.setMainObject(result.objectId));
-                        dispatchHighlighted(highlightActions.add([result.objectId]));
-                    }
-                } else {
-                    if (alreadySelected && highlightedObjects.idArr.length === 1) {
-                        dispatch(renderActions.setMainObject(undefined));
-                        dispatchHighlighted(highlightActions.setIds([]));
-                    } else {
-                        dispatch(renderActions.setMainObject(result.objectId));
-                        dispatchHighlighted(highlightActions.setIds([result.objectId]));
-                    }
-                }
-                break;
-            case Picker.ClippingPlane:
-                if (!normal) {
-                    return;
-                }
-
-                const w = -vec3.dot(normal, position);
-
-                dispatch(renderActions.setPicker(Picker.Object));
-                dispatch(
-                    renderActions.setClippingPlanes({
-                        planes: [vec4.fromValues(normal[0], normal[1], normal[2], w)],
-                        baseW: w,
-                    })
-                );
-                break;
-            case Picker.OrthoPlane:
-                const orthoController = api.createCameraController({ kind: "ortho" }, canvas);
-                (orthoController as any).init(position, normal, view.camera);
-                dispatch(
-                    renderActions.setCamera({
-                        type: CameraType.Orthographic,
-                        params: orthoController.params as OrthoControllerParams,
-                    })
-                );
-                dispatch(renderActions.setPicker(Picker.Object));
-
-                break;
-            case Picker.Measurement:
-                if (measure.hover) {
-                    dispatch(measureActions.selectEntity(measure.hover as ExtendedMeasureEntity));
-                } else {
-                    dispatch(measureActions.setLoadingBrep(true));
-                    const entity = await measureScene?.pickMeasureEntity(
-                        result.objectId,
-                        position,
-                        measurePickSettings
-                    );
-                    dispatch(measureActions.selectEntity(entity?.entity as ExtendedMeasureEntity));
-                    dispatch(measureActions.setLoadingBrep(false));
-                }
-                break;
-            case Picker.Manhole:
-                if (result.objectId === -1) {
-                    return;
-                }
-                dispatch(manholeActions.selectObj({ id: result.objectId, pos: position }));
-                break;
-
-            case Picker.FollowPathObject: {
-                if (result.objectId === -1) {
-                    return;
-                }
-
-                dispatch(followPathActions.setSelectedPositions([{ id: result.objectId, pos: position }]));
-                break;
-            }
-            case Picker.Area: {
-                dispatch(areaActions.addPoint([position, normal ?? [0, 0, 0]]));
-                break;
-            }
-            case Picker.PointLine: {
-                dispatch(pointLineActions.addPoint(position));
-                break;
-            }
-            case Picker.HeightProfileEntity: {
-                if (result.objectId === -1) {
-                    return;
-                }
-
-                dispatch(heightProfileActions.selectPoint({ id: result.objectId, pos: vec3.clone(position) }));
-                break;
-            }
-            default:
-                console.warn("Picker not handled", picker);
-        }
-    };
-
     const handleDown = async (x: number, y: number) => {
         if (!view || !(clippingBox.defining || clippingBox.showBox)) {
             return;
@@ -1213,22 +1018,7 @@ export function Render3D({ onInit }: Props) {
             return;
         }
 
-        const useSvgCursor =
-            e.buttons === 0 &&
-            [
-                Picker.CrossSection,
-                Picker.Measurement,
-                Picker.OrthoPlane,
-                Picker.FollowPathObject,
-                Picker.ClippingPlane,
-                Picker.Area,
-                Picker.PointLine,
-                Picker.Manhole,
-                Picker.HeightProfileEntity,
-            ].includes(picker);
-
-        if (useSvgCursor) {
-            canvas.style.cursor = "none";
+        if (e.buttons === 0 && usingSvgCursor) {
             const measurement = await view.lastRenderOutput?.measure(e.nativeEvent.offsetX, e.nativeEvent.offsetY);
 
             let hoverEnt = prevHoverEnt.current;
@@ -1313,19 +1103,19 @@ export function Render3D({ onInit }: Props) {
             const measurement = await view.lastRenderOutput?.measure(e.nativeEvent.offsetX, e.nativeEvent.offsetY);
 
             if (measurement?.deviation) {
-                setDeviationStamp({
-                    mouseX: e.nativeEvent.offsetX,
-                    mouseY: e.nativeEvent.offsetY,
-                    data: { deviation: measurement.deviation },
-                });
+                dispatch(
+                    renderActions.setDeviationStamp({
+                        mouseX: e.nativeEvent.offsetX,
+                        mouseY: e.nativeEvent.offsetY,
+                        data: { deviation: measurement.deviation },
+                    })
+                );
             } else {
-                setDeviationStamp(null);
+                dispatch(renderActions.setDeviationStamp(null));
             }
         } else {
-            setDeviationStamp(null);
+            dispatch(renderActions.setDeviationStamp(null));
         }
-
-        canvas.style.cursor = "default";
 
         if (
             !pointerDown.current ||
@@ -1390,6 +1180,11 @@ export function Render3D({ onInit }: Props) {
 
     return (
         <Box position="relative" width="100%" height="100%" sx={{ userSelect: "none" }}>
+            {loadingHandles.length !== 0 && (
+                <Box position={"absolute"} top={0} width={1} display={"flex"} justifyContent={"center"}>
+                    <LinearProgress />
+                </Box>
+            )}
             {isSceneError(status.status) ? (
                 <SceneError error={status.status} msg={status.msg} id={sceneId} />
             ) : (
@@ -1399,7 +1194,7 @@ export function Render3D({ onInit }: Props) {
                         id="main-canvas"
                         tabIndex={1}
                         ref={canvasRef}
-                        onClick={handleClick}
+                        onClick={canvasClickHandler}
                         onMouseDown={handleMouseDown}
                         onPointerEnter={handlePointerDown}
                         onPointerMove={handleMove}

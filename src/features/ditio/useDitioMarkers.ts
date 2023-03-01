@@ -2,7 +2,7 @@ import { dataApi } from "app";
 import { useAppSelector } from "app/store";
 import { vec3 } from "gl-matrix";
 import { useEffect, useState } from "react";
-import { CameraType, selectCameraType, selectProjectSettings } from "slices/renderSlice";
+import { CameraType, selectCameraType, selectProjectSettings } from "features/render/renderSlice";
 
 import { useFeedWebRawQuery } from "./api";
 import { selectDitioProject, selectFilters, selectShowDitioMarkers } from "./slice";

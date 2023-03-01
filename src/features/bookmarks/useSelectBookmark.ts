@@ -10,18 +10,30 @@ import { highlightActions, useDispatchHighlighted } from "contexts/highlighted";
 import { useDispatchSelectionBasket, selectionBasketActions } from "contexts/selectionBasket";
 import { followPathActions } from "features/followPath";
 import { measureActions } from "features/measure";
-import { CameraType, DeepWritable, ObjectVisibility, renderActions, SelectionBasketMode } from "slices/renderSlice";
+import {
+    CameraType,
+    DeepWritable,
+    ObjectVisibility,
+    renderActions,
+    SelectionBasketMode,
+} from "features/render/renderSlice";
 import { areaActions } from "features/area";
 import { pointLineActions } from "features/pointLine";
 import { groupsActions } from "features/groups";
 import { useSceneId } from "hooks/useSceneId";
 import { manholeActions } from "features/manhole";
-import { ExtendedMeasureEntity } from "types/misc";
+import { ExtendedMeasureEntity, ViewMode } from "types/misc";
+import {
+    HighlightCollection,
+    highlightCollectionsActions,
+    useDispatchHighlightCollections,
+} from "contexts/highlightCollections";
 
 export function useSelectBookmark() {
     const sceneId = useSceneId();
     const dispatchSelectionBasket = useDispatchSelectionBasket();
     const dispatchHighlighted = useDispatchHighlighted();
+    const dispatchHighlightCollections = useDispatchHighlightCollections();
     const dispatchHidden = useDispatchHidden();
     const objectGroups = useLazyObjectGroups();
     const dispatchObjectGroups = useDispatchObjectGroups();
@@ -93,6 +105,7 @@ export function useSelectBookmark() {
                 objectGroupsActions.set(updatedObjectGroups.map((group) => ({ ...group, selected: false })))
             );
             dispatchHighlighted(highlightActions.setIds([]));
+            dispatchHighlightCollections(highlightCollectionsActions.clearAll());
         } else {
             if (bookmark.objectGroups) {
                 const groups = bookmark.objectGroups;
@@ -103,6 +116,19 @@ export function useSelectBookmark() {
 
             dispatchHighlighted(highlightActions.setIds((bmDefaultGroup?.ids as number[] | undefined) ?? []));
             dispatchObjectGroups(objectGroupsActions.set(updatedObjectGroups));
+
+            if (bookmark.highlightCollections?.secondaryHighlight) {
+                dispatchHighlightCollections(
+                    highlightCollectionsActions.setIds(
+                        HighlightCollection.SecondaryHighlight,
+                        bookmark.highlightCollections.secondaryHighlight.ids
+                    )
+                );
+            } else {
+                dispatchHighlightCollections(
+                    highlightCollectionsActions.setIds(HighlightCollection.SecondaryHighlight, [])
+                );
+            }
 
             if (bookmark.selectionBasket) {
                 dispatchSelectionBasket(selectionBasketActions.set(bookmark.selectionBasket.ids));
@@ -243,14 +269,25 @@ export function useSelectBookmark() {
                 dispatch(followPathActions.setSelectedPositions(bookmark.followPath.parametric));
                 dispatch(followPathActions.setGoToRouterPath(`/followPos`));
             } else {
-                const ids = "ids" in bookmark.followPath ? bookmark.followPath.ids : [bookmark.followPath.id];
-                dispatch(followPathActions.setSelectedIds(ids));
+                if ("ids" in bookmark.followPath) {
+                    dispatch(followPathActions.setSelectedIds(bookmark.followPath.ids));
+                    dispatch(followPathActions.setDrawRoadId(bookmark.followPath.roadIds));
+                } else {
+                    dispatch(followPathActions.setSelectedIds([bookmark.followPath.id]));
+                    dispatch(followPathActions.setGoToRouterPath(`/followIds`));
+                }
                 dispatch(followPathActions.setGoToRouterPath(`/followIds`));
             }
         }
 
         if (bookmark.subtrees) {
             dispatch(renderActions.setSubtreesFromBookmark(bookmark.subtrees));
+        }
+
+        if (bookmark.viewMode) {
+            dispatch(renderActions.setViewMode(bookmark.viewMode));
+        } else {
+            dispatch(renderActions.setViewMode(ViewMode.Default));
         }
     };
 

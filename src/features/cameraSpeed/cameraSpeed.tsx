@@ -2,7 +2,7 @@ import type { SpeedDialActionProps } from "@mui/material";
 
 import { SpeedDialAction } from "components";
 import { featuresConfig } from "config/features";
-import { selectCameraSpeedMultiplier, renderActions, CameraSpeedMultiplier } from "slices/renderSlice";
+import { selectCameraSpeedMultiplier, renderActions, CameraSpeedMultiplier } from "features/render/renderSlice";
 import { useAppDispatch, useAppSelector } from "app/store";
 
 import { ReactComponent as WalkIcon } from "media/icons/walk.svg";

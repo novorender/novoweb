@@ -5,7 +5,7 @@ import { Grain, LineAxis, PictureAsPdf, Terrain, Token } from "@mui/icons-materi
 import { SpeedDialAction, WidgetMenuButtonWrapper } from "components";
 import { featuresConfig } from "config/features";
 import { useAppDispatch, useAppSelector } from "app/store";
-import { renderActions, selectSubtrees, SubtreeStatus } from "slices/renderSlice";
+import { renderActions, selectSubtrees, SubtreeStatus } from "features/render/renderSlice";
 import { selectActivePanorama } from "features/panoramas";
 
 export function ToggleSubtrees(speedDialProps: SpeedDialActionProps) {

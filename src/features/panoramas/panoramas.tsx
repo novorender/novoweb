@@ -30,7 +30,7 @@ import { useToggle } from "hooks/useToggle";
 import { store, useAppDispatch, useAppSelector } from "app/store";
 import { PanoramaType, selectPanoramas } from "./panoramaSlice";
 import { panoramasActions, PanoramaStatus, selectPanoramaStatus, selectShow3dMarkers } from ".";
-import { CameraType, renderActions } from "slices/renderSlice";
+import { CameraType, renderActions } from "features/render/renderSlice";
 import { selectMinimized, selectMaximized } from "slices/explorerSlice";
 
 // NOTE(OLA):

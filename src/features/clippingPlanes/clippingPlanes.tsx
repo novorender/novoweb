@@ -4,7 +4,7 @@ import { vec4 } from "gl-matrix";
 
 import { useAppDispatch, useAppSelector } from "app/store";
 import { IosSwitch, LogoSpeedDial, WidgetContainer, WidgetHeader } from "components";
-import { Picker, renderActions, selectClippingPlanes, selectPicker } from "slices/renderSlice";
+import { Picker, renderActions, selectClippingPlanes, selectPicker } from "features/render/renderSlice";
 import { useToggle } from "hooks/useToggle";
 import { featuresConfig } from "config/features";
 import WidgetList from "features/widgetList/widgetList";

@@ -29,7 +29,7 @@ import {
     CameraSpeedMultiplier,
     selectCameraType,
     CameraType,
-} from "slices/renderSlice";
+} from "features/render/renderSlice";
 
 type SliderSettings =
     | AdvancedSetting.CameraNearClipping

@@ -15,7 +15,7 @@ import {
     SubtreeStatus,
     Subtree,
     selectDefaultDeviceProfile,
-} from "slices/renderSlice";
+} from "features/render/renderSlice";
 import { selectUser } from "slices/authSlice";
 import { api } from "app";
 

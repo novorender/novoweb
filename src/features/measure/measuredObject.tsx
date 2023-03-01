@@ -466,8 +466,16 @@ export function MeasurementData({
                             <NestedAccordionSummary>Components</NestedAccordionSummary>
                             <NestedAccordionDetails>
                                 <MeasurementTable
-                                    start={measureValues.centerLineStart}
-                                    end={measureValues.centerLineEnd}
+                                    start={
+                                        measureValues.centerLineStart[1] > measureValues.centerLineEnd[1]
+                                            ? measureValues.centerLineStart
+                                            : measureValues.centerLineEnd
+                                    }
+                                    end={
+                                        measureValues.centerLineStart[1] <= measureValues.centerLineEnd[1]
+                                            ? measureValues.centerLineStart
+                                            : measureValues.centerLineEnd
+                                    }
                                 />
                             </NestedAccordionDetails>
                         </Accordion>

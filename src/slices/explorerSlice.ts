@@ -12,7 +12,7 @@ import {
 import type { RootState } from "app/store";
 import { uniqueArray } from "utils/misc";
 
-import { DeepWritable } from "./renderSlice";
+import { DeepWritable } from "features/render/renderSlice";
 
 export enum SceneType {
     Viewer,

@@ -4,7 +4,7 @@ import { vec3 } from "gl-matrix";
 
 import { useAppDispatch, useAppSelector } from "app/store";
 import { IosSwitch } from "components/iosSwitch";
-import { renderActions, selectClippingBox } from "slices/renderSlice";
+import { renderActions, selectClippingBox } from "features/render/renderSlice";
 import { LogoSpeedDial, ReverseSlider, ScrollBox, WidgetContainer, WidgetHeader } from "components";
 import { featuresConfig } from "config/features";
 import { useToggle } from "hooks/useToggle";

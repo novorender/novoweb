@@ -19,3 +19,9 @@ export function hasFinished<T>(state: AsyncState<T>): state is AsyncError | Asyn
 export type ExtendedMeasureEntity = MeasureEntity & {
     settings?: MeasureSettings;
 };
+
+export enum ViewMode {
+    Default = "default",
+    FollowPath = "followPath",
+    CrossSection = "crossSection",
+}

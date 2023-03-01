@@ -2,7 +2,7 @@ import { configureStore, combineReducers } from "@reduxjs/toolkit";
 import { TypedUseSelectorHook, useDispatch, useSelector } from "react-redux";
 import { setupListeners } from "@reduxjs/toolkit/query";
 
-import { renderReducer } from "slices/renderSlice";
+import { renderReducer } from "features/render/renderSlice";
 import { explorerReducer } from "slices/explorerSlice";
 import { authReducer } from "slices/authSlice";
 import { groupsReducer } from "features/groups";

@@ -4,7 +4,7 @@ import { SpeedDialAction } from "components";
 import { featuresConfig } from "config/features";
 import { useAppDispatch, useAppSelector } from "app/store";
 import { useExplorerGlobals } from "contexts/explorerGlobals";
-import { AdvancedSetting, CameraType, renderActions, selectCameraType } from "slices/renderSlice";
+import { AdvancedSetting, CameraType, renderActions, selectCameraType } from "features/render/renderSlice";
 import { getTopDownParams } from "features/orthoCam";
 
 type Props = SpeedDialActionProps & {

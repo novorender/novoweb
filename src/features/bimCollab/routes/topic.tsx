@@ -16,7 +16,7 @@ import {
 } from "components";
 
 import { useAppDispatch } from "app/store";
-import { renderActions, ObjectVisibility, CameraType } from "slices/renderSlice";
+import { renderActions, ObjectVisibility, CameraType } from "features/render/renderSlice";
 import { useDispatchHidden, hiddenGroupActions } from "contexts/hidden";
 import { useDispatchHighlighted, highlightActions } from "contexts/highlighted";
 import { useDispatchSelectionBasket, selectionBasketActions } from "contexts/selectionBasket";

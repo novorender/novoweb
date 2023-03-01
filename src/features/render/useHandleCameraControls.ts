@@ -4,7 +4,7 @@ import { useAppSelector } from "app/store";
 import { panoramaControls, defaultOrthoControls } from "config/camera";
 import { useExplorerGlobals } from "contexts/explorerGlobals";
 import { selectActivePanorama } from "features/panoramas";
-import { CameraType, selectAdvancedSettings, selectCameraType } from "slices/renderSlice";
+import { CameraType, selectAdvancedSettings, selectCameraType } from "features/render/renderSlice";
 
 export function useHandleCameraControls() {
     const {

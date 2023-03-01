@@ -33,7 +33,7 @@ import { selectMinimized, selectMaximized } from "slices/explorerSlice";
 import { useExplorerGlobals } from "contexts/explorerGlobals";
 import { AsyncState, AsyncStatus, hasFinished } from "types/misc";
 import { highlightActions, useDispatchHighlighted, useHighlighted } from "contexts/highlighted";
-import { Picker, renderActions, selectPicker } from "slices/renderSlice";
+import { Picker, renderActions, selectPicker } from "features/render/renderSlice";
 import { singleCylinderOptions } from "features/measure";
 
 import { HeightProfileChart } from "./heightProfileChart";

@@ -4,7 +4,7 @@ import { SpeedDialAction } from "components";
 import { featuresConfig } from "config/features";
 
 import { useAppDispatch, useAppSelector } from "app/store";
-import { selectDefaultVisibility, renderActions, ObjectVisibility } from "slices/renderSlice";
+import { selectDefaultVisibility, renderActions, ObjectVisibility } from "features/render/renderSlice";
 
 type Props = SpeedDialActionProps;
 

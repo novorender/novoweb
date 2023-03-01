@@ -21,7 +21,7 @@ import {
     selectGrid,
     selectPicker,
     Picker,
-} from "slices/renderSlice";
+} from "features/render/renderSlice";
 import { selectMinimized, selectMaximized } from "slices/explorerSlice";
 import { ColorPicker } from "features/colorPicker";
 import { rgbToVec, VecRGBA, vecToRgb } from "utils/color";
