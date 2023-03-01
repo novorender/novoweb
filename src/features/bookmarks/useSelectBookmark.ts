@@ -287,7 +287,7 @@ export function useSelectBookmark() {
         if (bookmark.viewMode) {
             dispatch(renderActions.setViewMode(bookmark.viewMode));
         } else {
-            dispatch(renderActions.setViewMode(ViewMode.Regular));
+            dispatch(renderActions.setViewMode(ViewMode.Default));
         }
     };
 

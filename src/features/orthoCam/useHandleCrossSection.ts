@@ -16,7 +16,7 @@ export function useHandleCrossSection() {
             dispatch(orthoCamActions.setCrossSectionPoint(undefined));
             dispatch(orthoCamActions.setCrossSectionHover(undefined));
             if (viewMode === ViewMode.CrossSection) {
-                dispatch(renderActions.setViewMode(ViewMode.Regular));
+                dispatch(renderActions.setViewMode(ViewMode.Default));
             }
         }
     }, [cameraType, dispatch, viewMode]);

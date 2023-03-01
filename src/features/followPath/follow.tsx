@@ -337,7 +337,7 @@ export function Follow({ fpObj }: { fpObj: FollowParametricObject }) {
         dispatch(renderActions.setViewMode(ViewMode.FollowPath));
 
         return () => {
-            dispatch(renderActions.setViewMode(ViewMode.Regular));
+            dispatch(renderActions.setViewMode(ViewMode.Default));
         };
     }, [dispatch]);
 

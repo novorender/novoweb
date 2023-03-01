@@ -220,7 +220,7 @@ const initialState = {
         [ProjectSetting.XsiteManage]: { siteId: "" },
     },
     picker: Picker.Object,
-    viewMode: ViewMode.Regular,
+    viewMode: ViewMode.Default,
     loadingHandles: [] as number[],
     deviationStamp: null as null | {
         mouseX: number;
