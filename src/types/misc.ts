@@ -21,7 +21,7 @@ export type ExtendedMeasureEntity = MeasureEntity & {
 };
 
 export enum ViewMode {
-    Regular = "regular",
+    Default = "default",
     FollowPath = "followPath",
     CrossSection = "crossSection",
 }

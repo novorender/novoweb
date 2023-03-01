@@ -8,7 +8,6 @@ import { ObjectId } from "@novorender/webgl-api";
 export type LandXmlPath = {
     id: number;
     name: string;
-    roadIds: string[] | undefined;
 };
 
 export type ParametricPath = {

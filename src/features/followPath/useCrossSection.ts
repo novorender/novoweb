@@ -37,7 +37,7 @@ export function useCrossSection() {
                 const fp = await measureScene.getCrossSections(roadIds, Number(followProfile));
 
                 if (!fp) {
-                    setObjects({ status: AsyncStatus.Error, msg: "Selected objects can't be followed." });
+                    setObjects({ status: AsyncStatus.Error, msg: "Cross section not found." });
                     return;
                 }
 

@@ -12,7 +12,7 @@ import {
     useTheme,
 } from "@mui/material";
 import { ArrowBack, ArrowForward, Edit, RestartAlt } from "@mui/icons-material";
-import { FlightControllerParams, OrthoControllerParams } from "@novorender/webgl-api";
+import { FlightControllerParams, HierarcicalObjectReference, OrthoControllerParams } from "@novorender/webgl-api";
 import { vec3, quat, mat3, mat4, glMatrix } from "gl-matrix";
 import { useHistory } from "react-router-dom";
 
@@ -38,6 +38,7 @@ import {
     selectLandXmlPaths,
 } from "./followPathSlice";
 import { AsyncStatus, ViewMode } from "types/misc";
+import { searchByPatterns } from "utils/search";
 
 const profileFractionDigits = 3;
 
@@ -45,7 +46,7 @@ export function Follow({ fpObj }: { fpObj: FollowParametricObject }) {
     const theme = useTheme();
     const history = useHistory();
     const {
-        state: { view },
+        state: { view, scene },
     } = useExplorerGlobals(true);
 
     const currentCenter = useAppSelector(selectCurrentCenter);
@@ -82,13 +83,6 @@ export function Follow({ fpObj }: { fpObj: FollowParametricObject }) {
 
             if (!pos) {
                 return;
-            }
-
-            if (selectedPath !== undefined && paths.status === AsyncStatus.Success) {
-                const roadIds = paths.data[selectedPath].roadIds;
-                if (roadIds) {
-                    dispatch(followPathActions.setDrawRoadId(roadIds));
-                }
             }
 
             const { position: pt, normal: dir } = pos;
@@ -157,9 +151,8 @@ export function Follow({ fpObj }: { fpObj: FollowParametricObject }) {
             dispatch(followPathActions.setCurrentCenter(pt as [number, number, number]));
             dispatch(followPathActions.setPtHeight(pt[1]));
         },
-        [clipping, currentCenter, dispatch, fpObj, view, selectedPath, paths]
+        [clipping, currentCenter, dispatch, fpObj, view]
     );
-    dispatch(renderActions.setViewMode(ViewMode.FollowPath));
 
     useEffect(() => {
         dispatch(
@@ -175,7 +168,44 @@ export function Follow({ fpObj }: { fpObj: FollowParametricObject }) {
         dispatch(followPathActions.toggleResetPositionOnInit(false));
         dispatch(followPathActions.setProfile(fpObj.parameterBounds.start.toFixed(3)));
         goToProfile({ view2d, showGrid, keepOffset: false, p: fpObj.parameterBounds.start });
-    }, [view2d, showGrid, profile, goToProfile, autoRecenter, resetPosition, dispatch, fpObj]);
+        const loadCrossSection = async () => {
+            if (selectedPath !== undefined && paths.status === AsyncStatus.Success) {
+                const pathName = paths.data[selectedPath].name;
+                let roadIds: string[] = [];
+                let references = [] as HierarcicalObjectReference[];
+                await searchByPatterns({
+                    scene,
+                    searchPatterns: [{ property: "Centerline", value: pathName, exact: true }],
+                    callback: (refs) => (references = references.concat(refs)),
+                });
+                await Promise.all(
+                    references.map(async (r) => {
+                        const data = await r.loadMetaData();
+                        const prop = data.properties.find((p) => p[0] === "Novorender/road");
+                        if (prop) {
+                            roadIds.push(prop[1]);
+                        }
+                    })
+                );
+                if (roadIds.length !== 0) {
+                    dispatch(followPathActions.setDrawRoadId(roadIds));
+                }
+            }
+        };
+        loadCrossSection();
+    }, [
+        view2d,
+        showGrid,
+        profile,
+        goToProfile,
+        autoRecenter,
+        resetPosition,
+        dispatch,
+        fpObj,
+        paths,
+        scene,
+        selectedPath,
+    ]);
 
     const handle2dChange = () => {
         const newState = !view2d;
@@ -304,8 +334,10 @@ export function Follow({ fpObj }: { fpObj: FollowParametricObject }) {
     };
 
     useEffect(() => {
+        dispatch(renderActions.setViewMode(ViewMode.FollowPath));
+
         return () => {
-            dispatch(renderActions.setViewMode(ViewMode.Regular));
+            dispatch(renderActions.setViewMode(ViewMode.Default));
         };
     }, [dispatch]);
 

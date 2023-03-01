@@ -269,8 +269,13 @@ export function useSelectBookmark() {
                 dispatch(followPathActions.setSelectedPositions(bookmark.followPath.parametric));
                 dispatch(followPathActions.setGoToRouterPath(`/followPos`));
             } else {
-                const ids = "ids" in bookmark.followPath ? bookmark.followPath.ids : [bookmark.followPath.id];
-                dispatch(followPathActions.setSelectedIds(ids));
+                if ("ids" in bookmark.followPath) {
+                    dispatch(followPathActions.setSelectedIds(bookmark.followPath.ids));
+                    dispatch(followPathActions.setDrawRoadId(bookmark.followPath.roadIds));
+                } else {
+                    dispatch(followPathActions.setSelectedIds([bookmark.followPath.id]));
+                    dispatch(followPathActions.setGoToRouterPath(`/followIds`));
+                }
                 dispatch(followPathActions.setGoToRouterPath(`/followIds`));
             }
         }
@@ -282,7 +287,7 @@ export function useSelectBookmark() {
         if (bookmark.viewMode) {
             dispatch(renderActions.setViewMode(bookmark.viewMode));
         } else {
-            dispatch(renderActions.setViewMode(ViewMode.Regular));
+            dispatch(renderActions.setViewMode(ViewMode.Default));
         }
     };
 

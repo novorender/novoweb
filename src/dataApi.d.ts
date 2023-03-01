@@ -14,6 +14,7 @@ declare module "@novorender/data-js-api" {
                   ids: number[];
                   profile: number;
                   currentCenter?: vec3;
+                  roadIds?: string[];
               }
             | {
                   parametric: {
