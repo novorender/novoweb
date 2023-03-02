@@ -1,4 +1,4 @@
-import { createSlice, PayloadAction } from "@reduxjs/toolkit";
+import { createSelector, createSlice, PayloadAction } from "@reduxjs/toolkit";
 import { Bookmark } from "@novorender/data-js-api";
 
 import { RootState } from "app/store";
@@ -29,6 +29,7 @@ const initialState = {
         personal: false,
         public: false,
     },
+    expandedCollections: [] as string[],
 };
 
 type State = typeof initialState;
@@ -56,12 +57,29 @@ export const bookmarksSlice = createSlice({
         resetState: () => {
             return initialState;
         },
+        expandCollection: (state, action: PayloadAction<string>) => {
+            state.expandedCollections = state.expandedCollections.concat(action.payload);
+        },
+        closeCollection: (state, action: PayloadAction<string>) => {
+            state.expandedCollections = state.expandedCollections.filter((collection) => collection !== action.payload);
+        },
+        renameExpandedCollection: (state, { payload: { from, to } }: PayloadAction<{ from: string; to: string }>) => {
+            state.expandedCollections = state.expandedCollections.map((collection) =>
+                collection.startsWith(from) ? collection.replace(from, to) : collection
+            );
+        },
     },
 });
 
 export const selectBookmarksStatus = (state: RootState) => state.bookmarks.status;
 export const selectBookmarkFilters = (state: RootState) => state.bookmarks.filters;
 export const selectBookmarks = (state: RootState) => state.bookmarks.bookmarks;
+export const selectExpandedCollections = (state: RootState) => state.bookmarks.expandedCollections;
+
+export const selectIsCollectionExpanded = createSelector(
+    [selectExpandedCollections, (_state, collection: string) => collection],
+    (collections, collection) => collections.includes(collection)
+);
 
 const { actions, reducer } = bookmarksSlice;
 export { actions as bookmarksActions, reducer as bookmarksReducer };

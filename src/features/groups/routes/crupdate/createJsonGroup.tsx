@@ -47,9 +47,10 @@ export function CreateJsonGroup({
     const [status, setStatus] = useMountedState(Status.Initial);
     const [json, setJson] = useState(JSON.stringify({ searchPattern: savedInputs }, undefined, 2));
 
-    const [abortController] = useAbortController();
+    const [abortController, abort] = useAbortController();
 
     const search = async () => {
+        abort();
         const abortSignal = abortController.current.signal;
 
         setIds([]);
@@ -90,6 +91,10 @@ export function CreateJsonGroup({
             }).catch(() => {});
         }
 
+        if (abortSignal.aborted) {
+            return;
+        }
+
         setSavedInputs(searchPatterns);
         setIds((ids) => uniqueArray(ids));
         setStatus(Status.SearchSuccess);
@@ -103,7 +108,7 @@ export function CreateJsonGroup({
 
     const disableNext =
         ![Status.Initial, Status.SearchSuccess].includes(status) ||
-        !savedInputs.filter((input) => input.property && input.value).length;
+        !savedInputs.filter((input) => input.property && (input.value || input.range)).length;
 
     return (
         <Modal open={true} onClose={() => history.goBack()}>

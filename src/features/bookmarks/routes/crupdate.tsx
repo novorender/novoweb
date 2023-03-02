@@ -1,5 +1,5 @@
 import { FormEventHandler, useEffect, useState } from "react";
-import { Box, Button, Checkbox, FormControlLabel, useTheme } from "@mui/material";
+import { Autocomplete, Box, Button, Checkbox, FormControlLabel, useTheme } from "@mui/material";
 import { useHistory, useParams } from "react-router-dom";
 import { v4 as uuidv4 } from "uuid";
 
@@ -37,6 +37,22 @@ export function Crupdate() {
         bmToEdit ? bmToEdit.options?.addSelectedToSelectionBasket : false
     );
     const [bmImg, setBmImg] = useState("");
+
+    const collections = Array.from(
+        bookmarks.reduce((set, bookmark) => {
+            if (bookmark.grouping) {
+                bookmark.grouping.split("/").forEach((_collection, idx, arr) => {
+                    set.add(arr.slice(0, -idx).join("/"));
+                });
+
+                set.add(bookmark.grouping);
+            }
+
+            return set;
+        }, new Set<string>())
+    )
+        .filter((collection) => collection !== "")
+        .sort((a, b) => a.localeCompare(b, "en", { sensitivity: "accent" }));
 
     useEffect(() => {
         if (bmImg) {
@@ -143,23 +159,26 @@ export function Crupdate() {
                         rows={4}
                         sx={{ mb: 2 }}
                     />
-                    <TextField
+
+                    <Autocomplete
+                        sx={{ mb: 2 }}
+                        id="bookmark-collection"
+                        options={collections}
                         value={collection}
-                        onChange={(e) => setCollection(e.target.value)}
-                        id={"bookmark-collection"}
-                        label={"Collection"}
-                        fullWidth
-                        autoComplete="off"
-                        inputProps={{ list: "collections" }}
-                        sx={{ mb: 1 }}
-                    />
-                    <datalist id="collections">
-                        {Array.from(new Set(bookmarks.filter((bm) => bm.grouping).map((bm) => bm.grouping))).map(
-                            (coll) => (
-                                <option key={coll} value={coll} />
-                            )
+                        onChange={(_e, value) => setCollection(value ?? "")}
+                        freeSolo
+                        size="small"
+                        renderInput={(params) => (
+                            <TextField
+                                {...params}
+                                onChange={(e) => {
+                                    setCollection(e.target.value);
+                                }}
+                                label="Collection"
+                            />
                         )}
-                    </datalist>
+                    />
+
                     <Box>
                         <FormControlLabel
                             control={

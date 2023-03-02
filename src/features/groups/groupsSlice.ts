@@ -21,9 +21,6 @@ export const groupsSlice = createSlice({
         setLoadingIds: (state, action: PayloadAction<State["loadingIds"]>) => {
             state.loadingIds = action.payload;
         },
-        setExpandedCollections: (state, action: PayloadAction<State["expandedCollections"]>) => {
-            state.expandedCollections = action.payload;
-        },
         expandCollection: (state, action: PayloadAction<string>) => {
             state.expandedCollections = state.expandedCollections.concat(action.payload);
         },
