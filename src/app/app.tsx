@@ -295,8 +295,19 @@ async function loadDeviceProfile(): Promise<void> {
                     api.deviceProfile = {
                         ...api.deviceProfile,
                         renderResolution: 1,
-                        gpuBytesLimit: Math.max(700_000_000, api.deviceProfile.gpuBytesLimit),
                     };
+
+                    if (isApple) {
+                        api.deviceProfile = {
+                            ...api.deviceProfile,
+                            gpuBytesLimit: Math.max(500_000_000, api.deviceProfile.gpuBytesLimit),
+                        };
+                    } else {
+                        api.deviceProfile = {
+                            ...api.deviceProfile,
+                            gpuBytesLimit: Math.max(700_000_000, api.deviceProfile.gpuBytesLimit),
+                        };
+                    }
                 } else {
                     api.deviceProfile = {
                         ...api.deviceProfile,
@@ -316,7 +327,7 @@ async function loadDeviceProfile(): Promise<void> {
                     if (isApple) {
                         api.deviceProfile = {
                             ...api.deviceProfile,
-                            gpuBytesLimit: Math.max(700_000_000, api.deviceProfile.gpuBytesLimit),
+                            gpuBytesLimit: Math.max(500_000_000, api.deviceProfile.gpuBytesLimit),
                         };
                     } else {
                         api.deviceProfile = {
