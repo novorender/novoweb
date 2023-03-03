@@ -78,10 +78,16 @@ export function PathList() {
                 await searchByPatterns({
                     scene,
                     searchPatterns: [{ property: "Novorender/Path", value: "true", exact: true }],
-                    callback: (refs) =>
-                        (paths = paths.concat(
-                            refs.map(({ path, id }) => ({ id, name: getObjectNameFromPath(getParentPath(path)) }))
-                        )),
+                    callback: (refs) => {
+                        paths.push(
+                            ...refs.map(({ path, id }) => {
+                                const grandParentName = getObjectNameFromPath(getParentPath(getParentPath(path)));
+                                const parentName = getObjectNameFromPath(getParentPath(path));
+
+                                return { id, name: grandParentName ? `${grandParentName}_${parentName}` : parentName };
+                            })
+                        );
+                    },
                 });
 
                 dispatch(followPathActions.setPaths({ status: AsyncStatus.Success, data: paths }));
