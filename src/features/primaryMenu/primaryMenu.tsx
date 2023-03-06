@@ -88,7 +88,7 @@ export function PrimaryMenu() {
     return (
         <Box
             sx={{ px: { xs: 12, xl: 0 }, mr: { xs: 0, xl: -3.5 }, gridColumn: "2 / 3", gridRow: "2 / 2" }}
-            justifySelf="end"
+            justifySelf={{ xs: "center", xl: "end" }}
             display="flex"
             alignItems={"flex-end"}
         >

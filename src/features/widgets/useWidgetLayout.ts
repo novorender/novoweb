@@ -4,9 +4,9 @@ import { useEffect, useState } from "react";
 export function useWidgetLayout() {
     const theme = useTheme();
     const xNarrow = useMediaQuery(`@media (max-width: ${theme.breakpoints.values.sm}px)`);
-    const narrow = useMediaQuery(`@media (max-width: ${theme.breakpoints.values.md}px)`);
+    const narrow = useMediaQuery(`@media (max-width: ${theme.breakpoints.values.xl}px)`);
     const xShort = useMediaQuery(`@media (max-height: ${theme.breakpoints.values.sm}px)`);
-    const short = useMediaQuery(`@media (max-height: ${theme.breakpoints.values.md}px)`);
+    const short = useMediaQuery(`@media (max-height: ${theme.breakpoints.values.xl}px)`);
 
     const [state, setState] = useState({
         widgets: 4,
