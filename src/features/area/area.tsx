@@ -16,7 +16,7 @@ export default function Area() {
     const [menuOpen, toggleMenu] = useToggle();
 
     const minimized = useAppSelector(selectMinimized) === featuresConfig.area.key;
-    const maximized = useAppSelector(selectMaximized) === featuresConfig.area.key;
+    const maximized = useAppSelector(selectMaximized).includes(featuresConfig.area.key);
 
     const selecting = useAppSelector(selectPicker) === Picker.Area;
     const points = useAppSelector(selectAreaPoints);
@@ -84,7 +84,7 @@ export default function Area() {
                 </ScrollBox>
                 {menuOpen && <WidgetList widgetKey={featuresConfig.area.key} onSelect={toggleMenu} />}
             </WidgetContainer>
-            <LogoSpeedDial open={menuOpen} toggle={toggleMenu} testId={`${featuresConfig.area.key}-widget-menu-fab`} />
+            <LogoSpeedDial open={menuOpen} toggle={toggleMenu} />
         </>
     );
 }

@@ -43,7 +43,7 @@ export default function Manhole() {
     } = useExplorerGlobals(true);
     const [menuOpen, toggleMenu] = useToggle();
     const minimized = useAppSelector(selectMinimized) === featuresConfig.manhole.key;
-    const maximized = useAppSelector(selectMaximized) === featuresConfig.manhole.key;
+    const maximized = useAppSelector(selectMaximized).includes(featuresConfig.manhole.key);
 
     const dispatch = useAppDispatch();
     const manhole = useAppSelector(selectManholeMeasureValues);
@@ -130,7 +130,7 @@ export default function Manhole() {
                     ) : null}
                 </WidgetHeader>
                 {isLoading ? (
-                    <Box>
+                    <Box position="relative">
                         <LinearProgress />
                     </Box>
                 ) : null}
@@ -421,11 +421,7 @@ export default function Manhole() {
 
                 {menuOpen && <WidgetList widgetKey={featuresConfig.manhole.key} onSelect={toggleMenu} />}
             </WidgetContainer>
-            <LogoSpeedDial
-                open={menuOpen}
-                toggle={toggleMenu}
-                testId={`${featuresConfig.manhole.key}-widget-menu-fab`}
-            />
+            <LogoSpeedDial open={menuOpen} toggle={toggleMenu} />
         </>
     );
 }

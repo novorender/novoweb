@@ -32,7 +32,7 @@ import { orthoCamActions } from "./orthoCamSlice";
 export default function OrthoCam() {
     const [menuOpen, toggleMenu] = useToggle();
     const minimized = useAppSelector(selectMinimized) === featuresConfig.orthoCam.key;
-    const maximized = useAppSelector(selectMaximized) === featuresConfig.orthoCam.key;
+    const maximized = useAppSelector(selectMaximized).includes(featuresConfig.orthoCam.key);
     const {
         state: { view, canvas },
     } = useExplorerGlobals(true);
@@ -199,11 +199,7 @@ export default function OrthoCam() {
                     );
                 }}
             />
-            <LogoSpeedDial
-                open={menuOpen}
-                toggle={toggleMenu}
-                testId={`${featuresConfig.orthoCam.key}-widget-menu-fab`}
-            />
+            <LogoSpeedDial open={menuOpen} toggle={toggleMenu} />
         </>
     );
 }

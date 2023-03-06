@@ -109,7 +109,7 @@ export function SceneSettings({
                 </Box>
             </Box>
             {saving ? (
-                <Box>
+                <Box position="relative">
                     <LinearProgress />
                 </Box>
             ) : null}

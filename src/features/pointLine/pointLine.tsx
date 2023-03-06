@@ -27,7 +27,7 @@ export default function PointLine() {
     const [menuOpen, toggleMenu] = useToggle();
 
     const minimized = useAppSelector(selectMinimized) === featuresConfig.pointLine.key;
-    const maximized = useAppSelector(selectMaximized) === featuresConfig.pointLine.key;
+    const maximized = useAppSelector(selectMaximized).includes(featuresConfig.pointLine.key);
 
     const selecting = useAppSelector(selectPicker) === Picker.PointLine;
     const { points, lockElevation, result } = useAppSelector(selectPointLine);
@@ -125,11 +125,7 @@ export default function PointLine() {
                 </ScrollBox>
                 {menuOpen && <WidgetList widgetKey={featuresConfig.pointLine.key} onSelect={toggleMenu} />}
             </WidgetContainer>
-            <LogoSpeedDial
-                open={menuOpen}
-                toggle={toggleMenu}
-                testId={`${featuresConfig.pointLine.key}-widget-menu-fab`}
-            />
+            <LogoSpeedDial open={menuOpen} toggle={toggleMenu} />
         </>
     );
 }

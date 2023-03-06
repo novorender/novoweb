@@ -36,7 +36,11 @@ export function EditTopic() {
     }, [topic, assignedTo, topicStatus]);
 
     if (!topic || !extensions) {
-        return <LinearProgress />;
+        return (
+            <Box position="relative">
+                <LinearProgress />
+            </Box>
+        );
     }
 
     const handleSubmit: FormEventHandler = async (e) => {

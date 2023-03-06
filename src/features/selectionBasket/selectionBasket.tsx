@@ -33,7 +33,7 @@ export default function SelectionBasket() {
 
     const [menuOpen, toggleMenu] = useToggle();
     const minimized = useAppSelector(selectMinimized) === featuresConfig.selectionBasket.key;
-    const maximized = useAppSelector(selectMaximized) === featuresConfig.selectionBasket.key;
+    const maximized = useAppSelector(selectMaximized).includes(featuresConfig.selectionBasket.key);
 
     const basketRef = useLazySelectionBasket();
     const [exportStatus, setExportStatus] = useState(ExportStatus.Idle);

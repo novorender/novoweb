@@ -24,7 +24,7 @@ export default function ClippingBox() {
 
     const [menuOpen, toggleMenu] = useToggle();
     const minimized = useAppSelector(selectMinimized) === featuresConfig.clippingBox.key;
-    const maximized = useAppSelector(selectMaximized) === featuresConfig.clippingBox.key;
+    const maximized = useAppSelector(selectMaximized).includes(featuresConfig.clippingBox.key);
     const [enableOptions, setEnableOptions] = useState(enabled || showBox || defining);
     const [sliderValues, setSliderValues] = useState([...baseBounds.min, ...baseBounds.max]);
 
@@ -185,11 +185,7 @@ export default function ClippingBox() {
                 </ScrollBox>
                 {menuOpen && <WidgetList widgetKey={featuresConfig.clippingBox.key} onSelect={toggleMenu} />}
             </WidgetContainer>
-            <LogoSpeedDial
-                open={menuOpen}
-                toggle={toggleMenu}
-                testId={`${featuresConfig.clippingBox.key}-widget-menu-fab`}
-            />
+            <LogoSpeedDial open={menuOpen} toggle={toggleMenu} />
         </>
     );
 }

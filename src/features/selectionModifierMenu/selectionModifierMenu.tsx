@@ -1,5 +1,14 @@
 import { useEffect } from "react";
-import { useTheme, useMediaQuery, FabProps, SpeedDial, SpeedDialIcon, CloseReason, OpenReason } from "@mui/material";
+import {
+    useTheme,
+    useMediaQuery,
+    FabProps,
+    SpeedDial,
+    SpeedDialIcon,
+    CloseReason,
+    OpenReason,
+    Box,
+} from "@mui/material";
 
 import { MultipleSelection } from "features/multipleSelection";
 import { ClearSelection } from "features/clearSelection";
@@ -40,27 +49,29 @@ export function SelectionModifierMenu() {
     };
 
     return (
-        <SpeedDial
-            data-test="selection-modifier-menu"
-            open={open}
-            onOpen={(_event, reason) => handleToggle(reason)}
-            onClose={(_event, reason) => handleToggle(reason)}
-            ariaLabel="selection modifiers"
-            FabProps={
-                {
-                    color: "secondary",
-                    size: isSmall ? "small" : "large",
-                    "data-test": "selection-modifier-menu-fab",
-                } as Partial<FabProps<"button", { "data-test": string }>>
-            }
-            icon={<SpeedDialIcon icon={<ArrowUpwardIcon />} openIcon={<ArrowDownwardIcon />} />}
-        >
-            <ClearSelection />
-            <HideSelected />
-            <ViewOnlySelected />
-            <SelectionColor />
-            <MultipleSelection />
-            <ToggleSubtrees />
-        </SpeedDial>
+        <Box sx={{ gridColumn: "1 / 2", gridRow: "2 / 2" }} display="flex" alignItems={"flex-end"}>
+            <SpeedDial
+                data-test="selection-modifier-menu"
+                open={open}
+                onOpen={(_event, reason) => handleToggle(reason)}
+                onClose={(_event, reason) => handleToggle(reason)}
+                ariaLabel="selection modifiers"
+                FabProps={
+                    {
+                        color: "secondary",
+                        size: isSmall ? "small" : "large",
+                        "data-test": "selection-modifier-menu-fab",
+                    } as Partial<FabProps<"button", { "data-test": string }>>
+                }
+                icon={<SpeedDialIcon icon={<ArrowUpwardIcon />} openIcon={<ArrowDownwardIcon />} />}
+            >
+                <ClearSelection />
+                <HideSelected />
+                <ViewOnlySelected />
+                <SelectionColor />
+                <MultipleSelection />
+                <ToggleSubtrees />
+            </SpeedDial>
+        </Box>
     );
 }

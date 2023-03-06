@@ -48,7 +48,11 @@ export function CreateComment() {
     };
 
     if (!project || !extensions) {
-        return <LinearProgress />;
+        return (
+            <Box position="relative">
+                <LinearProgress />
+            </Box>
+        );
     }
 
     const disabled = creatingComment || creatingViewpoint;

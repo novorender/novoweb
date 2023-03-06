@@ -30,7 +30,7 @@ import { RenameCollection } from "./routes/renameCollection";
 export default function Bookmarks() {
     const [menuOpen, toggleMenu] = useToggle();
     const minimized = useAppSelector(selectMinimized) === featuresConfig.bookmarks.key;
-    const maximized = useAppSelector(selectMaximized) === featuresConfig.bookmarks.key;
+    const maximized = useAppSelector(selectMaximized).includes(featuresConfig.bookmarks.key);
     const sceneId = useSceneId();
 
     const user = useAppSelector(selectUser);
@@ -99,11 +99,7 @@ export default function Bookmarks() {
                 </Box>
                 {menuOpen && <WidgetList widgetKey={featuresConfig.bookmarks.key} onSelect={toggleMenu} />}
             </WidgetContainer>
-            <LogoSpeedDial
-                open={menuOpen}
-                toggle={toggleMenu}
-                testId={`${featuresConfig.bookmarks.key}-widget-menu-fab`}
-            />
+            <LogoSpeedDial open={menuOpen} toggle={toggleMenu} />
         </>
     );
 }

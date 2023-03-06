@@ -7,6 +7,7 @@ import {
     CloseReason,
     OpenReason,
     SpeedDialActionProps,
+    Box,
 } from "@mui/material";
 import { Add, Close } from "@mui/icons-material";
 
@@ -85,27 +86,34 @@ export function PrimaryMenu() {
     const pos = isSmall ? positions.small : positions.large;
 
     return (
-        <SpeedDial
-            open={open}
-            onOpen={(_event, reason) => handleToggle(reason)}
-            onClose={(_event, reason) => handleToggle(reason)}
-            ariaLabel="Primary menu"
-            FabProps={
-                {
-                    color: "secondary",
-                    size: isSmall ? "small" : "large",
-                    "data-test": "canvas-navigation-menu-fab",
-                } as Partial<FabProps<"button", { "data-test": string }>>
-            }
-            icon={<SpeedDialIcon open={false} icon={<Add />} openIcon={<Close />} />}
-            sx={{ position: "relative" }}
+        <Box
+            sx={{ px: { xs: 12, xl: 0 }, mr: { xs: 0, xl: -3.5 }, gridColumn: "2 / 3", gridRow: "2 / 2" }}
+            justifySelf="end"
+            display="flex"
+            alignItems={"flex-end"}
         >
-            <FeatureButton featureKey={primaryMenu.button1} position={pos[0]} />
-            <FeatureButton featureKey={primaryMenu.button2} position={pos[1]} />
-            <FeatureButton featureKey={primaryMenu.button3} position={pos[2]} />
-            <FeatureButton featureKey={primaryMenu.button4} position={pos[3]} />
-            <FeatureButton featureKey={primaryMenu.button5} position={pos[4]} />
-        </SpeedDial>
+            <SpeedDial
+                open={open}
+                onOpen={(_event, reason) => handleToggle(reason)}
+                onClose={(_event, reason) => handleToggle(reason)}
+                ariaLabel="Primary menu"
+                FabProps={
+                    {
+                        color: "secondary",
+                        size: isSmall ? "small" : "large",
+                        "data-test": "canvas-navigation-menu-fab",
+                    } as Partial<FabProps<"button", { "data-test": string }>>
+                }
+                icon={<SpeedDialIcon open={false} icon={<Add />} openIcon={<Close />} />}
+                sx={{ position: "relative", gridColumn: "2 / 3", gridRow: "2 / 2" }}
+            >
+                <FeatureButton featureKey={primaryMenu.button1} position={pos[0]} />
+                <FeatureButton featureKey={primaryMenu.button2} position={pos[1]} />
+                <FeatureButton featureKey={primaryMenu.button3} position={pos[2]} />
+                <FeatureButton featureKey={primaryMenu.button4} position={pos[3]} />
+                <FeatureButton featureKey={primaryMenu.button5} position={pos[4]} />
+            </SpeedDial>
+        </Box>
     );
 }
 

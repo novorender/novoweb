@@ -135,7 +135,7 @@ export function BookmarkList() {
                 </Box>
             </Box>
             {[BookmarksStatus.Loading, BookmarksStatus.Saving].includes(status) ? (
-                <Box>
+                <Box position="relative">
                     <LinearProgress />
                 </Box>
             ) : null}

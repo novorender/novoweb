@@ -58,7 +58,7 @@ export default function Deviations() {
 
     const [menuOpen, toggleMenu] = useToggle();
     const minimized = useAppSelector(selectMinimized) === featuresConfig.deviations.key;
-    const maximized = useAppSelector(selectMaximized) === featuresConfig.deviations.key;
+    const maximized = useAppSelector(selectMaximized).includes(featuresConfig.deviations.key);
 
     useEffect(() => {
         if (isAdminScene && calculationStatus.status === DeviationCalculationStatus.Initial) {
@@ -227,8 +227,12 @@ export default function Deviations() {
                         </Box>
                     ) : null}
                 </WidgetHeader>
+                {status.status === DeviationsStatus.Saving ? (
+                    <Box position="relative">
+                        <LinearProgress />
+                    </Box>
+                ) : null}
                 <ScrollBox display={menuOpen || minimized ? "none" : "block"} height={1}>
-                    {status.status === DeviationsStatus.Saving ? <LinearProgress /> : null}
                     {[DeviationsStatus.Creating, DeviationsStatus.Editing].includes(status.status) ? (
                         <CreateDeviation />
                     ) : (
@@ -243,12 +247,7 @@ export default function Deviations() {
                 </ScrollBox>
                 {menuOpen && <WidgetList widgetKey={featuresConfig.deviations.key} onSelect={toggleMenu} />}
             </WidgetContainer>
-            <LogoSpeedDial
-                open={menuOpen}
-                toggle={toggleMenu}
-                testId={`${featuresConfig.deviations.key}-widget-menu-fab`}
-                ariaLabel="toggle widget menu"
-            />
+            <LogoSpeedDial open={menuOpen} toggle={toggleMenu} ariaLabel="toggle widget menu" />
         </>
     );
 }

@@ -76,7 +76,11 @@ export function Filters() {
     };
 
     if (!extensions) {
-        return <LinearProgress />;
+        return (
+            <Box position="relative">
+                <LinearProgress />
+            </Box>
+        );
     }
 
     return (

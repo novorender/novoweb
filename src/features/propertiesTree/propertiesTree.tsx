@@ -30,7 +30,7 @@ export default function PropertiesTree() {
     const [abortController, abort] = useAbortController();
     const [menuOpen, toggleMenu] = useToggle();
     const minimized = useAppSelector(selectMinimized) === featuresConfig.propertyTree.key;
-    const maximized = useAppSelector(selectMaximized) === featuresConfig.propertyTree.key;
+    const maximized = useAppSelector(selectMaximized).includes(featuresConfig.propertyTree.key);
 
     const [root, setRoot] = useMountedState<TreeLevel | undefined>(undefined);
     const [selected, setSelected] = useMountedState<string>("");
@@ -84,7 +84,9 @@ export default function PropertiesTree() {
                 <ScrollBox display={!menuOpen && !minimized ? "block" : "none"} height={1} pb={2}>
                     <List>
                         {root === undefined ? (
-                            <LinearProgress />
+                            <Box position="relative">
+                                <LinearProgress />
+                            </Box>
                         ) : (
                             root.properties?.map((p) => (
                                 <Node key={p.path} prop={p} level={0} selected={selected} search={search} />
@@ -94,12 +96,7 @@ export default function PropertiesTree() {
                 </ScrollBox>
                 {menuOpen && <WidgetList widgetKey={featuresConfig.propertyTree.key} onSelect={toggleMenu} />}
             </WidgetContainer>
-            <LogoSpeedDial
-                open={menuOpen}
-                toggle={toggleMenu}
-                testId={`${featuresConfig.propertyTree.key}-widget-menu-fab`}
-                ariaLabel="toggle widget menu"
-            />
+            <LogoSpeedDial open={menuOpen} toggle={toggleMenu} ariaLabel="toggle widget menu" />
         </>
     );
 }

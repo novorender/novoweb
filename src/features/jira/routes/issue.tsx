@@ -159,7 +159,7 @@ export function Issue({ sceneId }: { sceneId: string }) {
             </Box>
 
             {(isLoadingIssue || loadingBookmark || isLoadingFullImage || isLoadingThumbnail) && (
-                <Box>
+                <Box position="relative">
                     <LinearProgress />
                 </Box>
             )}

@@ -24,7 +24,7 @@ import {
 export default function MyLocation() {
     const [menuOpen, toggleMenu] = useToggle();
     const minimized = useAppSelector(selectMinimized) === featuresConfig.myLocation.key;
-    const maximized = useAppSelector(selectMaximized) === featuresConfig.myLocation.key;
+    const maximized = useAppSelector(selectMaximized).includes(featuresConfig.myLocation.key);
     const {
         state: { view, scene },
     } = useExplorerGlobals(true);
@@ -126,7 +126,13 @@ export default function MyLocation() {
                         </Box>
                     ) : null}
                 </WidgetHeader>
-                <Box>{status.status === LocationStatus.Loading ? <LinearProgress /> : null}</Box>
+                <Box>
+                    {status.status === LocationStatus.Loading ? (
+                        <Box position="relative">
+                            <LinearProgress />
+                        </Box>
+                    ) : null}
+                </Box>
                 <ScrollBox display={menuOpen || minimized ? "none" : "flex"} flexDirection="column" p={1}>
                     {!tmZone ? "Missing TM-zone. Admins can set this under Advanced settings -> Project" : null}
                     {status.status === LocationStatus.Error ? (
@@ -137,11 +143,7 @@ export default function MyLocation() {
                 </ScrollBox>
                 {menuOpen && <WidgetList widgetKey={featuresConfig.myLocation.key} onSelect={toggleMenu} />}
             </WidgetContainer>
-            <LogoSpeedDial
-                open={menuOpen}
-                toggle={toggleMenu}
-                testId={`${featuresConfig.myLocation.key}-widget-menu-fab`}
-            />
+            <LogoSpeedDial open={menuOpen} toggle={toggleMenu} />
         </>
     );
 }

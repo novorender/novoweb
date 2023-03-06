@@ -25,7 +25,7 @@ import { selectXsiteManageAccessToken, xsiteManageActions } from "./slice";
 export default function XsiteManage() {
     const [menuOpen, toggleMenu] = useToggle();
     const minimized = useAppSelector(selectMinimized) === featuresConfig.xsiteManage.key;
-    const maximized = useAppSelector(selectMaximized) === featuresConfig.xsiteManage.key;
+    const maximized = useAppSelector(selectMaximized).includes(featuresConfig.xsiteManage.key);
     const sceneId = useSceneId();
 
     return (

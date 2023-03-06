@@ -49,7 +49,7 @@ export default function BimCollab() {
 
     const [menuOpen, toggleMenu] = useToggle();
     const minimized = useAppSelector(selectMinimized) === featuresConfig.bimcollab.key;
-    const maximized = useAppSelector(selectMaximized) === featuresConfig.bimcollab.key;
+    const maximized = useAppSelector(selectMaximized).includes(featuresConfig.bimcollab.key);
 
     const { data: user } = useGetCurrentUserQuery(undefined, { skip: !accessToken });
     const [getToken] = useGetTokenMutation();
@@ -225,17 +225,14 @@ export default function BimCollab() {
                             </Switch>
                         </MemoryRouter>
                     ) : (
-                        <LinearProgress />
+                        <Box position="relative">
+                            <LinearProgress />
+                        </Box>
                     )}
                 </Box>
                 {menuOpen && <WidgetList widgetKey={featuresConfig.bimcollab.key} onSelect={toggleMenu} />}
             </WidgetContainer>
-            <LogoSpeedDial
-                open={menuOpen}
-                toggle={toggleMenu}
-                testId={`${featuresConfig.bimcollab.key}-widget-menu-fab`}
-                ariaLabel="toggle widget menu"
-            />
+            <LogoSpeedDial open={menuOpen} toggle={toggleMenu} ariaLabel="toggle widget menu" />
         </>
     );
 }

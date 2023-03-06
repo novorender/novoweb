@@ -171,7 +171,7 @@ export function RenderSettings({ save, saving }: { save: () => Promise<void>; sa
                 </Box>
             </Box>
             {saving ? (
-                <Box>
+                <Box position="relative">
                     <LinearProgress />
                 </Box>
             ) : null}

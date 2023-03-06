@@ -96,7 +96,9 @@ export function Machine() {
     }, [logPointData, id, dispatch, availableLogPointCodes]);
 
     return isFetchingMachine ? (
-        <LinearProgress />
+        <Box position="relative">
+            <LinearProgress />
+        </Box>
     ) : (
         <>
             <Box boxShadow={theme.customShadows.widgetHeader}>

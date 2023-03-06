@@ -49,7 +49,7 @@ export default function Panoramas() {
 
     const [menuOpen, toggleMenu] = useToggle();
     const minimized = useAppSelector(selectMinimized) === featuresConfig.panoramas.key;
-    const maximized = useAppSelector(selectMaximized) === featuresConfig.panoramas.key;
+    const maximized = useAppSelector(selectMaximized).includes(featuresConfig.panoramas.key);
 
     useEffect(() => {
         if (!panoramas) {
@@ -108,17 +108,14 @@ export default function Panoramas() {
                             <Typography sx={{ p: 1 }}>Found no panoramas for this scene.</Typography>
                         )
                     ) : (
-                        <LinearProgress />
+                        <Box position="relative">
+                            <LinearProgress />
+                        </Box>
                     )}
                 </ScrollBox>
                 {menuOpen && <WidgetList widgetKey={featuresConfig.panoramas.key} onSelect={toggleMenu} />}
             </WidgetContainer>
-            <LogoSpeedDial
-                open={menuOpen}
-                toggle={toggleMenu}
-                testId={`${featuresConfig.panoramas.key}-widget-menu-fab`}
-                ariaLabel="toggle widget menu"
-            />
+            <LogoSpeedDial open={menuOpen} toggle={toggleMenu} ariaLabel="toggle widget menu" />
         </>
     );
 }

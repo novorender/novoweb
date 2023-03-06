@@ -24,7 +24,7 @@ export default function Groups() {
     const sceneId = useSceneId();
     const [menuOpen, toggleMenu] = useToggle();
     const minimized = useAppSelector(selectMinimized) === featuresConfig.groups.key;
-    const maximized = useAppSelector(selectMaximized) === featuresConfig.groups.key;
+    const maximized = useAppSelector(selectMaximized).includes(featuresConfig.groups.key);
     const saveStatus = useAppSelector(selectSaveStatus);
     const dispatch = useAppDispatch();
 
@@ -89,12 +89,7 @@ export default function Groups() {
 
                 {menuOpen && <WidgetList widgetKey={featuresConfig.groups.key} onSelect={toggleMenu} />}
             </WidgetContainer>
-            <LogoSpeedDial
-                open={menuOpen}
-                toggle={toggleMenu}
-                testId={`${featuresConfig.groups.key}-widget-menu-fab`}
-                ariaLabel="toggle widget menu"
-            />
+            <LogoSpeedDial open={menuOpen} toggle={toggleMenu} ariaLabel="toggle widget menu" />
         </MemoryRouter>
     );
 }

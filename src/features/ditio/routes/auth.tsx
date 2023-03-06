@@ -143,7 +143,9 @@ export function Auth() {
     ) : projectsError || tokensError || accessToken.status === AsyncStatus.Error ? (
         <ErrorMsg>An error occurred.</ErrorMsg>
     ) : (
-        <LinearProgress />
+        <Box position="relative">
+            <LinearProgress />
+        </Box>
     );
 }
 

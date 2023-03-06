@@ -50,7 +50,9 @@ export function LogPoint() {
     };
 
     return isFetching ? (
-        <LinearProgress />
+        <Box position="relative">
+            <LinearProgress />
+        </Box>
     ) : (
         <>
             <Box boxShadow={theme.customShadows.widgetHeader}>

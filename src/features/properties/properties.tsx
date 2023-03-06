@@ -76,7 +76,7 @@ export default function Properties() {
     } = useExplorerGlobals(true);
 
     const minimized = useAppSelector(selectMinimized) === featuresConfig.properties.key;
-    const maximized = useAppSelector(selectMaximized) === featuresConfig.properties.key;
+    const maximized = useAppSelector(selectMaximized).includes(featuresConfig.properties.key);
     const [menuOpen, toggleMenu] = useToggle();
     const [searches, setSearches] = useState<Record<string, SearchPattern>>({});
     const [status, setStatus] = useMountedState(Status.Initial);
@@ -234,6 +234,11 @@ export default function Properties() {
         <>
             <WidgetContainer minimized={minimized} maximized={maximized}>
                 <WidgetHeader disableShadow={menuOpen} widget={featuresConfig.properties} />
+                {status === Status.Loading ? (
+                    <Box position="relative">
+                        <LinearProgress />
+                    </Box>
+                ) : null}
                 <ScrollBox
                     display={menuOpen || minimized ? "none" : "flex"}
                     flexDirection={"column"}
@@ -241,7 +246,6 @@ export default function Properties() {
                     pb={2}
                     {...bindResizeHandlers()}
                 >
-                    {status === Status.Loading ? <LinearProgress /> : null}
                     {mainObject !== undefined && object ? (
                         <>
                             <PropertyList

@@ -17,7 +17,7 @@ export default function ClippingPlanes() {
     } = useExplorerGlobals(true);
     const [menuOpen, toggleMenu] = useToggle();
     const minimized = useAppSelector(selectMinimized) === featuresConfig.clippingPlanes.key;
-    const maximized = useAppSelector(selectMaximized) === featuresConfig.clippingPlanes.key;
+    const maximized = useAppSelector(selectMaximized).includes(featuresConfig.clippingPlanes.key);
     const defining = useAppSelector(selectPicker) === Picker.ClippingPlane;
     const { enabled, planes, baseW } = useAppSelector(selectClippingPlanes);
     const [enableOptions, setEnableOptions] = useState(enabled || planes.length > 0 || defining);
@@ -130,11 +130,7 @@ export default function ClippingPlanes() {
                 ) : null}
                 {menuOpen && <WidgetList widgetKey={featuresConfig.clippingPlanes.key} onSelect={toggleMenu} />}
             </WidgetContainer>
-            <LogoSpeedDial
-                open={menuOpen}
-                toggle={toggleMenu}
-                testId={`${featuresConfig.clippingPlanes.key}-widget-menu-fab`}
-            />
+            <LogoSpeedDial open={menuOpen} toggle={toggleMenu} />
         </>
     );
 }

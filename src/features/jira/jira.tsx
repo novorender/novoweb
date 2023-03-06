@@ -26,7 +26,7 @@ export default function Jira() {
     const sceneId = useSceneId();
     const [menuOpen, toggleMenu] = useToggle();
     const minimized = useAppSelector(selectMinimized) === featuresConfig.jira.key;
-    const maximized = useAppSelector(selectMaximized) === featuresConfig.jira.key;
+    const maximized = useAppSelector(selectMaximized).includes(featuresConfig.jira.key);
 
     return (
         <MemoryRouter>
@@ -67,7 +67,7 @@ export default function Jira() {
                 </Box>
                 {menuOpen && <WidgetList widgetKey={featuresConfig.jira.key} onSelect={toggleMenu} />}
             </WidgetContainer>
-            <LogoSpeedDial open={menuOpen} toggle={toggleMenu} testId={`${featuresConfig.jira.key}-widget-menu-fab`} />
+            <LogoSpeedDial open={menuOpen} toggle={toggleMenu} />
         </MemoryRouter>
     );
 }

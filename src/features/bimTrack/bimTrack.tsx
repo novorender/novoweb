@@ -47,7 +47,7 @@ export default function BimTrack() {
 
     const [menuOpen, toggleMenu] = useToggle();
     const minimized = useAppSelector(selectMinimized) === featuresConfig.bimTrack.key;
-    const maximized = useAppSelector(selectMaximized) === featuresConfig.bimTrack.key;
+    const maximized = useAppSelector(selectMaximized).includes(featuresConfig.bimTrack.key);
 
     const { data: user } = useGetCurrentUserQuery(undefined, { skip: !accessToken });
     const [getToken] = useGetTokenMutation();
@@ -190,17 +190,14 @@ export default function BimTrack() {
                             </Switch>
                         </MemoryRouter>
                     ) : (
-                        <LinearProgress />
+                        <Box position="relative">
+                            <LinearProgress />
+                        </Box>
                     )}
                 </Box>
                 {menuOpen && <WidgetList widgetKey={featuresConfig.bimTrack.key} onSelect={toggleMenu} />}
             </WidgetContainer>
-            <LogoSpeedDial
-                open={menuOpen}
-                toggle={toggleMenu}
-                testId={`${featuresConfig.bimTrack.key}-widget-menu-fab`}
-                ariaLabel="toggle widget menu"
-            />
+            <LogoSpeedDial open={menuOpen} toggle={toggleMenu} ariaLabel="toggle widget menu" />
         </>
     );
 }

@@ -46,7 +46,11 @@ export function Project() {
     const filteredTopics = applyFilters(topics, filters, filterModifiers);
 
     if (!project || loadingTopics) {
-        return <LinearProgress />;
+        return (
+            <Box position="relative">
+                <LinearProgress />
+            </Box>
+        );
     }
 
     const projectActions = project.authorization?.project_actions ?? extensions?.project_actions ?? [];

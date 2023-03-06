@@ -36,7 +36,7 @@ const initialState = {
     requireConsent: false,
     organization: "",
     widgets: [] as WidgetKey[],
-    maximized: undefined as undefined | WidgetKey,
+    maximized: [] as WidgetKey[],
     minimized: undefined as undefined | WidgetKey,
     primaryMenu: {
         button1: featuresConfig.home.key,
@@ -74,6 +74,7 @@ export const explorerSlice = createSlice({
         },
         setWidgets: (state, action: PayloadAction<WidgetKey[]>) => {
             state.widgets = action.payload;
+            state.maximized = state.maximized.filter((widget) => action.payload.includes(widget));
         },
         addWidgetSlot: (state, action: PayloadAction<WidgetKey>) => {
             state.widgets = state.widgets.concat(action.payload);
@@ -81,8 +82,10 @@ export const explorerSlice = createSlice({
         replaceWidgetSlot: (state, action: PayloadAction<{ replace: WidgetKey; key: WidgetKey }>) => {
             state.minimized = undefined;
 
-            if (state.maximized === action.payload.replace) {
-                state.maximized = action.payload.key;
+            if (state.maximized.includes(action.payload.replace)) {
+                state.maximized = state.maximized.map((key) =>
+                    key === action.payload.replace ? action.payload.key : key
+                );
             }
 
             const widgets = [...state.widgets];
@@ -95,9 +98,13 @@ export const explorerSlice = createSlice({
             state.widgets = widgets;
         },
         removeWidgetSlot: (state, action: PayloadAction<WidgetKey>) => {
-            state.maximized = undefined;
             state.minimized = undefined;
+            state.maximized = state.maximized.filter((widget) => widget !== action.payload);
             state.widgets = state.widgets.filter((slot) => slot !== action.payload);
+
+            if (state.maximized.length !== state.widgets.length) {
+                state.maximized = [];
+            }
         },
         setUrlBookmarkId: (state, action: PayloadAction<State["urlBookmarkId"]>) => {
             state.urlBookmarkId = action.payload;
@@ -122,18 +129,51 @@ export const explorerSlice = createSlice({
                 ];
             }
         },
-        setMaximized: (state, action: PayloadAction<State["maximized"]>) => {
-            if (action.payload) {
-                state.widgets = [action.payload];
-                state.minimized = undefined;
+        toggleMaximized: (state, action: PayloadAction<WidgetKey>) => {
+            if (state.maximized.includes(action.payload)) {
+                state.maximized = state.maximized.filter((widget) => widget !== action.payload);
+
+                if (state.maximized.length !== state.widgets.length) {
+                    state.maximized = [];
+                }
+
+                return;
             }
-            state.maximized = action.payload;
+
+            state.minimized = undefined;
+
+            if (state.maximized.length) {
+                state.widgets = state.widgets.filter(
+                    (widget) => state.maximized.includes(widget) || widget === action.payload
+                );
+            } else {
+                const idx = state.widgets.indexOf(action.payload);
+                switch (idx) {
+                    case 0:
+                        state.widgets.splice(1, 1);
+                        break;
+                    case 1:
+                        state.widgets.splice(0, 1);
+                        break;
+                    case 2:
+                        state.widgets.splice(3, 1);
+                        break;
+                    case 3:
+                        state.widgets.splice(2, 1);
+                        break;
+                }
+            }
+
+            state.maximized.push(action.payload);
         },
-        setMinimized: (state, action: PayloadAction<State["maximized"]>) => {
+        setMinimized: (state, action: PayloadAction<State["minimized"]>) => {
             if (action.payload) {
-                state.maximized = undefined;
+                state.maximized = [];
             }
             state.minimized = action.payload;
+        },
+        clearMaximized: (state) => {
+            state.maximized = [];
         },
         setRequireConsent: (state, action: PayloadAction<State["requireConsent"]>) => {
             state.requireConsent = action.payload;

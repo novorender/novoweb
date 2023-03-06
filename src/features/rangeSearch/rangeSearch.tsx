@@ -33,7 +33,7 @@ export default function RangeSearch() {
 
     const [menuOpen, toggleMenu] = useToggle();
     const minimized = useAppSelector(selectMinimized) === featuresConfig.rangeSearch.key;
-    const maximized = useAppSelector(selectMaximized) === featuresConfig.rangeSearch.key;
+    const maximized = useAppSelector(selectMaximized).includes(featuresConfig.rangeSearch.key);
 
     const [dates, toggleDates] = useToggle();
     const [property, setProperty] = useState("");
@@ -242,7 +242,11 @@ export default function RangeSearch() {
                     ) : null}
                 </WidgetHeader>
                 <Box display={menuOpen || minimized ? "none" : "flex"} flexDirection="column" height={1}>
-                    {status === Status.Loading ? <LinearProgress /> : null}
+                    {status === Status.Loading ? (
+                        <Box position="relative">
+                            <LinearProgress />
+                        </Box>
+                    ) : null}
                     <ScrollBox flex={"1 1 100%"}>
                         {status === Status.Error ? (
                             <Box px={1} pt={1}>
@@ -281,11 +285,7 @@ export default function RangeSearch() {
                 </Box>
                 {menuOpen && <WidgetList widgetKey={featuresConfig.rangeSearch.key} onSelect={toggleMenu} />}
             </WidgetContainer>
-            <LogoSpeedDial
-                open={menuOpen}
-                toggle={toggleMenu}
-                testId={`${featuresConfig.rangeSearch.key}-widget-menu-fab`}
-            />
+            <LogoSpeedDial open={menuOpen} toggle={toggleMenu} />
         </>
     );
 }

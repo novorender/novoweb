@@ -42,7 +42,7 @@ export function ProjectSettings({ save, saving }: { save: () => Promise<void>; s
                 </Box>
             </Box>
             {saving ? (
-                <Box>
+                <Box position="relative">
                     <LinearProgress />
                 </Box>
             ) : null}

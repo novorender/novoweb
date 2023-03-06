@@ -1,11 +1,12 @@
-import { Fragment, useEffect, lazy, Suspense } from "react";
-import { Box, useMediaQuery, useTheme } from "@mui/material";
+import { useEffect, lazy, Suspense } from "react";
+import { Box } from "@mui/material";
 
 import { explorerActions, selectMaximized, selectWidgets } from "slices/explorerSlice";
 import { useAppDispatch, useAppSelector } from "app/store";
 import { featuresConfig, WidgetKey } from "config/features";
 import { WidgetErrorBoundary, WidgetSkeleton } from "components";
 import { MenuWidget } from "features/menuWidget";
+import { useWidgetLayout } from "./useWidgetLayout";
 
 const Properties = lazy(() => import("features/properties/properties"));
 const PropertiesTree = lazy(() => import("features/propertiesTree/propertiesTree"));
@@ -36,40 +37,102 @@ const Manhole = lazy(() => import("features/manhole/manhole"));
 const XsiteManage = lazy(() => import("features/xsiteManage/xsiteManage"));
 
 export function Widgets() {
-    const theme = useTheme();
-    const isSmall = useMediaQuery(
-        `@media (max-width: ${theme.breakpoints.values.sm}px), (max-height: ${theme.customBreakPoints.height.sm}px)`
-    );
+    const layout = useWidgetLayout();
     const maximized = useAppSelector(selectMaximized);
 
     const slots = useAppSelector(selectWidgets);
     const dispatch = useAppDispatch();
 
     useEffect(
-        function handleScreenSizeChange() {
-            if (isSmall && slots.length > 1) {
-                dispatch(explorerActions.removeWidgetSlot(slots[1]));
+        function handleSettingsChange() {
+            if (slots.length + (layout.widgets === 1 ? 0 : maximized.length) > layout.widgets) {
+                dispatch(explorerActions.clearMaximized());
+                dispatch(explorerActions.setWidgets(slots.slice(0, layout.widgets)));
             }
         },
-        [isSmall, slots, dispatch]
+        [layout, slots, dispatch, maximized]
     );
+
+    const getGridLayout = () => {
+        if (layout.widgets === 4) {
+            return {
+                gridColumn: "3 / 5",
+                gridRow: "1 / 3",
+                gridTemplateRows: "repeat(2, minmax(0, 1fr))",
+                gridTemplateColumns: "repeat(2, minmax(0, 600px))",
+                gridTemplateAreas:
+                    maximized.length === 2
+                        ? `"two one" "two one"`
+                        : maximized.length === 1
+                        ? slots.indexOf(maximized[0]) === 0
+                            ? `"three one" "two one"`
+                            : `"three two" "three one"`
+                        : `"four two" "three one"`,
+            };
+        } else if (layout.widgets === 2) {
+            return {
+                gridColumn: "3 / 5",
+                gridRow: "1 / 3",
+                gridTemplateRows: "repeat(2, minmax(0, 1fr))",
+                gridTemplateColumns: "minmax(0, 600px)",
+                gridTemplateAreas: maximized.length ? `"one" "one"` : `"two" "one"`,
+            };
+        } else if (layout.widgets === 1 && layout.sideBySide) {
+            return {
+                gridColumn: "3 / 4",
+                gridRow: "1 / 3",
+                gridTemplateColumns: "minmax(420px, 1fr)",
+                gridTemplateRows: "minmax(0, 1fr)",
+                gridTemplateAreas: `"one"`,
+            };
+        } else if (layout.widgets === 1 && !layout.sideBySide) {
+            return {
+                gridColumn: "1 / 4",
+                gridRow: "1 / 3",
+                gridTemplateColumns: "1fr",
+                gridTemplateRows: "1fr",
+                gridTemplateAreas: `"one"`,
+            };
+        }
+    };
 
     return (
         <Box
-            display="flex"
-            flexDirection="column"
-            alignItems="flex-end"
-            justifyContent="flex-end"
-            height={1}
-            width={{ xs: "auto", md: "100%" }}
+            sx={{ pb: 3, pr: 3 }}
+            display="grid"
+            gap={5}
+            justifyItems="stretch"
+            alignItems="stretch"
+            justifyContent="end"
+            alignContent="center"
+            {...getGridLayout()}
         >
-            {(isSmall && slots.length < 1) || (!isSmall && slots.length < 2 && !maximized) ? <MenuWidget /> : null}
-            {slots
-                .slice(0)
-                .reverse()
-                .map((key) => (
-                    <Fragment key={key}>{getWidgetByKey(key)}</Fragment>
-                ))}
+            {slots.length + maximized.length < layout.widgets ? (
+                <Box
+                    display="flex"
+                    flexDirection="column"
+                    alignItems="flex-end"
+                    justifyContent="flex-end"
+                    gridArea={
+                        slots.length === 0 ? "one" : slots.length === 1 ? "two" : slots.length === 2 ? "three" : "four"
+                    }
+                >
+                    <MenuWidget />
+                </Box>
+            ) : null}
+            {slots.map((key, idx) => (
+                <Box
+                    display="flex"
+                    flexDirection="column"
+                    alignItems="flex-end"
+                    justifyContent="flex-end"
+                    maxHeight={1}
+                    gridArea={idx === 0 ? "one" : idx === 1 ? "two" : idx === 2 ? "three" : "four"}
+                    key={key}
+                >
+                    {getWidgetByKey(key)}
+                </Box>
+            ))}
         </Box>
     );
 }

@@ -78,7 +78,9 @@ export function Feed() {
                 </>
             </Box>
             {isLoading ? (
-                <LinearProgress />
+                <Box position="relative">
+                    <LinearProgress />
+                </Box>
             ) : !feed ? (
                 <Typography>Unable to load feed.</Typography>
             ) : !feed.length ? (

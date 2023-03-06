@@ -64,7 +64,7 @@ export function ObjectSelectionSettings({ save, saving }: { save: () => Promise<
                 </Box>
             </Box>
             {saving ? (
-                <Box>
+                <Box position="relative">
                     <LinearProgress />
                 </Box>
             ) : null}

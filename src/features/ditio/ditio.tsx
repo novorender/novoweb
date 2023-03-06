@@ -22,7 +22,7 @@ export default function Ditio() {
     const sceneId = useSceneId();
     const [menuOpen, toggleMenu] = useToggle();
     const minimized = useAppSelector(selectMinimized) === featuresConfig.ditio.key;
-    const maximized = useAppSelector(selectMaximized) === featuresConfig.ditio.key;
+    const maximized = useAppSelector(selectMaximized).includes(featuresConfig.ditio.key);
     const lastViewedPath = useAppSelector(selectLastViewedPath);
 
     return (
@@ -60,7 +60,7 @@ export default function Ditio() {
                 </Box>
                 {menuOpen && <WidgetList widgetKey={featuresConfig.ditio.key} onSelect={toggleMenu} />}
             </WidgetContainer>
-            <LogoSpeedDial open={menuOpen} toggle={toggleMenu} testId={`${featuresConfig.ditio.key}-widget-menu-fab`} />
+            <LogoSpeedDial open={menuOpen} toggle={toggleMenu} />
         </>
     );
 }
