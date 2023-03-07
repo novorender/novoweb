@@ -22,6 +22,9 @@ export const WidgetContainer = styled((props: PaperProps) => <Paper elevation={4
         z-index: 1051;
         flex-grow: 1;
 
+        // Needed to contain snackbars inside widget
+        transform: translate(0px, 0px);
+
         ${theme.breakpoints.up("sm")} {
             width: 100%;
             position: static;

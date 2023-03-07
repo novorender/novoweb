@@ -1,11 +1,10 @@
 import { Fragment, useEffect, useRef } from "react";
 import { Link } from "react-router-dom";
-import { FixedSizeList } from "react-window";
 import AutoSizer from "react-virtualized-auto-sizer";
 import { Box, Button, FormControlLabel, ListItemButton, Typography, useTheme } from "@mui/material";
 import { FilterAlt } from "@mui/icons-material";
 
-import { Tooltip, ImgTooltip, Divider, IosSwitch, LinearProgress, withCustomScrollbar } from "components";
+import { Tooltip, ImgTooltip, Divider, IosSwitch, LinearProgress, FixedSizeVirualizedList } from "components";
 import { useAppDispatch, useAppSelector } from "app/store";
 
 import { baseUrl, useFeedWebRawQuery } from "../api";
@@ -17,8 +16,6 @@ import {
     selectDitioProject,
     selectShowDitioMarkers,
 } from "../slice";
-
-const StyledFixedSizeList = withCustomScrollbar(FixedSizeList) as typeof FixedSizeList;
 
 export function Feed() {
     const theme = useTheme();
@@ -109,7 +106,7 @@ export function Feed() {
                 <Box flex={"1 1 100%"}>
                     <AutoSizer>
                         {({ height, width }) => (
-                            <StyledFixedSizeList
+                            <FixedSizeVirualizedList
                                 style={{ paddingLeft: theme.spacing(1), paddingRight: theme.spacing(1) }}
                                 height={height}
                                 width={width}
@@ -199,7 +196,7 @@ export function Feed() {
                                         </ListItemButton>
                                     );
                                 }}
-                            </StyledFixedSizeList>
+                            </FixedSizeVirualizedList>
                         )}
                     </AutoSizer>
                 </Box>
