@@ -128,10 +128,10 @@ export function useCanvasClickHandler() {
                         ? vec3.fromValues(result.position[0], crossSectionPoint[1], result.position[2])
                         : vec3.copy(vec3.create(), result.position);
 
-                    const right = vec3.sub(vec3.create(), pos, crossSectionPoint);
+                    const right = vec3.sub(vec3.create(), crossSectionPoint, pos);
                     const l = vec3.len(right);
                     vec3.scale(right, right, 1 / l);
-                    const p = vec3.scaleAndAdd(vec3.create(), crossSectionPoint, right, l / 2);
+                    const p = vec3.scaleAndAdd(vec3.create(), crossSectionPoint, right, l / -2);
                     let dir = vec3.cross(vec3.create(), up, right);
 
                     if (topDown) {

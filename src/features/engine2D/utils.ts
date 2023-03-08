@@ -21,12 +21,20 @@ export interface CameraSettings {
     dir: ReadonlyVec3;
 }
 
+type CapStyle = "arrow";
+
+export interface LineCap {
+    end?: CapStyle;
+    start?: CapStyle;
+}
+
 export function drawProduct(
     ctx: CanvasRenderingContext2D,
     camera: CameraSettings,
     product: DrawProduct,
     colorSettings: ColorSettings,
-    pixelWidth: number
+    pixelWidth: number,
+    lineCap?: LineCap
 ) {
     for (const obj of product.objects) {
         if (colorSettings.complexCylinder && obj.kind === "cylinder" && obj.parts.length === 3) {
@@ -65,7 +73,7 @@ export function drawProduct(
             }
         } else {
             obj.parts.forEach((part) => {
-                drawPart(ctx, camera, part, colorSettings, pixelWidth);
+                drawPart(ctx, camera, part, colorSettings, pixelWidth, undefined, lineCap);
             });
         }
     }
@@ -77,7 +85,8 @@ export function drawPart(
     part: DrawPart,
     colorSettings: ColorSettings,
     pixelWidth: number,
-    textSettings?: TextSettings
+    textSettings?: TextSettings,
+    lineCap?: LineCap
 ): boolean {
     if (part.vertices2D) {
         ctx.lineWidth = pixelWidth;
@@ -88,7 +97,7 @@ export function drawPart(
         } else if (part.drawType === "text") {
             return drawTextPart(ctx, part);
         } else if (part.drawType === "lines" || part.drawType === "filled") {
-            return drawLinesOrPolygon(ctx, part, colorSettings, textSettings);
+            return drawLinesOrPolygon(ctx, part, colorSettings, textSettings, lineCap);
         } else if (part.drawType === "vertex") {
             return drawPoints(ctx, part, colorSettings);
         }
@@ -184,14 +193,31 @@ function drawLinesOrPolygon(
     ctx: CanvasRenderingContext2D,
     part: DrawPart,
     colorSettings: ColorSettings,
-    text?: TextSettings
+    text?: TextSettings,
+    lineCap?: LineCap
 ) {
     const lineColArray = colorSettings.lineColor !== undefined && Array.isArray(colorSettings.lineColor);
     if (part.vertices2D) {
+        if (lineCap?.start === "arrow") {
+            const dir = vec2.sub(vec2.create(), part.vertices2D[1], part.vertices2D[0]);
+            ctx.fillStyle = colorSettings.outlineColor ?? "black";
+            vec2.normalize(dir, dir);
+            drawArrow(ctx, part.vertices2D[0], dir, 20);
+        }
         ctx.beginPath();
         ctx.moveTo(part.vertices2D[0][0], part.vertices2D[0][1]);
+
         for (let i = 1; i < part.vertices2D.length; ++i) {
             ctx.lineTo(part.vertices2D[i][0], part.vertices2D[i][1]);
+            if (lineCap?.end === "arrow") {
+                ctx.fillStyle = colorSettings.outlineColor ?? "black";
+                ctx.stroke();
+                const dir = vec2.sub(vec2.create(), part.vertices2D[i], part.vertices2D[i - 1]);
+                vec2.normalize(dir, dir);
+                drawArrow(ctx, part.vertices2D[i], dir, 20);
+                ctx.beginPath();
+                ctx.moveTo(part.vertices2D[i][0], part.vertices2D[i][1]);
+            }
             if (lineColArray) {
                 ctx.strokeStyle = getLineColor(colorSettings.lineColor, i - 1);
                 ctx.lineCap = "butt";
@@ -366,4 +392,15 @@ export function drawText(ctx: CanvasRenderingContext2D, vertices2D: ReadonlyVec2
         ctx.fillText(text, center[0] / vertices2D.length, center[1] / vertices2D.length);
     }
     return true;
+}
+
+function drawArrow(ctx: CanvasRenderingContext2D, currentPos: ReadonlyVec2, dir: ReadonlyVec2, pixels: number) {
+    const scaledDir = vec2.scale(vec2.create(), dir, pixels);
+    ctx.beginPath();
+    ctx.moveTo(currentPos[0], currentPos[1]);
+    ctx.lineTo(currentPos[0] + scaledDir[1] / 2, currentPos[1] - scaledDir[0] / 2);
+    ctx.lineTo(currentPos[0] + scaledDir[0], currentPos[1] + scaledDir[1]);
+    ctx.lineTo(currentPos[0] - scaledDir[1] / 2, currentPos[1] + scaledDir[0] / 2);
+    ctx.closePath();
+    ctx.fill();
 }

@@ -1,7 +1,7 @@
 import { DrawableEntity, MeasureSettings } from "@novorender/measure-api";
 import { css, styled } from "@mui/material";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { quat, ReadonlyVec2, vec2, vec3 } from "gl-matrix";
+import { mat3, quat, ReadonlyVec2, vec2, vec3 } from "gl-matrix";
 
 import { useAppSelector } from "app/store";
 import { useExplorerGlobals } from "contexts/explorerGlobals";
@@ -30,6 +30,7 @@ const Canvas2D = styled("canvas")(
         top: 0;
         width: 100%;
         height: 100%;
+        overflow: visible;
         pointer-events: none;
     `
 );
@@ -433,6 +434,39 @@ export function Engine2D() {
                             );
                         });
                     });
+                }
+                if (crossSection.length > 1) {
+                    const mat = mat3.fromQuat(mat3.create(), view.camera.rotation);
+                    if (mat[7] === 1) {
+                        // top-down
+                        let up = vec3.fromValues(mat[6], mat[7], mat[8]);
+                        const dir = vec3.sub(vec3.create(), crossSection[1], crossSection[0]);
+                        vec3.normalize(dir, dir);
+                        const cross = vec3.cross(vec3.create(), dir, up);
+                        vec3.normalize(cross, cross);
+                        const center = vec3.add(vec3.create(), crossSection[0], crossSection[1]);
+                        vec3.scale(center, center, 0.5);
+                        const offsetP = vec3.scaleAndAdd(vec3.create(), center, cross, -3);
+                        const arrow = measureApi.getDrawObjectFromPoints(view, [center, offsetP], false, false);
+                        if (arrow) {
+                            arrow.objects.forEach((obj) => {
+                                obj.parts.forEach((part) => {
+                                    drawPart(
+                                        context2D,
+                                        camSettings,
+                                        part,
+                                        {
+                                            lineColor: "black",
+                                            pointColor: "black",
+                                        },
+                                        2,
+                                        undefined,
+                                        { end: "arrow" }
+                                    );
+                                });
+                            });
+                        }
+                    }
                 }
             }
             if (roadCrossSectionData && viewMode === ViewMode.FollowPath) {
