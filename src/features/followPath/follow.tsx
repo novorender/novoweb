@@ -136,7 +136,7 @@ export function Follow({ fpObj }: { fpObj: FollowParametricObject }) {
                     })
                 );
             } else {
-                vec3.scaleAndAdd(offsetPt, offsetPt, dir, (pt[1] - offsetPt[1]) * -2);
+                vec3.scaleAndAdd(offsetPt, offsetPt, dir, Math.abs(pt[1] - offsetPt[1]) * 2);
                 dispatch(renderActions.setGrid({ enabled: false }));
                 dispatch(
                     renderActions.setCamera({
