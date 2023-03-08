@@ -1,13 +1,12 @@
 import AutoSizer from "react-virtualized-auto-sizer";
-import { CSSProperties, Fragment } from "react";
+import { CSSProperties } from "react";
 import { useParams, Link, useHistory } from "react-router-dom";
 import { Add, ArrowBack, FilterAlt } from "@mui/icons-material";
 import { Box, Button, Typography, ListItem, useTheme } from "@mui/material";
 import { isAfter, isSameDay, parseISO } from "date-fns";
-import { FixedSizeList } from "react-window";
 
 import { useAppSelector } from "app/store";
-import { LinearProgress, Tooltip, ImgTooltip, withCustomScrollbar, Divider } from "components";
+import { LinearProgress, Tooltip, ImgTooltip, Divider, FixedSizeVirualizedList } from "components";
 import { Topic } from "types/bcf";
 
 import {
@@ -25,8 +24,6 @@ import {
     FilterModifier,
     selectFilterModifiers,
 } from "../bimCollabSlice";
-
-const StyledFixedSizeList = withCustomScrollbar(FixedSizeList) as typeof FixedSizeList;
 
 export function Project() {
     const theme = useTheme();
@@ -83,7 +80,7 @@ export function Project() {
                 <Box flex={"1 1 100%"}>
                     <AutoSizer>
                         {({ height, width }) => (
-                            <StyledFixedSizeList
+                            <FixedSizeVirualizedList
                                 style={{ paddingLeft: theme.spacing(1), paddingRight: theme.spacing(1) }}
                                 height={height}
                                 width={width}
@@ -100,7 +97,7 @@ export function Project() {
                                         />
                                     );
                                 }}
-                            </StyledFixedSizeList>
+                            </FixedSizeVirualizedList>
                         )}
                     </AutoSizer>
                 </Box>
