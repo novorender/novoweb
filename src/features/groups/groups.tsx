@@ -69,9 +69,6 @@ export default function Groups() {
                     height={1}
                 >
                     <Switch>
-                        <Route path="/" exact>
-                            <GroupList />
-                        </Route>
                         <Route path={crupdatePaths}>
                             <Crupdate sceneId={sceneId} />
                         </Route>
@@ -83,6 +80,9 @@ export default function Groups() {
                         </Route>
                         <Route path="/renameCollection">
                             <RenameCollection />
+                        </Route>
+                        <Route path="/">
+                            <GroupList />
                         </Route>
                     </Switch>
                 </Box>

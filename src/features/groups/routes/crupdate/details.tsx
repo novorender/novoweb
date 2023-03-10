@@ -77,6 +77,7 @@ export function Details({
             hidden: false,
             search: [...savedInputs],
             color: [1, 0, 0, 1],
+            opacity: 0,
         };
 
         dispatchObjectGroups(objectGroupsActions.add([newGroup]));

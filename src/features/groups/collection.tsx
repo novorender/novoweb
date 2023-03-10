@@ -1,4 +1,4 @@
-import { Visibility, MoreVert, Edit, Clear } from "@mui/icons-material";
+import { Visibility, MoreVert, Edit, Clear, VisibilityOff } from "@mui/icons-material";
 import { Box, IconButton, List, ListItemIcon, ListItemText, Menu, MenuItem } from "@mui/material";
 import { useState, MouseEvent } from "react";
 import { useHistory } from "react-router-dom";
@@ -50,8 +50,9 @@ export function Collection({ collection, disabled }: { collection: string; disab
     const name = collection.split("/").pop() ?? "";
     const collectionGroups = objectGroups.filter((group) => group.grouping === collection);
     const nestedGroups = objectGroups.filter((group) => group.grouping?.startsWith(collection));
-    const allGroupedSelected = !nestedGroups.some((group) => !group.selected);
-    const allGroupedHidden = !nestedGroups.some((group) => !group.hidden);
+    const allSelected = !nestedGroups.some((group) => !group.selected);
+    const allHidden = !nestedGroups.some((group) => !group.hidden);
+    const allFullyHidden = !nestedGroups.some((group) => group.opacity && group.opacity > 0);
 
     return (
         <Accordion
@@ -80,13 +81,13 @@ export function Collection({ collection, disabled }: { collection: string; disab
                             nestedGroups.forEach((group) =>
                                 dispatchObjectGroups(
                                     objectGroupsActions.update(group.id, {
-                                        selected: !allGroupedSelected,
-                                        hidden: !allGroupedSelected ? false : group.hidden,
+                                        selected: !allSelected,
+                                        hidden: !allSelected ? false : group.hidden,
                                     })
                                 )
                             )
                         }
-                        checked={allGroupedSelected}
+                        checked={allSelected}
                         onClick={(event) => event.stopPropagation()}
                         onFocus={(event) => event.stopPropagation()}
                     />
@@ -97,19 +98,21 @@ export function Collection({ collection, disabled }: { collection: string; disab
                         aria-label="toggle group visibility"
                         size="small"
                         icon={<Visibility />}
-                        checkedIcon={<Visibility color="disabled" />}
+                        checkedIcon={
+                            allFullyHidden ? <VisibilityOff color="disabled" /> : <Visibility color="disabled" />
+                        }
                         disabled={disabled}
                         onChange={() =>
                             nestedGroups.forEach((group) =>
                                 dispatchObjectGroups(
                                     objectGroupsActions.update(group.id, {
-                                        hidden: !allGroupedHidden,
-                                        selected: !allGroupedHidden ? false : group.selected,
+                                        hidden: !allHidden,
+                                        selected: !allHidden ? false : group.selected,
                                     })
                                 )
                             )
                         }
-                        checked={allGroupedHidden}
+                        checked={allHidden}
                         onClick={(event) => event.stopPropagation()}
                         onFocus={(event) => event.stopPropagation()}
                     />

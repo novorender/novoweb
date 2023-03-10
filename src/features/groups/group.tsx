@@ -1,6 +1,6 @@
 import { MouseEvent, useState } from "react";
-import { useHistory } from "react-router-dom";
-import { Delete, Edit, MoreVert, Visibility, ColorLens, LibraryAdd } from "@mui/icons-material";
+import { Route, Switch, useHistory, useRouteMatch } from "react-router-dom";
+import { Delete, Edit, MoreVert, Visibility, ColorLens, LibraryAdd, Opacity, VisibilityOff } from "@mui/icons-material";
 import {
     Box,
     Checkbox,
@@ -38,6 +38,7 @@ export const StyledCheckbox = styled(Checkbox)`
 
 export function Group({ group, disabled }: { group: ObjectGroup; disabled: boolean }) {
     const history = useHistory();
+    const match = useRouteMatch();
     const isAdmin = useAppSelector(selectHasAdminCapabilities);
     const dispatchObjectGroups = useDispatchObjectGroups();
 
@@ -50,6 +51,7 @@ export function Group({ group, disabled }: { group: ObjectGroup; disabled: boole
 
     const openMenu = (e: MouseEvent<HTMLButtonElement>) => {
         e.stopPropagation();
+        history.replace(match.path);
         setMenuAnchor(e.currentTarget.parentElement);
     };
 
@@ -102,7 +104,9 @@ export function Group({ group, disabled }: { group: ObjectGroup; disabled: boole
                             aria-label="toggle group visibility"
                             size="small"
                             icon={<Visibility htmlColor={`rgba(${r}, ${g}, ${b}, ${Math.max(a ?? 0, 0.2)})`} />}
-                            checkedIcon={<Visibility color="disabled" />}
+                            checkedIcon={
+                                !group.opacity ? <VisibilityOff color="disabled" /> : <Visibility color="disabled" />
+                            }
                             checked={group.hidden}
                             disabled={disabled}
                             onClick={(event) => event.stopPropagation()}
@@ -133,7 +137,7 @@ export function Group({ group, disabled }: { group: ObjectGroup; disabled: boole
             <ColorPicker
                 open={Boolean(colorPickerAnchor)}
                 anchorEl={colorPickerAnchor}
-                onClose={() => toggleColorPicker()}
+                onClose={() => setColorPickerAnchor(null)}
                 color={group.color}
                 onChangeComplete={({ rgb }) =>
                     dispatchObjectGroups(objectGroupsActions.update(group.id, { color: rgbToVec(rgb) }))
@@ -145,49 +149,72 @@ export function Group({ group, disabled }: { group: ObjectGroup; disabled: boole
                 open={Boolean(menuAnchor)}
                 onClose={closeMenu}
                 id={`${group.id}-menu`}
-                MenuListProps={{ sx: { maxWidth: "100%" } }}
+                MenuListProps={{ sx: { maxWidth: "100%", minWidth: 100 } }}
             >
-                {(isAdmin
-                    ? [
-                          <MenuItem
-                              key="edit"
-                              onClick={() => {
-                                  history.push("/edit/" + group.id);
-                              }}
-                          >
-                              <ListItemIcon>
-                                  <Edit fontSize="small" />
-                              </ListItemIcon>
-                              <ListItemText>Edit</ListItemText>
-                          </MenuItem>,
-                          <MenuItem
-                              key="duplicate"
-                              onClick={() => {
-                                  dispatchObjectGroups(objectGroupsActions.copy(group.id));
-                                  closeMenu();
-                              }}
-                          >
-                              <ListItemIcon>
-                                  <LibraryAdd fontSize="small" />
-                              </ListItemIcon>
-                              <ListItemText>Duplicate</ListItemText>
-                          </MenuItem>,
-                          <MenuItem key="delete" onClick={() => history.push("/delete/" + group.id)}>
-                              <ListItemIcon>
-                                  <Delete fontSize="small" />
-                              </ListItemIcon>
-                              <ListItemText>Delete</ListItemText>
-                          </MenuItem>,
-                      ]
-                    : []
-                ).concat(
-                    <MenuItem key="color" onClick={toggleColorPicker}>
-                        <ListItemIcon>
-                            <ColorLens sx={{ color: `rgb(${r}, ${g}, ${b})` }} fontSize="small" />
-                        </ListItemIcon>
-                        <ListItemText>Select color</ListItemText>
-                    </MenuItem>
-                )}
+                <Switch>
+                    <Route path={match.path} exact>
+                        {(isAdmin
+                            ? [
+                                  <MenuItem
+                                      key="edit"
+                                      onClick={() => {
+                                          history.push("/edit/" + group.id);
+                                      }}
+                                  >
+                                      <ListItemIcon>
+                                          <Edit fontSize="small" />
+                                      </ListItemIcon>
+                                      <ListItemText>Edit</ListItemText>
+                                  </MenuItem>,
+                                  <MenuItem
+                                      key="duplicate"
+                                      onClick={() => {
+                                          dispatchObjectGroups(objectGroupsActions.copy(group.id));
+                                          closeMenu();
+                                      }}
+                                  >
+                                      <ListItemIcon>
+                                          <LibraryAdd fontSize="small" />
+                                      </ListItemIcon>
+                                      <ListItemText>Duplicate</ListItemText>
+                                  </MenuItem>,
+                                  <MenuItem key="delete" onClick={() => history.push("/delete/" + group.id)}>
+                                      <ListItemIcon>
+                                          <Delete fontSize="small" />
+                                      </ListItemIcon>
+                                      <ListItemText>Delete</ListItemText>
+                                  </MenuItem>,
+                              ]
+                            : []
+                        ).concat(
+                            <MenuItem key="color" onClick={toggleColorPicker}>
+                                <ListItemIcon>
+                                    <ColorLens sx={{ color: `rgb(${r}, ${g}, ${b})` }} fontSize="small" />
+                                </ListItemIcon>
+                                <ListItemText>Select color</ListItemText>
+                            </MenuItem>,
+                            <MenuItem key="opacity" onClick={() => history.replace(match.path + "/opacity")}>
+                                <ListItemIcon>
+                                    <Opacity fontSize="small" />
+                                </ListItemIcon>
+                                <ListItemText>Select hidden opacity</ListItemText>
+                            </MenuItem>
+                        )}
+                    </Route>
+                    <Route path={match.path + "/opacity"} exact>
+                        {[0, 0.25, 0.5, 0.75].map((opacity) => (
+                            <MenuItem
+                                selected={(group.opacity ?? 0) === opacity}
+                                key={opacity}
+                                onClick={() => {
+                                    dispatchObjectGroups(objectGroupsActions.update(group.id, { opacity }));
+                                }}
+                            >
+                                <ListItemText>{opacity * 100}%</ListItemText>
+                            </MenuItem>
+                        ))}
+                    </Route>
+                </Switch>
             </Menu>
         </>
     );
