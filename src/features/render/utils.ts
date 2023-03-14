@@ -241,7 +241,7 @@ export async function refillObjects({
             const opacity = group.hidden ? group.opacity ?? 0 : 1;
 
             if (opacity === 0) {
-                prev[0].push(...group.ids);
+                group.ids.forEach((id) => prev[0].push(id));
             }
 
             if ((group.selected || group.hidden) && group.ids.length) {
@@ -271,11 +271,7 @@ export async function refillObjects({
 
             return prev;
         },
-        [[], {}] as [
-            number[],
-            // { [opacity: number]: { opacity: number; idx: number; highlight: Highlight } },
-            { [key: string]: { key: string; idx: number; highlight: Highlight } }
-        ]
+        [[], {}] as [number[], { [key: string]: { key: string; idx: number; highlight: Highlight } }]
     );
 
     const highlights = Object.values(_highlights);
@@ -284,7 +280,7 @@ export async function refillObjects({
     objectGroups.forEach((group) => {
         const { highlightIdx } = group;
 
-        if (group.ids.length && highlightIdx) {
+        if (group.ids?.length && highlightIdx) {
             if (group.selected) {
                 group.ids.forEach((id) => {
                     if (selectionBasket.mode === SelectionBasketMode.Loose || selectionBasket.ids[id]) {
