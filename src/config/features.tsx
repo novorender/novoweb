@@ -27,10 +27,10 @@ import {
     Undo,
     Visibility,
     VisibilityOff,
-    VrpanoOutlined,
     LinearScale,
     FiberSmartRecord,
     GpsFixed,
+    Image,
 } from "@mui/icons-material";
 
 import { ReactComponent as Clipping } from "media/icons/clipping.svg";
@@ -236,15 +236,12 @@ export const featuresConfig = {
         type: FeatureType.Widget,
         defaultLocked: false,
     },
-    panoramas: {
-        key: "panoramas",
-        name: "Panoramas",
-        Icon: VrpanoOutlined,
+    images: {
+        key: "images",
+        name: "Images",
+        Icon: Image,
         type: FeatureType.Widget,
         defaultLocked: false,
-        dependencies: {
-            subtrees: [["points"]],
-        },
     },
     deviations: {
         key: "deviations",

@@ -204,7 +204,11 @@ export function Auth() {
     } else if (accessToken.status === AsyncStatus.Error) {
         return <ErrorMsg>{accessToken.msg}</ErrorMsg>;
     } else {
-        return <LinearProgress />;
+        return (
+            <Box position="relative">
+                <LinearProgress />
+            </Box>
+        );
     }
 }
 

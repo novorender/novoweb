@@ -1,10 +1,12 @@
 import { SyntheticEvent } from "react";
 import { Close } from "@mui/icons-material";
 import {
+    Box,
     CloseReason,
     FabProps,
     OpenReason,
     SpeedDial,
+    speedDialClasses,
     SpeedDialIcon,
     SpeedDialProps,
     useMediaQuery,
@@ -16,10 +18,9 @@ import { ReactComponent as NovorenderIcon } from "media/icons/novorender-small.s
 export function LogoSpeedDial({
     open,
     toggle,
-    testId,
     ariaLabel = "toggle widget menu",
     ...props
-}: Omit<SpeedDialProps, "ariaLabel"> & { ariaLabel?: string; testId?: string; toggle: () => void }) {
+}: Omit<SpeedDialProps, "ariaLabel"> & { ariaLabel?: string; toggle: () => void }) {
     const theme = useTheme();
     const isSmall = useMediaQuery(theme.breakpoints.down("md"));
 
@@ -32,22 +33,33 @@ export function LogoSpeedDial({
     };
 
     return (
-        <SpeedDial
-            {...props}
-            ariaLabel={ariaLabel}
-            open={open}
-            onOpen={handleToggle}
-            onClose={handleToggle}
-            sx={{ ...props.sx, zIndex: 1052 }}
-            FabProps={
-                {
-                    ...props.FabProps,
-                    color: open ? "secondary" : "primary",
-                    size: isSmall ? "small" : "large",
-                    "data-test": testId,
-                } as Partial<FabProps<"button", { "data-test": string }>>
-            }
-            icon={<SpeedDialIcon icon={<NovorenderIcon />} openIcon={<Close />} />}
-        />
+        <Box position="relative">
+            <SpeedDial
+                {...props}
+                ariaLabel={ariaLabel}
+                open={open}
+                onOpen={handleToggle}
+                onClose={handleToggle}
+                sx={{
+                    position: "absolute",
+                    bottom: isSmall ? -20 : -28,
+                    right: isSmall ? -20 : -28,
+                    zIndex: 1052,
+                    ...props.sx,
+
+                    [`.${speedDialClasses.actions}`]: {
+                        padding: 0,
+                    },
+                }}
+                FabProps={
+                    {
+                        ...props.FabProps,
+                        color: open ? "secondary" : "primary",
+                        size: isSmall ? "small" : "large",
+                    } as Partial<FabProps<"button">>
+                }
+                icon={<SpeedDialIcon icon={<NovorenderIcon />} openIcon={<Close />} />}
+            />
+        </Box>
     );
 }

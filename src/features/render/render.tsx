@@ -29,14 +29,14 @@ import { CameraAlt, Close, FlightTakeoff } from "@mui/icons-material";
 import { PerformanceStats } from "features/performanceStats";
 import { getDataFromUrlHash } from "features/shareLink";
 import {
-    panoramasActions,
-    selectActivePanorama,
-    selectPanoramas,
-    selectShow3dMarkers,
-    PanoramaStatus,
-    useHandlePanoramaChanges,
-} from "features/panoramas";
-import { Accordion, AccordionDetails, AccordionSummary, Divider, LinearProgress, Loading } from "components";
+    imagesActions,
+    isFlat,
+    selectActiveImage,
+    selectImages,
+    selectShowImageMarkers,
+    useHandleImageChanges,
+} from "features/images";
+import { Accordion, AccordionDetails, AccordionSummary, Divider, ImgModal, LinearProgress, Loading } from "components";
 import { api, dataApi, measureApi } from "app";
 import { useSceneId } from "hooks/useSceneId";
 import {
@@ -63,6 +63,7 @@ import {
     Picker,
     selectLoadingHandles,
     selectDeviationStamp,
+    selectViewMode,
 } from "features/render/renderSlice";
 import { explorerActions, selectLocalBookmarkId, selectUrlBookmarkId } from "slices/explorerSlice";
 import { selectDeviations } from "features/deviations";
@@ -77,7 +78,9 @@ import { selectCurrentLocation, useHandleLocationMarker } from "features/myLocat
 import { useHandleJiraKeepAlive } from "features/jira";
 import { Engine2D } from "features/engine2D";
 import { LogPoint, useXsiteManageLogPointMarkers, useHandleXsiteManageKeepAlive } from "features/xsiteManage";
+import { AsyncStatus, ViewMode } from "types/misc";
 import { orthoCamActions, selectCrossSectionPoint, useHandleCrossSection } from "features/orthoCam";
+import { useHandleClippingBoxChanges } from "features/clippingBox";
 
 import { useHighlighted, highlightActions, useDispatchHighlighted } from "contexts/highlighted";
 import { useHidden, useDispatchHidden } from "contexts/hidden";
@@ -112,6 +115,7 @@ import { useHandleCameraControls } from "./useHandleCameraControls";
 import { moveSvgCursor } from "./svgUtils";
 import { useCanvasClickHandler } from "./useCanvasClickHandler";
 import { useHandleCanvasCursor } from "./useHandleCanvasCursor";
+import { getAssetUrl } from "utils/misc";
 
 glMatrix.setMatrixArrayType(Array);
 
@@ -140,7 +144,7 @@ const Svg = styled("svg")(
     `
 );
 
-const PanoramaMarker = styled((props: SVGProps<SVGGElement>) => (
+const ImageMarker = styled((props: SVGProps<SVGGElement>) => (
     <g {...props}>
         <CameraAlt color="primary" height="32px" width="32px" />
     </g>
@@ -222,24 +226,25 @@ export function Render3D({ onInit }: Props) {
     const clippingPlanes = useAppSelector(selectClippingPlanes);
     const cameraState = useAppSelector(selectCamera);
     const advancedSettings = useAppSelector(selectAdvancedSettings);
-    const panoramas = useAppSelector(selectPanoramas);
+    const images = useAppSelector(selectImages);
     const deviation = useAppSelector(selectDeviations);
-    const showPanoramaMarkers = useAppSelector(selectShow3dMarkers);
+    const showImageMarkers = useAppSelector(selectShowImageMarkers);
     const gridDefaults = useAppSelector(selectGridDefaults);
-    const activePanorama = useAppSelector(selectActivePanorama);
+    const activeImage = useAppSelector(selectActiveImage);
     const urlBookmarkId = useAppSelector(selectUrlBookmarkId);
     const localBookmarkId = useAppSelector(selectLocalBookmarkId);
     const loadingHandles = useAppSelector(selectLoadingHandles);
     const deviationStamp = useAppSelector(selectDeviationStamp);
+    const picker = useAppSelector(selectPicker);
+    const myLocationPoint = useAppSelector(selectCurrentLocation);
+    const crossSectionPoint = useAppSelector(selectCrossSectionPoint);
+    const viewMode = useAppSelector(selectViewMode);
+
     const ditioMarkers = useDitioMarkers();
     const logPoints = useXsiteManageLogPointMarkers();
     const canvasClickHandler = useCanvasClickHandler();
     const usingSvgCursor = useHandleCanvasCursor();
-
-    const picker = useAppSelector(selectPicker);
-    const myLocationPoint = useAppSelector(selectCurrentLocation);
     const measureHoverSettings = useMeasureHoverSettings();
-    const crossSectionPoint = useAppSelector(selectCrossSectionPoint);
 
     const dispatch = useAppDispatch();
 
@@ -314,15 +319,15 @@ export function Render3D({ onInit }: Props) {
                 ?.setAttribute("transform", pos ? `translate(${pos[0] - 25} ${pos[1] - 20})` : "translate(-100 -100)");
         });
 
-        if (panoramas) {
+        if (showImageMarkers && images.status === AsyncStatus.Success) {
             (
                 measureApi.toMarkerPoints(
                     view,
-                    panoramas.map((panorama) => panorama.position)
+                    images.data.map((image) => image.position)
                 ) ?? []
             ).forEach((pos, idx) => {
                 svg.children
-                    .namedItem(`panorama-${idx}`)
+                    .namedItem(`image-${idx}`)
                     ?.setAttribute(
                         "transform",
                         pos ? `translate(${pos[0] - 25} ${pos[1] - 25})` : "translate(-100 -100)"
@@ -340,7 +345,7 @@ export function Render3D({ onInit }: Props) {
                 .namedItem(`ditioMarker-${idx}`)
                 ?.setAttribute("transform", pos ? `translate(${pos[0] - 25} ${pos[1] - 25})` : "translate(-100 -100)");
         });
-    }, [view, svg, myLocationPoint, size, measureScene, logPoints, ditioMarkers, panoramas]);
+    }, [view, svg, myLocationPoint, size, measureScene, logPoints, ditioMarkers, images, showImageMarkers]);
 
     useEffect(() => {
         moveSvgMarkers();
@@ -547,7 +552,7 @@ export function Render3D({ onInit }: Props) {
                     }
 
                     movementTimer.current = setTimeout(() => {
-                        if (!view || cameraState.type === CameraType.Orthographic || activePanorama) {
+                        if (!view || cameraState.type === CameraType.Orthographic || viewMode === ViewMode.Panorama) {
                             return;
                         }
 
@@ -572,7 +577,7 @@ export function Render3D({ onInit }: Props) {
                 }
             }
         },
-        [view, dispatch, savedCameraPositions, cameraState, advancedSettings, activePanorama, moveSvgMarkers]
+        [view, dispatch, savedCameraPositions, cameraState, advancedSettings, viewMode, moveSvgMarkers]
     );
 
     useEffect(
@@ -636,13 +641,22 @@ export function Render3D({ onInit }: Props) {
 
             const settings = view.settings as Internal.RenderSettingsExt;
 
+            if (viewMode === ViewMode.Panorama) {
+                settings.advanced.hideLines = true;
+                settings.advanced.hidePoints = true;
+                settings.advanced.hideTerrain = true;
+                settings.advanced.hideTriangles = true;
+                settings.advanced.hideDocuments = true;
+                return;
+            }
+
             settings.advanced.hideLines = subtrees.lines !== SubtreeStatus.Shown;
             settings.advanced.hidePoints = subtrees.points !== SubtreeStatus.Shown;
             settings.advanced.hideTerrain = subtrees.terrain !== SubtreeStatus.Shown;
             settings.advanced.hideTriangles = subtrees.triangles !== SubtreeStatus.Shown;
             settings.advanced.hideDocuments = subtrees.documents !== SubtreeStatus.Shown;
         },
-        [subtrees, view]
+        [subtrees, view, viewMode]
     );
 
     useEffect(
@@ -672,17 +686,6 @@ export function Render3D({ onInit }: Props) {
     );
 
     useEffect(
-        function handleClippingBoxChanges() {
-            if (!view) {
-                return;
-            }
-
-            view.applySettings({ clippingPlanes: { ...clippingBox } });
-        },
-        [view, clippingBox]
-    );
-
-    useEffect(
         function handleClippingPlaneChanges() {
             if (!view) {
                 return;
@@ -708,10 +711,6 @@ export function Render3D({ onInit }: Props) {
             view.applySettings({
                 points: {
                     ...view.settings.points,
-                    intensity: {
-                        ...view.settings.points.intensity,
-                        mode: ["on", "mix"].includes(deviation.mode) ? "off" : "mix",
-                    },
                     deviation: {
                         ...deviation,
                         colors: [...deviation.colors].sort((a, b) => a.deviation - b.deviation),
@@ -732,6 +731,7 @@ export function Render3D({ onInit }: Props) {
 
             if (cameraState.type === CameraType.Flight) {
                 dispatch(renderActions.setGrid({ enabled: false }));
+
                 controller.enabled = true;
 
                 if (cameraState.goTo) {
@@ -752,6 +752,8 @@ export function Render3D({ onInit }: Props) {
                 }
 
                 view.camera.controller = controller;
+                (view.camera.controller.params as FlightControllerParams).fieldOfView = 60;
+                view.camera.fieldOfView = 60;
             } else if (cameraState.type === CameraType.Orthographic) {
                 let orthoController: CameraController;
                 if (cameraState.params) {
@@ -826,6 +828,7 @@ export function Render3D({ onInit }: Props) {
                     orthoController.mouseButtonsMap = { ...view.camera.controller.mouseButtonsMap };
                 }
 
+                dispatch(imagesActions.setActiveImage(undefined));
                 controller.enabled = false;
                 view.camera.controller = orthoController;
             }
@@ -841,7 +844,8 @@ export function Render3D({ onInit }: Props) {
     );
 
     useHandleGridChanges();
-    useHandlePanoramaChanges();
+    useHandleClippingBoxChanges();
+    useHandleImageChanges();
     useHandleCameraControls();
     useHandleAreaPoints();
     useHandleCrossSection();
@@ -920,7 +924,7 @@ export function Render3D({ onInit }: Props) {
     };
 
     const handleDown = async (x: number, y: number) => {
-        if (!view || !(clippingBox.defining || clippingBox.showBox)) {
+        if (!view || picker !== Picker.ClippingBox) {
             return;
         }
 
@@ -957,7 +961,7 @@ export function Render3D({ onInit }: Props) {
             dispatch(renderActions.setClippingBox({ bounds, baseBounds: bounds }));
         } else if (result.objectId > 0xfffffffe || result.objectId < 0xfffffff9) {
             camera2pointDistance.current = 0;
-        } else if (clippingBox.enabled && clippingBox.showBox) {
+        } else {
             view.camera.controller.enabled = false;
 
             const highlight = 0xfffffffe - result.objectId;
@@ -1117,12 +1121,7 @@ export function Render3D({ onInit }: Props) {
             dispatch(renderActions.setDeviationStamp(null));
         }
 
-        if (
-            !pointerDown.current ||
-            !clippingBox.enabled ||
-            !clippingBox.showBox ||
-            camera2pointDistance.current === 0
-        ) {
+        if (!pointerDown.current || picker !== Picker.ClippingBox || camera2pointDistance.current === 0) {
             return;
         }
 
@@ -1247,7 +1246,6 @@ export function Render3D({ onInit }: Props) {
                         }
                         transitionDuration={{ exit: 0 }}
                     >
-                        {" "}
                         {view && logPointStamp && (
                             <Box px={2} pb={1} sx={{ pointerEvents: "auto" }}>
                                 <Box display="flex" alignItems={"center"} justifyContent={"space-between"}>
@@ -1302,42 +1300,42 @@ export function Render3D({ onInit }: Props) {
                                 ></path>
                             ) : null}
 
-                            {panoramas && showPanoramaMarkers
-                                ? panoramas.map((panorama, idx) => {
-                                      if (!activePanorama) {
+                            {images.status === AsyncStatus.Success && showImageMarkers
+                                ? images.data.map((image, idx) => {
+                                      if (!activeImage || viewMode !== ViewMode.Panorama) {
                                           return (
-                                              <PanoramaMarker
-                                                  id={`panorama-${idx}`}
-                                                  name={`panorama-${idx}`}
-                                                  key={panorama.name}
+                                              <ImageMarker
+                                                  id={`image-${idx}`}
+                                                  name={`image-${idx}`}
+                                                  key={image.guid}
                                                   onClick={() =>
                                                       dispatch(
-                                                          panoramasActions.setStatus([
-                                                              PanoramaStatus.Loading,
-                                                              panorama.name,
-                                                          ])
+                                                          imagesActions.setActiveImage({
+                                                              image: image,
+                                                              status: AsyncStatus.Loading,
+                                                          })
                                                       )
                                                   }
                                               />
                                           );
                                       }
 
-                                      const activeIdx = panoramas.findIndex(
-                                          (pano) => pano.name === activePanorama.name
+                                      const activeIdx = images.data.findIndex(
+                                          (image) => image.guid === activeImage.image.guid
                                       );
 
                                       if (Math.abs(idx - activeIdx) === 1) {
                                           return (
-                                              <PanoramaMarker
-                                                  id={`panorama-${idx}`}
-                                                  name={`panorama-${idx}`}
-                                                  key={panorama.name}
+                                              <ImageMarker
+                                                  id={`image-${idx}`}
+                                                  name={`image-${idx}`}
+                                                  key={image.guid}
                                                   onClick={() =>
                                                       dispatch(
-                                                          panoramasActions.setStatus([
-                                                              PanoramaStatus.Loading,
-                                                              panorama.name,
-                                                          ])
+                                                          imagesActions.setActiveImage({
+                                                              image: image,
+                                                              status: AsyncStatus.Loading,
+                                                          })
                                                       )
                                                   }
                                               />
@@ -1349,7 +1347,7 @@ export function Render3D({ onInit }: Props) {
                                 : null}
 
                             {ditioMarkers.map((marker, idx) => (
-                                <PanoramaMarker
+                                <ImageMarker
                                     id={`ditioMarker-${idx}`}
                                     name={`ditioMarker-${idx}`}
                                     key={marker.id}
@@ -1404,6 +1402,14 @@ export function Render3D({ onInit }: Props) {
 
                             <g id="cursor" />
                         </Svg>
+                    )}
+                    {scene && activeImage && isFlat(activeImage.image) && (
+                        <ImgModal
+                            open={true}
+                            onClose={() => dispatch(imagesActions.setActiveImage(undefined))}
+                            sx={{ display: "flex", justifyContent: "center", alignItems: "center" }}
+                            src={getAssetUrl(scene, activeImage.image.src).toString()}
+                        />
                     )}
                     {!view ? <Loading /> : null}
                 </>

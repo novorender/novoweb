@@ -96,7 +96,11 @@ export function Topic() {
     );
 
     if (!topic || !comments) {
-        return <LinearProgress />;
+        return (
+            <Box position="relative">
+                <LinearProgress />
+            </Box>
+        );
     }
 
     const floatingViewpoints: Comment[] =

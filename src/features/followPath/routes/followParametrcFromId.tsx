@@ -1,3 +1,4 @@
+import { Box } from "@mui/material";
 import { LinearProgress } from "components";
 import { Redirect } from "react-router-dom";
 import { AsyncStatus } from "types/misc";
@@ -12,5 +13,11 @@ export function FollowParametricFromIds() {
         return <Redirect to="/" />;
     }
 
-    return following.status === AsyncStatus.Success ? <Follow fpObj={following.data} /> : <LinearProgress />;
+    return following.status === AsyncStatus.Success ? (
+        <Follow fpObj={following.data} />
+    ) : (
+        <Box position="relative">
+            <LinearProgress />
+        </Box>
+    );
 }

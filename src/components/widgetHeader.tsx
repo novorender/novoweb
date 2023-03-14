@@ -20,7 +20,7 @@ export function WidgetHeader({
 }) {
     const theme = useTheme();
     const isSmall = useMediaQuery(theme.breakpoints.down("sm"));
-    const maximized = useAppSelector(selectMaximized) === key;
+    const maximized = useAppSelector(selectMaximized).includes(key);
     const minimized = useAppSelector(selectMinimized) === key;
     const dispatch = useAppDispatch();
 
@@ -40,7 +40,7 @@ export function WidgetHeader({
     };
 
     const toggleMaximize = () => {
-        dispatch(explorerActions.setMaximized(maximized ? undefined : key));
+        dispatch(explorerActions.toggleMaximized(key));
     };
 
     const toggleMinimize = () => {

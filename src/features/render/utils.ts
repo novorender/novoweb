@@ -195,6 +195,7 @@ export async function refillObjects({
               id: string;
               ids: ObjectId[];
               color: VecRGB | VecRGBA;
+              opacity?: number;
               selected: boolean;
               hidden: boolean;
               highlightIdx?: number;
@@ -237,20 +238,25 @@ export async function refillObjects({
     const [hidden, _highlights] = objectGroups.reduce(
         (prev, group) => {
             delete group.highlightIdx;
-            if (group.hidden) {
-                return [[...prev[0], ...group.ids], prev[1]];
+            const opacity = group.hidden ? group.opacity ?? 0 : 1;
+
+            if (opacity === 0) {
+                group.ids.forEach((id) => prev[0].push(id));
             }
 
-            if (group.selected && group.ids.length) {
+            if ((group.selected || group.hidden) && group.ids.length) {
                 const neutral = "neutral" in group;
-                const color = neutral ? "neutral" : String(group.color);
+                const transparent = group.hidden;
+                const key = neutral ? "neutral" : transparent ? `opacity-${opacity}` : String(group.color);
 
-                if (!prev[1][color]) {
-                    prev[1][color] = {
-                        color,
+                if (!prev[1][key]) {
+                    prev[1][key] = {
+                        key,
                         idx: index,
                         highlight: neutral
                             ? getHighlightByObjectVisibility(ObjectVisibility.Neutral)
+                            : transparent
+                            ? api.createHighlight({ kind: "transparent", opacity })
                             : api.createHighlight({ kind: "color", color: group.color }),
                     };
 
@@ -259,13 +265,13 @@ export async function refillObjects({
 
                     return [prev[0], prev[1]];
                 } else {
-                    group.highlightIdx = prev[1][color].idx;
+                    group.highlightIdx = prev[1][key].idx;
                 }
             }
 
             return prev;
         },
-        [[], {}] as [number[], { [color: string]: { color: string; idx: number; highlight: Highlight } }]
+        [[], {}] as [number[], { [key: string]: { key: string; idx: number; highlight: Highlight } }]
     );
 
     const highlights = Object.values(_highlights);
@@ -273,12 +279,19 @@ export async function refillObjects({
 
     objectGroups.forEach((group) => {
         const { highlightIdx } = group;
-        if (group.selected && group.ids.length && highlightIdx) {
-            group.ids.forEach((id) => {
-                if (selectionBasket.mode === SelectionBasketMode.Loose || selectionBasket.ids[id]) {
+
+        if (group.ids?.length && highlightIdx) {
+            if (group.selected) {
+                group.ids.forEach((id) => {
+                    if (selectionBasket.mode === SelectionBasketMode.Loose || selectionBasket.ids[id]) {
+                        objectHighlighter.objectHighlightIndices[id] = highlightIdx;
+                    }
+                });
+            } else if (defaultVisibility === ObjectVisibility.Neutral && group.hidden) {
+                group.ids.forEach((id) => {
                     objectHighlighter.objectHighlightIndices[id] = highlightIdx;
-                }
-            });
+                });
+            }
         }
     });
 

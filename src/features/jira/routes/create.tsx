@@ -270,7 +270,7 @@ export function CreateIssue({ sceneId }: { sceneId: string }) {
             </Box>
 
             {(loadingFormMeta || saveStatus === AsyncStatus.Loading) && (
-                <Box>
+                <Box position="relative">
                     <LinearProgress />
                 </Box>
             )}

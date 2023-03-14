@@ -1,3 +1,8 @@
+import { withCustomScrollbar } from "./scrollBox";
+import { FixedSizeList } from "react-window";
+
+export const FixedSizeVirualizedList = withCustomScrollbar(FixedSizeList) as typeof FixedSizeList;
+
 export * from "./accordion";
 export * from "./accordionDetails";
 export * from "./accordionSummary";

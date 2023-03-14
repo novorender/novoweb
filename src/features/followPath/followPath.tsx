@@ -17,7 +17,7 @@ import { FollowParametricFromIds } from "./routes/followParametrcFromId";
 export default function FollowPath() {
     const [menuOpen, toggleMenu] = useToggle();
     const minimized = useAppSelector(selectMinimized) === featuresConfig.followPath.key;
-    const maximized = useAppSelector(selectMaximized) === featuresConfig.followPath.key;
+    const maximized = useAppSelector(selectMaximized).includes(featuresConfig.followPath.key);
     const lastViewedRouterPath = useAppSelector(selectLastViewedRouterPath);
 
     return (
@@ -47,11 +47,7 @@ export default function FollowPath() {
 
                 {menuOpen && <WidgetList widgetKey={featuresConfig.followPath.key} onSelect={toggleMenu} />}
             </WidgetContainer>
-            <LogoSpeedDial
-                open={menuOpen}
-                toggle={toggleMenu}
-                testId={`${featuresConfig.followPath.key}-widget-menu-fab`}
-            />
+            <LogoSpeedDial open={menuOpen} toggle={toggleMenu} />
         </>
     );
 }

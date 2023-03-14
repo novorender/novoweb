@@ -146,7 +146,7 @@ export function List() {
                 </Box>
             </Box>
             {!hasFinished(objects) ? (
-                <Box>
+                <Box position="relative">
                     <LinearProgress />
                 </Box>
             ) : objects.status === AsyncStatus.Error ? (

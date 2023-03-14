@@ -66,7 +66,7 @@ export function FeatureSettings({ save, saving }: { save: () => Promise<void>; s
                 </Box>
             </Box>
             {saving ? (
-                <Box>
+                <Box position="relative">
                     <LinearProgress />
                 </Box>
             ) : null}

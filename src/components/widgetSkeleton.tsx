@@ -8,13 +8,13 @@ import { selectMaximized, selectMinimized } from "slices/explorerSlice";
 export function WidgetSkeleton({ widgetKey }: { widgetKey: WidgetKey }) {
     const config = featuresConfig[widgetKey];
     const minimized = useAppSelector(selectMinimized) === config.key;
-    const maximized = useAppSelector(selectMaximized) === config.key;
+    const maximized = useAppSelector(selectMaximized).includes(config.key);
 
     return (
         <>
             <WidgetContainer minimized={minimized} maximized={maximized}>
                 <WidgetHeader widget={config} />
-                <Box>
+                <Box position="relative">
                     <LinearProgress />
                 </Box>
             </WidgetContainer>

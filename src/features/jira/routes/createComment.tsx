@@ -73,7 +73,7 @@ export function CreateComment() {
             </Box>
 
             {loading && (
-                <Box>
+                <Box position="relative">
                     <LinearProgress />
                 </Box>
             )}

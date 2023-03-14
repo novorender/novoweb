@@ -3,14 +3,14 @@ import { useEffect } from "react";
 import { useAppSelector } from "app/store";
 import { panoramaControls, defaultOrthoControls } from "config/camera";
 import { useExplorerGlobals } from "contexts/explorerGlobals";
-import { selectActivePanorama } from "features/panoramas";
-import { CameraType, selectAdvancedSettings, selectCameraType } from "features/render/renderSlice";
+import { CameraType, selectAdvancedSettings, selectCameraType, selectViewMode } from "features/render/renderSlice";
+import { ViewMode } from "types/misc";
 
 export function useHandleCameraControls() {
     const {
         state: { view },
     } = useExplorerGlobals();
-    const activePanorama = useAppSelector(selectActivePanorama);
+    const viewMode = useAppSelector(selectViewMode);
     const cameraType = useAppSelector(selectCameraType);
     const { mouseButtonMap, fingerMap } = useAppSelector(selectAdvancedSettings);
 
@@ -19,7 +19,7 @@ export function useHandleCameraControls() {
             return;
         }
 
-        if (activePanorama) {
+        if (viewMode === ViewMode.Panorama) {
             view.camera.controller.mouseButtonsMap = panoramaControls.mouse;
             view.camera.controller.fingersMap = panoramaControls.touch;
 
@@ -33,5 +33,5 @@ export function useHandleCameraControls() {
             view.camera.controller.mouseButtonsMap = mouseButtonMap;
             view.camera.controller.fingersMap = fingerMap;
         }
-    }, [view, cameraType, activePanorama, mouseButtonMap, fingerMap]);
+    }, [view, cameraType, viewMode, mouseButtonMap, fingerMap]);
 }

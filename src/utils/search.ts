@@ -63,7 +63,6 @@ export async function searchByPatterns({
         const [result, _done] = await iterateAsync({ iterator, abortSignal, count: callbackInterval });
         done = _done;
         callback(result);
-        await sleep(1);
     }
 }
 
@@ -291,8 +290,10 @@ export async function batchedPropertySearch<T = HierarcicalObjectReference>({
                 }).catch(() => {});
             })
         );
+    }
 
-        await sleep(1);
+    if (abortSignal.aborted) {
+        return [];
     }
 
     return result;

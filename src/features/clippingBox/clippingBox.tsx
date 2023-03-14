@@ -1,10 +1,11 @@
-import { Box, FormControlLabel, Checkbox, Slider } from "@mui/material";
-import { SyntheticEvent, useEffect, useState } from "react";
+import { Box, FormControlLabel, Checkbox, Slider, Button } from "@mui/material";
+import { SyntheticEvent, useEffect, useRef, useState } from "react";
 import { vec3 } from "gl-matrix";
+import { DeleteSweep } from "@mui/icons-material";
 
 import { useAppDispatch, useAppSelector } from "app/store";
 import { IosSwitch } from "components/iosSwitch";
-import { renderActions, selectClippingBox } from "features/render/renderSlice";
+import { Picker, renderActions, selectClippingBox, selectPicker } from "features/render/renderSlice";
 import { LogoSpeedDial, ReverseSlider, ScrollBox, WidgetContainer, WidgetHeader } from "components";
 import { featuresConfig } from "config/features";
 import { useToggle } from "hooks/useToggle";
@@ -19,41 +20,38 @@ export default function ClippingBox() {
         state: { view },
     } = useExplorerGlobals(true);
     const clippingBox = useAppSelector(selectClippingBox);
-    const { defining, enabled, showBox, inside, baseBounds } = clippingBox;
+    const { enabled, inside, baseBounds } = clippingBox;
     const dispatch = useAppDispatch();
 
     const [menuOpen, toggleMenu] = useToggle();
     const minimized = useAppSelector(selectMinimized) === featuresConfig.clippingBox.key;
-    const maximized = useAppSelector(selectMaximized) === featuresConfig.clippingBox.key;
-    const [enableOptions, setEnableOptions] = useState(enabled || showBox || defining);
+    const maximized = useAppSelector(selectMaximized).includes(featuresConfig.clippingBox.key);
     const [sliderValues, setSliderValues] = useState([...baseBounds.min, ...baseBounds.max]);
+    const selecting = useAppSelector(selectPicker) === Picker.ClippingBox;
+    const isInitial = useRef(true);
+
+    useEffect(() => {
+        if (isInitial.current) {
+            if (!selecting) {
+                dispatch(renderActions.setPicker(Picker.ClippingBox));
+            }
+
+            isInitial.current = false;
+        }
+    }, [dispatch, selecting]);
+
+    useEffect(() => {
+        return () => {
+            dispatch(renderActions.stopPicker(Picker.ClippingBox));
+        };
+    }, [dispatch]);
 
     useEffect(() => {
         setSliderValues([...baseBounds.min, ...baseBounds.max]);
     }, [baseBounds]);
 
-    const toggle = (func: "enabled" | "showBox" | "inside") => () => {
+    const toggle = (func: "enabled" | "inside") => () => {
         return dispatch(renderActions.setClippingBox({ ...clippingBox, [func]: !clippingBox[func] }));
-    };
-
-    const toggleDefineNew = () => {
-        if (!enableOptions) {
-            setEnableOptions(true);
-        }
-
-        if (clippingBox.defining) {
-            return dispatch(renderActions.setClippingBox({ ...clippingBox, defining: false }));
-        }
-
-        dispatch(
-            renderActions.setClippingBox({
-                ...clippingBox,
-                enabled: true,
-                showBox: true,
-                defining: true,
-                highlight: -1,
-            })
-        );
     };
 
     const handleSliderChange = (plane: number) => (_event: Event, newValue: number | number[]) => {
@@ -105,31 +103,24 @@ export default function ClippingBox() {
                         <>
                             <Box mt={1} mb={1} display="flex" justifyContent="space-between">
                                 <FormControlLabel
-                                    disabled={!enableOptions || defining}
+                                    sx={{ marginLeft: 0 }}
                                     control={
-                                        <Checkbox
-                                            size="small"
+                                        <IosSwitch
+                                            checked={selecting}
                                             color="primary"
-                                            checked={enabled}
-                                            onChange={toggle("enabled")}
+                                            onChange={() =>
+                                                dispatch(
+                                                    renderActions.setPicker(
+                                                        selecting ? Picker.Object : Picker.ClippingBox
+                                                    )
+                                                )
+                                            }
                                         />
                                     }
-                                    label={<Box mr={0.5}>Enable</Box>}
+                                    labelPlacement="start"
+                                    label={<Box>Select</Box>}
                                 />
                                 <FormControlLabel
-                                    disabled={!enableOptions || defining}
-                                    control={
-                                        <Checkbox
-                                            size="small"
-                                            color="primary"
-                                            checked={showBox}
-                                            onChange={toggle("showBox")}
-                                        />
-                                    }
-                                    label={<Box mr={0.5}>Show box</Box>}
-                                />
-                                <FormControlLabel
-                                    disabled={!enableOptions}
                                     control={
                                         <Checkbox
                                             size="small"
@@ -140,13 +131,24 @@ export default function ClippingBox() {
                                     }
                                     label={<Box>Inside</Box>}
                                 />
+                                <Button
+                                    onClick={() => {
+                                        dispatch(
+                                            renderActions.setClippingBox({
+                                                defining: true,
+                                                highlight: -1,
+                                                baseBounds: { min: [0, 0, 0], max: [0, 0, 0] },
+                                                bounds: { min: [0, 0, 0], max: [0, 0, 0] },
+                                            })
+                                        );
+                                    }}
+                                    color="grey"
+                                    disabled={disableSliders}
+                                >
+                                    <DeleteSweep sx={{ mr: 1 }} />
+                                    Clear
+                                </Button>
                             </Box>
-                            <FormControlLabel
-                                sx={{ marginLeft: 0 }}
-                                control={<IosSwitch checked={defining} color="primary" onChange={toggleDefineNew} />}
-                                labelPlacement="start"
-                                label={<Box>Create clipping box</Box>}
-                            />
                         </>
                     ) : null}
                 </WidgetHeader>
@@ -185,11 +187,7 @@ export default function ClippingBox() {
                 </ScrollBox>
                 {menuOpen && <WidgetList widgetKey={featuresConfig.clippingBox.key} onSelect={toggleMenu} />}
             </WidgetContainer>
-            <LogoSpeedDial
-                open={menuOpen}
-                toggle={toggleMenu}
-                testId={`${featuresConfig.clippingBox.key}-widget-menu-fab`}
-            />
+            <LogoSpeedDial open={menuOpen} toggle={toggleMenu} />
         </>
     );
 }

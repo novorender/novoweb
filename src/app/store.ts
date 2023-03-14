@@ -7,7 +7,7 @@ import { explorerReducer } from "slices/explorerSlice";
 import { authReducer } from "slices/authSlice";
 import { groupsReducer } from "features/groups";
 import { bookmarksReducer } from "features/bookmarks";
-import { panoramasReducer } from "features/panoramas";
+import { imagesReduces } from "features/images";
 import { followPathReducer } from "features/followPath";
 import { deviationsReducer } from "features/deviations";
 import { measureReducer } from "features/measure";
@@ -31,7 +31,7 @@ const rootReducer = combineReducers({
     auth: authReducer,
     groups: groupsReducer,
     bookmarks: bookmarksReducer,
-    panoramas: panoramasReducer,
+    images: imagesReduces,
     followPath: followPathReducer,
     deviations: deviationsReducer,
     measure: measureReducer,

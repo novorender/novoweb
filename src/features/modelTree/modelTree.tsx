@@ -58,7 +58,7 @@ export default function ModelTree() {
 
     const [menuOpen, toggleMenu] = useToggle();
     const minimized = useAppSelector(selectMinimized) === featuresConfig.modelTree.key;
-    const maximized = useAppSelector(selectMaximized) === featuresConfig.modelTree.key;
+    const maximized = useAppSelector(selectMaximized).includes(featuresConfig.modelTree.key);
     const [status, setStatus] = useMountedState(Status.Loading);
     const [currentDepth, setCurrentDepth] = useMountedState<TreeLevel | undefined>(undefined);
     const [currentNode, setCurrentNode] = useMountedState<HierarcicalObjectReference | RootNode | undefined>(undefined);
@@ -270,7 +270,11 @@ export default function ModelTree() {
                     )}
                 />
                 <Box display={menuOpen || minimized ? "none" : "flex"} flexDirection="column" height={1}>
-                    {status === Status.Loading ? <LinearProgress /> : null}
+                    {status === Status.Loading ? (
+                        <Box position="relative">
+                            <LinearProgress />
+                        </Box>
+                    ) : null}
                     {currentDepth ? (
                         <>
                             <Box px={1}>
@@ -303,11 +307,7 @@ export default function ModelTree() {
                 </Box>
                 {menuOpen && <WidgetList widgetKey={featuresConfig.modelTree.key} onSelect={toggleMenu} />}
             </WidgetContainer>
-            <LogoSpeedDial
-                open={menuOpen}
-                toggle={toggleMenu}
-                testId={`${featuresConfig.modelTree.key}-widget-menu-fab`}
-            />
+            <LogoSpeedDial open={menuOpen} toggle={toggleMenu} />
         </>
     );
 }

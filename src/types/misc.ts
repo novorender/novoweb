@@ -24,4 +24,5 @@ export enum ViewMode {
     Default = "default",
     FollowPath = "followPath",
     CrossSection = "crossSection",
+    Panorama = "panorama",
 }

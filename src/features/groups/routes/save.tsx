@@ -46,8 +46,8 @@ export function Save({ sceneId }: { sceneId: string }) {
 
                         return {
                             ...group,
-                            selected: originalGroup ? originalGroup.selected : false,
-                            hidden: originalGroup ? originalGroup.hidden : false,
+                            selected: originalGroup?.selected ?? false,
+                            hidden: originalGroup?.hidden ?? false,
                         };
                     })
                     .sort(

@@ -50,7 +50,7 @@ export default function HeightProfile() {
     const theme = useTheme();
     const [menuOpen, toggleMenu] = useToggle();
     const minimized = useAppSelector(selectMinimized) === featuresConfig.heightProfile.key;
-    const maximized = useAppSelector(selectMaximized) === featuresConfig.heightProfile.key;
+    const maximized = useAppSelector(selectMaximized).includes(featuresConfig.heightProfile.key);
     const {
         state: { measureScene },
     } = useExplorerGlobals(true);
@@ -335,11 +335,7 @@ export default function HeightProfile() {
                 </ScrollBox>
                 {menuOpen && <WidgetList widgetKey={featuresConfig.heightProfile.key} onSelect={toggleMenu} />}
             </WidgetContainer>
-            <LogoSpeedDial
-                open={menuOpen}
-                toggle={toggleMenu}
-                testId={`${featuresConfig.heightProfile.key}-widget-menu-fab`}
-            />
+            <LogoSpeedDial open={menuOpen} toggle={toggleMenu} />
         </>
     );
 }

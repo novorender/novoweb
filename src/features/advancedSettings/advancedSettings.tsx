@@ -66,7 +66,7 @@ export default function AdvancedSettings() {
 
     const [menuOpen, toggleMenu] = useToggle();
     const minimized = useAppSelector(selectMinimized) === featuresConfig.advancedSettings.key;
-    const maximized = useAppSelector(selectMaximized) === featuresConfig.advancedSettings.key;
+    const maximized = useAppSelector(selectMaximized).includes(featuresConfig.advancedSettings.key);
     const [status, setStatus] = useMountedState(Status.Idle);
     const saving = status === Status.Saving;
 
@@ -293,12 +293,7 @@ export default function AdvancedSettings() {
                 </Box>
                 {menuOpen && <WidgetList widgetKey={featuresConfig.advancedSettings.key} onSelect={toggleMenu} />}
             </WidgetContainer>
-            <LogoSpeedDial
-                open={menuOpen}
-                toggle={toggleMenu}
-                testId={`${featuresConfig.advancedSettings.key}-widget-menu-fab`}
-                ariaLabel="toggle widget menu"
-            />
+            <LogoSpeedDial open={menuOpen} toggle={toggleMenu} ariaLabel="toggle widget menu" />
         </>
     );
 }
@@ -320,7 +315,7 @@ function Root({ save, saving }: { save: () => Promise<void>; saving: boolean }) 
                 </Box>
             </Box>
             {saving ? (
-                <Box>
+                <Box position="relative">
                     <LinearProgress />
                 </Box>
             ) : null}

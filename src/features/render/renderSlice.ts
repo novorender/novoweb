@@ -90,6 +90,7 @@ export enum Picker {
     Measurement,
     FollowPathObject,
     ClippingPlane,
+    ClippingBox,
     OrthoPlane,
     CrossSection,
     Area,

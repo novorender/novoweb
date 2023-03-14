@@ -68,7 +68,11 @@ export function Crupdate({ sceneId }: { sceneId: string }) {
     switch (ids.status) {
         case AsyncStatus.Initial:
         case AsyncStatus.Loading:
-            return <LinearProgress />;
+            return (
+                <Box position="relative">
+                    <LinearProgress />
+                </Box>
+            );
         case AsyncStatus.Error:
             return <Box p={1}>{ids.msg}</Box>;
         case AsyncStatus.Success:

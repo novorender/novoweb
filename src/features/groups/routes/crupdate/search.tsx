@@ -94,7 +94,7 @@ export function Search({
                 </>
             </Box>
             {searching ? (
-                <Box>
+                <Box position="relative">
                     <LinearProgress />
                 </Box>
             ) : null}

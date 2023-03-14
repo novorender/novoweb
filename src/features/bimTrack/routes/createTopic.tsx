@@ -109,7 +109,11 @@ export function CreateTopic() {
     };
 
     if (!project || !extensions) {
-        return <LinearProgress />;
+        return (
+            <Box position="relative">
+                <LinearProgress />
+            </Box>
+        );
     }
 
     const disabled = creatingTopic || creatingComment || creatingViewpoint;

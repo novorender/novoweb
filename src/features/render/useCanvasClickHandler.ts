@@ -107,9 +107,11 @@ export function useCanvasClickHandler() {
             dispatch(renderActions.setDeviationStamp(null));
         }
 
-        if (!result || result.objectId > 0x1000000) {
+        if (!result) {
             if (picker === Picker.Measurement && measure.hover) {
-                dispatch(measureActions.selectEntity(measure.hover as ExtendedMeasureEntity));
+                dispatch(
+                    measureActions.selectEntity({ entity: measure.hover as ExtendedMeasureEntity, pin: evt.shiftKey })
+                );
             }
             return;
         }
@@ -128,10 +130,10 @@ export function useCanvasClickHandler() {
                         ? vec3.fromValues(result.position[0], crossSectionPoint[1], result.position[2])
                         : vec3.copy(vec3.create(), result.position);
 
-                    const right = vec3.sub(vec3.create(), pos, crossSectionPoint);
+                    const right = vec3.sub(vec3.create(), crossSectionPoint, pos);
                     const l = vec3.len(right);
                     vec3.scale(right, right, 1 / l);
-                    const p = vec3.scaleAndAdd(vec3.create(), crossSectionPoint, right, l / 2);
+                    const p = vec3.scaleAndAdd(vec3.create(), crossSectionPoint, right, l / -2);
                     let dir = vec3.cross(vec3.create(), up, right);
 
                     if (topDown) {
@@ -292,6 +294,7 @@ export function useCanvasClickHandler() {
                 dispatch(renderActions.setPicker(Picker.Object));
                 dispatch(
                     renderActions.setClippingPlanes({
+                        enabled: true,
                         planes: [vec4.fromValues(normal[0], normal[1], normal[2], w)],
                         baseW: w,
                     })
@@ -311,7 +314,12 @@ export function useCanvasClickHandler() {
                 break;
             case Picker.Measurement:
                 if (measure.hover) {
-                    dispatch(measureActions.selectEntity(measure.hover as ExtendedMeasureEntity));
+                    dispatch(
+                        measureActions.selectEntity({
+                            entity: measure.hover as ExtendedMeasureEntity,
+                            pin: evt.shiftKey,
+                        })
+                    );
                 } else {
                     dispatch(measureActions.setLoadingBrep(true));
                     const entity = await measureScene?.pickMeasureEntity(
@@ -319,7 +327,12 @@ export function useCanvasClickHandler() {
                         position,
                         measurePickSettings
                     );
-                    dispatch(measureActions.selectEntity(entity?.entity as ExtendedMeasureEntity));
+                    dispatch(
+                        measureActions.selectEntity({
+                            entity: entity?.entity as ExtendedMeasureEntity,
+                            pin: evt.shiftKey,
+                        })
+                    );
                     dispatch(measureActions.setLoadingBrep(false));
                 }
                 break;
@@ -352,6 +365,12 @@ export function useCanvasClickHandler() {
                 }
 
                 dispatch(heightProfileActions.selectPoint({ id: result.objectId, pos: vec3.clone(position) }));
+                break;
+            }
+            case Picker.ClippingBox: {
+                // Nothing
+                // Handled on down/move/up
+
                 break;
             }
             default:

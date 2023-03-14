@@ -1,11 +1,11 @@
 import { ChangeEvent, forwardRef, MouseEventHandler, CSSProperties, MutableRefObject } from "react";
 import { HierarcicalObjectReference } from "@novorender/webgl-api";
-import { FixedSizeList, FixedSizeListProps, ListOnScrollProps } from "react-window";
+import { FixedSizeListProps, ListOnScrollProps } from "react-window";
 import AutoSizer from "react-virtualized-auto-sizer";
 import { ListItemProps, useTheme, ListItem, Box, Typography, Checkbox } from "@mui/material";
 
 import { useAppDispatch } from "app/store";
-import { Tooltip, withCustomScrollbar } from "components";
+import { FixedSizeVirualizedList, Tooltip } from "components";
 import { NodeType } from "features/modelTree/modelTree";
 
 import { getDescendants, searchByParentPath } from "utils/search";
@@ -19,8 +19,6 @@ import { renderActions } from "features/render/renderSlice";
 import FolderIcon from "@mui/icons-material/Folder";
 import VisibilityIcon from "@mui/icons-material/Visibility";
 import { useDispatchSelectionBasket, selectionBasketActions } from "contexts/selectionBasket";
-
-const StyledFixedSizeList = withCustomScrollbar(FixedSizeList) as typeof FixedSizeList;
 
 type Props = {
     nodes: HierarcicalObjectReference[];
@@ -40,7 +38,7 @@ export const NodeList = forwardRef<any, Props>(
         return (
             <AutoSizer>
                 {({ height, width }) => (
-                    <StyledFixedSizeList
+                    <FixedSizeVirualizedList
                         style={{ paddingLeft: theme.spacing(1), paddingRight: theme.spacing(1) }}
                         onScroll={onScroll}
                         height={height}
@@ -81,7 +79,7 @@ export const NodeList = forwardRef<any, Props>(
                                 </>
                             );
                         }}
-                    </StyledFixedSizeList>
+                    </FixedSizeVirualizedList>
                 )}
             </AutoSizer>
         );

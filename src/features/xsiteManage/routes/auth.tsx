@@ -138,7 +138,9 @@ export function Auth() {
     ) : sitesError || tokensError || accessToken.status === AsyncStatus.Error ? (
         <ErrorMsg>An error occurred.</ErrorMsg>
     ) : (
-        <LinearProgress />
+        <Box position="relative">
+            <LinearProgress />
+        </Box>
     );
 }
 

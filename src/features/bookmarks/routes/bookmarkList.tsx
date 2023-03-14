@@ -8,6 +8,8 @@ import { Divider, LinearProgress, ScrollBox } from "components";
 import { useAppDispatch, useAppSelector } from "app/store";
 import { selectUser } from "slices/authSlice";
 import { useSceneId } from "hooks/useSceneId";
+import { ViewMode } from "types/misc";
+import { selectViewMode } from "features/render/renderSlice";
 
 import {
     Filters,
@@ -30,6 +32,7 @@ export function BookmarkList() {
     const history = useHistory();
     const sceneId = useSceneId();
 
+    const viewMode = useAppSelector(selectViewMode);
     const status = useAppSelector(selectBookmarksStatus);
     const user = useAppSelector(selectUser);
     const bookmarks = useAppSelector(selectBookmarks);
@@ -115,7 +118,7 @@ export function BookmarkList() {
                                     <Button
                                         color="grey"
                                         onClick={() => history.push("/create")}
-                                        disabled={status !== BookmarksStatus.Running}
+                                        disabled={status !== BookmarksStatus.Running || viewMode === ViewMode.Panorama}
                                     >
                                         <AddCircle sx={{ mr: 1 }} />
                                         Add bookmark
@@ -135,7 +138,7 @@ export function BookmarkList() {
                 </Box>
             </Box>
             {[BookmarksStatus.Loading, BookmarksStatus.Saving].includes(status) ? (
-                <Box>
+                <Box position="relative">
                     <LinearProgress />
                 </Box>
             ) : null}
