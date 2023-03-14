@@ -197,7 +197,7 @@ export function Group({ group, disabled }: { group: ObjectGroup; disabled: boole
                                 <ListItemIcon>
                                     <Opacity fontSize="small" />
                                 </ListItemIcon>
-                                <ListItemText>Hidden opacity</ListItemText>
+                                <ListItemText>Transparency</ListItemText>
                             </MenuItem>
                         )}
                     </Route>
@@ -210,7 +210,7 @@ export function Group({ group, disabled }: { group: ObjectGroup; disabled: boole
                                     dispatchObjectGroups(objectGroupsActions.update(group.id, { opacity }));
                                 }}
                             >
-                                <ListItemText>{opacity * 100}%</ListItemText>
+                                <ListItemText>{(1 - opacity) * 100}%</ListItemText>
                             </MenuItem>
                         ))}
                     </Route>
