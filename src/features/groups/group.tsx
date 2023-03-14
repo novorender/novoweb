@@ -197,7 +197,7 @@ export function Group({ group, disabled }: { group: ObjectGroup; disabled: boole
                                 <ListItemIcon>
                                     <Opacity fontSize="small" />
                                 </ListItemIcon>
-                                <ListItemText>Transparency</ListItemText>
+                                <ListItemText>Hidden transparency</ListItemText>
                             </MenuItem>
                         )}
                     </Route>
