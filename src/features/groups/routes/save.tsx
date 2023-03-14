@@ -48,7 +48,6 @@ export function Save({ sceneId }: { sceneId: string }) {
                             ...group,
                             selected: originalGroup?.selected ?? false,
                             hidden: originalGroup?.hidden ?? false,
-                            opacity: originalGroup?.opacity ?? 0,
                         };
                     })
                     .sort(
