@@ -284,7 +284,7 @@ export async function refillObjects({
     objectGroups.forEach((group) => {
         const { highlightIdx } = group;
 
-        if (group.ids.length && highlightIdx) {
+        if (group.ids?.length && highlightIdx) {
             if (group.selected) {
                 group.ids.forEach((id) => {
                     if (selectionBasket.mode === SelectionBasketMode.Loose || selectionBasket.ids[id]) {
