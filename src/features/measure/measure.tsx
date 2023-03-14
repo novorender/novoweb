@@ -65,7 +65,7 @@ export default function Measure() {
                                         }
                                     />
                                 }
-                                label={<Box fontSize={14}>Selecting</Box>}
+                                label={<Box fontSize={14}>Select</Box>}
                             />
                             <Select
                                 sx={{ width: "auto", minWidth: 110, lineHeight: "normal" }}

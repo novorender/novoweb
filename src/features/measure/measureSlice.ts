@@ -31,9 +31,13 @@ export const measureSlice = createSlice({
     name: "measure",
     initialState: initialState,
     reducers: {
-        selectEntity: (state, action: PayloadAction<ExtendedMeasureEntity>) => {
+        selectEntity: (state, action: PayloadAction<{ entity: ExtendedMeasureEntity; pin?: boolean }>) => {
             const selectIdx = [1, undefined].includes(state.pinned) ? 0 : 1;
-            state.selectedEntities[selectIdx] = action.payload as WriteableExtendedMeasureEntity;
+            state.selectedEntities[selectIdx] = action.payload.entity as WriteableExtendedMeasureEntity;
+
+            if (action.payload.pin) {
+                state.pinned = selectIdx;
+            }
         },
         selectHoverObj: (state, action: PayloadAction<MeasureEntity | undefined>) => {
             state.hover = action.payload as WriteableMeasureEntity | undefined;

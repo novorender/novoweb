@@ -58,7 +58,7 @@ export default function Area() {
                                         }
                                     />
                                 }
-                                label={<Box fontSize={14}>Selecting</Box>}
+                                label={<Box fontSize={14}>Select</Box>}
                             />
                             <Button
                                 disabled={!points.length}

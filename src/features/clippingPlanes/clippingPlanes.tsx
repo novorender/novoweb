@@ -1,9 +1,10 @@
-import { Box, Checkbox, FormControlLabel, Slider } from "@mui/material";
-import { SyntheticEvent, useEffect, useState } from "react";
+import { Box, Button, FormControlLabel, Slider } from "@mui/material";
+import { SyntheticEvent, useEffect, useRef, useState } from "react";
 import { vec4 } from "gl-matrix";
+import { DeleteSweep } from "@mui/icons-material";
 
 import { useAppDispatch, useAppSelector } from "app/store";
-import { IosSwitch, LogoSpeedDial, WidgetContainer, WidgetHeader } from "components";
+import { IosSwitch, LogoSpeedDial, ScrollBox, WidgetContainer, WidgetHeader } from "components";
 import { Picker, renderActions, selectClippingPlanes, selectPicker } from "features/render/renderSlice";
 import { useToggle } from "hooks/useToggle";
 import { featuresConfig } from "config/features";
@@ -18,36 +19,33 @@ export default function ClippingPlanes() {
     const [menuOpen, toggleMenu] = useToggle();
     const minimized = useAppSelector(selectMinimized) === featuresConfig.clippingPlanes.key;
     const maximized = useAppSelector(selectMaximized).includes(featuresConfig.clippingPlanes.key);
-    const defining = useAppSelector(selectPicker) === Picker.ClippingPlane;
-    const { enabled, planes, baseW } = useAppSelector(selectClippingPlanes);
-    const [enableOptions, setEnableOptions] = useState(enabled || planes.length > 0 || defining);
+    const selecting = useAppSelector(selectPicker) === Picker.ClippingPlane;
+    const { planes, baseW } = useAppSelector(selectClippingPlanes);
     const dispatch = useAppDispatch();
     const [sliderVal, setSliderVal] = useState(0);
+    const isInitial = useRef(true);
+
+    useEffect(() => {
+        if (isInitial.current) {
+            if (!selecting) {
+                dispatch(renderActions.setPicker(Picker.ClippingPlane));
+            }
+
+            isInitial.current = false;
+        }
+    }, [dispatch, selecting]);
+
+    useEffect(() => {
+        return () => {
+            dispatch(renderActions.stopPicker(Picker.ClippingPlane));
+        };
+    }, [dispatch]);
 
     useEffect(() => {
         if (planes[0]) {
             setSliderVal(planes[0][3]);
         }
     }, [planes]);
-
-    const toggleDefineNew = () => {
-        if (!enableOptions) {
-            setEnableOptions(true);
-        }
-
-        if (defining) {
-            dispatch(renderActions.setPicker(Picker.Object));
-            return;
-        }
-
-        dispatch(renderActions.setPicker(Picker.ClippingPlane));
-        dispatch(
-            renderActions.setClippingPlanes({
-                planes: [],
-                enabled: true,
-            })
-        );
-    };
 
     const handleSliderChange = (_event: Event, newValue: number | number[]) => {
         const plane = planes[0] ? vec4.clone(planes[0]) : undefined;
@@ -92,42 +90,54 @@ export default function ClippingPlanes() {
                         <>
                             <Box mt={1} mb={1} display="flex" justifyContent="space-between">
                                 <FormControlLabel
-                                    disabled={!enableOptions || defining}
+                                    sx={{ marginLeft: 0 }}
                                     control={
-                                        <Checkbox
-                                            size="small"
+                                        <IosSwitch
+                                            checked={selecting}
                                             color="primary"
-                                            checked={enabled}
                                             onChange={() =>
-                                                dispatch(renderActions.setClippingPlanes({ enabled: !enabled }))
+                                                dispatch(
+                                                    renderActions.setPicker(
+                                                        selecting ? Picker.Object : Picker.ClippingPlane
+                                                    )
+                                                )
                                             }
                                         />
                                     }
-                                    label={<Box mr={0.5}>Enable</Box>}
+                                    labelPlacement="start"
+                                    label={<Box>Select</Box>}
                                 />
+                                <Button
+                                    onClick={() => {
+                                        dispatch(
+                                            renderActions.setClippingPlanes({ planes: [], baseW: 0, enabled: false })
+                                        );
+                                    }}
+                                    color="grey"
+                                    disabled={!planes.length}
+                                >
+                                    <DeleteSweep sx={{ mr: 1 }} />
+                                    Clear
+                                </Button>
                             </Box>
-                            <FormControlLabel
-                                sx={{ marginLeft: 0 }}
-                                control={<IosSwitch checked={defining} color="primary" onChange={toggleDefineNew} />}
-                                labelPlacement="start"
-                                label={<div>Create clipping plane</div>}
-                            />
                         </>
                     ) : null}
                 </WidgetHeader>
-                {planes.length && !menuOpen ? (
-                    <Box p={1} mt={2}>
-                        Position:
-                        <Slider
-                            min={baseW - 20}
-                            step={0.1}
-                            max={baseW + 20}
-                            value={sliderVal}
-                            onChange={handleSliderChange}
-                            onChangeCommitted={handleSliderChangeCommitted}
-                        />
-                    </Box>
-                ) : null}
+                <ScrollBox p={1} pb={3} display={menuOpen || minimized ? "none" : "block"}>
+                    {planes.length > 0 && (
+                        <>
+                            Position:
+                            <Slider
+                                min={baseW - 20}
+                                step={0.1}
+                                max={baseW + 20}
+                                value={sliderVal}
+                                onChange={handleSliderChange}
+                                onChangeCommitted={handleSliderChangeCommitted}
+                            />
+                        </>
+                    )}
+                </ScrollBox>
                 {menuOpen && <WidgetList widgetKey={featuresConfig.clippingPlanes.key} onSelect={toggleMenu} />}
             </WidgetContainer>
             <LogoSpeedDial open={menuOpen} toggle={toggleMenu} />

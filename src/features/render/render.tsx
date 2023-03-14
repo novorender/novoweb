@@ -80,6 +80,7 @@ import { Engine2D } from "features/engine2D";
 import { LogPoint, useXsiteManageLogPointMarkers, useHandleXsiteManageKeepAlive } from "features/xsiteManage";
 import { AsyncStatus, ViewMode } from "types/misc";
 import { orthoCamActions, selectCrossSectionPoint, useHandleCrossSection } from "features/orthoCam";
+import { useHandleClippingBoxChanges } from "features/clippingBox";
 
 import { useHighlighted, highlightActions, useDispatchHighlighted } from "contexts/highlighted";
 import { useHidden, useDispatchHidden } from "contexts/hidden";
@@ -685,17 +686,6 @@ export function Render3D({ onInit }: Props) {
     );
 
     useEffect(
-        function handleClippingBoxChanges() {
-            if (!view) {
-                return;
-            }
-
-            view.applySettings({ clippingPlanes: { ...clippingBox } });
-        },
-        [view, clippingBox]
-    );
-
-    useEffect(
         function handleClippingPlaneChanges() {
             if (!view) {
                 return;
@@ -854,6 +844,7 @@ export function Render3D({ onInit }: Props) {
     );
 
     useHandleGridChanges();
+    useHandleClippingBoxChanges();
     useHandleImageChanges();
     useHandleCameraControls();
     useHandleAreaPoints();
@@ -933,7 +924,7 @@ export function Render3D({ onInit }: Props) {
     };
 
     const handleDown = async (x: number, y: number) => {
-        if (!view || !(clippingBox.defining || clippingBox.showBox)) {
+        if (!view || picker !== Picker.ClippingBox) {
             return;
         }
 
@@ -970,7 +961,7 @@ export function Render3D({ onInit }: Props) {
             dispatch(renderActions.setClippingBox({ bounds, baseBounds: bounds }));
         } else if (result.objectId > 0xfffffffe || result.objectId < 0xfffffff9) {
             camera2pointDistance.current = 0;
-        } else if (clippingBox.enabled && clippingBox.showBox) {
+        } else {
             view.camera.controller.enabled = false;
 
             const highlight = 0xfffffffe - result.objectId;
@@ -1130,12 +1121,7 @@ export function Render3D({ onInit }: Props) {
             dispatch(renderActions.setDeviationStamp(null));
         }
 
-        if (
-            !pointerDown.current ||
-            !clippingBox.enabled ||
-            !clippingBox.showBox ||
-            camera2pointDistance.current === 0
-        ) {
+        if (!pointerDown.current || picker !== Picker.ClippingBox || camera2pointDistance.current === 0) {
             return;
         }
 
