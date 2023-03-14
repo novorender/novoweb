@@ -191,13 +191,13 @@ export function Group({ group, disabled }: { group: ObjectGroup; disabled: boole
                                 <ListItemIcon>
                                     <ColorLens sx={{ color: `rgb(${r}, ${g}, ${b})` }} fontSize="small" />
                                 </ListItemIcon>
-                                <ListItemText>Select color</ListItemText>
+                                <ListItemText>Color</ListItemText>
                             </MenuItem>,
                             <MenuItem key="opacity" onClick={() => history.replace(match.path + "/opacity")}>
                                 <ListItemIcon>
                                     <Opacity fontSize="small" />
                                 </ListItemIcon>
-                                <ListItemText>Select hidden opacity</ListItemText>
+                                <ListItemText>Hidden opacity</ListItemText>
                             </MenuItem>
                         )}
                     </Route>
