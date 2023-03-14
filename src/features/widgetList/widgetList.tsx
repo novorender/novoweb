@@ -21,7 +21,7 @@ export const sorting = [
     featuresConfig.clippingPlanes.key,
     featuresConfig.clippingBox.key,
     featuresConfig.orthoCam.key,
-    featuresConfig.panoramas.key,
+    featuresConfig.images.key,
     featuresConfig.propertyTree.key,
     featuresConfig.manhole.key,
     featuresConfig.area.key,

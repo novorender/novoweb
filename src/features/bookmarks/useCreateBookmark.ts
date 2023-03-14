@@ -27,6 +27,7 @@ import {
     selectManholeMeasureValues,
 } from "features/manhole";
 import { HighlightCollection, useLazyHighlightCollections } from "contexts/highlightCollections";
+import { ViewMode } from "types/misc";
 
 export function useCreateBookmark() {
     const measurement = useAppSelector(selectMeasure);
@@ -125,7 +126,7 @@ export function useCreateBookmark() {
                     max: Array.from(clippingPlanes.bounds.max) as [number, number, number],
                 },
             },
-            viewMode: viewMode,
+            viewMode: viewMode === ViewMode.Panorama ? ViewMode.Default : viewMode,
             grid: { ...view.settings.grid },
             ...(measurement.selectedEntities.length > 0
                 ? { selectedMeasureEntities: measurement.selectedEntities }

@@ -2,10 +2,16 @@ import type { SpeedDialActionProps } from "@mui/material";
 
 import { SpeedDialAction } from "components";
 import { featuresConfig } from "config/features";
-import { selectSavedCameraPositions, renderActions, CameraType, selectCameraType } from "features/render/renderSlice";
+import {
+    selectSavedCameraPositions,
+    renderActions,
+    CameraType,
+    selectCameraType,
+    selectViewMode,
+} from "features/render/renderSlice";
 import { useAppDispatch, useAppSelector } from "app/store";
 import { useExplorerGlobals } from "contexts/explorerGlobals";
-import { selectActivePanorama } from "features/panoramas";
+import { ViewMode } from "types/misc";
 
 type Props = SpeedDialActionProps & {
     position?: { top?: number; right?: number; bottom?: number; left?: number };
@@ -14,9 +20,10 @@ type Props = SpeedDialActionProps & {
 export function StepBack({ position, ...speedDialProps }: Props) {
     const { name, Icon } = featuresConfig["stepBack"];
     const savedCameraPositions = useAppSelector(selectSavedCameraPositions);
-    const activePanorama = useAppSelector(selectActivePanorama);
+    const viewMode = useAppSelector(selectViewMode);
     const cameraType = useAppSelector(selectCameraType);
-    const canStepBack = savedCameraPositions.currentIndex >= 1 && !activePanorama && cameraType === CameraType.Flight;
+    const canStepBack =
+        savedCameraPositions.currentIndex >= 1 && viewMode !== ViewMode.Panorama && cameraType === CameraType.Flight;
     const {
         state: { view },
     } = useExplorerGlobals(true);

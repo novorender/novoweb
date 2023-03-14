@@ -9,6 +9,9 @@ import { WidgetMenuButtonWrapper } from "components";
 import { useCreateBookmark } from "features/bookmarks/useCreateBookmark";
 import { useMountedState } from "hooks/useMountedState";
 import { useSceneId } from "hooks/useSceneId";
+import { useAppSelector } from "app/store";
+import { selectViewMode } from "features/render/renderSlice";
+import { ViewMode } from "types/misc";
 
 enum Status {
     Initial,
@@ -20,12 +23,13 @@ export function ShareLink() {
     const { Icon, name } = featuresConfig.shareLink;
 
     const createBookmark = useCreateBookmark();
+    const viewMode = useAppSelector(selectViewMode);
     const sceneId = useSceneId();
 
     const [status, setStatus] = useMountedState(Status.Initial);
 
     const createLink = async () => {
-        if (status !== Status.Initial) {
+        if (status !== Status.Initial || viewMode === ViewMode.Panorama) {
             return;
         }
 
@@ -91,7 +95,11 @@ export function ShareLink() {
                     </IconButton>
                 }
             />
-            <WidgetMenuButtonWrapper activeCurrent={status !== Status.Initial} onClick={createLink}>
+            <WidgetMenuButtonWrapper
+                activeCurrent={status !== Status.Initial}
+                activeElsewhere={viewMode === ViewMode.Panorama}
+                onClick={createLink}
+            >
                 <IconButton size="large">
                     <Icon />
                 </IconButton>

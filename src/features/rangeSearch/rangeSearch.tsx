@@ -17,14 +17,13 @@ import { featuresConfig } from "config/features";
 import { CustomParentNode } from "features/search";
 import { useAppSelector } from "app/store";
 import { selectMinimized, selectMaximized } from "slices/explorerSlice";
+import { rangeSearchDateFormat } from "config";
 
 enum Status {
     Initial,
     Loading,
     Error,
 }
-
-const dateFormat = "yyyyMMdd'z'";
 
 export default function RangeSearch() {
     const {
@@ -149,17 +148,19 @@ export default function RangeSearch() {
                                         <FormControl size="small" sx={{ width: 1, mr: 1 }}>
                                             <DatePicker
                                                 label="Min"
-                                                value={min ? parse(String(min), dateFormat, new Date()) : null}
+                                                value={
+                                                    min ? parse(String(min), rangeSearchDateFormat, new Date()) : null
+                                                }
                                                 onChange={(newDate: Date | null, keyboardInput) =>
                                                     setMin(
                                                         newDate
                                                             ? isValid(newDate)
-                                                                ? format(newDate, dateFormat)
+                                                                ? format(newDate, rangeSearchDateFormat)
                                                                 : keyboardInput ?? ""
                                                             : ""
                                                     )
                                                 }
-                                                inputFormat={dateFormat}
+                                                inputFormat={rangeSearchDateFormat}
                                                 disableMaskedInput={true}
                                                 renderInput={(params: TextFieldProps) => (
                                                     <TextField {...params} size="small" />
@@ -169,17 +170,19 @@ export default function RangeSearch() {
                                         <FormControl size="small" sx={{ width: 1 }}>
                                             <DatePicker
                                                 label="Max"
-                                                value={max ? parse(String(max), dateFormat, new Date()) : null}
+                                                value={
+                                                    max ? parse(String(max), rangeSearchDateFormat, new Date()) : null
+                                                }
                                                 onChange={(newDate: Date | null, keyboardInput) =>
                                                     setMax(
                                                         newDate
                                                             ? isValid(newDate)
-                                                                ? format(newDate, dateFormat)
+                                                                ? format(newDate, rangeSearchDateFormat)
                                                                 : keyboardInput ?? ""
                                                             : ""
                                                     )
                                                 }
-                                                inputFormat={dateFormat}
+                                                inputFormat={rangeSearchDateFormat}
                                                 disableMaskedInput={true}
                                                 renderInput={(params: TextFieldProps) => (
                                                     <TextField {...params} size="small" />

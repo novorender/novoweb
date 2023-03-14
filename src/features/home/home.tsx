@@ -13,7 +13,7 @@ import {
     initHighlighted,
     initSubtrees,
 } from "features/render/utils";
-import { panoramasActions, PanoramaStatus } from "features/panoramas";
+import { imagesActions } from "features/images";
 import { useMountedState } from "hooks/useMountedState";
 import { useSceneId } from "hooks/useSceneId";
 
@@ -119,7 +119,7 @@ export function Home({ position, ...speedDialProps }: Props) {
         initHidden(dispatchHidden);
         initHighlighted(dispatchHighlighted, customProperties.highlights?.primary?.color);
         initAdvancedSettings(view, { ...customProperties, triangleLimit }, api);
-        dispatch(panoramasActions.setStatus(PanoramaStatus.Initial));
+        dispatch(imagesActions.setActiveImage(undefined));
         initSubtrees(view, scene);
 
         dispatchObjectGroups(

@@ -17,6 +17,7 @@ import { Hud } from "features/hud";
 import { Render3D } from "features/render";
 import { Consent } from "features/consent";
 
+import { api } from "app";
 import { useAppSelector, useAppDispatch } from "app/store";
 import { explorerActions, PrimaryMenuConfigType, SceneType, UserRole } from "slices/explorerSlice";
 import { selectUser } from "slices/authSlice";
@@ -65,6 +66,10 @@ function ExplorerBase() {
 
         if (user && user.features) {
             dispatch(explorerActions.unlockWidgets(defaultLockedWidgets.filter((widget) => user.features[widget])));
+        }
+
+        if (api.deviceProfile.name.includes("Mobile")) {
+            dispatch(explorerActions.lockWidgets([featuresConfig.images.key]));
         }
 
         const enabledFeatures = getEnabledFeatures(customProperties) ?? {};

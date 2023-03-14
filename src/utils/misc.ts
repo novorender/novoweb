@@ -1,4 +1,5 @@
 import { MeasureEntity, MeasurementValues, PointEntity } from "@novorender/measure-api";
+import { Scene } from "@novorender/webgl-api";
 import { WidgetKey, featuresConfig, defaultEnabledWidgets } from "config/features";
 
 export function uniqueArray<T>(arr: T[]): T[] {
@@ -166,4 +167,11 @@ export function measureObjectIsVertex(measureObject: MeasureEntity | undefined):
 
 export function getMeasurementValueKind(val: MeasurementValues): string {
     return "kind" in val ? val.kind : "";
+}
+
+export function getAssetUrl(scene: Scene, path: string): URL {
+    const url = new URL((scene as any).assetUrl);
+    url.pathname += path;
+
+    return url;
 }

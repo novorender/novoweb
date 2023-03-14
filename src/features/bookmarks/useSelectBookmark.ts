@@ -28,6 +28,7 @@ import {
     highlightCollectionsActions,
     useDispatchHighlightCollections,
 } from "contexts/highlightCollections";
+import { imagesActions } from "features/images";
 
 export function useSelectBookmark() {
     const sceneId = useSceneId();
@@ -45,6 +46,8 @@ export function useSelectBookmark() {
     const dispatch = useAppDispatch();
 
     const select = async (bookmark: Bookmark) => {
+        dispatch(imagesActions.setActiveImage(undefined));
+
         const bmHiddenGroup = bookmark.objectGroups?.find((group) => !group.id && group.hidden);
         dispatchHidden(hiddenGroupActions.setIds((bmHiddenGroup?.ids as number[] | undefined) ?? []));
 
