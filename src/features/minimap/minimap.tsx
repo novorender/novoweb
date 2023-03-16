@@ -3,7 +3,7 @@ import { useEffect, useRef, useState } from "react";
 
 import { useExplorerGlobals } from "contexts/explorerGlobals";
 import { downloadMinimap, downloadPdfPreview, getElevation, MinimapHelper, PDFPreview } from "utils/minimap";
-import { quat, ReadonlyVec2, ReadonlyVec3, vec2, vec3 } from "gl-matrix";
+import { mat2, quat, quat2, ReadonlyVec2, ReadonlyVec3, vec2, vec3 } from "gl-matrix";
 import { SceneData } from "@novorender/data-js-api";
 import { dataApi } from "app";
 import { useMeasureObjects } from "features/measure";
@@ -37,15 +37,18 @@ export function Minimap() {
 
     useEffect(() => {
         const loadPdfScene = async () => {
-            const pdfScene = (await dataApi.loadScene("bad260f94a5340b9b767ea2756392be4")) as SceneData;
+            const pdfScene = (await dataApi.loadScene("40d1cd32c6bd42daab915b4a948f29c4")) as SceneData;
             //setPdfScene(pdfScene);
-            const elevation = await getElevation(view!.scene);
             const preview = await downloadPdfPreview(pdfScene);
             setPdfPreview(preview);
             setCtx(canvas?.getContext("2d"));
         };
         loadPdfScene();
     }, [canvas]);
+
+    useEffect(() => {
+        setCtx(canvas?.getContext("2d"));
+    }, [scene, canvas]);
 
     useEffect(() => {
         if (pdfPreview && ctx) {
@@ -143,21 +146,32 @@ export function Minimap() {
                 });
                 if (modelPos.length === 2) {
                     const pixelPosA = vec2.fromValues(pdfPosA[0], imgHeight.current - pdfPosA[1]);
-                    const picelPosB = vec2.fromValues(pdfPosB[0], imgHeight.current - pdfPosB[1]);
-                    const pixelLength = vec2.dist(pixelPosA, picelPosB);
+                    const pixelPosB = vec2.fromValues(pdfPosB[0], imgHeight.current - pdfPosB[1]);
+                    const pixelLength = vec2.dist(pixelPosA, pixelPosB);
                     const modelLength = vec2.dist(modelPos[0], modelPos[1]);
                     const modelDir = vec2.sub(vec2.create(), modelPos[1], modelPos[0]);
                     vec2.normalize(modelDir, modelDir);
-                    const pixDir = vec2.sub(vec2.create(), pixelPosA, picelPosB);
+                    const pixDir = vec2.sub(vec2.create(), pixelPosB, pixelPosA);
                     vec2.normalize(pixDir, pixDir);
                     const scale = modelLength / pixelLength;
-                    const angleAroundZ = vec2.dot(modelDir, pixDir);
+                    const angleAroundZRad = Math.acos(vec2.dot(modelDir, pixDir)) * -1;
+                    const angleAroundZ = (angleAroundZRad / Math.PI) * 180;
+
                     const pdfScale = imgHeight.current * scale;
                     const zeroWorld = vec2.sub(
                         vec2.create(),
                         modelPos[0],
-                        vec2.fromValues(pixelPosA[0] * scale, pixelPosA[1] * scale)
+                        vec2.fromValues(
+                            pixelPosA[0] * scale * Math.cos(angleAroundZRad),
+                            pixelPosA[1] * scale * Math.sin(angleAroundZRad)
+                        )
                     );
+
+                    const q = quat.fromValues(0.70710677, 0, 0, 0.70710677);
+                    quat.rotateZ(q, q, angleAroundZRad);
+                    const posB = vec3.fromValues(pixelPosB[0] * scale, 0, pixelPosB[1] * scale);
+                    vec3.transformQuat(posB, posB, q);
+                    vec3.add(posB, posB, vec3.fromValues(zeroWorld[0], 0, zeroWorld[1]));
 
                     console.log("angleAroundZ");
                     console.log(angleAroundZ);
@@ -172,5 +186,5 @@ export function Minimap() {
     };
 
     //return <Canvas ref={setCanvas} width={width} height={height} />;
-    return <Canvas ref={setCanvas} width={width} height={height} onClick={(e) => clickPdf(e)} />;
+    return <Canvas id="pdfcanvas" ref={setCanvas} width={width} height={height} onClick={(e) => clickPdf(e)} />;
 }
