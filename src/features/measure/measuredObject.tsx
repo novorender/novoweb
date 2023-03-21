@@ -73,10 +73,8 @@ export function MeasuredObject({ obj, idx }: { obj: ExtendedMeasureEntity; idx: 
 
     const kind = !measureObject ? "" : measureValues ? getMeasurementValueKind(measureValues) : "point";
 
-    const _idx = idx === 0 ? "a" : "b";
-    const useCylinderMeasureSettings =
-        duoMeasurementValues &&
-        (!duoMeasurementValues.validMeasureSettings || duoMeasurementValues.validMeasureSettings[_idx]);
+    const _idx = idx === 0 ? "measureInfoA" : "measureInfoB";
+    const useCylinderMeasureSettings = duoMeasurementValues && duoMeasurementValues[_idx]?.validMeasureSettings;
 
     return (
         <Accordion defaultExpanded={true}>
@@ -138,13 +136,13 @@ export function MeasuredResult({ duoMeasurementValues }: { duoMeasurementValues:
         return null;
     }
 
-    const pts =
-        duoMeasurementValues.pointA && duoMeasurementValues.pointB
-            ? [duoMeasurementValues.pointA, duoMeasurementValues.pointB]
-            : duoMeasurementValues.normalPoints;
+    const hasMeasurePoints = duoMeasurementValues.measureInfoA?.point && duoMeasurementValues.measureInfoB?.point;
+    const pts = hasMeasurePoints
+        ? [duoMeasurementValues.measureInfoA.point, duoMeasurementValues.measureInfoB.point]
+        : duoMeasurementValues.normalPoints;
 
-    const showSlope = duoMeasurementValues.pointA && duoMeasurementValues.pointB;
-    const showPlanarDiff = duoMeasurementValues.pointA && duoMeasurementValues.pointB;
+    const showSlope = hasMeasurePoints;
+    const showPlanarDiff = hasMeasurePoints;
     return (
         <Accordion defaultExpanded={true}>
             <AccordionSummary sx={{ fontWeight: 600 }}>Result</AccordionSummary>
@@ -189,12 +187,12 @@ export function MeasuredResult({ duoMeasurementValues }: { duoMeasurementValues:
                         ) : null}
                         {showPlanarDiff ? (
                             <ListItem>
-                                <PlanarDiff start={duoMeasurementValues.pointA!} end={duoMeasurementValues.pointB!} />
+                                <PlanarDiff start={pts![0]} end={pts![1]} />
                             </ListItem>
                         ) : null}
                         {showSlope ? (
                             <ListItem>
-                                <Slope start={duoMeasurementValues.pointA!} end={duoMeasurementValues.pointB!} />
+                                <Slope start={pts![0]} end={pts![1]} />
                             </ListItem>
                         ) : null}
                     </List>

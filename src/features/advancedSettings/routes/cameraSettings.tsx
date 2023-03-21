@@ -105,10 +105,13 @@ export function CameraSettings({
                     view.invalidateCamera();
                     return;
                 case AdvancedSetting.CameraNearClipping:
+                    if (view.camera.controller.params.kind !== "flight") {
+                        return;
+                    }
+
                     setNear(value);
 
-                    (view.camera.controller.params as FlightControllerParams | OrthoControllerParams).near =
-                        scaleNearClipping(value);
+                    (view.camera.controller.params as FlightControllerParams).near = scaleNearClipping(value);
                     view.invalidateCamera();
                     return;
                 case AdvancedSetting.HeadlightIntensity:
@@ -141,6 +144,10 @@ export function CameraSettings({
                     );
                     return;
                 case AdvancedSetting.CameraNearClipping:
+                    if (view.camera.controller.params.kind !== "flight") {
+                        return;
+                    }
+
                     dispatch(
                         renderActions.setAdvancedSettings({
                             [AdvancedSetting.CameraNearClipping]: scaleNearClipping(value),

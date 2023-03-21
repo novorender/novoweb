@@ -10,7 +10,6 @@ import {
     Internal,
     MeasureInfo,
     ObjectId,
-    OrthoControllerParams,
     RenderSettings,
     Scene,
     View,
@@ -521,7 +520,14 @@ export function initDeviation(deviation: RenderSettings["points"]["deviation"]):
 export function initAdvancedSettings(view: View, customProperties: Record<string, any>, api: API): void {
     const { diagnostics, advanced, points, light, terrain, background, pickBuffer } =
         view.settings as Internal.RenderSettingsExt;
-    const cameraParams = view.camera.controller.params as FlightControllerParams | OrthoControllerParams;
+    const cameraParams = { far: 1000, near: 0.1 };
+
+    if (view.camera.controller.params.kind === "flight") {
+        cameraParams.far = Math.max(1000, view.camera.controller.params.far);
+        cameraParams.near = Math.max(0.001, view.camera.controller.params.near);
+        view.camera.controller.params.far = cameraParams.far;
+        view.camera.controller.params.near = cameraParams.near;
+    }
 
     store.dispatch(
         renderActions.setAdvancedSettings({
@@ -532,7 +538,7 @@ export function initAdvancedSettings(view: View, customProperties: Record<string
             [AdvancedSetting.DoubleSidedMaterials]: advanced.doubleSided.opaque,
             [AdvancedSetting.DoubleSidedTransparentMaterials]: advanced.doubleSided.transparent,
             [AdvancedSetting.CameraFarClipping]: cameraParams.far,
-            [AdvancedSetting.CameraNearClipping]: cameraParams.kind === "flight" ? cameraParams.near : 0.1,
+            [AdvancedSetting.CameraNearClipping]: cameraParams.near,
             [AdvancedSetting.QualityPoints]: points.shape === "disc",
             [AdvancedSetting.PointSize]: points.size.pixel ?? 1,
             [AdvancedSetting.MaxPointSize]: points.size.maxPixel ?? 20,
