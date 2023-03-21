@@ -2,7 +2,7 @@ import { Link, MemoryRouter, Route, Switch } from "react-router-dom";
 import { Close, Save } from "@mui/icons-material";
 import { Box, Button, IconButton, List, ListItemButton, Snackbar, useTheme } from "@mui/material";
 import { SceneData } from "@novorender/data-js-api";
-import { FlightControllerParams, Internal, OrthoControllerParams } from "@novorender/webgl-api";
+import { FlightControllerParams, Internal } from "@novorender/webgl-api";
 
 import { dataApi } from "app";
 import { useAppSelector } from "app/store";
@@ -143,15 +143,12 @@ export default function AdvancedSettings() {
                           },
                           ...(currentEnvironment ? { environment: currentEnvironment.name } : {}),
                       } as Internal.RenderSettingsExt),
-                camera:
-                    !camera || !["flight", "ortho"].includes(camera.kind)
-                        ? view.camera.controller.params
-                        : {
-                              ...(camera as Required<FlightControllerParams | OrthoControllerParams>),
-                              far: settings.cameraFarClipping,
-                              near: settings.cameraNearClipping,
-                              linearVelocity: baseCameraSpeed,
-                          },
+                camera: {
+                    ...(camera as Required<FlightControllerParams>),
+                    far: Math.max(1000, settings.cameraFarClipping),
+                    near: Math.max(0.001, settings.cameraNearClipping),
+                    linearVelocity: baseCameraSpeed,
+                },
                 customProperties: {
                     ...customProperties,
                     primaryMenu,
@@ -193,6 +190,10 @@ export default function AdvancedSettings() {
     };
 
     const saveCameraPos = async (camera: Required<FlightControllerParams>) => {
+        if (camera.kind !== "flight") {
+            return;
+        }
+
         setStatus(Status.Saving);
 
         try {

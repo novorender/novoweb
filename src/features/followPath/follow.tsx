@@ -12,7 +12,7 @@ import {
     useTheme,
 } from "@mui/material";
 import { ArrowBack, ArrowForward, Edit, RestartAlt } from "@mui/icons-material";
-import { FlightControllerParams, HierarcicalObjectReference, OrthoControllerParams } from "@novorender/webgl-api";
+import { HierarcicalObjectReference, OrthoControllerParams } from "@novorender/webgl-api";
 import { vec3, quat, mat3, mat4, glMatrix } from "gl-matrix";
 import { useHistory } from "react-router-dom";
 
@@ -319,7 +319,9 @@ export function Follow({ fpObj }: { fpObj: FollowParametricObject }) {
         }
 
         setClipping(newValue);
-        (view.camera.controller.params as FlightControllerParams | OrthoControllerParams).far = newValue;
+        if (view.camera.controller.params.kind === "ortho") {
+            (view.camera.controller.params as OrthoControllerParams).far = newValue;
+        }
     };
 
     const handleClippingCommit = (_event: Event | SyntheticEvent<Element, Event>, newValue: number | number[]) => {
