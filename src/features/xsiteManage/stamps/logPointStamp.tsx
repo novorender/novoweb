@@ -36,9 +36,7 @@ export function LogPointStamp() {
                 <Button
                     variant="outlined"
                     color="secondary"
-                    onClick={(e) => {
-                        console.log(e);
-                        e.stopPropagation();
+                    onClick={() =>
                         dispatch(
                             renderActions.setCamera({
                                 type: CameraType.Flight,
@@ -47,8 +45,8 @@ export function LogPointStamp() {
                                     rotation: view ? quat.clone(view.camera.rotation) : [0, 0, 0, 1],
                                 },
                             })
-                        );
-                    }}
+                        )
+                    }
                 >
                     <FlightTakeoff sx={{ mr: 2 }} />
                     Fly to point
