@@ -46,7 +46,9 @@ export function MachineLocationStamp() {
                     variant="outlined"
                     color="secondary"
                     sx={{ minWidth: 170, display: "flex", justifyContent: "center" }}
-                    onClick={() =>
+                    onClick={(e) => {
+                        console.log(e);
+                        e.stopPropagation();
                         dispatch(
                             renderActions.setCamera({
                                 type: CameraType.Flight,
@@ -61,8 +63,8 @@ export function MachineLocationStamp() {
                                     rotation: view ? quat.clone(view.camera.rotation) : [0, 0, 0, 1],
                                 },
                             })
-                        )
-                    }
+                        );
+                    }}
                 >
                     <FlightTakeoff sx={{ mr: 1 }} />
                     Fly to machine
