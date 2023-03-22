@@ -1,6 +1,6 @@
 import { HierarcicalObjectReference, ObjectData, ObjectId, Scene, SearchPattern } from "@novorender/webgl-api";
 import { NodeType } from "features/modelTree/modelTree";
-import { sleep } from "./timers";
+import { sleep } from "./time";
 
 const defaultCallbackInterval = 10000;
 

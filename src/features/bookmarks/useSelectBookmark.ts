@@ -12,7 +12,7 @@ import { followPathActions } from "features/followPath";
 import { measureActions } from "features/measure";
 import {
     CameraType,
-    DeepWritable,
+    DeepMutable,
     ObjectVisibility,
     renderActions,
     SelectionBasketMode,
@@ -238,7 +238,7 @@ export function useSelectBookmark() {
             }
 
             dispatch(renderActions.setGridDefaults({ enabled: bookmark.grid.enabled }));
-            dispatch(renderActions.setGrid(bookmark.grid as DeepWritable<typeof bookmark.grid>));
+            dispatch(renderActions.setGrid(bookmark.grid as DeepMutable<typeof bookmark.grid>));
         }
 
         if (bookmark.followPath) {

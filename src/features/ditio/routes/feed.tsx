@@ -67,7 +67,7 @@ export function Feed() {
                             }
                             label={
                                 <Box fontSize={14} sx={{ userSelect: "none" }}>
-                                    Show 2D markers
+                                    2D markers
                                 </Box>
                             }
                         />

@@ -14,6 +14,8 @@ import {
     Picker,
     selectViewMode,
     selectSecondaryHighlightProperty,
+    StampKind,
+    selectStamp,
 } from "features/render/renderSlice";
 import { selectDeviations } from "features/deviations";
 import { measureActions, selectMeasure, useMeasurePickSettings } from "features/measure";
@@ -36,7 +38,7 @@ import {
     useHighlightCollections,
 } from "contexts/highlightCollections";
 
-import { pickDeviationArea } from "./utils";
+import { pickDeviationArea } from "../utils";
 
 export function useCanvasClickHandler() {
     const dispatch = useAppDispatch();
@@ -58,6 +60,7 @@ export function useCanvasClickHandler() {
     const measurePickSettings = useMeasurePickSettings();
     const crossSectionPoint = useAppSelector(selectCrossSectionPoint);
     const viewMode = useAppSelector(selectViewMode);
+    const stamp = useAppSelector(selectStamp);
 
     const [secondaryHighlightAbortController, abortSecondaryHighlight] = useAbortController();
     const currentSecondaryHighlightQuery = useRef("");
@@ -90,9 +93,11 @@ export function useCanvasClickHandler() {
 
             if (deviation) {
                 dispatch(
-                    renderActions.setDeviationStamp({
+                    renderActions.setStamp({
+                        kind: StampKind.Deviation,
                         mouseX: evt.nativeEvent.offsetX,
                         mouseY: evt.nativeEvent.offsetY,
+                        pinned: false,
                         data: {
                             deviation: deviation,
                         },
@@ -100,11 +105,11 @@ export function useCanvasClickHandler() {
                 );
 
                 return;
-            } else {
-                dispatch(renderActions.setDeviationStamp(null));
+            } else if (stamp?.kind === StampKind.Deviation) {
+                dispatch(renderActions.setStamp(null));
             }
-        } else {
-            dispatch(renderActions.setDeviationStamp(null));
+        } else if (stamp?.kind === StampKind.Deviation) {
+            dispatch(renderActions.setStamp(null));
         }
 
         if (!result) {

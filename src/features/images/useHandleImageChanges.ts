@@ -6,7 +6,7 @@ import { useAppDispatch, useAppSelector } from "app/store";
 import { useExplorerGlobals } from "contexts/explorerGlobals";
 import { useAbortController } from "hooks/useAbortController";
 import { CameraType, renderActions } from "features/render/renderSlice";
-import { sleep } from "utils/timers";
+import { sleep } from "utils/time";
 import { getAssetUrl } from "utils/misc";
 import { AsyncStatus, ViewMode } from "types/misc";
 

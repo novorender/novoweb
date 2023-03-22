@@ -32,6 +32,7 @@ import {
 } from "../slice";
 import { useGetAllLogPointsQuery, useGetMachinesQuery } from "../api";
 import { uniqueArray } from "utils/misc";
+import { toDBSN } from "../utils";
 
 export function Machine() {
     const theme = useTheme();
@@ -210,13 +211,4 @@ export function Machine() {
             </ScrollBox>
         </>
     );
-}
-
-function toDBSN(id: string): string {
-    return id
-        .split("-")
-        .map((str) => String(parseInt(str)))
-        .filter((_, idx) => [0, 3, 4].includes(idx))
-        .join("-")
-        .replaceAll(/0{3,}/g, "-");
 }

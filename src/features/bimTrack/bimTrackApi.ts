@@ -5,7 +5,7 @@ import { StorageKey } from "config/storage";
 import { generateCodeChallenge } from "utils/auth";
 import { generateRandomString } from "utils/misc";
 import { getFromStorage, saveToStorage } from "utils/storage";
-import { sleep } from "utils/timers";
+import { sleep } from "utils/time";
 import { handleImageResponse } from "utils/bcf";
 
 import {

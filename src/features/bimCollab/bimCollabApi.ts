@@ -6,7 +6,7 @@ import { generateCodeChallenge } from "utils/auth";
 import { generateRandomString } from "utils/misc";
 import { handleImageResponse } from "utils/bcf";
 import { getFromStorage, saveToStorage } from "utils/storage";
-import { sleep } from "utils/timers";
+import { sleep } from "utils/time";
 
 import {
     AuthInfo,

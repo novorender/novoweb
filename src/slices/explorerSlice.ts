@@ -12,7 +12,7 @@ import {
 import type { RootState } from "app/store";
 import { uniqueArray } from "utils/misc";
 
-import { DeepWritable } from "features/render/renderSlice";
+import { DeepMutable } from "features/render/renderSlice";
 
 export enum SceneType {
     Viewer,
@@ -26,7 +26,7 @@ export enum UserRole {
 }
 
 type UrlSearchQuery = undefined | string | SearchPattern[];
-type WritableUrlSearchQuery = DeepWritable<UrlSearchQuery>;
+type WritableUrlSearchQuery = DeepMutable<UrlSearchQuery>;
 
 const initialState = {
     enabledWidgets: defaultEnabledWidgets,

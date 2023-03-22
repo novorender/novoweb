@@ -15,7 +15,7 @@ import { useAbortController } from "hooks/useAbortController";
 import { useMountedState } from "hooks/useMountedState";
 import { searchByPatterns } from "utils/search";
 import { getGuids } from "utils/objectData";
-import { sleep } from "utils/timers";
+import { sleep } from "utils/time";
 import {
     createBcfClippingPlanes,
     createPerspectiveCamera,

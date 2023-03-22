@@ -1,5 +1,5 @@
 import { glMatrix, mat3, mat4, quat, vec2, vec3, vec4 } from "gl-matrix";
-import { useEffect, useState, useRef, MouseEvent, PointerEvent, useCallback, RefCallback, SVGProps } from "react";
+import { useEffect, useState, useRef, MouseEvent, PointerEvent, useCallback, RefCallback } from "react";
 import {
     View,
     EnvironmentDescription,
@@ -10,33 +10,12 @@ import {
     FlightControllerParams,
 } from "@novorender/webgl-api";
 import { MeasureScene } from "@novorender/measure-api";
-import {
-    Box,
-    Paper,
-    Typography,
-    useTheme,
-    styled,
-    Menu,
-    MenuItem,
-    popoverClasses,
-    CircularProgress,
-    IconButton,
-    Button,
-} from "@mui/material";
-import { css } from "@mui/styled-engine";
-import { CameraAlt, Close, FlightTakeoff } from "@mui/icons-material";
+import { Box, styled, css } from "@mui/material";
 
 import { PerformanceStats } from "features/performanceStats";
 import { getDataFromUrlHash } from "features/shareLink";
-import {
-    imagesActions,
-    isFlat,
-    selectActiveImage,
-    selectImages,
-    selectShowImageMarkers,
-    useHandleImageChanges,
-} from "features/images";
-import { Accordion, AccordionDetails, AccordionSummary, Divider, ImgModal, LinearProgress, Loading } from "components";
+import { imagesActions, isFlat, selectActiveImage, useHandleImageChanges } from "features/images";
+import { ImgModal, LinearProgress, Loading } from "components";
 import { api, dataApi, measureApi } from "app";
 import { useSceneId } from "hooks/useSceneId";
 import {
@@ -62,23 +41,24 @@ import {
     selectPicker,
     Picker,
     selectLoadingHandles,
-    selectDeviationStamp,
     selectViewMode,
+    selectStamp,
+    StampKind,
 } from "features/render/renderSlice";
 import { explorerActions, selectLocalBookmarkId, selectUrlBookmarkId } from "slices/explorerSlice";
 import { selectDeviations } from "features/deviations";
 import { useSelectBookmark } from "features/bookmarks/useSelectBookmark";
 import { measureActions, useMeasureHoverSettings } from "features/measure";
 import { useHandleManholeUpdates } from "features/manhole";
-import { ditioActions, useDitioMarkers, useHandleDitioKeepAlive } from "features/ditio";
+import { useHandleDitioKeepAlive } from "features/ditio";
 import { useAppDispatch, useAppSelector } from "app/store";
 import { useHandleAreaPoints } from "features/area";
 import { useHandlePointLineUpdates } from "features/pointLine";
-import { selectCurrentLocation, useHandleLocationMarker } from "features/myLocation";
+import { useHandleLocationMarker } from "features/myLocation";
 import { useHandleJiraKeepAlive } from "features/jira";
 import { Engine2D } from "features/engine2D";
-import { LogPoint, useXsiteManageLogPointMarkers, useHandleXsiteManageKeepAlive } from "features/xsiteManage";
-import { AsyncStatus, ViewMode } from "types/misc";
+import { useHandleXsiteManageKeepAlive, useHandleXsiteManageMachineLocations } from "features/xsiteManage";
+import { ViewMode } from "types/misc";
 import { orthoCamActions, selectCrossSectionPoint, useHandleCrossSection } from "features/orthoCam";
 import { useHandleClippingBoxChanges } from "features/clippingBox";
 
@@ -93,6 +73,7 @@ import {
     useDispatchHighlightCollections,
     useHighlightCollections,
 } from "contexts/highlightCollections";
+import { getAssetUrl } from "utils/misc";
 
 import {
     refillObjects,
@@ -109,13 +90,16 @@ import {
     initSubtrees,
     initProjectSettings,
 } from "./utils";
-import { xAxis, yAxis, axis, MAX_FLOAT } from "./consts";
-import { useHandleGridChanges } from "./useHandleGridChanges";
-import { useHandleCameraControls } from "./useHandleCameraControls";
+import { xAxis, yAxis, axis } from "./consts";
 import { moveSvgCursor } from "./svgUtils";
-import { useCanvasClickHandler } from "./useCanvasClickHandler";
-import { useHandleCanvasCursor } from "./useHandleCanvasCursor";
-import { getAssetUrl } from "utils/misc";
+import { useHandleGridChanges } from "./hooks/useHandleGridChanges";
+import { useHandleCameraControls } from "./hooks/useHandleCameraControls";
+import { useCanvasClickHandler } from "./hooks/useCanvasClickHandler";
+import { useHandleCanvasCursor } from "./hooks/useHandleCanvasCursor";
+import { Stamp } from "./stamp";
+import { Markers } from "./markers";
+import { isSceneError, SceneError } from "./sceneError";
+import { useMoveMarkers } from "./hooks/useMoveMarkers";
 
 glMatrix.setMatrixArrayType(Array);
 
@@ -144,44 +128,7 @@ const Svg = styled("svg")(
     `
 );
 
-const ImageMarker = styled((props: SVGProps<SVGGElement>) => (
-    <g {...props}>
-        <CameraAlt color="primary" height="32px" width="32px" />
-    </g>
-))(
-    () => css`
-        cursor: pointer;
-        pointer-events: bounding-box;
-
-        svg {
-            filter: drop-shadow(3px 3px 2px rgba(0, 0, 0, 0.3));
-        }
-    `
-);
-
-const LogPointMarker = styled(
-    (props: SVGProps<SVGSVGElement>) => (
-        <svg viewBox="0 0 24 24" {...props}>
-            <path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z" strokeWidth="0.4"></path>
-        </svg>
-    ),
-    { shouldForwardProp: (prop) => prop !== "active" }
-)<{ active?: boolean }>(
-    ({ theme, active }) => css`
-        path {
-            stroke: ${theme.palette.secondary.dark};
-            fill: ${active ? theme.palette.primary.light : theme.palette.common.white};
-        }
-
-        :hover {
-            path {
-                fill: ${theme.palette.primary.light};
-            }
-        }
-    `
-);
-
-enum Status {
+export enum Status {
     Initial,
     NoSceneError,
     AuthError,
@@ -193,7 +140,6 @@ type Props = {
 };
 
 export function Render3D({ onInit }: Props) {
-    const theme = useTheme();
     const sceneId = useSceneId();
     const highlightedObjects = useHighlighted();
     const dispatchHighlighted = useDispatchHighlighted();
@@ -226,22 +172,17 @@ export function Render3D({ onInit }: Props) {
     const clippingPlanes = useAppSelector(selectClippingPlanes);
     const cameraState = useAppSelector(selectCamera);
     const advancedSettings = useAppSelector(selectAdvancedSettings);
-    const images = useAppSelector(selectImages);
     const deviation = useAppSelector(selectDeviations);
-    const showImageMarkers = useAppSelector(selectShowImageMarkers);
     const gridDefaults = useAppSelector(selectGridDefaults);
     const activeImage = useAppSelector(selectActiveImage);
     const urlBookmarkId = useAppSelector(selectUrlBookmarkId);
     const localBookmarkId = useAppSelector(selectLocalBookmarkId);
     const loadingHandles = useAppSelector(selectLoadingHandles);
-    const deviationStamp = useAppSelector(selectDeviationStamp);
+    const stamp = useAppSelector(selectStamp);
     const picker = useAppSelector(selectPicker);
-    const myLocationPoint = useAppSelector(selectCurrentLocation);
     const crossSectionPoint = useAppSelector(selectCrossSectionPoint);
     const viewMode = useAppSelector(selectViewMode);
 
-    const ditioMarkers = useDitioMarkers();
-    const logPoints = useXsiteManageLogPointMarkers();
     const canvasClickHandler = useCanvasClickHandler();
     const usingSvgCursor = useHandleCanvasCursor();
     const measureHoverSettings = useMeasureHoverSettings();
@@ -267,23 +208,6 @@ export function Render3D({ onInit }: Props) {
     const [svg, setSvg] = useState<null | SVGSVGElement>(null);
     const [status, setStatus] = useState<{ status: Status; msg?: string }>({ status: Status.Initial });
 
-    const closeDeviationStamp = () => {
-        dispatch(renderActions.setDeviationStamp(null));
-    };
-
-    const [logPointStamp, setLogPointStamp] = useState<{
-        mouseX: number;
-        mouseY: number;
-        pinned: boolean;
-        data: {
-            logPoint: LogPoint;
-        };
-    } | null>(null);
-
-    const closeLogPointStamp = () => {
-        setLogPointStamp(null);
-    };
-
     const canvasRef: RefCallback<HTMLCanvasElement> = useCallback(
         (el) => {
             dispatchGlobals(explorerGlobalsActions.update({ canvas: el }));
@@ -291,65 +215,7 @@ export function Render3D({ onInit }: Props) {
         [dispatchGlobals]
     );
 
-    const moveSvgMarkers = useCallback(() => {
-        if (!view || !svg || !measureScene || !size) {
-            return;
-        }
-
-        if (myLocationPoint !== undefined) {
-            const myLocationPt = (measureApi.toMarkerPoints(view, [myLocationPoint]) ?? [])[0];
-            if (myLocationPt) {
-                const marker = svg.children.namedItem("myLocationPoint");
-
-                marker?.setAttribute(
-                    "transform",
-                    `translate(${myLocationPt[0] - 25} ${myLocationPt[1] - 40}) scale(2)`
-                );
-            }
-        }
-
-        (
-            measureApi.toMarkerPoints(
-                view,
-                logPoints.map((lpt) => vec3.fromValues(lpt.x, lpt.y, lpt.z))
-            ) ?? []
-        ).forEach((pos, idx) => {
-            svg.children
-                .namedItem(`logPoint-${idx}`)
-                ?.setAttribute("transform", pos ? `translate(${pos[0] - 25} ${pos[1] - 20})` : "translate(-100 -100)");
-        });
-
-        if (showImageMarkers && images.status === AsyncStatus.Success) {
-            (
-                measureApi.toMarkerPoints(
-                    view,
-                    images.data.map((image) => image.position)
-                ) ?? []
-            ).forEach((pos, idx) => {
-                svg.children
-                    .namedItem(`image-${idx}`)
-                    ?.setAttribute(
-                        "transform",
-                        pos ? `translate(${pos[0] - 25} ${pos[1] - 25})` : "translate(-100 -100)"
-                    );
-            });
-        }
-
-        (
-            measureApi.toMarkerPoints(
-                view,
-                ditioMarkers.map((marker) => marker.position)
-            ) ?? []
-        ).forEach((pos, idx) => {
-            svg.children
-                .namedItem(`ditioMarker-${idx}`)
-                ?.setAttribute("transform", pos ? `translate(${pos[0] - 25} ${pos[1] - 25})` : "translate(-100 -100)");
-        });
-    }, [view, svg, myLocationPoint, size, measureScene, logPoints, ditioMarkers, images, showImageMarkers]);
-
-    useEffect(() => {
-        moveSvgMarkers();
-    }, [moveSvgMarkers]);
+    const moveSvgMarkers = useMoveMarkers(svg);
 
     useEffect(() => {
         if (!environments.length) {
@@ -544,8 +410,7 @@ export function Render3D({ onInit }: Props) {
                     cameraGeneration.current = view.performanceStatistics.cameraGeneration ?? 0;
 
                     moveSvgMarkers();
-                    dispatch(renderActions.setDeviationStamp(null));
-                    setLogPointStamp(null);
+                    dispatch(renderActions.setStamp(null));
 
                     if (movementTimer.current) {
                         clearTimeout(movementTimer.current);
@@ -854,6 +719,7 @@ export function Render3D({ onInit }: Props) {
     useHandlePointLineUpdates();
     useHandleJiraKeepAlive();
     useHandleXsiteManageKeepAlive();
+    useHandleXsiteManageMachineLocations();
     useHandleDitioKeepAlive();
 
     useEffect(() => {
@@ -1099,6 +965,7 @@ export function Render3D({ onInit }: Props) {
         }
 
         if (
+            !stamp?.pinned &&
             deviation.mode !== "off" &&
             cameraState.type === CameraType.Orthographic &&
             e.buttons === 0 &&
@@ -1108,17 +975,19 @@ export function Render3D({ onInit }: Props) {
 
             if (measurement?.deviation) {
                 dispatch(
-                    renderActions.setDeviationStamp({
+                    renderActions.setStamp({
+                        kind: StampKind.Deviation,
+                        pinned: false,
                         mouseX: e.nativeEvent.offsetX,
                         mouseY: e.nativeEvent.offsetY,
                         data: { deviation: measurement.deviation },
                     })
                 );
             } else {
-                dispatch(renderActions.setDeviationStamp(null));
+                dispatch(renderActions.setStamp(null));
             }
-        } else {
-            dispatch(renderActions.setDeviationStamp(null));
+        } else if (stamp && !stamp.pinned) {
+            dispatch(renderActions.setStamp(null));
         }
 
         if (!pointerDown.current || picker !== Picker.ClippingBox || camera2pointDistance.current === 0) {
@@ -1205,201 +1074,10 @@ export function Render3D({ onInit }: Props) {
                         }}
                     />
                     <Engine2D />
-                    <Menu
-                        open={deviationStamp !== null}
-                        onClose={closeDeviationStamp}
-                        sx={{
-                            [`&.${popoverClasses.root}`]: {
-                                pointerEvents: "none",
-                            },
-                        }}
-                        anchorReference="anchorPosition"
-                        anchorPosition={
-                            deviationStamp !== null
-                                ? { top: deviationStamp.mouseY, left: deviationStamp.mouseX }
-                                : undefined
-                        }
-                        transitionDuration={{ exit: 0 }}
-                    >
-                        <Box sx={{ pointerEvents: "auto" }}>
-                            <MenuItem>
-                                Deviation:{" "}
-                                {deviationStamp?.data.deviation === MAX_FLOAT
-                                    ? "Outside range -1 to 1"
-                                    : deviationStamp?.data.deviation.toFixed(3)}
-                            </MenuItem>
-                        </Box>
-                    </Menu>
-                    <Menu
-                        open={logPointStamp !== null}
-                        onClose={closeLogPointStamp}
-                        sx={{
-                            [`&.${popoverClasses.root}`]: {
-                                pointerEvents: "none",
-                            },
-                        }}
-                        anchorReference="anchorPosition"
-                        anchorPosition={
-                            logPointStamp !== null
-                                ? { top: logPointStamp.mouseY, left: logPointStamp.mouseX }
-                                : undefined
-                        }
-                        transitionDuration={{ exit: 0 }}
-                    >
-                        {view && logPointStamp && (
-                            <Box px={2} pb={1} sx={{ pointerEvents: "auto" }}>
-                                <Box display="flex" alignItems={"center"} justifyContent={"space-between"}>
-                                    <Typography fontWeight={600}>
-                                        {logPointStamp.data.logPoint.name ??
-                                            logPointStamp.data.logPoint.type ??
-                                            "Log point"}
-                                    </Typography>
-                                    <IconButton size="small" onClick={closeLogPointStamp}>
-                                        <Close />
-                                    </IconButton>
-                                </Box>
-                                <Divider />
-                                Number: {logPointStamp.data.logPoint.sequenceId} <br />
-                                Code: {logPointStamp.data.logPoint.code} <br />
-                                Uploaded: {new Date(logPointStamp.data.logPoint.timestampMs).toLocaleString()}
-                                <Box mt={1}>
-                                    <Button
-                                        variant="outlined"
-                                        color="secondary"
-                                        onClick={() =>
-                                            dispatch(
-                                                renderActions.setCamera({
-                                                    type: CameraType.Flight,
-                                                    goTo: {
-                                                        position: [
-                                                            logPointStamp.data.logPoint.x,
-                                                            logPointStamp.data.logPoint.y,
-                                                            logPointStamp.data.logPoint.z,
-                                                        ],
-                                                        rotation: quat.clone(view.camera.rotation),
-                                                    },
-                                                })
-                                            )
-                                        }
-                                    >
-                                        <FlightTakeoff sx={{ mr: 2 }} />
-                                        Fly to point
-                                    </Button>
-                                </Box>
-                            </Box>
-                        )}
-                    </Menu>
+                    <Stamp />
                     {canvas !== null && (
                         <Svg width={canvas.width} height={canvas.height} ref={setSvg}>
-                            {myLocationPoint ? (
-                                <path
-                                    id="myLocationPoint"
-                                    name="myLocationPoint"
-                                    fill={theme.palette.primary.main}
-                                    d="M12 2C8.14 2 5 5.14 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.86-3.14-7-7-7zm0 2c1.1 0 2 .9 2 2 0 1.11-.9 2-2 2s-2-.89-2-2c0-1.1.9-2 2-2zm0 10c-1.67 0-3.14-.85-4-2.15.02-1.32 2.67-2.05 4-2.05s3.98.73 4 2.05c-.86 1.3-2.33 2.15-4 2.15z"
-                                ></path>
-                            ) : null}
-
-                            {images.status === AsyncStatus.Success && showImageMarkers
-                                ? images.data.map((image, idx) => {
-                                      if (!activeImage || viewMode !== ViewMode.Panorama) {
-                                          return (
-                                              <ImageMarker
-                                                  id={`image-${idx}`}
-                                                  name={`image-${idx}`}
-                                                  key={image.guid}
-                                                  onClick={() =>
-                                                      dispatch(
-                                                          imagesActions.setActiveImage({
-                                                              image: image,
-                                                              status: AsyncStatus.Loading,
-                                                          })
-                                                      )
-                                                  }
-                                              />
-                                          );
-                                      }
-
-                                      const activeIdx = images.data.findIndex(
-                                          (image) => image.guid === activeImage.image.guid
-                                      );
-
-                                      if (Math.abs(idx - activeIdx) === 1) {
-                                          return (
-                                              <ImageMarker
-                                                  id={`image-${idx}`}
-                                                  name={`image-${idx}`}
-                                                  key={image.guid}
-                                                  onClick={() =>
-                                                      dispatch(
-                                                          imagesActions.setActiveImage({
-                                                              image: image,
-                                                              status: AsyncStatus.Loading,
-                                                          })
-                                                      )
-                                                  }
-                                              />
-                                          );
-                                      }
-
-                                      return null;
-                                  })
-                                : null}
-
-                            {ditioMarkers.map((marker, idx) => (
-                                <ImageMarker
-                                    id={`ditioMarker-${idx}`}
-                                    name={`ditioMarker-${idx}`}
-                                    key={marker.id}
-                                    onClick={() => dispatch(ditioActions.setClickedMarker(marker.id))}
-                                    height="32px"
-                                    width="32px"
-                                />
-                            ))}
-
-                            {logPoints.map((pt, idx) => (
-                                <Box
-                                    id={`logPoint-${idx}`}
-                                    name={`logPoint-${idx}`}
-                                    key={idx}
-                                    component="g"
-                                    sx={{ cursor: "pointer", pointerEvents: "bounding-box" }}
-                                    onClick={(e) => {
-                                        setLogPointStamp({
-                                            mouseX: e.clientX,
-                                            mouseY: e.clientY,
-                                            pinned: true,
-                                            data: { logPoint: pt },
-                                        });
-                                    }}
-                                    onMouseEnter={(e) => {
-                                        if (logPointStamp?.pinned) {
-                                            return;
-                                        }
-
-                                        setLogPointStamp({
-                                            mouseX: e.clientX,
-                                            mouseY: e.clientY,
-                                            pinned: false,
-                                            data: { logPoint: pt },
-                                        });
-                                    }}
-                                    onMouseLeave={() => {
-                                        if (logPointStamp?.pinned) {
-                                            return;
-                                        }
-
-                                        closeLogPointStamp();
-                                    }}
-                                >
-                                    <LogPointMarker
-                                        active={pt.sequenceId === logPointStamp?.data.logPoint.sequenceId}
-                                        height="50px"
-                                        width="50px"
-                                    />
-                                </Box>
-                            ))}
-
+                            <Markers />
                             <g id="cursor" />
                         </Svg>
                     )}
@@ -1416,81 +1094,4 @@ export function Render3D({ onInit }: Props) {
             )}
         </Box>
     );
-}
-
-function SceneError({ id, error, msg }: { id: string; error: Exclude<Status, Status.Initial>; msg?: string }) {
-    const theme = useTheme();
-    const loginUrl = `${window.location.origin}/login/${id}${window.location.search}`;
-
-    if (error === Status.AuthError) {
-        window.location.replace(
-            loginUrl +
-                (window.location.search
-                    ? window.location.search.includes("force-login=true")
-                        ? ""
-                        : "&force-login=true"
-                    : "?force-login=true")
-        );
-    }
-
-    return (
-        <Box
-            bgcolor={theme.palette.secondary.main}
-            display="flex"
-            justifyContent="center"
-            alignItems="center"
-            height={"100vh"}
-        >
-            {error === Status.AuthError ? (
-                <CircularProgress />
-            ) : (
-                <Paper sx={{ minWidth: 320, maxWidth: `min(600px, 90%)`, wordBreak: "break-word", p: 2 }}>
-                    <Box>
-                        <Typography paragraph variant="h4" component="h1" align="center">
-                            {error === Status.ServerError
-                                ? "An error occurred"
-                                : error === Status.NoSceneError
-                                ? `Scene not found`
-                                : "Unable to load scene"}
-                        </Typography>
-                        <Typography paragraph>
-                            {error === Status.ServerError ? (
-                                "Failed to download the scene. Please try again later."
-                            ) : error === Status.NoSceneError ? (
-                                <>
-                                    The scene with id <em>{id}</em> does not exist.
-                                </>
-                            ) : (
-                                <>
-                                    You do not have access to the scene <em>{id}</em>.
-                                </>
-                            )}
-                        </Typography>
-                        <Accordion>
-                            <AccordionSummary>Details</AccordionSummary>
-                            <AccordionDetails>
-                                <Box p={1}>
-                                    <>
-                                        Timestamp: {new Date().toISOString()} <br />
-                                        API: {api.version} <br />
-                                        Dataserver: {(dataApi as any).serviceUrl}
-                                        {msg ? (
-                                            <Box mt={2}>
-                                                ERROR: <br />
-                                                {msg}
-                                            </Box>
-                                        ) : null}
-                                    </>
-                                </Box>
-                            </AccordionDetails>
-                        </Accordion>
-                    </Box>
-                </Paper>
-            )}
-        </Box>
-    );
-}
-
-function isSceneError(status: Status): status is Exclude<Status, Status.Initial> {
-    return [Status.AuthError, Status.NoSceneError, Status.ServerError].includes(status);
 }
