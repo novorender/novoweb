@@ -38,13 +38,7 @@ export function useHandleXsiteManageMachineLocations() {
 
             currentClient.current = client;
 
-            client.on("connect", () => console.log(`Connected ${email} to ${site.siteId}`));
-            client.on("disconnect", () => console.log(`Disconnected ${email} from ${site.siteId}`));
-            client.on("reconnect", () => console.log(`Reconnected ${email} to ${site.siteId}`));
-            client.on("end", () => console.log(`Ended ${email} at ${site.siteId}`));
-            client.subscribe(`prod-ext/site:${site.siteId}/+/status`, () =>
-                console.log(`Subscribed to all machines at ${site.siteId}`)
-            );
+            client.subscribe(`prod-ext/site:${site.siteId}/+/status`);
             client.on("message", (_topic, msgBuffer) => {
                 try {
                     const message = JSON.parse(msgBuffer.toString()) as Omit<MachineLocation, "position">;
