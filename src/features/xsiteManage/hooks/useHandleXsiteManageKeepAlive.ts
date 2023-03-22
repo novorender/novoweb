@@ -5,30 +5,30 @@ import { StorageKey } from "config/storage";
 import { AsyncStatus } from "types/misc";
 import { deleteFromStorage } from "utils/storage";
 
-import { useRefreshTokensMutation } from "./api";
-import { xsiteManageActions, selectXsiteManageRefreshToken } from "./slice";
+import { useRefreshTokensMutation } from "../api";
+import { xsiteManageActions, selectXsiteManageRefreshToken } from "../slice";
 
 export function useHandleXsiteManageKeepAlive() {
     const dispatch = useAppDispatch();
     const refreshToken = useAppSelector(selectXsiteManageRefreshToken);
     const [refreshTokens] = useRefreshTokensMutation();
-    const timeoutId = useRef<number>();
+    const intervalId = useRef<number>();
 
     useEffect(() => {
         if (!refreshToken) {
-            if (timeoutId.current !== undefined) {
-                window.clearTimeout(timeoutId.current);
-                timeoutId.current = undefined;
+            if (intervalId.current !== undefined) {
+                window.clearTimeout(intervalId.current);
+                intervalId.current = undefined;
             }
 
             return;
         }
 
-        if (timeoutId.current !== undefined) {
+        if (intervalId.current !== undefined) {
             return;
         }
 
-        timeoutId.current = window.setTimeout(async () => {
+        intervalId.current = window.setInterval(async () => {
             const res = await refreshTokens({ refreshToken: refreshToken.token });
 
             if ("data" in res) {
@@ -42,8 +42,8 @@ export function useHandleXsiteManageKeepAlive() {
         }, refreshToken.refreshIn * 0.9 * 1000);
 
         return () => {
-            window.clearTimeout(timeoutId.current);
-            timeoutId.current = undefined;
+            window.clearTimeout(intervalId.current);
+            intervalId.current = undefined;
         };
     }, [refreshToken, dispatch, refreshTokens]);
 

@@ -1,3 +1,5 @@
+import { vec3 } from "gl-matrix";
+
 export type Site = {
     siteId: string;
     name: string;
@@ -71,4 +73,13 @@ export type Machine = {
     machineId: string;
     name: string;
     inactiveTimestamp?: number;
+};
+
+export type MachineLocation = {
+    latitude: number;
+    longitude: number;
+    machineId: string;
+    siteId: string;
+    timestampMs: number;
+    position: vec3;
 };

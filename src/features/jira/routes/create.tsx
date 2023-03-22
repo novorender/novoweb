@@ -24,7 +24,7 @@ import { format, isValid } from "date-fns";
 import { dataApi } from "app";
 import { Divider, LinearProgress, ScrollBox } from "components";
 import { useAppDispatch, useAppSelector } from "app/store";
-import { sleep } from "utils/timers";
+import { sleep } from "utils/time";
 import { AsyncStatus } from "types/misc";
 import { useCreateBookmark } from "features/bookmarks/useCreateBookmark";
 import { createCanvasSnapshot } from "utils/misc";

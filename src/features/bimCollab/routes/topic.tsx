@@ -29,7 +29,7 @@ import { useToggle } from "hooks/useToggle";
 import { extractObjectIds } from "utils/objectData";
 import { searchByPatterns } from "utils/search";
 import { hexToVec } from "utils/color";
-import { sleep } from "utils/timers";
+import { sleep } from "utils/time";
 import { translateBcfClippingPlanes, translateOrthogonalCamera, translatePerspectiveCamera } from "utils/bcf";
 import type { Comment } from "types/bcf";
 

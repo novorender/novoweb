@@ -75,7 +75,7 @@ export function LogPoints() {
                                 disableGutters
                                 key={point.localId}
                                 component={Link}
-                                to={`/log-point/${point.localId}`}
+                                to={`/log-points/${point.localId}`}
                             >
                                 {point.localId}. {point.code ?? point.type} -{" "}
                                 {format(point.timestampMs, "EEE dd/MM/yyyy HH:MM:SS")}

@@ -3,7 +3,7 @@ import { createSlice, PayloadAction } from "@reduxjs/toolkit";
 import { vec3 } from "gl-matrix";
 
 import { RootState } from "app/store";
-import { DeepWritable } from "features/render/renderSlice";
+import { DeepMutable } from "features/render/renderSlice";
 import { ExtendedMeasureEntity } from "types/misc";
 import { SnapKind } from "./config";
 
@@ -13,8 +13,8 @@ export type SelectedMeasureObj = {
     settings?: MeasureSettings;
 };
 
-type WriteableMeasureEntity = DeepWritable<MeasureEntity>;
-type WriteableExtendedMeasureEntity = DeepWritable<ExtendedMeasureEntity>;
+type WriteableMeasureEntity = DeepMutable<MeasureEntity>;
+type WriteableExtendedMeasureEntity = DeepMutable<ExtendedMeasureEntity>;
 
 const initialState = {
     selectedEntities: [] as WriteableExtendedMeasureEntity[],

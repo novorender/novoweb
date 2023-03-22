@@ -15,6 +15,7 @@ import type { RootState } from "app/store";
 import { VecRGB, VecRGBA } from "utils/color";
 import { defaultFlightControls } from "config/camera";
 import { ViewMode } from "types/misc";
+import { LogPoint, MachineLocation } from "features/xsiteManage";
 
 export const fetchEnvironments = createAsyncThunk("novorender/fetchEnvironments", async (api: API) => {
     const envs = await api.availableEnvironments("https://api.novorender.com/assets/env/index.json");
@@ -106,7 +107,7 @@ export type ObjectGroups = { default: ObjectGroup; defaultHidden: ObjectGroup; c
 
 // Redux toolkit with immer removes readonly modifier of state in the reducer so we get ts errors
 // unless we cast the types to writable ones.
-export type DeepWritable<T> = { -readonly [P in keyof T]: DeepWritable<T[P]> };
+export type DeepMutable<T> = { -readonly [P in keyof T]: DeepMutable<T[P]> };
 type CameraState =
     | {
           type: CameraType.Orthographic;
@@ -119,15 +120,48 @@ type CameraState =
           goTo?: { position: Camera["position"]; rotation: Camera["rotation"]; fieldOfView?: number };
           zoomTo?: BoundingSphere;
       };
-type WritableCameraState = DeepWritable<CameraState>;
-type WritableGrid = DeepWritable<RenderSettings["grid"]>;
+type MutableCameraState = DeepMutable<CameraState>;
+type MutableGrid = DeepMutable<RenderSettings["grid"]>;
 export type ClippingBox = RenderSettings["clippingPlanes"] & {
     defining: boolean;
     baseBounds: RenderSettings["clippingPlanes"]["bounds"];
 };
-type WritableClippingBox = DeepWritable<ClippingBox>;
+type MutableClippingBox = DeepMutable<ClippingBox>;
 type SavedCameraPositions = { currentIndex: number; positions: CameraPosition[] };
-type WritableSavedCameraPositions = DeepWritable<SavedCameraPositions>;
+type MutableSavedCameraPositions = DeepMutable<SavedCameraPositions>;
+
+export enum StampKind {
+    LogPoint,
+    MachineLocation,
+    Deviation,
+}
+
+type LogPointStamp = {
+    kind: StampKind.LogPoint;
+    data: {
+        logPoint: LogPoint;
+    };
+};
+
+type MachineLocationStamp = {
+    kind: StampKind.MachineLocation;
+    data: {
+        location: MachineLocation;
+    };
+};
+
+type DeviationStamp = {
+    kind: StampKind.Deviation;
+    data: {
+        deviation: number;
+    };
+};
+
+type Stamp = { mouseX: number; mouseY: number; pinned: boolean } & (
+    | LogPointStamp
+    | MachineLocationStamp
+    | DeviationStamp
+);
 
 const initialState = {
     environments: [] as EnvironmentDescription[],
@@ -137,7 +171,7 @@ const initialState = {
     selectMultiple: false,
     baseCameraSpeed: 0.03,
     cameraSpeedMultiplier: CameraSpeedMultiplier.Normal,
-    savedCameraPositions: { currentIndex: -1, positions: [] } as WritableSavedCameraPositions,
+    savedCameraPositions: { currentIndex: -1, positions: [] } as MutableSavedCameraPositions,
     subtrees: undefined as
         | undefined
         | {
@@ -160,14 +194,14 @@ const initialState = {
         highlight: -1,
         bounds: { min: [0, 0, 0], max: [0, 0, 0] },
         baseBounds: { min: [0, 0, 0], max: [0, 0, 0] },
-    } as WritableClippingBox,
+    } as MutableClippingBox,
     clippingPlanes: {
         enabled: false,
         mode: "union" as "union" | "intersection",
         planes: [] as vec4[],
         baseW: 0,
     },
-    camera: { type: CameraType.Flight } as WritableCameraState,
+    camera: { type: CameraType.Flight } as MutableCameraState,
     advancedSettings: {
         [AdvancedSetting.Taa]: true,
         [AdvancedSetting.Ssao]: true,
@@ -213,7 +247,7 @@ const initialState = {
         axisY: [0, 0, 0],
         majorColor: [0, 0, 0],
         minorColor: [0, 0, 0],
-    } as WritableGrid,
+    } as MutableGrid,
     projectSettings: {
         [ProjectSetting.TmZone]: "",
         [ProjectSetting.DitioProjectNumber]: "",
@@ -223,13 +257,7 @@ const initialState = {
     picker: Picker.Object,
     viewMode: ViewMode.Default,
     loadingHandles: [] as number[],
-    deviationStamp: null as null | {
-        mouseX: number;
-        mouseY: number;
-        data: {
-            deviation: number;
-        };
-    },
+    stamp: null as null | Stamp,
 };
 
 type State = typeof initialState;
@@ -378,7 +406,7 @@ export const renderSlice = createSlice({
                 state.clippingPlanes.enabled = false;
             }
 
-            state.clippingBox = { ...state.clippingBox, ...action.payload } as WritableClippingBox;
+            state.clippingBox = { ...state.clippingBox, ...action.payload } as MutableClippingBox;
         },
         resetClippingBox: (state) => {
             state.clippingBox = initialState.clippingBox;
@@ -436,7 +464,7 @@ export const renderSlice = createSlice({
                 ...(goTo ? { goTo } : {}),
                 ...(zoomTo ? { zoomTo } : {}),
                 ...(params ? { params } : {}),
-            } as WritableCameraState;
+            } as MutableCameraState;
         },
         setBaseCameraSpeed: (state, { payload }: PayloadAction<number>) => {
             state.baseCameraSpeed = payload;
@@ -463,7 +491,7 @@ export const renderSlice = createSlice({
                 ...state.gridDefaults,
                 enabled: state.grid.enabled,
                 ...action.payload,
-            } as WritableGrid;
+            } as MutableGrid;
         },
         setPicker: (state, action: PayloadAction<State["picker"]>) => {
             state.picker = action.payload;
@@ -482,13 +510,13 @@ export const renderSlice = createSlice({
         removeLoadingHandle: (state, action: PayloadAction<State["loadingHandles"][number]>) => {
             state.loadingHandles = state.loadingHandles.filter((handle) => handle !== action.payload);
         },
-        setDeviationStamp: (state, action: PayloadAction<State["deviationStamp"]>) => {
-            state.deviationStamp = action.payload;
+        setStamp: (state, action: PayloadAction<State["stamp"]>) => {
+            state.stamp = action.payload;
         },
     },
     extraReducers: (builder) => {
         builder.addCase(fetchEnvironments.fulfilled, (state, action) => {
-            state.environments = action.payload as DeepWritable<typeof action.payload>;
+            state.environments = action.payload as DeepMutable<typeof action.payload>;
         });
     },
 });
@@ -521,7 +549,7 @@ export const selectPicker = (state: RootState) => state.render.picker;
 export const selectDefaultDeviceProfile = (state: RootState) => state.render.defaultDeviceProfile;
 export const selectViewMode = (state: RootState) => state.render.viewMode;
 export const selectLoadingHandles = (state: RootState) => state.render.loadingHandles;
-export const selectDeviationStamp = (state: RootState) => state.render.deviationStamp;
+export const selectStamp = (state: RootState) => state.render.stamp;
 
 const { reducer, actions } = renderSlice;
 export { reducer as renderReducer, actions as renderActions };

@@ -1,16 +1,17 @@
 import { useAppDispatch, useAppSelector } from "app/store";
 import { useEffect, useState } from "react";
 
-import { useGetAllLogPointsQuery } from "./api";
+import { useGetAllLogPointsQuery } from "../api";
 import {
     LogPointTime,
     selectXsiteManageActiveLogPoints,
     selectXsiteManageCurrentMachine,
     selectXsiteManageIncludedLogPointCodes,
+    selectXsiteManageShowLogPointMarkers,
     selectXsiteManageSite,
     xsiteManageActions,
-} from "./slice";
-import { LogPoint } from "./types";
+} from "../slice";
+import { LogPoint } from "../types";
 
 const empty = [] as LogPoint[];
 
@@ -19,6 +20,7 @@ export function useXsiteManageLogPointMarkers() {
     const activeLogPoints = useAppSelector(selectXsiteManageActiveLogPoints);
     const currentMachine = useAppSelector(selectXsiteManageCurrentMachine);
     const includedLogPointCodes = useAppSelector(selectXsiteManageIncludedLogPointCodes);
+    const showMarkers = useAppSelector(selectXsiteManageShowLogPointMarkers);
     const dispatch = useAppDispatch();
 
     const [pts, setPts] = useState(empty);
@@ -32,7 +34,7 @@ export function useXsiteManageLogPointMarkers() {
     }, [dispatch, isFetching]);
 
     useEffect(() => {
-        if (!logPointData || !currentMachine || activeLogPoints === LogPointTime.None) {
+        if (!showMarkers || !logPointData || !currentMachine || activeLogPoints === LogPointTime.None) {
             setPts(empty);
             return;
         }
@@ -70,7 +72,7 @@ export function useXsiteManageLogPointMarkers() {
                     (includedLogPointCodes.length ? lpt.code && includedLogPointCodes.includes(lpt.code) : true)
             )
         );
-    }, [logPointData, activeLogPoints, currentMachine, includedLogPointCodes]);
+    }, [showMarkers, logPointData, activeLogPoints, currentMachine, includedLogPointCodes]);
 
     return pts;
 }
