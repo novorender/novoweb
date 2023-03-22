@@ -19,7 +19,7 @@ export function LogPointStamp() {
     }
 
     return (
-        <Box px={2} pb={1} style={{ pointerEvents: "auto" }}>
+        <Box px={2} pb={1} sx={{ pointerEvents: "auto" }}>
             <Box display="flex" alignItems={"center"} justifyContent={"space-between"}>
                 <Typography fontWeight={600}>
                     {stamp.data.logPoint.name ?? stamp.data.logPoint.type ?? "Log point"}

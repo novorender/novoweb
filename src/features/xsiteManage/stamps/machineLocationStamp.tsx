@@ -26,7 +26,7 @@ export function MachineLocationStamp() {
     }
 
     return (
-        <Box px={2} pb={1} style={{ pointerEvents: "all" }}>
+        <Box px={2} pb={1} sx={{ pointerEvents: "auto" }}>
             <Box display="flex" alignItems={"center"} justifyContent={"space-between"}>
                 <Typography fontWeight={600}>
                     {machines?.find((machine) => machine.machineId === stamp.data.location.machineId)?.name ??
