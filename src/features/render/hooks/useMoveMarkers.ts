@@ -18,7 +18,7 @@ export function useMoveMarkers(svg: SVGSVGElement | null) {
     const images = useAppSelector(selectImages);
     const showImageMarkers = useAppSelector(selectShowImageMarkers);
     const myLocationPoint = useAppSelector(selectCurrentLocation);
-    const ditioMarkers = useDitioMarkers();
+    const [ditioPostMarkers, ditioImgMarkers] = useDitioMarkers();
     const logPoints = useXsiteManageLogPointMarkers();
     const machineLocationMarkers = useXsiteManageMachineMarkers();
 
@@ -69,11 +69,22 @@ export function useMoveMarkers(svg: SVGSVGElement | null) {
         (
             measureApi.toMarkerPoints(
                 view,
-                ditioMarkers.map((marker) => marker.position)
+                ditioPostMarkers.map((marker) => marker.position)
             ) ?? []
         ).forEach((pos, idx) => {
             svg.children
-                .namedItem(`ditioMarker-${idx}`)
+                .namedItem(`ditioPostMarker-${ditioPostMarkers[idx].id}`)
+                ?.setAttribute("transform", pos ? `translate(${pos[0] - 25} ${pos[1] - 25})` : "translate(-100 -100)");
+        });
+
+        (
+            measureApi.toMarkerPoints(
+                view,
+                ditioImgMarkers.map((marker) => marker.position)
+            ) ?? []
+        ).forEach((pos, idx) => {
+            svg.children
+                .namedItem(`ditioImgMarker-${ditioImgMarkers[idx].id}`)
                 ?.setAttribute("transform", pos ? `translate(${pos[0] - 25} ${pos[1] - 25})` : "translate(-100 -100)");
         });
 
@@ -87,7 +98,18 @@ export function useMoveMarkers(svg: SVGSVGElement | null) {
                 .namedItem(`machineMarker-${machineLocationMarkers[idx].machineId}`)
                 ?.setAttribute("transform", pos ? `translate(${pos[0] - 25} ${pos[1] - 25})` : "translate(-100 -100)");
         });
-    }, [view, svg, myLocationPoint, size, logPoints, ditioMarkers, images, showImageMarkers, machineLocationMarkers]);
+    }, [
+        view,
+        svg,
+        myLocationPoint,
+        size,
+        logPoints,
+        ditioPostMarkers,
+        ditioImgMarkers,
+        images,
+        showImageMarkers,
+        machineLocationMarkers,
+    ]);
 
     useEffect(() => {
         moveSvgMarkers();

@@ -17,11 +17,11 @@ import {
 } from "features/manhole";
 import { measureApi } from "app";
 import { AsyncStatus, ViewMode } from "types/misc";
-import { CameraType, selectCameraType, selectGrid, selectViewMode } from "features/render/renderSlice";
-
-import { drawPart, drawProduct, drawTexts } from "../engine2D/utils";
+import { CameraType, selectCameraType, selectGrid, selectViewMode } from "features/render";
 import { selectCrossSectionPoints } from "features/orthoCam";
 import { useCrossSection } from "features/followPath/useCrossSection";
+
+import { drawPart, drawProduct, drawTexts } from "./utils";
 
 const Canvas2D = styled("canvas")(
     () => css`
@@ -30,7 +30,6 @@ const Canvas2D = styled("canvas")(
         top: 0;
         width: 100%;
         height: 100%;
-        overflow: visible;
         pointer-events: none;
     `
 );

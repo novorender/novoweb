@@ -1,17 +1,18 @@
-import { Fragment, useState } from "react";
+import { Fragment } from "react";
 import { useHistory, useParams } from "react-router-dom";
 import { Avatar, Box, Button, ImageList, ImageListItem, Typography, useTheme } from "@mui/material";
 import { ArrowBack, LocationOnOutlined } from "@mui/icons-material";
 import { format, formatDistance } from "date-fns";
 
 import { dataApi } from "app";
-import { ScrollBox, Tooltip, Divider, ImgModal, LinearProgress } from "components";
+import { ScrollBox, Tooltip, Divider, LinearProgress } from "components";
 import { useExplorerGlobals } from "contexts/explorerGlobals";
 import { useAppDispatch, useAppSelector } from "app/store";
-import { CameraType, renderActions, selectProjectSettings } from "features/render/renderSlice";
+import { CameraType, renderActions, selectProjectSettings } from "features/render";
 
 import { baseUrl, useGetPostQuery } from "../api";
 import { newLineToHtmlBr } from "./feed";
+import { ditioActions } from "../slice";
 
 export function Post() {
     const theme = useTheme();
@@ -23,7 +24,6 @@ export function Post() {
 
     const { tmZone } = useAppSelector(selectProjectSettings);
     const dispatch = useAppDispatch();
-    const [modalImg, setModalImg] = useState("");
 
     const { data: post, isFetching } = useGetPostQuery({ postId });
 
@@ -55,7 +55,13 @@ export function Post() {
                     <Divider />
                 </Box>
                 <Box display="flex">
-                    <Button onClick={() => history.push("/")} color="grey">
+                    <Button
+                        onClick={() => {
+                            history.push("/");
+                            dispatch(ditioActions.setActivePost(""));
+                        }}
+                        color="grey"
+                    >
                         <ArrowBack sx={{ mr: 1 }} />
                         Back
                     </Button>
@@ -109,11 +115,19 @@ export function Post() {
                                 <ImageListItem
                                     sx={{ cursor: "pointer", bgcolor: "transparent", padding: 0, border: 0 }}
                                     component={"button"}
-                                    onClick={() => setModalImg(`${baseUrl}/${image.UrlLg}`)}
+                                    onClick={() => dispatch(ditioActions.setActiveImg(`${baseUrl}/${image.UrlLg}`))}
                                     key={image.FileReferenceId}
                                     cols={1}
+                                    onMouseEnter={() => {
+                                        dispatch(
+                                            ditioActions.setHoveredEntity({ kind: "image", id: image.FileReferenceId })
+                                        );
+                                    }}
+                                    onMouseLeave={() => {
+                                        dispatch(ditioActions.setHoveredEntity(undefined));
+                                    }}
                                 >
-                                    <img src={`${baseUrl}/${image.UrlM}`} alt={image.Name} loading="lazy" />
+                                    <img src={`${baseUrl}/${image.UrlSm}`} alt={image.Name} loading="lazy" />
                                 </ImageListItem>
                             ))}
                         </ImageList>
@@ -168,12 +182,6 @@ export function Post() {
                     ) : null}
                 </ScrollBox>
             )}
-            <ImgModal
-                open={Boolean(modalImg)}
-                onClose={() => setModalImg("")}
-                sx={{ display: "flex", justifyContent: "center", alignItems: "center" }}
-                src={modalImg}
-            />
         </>
     );
 }

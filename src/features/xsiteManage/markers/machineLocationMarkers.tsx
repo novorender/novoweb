@@ -24,6 +24,7 @@ const MachineMarker = styled(
     ({ theme, active, hovered }) => css`
         cursor: pointer;
         pointer-events: bounding-box;
+        filter: drop-shadow(3px 3px 2px rgba(0, 0, 0, 0.3));
 
         path {
             stroke: ${theme.palette.primary.main};
@@ -41,10 +42,6 @@ const MachineMarker = styled(
                 : hovered
                 ? theme.palette.secondary.light
                 : theme.palette.secondary.dark};
-        }
-
-        svg {
-            filter: drop-shadow(3px 3px 2px rgba(0, 0, 0, 0.3));
         }
     `
 );
