@@ -1,5 +1,5 @@
 import { Fragment, useEffect, useRef } from "react";
-import { Link } from "react-router-dom";
+import { Link, useHistory } from "react-router-dom";
 import AutoSizer from "react-virtualized-auto-sizer";
 import { Box, Button, FormControlLabel, ListItemButton, Typography, useTheme } from "@mui/material";
 import { FilterAlt } from "@mui/icons-material";
@@ -19,6 +19,7 @@ import {
 
 export function Feed() {
     const theme = useTheme();
+    const history = useHistory();
 
     const dispatch = useAppDispatch();
     const showMarkers = useAppSelector(selectShowDitioMarkers);
@@ -130,8 +131,18 @@ export function Feed() {
                                                 alignItems="flex-start"
                                                 overflow="hidden"
                                                 sx={{ color: "text.primary", textDecoration: "none" }}
-                                                component={Link}
-                                                to={`/post/${post.id}`}
+                                                onClick={() => {
+                                                    history.push(`/post/${post.id}`);
+                                                    dispatch(ditioActions.setActivePost(post.id));
+                                                }}
+                                                onMouseEnter={() => {
+                                                    dispatch(
+                                                        ditioActions.setHoveredEntity({ kind: "post", id: post.id })
+                                                    );
+                                                }}
+                                                onMouseLeave={() => {
+                                                    dispatch(ditioActions.setHoveredEntity(undefined));
+                                                }}
                                             >
                                                 <Box
                                                     bgcolor={theme.palette.grey[200]}

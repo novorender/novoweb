@@ -14,8 +14,8 @@ import { Box, styled, css } from "@mui/material";
 
 import { PerformanceStats } from "features/performanceStats";
 import { getDataFromUrlHash } from "features/shareLink";
-import { imagesActions, isFlat, selectActiveImage, useHandleImageChanges } from "features/images";
-import { ImgModal, LinearProgress, Loading } from "components";
+import { imagesActions, useHandleImageChanges } from "features/images";
+import { LinearProgress, Loading } from "components";
 import { api, dataApi, measureApi } from "app";
 import { useSceneId } from "hooks/useSceneId";
 import {
@@ -73,7 +73,6 @@ import {
     useDispatchHighlightCollections,
     useHighlightCollections,
 } from "contexts/highlightCollections";
-import { getAssetUrl } from "utils/misc";
 
 import {
     refillObjects,
@@ -100,6 +99,7 @@ import { Stamp } from "./stamp";
 import { Markers } from "./markers";
 import { isSceneError, SceneError } from "./sceneError";
 import { useMoveMarkers } from "./hooks/useMoveMarkers";
+import { Images } from "./images";
 
 glMatrix.setMatrixArrayType(Array);
 
@@ -119,7 +119,7 @@ const Svg = styled("svg")(
         top: 0;
         width: 100%;
         height: 100%;
-        overflow: visible;
+        overflow: hidden;
         pointer-events: none;
 
         g {
@@ -174,7 +174,6 @@ export function Render3D({ onInit }: Props) {
     const advancedSettings = useAppSelector(selectAdvancedSettings);
     const deviation = useAppSelector(selectDeviations);
     const gridDefaults = useAppSelector(selectGridDefaults);
-    const activeImage = useAppSelector(selectActiveImage);
     const urlBookmarkId = useAppSelector(selectUrlBookmarkId);
     const localBookmarkId = useAppSelector(selectLocalBookmarkId);
     const loadingHandles = useAppSelector(selectLoadingHandles);
@@ -1081,14 +1080,7 @@ export function Render3D({ onInit }: Props) {
                             <g id="cursor" />
                         </Svg>
                     )}
-                    {scene && activeImage && isFlat(activeImage.image) && (
-                        <ImgModal
-                            open={true}
-                            onClose={() => dispatch(imagesActions.setActiveImage(undefined))}
-                            sx={{ display: "flex", justifyContent: "center", alignItems: "center" }}
-                            src={getAssetUrl(scene, activeImage.image.src).toString()}
-                        />
-                    )}
+                    <Images />
                     {!view ? <Loading /> : null}
                 </>
             )}
