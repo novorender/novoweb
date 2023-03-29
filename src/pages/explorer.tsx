@@ -28,7 +28,7 @@ import { SelectionBasketProvider } from "contexts/selectionBasket";
 import { explorerGlobalsActions, ExplorerGlobalsProvider, useExplorerGlobals } from "contexts/explorerGlobals";
 import { HighlightCollectionsProvider } from "contexts/highlightCollections";
 import { MsalInteraction } from "features/msalInteraction";
-import { VersionAlert } from "features/versionAlert";
+// import { VersionAlert } from "features/versionAlert";
 
 export function Explorer() {
     return (
@@ -119,7 +119,7 @@ function ExplorerBase() {
             <Render3D onInit={handleInit} />
             {view && scene && !disableHud ? <Hud /> : null}
             <Consent />
-            <VersionAlert />
+            {/* <VersionAlert /> */}
             <MsalInteraction />
         </>
     );
