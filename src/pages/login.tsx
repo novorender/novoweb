@@ -1,16 +1,6 @@
 import { useState, FormEvent, ChangeEvent } from "react";
 import { useMsal } from "@azure/msal-react";
-import {
-    useTheme,
-    Box,
-    OutlinedInput,
-    IconButton,
-    InputAdornment,
-    FormControl,
-    CircularProgress,
-    Alert,
-    Typography,
-} from "@mui/material";
+import { useTheme, Box, OutlinedInput, IconButton, InputAdornment, FormControl, CircularProgress } from "@mui/material";
 import { useHistory } from "react-router-dom";
 import { LoadingButton } from "@mui/lab";
 import { Lock, Visibility, VisibilityOff, AccountCircle } from "@mui/icons-material";
@@ -128,14 +118,6 @@ export function Login() {
                     <Box mb={2} fontSize={24} fontWeight={700} textAlign="center" component="h1">
                         Log in
                     </Box>
-                    <Alert severity="warning" sx={{ mb: 2 }}>
-                        <Typography mb={1}>
-                            There is a driver bug on latest iOS/iPadOS 16.4 that causes Novorender to crash.
-                        </Typography>
-                        <Typography>
-                            We are working on a fix/worakound. Please do not upgrade to this version yet.
-                        </Typography>
-                    </Alert>
                     <form onSubmit={handleSubmit}>
                         <Box mb={2}>
                             <FormControl fullWidth>
