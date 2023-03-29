@@ -19,7 +19,7 @@ import { Explorer } from "pages/explorer";
 import { Login } from "pages/login";
 import { authActions } from "slices/authSlice";
 import { loginRequest, msalConfig } from "config/auth";
-import { dataServerBaseUrl, offscreenCanvas } from "config";
+import { dataServerBaseUrl } from "config";
 import {
     CustomNavigationClient,
     getAccessToken,
@@ -31,6 +31,12 @@ import {
 import { getAuthHeader } from "utils/auth";
 import { StorageKey } from "config/storage";
 import { deleteFromStorage, getFromStorage } from "utils/storage";
+
+const isIpad =
+    /\biPad/.test(navigator.userAgent) ||
+    (/\bMobile\b/.test(navigator.userAgent) && /\bMacintosh\b/.test(navigator.userAgent));
+const isIphone = /\biPhone/.test(navigator.userAgent);
+export const offscreenCanvas = !(isIpad || isIphone) && "OffscreenCanvas" in window;
 
 export const api = createAPI({
     noOffscreenCanvas: !offscreenCanvas,
@@ -253,11 +259,12 @@ export function App() {
 async function loadDeviceProfile(): Promise<void> {
     try {
         const tiers = [0, 50, 75, 300];
-        const { isMobile, device, fps, ...gpuTier } = await getGPUTier({
+        const tierResult = await getGPUTier({
             mobileTiers: tiers,
             desktopTiers: tiers,
         });
-        const isApple = device?.includes("apple");
+        const isApple = tierResult.device?.includes("apple") || false;
+        const { isMobile, fps, ...gpuTier } = tierResult;
         let { tier } = gpuTier;
 
         // GPU is obscured on apple mobile devices and the result is usually much worse than the actual device's GPU.

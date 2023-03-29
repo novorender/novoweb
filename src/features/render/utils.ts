@@ -16,8 +16,7 @@ import {
 } from "@novorender/webgl-api";
 import { vec3 } from "gl-matrix";
 
-import { api, dataApi } from "app";
-import { offscreenCanvas } from "config";
+import { api, dataApi, offscreenCanvas } from "app";
 import { featuresConfig, WidgetKey } from "config/features";
 import { groupsActions, selectLoadingIds } from "features/groups";
 import { DeviationMode, deviationsActions } from "features/deviations";
