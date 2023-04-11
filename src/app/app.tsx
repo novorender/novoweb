@@ -307,6 +307,7 @@ async function loadDeviceProfile(): Promise<void> {
                     if (isApple) {
                         api.deviceProfile = {
                             ...api.deviceProfile,
+                            triangleLimit: Math.max(7_500_000, api.deviceProfile.triangleLimit),
                             gpuBytesLimit: Math.max(500_000_000, api.deviceProfile.gpuBytesLimit),
                         };
                     } else {
