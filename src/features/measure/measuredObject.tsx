@@ -143,6 +143,10 @@ export function MeasuredResult({ duoMeasurementValues }: { duoMeasurementValues:
 
     const showSlope = hasMeasurePoints;
     const showPlanarDiff = hasMeasurePoints;
+    const parameters = [
+        duoMeasurementValues.measureInfoA?.parameter,
+        duoMeasurementValues.measureInfoB?.parameter,
+    ].filter((p) => typeof p === "number") as number[];
     return (
         <Accordion defaultExpanded={true}>
             <AccordionSummary sx={{ fontWeight: 600 }}>Result</AccordionSummary>
@@ -185,11 +189,26 @@ export function MeasuredResult({ duoMeasurementValues }: { duoMeasurementValues:
                                 </Grid>
                             </ListItem>
                         ) : null}
+
                         {showPlanarDiff ? (
                             <ListItem>
                                 <PlanarDiff start={pts![0]} end={pts![1]} />
                             </ListItem>
                         ) : null}
+
+                        {parameters.map((p, idx, arr) => (
+                            <ListItem>
+                                <Grid container>
+                                    <Grid item xs={5}>
+                                        Parameter {arr.length === 2 ? (idx === 0 ? "A" : "B") : ""}
+                                    </Grid>
+                                    <Grid item xs={5}>
+                                        {p.toFixed(3)}
+                                    </Grid>
+                                </Grid>
+                            </ListItem>
+                        ))}
+
                         {showSlope ? (
                             <ListItem>
                                 <Slope start={pts![0]} end={pts![1]} />
