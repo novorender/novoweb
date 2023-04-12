@@ -1,4 +1,4 @@
-import { Box, Paper, Typography, useTheme, CircularProgress } from "@mui/material";
+import { Box, Paper, Typography, useTheme, CircularProgress, Alert } from "@mui/material";
 
 import { api, dataApi } from "app";
 import { Accordion, AccordionDetails, AccordionSummary } from "components";
@@ -40,6 +40,12 @@ export function SceneError({ id, error, msg }: { id: string; error: Exclude<Stat
                                 ? `Scene not found`
                                 : "Unable to load scene"}
                         </Typography>
+                        {error === Status.ServerError && (
+                            <Alert severity="warning" sx={{ mb: 2 }}>
+                                Make sure you are using an up to date version of either Safari or a Chromium based
+                                browser such as Chrome or Edge.
+                            </Alert>
+                        )}
                         <Typography paragraph>
                             {error === Status.ServerError ? (
                                 "Failed to download the scene. Please try again later."
