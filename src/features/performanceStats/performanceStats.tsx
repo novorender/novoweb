@@ -43,8 +43,8 @@ export function PerformanceStats() {
                 const { performanceStatistics: stats } = view;
 
                 if (detailBiasRef.current) {
-                    detailBiasRef.current.innerText = `${
-                        api.deviceProfile.detailBias
+                    detailBiasRef.current.innerText = `${api.deviceProfile.detailBias} / ortho ${
+                        api.deviceProfile.orthoDetailBias
                     } (active: ${view.settings.quality.detail.value.toFixed(
                         2
                     )}, idle: ${view.lastRenderOutput?.isIdleFrame()})`;

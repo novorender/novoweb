@@ -11,6 +11,7 @@ export function PerformanceSettings() {
     const theme = useTheme();
 
     const [detailBias, setDetailBias] = useState(String(api.deviceProfile.detailBias));
+    const [orthoDetailBias, setOrthoDetailBias] = useState(String(api.deviceProfile.orthoDetailBias));
     const [gpuBytesLimit, setGpuBytesLimit] = useState(String(api.deviceProfile.gpuBytesLimit));
     const [renderResolution, setRenderResolution] = useState(String(api.deviceProfile.renderResolution));
     const [textureResolution, setTextureResolution] = useState(String(api.deviceProfile.textureResolution));
@@ -109,6 +110,16 @@ export function PerformanceSettings() {
                     name="detailBias"
                     value={detailBias}
                     onChange={handleChange(setDetailBias)}
+                />
+
+                <TextField
+                    sx={{ mt: 2 }}
+                    fullWidth
+                    size="medium"
+                    label="Ortho detail bias"
+                    name="orthoDetailBias"
+                    value={orthoDetailBias}
+                    onChange={handleChange(setOrthoDetailBias)}
                 />
 
                 <TextField

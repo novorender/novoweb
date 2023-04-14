@@ -280,6 +280,7 @@ async function loadDeviceProfile(): Promise<void> {
         const { name } = api.deviceProfile;
         api.deviceProfile = {
             ...api.deviceProfile,
+            orthoDetailBias: 0,
             name: `${api.deviceProfile.name}${/tier/i.test(name) ? "" : `; tier${tier} (${fps})`}${
                 /(pc|mobile)/i.test(name) ? "" : `; ${isMobile ? "Mobile" : "PC"}`
             }`,
@@ -302,11 +303,13 @@ async function loadDeviceProfile(): Promise<void> {
                     api.deviceProfile = {
                         ...api.deviceProfile,
                         renderResolution: 1,
+                        orthoDetailBias: 1.5,
                     };
 
                     if (isApple) {
                         api.deviceProfile = {
                             ...api.deviceProfile,
+                            orthoDetailBias: 2.75,
                             triangleLimit: Math.max(7_500_000, api.deviceProfile.triangleLimit),
                             gpuBytesLimit: Math.max(500_000_000, api.deviceProfile.gpuBytesLimit),
                         };
@@ -319,6 +322,7 @@ async function loadDeviceProfile(): Promise<void> {
                 } else {
                     api.deviceProfile = {
                         ...api.deviceProfile,
+                        orthoDetailBias: 1.5,
                         gpuBytesLimit: Math.max(1_000_000, api.deviceProfile.gpuBytesLimit),
                         detailBias: Math.max(0.4, api.deviceProfile.detailBias),
                     };
@@ -328,6 +332,7 @@ async function loadDeviceProfile(): Promise<void> {
                 if (isMobile) {
                     api.deviceProfile = {
                         ...api.deviceProfile,
+                        orthoDetailBias: 2.75,
                         triangleLimit: Math.max(7_500_000, api.deviceProfile.triangleLimit),
                         weakDevice: false,
                     };
@@ -347,6 +352,7 @@ async function loadDeviceProfile(): Promise<void> {
                 } else {
                     api.deviceProfile = {
                         ...api.deviceProfile,
+                        orthoDetailBias: 2.75,
                         weakDevice: false,
                     };
                 }
@@ -355,12 +361,14 @@ async function loadDeviceProfile(): Promise<void> {
                 if (isMobile) {
                     api.deviceProfile = {
                         ...api.deviceProfile,
+                        orthoDetailBias: 2.75,
                         weakDevice: false,
                     };
                 } else {
                     api.deviceProfile = {
                         ...api.deviceProfile,
                         detailBias: Math.max(1.5, api.deviceProfile.detailBias),
+                        orthoDetailBias: 10,
                         triangleLimit: Math.max(20_000_000, api.deviceProfile.triangleLimit),
                         gpuBytesLimit: Math.max(4_000_000_000, api.deviceProfile.gpuBytesLimit),
                         renderResolution: 1,
