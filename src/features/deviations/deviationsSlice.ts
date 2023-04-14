@@ -43,6 +43,7 @@ const initialState = {
               idx: number;
           },
     deviations: {
+        index: 0,
         mode: DeviationMode.Mix,
         colors: [] as Deviation[],
     },
