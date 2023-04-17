@@ -11,7 +11,7 @@ export interface ColorSettings {
 }
 
 export interface TextSettings {
-    type: "centerOfLine" | "center";
+    type: "centerOfLine" | "center" | "defualt";
     unit?: string;
     customText?: string[];
 }
@@ -34,6 +34,7 @@ export function drawProduct(
     product: DrawProduct,
     colorSettings: ColorSettings,
     pixelWidth: number,
+    textSettings?: TextSettings,
     lineCap?: LineCap
 ) {
     for (const obj of product.objects) {
@@ -73,7 +74,7 @@ export function drawProduct(
             }
         } else {
             obj.parts.forEach((part) => {
-                drawPart(ctx, camera, part, colorSettings, pixelWidth, undefined, lineCap);
+                drawPart(ctx, camera, part, colorSettings, pixelWidth, textSettings, lineCap);
             });
         }
     }
@@ -105,7 +106,7 @@ export function drawPart(
     return false;
 }
 function drawTextPart(ctx: CanvasRenderingContext2D, part: DrawPart) {
-    if (part.drawType === "text" && part.text && part.vertices2D) {
+    if (part.drawType === "text" && !Array.isArray(part.text) && part.text && part.vertices2D) {
         return drawText(ctx, part.vertices2D, part.text);
     }
     return false;
@@ -171,7 +172,7 @@ function drawAngle(ctx: CanvasRenderingContext2D, camera: CameraSettings, part: 
         ctx.arc(anglePoint[0], anglePoint[1], 50, angleA, angleB);
         ctx.stroke();
 
-        if (part.text) {
+        if (part.text && !Array.isArray(part.text)) {
             ctx.fillStyle = "white";
             ctx.strokeStyle = "black";
             ctx.lineWidth = 2;
@@ -288,6 +289,29 @@ function drawLinesOrPolygon(
                     text.customText && text.customText.length > 0 ? text.customText : part.text ? part.text : ""
                 } ${text.unit ? text.unit : "m"}`;
                 drawText(ctx, part.vertices2D, textStr);
+            } else if (part.text && Array.isArray(part.text) && part.text.length > 0) {
+                const points = part.vertices2D;
+                for (let i = 0; i < points.length - 1 && i < part.text[0].length; ++i) {
+                    if (part.text[0][i].length === 0) {
+                        continue;
+                    }
+                    const textStr = part.text[0][i] + `${text.unit ? text.unit : "m"}`;
+                    drawText(ctx, [points[i], points[i + 1]], textStr);
+                }
+                if (part.voids) {
+                    for (let j = 0; j < part.voids.length && j < part.text.length - 1; ++j) {
+                        const voidVerts = part.voids[j].vertices2D;
+                        if (voidVerts) {
+                            for (let i = 0; i < voidVerts.length - 1 && i < part.text[j].length; ++i) {
+                                if (part.text[j + 1][i].length === 0) {
+                                    continue;
+                                }
+                                const textStr = part.text[j + 1][i] + `${text.unit ? text.unit : "m"}`;
+                                drawText(ctx, [voidVerts[i], voidVerts[i + 1]], textStr);
+                            }
+                        }
+                    }
+                }
             }
         }
         return true;

@@ -171,7 +171,8 @@ export function Engine2D() {
                             pointColor: inactiveDueToHover ? measurementInactivePointColor : measurementPointColor,
                             complexCylinder: true,
                         },
-                        3
+                        3,
+                        { type: "defualt" }
                     );
                 }
             });
