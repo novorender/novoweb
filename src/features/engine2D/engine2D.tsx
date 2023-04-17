@@ -172,7 +172,7 @@ export function Engine2D() {
                             complexCylinder: true,
                         },
                         3,
-                        { type: "defualt" }
+                        { type: "default" }
                     );
                 }
             });

@@ -11,7 +11,7 @@ export interface ColorSettings {
 }
 
 export interface TextSettings {
-    type: "centerOfLine" | "center" | "defualt";
+    type: "centerOfLine" | "center" | "default";
     unit?: string;
     customText?: string[];
 }
