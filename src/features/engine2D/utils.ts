@@ -38,7 +38,7 @@ export function drawProduct(
     lineCap?: LineCap
 ) {
     for (const obj of product.objects) {
-        if (colorSettings.complexCylinder && obj.kind === "cylinder" && obj.parts.length === 3) {
+        if (colorSettings.complexCylinder && obj.kind === "cylinder") {
             let startCol = "red";
             let endCol = "lime";
             const cylinderLine = obj.parts[0];
@@ -58,22 +58,34 @@ export function drawProduct(
                     camera,
                     cylinderLine,
                     { lineColor: gradient, outlineColor: "rgba(80, 80, 80, .8)" },
-                    pixelWidth
+                    pixelWidth,
+                    { type: "centerOfLine", unit: " " }
                 );
             }
 
             for (let i = 1; i < 3; ++i) {
-                const col = i === 1 ? startCol : endCol;
+                const top = i === 1;
+                const col = top ? startCol : endCol;
                 drawPart(
                     ctx,
                     camera,
                     obj.parts[i],
                     { lineColor: col, outlineColor: "rgba(80, 80, 80, .8)" },
-                    pixelWidth
+                    pixelWidth,
+                    { type: "center" }
                 );
+            }
+
+            if (textSettings) {
+                for (let i = 3; i < obj.parts.length; ++i) {
+                    drawPart(ctx, camera, obj.parts[i], colorSettings, pixelWidth, textSettings, lineCap);
+                }
             }
         } else {
             obj.parts.forEach((part) => {
+                if (part.drawType === "text" && !textSettings) {
+                    return;
+                }
                 drawPart(ctx, camera, part, colorSettings, pixelWidth, textSettings, lineCap);
             });
         }
