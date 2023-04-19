@@ -8,7 +8,7 @@ import {
     initAdvancedSettings,
     initClippingBox,
     initClippingPlanes,
-    initDeviation,
+    initDeviations,
     initHidden,
     initHighlighted,
     initSubtrees,
@@ -95,7 +95,7 @@ export function Home({ position, ...speedDialProps }: Props) {
             view.applySettings(toApply);
             initClippingBox(toApply.clippingPlanes);
             initClippingPlanes(toApply.clippingVolume ?? { enabled: false, mode: "union", planes: [] });
-            initDeviation(toApply.points.deviation ?? { mode: "off", colors: [] });
+            initDeviations(toApply.points.deviation ?? { mode: "off", colors: [] });
         }
 
         if (camera.kind === "ortho") {

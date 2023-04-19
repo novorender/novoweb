@@ -251,7 +251,7 @@ export const featuresConfig = {
         defaultLocked: false,
         tags: [featureTags.review.key],
         dependencies: {
-            subtrees: [["points", "triangles"]],
+            subtrees: [["points"]],
         },
     },
     followPath: {

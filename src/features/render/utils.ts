@@ -505,13 +505,14 @@ export function initClippingPlanes(clipping: RenderSettings["clippingVolume"]): 
     );
 }
 
-export function initDeviation(deviation: RenderSettings["points"]["deviation"]): void {
+export function initDeviations(deviations: RenderSettings["points"]["deviation"]): void {
     store.dispatch(
         deviationsActions.setDeviations({
-            mode: deviation.mode as DeviationMode,
-            colors: deviation.colors
+            mode: deviations.mode as DeviationMode,
+            colors: deviations.colors
                 .map((c) => ({ ...c, color: Array.from(c.color) as VecRGBA }))
                 .sort((a, b) => b.deviation - a.deviation),
+            index: deviations.index ?? 0,
         })
     );
 }

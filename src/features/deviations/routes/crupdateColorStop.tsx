@@ -1,18 +1,20 @@
 import { FormEvent, useState } from "react";
 import { TextField } from "@mui/material";
+import { useHistory, useParams } from "react-router-dom";
 
 import { Confirmation } from "components";
 import { useAppDispatch, useAppSelector } from "app/store";
 
-import { DeviationsStatus, selectDeviationsStatus, deviationsActions, selectDeviations } from "./deviationsSlice";
+import { deviationsActions, selectDeviations } from "../deviationsSlice";
 
-export function CreateDeviation() {
-    const status = useAppSelector(selectDeviationsStatus);
+export function CrupdateColorStop() {
+    const history = useHistory();
+    let { idx: _idx } = useParams<{ idx?: string }>();
+    const idx = _idx ? Number(_idx) : undefined;
     const deviations = useAppSelector(selectDeviations);
     const dispatch = useAppDispatch();
 
-    const editing = status.status === DeviationsStatus.Editing ? deviations.colors[status.idx] : undefined;
-
+    const editing = idx !== undefined ? deviations.colors[idx] : undefined;
     const [deviationNumber, setDeviationNumber] = useState(editing ? String(editing.deviation) : "");
     const [error, setError] = useState("");
 
@@ -24,7 +26,7 @@ export function CreateDeviation() {
                 (deviation) => deviation.deviation === Number(deviationNumber) && deviation !== editing
             )
         ) {
-            setError("A deviation with this value is already set.");
+            setError("A deviation with this value already exists.");
             return;
         }
 
@@ -39,7 +41,8 @@ export function CreateDeviation() {
                 colors: [...newDeviations].sort((a, b) => b.deviation - a.deviation),
             })
         );
-        dispatch(deviationsActions.setStatus({ status: DeviationsStatus.Initial }));
+
+        history.goBack();
     };
 
     return (
@@ -47,7 +50,7 @@ export function CreateDeviation() {
             title={editing ? "Edit deviation" : "Add deviation"}
             confirmBtnText="Save"
             onCancel={() => {
-                dispatch(deviationsActions.setStatus({ status: DeviationsStatus.Initial }));
+                history.goBack();
             }}
             component="form"
             onSubmit={handleSubmit}

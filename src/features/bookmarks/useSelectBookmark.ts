@@ -29,6 +29,7 @@ import {
     useDispatchHighlightCollections,
 } from "contexts/highlightCollections";
 import { imagesActions } from "features/images";
+import { DeviationMode, deviationsActions } from "features/deviations";
 
 export function useSelectBookmark() {
     const sceneId = useSceneId();
@@ -291,6 +292,16 @@ export function useSelectBookmark() {
             dispatch(renderActions.setViewMode(bookmark.viewMode));
         } else {
             dispatch(renderActions.setViewMode(ViewMode.Default));
+        }
+
+        if (bookmark.deviations) {
+            const { mode, index } = bookmark.deviations;
+            dispatch(
+                deviationsActions.setDeviations({
+                    index,
+                    mode: mode === "off" ? DeviationMode.Off : mode === "on" ? DeviationMode.On : DeviationMode.Mix,
+                })
+            );
         }
     };
 

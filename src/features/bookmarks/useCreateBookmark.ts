@@ -28,6 +28,7 @@ import {
 } from "features/manhole";
 import { HighlightCollection, useLazyHighlightCollections } from "contexts/highlightCollections";
 import { ViewMode } from "types/misc";
+import { selectDeviations } from "features/deviations";
 
 export function useCreateBookmark() {
     const measurement = useAppSelector(selectMeasure);
@@ -42,6 +43,7 @@ export function useCreateBookmark() {
     const manholeCollisionTarget = useAppSelector(selectManholeCollisionTarget);
     const viewMode = useAppSelector(selectViewMode);
     const manholeCollisionSettings = useAppSelector(selectManholeCollisionSettings);
+    const deviations = useAppSelector(selectDeviations);
 
     const {
         state: { view },
@@ -128,6 +130,10 @@ export function useCreateBookmark() {
             },
             viewMode: viewMode === ViewMode.Panorama ? ViewMode.Default : viewMode,
             grid: { ...view.settings.grid },
+            deviations: {
+                mode: deviations.mode,
+                index: deviations.index,
+            },
             ...(measurement.selectedEntities.length > 0
                 ? { selectedMeasureEntities: measurement.selectedEntities }
                 : {}),
