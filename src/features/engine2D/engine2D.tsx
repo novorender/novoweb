@@ -391,9 +391,8 @@ export function Engine2D() {
             }
 
             if (pointLinePoints.length && pointLineResult) {
-                const drawProd = measureApi.getDrawObjectFromPoints(view, pointLinePoints, false, true);
+                const drawProd = measureApi.getDrawObjectFromPoints(view, pointLinePoints, false, true, true);
                 if (drawProd) {
-                    const textList = pointLineResult.segmentLengts.map((v) => v.toFixed(2));
                     drawProd.objects.forEach((obj) => {
                         obj.parts.forEach((part) => {
                             drawPart(
@@ -407,8 +406,7 @@ export function Engine2D() {
                                 },
                                 2,
                                 {
-                                    type: "centerOfLine",
-                                    customText: textList,
+                                    type: "default",
                                 }
                             );
                         });
