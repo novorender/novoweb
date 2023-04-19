@@ -85,7 +85,7 @@ import {
     initClippingBox,
     initClippingPlanes,
     initAdvancedSettings,
-    initDeviation,
+    initDeviations,
     initSubtrees,
     initProjectSettings,
 } from "./utils";
@@ -290,7 +290,7 @@ export function Render3D({ onInit }: Props) {
 
                 initClippingBox(_view.settings.clippingPlanes);
                 initClippingPlanes(_view.settings.clippingVolume);
-                initDeviation(_view.settings.points.deviation);
+                initDeviations(_view.settings.points.deviation);
 
                 dispatchSelectionBasket(selectionBasketActions.set([]));
                 initHidden(dispatchHidden);

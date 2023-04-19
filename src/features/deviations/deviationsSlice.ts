@@ -1,6 +1,7 @@
 import { createSlice, PayloadAction } from "@reduxjs/toolkit";
 
 import { RootState } from "app/store";
+import { AsyncState, AsyncStatus } from "types/misc";
 import { VecRGBA } from "utils/color";
 
 export enum DeviationMode {
@@ -13,14 +14,6 @@ export type Deviation = {
     color: VecRGBA;
     deviation: number;
 };
-
-export enum DeviationsStatus {
-    Initial,
-    Saving,
-    Creating,
-    Editing,
-    Error,
-}
 
 export enum DeviationCalculationStatus {
     Initial,
@@ -36,17 +29,12 @@ const initialState = {
     } as
         | { status: Exclude<DeviationCalculationStatus, DeviationCalculationStatus.Error> }
         | { status: DeviationCalculationStatus.Error; error: string },
-    status: { status: DeviationsStatus.Initial } as
-        | { status: Exclude<DeviationsStatus, DeviationsStatus.Editing> }
-        | {
-              status: DeviationsStatus.Editing;
-              idx: number;
-          },
     deviations: {
         index: 0,
-        mode: DeviationMode.Mix,
+        mode: DeviationMode.Off,
         colors: [] as Deviation[],
     },
+    profiles: { status: AsyncStatus.Initial } as AsyncState<string[]>,
 };
 
 type State = typeof initialState;
@@ -58,17 +46,19 @@ export const deviationsSlice = createSlice({
         setCalculationStatus: (state, action: PayloadAction<State["calculationStatus"]>) => {
             state.calculationStatus = action.payload;
         },
-        setStatus: (state, action: PayloadAction<State["status"]>) => {
-            state.status = action.payload;
-        },
         setDeviations: (state, action: PayloadAction<Partial<State["deviations"]>>) => {
             state.deviations = { ...state.deviations, ...action.payload };
+        },
+        setProfiles: (state, action: PayloadAction<State["profiles"]>) => {
+            state.profiles = action.payload;
         },
     },
 });
 
 export const selectDeviations = (state: RootState) => state.deviations.deviations;
-export const selectDeviationsStatus = (state: RootState) => state.deviations.status;
+export const selectDeviationProfiles = (state: RootState) => state.deviations.profiles;
+export const selectDeviationProfilesData = (state: RootState) =>
+    state.deviations.profiles.status === AsyncStatus.Success ? state.deviations.profiles.data : [];
 export const selectDeviationCalculationStatus = (state: RootState) => state.deviations.calculationStatus;
 
 const { actions, reducer } = deviationsSlice;

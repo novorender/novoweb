@@ -54,5 +54,9 @@ declare module "@novorender/data-js-api" {
                 ids: number[];
             };
         };
+        deviations?: {
+            index: number;
+            mode: "on" | "off" | "mix";
+        };
     }
 }
