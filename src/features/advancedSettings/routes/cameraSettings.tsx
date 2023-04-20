@@ -7,7 +7,6 @@ import {
     Button,
     Slider,
     Typography,
-    InputAdornment,
     OutlinedInput,
     InputLabel,
     Select,
@@ -15,7 +14,7 @@ import {
     Divider as BaseDivider,
     SelectChangeEvent,
 } from "@mui/material";
-import { ArrowBack, Edit, Save } from "@mui/icons-material";
+import { ArrowBack, Save } from "@mui/icons-material";
 import { quat, vec3 } from "gl-matrix";
 
 import { Divider, ScrollBox, Accordion, AccordionDetails, AccordionSummary, LinearProgress } from "components";
@@ -25,10 +24,10 @@ import {
     AdvancedSetting,
     selectAdvancedSettings,
     renderActions,
-    selectBaseCameraSpeed,
-    CameraSpeedMultiplier,
     selectCameraType,
     CameraType,
+    selectCameraSpeedLevels,
+    CameraSpeedLevel,
 } from "features/render/renderSlice";
 
 type SliderSettings =
@@ -65,7 +64,7 @@ export function CameraSettings({
     } = useExplorerGlobals(true);
 
     const dispatch = useAppDispatch();
-    const baseSpeed = useAppSelector(selectBaseCameraSpeed);
+    const speedLevels = useAppSelector(selectCameraSpeedLevels).flight;
     const settings = useAppSelector(selectAdvancedSettings);
     const { cameraNearClipping, cameraFarClipping, headlightIntensity, headlightDistance, mouseButtonMap, fingerMap } =
         settings;
@@ -87,7 +86,13 @@ export function CameraSettings({
         return numZero * 90 + +d.substr(0, d.length - numZero) - 10;
     });
     const [intensity, setIntensity] = useState(headlightIntensity);
-    const [speed, setSpeed] = useState(String(baseSpeed));
+    // const [speed, setSpeed] = useState(String(baseSpeed));
+
+    const [speeds, setSpeeds] = useState({
+        [CameraSpeedLevel.Slow]: String(speedLevels[CameraSpeedLevel.Slow]),
+        [CameraSpeedLevel.Default]: String(speedLevels[CameraSpeedLevel.Default]),
+        [CameraSpeedLevel.Fast]: String(speedLevels[CameraSpeedLevel.Fast]),
+    });
 
     const handleSliderChange =
         (kind: SliderSettings) =>
@@ -172,7 +177,7 @@ export function CameraSettings({
         };
 
     const handleSpeedChange = (e: ChangeEvent<HTMLInputElement>) => {
-        setSpeed(e.target.value);
+        setSpeeds((speed) => ({ ...speed, [e.target.name]: e.target.value.replace(",", ".") }));
     };
 
     const handleSpeedSubmit = (e: FormEvent | FocusEvent) => {
@@ -180,13 +185,24 @@ export function CameraSettings({
             e.preventDefault();
         }
 
-        const val = Number(speed);
+        const isValid = (num: number) => !Number.isNaN(num) && Number.isFinite(num);
 
-        if (Number.isNaN(val) || !Number.isFinite(val)) {
-            setSpeed(String(baseSpeed));
-        } else {
-            dispatch(renderActions.setBaseCameraSpeed(val));
-        }
+        const levels = {
+            [CameraSpeedLevel.Slow]: isValid(Number(speeds[CameraSpeedLevel.Slow]))
+                ? Number(speeds[CameraSpeedLevel.Slow])
+                : speedLevels[CameraSpeedLevel.Slow],
+            [CameraSpeedLevel.Default]: isValid(Number(speeds[CameraSpeedLevel.Default]))
+                ? Number(speeds[CameraSpeedLevel.Default])
+                : speedLevels[CameraSpeedLevel.Default],
+            [CameraSpeedLevel.Fast]: isValid(Number(speeds[CameraSpeedLevel.Fast]))
+                ? Number(speeds[CameraSpeedLevel.Fast])
+                : speedLevels[CameraSpeedLevel.Fast],
+        };
+
+        setSpeeds(
+            Object.fromEntries(Object.entries(levels).map(([key, value]) => [key, String(value)])) as typeof speeds
+        );
+        dispatch(renderActions.setCameraSpeedLevels({ flight: levels }));
     };
 
     const handleMouseControllerChange = ({ target: { name, value } }: SelectChangeEvent<number>) => {
@@ -371,45 +387,50 @@ export function CameraSettings({
                         >
                             <BaseDivider sx={{ mb: 1, color: theme.palette.grey[500] }} />
                             <Box display="flex" justifyContent="space-between" alignItems="center">
-                                <InputLabel sx={{ color: "text.primary" }}>Slow:</InputLabel>
-                                <OutlinedInput
-                                    sx={{ maxWidth: 150 }}
-                                    value={(baseSpeed * CameraSpeedMultiplier.Slow).toFixed(2)}
-                                    color="secondary"
-                                    size="small"
-                                    readOnly
-                                />
-                            </Box>
-                            <BaseDivider sx={{ my: 1, color: theme.palette.grey[500] }} />
-                            <Box display="flex" justifyContent="space-between" alignItems="center">
-                                <InputLabel sx={{ color: "text.primary" }} htmlFor="baseSpeed">
-                                    Base:
+                                <InputLabel sx={{ color: "text.primary" }} htmlFor="slowSpeed">
+                                    Slow:
                                 </InputLabel>
                                 <OutlinedInput
-                                    id="baseSpeed"
-                                    value={speed}
+                                    id="slowSpeed"
+                                    name={CameraSpeedLevel.Slow}
+                                    value={speeds[CameraSpeedLevel.Slow]}
                                     onChange={handleSpeedChange}
                                     onBlur={handleSpeedSubmit}
                                     size="small"
-                                    sx={{ fontWeight: 600, maxWidth: 150 }}
-                                    inputProps={{ inputMode: "numeric", pattern: "[0-9.]*" }}
-                                    autoFocus
-                                    endAdornment={
-                                        <InputAdornment position="end">
-                                            <Edit fontSize="small" />
-                                        </InputAdornment>
-                                    }
+                                    sx={{ maxWidth: 150 }}
+                                    inputProps={{ inputMode: "numeric", pattern: "[0-9,.]*" }}
                                 />
                             </Box>
                             <BaseDivider sx={{ my: 1, color: theme.palette.grey[500] }} />
                             <Box display="flex" justifyContent="space-between" alignItems="center">
-                                <InputLabel sx={{ color: "text.primary" }}>Fast:</InputLabel>
+                                <InputLabel sx={{ color: "text.primary" }} htmlFor="defaultSpeed">
+                                    Default:
+                                </InputLabel>
                                 <OutlinedInput
-                                    value={(baseSpeed * CameraSpeedMultiplier.Fast).toFixed(2)}
-                                    sx={{ maxWidth: 150 }}
-                                    color="secondary"
+                                    id="defaultSpeed"
+                                    name={CameraSpeedLevel.Default}
+                                    value={speeds[CameraSpeedLevel.Default]}
+                                    onChange={handleSpeedChange}
+                                    onBlur={handleSpeedSubmit}
                                     size="small"
-                                    readOnly
+                                    sx={{ maxWidth: 150 }}
+                                    inputProps={{ inputMode: "numeric", pattern: "[0-9,.]*" }}
+                                />
+                            </Box>
+                            <BaseDivider sx={{ my: 1, color: theme.palette.grey[500] }} />
+                            <Box display="flex" justifyContent="space-between" alignItems="center">
+                                <InputLabel sx={{ color: "text.primary" }} htmlFor="fastSpeed">
+                                    Fast:
+                                </InputLabel>
+                                <OutlinedInput
+                                    id="fastSpeed"
+                                    name={CameraSpeedLevel.Fast}
+                                    value={speeds[CameraSpeedLevel.Fast]}
+                                    onChange={handleSpeedChange}
+                                    onBlur={handleSpeedSubmit}
+                                    size="small"
+                                    sx={{ maxWidth: 150 }}
+                                    inputProps={{ inputMode: "numeric", pattern: "[0-9,.]*" }}
                                 />
                             </Box>
                             <BaseDivider sx={{ my: 1, color: theme.palette.grey[500] }} />

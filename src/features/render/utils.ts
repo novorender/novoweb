@@ -5,7 +5,6 @@ import {
     CameraController,
     CameraControllerParams,
     EnvironmentDescription,
-    FlightControllerParams,
     Highlight,
     Internal,
     MeasureInfo,
@@ -26,6 +25,7 @@ import { hiddenGroupActions, DispatchHidden } from "contexts/hidden";
 import { highlightActions, DispatchHighlighted } from "contexts/highlighted";
 import {
     AdvancedSetting,
+    CameraSpeedLevel,
     CameraType,
     ObjectVisibility,
     ProjectSetting,
@@ -445,12 +445,6 @@ export function initCamera({
             autoZoomToScene: false,
             enabled: false,
         };
-
-        store.dispatch(
-            renderActions.setBaseCameraSpeed(
-                (flightControllerRef.current.params as Required<FlightControllerParams>).linearVelocity
-            )
-        );
     }
 
     if (controls?.mouseButtonMap) {
@@ -465,12 +459,46 @@ export function initCamera({
 
     if (controller.params.kind === "flight") {
         store.dispatch(renderActions.setCamera({ type: CameraType.Flight }));
-        store.dispatch(renderActions.setBaseCameraSpeed(controller.params.linearVelocity));
     } else if (controller.params.kind === "ortho") {
         store.dispatch(renderActions.setCamera({ type: CameraType.Orthographic }));
     }
 
     return controller;
+}
+
+export function initCameraSpeedLevels(customProperties: Record<string, any>, cameraParams: CameraControllerParams) {
+    const levels = customProperties?.cameraSpeedLevels;
+
+    if (!levels) {
+        // legacy multipliers
+        if (cameraParams.kind === "flight" && cameraParams.linearVelocity) {
+            const baseSpeed = cameraParams.linearVelocity;
+            store.dispatch(
+                renderActions.setCameraSpeedLevels({
+                    flight: {
+                        [CameraSpeedLevel.Slow]: baseSpeed * 0.2,
+                        [CameraSpeedLevel.Default]: baseSpeed,
+                        [CameraSpeedLevel.Fast]: baseSpeed * 5,
+                    },
+                })
+            );
+            return;
+        }
+
+        // defaults
+        store.dispatch(
+            renderActions.setCameraSpeedLevels({
+                flight: {
+                    [CameraSpeedLevel.Slow]: 0.01,
+                    [CameraSpeedLevel.Default]: 0.03,
+                    [CameraSpeedLevel.Fast]: 0.15,
+                },
+            })
+        );
+        return;
+    }
+
+    store.dispatch(renderActions.setCameraSpeedLevels(levels));
 }
 
 export function initClippingBox(clipping: RenderSettings["clippingPlanes"]): void {

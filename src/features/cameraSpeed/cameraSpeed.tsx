@@ -2,7 +2,7 @@ import type { SpeedDialActionProps } from "@mui/material";
 
 import { SpeedDialAction } from "components";
 import { featuresConfig } from "config/features";
-import { selectCameraSpeedMultiplier, renderActions, CameraSpeedMultiplier } from "features/render/renderSlice";
+import { CameraSpeedLevel, renderActions, selectCurrentCameraSpeedLevel } from "features/render";
 import { useAppDispatch, useAppSelector } from "app/store";
 
 import { ReactComponent as WalkIcon } from "media/icons/walk.svg";
@@ -15,25 +15,15 @@ type Props = SpeedDialActionProps & {
 
 export function CameraSpeed({ position, ...speedDialProps }: Props) {
     const { name } = featuresConfig["cameraSpeed"];
-    const multiplier = useAppSelector(selectCameraSpeedMultiplier);
+    const level = useAppSelector(selectCurrentCameraSpeedLevel);
 
     const dispatch = useAppDispatch();
 
     const handleClick = () => dispatch(renderActions.toggleCameraSpeed());
 
-    const speed =
-        multiplier === CameraSpeedMultiplier.Slow
-            ? "Slow"
-            : multiplier === CameraSpeedMultiplier.Normal
-            ? "Normal"
-            : "Fast";
+    const speed = level === CameraSpeedLevel.Slow ? "Slow" : level === CameraSpeedLevel.Default ? "Default" : "Fast";
 
-    const Icon =
-        multiplier === CameraSpeedMultiplier.Slow
-            ? WalkIcon
-            : multiplier === CameraSpeedMultiplier.Normal
-            ? RunIcon
-            : SprintIcon;
+    const Icon = level === CameraSpeedLevel.Slow ? WalkIcon : level === CameraSpeedLevel.Default ? RunIcon : SprintIcon;
 
     return (
         <SpeedDialAction

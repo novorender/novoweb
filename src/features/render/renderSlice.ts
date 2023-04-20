@@ -22,10 +22,10 @@ export const fetchEnvironments = createAsyncThunk("novorender/fetchEnvironments"
     return envs;
 });
 
-export enum CameraSpeedMultiplier {
-    Slow = 0.2,
-    Normal = 1,
-    Fast = 5,
+export enum CameraSpeedLevel {
+    Slow = "slow",
+    Default = "default",
+    Fast = "fast",
 }
 
 export enum ObjectVisibility {
@@ -169,8 +169,14 @@ const initialState = {
     mainObject: undefined as ObjectId | undefined,
     defaultVisibility: ObjectVisibility.Neutral,
     selectMultiple: false,
-    baseCameraSpeed: 0.03,
-    cameraSpeedMultiplier: CameraSpeedMultiplier.Normal,
+    cameraSpeedLevels: {
+        flight: {
+            [CameraSpeedLevel.Slow]: 0.01,
+            [CameraSpeedLevel.Default]: 0.03,
+            [CameraSpeedLevel.Fast]: 0.15,
+        },
+    },
+    currentCameraSpeedLevel: CameraSpeedLevel.Default,
     savedCameraPositions: { currentIndex: -1, positions: [] } as MutableSavedCameraPositions,
     subtrees: undefined as
         | undefined
@@ -291,15 +297,15 @@ export const renderSlice = createSlice({
             state.selectMultiple = !state.selectMultiple;
         },
         toggleCameraSpeed: (state) => {
-            switch (state.cameraSpeedMultiplier) {
-                case CameraSpeedMultiplier.Slow:
-                    state.cameraSpeedMultiplier = CameraSpeedMultiplier.Normal;
+            switch (state.currentCameraSpeedLevel) {
+                case CameraSpeedLevel.Slow:
+                    state.currentCameraSpeedLevel = CameraSpeedLevel.Default;
                     break;
-                case CameraSpeedMultiplier.Normal:
-                    state.cameraSpeedMultiplier = CameraSpeedMultiplier.Fast;
+                case CameraSpeedLevel.Default:
+                    state.currentCameraSpeedLevel = CameraSpeedLevel.Fast;
                     break;
-                case CameraSpeedMultiplier.Fast:
-                    state.cameraSpeedMultiplier = CameraSpeedMultiplier.Slow;
+                case CameraSpeedLevel.Fast:
+                    state.currentCameraSpeedLevel = CameraSpeedLevel.Slow;
                     break;
             }
         },
@@ -428,6 +434,8 @@ export const renderSlice = createSlice({
                 environments: state.environments,
                 projectSettings: state.projectSettings,
                 savedCameraPositions: { currentIndex: 0, positions: [state.savedCameraPositions.positions[0]] },
+                cameraSpeedLevels: state.cameraSpeedLevels,
+                currentCameraSpeedLevel: state.currentCameraSpeedLevel,
             };
         },
         setCamera: (state, { payload }: PayloadAction<CameraState>) => {
@@ -466,8 +474,8 @@ export const renderSlice = createSlice({
                 ...(params ? { params } : {}),
             } as MutableCameraState;
         },
-        setBaseCameraSpeed: (state, { payload }: PayloadAction<number>) => {
-            state.baseCameraSpeed = payload;
+        setCameraSpeedLevels: (state, { payload }: PayloadAction<Partial<State["cameraSpeedLevels"]>>) => {
+            state.cameraSpeedLevels = { ...state.cameraSpeedLevels, ...payload };
         },
         setAdvancedSettings: (state, action: PayloadAction<Partial<State["advancedSettings"]>>) => {
             state.advancedSettings = {
@@ -526,8 +534,8 @@ export const selectEnvironments = (state: RootState) => state.render.environment
 export const selectCurrentEnvironment = (state: RootState) => state.render.currentEnvironment;
 export const selectDefaultVisibility = (state: RootState) => state.render.defaultVisibility;
 export const selectSelectMultiple = (state: RootState) => state.render.selectMultiple;
-export const selectCameraSpeedMultiplier = (state: RootState) => state.render.cameraSpeedMultiplier;
-export const selectBaseCameraSpeed = (state: RootState) => state.render.baseCameraSpeed;
+export const selectCameraSpeedLevels = (state: RootState) => state.render.cameraSpeedLevels;
+export const selectCurrentCameraSpeedLevel = (state: RootState) => state.render.currentCameraSpeedLevel;
 export const selectSavedCameraPositions = (state: RootState) =>
     state.render.savedCameraPositions as SavedCameraPositions;
 export const selectHomeCameraPosition = (state: RootState) =>

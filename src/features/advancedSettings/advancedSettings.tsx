@@ -12,12 +12,12 @@ import WidgetList from "features/widgetList/widgetList";
 import { useExplorerGlobals } from "contexts/explorerGlobals";
 import {
     selectAdvancedSettings,
-    selectBaseCameraSpeed,
+    selectCameraSpeedLevels,
     selectCurrentEnvironment,
     selectProjectSettings,
     selectSubtrees,
     SubtreeStatus,
-} from "features/render/renderSlice";
+} from "features/render";
 import {
     selectEnabledWidgets,
     selectIsAdminScene,
@@ -25,6 +25,8 @@ import {
     selectMinimized,
     selectPrimaryMenu,
 } from "slices/explorerSlice";
+import { useHighlighted } from "contexts/highlighted";
+import { useHighlightCollections } from "contexts/highlightCollections";
 
 import { useMountedState } from "hooks/useMountedState";
 import { useSceneId } from "hooks/useSceneId";
@@ -37,8 +39,6 @@ import { ProjectSettings } from "./routes/projectSettings";
 import { SceneSettings } from "./routes/sceneSettings";
 import { PerformanceSettings } from "./routes/performanceSettings";
 import { ObjectSelectionSettings } from "./routes/objectSelectionSettings";
-import { useHighlighted } from "contexts/highlighted";
-import { useHighlightCollections } from "contexts/highlightCollections";
 
 enum Status {
     Idle,
@@ -58,7 +58,7 @@ export default function AdvancedSettings() {
     const settings = useAppSelector(selectAdvancedSettings);
     const currentEnvironment = useAppSelector(selectCurrentEnvironment);
     const projectSettings = useAppSelector(selectProjectSettings);
-    const baseCameraSpeed = useAppSelector(selectBaseCameraSpeed);
+    const cameraSpeedLevels = useAppSelector(selectCameraSpeedLevels);
     const enabledWidgets = useAppSelector(selectEnabledWidgets);
     const primaryMenu = useAppSelector(selectPrimaryMenu);
     const primaryHighlightColor = useHighlighted().color;
@@ -147,11 +147,11 @@ export default function AdvancedSettings() {
                     ...(camera as Required<FlightControllerParams>),
                     far: Math.max(1000, settings.cameraFarClipping),
                     near: Math.max(0.001, settings.cameraNearClipping),
-                    linearVelocity: baseCameraSpeed,
                 },
                 customProperties: {
                     ...customProperties,
                     primaryMenu,
+                    cameraSpeedLevels,
                     showStats: settings.showPerformance,
                     navigationCube: settings.navigationCube,
                     ditioProjectNumber: projectSettings.ditioProjectNumber,
@@ -204,7 +204,6 @@ export default function AdvancedSettings() {
                 url: isAdminScene ? scene.id : `${sceneId}:${scene.id}`,
                 camera: {
                     ...camera,
-                    linearVelocity: baseCameraSpeed,
                 },
             });
         } catch {
