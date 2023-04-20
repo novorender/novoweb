@@ -109,11 +109,6 @@ export function Home({ position, ...speedDialProps }: Props) {
             );
         }
 
-        const cameraSpeed = (camera as { linearVelocity?: number }).linearVelocity;
-        if (cameraSpeed !== undefined) {
-            dispatch(renderActions.setBaseCameraSpeed(cameraSpeed));
-        }
-
         dispatchSelectionBasket(selectionBasketActions.set([]));
         dispatchHighlightCollections(highlightCollectionsActions.clearAll());
         initHidden(dispatchHidden);

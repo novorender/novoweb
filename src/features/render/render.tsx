@@ -21,8 +21,6 @@ import { useSceneId } from "hooks/useSceneId";
 import {
     fetchEnvironments,
     renderActions,
-    selectBaseCameraSpeed,
-    selectCameraSpeedMultiplier,
     selectClippingBox,
     selectCurrentEnvironment,
     selectEnvironments,
@@ -44,6 +42,8 @@ import {
     selectViewMode,
     selectStamp,
     StampKind,
+    selectCurrentCameraSpeedLevel,
+    selectCameraSpeedLevels,
 } from "features/render/renderSlice";
 import { explorerActions, selectLocalBookmarkId, selectUrlBookmarkId } from "slices/explorerSlice";
 import { selectDeviations } from "features/deviations";
@@ -88,6 +88,7 @@ import {
     initDeviations,
     initSubtrees,
     initProjectSettings,
+    initCameraSpeedLevels,
 } from "./utils";
 import { xAxis, yAxis, axis } from "./consts";
 import { moveSvgCursor } from "./svgUtils";
@@ -162,8 +163,8 @@ export function Render3D({ onInit }: Props) {
     const mainObject = useAppSelector(selectMainObject);
 
     const defaultVisibility = useAppSelector(selectDefaultVisibility);
-    const cameraSpeedMultiplier = useAppSelector(selectCameraSpeedMultiplier);
-    const baseCameraSpeed = useAppSelector(selectBaseCameraSpeed);
+    const cameraSpeedLevels = useAppSelector(selectCameraSpeedLevels).flight;
+    const currentCameraSpeedLevel = useAppSelector(selectCurrentCameraSpeedLevel);
     const savedCameraPositions = useAppSelector(selectSavedCameraPositions);
     const subtrees = useAppSelector(selectSubtrees);
     const selectionBasketMode = useAppSelector(selectSelectionBasketMode);
@@ -306,6 +307,7 @@ export function Render3D({ onInit }: Props) {
                 }
                 initAdvancedSettings(_view, customProperties, api);
                 initProjectSettings({ sceneData: sceneResponse });
+                initCameraSpeedLevels(customProperties, camera);
 
                 if (urlData.mainObject !== undefined) {
                     dispatchHighlighted(highlightActions.add([urlData.mainObject]));
@@ -525,13 +527,14 @@ export function Render3D({ onInit }: Props) {
 
     useEffect(
         function handleCameraSpeedChanges() {
-            if (!view || view.camera.controller.params.kind !== "flight") {
+            if (!view) {
                 return;
             }
 
-            view.camera.controller.params.linearVelocity = baseCameraSpeed * cameraSpeedMultiplier;
+            (flightController.current?.params as FlightControllerParams).linearVelocity =
+                cameraSpeedLevels[currentCameraSpeedLevel];
         },
-        [cameraSpeedMultiplier, baseCameraSpeed, view, canvas]
+        [cameraSpeedLevels, currentCameraSpeedLevel, view, canvas]
     );
 
     useEffect(
