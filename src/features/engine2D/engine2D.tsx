@@ -106,8 +106,9 @@ export function Engine2D() {
                 labels.push(`-${yLabel}`);
             }
             const pts = measureApi.toPathPoints(pts3d, view);
+
             if (pts) {
-                drawTexts(context2D, pts[0], labels);
+                drawTexts(context2D, pts.screenPoints, labels);
             }
         }
     }, [grid, context2D, view, cameraType]);
@@ -467,6 +468,7 @@ export function Engine2D() {
                     }
                 }
             }
+
             if (roadCrossSectionData && viewMode === ViewMode.FollowPath) {
                 roadCrossSectionData.forEach((section) => {
                     const colorList: string[] = [];
@@ -501,7 +503,8 @@ export function Engine2D() {
                                     {
                                         lineColor: colorList,
                                     },
-                                    2
+                                    2,
+                                    { type: "default" }
                                 );
                             });
                         });
@@ -517,8 +520,8 @@ export function Engine2D() {
                         (section.slopes.right.slope * 100).toFixed(1) + "%"
                     );
                     if (slopeL && slopeR) {
-                        drawProduct(context2D, camSettings, slopeL, {}, 3);
-                        drawProduct(context2D, camSettings, slopeR, {}, 3);
+                        drawProduct(context2D, camSettings, slopeL, {}, 3, { type: "default" });
+                        drawProduct(context2D, camSettings, slopeR, {}, 3, { type: "default" });
                     }
                 });
             }
