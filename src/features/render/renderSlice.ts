@@ -172,7 +172,7 @@ const initialState = {
     cameraSpeedLevels: {
         flight: {
             [CameraSpeedLevel.Slow]: 0.01,
-            [CameraSpeedLevel.Default]: 0.03,
+            [CameraSpeedLevel.Default]: 0.09,
             [CameraSpeedLevel.Fast]: 0.15,
         },
     },
