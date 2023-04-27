@@ -429,7 +429,7 @@ export function initCamera({
         fingerMap?: CameraController["fingersMap"];
     };
 }): CameraController {
-    (camera as FlightControllerParams).proportionalCameraSpeed = { min: 0.3, max: 100, pickDelay: 500 };
+    (camera as FlightControllerParams).proportionalCameraSpeed = { min: 0.3, max: 300, pickDelay: 500 };
 
     const controller = api.createCameraController(camera as any, canvas);
 
