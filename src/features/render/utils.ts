@@ -38,6 +38,7 @@ import { explorerActions } from "slices/explorerSlice";
 import { VecRGB, VecRGBA } from "utils/color";
 
 import { MAX_FLOAT } from "./consts";
+import { orthoCamActions } from "features/orthoCam";
 
 type Settings = {
     taaEnabled: boolean;
@@ -499,6 +500,32 @@ export function initCameraSpeedLevels(customProperties: Record<string, any>, cam
     }
 
     store.dispatch(renderActions.setCameraSpeedLevels(levels));
+}
+
+export function initProportionalCameraSpeed(customProperties: Record<string, any>) {
+    const speed = customProperties?.proportionalCameraSpeed;
+
+    if (speed) {
+        store.dispatch(renderActions.setProportionalCameraSpeed(speed));
+    }
+}
+
+export function initPointerLock(customProperties: Record<string, any>) {
+    const pointerLock = customProperties?.pointerLock;
+
+    if (pointerLock) {
+        store.dispatch(renderActions.setPointerLock(pointerLock));
+    }
+}
+
+export function initDefaultTopDownElevation(customProperties: Record<string, any>) {
+    const defaultTopDownElevation = customProperties?.defaultTopDownElevation;
+
+    if (typeof defaultTopDownElevation === "number") {
+        store.dispatch(orthoCamActions.setDefaultTopDownElevation(defaultTopDownElevation));
+    } else {
+        store.dispatch(orthoCamActions.setDefaultTopDownElevation(undefined));
+    }
 }
 
 export function initClippingBox(clipping: RenderSettings["clippingPlanes"]): void {

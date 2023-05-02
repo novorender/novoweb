@@ -13,11 +13,13 @@ import {
     MenuItem,
     Divider as BaseDivider,
     SelectChangeEvent,
+    FormControlLabel,
+    FormHelperText,
 } from "@mui/material";
 import { ArrowBack, Save } from "@mui/icons-material";
 import { quat, vec3 } from "gl-matrix";
 
-import { Divider, ScrollBox, Accordion, AccordionDetails, AccordionSummary, LinearProgress } from "components";
+import { Divider, ScrollBox, Accordion, AccordionDetails, AccordionSummary, LinearProgress, Switch } from "components";
 import { useAppDispatch, useAppSelector } from "app/store";
 import { useExplorerGlobals } from "contexts/explorerGlobals";
 import {
@@ -28,7 +30,10 @@ import {
     CameraType,
     selectCameraSpeedLevels,
     CameraSpeedLevel,
+    selectProportionalCameraSpeed,
+    selectPointerLock,
 } from "features/render/renderSlice";
+import { orthoCamActions, selectDefaultTopDownElevation } from "features/orthoCam";
 
 type SliderSettings =
     | AdvancedSetting.CameraNearClipping
@@ -65,10 +70,13 @@ export function CameraSettings({
 
     const dispatch = useAppDispatch();
     const speedLevels = useAppSelector(selectCameraSpeedLevels).flight;
+    const proportionalSpeed = useAppSelector(selectProportionalCameraSpeed);
     const settings = useAppSelector(selectAdvancedSettings);
     const { cameraNearClipping, cameraFarClipping, headlightIntensity, headlightDistance, mouseButtonMap, fingerMap } =
         settings;
     const cameraType = useAppSelector(selectCameraType);
+    const pointerLock = useAppSelector(selectPointerLock).ortho;
+    const defaultTopDownElevation = useAppSelector(selectDefaultTopDownElevation);
 
     const [far, setFar] = useState(() => {
         const d = cameraFarClipping.toString();
@@ -86,13 +94,19 @@ export function CameraSettings({
         return numZero * 90 + +d.substr(0, d.length - numZero) - 10;
     });
     const [intensity, setIntensity] = useState(headlightIntensity);
-    // const [speed, setSpeed] = useState(String(baseSpeed));
 
     const [speeds, setSpeeds] = useState({
         [CameraSpeedLevel.Slow]: String(speedLevels[CameraSpeedLevel.Slow]),
         [CameraSpeedLevel.Default]: String(speedLevels[CameraSpeedLevel.Default]),
         [CameraSpeedLevel.Fast]: String(speedLevels[CameraSpeedLevel.Fast]),
     });
+    const [proportionalSpeedInput, setProportionalSpeedInput] = useState({
+        min: String(proportionalSpeed.min),
+        max: String(proportionalSpeed.max),
+    });
+    const [defaultTopDownElevationInput, setDefaultTopDownElevationInput] = useState(
+        defaultTopDownElevation !== undefined ? String(defaultTopDownElevation) : ""
+    );
 
     const handleSliderChange =
         (kind: SliderSettings) =>
@@ -205,6 +219,24 @@ export function CameraSettings({
         dispatch(renderActions.setCameraSpeedLevels({ flight: levels }));
     };
 
+    const handleProportionalSpeedSubmit = (e: FormEvent | FocusEvent) => {
+        if (e.type === "submit") {
+            e.preventDefault();
+        }
+
+        const isValid = (num: number) => !Number.isNaN(num) && Number.isFinite(num);
+
+        const min = isValid(Number(proportionalSpeedInput.min))
+            ? Number(proportionalSpeedInput.min)
+            : proportionalSpeed.min;
+        const max = isValid(Number(proportionalSpeedInput.max))
+            ? Number(proportionalSpeedInput.max)
+            : proportionalSpeed.max;
+
+        setProportionalSpeedInput({ min: String(min), max: String(max) });
+        dispatch(renderActions.setProportionalCameraSpeed({ min, max }));
+    };
+
     const handleMouseControllerChange = ({ target: { name, value } }: SelectChangeEvent<number>) => {
         const swapped = Object.entries(mouseButtonMap)
             .filter(([_key, val]) => {
@@ -245,6 +277,23 @@ export function CameraSettings({
             );
 
         dispatch(renderActions.setAdvancedSettings({ fingerMap: swapped }));
+    };
+
+    const handleDefaultTopDownElevationSubmit = (e: FormEvent | FocusEvent) => {
+        if (e.type === "submit") {
+            e.preventDefault();
+        }
+
+        const isValid = (num: number) => !Number.isNaN(num) && Number.isFinite(num);
+
+        const elevation = defaultTopDownElevationInput
+            ? isValid(Number(defaultTopDownElevationInput))
+                ? Number(defaultTopDownElevationInput)
+                : defaultTopDownElevation
+            : undefined;
+
+        setDefaultTopDownElevationInput(elevation !== undefined ? String(elevation) : "");
+        dispatch(orthoCamActions.setDefaultTopDownElevation(elevation));
     };
 
     return (
@@ -438,6 +487,91 @@ export function CameraSettings({
                         </Box>
                     </AccordionDetails>
                 </Accordion>
+
+                <Accordion>
+                    <AccordionSummary>Proportional movement speed</AccordionSummary>
+                    <AccordionDetails>
+                        <Box px={1} mt={1}>
+                            <FormControlLabel
+                                sx={{ ml: 0, mb: 1 }}
+                                control={
+                                    <Switch
+                                        name={"proportionalSpeed"}
+                                        checked={proportionalSpeed.enabled}
+                                        onChange={() => {
+                                            dispatch(
+                                                renderActions.setProportionalCameraSpeed({
+                                                    enabled: !proportionalSpeed.enabled,
+                                                })
+                                            );
+                                        }}
+                                    />
+                                }
+                                label={
+                                    <Box ml={1} fontSize={16}>
+                                        Enabled
+                                    </Box>
+                                }
+                            />
+                        </Box>
+                        <Box
+                            px={1}
+                            display="flex"
+                            flexDirection="column"
+                            component="form"
+                            noValidate
+                            onSubmit={handleProportionalSpeedSubmit}
+                        >
+                            <BaseDivider sx={{ my: 1, color: theme.palette.grey[500] }} />
+                            <Box display="flex" justifyContent="space-between" alignItems="center">
+                                <InputLabel sx={{ color: "text.primary" }} htmlFor="proportional-speed_min">
+                                    Min:
+                                </InputLabel>
+                                <OutlinedInput
+                                    id="proportional-speed_min"
+                                    name={"proportional-speed_min"}
+                                    value={proportionalSpeedInput.min}
+                                    onChange={(e) =>
+                                        setProportionalSpeedInput((state) => ({
+                                            ...state,
+                                            min: e.target.value.replace(",", "."),
+                                        }))
+                                    }
+                                    onBlur={handleProportionalSpeedSubmit}
+                                    disabled={!proportionalSpeed.enabled}
+                                    size="small"
+                                    sx={{ maxWidth: 150 }}
+                                    inputProps={{ inputMode: "numeric", pattern: "[0-9,.]*" }}
+                                />
+                            </Box>
+                            <BaseDivider sx={{ my: 1, color: theme.palette.grey[500] }} />
+                            <Box display="flex" justifyContent="space-between" alignItems="center">
+                                <InputLabel sx={{ color: "text.primary" }} htmlFor="proportional-speed_max">
+                                    Max:
+                                </InputLabel>
+                                <OutlinedInput
+                                    id="proportional-speed_max"
+                                    name={"proportional-speed_max"}
+                                    value={proportionalSpeedInput.max}
+                                    onChange={(e) =>
+                                        setProportionalSpeedInput((state) => ({
+                                            ...state,
+                                            max: e.target.value.replace(",", "."),
+                                        }))
+                                    }
+                                    onBlur={handleProportionalSpeedSubmit}
+                                    disabled={!proportionalSpeed.enabled}
+                                    size="small"
+                                    sx={{ maxWidth: 150 }}
+                                    inputProps={{ inputMode: "numeric", pattern: "[0-9,.]*" }}
+                                />
+                            </Box>
+                            <BaseDivider sx={{ my: 1, color: theme.palette.grey[500] }} />
+                            <input type="submit" hidden />
+                        </Box>
+                    </AccordionDetails>
+                </Accordion>
+
                 <Accordion>
                     <AccordionSummary>Controls</AccordionSummary>
                     <AccordionDetails>
@@ -565,6 +699,52 @@ export function CameraSettings({
                                 </Select>
                             </Box>
                             <BaseDivider sx={{ my: 1, color: theme.palette.grey[500] }} />
+                        </Box>
+                    </AccordionDetails>
+                </Accordion>
+
+                <Accordion>
+                    <AccordionSummary>2D</AccordionSummary>
+                    <AccordionDetails>
+                        <Box px={1} mt={1}>
+                            <FormControlLabel
+                                sx={{ ml: 0, mb: 1 }}
+                                control={
+                                    <Switch
+                                        name={"orthoPointerLock"}
+                                        checked={pointerLock}
+                                        onChange={() => {
+                                            dispatch(renderActions.setPointerLock({ ortho: !pointerLock }));
+                                        }}
+                                    />
+                                }
+                                label={
+                                    <Box ml={1} fontSize={16}>
+                                        Reset pointer when released
+                                    </Box>
+                                }
+                            />
+                        </Box>
+                        <BaseDivider sx={{ my: 1, color: theme.palette.grey[500] }} />
+                        <Box px={1} component="form" onSubmit={handleDefaultTopDownElevationSubmit}>
+                            <Box display="flex" justifyContent="space-between" alignItems="center">
+                                <InputLabel sx={{ color: "text.primary" }} htmlFor="topdown-elevation">
+                                    Top-down elevation (meters):
+                                </InputLabel>
+                                <OutlinedInput
+                                    id="topdown-elevation"
+                                    name={"topdown-elevation"}
+                                    value={defaultTopDownElevationInput}
+                                    onChange={(e) => {
+                                        setDefaultTopDownElevationInput(e.target.value.replace(",", "."));
+                                    }}
+                                    onBlur={handleDefaultTopDownElevationSubmit}
+                                    size="small"
+                                    sx={{ maxWidth: 150 }}
+                                    inputProps={{ inputMode: "numeric", pattern: "[0-9,.]*" }}
+                                />
+                            </Box>
+                            <FormHelperText>Leave blank to use current camera elevation.</FormHelperText>
                         </Box>
                     </AccordionDetails>
                 </Accordion>

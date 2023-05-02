@@ -1,9 +1,9 @@
 import { ChangeEvent, useState, MouseEvent } from "react";
-import { Box, Button, FormControlLabel } from "@mui/material";
+import { Box, Button, FormControlLabel, Typography } from "@mui/material";
 import { ArrowDownward, ColorLens } from "@mui/icons-material";
 
 import { useAppDispatch, useAppSelector } from "app/store";
-import { IosSwitch, LogoSpeedDial, ScrollBox, Switch, WidgetContainer, WidgetHeader } from "components";
+import { Divider, IosSwitch, LogoSpeedDial, ScrollBox, Switch, WidgetContainer, WidgetHeader } from "components";
 import { featuresConfig } from "config/features";
 import { useExplorerGlobals } from "contexts/explorerGlobals";
 import { toggleTerrainAsBackground } from "features/advancedSettings";
@@ -27,7 +27,7 @@ import { ColorPicker } from "features/colorPicker";
 import { rgbToVec, VecRGBA, vecToRgb } from "utils/color";
 
 import { getTopDownParams } from "./utils";
-import { orthoCamActions } from "./orthoCamSlice";
+import { orthoCamActions, selectCurrentTopDownElevation, selectDefaultTopDownElevation } from "./orthoCamSlice";
 
 export default function OrthoCam() {
     const [menuOpen, toggleMenu] = useToggle();
@@ -45,6 +45,8 @@ export default function OrthoCam() {
     const { terrainAsBackground } = useAppSelector(selectAdvancedSettings);
     const subtrees = useAppSelector(selectSubtrees);
     const backgroundColor = useAppSelector(selectAdvancedSettings).backgroundColor;
+    const defaultTopDownElevation = useAppSelector(selectDefaultTopDownElevation);
+    const currentElevation = useAppSelector(selectCurrentTopDownElevation);
     const dispatch = useAppDispatch();
 
     const [colorPickerAnchor, setColorPickerAnchor] = useState<HTMLElement | null>(null);
@@ -73,7 +75,7 @@ export default function OrthoCam() {
     };
 
     const handleTopDown = () => {
-        const params = getTopDownParams({ view, canvas });
+        const params = getTopDownParams({ view, canvas, elevation: defaultTopDownElevation });
 
         dispatch(
             renderActions.setCamera({
@@ -142,6 +144,12 @@ export default function OrthoCam() {
                     ) : null}
                     {cameraType === CameraType.Orthographic ? (
                         <>
+                            {currentElevation && (
+                                <>
+                                    <Typography>Elevation: {currentElevation.toFixed(3)}</Typography>
+                                    <Divider sx={{ my: 1 }} />
+                                </>
+                            )}
                             <FormControlLabel
                                 sx={{ ml: 0, mb: 2 }}
                                 control={<Switch name={"Show grid"} checked={grid.enabled} onChange={toggleGrid} />}

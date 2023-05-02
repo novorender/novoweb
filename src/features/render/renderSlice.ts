@@ -3,6 +3,7 @@ import type {
     BoundingSphere,
     Camera,
     EnvironmentDescription,
+    FlightControllerParams,
     ObjectId,
     OrthoControllerParams,
     RenderSettings,
@@ -176,6 +177,15 @@ const initialState = {
             [CameraSpeedLevel.Fast]: 0.15,
         },
     },
+    proportionalCameraSpeed: {
+        enabled: true,
+        min: 5,
+        max: 300,
+        pickDelay: 1000,
+    } as NonNullable<FlightControllerParams["proportionalCameraSpeed"]> & { enabled: boolean },
+    pointerLock: {
+        ortho: false,
+    },
     currentCameraSpeedLevel: CameraSpeedLevel.Default,
     savedCameraPositions: { currentIndex: -1, positions: [] } as MutableSavedCameraPositions,
     subtrees: undefined as
@@ -264,6 +274,13 @@ const initialState = {
     viewMode: ViewMode.Default,
     loadingHandles: [] as number[],
     stamp: null as null | Stamp,
+    pointerDownState: undefined as
+        | undefined
+        | {
+              timestamp: number;
+              x: number;
+              y: number;
+          },
 };
 
 type State = typeof initialState;
@@ -521,6 +538,15 @@ export const renderSlice = createSlice({
         setStamp: (state, action: PayloadAction<State["stamp"]>) => {
             state.stamp = action.payload;
         },
+        setPointerLock: (state, action: PayloadAction<Partial<State["pointerLock"]>>) => {
+            state.pointerLock = { ...state.pointerLock, ...action.payload };
+        },
+        setProportionalCameraSpeed: (state, action: PayloadAction<Partial<State["proportionalCameraSpeed"]>>) => {
+            state.proportionalCameraSpeed = { ...state.proportionalCameraSpeed, ...action.payload };
+        },
+        setPointerDownState: (state, action: PayloadAction<State["pointerDownState"]>) => {
+            state.pointerDownState = action.payload;
+        },
     },
     extraReducers: (builder) => {
         builder.addCase(fetchEnvironments.fulfilled, (state, action) => {
@@ -558,6 +584,9 @@ export const selectDefaultDeviceProfile = (state: RootState) => state.render.def
 export const selectViewMode = (state: RootState) => state.render.viewMode;
 export const selectLoadingHandles = (state: RootState) => state.render.loadingHandles;
 export const selectStamp = (state: RootState) => state.render.stamp;
+export const selectPointerLock = (state: RootState) => state.render.pointerLock;
+export const selectProportionalCameraSpeed = (state: RootState) => state.render.proportionalCameraSpeed;
+export const selectPointerDownState = (state: RootState) => state.render.pointerDownState;
 
 const { reducer, actions } = renderSlice;
 export { reducer as renderReducer, actions as renderActions };

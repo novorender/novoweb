@@ -6,6 +6,8 @@ import { RootState } from "app/store";
 const initialState = {
     crossSection: undefined as vec3 | undefined,
     crossSectionHover: undefined as vec3 | undefined,
+    defaultTopDownElevation: undefined as number | undefined,
+    currentTopDownElevation: undefined as number | undefined,
 };
 
 type State = typeof initialState;
@@ -20,9 +22,17 @@ export const orthoCamSlice = createSlice({
         setCrossSectionHover: (state, action: PayloadAction<State["crossSectionHover"]>) => {
             state.crossSectionHover = action.payload;
         },
+        setDefaultTopDownElevation: (state, action: PayloadAction<State["defaultTopDownElevation"]>) => {
+            state.defaultTopDownElevation = action.payload;
+        },
+        setCurrentTopDownElevation: (state, action: PayloadAction<State["currentTopDownElevation"]>) => {
+            state.currentTopDownElevation = action.payload;
+        },
     },
 });
 
+export const selectDefaultTopDownElevation = (state: RootState) => state.orthoCam.defaultTopDownElevation;
+export const selectCurrentTopDownElevation = (state: RootState) => state.orthoCam.currentTopDownElevation;
 export const selectCrossSectionPoint = (state: RootState) => state.orthoCam.crossSection;
 export const selectCrossSectionHover = (state: RootState) => state.orthoCam.crossSectionHover;
 export const selectCrossSectionPoints = (state: RootState) => {

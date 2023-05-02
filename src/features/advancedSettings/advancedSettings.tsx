@@ -14,7 +14,9 @@ import {
     selectAdvancedSettings,
     selectCameraSpeedLevels,
     selectCurrentEnvironment,
+    selectPointerLock,
     selectProjectSettings,
+    selectProportionalCameraSpeed,
     selectSubtrees,
     SubtreeStatus,
 } from "features/render";
@@ -27,6 +29,7 @@ import {
 } from "slices/explorerSlice";
 import { useHighlighted } from "contexts/highlighted";
 import { useHighlightCollections } from "contexts/highlightCollections";
+import { selectDefaultTopDownElevation } from "features/orthoCam";
 
 import { useMountedState } from "hooks/useMountedState";
 import { useSceneId } from "hooks/useSceneId";
@@ -61,6 +64,9 @@ export default function AdvancedSettings() {
     const cameraSpeedLevels = useAppSelector(selectCameraSpeedLevels);
     const enabledWidgets = useAppSelector(selectEnabledWidgets);
     const primaryMenu = useAppSelector(selectPrimaryMenu);
+    const proportionalCameraSpeed = useAppSelector(selectProportionalCameraSpeed);
+    const pointerLock = useAppSelector(selectPointerLock);
+    const defaultTopDownElevation = useAppSelector(selectDefaultTopDownElevation);
     const primaryHighlightColor = useHighlighted().color;
     const secondaryHighlightColor = useHighlightCollections().secondaryHighlight.color;
 
@@ -152,6 +158,9 @@ export default function AdvancedSettings() {
                     ...customProperties,
                     primaryMenu,
                     cameraSpeedLevels,
+                    pointerLock,
+                    proportionalCameraSpeed,
+                    defaultTopDownElevation,
                     showStats: settings.showPerformance,
                     navigationCube: settings.navigationCube,
                     ditioProjectNumber: projectSettings.ditioProjectNumber,
