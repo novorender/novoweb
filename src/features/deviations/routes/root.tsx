@@ -66,7 +66,6 @@ export function Root() {
                 );
             } catch (e) {
                 console.warn(e);
-                // TODO(OLA): Is this supposed to work without proper config?
                 dispatch(deviationsActions.setProfiles({ status: AsyncStatus.Success, data: [] }));
             }
         }

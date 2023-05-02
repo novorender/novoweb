@@ -1,4 +1,4 @@
-import { mat3, mat4, quat, vec3, vec4 } from "gl-matrix";
+import { mat3, mat4, quat, vec2, vec3, vec4 } from "gl-matrix";
 import { MouseEventHandler, useRef } from "react";
 import { OrthoControllerParams } from "@novorender/webgl-api";
 
@@ -16,6 +16,7 @@ import {
     selectSecondaryHighlightProperty,
     StampKind,
     selectStamp,
+    selectPointerDownState,
 } from "features/render/renderSlice";
 import { selectDeviations } from "features/deviations";
 import { measureActions, selectMeasure, useMeasurePickSettings } from "features/measure";
@@ -61,15 +62,24 @@ export function useCanvasClickHandler() {
     const crossSectionPoint = useAppSelector(selectCrossSectionPoint);
     const viewMode = useAppSelector(selectViewMode);
     const stamp = useAppSelector(selectStamp);
+    const pointerDownState = useAppSelector(selectPointerDownState);
 
     const [secondaryHighlightAbortController, abortSecondaryHighlight] = useAbortController();
     const currentSecondaryHighlightQuery = useRef("");
     const secondaryHighlightProperty = useAppSelector(selectSecondaryHighlightProperty);
 
     const handleCanvasPick: MouseEventHandler<HTMLCanvasElement> = async (evt) => {
-        if (!view?.lastRenderOutput || clippingBox.defining || !canvas || !scene) {
+        const longPress = pointerDownState && evt.timeStamp - pointerDownState.timestamp >= 300;
+        const drag =
+            pointerDownState &&
+            vec2.dist([pointerDownState.x, pointerDownState.y], [evt.nativeEvent.offsetX, evt.nativeEvent.offsetY]) >=
+                5;
+
+        if (!view?.lastRenderOutput || clippingBox.defining || !canvas || !scene || longPress || drag) {
             return;
         }
+
+        dispatch(renderActions.setPointerDownState(undefined));
 
         const pickCameraPlane =
             cameraState.type === CameraType.Orthographic &&

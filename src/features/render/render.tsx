@@ -44,6 +44,8 @@ import {
     StampKind,
     selectCurrentCameraSpeedLevel,
     selectCameraSpeedLevels,
+    selectProportionalCameraSpeed,
+    selectPointerLock,
 } from "features/render/renderSlice";
 import { explorerActions, selectLocalBookmarkId, selectUrlBookmarkId } from "slices/explorerSlice";
 import { selectDeviations } from "features/deviations";
@@ -59,7 +61,12 @@ import { useHandleJiraKeepAlive } from "features/jira";
 import { Engine2D } from "features/engine2D";
 import { useHandleXsiteManageKeepAlive, useHandleXsiteManageMachineLocations } from "features/xsiteManage";
 import { ViewMode } from "types/misc";
-import { orthoCamActions, selectCrossSectionPoint, useHandleCrossSection } from "features/orthoCam";
+import {
+    orthoCamActions,
+    selectCrossSectionPoint,
+    selectCurrentTopDownElevation,
+    useHandleCrossSection,
+} from "features/orthoCam";
 import { useHandleClippingBoxChanges } from "features/clippingBox";
 
 import { useHighlighted, highlightActions, useDispatchHighlighted } from "contexts/highlighted";
@@ -89,6 +96,9 @@ import {
     initSubtrees,
     initProjectSettings,
     initCameraSpeedLevels,
+    initProportionalCameraSpeed,
+    initPointerLock,
+    initDefaultTopDownElevation,
 } from "./utils";
 import { xAxis, yAxis, axis } from "./consts";
 import { moveSvgCursor } from "./svgUtils";
@@ -165,6 +175,8 @@ export function Render3D({ onInit }: Props) {
     const defaultVisibility = useAppSelector(selectDefaultVisibility);
     const cameraSpeedLevels = useAppSelector(selectCameraSpeedLevels).flight;
     const currentCameraSpeedLevel = useAppSelector(selectCurrentCameraSpeedLevel);
+    const proportionalCameraSpeed = useAppSelector(selectProportionalCameraSpeed);
+    const pointerLock = useAppSelector(selectPointerLock);
     const savedCameraPositions = useAppSelector(selectSavedCameraPositions);
     const subtrees = useAppSelector(selectSubtrees);
     const selectionBasketMode = useAppSelector(selectSelectionBasketMode);
@@ -182,6 +194,7 @@ export function Render3D({ onInit }: Props) {
     const picker = useAppSelector(selectPicker);
     const crossSectionPoint = useAppSelector(selectCrossSectionPoint);
     const viewMode = useAppSelector(selectViewMode);
+    const currentTopDownElevation = useAppSelector(selectCurrentTopDownElevation);
 
     const canvasClickHandler = useCanvasClickHandler();
     const usingSvgCursor = useHandleCanvasCursor();
@@ -195,6 +208,7 @@ export function Render3D({ onInit }: Props) {
         update: () => {},
     } as ReturnType<typeof createRendering>);
     const movementTimer = useRef<ReturnType<typeof setTimeout>>();
+    const orthoMovementTimer = useRef<ReturnType<typeof setTimeout>>();
     const cameraGeneration = useRef<number>();
     const previousSceneId = useRef("");
     const camera2pointDistance = useRef(0);
@@ -308,6 +322,9 @@ export function Render3D({ onInit }: Props) {
                 initAdvancedSettings(_view, customProperties, api);
                 initProjectSettings({ sceneData: sceneResponse });
                 initCameraSpeedLevels(customProperties, camera);
+                initProportionalCameraSpeed(customProperties);
+                initPointerLock(customProperties);
+                initDefaultTopDownElevation(customProperties);
 
                 if (urlData.mainObject !== undefined) {
                     dispatchHighlighted(highlightActions.add([urlData.mainObject]));
@@ -417,6 +434,41 @@ export function Render3D({ onInit }: Props) {
                         clearTimeout(movementTimer.current);
                     }
 
+                    if (orthoMovementTimer.current) {
+                        clearTimeout(orthoMovementTimer.current);
+                    }
+
+                    orthoMovementTimer.current = setTimeout(() => {
+                        if (
+                            !view ||
+                            cameraState.type !== CameraType.Orthographic ||
+                            view.camera.controller.params.kind !== "ortho"
+                        ) {
+                            return;
+                        }
+
+                        // Update elevation
+                        const mat = mat3.fromQuat(mat3.create(), view.camera.rotation);
+                        const up = [0, 1, 0] as vec3;
+                        const topDown = vec3.equals(vec3.fromValues(mat[6], mat[7], mat[8]), up);
+                        const elevation = topDown ? view.camera.controller.params.referenceCoordSys[13] : undefined;
+                        if (currentTopDownElevation !== elevation) {
+                            dispatch(orthoCamActions.setCurrentTopDownElevation(elevation));
+                        }
+
+                        // Move grid
+                        const origo = vec3.clone(view.settings.grid.origo);
+                        const z = vec3.fromValues(mat[6], mat[7], mat[8]);
+                        const camPos = vec3.fromValues(
+                            view.camera.controller.params.referenceCoordSys[12],
+                            view.camera.controller.params.referenceCoordSys[13],
+                            view.camera.controller.params.referenceCoordSys[14]
+                        );
+                        const delta = vec3.dot(z, vec3.sub(vec3.create(), camPos, origo));
+                        const newPos = vec3.scaleAndAdd(vec3.create(), origo, z, delta);
+                        dispatch(renderActions.setGrid({ origo: newPos }));
+                    }, 100);
+
                     movementTimer.current = setTimeout(() => {
                         if (!view || cameraState.type === CameraType.Orthographic || viewMode === ViewMode.Panorama) {
                             return;
@@ -443,7 +495,16 @@ export function Render3D({ onInit }: Props) {
                 }
             }
         },
-        [view, dispatch, savedCameraPositions, cameraState, advancedSettings, viewMode, moveSvgMarkers]
+        [
+            view,
+            dispatch,
+            currentTopDownElevation,
+            savedCameraPositions,
+            cameraState,
+            advancedSettings,
+            viewMode,
+            moveSvgMarkers,
+        ]
     );
 
     useEffect(
@@ -531,10 +592,17 @@ export function Render3D({ onInit }: Props) {
                 return;
             }
 
-            (flightController.current?.params as FlightControllerParams).linearVelocity =
-                cameraSpeedLevels[currentCameraSpeedLevel];
+            const params = flightController.current?.params as FlightControllerParams;
+            params.linearVelocity = cameraSpeedLevels[currentCameraSpeedLevel];
+            params.proportionalCameraSpeed = proportionalCameraSpeed.enabled
+                ? {
+                      min: proportionalCameraSpeed.min,
+                      max: proportionalCameraSpeed.max,
+                      pickDelay: proportionalCameraSpeed.pickDelay,
+                  }
+                : undefined;
         },
-        [cameraSpeedLevels, currentCameraSpeedLevel, view, canvas]
+        [cameraSpeedLevels, currentCameraSpeedLevel, proportionalCameraSpeed, view, canvas]
     );
 
     useEffect(
@@ -693,6 +761,8 @@ export function Render3D({ onInit }: Props) {
                 if (view.camera.controller.params.kind === "ortho") {
                     orthoController.fingersMap = { ...view.camera.controller.fingersMap };
                     orthoController.mouseButtonsMap = { ...view.camera.controller.mouseButtonsMap };
+                    (orthoController.params as OrthoControllerParams).pointerLockOnPan =
+                        view.camera.controller.params.pointerLockOnPan;
                 }
 
                 dispatch(imagesActions.setActiveImage(undefined));
@@ -708,6 +778,15 @@ export function Render3D({ onInit }: Props) {
             rendering.current.update({ taaEnabled: advancedSettings.taa, ssaoEnabled: advancedSettings.ssao });
         },
         [advancedSettings]
+    );
+
+    useEffect(
+        function handlePointerLockChanges() {
+            if (cameraState.type === CameraType.Orthographic && view?.camera.controller.params.kind === "ortho") {
+                view.camera.controller.params.pointerLockOnPan = pointerLock.ortho;
+            }
+        },
+        [cameraState, pointerLock, view, canvas]
     );
 
     useHandleGridChanges();
@@ -791,7 +870,15 @@ export function Render3D({ onInit }: Props) {
         }
     };
 
-    const handleDown = async (x: number, y: number) => {
+    const handleDown = async (x: number, y: number, timestamp: number) => {
+        dispatch(
+            renderActions.setPointerDownState({
+                timestamp,
+                x,
+                y,
+            })
+        );
+
         if (!view || picker !== Picker.ClippingBox) {
             return;
         }
@@ -844,7 +931,7 @@ export function Render3D({ onInit }: Props) {
         }
 
         isTouchPointer.current = true;
-        handleDown(e.nativeEvent.offsetX, e.nativeEvent.offsetY);
+        handleDown(e.nativeEvent.offsetX, e.nativeEvent.offsetY, e.timeStamp);
     };
 
     const handleMouseDown = (e: MouseEvent) => {
@@ -852,7 +939,7 @@ export function Render3D({ onInit }: Props) {
             return;
         }
 
-        handleDown(e.nativeEvent.offsetX, e.nativeEvent.offsetY);
+        handleDown(e.nativeEvent.offsetX, e.nativeEvent.offsetY, e.timeStamp);
     };
 
     const handleUp = () => {
