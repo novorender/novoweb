@@ -181,7 +181,7 @@ const initialState = {
         enabled: true,
         min: 5,
         max: 300,
-        pickDelay: 1000,
+        pickDelay: 500,
     } as NonNullable<FlightControllerParams["proportionalCameraSpeed"]> & { enabled: boolean },
     pointerLock: {
         ortho: false,
