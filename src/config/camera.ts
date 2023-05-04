@@ -4,7 +4,7 @@ export const defaultFlightControls = {
 };
 
 export const defaultOrthoControls = {
-    touch: { pan: 1, rotate: 0, pivot: 0, orbit: 0 },
+    touch: { pan: 1, rotate: 0, pivot: 0, orbit: 0, zoomZ: 3 },
     mouse: { pan: 1, rotate: 0, pivot: 0, orbit: 0 },
 };
 
