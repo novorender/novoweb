@@ -26,6 +26,19 @@ export function getObjectNameFromPath(path: string): string {
     return decodeObjPathName(arr.length ? arr.pop()! : path);
 }
 
+export function getFilePathFromObjectPath(objectPath: string): string | null {
+    //https://novorender.com/formats-integrations/
+    const match = objectPath.match(
+        /^(?<path>.+\.(dem|dwg|dxf|ifc|xml|kof|nwd|obj|pdms|rvm|step|stp|wms|wmts|pts|las|e57|jpg|jpeg|tif|tiff|pdf))/
+    )?.groups;
+
+    if (!match || !match.path) {
+        return null;
+    }
+
+    return match.path;
+}
+
 export async function objIdsToTotalBoundingSphere({
     ids,
     abortSignal,

@@ -40,7 +40,7 @@ import {
     searchByPatterns,
     searchDeepByPatterns,
 } from "utils/search";
-import { extractObjectIds, getParentPath } from "utils/objectData";
+import { extractObjectIds, getFilePathFromObjectPath, getParentPath } from "utils/objectData";
 import { highlightActions, useDispatchHighlighted } from "contexts/highlighted";
 import { NodeType } from "features/modelTree/modelTree";
 import { useExplorerGlobals } from "contexts/explorerGlobals";
@@ -541,6 +541,7 @@ function createPropertiesObject(object: ObjectData): PropertiesObject {
             id: object.id,
             base: [
                 ["Name", object.name],
+                ["Path", getFilePathFromObjectPath(object.path)],
                 ["Description", object.description],
             ],
             grouped: {},
