@@ -29,7 +29,7 @@ export function getObjectNameFromPath(path: string): string {
 export function getFilePathFromObjectPath(objectPath: string): string | null {
     //https://novorender.com/formats-integrations/
     const match = objectPath.match(
-        /^(?<path>.+\.(dem|dwg|dxf|ifc|xml|kof|nwd|obj|pdms|rvm|step|stp|wms|wmts|pts|las|e57|jpg|jpeg|tif|tiff|pdf))/
+        /^(?<path>.+\.(dem|dwg|dxf|ifc|xml|kof|nwd|obj|pdms|rvm|step|stp|wms|wmts|pts|las|e57|jpg|jpeg|tif|tiff|pdf))/i
     )?.groups;
 
     if (!match || !match.path) {
