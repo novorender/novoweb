@@ -76,6 +76,11 @@ export function Engine2D() {
     const grid = useAppSelector(selectGrid);
     const viewMode = useAppSelector(selectViewMode);
 
+    const prevMousePos = useRef<vec2>();
+    const mousePos = useRef<vec2>();
+
+    //const mouseMove = useCallback((event: TouchEvent<HTMLCanvasElement> | MouseEvent<HTMLCanvasElement>) => {}, []);
+
     const renderGridLabels = useCallback(() => {
         if (
             grid.enabled &&
@@ -391,6 +396,55 @@ export function Engine2D() {
                 }
             }
 
+            //Measure tracer
+            if (
+                pointLinePoints.length > 1 &&
+                roadCrossSectionData &&
+                roadCrossSectionData.length > 0 &&
+                mousePos.current
+            ) {
+                const sectionProd = measureApi.getDrawObjectFromPoints(
+                    view,
+                    roadCrossSectionData[0].points,
+                    false,
+                    false
+                );
+                const lineProd = measureApi.getDrawObjectFromPoints(view, pointLinePoints, false, true, true);
+                if (sectionProd && lineProd) {
+                    let line = {
+                        start: vec2.fromValues(mousePos.current[0], size.height),
+                        end: vec2.fromValues(mousePos.current[0], 0),
+                    };
+                    if (true) {
+                        const normal = measureApi.get2dNormal(sectionProd, line);
+                        if (normal) {
+                            line = {
+                                start: vec2.scaleAndAdd(vec2.create(), normal.position, normal.normal, size.height),
+                                end: vec2.scaleAndAdd(vec2.create(), normal.position, normal.normal, -size.height),
+                            };
+                        }
+                    }
+                    const traceDraw = measureApi.traceDrawObjects([sectionProd, lineProd], line);
+                    traceDraw.objects.forEach((obj) => {
+                        obj.parts.forEach((part) => {
+                            drawPart(
+                                context2D,
+                                camSettings,
+                                part,
+                                {
+                                    lineColor: "black",
+                                    displayAllPoints: true,
+                                },
+                                2,
+                                {
+                                    type: "default",
+                                }
+                            );
+                        });
+                    });
+                }
+            }
+
             if (pointLinePoints.length && pointLineResult) {
                 const drawProd = measureApi.getDrawObjectFromPoints(view, pointLinePoints, false, true, true);
                 if (drawProd) {
@@ -570,10 +624,18 @@ export function Engine2D() {
                     !prevCamRot.current ||
                     !quat.exactEquals(prevCamRot.current, view.camera.rotation) ||
                     !prevCamPos.current ||
-                    !vec3.exactEquals(prevCamPos.current, view.camera.position)
+                    !vec3.exactEquals(prevCamPos.current, view.camera.position) ||
+                    !prevCamPos.current ||
+                    !vec3.exactEquals(prevCamPos.current, view.camera.position) ||
+                    !prevMousePos.current ||
+                    !mousePos.current ||
+                    !vec2.exactEquals(prevMousePos.current, mousePos.current)
                 ) {
                     prevCamRot.current = quat.clone(view.camera.rotation);
                     prevCamPos.current = vec3.clone(view.camera.position);
+                    if (mousePos.current) {
+                        prevMousePos.current = vec2.clone(mousePos.current);
+                    }
                     render();
                 }
             }
@@ -583,5 +645,15 @@ export function Engine2D() {
         return () => cancelAnimationFrame(animationFrameId.current);
     }, [view, render, grid, renderGridLabels, cameraType]);
 
-    return <Canvas2D id="canvas2D" ref={setCanvas2D} width={size.width} height={size.height} />;
+    return (
+        <Canvas2D
+            id="canvas2D"
+            ref={setCanvas2D}
+            width={size.width}
+            height={size.height}
+            onMouseMove={(e) => {
+                mousePos.current = vec2.fromValues(e.clientX, e.clientY);
+            }}
+        />
+    );
 }
