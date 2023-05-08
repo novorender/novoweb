@@ -40,7 +40,7 @@ import {
     searchByPatterns,
     searchDeepByPatterns,
 } from "utils/search";
-import { extractObjectIds, getFilePathFromObjectPath, getParentPath } from "utils/objectData";
+import { extractObjectIds, getFileNameFromPath, getFilePathFromObjectPath, getParentPath } from "utils/objectData";
 import { highlightActions, useDispatchHighlighted } from "contexts/highlighted";
 import { NodeType } from "features/modelTree/modelTree";
 import { useExplorerGlobals } from "contexts/explorerGlobals";
@@ -429,6 +429,8 @@ function PropertyItem({ checked, onChange, property, value, resizing, groupName 
                                 <a href={value} target="_blank" rel="noreferrer">
                                     {value}
                                 </a>
+                            ) : property === "Path" ? (
+                                getFileNameFromPath(value)
                             ) : (
                                 value
                             )}
