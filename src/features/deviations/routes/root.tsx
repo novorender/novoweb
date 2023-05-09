@@ -1,15 +1,15 @@
 import { Box, Button, List, ListItemButton, Typography, useTheme } from "@mui/material";
 import { Redirect, useHistory } from "react-router-dom";
+import { Settings } from "@mui/icons-material";
+import { useEffect } from "react";
 
 import { Divider, LinearProgress, ScrollBox } from "components";
 import { useExplorerGlobals } from "contexts/explorerGlobals";
 import { useAppDispatch, useAppSelector } from "app/store";
-
-import { deviationsActions, selectDeviationProfiles, selectDeviations } from "../deviationsSlice";
-import { useEffect } from "react";
 import { AsyncStatus, hasFinished } from "types/misc";
 import { getAssetUrl } from "utils/misc";
-import { Settings } from "@mui/icons-material";
+
+import { deviationsActions, selectDeviationProfiles, selectDeviations } from "../deviationsSlice";
 
 type DeviationConfig = {
     pointToTriangle: {
