@@ -241,6 +241,7 @@ export async function refillObjects({
 
             if (opacity === 0) {
                 group.ids.forEach((id) => prev[0].push(id));
+                return prev;
             }
 
             if ((group.selected || group.hidden) && group.ids.length) {
@@ -286,7 +287,7 @@ export async function refillObjects({
                         objectHighlighter.objectHighlightIndices[id] = highlightIdx;
                     }
                 });
-            } else if (defaultVisibility === ObjectVisibility.Neutral && group.hidden) {
+            } else if (defaultVisibility === ObjectVisibility.Neutral && group.hidden && group.opacity) {
                 group.ids.forEach((id) => {
                     objectHighlighter.objectHighlightIndices[id] = highlightIdx;
                 });

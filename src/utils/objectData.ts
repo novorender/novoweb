@@ -39,6 +39,20 @@ export function getFilePathFromObjectPath(objectPath: string): string | null {
     return match.path;
 }
 
+export function getFileNameFromPath(path: string): string | null {
+    const filePath = getFilePathFromObjectPath(path);
+
+    if (!filePath) {
+        return null;
+    }
+
+    if (!filePath.includes("/")) {
+        return filePath;
+    }
+
+    return filePath.split("/").at(-1) ?? null;
+}
+
 export async function objIdsToTotalBoundingSphere({
     ids,
     abortSignal,

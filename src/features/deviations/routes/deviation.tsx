@@ -219,7 +219,7 @@ function ColorStop({ deviation, disabled }: { deviation: DeviationType; disabled
                     disabled={disabled}
                     onClick={(evt) => {
                         evt.stopPropagation();
-                        history.push(`/config/edit/${deviations.colors.indexOf(deviation)}`);
+                        history.push(`/deviation/edit/${deviations.colors.indexOf(deviation)}`);
                     }}
                 >
                     <Edit fontSize="small" />
