@@ -35,7 +35,9 @@ const initialState = {
     resetPositionOnInit: false,
     followCylindersFrom: "center" as "center" | "top" | "bottom",
     drawRoadIds: undefined as string[] | undefined,
-    selectedPath: undefined as undefined | number,
+    roadIds: undefined as string[] | undefined,
+    selectedPath: undefined as undefined | LandXmlPath["id"],
+    showTracer: false,
 };
 
 type State = typeof initialState;
@@ -86,6 +88,9 @@ export const followPathSlice = createSlice({
         toggleDrawSelectedPositions: (state, action: PayloadAction<State["drawSelectedPositions"] | undefined>) => {
             state.drawSelectedPositions = action.payload !== undefined ? action.payload : !state.drawSelectedPositions;
         },
+        toggleShowTracer: (state, action: PayloadAction<State["showTracer"] | undefined>) => {
+            state.showTracer = action.payload !== undefined ? action.payload : !state.showTracer;
+        },
         setSelectedPositions: (state, action: PayloadAction<State["selectedPositions"]>) => {
             state.selectedPositions = action.payload;
         },
@@ -98,8 +103,19 @@ export const followPathSlice = createSlice({
         setFollowFrom: (state, action: PayloadAction<State["followCylindersFrom"]>) => {
             state.followCylindersFrom = action.payload;
         },
-        setDrawRoadId: (state, action: PayloadAction<State["drawRoadIds"]>) => {
+        setDrawRoadIds: (state, action: PayloadAction<State["drawRoadIds"]>) => {
             state.drawRoadIds = action.payload;
+        },
+        addDrawRoad: (state, action: PayloadAction<string>) => {
+            state.drawRoadIds?.push(action.payload);
+        },
+        removeDrawRoad: (state, action: PayloadAction<string>) => {
+            if (state.drawRoadIds) {
+                state.drawRoadIds = state.drawRoadIds.filter((id) => id !== action.payload);
+            }
+        },
+        setRoadIds: (state, action: PayloadAction<State["roadIds"]>) => {
+            state.roadIds = action.payload;
         },
         setSelectedPath: (state, action: PayloadAction<State["selectedPath"]>) => {
             state.selectedPath = action.payload;
@@ -128,6 +144,8 @@ export const selectResetPositionOnInit = (state: RootState) => state.followPath.
 export const selectFollowCylindersFrom = (state: RootState) => state.followPath.followCylindersFrom;
 export const selectSelectedPath = (state: RootState) => state.followPath.selectedPath;
 export const selectDrawRoadIds = (state: RootState) => state.followPath.drawRoadIds;
+export const selectRoadIds = (state: RootState) => state.followPath.roadIds;
+export const selectShowTracer = (state: RootState) => state.followPath.showTracer;
 
 const { actions, reducer } = followPathSlice;
 export { actions as followPathActions, reducer as followPathReducer };

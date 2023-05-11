@@ -275,7 +275,11 @@ export function useSelectBookmark() {
             } else {
                 if ("ids" in bookmark.followPath) {
                     dispatch(followPathActions.setSelectedIds(bookmark.followPath.ids));
-                    dispatch(followPathActions.setDrawRoadId(bookmark.followPath.roadIds));
+                    dispatch(followPathActions.setDrawRoadIds(bookmark.followPath.roadIds));
+
+                    if (bookmark.followPath.roadIds) {
+                        dispatch(followPathActions.setSelectedPath(bookmark.followPath.ids[0]));
+                    }
                 } else {
                     dispatch(followPathActions.setSelectedIds([bookmark.followPath.id]));
                     dispatch(followPathActions.setGoToRouterPath(`/followIds`));

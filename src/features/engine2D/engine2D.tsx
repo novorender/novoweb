@@ -1,13 +1,18 @@
-import { DrawableEntity, MeasureSettings } from "@novorender/measure-api";
+import { DrawProduct, DrawableEntity, MeasureSettings } from "@novorender/measure-api";
 import { css, styled } from "@mui/material";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { MutableRefObject, useCallback, useEffect, useRef, useState } from "react";
 import { mat3, quat, ReadonlyVec2, vec2, vec3 } from "gl-matrix";
 
 import { useAppSelector } from "app/store";
 import { useExplorerGlobals } from "contexts/explorerGlobals";
 import { useHeightProfileMeasureObject } from "features/heightProfile";
 import { selectMeasure, useMeasureObjects } from "features/measure";
-import { selectDrawSelectedPositions, selectFollowCylindersFrom, usePathMeasureObjects } from "features/followPath";
+import {
+    selectDrawSelectedPositions,
+    selectFollowCylindersFrom,
+    selectShowTracer,
+    usePathMeasureObjects,
+} from "features/followPath";
 import { selectArea, selectAreaDrawPoints } from "features/area";
 import { selectPointLine } from "features/pointLine";
 import {
@@ -43,7 +48,7 @@ const measurementInactiveLineColor = "rgba(255, 255, 0, 0.4)";
 const hoverFillColor = "rgba(0, 170, 200, 0.3)";
 const hoverLineColor = "rgba(255, 165, 0, 1)";
 
-export function Engine2D() {
+export function Engine2D({ pointerPos }: { pointerPos: MutableRefObject<[number, number]> }) {
     const {
         state: { size, scene, view, measureScene },
     } = useExplorerGlobals();
@@ -75,6 +80,9 @@ export function Engine2D() {
     const cameraType = useAppSelector(selectCameraType);
     const grid = useAppSelector(selectGrid);
     const viewMode = useAppSelector(selectViewMode);
+    const showTracer = useAppSelector(selectShowTracer);
+
+    const prevPointerPos = useRef([0, 0] as [number, number]);
 
     const renderGridLabels = useCallback(() => {
         if (
@@ -391,6 +399,53 @@ export function Engine2D() {
                 }
             }
 
+            //Measure tracer
+            if (
+                showTracer &&
+                cameraType === CameraType.Orthographic &&
+                viewMode === ViewMode.FollowPath &&
+                roadCrossSectionData &&
+                roadCrossSectionData.length > 1
+            ) {
+                const prods = roadCrossSectionData
+                    .map((road) => measureApi.getDrawObjectFromPoints(view, road.points, false, false))
+                    .filter((prod) => prod) as DrawProduct[];
+
+                if (prods.length) {
+                    let line = {
+                        start: vec2.fromValues(pointerPos.current[0], size.height),
+                        end: vec2.fromValues(pointerPos.current[0], 0),
+                    };
+
+                    const normal = measureApi.get2dNormal(prods[0], line);
+                    if (normal) {
+                        line = {
+                            start: vec2.scaleAndAdd(vec2.create(), normal.position, normal.normal, size.height),
+                            end: vec2.scaleAndAdd(vec2.create(), normal.position, normal.normal, -size.height),
+                        };
+                    }
+
+                    const traceDraw = measureApi.traceDrawObjects(prods, line);
+                    traceDraw.objects.forEach((obj) => {
+                        obj.parts.forEach((part) => {
+                            drawPart(
+                                context2D,
+                                camSettings,
+                                part,
+                                {
+                                    lineColor: "black",
+                                    displayAllPoints: true,
+                                },
+                                2,
+                                {
+                                    type: "default",
+                                }
+                            );
+                        });
+                    });
+                }
+            }
+
             if (pointLinePoints.length && pointLineResult) {
                 const drawProd = measureApi.getDrawObjectFromPoints(view, pointLinePoints, false, true, true);
                 if (drawProd) {
@@ -551,6 +606,9 @@ export function Engine2D() {
         crossSection,
         roadCrossSectionData,
         viewMode,
+        cameraType,
+        pointerPos,
+        showTracer,
     ]);
 
     useEffect(() => {
@@ -570,10 +628,14 @@ export function Engine2D() {
                     !prevCamRot.current ||
                     !quat.exactEquals(prevCamRot.current, view.camera.rotation) ||
                     !prevCamPos.current ||
-                    !vec3.exactEquals(prevCamPos.current, view.camera.position)
+                    !vec3.exactEquals(prevCamPos.current, view.camera.position) ||
+                    !prevCamPos.current ||
+                    !vec3.exactEquals(prevCamPos.current, view.camera.position) ||
+                    !vec2.exactEquals(prevPointerPos.current, pointerPos.current)
                 ) {
                     prevCamRot.current = quat.clone(view.camera.rotation);
                     prevCamPos.current = vec3.clone(view.camera.position);
+                    prevPointerPos.current = [...pointerPos.current];
                     render();
                 }
             }
@@ -581,7 +643,7 @@ export function Engine2D() {
             animationFrameId.current = requestAnimationFrame(() => animate());
         }
         return () => cancelAnimationFrame(animationFrameId.current);
-    }, [view, render, grid, renderGridLabels, cameraType]);
+    }, [view, render, grid, renderGridLabels, cameraType, pointerPos]);
 
     return <Canvas2D id="canvas2D" ref={setCanvas2D} width={size.width} height={size.height} />;
 }

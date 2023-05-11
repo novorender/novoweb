@@ -217,6 +217,7 @@ export function Render3D({ onInit }: Props) {
     const pointerDown = useRef(false);
     const isTouchPointer = useRef(false);
     const movingClippingBox = useRef(false);
+    const pointerPos = useRef([0, 0] as [x: number, y: number]);
     const camX = useRef(vec3.create());
     const camY = useRef(vec3.create());
 
@@ -975,6 +976,7 @@ export function Render3D({ onInit }: Props) {
     const prevHoverEnt = useRef<Awaited<ReturnType<MeasureScene["pickMeasureEntityOnCurrentObject"]>>>();
     const previous2dSnapPos = useRef(vec2.create());
     const handleMove = async (e: PointerEvent) => {
+        pointerPos.current = [e.nativeEvent.offsetX, e.nativeEvent.offsetY];
         if (!view || !canvas || !svg || (!e.movementY && !e.movementX)) {
             return;
         }
@@ -1164,7 +1166,7 @@ export function Render3D({ onInit }: Props) {
                             }
                         }}
                     />
-                    <Engine2D />
+                    <Engine2D pointerPos={pointerPos} />
                     <Stamp />
                     {canvas !== null && (
                         <Svg width={canvas.width} height={canvas.height} ref={setSvg}>
