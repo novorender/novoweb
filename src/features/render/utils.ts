@@ -39,6 +39,7 @@ import { VecRGB, VecRGBA } from "utils/color";
 
 import { MAX_FLOAT } from "./consts";
 import { orthoCamActions } from "features/orthoCam";
+import { propertiesActions } from "features/properties/slice";
 
 type Settings = {
     taaEnabled: boolean;
@@ -526,6 +527,18 @@ export function initDefaultTopDownElevation(customProperties: Record<string, any
         store.dispatch(orthoCamActions.setDefaultTopDownElevation(defaultTopDownElevation));
     } else {
         store.dispatch(orthoCamActions.setDefaultTopDownElevation(undefined));
+    }
+}
+
+export function initPropertiesSettings(customProperties: Record<string, any>) {
+    const stampSettings = customProperties?.properties?.stampSettings;
+
+    if (stampSettings) {
+        store.dispatch(propertiesActions.setStampSettings(stampSettings));
+
+        if (stampSettings.enabled) {
+            store.dispatch(propertiesActions.toggleShowStamp(true));
+        }
     }
 }
 

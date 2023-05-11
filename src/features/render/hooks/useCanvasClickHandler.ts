@@ -40,6 +40,7 @@ import {
 } from "contexts/highlightCollections";
 
 import { pickDeviationArea } from "../utils";
+import { selectShowPropertiesStamp } from "features/properties/slice";
 
 export function useCanvasClickHandler() {
     const dispatch = useAppDispatch();
@@ -63,6 +64,7 @@ export function useCanvasClickHandler() {
     const viewMode = useAppSelector(selectViewMode);
     const stamp = useAppSelector(selectStamp);
     const pointerDownState = useAppSelector(selectPointerDownState);
+    const showPropertiesStamp = useAppSelector(selectShowPropertiesStamp);
 
     const [secondaryHighlightAbortController, abortSecondaryHighlight] = useAbortController();
     const currentSecondaryHighlightQuery = useRef("");
@@ -127,6 +129,8 @@ export function useCanvasClickHandler() {
                 dispatch(
                     measureActions.selectEntity({ entity: measure.hover as ExtendedMeasureEntity, pin: evt.shiftKey })
                 );
+            } else if (picker === Picker.Object) {
+                dispatch(renderActions.setStamp(null));
             }
             return;
         }
@@ -201,6 +205,7 @@ export function useCanvasClickHandler() {
                 break;
             case Picker.Object:
                 if (result.objectId === -1) {
+                    dispatch(renderActions.setStamp(null));
                     return;
                 }
 
@@ -219,6 +224,7 @@ export function useCanvasClickHandler() {
                 } else {
                     if (alreadySelected) {
                         dispatch(renderActions.setMainObject(undefined));
+                        dispatch(renderActions.setStamp(null));
                         dispatchHighlighted(highlightActions.setIds([]));
 
                         if (!secondaryHighlightProperty) {
@@ -234,20 +240,30 @@ export function useCanvasClickHandler() {
                         dispatch(renderActions.setMainObject(result.objectId));
                         dispatchHighlighted(highlightActions.setIds([result.objectId]));
 
+                        const metadata = await scene?.getObjectReference(result.objectId).loadMetaData();
+
+                        if (showPropertiesStamp) {
+                            dispatch(
+                                renderActions.setStamp({
+                                    kind: StampKind.Properties,
+                                    properties: [
+                                        ["name", metadata.name],
+                                        ["path", metadata.path],
+                                        ...metadata.properties,
+                                    ],
+                                    mouseX: evt.nativeEvent.offsetX,
+                                    mouseY: evt.nativeEvent.offsetY,
+                                    pinned: true,
+                                })
+                            );
+                        }
+
                         if (!secondaryHighlightProperty) {
                             return;
                         }
 
-                        const query = await scene
-                            ?.getObjectReference(result.objectId)
-                            .loadMetaData()
-                            .then((metadata) => {
-                                const query = metadata.properties.find(
-                                    (prop) => prop[0] === secondaryHighlightProperty
-                                );
-
-                                return query ? query[1] : undefined;
-                            });
+                        const property = metadata.properties.find((prop) => prop[0] === secondaryHighlightProperty);
+                        const query = property && property[1];
 
                         if (
                             query &&

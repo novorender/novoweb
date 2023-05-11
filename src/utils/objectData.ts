@@ -123,3 +123,21 @@ export function getGuid(ref: HierarcicalObjectReference): Promise<string> {
         return guid ? guid[1] : "";
     });
 }
+
+export function getPropertyDisplayName(property: string): string {
+    let decoded: string | undefined = undefined;
+
+    try {
+        decoded = decodeURIComponent(property);
+    } catch (e) {
+        console.warn(`Failed to decode property "${property}".`);
+    }
+
+    const display = decoded ?? property;
+
+    return display[0]?.toUpperCase() + display.slice(1);
+}
+
+export function isUrl(str: string): boolean {
+    return str.startsWith("http");
+}

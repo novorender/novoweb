@@ -99,6 +99,7 @@ import {
     initProportionalCameraSpeed,
     initPointerLock,
     initDefaultTopDownElevation,
+    initPropertiesSettings,
 } from "./utils";
 import { xAxis, yAxis, axis } from "./consts";
 import { moveSvgCursor } from "./svgUtils";
@@ -325,6 +326,7 @@ export function Render3D({ onInit }: Props) {
                 initProportionalCameraSpeed(customProperties);
                 initPointerLock(customProperties);
                 initDefaultTopDownElevation(customProperties);
+                initPropertiesSettings(customProperties);
 
                 if (urlData.mainObject !== undefined) {
                     dispatchHighlighted(highlightActions.add([urlData.mainObject]));

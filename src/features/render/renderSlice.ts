@@ -135,6 +135,7 @@ export enum StampKind {
     LogPoint,
     MachineLocation,
     Deviation,
+    Properties,
 }
 
 type LogPointStamp = {
@@ -158,10 +159,16 @@ type DeviationStamp = {
     };
 };
 
+type PropertiesStamp = {
+    kind: StampKind.Properties;
+    properties: [key: string, value: string][];
+};
+
 type Stamp = { mouseX: number; mouseY: number; pinned: boolean } & (
     | LogPointStamp
     | MachineLocationStamp
     | DeviationStamp
+    | PropertiesStamp
 );
 
 const initialState = {

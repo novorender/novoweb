@@ -1,1 +1,1 @@
-export {};
+export { PropertiesStamp } from "./propertiesStamp";

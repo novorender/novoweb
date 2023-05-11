@@ -1,11 +1,19 @@
 import { Paper, PaperProps, styled, css } from "@mui/material";
+import { useAppDispatch } from "app/store";
+import { renderActions } from "features/render";
 
 type StyleProps = {
     minimized?: boolean;
     maximized?: boolean;
 };
 
-export const WidgetContainer = styled((props: PaperProps) => <Paper elevation={4} {...props} />, {
+const ConnectedPaper = (props: PaperProps) => {
+    const dispatch = useAppDispatch();
+
+    return <Paper elevation={4} {...props} onClick={() => dispatch(renderActions.setStamp(null))} />;
+};
+
+export const WidgetContainer = styled(ConnectedPaper, {
     shouldForwardProp: (prop) => prop !== "minimized" && prop !== "maximized",
 })<StyleProps>(
     ({ theme, minimized, maximized }) => css`
