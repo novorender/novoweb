@@ -3,7 +3,6 @@ import {
     BlurOn,
     Cameraswitch,
     Category,
-    CheckBox,
     ColorLens,
     CropLandscape,
     Domain,
@@ -31,6 +30,7 @@ import {
     FiberSmartRecord,
     GpsFixed,
     Image,
+    RestartAlt,
 } from "@mui/icons-material";
 
 import { ReactComponent as Clipping } from "media/icons/clipping.svg";
@@ -334,8 +334,8 @@ export const featuresConfig = {
     },
     clearSelection: {
         key: "clearSelection",
-        name: "Clear selection",
-        Icon: CheckBox,
+        name: "Clear",
+        Icon: RestartAlt,
         type: FeatureType.Button,
         defaultLocked: false,
     },

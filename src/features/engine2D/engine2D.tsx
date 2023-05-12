@@ -48,7 +48,7 @@ const measurementInactiveLineColor = "rgba(255, 255, 0, 0.4)";
 const hoverFillColor = "rgba(0, 170, 200, 0.3)";
 const hoverLineColor = "rgba(255, 165, 0, 1)";
 
-export function Engine2D({ pointerPos }: { pointerPos: MutableRefObject<[number, number]> }) {
+export function Engine2D({ pointerPos }: { pointerPos: MutableRefObject<Vec2> }) {
     const {
         state: { size, scene, view, measureScene },
     } = useExplorerGlobals();
@@ -82,7 +82,7 @@ export function Engine2D({ pointerPos }: { pointerPos: MutableRefObject<[number,
     const viewMode = useAppSelector(selectViewMode);
     const showTracer = useAppSelector(selectShowTracer);
 
-    const prevPointerPos = useRef([0, 0] as [number, number]);
+    const prevPointerPos = useRef([0, 0] as Vec2);
 
     const renderGridLabels = useCallback(() => {
         if (

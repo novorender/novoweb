@@ -124,8 +124,8 @@ export function useCreateBookmark() {
             clippingPlanes: {
                 ...clippingPlanes,
                 bounds: {
-                    min: Array.from(clippingPlanes.bounds.min) as [number, number, number],
-                    max: Array.from(clippingPlanes.bounds.max) as [number, number, number],
+                    min: Array.from(clippingPlanes.bounds.min) as Vec3,
+                    max: Array.from(clippingPlanes.bounds.max) as Vec3,
                 },
             },
             viewMode: viewMode === ViewMode.Panorama ? ViewMode.Default : viewMode,

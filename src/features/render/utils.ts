@@ -21,7 +21,7 @@ import { groupsActions, selectLoadingIds } from "features/groups";
 import { DeviationMode, deviationsActions } from "features/deviations";
 import { store } from "app/store";
 import { ObjectGroup, objectGroupsActions, DispatchObjectGroups } from "contexts/objectGroups";
-import { hiddenGroupActions, DispatchHidden } from "contexts/hidden";
+import { hiddenActions, DispatchHidden } from "contexts/hidden";
 import { highlightActions, DispatchHighlighted } from "contexts/highlighted";
 import {
     AdvancedSetting,
@@ -276,7 +276,6 @@ export async function refillObjects({
     );
 
     const highlights = Object.values(_highlights);
-    hidden.forEach((id) => (objectHighlighter.objectHighlightIndices[id] = 255));
 
     objectGroups.forEach((group) => {
         const { highlightIdx } = group;
@@ -295,6 +294,8 @@ export async function refillObjects({
             }
         }
     });
+
+    hidden.forEach((id) => (objectHighlighter.objectHighlightIndices[id] = 255));
 
     view.settings.objectHighlights = [
         getHighlightByObjectVisibility(defaultVisibility),
@@ -388,7 +389,7 @@ export function initHighlighted(dispatch: DispatchHighlighted, color?: VecRGBA):
 }
 
 export function initHidden(dispatch: DispatchHidden): void {
-    dispatch(hiddenGroupActions.setIds([]));
+    dispatch(hiddenActions.setIds([]));
 }
 
 function serializeableObjectGroups(groups: BaseObjectGroup[]): ObjectGroup[] {

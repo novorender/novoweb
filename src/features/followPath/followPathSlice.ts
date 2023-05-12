@@ -17,7 +17,7 @@ export type ParametricPath = {
 
 const initialState = {
     paths: { status: AsyncStatus.Initial } as AsyncState<LandXmlPath[]>,
-    currentCenter: undefined as undefined | [number, number, number],
+    currentCenter: undefined as undefined | Vec3,
     profile: "",
     step: "1",
     ptHeight: undefined as undefined | number,

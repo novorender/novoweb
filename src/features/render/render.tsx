@@ -1,5 +1,5 @@
 import { glMatrix, mat3, mat4, quat, vec2, vec3, vec4 } from "gl-matrix";
-import { useEffect, useState, useRef, MouseEvent, PointerEvent, useCallback, RefCallback } from "react";
+import { useEffect, useState, useRef, MouseEvent, PointerEvent, useCallback, RefCallback, TouchEvent } from "react";
 import {
     View,
     EnvironmentDescription,
@@ -16,7 +16,7 @@ import { PerformanceStats } from "features/performanceStats";
 import { getDataFromUrlHash } from "features/shareLink";
 import { imagesActions, useHandleImageChanges } from "features/images";
 import { LinearProgress, Loading } from "components";
-import { api, dataApi, measureApi } from "app";
+import { api, dataApi, isIpad, isIphone, measureApi } from "app";
 import { useSceneId } from "hooks/useSceneId";
 import {
     fetchEnvironments,
@@ -112,6 +112,7 @@ import { Markers } from "./markers";
 import { isSceneError, SceneError } from "./sceneError";
 import { useMoveMarkers } from "./hooks/useMoveMarkers";
 import { Images } from "./images";
+import { useCanvasContextMenuHandler } from "./hooks/useCanvasContextMenuHandler";
 
 glMatrix.setMatrixArrayType(Array);
 
@@ -197,7 +198,8 @@ export function Render3D({ onInit }: Props) {
     const viewMode = useAppSelector(selectViewMode);
     const currentTopDownElevation = useAppSelector(selectCurrentTopDownElevation);
 
-    const canvasClickHandler = useCanvasClickHandler();
+    const handleCanvasClick = useCanvasClickHandler();
+    const handleCanvasContextMenu = useCanvasContextMenuHandler();
     const usingSvgCursor = useHandleCanvasCursor();
     const measureHoverSettings = useMeasureHoverSettings();
 
@@ -932,17 +934,108 @@ export function Render3D({ onInit }: Props) {
             isTouchPointer.current = false;
             return;
         }
-
         isTouchPointer.current = true;
         handleDown(e.nativeEvent.offsetX, e.nativeEvent.offsetY, e.timeStamp);
     };
 
+    // Need this until contextmenu event is supported in mobile safari.
+    // 'oncontextmenu' in window == true, but doesn't fire.
+    const contextMenuTouchState = useRef<{
+        startPos: Vec2;
+        currentPos: Vec2;
+        timer: ReturnType<typeof setTimeout>;
+    }>();
+    const handleTouchDown = (e: TouchEvent<HTMLCanvasElement>) => {
+        if (contextMenuTouchState.current) {
+            clearTimeout(contextMenuTouchState.current.timer);
+            contextMenuTouchState.current = undefined;
+        }
+
+        if ((isIphone || isIpad) && e.touches.length === 1) {
+            dispatch(renderActions.setStamp(null));
+            const pos = [e.touches[0].clientX, e.touches[0].clientY] as Vec2;
+            contextMenuTouchState.current = {
+                startPos: pos,
+                currentPos: [...pos],
+                timer: setTimeout(() => {
+                    if (
+                        contextMenuTouchState.current &&
+                        vec2.dist(contextMenuTouchState.current.startPos, contextMenuTouchState.current.currentPos) <=
+                            10
+                    ) {
+                        handleCanvasContextMenu(contextMenuTouchState.current.currentPos);
+                        contextMenuTouchState.current = undefined;
+                    }
+                }, 500),
+            };
+        }
+    };
+
+    const handleTouchMove = (e: TouchEvent<HTMLCanvasElement>) => {
+        if (contextMenuTouchState.current && e.touches.length === 1) {
+            contextMenuTouchState.current.currentPos[0] = e.touches[0].clientX;
+            contextMenuTouchState.current.currentPos[1] = e.touches[0].clientY;
+        }
+    };
+
+    const handleTouchUp = () => {
+        if (contextMenuTouchState.current) {
+            clearTimeout(contextMenuTouchState.current.timer);
+            contextMenuTouchState.current = undefined;
+        }
+    };
+
+    const contextMenuCursorState = useRef<{
+        timestamp: number;
+        startPos: Vec2;
+        currentPos: Vec2;
+    }>();
     const handleMouseDown = (e: MouseEvent) => {
-        if (e.button !== 0) {
+        contextMenuCursorState.current = undefined;
+        if (e.button === 2) {
+            contextMenuCursorState.current = {
+                timestamp: e.timeStamp,
+                startPos: [e.clientX, e.clientY],
+                currentPos: [e.clientX, e.clientY],
+            };
+            return;
+        } else if (e.button !== 0) {
             return;
         }
 
         handleDown(e.nativeEvent.offsetX, e.nativeEvent.offsetY, e.timeStamp);
+    };
+
+    const handlePointerUp = (e: PointerEvent) => {
+        if (e.pointerType === "mouse") {
+            return;
+        }
+
+        handleUp();
+    };
+
+    const handleMouseUp = (e: MouseEvent) => {
+        if (e.buttons === 0 && e.button === 2) {
+            const cursorState = contextMenuCursorState.current;
+
+            if (!cursorState) {
+                return;
+            }
+
+            const longPress = e.timeStamp - cursorState.timestamp >= 300;
+            const drag = vec2.dist(cursorState.startPos, cursorState.currentPos) >= 5;
+
+            contextMenuCursorState.current = undefined;
+            if (longPress || drag) {
+                return;
+            }
+
+            handleCanvasContextMenu(cursorState.currentPos);
+        } else if (e.button !== 0) {
+            return;
+        }
+
+        handleUp();
     };
 
     const handleUp = () => {
@@ -1083,6 +1176,11 @@ export function Render3D({ onInit }: Props) {
             dispatch(renderActions.setStamp(null));
         }
 
+        if (contextMenuCursorState.current) {
+            contextMenuCursorState.current.currentPos[0] += e.movementX;
+            contextMenuCursorState.current.currentPos[1] += e.movementY;
+        }
+
         if (!pointerDown.current || picker !== Picker.ClippingBox || camera2pointDistance.current === 0) {
             return;
         }
@@ -1155,27 +1253,39 @@ export function Render3D({ onInit }: Props) {
                         id="main-canvas"
                         tabIndex={1}
                         ref={canvasRef}
-                        onClick={canvasClickHandler}
+                        onClick={handleCanvasClick}
                         onMouseDown={handleMouseDown}
+                        onContextMenu={(evt) => {
+                            if (!isTouchPointer.current) {
+                                return;
+                            }
+                            evt.preventDefault();
+                            handleCanvasContextMenu([evt.clientX, evt.clientY]);
+                        }}
+                        onMouseUp={handleMouseUp}
                         onPointerEnter={handlePointerDown}
                         onPointerMove={handleMove}
-                        onPointerUp={handleUp}
+                        onPointerUp={handlePointerUp}
                         onPointerOut={() => {
                             if (svg && view) {
                                 moveSvgCursor({ svg, view, size, measurement: undefined, x: -100, y: -100, color: "" });
                             }
                         }}
+                        onTouchStart={handleTouchDown}
+                        onTouchMove={handleTouchMove}
+                        onTouchEnd={handleTouchUp}
+                        onTouchCancel={handleTouchUp}
                     />
                     <Engine2D pointerPos={pointerPos} />
-                    <Stamp />
-                    {canvas !== null && (
+                    {view && <Stamp />}
+                    {canvas && (
                         <Svg width={canvas.width} height={canvas.height} ref={setSvg}>
                             <Markers />
                             <g id="cursor" />
                         </Svg>
                     )}
                     <Images />
-                    {!view ? <Loading /> : null}
+                    {!view && <Loading />}
                 </>
             )}
         </Box>

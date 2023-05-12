@@ -17,7 +17,7 @@ import {
 
 import { useAppDispatch } from "app/store";
 import { renderActions, ObjectVisibility, CameraType } from "features/render/renderSlice";
-import { useDispatchHidden, hiddenGroupActions } from "contexts/hidden";
+import { useDispatchHidden, hiddenActions } from "contexts/hidden";
 import { useDispatchHighlighted, highlightActions } from "contexts/highlighted";
 import { useDispatchSelectionBasket, selectionBasketActions } from "contexts/selectionBasket";
 import { useExplorerGlobals } from "contexts/explorerGlobals";
@@ -282,10 +282,10 @@ function CommentListItem({
 
         if (visibility?.default_visibility) {
             dispatch(renderActions.setDefaultVisibility(ObjectVisibility.Neutral));
-            dispatchHidden(hiddenGroupActions.setIds(visibilityExceptionIds));
+            dispatchHidden(hiddenActions.setIds(visibilityExceptionIds));
         } else {
             dispatch(renderActions.setDefaultVisibility(ObjectVisibility.Transparent));
-            dispatchHidden(hiddenGroupActions.setIds([]));
+            dispatchHidden(hiddenActions.setIds([]));
             dispatchSelectionBasket(selectionBasketActions.set(visibilityExceptionIds));
         }
 

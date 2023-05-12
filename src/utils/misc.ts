@@ -175,3 +175,11 @@ export function getAssetUrl(scene: Scene, path: string): URL {
 
     return url;
 }
+
+export function isRealNumber(num: number): boolean {
+    return !Number.isNaN(num) && Number.isFinite(num);
+}
+
+export function isRealVec(vec: number[]): boolean {
+    return !vec.some((num) => !isRealNumber(num));
+}

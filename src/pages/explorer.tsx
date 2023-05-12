@@ -14,7 +14,7 @@ import {
     allWidgets,
 } from "config/features";
 import { Hud } from "features/hud";
-import { Render3D } from "features/render";
+import { CanvasContextMenuFeatureKey, Render3D } from "features/render";
 import { Consent } from "features/consent";
 
 import { api } from "app";
@@ -88,6 +88,11 @@ function ExplorerBase() {
         const primaryMenu = getPrimaryMenu(customProperties);
         if (primaryMenu) {
             dispatch(explorerActions.setPrimaryMenu(primaryMenu));
+        }
+
+        const canvasContextMenuFeatures = getCanvasContextMenuFeatures(customProperties);
+        if (canvasContextMenuFeatures) {
+            dispatch(explorerActions.setCanvasContextMenu({ features: canvasContextMenuFeatures }));
         }
 
         const oAuthState = getOAuthState();
@@ -187,6 +192,13 @@ function getUserRole(customProperties: unknown): UserRole {
 function getPrimaryMenu(customProperties: unknown): PrimaryMenuConfigType | undefined {
     return customProperties && typeof customProperties === "object" && "primaryMenu" in customProperties
         ? (customProperties as { primaryMenu: PrimaryMenuConfigType }).primaryMenu
+        : undefined;
+}
+
+function getCanvasContextMenuFeatures(customProperties: unknown): CanvasContextMenuFeatureKey[] | undefined {
+    return customProperties && typeof customProperties === "object" && "canvasContextMenu" in customProperties
+        ? (customProperties as { canvasContextMenu: { features: CanvasContextMenuFeatureKey[] } }).canvasContextMenu
+              .features
         : undefined;
 }
 

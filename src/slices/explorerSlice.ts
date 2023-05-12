@@ -12,7 +12,7 @@ import {
 import type { RootState } from "app/store";
 import { uniqueArray } from "utils/misc";
 
-import { DeepMutable } from "features/render/renderSlice";
+import { CanvasContextMenuFeatureKey, DeepMutable, defaultCanvasContextMenuFeatures } from "features/render";
 
 export enum SceneType {
     Viewer,
@@ -44,6 +44,11 @@ const initialState = {
         button3: featuresConfig.flyToSelected.key,
         button4: featuresConfig.stepBack.key,
         button5: featuresConfig.stepForwards.key as ButtonKey,
+    },
+    contextMenu: {
+        canvas: {
+            features: defaultCanvasContextMenuFeatures as CanvasContextMenuFeatureKey[],
+        },
     },
     urlSearchQuery: undefined as WritableUrlSearchQuery,
     urlBookmarkId: undefined as undefined | string,
@@ -184,6 +189,9 @@ export const explorerSlice = createSlice({
         setPrimaryMenu: (state, action: PayloadAction<Partial<State["primaryMenu"]>>) => {
             state.primaryMenu = { ...state.primaryMenu, ...action.payload };
         },
+        setCanvasContextMenu: (state, action: PayloadAction<Partial<State["contextMenu"]["canvas"]>>) => {
+            state.contextMenu.canvas = { ...state.contextMenu.canvas, ...action.payload };
+        },
     },
 });
 
@@ -201,12 +209,12 @@ export const selectMinimized = (state: RootState) => state.explorer.minimized;
 export const selectPrimaryMenu = (state: RootState) => state.explorer.primaryMenu;
 export const selectIsAdminScene = (state: RootState) => state.explorer.sceneType === SceneType.Admin;
 export const selectHasAdminCapabilities = (state: RootState) => state.explorer.userRole !== UserRole.Viewer;
+export const selectCanvasContextMenuFeatures = (state: RootState) => state.explorer.contextMenu.canvas.features;
 
 export const selectEnabledWidgets = createSelector(
     (state: RootState) => state.explorer.enabledWidgets,
     (widgets) => widgets.map((widget) => featuresConfig[widget]).filter((config) => config) as Widget[]
 );
 
-// Action creators are generated for each case reducer function
 const { actions, reducer } = explorerSlice;
 export { actions as explorerActions, reducer as explorerReducer };

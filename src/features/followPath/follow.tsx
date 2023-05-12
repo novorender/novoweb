@@ -161,7 +161,7 @@ export function Follow({ fpObj }: { fpObj: FollowParametricObject }) {
                 );
             }
 
-            dispatch(followPathActions.setCurrentCenter(pt as [number, number, number]));
+            dispatch(followPathActions.setCurrentCenter(pt as Vec3));
             dispatch(followPathActions.setPtHeight(pt[1]));
         },
         [clipping, currentCenter, dispatch, fpObj, view]

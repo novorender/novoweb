@@ -24,7 +24,9 @@ import {
     selectEnabledWidgets,
     selectIsAdminScene,
     selectPrimaryMenu,
+    selectCanvasContextMenuFeatures,
 } from "slices/explorerSlice";
+import { CanvasContextMenuFeatureKey, canvasContextMenuFeatures } from "features/render";
 
 export function FeatureSettings({ save, saving }: { save: () => Promise<void>; saving: boolean }) {
     const history = useHistory();
@@ -36,6 +38,7 @@ export function FeatureSettings({ save, saving }: { save: () => Promise<void>; s
     const lockedWidgets = useAppSelector(selectLockedWidgets);
     const settings = useAppSelector(selectAdvancedSettings);
     const primaryMenu = useAppSelector(selectPrimaryMenu);
+    const enabledCanvasContextMenuFeatures = useAppSelector(selectCanvasContextMenuFeatures);
     const { showPerformance, navigationCube } = settings;
 
     const handleToggleFeature = ({ target: { name, checked } }: ChangeEvent<HTMLInputElement>) => {
@@ -46,6 +49,15 @@ export function FeatureSettings({ save, saving }: { save: () => Promise<void>; s
         const keys = enabledWidgets.map((w) => w.key);
 
         dispatch(explorerActions.setEnabledWidgets(checked ? keys.concat(key) : keys.filter((k) => k !== key)));
+    };
+
+    const toggleCanvasContextMenuFeature = (key: CanvasContextMenuFeatureKey, checked: boolean) => {
+        const keys = enabledCanvasContextMenuFeatures;
+        dispatch(
+            explorerActions.setCanvasContextMenu({
+                features: checked ? keys.concat(key) : keys.filter((k) => k !== key),
+            })
+        );
     };
 
     return (
@@ -267,6 +279,38 @@ export function FeatureSettings({ save, saving }: { save: () => Promise<void>; s
                                 </Select>
                             </FormControl>
                         </Box>
+                    </AccordionDetails>
+                </Accordion>
+                <Accordion>
+                    <AccordionSummary>Context menu</AccordionSummary>
+                    <AccordionDetails>
+                        <Grid container p={1}>
+                            {[...canvasContextMenuFeatures]
+                                .sort((a, b) => a.name.localeCompare(b.name, "en", { sensitivity: "accent" }))
+                                .map((feature) => (
+                                    <Grid item xs={6} key={feature.key}>
+                                        <FormControlLabel
+                                            control={
+                                                <Checkbox
+                                                    size="small"
+                                                    color="primary"
+                                                    checked={enabledCanvasContextMenuFeatures.some(
+                                                        (enabled) => enabled === feature.key
+                                                    )}
+                                                    onChange={(_e, checked) => {
+                                                        toggleCanvasContextMenuFeature(feature.key, checked);
+                                                    }}
+                                                />
+                                            }
+                                            label={
+                                                <Box mr={0.5} sx={{ userSelect: "none" }}>
+                                                    {feature.name}
+                                                </Box>
+                                            }
+                                        />
+                                    </Grid>
+                                ))}
+                        </Grid>
                     </AccordionDetails>
                 </Accordion>
             </ScrollBox>

@@ -38,9 +38,10 @@ import {
     useDispatchHighlightCollections,
     useHighlightCollections,
 } from "contexts/highlightCollections";
+import { isRealVec } from "utils/misc";
+import { selectShowPropertiesStamp } from "features/properties/slice";
 
 import { pickDeviationArea } from "../utils";
-import { selectShowPropertiesStamp } from "features/properties/slice";
 
 export function useCanvasClickHandler() {
     const dispatch = useAppDispatch();
@@ -135,7 +136,7 @@ export function useCanvasClickHandler() {
             return;
         }
 
-        const normal = result.normal.some((n) => Number.isNaN(n)) ? undefined : vec3.clone(result.normal);
+        const normal = isRealVec([...result.normal]) ? vec3.clone(result.normal) : undefined;
         const position = vec3.clone(result.position);
 
         switch (picker) {
