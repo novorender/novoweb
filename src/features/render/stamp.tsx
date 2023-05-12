@@ -4,6 +4,9 @@ import { renderActions, selectStamp, StampKind } from "features/render";
 import { useAppDispatch, useAppSelector } from "app/store";
 import { LogPointStamp, MachineLocationStamp } from "features/xsiteManage";
 import { DeviationStamp } from "features/deviations";
+import { PropertiesStamp } from "features/properties";
+
+import { CanvasContextMenuStamp } from "./canvasContextMenuStamp";
 
 export function Stamp() {
     const dispatch = useAppDispatch();
@@ -32,6 +35,10 @@ export function Stamp() {
                 <LogPointStamp />
             ) : stamp.kind === StampKind.Deviation ? (
                 <DeviationStamp />
+            ) : stamp.kind === StampKind.CanvasContextMenu ? (
+                <CanvasContextMenuStamp />
+            ) : stamp.kind === StampKind.Properties ? (
+                <PropertiesStamp />
             ) : null}
         </Menu>
     );

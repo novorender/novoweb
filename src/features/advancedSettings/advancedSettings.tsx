@@ -21,6 +21,7 @@ import {
     SubtreeStatus,
 } from "features/render";
 import {
+    selectCanvasContextMenuFeatures,
     selectEnabledWidgets,
     selectIsAdminScene,
     selectMaximized,
@@ -67,6 +68,7 @@ export default function AdvancedSettings() {
     const proportionalCameraSpeed = useAppSelector(selectProportionalCameraSpeed);
     const pointerLock = useAppSelector(selectPointerLock);
     const defaultTopDownElevation = useAppSelector(selectDefaultTopDownElevation);
+    const canvasContextMenuFeatures = useAppSelector(selectCanvasContextMenuFeatures);
     const primaryHighlightColor = useHighlighted().color;
     const secondaryHighlightColor = useHighlightCollections().secondaryHighlight.color;
 
@@ -187,6 +189,9 @@ export default function AdvancedSettings() {
                             color: secondaryHighlightColor,
                             property: settings.secondaryHighlight.property,
                         },
+                    },
+                    canvasContextMenu: {
+                        features: canvasContextMenuFeatures,
                     },
                 },
                 tmZone: projectSettings.tmZone,

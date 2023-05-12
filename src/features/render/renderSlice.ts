@@ -135,6 +135,8 @@ export enum StampKind {
     LogPoint,
     MachineLocation,
     Deviation,
+    CanvasContextMenu,
+    Properties,
 }
 
 type LogPointStamp = {
@@ -158,10 +160,26 @@ type DeviationStamp = {
     };
 };
 
+type CanvasContextMenuStamp = {
+    kind: StampKind.CanvasContextMenu;
+    data: {
+        object: number;
+        position: Vec3;
+        normal: Vec3 | undefined;
+    };
+};
+
+type PropertiesStamp = {
+    kind: StampKind.Properties;
+    properties: [key: string, value: string][];
+};
+
 type Stamp = { mouseX: number; mouseY: number; pinned: boolean } & (
     | LogPointStamp
     | MachineLocationStamp
     | DeviationStamp
+    | CanvasContextMenuStamp
+    | PropertiesStamp
 );
 
 const initialState = {
@@ -251,8 +269,8 @@ const initialState = {
         enabled: false,
         majorLineCount: 1001,
         minorLineCount: 4,
-        majorColor: [0.15, 0.15, 0.15] as [number, number, number],
-        minorColor: [0.65, 0.65, 0.65] as [number, number, number],
+        majorColor: [0.15, 0.15, 0.15] as Vec3,
+        minorColor: [0.65, 0.65, 0.65] as Vec3,
     },
     grid: {
         enabled: false,

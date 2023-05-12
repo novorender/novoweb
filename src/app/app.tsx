@@ -32,10 +32,10 @@ import { getAuthHeader } from "utils/auth";
 import { StorageKey } from "config/storage";
 import { deleteFromStorage, getFromStorage } from "utils/storage";
 
-const isIpad =
+export const isIpad =
     /\biPad/.test(navigator.userAgent) ||
     (/\bMobile\b/.test(navigator.userAgent) && /\bMacintosh\b/.test(navigator.userAgent));
-const isIphone = /\biPhone/.test(navigator.userAgent);
+export const isIphone = /\biPhone/.test(navigator.userAgent);
 export const offscreenCanvas = !(isIpad || isIphone) && "OffscreenCanvas" in window;
 
 export const api = createAPI({

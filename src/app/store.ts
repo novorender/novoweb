@@ -24,6 +24,7 @@ import { jiraApi, jiraReducer } from "features/jira";
 import { manholeReducer } from "features/manhole";
 import { selectionBasketReducer } from "features/selectionBasket";
 import { xsiteManageReducer, xsiteManageApi } from "features/xsiteManage";
+import { propertiesReducer } from "features/properties/slice";
 
 const rootReducer = combineReducers({
     explorer: explorerReducer,
@@ -43,6 +44,7 @@ const rootReducer = combineReducers({
     bimCollab: bimCollabReducer,
     heightProfile: heightProfileReducer,
     selectionBasket: selectionBasketReducer,
+    properties: propertiesReducer,
     [bimCollabApi.reducerPath]: bimCollabApi.reducer,
     bimTrack: bimTrackReducer,
     [bimTrackApi.reducerPath]: bimTrackApi.reducer,

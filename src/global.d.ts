@@ -13,3 +13,6 @@ interface Window {
     view?: any;
     api?: any;
 }
+
+type Vec2 = [number, number];
+type Vec3 = [number, number, number];

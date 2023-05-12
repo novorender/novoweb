@@ -49,7 +49,7 @@ function setIds(ids: State["idArr"]) {
 
 const actions = { add, remove, setIds };
 
-type Actions = ReturnType<typeof actions[keyof typeof actions]>;
+type Actions = ReturnType<(typeof actions)[keyof typeof actions]>;
 type DispatchHidden = Dispatch<Actions>;
 type LazyState = MutableRefObject<State>;
 
@@ -144,5 +144,5 @@ function useIsHidden(id: number) {
     return isHidden;
 }
 
-export { HiddenProvider, useHidden, useLazyHidden, useDispatchHidden, useIsHidden, actions as hiddenGroupActions };
+export { HiddenProvider, useHidden, useLazyHidden, useDispatchHidden, useIsHidden, actions as hiddenActions };
 export type { DispatchHidden };

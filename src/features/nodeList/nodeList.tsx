@@ -12,7 +12,7 @@ import { getDescendants, searchByParentPath } from "utils/search";
 import { extractObjectIds, getObjectNameFromPath } from "utils/objectData";
 
 import { highlightActions, useDispatchHighlighted, useIsHighlighted } from "contexts/highlighted";
-import { hiddenGroupActions, useDispatchHidden, useIsHidden } from "contexts/hidden";
+import { hiddenActions, useDispatchHidden, useIsHidden } from "contexts/hidden";
 import { useExplorerGlobals } from "contexts/explorerGlobals";
 import { renderActions } from "features/render/renderSlice";
 
@@ -138,7 +138,7 @@ function Node({ node, parent, loading, setLoading, abortController, ...props }: 
     const select = async (node: HierarcicalObjectReference) => {
         if (node.type === NodeType.Leaf) {
             dispatchHighlighted(highlightActions.add([node.id]));
-            dispatchHidden(hiddenGroupActions.remove([node.id]));
+            dispatchHidden(hiddenActions.remove([node.id]));
             dispatch(renderActions.setMainObject(node.id));
             return;
         }
@@ -150,7 +150,7 @@ function Node({ node, parent, loading, setLoading, abortController, ...props }: 
             try {
                 await getDescendants({ scene, parentNode: node, abortSignal }).then((ids) => {
                     dispatchHighlighted(highlightActions.add(ids));
-                    dispatchHidden(hiddenGroupActions.remove(ids));
+                    dispatchHidden(hiddenActions.remove(ids));
                 });
             } catch {
                 await searchByParentPath({
@@ -160,14 +160,14 @@ function Node({ node, parent, loading, setLoading, abortController, ...props }: 
                     callback: (refs) => {
                         const ids = extractObjectIds(refs);
                         dispatchHighlighted(highlightActions.add(ids));
-                        dispatchHidden(hiddenGroupActions.remove(ids));
+                        dispatchHidden(hiddenActions.remove(ids));
                     },
                 });
             }
 
             if (!abortSignal.aborted) {
                 dispatchHighlighted(highlightActions.add([node.id]));
-                dispatchHidden(hiddenGroupActions.remove([node.id]));
+                dispatchHidden(hiddenActions.remove([node.id]));
                 setLoading(false);
             }
         } catch {
@@ -211,7 +211,7 @@ function Node({ node, parent, loading, setLoading, abortController, ...props }: 
 
     const hide = async (node: HierarcicalObjectReference) => {
         if (node.type === NodeType.Leaf) {
-            dispatchHidden(hiddenGroupActions.add([node.id]));
+            dispatchHidden(hiddenActions.add([node.id]));
             dispatchHighlighted(highlightActions.remove([node.id]));
             dispatchSelectionBasket(selectionBasketActions.remove([node.id]));
             return;
@@ -223,7 +223,7 @@ function Node({ node, parent, loading, setLoading, abortController, ...props }: 
         try {
             try {
                 await getDescendants({ scene, parentNode: node, abortSignal }).then((ids) => {
-                    dispatchHidden(hiddenGroupActions.add(ids));
+                    dispatchHidden(hiddenActions.add(ids));
                     dispatchHighlighted(highlightActions.remove(ids));
                 });
             } catch {
@@ -233,14 +233,14 @@ function Node({ node, parent, loading, setLoading, abortController, ...props }: 
                     parentPath: node.path,
                     callback: (refs) => {
                         const ids = extractObjectIds(refs);
-                        dispatchHidden(hiddenGroupActions.add(ids));
+                        dispatchHidden(hiddenActions.add(ids));
                         dispatchHighlighted(highlightActions.remove(ids));
                     },
                 });
             }
 
             if (!abortSignal.aborted) {
-                dispatchHidden(hiddenGroupActions.add([node.id]));
+                dispatchHidden(hiddenActions.add([node.id]));
                 dispatchHighlighted(highlightActions.remove([node.id]));
                 setLoading(false);
             }
@@ -253,10 +253,10 @@ function Node({ node, parent, loading, setLoading, abortController, ...props }: 
 
     const show = async (node: HierarcicalObjectReference) => {
         if (node.type === NodeType.Leaf) {
-            return dispatchHidden(hiddenGroupActions.remove([node.id]));
+            return dispatchHidden(hiddenActions.remove([node.id]));
         }
 
-        dispatchHidden(hiddenGroupActions.remove([node.id]));
+        dispatchHidden(hiddenActions.remove([node.id]));
 
         setLoading(true);
         const abortSignal = abortController.current.signal;
@@ -264,14 +264,14 @@ function Node({ node, parent, loading, setLoading, abortController, ...props }: 
         try {
             try {
                 await getDescendants({ scene, parentNode: node, abortSignal }).then((ids) =>
-                    dispatchHidden(hiddenGroupActions.remove(ids))
+                    dispatchHidden(hiddenActions.remove(ids))
                 );
             } catch {
                 await searchByParentPath({
                     scene,
                     abortSignal,
                     parentPath: node.path,
-                    callback: (refs) => dispatchHidden(hiddenGroupActions.remove(extractObjectIds(refs))),
+                    callback: (refs) => dispatchHidden(hiddenActions.remove(extractObjectIds(refs))),
                 });
             }
         } catch {

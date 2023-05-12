@@ -264,7 +264,7 @@ export default function HeightProfile() {
                                 <ParentSizeModern>
                                     {(parent) => (
                                         <HeightProfileChart
-                                            pts={profile.data.profilePoints as [number, number][]}
+                                            pts={profile.data.profilePoints as Vec2[]}
                                             height={parent.height}
                                             width={parent.width}
                                         />

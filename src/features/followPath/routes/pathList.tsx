@@ -144,6 +144,8 @@ export function PathList() {
                             disabled={!canFollowSelected}
                             onClick={() => {
                                 dispatch(followPathActions.toggleResetPositionOnInit(true));
+                                dispatch(followPathActions.setRoadIds(undefined));
+                                dispatch(followPathActions.setDrawRoadIds(undefined));
 
                                 if (selectingPos) {
                                     history.push("/followPos");
@@ -193,15 +195,15 @@ export function PathList() {
                         ""
                     ) : (
                         <List disablePadding>
-                            {landXmlPaths.data.map((path, idx) => (
+                            {landXmlPaths.data.map((path) => (
                                 <ListItemButton
                                     disabled={selectingPos}
                                     key={path.id}
                                     onClick={() => {
-                                        dispatch(followPathActions.setSelectedPath(idx));
+                                        dispatch(followPathActions.setSelectedPath(path.id));
                                         dispatch(followPathActions.toggleResetPositionOnInit(true));
-                                        dispatch(renderActions.setMainObject(path.id));
                                         dispatch(followPathActions.setSelectedIds([path.id]));
+                                        dispatch(renderActions.setMainObject(path.id));
                                         dispatchHighlighted(highlightActions.setIds([path.id]));
                                         history.push(`/followIds`);
                                     }}

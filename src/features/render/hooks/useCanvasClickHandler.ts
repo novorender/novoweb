@@ -38,6 +38,8 @@ import {
     useDispatchHighlightCollections,
     useHighlightCollections,
 } from "contexts/highlightCollections";
+import { isRealVec } from "utils/misc";
+import { selectShowPropertiesStamp } from "features/properties/slice";
 
 import { pickDeviationArea } from "../utils";
 
@@ -63,6 +65,7 @@ export function useCanvasClickHandler() {
     const viewMode = useAppSelector(selectViewMode);
     const stamp = useAppSelector(selectStamp);
     const pointerDownState = useAppSelector(selectPointerDownState);
+    const showPropertiesStamp = useAppSelector(selectShowPropertiesStamp);
 
     const [secondaryHighlightAbortController, abortSecondaryHighlight] = useAbortController();
     const currentSecondaryHighlightQuery = useRef("");
@@ -127,11 +130,13 @@ export function useCanvasClickHandler() {
                 dispatch(
                     measureActions.selectEntity({ entity: measure.hover as ExtendedMeasureEntity, pin: evt.shiftKey })
                 );
+            } else if (picker === Picker.Object) {
+                dispatch(renderActions.setStamp(null));
             }
             return;
         }
 
-        const normal = result.normal.some((n) => Number.isNaN(n)) ? undefined : vec3.clone(result.normal);
+        const normal = isRealVec([...result.normal]) ? vec3.clone(result.normal) : undefined;
         const position = vec3.clone(result.position);
 
         switch (picker) {
@@ -201,6 +206,7 @@ export function useCanvasClickHandler() {
                 break;
             case Picker.Object:
                 if (result.objectId === -1) {
+                    dispatch(renderActions.setStamp(null));
                     return;
                 }
 
@@ -219,6 +225,7 @@ export function useCanvasClickHandler() {
                 } else {
                     if (alreadySelected) {
                         dispatch(renderActions.setMainObject(undefined));
+                        dispatch(renderActions.setStamp(null));
                         dispatchHighlighted(highlightActions.setIds([]));
 
                         if (!secondaryHighlightProperty) {
@@ -234,20 +241,30 @@ export function useCanvasClickHandler() {
                         dispatch(renderActions.setMainObject(result.objectId));
                         dispatchHighlighted(highlightActions.setIds([result.objectId]));
 
+                        const metadata = await scene?.getObjectReference(result.objectId).loadMetaData();
+
+                        if (showPropertiesStamp) {
+                            dispatch(
+                                renderActions.setStamp({
+                                    kind: StampKind.Properties,
+                                    properties: [
+                                        ["name", metadata.name],
+                                        ["path", metadata.path],
+                                        ...metadata.properties,
+                                    ],
+                                    mouseX: evt.nativeEvent.offsetX,
+                                    mouseY: evt.nativeEvent.offsetY,
+                                    pinned: true,
+                                })
+                            );
+                        }
+
                         if (!secondaryHighlightProperty) {
                             return;
                         }
 
-                        const query = await scene
-                            ?.getObjectReference(result.objectId)
-                            .loadMetaData()
-                            .then((metadata) => {
-                                const query = metadata.properties.find(
-                                    (prop) => prop[0] === secondaryHighlightProperty
-                                );
-
-                                return query ? query[1] : undefined;
-                            });
+                        const property = metadata.properties.find((prop) => prop[0] === secondaryHighlightProperty);
+                        const query = property && property[1];
 
                         if (
                             query &&

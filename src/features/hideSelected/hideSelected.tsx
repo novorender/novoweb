@@ -5,7 +5,7 @@ import { featuresConfig } from "config/features";
 import { renderActions, selectMainObject } from "features/render/renderSlice";
 import { useAppDispatch, useAppSelector } from "app/store";
 import { highlightActions, useDispatchHighlighted, useHighlighted } from "contexts/highlighted";
-import { hiddenGroupActions, useDispatchHidden, useHidden } from "contexts/hidden";
+import { hiddenActions, useDispatchHidden, useHidden } from "contexts/hidden";
 import { useDispatchSelectionBasket, selectionBasketActions } from "contexts/selectionBasket";
 import {
     HighlightCollection,
@@ -33,7 +33,7 @@ export function HideSelected(props: Props) {
 
     const toggleHideSelected = () => {
         if (selected.length) {
-            dispatchHidden(hiddenGroupActions.add(selected));
+            dispatchHidden(hiddenActions.add(selected));
 
             dispatch(renderActions.setMainObject(undefined));
             dispatchHighlighted(highlightActions.setIds([]));
@@ -42,7 +42,7 @@ export function HideSelected(props: Props) {
             );
             dispatchSelectionBasket(selectionBasketActions.remove(selected));
         } else if (hidden.length) {
-            dispatchHidden(hiddenGroupActions.setIds([]));
+            dispatchHidden(hiddenActions.setIds([]));
         }
     };
 

@@ -5,7 +5,7 @@ import { dataApi } from "app";
 import { useAppDispatch } from "app/store";
 import { ObjectGroup, objectGroupsActions, useDispatchObjectGroups, useLazyObjectGroups } from "contexts/objectGroups";
 import { useExplorerGlobals } from "contexts/explorerGlobals";
-import { hiddenGroupActions, useDispatchHidden } from "contexts/hidden";
+import { hiddenActions, useDispatchHidden } from "contexts/hidden";
 import { highlightActions, useDispatchHighlighted } from "contexts/highlighted";
 import { useDispatchSelectionBasket, selectionBasketActions } from "contexts/selectionBasket";
 import { followPathActions } from "features/followPath";
@@ -50,7 +50,7 @@ export function useSelectBookmark() {
         dispatch(imagesActions.setActiveImage(undefined));
 
         const bmHiddenGroup = bookmark.objectGroups?.find((group) => !group.id && group.hidden);
-        dispatchHidden(hiddenGroupActions.setIds((bmHiddenGroup?.ids as number[] | undefined) ?? []));
+        dispatchHidden(hiddenActions.setIds((bmHiddenGroup?.ids as number[] | undefined) ?? []));
 
         const bmDefaultGroup = bookmark.objectGroups?.find((group) => !group.id && group.selected);
         const updatedObjectGroups = objectGroups.current.map((group) => {
@@ -251,7 +251,7 @@ export function useSelectBookmark() {
             dispatch(followPathActions.setProfile(String(profile)));
             dispatch(followPathActions.setView2d(Boolean(bookmark.ortho)));
             dispatch(followPathActions.setShowGrid(Boolean(bookmark.grid?.enabled)));
-            dispatch(followPathActions.setCurrentCenter(currentCenter as [number, number, number]));
+            dispatch(followPathActions.setCurrentCenter(currentCenter as Vec3));
 
             if (bookmark.ortho?.far) {
                 dispatch(followPathActions.setClipping(bookmark.ortho.far));
@@ -275,7 +275,11 @@ export function useSelectBookmark() {
             } else {
                 if ("ids" in bookmark.followPath) {
                     dispatch(followPathActions.setSelectedIds(bookmark.followPath.ids));
-                    dispatch(followPathActions.setDrawRoadId(bookmark.followPath.roadIds));
+                    dispatch(followPathActions.setDrawRoadIds(bookmark.followPath.roadIds));
+
+                    if (bookmark.followPath.roadIds) {
+                        dispatch(followPathActions.setSelectedPath(bookmark.followPath.ids[0]));
+                    }
                 } else {
                     dispatch(followPathActions.setSelectedIds([bookmark.followPath.id]));
                     dispatch(followPathActions.setGoToRouterPath(`/followIds`));

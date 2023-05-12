@@ -24,7 +24,7 @@ import { useAbortController } from "hooks/useAbortController";
 import { useAppDispatch, useAppSelector } from "app/store";
 import { useExplorerGlobals } from "contexts/explorerGlobals";
 import { selectionBasketActions, useDispatchSelectionBasket } from "contexts/selectionBasket";
-import { hiddenGroupActions, useDispatchHidden } from "contexts/hidden";
+import { hiddenActions, useDispatchHidden } from "contexts/hidden";
 import { highlightActions, useDispatchHighlighted, useLazyHighlighted } from "contexts/highlighted";
 import { ObjectVisibility, renderActions } from "features/render/renderSlice";
 import { explorerActions, selectMaximized, selectMinimized, selectUrlSearchQuery } from "slices/explorerSlice";
@@ -478,12 +478,12 @@ export function CustomParentNode({
     };
 
     const hide = async () => {
-        await search((ids) => dispatchHidden(hiddenGroupActions.add(ids)));
+        await search((ids) => dispatchHidden(hiddenActions.add(ids)));
         setAllHidden(true);
     };
 
     const show = async () => {
-        await search((ids) => dispatchHidden(hiddenGroupActions.remove(ids)));
+        await search((ids) => dispatchHidden(hiddenActions.remove(ids)));
         setAllHidden(false);
     };
 

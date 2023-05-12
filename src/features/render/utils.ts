@@ -21,7 +21,7 @@ import { groupsActions, selectLoadingIds } from "features/groups";
 import { DeviationMode, deviationsActions } from "features/deviations";
 import { store } from "app/store";
 import { ObjectGroup, objectGroupsActions, DispatchObjectGroups } from "contexts/objectGroups";
-import { hiddenGroupActions, DispatchHidden } from "contexts/hidden";
+import { hiddenActions, DispatchHidden } from "contexts/hidden";
 import { highlightActions, DispatchHighlighted } from "contexts/highlighted";
 import {
     AdvancedSetting,
@@ -39,6 +39,7 @@ import { VecRGB, VecRGBA } from "utils/color";
 
 import { MAX_FLOAT } from "./consts";
 import { orthoCamActions } from "features/orthoCam";
+import { propertiesActions } from "features/properties/slice";
 
 type Settings = {
     taaEnabled: boolean;
@@ -275,7 +276,6 @@ export async function refillObjects({
     );
 
     const highlights = Object.values(_highlights);
-    hidden.forEach((id) => (objectHighlighter.objectHighlightIndices[id] = 255));
 
     objectGroups.forEach((group) => {
         const { highlightIdx } = group;
@@ -294,6 +294,8 @@ export async function refillObjects({
             }
         }
     });
+
+    hidden.forEach((id) => (objectHighlighter.objectHighlightIndices[id] = 255));
 
     view.settings.objectHighlights = [
         getHighlightByObjectVisibility(defaultVisibility),
@@ -387,7 +389,7 @@ export function initHighlighted(dispatch: DispatchHighlighted, color?: VecRGBA):
 }
 
 export function initHidden(dispatch: DispatchHidden): void {
-    dispatch(hiddenGroupActions.setIds([]));
+    dispatch(hiddenActions.setIds([]));
 }
 
 function serializeableObjectGroups(groups: BaseObjectGroup[]): ObjectGroup[] {
@@ -526,6 +528,18 @@ export function initDefaultTopDownElevation(customProperties: Record<string, any
         store.dispatch(orthoCamActions.setDefaultTopDownElevation(defaultTopDownElevation));
     } else {
         store.dispatch(orthoCamActions.setDefaultTopDownElevation(undefined));
+    }
+}
+
+export function initPropertiesSettings(customProperties: Record<string, any>) {
+    const stampSettings = customProperties?.properties?.stampSettings;
+
+    if (stampSettings) {
+        store.dispatch(propertiesActions.setStampSettings(stampSettings));
+
+        if (stampSettings.enabled) {
+            store.dispatch(propertiesActions.toggleShowStamp(true));
+        }
     }
 }
 
