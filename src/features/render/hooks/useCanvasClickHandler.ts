@@ -248,8 +248,8 @@ export function useCanvasClickHandler() {
                                 renderActions.setStamp({
                                     kind: StampKind.Properties,
                                     properties: [
-                                        ["name", metadata.name],
-                                        ["path", metadata.path],
+                                        ["Name", metadata.name],
+                                        ["Path", metadata.path],
                                         ...metadata.properties,
                                     ],
                                     mouseX: evt.nativeEvent.offsetX,

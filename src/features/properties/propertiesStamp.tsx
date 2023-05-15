@@ -8,13 +8,13 @@ import { renderActions, selectStamp, StampKind } from "features/render";
 import { useAppDispatch, useAppSelector } from "app/store";
 import { getFileNameFromPath, getFilePathFromObjectPath, getPropertyDisplayName, isUrl } from "utils/objectData";
 
-import { selectPropertiesStampSettings, selectShowPropertiesStamp } from "./slice";
+import { selectShowPropertiesStamp, selectStarredProperties } from "./slice";
 import { ResizeHandle } from "./resizeHandle";
 
 export function PropertiesStamp() {
     const dispatch = useAppDispatch();
     const stamp = useAppSelector(selectStamp);
-    const settings = useAppSelector(selectPropertiesStampSettings);
+    const starred = useAppSelector(selectStarredProperties);
     const enabled = useAppSelector(selectShowPropertiesStamp);
     const [properties, setProperties] = useState<[key: string, value: string][]>();
     const show = stamp?.kind === StampKind.Properties && enabled;
@@ -41,23 +41,23 @@ export function PropertiesStamp() {
             return;
         }
 
-        setProperties(
-            stamp.properties
-                .filter(
-                    ([key]) =>
-                        settings.properties.includes(key) ||
-                        settings.properties.find((p) => p.toLowerCase() === key.toLowerCase())
-                )
-                .filter(([key, val]) => {
-                    if (!val) {
-                        return false;
-                    }
+        const filtered = stamp.properties
+            .filter(([key]) => starred[key])
+            .filter(([key, val]) => {
+                if (!val) {
+                    return false;
+                }
 
-                    const isPath = key.toLowerCase() === "path";
-                    return !isPath || getFilePathFromObjectPath(val);
-                })
-        );
-    }, [show, stamp, settings.properties]);
+                const isPath = key.toLowerCase() === "path";
+                return !isPath || getFilePathFromObjectPath(val);
+            });
+
+        if (!filtered.length) {
+            dispatch(renderActions.setStamp(null));
+        } else {
+            setProperties(filtered);
+        }
+    }, [show, stamp, starred, dispatch]);
 
     if (!show) {
         return null;

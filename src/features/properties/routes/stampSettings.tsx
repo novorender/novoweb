@@ -10,7 +10,7 @@ import {
     Typography,
     useTheme,
 } from "@mui/material";
-import { FormEventHandler, useState } from "react";
+import { FormEventHandler, useEffect, useState } from "react";
 import { useHistory } from "react-router-dom";
 
 import { Divider, IosSwitch, ScrollBox, TextField } from "components";
@@ -20,7 +20,7 @@ import { AsyncStatus } from "types/misc";
 import { dataApi } from "app";
 import { selectIsAdminScene } from "slices/explorerSlice";
 
-import { propertiesActions, selectPropertiesStampSettings } from "../slice";
+import { propertiesActions, selectPropertiesStampSettings, selectStarredProperties } from "../slice";
 
 export function StampSettings({ sceneId }: { sceneId: string }) {
     const {
@@ -31,16 +31,24 @@ export function StampSettings({ sceneId }: { sceneId: string }) {
     const dispatch = useAppDispatch();
     const isAdminScene = useAppSelector(selectIsAdminScene);
     const settings = useAppSelector(selectPropertiesStampSettings);
-    const [saveStatus, setSaveStatus] = useState(AsyncStatus.Initial);
+    const starred = useAppSelector(selectStarredProperties);
 
+    const [starredArr, setStarredArr] = useState(
+        Object.keys(starred).sort((a, b) => a.localeCompare(b, "en", { sensitivity: "accent" }))
+    );
+    const [saveStatus, setSaveStatus] = useState(AsyncStatus.Initial);
     const [input, setInput] = useState("");
+
+    useEffect(() => {
+        setStarredArr(Object.keys(starred).sort((a, b) => a.localeCompare(b, "en", { sensitivity: "accent" })));
+    }, [starred]);
 
     const handleSubmit: FormEventHandler<HTMLFormElement> = (e) => {
         e.preventDefault();
         const trimmed = input.trim();
 
         if (trimmed) {
-            dispatch(propertiesActions.addStampProperties(trimmed));
+            dispatch(propertiesActions.star(trimmed));
         }
 
         setInput("");
@@ -69,6 +77,7 @@ export function StampSettings({ sceneId }: { sceneId: string }) {
                     ...customProperties,
                     properties: {
                         stampSettings: settings,
+                        starred: starredArr,
                     },
                 },
             });
@@ -126,14 +135,14 @@ export function StampSettings({ sceneId }: { sceneId: string }) {
             </Box>
             <ScrollBox pb={3}>
                 <Typography px={1} fontWeight={600}>
-                    Properties
+                    Starred properties
                 </Typography>
                 <Divider sx={{ mt: 1 }} />
-                {!settings.properties.length ? (
-                    <Typography p={1}>No properties added.</Typography>
+                {!starredArr.length ? (
+                    <Typography p={1}>No properties starred.</Typography>
                 ) : (
                     <List dense disablePadding>
-                        {settings.properties.map((property, idx) => (
+                        {starredArr.map((property) => (
                             <ListItemButton key={property} disableGutters sx={{ px: 1 }}>
                                 <Box
                                     sx={{
@@ -144,10 +153,7 @@ export function StampSettings({ sceneId }: { sceneId: string }) {
                                 >
                                     <Typography noWrap={true}>{property}</Typography>
                                 </Box>
-                                <IconButton
-                                    size="small"
-                                    onClick={() => dispatch(propertiesActions.removeStampPropertyIndex(idx))}
-                                >
+                                <IconButton size="small" onClick={() => dispatch(propertiesActions.unStar(property))}>
                                     <Close />
                                 </IconButton>
                             </ListItemButton>

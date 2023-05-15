@@ -36,10 +36,11 @@ import {
 } from "features/render/renderSlice";
 import { explorerActions } from "slices/explorerSlice";
 import { VecRGB, VecRGBA } from "utils/color";
-
-import { MAX_FLOAT } from "./consts";
 import { orthoCamActions } from "features/orthoCam";
 import { propertiesActions } from "features/properties/slice";
+import { capitalize } from "utils/misc";
+
+import { MAX_FLOAT } from "./consts";
 
 type Settings = {
     taaEnabled: boolean;
@@ -533,13 +534,24 @@ export function initDefaultTopDownElevation(customProperties: Record<string, any
 
 export function initPropertiesSettings(customProperties: Record<string, any>) {
     const stampSettings = customProperties?.properties?.stampSettings;
+    const starred = customProperties?.properties?.starred ?? stampSettings?.properties;
 
     if (stampSettings) {
-        store.dispatch(propertiesActions.setStampSettings(stampSettings));
+        store.dispatch(propertiesActions.setStampSettings({ enabled: stampSettings.enabled }));
 
         if (stampSettings.enabled) {
             store.dispatch(propertiesActions.toggleShowStamp(true));
         }
+    }
+
+    if (starred) {
+        store.dispatch(
+            propertiesActions.setStarred(
+                Object.fromEntries(
+                    starred.map((prop: string) => [["path", "name"].includes(prop) ? capitalize(prop) : prop, true])
+                )
+            )
+        );
     }
 }
 
