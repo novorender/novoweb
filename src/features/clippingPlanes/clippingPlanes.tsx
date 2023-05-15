@@ -20,9 +20,9 @@ export default function ClippingPlanes() {
     const minimized = useAppSelector(selectMinimized) === featuresConfig.clippingPlanes.key;
     const maximized = useAppSelector(selectMaximized).includes(featuresConfig.clippingPlanes.key);
     const selecting = useAppSelector(selectPicker) === Picker.ClippingPlane;
-    const { planes, baseW } = useAppSelector(selectClippingPlanes);
+    const { planes } = useAppSelector(selectClippingPlanes);
     const dispatch = useAppDispatch();
-    const [sliderVal, setSliderVal] = useState(0);
+    const [sliders, setSliders] = useState([] as number[]);
     const isInitial = useRef(true);
 
     useEffect(() => {
@@ -42,13 +42,13 @@ export default function ClippingPlanes() {
     }, [dispatch]);
 
     useEffect(() => {
-        if (planes[0]) {
-            setSliderVal(planes[0][3]);
+        if (planes.length) {
+            setSliders(planes.map((plane) => plane.plane[3]));
         }
     }, [planes]);
 
-    const handleSliderChange = (_event: Event, newValue: number | number[]) => {
-        const plane = planes[0] ? vec4.clone(planes[0]) : undefined;
+    const handleSliderChange = (idx: number) => (_event: Event, newValue: number | number[]) => {
+        const plane = planes[idx] ? vec4.clone(planes[idx].plane) : undefined;
 
         if (!plane) {
             return;
@@ -56,31 +56,38 @@ export default function ClippingPlanes() {
 
         const newVal = typeof newValue === "number" ? newValue : newValue[0];
         plane[3] = typeof newValue === "number" ? newValue : newValue[0];
-        setSliderVal(newVal);
+
+        setSliders((_state) => {
+            const state = [..._state];
+            state[idx] = newVal;
+            return state;
+        });
 
         view.applySettings({
             clippingVolume: {
                 ...view.settings.clippingVolume,
-                planes: [plane],
+                planes: planes.map((p, i) => (i === idx ? plane : p.plane)),
             },
         });
     };
 
-    const handleSliderChangeCommitted = (
-        _event: Event | SyntheticEvent<Element, Event>,
-        newValue: number | number[]
-    ) => {
-        const plane = planes[0] ? vec4.clone(planes[0]) : undefined;
+    const handleSliderChangeCommitted =
+        (idx: number) => (_event: Event | SyntheticEvent<Element, Event>, newValue: number | number[]) => {
+            const plane = planes[idx] ? (vec4.clone(planes[idx].plane) as Vec4) : undefined;
 
-        if (!plane) {
-            return;
-        }
+            if (!plane) {
+                return;
+            }
 
-        const newVal = typeof newValue === "number" ? newValue : newValue[0];
-        plane[3] = newVal;
+            const newVal = typeof newValue === "number" ? newValue : newValue[0];
+            plane[3] = newVal;
 
-        dispatch(renderActions.setClippingPlanes({ planes: [plane] }));
-    };
+            dispatch(
+                renderActions.setClippingPlanes({
+                    planes: planes.map((p, i) => (i === idx ? { ...planes[idx], plane } : p)),
+                })
+            );
+        };
 
     return (
         <>
@@ -93,6 +100,7 @@ export default function ClippingPlanes() {
                                     sx={{ marginLeft: 0 }}
                                     control={
                                         <IosSwitch
+                                            disabled={planes.length > 5}
                                             checked={selecting}
                                             color="primary"
                                             onChange={() =>
@@ -109,9 +117,7 @@ export default function ClippingPlanes() {
                                 />
                                 <Button
                                     onClick={() => {
-                                        dispatch(
-                                            renderActions.setClippingPlanes({ planes: [], baseW: 0, enabled: false })
-                                        );
+                                        dispatch(renderActions.setClippingPlanes({ planes: [], enabled: false }));
                                     }}
                                     color="grey"
                                     disabled={!planes.length}
@@ -124,19 +130,22 @@ export default function ClippingPlanes() {
                     ) : null}
                 </WidgetHeader>
                 <ScrollBox p={1} pb={3} display={menuOpen || minimized ? "none" : "block"}>
-                    {planes.length > 0 && (
-                        <>
-                            Position:
-                            <Slider
-                                min={baseW - 20}
-                                step={0.1}
-                                max={baseW + 20}
-                                value={sliderVal}
-                                onChange={handleSliderChange}
-                                onChangeCommitted={handleSliderChangeCommitted}
-                            />
-                        </>
-                    )}
+                    {planes.length === sliders.length &&
+                        planes.map((plane, idx) => {
+                            return (
+                                <Box mb={2} key={idx}>
+                                    Plane {idx + 1}:
+                                    <Slider
+                                        min={plane.baseW - 20}
+                                        step={0.1}
+                                        max={plane.baseW + 20}
+                                        value={sliders[idx]}
+                                        onChange={handleSliderChange(idx)}
+                                        onChangeCommitted={handleSliderChangeCommitted(idx)}
+                                    />
+                                </Box>
+                            );
+                        })}
                 </ScrollBox>
                 {menuOpen && <WidgetList widgetKey={featuresConfig.clippingPlanes.key} onSelect={toggleMenu} />}
             </WidgetContainer>

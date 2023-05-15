@@ -4,7 +4,7 @@ import { Box, ListItemIcon, ListItemText, MenuItem } from "@mui/material";
 import { CropLandscape, Layers, LayersClear, Straighten, VisibilityOff } from "@mui/icons-material";
 import { MeasureEntity } from "@novorender/measure-api";
 
-import { ObjectVisibility, renderActions, selectStamp, StampKind } from "features/render";
+import { ObjectVisibility, renderActions, selectClippingPlanes, selectStamp, StampKind } from "features/render";
 import { useAppDispatch, useAppSelector } from "app/store";
 import { useExplorerGlobals } from "contexts/explorerGlobals";
 import { getFilePathFromObjectPath } from "utils/objectData";
@@ -27,7 +27,7 @@ export const canvasContextMenuConfig = {
     },
     isolateFile: {
         key: "isolateFile",
-        name: "Isolate file",
+        name: "Add file to selection basket",
     },
     measure: {
         key: "measure",
@@ -35,7 +35,7 @@ export const canvasContextMenuConfig = {
     },
     clip: {
         key: "clip",
-        name: "Set clipping plane",
+        name: "Add clipping plane",
     },
 } as const;
 
@@ -60,6 +60,7 @@ export function CanvasContextMenuStamp() {
     } = useExplorerGlobals(true);
 
     const features = useAppSelector(selectCanvasContextMenuFeatures);
+    const clippingPlanes = useAppSelector(selectClippingPlanes).planes;
     const stamp = useAppSelector(selectStamp);
     const [measureEntity, setMeasureEntity] = useState<MeasureEntity>();
     const [properties, setProperties] = useState<{
@@ -183,9 +184,8 @@ export function CanvasContextMenuStamp() {
 
         const w = -vec3.dot(normal, position);
         dispatch(
-            renderActions.setClippingPlanes({
-                enabled: true,
-                planes: [vec4.fromValues(normal[0], normal[1], normal[2], w)],
+            renderActions.addClippingPlane({
+                plane: vec4.fromValues(normal[0], normal[1], normal[2], w) as Vec4,
                 baseW: w,
             })
         );
@@ -241,7 +241,7 @@ export function CanvasContextMenuStamp() {
                     </MenuItem>
                 )}
                 {features.includes(config.clip.key) && (
-                    <MenuItem onClick={clip} disabled={!stamp.data.normal}>
+                    <MenuItem onClick={clip} disabled={!stamp.data.normal || clippingPlanes.length > 5}>
                         <ListItemIcon>
                             <CropLandscape fontSize="small" />
                         </ListItemIcon>

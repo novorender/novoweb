@@ -633,7 +633,7 @@ export function Render3D({ onInit }: Props) {
 
             view.applySettings({
                 clippingVolume: {
-                    planes: clippingPlanes.planes,
+                    planes: clippingPlanes.planes.map((plane) => plane.plane),
                     enabled: clippingPlanes.planes.length ? clippingPlanes.enabled : false,
                     mode: clippingPlanes.mode,
                 },

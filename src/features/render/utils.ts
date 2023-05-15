@@ -569,8 +569,7 @@ export function initClippingPlanes(clipping: RenderSettings["clippingVolume"]): 
         renderActions.setClippingPlanes({
             enabled: clipping.enabled,
             mode: clipping.mode,
-            planes: clipping.planes.map((plane) => Array.from(plane) as [number, number, number, number]),
-            baseW: clipping.planes.length ? clipping.planes[0][3] : 0,
+            planes: clipping.planes.map((plane) => ({ plane: Array.from(plane) as Vec4, baseW: plane[3] })),
         })
     );
 }
