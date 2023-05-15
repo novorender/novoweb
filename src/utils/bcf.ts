@@ -182,7 +182,7 @@ export function createOrthogonalCamera(
     };
 }
 
-export function translateBcfClippingPlanes(planes: Viewpoint["clipping_planes"]): [number, number, number, number][] {
+export function translateBcfClippingPlanes(planes: Viewpoint["clipping_planes"]): Vec4[] {
     return planes.map(({ location, direction }) => {
         return vec4.fromValues(
             direction.x,
@@ -192,7 +192,7 @@ export function translateBcfClippingPlanes(planes: Viewpoint["clipping_planes"])
                 vec3.fromValues(direction.x, direction.z, -direction.y),
                 vec3.fromValues(location.x, location.z, -location.y)
             )
-        ) as [number, number, number, number];
+        ) as Vec4;
     });
 }
 

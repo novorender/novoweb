@@ -374,7 +374,13 @@ function CommentListItem({
         dispatch(renderActions.resetClippingBox());
         if (viewpoint?.clipping_planes?.length) {
             const planes = translateBcfClippingPlanes(viewpoint.clipping_planes);
-            dispatch(renderActions.setClippingPlanes({ enabled: true, mode: "union", planes, baseW: planes[0][3] }));
+            dispatch(
+                renderActions.setClippingPlanes({
+                    enabled: true,
+                    mode: "union",
+                    planes: planes.map((plane) => ({ plane, baseW: plane[3] })),
+                })
+            );
         } else {
             dispatch(renderActions.setClippingPlanes({ enabled: false, planes: [] }));
         }

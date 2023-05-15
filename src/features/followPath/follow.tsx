@@ -148,7 +148,10 @@ export function Follow({ fpObj }: { fpObj: FollowParametricObject }) {
                 dispatch(renderActions.setGrid({ enabled: false }));
                 const w = -vec3.dot(dir, pt);
                 dispatch(
-                    renderActions.setClippingPlanes({ enabled: true, baseW: w, planes: [[dir[0], dir[1], dir[2], w]] })
+                    renderActions.setClippingPlanes({
+                        enabled: true,
+                        planes: [{ plane: [dir[0], dir[1], dir[2], w], baseW: w }],
+                    })
                 );
                 dispatch(
                     renderActions.setCamera({

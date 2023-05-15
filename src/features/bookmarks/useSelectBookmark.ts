@@ -1,4 +1,3 @@
-import { vec4 } from "gl-matrix";
 import { Bookmark } from "@novorender/data-js-api";
 
 import { dataApi } from "app";
@@ -219,8 +218,7 @@ export function useSelectBookmark() {
                 renderActions.setClippingPlanes({
                     enabled,
                     mode,
-                    planes: Array.from(planes) as vec4[],
-                    baseW: planes[0] && planes[0][3] !== undefined ? planes[0][3] : 0,
+                    planes: (Array.from(planes) as Vec4[]).map((plane) => ({ plane, baseW: plane[3] })),
                 })
             );
         } else {

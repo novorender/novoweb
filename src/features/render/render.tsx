@@ -1,5 +1,15 @@
 import { glMatrix, mat3, mat4, quat, vec2, vec3, vec4 } from "gl-matrix";
-import { useEffect, useState, useRef, MouseEvent, PointerEvent, useCallback, RefCallback, TouchEvent } from "react";
+import {
+    useEffect,
+    useState,
+    useRef,
+    MouseEvent,
+    PointerEvent,
+    useCallback,
+    RefCallback,
+    TouchEvent,
+    WheelEvent,
+} from "react";
 import {
     View,
     EnvironmentDescription,
@@ -633,7 +643,7 @@ export function Render3D({ onInit }: Props) {
 
             view.applySettings({
                 clippingVolume: {
-                    planes: clippingPlanes.planes,
+                    planes: clippingPlanes.planes.map((plane) => plane.plane),
                     enabled: clippingPlanes.planes.length ? clippingPlanes.enabled : false,
                     mode: clippingPlanes.mode,
                 },
@@ -971,10 +981,24 @@ export function Render3D({ onInit }: Props) {
         }
     };
 
+    const prevPinchDiff = useRef<number>(0);
     const handleTouchMove = (e: TouchEvent<HTMLCanvasElement>) => {
         if (contextMenuTouchState.current && e.touches.length === 1) {
             contextMenuTouchState.current.currentPos[0] = e.touches[0].clientX;
             contextMenuTouchState.current.currentPos[1] = e.touches[0].clientY;
+        }
+
+        if (e.touches.length === 4 && clippingPlanes.enabled) {
+            const touches = Array.from(e.touches).sort((a, b) => a.clientY - b.clientY);
+            const top = (touches[0].clientY + touches[1].clientY, touches[2].clientY) / 3;
+            const bot = touches[3].clientY;
+            const diff = top - bot;
+
+            if (Math.abs(prevPinchDiff.current - diff) >= 1) {
+                moveClippingPlanes(-(Math.sign(prevPinchDiff.current - diff) * 0.1));
+            }
+
+            prevPinchDiff.current = diff;
         }
     };
 
@@ -1237,6 +1261,46 @@ export function Render3D({ onInit }: Props) {
         view.applySettings({ clippingPlanes: { ...clippingBox, bounds: { min, max } } });
     };
 
+    const handleWheel = (e: WheelEvent<HTMLCanvasElement>) => {
+        if (!e.shiftKey || !clippingPlanes.enabled) {
+            return;
+        }
+
+        moveClippingPlanes(-(e.deltaY / 100));
+    };
+
+    const clippingPlaneCommitTimer = useRef<ReturnType<typeof setTimeout>>();
+    const moveClippingPlanes = (delta: number) => {
+        if (!view) {
+            return;
+        }
+
+        if (clippingPlaneCommitTimer.current) {
+            clearTimeout(clippingPlaneCommitTimer.current);
+        }
+        view.applySettings({
+            clippingVolume: {
+                planes: view.settings.clippingVolume.planes.map((plane) => [
+                    plane[0],
+                    plane[1],
+                    plane[2],
+                    plane[3] + delta,
+                ]),
+            },
+        });
+
+        clippingPlaneCommitTimer.current = setTimeout(() => {
+            dispatch(
+                renderActions.setClippingPlanes({
+                    planes: view.settings.clippingVolume.planes.map((plane) => ({
+                        plane: vec4.clone(plane) as Vec4,
+                        baseW: plane[3],
+                    })),
+                })
+            );
+        }, 100);
+    };
+
     return (
         <Box position="relative" width="100%" height="100%" sx={{ userSelect: "none" }}>
             {loadingHandles.length !== 0 && (
@@ -1275,6 +1339,7 @@ export function Render3D({ onInit }: Props) {
                         onTouchMove={handleTouchMove}
                         onTouchEnd={handleTouchUp}
                         onTouchCancel={handleTouchUp}
+                        onWheel={handleWheel}
                     />
                     <Engine2D pointerPos={pointerPos} />
                     {view && <Stamp />}
