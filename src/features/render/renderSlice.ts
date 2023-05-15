@@ -232,8 +232,10 @@ const initialState = {
     clippingPlanes: {
         enabled: false,
         mode: "union" as "union" | "intersection",
-        planes: [] as vec4[],
-        baseW: 0,
+        planes: [] as {
+            plane: Vec4;
+            baseW: number;
+        }[],
     },
     camera: { type: CameraType.Flight } as MutableCameraState,
     advancedSettings: {
@@ -458,6 +460,14 @@ export const renderSlice = createSlice({
             }
 
             state.clippingPlanes = { ...state.clippingPlanes, ...action.payload };
+        },
+        addClippingPlane: (state, action: PayloadAction<(typeof initialState)["clippingPlanes"]["planes"][number]>) => {
+            state.clippingBox.enabled = false;
+            state.clippingPlanes.enabled = true;
+
+            if (state.clippingPlanes.planes.length < 6) {
+                state.clippingPlanes.planes.push(action.payload);
+            }
         },
         resetClippingPlanes: (state) => {
             state.clippingPlanes = initialState.clippingPlanes;

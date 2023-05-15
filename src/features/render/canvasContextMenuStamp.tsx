@@ -4,7 +4,7 @@ import { Box, ListItemIcon, ListItemText, MenuItem } from "@mui/material";
 import { CropLandscape, Layers, LayersClear, Straighten, VisibilityOff } from "@mui/icons-material";
 import { MeasureEntity } from "@novorender/measure-api";
 
-import { ObjectVisibility, renderActions, selectStamp, StampKind } from "features/render";
+import { renderActions, selectClippingPlanes, selectStamp, StampKind } from "features/render";
 import { useAppDispatch, useAppSelector } from "app/store";
 import { useExplorerGlobals } from "contexts/explorerGlobals";
 import { getFilePathFromObjectPath } from "utils/objectData";
@@ -25,9 +25,9 @@ export const canvasContextMenuConfig = {
         key: "hideLayer",
         name: "Hide class / layer",
     },
-    isolateFile: {
-        key: "isolateFile",
-        name: "Isolate file",
+    addFileToBasket: {
+        key: "addFileToBasket",
+        name: "Add file to selection basket",
     },
     measure: {
         key: "measure",
@@ -35,7 +35,7 @@ export const canvasContextMenuConfig = {
     },
     clip: {
         key: "clip",
-        name: "Set clipping plane",
+        name: "Add clipping plane",
     },
 } as const;
 
@@ -44,7 +44,7 @@ export const canvasContextMenuFeatures = Object.values(config);
 export const defaultCanvasContextMenuFeatures = [
     config.hide.key,
     config.hideLayer.key,
-    config.isolateFile.key,
+    config.addFileToBasket.key,
     config.measure.key,
     config.clip.key,
 ];
@@ -60,6 +60,7 @@ export function CanvasContextMenuStamp() {
     } = useExplorerGlobals(true);
 
     const features = useAppSelector(selectCanvasContextMenuFeatures);
+    const clippingPlanes = useAppSelector(selectClippingPlanes).planes;
     const stamp = useAppSelector(selectStamp);
     const [measureEntity, setMeasureEntity] = useState<MeasureEntity>();
     const [properties, setProperties] = useState<{
@@ -137,7 +138,7 @@ export function CanvasContextMenuStamp() {
         dispatch(renderActions.removeLoadingHandle(handle));
     };
 
-    const isolateFile = async () => {
+    const addToBasket = async () => {
         if (!properties?.file) {
             return;
         }
@@ -154,7 +155,6 @@ export function CanvasContextMenuStamp() {
                 dispatchHighlighted(highlightActions.remove(ids));
                 dispatchHidden(hiddenActions.remove(ids));
                 dispatchSelectionBasket(selectionBasketActions.add(ids));
-                dispatch(renderActions.setDefaultVisibility(ObjectVisibility.Transparent));
             },
         });
 
@@ -183,9 +183,8 @@ export function CanvasContextMenuStamp() {
 
         const w = -vec3.dot(normal, position);
         dispatch(
-            renderActions.setClippingPlanes({
-                enabled: true,
-                planes: [vec4.fromValues(normal[0], normal[1], normal[2], w)],
+            renderActions.addClippingPlane({
+                plane: vec4.fromValues(normal[0], normal[1], normal[2], w) as Vec4,
                 baseW: w,
             })
         );
@@ -224,12 +223,12 @@ export function CanvasContextMenuStamp() {
                         </ListItemText>
                     </MenuItem>
                 )}
-                {features.includes(config.isolateFile.key) && (
-                    <MenuItem onClick={isolateFile} disabled={!properties?.file}>
+                {features.includes(config.addFileToBasket.key) && (
+                    <MenuItem onClick={addToBasket} disabled={!properties?.file}>
                         <ListItemIcon>
                             <Layers fontSize="small" />
                         </ListItemIcon>
-                        <ListItemText>{config.isolateFile.name}</ListItemText>
+                        <ListItemText>{config.addFileToBasket.name}</ListItemText>
                     </MenuItem>
                 )}
                 {features.includes(config.measure.key) && (
@@ -241,7 +240,7 @@ export function CanvasContextMenuStamp() {
                     </MenuItem>
                 )}
                 {features.includes(config.clip.key) && (
-                    <MenuItem onClick={clip} disabled={!stamp.data.normal}>
+                    <MenuItem onClick={clip} disabled={!stamp.data.normal || clippingPlanes.length > 5}>
                         <ListItemIcon>
                             <CropLandscape fontSize="small" />
                         </ListItemIcon>

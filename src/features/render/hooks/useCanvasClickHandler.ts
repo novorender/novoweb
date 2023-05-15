@@ -325,9 +325,8 @@ export function useCanvasClickHandler() {
 
                 dispatch(renderActions.setPicker(Picker.Object));
                 dispatch(
-                    renderActions.setClippingPlanes({
-                        enabled: true,
-                        planes: [vec4.fromValues(normal[0], normal[1], normal[2], w)],
+                    renderActions.addClippingPlane({
+                        plane: vec4.fromValues(normal[0], normal[1], normal[2], w) as Vec4,
                         baseW: w,
                     })
                 );
