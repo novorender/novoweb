@@ -4,7 +4,7 @@ import { Box, ListItemIcon, ListItemText, MenuItem } from "@mui/material";
 import { CropLandscape, Layers, LayersClear, Straighten, VisibilityOff } from "@mui/icons-material";
 import { MeasureEntity } from "@novorender/measure-api";
 
-import { ObjectVisibility, renderActions, selectClippingPlanes, selectStamp, StampKind } from "features/render";
+import { renderActions, selectClippingPlanes, selectStamp, StampKind } from "features/render";
 import { useAppDispatch, useAppSelector } from "app/store";
 import { useExplorerGlobals } from "contexts/explorerGlobals";
 import { getFilePathFromObjectPath } from "utils/objectData";
@@ -25,8 +25,8 @@ export const canvasContextMenuConfig = {
         key: "hideLayer",
         name: "Hide class / layer",
     },
-    isolateFile: {
-        key: "isolateFile",
+    addFileToBasket: {
+        key: "addFileToBasket",
         name: "Add file to selection basket",
     },
     measure: {
@@ -44,7 +44,7 @@ export const canvasContextMenuFeatures = Object.values(config);
 export const defaultCanvasContextMenuFeatures = [
     config.hide.key,
     config.hideLayer.key,
-    config.isolateFile.key,
+    config.addFileToBasket.key,
     config.measure.key,
     config.clip.key,
 ];
@@ -138,7 +138,7 @@ export function CanvasContextMenuStamp() {
         dispatch(renderActions.removeLoadingHandle(handle));
     };
 
-    const isolateFile = async () => {
+    const addToBasket = async () => {
         if (!properties?.file) {
             return;
         }
@@ -155,7 +155,6 @@ export function CanvasContextMenuStamp() {
                 dispatchHighlighted(highlightActions.remove(ids));
                 dispatchHidden(hiddenActions.remove(ids));
                 dispatchSelectionBasket(selectionBasketActions.add(ids));
-                dispatch(renderActions.setDefaultVisibility(ObjectVisibility.Transparent));
             },
         });
 
@@ -224,12 +223,12 @@ export function CanvasContextMenuStamp() {
                         </ListItemText>
                     </MenuItem>
                 )}
-                {features.includes(config.isolateFile.key) && (
-                    <MenuItem onClick={isolateFile} disabled={!properties?.file}>
+                {features.includes(config.addFileToBasket.key) && (
+                    <MenuItem onClick={addToBasket} disabled={!properties?.file}>
                         <ListItemIcon>
                             <Layers fontSize="small" />
                         </ListItemIcon>
-                        <ListItemText>{config.isolateFile.name}</ListItemText>
+                        <ListItemText>{config.addFileToBasket.name}</ListItemText>
                     </MenuItem>
                 )}
                 {features.includes(config.measure.key) && (
