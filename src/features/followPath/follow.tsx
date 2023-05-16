@@ -100,8 +100,6 @@ export function Follow({ fpObj }: { fpObj: FollowParametricObject }) {
                     ? vec3.sub(vec3.create(), currentCenter, view.camera.position)
                     : vec3.fromValues(0, 0, 0);
             const offsetPt = vec3.sub(vec3.create(), pt, offset);
-            const dist = vec3.dot(vec3.sub(vec3.create(), offsetPt, pt), dir);
-            vec3.scaleAndAdd(offsetPt, offsetPt, dir, -dist);
 
             const up = glMatrix.equals(Math.abs(vec3.dot(vec3.fromValues(0, 1, 0), dir)), 1)
                 ? vec3.fromValues(0, 0, 1)
@@ -119,7 +117,6 @@ export function Follow({ fpObj }: { fpObj: FollowParametricObject }) {
                 quat.create(),
                 mat3.fromValues(right[0], right[1], right[2], up[0], up[1], up[2], dir[0], dir[1], dir[2])
             );
-
             if (view2d) {
                 const mat = mat4.fromRotationTranslation(mat4.create(), rotation, offsetPt);
 
@@ -144,7 +141,6 @@ export function Follow({ fpObj }: { fpObj: FollowParametricObject }) {
                     })
                 );
             } else {
-                vec3.scaleAndAdd(offsetPt, offsetPt, dir, Math.abs(pt[1] - offsetPt[1]) * 2);
                 dispatch(renderActions.setGrid({ enabled: false }));
                 const w = -vec3.dot(dir, pt);
                 dispatch(
@@ -158,7 +154,7 @@ export function Follow({ fpObj }: { fpObj: FollowParametricObject }) {
                         type: CameraType.Flight,
                         goTo: {
                             position: offsetPt,
-                            rotation,
+                            rotation: keepOffset ? ([...view.camera.rotation] as Vec4) : rotation,
                         },
                     })
                 );
