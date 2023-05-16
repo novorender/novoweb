@@ -58,5 +58,8 @@ declare module "@novorender/data-js-api" {
             index: number;
             mode: "on" | "off" | "mix";
         };
+        background?: {
+            color: Vec4;
+        };
     }
 }

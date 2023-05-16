@@ -305,6 +305,10 @@ export function useSelectBookmark() {
                 })
             );
         }
+
+        if (bookmark.background) {
+            dispatch(renderActions.setAdvancedSettings({ backgroundColor: bookmark.background.color }));
+        }
     };
 
     return select;
