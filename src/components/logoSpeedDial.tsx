@@ -12,8 +12,10 @@ import {
     useMediaQuery,
     useTheme,
 } from "@mui/material";
-
 import { ReactComponent as NovorenderIcon } from "media/icons/novorender-small.svg";
+
+import { useAppDispatch } from "app/store";
+import { renderActions } from "features/render";
 
 export function LogoSpeedDial({
     open,
@@ -23,6 +25,7 @@ export function LogoSpeedDial({
 }: Omit<SpeedDialProps, "ariaLabel"> & { ariaLabel?: string; toggle: () => void }) {
     const theme = useTheme();
     const isSmall = useMediaQuery(theme.breakpoints.down("md"));
+    const dispatch = useAppDispatch();
 
     const handleToggle = (_event: SyntheticEvent<{}, Event>, reason: OpenReason | CloseReason) => {
         if (!["toggle", "escapeKeyDown"].includes(reason)) {
@@ -59,6 +62,7 @@ export function LogoSpeedDial({
                     } as Partial<FabProps<"button">>
                 }
                 icon={<SpeedDialIcon icon={<NovorenderIcon />} openIcon={<Close />} />}
+                onClick={() => dispatch(renderActions.setStamp(null))}
             />
         </Box>
     );

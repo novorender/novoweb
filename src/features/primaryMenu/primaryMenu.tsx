@@ -19,8 +19,9 @@ import { FlyToSelected } from "features/flyToSelected";
 import { OrthoShortcut } from "features/orthoShortcut";
 import { useToggle } from "hooks/useToggle";
 import { ButtonKey, featuresConfig } from "config/features";
-import { useAppSelector } from "app/store";
+import { useAppDispatch, useAppSelector } from "app/store";
 import { selectPrimaryMenu } from "slices/explorerSlice";
+import { renderActions } from "features/render";
 
 const positions = {
     small: [
@@ -74,6 +75,7 @@ export function PrimaryMenu() {
     const theme = useTheme();
     const isSmall = useMediaQuery(theme.breakpoints.down("md"));
     const primaryMenu = useAppSelector(selectPrimaryMenu);
+    const dispatch = useAppDispatch();
 
     const handleToggle = (reason: OpenReason | CloseReason) => {
         if (!["toggle", "escapeKeyDown"].includes(reason)) {
@@ -106,6 +108,7 @@ export function PrimaryMenu() {
                 }
                 icon={<SpeedDialIcon open={false} icon={<Add />} openIcon={<Close />} />}
                 sx={{ position: "relative", gridColumn: "2 / 3", gridRow: "2 / 2" }}
+                onClick={() => dispatch(renderActions.setStamp(null))}
             >
                 <FeatureButton featureKey={primaryMenu.button1} position={pos[0]} />
                 <FeatureButton featureKey={primaryMenu.button2} position={pos[1]} />

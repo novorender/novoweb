@@ -5,8 +5,8 @@ import { RootState } from "app/store";
 const initialState = {
     stampSettings: {
         enabled: false,
-        properties: [] as string[],
     },
+    starred: {} as Record<string, true | undefined>,
     showStamp: false,
 };
 
@@ -27,32 +27,21 @@ export const propertiesSlice = createSlice({
         toggleShowStamp: (state, action: PayloadAction<State["showStamp"] | undefined>) => {
             state.showStamp = action.payload !== undefined ? action.payload : !state.showStamp;
         },
-        addStampProperties: (state, action: PayloadAction<string | string[]>) => {
-            if (Array.isArray(action.payload)) {
-                action.payload.forEach((property) => state.stampSettings.properties.push(property));
-            } else {
-                state.stampSettings.properties.push(action.payload);
-            }
+        setStarred: (state, action: PayloadAction<State["starred"]>) => {
+            state.starred = action.payload;
         },
-        removeStampProperties: (state, action: PayloadAction<string | string[]>) => {
-            if (Array.isArray(action.payload)) {
-                state.stampSettings.properties = state.stampSettings.properties.filter(
-                    (property) => !(action.payload as string[]).some((toDelete) => property.startsWith(toDelete))
-                );
-            } else {
-                state.stampSettings.properties = state.stampSettings.properties.filter(
-                    (property) => !property.startsWith(action.payload as string)
-                );
-            }
+        star: (state, action: PayloadAction<string>) => {
+            state.starred[action.payload] = true;
         },
-        removeStampPropertyIndex: (state, action: PayloadAction<number>) => {
-            state.stampSettings.properties.splice(action.payload, 1);
+        unStar: (state, action: PayloadAction<string>) => {
+            delete state.starred[action.payload];
         },
     },
 });
 
 export const selectPropertiesStampSettings = (state: RootState) => state.properties.stampSettings;
 export const selectShowPropertiesStamp = (state: RootState) => state.properties.showStamp;
+export const selectStarredProperties = (state: RootState) => state.properties.starred;
 
 const { actions, reducer } = propertiesSlice;
 export { actions as propertiesActions, reducer as propertiesReducer };

@@ -10,6 +10,7 @@ import { useLazyHighlighted } from "contexts/highlighted";
 import { useLazySelectionBasket } from "contexts/selectionBasket";
 import {
     ObjectVisibility,
+    selectAdvancedSettings,
     selectDefaultVisibility,
     selectMainObject,
     selectSelectionBasketMode,
@@ -44,6 +45,7 @@ export function useCreateBookmark() {
     const viewMode = useAppSelector(selectViewMode);
     const manholeCollisionSettings = useAppSelector(selectManholeCollisionSettings);
     const deviations = useAppSelector(selectDeviations);
+    const backgroundColor = useAppSelector(selectAdvancedSettings).backgroundColor;
 
     const {
         state: { view },
@@ -133,6 +135,9 @@ export function useCreateBookmark() {
             deviations: {
                 mode: deviations.mode,
                 index: deviations.index,
+            },
+            background: {
+                color: backgroundColor,
             },
             ...(measurement.selectedEntities.length > 0
                 ? { selectedMeasureEntities: measurement.selectedEntities }

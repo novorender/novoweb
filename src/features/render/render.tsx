@@ -819,6 +819,10 @@ export function Render3D({ onInit }: Props) {
     useHandleDitioKeepAlive();
 
     useEffect(() => {
+        view?.applySettings({ background: { color: advancedSettings.backgroundColor } });
+    }, [view, advancedSettings.backgroundColor]);
+
+    useEffect(() => {
         handleUrlBookmark();
 
         async function handleUrlBookmark() {

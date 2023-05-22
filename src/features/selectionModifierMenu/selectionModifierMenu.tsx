@@ -16,9 +16,9 @@ import { ViewOnlySelected } from "features/viewOnlySelected";
 import { SelectionColor } from "features/selectionColor";
 import { HideSelected } from "features/hideSelected";
 import { ToggleSubtrees } from "features/toggleSubtrees";
-import { useAppSelector } from "app/store";
+import { useAppDispatch, useAppSelector } from "app/store";
 import { useToggle } from "hooks/useToggle";
-import { selectMainObject } from "features/render/renderSlice";
+import { renderActions, selectMainObject } from "features/render";
 
 import ArrowUpwardIcon from "@mui/icons-material/ArrowUpward";
 import ArrowDownwardIcon from "@mui/icons-material/ArrowDownward";
@@ -29,6 +29,7 @@ export function SelectionModifierMenu() {
     const [interacted, toggleInteracted] = useToggle(isSmall);
     const mainObject = useAppSelector(selectMainObject);
     const [open, toggle] = useToggle();
+    const dispatch = useAppDispatch();
 
     useEffect(() => {
         if (!interacted && mainObject !== undefined && !open) {
@@ -64,6 +65,7 @@ export function SelectionModifierMenu() {
                     } as Partial<FabProps<"button", { "data-test": string }>>
                 }
                 icon={<SpeedDialIcon icon={<ArrowUpwardIcon />} openIcon={<ArrowDownwardIcon />} />}
+                onClick={() => dispatch(renderActions.setStamp(null))}
             >
                 <ClearSelection />
                 <HideSelected />

@@ -3,7 +3,6 @@ import {
     useTheme,
     Box,
     List,
-    ListItem,
     Typography,
     Checkbox,
     IconButton,
@@ -12,10 +11,11 @@ import {
     ListItemIcon,
     ListItemText,
     FormControlLabel,
+    ListItemButton,
 } from "@mui/material";
 import type { ObjectData, ObjectId } from "@novorender/webgl-api";
 import { useDrag } from "@use-gesture/react";
-import { ContentCopy, MoreVert } from "@mui/icons-material";
+import { ContentCopy, MoreVert, StarOutline } from "@mui/icons-material";
 
 import {
     LinearProgress,
@@ -47,8 +47,14 @@ import {
 import { highlightActions, useDispatchHighlighted } from "contexts/highlighted";
 import { NodeType } from "features/modelTree/modelTree";
 import { useExplorerGlobals } from "contexts/explorerGlobals";
+import { selectHasAdminCapabilities } from "slices/explorerSlice";
 
-import { propertiesActions, selectPropertiesStampSettings, selectShowPropertiesStamp } from "../slice";
+import {
+    propertiesActions,
+    selectPropertiesStampSettings,
+    selectShowPropertiesStamp,
+    selectStarredProperties,
+} from "../slice";
 import { ResizeHandle } from "../resizeHandle";
 
 enum Status {
@@ -382,6 +388,10 @@ type PropertyItemProps = {
 
 function PropertyItem({ checked, onChange, property, value, resizing, groupName }: PropertyItemProps) {
     const isUrl = value.startsWith("http");
+    const isAdmin = useAppSelector(selectHasAdminCapabilities);
+    const starred = useAppSelector(selectStarredProperties);
+    const stampSettings = useAppSelector(selectPropertiesStampSettings);
+    const dispatch = useAppDispatch();
 
     const checkboxRef = useRef<HTMLInputElement | null>(null);
 
@@ -414,8 +424,10 @@ function PropertyItem({ checked, onChange, property, value, resizing, groupName 
 
     const id = `${property}-${value}`;
     const displayName = getPropertyDisplayName(property);
+    const fullProperty = (groupName ? groupName + "/" : "") + property;
+    const isStarred = starred[fullProperty];
     return (
-        <ListItem button dense disableGutters onClick={handleItemClick}>
+        <ListItemButton dense disableGutters onClick={handleItemClick}>
             <Box px={1} width={1} display="flex">
                 <Box className="propertyName" flexShrink={0} display="flex" justifyContent="space-between">
                     <Tooltip title={displayName}>
@@ -456,6 +468,24 @@ function PropertyItem({ checked, onChange, property, value, resizing, groupName 
                         id={id}
                         MenuListProps={{ sx: { maxWidth: "100%" } }}
                     >
+                        {isAdmin && stampSettings.enabled && (
+                            <MenuItem
+                                onClick={() => {
+                                    if (isStarred) {
+                                        dispatch(propertiesActions.unStar(fullProperty));
+                                    } else {
+                                        dispatch(propertiesActions.star(fullProperty));
+                                    }
+
+                                    closeMenu();
+                                }}
+                            >
+                                <ListItemIcon>
+                                    <StarOutline color={isStarred ? "primary" : undefined} />
+                                </ListItemIcon>
+                                <ListItemText>{isStarred ? "Remove star" : "Star"} </ListItemText>
+                            </MenuItem>
+                        )}
                         <MenuItem
                             onClick={() =>
                                 navigator.clipboard.writeText(
@@ -496,7 +526,7 @@ function PropertyItem({ checked, onChange, property, value, resizing, groupName 
                     </IconButton>
                 </Box>
             </Box>
-        </ListItem>
+        </ListItemButton>
     );
 }
 

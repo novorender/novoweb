@@ -199,7 +199,6 @@ export default function OrthoCam() {
                 color={backgroundColor}
                 onChangeComplete={({ rgb }) => {
                     const rgba = rgbToVec(rgb) as VecRGBA;
-                    view.applySettings({ background: { color: rgba } });
                     dispatch(
                         renderActions.setAdvancedSettings({
                             [AdvancedSetting.BackgroundColor]: rgba,

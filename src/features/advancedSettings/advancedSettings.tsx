@@ -151,11 +151,15 @@ export default function AdvancedSettings() {
                           },
                           ...(currentEnvironment ? { environment: currentEnvironment.name } : {}),
                       } as Internal.RenderSettingsExt),
-                camera: {
-                    ...(camera as Required<FlightControllerParams>),
-                    far: Math.max(1000, settings.cameraFarClipping),
-                    near: Math.max(0.001, settings.cameraNearClipping),
-                },
+                ...(camera && camera.kind === "flight"
+                    ? {
+                          camera: {
+                              ...(camera as Required<FlightControllerParams>),
+                              far: Math.max(1000, settings.cameraFarClipping),
+                              near: Math.max(0.001, settings.cameraNearClipping),
+                          },
+                      }
+                    : {}),
                 customProperties: {
                     ...customProperties,
                     primaryMenu,
