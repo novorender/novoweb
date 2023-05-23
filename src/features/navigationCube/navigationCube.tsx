@@ -383,7 +383,7 @@ export function NavigationCube() {
             return;
         }
 
-        let pt: ReadonlyVec3 | undefined;
+        let pt: ReadonlyVec3 | undefined = vec3.clone(view.camera.position);
 
         if (highlighted.length) {
             const abortSignal = abortController.current.signal;
@@ -401,27 +401,12 @@ export function NavigationCube() {
 
                     highlightedBoundingSphereCenter.current = pt;
                 } catch {
-                    if (!abortSignal.aborted) {
-                        pt = prevPivotPt.current;
+                    if (abortSignal.aborted) {
+                        pt = undefined;
                     }
                 }
 
                 setLoading(false);
-            }
-        } else if (prevPivotPt.current) {
-            pt = prevPivotPt.current;
-        } else {
-            const sceneCenterDist = vec3.len(
-                vec3.sub(vec3.create(), view.camera.position, scene.boundingSphere.center)
-            );
-
-            if (sceneCenterDist <= 500) {
-                pt = scene.boundingSphere.center;
-            } else {
-                pt = (
-                    await view.lastRenderOutput?.pick(view.settings.display.width / 2, view.settings.display.width / 2)
-                )?.position;
-                prevPivotPt.current = pt;
             }
         }
 
