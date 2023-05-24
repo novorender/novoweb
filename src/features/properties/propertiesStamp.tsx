@@ -98,7 +98,9 @@ export function PropertiesStamp() {
                                     justifyContent="space-between"
                                 >
                                     <Tooltip title={getPropertyDisplayName(key)}>
-                                        <Typography noWrap={true}>{getPropertyDisplayName(key)}</Typography>
+                                        <Typography noWrap={true}>
+                                            {getPropertyDisplayName(key.split("/").at(-1) ?? key)}
+                                        </Typography>
                                     </Tooltip>
                                     <ResizeHandle data-resize-handle>|</ResizeHandle>
                                 </Box>
