@@ -276,6 +276,7 @@ export async function refillObjects({
         [[], {}] as [number[], { [key: string]: { key: string; idx: number; highlight: Highlight } }]
     );
 
+    hidden.forEach((id) => (objectHighlighter.objectHighlightIndices[id] = 255));
     const highlights = Object.values(_highlights);
 
     objectGroups.forEach((group) => {
@@ -295,8 +296,6 @@ export async function refillObjects({
             }
         }
     });
-
-    hidden.forEach((id) => (objectHighlighter.objectHighlightIndices[id] = 255));
 
     view.settings.objectHighlights = [
         getHighlightByObjectVisibility(defaultVisibility),
