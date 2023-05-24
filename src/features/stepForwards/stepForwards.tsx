@@ -43,17 +43,18 @@ export function StepForwards({ position, ...speedDialProps }: Props) {
         view.camera.controller.moveTo(step.position, step.rotation);
     };
 
+    const disabled = !canStepForwards;
     return (
         <SpeedDialAction
             {...speedDialProps}
             data-test="step-forwards"
             FabProps={{
-                disabled: !canStepForwards,
+                disabled,
                 ...speedDialProps.FabProps,
                 style: { ...position, position: "absolute" },
             }}
             onClick={handleClick}
-            title={name}
+            title={disabled ? undefined : name}
             icon={<Icon />}
         />
     );

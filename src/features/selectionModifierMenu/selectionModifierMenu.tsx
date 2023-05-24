@@ -11,7 +11,7 @@ import {
 } from "@mui/material";
 
 import { MultipleSelection } from "features/multipleSelection";
-import { ClearSelection } from "features/clearSelection";
+import { ClearView } from "features/clearView";
 import { ViewOnlySelected } from "features/viewOnlySelected";
 import { SelectionColor } from "features/selectionColor";
 import { HideSelected } from "features/hideSelected";
@@ -22,6 +22,7 @@ import { renderActions, selectMainObject } from "features/render";
 
 import ArrowUpwardIcon from "@mui/icons-material/ArrowUpward";
 import ArrowDownwardIcon from "@mui/icons-material/ArrowDownward";
+import { ClearSelection } from "features/clearSelection";
 
 export function SelectionModifierMenu() {
     const theme = useTheme();
@@ -52,7 +53,6 @@ export function SelectionModifierMenu() {
     return (
         <Box sx={{ gridColumn: "1 / 2", gridRow: "2 / 2" }} display="flex" alignItems={"flex-end"}>
             <SpeedDial
-                data-test="selection-modifier-menu"
                 open={open}
                 onOpen={(_event, reason) => handleToggle(reason)}
                 onClose={(_event, reason) => handleToggle(reason)}
@@ -61,12 +61,12 @@ export function SelectionModifierMenu() {
                     {
                         color: "secondary",
                         size: isSmall ? "small" : "large",
-                        "data-test": "selection-modifier-menu-fab",
-                    } as Partial<FabProps<"button", { "data-test": string }>>
+                    } as Partial<FabProps<"button">>
                 }
                 icon={<SpeedDialIcon icon={<ArrowUpwardIcon />} openIcon={<ArrowDownwardIcon />} />}
                 onClick={() => dispatch(renderActions.setStamp(null))}
             >
+                <ClearView />
                 <ClearSelection />
                 <HideSelected />
                 <ViewOnlySelected />
