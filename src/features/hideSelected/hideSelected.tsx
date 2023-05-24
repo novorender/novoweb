@@ -52,7 +52,7 @@ export function HideSelected(props: Props) {
             data-test="hide-selected"
             FabProps={{ disabled, ...props.FabProps }}
             onClick={toggleHideSelected}
-            title={name}
+            title={disabled ? undefined : name}
             icon={<Icon />}
         />
     );

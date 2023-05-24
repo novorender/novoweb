@@ -31,6 +31,7 @@ import {
     GpsFixed,
     Image,
     RestartAlt,
+    CheckBox,
 } from "@mui/icons-material";
 
 import { ReactComponent as Clipping } from "media/icons/clipping.svg";
@@ -332,10 +333,17 @@ export const featuresConfig = {
         type: FeatureType.Button,
         defaultLocked: false,
     },
-    clearSelection: {
-        key: "clearSelection",
+    clearView: {
+        key: "clearView",
         name: "Clear",
         Icon: RestartAlt,
+        type: FeatureType.Button,
+        defaultLocked: false,
+    },
+    clearSelection: {
+        key: "clearSelection",
+        name: "Clear selection",
+        Icon: CheckBox,
         type: FeatureType.Button,
         defaultLocked: false,
     },

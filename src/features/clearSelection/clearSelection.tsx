@@ -1,45 +1,41 @@
-import { useState } from "react";
-import { Box, CircularProgress, SpeedDialActionProps } from "@mui/material";
+import type { SpeedDialActionProps } from "@mui/material";
 
 import { SpeedDialAction } from "components";
 import { featuresConfig } from "config/features";
-import { useResetView } from "features/home/useResetView";
-import { AsyncStatus } from "types/misc";
+import { renderActions, selectMainObject } from "features/render";
+import { useAppDispatch, useAppSelector } from "app/store";
+import { highlightActions, useDispatchHighlighted, useHighlighted } from "contexts/highlighted";
+import { highlightCollectionsActions, useDispatchHighlightCollections } from "contexts/highlightCollections";
 
 type Props = SpeedDialActionProps;
 
 export function ClearSelection(props: Props) {
     const { name, Icon } = featuresConfig["clearSelection"];
-    const resetView = useResetView();
-    const [status, setStatus] = useState(AsyncStatus.Initial);
+    const { idArr: highlighted } = useHighlighted();
+    const dispatchHighlighted = useDispatchHighlighted();
+    const dispatchHighlightCollections = useDispatchHighlightCollections();
+    const mainObject = useAppSelector(selectMainObject);
 
-    const handleClick = async () => {
-        setStatus(AsyncStatus.Loading);
-        await resetView({ resetCamera: false });
-        setStatus(AsyncStatus.Initial);
+    const selectedIds = mainObject !== undefined ? highlighted.concat(mainObject) : highlighted;
+
+    const dispatch = useAppDispatch();
+
+    const clear = () => {
+        dispatchHighlighted(highlightActions.setIds([]));
+        dispatchHighlightCollections(highlightCollectionsActions.clearAll());
+        dispatch(renderActions.setMainObject(undefined));
     };
+
+    const disabled = !selectedIds.length;
 
     return (
         <SpeedDialAction
             {...props}
             data-test="clear-selection"
-            onClick={handleClick}
-            title={name}
-            icon={
-                <Box
-                    width={1}
-                    height={1}
-                    position="relative"
-                    display="inline-flex"
-                    justifyContent="center"
-                    alignItems="center"
-                >
-                    {status === AsyncStatus.Loading ? (
-                        <CircularProgress thickness={2.5} sx={{ position: "absolute" }} />
-                    ) : null}
-                    <Icon />
-                </Box>
-            }
+            FabProps={{ disabled, ...props.FabProps }}
+            onClick={clear}
+            title={disabled ? undefined : name}
+            icon={<Icon />}
         />
     );
 }

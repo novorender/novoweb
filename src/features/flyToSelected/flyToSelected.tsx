@@ -67,17 +67,18 @@ export function FlyToSelected({ position, ...speedDialProps }: Props) {
         }
     };
 
+    const disabled = !highlighted.length;
     return (
         <SpeedDialAction
             {...speedDialProps}
             data-test="flyToSelected"
             FabProps={{
                 ...speedDialProps.FabProps,
+                disabled,
                 style: { ...position, position: "absolute" },
-                disabled: !highlighted.length,
             }}
             onClick={handleClick}
-            title={name}
+            title={disabled ? undefined : name}
             icon={
                 <Box
                     width={1}
