@@ -276,30 +276,42 @@ export async function refillObjects({
         [[], {}] as [number[], { [key: string]: { key: string; idx: number; highlight: Highlight } }]
     );
 
-    hidden.forEach((id) => (objectHighlighter.objectHighlightIndices[id] = 255));
     const highlights = Object.values(_highlights);
+    if (defaultVisibility === ObjectVisibility.Neutral) {
+        objectGroups
+            .filter((group) => group.hidden && group.opacity)
+            .forEach((group) => {
+                const { highlightIdx } = group;
 
-    objectGroups.forEach((group) => {
-        const { highlightIdx } = group;
-
-        if (group.ids?.length && highlightIdx) {
-            if (group.selected) {
-                group.ids.forEach((id) => {
-                    if (selectionBasket.mode === SelectionBasketMode.Loose || selectionBasket.ids[id]) {
+                if (group.ids?.length && highlightIdx) {
+                    group.ids.forEach((id) => {
                         objectHighlighter.objectHighlightIndices[id] = highlightIdx;
-                    }
-                });
-            } else if (defaultVisibility === ObjectVisibility.Neutral && group.hidden && group.opacity) {
-                group.ids.forEach((id) => {
-                    objectHighlighter.objectHighlightIndices[id] = highlightIdx;
-                });
+                    });
+                }
+            });
+    }
+
+    hidden.forEach((id) => (objectHighlighter.objectHighlightIndices[id] = 255));
+
+    objectGroups
+        .filter((group) => group.selected)
+        .forEach((group) => {
+            const { highlightIdx } = group;
+
+            if (group.ids?.length && highlightIdx) {
+                if (group.selected) {
+                    group.ids.forEach((id) => {
+                        if (selectionBasket.mode === SelectionBasketMode.Loose || selectionBasket.ids[id]) {
+                            objectHighlighter.objectHighlightIndices[id] = highlightIdx;
+                        }
+                    });
+                }
             }
-        }
-    });
+        });
 
     view.settings.objectHighlights = [
         getHighlightByObjectVisibility(defaultVisibility),
-        ...highlights.sort((a, b) => a.idx - b.idx).map((selected) => selected.highlight),
+        ...highlights.sort((a, b) => a.idx - b.idx).map(({ highlight }) => highlight),
     ];
 
     objectHighlighter.commit();
