@@ -203,6 +203,8 @@ export function PathList() {
                                         dispatch(followPathActions.setSelectedPath(path.id));
                                         dispatch(followPathActions.toggleResetPositionOnInit(true));
                                         dispatch(followPathActions.setSelectedIds([path.id]));
+                                        dispatch(followPathActions.setRoadIds(undefined));
+                                        dispatch(followPathActions.setDrawRoadIds(undefined));
                                         dispatch(renderActions.setMainObject(path.id));
                                         dispatchHighlighted(highlightActions.setIds([path.id]));
                                         history.push(`/followIds`);
