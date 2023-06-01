@@ -12,7 +12,7 @@ export function useCanvasContextMenuHandler() {
     const features = useAppSelector(selectCanvasContextMenuFeatures);
     const picker = useAppSelector(selectPicker);
     const {
-        state: { view },
+        state: { view_OLD: view },
     } = useExplorerGlobals();
 
     const handleContextMenu = async (pos: Vec2) => {

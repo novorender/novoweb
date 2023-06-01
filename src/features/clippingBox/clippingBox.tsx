@@ -17,7 +17,7 @@ const axisNames = ["-X", "-Z", "-Y", "+X", "+Z", "+Y"];
 
 export default function ClippingBox() {
     const {
-        state: { view },
+        state: { view_OLD: view },
     } = useExplorerGlobals(true);
     const clippingBox = useAppSelector(selectClippingBox);
     const { enabled, inside, baseBounds } = clippingBox;

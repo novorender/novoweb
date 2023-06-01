@@ -27,7 +27,7 @@ export function StepForwards({ position, ...speedDialProps }: Props) {
         viewMode !== ViewMode.Panorama &&
         cameraType === CameraType.Flight;
     const {
-        state: { view },
+        state: { view_OLD: view },
     } = useExplorerGlobals(true);
 
     const dispatch = useAppDispatch();

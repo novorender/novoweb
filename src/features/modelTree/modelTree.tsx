@@ -53,7 +53,7 @@ export default function ModelTree() {
     const dispatch = useAppDispatch();
 
     const {
-        state: { scene },
+        state: { scene_OLD: scene },
     } = useExplorerGlobals(true);
 
     const [menuOpen, toggleMenu] = useToggle();

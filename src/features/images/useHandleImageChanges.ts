@@ -15,7 +15,7 @@ import { isPanorama } from "./utils";
 
 export function useHandleImageChanges() {
     const {
-        state: { view, scene },
+        state: { view_OLD: view, scene_OLD: scene },
     } = useExplorerGlobals();
     const dispatch = useAppDispatch();
 

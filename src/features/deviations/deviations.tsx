@@ -63,7 +63,7 @@ function WidgetMenu(props: MenuProps) {
     const dispatch = useAppDispatch();
 
     const {
-        state: { scene },
+        state: { scene_OLD: scene },
     } = useExplorerGlobals(true);
     const isAdminScene = useAppSelector(selectIsAdminScene);
 

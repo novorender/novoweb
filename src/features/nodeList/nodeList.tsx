@@ -98,7 +98,7 @@ function Node({ node, parent, loading, setLoading, abortController, ...props }: 
     const theme = useTheme();
 
     const {
-        state: { scene },
+        state: { scene_OLD: scene },
     } = useExplorerGlobals(true);
     const dispatch = useAppDispatch();
     const dispatchHighlighted = useDispatchHighlighted();

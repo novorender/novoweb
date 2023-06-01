@@ -14,7 +14,7 @@ type Props = SpeedDialActionProps & {
 export function OrthoShortcut({ position, ...speedDialProps }: Props) {
     const { name, Icon } = featuresConfig["orthoShortcut"];
     const {
-        state: { view, canvas },
+        state: { view_OLD: view, canvas },
     } = useExplorerGlobals(true);
 
     const cameraType = useAppSelector(selectCameraType);

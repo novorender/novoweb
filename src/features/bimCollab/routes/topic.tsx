@@ -250,7 +250,7 @@ function CommentListItem({
     const dispatchSelectionBasket = useDispatchSelectionBasket();
     const dispatchObjectGroups = useDispatchObjectGroups();
     const {
-        state: { scene },
+        state: { scene_OLD: scene },
     } = useExplorerGlobals(true);
 
     const [modalOpen, toggleModal] = useToggle();

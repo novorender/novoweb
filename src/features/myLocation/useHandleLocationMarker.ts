@@ -10,7 +10,7 @@ import { LocationStatus, myLocationActions, selectShowLocationMarker } from "./m
 
 export function useHandleLocationMarker() {
     const {
-        state: { view, scene },
+        state: { view_OLD: view, scene_OLD: scene },
     } = useExplorerGlobals();
 
     const { tmZone } = useAppSelector(selectProjectSettings);

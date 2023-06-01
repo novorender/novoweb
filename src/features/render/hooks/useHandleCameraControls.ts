@@ -8,7 +8,7 @@ import { ViewMode } from "types/misc";
 
 export function useHandleCameraControls() {
     const {
-        state: { view },
+        state: { view_OLD: view },
     } = useExplorerGlobals();
     const viewMode = useAppSelector(selectViewMode);
     const cameraType = useAppSelector(selectCameraType);

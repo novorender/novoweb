@@ -6,7 +6,7 @@ import { useExplorerGlobals } from "contexts/explorerGlobals";
 
 export function useHandleClippingBoxChanges() {
     const {
-        state: { view },
+        state: { view_OLD: view },
     } = useExplorerGlobals();
     const dispatch = useAppDispatch();
     const selecting = useAppSelector(selectPicker) === Picker.ClippingBox;

@@ -27,7 +27,7 @@ enum Status {
 
 export default function RangeSearch() {
     const {
-        state: { scene },
+        state: { scene_OLD: scene },
     } = useExplorerGlobals(true);
 
     const [menuOpen, toggleMenu] = useToggle();

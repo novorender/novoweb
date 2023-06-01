@@ -51,7 +51,7 @@ export function Follow({ fpObj }: { fpObj: FollowParametricObject }) {
     const theme = useTheme();
     const history = useHistory();
     const {
-        state: { view, scene },
+        state: { view_OLD: view, scene_OLD: scene },
     } = useExplorerGlobals(true);
 
     const currentCenter = useAppSelector(selectCurrentCenter);

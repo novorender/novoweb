@@ -8,33 +8,33 @@ import { WidgetErrorBoundary, WidgetSkeleton } from "components";
 import { MenuWidget } from "features/menuWidget";
 import { useWidgetLayout } from "./useWidgetLayout";
 
-const Properties = lazy(() => import("features/properties/properties"));
-const PropertiesTree = lazy(() => import("features/propertiesTree/propertiesTree"));
-const Bookmarks = lazy(() => import("features/bookmarks/bookmarksWidget"));
-const ModelTree = lazy(() => import("features/modelTree/modelTree"));
-const Search = lazy(() => import("features/search/search"));
-const ClippingBox = lazy(() => import("features/clippingBox/clippingBox"));
-const Measure = lazy(() => import("features/measure/measure"));
-const Groups = lazy(() => import("features/groups/groups"));
-const ClippingPlanes = lazy(() => import("features/clippingPlanes/clippingPlanes"));
-const OrthoCam = lazy(() => import("features/orthoCam/orthoCam"));
-const Images = lazy(() => import("features/images/images"));
-const AdvancedSettings = lazy(() => import("features/advancedSettings/advancedSettings"));
-const BimCollab = lazy(() => import("features/bimCollab/bimCollab"));
-const SelectionBasket = lazy(() => import("features/selectionBasket/selectionBasket"));
-const Deviations = lazy(() => import("features/deviations/deviations"));
-const FollowPath = lazy(() => import("features/followPath/followPath"));
-const BimTrack = lazy(() => import("features/bimTrack/bimTrack"));
-const Ditio = lazy(() => import("features/ditio/ditio"));
-const MyLocation = lazy(() => import("features/myLocation/myLocation"));
-const RangeSearch = lazy(() => import("features/rangeSearch/rangeSearch"));
-const User = lazy(() => import("features/user/user"));
-const HeightProfile = lazy(() => import("features/heightProfile/heightProfile"));
-const Area = lazy(() => import("features/area/area"));
-const PointLine = lazy(() => import("features/pointLine/pointLine"));
-const Jira = lazy(() => import("features/jira/jira"));
-const Manhole = lazy(() => import("features/manhole/manhole"));
-const XsiteManage = lazy(() => import("features/xsiteManage/xsiteManage"));
+// const Properties = lazy(() => import("features/properties/properties"));
+// const PropertiesTree = lazy(() => import("features/propertiesTree/propertiesTree"));
+// const Bookmarks = lazy(() => import("features/bookmarks/bookmarksWidget"));
+// const ModelTree = lazy(() => import("features/modelTree/modelTree"));
+// const Search = lazy(() => import("features/search/search"));
+// const ClippingBox = lazy(() => import("features/clippingBox/clippingBox"));
+// const Measure = lazy(() => import("features/measure/measure"));
+// const Groups = lazy(() => import("features/groups/groups"));
+// const ClippingPlanes = lazy(() => import("features/clippingPlanes/clippingPlanes"));
+// const OrthoCam = lazy(() => import("features/orthoCam/orthoCam"));
+// const Images = lazy(() => import("features/images/images"));
+// const AdvancedSettings = lazy(() => import("features/advancedSettings/advancedSettings"));
+// const BimCollab = lazy(() => import("features/bimCollab/bimCollab"));
+// const SelectionBasket = lazy(() => import("features/selectionBasket/selectionBasket"));
+// const Deviations = lazy(() => import("features/deviations/deviations"));
+// const FollowPath = lazy(() => import("features/followPath/followPath"));
+// const BimTrack = lazy(() => import("features/bimTrack/bimTrack"));
+// const Ditio = lazy(() => import("features/ditio/ditio"));
+// const MyLocation = lazy(() => import("features/myLocation/myLocation"));
+// const RangeSearch = lazy(() => import("features/rangeSearch/rangeSearch"));
+// const User = lazy(() => import("features/user/user"));
+// const HeightProfile = lazy(() => import("features/heightProfile/heightProfile"));
+// const Area = lazy(() => import("features/area/area"));
+// const PointLine = lazy(() => import("features/pointLine/pointLine"));
+// const Jira = lazy(() => import("features/jira/jira"));
+// const Manhole = lazy(() => import("features/manhole/manhole"));
+// const XsiteManage = lazy(() => import("features/xsiteManage/xsiteManage"));
 
 export function Widgets() {
     const layout = useWidgetLayout();
@@ -141,96 +141,96 @@ function getWidgetByKey(key: WidgetKey): JSX.Element | string {
     let Widget: React.LazyExoticComponent<() => JSX.Element>;
 
     switch (key) {
-        case featuresConfig.properties.key:
-            Widget = Properties;
-            break;
-        case featuresConfig.propertyTree.key:
-            Widget = PropertiesTree;
-            break;
-        case featuresConfig.bookmarks.key:
-            Widget = Bookmarks;
-            break;
-        case featuresConfig.groups.key:
-            Widget = Groups;
-            break;
-        case featuresConfig.modelTree.key:
-            Widget = ModelTree;
-            break;
-        case featuresConfig.search.key:
-            Widget = Search;
-            break;
-        case featuresConfig.clippingBox.key:
-            Widget = ClippingBox;
-            break;
-        case featuresConfig.measure.key:
-            Widget = Measure;
-            break;
-        case featuresConfig.bimcollab.key:
-            Widget = BimCollab;
-            break;
-        case featuresConfig.bimTrack.key:
-            Widget = BimTrack;
-            break;
-        case featuresConfig.clippingPlanes.key:
-            Widget = ClippingPlanes;
-            break;
-        case featuresConfig.orthoCam.key:
-            Widget = OrthoCam;
-            break;
-        case featuresConfig.images.key:
-            Widget = Images;
-            break;
-        case featuresConfig.advancedSettings.key:
-            Widget = AdvancedSettings;
-            break;
-        case featuresConfig.selectionBasket.key:
-            Widget = SelectionBasket;
-            break;
-        case featuresConfig.deviations.key:
-            Widget = Deviations;
-            break;
-        case featuresConfig.followPath.key:
-            Widget = FollowPath;
-            break;
-        case featuresConfig.ditio.key:
-            Widget = Ditio;
-            break;
-        case featuresConfig.myLocation.key:
-            Widget = MyLocation;
-            break;
-        case featuresConfig.rangeSearch.key:
-            Widget = RangeSearch;
-            break;
-        case featuresConfig.user.key:
-            Widget = User;
-            break;
-        case featuresConfig.heightProfile.key:
-            Widget = HeightProfile;
-            break;
-        case featuresConfig.area.key:
-            Widget = Area;
-            break;
-        case featuresConfig.pointLine.key:
-            Widget = PointLine;
-            break;
-        case featuresConfig.jira.key:
-            Widget = Jira;
-            break;
-        case featuresConfig.manhole.key:
-            Widget = Manhole;
-            break;
-        case featuresConfig.xsiteManage.key:
-            Widget = XsiteManage;
-            break;
+        // case featuresConfig.properties.key:
+        //     Widget = Properties;
+        //     break;
+        // case featuresConfig.propertyTree.key:
+        //     Widget = PropertiesTree;
+        //     break;
+        // case featuresConfig.bookmarks.key:
+        //     Widget = Bookmarks;
+        //     break;
+        // case featuresConfig.groups.key:
+        //     Widget = Groups;
+        //     break;
+        // case featuresConfig.modelTree.key:
+        //     Widget = ModelTree;
+        //     break;
+        // case featuresConfig.search.key:
+        //     Widget = Search;
+        //     break;
+        // case featuresConfig.clippingBox.key:
+        //     Widget = ClippingBox;
+        //     break;
+        // case featuresConfig.measure.key:
+        //     Widget = Measure;
+        //     break;
+        // case featuresConfig.bimcollab.key:
+        //     Widget = BimCollab;
+        //     break;
+        // case featuresConfig.bimTrack.key:
+        //     Widget = BimTrack;
+        //     break;
+        // case featuresConfig.clippingPlanes.key:
+        //     Widget = ClippingPlanes;
+        //     break;
+        // case featuresConfig.orthoCam.key:
+        //     Widget = OrthoCam;
+        //     break;
+        // case featuresConfig.images.key:
+        //     Widget = Images;
+        //     break;
+        // case featuresConfig.advancedSettings.key:
+        //     Widget = AdvancedSettings;
+        //     break;
+        // case featuresConfig.selectionBasket.key:
+        //     Widget = SelectionBasket;
+        //     break;
+        // case featuresConfig.deviations.key:
+        //     Widget = Deviations;
+        //     break;
+        // case featuresConfig.followPath.key:
+        //     Widget = FollowPath;
+        //     break;
+        // case featuresConfig.ditio.key:
+        //     Widget = Ditio;
+        //     break;
+        // case featuresConfig.myLocation.key:
+        //     Widget = MyLocation;
+        //     break;
+        // case featuresConfig.rangeSearch.key:
+        //     Widget = RangeSearch;
+        //     break;
+        // case featuresConfig.user.key:
+        //     Widget = User;
+        //     break;
+        // case featuresConfig.heightProfile.key:
+        //     Widget = HeightProfile;
+        //     break;
+        // case featuresConfig.area.key:
+        //     Widget = Area;
+        //     break;
+        // case featuresConfig.pointLine.key:
+        //     Widget = PointLine;
+        //     break;
+        // case featuresConfig.jira.key:
+        //     Widget = Jira;
+        //     break;
+        // case featuresConfig.manhole.key:
+        //     Widget = Manhole;
+        //     break;
+        // case featuresConfig.xsiteManage.key:
+        //     Widget = XsiteManage;
+        //     break;
         default:
             return key;
     }
 
-    return (
-        <WidgetErrorBoundary widgetKey={key}>
-            <Suspense fallback={<WidgetSkeleton widgetKey={key} />}>
-                <Widget />
-            </Suspense>
-        </WidgetErrorBoundary>
-    );
+    // return (
+    //     <WidgetErrorBoundary widgetKey={key}>
+    //         <Suspense fallback={<WidgetSkeleton widgetKey={key} />}>
+    //             <Widget />
+    //         </Suspense>
+    //     </WidgetErrorBoundary>
+    // );
 }

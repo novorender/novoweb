@@ -19,7 +19,7 @@ const formatNumber = new Intl.NumberFormat("en-US").format;
 
 export function PerformanceStats() {
     const {
-        state: { canvas, view },
+        state: { canvas, view_OLD: view },
     } = useExplorerGlobals(true);
 
     const detailBiasRef = useRef<HTMLTableCellElement | null>(null);

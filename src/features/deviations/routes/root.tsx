@@ -35,7 +35,7 @@ export function Root() {
     const history = useHistory();
     const theme = useTheme();
     const {
-        state: { scene },
+        state: { scene_OLD: scene },
     } = useExplorerGlobals(true);
     const deviations = useAppSelector(selectDeviations);
     const profiles = useAppSelector(selectDeviationProfiles);

@@ -32,7 +32,7 @@ export function PathList() {
     const theme = useTheme();
     const history = useHistory<{ prevPath?: string }>();
     const {
-        state: { scene },
+        state: { scene_OLD: scene },
     } = useExplorerGlobals(true);
     const highlighted = useHighlighted().idArr;
     const dispatchHighlighted = useDispatchHighlighted();

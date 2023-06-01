@@ -1,20 +1,26 @@
-import { Scene, View } from "@novorender/webgl-api";
+import { Scene as Scene_OLD, View as View_OLD } from "@novorender/webgl-api";
 import { MeasureScene } from "@novorender/measure-api";
 import { createContext, Dispatch, ReactNode, useContext, useReducer } from "react";
+import { OctreeSceneConfig, RenderStateScene, View } from "@novorender/web_app";
 
 // Values that are used all over the place within Explorer, but are unserializable go here instead of redux store.
 
 const initialState = {
+    view_OLD: undefined as undefined | View_OLD,
+    scene_OLD: undefined as undefined | Scene_OLD,
     view: undefined as undefined | View,
-    scene: undefined as undefined | Scene,
+    scene: undefined as undefined | OctreeSceneConfig,
     canvas: null as null | HTMLCanvasElement,
     measureScene: undefined as undefined | MeasureScene,
     size: { width: 0, height: 0 },
 };
 
 type State = typeof initialState;
-type HydratedState = Pick<{ [K in keyof State]: NonNullable<State[K]> }, "view" | "scene" | "canvas" | "measureScene"> &
-    Omit<State, "view" | "scene" | "canvas" | "measureScene">;
+type HydratedState = Pick<
+    { [K in keyof State]: NonNullable<State[K]> },
+    "view_OLD" | "scene_OLD" | "view" | "scene" | "canvas" | "measureScene"
+> &
+    Omit<State, "view_OLD" | "scene_OLD" | "view" | "scene" | "canvas" | "measureScene">;
 
 enum ActionTypes {
     Set,
@@ -37,7 +43,7 @@ function set(state: State) {
 
 const actions = { set, update };
 
-type Actions = ReturnType<typeof actions[keyof typeof actions]>;
+type Actions = ReturnType<(typeof actions)[keyof typeof actions]>;
 type ContextType = { state: State | HydratedState; dispatch: Dispatch<Actions> };
 
 const Context = createContext<ContextType>(undefined as any);
@@ -75,7 +81,7 @@ function useExplorerGlobals(expectHydrated?: boolean): ContextType {
         throw new Error("useExplorerGlobals must be used within a ExplorerGlobalsProvider");
     }
 
-    if (expectHydrated && [context.state.canvas, context.state.scene, context.state.view].includes(undefined)) {
+    if (expectHydrated && [context.state.canvas, context.state.scene_OLD, context.state.view_OLD].includes(undefined)) {
         throw new Error("useExplorerGlobals(true) must not be used without first loading scene, view and canvas");
     }
 

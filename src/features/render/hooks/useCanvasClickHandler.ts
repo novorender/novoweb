@@ -50,7 +50,7 @@ export function useCanvasClickHandler() {
     const dispatchHighlightCollections = useDispatchHighlightCollections();
     const highlightCollections = useHighlightCollections();
     const {
-        state: { view, scene, canvas, measureScene },
+        state: { view_OLD: view, scene_OLD: scene, canvas, measureScene },
     } = useExplorerGlobals();
 
     const mainObject = useAppSelector(selectMainObject);

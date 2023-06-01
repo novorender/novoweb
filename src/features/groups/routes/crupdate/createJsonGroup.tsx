@@ -40,7 +40,7 @@ export function CreateJsonGroup({
     const match = useRouteMatch();
     const theme = useTheme();
     const {
-        state: { scene },
+        state: { scene_OLD: scene },
     } = useExplorerGlobals(true);
     const dispatchHighlighted = useDispatchHighlighted();
 

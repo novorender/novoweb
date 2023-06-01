@@ -3,7 +3,7 @@ import { Box, Paper, Typography, useTheme, CircularProgress, Alert } from "@mui/
 import { api, dataApi } from "app";
 import { Accordion, AccordionDetails, AccordionSummary } from "components";
 
-import { Status } from "./render";
+import { Status } from "./render_OLD";
 
 export function SceneError({ id, error, msg }: { id: string; error: Exclude<Status, Status.Initial>; msg?: string }) {
     const theme = useTheme();

@@ -24,7 +24,7 @@ import { propertiesActions, selectPropertiesStampSettings, selectStarredProperti
 
 export function StampSettings({ sceneId }: { sceneId: string }) {
     const {
-        state: { scene },
+        state: { scene_OLD: scene },
     } = useExplorerGlobals(true);
     const theme = useTheme();
     const history = useHistory();

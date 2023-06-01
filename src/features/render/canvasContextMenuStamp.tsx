@@ -56,7 +56,7 @@ export function CanvasContextMenuStamp() {
     const dispatchHighlighted = useDispatchHighlighted();
     const dispatchSelectionBasket = useDispatchSelectionBasket();
     const {
-        state: { scene, measureScene },
+        state: { scene_OLD: scene, measureScene },
     } = useExplorerGlobals(true);
 
     const features = useAppSelector(selectCanvasContextMenuFeatures);

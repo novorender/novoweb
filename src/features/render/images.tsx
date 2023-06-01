@@ -7,7 +7,7 @@ import { getAssetUrl } from "utils/misc";
 
 export function Images() {
     const {
-        state: { scene },
+        state: { scene_OLD: scene },
     } = useExplorerGlobals();
     const dispatch = useAppDispatch();
     const activeImage = useAppSelector(selectActiveImage);

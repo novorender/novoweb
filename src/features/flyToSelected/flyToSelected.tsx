@@ -26,7 +26,7 @@ export function FlyToSelected({ position, ...speedDialProps }: Props) {
     const { name, Icon } = featuresConfig.flyToSelected;
     const highlighted = useHighlighted().idArr;
     const {
-        state: { scene },
+        state: { scene_OLD: scene },
     } = useExplorerGlobals(true);
     const dispatch = useAppDispatch();
 

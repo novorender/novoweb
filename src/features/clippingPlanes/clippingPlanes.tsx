@@ -14,7 +14,7 @@ import { useExplorerGlobals } from "contexts/explorerGlobals";
 
 export default function ClippingPlanes() {
     const {
-        state: { view },
+        state: { view_OLD: view },
     } = useExplorerGlobals(true);
     const [menuOpen, toggleMenu] = useToggle();
     const minimized = useAppSelector(selectMinimized) === featuresConfig.clippingPlanes.key;

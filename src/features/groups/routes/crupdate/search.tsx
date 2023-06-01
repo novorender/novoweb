@@ -27,7 +27,7 @@ export function Search({
     const history = useHistory();
     const dispatchHighlighted = useDispatchHighlighted();
     const {
-        state: { scene },
+        state: { scene_OLD: scene },
     } = useExplorerGlobals(true);
 
     const [searching, setSearching] = useState(false);

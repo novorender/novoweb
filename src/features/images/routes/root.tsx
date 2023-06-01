@@ -31,7 +31,7 @@ export function Root() {
     const theme = useTheme();
     const history = useHistory();
     const {
-        state: { scene },
+        state: { scene_OLD: scene },
     } = useExplorerGlobals(true);
 
     const images = useAppSelector(selectImages);

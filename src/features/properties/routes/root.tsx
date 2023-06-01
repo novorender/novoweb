@@ -83,7 +83,7 @@ export function Root() {
     const stampSettings = useAppSelector(selectPropertiesStampSettings);
     const dispatchHighlighted = useDispatchHighlighted();
     const {
-        state: { scene },
+        state: { scene_OLD: scene },
     } = useExplorerGlobals(true);
     const theme = useTheme();
     const dispatch = useAppDispatch();

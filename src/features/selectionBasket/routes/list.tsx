@@ -29,7 +29,7 @@ export function List() {
     const theme = useTheme();
     const history = useHistory();
     const {
-        state: { scene, view },
+        state: { scene_OLD: scene, view_OLD: view },
     } = useExplorerGlobals(true);
 
     const [abortController, abort] = useAbortController();

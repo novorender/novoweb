@@ -48,7 +48,7 @@ export function useCreateBookmark() {
     const backgroundColor = useAppSelector(selectAdvancedSettings).backgroundColor;
 
     const {
-        state: { view },
+        state: { view_OLD: view },
     } = useExplorerGlobals(true);
     const objectGroups = useLazyObjectGroups();
     const highlighted = useLazyHighlighted();

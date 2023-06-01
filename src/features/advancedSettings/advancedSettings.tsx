@@ -54,7 +54,7 @@ enum Status {
 export default function AdvancedSettings() {
     const sceneId = useSceneId();
     const {
-        state: { scene, view },
+        state: { scene_OLD: scene, view_OLD: view },
     } = useExplorerGlobals(true);
 
     const isAdminScene = useAppSelector(selectIsAdminScene);

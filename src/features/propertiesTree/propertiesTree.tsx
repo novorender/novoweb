@@ -24,7 +24,7 @@ type TreeLevel = {
 
 export default function PropertiesTree() {
     const {
-        state: { scene },
+        state: { scene_OLD: scene },
     } = useExplorerGlobals(true);
     const dispatchHighlighted = useDispatchHighlighted();
     const [abortController, abort] = useAbortController();
@@ -196,7 +196,7 @@ function Node({ prop, level, selected, search }: NodeProps) {
     const theme = useTheme();
 
     const {
-        state: { scene },
+        state: { scene_OLD: scene },
     } = useExplorerGlobals(true);
 
     const [expanded, setExpanded] = useMountedState<boolean | undefined>(undefined);

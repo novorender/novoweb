@@ -25,7 +25,7 @@ export function StepBack({ position, ...speedDialProps }: Props) {
     const canStepBack =
         savedCameraPositions.currentIndex >= 1 && viewMode !== ViewMode.Panorama && cameraType === CameraType.Flight;
     const {
-        state: { view },
+        state: { view_OLD: view },
     } = useExplorerGlobals(true);
 
     const dispatch = useAppDispatch();

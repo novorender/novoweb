@@ -36,7 +36,7 @@ import { xsiteManageActions } from "features/xsiteManage";
 export function useResetView() {
     const id = useSceneId();
     const {
-        state: { view, scene },
+        state: { view_OLD: view, scene_OLD: scene },
     } = useExplorerGlobals(true);
 
     const homeCameraPos = useAppSelector(selectHomeCameraPosition);

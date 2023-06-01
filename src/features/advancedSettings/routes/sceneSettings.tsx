@@ -45,7 +45,7 @@ export function SceneSettings({
     const history = useHistory();
     const theme = useTheme();
     const {
-        state: { view },
+        state: { view_OLD: view },
     } = useExplorerGlobals(true);
 
     const dispatch = useAppDispatch();

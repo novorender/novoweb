@@ -41,17 +41,11 @@ export function Explorer() {
 const disableHud = new URLSearchParams(window.location.search).get("disableHud") === "true";
 
 function ExplorerBase() {
-    const id = useSceneId();
     const user = useAppSelector(selectUser);
     const dispatch = useAppDispatch();
     const {
         state: { view, scene },
-        dispatch: dispatchGlobals,
     } = useExplorerGlobals();
-
-    useEffect(() => {
-        dispatchGlobals(explorerGlobalsActions.update({ view: undefined, scene: undefined }));
-    }, [id, dispatchGlobals]);
 
     const handleInit = ({ customProperties }: { customProperties: unknown }) => {
         const isAdminScene = !getIsViewerScene(customProperties);

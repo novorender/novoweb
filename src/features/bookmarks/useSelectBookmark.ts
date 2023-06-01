@@ -40,7 +40,7 @@ export function useSelectBookmark() {
     const dispatchObjectGroups = useDispatchObjectGroups();
 
     const {
-        state: { view, scene, measureScene },
+        state: { view_OLD: view, scene_OLD: scene, measureScene },
     } = useExplorerGlobals();
 
     const dispatch = useAppDispatch();

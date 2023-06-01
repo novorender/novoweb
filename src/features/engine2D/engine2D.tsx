@@ -50,7 +50,7 @@ const hoverLineColor = "rgba(255, 165, 0, 1)";
 
 export function Engine2D({ pointerPos }: { pointerPos: MutableRefObject<Vec2> }) {
     const {
-        state: { size, scene, view, measureScene },
+        state: { size, scene_OLD: scene, view_OLD: view, measureScene },
     } = useExplorerGlobals();
     const [canvas2D, setCanvas2D] = useState<HTMLCanvasElement | null>(null);
     const [context2D, setContext2D] = useState<CanvasRenderingContext2D | null | undefined>(null);

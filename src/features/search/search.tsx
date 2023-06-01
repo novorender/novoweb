@@ -48,7 +48,7 @@ export default function Search() {
     const dispatchHighlighted = useDispatchHighlighted();
     const dispatchSelectionBasket = useDispatchSelectionBasket();
     const {
-        state: { view, scene },
+        state: { view_OLD: view, scene_OLD: scene },
     } = useExplorerGlobals(true);
 
     const urlSearchQuery = useAppSelector(selectUrlSearchQuery);
@@ -441,7 +441,7 @@ export function CustomParentNode({
     setAllHidden: (state: boolean) => void;
 }) {
     const {
-        state: { scene },
+        state: { scene_OLD: scene },
     } = useExplorerGlobals(true);
     const dispatchHighlighted = useDispatchHighlighted();
     const dispatchHidden = useDispatchHidden();

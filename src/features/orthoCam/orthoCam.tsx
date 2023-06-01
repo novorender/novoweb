@@ -34,7 +34,7 @@ export default function OrthoCam() {
     const minimized = useAppSelector(selectMinimized) === featuresConfig.orthoCam.key;
     const maximized = useAppSelector(selectMaximized).includes(featuresConfig.orthoCam.key);
     const {
-        state: { view, canvas },
+        state: { view_OLD: view, canvas },
     } = useExplorerGlobals(true);
 
     const grid = useAppSelector(selectGrid);

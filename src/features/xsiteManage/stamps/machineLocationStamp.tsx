@@ -13,7 +13,7 @@ import { LogPointTime, selectXsiteManageActiveLogPoints, selectXsiteManageSite, 
 
 export function MachineLocationStamp() {
     const {
-        state: { view },
+        state: { view_OLD: view },
     } = useExplorerGlobals();
     const dispatch = useAppDispatch();
     const stamp = useAppSelector(selectStamp);

@@ -20,7 +20,7 @@ const Img = styled("img")(
 
 export function ImageListItem({ image, style }: { image: Image; style: CSSProperties }) {
     const {
-        state: { scene },
+        state: { scene_OLD: scene },
     } = useExplorerGlobals(true);
     const theme = useTheme();
     const dispatch = useAppDispatch();

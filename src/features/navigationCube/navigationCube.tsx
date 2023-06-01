@@ -356,7 +356,7 @@ type Path = {
 export function NavigationCube() {
     const theme = useTheme();
     const {
-        state: { view, scene },
+        state: { view_OLD: view, scene_OLD: scene },
     } = useExplorerGlobals(true);
     const highlighted = useHighlighted().idArr;
     const prevPivotPt = useRef<ReadonlyVec3>();

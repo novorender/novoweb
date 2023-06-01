@@ -44,7 +44,7 @@ export function IncludeViewpoint({
     const highlighted = useLazyHighlighted();
     const objectGroups = useLazyObjectGroups();
     const {
-        state: { view, scene, canvas },
+        state: { view_OLD: view, scene_OLD: scene, canvas },
     } = useExplorerGlobals(true);
     const store = useStore<RootState>();
 

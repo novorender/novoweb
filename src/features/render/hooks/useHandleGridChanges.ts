@@ -6,7 +6,7 @@ import { selectGrid } from "features/render/renderSlice";
 
 export function useHandleGridChanges() {
     const {
-        state: { view },
+        state: { view_OLD: view },
     } = useExplorerGlobals();
     const grid = useAppSelector(selectGrid);
 

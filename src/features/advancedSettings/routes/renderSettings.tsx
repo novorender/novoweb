@@ -39,7 +39,7 @@ export function RenderSettings({ save, saving }: { save: () => Promise<void>; sa
     const history = useHistory();
     const theme = useTheme();
     const {
-        state: { view },
+        state: { view_OLD: view },
     } = useExplorerGlobals(true);
 
     const dispatch = useAppDispatch();

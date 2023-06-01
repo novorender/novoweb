@@ -18,7 +18,7 @@ const baseProperties = ["Name", "GUID", "Path"];
 
 export function CsvExport() {
     const {
-        state: { scene },
+        state: { scene_OLD: scene },
     } = useExplorerGlobals(true);
     const theme = useTheme();
     const history = useHistory();

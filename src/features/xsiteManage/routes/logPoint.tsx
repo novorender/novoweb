@@ -16,7 +16,7 @@ export function LogPoint() {
     const history = useHistory();
     const { id } = useParams<{ id?: string }>();
     const {
-        state: { view },
+        state: { view_OLD: view },
     } = useExplorerGlobals(true);
 
     const dispatch = useAppDispatch();

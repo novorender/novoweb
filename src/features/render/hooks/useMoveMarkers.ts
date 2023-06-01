@@ -12,7 +12,7 @@ import { useExplorerGlobals } from "contexts/explorerGlobals";
 
 export function useMoveMarkers(svg: SVGSVGElement | null) {
     const {
-        state: { view, size },
+        state: { view_OLD: view, size },
     } = useExplorerGlobals();
 
     const images = useAppSelector(selectImages);

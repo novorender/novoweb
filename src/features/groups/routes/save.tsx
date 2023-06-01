@@ -17,7 +17,7 @@ export function Save({ sceneId }: { sceneId: string }) {
     const history = useHistory();
     const dispatch = useAppDispatch();
     const {
-        state: { scene },
+        state: { scene_OLD: scene },
     } = useExplorerGlobals(true);
     const objectGroups = useLazyObjectGroups();
     const [saveState, toggleSaveState] = useToggle();

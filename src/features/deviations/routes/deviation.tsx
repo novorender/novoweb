@@ -40,7 +40,7 @@ export function Deviation({ sceneId }: { sceneId: string }) {
     const theme = useTheme();
     const history = useHistory();
     const {
-        state: { scene },
+        state: { scene_OLD: scene },
     } = useExplorerGlobals(true);
 
     const deviations = useAppSelector(selectDeviations);

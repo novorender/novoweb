@@ -21,7 +21,7 @@ export function Settings({ sceneId }: { sceneId: string }) {
     const history = useHistory();
     const theme = useTheme();
     const {
-        state: { scene },
+        state: { scene_OLD: scene },
     } = useExplorerGlobals(true);
 
     const dispatch = useAppDispatch();

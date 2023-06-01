@@ -26,7 +26,7 @@ export default function MyLocation() {
     const minimized = useAppSelector(selectMinimized) === featuresConfig.myLocation.key;
     const maximized = useAppSelector(selectMaximized).includes(featuresConfig.myLocation.key);
     const {
-        state: { view, scene },
+        state: { view_OLD: view, scene_OLD: scene },
     } = useExplorerGlobals(true);
 
     const { tmZone } = useAppSelector(selectProjectSettings);

@@ -19,7 +19,7 @@ export function Post() {
     const postId = useParams<{ id: string }>().id;
     const history = useHistory();
     const {
-        state: { view },
+        state: { view_OLD: view },
     } = useExplorerGlobals(true);
 
     const { tmZone } = useAppSelector(selectProjectSettings);
