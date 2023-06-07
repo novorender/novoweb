@@ -1,3 +1,5 @@
+// @ts-nocheck
+
 import { glMatrix, mat3, mat4, quat, vec2, vec3, vec4 } from "gl-matrix";
 import {
     useEffect,

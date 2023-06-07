@@ -9,14 +9,18 @@ import type {
     RenderSettings,
 } from "@novorender/webgl-api";
 import type { Bookmark, ObjectGroup } from "@novorender/data-js-api";
-import { createSlice, createAsyncThunk, PayloadAction } from "@reduxjs/toolkit";
+import { createSlice, createAsyncThunk, PayloadAction, createAction } from "@reduxjs/toolkit";
 import { mat4, quat, vec3, vec4 } from "gl-matrix";
 
 import type { RootState } from "app/store";
 import { VecRGB, VecRGBA } from "utils/color";
 import { defaultFlightControls } from "config/camera";
-import { ViewMode } from "types/misc";
+import { AsyncState, AsyncStatus, ViewMode } from "types/misc";
 import { LogPoint, MachineLocation } from "features/xsiteManage";
+
+import { SceneConfig, getCustomProperties } from "./render";
+
+export const initScene = createAction<Omit<SceneConfig, "db" | "url">>("initScene");
 
 export const fetchEnvironments = createAsyncThunk("novorender/fetchEnvironments", async (api: API) => {
     const envs = await api.availableEnvironments("https://api.novorender.com/assets/env/index.json");
@@ -260,7 +264,7 @@ const initialState = {
         [AdvancedSetting.TerrainAsBackground]: false,
         [AdvancedSetting.FingerMap]: defaultFlightControls.touch,
         [AdvancedSetting.MouseButtonMap]: defaultFlightControls.mouse,
-        [AdvancedSetting.BackgroundColor]: [0.75, 0.75, 0.75, 1] as VecRGBA,
+        // [AdvancedSetting.BackgroundColor]: [0.75, 0.75, 0.75, 1] as VecRGBA,
         [AdvancedSetting.TriangleLimit]: 0,
         [AdvancedSetting.SkyBoxBlur]: 0,
         [AdvancedSetting.SecondaryHighlight]: { property: "" },
@@ -301,6 +305,29 @@ const initialState = {
               x: number;
               y: number;
           },
+
+    // NEW
+    background: {
+        environments: { status: AsyncStatus.Initial } as AsyncState<EnvironmentDescription[]>,
+        color: [0, 0, 0, 1] as vec4,
+        url: "",
+        blur: 0,
+    },
+    points: {
+        size: {
+            pixel: 1,
+            maxPixel: 1,
+            metric: 1,
+            toleranceFactor: 1,
+        },
+        deviation: {
+            index: 0,
+            mixFactor: 1,
+            colorGradient: {
+                knots: [] as any[], // TODO
+            },
+        },
+    },
 };
 
 type State = typeof initialState;
@@ -314,6 +341,9 @@ export const renderSlice = createSlice({
         },
         setEnvironment: (state, action: PayloadAction<EnvironmentDescription | undefined>) => {
             state.currentEnvironment = action.payload;
+        },
+        setEnvironments: (state, action: PayloadAction<EnvironmentDescription[]>) => {
+            state.environments = action.payload;
         },
         toggleDefaultVisibility: (state) => {
             switch (state.defaultVisibility) {
@@ -575,10 +605,44 @@ export const renderSlice = createSlice({
         setPointerDownState: (state, action: PayloadAction<State["pointerDownState"]>) => {
             state.pointerDownState = action.payload;
         },
+        setBackground: (state, action: PayloadAction<Partial<State["background"]>>) => {
+            state.background = { ...state.background, ...action.payload };
+        },
     },
     extraReducers: (builder) => {
-        builder.addCase(fetchEnvironments.fulfilled, (state, action) => {
-            state.environments = action.payload as DeepMutable<typeof action.payload>;
+        builder.addCase(initScene, (state, action) => {
+            const { customProperties, settings } = action.payload;
+
+            const props = getCustomProperties(customProperties);
+
+            // init props
+
+            if (!settings) {
+                return;
+            }
+
+            // background
+            state.background.color = settings.background.color ?? state.background.color;
+            state.background.blur = settings.background.skyBoxBlur ?? state.background.blur;
+            state.background.url = action.payload.environment ?? state.background.url;
+
+            // points
+            state.points.size.pixel = settings.points.size.pixel ?? state.points.size.pixel;
+            state.points.size.maxPixel = settings.points.size.maxPixel ?? state.points.size.maxPixel;
+            state.points.size.metric = settings.points.size.metric ?? state.points.size.metric;
+            state.points.size.toleranceFactor =
+                settings.points.size.toleranceFactor ?? state.points.size.toleranceFactor;
+
+            // deviations
+            state.points.deviation.index = settings.points.deviation.index;
+            state.points.deviation.mixFactor =
+                settings.points.deviation.mode === "mix" ? 1 : settings.points.deviation.mode === "on" ? 0.5 : 0; // TODO map mode to mixFactor?
+            state.points.deviation.colorGradient = {
+                knots: settings.points.deviation.colors.map((deviation) => ({
+                    color: deviation.color,
+                    position: deviation.deviation,
+                })),
+            };
         });
     },
 });
@@ -615,7 +679,9 @@ export const selectStamp = (state: RootState) => state.render.stamp;
 export const selectPointerLock = (state: RootState) => state.render.pointerLock;
 export const selectProportionalCameraSpeed = (state: RootState) => state.render.proportionalCameraSpeed;
 export const selectPointerDownState = (state: RootState) => state.render.pointerDownState;
+export const selectBackground = (state: RootState) => state.render.background;
 
-const { reducer, actions } = renderSlice;
+const { reducer } = renderSlice;
+const actions = { ...renderSlice.actions, initScene };
 export { reducer as renderReducer, actions as renderActions };
 export type { State as RenderState };

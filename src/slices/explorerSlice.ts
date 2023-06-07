@@ -47,7 +47,8 @@ const initialState = {
     },
     contextMenu: {
         canvas: {
-            features: defaultCanvasContextMenuFeatures as CanvasContextMenuFeatureKey[],
+            // features: defaultCanvasContextMenuFeatures as CanvasContextMenuFeatureKey[],
+            features: [] as CanvasContextMenuFeatureKey[], // TODO
         },
     },
     urlSearchQuery: undefined as WritableUrlSearchQuery,

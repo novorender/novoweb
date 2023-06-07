@@ -16,6 +16,14 @@ export function hasFinished<T>(state: AsyncState<T>): state is AsyncError | Asyn
     return state.status === AsyncStatus.Success || state.status === AsyncStatus.Error;
 }
 
+export function getAsyncStateData<T>(state: AsyncState<T>): T | undefined {
+    if (state.status !== AsyncStatus.Success) {
+        return;
+    }
+
+    return state.data;
+}
+
 export type ExtendedMeasureEntity = MeasureEntity & {
     settings?: MeasureSettings;
 };
