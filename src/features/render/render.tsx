@@ -1,11 +1,12 @@
-import { ReadonlyVec3, ReadonlyVec4, glMatrix, quat, vec3, vec4 } from "gl-matrix";
+import { SceneData, SceneLoadFail } from "@novorender/data-js-api";
+import { computeRotation, rotationFromDirection, createView } from "@novorender/web_app";
+import { glMatrix, quat, vec3, vec4 } from "gl-matrix";
 import { useEffect, useState, useRef, useCallback, RefCallback } from "react";
 import { Box, styled, css } from "@mui/material";
 
 import { PerformanceStats } from "features/performanceStats";
-import { getDataFromUrlHash } from "features/shareLink";
 import { LinearProgress, Loading } from "components";
-import { api, dataApi, measureApi } from "app";
+import { dataApi } from "app";
 import { useSceneId } from "hooks/useSceneId";
 import {
     renderActions,
@@ -13,74 +14,26 @@ import {
     selectAdvancedSettings,
     selectLoadingHandles,
     DeepMutable,
-    selectCurrentEnvironment,
-    selectBackground,
-    selectDefaultVisibility,
-    ObjectVisibility,
 } from "features/render/renderSlice";
-import { explorerActions, selectLocalBookmarkId, selectUrlBookmarkId } from "slices/explorerSlice";
+import { selectLocalBookmarkId, selectUrlBookmarkId } from "slices/explorerSlice";
 import { useSelectBookmark } from "features/bookmarks/useSelectBookmark";
 import { useAppDispatch, useAppSelector } from "app/store";
 import { Engine2D } from "features/engine2D";
-
-import { highlightActions, useDispatchHighlighted, useHighlighted } from "contexts/highlighted";
-import { useDispatchHidden, useHidden } from "contexts/hidden";
-import {
-    GroupStatus,
-    ObjectGroup,
-    objectGroupsActions,
-    useDispatchObjectGroups,
-    useObjectGroups,
-} from "contexts/objectGroups";
-import { useDispatchSelectionBasket, selectionBasketActions, useSelectionBasket } from "contexts/selectionBasket";
+import { useDispatchHighlighted } from "contexts/highlighted";
+import { useDispatchHidden } from "contexts/hidden";
+import { GroupStatus, objectGroupsActions, useDispatchObjectGroups } from "contexts/objectGroups";
+import { useDispatchSelectionBasket } from "contexts/selectionBasket";
 import { explorerGlobalsActions, useExplorerGlobals } from "contexts/explorerGlobals";
-import {
-    HighlightCollection,
-    highlightCollectionsActions,
-    useDispatchHighlightCollections,
-    useHighlightCollections,
-} from "contexts/highlightCollections";
+import { useDispatchHighlightCollections } from "contexts/highlightCollections";
+import { VecRGBA } from "utils/color";
 
-import {
-    createRendering,
-    initHighlighted,
-    initHidden,
-    initObjectGroups,
-    initEnvironment,
-    initCamera,
-    initClippingBox,
-    initClippingPlanes,
-    initAdvancedSettings,
-    initDeviations,
-    initProjectSettings,
-    initCameraSpeedLevels,
-    initProportionalCameraSpeed,
-    initPointerLock,
-    initDefaultTopDownElevation,
-    initPropertiesSettings,
-} from "./utils";
+import { isSceneError, SceneError } from "./sceneError";
+import { createRendering } from "./utils";
 import { Stamp } from "./stamp";
 import { Markers } from "./markers";
-import { isSceneError, SceneError } from "./sceneError";
 import { Images } from "./images";
-import { SceneData, SceneLoadFail } from "@novorender/data-js-api";
-import {
-    ClippingMode,
-    EnvironmentDescription,
-    RenderState,
-    TonemappingMode,
-    View,
-    computeRotation,
-    createColorSetHighlight,
-    createNeutralHighlight,
-    createTransparentHighlight,
-    defaultRenderState,
-    rotationFromDirection,
-} from "@novorender/web_app";
-import { createView } from "@novorender/web_app";
-import { AsyncStatus } from "types/misc";
-import { VecRGBA } from "utils/color";
-import { ScienceOutlined } from "@mui/icons-material";
+import { useHandleBackground } from "./hooks/useHandleBackground";
+import { useHandleHighlights } from "./hooks/useHandleHighlights";
 
 glMatrix.setMatrixArrayType(Array);
 
@@ -175,7 +128,10 @@ export function Render3D({ onInit }: { onInit: (params: { customProperties: unkn
 
                 // TODO(?): Set in initScene() and handle effect?
                 if (sceneData.camera) {
-                    await _view.switchCameraController(sceneData.camera.kind, { ...sceneData.camera });
+                    await _view.switchCameraController(sceneData.camera.kind, {
+                        position: sceneData.camera.position,
+                        rotation: sceneData.camera.rotation,
+                    });
                 }
 
                 dispatch(renderActions.initScene(sceneData));
@@ -274,7 +230,7 @@ export function Render3D({ onInit }: { onInit: (params: { customProperties: unkn
                 <SceneError error={status.status} msg={status.msg} id={sceneId} />
             ) : (
                 <>
-                    {advancedSettings.showPerformance && view && canvas ? <PerformanceStats /> : null}
+                    {view && <PerformanceStats />}
                     <Canvas id="main-canvas" tabIndex={1} ref={canvasRef} />
                     <Engine2D pointerPos={pointerPos} />
                     {view && <Stamp />}
@@ -369,39 +325,6 @@ function getBackgroundColor(color: Vec4 | undefined): Vec4 {
     }
 
     return color;
-}
-
-function useHandleBackground() {
-    const {
-        state: { view },
-    } = useExplorerGlobals();
-    const { environments, color, url, blur } = useAppSelector(selectBackground);
-    const dispatch = useAppDispatch();
-
-    useEffect(() => {
-        loadEnvs();
-
-        async function loadEnvs() {
-            if (!view || environments.status !== AsyncStatus.Initial) {
-                return;
-            }
-
-            dispatch(renderActions.setBackground({ environments: { status: AsyncStatus.Loading } }));
-            const envs = await view.availableEnvironments("https://api.novorender.com/assets/env/index.json");
-            dispatch(renderActions.setBackground({ environments: { status: AsyncStatus.Success, data: envs } }));
-        }
-    }, [view, dispatch, environments]);
-
-    useEffect(
-        function handleBackgroundChange() {
-            if (!view) {
-                return;
-            }
-
-            view.modifyRenderState({ background: { color, url, blur } });
-        },
-        [view, color, url, blur]
-    );
 }
 
 export type CustomProperties = {
@@ -506,118 +429,4 @@ export function getCustomProperties(customProperties: any = {}): CustomPropertie
     }
 
     return customProperties as CustomProperties;
-}
-
-export function useHandleHighlights() {
-    const {
-        state: { view },
-    } = useExplorerGlobals();
-    const sceneId = useSceneId();
-    const highlighted = useHighlighted();
-    const collections = useHighlightCollections()["secondaryHighlight"];
-    const hidden = useHidden().idArr;
-    const groups = useObjectGroups();
-    const defaultVisibility = useAppSelector(selectDefaultVisibility);
-    const basket = useSelectionBasket();
-    const dispatch = useAppDispatch();
-
-    const id = useRef(0);
-
-    useEffect(() => {
-        apply();
-
-        async function apply() {
-            if (!view) {
-                return;
-            }
-
-            view.modifyRenderState({
-                highlights: {
-                    defaultHighlight:
-                        defaultVisibility === ObjectVisibility.Neutral
-                            ? createNeutralHighlight()
-                            : defaultVisibility === ObjectVisibility.SemiTransparent
-                            ? createTransparentHighlight(0.5)
-                            : createTransparentHighlight(0),
-                },
-            });
-
-            const currentId = ++id.current;
-            const loading = performance.now();
-            dispatch(renderActions.addLoadingHandle(loading));
-            await fillActiveGroupIds(sceneId, groups);
-            dispatch(renderActions.removeLoadingHandle(loading));
-
-            if (currentId !== id.current) {
-                return;
-            }
-
-            const { colored, hidden, semiTransparent } = groups.reduceRight(
-                (prev, group) => {
-                    switch (group.status) {
-                        case GroupStatus.Selected: {
-                            prev.colored.push(group);
-                            break;
-                        }
-                        case GroupStatus.Hidden: {
-                            if (!group.opacity) {
-                                prev.hidden.push(group);
-                            } else {
-                                prev.semiTransparent.push(group);
-                            }
-                            break;
-                        }
-                        default:
-                            break;
-                    }
-
-                    return prev;
-                },
-                {
-                    colored: [] as ObjectGroup[],
-                    hidden: [] as ObjectGroup[],
-                    semiTransparent: [] as ObjectGroup[],
-                }
-            );
-
-            view.modifyRenderState({
-                highlights: {
-                    groups: [
-                        {
-                            objectIds: new Uint32Array(highlighted.idArr).sort(),
-                            rgbaTransform: createColorSetHighlight(highlighted.color),
-                        },
-                        ...colored.map((group) => ({
-                            objectIds: new Uint32Array(group.ids).sort(),
-                            rgbaTransform: createColorSetHighlight(group.color),
-                        })),
-                        ...hidden.map((group) => ({
-                            objectIds: new Uint32Array([...group.ids]).sort(),
-                            rgbaTransform: createTransparentHighlight(0),
-                        })),
-                        ...semiTransparent.map((group) => ({
-                            objectIds: new Uint32Array([...group.ids]).sort(),
-                            rgbaTransform: createTransparentHighlight(group.opacity),
-                        })),
-                    ],
-                },
-            });
-        }
-    }, [view, dispatch, sceneId, highlighted, collections, hidden, groups, defaultVisibility, basket]);
-}
-
-async function fillActiveGroupIds(sceneId: string, groups: ObjectGroup[]): Promise<void> {
-    const proms: Promise<void>[] = groups.map(async (group) => {
-        if (group.status !== GroupStatus.Default && !group.ids) {
-            group.ids = new Set(
-                await dataApi.getGroupIds(sceneId, group.id).catch(() => {
-                    console.warn("failed to load ids for group - ", group.id);
-                    return [] as number[];
-                })
-            );
-        }
-    });
-
-    await Promise.all(proms);
-    return;
 }
