@@ -9,9 +9,9 @@ import { useHighlighted } from "contexts/highlighted";
 import { useObjectGroups, GroupStatus, ObjectGroup } from "contexts/objectGroups";
 import { useSelectionBasket } from "contexts/selectionBasket";
 import { useSceneId } from "hooks/useSceneId";
+import { dataApi } from "app";
 
 import { selectDefaultVisibility, ObjectVisibility, renderActions } from "..";
-import { dataApi } from "app";
 
 export function useHandleHighlights() {
     const {
@@ -102,7 +102,7 @@ export function useHandleHighlights() {
                         })),
                         ...hidden.map((group) => ({
                             objectIds: new Uint32Array([...group.ids]).sort(),
-                            rgbaTransform: createTransparentHighlight(0),
+                            rgbaTransform: null,
                         })),
                         ...semiTransparent.map((group) => ({
                             objectIds: new Uint32Array([...group.ids]).sort(),
@@ -110,6 +110,13 @@ export function useHandleHighlights() {
                         })),
                     ],
                 },
+                // scene: {
+                //     filter: {
+                //         objectIds: new Uint32Array(
+                //             new Set([...hidden.flatMap((group) => Array.from(group.ids))])
+                //         ).sort(),
+                //     },
+                // },
             });
         }
     }, [view, dispatch, sceneId, highlighted, secondaryHighlight, hidden, groups, defaultVisibility, basket]);
