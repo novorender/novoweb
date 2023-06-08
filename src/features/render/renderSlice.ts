@@ -11,6 +11,7 @@ import type {
 import type { Bookmark, ObjectGroup } from "@novorender/data-js-api";
 import { createSlice, createAsyncThunk, PayloadAction, createAction } from "@reduxjs/toolkit";
 import { mat4, quat, vec3, vec4 } from "gl-matrix";
+import { OctreeSceneConfig } from "@novorender/web_app";
 
 import type { RootState } from "app/store";
 import { VecRGB, VecRGBA } from "utils/color";
@@ -20,8 +21,12 @@ import { LogPoint, MachineLocation } from "features/xsiteManage";
 
 import { getCustomProperties } from "./render";
 import { SceneConfig } from "./hooks/useHandleInit";
+import { getSubtrees } from "./utils";
 
-export const initScene = createAction<Omit<SceneConfig, "db" | "url">>("initScene");
+export const initScene = createAction<{
+    sceneData: Omit<SceneConfig, "db" | "url">;
+    octreeSceneConfig: OctreeSceneConfig;
+}>("initScene");
 
 export const fetchEnvironments = createAsyncThunk("novorender/fetchEnvironments", async (api: API) => {
     const envs = await api.availableEnvironments("https://api.novorender.com/assets/env/index.json");
@@ -212,15 +217,13 @@ const initialState = {
     },
     currentCameraSpeedLevel: CameraSpeedLevel.Default,
     savedCameraPositions: { currentIndex: -1, positions: [] } as MutableSavedCameraPositions,
-    subtrees: undefined as
-        | undefined
-        | {
-              triangles: SubtreeStatus;
-              lines: SubtreeStatus;
-              terrain: SubtreeStatus;
-              points: SubtreeStatus;
-              documents: SubtreeStatus;
-          },
+    subtrees: {
+        triangles: SubtreeStatus.Unavailable,
+        lines: SubtreeStatus.Unavailable,
+        terrain: SubtreeStatus.Unavailable,
+        points: SubtreeStatus.Unavailable,
+        documents: SubtreeStatus.Unavailable,
+    },
     selectionBasketMode: SelectionBasketMode.Loose,
     selectionBasketColor: {
         color: [0, 0, 1, 1] as VecRGB | VecRGBA,
@@ -616,7 +619,10 @@ export const renderSlice = createSlice({
     },
     extraReducers: (builder) => {
         builder.addCase(initScene, (state, action) => {
-            const { customProperties, settings } = action.payload;
+            const {
+                sceneData: { customProperties, settings, environment },
+                octreeSceneConfig,
+            } = action.payload;
 
             const _props = getCustomProperties(customProperties);
 
@@ -629,7 +635,7 @@ export const renderSlice = createSlice({
             // background
             state.background.color = settings.background.color ?? state.background.color;
             state.background.blur = settings.background.skyBoxBlur ?? state.background.blur;
-            state.background.url = action.payload.environment ?? state.background.url;
+            state.background.url = environment ?? state.background.url;
 
             // points
             state.points.size.pixel = settings.points.size.pixel ?? state.points.size.pixel;
@@ -648,6 +654,12 @@ export const renderSlice = createSlice({
                     position: deviation.deviation,
                 })),
             };
+
+            // subtrees
+            state.subtrees = getSubtrees(
+                settings.advanced,
+                octreeSceneConfig.subtrees ?? ["triangles", "points", "terrain"]
+            ); // TODO ["triangles"]
         });
     },
 });

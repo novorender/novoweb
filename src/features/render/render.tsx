@@ -17,6 +17,7 @@ import { Images } from "./images";
 import { useHandleBackground } from "./hooks/useHandleBackground";
 import { useHandleHighlights } from "./hooks/useHandleHighlights";
 import { useHandleInit } from "./hooks/useHandleInit";
+import { useHandleSubtrees } from "./hooks/useHandleSubtrees";
 
 glMatrix.setMatrixArrayType(Array);
 
@@ -68,6 +69,7 @@ export function Render3D() {
     useHandleInit();
     useHandleBackground();
     useHandleHighlights();
+    useHandleSubtrees();
 
     window.view = view;
 

@@ -328,33 +328,33 @@ export function getEnvironmentDescription(
     return environments.find((env) => env.name === name) ?? environments[0];
 }
 
-export async function getSubtrees(view: View, scene: Scene): Promise<NonNullable<RenderState["subtrees"]>> {
-    const subtrees = scene.subtrees ?? ["triangles"];
-    const advancedSettings = (view.settings as Internal.RenderSettingsExt).advanced;
-
+export function getSubtrees(
+    settings: Internal.RenderSettingsExt["advanced"],
+    subtrees: string[]
+): NonNullable<RenderState["subtrees"]> {
     return {
         terrain: subtrees.includes("terrain")
-            ? advancedSettings.hideTerrain
+            ? settings.hideTerrain
                 ? SubtreeStatus.Hidden
                 : SubtreeStatus.Shown
             : SubtreeStatus.Unavailable,
         lines: subtrees.includes("lines")
-            ? advancedSettings.hideLines
+            ? settings.hideLines
                 ? SubtreeStatus.Hidden
                 : SubtreeStatus.Shown
             : SubtreeStatus.Unavailable,
         points: subtrees.includes("points")
-            ? advancedSettings.hidePoints
+            ? settings.hidePoints
                 ? SubtreeStatus.Hidden
                 : SubtreeStatus.Shown
             : SubtreeStatus.Unavailable,
         triangles: subtrees.includes("triangles")
-            ? advancedSettings.hideTriangles
+            ? settings.hideTriangles
                 ? SubtreeStatus.Hidden
                 : SubtreeStatus.Shown
             : SubtreeStatus.Unavailable,
         documents: subtrees.includes("documents")
-            ? advancedSettings.hideDocuments
+            ? settings.hideDocuments
                 ? SubtreeStatus.Hidden
                 : SubtreeStatus.Shown
             : SubtreeStatus.Unavailable,

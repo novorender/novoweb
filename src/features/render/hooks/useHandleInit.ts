@@ -1,5 +1,6 @@
 import { useEffect, useRef } from "react";
 import { SceneData, SceneLoadFail } from "@novorender/data-js-api";
+import { Internal } from "@novorender/webgl-api";
 import { quat, vec3, vec4 } from "gl-matrix";
 import { computeRotation, createView, rotationFromDirection } from "@novorender/web_app";
 
@@ -52,7 +53,7 @@ export function useHandleInit() {
             try {
                 const { url, db: _db, ...sceneData } = await loadScene(sceneId);
 
-                const _scene = await _view.loadScene(url, undefined, undefined);
+                const octreeSceneConfig = await _view.loadScene(url, undefined, undefined);
 
                 // TODO(?): Set in initScene() and handle effect?
                 if (sceneData.camera) {
@@ -62,7 +63,7 @@ export function useHandleInit() {
                     });
                 }
 
-                dispatch(renderActions.initScene(sceneData));
+                dispatch(renderActions.initScene({ sceneData, octreeSceneConfig }));
                 dispatchObjectGroups(
                     objectGroupsActions.set(
                         sceneData.objectGroups
@@ -80,7 +81,7 @@ export function useHandleInit() {
                                     : group.hidden
                                     ? GroupStatus.Hidden
                                     : GroupStatus.Default,
-                                ids: group.ids ? new Set(group.ids) : (undefined as any), // TODO?
+                                ids: group.ids ? new Set(group.ids) : (undefined as any), // TODO any?
                             }))
                     )
                 );
@@ -98,12 +99,11 @@ export function useHandleInit() {
                 });
 
                 resizeObserver.observe(canvas);
-                // onInit({ customProperties: sceneData.customProperties });
                 dispatch(renderActions.setEnvironments(environments));
                 dispatchGlobals(
                     explorerGlobalsActions.update({
                         view: _view,
-                        scene: _scene,
+                        scene: octreeSceneConfig,
                     })
                 );
                 dispatch(renderActions.setSceneStatus({ status: AsyncStatus.Success, data: undefined }));
@@ -156,7 +156,8 @@ export function useHandleInit() {
     ]);
 }
 
-export type SceneConfig = Omit<DeepMutable<SceneData>, "camera" | "environment"> & {
+export type SceneConfig = Omit<DeepMutable<SceneData>, "camera" | "environment" | "settings"> & {
+    settings: Internal.RenderSettingsExt;
     camera?: { kind: string; position: vec3; rotation: quat; fov: number };
     environment: string;
     version?: string;

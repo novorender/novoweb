@@ -13,6 +13,7 @@ import {
 import { useAppDispatch, useAppSelector } from "app/store";
 import { useToggle } from "hooks/useToggle";
 import { renderActions, selectMainObject } from "features/render";
+import { ToggleSubtrees } from "features/toggleSubtrees";
 
 import ArrowUpwardIcon from "@mui/icons-material/ArrowUpward";
 import ArrowDownwardIcon from "@mui/icons-material/ArrowDownward";
@@ -66,6 +67,7 @@ export function SelectionModifierMenu() {
                 <SelectionColor />
                 <MultipleSelection />
                 <ToggleSubtrees /> */}
+                <ToggleSubtrees />
             </SpeedDial>
         </Box>
     );

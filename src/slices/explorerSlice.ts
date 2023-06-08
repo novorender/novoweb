@@ -199,7 +199,7 @@ export const explorerSlice = createSlice({
     },
     extraReducers(builder) {
         builder.addCase(initScene, (state, action) => {
-            const { customProperties } = action.payload;
+            const { customProperties } = action.payload.sceneData;
 
             state.sceneType = getSceneType(customProperties);
             state.userRole = state.sceneType === SceneType.Admin ? UserRole.Admin : getUserRole(customProperties);
