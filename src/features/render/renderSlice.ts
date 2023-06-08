@@ -618,7 +618,7 @@ export const renderSlice = createSlice({
         builder.addCase(initScene, (state, action) => {
             const { customProperties, settings } = action.payload;
 
-            const props = getCustomProperties(customProperties);
+            const _props = getCustomProperties(customProperties);
 
             // init props
 

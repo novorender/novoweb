@@ -8,11 +8,14 @@ import {
     defaultEnabledWidgets,
     defaultLockedWidgets,
     ButtonKey,
+    allWidgets,
+    defaultEnabledAdminWidgets,
 } from "config/features";
 import type { RootState } from "app/store";
 import { uniqueArray } from "utils/misc";
 
-import { CanvasContextMenuFeatureKey, DeepMutable, defaultCanvasContextMenuFeatures } from "features/render";
+import { CanvasContextMenuFeatureKey, DeepMutable, initScene } from "features/render";
+import { api } from "app";
 
 export enum SceneType {
     Viewer,
@@ -194,6 +197,33 @@ export const explorerSlice = createSlice({
             state.contextMenu.canvas = { ...state.contextMenu.canvas, ...action.payload };
         },
     },
+    extraReducers(builder) {
+        builder.addCase(initScene, (state, action) => {
+            const { customProperties } = action.payload;
+
+            state.sceneType = getSceneType(customProperties);
+            state.userRole = state.sceneType === SceneType.Admin ? UserRole.Admin : getUserRole(customProperties);
+            state.requireConsent = getRequireConsent(customProperties);
+            state.lockedWidgets = state.lockedWidgets.filter((widget) => !customProperties?.features[widget]);
+            state.primaryMenu = getPrimaryMenu(customProperties) ?? state.primaryMenu;
+            state.contextMenu.canvas.features =
+                getCanvasContextMenuFeatures(customProperties) ?? state.contextMenu.canvas.features;
+
+            if (api.deviceProfile.name.includes("Mobile") && !state.lockedWidgets.includes(featuresConfig.images.key)) {
+                state.lockedWidgets.push(featuresConfig.images.key);
+            }
+
+            if (state.sceneType === SceneType.Admin) {
+                state.enabledWidgets = allWidgets;
+            } else if (state.userRole !== UserRole.Viewer) {
+                state.enabledWidgets = uniqueArray(
+                    getEnabledFeatures(customProperties).concat(defaultEnabledAdminWidgets)
+                );
+            } else {
+                state.enabledWidgets = uniqueArray(getEnabledFeatures(customProperties));
+            }
+        });
+    },
 });
 
 export const selectWidgets = (state: RootState) => state.explorer.widgets;
@@ -219,3 +249,80 @@ export const selectEnabledWidgets = createSelector(
 
 const { actions, reducer } = explorerSlice;
 export { actions as explorerActions, reducer as explorerReducer };
+
+function enabledFeaturesToFeatureKeys(enabledFeatures: Record<string, boolean>): WidgetKey[] {
+    const dictionary: Record<string, string | string[] | undefined> = {
+        measurement: [featuresConfig.measure.key, featuresConfig.orthoCam.key],
+        clipping: [featuresConfig.clippingBox.key, featuresConfig.clippingPlanes.key],
+        tree: featuresConfig.modelTree.key,
+        layers: [featuresConfig.selectionBasket.key],
+    };
+
+    if (enabledFeatures.disableLink === false && enabledFeatures.shareLink !== false) {
+        enabledFeatures.shareLink = true;
+    }
+
+    return uniqueArray(
+        Object.keys(enabledFeatures)
+            .map((key) => ({ key, enabled: enabledFeatures[key] }))
+            .filter((feature) => feature.enabled)
+            .map((feature) => (dictionary[feature.key] ? dictionary[feature.key]! : feature.key))
+            .concat(defaultEnabledWidgets)
+            .flat() as WidgetKey[]
+    );
+}
+
+function getEnabledFeatures(customProperties: unknown): WidgetKey[] {
+    const features =
+        customProperties && typeof customProperties === "object" && "enabledFeatures" in customProperties
+            ? (customProperties as { enabledFeatures?: Record<string, boolean> }).enabledFeatures
+            : undefined;
+
+    return features ? enabledFeaturesToFeatureKeys(features) : [];
+}
+
+function getSceneType(customProperties: unknown): SceneType {
+    return customProperties && typeof customProperties === "object" && "isViewer" in customProperties
+        ? (customProperties as { isViewer: boolean }).isViewer
+            ? SceneType.Viewer
+            : SceneType.Admin
+        : SceneType.Admin;
+}
+
+function getRequireConsent(customProperties: unknown): boolean {
+    if (!customProperties || typeof customProperties !== "object") {
+        return false;
+    }
+
+    if ("requireConsent" in customProperties) {
+        return (customProperties as { requireConsent: boolean }).requireConsent;
+    } else if ("enabledFeatures" in customProperties) {
+        return Boolean(
+            (customProperties as { enabledFeatures?: { requireConsent?: boolean } })?.enabledFeatures?.requireConsent
+        );
+    }
+
+    return false;
+}
+
+function getUserRole(customProperties: unknown): UserRole {
+    const role =
+        customProperties && typeof customProperties === "object" && "role" in customProperties
+            ? (customProperties as { role: string }).role
+            : UserRole.Viewer;
+
+    return role === "owner" ? UserRole.Owner : role === "administrator" ? UserRole.Admin : UserRole.Viewer;
+}
+
+function getPrimaryMenu(customProperties: unknown): PrimaryMenuConfigType | undefined {
+    return customProperties && typeof customProperties === "object" && "primaryMenu" in customProperties
+        ? (customProperties as { primaryMenu: PrimaryMenuConfigType }).primaryMenu
+        : undefined;
+}
+
+function getCanvasContextMenuFeatures(customProperties: unknown): CanvasContextMenuFeatureKey[] | undefined {
+    return customProperties && typeof customProperties === "object" && "canvasContextMenu" in customProperties
+        ? (customProperties as { canvasContextMenu: { features: CanvasContextMenuFeatureKey[] } }).canvasContextMenu
+              .features
+        : undefined;
+}

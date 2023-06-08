@@ -1,31 +1,17 @@
 import { ReactNode, useEffect } from "react";
 import { SearchPattern } from "@novorender/webgl-api";
 
-import { uniqueArray } from "utils/misc";
 import { getOAuthState } from "utils/auth";
-import { useSceneId } from "hooks/useSceneId";
-
-import {
-    featuresConfig,
-    defaultEnabledWidgets,
-    defaultEnabledAdminWidgets,
-    WidgetKey,
-    defaultLockedWidgets,
-    allWidgets,
-} from "config/features";
 import { Hud } from "features/hud";
-import { CanvasContextMenuFeatureKey, Render3D } from "features/render";
+import { Render3D } from "features/render";
 import { Consent } from "features/consent";
-
-import { api } from "app";
-import { useAppSelector, useAppDispatch } from "app/store";
-import { explorerActions, PrimaryMenuConfigType, SceneType, UserRole } from "slices/explorerSlice";
-import { selectUser } from "slices/authSlice";
+import { useAppDispatch } from "app/store";
+import { explorerActions } from "slices/explorerSlice";
 import { HiddenProvider } from "contexts/hidden";
 import { ObjectGroupsProvider } from "contexts/objectGroups";
 import { HighlightedProvider } from "contexts/highlighted";
 import { SelectionBasketProvider } from "contexts/selectionBasket";
-import { explorerGlobalsActions, ExplorerGlobalsProvider, useExplorerGlobals } from "contexts/explorerGlobals";
+import { ExplorerGlobalsProvider, useExplorerGlobals } from "contexts/explorerGlobals";
 import { HighlightCollectionsProvider } from "contexts/highlightCollections";
 import { MsalInteraction } from "features/msalInteraction";
 import { VersionAlert } from "features/versionAlert";
@@ -41,54 +27,12 @@ export function Explorer() {
 const disableHud = new URLSearchParams(window.location.search).get("disableHud") === "true";
 
 function ExplorerBase() {
-    const user = useAppSelector(selectUser);
     const dispatch = useAppDispatch();
     const {
         state: { view, scene },
     } = useExplorerGlobals();
 
-    const handleInit = ({ customProperties }: { customProperties: unknown }) => {
-        const isAdminScene = !getIsViewerScene(customProperties);
-        const userRole = isAdminScene ? UserRole.Admin : getUserRole(customProperties);
-        dispatch(explorerActions.setSceneType(isAdminScene ? SceneType.Admin : SceneType.Viewer));
-        dispatch(explorerActions.setUserRole(userRole));
-
-        const requireConsent = getRequireConsent(customProperties);
-        if (requireConsent) {
-            dispatch(explorerActions.setRequireConsent(requireConsent));
-        }
-
-        if (user && user.features) {
-            dispatch(explorerActions.unlockWidgets(defaultLockedWidgets.filter((widget) => user.features[widget])));
-        }
-
-        if (api.deviceProfile.name.includes("Mobile")) {
-            dispatch(explorerActions.lockWidgets([featuresConfig.images.key]));
-        }
-
-        const enabledFeatures = getEnabledFeatures(customProperties) ?? {};
-        if (userRole !== UserRole.Viewer) {
-            dispatch(
-                explorerActions.setEnabledWidgets(
-                    enabledFeaturesToFeatureKeys(enabledFeatures).concat(
-                        isAdminScene ? allWidgets : defaultEnabledAdminWidgets
-                    )
-                )
-            );
-        } else if (enabledFeatures) {
-            dispatch(explorerActions.setEnabledWidgets(enabledFeaturesToFeatureKeys(enabledFeatures)));
-        }
-
-        const primaryMenu = getPrimaryMenu(customProperties);
-        if (primaryMenu) {
-            dispatch(explorerActions.setPrimaryMenu(primaryMenu));
-        }
-
-        const canvasContextMenuFeatures = getCanvasContextMenuFeatures(customProperties);
-        if (canvasContextMenuFeatures) {
-            dispatch(explorerActions.setCanvasContextMenu({ features: canvasContextMenuFeatures }));
-        }
-
+    useEffect(() => {
         const oAuthState = getOAuthState();
 
         if (oAuthState) {
@@ -111,89 +55,17 @@ function ExplorerBase() {
             const selectionOnly = searchParams.get("selectionOnly") ?? "";
             dispatch(explorerActions.setUrlSearchQuery({ query: getUrlSearchQuery(), selectionOnly }));
         }
-    };
+    }, [dispatch]);
 
     return (
         <>
-            <Render3D onInit={handleInit} />
+            <Render3D />
             {view && scene && !disableHud ? <Hud /> : null}
             <Consent />
             <VersionAlert />
             <MsalInteraction />
         </>
     );
-}
-
-function enabledFeaturesToFeatureKeys(enabledFeatures: Record<string, boolean>): WidgetKey[] {
-    const dictionary: Record<string, string | string[] | undefined> = {
-        measurement: [featuresConfig.measure.key, featuresConfig.orthoCam.key],
-        clipping: [featuresConfig.clippingBox.key, featuresConfig.clippingPlanes.key],
-        tree: featuresConfig.modelTree.key,
-        layers: [featuresConfig.selectionBasket.key],
-    };
-
-    if (enabledFeatures.disableLink === false && enabledFeatures.shareLink !== false) {
-        enabledFeatures.shareLink = true;
-    }
-
-    return uniqueArray(
-        Object.keys(enabledFeatures)
-            .map((key) => ({ key, enabled: enabledFeatures[key] }))
-            .filter((feature) => feature.enabled)
-            .map((feature) => (dictionary[feature.key] ? dictionary[feature.key]! : feature.key))
-            .concat(defaultEnabledWidgets)
-            .flat() as WidgetKey[]
-    );
-}
-
-function getEnabledFeatures(customProperties: unknown): Record<string, boolean> | undefined {
-    return customProperties && typeof customProperties === "object" && "enabledFeatures" in customProperties
-        ? (customProperties as { enabledFeatures?: Record<string, boolean> }).enabledFeatures
-        : undefined;
-}
-
-function getIsViewerScene(customProperties: unknown): boolean {
-    return customProperties && typeof customProperties === "object" && "isViewer" in customProperties
-        ? (customProperties as { isViewer: boolean }).isViewer
-        : false;
-}
-
-function getRequireConsent(customProperties: unknown): boolean {
-    if (!customProperties || typeof customProperties !== "object") {
-        return false;
-    }
-
-    if ("requireConsent" in customProperties) {
-        return (customProperties as { requireConsent: boolean }).requireConsent;
-    } else if ("enabledFeatures" in customProperties) {
-        return Boolean(
-            (customProperties as { enabledFeatures?: { requireConsent?: boolean } })?.enabledFeatures?.requireConsent
-        );
-    }
-
-    return false;
-}
-
-function getUserRole(customProperties: unknown): UserRole {
-    const role =
-        customProperties && typeof customProperties === "object" && "role" in customProperties
-            ? (customProperties as { role: string }).role
-            : UserRole.Viewer;
-
-    return role === "owner" ? UserRole.Owner : role === "administrator" ? UserRole.Admin : UserRole.Viewer;
-}
-
-function getPrimaryMenu(customProperties: unknown): PrimaryMenuConfigType | undefined {
-    return customProperties && typeof customProperties === "object" && "primaryMenu" in customProperties
-        ? (customProperties as { primaryMenu: PrimaryMenuConfigType }).primaryMenu
-        : undefined;
-}
-
-function getCanvasContextMenuFeatures(customProperties: unknown): CanvasContextMenuFeatureKey[] | undefined {
-    return customProperties && typeof customProperties === "object" && "canvasContextMenu" in customProperties
-        ? (customProperties as { canvasContextMenu: { features: CanvasContextMenuFeatureKey[] } }).canvasContextMenu
-              .features
-        : undefined;
 }
 
 function ContextProviders({ children }: { children: ReactNode }) {

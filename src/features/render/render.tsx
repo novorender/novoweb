@@ -56,7 +56,7 @@ export function Render3D() {
 
     const pointerPos = useRef([0, 0] as [x: number, y: number]);
 
-    const [svg, setSvg] = useState<null | SVGSVGElement>(null);
+    const [_svg, setSvg] = useState<null | SVGSVGElement>(null);
 
     const canvasRef: RefCallback<HTMLCanvasElement> = useCallback(
         (el) => {
