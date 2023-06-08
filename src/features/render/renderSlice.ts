@@ -18,7 +18,8 @@ import { defaultFlightControls } from "config/camera";
 import { AsyncState, AsyncStatus, ViewMode } from "types/misc";
 import { LogPoint, MachineLocation } from "features/xsiteManage";
 
-import { SceneConfig, getCustomProperties } from "./render";
+import { getCustomProperties } from "./render";
+import { SceneConfig } from "./hooks/useHandleInit";
 
 export const initScene = createAction<Omit<SceneConfig, "db" | "url">>("initScene");
 
@@ -187,6 +188,7 @@ type Stamp = { mouseX: number; mouseY: number; pinned: boolean } & (
 );
 
 const initialState = {
+    sceneStatus: { status: AsyncStatus.Initial } as AsyncState<void>,
     environments: [] as EnvironmentDescription[],
     currentEnvironment: undefined as EnvironmentDescription | undefined,
     mainObject: undefined as ObjectId | undefined,
@@ -608,6 +610,9 @@ export const renderSlice = createSlice({
         setBackground: (state, action: PayloadAction<Partial<State["background"]>>) => {
             state.background = { ...state.background, ...action.payload };
         },
+        setSceneStatus: (state, action: PayloadAction<State["sceneStatus"]>) => {
+            state.sceneStatus = action.payload;
+        },
     },
     extraReducers: (builder) => {
         builder.addCase(initScene, (state, action) => {
@@ -680,6 +685,7 @@ export const selectPointerLock = (state: RootState) => state.render.pointerLock;
 export const selectProportionalCameraSpeed = (state: RootState) => state.render.proportionalCameraSpeed;
 export const selectPointerDownState = (state: RootState) => state.render.pointerDownState;
 export const selectBackground = (state: RootState) => state.render.background;
+export const selectSceneStatus = (state: RootState) => state.render.sceneStatus;
 
 const { reducer } = renderSlice;
 const actions = { ...renderSlice.actions, initScene };

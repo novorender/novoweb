@@ -8,7 +8,7 @@ export enum AsyncStatus {
 }
 
 export type AsyncEmpty = { status: Exclude<AsyncStatus, AsyncStatus.Success | AsyncStatus.Error> };
-export type AsyncError = { status: AsyncStatus.Error; msg: string };
+export type AsyncError = { status: AsyncStatus.Error; msg: string; stack?: string };
 export type AsyncSuccess<T> = { status: AsyncStatus.Success; data: T };
 export type AsyncState<T> = AsyncEmpty | AsyncError | AsyncSuccess<T>;
 

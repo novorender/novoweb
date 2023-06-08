@@ -1,39 +1,22 @@
-import { SceneData, SceneLoadFail } from "@novorender/data-js-api";
-import { computeRotation, rotationFromDirection, createView } from "@novorender/web_app";
-import { glMatrix, quat, vec3, vec4 } from "gl-matrix";
-import { useEffect, useState, useRef, useCallback, RefCallback } from "react";
+import { glMatrix, vec4 } from "gl-matrix";
+import { useState, useRef, useCallback, RefCallback } from "react";
 import { Box, styled, css } from "@mui/material";
 
 import { PerformanceStats } from "features/performanceStats";
 import { LinearProgress, Loading } from "components";
-import { dataApi } from "app";
-import { useSceneId } from "hooks/useSceneId";
-import {
-    renderActions,
-    selectEnvironments,
-    selectAdvancedSettings,
-    selectLoadingHandles,
-    DeepMutable,
-} from "features/render/renderSlice";
-import { selectLocalBookmarkId, selectUrlBookmarkId } from "slices/explorerSlice";
-import { useSelectBookmark } from "features/bookmarks/useSelectBookmark";
-import { useAppDispatch, useAppSelector } from "app/store";
+import { selectLoadingHandles, selectSceneStatus } from "features/render/renderSlice";
+import { useAppSelector } from "app/store";
 import { Engine2D } from "features/engine2D";
-import { useDispatchHighlighted } from "contexts/highlighted";
-import { useDispatchHidden } from "contexts/hidden";
-import { GroupStatus, objectGroupsActions, useDispatchObjectGroups } from "contexts/objectGroups";
-import { useDispatchSelectionBasket } from "contexts/selectionBasket";
 import { explorerGlobalsActions, useExplorerGlobals } from "contexts/explorerGlobals";
-import { useDispatchHighlightCollections } from "contexts/highlightCollections";
-import { VecRGBA } from "utils/color";
+import { AsyncStatus } from "types/misc";
 
-import { isSceneError, SceneError } from "./sceneError";
-import { createRendering } from "./utils";
+import { SceneError } from "./sceneError";
 import { Stamp } from "./stamp";
 import { Markers } from "./markers";
 import { Images } from "./images";
 import { useHandleBackground } from "./hooks/useHandleBackground";
 import { useHandleHighlights } from "./hooks/useHandleHighlights";
+import { useHandleInit } from "./hooks/useHandleInit";
 
 glMatrix.setMatrixArrayType(Array);
 
@@ -62,45 +45,18 @@ const Svg = styled("svg")(
     `
 );
 
-export enum Status {
-    Initial,
-    NoSceneError,
-    AuthError,
-    ServerError,
-}
-
-export function Render3D({ onInit }: { onInit: (params: { customProperties: unknown }) => void }) {
-    const sceneId = useSceneId();
-    const dispatchHighlighted = useDispatchHighlighted();
-    const dispatchHighlightCollections = useDispatchHighlightCollections();
-    const dispatchHidden = useDispatchHidden();
-    const dispatchSelectionBasket = useDispatchSelectionBasket();
-    const dispatchObjectGroups = useDispatchObjectGroups();
+export function Render3D() {
     const {
         state: { view, canvas },
         dispatch: dispatchGlobals,
     } = useExplorerGlobals();
-    const selectBookmark = useSelectBookmark();
 
-    const environments = useAppSelector(selectEnvironments);
-    const advancedSettings = useAppSelector(selectAdvancedSettings);
-    const urlBookmarkId = useAppSelector(selectUrlBookmarkId);
-    const localBookmarkId = useAppSelector(selectLocalBookmarkId);
     const loadingHandles = useAppSelector(selectLoadingHandles);
+    const sceneStatus = useAppSelector(selectSceneStatus);
 
-    const dispatch = useAppDispatch();
-
-    const rendering = useRef({
-        start: () => Promise.resolve(),
-        stop: () => {},
-        update: () => {},
-    } as ReturnType<typeof createRendering>);
-    const cameraGeneration = useRef<number>();
-    const previousSceneId = useRef("");
     const pointerPos = useRef([0, 0] as [x: number, y: number]);
 
     const [svg, setSvg] = useState<null | SVGSVGElement>(null);
-    const [status, setStatus] = useState<{ status: Status; msg?: string }>({ status: Status.Initial });
 
     const canvasRef: RefCallback<HTMLCanvasElement> = useCallback(
         (el) => {
@@ -109,111 +65,7 @@ export function Render3D({ onInit }: { onInit: (params: { customProperties: unkn
         [dispatchGlobals]
     );
 
-    useEffect(() => {
-        initView();
-
-        async function initView() {
-            if (previousSceneId.current === sceneId || !canvas || view) {
-                return;
-            }
-
-            previousSceneId.current = sceneId;
-
-            const _view = createView(canvas);
-
-            try {
-                const { url, db: _db, ...sceneData } = await loadScene(sceneId);
-
-                const _scene = await _view.loadScene(url, undefined, undefined);
-
-                // TODO(?): Set in initScene() and handle effect?
-                if (sceneData.camera) {
-                    await _view.switchCameraController(sceneData.camera.kind, {
-                        position: sceneData.camera.position,
-                        rotation: sceneData.camera.rotation,
-                    });
-                }
-
-                dispatch(renderActions.initScene(sceneData));
-                dispatchObjectGroups(
-                    objectGroupsActions.set(
-                        sceneData.objectGroups
-                            .filter((group) => group.id && group.search)
-                            .map((group) => ({
-                                name: group.name,
-                                id: group.id,
-                                grouping: group.grouping ?? "",
-                                color: group.color ?? ([1, 0, 0, 1] as VecRGBA),
-                                opacity: group.opacity ?? 0,
-                                search: group.search ?? [],
-                                includeDescendants: group.includeDescendants ?? true,
-                                status: group.selected
-                                    ? GroupStatus.Selected
-                                    : group.hidden
-                                    ? GroupStatus.Hidden
-                                    : GroupStatus.Default,
-                                ids: group.ids ? new Set(group.ids) : (undefined as any), // TODO?
-                            }))
-                    )
-                );
-
-                _view.run();
-                window.document.title = `${sceneData.title} - Novorender`;
-                const resizeObserver = new ResizeObserver((entries) => {
-                    for (const entry of entries) {
-                        canvas.width = entry.contentRect.width;
-                        canvas.height = entry.contentRect.height;
-                        dispatchGlobals(
-                            explorerGlobalsActions.update({ size: { width: canvas.width, height: canvas.height } })
-                        );
-                    }
-                });
-
-                resizeObserver.observe(canvas);
-                onInit({ customProperties: sceneData.customProperties });
-                dispatch(renderActions.setEnvironments(environments));
-                dispatchGlobals(
-                    explorerGlobalsActions.update({
-                        view: _view,
-                        scene: _scene,
-                    })
-                );
-            } catch (e) {
-                console.warn(e);
-                if (e && typeof e === "object" && "error" in e) {
-                    const error = (e as { error: string }).error;
-
-                    if (error === "Not authorized") {
-                        setStatus({ status: Status.AuthError });
-                    } else if (error === "Scene not found") {
-                        setStatus({ status: Status.NoSceneError });
-                    } else {
-                        setStatus({ status: Status.ServerError, msg: error });
-                    }
-                } else if (e instanceof Error) {
-                    setStatus({
-                        status: Status.ServerError,
-                        msg: e.stack ? e.stack : typeof e.cause === "string" ? e.cause : `${e.name}: ${e.message}`,
-                    });
-                }
-            }
-        }
-    }, [
-        canvas,
-        view,
-        dispatch,
-        onInit,
-        environments,
-        sceneId,
-        dispatchGlobals,
-        setStatus,
-        dispatchObjectGroups,
-        dispatchHidden,
-        dispatchHighlighted,
-        dispatchSelectionBasket,
-        dispatchHighlightCollections,
-    ]);
-
+    useHandleInit();
     useHandleBackground();
     useHandleHighlights();
 
@@ -226,105 +78,23 @@ export function Render3D({ onInit }: { onInit: (params: { customProperties: unkn
                     <LinearProgress />
                 </Box>
             )}
-            {isSceneError(status.status) ? (
-                <SceneError error={status.status} msg={status.msg} id={sceneId} />
-            ) : (
+            {sceneStatus.status === AsyncStatus.Error && <SceneError />}
+            <Canvas id="main-canvas" tabIndex={1} ref={canvasRef} />
+            {[AsyncStatus.Initial, AsyncStatus.Loading].includes(sceneStatus.status) && <Loading />}
+            {sceneStatus.status === AsyncStatus.Success && view && canvas && (
                 <>
-                    {view && <PerformanceStats />}
-                    <Canvas id="main-canvas" tabIndex={1} ref={canvasRef} />
+                    <PerformanceStats />
                     <Engine2D pointerPos={pointerPos} />
-                    {view && <Stamp />}
-                    {canvas && (
-                        <Svg width={canvas.width} height={canvas.height} ref={setSvg}>
-                            <Markers />
-                            <g id="cursor" />
-                        </Svg>
-                    )}
+                    <Stamp />
+                    <Svg width={canvas.width} height={canvas.height} ref={setSvg}>
+                        <Markers />
+                        <g id="cursor" />
+                    </Svg>
                     <Images />
-                    {!view && <Loading />}
                 </>
             )}
         </Box>
     );
-}
-
-export type SceneConfig = Omit<DeepMutable<SceneData>, "camera" | "environment"> & {
-    camera?: { kind: string; position: vec3; rotation: quat; fov: number };
-    environment: string;
-    version?: string;
-};
-async function loadScene(id: string): Promise<SceneConfig> {
-    const res: (SceneData & { version?: string }) | SceneLoadFail = await dataApi.loadScene(id);
-
-    if ("error" in res) {
-        throw res;
-    }
-
-    let { camera, ..._cfg } = res;
-    const cfg = _cfg as SceneConfig;
-
-    // Legacy scene config format
-    // needs to be flipped.
-    if (!cfg.version) {
-        if (!camera || !(camera.kind === "ortho" || camera.kind === "flight")) {
-            return cfg;
-        }
-
-        cfg.camera =
-            camera.kind === "ortho"
-                ? {
-                      kind: "ortho",
-                      position: flip([
-                          camera.referenceCoordSys[12],
-                          camera.referenceCoordSys[13],
-                          camera.referenceCoordSys[14],
-                      ]),
-                      rotation: rotationFromDirection(
-                          flip([camera.referenceCoordSys[8], camera.referenceCoordSys[9], camera.referenceCoordSys[10]])
-                      ),
-                      fov: camera.fieldOfView,
-                  }
-                : {
-                      kind: "flight",
-                      position: flip(camera.position),
-                      rotation: computeRotation(0, camera.pitch, camera.yaw),
-                      fov: camera.fieldOfView,
-                  };
-
-        cfg.environment = cfg.settings?.environment
-            ? "https://api.novorender.com/assets/env/" + (cfg.settings.environment as any as string) + "/"
-            : "";
-    }
-
-    if (cfg.settings && cfg.settings.background) {
-        cfg.settings.background.color = getBackgroundColor(cfg.settings.background.color);
-    }
-
-    return cfg;
-}
-
-function flip<T extends number[]>(v: T): T {
-    const flipped = [...v];
-    flipped[1] = -v[2];
-    flipped[2] = v[1];
-    return flipped as T;
-}
-
-function flipClippingPlane(plane: Vec4): Vec4 {
-    const flipped = flip(plane);
-    flipped[3] *= -1;
-    return flipped;
-}
-
-function getBackgroundColor(color: Vec4 | undefined): Vec4 {
-    const grey: Vec4 = [0.75, 0.75, 0.75, 1];
-    const legacyBlue: Vec4 = [0, 0, 0.25, 1];
-
-    if (!color || vec4.equals(color, legacyBlue)) {
-        return grey;
-    }
-
-    return color;
 }
 
 export type CustomProperties = {

@@ -716,3 +716,10 @@ export async function pickDeviationArea({
             }
         }, 0);
 }
+
+export function flip<T extends number[]>(v: T): T {
+    const flipped = [...v];
+    flipped[1] = -v[2];
+    flipped[2] = v[1];
+    return flipped as T;
+}
