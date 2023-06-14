@@ -26,6 +26,10 @@ import { getSubtrees } from "./utils";
 export const initScene = createAction<{
     sceneData: Omit<SceneConfig, "db" | "url">;
     octreeSceneConfig: OctreeSceneConfig;
+    initialCamera: {
+        position: vec3;
+        rotation: quat;
+    };
 }>("initScene");
 
 export const fetchEnvironments = createAsyncThunk("novorender/fetchEnvironments", async (api: API) => {
@@ -392,20 +396,28 @@ export const renderSlice = createSlice({
                 .slice(0, state.savedCameraPositions.currentIndex + 1)
                 .concat({
                     position: vec3.clone(action.payload.position),
-                    rotation: vec4.clone(action.payload.rotation),
+                    rotation: quat.clone(action.payload.rotation),
                 });
             state.savedCameraPositions.currentIndex = state.savedCameraPositions.positions.length - 1;
         },
         undoCameraPosition: (state) => {
             state.savedCameraPositions.currentIndex = state.savedCameraPositions.currentIndex - 1;
+            state.camera = {
+                type: CameraType.Flight,
+                goTo: state.savedCameraPositions.positions[state.savedCameraPositions.currentIndex],
+            };
         },
         redoCameraPosition: (state) => {
             state.savedCameraPositions.currentIndex = state.savedCameraPositions.currentIndex + 1;
+            state.camera = {
+                type: CameraType.Flight,
+                goTo: state.savedCameraPositions.positions[state.savedCameraPositions.currentIndex],
+            };
         },
         setHomeCameraPos: (state, action: PayloadAction<CameraPosition>) => {
             state.savedCameraPositions.positions[0] = {
                 position: vec3.clone(action.payload.position),
-                rotation: vec4.clone(action.payload.rotation),
+                rotation: quat.clone(action.payload.rotation),
             };
         },
         setDefaultDeviceProfile: (state, action: PayloadAction<State["defaultDeviceProfile"]>) => {
@@ -622,6 +634,7 @@ export const renderSlice = createSlice({
             const {
                 sceneData: { customProperties, settings, environment },
                 octreeSceneConfig,
+                initialCamera,
             } = action.payload;
 
             const _props = getCustomProperties(customProperties);
@@ -631,6 +644,10 @@ export const renderSlice = createSlice({
             if (!settings) {
                 return;
             }
+
+            // Home position
+            state.savedCameraPositions.positions[0] = initialCamera;
+            state.savedCameraPositions.currentIndex = 0;
 
             // background
             state.background.color = settings.background.color ?? state.background.color;

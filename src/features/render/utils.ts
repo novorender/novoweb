@@ -13,7 +13,7 @@ import {
     Scene,
     View,
 } from "@novorender/webgl-api";
-import { vec3 } from "gl-matrix";
+import { quat, vec3 } from "gl-matrix";
 
 import { api, dataApi, offscreenCanvas } from "app";
 import { featuresConfig, WidgetKey } from "config/features";
@@ -722,4 +722,20 @@ export function flip<T extends number[]>(v: T): T {
     flipped[1] = -v[2];
     flipped[2] = v[1];
     return flipped as T;
+}
+
+export function flipGLtoCadQuat(b: quat) {
+    let ax = 0.7071067811865475,
+        aw = 0.7071067811865475;
+    let bx = b[0],
+        by = b[1],
+        bz = b[2],
+        bw = b[3];
+
+    // prettier-ignore
+    return quat.fromValues(
+        ax * bw + aw * bx,
+        aw * by + - ax * bz,
+        aw * bz + ax * by,
+        aw * bw - ax * bx);
 }

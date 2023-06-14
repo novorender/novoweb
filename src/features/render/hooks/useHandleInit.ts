@@ -63,7 +63,18 @@ export function useHandleInit() {
                     });
                 }
 
-                dispatch(renderActions.initScene({ sceneData, octreeSceneConfig }));
+                _view.run();
+
+                dispatch(
+                    renderActions.initScene({
+                        sceneData,
+                        octreeSceneConfig,
+                        initialCamera: {
+                            position: vec3.clone(sceneData.camera?.position ?? _view.renderState.camera.position),
+                            rotation: quat.clone(sceneData.camera?.rotation ?? _view.renderState.camera.rotation),
+                        },
+                    })
+                );
                 dispatchObjectGroups(
                     objectGroupsActions.set(
                         sceneData.objectGroups
@@ -86,7 +97,6 @@ export function useHandleInit() {
                     )
                 );
 
-                _view.run();
                 window.document.title = `${sceneData.title} - Novorender`;
                 const resizeObserver = new ResizeObserver((entries) => {
                     for (const entry of entries) {

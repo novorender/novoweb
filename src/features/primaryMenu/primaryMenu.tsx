@@ -113,8 +113,9 @@ export function PrimaryMenu() {
                 {/* <FeatureButton featureKey={primaryMenu.button1} position={pos[0]} />
                 <FeatureButton featureKey={primaryMenu.button2} position={pos[1]} />
                 <FeatureButton featureKey={primaryMenu.button3} position={pos[2]} />
+            */}
                 <FeatureButton featureKey={primaryMenu.button4} position={pos[3]} />
-                <FeatureButton featureKey={primaryMenu.button5} position={pos[4]} /> */}
+                <FeatureButton featureKey={primaryMenu.button5} position={pos[4]} />
             </SpeedDial>
         </Box>
     );

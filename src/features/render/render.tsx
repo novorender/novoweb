@@ -19,6 +19,8 @@ import { useHandleHighlights } from "./hooks/useHandleHighlights";
 import { useHandleInit } from "./hooks/useHandleInit";
 import { useHandleSubtrees } from "./hooks/useHandleSubtrees";
 import { useCanvasClickHandler } from "./hooks/useCanvasClickHandler";
+import { useHandleCameraMoved } from "./hooks/useHandleCameraMoved";
+import { useHandleCameraStateChange } from "./hooks/useHandleCameraStateChange";
 
 glMatrix.setMatrixArrayType(Array);
 
@@ -69,6 +71,8 @@ export function Render3D() {
     const canvasClickHandler = useCanvasClickHandler();
 
     useHandleInit();
+    useHandleCameraMoved();
+    useHandleCameraStateChange();
     useHandleBackground();
     useHandleHighlights();
     useHandleSubtrees();

@@ -26,9 +26,6 @@ export function StepForwards({ position, ...speedDialProps }: Props) {
         savedCameraPositions.currentIndex < savedCameraPositions.positions.length - 1 &&
         viewMode !== ViewMode.Panorama &&
         cameraType === CameraType.Flight;
-    const {
-        state: { view_OLD: view },
-    } = useExplorerGlobals(true);
 
     const dispatch = useAppDispatch();
 
@@ -40,7 +37,6 @@ export function StepForwards({ position, ...speedDialProps }: Props) {
         }
 
         dispatch(renderActions.redoCameraPosition());
-        view.camera.controller.moveTo(step.position, step.rotation);
     };
 
     const disabled = !canStepForwards;
