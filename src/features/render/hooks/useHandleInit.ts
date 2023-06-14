@@ -53,7 +53,7 @@ export function useHandleInit() {
             try {
                 const { url, db: _db, ...sceneData } = await loadScene(sceneId);
 
-                const octreeSceneConfig = await _view.loadScene(url, undefined, undefined);
+                const octreeSceneConfig = await _view.loadSceneFromURL(new URL(url));
 
                 // TODO(?): Set in initScene() and handle effect?
                 if (sceneData.camera) {

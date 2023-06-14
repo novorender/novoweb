@@ -18,6 +18,7 @@ import { useHandleBackground } from "./hooks/useHandleBackground";
 import { useHandleHighlights } from "./hooks/useHandleHighlights";
 import { useHandleInit } from "./hooks/useHandleInit";
 import { useHandleSubtrees } from "./hooks/useHandleSubtrees";
+import { useCanvasClickHandler } from "./hooks/useCanvasClickHandler";
 
 glMatrix.setMatrixArrayType(Array);
 
@@ -55,16 +56,17 @@ export function Render3D() {
     const loadingHandles = useAppSelector(selectLoadingHandles);
     const sceneStatus = useAppSelector(selectSceneStatus);
 
-    const pointerPos = useRef([0, 0] as [x: number, y: number]);
-
     const [_svg, setSvg] = useState<null | SVGSVGElement>(null);
 
+    const pointerPos = useRef([0, 0] as [x: number, y: number]);
     const canvasRef: RefCallback<HTMLCanvasElement> = useCallback(
         (el) => {
             dispatchGlobals(explorerGlobalsActions.update({ canvas: el }));
         },
         [dispatchGlobals]
     );
+
+    const canvasClickHandler = useCanvasClickHandler();
 
     useHandleInit();
     useHandleBackground();
@@ -81,7 +83,7 @@ export function Render3D() {
                 </Box>
             )}
             {sceneStatus.status === AsyncStatus.Error && <SceneError />}
-            <Canvas id="main-canvas" tabIndex={1} ref={canvasRef} />
+            <Canvas id="main-canvas" onClick={canvasClickHandler} tabIndex={1} ref={canvasRef} />
             {[AsyncStatus.Initial, AsyncStatus.Loading].includes(sceneStatus.status) && <Loading />}
             {sceneStatus.status === AsyncStatus.Success && view && canvas && (
                 <>

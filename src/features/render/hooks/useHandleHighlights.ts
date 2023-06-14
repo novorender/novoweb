@@ -57,7 +57,7 @@ export function useHandleHighlights() {
                 return;
             }
 
-            const { colored, hidden, semiTransparent } = groups.reduceRight(
+            const { colored, hiddenGroups, semiTransparent } = groups.reduceRight(
                 (prev, group) => {
                     switch (group.status) {
                         case GroupStatus.Selected: {
@@ -66,7 +66,7 @@ export function useHandleHighlights() {
                         }
                         case GroupStatus.Hidden: {
                             if (!group.opacity) {
-                                prev.hidden.push(group);
+                                prev.hiddenGroups.push(group);
                             } else {
                                 prev.semiTransparent.push(group);
                             }
@@ -80,7 +80,7 @@ export function useHandleHighlights() {
                 },
                 {
                     colored: [] as ObjectGroup[],
-                    hidden: [] as ObjectGroup[],
+                    hiddenGroups: [] as ObjectGroup[],
                     semiTransparent: [] as ObjectGroup[],
                 }
             );
@@ -100,7 +100,11 @@ export function useHandleHighlights() {
                             objectIds: new Uint32Array(group.ids).sort(),
                             rgbaTransform: createColorSetHighlight(group.color),
                         })),
-                        ...hidden.map((group) => ({
+                        {
+                            objectIds: new Uint32Array(hidden).sort(),
+                            rgbaTransform: null,
+                        },
+                        ...hiddenGroups.map((group) => ({
                             objectIds: new Uint32Array([...group.ids]).sort(),
                             rgbaTransform: null,
                         })),

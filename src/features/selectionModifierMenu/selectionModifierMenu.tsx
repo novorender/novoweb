@@ -9,14 +9,17 @@ import {
     OpenReason,
     Box,
 } from "@mui/material";
+import { ArrowUpward, ArrowDownward } from "@mui/icons-material";
 
 import { useAppDispatch, useAppSelector } from "app/store";
 import { useToggle } from "hooks/useToggle";
 import { renderActions, selectMainObject } from "features/render";
 import { ToggleSubtrees } from "features/toggleSubtrees";
-
-import ArrowUpwardIcon from "@mui/icons-material/ArrowUpward";
-import ArrowDownwardIcon from "@mui/icons-material/ArrowDownward";
+import { MultipleSelection } from "features/multipleSelection";
+import { SelectionColor } from "features/selectionColor";
+import { ViewOnlySelected } from "features/viewOnlySelected";
+import { HideSelected } from "features/hideSelected";
+import { ClearSelection } from "features/clearSelection";
 
 export function SelectionModifierMenu() {
     const theme = useTheme();
@@ -57,16 +60,15 @@ export function SelectionModifierMenu() {
                         size: isSmall ? "small" : "large",
                     } as Partial<FabProps<"button">>
                 }
-                icon={<SpeedDialIcon icon={<ArrowUpwardIcon />} openIcon={<ArrowDownwardIcon />} />}
+                icon={<SpeedDialIcon icon={<ArrowUpward />} openIcon={<ArrowDownward />} />}
                 onClick={() => dispatch(renderActions.setStamp(null))}
             >
-                {/* <ClearView />
+                {/* <ClearView /> TODO */}
                 <ClearSelection />
                 <HideSelected />
                 <ViewOnlySelected />
                 <SelectionColor />
                 <MultipleSelection />
-                <ToggleSubtrees /> */}
                 <ToggleSubtrees />
             </SpeedDial>
         </Box>

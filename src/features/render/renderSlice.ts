@@ -11,7 +11,7 @@ import type {
 import type { Bookmark, ObjectGroup } from "@novorender/data-js-api";
 import { createSlice, createAsyncThunk, PayloadAction, createAction } from "@reduxjs/toolkit";
 import { mat4, quat, vec3, vec4 } from "gl-matrix";
-import { OctreeSceneConfig } from "@novorender/web_app";
+import { SceneConfig as OctreeSceneConfig } from "@novorender/web_app";
 
 import type { RootState } from "app/store";
 import { VecRGB, VecRGBA } from "utils/color";

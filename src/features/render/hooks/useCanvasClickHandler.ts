@@ -50,7 +50,7 @@ export function useCanvasClickHandler() {
     const dispatchHighlightCollections = useDispatchHighlightCollections();
     const highlightCollections = useHighlightCollections();
     const {
-        state: { view_OLD: view, scene_OLD: scene, canvas, measureScene },
+        state: { view, canvas, measureScene },
     } = useExplorerGlobals();
 
     const mainObject = useAppSelector(selectMainObject);
@@ -78,52 +78,20 @@ export function useCanvasClickHandler() {
             vec2.dist([pointerDownState.x, pointerDownState.y], [evt.nativeEvent.offsetX, evt.nativeEvent.offsetY]) >=
                 5;
 
-        if (!view?.lastRenderOutput || clippingBox.defining || !canvas || !scene || longPress || drag) {
+        if (!view || clippingBox.defining || !canvas || longPress || drag) {
+            console.log({ view, def: clippingBox.defining, canvas, longPress, drag });
             return;
         }
 
         dispatch(renderActions.setPointerDownState(undefined));
 
-        const pickCameraPlane =
-            cameraState.type === CameraType.Orthographic &&
-            (viewMode === ViewMode.CrossSection || viewMode === ViewMode.FollowPath);
+        // TODO spør sigve om tilsvarende
+        // const pickCameraPlane =
+        //     cameraState.type === CameraType.Orthographic &&
+        //     (viewMode === ViewMode.CrossSection || viewMode === ViewMode.FollowPath);
 
-        const result = await view.lastRenderOutput.pick(
-            evt.nativeEvent.offsetX,
-            evt.nativeEvent.offsetY,
-            pickCameraPlane
-        );
-
-        if (picker === Picker.Object && deviation.mode !== "off" && cameraState.type === CameraType.Orthographic) {
-            const isTouch = evt.nativeEvent instanceof PointerEvent && evt.nativeEvent.pointerType === "touch";
-            const pickSize = isTouch ? 16 : 0;
-            const deviation = await pickDeviationArea({
-                view,
-                size: pickSize,
-                clickX: evt.nativeEvent.offsetX,
-                clickY: evt.nativeEvent.offsetY,
-            });
-
-            if (deviation) {
-                dispatch(
-                    renderActions.setStamp({
-                        kind: StampKind.Deviation,
-                        mouseX: evt.nativeEvent.offsetX,
-                        mouseY: evt.nativeEvent.offsetY,
-                        pinned: false,
-                        data: {
-                            deviation: deviation,
-                        },
-                    })
-                );
-
-                return;
-            } else if (stamp?.kind === StampKind.Deviation) {
-                dispatch(renderActions.setStamp(null));
-            }
-        } else if (stamp?.kind === StampKind.Deviation) {
-            dispatch(renderActions.setStamp(null));
-        }
+        const isTouch = evt.nativeEvent instanceof PointerEvent && evt.nativeEvent.pointerType === "touch";
+        const result = await view.pick(evt.nativeEvent.offsetX, evt.nativeEvent.offsetY, isTouch ? 16 : 8);
 
         if (!result) {
             if (picker === Picker.Measurement && measure.hover) {
@@ -135,76 +103,94 @@ export function useCanvasClickHandler() {
             }
             return;
         }
-
         const normal = isRealVec([...result.normal]) ? vec3.clone(result.normal) : undefined;
         const position = vec3.clone(result.position);
 
         switch (picker) {
             case Picker.CrossSection:
-                if (crossSectionPoint) {
-                    dispatch(renderActions.setViewMode(ViewMode.CrossSection));
-                    const mat = mat3.fromQuat(mat3.create(), view.camera.rotation);
-                    let up = vec3.fromValues(0, 1, 0);
-                    const topDown = vec3.equals(vec3.fromValues(mat[6], mat[7], mat[8]), up);
-                    const pos = topDown
-                        ? vec3.fromValues(result.position[0], crossSectionPoint[1], result.position[2])
-                        : vec3.copy(vec3.create(), result.position);
+                // if (crossSectionPoint) {
+                //     dispatch(renderActions.setViewMode(ViewMode.CrossSection));
+                //     const mat = mat3.fromQuat(mat3.create(), view.camera.rotation);
+                //     let up = vec3.fromValues(0, 1, 0);
+                //     const topDown = vec3.equals(vec3.fromValues(mat[6], mat[7], mat[8]), up);
+                //     const pos = topDown
+                //         ? vec3.fromValues(result.position[0], crossSectionPoint[1], result.position[2])
+                //         : vec3.copy(vec3.create(), result.position);
 
-                    const right = vec3.sub(vec3.create(), crossSectionPoint, pos);
-                    const l = vec3.len(right);
-                    vec3.scale(right, right, 1 / l);
-                    const p = vec3.scaleAndAdd(vec3.create(), crossSectionPoint, right, l / -2);
-                    let dir = vec3.cross(vec3.create(), up, right);
+                //     const right = vec3.sub(vec3.create(), crossSectionPoint, pos);
+                //     const l = vec3.len(right);
+                //     vec3.scale(right, right, 1 / l);
+                //     const p = vec3.scaleAndAdd(vec3.create(), crossSectionPoint, right, l / -2);
+                //     let dir = vec3.cross(vec3.create(), up, right);
 
-                    if (topDown) {
-                        const midPt = (measureApi.toMarkerPoints(view, [p]) ?? [])[0];
-                        if (midPt) {
-                            const midPick = await view.lastRenderOutput.pick(midPt[0], midPt[1]);
-                            if (midPick) {
-                                vec3.copy(p, midPick.position);
-                            }
-                        }
-                    } else if (right[1] < 0.01) {
-                        right[1] = 0;
-                        dir = vec3.clone(up);
-                        vec3.cross(up, right, dir);
-                        vec3.normalize(up, up);
-                    } else {
-                        vec3.normalize(dir, dir);
-                    }
-                    vec3.cross(right, up, dir);
-                    vec3.normalize(right, right);
+                //     if (topDown) {
+                //         const midPt = (measureApi.toMarkerPoints(view, [p]) ?? [])[0];
+                //         if (midPt) {
+                //             const midPick = await view.lastRenderOutput.pick(midPt[0], midPt[1]);
+                //             if (midPick) {
+                //                 vec3.copy(p, midPick.position);
+                //             }
+                //         }
+                //     } else if (right[1] < 0.01) {
+                //         right[1] = 0;
+                //         dir = vec3.clone(up);
+                //         vec3.cross(up, right, dir);
+                //         vec3.normalize(up, up);
+                //     } else {
+                //         vec3.normalize(dir, dir);
+                //     }
+                //     vec3.cross(right, up, dir);
+                //     vec3.normalize(right, right);
 
-                    const rotation = quat.fromMat3(
-                        quat.create(),
-                        mat3.fromValues(right[0], right[1], right[2], up[0], up[1], up[2], dir[0], dir[1], dir[2])
-                    );
+                //     const rotation = quat.fromMat3(
+                //         quat.create(),
+                //         mat3.fromValues(right[0], right[1], right[2], up[0], up[1], up[2], dir[0], dir[1], dir[2])
+                //     );
 
-                    const orthoMat = mat4.fromRotationTranslation(mat4.create(), rotation, p);
+                //     const orthoMat = mat4.fromRotationTranslation(mat4.create(), rotation, p);
 
-                    dispatch(
-                        renderActions.setCamera({
-                            type: CameraType.Orthographic,
-                            params: {
-                                kind: "ortho",
-                                referenceCoordSys: orthoMat,
-                                fieldOfView: 45,
-                                near: -0.001,
-                                far: 0.5,
-                                position: [0, 0, 0],
-                            },
-                            gridOrigo: p as vec3,
-                        })
-                    );
-                    dispatch(renderActions.setPicker(Picker.Object));
-                    dispatch(orthoCamActions.setCrossSectionPoint(undefined));
-                    dispatch(orthoCamActions.setCrossSectionHover(undefined));
-                    dispatch(renderActions.setGrid({ enabled: true }));
-                } else {
-                    dispatch(orthoCamActions.setCrossSectionPoint(result.position as vec3));
-                }
+                //     dispatch(
+                //         renderActions.setCamera({
+                //             type: CameraType.Orthographic,
+                //             params: {
+                //                 kind: "ortho",
+                //                 referenceCoordSys: orthoMat,
+                //                 fieldOfView: 45,
+                //                 near: -0.001,
+                //                 far: 0.5,
+                //                 position: [0, 0, 0],
+                //             },
+                //             gridOrigo: p as vec3,
+                //         })
+                //     );
+                //     dispatch(renderActions.setPicker(Picker.Object));
+                //     dispatch(orthoCamActions.setCrossSectionPoint(undefined));
+                //     dispatch(orthoCamActions.setCrossSectionHover(undefined));
+                //     dispatch(renderActions.setGrid({ enabled: true }));
+                // } else {
+                //     dispatch(orthoCamActions.setCrossSectionPoint(result.position as vec3));
+                // }
                 break;
             case Picker.Object:
+                if (
+                    deviation.mode !== "off" &&
+                    cameraState.type === CameraType.Orthographic &&
+                    result.deviation !== undefined
+                ) {
+                    dispatch(
+                        renderActions.setStamp({
+                            kind: StampKind.Deviation,
+                            mouseX: evt.nativeEvent.offsetX,
+                            mouseY: evt.nativeEvent.offsetY,
+                            pinned: false,
+                            data: {
+                                deviation: result.deviation,
+                            },
+                        })
+                    );
+                    return;
+                }
+
                 if (result.objectId === -1) {
                     dispatch(renderActions.setStamp(null));
                     return;
@@ -241,161 +227,162 @@ export function useCanvasClickHandler() {
                         dispatch(renderActions.setMainObject(result.objectId));
                         dispatchHighlighted(highlightActions.setIds([result.objectId]));
 
-                        const metadata = await scene?.getObjectReference(result.objectId).loadMetaData();
+                        // TODO SEARCH
+                        // const metadata = await scene?.getObjectReference(result.objectId).loadMetaData();
 
-                        if (showPropertiesStamp) {
-                            dispatch(
-                                renderActions.setStamp({
-                                    kind: StampKind.Properties,
-                                    properties: [
-                                        ["Name", metadata.name],
-                                        ["Path", metadata.path],
-                                        ...metadata.properties,
-                                    ],
-                                    mouseX: evt.nativeEvent.offsetX,
-                                    mouseY: evt.nativeEvent.offsetY,
-                                    pinned: true,
-                                })
-                            );
-                        }
+                        // if (showPropertiesStamp) {
+                        //     dispatch(
+                        //         renderActions.setStamp({
+                        //             kind: StampKind.Properties,
+                        //             properties: [
+                        //                 ["Name", metadata.name],
+                        //                 ["Path", metadata.path],
+                        //                 ...metadata.properties,
+                        //             ],
+                        //             mouseX: evt.nativeEvent.offsetX,
+                        //             mouseY: evt.nativeEvent.offsetY,
+                        //             pinned: true,
+                        //         })
+                        //     );
+                        // }
 
-                        if (!secondaryHighlightProperty) {
-                            return;
-                        }
+                        // if (!secondaryHighlightProperty) {
+                        //     return;
+                        // }
 
-                        const property = metadata.properties.find((prop) => prop[0] === secondaryHighlightProperty);
-                        const query = property && property[1];
+                        // const property = metadata.properties.find((prop) => prop[0] === secondaryHighlightProperty);
+                        // const query = property && property[1];
 
-                        if (
-                            query &&
-                            query === currentSecondaryHighlightQuery.current &&
-                            highlightCollections.secondaryHighlight.idArr.length
-                        ) {
-                            return;
-                        }
+                        // if (
+                        //     query &&
+                        //     query === currentSecondaryHighlightQuery.current &&
+                        //     highlightCollections.secondaryHighlight.idArr.length
+                        // ) {
+                        //     return;
+                        // }
 
-                        abortSecondaryHighlight();
-                        dispatchHighlightCollections(
-                            highlightCollectionsActions.setIds(HighlightCollection.SecondaryHighlight, [])
-                        );
+                        // abortSecondaryHighlight();
+                        // dispatchHighlightCollections(
+                        //     highlightCollectionsActions.setIds(HighlightCollection.SecondaryHighlight, [])
+                        // );
 
-                        if (!query) {
-                            return;
-                        }
+                        // if (!query) {
+                        //     return;
+                        // }
 
-                        const abortSignal = secondaryHighlightAbortController.current.signal;
-                        const loadingHandle = evt.timeStamp;
-                        currentSecondaryHighlightQuery.current = query;
-                        dispatch(renderActions.addLoadingHandle(loadingHandle));
+                        // const abortSignal = secondaryHighlightAbortController.current.signal;
+                        // const loadingHandle = evt.timeStamp;
+                        // currentSecondaryHighlightQuery.current = query;
+                        // dispatch(renderActions.addLoadingHandle(loadingHandle));
 
-                        try {
-                            const iterator = scene.search(
-                                {
-                                    searchPattern: [
-                                        { property: secondaryHighlightProperty, value: query, exact: true },
-                                    ],
-                                },
-                                abortSignal
-                            );
+                        // try {
+                        //     const iterator = scene.search(
+                        //         {
+                        //             searchPattern: [
+                        //                 { property: secondaryHighlightProperty, value: query, exact: true },
+                        //             ],
+                        //         },
+                        //         abortSignal
+                        //     );
 
-                            const res: number[] = [];
-                            for await (const item of iterator) {
-                                res.push(item.id);
-                            }
+                        //     const res: number[] = [];
+                        //     for await (const item of iterator) {
+                        //         res.push(item.id);
+                        //     }
 
-                            dispatchHighlightCollections(
-                                highlightCollectionsActions.setIds(HighlightCollection.SecondaryHighlight, res)
-                            );
-                        } catch (e) {
-                            if (!abortSignal.aborted) {
-                                console.warn(e);
-                            }
-                        } finally {
-                            dispatch(renderActions.removeLoadingHandle(loadingHandle));
-                        }
+                        //     dispatchHighlightCollections(
+                        //         highlightCollectionsActions.setIds(HighlightCollection.SecondaryHighlight, res)
+                        //     );
+                        // } catch (e) {
+                        //     if (!abortSignal.aborted) {
+                        //         console.warn(e);
+                        //     }
+                        // } finally {
+                        //     dispatch(renderActions.removeLoadingHandle(loadingHandle));
+                        // }
                     }
                 }
                 break;
             case Picker.ClippingPlane:
-                if (!normal) {
-                    return;
-                }
+                // if (!normal) {
+                //     return;
+                // }
 
-                const w = -vec3.dot(normal, position);
+                // const w = -vec3.dot(normal, position);
 
-                dispatch(renderActions.setPicker(Picker.Object));
-                dispatch(
-                    renderActions.addClippingPlane({
-                        plane: vec4.fromValues(normal[0], normal[1], normal[2], w) as Vec4,
-                        baseW: w,
-                    })
-                );
+                // dispatch(renderActions.setPicker(Picker.Object));
+                // dispatch(
+                //     renderActions.addClippingPlane({
+                //         plane: vec4.fromValues(normal[0], normal[1], normal[2], w) as Vec4,
+                //         baseW: w,
+                //     })
+                // );
                 break;
             case Picker.OrthoPlane:
-                const orthoController = api.createCameraController({ kind: "ortho" }, canvas);
-                (orthoController as any).init(position, normal, view.camera);
-                dispatch(
-                    renderActions.setCamera({
-                        type: CameraType.Orthographic,
-                        params: orthoController.params as OrthoControllerParams,
-                    })
-                );
-                dispatch(renderActions.setPicker(Picker.Object));
+                // const orthoController = api.createCameraController({ kind: "ortho" }, canvas);
+                // (orthoController as any).init(position, normal, view.camera);
+                // dispatch(
+                //     renderActions.setCamera({
+                //         type: CameraType.Orthographic,
+                //         params: orthoController.params as OrthoControllerParams,
+                //     })
+                // );
+                // dispatch(renderActions.setPicker(Picker.Object));
 
                 break;
             case Picker.Measurement:
-                if (measure.hover) {
-                    dispatch(
-                        measureActions.selectEntity({
-                            entity: measure.hover as ExtendedMeasureEntity,
-                            pin: evt.shiftKey,
-                        })
-                    );
-                } else {
-                    dispatch(measureActions.setLoadingBrep(true));
-                    const entity = await measureScene?.pickMeasureEntity(
-                        result.objectId,
-                        position,
-                        measurePickSettings
-                    );
-                    dispatch(
-                        measureActions.selectEntity({
-                            entity: entity?.entity as ExtendedMeasureEntity,
-                            pin: evt.shiftKey,
-                        })
-                    );
-                    dispatch(measureActions.setLoadingBrep(false));
-                }
+                // if (measure.hover) {
+                //     dispatch(
+                //         measureActions.selectEntity({
+                //             entity: measure.hover as ExtendedMeasureEntity,
+                //             pin: evt.shiftKey,
+                //         })
+                //     );
+                // } else {
+                //     dispatch(measureActions.setLoadingBrep(true));
+                //     const entity = await measureScene?.pickMeasureEntity(
+                //         result.objectId,
+                //         position,
+                //         measurePickSettings
+                //     );
+                //     dispatch(
+                //         measureActions.selectEntity({
+                //             entity: entity?.entity as ExtendedMeasureEntity,
+                //             pin: evt.shiftKey,
+                //         })
+                //     );
+                //     dispatch(measureActions.setLoadingBrep(false));
+                // }
                 break;
             case Picker.Manhole:
-                if (result.objectId === -1) {
-                    return;
-                }
-                dispatch(manholeActions.selectObj({ id: result.objectId, pos: position }));
+                // if (result.objectId === -1) {
+                //     return;
+                // }
+                // dispatch(manholeActions.selectObj({ id: result.objectId, pos: position }));
                 break;
 
             case Picker.FollowPathObject: {
-                if (result.objectId === -1) {
-                    return;
-                }
+                // if (result.objectId === -1) {
+                //     return;
+                // }
 
-                dispatch(followPathActions.setSelectedPositions([{ id: result.objectId, pos: position }]));
+                // dispatch(followPathActions.setSelectedPositions([{ id: result.objectId, pos: position }]));
                 break;
             }
             case Picker.Area: {
-                dispatch(areaActions.addPoint([position, normal ?? [0, 0, 0]]));
+                // dispatch(areaActions.addPoint([position, normal ?? [0, 0, 0]]));
                 break;
             }
             case Picker.PointLine: {
-                dispatch(pointLineActions.addPoint(position));
+                // dispatch(pointLineActions.addPoint(position));
                 break;
             }
             case Picker.HeightProfileEntity: {
-                if (result.objectId === -1) {
-                    return;
-                }
+                // if (result.objectId === -1) {
+                //     return;
+                // }
 
-                dispatch(heightProfileActions.selectPoint({ id: result.objectId, pos: vec3.clone(position) }));
+                // dispatch(heightProfileActions.selectPoint({ id: result.objectId, pos: vec3.clone(position) }));
                 break;
             }
             case Picker.ClippingBox: {
