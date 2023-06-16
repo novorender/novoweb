@@ -32,16 +32,8 @@ export function useHandleCameraMoved() {
             function cameraMoved(view: View) {
                 const hasMoved =
                     !view.prevRenderState ||
-                    (!vec3.equals(
-                        view.renderState.camera.position,
-                        view.prevRenderState.camera.position
-                        // flip(view.renderContext?.prevState?.camera.position ?? [0, 0, 0])
-                    ) &&
-                        !quat.equals(
-                            view.renderState.camera.rotation,
-                            view.prevRenderState.camera.rotation
-                            // flipGLtoCadQuat(view.renderContext?.prevState?.camera.rotation ?? [0, 0, 0, 0])
-                        ));
+                    (!vec3.equals(view.renderState.camera.position, view.prevRenderState.camera.position) &&
+                        !quat.equals(view.renderState.camera.rotation, view.prevRenderState.camera.rotation));
 
                 if (!hasMoved) {
                     return;
