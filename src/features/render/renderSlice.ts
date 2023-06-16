@@ -343,6 +343,9 @@ const initialState = {
             knots: [] as { position: number; color: VecRGB }[],
         },
     },
+    secondaryHighlight: {
+        property: "",
+    },
 };
 
 type State = typeof initialState;
@@ -634,6 +637,9 @@ export const renderSlice = createSlice({
         setTerrain: (state, action: PayloadAction<Partial<State["terrain"]>>) => {
             state.terrain = { ...state.terrain, ...action.payload };
         },
+        setSecondaryHighlight: (state, action: PayloadAction<Partial<State["secondaryHighlight"]>>) => {
+            state.secondaryHighlight = { ...state.secondaryHighlight, ...action.payload };
+        },
         setSceneStatus: (state, action: PayloadAction<State["sceneStatus"]>) => {
             state.sceneStatus = action.payload;
         },
@@ -646,9 +652,9 @@ export const renderSlice = createSlice({
                 initialCamera,
             } = action.payload;
 
-            const _props = getCustomProperties(customProperties);
+            const props = getCustomProperties(customProperties);
 
-            // init props
+            state.secondaryHighlight.property = props.highlights?.secondary.property ?? "";
 
             if (!settings) {
                 return;
@@ -682,10 +688,7 @@ export const renderSlice = createSlice({
             };
 
             // subtrees
-            state.subtrees = getSubtrees(
-                settings.advanced,
-                octreeSceneConfig.subtrees ?? ["triangles", "points", "terrain"]
-            ); // TODO ["triangles"]
+            state.subtrees = getSubtrees(settings.advanced, octreeSceneConfig.subtrees ?? ["triangles"]);
 
             // terrain
             state.terrain.asBackground = settings.terrain.asBackground;
@@ -718,8 +721,7 @@ export const selectClippingPlanes = (state: RootState) => state.render.clippingP
 export const selectCamera = (state: RootState) => state.render.camera as CameraState;
 export const selectCameraType = (state: RootState) => state.render.camera.type;
 export const selectAdvancedSettings = (state: RootState) => state.render.advancedSettings;
-export const selectSecondaryHighlightProperty = (state: RootState) =>
-    state.render.advancedSettings.secondaryHighlight.property;
+export const selectSecondaryHighlightProperty = (state: RootState) => state.render.secondaryHighlight.property;
 export const selectProjectSettings = (state: RootState) => state.render.projectSettings;
 export const selectGridDefaults = (state: RootState) => state.render.gridDefaults;
 export const selectGrid = (state: RootState) => state.render.grid as RenderSettings["grid"];

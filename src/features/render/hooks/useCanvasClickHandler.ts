@@ -50,7 +50,7 @@ export function useCanvasClickHandler() {
     const dispatchHighlightCollections = useDispatchHighlightCollections();
     const highlightCollections = useHighlightCollections();
     const {
-        state: { view, canvas, measureScene },
+        state: { view, canvas, db, measureScene },
     } = useExplorerGlobals();
 
     const mainObject = useAppSelector(selectMainObject);
@@ -227,79 +227,82 @@ export function useCanvasClickHandler() {
                         dispatch(renderActions.setMainObject(result.objectId));
                         dispatchHighlighted(highlightActions.setIds([result.objectId]));
 
-                        // TODO SEARCH
-                        // const metadata = await scene?.getObjectReference(result.objectId).loadMetaData();
+                        if (!db) {
+                            return;
+                        }
 
-                        // if (showPropertiesStamp) {
-                        //     dispatch(
-                        //         renderActions.setStamp({
-                        //             kind: StampKind.Properties,
-                        //             properties: [
-                        //                 ["Name", metadata.name],
-                        //                 ["Path", metadata.path],
-                        //                 ...metadata.properties,
-                        //             ],
-                        //             mouseX: evt.nativeEvent.offsetX,
-                        //             mouseY: evt.nativeEvent.offsetY,
-                        //             pinned: true,
-                        //         })
-                        //     );
-                        // }
+                        const metadata = await db.getObjectMetdata(result.objectId);
 
-                        // if (!secondaryHighlightProperty) {
-                        //     return;
-                        // }
+                        if (showPropertiesStamp) {
+                            dispatch(
+                                renderActions.setStamp({
+                                    kind: StampKind.Properties,
+                                    properties: [
+                                        ["Name", metadata.name],
+                                        ["Path", metadata.path],
+                                        ...metadata.properties,
+                                    ],
+                                    mouseX: evt.nativeEvent.offsetX,
+                                    mouseY: evt.nativeEvent.offsetY,
+                                    pinned: true,
+                                })
+                            );
+                        }
 
-                        // const property = metadata.properties.find((prop) => prop[0] === secondaryHighlightProperty);
-                        // const query = property && property[1];
+                        if (!secondaryHighlightProperty) {
+                            return;
+                        }
 
-                        // if (
-                        //     query &&
-                        //     query === currentSecondaryHighlightQuery.current &&
-                        //     highlightCollections.secondaryHighlight.idArr.length
-                        // ) {
-                        //     return;
-                        // }
+                        const property = metadata.properties.find((prop) => prop[0] === secondaryHighlightProperty);
+                        const query = property && property[1];
 
-                        // abortSecondaryHighlight();
-                        // dispatchHighlightCollections(
-                        //     highlightCollectionsActions.setIds(HighlightCollection.SecondaryHighlight, [])
-                        // );
+                        if (
+                            query &&
+                            query === currentSecondaryHighlightQuery.current &&
+                            highlightCollections.secondaryHighlight.idArr.length
+                        ) {
+                            return;
+                        }
 
-                        // if (!query) {
-                        //     return;
-                        // }
+                        abortSecondaryHighlight();
+                        dispatchHighlightCollections(
+                            highlightCollectionsActions.setIds(HighlightCollection.SecondaryHighlight, [])
+                        );
 
-                        // const abortSignal = secondaryHighlightAbortController.current.signal;
-                        // const loadingHandle = evt.timeStamp;
-                        // currentSecondaryHighlightQuery.current = query;
-                        // dispatch(renderActions.addLoadingHandle(loadingHandle));
+                        if (!query) {
+                            return;
+                        }
 
-                        // try {
-                        //     const iterator = scene.search(
-                        //         {
-                        //             searchPattern: [
-                        //                 { property: secondaryHighlightProperty, value: query, exact: true },
-                        //             ],
-                        //         },
-                        //         abortSignal
-                        //     );
+                        const abortSignal = secondaryHighlightAbortController.current.signal;
+                        const loadingHandle = evt.timeStamp;
+                        currentSecondaryHighlightQuery.current = query;
+                        dispatch(renderActions.addLoadingHandle(loadingHandle));
 
-                        //     const res: number[] = [];
-                        //     for await (const item of iterator) {
-                        //         res.push(item.id);
-                        //     }
+                        try {
+                            const iterator = db.search(
+                                {
+                                    searchPattern: [
+                                        { property: secondaryHighlightProperty, value: query, exact: true },
+                                    ],
+                                },
+                                abortSignal
+                            );
 
-                        //     dispatchHighlightCollections(
-                        //         highlightCollectionsActions.setIds(HighlightCollection.SecondaryHighlight, res)
-                        //     );
-                        // } catch (e) {
-                        //     if (!abortSignal.aborted) {
-                        //         console.warn(e);
-                        //     }
-                        // } finally {
-                        //     dispatch(renderActions.removeLoadingHandle(loadingHandle));
-                        // }
+                            const res: number[] = [];
+                            for await (const item of iterator) {
+                                res.push(item.id);
+                            }
+
+                            dispatchHighlightCollections(
+                                highlightCollectionsActions.setIds(HighlightCollection.SecondaryHighlight, res)
+                            );
+                        } catch (e) {
+                            if (!abortSignal.aborted) {
+                                console.warn(e);
+                            }
+                        } finally {
+                            dispatch(renderActions.removeLoadingHandle(loadingHandle));
+                        }
                     }
                 }
                 break;
