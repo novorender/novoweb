@@ -1,6 +1,6 @@
 import { useEffect, useRef } from "react";
 import { SceneData, SceneLoadFail } from "@novorender/data-js-api";
-import { Internal } from "@novorender/webgl-api";
+import { Internal, ObjectDB } from "@novorender/webgl-api";
 import { quat, vec3, vec4 } from "gl-matrix";
 import { computeRotation, createView, rotationFromDirection } from "@novorender/web_app";
 
@@ -51,7 +51,10 @@ export function useHandleInit() {
             const _view = createView(canvas);
 
             try {
-                const { url, db: _db, ...sceneData } = await loadScene(sceneId);
+                const { url, db, ...sceneData } = await loadScene(sceneId);
+                // const { db, ..._sceneData } = (await dataApi.loadScene(
+                //     "3b3caf9359c943f48ce49055e8b3e118"
+                // )) as SceneData;
 
                 const octreeSceneConfig = await _view.loadSceneFromURL(new URL(url));
 
@@ -112,6 +115,7 @@ export function useHandleInit() {
                 dispatch(renderActions.setEnvironments(environments));
                 dispatchGlobals(
                     explorerGlobalsActions.update({
+                        db: db as ObjectDB,
                         view: _view,
                         scene: octreeSceneConfig,
                     })
@@ -154,7 +158,6 @@ export function useHandleInit() {
         canvas,
         view,
         dispatch,
-        // onInit,
         environments,
         sceneId,
         dispatchGlobals,
@@ -179,6 +182,8 @@ async function loadScene(id: string): Promise<SceneConfig> {
     if ("error" in res) {
         throw res;
     }
+
+    (window as any).db = res.db;
 
     let { camera, ..._cfg } = res;
     const cfg = _cfg as SceneConfig;

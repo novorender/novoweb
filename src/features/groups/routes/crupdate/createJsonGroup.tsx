@@ -71,7 +71,7 @@ export function CreateJsonGroup({
         if (includeDescendants) {
             await searchDeepByPatterns({
                 abortSignal,
-                scene,
+                db: scene,
                 searchPatterns,
                 callback: (result: number[]) => {
                     setIds((state) => state.concat(result));
@@ -81,7 +81,7 @@ export function CreateJsonGroup({
         } else {
             await searchByPatterns({
                 abortSignal,
-                scene,
+                db: scene,
                 searchPatterns,
                 callback: (result: HierarcicalObjectReference[]) => {
                     const idArr = result.map((res) => res.id);

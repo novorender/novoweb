@@ -1,5 +1,7 @@
-import { HierarcicalObjectReference, ObjectData, ObjectId, Scene, SearchPattern } from "@novorender/webgl-api";
+import { HierarcicalObjectReference, ObjectDB, ObjectData, ObjectId, SearchPattern } from "@novorender/webgl-api";
+
 import { NodeType } from "features/modelTree/modelTree";
+
 import { sleep } from "./time";
 
 const defaultCallbackInterval = 10000;
@@ -42,21 +44,21 @@ export async function iterateAsync<T = HierarcicalObjectReference>({
     Some searches may return thousands of objects and take several seconds to complete.
 */
 export async function searchByPatterns({
-    scene,
+    db,
     searchPatterns,
     callback,
     callbackInterval = defaultCallbackInterval,
     abortSignal,
     full,
 }: {
-    scene: Scene;
+    db: ObjectDB;
     searchPatterns: SearchPattern[] | string;
     callback: (result: HierarcicalObjectReference[]) => void;
     callbackInterval?: number;
     abortSignal?: AbortSignal;
     full?: boolean;
 }): Promise<void> {
-    const iterator = scene.search({ searchPattern: searchPatterns, full }, abortSignal);
+    const iterator = db.search({ searchPattern: searchPatterns, full }, abortSignal);
     let done = false;
 
     while (!done && !abortSignal?.aborted) {
@@ -75,19 +77,19 @@ export async function searchByPatterns({
     Some searches may return thousands of objects and take several seconds to complete.
 */
 export async function searchDeepByPatterns({
-    scene,
+    db,
     searchPatterns,
     callback,
     callbackInterval = defaultCallbackInterval,
     abortSignal,
 }: {
-    scene: Scene;
+    db: ObjectDB;
     searchPatterns: SearchPattern[] | string;
     callback: (result: ObjectId[]) => void;
     callbackInterval?: number;
     abortSignal?: AbortSignal;
 }): Promise<void> {
-    const iterator = scene.search({ searchPattern: searchPatterns }, abortSignal);
+    const iterator = db.search({ searchPattern: searchPatterns }, abortSignal);
     let done = false;
 
     while (!done && !abortSignal?.aborted) {
@@ -136,11 +138,11 @@ export async function searchDeepByPatterns({
 
             await Promise.all(
                 batch.map((obj) =>
-                    getDescendants({ scene, parentNode: obj, abortSignal })
+                    getDescendants({ db: db, parentNode: obj, abortSignal })
                         .then((ids) => callback(ids))
                         .catch(() =>
                             searchByParentPath({
-                                scene,
+                                db: db,
                                 abortSignal,
                                 callback: (results) => callback(results.map((res) => res.id)),
                                 callbackInterval: callbackInterval,
@@ -163,21 +165,21 @@ export async function searchDeepByPatterns({
     Some searches may return thousands of objects and take several seconds to complete.    
 */
 export async function searchByParentPath({
-    scene,
+    db,
     parentPath,
     callback,
     callbackInterval = defaultCallbackInterval,
     depth,
     abortSignal,
 }: {
-    scene: Scene;
+    db: ObjectDB;
     parentPath: string;
     callback: (result: HierarcicalObjectReference[]) => void;
     callbackInterval?: number;
     depth?: number;
     abortSignal?: AbortSignal;
 }): Promise<void> {
-    const allChildren = scene.search({ parentPath, descentDepth: depth }, abortSignal);
+    const allChildren = db.search({ parentPath, descentDepth: depth }, abortSignal);
     let done = false;
 
     while (!done && !abortSignal?.aborted) {
@@ -192,31 +194,33 @@ export async function searchByParentPath({
  * Find the first object that matches the passed in path, and load its full meta data.
  *  */
 export async function searchFirstObjectAtPath({
-    scene,
+    db,
     path,
 }: {
-    scene: Scene;
+    db: ObjectDB;
     path: string;
 }): Promise<ObjectData | undefined> {
-    return scene
-        .search({ parentPath: path, descentDepth: 0, full: true })
+    return db
+        .search({ parentPath: path, descentDepth: 0, full: true }, undefined)
         .next()
         .then((res) => (res.value ? res.value.loadMetaData() : undefined))
         .catch(() => undefined);
 }
 
 export async function getDescendants({
-    scene,
+    db,
     parentNode,
     abortSignal,
 }: {
-    scene: Scene;
+    db: ObjectDB;
     parentNode: HierarcicalObjectReference;
     abortSignal?: AbortSignal;
 }): Promise<ObjectId[]> {
     return (
         parentNode.descendants ??
-        scene.descendants(parentNode, abortSignal).then((ids) => {
+        // TODO descendant search
+        // @ts-ignore
+        db.descendants(parentNode, abortSignal).then((ids) => {
             if (!ids.length) {
                 // Probably not cached so throw to handle fallback in catch
                 throw new Error("No descendants found");
@@ -227,25 +231,22 @@ export async function getDescendants({
     );
 }
 
-export function getObjectData({ scene, id }: { scene: Scene; id: ObjectId }): Promise<ObjectData | undefined> {
-    return scene
-        .getObjectReference(id)
-        .loadMetaData()
-        .catch(() => undefined);
+export function getObjectData({ db, id }: { db: ObjectDB; id: ObjectId }): Promise<ObjectData | undefined> {
+    return db.getObjectMetdata(id).catch(() => undefined);
 }
 
 export async function batchedPropertySearch<T = HierarcicalObjectReference>({
     property,
     value,
     transformResult,
-    scene,
+    db,
     abortSignal,
     full,
 }: {
     property: string;
     value: string[];
     transformResult?: (res: (HierarcicalObjectReference | ObjectData)[]) => T[];
-    scene: Scene;
+    db: ObjectDB;
     abortSignal: AbortSignal;
     full?: boolean;
 }): Promise<T[]> {
@@ -276,7 +277,7 @@ export async function batchedPropertySearch<T = HierarcicalObjectReference>({
         await Promise.all(
             batches.slice(i * concurrentRequests, i * concurrentRequests + concurrentRequests).map((batch) => {
                 return searchByPatterns({
-                    scene,
+                    db,
                     callback,
                     abortSignal,
                     full,

@@ -187,7 +187,7 @@ export function Follow({ fpObj }: { fpObj: FollowParametricObject }) {
                 let roadIds: string[] = [];
                 let references = [] as HierarcicalObjectReference[];
                 await searchByPatterns({
-                    scene,
+                    db: scene,
                     searchPatterns: [{ property: "Centerline", value: pathName, exact: true }],
                     callback: (refs) => (references = references.concat(refs)),
                 });

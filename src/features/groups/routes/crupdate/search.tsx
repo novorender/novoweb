@@ -48,7 +48,7 @@ export function Search({
 
         await searchDeepByPatterns({
             abortSignal,
-            scene,
+            db: scene,
             searchPatterns: inputs,
             callback: (result) => {
                 setIds((state) => state.concat(result));

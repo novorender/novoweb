@@ -142,7 +142,7 @@ export default function Search() {
 
                 // Deep search to highlight and fly to
                 await searchDeepByPatterns({
-                    scene,
+                    db: scene,
                     searchPatterns,
                     abortSignal,
                     callback: (ids) => {
@@ -155,7 +155,7 @@ export default function Search() {
                     foundRefs = await batchedPropertySearch({
                         property: "id",
                         value: foundIds.map((id) => String(id)),
-                        scene,
+                        db: scene,
                         abortSignal,
                     });
                 }
@@ -457,7 +457,7 @@ export function CustomParentNode({
 
         try {
             await searchDeepByPatterns({
-                scene,
+                db: scene,
                 searchPatterns,
                 abortSignal,
                 callback,

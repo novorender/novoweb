@@ -397,7 +397,7 @@ export function NavigationCube() {
                 try {
                     pt =
                         highlightedBoundingSphereCenter.current ??
-                        (await objIdsToTotalBoundingSphere({ ids: highlighted, abortSignal, scene }))?.center;
+                        (await objIdsToTotalBoundingSphere({ ids: highlighted, abortSignal, db: scene }))?.center;
 
                     highlightedBoundingSphereCenter.current = pt;
                 } catch {

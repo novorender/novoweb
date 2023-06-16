@@ -76,7 +76,7 @@ export function PathList() {
                 }[];
 
                 await searchByPatterns({
-                    scene,
+                    db: scene,
                     searchPatterns: [{ property: "Novorender/Path", value: "true", exact: true }],
                     callback: (refs) =>
                         (paths = paths.concat(

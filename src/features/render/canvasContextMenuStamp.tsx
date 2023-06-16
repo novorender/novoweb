@@ -126,7 +126,7 @@ export function CanvasContextMenuStamp() {
         close();
 
         await searchDeepByPatterns({
-            scene,
+            db: scene,
             searchPatterns: [{ property: properties.layer[0], value: properties.layer[1], exact: true }],
             callback: (ids) => {
                 dispatchHighlighted(highlightActions.remove(ids));
@@ -149,7 +149,7 @@ export function CanvasContextMenuStamp() {
         close();
 
         await searchDeepByPatterns({
-            scene,
+            db: scene,
             searchPatterns: [{ property: properties.file[0], value: properties.file[1], exact: true }],
             callback: (ids) => {
                 dispatchHighlighted(highlightActions.remove(ids));

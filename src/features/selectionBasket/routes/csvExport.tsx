@@ -45,7 +45,7 @@ export function CsvExport() {
             const abortSignal = abortController.current.signal;
             try {
                 const nodes = await batchedPropertySearch<ObjectData>({
-                    scene,
+                    db: scene,
                     abortSignal,
                     property: "id",
                     value: basket.map((n) => String(n)),

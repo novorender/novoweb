@@ -43,7 +43,7 @@ export default function PropertiesTree() {
             try {
                 const { signal } = abortController.current;
                 await searchDeepByPatterns({
-                    scene,
+                    db: scene,
                     searchPatterns: [{ property, value, exact: true }],
                     callback: (ids) => {
                         if (!signal.aborted) {

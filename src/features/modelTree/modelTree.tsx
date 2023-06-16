@@ -84,7 +84,7 @@ export default function ModelTree() {
             setStatus(Status.Loading);
 
             try {
-                const obj = await getObjectData({ scene, id: mainObject });
+                const obj = await getObjectData({ db: scene, id: mainObject });
 
                 if (!obj) {
                     return setStatus(Status.Ready);
@@ -142,7 +142,7 @@ export default function ModelTree() {
                     ? node
                     : node.type === rootNode.type
                     ? undefined
-                    : await searchFirstObjectAtPath({ scene, path: parentPath });
+                    : await searchFirstObjectAtPath({ db: scene, path: parentPath });
 
             try {
                 const iterator = scene.search({ parentPath, descentDepth: 1 });
@@ -224,7 +224,7 @@ export default function ModelTree() {
         if (crumbPath) {
             try {
                 setStatus(Status.Loading);
-                const node = await searchFirstObjectAtPath({ scene, path: crumbPath });
+                const node = await searchFirstObjectAtPath({ db: scene, path: crumbPath });
 
                 if (node) {
                     dispatch(renderActions.setMainObject(node.id));

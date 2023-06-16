@@ -133,7 +133,7 @@ export function Root() {
         async function getObjectData(id: number) {
             setStatus(Status.Loading);
 
-            const objectData = await getObjectDataUtil({ scene, id });
+            const objectData = await getObjectDataUtil({ db: scene, id });
 
             if (!objectData) {
                 setObject(undefined);
@@ -142,7 +142,7 @@ export function Root() {
             }
 
             const cleanedObjectData = { ...objectData, properties: objectData.properties.slice(0, 100) };
-            const parent = await searchFirstObjectAtPath({ scene, path: getParentPath(objectData.path) });
+            const parent = await searchFirstObjectAtPath({ db: scene, path: getParentPath(objectData.path) });
 
             if (parent) {
                 const parentPropertiesObject = createPropertiesObject({
@@ -160,7 +160,7 @@ export function Root() {
 
     const search = async (searchPatterns: SearchPattern[]) => {
         if (mainObject !== undefined) {
-            const objData = await getObjectDataUtil({ scene, id: mainObject });
+            const objData = await getObjectDataUtil({ db: scene, id: mainObject });
 
             if (objData?.type === NodeType.Leaf) {
                 dispatchHighlighted(highlightActions.setIds([mainObject]));

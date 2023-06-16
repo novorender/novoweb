@@ -480,7 +480,7 @@ async function guidsToIds({ guids, scene, abortSignal }: { guids: string[]; scen
         await Promise.all(
             batches.slice(i * concurrentRequests, i * concurrentRequests + concurrentRequests).map((batch) => {
                 return searchByPatterns({
-                    scene,
+                    db: scene,
                     callback,
                     abortSignal,
                     searchPatterns: [

@@ -148,13 +148,13 @@ function Node({ node, parent, loading, setLoading, abortController, ...props }: 
 
         try {
             try {
-                await getDescendants({ scene, parentNode: node, abortSignal }).then((ids) => {
+                await getDescendants({ db: scene, parentNode: node, abortSignal }).then((ids) => {
                     dispatchHighlighted(highlightActions.add(ids));
                     dispatchHidden(hiddenActions.remove(ids));
                 });
             } catch {
                 await searchByParentPath({
-                    scene,
+                    db: scene,
                     abortSignal,
                     parentPath: node.path,
                     callback: (refs) => {
@@ -189,12 +189,12 @@ function Node({ node, parent, loading, setLoading, abortController, ...props }: 
 
         try {
             try {
-                await getDescendants({ scene, parentNode: node, abortSignal }).then((ids) =>
+                await getDescendants({ db: scene, parentNode: node, abortSignal }).then((ids) =>
                     dispatchHighlighted(highlightActions.remove(ids))
                 );
             } catch {
                 await searchByParentPath({
-                    scene,
+                    db: scene,
                     abortSignal,
                     parentPath: node.path,
                     callback: (refs) => dispatchHighlighted(highlightActions.remove(extractObjectIds(refs))),
@@ -222,13 +222,13 @@ function Node({ node, parent, loading, setLoading, abortController, ...props }: 
 
         try {
             try {
-                await getDescendants({ scene, parentNode: node, abortSignal }).then((ids) => {
+                await getDescendants({ db: scene, parentNode: node, abortSignal }).then((ids) => {
                     dispatchHidden(hiddenActions.add(ids));
                     dispatchHighlighted(highlightActions.remove(ids));
                 });
             } catch {
                 await searchByParentPath({
-                    scene,
+                    db: scene,
                     abortSignal,
                     parentPath: node.path,
                     callback: (refs) => {
@@ -263,12 +263,12 @@ function Node({ node, parent, loading, setLoading, abortController, ...props }: 
 
         try {
             try {
-                await getDescendants({ scene, parentNode: node, abortSignal }).then((ids) =>
+                await getDescendants({ db: scene, parentNode: node, abortSignal }).then((ids) =>
                     dispatchHidden(hiddenActions.remove(ids))
                 );
             } catch {
                 await searchByParentPath({
-                    scene,
+                    db: scene,
                     abortSignal,
                     parentPath: node.path,
                     callback: (refs) => dispatchHidden(hiddenActions.remove(extractObjectIds(refs))),

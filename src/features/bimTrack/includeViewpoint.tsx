@@ -181,7 +181,7 @@ async function idsToGuids({
         await Promise.all(
             batches.slice(i * concurrentRequests, i * concurrentRequests + concurrentRequests).map((batch) => {
                 return searchByPatterns({
-                    scene,
+                    db: scene,
                     abortSignal,
                     callback,
                     full: true,

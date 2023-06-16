@@ -5,6 +5,7 @@ import { useAppSelector } from "app/store";
 import { CameraType, selectCamera } from "..";
 import { useExplorerGlobals } from "contexts/explorerGlobals";
 import { vec3, quat } from "gl-matrix";
+import { flip } from "../utils";
 
 export function useHandleCameraStateChange() {
     const {
@@ -22,11 +23,15 @@ export function useHandleCameraStateChange() {
                 const controller = view.controllers["flight"];
 
                 if (state.goTo) {
-                    controller.moveTo({
-                        position: vec3.clone(state.goTo.position),
-                        rotation: quat.clone(state.goTo.rotation),
-                        // TODO reset after api bugfix
-                        flyTime: 0,
+                    // controller.moveTo({
+                    //     position: vec3.clone(state.goTo.position),
+                    //     rotation: quat.clone(state.goTo.rotation),
+                    // });
+                    controller.moveTo(vec3.clone(state.goTo.position), 0, quat.clone(state.goTo.rotation));
+                } else if (state.zoomTo) {
+                    controller.zoomTo({
+                        center: flip(state.zoomTo.center),
+                        radius: state.zoomTo.radius,
                     });
                 }
                 break;
