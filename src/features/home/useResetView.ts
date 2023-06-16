@@ -83,7 +83,7 @@ export function useResetView() {
             } else {
                 dispatch(
                     renderActions.setCamera({
-                        type: CameraType.Flight,
+                        type: CameraType.Pinhole,
                         goTo: homeCameraPos,
                     })
                 );

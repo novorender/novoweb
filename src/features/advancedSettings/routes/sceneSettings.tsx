@@ -213,7 +213,7 @@ export function SceneSettings({
                         </Button>
                     </Box>
                     <Button
-                        disabled={cameraType !== CameraType.Flight}
+                        disabled={cameraType !== CameraType.Pinhole}
                         variant="outlined"
                         color="grey"
                         onClick={async () => {

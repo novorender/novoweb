@@ -51,7 +51,7 @@ export enum ObjectVisibility {
 
 export enum CameraType {
     Orthographic,
-    Flight,
+    Pinhole,
 }
 
 export enum SubtreeStatus {
@@ -131,7 +131,7 @@ type CameraState =
           gridOrigo?: vec3;
       }
     | {
-          type: CameraType.Flight;
+          type: CameraType.Pinhole;
           goTo?: { position: Camera["position"]; rotation: Camera["rotation"]; fieldOfView?: number };
           zoomTo?: BoundingSphere;
       };
@@ -250,7 +250,7 @@ const initialState = {
             baseW: number;
         }[],
     },
-    camera: { type: CameraType.Flight } as MutableCameraState,
+    camera: { type: CameraType.Pinhole } as MutableCameraState,
     advancedSettings: {
         [AdvancedSetting.Taa]: true,
         [AdvancedSetting.Ssao]: true,
@@ -337,6 +337,12 @@ const initialState = {
             },
         },
     },
+    terrain: {
+        asBackground: false,
+        elevationGradient: {
+            knots: [] as { position: number; color: VecRGB }[],
+        },
+    },
 };
 
 type State = typeof initialState;
@@ -403,14 +409,14 @@ export const renderSlice = createSlice({
         undoCameraPosition: (state) => {
             state.savedCameraPositions.currentIndex = state.savedCameraPositions.currentIndex - 1;
             state.camera = {
-                type: CameraType.Flight,
+                type: CameraType.Pinhole,
                 goTo: state.savedCameraPositions.positions[state.savedCameraPositions.currentIndex],
             };
         },
         redoCameraPosition: (state) => {
             state.savedCameraPositions.currentIndex = state.savedCameraPositions.currentIndex + 1;
             state.camera = {
-                type: CameraType.Flight,
+                type: CameraType.Pinhole,
                 goTo: state.savedCameraPositions.positions[state.savedCameraPositions.currentIndex],
             };
         },
@@ -625,6 +631,9 @@ export const renderSlice = createSlice({
         setBackground: (state, action: PayloadAction<Partial<State["background"]>>) => {
             state.background = { ...state.background, ...action.payload };
         },
+        setTerrain: (state, action: PayloadAction<Partial<State["terrain"]>>) => {
+            state.terrain = { ...state.terrain, ...action.payload };
+        },
         setSceneStatus: (state, action: PayloadAction<State["sceneStatus"]>) => {
             state.sceneStatus = action.payload;
         },
@@ -677,6 +686,15 @@ export const renderSlice = createSlice({
                 settings.advanced,
                 octreeSceneConfig.subtrees ?? ["triangles", "points", "terrain"]
             ); // TODO ["triangles"]
+
+            // terrain
+            state.terrain.asBackground = settings.terrain.asBackground;
+            state.terrain.elevationGradient = {
+                knots: settings.terrain.elevationColors.map((node) => ({
+                    position: node.elevation,
+                    color: node.color,
+                })),
+            };
         });
     },
 });
@@ -715,6 +733,7 @@ export const selectProportionalCameraSpeed = (state: RootState) => state.render.
 export const selectPointerDownState = (state: RootState) => state.render.pointerDownState;
 export const selectBackground = (state: RootState) => state.render.background;
 export const selectSceneStatus = (state: RootState) => state.render.sceneStatus;
+export const selectTerrain = (state: RootState) => state.render.terrain;
 
 const { reducer } = renderSlice;
 const actions = { ...renderSlice.actions, initScene };

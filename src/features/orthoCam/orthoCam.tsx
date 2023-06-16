@@ -58,7 +58,7 @@ export default function OrthoCam() {
     const togglePick = () => {
         if (cameraType === CameraType.Orthographic || selectingOrthoPoint) {
             dispatch(renderActions.setPicker(Picker.Object));
-            dispatch(renderActions.setCamera({ type: CameraType.Flight }));
+            dispatch(renderActions.setCamera({ type: CameraType.Pinhole }));
         } else {
             dispatch(renderActions.setPicker(Picker.OrthoPlane));
         }

@@ -228,7 +228,7 @@ export function useSelectBookmark() {
         if (bookmark.ortho) {
             dispatch(renderActions.setCamera({ type: CameraType.Orthographic, params: bookmark.ortho }));
         } else if (bookmark.camera) {
-            dispatch(renderActions.setCamera({ type: CameraType.Flight, goTo: bookmark.camera }));
+            dispatch(renderActions.setCamera({ type: CameraType.Pinhole, goTo: bookmark.camera }));
         }
 
         if (bookmark.grid) {

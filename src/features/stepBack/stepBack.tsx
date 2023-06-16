@@ -23,7 +23,7 @@ export function StepBack({ position, ...speedDialProps }: Props) {
     const viewMode = useAppSelector(selectViewMode);
     const cameraType = useAppSelector(selectCameraType);
     const canStepBack =
-        savedCameraPositions.currentIndex >= 1 && viewMode !== ViewMode.Panorama && cameraType === CameraType.Flight;
+        savedCameraPositions.currentIndex >= 1 && viewMode !== ViewMode.Panorama && cameraType === CameraType.Pinhole;
 
     const dispatch = useAppDispatch();
 

@@ -80,7 +80,7 @@ export function useHandleCameraMoved() {
 
                 movementTimer.current = setTimeout(() => {
                     if (
-                        cameraType !== CameraType.Flight ||
+                        cameraType !== CameraType.Pinhole ||
                         viewMode === ViewMode.Panorama ||
                         view.renderState.camera.kind !== "pinhole"
                     ) {

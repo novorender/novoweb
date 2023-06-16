@@ -354,7 +354,7 @@ function CommentListItem({
         if (viewpoint?.perspective_camera) {
             const camera = translatePerspectiveCamera(viewpoint.perspective_camera);
 
-            dispatch(renderActions.setCamera({ type: CameraType.Flight, goTo: camera }));
+            dispatch(renderActions.setCamera({ type: CameraType.Pinhole, goTo: camera }));
         }
 
         if (viewpoint?.orthogonal_camera) {

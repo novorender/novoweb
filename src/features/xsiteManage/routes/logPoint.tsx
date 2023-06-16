@@ -40,7 +40,7 @@ export function LogPoint() {
 
         dispatch(
             renderActions.setCamera({
-                type: CameraType.Flight,
+                type: CameraType.Pinhole,
                 goTo: {
                     position: [pt.x, pt.y, pt.z],
                     rotation: view.camera.rotation,

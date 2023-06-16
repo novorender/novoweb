@@ -20,8 +20,9 @@ import { useHandleInit } from "./hooks/useHandleInit";
 import { useHandleSubtrees } from "./hooks/useHandleSubtrees";
 import { useCanvasClickHandler } from "./hooks/useCanvasClickHandler";
 import { useHandleCameraMoved } from "./hooks/useHandleCameraMoved";
-import { useHandleCameraStateChange } from "./hooks/useHandleCameraStateChange";
-import { useHandleCameraSpeedChange } from "./hooks/useHandleCameraSpeedChange";
+import { useHandleCameraState } from "./hooks/useHandleCameraState";
+import { useHandleCameraSpeed } from "./hooks/useHandleCameraSpeed";
+import { useHandleTerrain } from "./hooks/useHandleTerrain";
 
 glMatrix.setMatrixArrayType(Array);
 
@@ -73,11 +74,12 @@ export function Render3D() {
 
     useHandleInit();
     useHandleCameraMoved();
-    useHandleCameraStateChange();
-    useHandleCameraSpeedChange();
+    useHandleCameraState();
+    useHandleCameraSpeed();
     useHandleBackground();
     useHandleHighlights();
     useHandleSubtrees();
+    useHandleTerrain();
 
     window.view = view;
 

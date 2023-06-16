@@ -474,7 +474,7 @@ export function initCamera({
     view.camera.controller = controller;
 
     if (controller.params.kind === "flight") {
-        store.dispatch(renderActions.setCamera({ type: CameraType.Flight }));
+        store.dispatch(renderActions.setCamera({ type: CameraType.Pinhole }));
     } else if (controller.params.kind === "ortho") {
         store.dispatch(renderActions.setCamera({ type: CameraType.Orthographic }));
     }

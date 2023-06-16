@@ -5,7 +5,7 @@ import { useAppSelector } from "app/store";
 
 import { selectCameraSpeedLevels, selectCurrentCameraSpeedLevel, selectProportionalCameraSpeed } from "..";
 
-export function useHandleCameraSpeedChange() {
+export function useHandleCameraSpeed() {
     const {
         state: { view },
     } = useExplorerGlobals();

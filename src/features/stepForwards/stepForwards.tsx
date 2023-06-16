@@ -25,7 +25,7 @@ export function StepForwards({ position, ...speedDialProps }: Props) {
     const canStepForwards =
         savedCameraPositions.currentIndex < savedCameraPositions.positions.length - 1 &&
         viewMode !== ViewMode.Panorama &&
-        cameraType === CameraType.Flight;
+        cameraType === CameraType.Pinhole;
 
     const dispatch = useAppDispatch();
 

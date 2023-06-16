@@ -151,7 +151,7 @@ export function Follow({ fpObj }: { fpObj: FollowParametricObject }) {
                 );
                 dispatch(
                     renderActions.setCamera({
-                        type: CameraType.Flight,
+                        type: CameraType.Pinhole,
                         goTo: {
                             position: offsetPt,
                             rotation: keepOffset ? ([...view.camera.rotation] as Vec4) : rotation,

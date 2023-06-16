@@ -387,7 +387,7 @@ export function CameraSettings({
                                     min={0}
                                     max={360}
                                     step={1}
-                                    disabled={cameraType !== CameraType.Flight}
+                                    disabled={cameraType !== CameraType.Pinhole}
                                     scale={scaleNearClipping}
                                     name={AdvancedSetting.CameraNearClipping}
                                     value={near}
@@ -583,7 +583,7 @@ export function CameraSettings({
                                     sx={{ width: 150 }}
                                     name="pivot"
                                     size="small"
-                                    disabled={cameraType !== CameraType.Flight}
+                                    disabled={cameraType !== CameraType.Pinhole}
                                     value={mouseButtonMap.pivot}
                                     onChange={handleMouseControllerChange}
                                     input={<OutlinedInput />}
@@ -602,7 +602,7 @@ export function CameraSettings({
                                     sx={{ width: 150 }}
                                     name="rotate"
                                     size="small"
-                                    disabled={cameraType !== CameraType.Flight}
+                                    disabled={cameraType !== CameraType.Pinhole}
                                     value={mouseButtonMap.rotate}
                                     onChange={handleMouseControllerChange}
                                     input={<OutlinedInput />}
@@ -621,7 +621,7 @@ export function CameraSettings({
                                     sx={{ width: 150 }}
                                     name="pan"
                                     size="small"
-                                    disabled={cameraType !== CameraType.Flight}
+                                    disabled={cameraType !== CameraType.Pinhole}
                                     value={mouseButtonMap.pan}
                                     onChange={handleMouseControllerChange}
                                     input={<OutlinedInput />}
@@ -648,7 +648,7 @@ export function CameraSettings({
                                     sx={{ width: 150 }}
                                     name="pivot"
                                     size="small"
-                                    disabled={cameraType !== CameraType.Flight}
+                                    disabled={cameraType !== CameraType.Pinhole}
                                     value={fingerMap.pivot}
                                     onChange={handleTouchControllerChange}
                                     input={<OutlinedInput />}
@@ -667,7 +667,7 @@ export function CameraSettings({
                                     sx={{ width: 150 }}
                                     name="rotate"
                                     size="small"
-                                    disabled={cameraType !== CameraType.Flight}
+                                    disabled={cameraType !== CameraType.Pinhole}
                                     value={fingerMap.rotate}
                                     onChange={handleTouchControllerChange}
                                     input={<OutlinedInput />}
@@ -686,7 +686,7 @@ export function CameraSettings({
                                     sx={{ width: 150 }}
                                     name="pan"
                                     size="small"
-                                    disabled={cameraType !== CameraType.Flight}
+                                    disabled={cameraType !== CameraType.Pinhole}
                                     value={fingerMap.pan}
                                     onChange={handleTouchControllerChange}
                                     input={<OutlinedInput />}
@@ -750,7 +750,7 @@ export function CameraSettings({
                 </Accordion>
 
                 <Button
-                    disabled={cameraType !== CameraType.Flight}
+                    disabled={cameraType !== CameraType.Pinhole}
                     variant="outlined"
                     color="grey"
                     sx={{ ml: 1, my: 2 }}

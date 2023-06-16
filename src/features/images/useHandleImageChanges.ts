@@ -43,7 +43,7 @@ export function useHandleImageChanges() {
 
             if (!activeImage) {
                 dispatch(renderActions.setViewMode(ViewMode.Default));
-                dispatch(renderActions.setCamera({ type: CameraType.Flight }));
+                dispatch(renderActions.setCamera({ type: CameraType.Pinhole }));
                 return;
             }
 
@@ -56,7 +56,7 @@ export function useHandleImageChanges() {
             function loadFlatImage(image: FlatImage, view: View) {
                 dispatch(
                     renderActions.setCamera({
-                        type: CameraType.Flight,
+                        type: CameraType.Pinhole,
                         goTo: { position: image.position, rotation: view.camera.rotation },
                     })
                 );
@@ -70,7 +70,7 @@ export function useHandleImageChanges() {
                 const rotation = panorama.rotation ?? view.camera.rotation;
                 dispatch(
                     renderActions.setCamera({
-                        type: CameraType.Flight,
+                        type: CameraType.Pinhole,
                         goTo: { position: panorama.position, rotation },
                     })
                 );

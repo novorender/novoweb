@@ -47,7 +47,7 @@ export function FlyToSelected({ position, ...speedDialProps }: Props) {
         }
 
         if (previousBoundingSphere.current) {
-            dispatch(renderActions.setCamera({ type: CameraType.Flight, zoomTo: previousBoundingSphere.current }));
+            dispatch(renderActions.setCamera({ type: CameraType.Pinhole, zoomTo: previousBoundingSphere.current }));
             dispatch(imagesActions.setActiveImage(undefined));
             return;
         }
@@ -60,7 +60,7 @@ export function FlyToSelected({ position, ...speedDialProps }: Props) {
 
             if (boundingSphere) {
                 previousBoundingSphere.current = boundingSphere;
-                dispatch(renderActions.setCamera({ type: CameraType.Flight, zoomTo: boundingSphere }));
+                dispatch(renderActions.setCamera({ type: CameraType.Pinhole, zoomTo: boundingSphere }));
                 dispatch(imagesActions.setActiveImage(undefined));
             }
         } finally {

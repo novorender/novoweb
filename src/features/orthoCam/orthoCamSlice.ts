@@ -2,6 +2,8 @@ import { createSlice, PayloadAction } from "@reduxjs/toolkit";
 import { vec3 } from "gl-matrix";
 
 import { RootState } from "app/store";
+import { initScene } from "features/render";
+import { getCustomProperties } from "features/render/render";
 
 const initialState = {
     crossSection: undefined as vec3 | undefined,
@@ -28,6 +30,12 @@ export const orthoCamSlice = createSlice({
         setCurrentTopDownElevation: (state, action: PayloadAction<State["currentTopDownElevation"]>) => {
             state.currentTopDownElevation = action.payload;
         },
+    },
+    extraReducers(builder) {
+        builder.addCase(initScene, (state, action) => {
+            const props = getCustomProperties(action.payload.sceneData.customProperties);
+            state.defaultTopDownElevation = props.defaultTopDownElevation;
+        });
     },
 });
 

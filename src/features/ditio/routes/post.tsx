@@ -39,7 +39,7 @@ export function Post() {
 
         dispatch(
             renderActions.setCamera({
-                type: CameraType.Flight,
+                type: CameraType.Pinhole,
                 goTo: {
                     position: [pos[0], view.camera.position[1], pos[2]],
                     rotation: view.camera.rotation,

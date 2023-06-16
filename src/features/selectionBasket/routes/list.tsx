@@ -107,10 +107,10 @@ export function List() {
                             <Checkbox
                                 size="medium"
                                 color="primary"
-                                disabled={cameraType !== CameraType.Flight}
-                                checked={cameraType === CameraType.Flight && flyOnSelect}
+                                disabled={cameraType !== CameraType.Pinhole}
+                                checked={cameraType === CameraType.Pinhole && flyOnSelect}
                                 onChange={() => {
-                                    if (cameraType !== CameraType.Flight) {
+                                    if (cameraType !== CameraType.Pinhole) {
                                         return;
                                     }
 
@@ -122,12 +122,12 @@ export function List() {
                     />
                     <Button
                         disabled={
-                            cameraType !== CameraType.Flight ||
+                            cameraType !== CameraType.Pinhole ||
                             !(objects.status === AsyncStatus.Success && objects.data.length)
                         }
                         onClick={() => {
                             if (
-                                cameraType !== CameraType.Flight ||
+                                cameraType !== CameraType.Pinhole ||
                                 !(objects.status === AsyncStatus.Success && objects.data.length)
                             ) {
                                 return;

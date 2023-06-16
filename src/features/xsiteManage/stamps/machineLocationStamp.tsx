@@ -49,7 +49,7 @@ export function MachineLocationStamp() {
                     onClick={() =>
                         dispatch(
                             renderActions.setCamera({
-                                type: CameraType.Flight,
+                                type: CameraType.Pinhole,
                                 goTo: {
                                     position: [
                                         stamp.data.location.position[0],

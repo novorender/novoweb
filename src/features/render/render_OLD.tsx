@@ -681,7 +681,7 @@ export function Render3D({ onInit }: Props) {
                 return;
             }
 
-            if (cameraState.type === CameraType.Flight) {
+            if (cameraState.type === CameraType.Pinhole) {
                 dispatch(renderActions.setGrid({ enabled: false }));
 
                 controller.enabled = true;
