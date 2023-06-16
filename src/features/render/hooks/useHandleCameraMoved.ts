@@ -7,7 +7,6 @@ import { useAppDispatch, useAppSelector } from "app/store";
 import { ViewMode } from "types/misc";
 
 import { CameraType, renderActions, selectCameraType, selectSavedCameraPositions, selectViewMode } from "..";
-import { flip, flipGLtoCadQuat } from "../utils";
 
 export function useHandleCameraMoved() {
     const {
