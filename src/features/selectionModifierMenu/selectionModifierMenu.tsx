@@ -20,6 +20,7 @@ import { SelectionColor } from "features/selectionColor";
 import { ViewOnlySelected } from "features/viewOnlySelected";
 import { HideSelected } from "features/hideSelected";
 import { ClearSelection } from "features/clearSelection";
+import { ClearView } from "features/clearView";
 
 export function SelectionModifierMenu() {
     const theme = useTheme();
@@ -63,7 +64,7 @@ export function SelectionModifierMenu() {
                 icon={<SpeedDialIcon icon={<ArrowUpward />} openIcon={<ArrowDownward />} />}
                 onClick={() => dispatch(renderActions.setStamp(null))}
             >
-                {/* <ClearView /> TODO */}
+                <ClearView />
                 <ClearSelection />
                 <HideSelected />
                 <ViewOnlySelected />

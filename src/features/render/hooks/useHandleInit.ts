@@ -71,7 +71,7 @@ export function useHandleInit() {
                 dispatch(
                     renderActions.initScene({
                         sceneData,
-                        octreeSceneConfig,
+                        sceneConfig: octreeSceneConfig,
                         initialCamera: {
                             position: vec3.clone(sceneData.camera?.position ?? _view.renderState.camera.position),
                             rotation: quat.clone(sceneData.camera?.rotation ?? _view.renderState.camera.rotation),
@@ -176,7 +176,7 @@ export type SceneConfig = Omit<DeepMutable<SceneData>, "camera" | "environment" 
     version?: string;
 };
 
-async function loadScene(id: string): Promise<SceneConfig> {
+export async function loadScene(id: string): Promise<SceneConfig> {
     const res: (SceneData & { version?: string }) | SceneLoadFail = await dataApi.loadScene(id);
 
     if ("error" in res) {

@@ -25,12 +25,20 @@ import { getSubtrees } from "./utils";
 
 export const initScene = createAction<{
     sceneData: Omit<SceneConfig, "db" | "url">;
-    octreeSceneConfig: OctreeSceneConfig;
+    sceneConfig: OctreeSceneConfig;
     initialCamera: {
         position: vec3;
         rotation: quat;
     };
 }>("initScene");
+
+export const resetView = createAction<{
+    sceneData: Omit<SceneConfig, "db" | "url">;
+    initialCamera?: {
+        position: vec3;
+        rotation: quat;
+    };
+}>("resetView");
 
 export const fetchEnvironments = createAsyncThunk("novorender/fetchEnvironments", async (api: API) => {
     const envs = await api.availableEnvironments("https://api.novorender.com/assets/env/index.json");
@@ -648,7 +656,7 @@ export const renderSlice = createSlice({
         builder.addCase(initScene, (state, action) => {
             const {
                 sceneData: { customProperties, settings, environment },
-                octreeSceneConfig,
+                sceneConfig,
                 initialCamera,
             } = action.payload;
 
@@ -660,7 +668,7 @@ export const renderSlice = createSlice({
                 return;
             }
 
-            // Home position
+            // Camera
             state.savedCameraPositions.positions[0] = initialCamera;
             state.savedCameraPositions.currentIndex = 0;
 
@@ -688,7 +696,7 @@ export const renderSlice = createSlice({
             };
 
             // subtrees
-            state.subtrees = getSubtrees(settings.advanced, octreeSceneConfig.subtrees ?? ["triangles"]);
+            state.subtrees = getSubtrees(settings.advanced, sceneConfig.subtrees ?? ["triangles"]);
 
             // terrain
             state.terrain.asBackground = settings.terrain.asBackground;
@@ -698,6 +706,47 @@ export const renderSlice = createSlice({
                     color: node.color,
                 })),
             };
+        });
+        builder.addCase(resetView, (state, action) => {
+            const {
+                initialCamera,
+                sceneData: { settings },
+            } = action.payload;
+
+            // Highlight
+            state.defaultVisibility = ObjectVisibility.Neutral;
+
+            // Camera
+            if (initialCamera) {
+                // todo support ortho
+                state.camera = {
+                    type: CameraType.Pinhole,
+                    goTo: initialCamera,
+                };
+                state.savedCameraPositions = {
+                    positions: [initialCamera],
+                    currentIndex: 0,
+                };
+            }
+
+            // background
+            state.background.color = settings.background.color ?? state.background.color;
+
+            // Deviations
+            state.points.deviation.index = settings.points.deviation.index;
+            state.points.deviation.mixFactor =
+                settings.points.deviation.mode === "mix" ? 1 : settings.points.deviation.mode === "on" ? 0.5 : 0; // TODO map mode to mixFactor?
+
+            // Subtrees
+            state.subtrees = getSubtrees(
+                settings.advanced,
+                Object.keys(state.subtrees).filter(
+                    (key: any) => state.subtrees[key as keyof State["subtrees"]] !== SubtreeStatus.Unavailable
+                )
+            );
+
+            // terrain
+            state.terrain.asBackground = settings.terrain.asBackground;
         });
     },
 });
@@ -738,6 +787,6 @@ export const selectSceneStatus = (state: RootState) => state.render.sceneStatus;
 export const selectTerrain = (state: RootState) => state.render.terrain;
 
 const { reducer } = renderSlice;
-const actions = { ...renderSlice.actions, initScene };
+const actions = { ...renderSlice.actions, initScene, resetView };
 export { reducer as renderReducer, actions as renderActions };
 export type { State as RenderState };

@@ -1,7 +1,6 @@
 import { createSlice, PayloadAction } from "@reduxjs/toolkit";
 
 import { RootState } from "app/store";
-import { initScene } from "features/render";
 import { AsyncState, AsyncStatus } from "types/misc";
 import { VecRGBA } from "utils/color";
 
@@ -53,11 +52,6 @@ export const deviationsSlice = createSlice({
         setProfiles: (state, action: PayloadAction<State["profiles"]>) => {
             state.profiles = action.payload;
         },
-    },
-    extraReducers: (builder) => {
-        builder.addCase(initScene, (state, action) => {
-            console.log("DEVIATIONS");
-        });
     },
 });
 
