@@ -110,6 +110,16 @@ export function Render3D() {
 }
 
 export type CustomProperties = {
+    v1?: {
+        camera: {
+            initialState: {
+                kind: "pinhole" | "orthographic";
+                position: [number, number, number];
+                rotation: [number, number, number, number];
+                fov: number;
+            };
+        };
+    };
     enabledFeatures?: Record<string, boolean>;
     showStats?: boolean;
     navigationCube?: boolean;

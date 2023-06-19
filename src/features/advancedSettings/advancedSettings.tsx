@@ -43,6 +43,7 @@ import { PerformanceSettings } from "./routes/performanceSettings";
 import { ProjectSettings } from "./routes/projectSettings";
 import { RenderSettings } from "./routes/renderSettings";
 import { SceneSettings } from "./routes/sceneSettings";
+import { quat, vec3 } from "gl-matrix";
 
 enum Status {
     Idle,
@@ -54,7 +55,7 @@ enum Status {
 export default function AdvancedSettings() {
     const sceneId = useSceneId();
     const {
-        state: { scene_OLD: scene, view_OLD: view },
+        state: { scene, view },
     } = useExplorerGlobals(true);
 
     const isAdminScene = useAppSelector(selectIsAdminScene);
@@ -207,11 +208,12 @@ export default function AdvancedSettings() {
         setStatus(Status.SaveSuccess);
     };
 
-    const saveCameraPos = async (camera: Required<FlightControllerParams>) => {
-        if (camera.kind !== "flight") {
-            return;
-        }
-
+    const saveCameraPos = async (cameraState: {
+        projection: "pinhole" | "orthographic";
+        position: vec3;
+        rotation: quat;
+        fov: number;
+    }) => {
         setStatus(Status.Saving);
 
         try {
@@ -220,11 +222,18 @@ export default function AdvancedSettings() {
             await dataApi.putScene({
                 ...originalScene,
                 url: isAdminScene ? scene.id : `${sceneId}:${scene.id}`,
-                camera: {
-                    ...camera,
+                customProperties: {
+                    ...originalScene.customProperties,
+                    v1: {
+                        ...originalScene.customProperties.v1,
+                        camera: {
+                            initialState: cameraState,
+                        },
+                    },
                 },
             });
-        } catch {
+        } catch (e) {
+            console.warn(e);
             return setStatus(Status.SaveError);
         }
 

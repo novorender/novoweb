@@ -27,16 +27,20 @@ export const initScene = createAction<{
     sceneData: Omit<SceneConfig, "db" | "url">;
     sceneConfig: OctreeSceneConfig;
     initialCamera: {
+        kind: "pinhole" | "orthographic";
         position: vec3;
         rotation: quat;
+        fov: number;
     };
 }>("initScene");
 
 export const resetView = createAction<{
     sceneData: Omit<SceneConfig, "db" | "url">;
     initialCamera?: {
+        kind: "pinhole" | "orthographic";
         position: vec3;
         rotation: quat;
+        fov: number;
     };
 }>("resetView");
 
@@ -134,13 +138,12 @@ export type DeepMutable<T> = { -readonly [P in keyof T]: DeepMutable<T[P]> };
 type CameraState =
     | {
           type: CameraType.Orthographic;
-          params?: OrthoControllerParams;
-          goTo?: { position: Camera["position"]; rotation: Camera["rotation"]; fieldOfView?: number };
+          goTo?: { position: Camera["position"]; rotation: Camera["rotation"]; fov?: number };
           gridOrigo?: vec3;
       }
     | {
           type: CameraType.Pinhole;
-          goTo?: { position: Camera["position"]; rotation: Camera["rotation"]; fieldOfView?: number };
+          goTo?: { position: Camera["position"]; rotation: Camera["rotation"]; fov?: number };
           zoomTo?: BoundingSphere;
       };
 type MutableCameraState = DeepMutable<CameraState>;
@@ -655,12 +658,10 @@ export const renderSlice = createSlice({
     extraReducers: (builder) => {
         builder.addCase(initScene, (state, action) => {
             const {
-                sceneData: { customProperties, settings, environment },
+                sceneData: { customProperties: props, settings, environment },
                 sceneConfig,
                 initialCamera,
             } = action.payload;
-
-            const props = getCustomProperties(customProperties);
 
             state.secondaryHighlight.property = props.highlights?.secondary.property ?? "";
 
@@ -669,6 +670,8 @@ export const renderSlice = createSlice({
             }
 
             // Camera
+            state.camera.type = initialCamera.kind === "orthographic" ? CameraType.Orthographic : CameraType.Pinhole;
+            state.camera.goTo = initialCamera;
             state.savedCameraPositions.positions[0] = initialCamera;
             state.savedCameraPositions.currentIndex = 0;
 
@@ -719,10 +722,9 @@ export const renderSlice = createSlice({
             // Camera
             if (initialCamera) {
                 // todo support ortho
-                state.camera = {
-                    type: CameraType.Pinhole,
-                    goTo: initialCamera,
-                };
+                state.camera.type =
+                    initialCamera.kind === "orthographic" ? CameraType.Orthographic : CameraType.Pinhole;
+                state.camera.goTo = initialCamera;
                 state.savedCameraPositions = {
                     positions: [initialCamera],
                     currentIndex: 0,

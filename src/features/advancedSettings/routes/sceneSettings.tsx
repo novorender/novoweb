@@ -1,10 +1,10 @@
-import { ChangeEvent, MouseEvent, SyntheticEvent, useState } from "react";
-import { quat, vec3 } from "gl-matrix";
-import { FlightControllerParams } from "@novorender/webgl-api";
-import { useTheme, Box, Button, Autocomplete, FormControlLabel, Typography, Slider } from "@mui/material";
-import { useHistory } from "react-router-dom";
 import { ArrowBack, ColorLens, Save } from "@mui/icons-material";
+import { Autocomplete, Box, Button, FormControlLabel, Slider, Typography, useTheme } from "@mui/material";
+import { quat, vec3 } from "gl-matrix";
+import { ChangeEvent, MouseEvent, SyntheticEvent, useState } from "react";
+import { useHistory } from "react-router-dom";
 
+import { useAppDispatch, useAppSelector } from "app/store";
 import {
     Accordion,
     AccordionDetails,
@@ -15,23 +15,21 @@ import {
     Switch,
     TextField,
 } from "components";
-import { useAppDispatch, useAppSelector } from "app/store";
-import {
-    renderActions,
-    selectEnvironments,
-    selectCurrentEnvironment,
-    AdvancedSetting,
-    selectAdvancedSettings,
-    selectSubtrees,
-    SubtreeStatus,
-    selectCameraType,
-    CameraType,
-} from "features/render/renderSlice";
 import { useExplorerGlobals } from "contexts/explorerGlobals";
-import { rgbToVec, VecRGBA, vecToRgb } from "utils/color";
 import { ColorPicker } from "features/colorPicker";
+import {
+    AdvancedSetting,
+    SubtreeStatus,
+    renderActions,
+    selectBackground,
+    selectSubtrees,
+    selectTerrain,
+    selectViewMode,
+} from "features/render/renderSlice";
+import { ViewMode, getAsyncStateData } from "types/misc";
+import { VecRGBA, rgbToVec, vecToRgb } from "utils/color";
 
-import { toggleTerrainAsBackground, togglePickSemiTransparentObjects } from "../utils";
+import { togglePickSemiTransparentObjects, toggleTerrainAsBackground } from "../utils";
 
 export function SceneSettings({
     save,
@@ -39,37 +37,35 @@ export function SceneSettings({
     saving,
 }: {
     save: () => Promise<void>;
-    saveCameraPos: (camera: Required<FlightControllerParams>) => Promise<void>;
+    saveCameraPos: (camera: {
+        kind: "pinhole" | "orthographic";
+        position: vec3;
+        rotation: quat;
+        fov: number;
+    }) => Promise<void>;
     saving: boolean;
 }) {
     const history = useHistory();
     const theme = useTheme();
     const {
-        state: { view_OLD: view },
+        state: { view },
     } = useExplorerGlobals(true);
 
     const dispatch = useAppDispatch();
-    const environments = useAppSelector(selectEnvironments);
-    const currentEnvironment = useAppSelector(selectCurrentEnvironment);
+    const viewMode = useAppSelector(selectViewMode);
     const subtrees = useAppSelector(selectSubtrees);
-    const cameraType = useAppSelector(selectCameraType);
-    const settings = useAppSelector(selectAdvancedSettings);
-    const { terrainAsBackground, backgroundColor, skyBoxBlur, pickSemiTransparentObjects } = settings;
+    const background = useAppSelector(selectBackground);
+    const terrain = useAppSelector(selectTerrain);
+    // todo semitransparent picking?
 
-    const [blur, setBlur] = useState(skyBoxBlur);
+    const [blur, setBlur] = useState(background.blur);
     const [colorPickerAnchor, setColorPickerAnchor] = useState<HTMLElement | null>(null);
     const toggleColorPicker = (event?: MouseEvent<HTMLElement>) => {
         setColorPickerAnchor(!colorPickerAnchor && event?.currentTarget ? event.currentTarget : null);
     };
 
-    const handleToggleTerrainAsBackground = ({ target: { checked } }: ChangeEvent<HTMLInputElement>) => {
-        dispatch(renderActions.setAdvancedSettings({ [AdvancedSetting.TerrainAsBackground]: checked }));
-        return toggleTerrainAsBackground(view);
-    };
-
     const handleTogglePickSemiTransparentObjects = ({ target: { checked } }: ChangeEvent<HTMLInputElement>) => {
         dispatch(renderActions.setAdvancedSettings({ [AdvancedSetting.PickSemiTransparentObjects]: checked }));
-        return togglePickSemiTransparentObjects(view);
     };
 
     const handleBlurChange = (_event: Event, value: number | number[]): void => {
@@ -78,7 +74,7 @@ export function SceneSettings({
         }
 
         setBlur(value);
-        view.applySettings({ background: { skyBoxBlur: value } });
+        view.modifyRenderState({ background: { blur: value } });
     };
 
     const handleBlurCommit = (_event: Event | SyntheticEvent<Element, Event>, value: number | number[]) => {
@@ -86,11 +82,11 @@ export function SceneSettings({
             return;
         }
 
-        dispatch(renderActions.setAdvancedSettings({ skyBoxBlur: value }));
+        dispatch(renderActions.setBackground({ blur: value }));
     };
 
     const showTerrainSettings = subtrees?.terrain !== SubtreeStatus.Unavailable;
-    const { r, g, b } = vecToRgb(backgroundColor);
+    const { r, g, b } = vecToRgb(background.color);
     return (
         <>
             <Box boxShadow={theme.customShadows.widgetHeader}>
@@ -121,15 +117,24 @@ export function SceneSettings({
                             <Autocomplete
                                 id="scene-environment"
                                 fullWidth
-                                options={environments}
-                                getOptionLabel={(env) =>
-                                    env.name[0].toUpperCase() + env.name.slice(1).replaceAll("_", " ")
+                                options={
+                                    getAsyncStateData(background.environments)?.map((env) => env.url) ??
+                                    ([] as string[])
                                 }
-                                value={currentEnvironment}
-                                isOptionEqualToValue={(option, value) => option.name === value.name}
+                                getOptionLabel={(url) => {
+                                    const env = getAsyncStateData(background.environments)?.find((e) => e.url === url);
+
+                                    if (!env) {
+                                        return url.split("/").at(-1) ?? url;
+                                    }
+
+                                    return env.name[0].toUpperCase() + env.name.slice(1).replaceAll("_", " ");
+                                }}
+                                value={background.url}
+                                isOptionEqualToValue={(option, value) => option === value}
                                 onChange={(_e, value) => {
                                     if (value) {
-                                        dispatch(renderActions.setEnvironment(value));
+                                        dispatch(renderActions.setBackground({ url: value }));
                                     }
                                 }}
                                 size="small"
@@ -168,9 +173,11 @@ export function SceneSettings({
                                     sx={{ ml: 0, mb: 1 }}
                                     control={
                                         <Switch
-                                            name={AdvancedSetting.TerrainAsBackground}
-                                            checked={terrainAsBackground}
-                                            onChange={handleToggleTerrainAsBackground}
+                                            name={"render-terrain-as-background"}
+                                            checked={terrain.asBackground}
+                                            onChange={(_evt, checked) =>
+                                                dispatch(renderActions.setTerrain({ asBackground: checked }))
+                                            }
                                         />
                                     }
                                     label={
@@ -183,7 +190,7 @@ export function SceneSettings({
                         </AccordionDetails>
                     </Accordion>
                 ) : null}
-                <Accordion>
+                {/* <Accordion>
                     <AccordionSummary>Object picking</AccordionSummary>
                     <AccordionDetails>
                         <Box p={1} display="flex" flexDirection="column">
@@ -204,7 +211,7 @@ export function SceneSettings({
                             />
                         </Box>
                     </AccordionDetails>
-                </Accordion>
+                </Accordion> */}
                 <Box p={1} mt={1}>
                     <Box>
                         <Button sx={{ mb: 2 }} variant="outlined" color="grey" onClick={toggleColorPicker}>
@@ -213,19 +220,20 @@ export function SceneSettings({
                         </Button>
                     </Box>
                     <Button
-                        disabled={cameraType !== CameraType.Pinhole}
+                        disabled={saving || viewMode === ViewMode.Panorama}
                         variant="outlined"
                         color="grey"
                         onClick={async () => {
-                            if (view.camera.controller.params.kind === "flight") {
-                                await saveCameraPos(view.camera.controller.params);
-                                dispatch(
-                                    renderActions.setHomeCameraPos({
-                                        position: vec3.clone(view.camera.position),
-                                        rotation: quat.clone(view.camera.rotation),
-                                    })
-                                );
+                            if (saving || view.activeController.kind === "panorama") {
+                                return;
                             }
+
+                            await saveCameraPos({
+                                kind: view.renderState.camera.kind,
+                                position: vec3.clone(view.renderState.camera.position),
+                                rotation: quat.clone(view.renderState.camera.rotation),
+                                fov: view.renderState.camera.fov,
+                            });
                         }}
                     >
                         Save default camera position
@@ -236,12 +244,12 @@ export function SceneSettings({
                 open={Boolean(colorPickerAnchor)}
                 anchorEl={colorPickerAnchor}
                 onClose={() => toggleColorPicker()}
-                color={backgroundColor}
+                color={background.color}
                 onChangeComplete={({ rgb }) => {
-                    const rgba = rgbToVec(rgb) as VecRGBA;
+                    const color = rgbToVec(rgb) as VecRGBA;
                     dispatch(
-                        renderActions.setAdvancedSettings({
-                            [AdvancedSetting.BackgroundColor]: rgba,
+                        renderActions.setBackground({
+                            color,
                         })
                     );
                 }}

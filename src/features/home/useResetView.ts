@@ -33,12 +33,12 @@ export function useResetView() {
             const { url: _url, db: _db, ...sceneData } = await loadScene(sceneId);
             const groups = sceneData.objectGroups ?? [];
             const initialCamera = resetCamera
-                ? sceneData.camera
-                    ? {
-                          position: vec3.clone(sceneData.camera.position),
-                          rotation: quat.clone(sceneData.camera.rotation),
-                      }
-                    : { position: vec3.clone(homePos.position), rotation: quat.clone(homePos.rotation) }
+                ? sceneData.camera ?? {
+                      kind: "pinhole",
+                      position: vec3.clone(homePos.position),
+                      rotation: quat.clone(homePos.rotation),
+                      fov: 60,
+                  }
                 : undefined;
 
             dispatch(

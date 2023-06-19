@@ -28,7 +28,7 @@ export function useHandleCameraState() {
                     //     position: vec3.clone(state.goTo.position),
                     //     rotation: quat.clone(state.goTo.rotation),
                     // });
-                    controller.moveTo(vec3.clone(state.goTo.position), 0, quat.clone(state.goTo.rotation));
+                    controller.moveTo(vec3.clone(state.goTo.position), 1000, quat.clone(state.goTo.rotation));
                 } else if (state.zoomTo) {
                     controller.zoomTo({
                         center: flip(state.zoomTo.center),
@@ -44,10 +44,12 @@ export function useHandleCameraState() {
 
                 if (state.goTo) {
                     // view.switchCameraController("ortho");
-                    // controller.moveTo(vec3.clone(state.goTo.position), 2000, quat.clone(state.goTo.rotation));
+                    // controller.moveTo(vec3.clone(state.goTo.position), 1000, quat.clone(state.goTo.rotation));
+                    // controller.updateParams({ fieldOfView: state.goTo.fov });
                     view.switchCameraController("ortho", {
                         position: vec3.clone(state.goTo.position),
                         rotation: quat.clone(state.goTo.rotation),
+                        fov: state.goTo.fov,
                     });
                 }
 

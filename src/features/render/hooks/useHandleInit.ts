@@ -19,6 +19,7 @@ import { AsyncStatus } from "types/misc";
 import { selectEnvironments, renderActions, DeepMutable } from "..";
 import { flip } from "../utils";
 import { Error as SceneError } from "../sceneError";
+import { CustomProperties } from "../render";
 
 export function useHandleInit() {
     const sceneId = useSceneId();
@@ -32,7 +33,6 @@ export function useHandleInit() {
         dispatch: dispatchGlobals,
     } = useExplorerGlobals();
 
-    const environments = useAppSelector(selectEnvironments);
     const dispatch = useAppDispatch();
 
     const initialized = useRef(false);
@@ -52,19 +52,15 @@ export function useHandleInit() {
 
             try {
                 const { url, db, ...sceneData } = await loadScene(sceneId);
-                // const { db, ..._sceneData } = (await dataApi.loadScene(
-                //     "3b3caf9359c943f48ce49055e8b3e118"
-                // )) as SceneData;
-
                 const octreeSceneConfig = await _view.loadSceneFromURL(new URL(url));
 
                 // TODO(?): Set in initScene() and handle effect?
-                if (sceneData.camera) {
-                    await _view.switchCameraController(sceneData.camera.kind, {
-                        position: sceneData.camera.position,
-                        rotation: sceneData.camera.rotation,
-                    });
-                }
+                // if (sceneData.camera) {
+                //     await _view.switchCameraController(sceneData.camera.kind, {
+                //         position: sceneData.camera.position,
+                //         rotation: sceneData.camera.rotation,
+                //     });
+                // }
 
                 _view.run();
 
@@ -73,8 +69,10 @@ export function useHandleInit() {
                         sceneData,
                         sceneConfig: octreeSceneConfig,
                         initialCamera: {
+                            kind: sceneData.camera?.kind ?? _view.renderState.camera.kind,
                             position: vec3.clone(sceneData.camera?.position ?? _view.renderState.camera.position),
                             rotation: quat.clone(sceneData.camera?.rotation ?? _view.renderState.camera.rotation),
+                            fov: sceneData.camera?.fov ?? _view.renderState.camera.fov,
                         },
                     })
                 );
@@ -112,7 +110,6 @@ export function useHandleInit() {
                 });
 
                 resizeObserver.observe(canvas);
-                dispatch(renderActions.setEnvironments(environments));
                 dispatchGlobals(
                     explorerGlobalsActions.update({
                         db: db as ObjectDB,
@@ -158,7 +155,6 @@ export function useHandleInit() {
         canvas,
         view,
         dispatch,
-        environments,
         sceneId,
         dispatchGlobals,
         dispatchObjectGroups,
@@ -169,11 +165,12 @@ export function useHandleInit() {
     ]);
 }
 
-export type SceneConfig = Omit<DeepMutable<SceneData>, "camera" | "environment" | "settings"> & {
+export type SceneConfig = Omit<DeepMutable<SceneData>, "camera" | "environment" | "settings" | "customProperties"> & {
     settings: Internal.RenderSettingsExt;
-    camera?: { kind: string; position: vec3; rotation: quat; fov: number };
+    camera?: { kind: "pinhole" | "orthographic"; position: vec3; rotation: quat; fov: number };
     environment: string;
     version?: string;
+    customProperties: CustomProperties;
 };
 
 export async function loadScene(id: string): Promise<SceneConfig> {
@@ -190,7 +187,7 @@ export async function loadScene(id: string): Promise<SceneConfig> {
 
     // Legacy scene config format
     // needs to be flipped.
-    if (!cfg.version) {
+    if (!cfg.customProperties?.v1) {
         if (!camera || !(camera.kind === "ortho" || camera.kind === "flight")) {
             return cfg;
         }
@@ -198,7 +195,7 @@ export async function loadScene(id: string): Promise<SceneConfig> {
         cfg.camera =
             camera.kind === "ortho"
                 ? {
-                      kind: "ortho",
+                      kind: "orthographic",
                       position: flip([
                           camera.referenceCoordSys[12],
                           camera.referenceCoordSys[13],
@@ -210,12 +207,19 @@ export async function loadScene(id: string): Promise<SceneConfig> {
                       fov: camera.fieldOfView,
                   }
                 : {
-                      kind: "flight",
+                      kind: "pinhole",
                       position: flip(camera.position),
                       rotation: computeRotation(0, camera.pitch, camera.yaw),
                       fov: camera.fieldOfView,
                   };
 
+        cfg.environment = cfg.settings?.environment
+            ? "https://api.novorender.com/assets/env/" + (cfg.settings.environment as any as string) + "/"
+            : "";
+    } else {
+        cfg.camera = cfg.customProperties.v1.camera.initialState;
+
+        // todo save env
         cfg.environment = cfg.settings?.environment
             ? "https://api.novorender.com/assets/env/" + (cfg.settings.environment as any as string) + "/"
             : "";

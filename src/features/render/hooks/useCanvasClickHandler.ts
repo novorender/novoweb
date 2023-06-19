@@ -227,7 +227,7 @@ export function useCanvasClickHandler() {
                         dispatch(renderActions.setMainObject(result.objectId));
                         dispatchHighlighted(highlightActions.setIds([result.objectId]));
 
-                        if (!db) {
+                        if (!showPropertiesStamp || !secondaryHighlightProperty || !db) {
                             return;
                         }
 
