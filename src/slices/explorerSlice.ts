@@ -38,7 +38,8 @@ const initialState = {
     userRole: UserRole.Viewer,
     requireConsent: false,
     organization: "",
-    widgets: [] as WidgetKey[],
+    // todo
+    widgets: ["advancedSettings"] as WidgetKey[],
     maximized: [] as WidgetKey[],
     minimized: undefined as undefined | WidgetKey,
     primaryMenu: {

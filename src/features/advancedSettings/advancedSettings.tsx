@@ -1,16 +1,20 @@
-import { Link, MemoryRouter, Route, Switch } from "react-router-dom";
 import { Close, Save } from "@mui/icons-material";
 import { Box, Button, IconButton, List, ListItemButton, Snackbar, useTheme } from "@mui/material";
 import { SceneData } from "@novorender/data-js-api";
 import { FlightControllerParams, Internal } from "@novorender/webgl-api";
+import { useState } from "react";
+import { Link, MemoryRouter, Route, Switch } from "react-router-dom";
 
 import { dataApi } from "app";
 import { useAppSelector } from "app/store";
-import { featuresConfig, FeatureType } from "config/features";
 import { Divider, LinearProgress, LogoSpeedDial, ScrollBox, WidgetContainer, WidgetHeader } from "components";
-import WidgetList from "features/widgetList/widgetList";
+import { FeatureType, featuresConfig } from "config/features";
 import { useExplorerGlobals } from "contexts/explorerGlobals";
+import { useHighlightCollections } from "contexts/highlightCollections";
+import { useHighlighted } from "contexts/highlighted";
+import { selectDefaultTopDownElevation } from "features/orthoCam";
 import {
+    SubtreeStatus,
     selectAdvancedSettings,
     selectCameraSpeedLevels,
     selectCurrentEnvironment,
@@ -18,8 +22,8 @@ import {
     selectProjectSettings,
     selectProportionalCameraSpeed,
     selectSubtrees,
-    SubtreeStatus,
 } from "features/render";
+import WidgetList from "features/widgetList/widgetList";
 import {
     selectCanvasContextMenuFeatures,
     selectEnabledWidgets,
@@ -28,21 +32,17 @@ import {
     selectMinimized,
     selectPrimaryMenu,
 } from "slices/explorerSlice";
-import { useHighlighted } from "contexts/highlighted";
-import { useHighlightCollections } from "contexts/highlightCollections";
-import { selectDefaultTopDownElevation } from "features/orthoCam";
 
-import { useMountedState } from "hooks/useMountedState";
 import { useSceneId } from "hooks/useSceneId";
 import { useToggle } from "hooks/useToggle";
 
 import { CameraSettings } from "./routes/cameraSettings";
 import { FeatureSettings } from "./routes/featureSettings";
-import { RenderSettings } from "./routes/renderSettings";
-import { ProjectSettings } from "./routes/projectSettings";
-import { SceneSettings } from "./routes/sceneSettings";
-import { PerformanceSettings } from "./routes/performanceSettings";
 import { ObjectSelectionSettings } from "./routes/objectSelectionSettings";
+import { PerformanceSettings } from "./routes/performanceSettings";
+import { ProjectSettings } from "./routes/projectSettings";
+import { RenderSettings } from "./routes/renderSettings";
+import { SceneSettings } from "./routes/sceneSettings";
 
 enum Status {
     Idle,
@@ -75,7 +75,7 @@ export default function AdvancedSettings() {
     const [menuOpen, toggleMenu] = useToggle();
     const minimized = useAppSelector(selectMinimized) === featuresConfig.advancedSettings.key;
     const maximized = useAppSelector(selectMaximized).includes(featuresConfig.advancedSettings.key);
-    const [status, setStatus] = useMountedState(Status.Idle);
+    const [status, setStatus] = useState(Status.Idle);
     const saving = status === Status.Saving;
 
     const save = async () => {

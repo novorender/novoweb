@@ -19,7 +19,7 @@ import { useWidgetLayout } from "./useWidgetLayout";
 // const ClippingPlanes = lazy(() => import("features/clippingPlanes/clippingPlanes"));
 // const OrthoCam = lazy(() => import("features/orthoCam/orthoCam"));
 // const Images = lazy(() => import("features/images/images"));
-// const AdvancedSettings = lazy(() => import("features/advancedSettings/advancedSettings"));
+const AdvancedSettings = lazy(() => import("features/advancedSettings/advancedSettings"));
 // const BimCollab = lazy(() => import("features/bimCollab/bimCollab"));
 // const SelectionBasket = lazy(() => import("features/selectionBasket/selectionBasket"));
 // const Deviations = lazy(() => import("features/deviations/deviations"));
@@ -180,9 +180,9 @@ function getWidgetByKey(key: WidgetKey): JSX.Element | string {
         // case featuresConfig.images.key:
         //     Widget = Images;
         //     break;
-        // case featuresConfig.advancedSettings.key:
-        //     Widget = AdvancedSettings;
-        //     break;
+        case featuresConfig.advancedSettings.key:
+            Widget = AdvancedSettings;
+            break;
         // case featuresConfig.selectionBasket.key:
         //     Widget = SelectionBasket;
         //     break;
@@ -226,11 +226,11 @@ function getWidgetByKey(key: WidgetKey): JSX.Element | string {
             return key;
     }
 
-    // return (
-    //     <WidgetErrorBoundary widgetKey={key}>
-    //         <Suspense fallback={<WidgetSkeleton widgetKey={key} />}>
-    //             <Widget />
-    //         </Suspense>
-    //     </WidgetErrorBoundary>
-    // );
+    return (
+        <WidgetErrorBoundary widgetKey={key}>
+            <Suspense fallback={<WidgetSkeleton widgetKey={key} />}>
+                <Widget />
+            </Suspense>
+        </WidgetErrorBoundary>
+    );
 }
