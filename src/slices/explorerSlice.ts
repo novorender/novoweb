@@ -205,7 +205,9 @@ export const explorerSlice = createSlice({
             state.sceneType = getSceneType(customProperties);
             state.userRole = state.sceneType === SceneType.Admin ? UserRole.Admin : getUserRole(customProperties);
             state.requireConsent = getRequireConsent(customProperties);
-            state.lockedWidgets = state.lockedWidgets.filter((widget) => !customProperties?.features[widget]);
+            state.lockedWidgets = state.lockedWidgets.filter(
+                (widget) => !(customProperties?.features ?? ({} as any))[widget]
+            );
             state.primaryMenu = getPrimaryMenu(customProperties) ?? state.primaryMenu;
             state.contextMenu.canvas.features =
                 getCanvasContextMenuFeatures(customProperties) ?? state.contextMenu.canvas.features;

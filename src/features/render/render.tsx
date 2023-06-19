@@ -119,6 +119,11 @@ export type CustomProperties = {
                 fov: number;
             };
         };
+        integrations: {
+            ditio?: {
+                projectNumber: string;
+            };
+        };
     };
     enabledFeatures?: Record<string, boolean>;
     showStats?: boolean;

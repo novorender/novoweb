@@ -1,36 +1,35 @@
+import { OrthoControllerParams } from "@novorender/webgl-api";
 import { mat3, mat4, quat, vec2, vec3, vec4 } from "gl-matrix";
 import { MouseEventHandler, useRef } from "react";
-import { OrthoControllerParams } from "@novorender/webgl-api";
 
 import { api, measureApi } from "app";
+import { useAppDispatch, useAppSelector } from "app/store";
+import { areaActions } from "features/area";
+import { selectDeviations } from "features/deviations";
+import { followPathActions } from "features/followPath";
+import { heightProfileActions } from "features/heightProfile";
+import { manholeActions } from "features/manhole";
+import { measureActions, selectMeasure, useMeasurePickSettings } from "features/measure";
+import { orthoCamActions, selectCrossSectionPoint } from "features/orthoCam";
+import { pointLineActions } from "features/pointLine";
 import {
+    CameraType,
+    Picker,
+    StampKind,
     renderActions,
+    selectCamera,
     selectClippingBox,
     selectMainObject,
-    selectSelectMultiple,
-    CameraType,
-    selectCamera,
     selectPicker,
-    Picker,
-    selectViewMode,
-    selectSecondaryHighlightProperty,
-    StampKind,
-    selectStamp,
     selectPointerDownState,
+    selectSecondaryHighlightProperty,
+    selectSelectMultiple,
+    selectStamp,
+    selectViewMode,
 } from "features/render/renderSlice";
-import { selectDeviations } from "features/deviations";
-import { measureActions, selectMeasure, useMeasurePickSettings } from "features/measure";
-import { manholeActions } from "features/manhole";
-import { useAppDispatch, useAppSelector } from "app/store";
-import { followPathActions } from "features/followPath";
-import { areaActions } from "features/area";
-import { heightProfileActions } from "features/heightProfile";
-import { pointLineActions } from "features/pointLine";
-import { ExtendedMeasureEntity, ViewMode } from "types/misc";
-import { orthoCamActions, selectCrossSectionPoint } from "features/orthoCam";
 import { useAbortController } from "hooks/useAbortController";
+import { ExtendedMeasureEntity, ViewMode } from "types/misc";
 
-import { useHighlighted, highlightActions, useDispatchHighlighted } from "contexts/highlighted";
 import { useExplorerGlobals } from "contexts/explorerGlobals";
 import {
     HighlightCollection,
@@ -38,8 +37,9 @@ import {
     useDispatchHighlightCollections,
     useHighlightCollections,
 } from "contexts/highlightCollections";
-import { isRealVec } from "utils/misc";
+import { highlightActions, useDispatchHighlighted, useHighlighted } from "contexts/highlighted";
 import { selectShowPropertiesStamp } from "features/properties/slice";
+import { isRealVec } from "utils/misc";
 
 import { pickDeviationArea } from "../utils";
 
@@ -227,7 +227,8 @@ export function useCanvasClickHandler() {
                         dispatch(renderActions.setMainObject(result.objectId));
                         dispatchHighlighted(highlightActions.setIds([result.objectId]));
 
-                        if (!showPropertiesStamp || !secondaryHighlightProperty || !db) {
+                        console.log(secondaryHighlightProperty);
+                        if ((!showPropertiesStamp && !secondaryHighlightProperty) || !db) {
                             return;
                         }
 

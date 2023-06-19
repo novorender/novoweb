@@ -1,3 +1,5 @@
+import type { Bookmark, ObjectGroup } from "@novorender/data-js-api";
+import { SceneConfig as OctreeSceneConfig } from "@novorender/web_app";
 import type {
     API,
     BoundingSphere,
@@ -8,19 +10,17 @@ import type {
     OrthoControllerParams,
     RenderSettings,
 } from "@novorender/webgl-api";
-import type { Bookmark, ObjectGroup } from "@novorender/data-js-api";
-import { createSlice, createAsyncThunk, PayloadAction, createAction } from "@reduxjs/toolkit";
+import { PayloadAction, createAction, createAsyncThunk, createSlice } from "@reduxjs/toolkit";
 import { mat4, quat, vec3, vec4 } from "gl-matrix";
-import { SceneConfig as OctreeSceneConfig } from "@novorender/web_app";
 
 import type { RootState } from "app/store";
-import { VecRGB, VecRGBA } from "utils/color";
 import { defaultFlightControls } from "config/camera";
-import { AsyncState, AsyncStatus, ViewMode } from "types/misc";
 import { LogPoint, MachineLocation } from "features/xsiteManage";
+import { AsyncState, AsyncStatus, ViewMode } from "types/misc";
+import { VecRGB, VecRGBA } from "utils/color";
 
-import { getCustomProperties } from "./render";
 import { SceneConfig } from "./hooks/useHandleInit";
+import { getCustomProperties } from "./render";
 import { getSubtrees } from "./utils";
 
 export const initScene = createAction<{
@@ -357,6 +357,9 @@ const initialState = {
     secondaryHighlight: {
         property: "",
     },
+    project: {
+        tmZone: "",
+    },
 };
 
 type State = typeof initialState;
@@ -568,22 +571,10 @@ export const renderSlice = createSlice({
                       }
                     : undefined;
 
-            const params =
-                "params" in payload && payload.params
-                    ? {
-                          ...payload.params,
-                          ...(payload.params.referenceCoordSys
-                              ? { referenceCoordSys: Array.from(payload.params.referenceCoordSys) as mat4 }
-                              : {}),
-                          ...(payload.params.position ? { position: Array.from(payload.params.position) as vec3 } : {}),
-                      }
-                    : undefined;
-
             state.camera = {
                 ...payload,
                 ...(goTo ? { goTo } : {}),
                 ...(zoomTo ? { zoomTo } : {}),
-                ...(params ? { params } : {}),
             } as MutableCameraState;
         },
         setCameraSpeedLevels: (state, { payload }: PayloadAction<Partial<State["cameraSpeedLevels"]>>) => {
@@ -658,7 +649,7 @@ export const renderSlice = createSlice({
     extraReducers: (builder) => {
         builder.addCase(initScene, (state, action) => {
             const {
-                sceneData: { customProperties: props, settings, environment },
+                sceneData: { customProperties: props, settings, environment, tmZone },
                 sceneConfig,
                 initialCamera,
             } = action.payload;
@@ -709,6 +700,9 @@ export const renderSlice = createSlice({
                     color: node.color,
                 })),
             };
+
+            // project
+            state.project.tmZone = tmZone ?? state.project.tmZone;
         });
         builder.addCase(resetView, (state, action) => {
             const {
@@ -773,7 +767,7 @@ export const selectCamera = (state: RootState) => state.render.camera as CameraS
 export const selectCameraType = (state: RootState) => state.render.camera.type;
 export const selectAdvancedSettings = (state: RootState) => state.render.advancedSettings;
 export const selectSecondaryHighlightProperty = (state: RootState) => state.render.secondaryHighlight.property;
-export const selectProjectSettings = (state: RootState) => state.render.projectSettings;
+export const selectProjectSettings = (state: RootState) => state.render.project;
 export const selectGridDefaults = (state: RootState) => state.render.gridDefaults;
 export const selectGrid = (state: RootState) => state.render.grid as RenderSettings["grid"];
 export const selectPicker = (state: RootState) => state.render.picker;

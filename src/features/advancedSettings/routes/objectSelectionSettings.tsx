@@ -1,20 +1,20 @@
-import { useTheme, Box, Button, Typography } from "@mui/material";
-import { useHistory } from "react-router-dom";
 import { ArrowBack, ColorLens, Save } from "@mui/icons-material";
+import { Box, Button, Typography, useTheme } from "@mui/material";
 import { MouseEvent, useState } from "react";
+import { useHistory } from "react-router-dom";
 
-import { Divider, LinearProgress, ScrollBox, TextField } from "components";
 import { useAppDispatch, useAppSelector } from "app/store";
-import { AdvancedSetting, renderActions, selectSecondaryHighlightProperty } from "features/render/renderSlice";
-import { highlightActions, useDispatchHighlighted, useHighlighted } from "contexts/highlighted";
+import { Divider, LinearProgress, ScrollBox, TextField } from "components";
 import {
     HighlightCollection,
     highlightCollectionsActions,
     useDispatchHighlightCollections,
     useHighlightCollections,
 } from "contexts/highlightCollections";
-import { VecRGBA, vecToRgb, rgbToVec } from "utils/color";
+import { highlightActions, useDispatchHighlighted, useHighlighted } from "contexts/highlighted";
 import { ColorPicker } from "features/colorPicker";
+import { renderActions, selectSecondaryHighlightProperty } from "features/render/renderSlice";
+import { VecRGBA, rgbToVec, vecToRgb } from "utils/color";
 
 export function ObjectSelectionSettings({ save, saving }: { save: () => Promise<void>; saving: boolean }) {
     const history = useHistory();
@@ -99,8 +99,8 @@ export function ObjectSelectionSettings({ save, saving }: { save: () => Promise<
                     onChange={({ target: { value } }) => setSecondaryHighlightInputValue(value)}
                     onBlur={() =>
                         dispatch(
-                            renderActions.setAdvancedSettings({
-                                [AdvancedSetting.SecondaryHighlight]: { property: secondaryHighlightInputValue },
+                            renderActions.setSecondaryHighlight({
+                                property: secondaryHighlightInputValue,
                             })
                         )
                     }

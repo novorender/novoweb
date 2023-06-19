@@ -7,8 +7,12 @@ import { computeRotation, createView, rotationFromDirection } from "@novorender/
 import { useAppSelector, useAppDispatch } from "app/store";
 import { useExplorerGlobals, explorerGlobalsActions } from "contexts/explorerGlobals";
 import { useDispatchHidden } from "contexts/hidden";
-import { useDispatchHighlightCollections } from "contexts/highlightCollections";
-import { useDispatchHighlighted } from "contexts/highlighted";
+import {
+    HighlightCollection,
+    highlightCollectionsActions,
+    useDispatchHighlightCollections,
+} from "contexts/highlightCollections";
+import { highlightActions, useDispatchHighlighted } from "contexts/highlighted";
 import { useDispatchObjectGroups, objectGroupsActions, GroupStatus } from "contexts/objectGroups";
 import { useDispatchSelectionBasket } from "contexts/selectionBasket";
 import { useSceneId } from "hooks/useSceneId";
@@ -25,8 +29,6 @@ export function useHandleInit() {
     const sceneId = useSceneId();
     const dispatchHighlighted = useDispatchHighlighted();
     const dispatchHighlightCollections = useDispatchHighlightCollections();
-    const dispatchHidden = useDispatchHidden();
-    const dispatchSelectionBasket = useDispatchSelectionBasket();
     const dispatchObjectGroups = useDispatchObjectGroups();
     const {
         state: { view, canvas },
@@ -97,6 +99,15 @@ export function useHandleInit() {
                             }))
                     )
                 );
+                dispatchHighlighted(
+                    highlightActions.setColor(sceneData.customProperties.highlights?.primary.color ?? [1, 0, 0, 1])
+                );
+                dispatchHighlightCollections(
+                    highlightCollectionsActions.setColor(
+                        HighlightCollection.SecondaryHighlight,
+                        sceneData.customProperties.highlights?.secondary.color ?? [1, 1, 0, 1]
+                    )
+                );
 
                 window.document.title = `${sceneData.title} - Novorender`;
                 const resizeObserver = new ResizeObserver((entries) => {
@@ -158,9 +169,7 @@ export function useHandleInit() {
         sceneId,
         dispatchGlobals,
         dispatchObjectGroups,
-        dispatchHidden,
         dispatchHighlighted,
-        dispatchSelectionBasket,
         dispatchHighlightCollections,
     ]);
 }
