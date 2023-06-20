@@ -1,39 +1,41 @@
-import { useState, SyntheticEvent, ChangeEvent, FormEvent } from "react";
-import { CameraController, FlightControllerParams, OrthoControllerParams } from "@novorender/webgl-api";
-import { useHistory } from "react-router-dom";
+import { ArrowBack, Save } from "@mui/icons-material";
 import {
-    useTheme,
+    Divider as BaseDivider,
     Box,
     Button,
-    Slider,
-    Typography,
-    OutlinedInput,
-    InputLabel,
-    Select,
-    MenuItem,
-    Divider as BaseDivider,
-    SelectChangeEvent,
     FormControlLabel,
     FormHelperText,
+    InputLabel,
+    MenuItem,
+    OutlinedInput,
+    Select,
+    SelectChangeEvent,
+    Slider,
+    Typography,
+    useTheme,
 } from "@mui/material";
-import { ArrowBack, Save } from "@mui/icons-material";
+import { CameraController, FlightControllerParams, OrthoControllerParams } from "@novorender/webgl-api";
 import { quat, vec3 } from "gl-matrix";
+import { ChangeEvent, FormEvent, SyntheticEvent, useState } from "react";
+import { useHistory } from "react-router-dom";
 
-import { Divider, ScrollBox, Accordion, AccordionDetails, AccordionSummary, LinearProgress, Switch } from "components";
 import { useAppDispatch, useAppSelector } from "app/store";
+import { Accordion, AccordionDetails, AccordionSummary, Divider, LinearProgress, ScrollBox, Switch } from "components";
 import { useExplorerGlobals } from "contexts/explorerGlobals";
+import { orthoCamActions, selectDefaultTopDownElevation } from "features/orthoCam";
 import {
     AdvancedSetting,
-    selectAdvancedSettings,
-    renderActions,
-    selectCameraType,
-    CameraType,
-    selectCameraSpeedLevels,
     CameraSpeedLevel,
-    selectProportionalCameraSpeed,
+    CameraType,
+    renderActions,
+    selectAdvancedSettings,
+    selectCameraDefaults,
+    selectCameraSpeedLevels,
+    selectCameraType,
     selectPointerLock,
-} from "features/render/renderSlice";
-import { orthoCamActions, selectDefaultTopDownElevation } from "features/orthoCam";
+    selectProportionalCameraSpeed,
+} from "features/render";
+import { Clipping } from "./clipping";
 
 type SliderSettings =
     | AdvancedSetting.CameraNearClipping
@@ -65,34 +67,25 @@ export function CameraSettings({
     const history = useHistory();
     const theme = useTheme();
     const {
-        state: { view_OLD: view },
+        state: { view },
     } = useExplorerGlobals(true);
 
     const dispatch = useAppDispatch();
-    const speedLevels = useAppSelector(selectCameraSpeedLevels).flight;
+    const speedLevels = useAppSelector(selectCameraSpeedLevels).pinhole;
     const proportionalSpeed = useAppSelector(selectProportionalCameraSpeed);
     const settings = useAppSelector(selectAdvancedSettings);
-    const { cameraNearClipping, cameraFarClipping, headlightIntensity, headlightDistance, mouseButtonMap, fingerMap } =
-        settings;
+    const { headlightIntensity, headlightDistance, mouseButtonMap, fingerMap } = settings;
+    const cameraDefaults = useAppSelector(selectCameraDefaults);
     const cameraType = useAppSelector(selectCameraType);
     const pointerLock = useAppSelector(selectPointerLock).ortho;
     const defaultTopDownElevation = useAppSelector(selectDefaultTopDownElevation);
 
-    const [far, setFar] = useState(() => {
-        const d = cameraFarClipping.toString();
-        const numZero = Math.max(0, d.length - 2);
-        return numZero * 90 + +d.substr(0, d.length - numZero) - 10;
-    });
-    const [near, setNear] = useState(() => {
-        const d = (cameraNearClipping * 10000).toString();
-        const numZero = Math.max(0, d.length - 2);
-        return numZero * 90 + +d.substr(0, d.length - numZero) - 10;
-    });
     const [distance, setDistance] = useState(() => {
         const d = headlightDistance.toString();
         const numZero = Math.max(0, d.length - 2);
         return numZero * 90 + +d.substr(0, d.length - numZero) - 10;
     });
+
     const [intensity, setIntensity] = useState(headlightIntensity);
 
     const [speeds, setSpeeds] = useState({
@@ -116,23 +109,6 @@ export function CameraSettings({
             }
 
             switch (kind) {
-                case AdvancedSetting.CameraFarClipping:
-                    setFar(value);
-
-                    (view.camera.controller.params as FlightControllerParams | OrthoControllerParams).far =
-                        scaleFarClipping(value);
-                    view.invalidateCamera();
-                    return;
-                case AdvancedSetting.CameraNearClipping:
-                    if (view.camera.controller.params.kind !== "flight") {
-                        return;
-                    }
-
-                    setNear(value);
-
-                    (view.camera.controller.params as FlightControllerParams).near = scaleNearClipping(value);
-                    view.invalidateCamera();
-                    return;
                 case AdvancedSetting.HeadlightIntensity:
                     setIntensity(value);
 
@@ -155,24 +131,6 @@ export function CameraSettings({
             }
 
             switch (kind) {
-                case AdvancedSetting.CameraFarClipping:
-                    dispatch(
-                        renderActions.setAdvancedSettings({
-                            [AdvancedSetting.CameraFarClipping]: scaleFarClipping(value),
-                        })
-                    );
-                    return;
-                case AdvancedSetting.CameraNearClipping:
-                    if (view.camera.controller.params.kind !== "flight") {
-                        return;
-                    }
-
-                    dispatch(
-                        renderActions.setAdvancedSettings({
-                            [AdvancedSetting.CameraNearClipping]: scaleNearClipping(value),
-                        })
-                    );
-                    return;
                 case AdvancedSetting.HeadlightIntensity:
                     dispatch(
                         renderActions.setAdvancedSettings({
@@ -216,7 +174,7 @@ export function CameraSettings({
         setSpeeds(
             Object.fromEntries(Object.entries(levels).map(([key, value]) => [key, String(value)])) as typeof speeds
         );
-        dispatch(renderActions.setCameraSpeedLevels({ flight: levels }));
+        dispatch(renderActions.setCameraSpeedLevels({ pinhole: levels }));
     };
 
     const handleProportionalSpeedSubmit = (e: FormEvent | FocusEvent) => {
@@ -319,7 +277,9 @@ export function CameraSettings({
                 </Box>
             ) : null}
             <ScrollBox height={1} mt={1} pb={3}>
-                <Accordion>
+                {/*
+                TODO
+                 <Accordion>
                     <AccordionSummary>Headlight</AccordionSummary>
                     <AccordionDetails>
                         <Box p={1} display="flex" flexDirection="column">
@@ -368,61 +328,8 @@ export function CameraSettings({
                             </Box>
                         </Box>
                     </AccordionDetails>
-                </Accordion>
-                <Accordion>
-                    <AccordionSummary>Clipping</AccordionSummary>
-                    <AccordionDetails>
-                        <Box p={1} display="flex" flexDirection="column">
-                            <Box display="flex" sx={{ mb: 2 }} alignItems="center">
-                                <Typography
-                                    sx={{
-                                        width: 160,
-                                        flexShrink: 0,
-                                    }}
-                                >
-                                    Near clipping
-                                </Typography>
-                                <Slider
-                                    sx={{ mx: 2, flex: "1 1 100%" }}
-                                    min={0}
-                                    max={360}
-                                    step={1}
-                                    disabled={cameraType !== CameraType.Pinhole}
-                                    scale={scaleNearClipping}
-                                    name={AdvancedSetting.CameraNearClipping}
-                                    value={near}
-                                    valueLabelFormat={(value) => value.toFixed(3)}
-                                    valueLabelDisplay="auto"
-                                    onChange={handleSliderChange(AdvancedSetting.CameraNearClipping)}
-                                    onChangeCommitted={handleSliderCommit(AdvancedSetting.CameraNearClipping)}
-                                />
-                            </Box>
-                            <Box display="flex" alignItems="center">
-                                <Typography
-                                    sx={{
-                                        width: 160,
-                                        flexShrink: 0,
-                                    }}
-                                >
-                                    Far clipping
-                                </Typography>
-                                <Slider
-                                    sx={{ mx: 2, flex: "1 1 100%" }}
-                                    min={180}
-                                    max={400}
-                                    step={1}
-                                    scale={scaleFarClipping}
-                                    name={AdvancedSetting.CameraFarClipping}
-                                    value={far}
-                                    valueLabelFormat={(value) => value.toFixed(0)}
-                                    valueLabelDisplay="auto"
-                                    onChange={handleSliderChange(AdvancedSetting.CameraFarClipping)}
-                                    onChangeCommitted={handleSliderCommit(AdvancedSetting.CameraFarClipping)}
-                                />
-                            </Box>
-                        </Box>
-                    </AccordionDetails>
-                </Accordion>
+                </Accordion> */}
+                <Clipping />
                 <Accordion>
                     <AccordionSummary>Movement speed</AccordionSummary>
                     <AccordionDetails>
@@ -773,12 +680,6 @@ export function CameraSettings({
     );
 }
 
-function scaleNearClipping(value: number): number {
-    return Math.pow(10, Math.floor(value / 90)) * ((value % 90) + 10) * 0.0001;
-}
-
-function scaleFarClipping(value: number): number {
+function scaleHeadlightDistance(value: number): number {
     return Math.pow(10, Math.floor(value / 90)) * ((value % 90) + 10);
 }
-
-const scaleHeadlightDistance = scaleFarClipping;

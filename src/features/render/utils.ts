@@ -491,7 +491,7 @@ export function initCameraSpeedLevels(customProperties: Record<string, any>, cam
             const baseSpeed = cameraParams.linearVelocity;
             store.dispatch(
                 renderActions.setCameraSpeedLevels({
-                    flight: {
+                    pinhole: {
                         [CameraSpeedLevel.Slow]: baseSpeed * 0.2,
                         [CameraSpeedLevel.Default]: baseSpeed,
                         [CameraSpeedLevel.Fast]: baseSpeed * 5,
@@ -504,7 +504,7 @@ export function initCameraSpeedLevels(customProperties: Record<string, any>, cam
         // defaults
         store.dispatch(
             renderActions.setCameraSpeedLevels({
-                flight: {
+                pinhole: {
                     [CameraSpeedLevel.Slow]: 0.01,
                     [CameraSpeedLevel.Default]: 0.03,
                     [CameraSpeedLevel.Fast]: 0.15,

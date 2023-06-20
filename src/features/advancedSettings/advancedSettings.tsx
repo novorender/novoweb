@@ -1,7 +1,9 @@
 import { Close, Save } from "@mui/icons-material";
 import { Box, Button, IconButton, List, ListItemButton, Snackbar, useTheme } from "@mui/material";
 import { SceneData } from "@novorender/data-js-api";
+import { mergeRecursive } from "@novorender/web_app";
 import { FlightControllerParams, Internal } from "@novorender/webgl-api";
+import { quat, vec3 } from "gl-matrix";
 import { useState } from "react";
 import { Link, MemoryRouter, Route, Switch } from "react-router-dom";
 
@@ -43,7 +45,6 @@ import { PerformanceSettings } from "./routes/performanceSettings";
 import { ProjectSettings } from "./routes/projectSettings";
 import { RenderSettings } from "./routes/renderSettings";
 import { SceneSettings } from "./routes/sceneSettings";
-import { quat, vec3 } from "gl-matrix";
 
 enum Status {
     Idle,
@@ -209,7 +210,7 @@ export default function AdvancedSettings() {
     };
 
     const saveCameraPos = async (cameraState: {
-        projection: "pinhole" | "orthographic";
+        kind: "pinhole" | "orthographic";
         position: vec3;
         rotation: quat;
         fov: number;
@@ -219,19 +220,31 @@ export default function AdvancedSettings() {
         try {
             const { url: _url, ...originalScene } = (await dataApi.loadScene(sceneId)) as SceneData;
 
-            await dataApi.putScene({
-                ...originalScene,
-                url: isAdminScene ? scene.id : `${sceneId}:${scene.id}`,
-                customProperties: {
-                    ...originalScene.customProperties,
-                    v1: {
-                        ...originalScene.customProperties.v1,
-                        camera: {
-                            initialState: cameraState,
+            await dataApi.putScene(
+                mergeRecursive(originalScene, {
+                    url: isAdminScene ? scene.id : `${sceneId}:${scene.id}`,
+                    customProperties: {
+                        v1: {
+                            camera: {
+                                initialState: cameraState,
+                                // todo flytt te save
+                                pinhole: {
+                                    clipping: {
+                                        far: 1337,
+                                        near: 1,
+                                    },
+                                },
+                                orthographic: {
+                                    clipping: {
+                                        far: 420,
+                                        near: -0.001,
+                                    },
+                                },
+                            },
                         },
                     },
-                },
-            });
+                })
+            );
         } catch (e) {
             console.warn(e);
             return setStatus(Status.SaveError);
@@ -289,7 +302,8 @@ export default function AdvancedSettings() {
                     overflow="hidden"
                     flexDirection="column"
                 >
-                    <MemoryRouter>
+                    {/* TODO */}
+                    <MemoryRouter initialEntries={["/", "/camera"]} initialIndex={1}>
                         <Switch>
                             <Route path="/" exact>
                                 <Root save={save} saving={saving} />

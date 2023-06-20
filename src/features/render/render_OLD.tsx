@@ -187,7 +187,7 @@ export function Render3D({ onInit }: Props) {
     const mainObject = useAppSelector(selectMainObject);
 
     const defaultVisibility = useAppSelector(selectDefaultVisibility);
-    const cameraSpeedLevels = useAppSelector(selectCameraSpeedLevels).flight;
+    const cameraSpeedLevels = useAppSelector(selectCameraSpeedLevels).pinhole;
     const currentCameraSpeedLevel = useAppSelector(selectCurrentCameraSpeedLevel);
     const proportionalCameraSpeed = useAppSelector(selectProportionalCameraSpeed);
     const pointerLock = useAppSelector(selectPointerLock);

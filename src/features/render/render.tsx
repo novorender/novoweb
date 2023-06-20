@@ -118,6 +118,20 @@ export type CustomProperties = {
                 rotation: [number, number, number, number];
                 fov: number;
             };
+            pinhole: {
+                controller: "cad" | "flight";
+                clipping: {
+                    far: number;
+                    near: number;
+                };
+            };
+            orthographic: {
+                controller: "ortho";
+                clipping: {
+                    far: number;
+                    near: number;
+                };
+            };
         };
         integrations: {
             ditio?: {
@@ -220,10 +234,3 @@ export type CustomProperties = {
         xsiteManage?: boolean;
     };
 };
-export function getCustomProperties(customProperties: any = {}): CustomProperties {
-    if (!customProperties || typeof customProperties !== "object") {
-        return {};
-    }
-
-    return customProperties as CustomProperties;
-}

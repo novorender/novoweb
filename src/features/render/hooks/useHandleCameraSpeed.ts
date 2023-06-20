@@ -9,7 +9,7 @@ export function useHandleCameraSpeed() {
     const {
         state: { view },
     } = useExplorerGlobals();
-    const levels = useAppSelector(selectCameraSpeedLevels).flight;
+    const levels = useAppSelector(selectCameraSpeedLevels).pinhole;
     const currentLevel = useAppSelector(selectCurrentCameraSpeedLevel);
     const proportionalSpeed = useAppSelector(selectProportionalCameraSpeed);
 

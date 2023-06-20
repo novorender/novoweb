@@ -1,5 +1,5 @@
 import type { Bookmark, ObjectGroup } from "@novorender/data-js-api";
-import { SceneConfig as OctreeSceneConfig } from "@novorender/web_app";
+import { SceneConfig as OctreeSceneConfig, RecursivePartial, mergeRecursive } from "@novorender/web_app";
 import type {
     API,
     BoundingSphere,
@@ -7,11 +7,10 @@ import type {
     EnvironmentDescription,
     FlightControllerParams,
     ObjectId,
-    OrthoControllerParams,
     RenderSettings,
 } from "@novorender/webgl-api";
 import { PayloadAction, createAction, createAsyncThunk, createSlice } from "@reduxjs/toolkit";
-import { mat4, quat, vec3, vec4 } from "gl-matrix";
+import { quat, vec3, vec4 } from "gl-matrix";
 
 import type { RootState } from "app/store";
 import { defaultFlightControls } from "config/camera";
@@ -20,7 +19,6 @@ import { AsyncState, AsyncStatus, ViewMode } from "types/misc";
 import { VecRGB, VecRGBA } from "utils/color";
 
 import { SceneConfig } from "./hooks/useHandleInit";
-import { getCustomProperties } from "./render";
 import { getSubtrees } from "./utils";
 
 export const initScene = createAction<{
@@ -215,7 +213,7 @@ const initialState = {
     defaultVisibility: ObjectVisibility.Neutral,
     selectMultiple: false,
     cameraSpeedLevels: {
-        flight: {
+        pinhole: {
             [CameraSpeedLevel.Slow]: 0.01,
             [CameraSpeedLevel.Default]: 0.03,
             [CameraSpeedLevel.Fast]: 0.15,
@@ -359,6 +357,22 @@ const initialState = {
     },
     project: {
         tmZone: "",
+    },
+    cameraDefaults: {
+        pinhole: {
+            controller: "flight" as "flight" | "cad",
+            clipping: {
+                near: 0.1,
+                far: 1000,
+            },
+        },
+        orthographic: {
+            controller: "ortho" as const,
+            clipping: {
+                near: -0.1,
+                far: 1000,
+            },
+        },
     },
 };
 
@@ -645,6 +659,9 @@ export const renderSlice = createSlice({
         setSceneStatus: (state, action: PayloadAction<State["sceneStatus"]>) => {
             state.sceneStatus = action.payload;
         },
+        setCameraDefaults: (state, action: PayloadAction<RecursivePartial<State["cameraDefaults"]>>) => {
+            state.cameraDefaults = mergeRecursive(state.cameraDefaults, action.payload);
+        },
     },
     extraReducers: (builder) => {
         builder.addCase(initScene, (state, action) => {
@@ -665,7 +682,8 @@ export const renderSlice = createSlice({
             state.camera.goTo = initialCamera;
             state.savedCameraPositions.positions[0] = initialCamera;
             state.savedCameraPositions.currentIndex = 0;
-
+            state.cameraDefaults.pinhole = props.v1?.camera.pinhole ?? state.cameraDefaults.pinhole;
+            state.cameraDefaults.orthographic = props.v1?.camera.orthographic ?? state.cameraDefaults.orthographic;
             // background
             state.background.color = settings.background.color ?? state.background.color;
             state.background.blur = settings.background.skyBoxBlur ?? state.background.blur;
@@ -781,6 +799,7 @@ export const selectPointerDownState = (state: RootState) => state.render.pointer
 export const selectBackground = (state: RootState) => state.render.background;
 export const selectSceneStatus = (state: RootState) => state.render.sceneStatus;
 export const selectTerrain = (state: RootState) => state.render.terrain;
+export const selectCameraDefaults = (state: RootState) => state.render.cameraDefaults;
 
 const { reducer } = renderSlice;
 const actions = { ...renderSlice.actions, initScene, resetView };
