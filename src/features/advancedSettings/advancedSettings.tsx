@@ -227,18 +227,32 @@ export default function AdvancedSettings() {
                         v1: {
                             camera: {
                                 initialState: cameraState,
-                                // todo flytt te save
+                                // todo flytt te save og les ekte verdier
                                 pinhole: {
+                                    controller: "flight",
                                     clipping: {
                                         far: 1337,
                                         near: 1,
                                     },
+                                    speedLevels: {
+                                        slow: 0.01,
+                                        default: 0.05,
+                                        fast: 0.2,
+                                    },
+                                    proportionalSpeed: {
+                                        enabled: true,
+                                        min: 3,
+                                        max: 350,
+                                    },
                                 },
                                 orthographic: {
+                                    controller: "ortho",
                                     clipping: {
                                         far: 420,
                                         near: -0.001,
                                     },
+                                    usePointerLock: false,
+                                    topDownElevation: undefined,
                                 },
                             },
                         },
@@ -303,7 +317,7 @@ export default function AdvancedSettings() {
                     flexDirection="column"
                 >
                     {/* TODO */}
-                    <MemoryRouter initialEntries={["/", "/camera"]} initialIndex={1}>
+                    <MemoryRouter initialEntries={["/", "/render"]} initialIndex={1}>
                         <Switch>
                             <Route path="/" exact>
                                 <Root save={save} saving={saving} />

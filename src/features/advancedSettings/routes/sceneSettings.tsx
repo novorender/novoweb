@@ -29,7 +29,7 @@ import {
 import { ViewMode, getAsyncStateData } from "types/misc";
 import { VecRGBA, rgbToVec, vecToRgb } from "utils/color";
 
-import { togglePickSemiTransparentObjects, toggleTerrainAsBackground } from "../utils";
+import { togglePickSemiTransparentObjects } from "../utils";
 
 export function SceneSettings({
     save,
@@ -155,7 +155,6 @@ export function SceneSettings({
                                 min={0}
                                 max={1}
                                 step={0.01}
-                                name={AdvancedSetting.SkyBoxBlur}
                                 value={blur}
                                 valueLabelDisplay="auto"
                                 onChange={handleBlurChange}

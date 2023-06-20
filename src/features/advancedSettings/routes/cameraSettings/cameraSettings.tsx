@@ -9,50 +9,32 @@ import {
     MenuItem,
     OutlinedInput,
     Select,
-    SelectChangeEvent,
-    Slider,
-    Typography,
     useTheme,
 } from "@mui/material";
-import { CameraController, FlightControllerParams, OrthoControllerParams } from "@novorender/webgl-api";
 import { quat, vec3 } from "gl-matrix";
-import { ChangeEvent, FormEvent, SyntheticEvent, useState } from "react";
+import { ChangeEvent, FormEvent, useState } from "react";
 import { useHistory } from "react-router-dom";
 
 import { useAppDispatch, useAppSelector } from "app/store";
 import { Accordion, AccordionDetails, AccordionSummary, Divider, LinearProgress, ScrollBox, Switch } from "components";
 import { useExplorerGlobals } from "contexts/explorerGlobals";
-import { orthoCamActions, selectDefaultTopDownElevation } from "features/orthoCam";
+import { selectDefaultTopDownElevation } from "features/orthoCam";
 import {
-    AdvancedSetting,
     CameraSpeedLevel,
-    CameraType,
     renderActions,
-    selectAdvancedSettings,
     selectCameraDefaults,
     selectCameraSpeedLevels,
-    selectCameraType,
     selectPointerLock,
     selectProportionalCameraSpeed,
+    selectViewMode,
 } from "features/render";
+
+import { ViewMode } from "types/misc";
 import { Clipping } from "./clipping";
 
-type SliderSettings =
-    | AdvancedSetting.CameraNearClipping
-    | AdvancedSetting.CameraFarClipping
-    | AdvancedSetting.HeadlightDistance
-    | AdvancedSetting.HeadlightIntensity;
-
-const mouseButtons = [
-    { label: "Mouse L", value: 1 },
-    { label: "Mouse R", value: 2 },
-    { label: "Mouse M", value: 4 },
-];
-
-const touchButtons = [
-    { label: "1 finger", value: 1 },
-    { label: "2 fingers", value: 2 },
-    { label: "3 fingers", value: 3 },
+const controls = [
+    { label: "Default", value: "flight" },
+    { label: "CAD", value: "cad" },
 ];
 
 export function CameraSettings({
@@ -61,7 +43,12 @@ export function CameraSettings({
     saving,
 }: {
     save: () => Promise<void>;
-    saveCameraPos: (camera: Required<FlightControllerParams>) => Promise<void>;
+    saveCameraPos: (camera: {
+        kind: "pinhole" | "orthographic";
+        position: vec3;
+        rotation: quat;
+        fov: number;
+    }) => Promise<void>;
     saving: boolean;
 }) {
     const history = useHistory();
@@ -71,22 +58,21 @@ export function CameraSettings({
     } = useExplorerGlobals(true);
 
     const dispatch = useAppDispatch();
-    const speedLevels = useAppSelector(selectCameraSpeedLevels).pinhole;
+    const speedLevels = useAppSelector(selectCameraSpeedLevels);
     const proportionalSpeed = useAppSelector(selectProportionalCameraSpeed);
-    const settings = useAppSelector(selectAdvancedSettings);
-    const { headlightIntensity, headlightDistance, mouseButtonMap, fingerMap } = settings;
+    // const { headlightIntensity, headlightDistance } = settings;
     const cameraDefaults = useAppSelector(selectCameraDefaults);
-    const cameraType = useAppSelector(selectCameraType);
-    const pointerLock = useAppSelector(selectPointerLock).ortho;
+    const usePointerLock = useAppSelector(selectPointerLock);
     const defaultTopDownElevation = useAppSelector(selectDefaultTopDownElevation);
+    const viewMode = useAppSelector(selectViewMode);
 
-    const [distance, setDistance] = useState(() => {
-        const d = headlightDistance.toString();
-        const numZero = Math.max(0, d.length - 2);
-        return numZero * 90 + +d.substr(0, d.length - numZero) - 10;
-    });
+    // const [distance, setDistance] = useState(() => {
+    //     const d = headlightDistance.toString();
+    //     const numZero = Math.max(0, d.length - 2);
+    //     return numZero * 90 + +d.substr(0, d.length - numZero) - 10;
+    // });
 
-    const [intensity, setIntensity] = useState(headlightIntensity);
+    // const [intensity, setIntensity] = useState(headlightIntensity);
 
     const [speeds, setSpeeds] = useState({
         [CameraSpeedLevel.Slow]: String(speedLevels[CameraSpeedLevel.Slow]),
@@ -101,52 +87,52 @@ export function CameraSettings({
         defaultTopDownElevation !== undefined ? String(defaultTopDownElevation) : ""
     );
 
-    const handleSliderChange =
-        (kind: SliderSettings) =>
-        (_event: Event, value: number | number[]): void => {
-            if (Array.isArray(value)) {
-                return;
-            }
+    // const handleSliderChange =
+    //     (kind: SliderSettings) =>
+    //     (_event: Event, value: number | number[]): void => {
+    //         if (Array.isArray(value)) {
+    //             return;
+    //         }
 
-            switch (kind) {
-                case AdvancedSetting.HeadlightIntensity:
-                    setIntensity(value);
+    //         switch (kind) {
+    //             case AdvancedSetting.HeadlightIntensity:
+    //                 setIntensity(value);
 
-                    view.settings.light.camera.brightness = value;
-                    view.invalidateCamera();
-                    return;
-                case AdvancedSetting.HeadlightDistance:
-                    setDistance(value);
+    //                 view.settings.light.camera.brightness = value;
+    //                 view.invalidateCamera();
+    //                 return;
+    //             case AdvancedSetting.HeadlightDistance:
+    //                 setDistance(value);
 
-                    view.settings.light.camera.distance = scaleHeadlightDistance(value);
-                    view.invalidateCamera();
-                    return;
-            }
-        };
+    //                 view.settings.light.camera.distance = scaleHeadlightDistance(value);
+    //                 view.invalidateCamera();
+    //                 return;
+    //         }
+    //     };
 
-    const handleSliderCommit =
-        (kind: SliderSettings) => (_event: Event | SyntheticEvent<Element, Event>, value: number | number[]) => {
-            if (Array.isArray(value)) {
-                return;
-            }
+    // const handleSliderCommit =
+    //     (kind: SliderSettings) => (_event: Event | SyntheticEvent<Element, Event>, value: number | number[]) => {
+    //         if (Array.isArray(value)) {
+    //             return;
+    //         }
 
-            switch (kind) {
-                case AdvancedSetting.HeadlightIntensity:
-                    dispatch(
-                        renderActions.setAdvancedSettings({
-                            [AdvancedSetting.HeadlightIntensity]: value,
-                        })
-                    );
-                    return;
-                case AdvancedSetting.HeadlightDistance:
-                    dispatch(
-                        renderActions.setAdvancedSettings({
-                            [AdvancedSetting.HeadlightDistance]: scaleHeadlightDistance(value),
-                        })
-                    );
-                    return;
-            }
-        };
+    //         switch (kind) {
+    //             case AdvancedSetting.HeadlightIntensity:
+    //                 dispatch(
+    //                     renderActions.setAdvancedSettings({
+    //                         [AdvancedSetting.HeadlightIntensity]: value,
+    //                     })
+    //                 );
+    //                 return;
+    //             case AdvancedSetting.HeadlightDistance:
+    //                 dispatch(
+    //                     renderActions.setAdvancedSettings({
+    //                         [AdvancedSetting.HeadlightDistance]: scaleHeadlightDistance(value),
+    //                     })
+    //                 );
+    //                 return;
+    //         }
+    //     };
 
     const handleSpeedChange = (e: ChangeEvent<HTMLInputElement>) => {
         setSpeeds((speed) => ({ ...speed, [e.target.name]: e.target.value.replace(",", ".") }));
@@ -174,7 +160,7 @@ export function CameraSettings({
         setSpeeds(
             Object.fromEntries(Object.entries(levels).map(([key, value]) => [key, String(value)])) as typeof speeds
         );
-        dispatch(renderActions.setCameraSpeedLevels({ pinhole: levels }));
+        dispatch(renderActions.setCameraDefaults({ pinhole: { speedLevels: levels } }));
     };
 
     const handleProportionalSpeedSubmit = (e: FormEvent | FocusEvent) => {
@@ -192,49 +178,7 @@ export function CameraSettings({
             : proportionalSpeed.max;
 
         setProportionalSpeedInput({ min: String(min), max: String(max) });
-        dispatch(renderActions.setProportionalCameraSpeed({ min, max }));
-    };
-
-    const handleMouseControllerChange = ({ target: { name, value } }: SelectChangeEvent<number>) => {
-        const swapped = Object.entries(mouseButtonMap)
-            .filter(([_key, val]) => {
-                return val === value;
-            })
-            .reduce(
-                (prev, [key]) => {
-                    return {
-                        ...prev,
-                        [key]: mouseButtonMap[name as keyof typeof mouseButtonMap],
-                    };
-                },
-                {
-                    ...mouseButtonMap,
-                    [name]: value,
-                    ...(name === "pivot" ? { orbit: value } : {}),
-                } as CameraController["mouseButtonsMap"]
-            );
-
-        dispatch(renderActions.setAdvancedSettings({ mouseButtonMap: swapped }));
-    };
-
-    const handleTouchControllerChange = ({ target: { name, value } }: SelectChangeEvent<number>) => {
-        const swapped = Object.entries(fingerMap)
-            .filter(([_key, val]) => val === value)
-            .reduce(
-                (prev, [key]) => {
-                    return {
-                        ...prev,
-                        [key]: fingerMap[name as keyof typeof fingerMap],
-                    };
-                },
-                {
-                    ...fingerMap,
-                    [name]: value,
-                    ...(name === "pivot" ? { orbit: value } : {}),
-                } as CameraController["fingersMap"]
-            );
-
-        dispatch(renderActions.setAdvancedSettings({ fingerMap: swapped }));
+        dispatch(renderActions.setCameraDefaults({ pinhole: { proportionalSpeed: { min, max } } }));
     };
 
     const handleDefaultTopDownElevationSubmit = (e: FormEvent | FocusEvent) => {
@@ -251,7 +195,7 @@ export function CameraSettings({
             : undefined;
 
         setDefaultTopDownElevationInput(elevation !== undefined ? String(elevation) : "");
-        dispatch(orthoCamActions.setDefaultTopDownElevation(elevation));
+        dispatch(renderActions.setCameraDefaults({ orthographic: { topDownElevation: elevation } }));
     };
 
     return (
@@ -407,8 +351,12 @@ export function CameraSettings({
                                         checked={proportionalSpeed.enabled}
                                         onChange={() => {
                                             dispatch(
-                                                renderActions.setProportionalCameraSpeed({
-                                                    enabled: !proportionalSpeed.enabled,
+                                                renderActions.setCameraDefaults({
+                                                    pinhole: {
+                                                        proportionalSpeed: {
+                                                            enabled: !proportionalSpeed.enabled,
+                                                        },
+                                                    },
                                                 })
                                             );
                                         }}
@@ -485,120 +433,22 @@ export function CameraSettings({
                         <Box p={1} display="flex" flexDirection="column">
                             <BaseDivider sx={{ mb: 1, color: theme.palette.grey[500] }} />
                             <Box display="flex" justifyContent="space-between" alignItems="center">
-                                <InputLabel sx={{ color: "text.primary" }}>Rotate around object:</InputLabel>
+                                <InputLabel sx={{ color: "text.primary" }}>Controls</InputLabel>
                                 <Select
                                     sx={{ width: 150 }}
-                                    name="pivot"
                                     size="small"
-                                    disabled={cameraType !== CameraType.Pinhole}
-                                    value={mouseButtonMap.pivot}
-                                    onChange={handleMouseControllerChange}
+                                    value={cameraDefaults.pinhole.controller}
+                                    onChange={({ target: { value } }) => {
+                                        if (!controls.map((c) => c.value).includes(value)) {
+                                            return;
+                                        }
+                                        dispatch(
+                                            renderActions.setCameraDefaults({ pinhole: { controller: value as any } })
+                                        );
+                                    }}
                                     input={<OutlinedInput />}
                                 >
-                                    {mouseButtons.map((opt) => (
-                                        <MenuItem key={opt.label} value={opt.value}>
-                                            {opt.label}
-                                        </MenuItem>
-                                    ))}
-                                </Select>
-                            </Box>
-                            <BaseDivider sx={{ my: 1, color: theme.palette.grey[500] }} />
-                            <Box display="flex" justifyContent="space-between" alignItems="center">
-                                <InputLabel sx={{ color: "text.primary" }}>Change direction:</InputLabel>
-                                <Select
-                                    sx={{ width: 150 }}
-                                    name="rotate"
-                                    size="small"
-                                    disabled={cameraType !== CameraType.Pinhole}
-                                    value={mouseButtonMap.rotate}
-                                    onChange={handleMouseControllerChange}
-                                    input={<OutlinedInput />}
-                                >
-                                    {mouseButtons.map((opt) => (
-                                        <MenuItem key={opt.label} value={opt.value}>
-                                            {opt.label}
-                                        </MenuItem>
-                                    ))}
-                                </Select>
-                            </Box>
-                            <BaseDivider sx={{ my: 1, color: theme.palette.grey[500] }} />
-                            <Box display="flex" justifyContent="space-between" alignItems="center">
-                                <InputLabel sx={{ color: "text.primary" }}>Pan:</InputLabel>
-                                <Select
-                                    sx={{ width: 150 }}
-                                    name="pan"
-                                    size="small"
-                                    disabled={cameraType !== CameraType.Pinhole}
-                                    value={mouseButtonMap.pan}
-                                    onChange={handleMouseControllerChange}
-                                    input={<OutlinedInput />}
-                                >
-                                    {mouseButtons.map((opt) => (
-                                        <MenuItem key={opt.label} value={opt.value}>
-                                            {opt.label}
-                                        </MenuItem>
-                                    ))}
-                                </Select>
-                            </Box>
-                            <BaseDivider sx={{ my: 1, color: theme.palette.grey[500] }} />
-                        </Box>
-                    </AccordionDetails>
-                </Accordion>
-                <Accordion>
-                    <AccordionSummary>Touch controls</AccordionSummary>
-                    <AccordionDetails>
-                        <Box p={1} display="flex" flexDirection="column">
-                            <BaseDivider sx={{ mb: 1, color: theme.palette.grey[500] }} />
-                            <Box display="flex" justifyContent="space-between" alignItems="center">
-                                <InputLabel sx={{ color: "text.primary" }}>Rotate around object:</InputLabel>
-                                <Select
-                                    sx={{ width: 150 }}
-                                    name="pivot"
-                                    size="small"
-                                    disabled={cameraType !== CameraType.Pinhole}
-                                    value={fingerMap.pivot}
-                                    onChange={handleTouchControllerChange}
-                                    input={<OutlinedInput />}
-                                >
-                                    {touchButtons.map((opt) => (
-                                        <MenuItem key={opt.label} value={opt.value}>
-                                            {opt.label}
-                                        </MenuItem>
-                                    ))}
-                                </Select>
-                            </Box>
-                            <BaseDivider sx={{ my: 1, color: theme.palette.grey[500] }} />
-                            <Box display="flex" justifyContent="space-between" alignItems="center">
-                                <InputLabel sx={{ color: "text.primary" }}>Change direction:</InputLabel>
-                                <Select
-                                    sx={{ width: 150 }}
-                                    name="rotate"
-                                    size="small"
-                                    disabled={cameraType !== CameraType.Pinhole}
-                                    value={fingerMap.rotate}
-                                    onChange={handleTouchControllerChange}
-                                    input={<OutlinedInput />}
-                                >
-                                    {touchButtons.map((opt) => (
-                                        <MenuItem key={opt.label} value={opt.value}>
-                                            {opt.label}
-                                        </MenuItem>
-                                    ))}
-                                </Select>
-                            </Box>
-                            <BaseDivider sx={{ my: 1, color: theme.palette.grey[500] }} />
-                            <Box display="flex" justifyContent="space-between" alignItems="center">
-                                <InputLabel sx={{ color: "text.primary" }}>Pan</InputLabel>
-                                <Select
-                                    sx={{ width: 150 }}
-                                    name="pan"
-                                    size="small"
-                                    disabled={cameraType !== CameraType.Pinhole}
-                                    value={fingerMap.pan}
-                                    onChange={handleTouchControllerChange}
-                                    input={<OutlinedInput />}
-                                >
-                                    {touchButtons.map((opt) => (
+                                    {controls.map((opt) => (
                                         <MenuItem key={opt.label} value={opt.value}>
                                             {opt.label}
                                         </MenuItem>
@@ -619,9 +469,13 @@ export function CameraSettings({
                                 control={
                                     <Switch
                                         name={"orthoPointerLock"}
-                                        checked={pointerLock}
+                                        checked={usePointerLock}
                                         onChange={() => {
-                                            dispatch(renderActions.setPointerLock({ ortho: !pointerLock }));
+                                            dispatch(
+                                                renderActions.setCameraDefaults({
+                                                    orthographic: { usePointerLock: !usePointerLock },
+                                                })
+                                            );
                                         }}
                                     />
                                 }
@@ -657,20 +511,20 @@ export function CameraSettings({
                 </Accordion>
 
                 <Button
-                    disabled={cameraType !== CameraType.Pinhole}
+                    disabled={saving || viewMode === ViewMode.Panorama}
                     variant="outlined"
                     color="grey"
-                    sx={{ ml: 1, my: 2 }}
                     onClick={async () => {
-                        if (view.camera.controller.params.kind === "flight") {
-                            await saveCameraPos(view.camera.controller.params);
-                            dispatch(
-                                renderActions.setHomeCameraPos({
-                                    position: vec3.clone(view.camera.position),
-                                    rotation: quat.clone(view.camera.rotation),
-                                })
-                            );
+                        if (saving || view.activeController.kind === "panorama") {
+                            return;
                         }
+
+                        await saveCameraPos({
+                            kind: view.renderState.camera.kind,
+                            position: vec3.clone(view.renderState.camera.position),
+                            rotation: quat.clone(view.renderState.camera.rotation),
+                            fov: view.renderState.camera.fov,
+                        });
                     }}
                 >
                     Save default camera position
@@ -680,6 +534,6 @@ export function CameraSettings({
     );
 }
 
-function scaleHeadlightDistance(value: number): number {
-    return Math.pow(10, Math.floor(value / 90)) * ((value % 90) + 10);
-}
+// function scaleHeadlightDistance(value: number): number {
+//     return Math.pow(10, Math.floor(value / 90)) * ((value % 90) + 10);
+// }

@@ -1,29 +1,27 @@
-import { useEffect, useRef } from "react";
 import { SceneData, SceneLoadFail } from "@novorender/data-js-api";
+import { computeRotation, createView, rotationFromDirection } from "@novorender/web_app";
 import { Internal, ObjectDB } from "@novorender/webgl-api";
 import { quat, vec3, vec4 } from "gl-matrix";
-import { computeRotation, createView, rotationFromDirection } from "@novorender/web_app";
+import { useEffect, useRef } from "react";
 
-import { useAppSelector, useAppDispatch } from "app/store";
-import { useExplorerGlobals, explorerGlobalsActions } from "contexts/explorerGlobals";
-import { useDispatchHidden } from "contexts/hidden";
+import { dataApi } from "app";
+import { useAppDispatch } from "app/store";
+import { explorerGlobalsActions, useExplorerGlobals } from "contexts/explorerGlobals";
 import {
     HighlightCollection,
     highlightCollectionsActions,
     useDispatchHighlightCollections,
 } from "contexts/highlightCollections";
 import { highlightActions, useDispatchHighlighted } from "contexts/highlighted";
-import { useDispatchObjectGroups, objectGroupsActions, GroupStatus } from "contexts/objectGroups";
-import { useDispatchSelectionBasket } from "contexts/selectionBasket";
+import { GroupStatus, objectGroupsActions, useDispatchObjectGroups } from "contexts/objectGroups";
 import { useSceneId } from "hooks/useSceneId";
-import { VecRGBA } from "utils/color";
-import { dataApi } from "app";
 import { AsyncStatus } from "types/misc";
+import { VecRGBA } from "utils/color";
 
-import { selectEnvironments, renderActions, DeepMutable } from "..";
-import { flip } from "../utils";
-import { Error as SceneError } from "../sceneError";
+import { DeepMutable, renderActions } from "..";
 import { CustomProperties } from "../render";
+import { Error as SceneError } from "../sceneError";
+import { flip } from "../utils";
 
 export function useHandleInit() {
     const sceneId = useSceneId();
@@ -251,9 +249,3 @@ function getBackgroundColor(color: vec4 | undefined): vec4 {
 
     return color;
 }
-
-// function flipClippingPlane(plane: Vec4): Vec4 {
-//     const flipped = flip(plane);
-//     flipped[3] *= -1;
-//     return flipped;
-// }

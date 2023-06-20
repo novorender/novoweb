@@ -1,19 +1,10 @@
 import type { Bookmark, ObjectGroup } from "@novorender/data-js-api";
 import { SceneConfig as OctreeSceneConfig, RecursivePartial, mergeRecursive } from "@novorender/web_app";
-import type {
-    API,
-    BoundingSphere,
-    Camera,
-    EnvironmentDescription,
-    FlightControllerParams,
-    ObjectId,
-    RenderSettings,
-} from "@novorender/webgl-api";
-import { PayloadAction, createAction, createAsyncThunk, createSlice } from "@reduxjs/toolkit";
+import type { BoundingSphere, Camera, EnvironmentDescription, ObjectId, RenderSettings } from "@novorender/webgl-api";
+import { PayloadAction, createAction, createSlice } from "@reduxjs/toolkit";
 import { quat, vec3, vec4 } from "gl-matrix";
 
 import type { RootState } from "app/store";
-import { defaultFlightControls } from "config/camera";
 import { LogPoint, MachineLocation } from "features/xsiteManage";
 import { AsyncState, AsyncStatus, ViewMode } from "types/misc";
 import { VecRGB, VecRGBA } from "utils/color";
@@ -41,11 +32,6 @@ export const resetView = createAction<{
         fov: number;
     };
 }>("resetView");
-
-export const fetchEnvironments = createAsyncThunk("novorender/fetchEnvironments", async (api: API) => {
-    const envs = await api.availableEnvironments("https://api.novorender.com/assets/env/index.json");
-    return envs;
-});
 
 export enum CameraSpeedLevel {
     Slow = "slow",
@@ -79,8 +65,6 @@ export enum AdvancedSetting {
     DoubleSidedTransparentMaterials = "doubleSidedTransparentMaterials",
     HoldDynamic = "holdDynamic",
     ShowPerformance = "showPerformance",
-    CameraNearClipping = "cameraNearClipping",
-    CameraFarClipping = "cameraFarClipping",
     QualityPoints = "qualityPoints",
     PointSize = "pointSize",
     MaxPointSize = "maxPointSize",
@@ -89,13 +73,7 @@ export enum AdvancedSetting {
     HeadlightDistance = "headlightDistance",
     AmbientLight = "ambientLight",
     NavigationCube = "navigationCube",
-    TerrainAsBackground = "terrainAsBackground",
-    MouseButtonMap = "mouseButtonMap",
-    FingerMap = "fingerMap",
-    BackgroundColor = "backgroundColor",
     TriangleLimit = "triangleLimit",
-    SkyBoxBlur = "skyBoxBlur",
-    SecondaryHighlight = "secondaryHighlight",
     PickSemiTransparentObjects = "pickSemiTransparentObjects",
 }
 
@@ -212,22 +190,6 @@ const initialState = {
     mainObject: undefined as ObjectId | undefined,
     defaultVisibility: ObjectVisibility.Neutral,
     selectMultiple: false,
-    cameraSpeedLevels: {
-        pinhole: {
-            [CameraSpeedLevel.Slow]: 0.01,
-            [CameraSpeedLevel.Default]: 0.03,
-            [CameraSpeedLevel.Fast]: 0.15,
-        },
-    },
-    proportionalCameraSpeed: {
-        enabled: true,
-        min: 5,
-        max: 300,
-        pickDelay: 500,
-    } as NonNullable<FlightControllerParams["proportionalCameraSpeed"]> & { enabled: boolean },
-    pointerLock: {
-        ortho: false,
-    },
     currentCameraSpeedLevel: CameraSpeedLevel.Default,
     savedCameraPositions: { currentIndex: -1, positions: [] } as MutableSavedCameraPositions,
     subtrees: {
@@ -269,8 +231,6 @@ const initialState = {
         [AdvancedSetting.DoubleSidedTransparentMaterials]: false,
         [AdvancedSetting.HoldDynamic]: false,
         [AdvancedSetting.ShowPerformance]: false,
-        [AdvancedSetting.CameraNearClipping]: 0,
-        [AdvancedSetting.CameraFarClipping]: 0,
         [AdvancedSetting.QualityPoints]: true,
         [AdvancedSetting.PointSize]: 1,
         [AdvancedSetting.MaxPointSize]: 20,
@@ -279,13 +239,7 @@ const initialState = {
         [AdvancedSetting.HeadlightDistance]: 0,
         [AdvancedSetting.AmbientLight]: 0,
         [AdvancedSetting.NavigationCube]: false,
-        [AdvancedSetting.TerrainAsBackground]: false,
-        [AdvancedSetting.FingerMap]: defaultFlightControls.touch,
-        [AdvancedSetting.MouseButtonMap]: defaultFlightControls.mouse,
-        // [AdvancedSetting.BackgroundColor]: [0.75, 0.75, 0.75, 1] as VecRGBA,
         [AdvancedSetting.TriangleLimit]: 0,
-        [AdvancedSetting.SkyBoxBlur]: 0,
-        [AdvancedSetting.SecondaryHighlight]: { property: "" },
         [AdvancedSetting.PickSemiTransparentObjects]: false,
     },
     defaultDeviceProfile: {} as any,
@@ -365,6 +319,16 @@ const initialState = {
                 near: 0.1,
                 far: 1000,
             },
+            speedLevels: {
+                slow: 0.01,
+                default: 0.03,
+                fast: 0.15,
+            },
+            proportionalSpeed: {
+                enabled: false,
+                min: 5,
+                max: 300,
+            },
         },
         orthographic: {
             controller: "ortho" as const,
@@ -372,6 +336,8 @@ const initialState = {
                 near: -0.1,
                 far: 1000,
             },
+            usePointerLock: false,
+            topDownElevation: undefined as undefined | number,
         },
     },
 };
@@ -563,7 +529,7 @@ export const renderSlice = createSlice({
                 environments: state.environments,
                 projectSettings: state.projectSettings,
                 savedCameraPositions: { currentIndex: 0, positions: [state.savedCameraPositions.positions[0]] },
-                cameraSpeedLevels: state.cameraSpeedLevels,
+                // cameraSpeedLevels: state.cameraSpeedLevels,
                 currentCameraSpeedLevel: state.currentCameraSpeedLevel,
             };
         },
@@ -590,9 +556,6 @@ export const renderSlice = createSlice({
                 ...(goTo ? { goTo } : {}),
                 ...(zoomTo ? { zoomTo } : {}),
             } as MutableCameraState;
-        },
-        setCameraSpeedLevels: (state, { payload }: PayloadAction<Partial<State["cameraSpeedLevels"]>>) => {
-            state.cameraSpeedLevels = { ...state.cameraSpeedLevels, ...payload };
         },
         setAdvancedSettings: (state, action: PayloadAction<Partial<State["advancedSettings"]>>) => {
             state.advancedSettings = {
@@ -637,12 +600,6 @@ export const renderSlice = createSlice({
         },
         setStamp: (state, action: PayloadAction<State["stamp"]>) => {
             state.stamp = action.payload;
-        },
-        setPointerLock: (state, action: PayloadAction<Partial<State["pointerLock"]>>) => {
-            state.pointerLock = { ...state.pointerLock, ...action.payload };
-        },
-        setProportionalCameraSpeed: (state, action: PayloadAction<Partial<State["proportionalCameraSpeed"]>>) => {
-            state.proportionalCameraSpeed = { ...state.proportionalCameraSpeed, ...action.payload };
         },
         setPointerDownState: (state, action: PayloadAction<State["pointerDownState"]>) => {
             state.pointerDownState = action.payload;
@@ -770,7 +727,7 @@ export const selectEnvironments = (state: RootState) => state.render.environment
 export const selectCurrentEnvironment = (state: RootState) => state.render.currentEnvironment;
 export const selectDefaultVisibility = (state: RootState) => state.render.defaultVisibility;
 export const selectSelectMultiple = (state: RootState) => state.render.selectMultiple;
-export const selectCameraSpeedLevels = (state: RootState) => state.render.cameraSpeedLevels;
+export const selectCameraSpeedLevels = (state: RootState) => state.render.cameraDefaults.pinhole.speedLevels;
 export const selectCurrentCameraSpeedLevel = (state: RootState) => state.render.currentCameraSpeedLevel;
 export const selectSavedCameraPositions = (state: RootState) =>
     state.render.savedCameraPositions as SavedCameraPositions;
@@ -793,8 +750,9 @@ export const selectDefaultDeviceProfile = (state: RootState) => state.render.def
 export const selectViewMode = (state: RootState) => state.render.viewMode;
 export const selectLoadingHandles = (state: RootState) => state.render.loadingHandles;
 export const selectStamp = (state: RootState) => state.render.stamp;
-export const selectPointerLock = (state: RootState) => state.render.pointerLock;
-export const selectProportionalCameraSpeed = (state: RootState) => state.render.proportionalCameraSpeed;
+export const selectPointerLock = (state: RootState) => state.render.cameraDefaults.orthographic.usePointerLock;
+export const selectProportionalCameraSpeed = (state: RootState) =>
+    state.render.cameraDefaults.pinhole.proportionalSpeed;
 export const selectPointerDownState = (state: RootState) => state.render.pointerDownState;
 export const selectBackground = (state: RootState) => state.render.background;
 export const selectSceneStatus = (state: RootState) => state.render.sceneStatus;

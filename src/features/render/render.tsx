@@ -124,6 +124,16 @@ export type CustomProperties = {
                     far: number;
                     near: number;
                 };
+                speedLevels: {
+                    slow: number;
+                    default: number;
+                    fast: number;
+                };
+                proportionalSpeed: {
+                    enabled: boolean;
+                    min: number;
+                    max: number;
+                };
             };
             orthographic: {
                 controller: "ortho";
@@ -131,6 +141,8 @@ export type CustomProperties = {
                     far: number;
                     near: number;
                 };
+                usePointerLock: boolean;
+                topDownElevation: undefined | number;
             };
         };
         integrations: {

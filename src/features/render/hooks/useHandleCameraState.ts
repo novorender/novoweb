@@ -1,11 +1,12 @@
 import { vec3, quat } from "gl-matrix";
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 
-import { useAppSelector } from "app/store";
+import { useAppDispatch, useAppSelector } from "app/store";
 import { useExplorerGlobals } from "contexts/explorerGlobals";
 
-import { CameraType, selectCamera, selectCameraDefaults } from "..";
+import { CameraType, selectCamera, selectCameraDefaults, selectViewMode } from "..";
 import { flip } from "../utils";
+import { ViewMode } from "types/misc";
 
 export function useHandleCameraState() {
     const {
@@ -13,6 +14,19 @@ export function useHandleCameraState() {
     } = useExplorerGlobals();
     const state = useAppSelector(selectCamera);
     const defaults = useAppSelector(selectCameraDefaults);
+    const viewMode = useAppSelector(selectViewMode);
+    const dispatch = useAppDispatch();
+
+    const pinholeKind = useRef<"flight" | "cad" | "panorama">(defaults.pinhole.controller);
+
+    useEffect(() => {
+        if (!view) {
+            return;
+        }
+
+        pinholeKind.current = viewMode === ViewMode.Panorama ? "panorama" : defaults.pinhole.controller;
+        view.switchCameraController(pinholeKind.current);
+    }, [view, viewMode, defaults.pinhole.controller, pinholeKind]);
 
     useEffect(() => {
         if (!view) {
@@ -20,8 +34,7 @@ export function useHandleCameraState() {
         }
 
         if (state.type === CameraType.Pinhole) {
-            const pinholeKind = "flight"; // TODO
-            const controller = view.controllers[pinholeKind];
+            const controller = view.controllers[pinholeKind.current];
 
             if (state.goTo) {
                 // controller.moveTo({
@@ -36,7 +49,7 @@ export function useHandleCameraState() {
                 });
             }
 
-            view.switchCameraController(pinholeKind);
+            view.switchCameraController(controller.kind);
         } else {
             // const controller = view.controllers["ortho"];
 
@@ -51,7 +64,7 @@ export function useHandleCameraState() {
                 });
             }
         }
-    }, [view, state]);
+    }, [view, dispatch, state]);
 
     useEffect(() => {
         if (!view) {
@@ -63,5 +76,14 @@ export function useHandleCameraState() {
         } else {
             view.modifyRenderState({ camera: { ...defaults.orthographic.clipping } });
         }
-    }, [state, defaults, view]);
+    }, [state, defaults.pinhole.clipping, defaults.orthographic.clipping, view]);
+
+    useEffect(() => {
+        if (!view) {
+            return;
+        }
+
+        // Todo pointerlock
+        // view.controllers["ortho"].input.usePointerLock = defaults.orthographic.usePointerLock;
+    }, [view, defaults.orthographic.usePointerLock]);
 }
