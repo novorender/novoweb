@@ -22,6 +22,7 @@ import { DeepMutable, renderActions } from "..";
 import { CustomProperties } from "../render";
 import { Error as SceneError } from "../sceneError";
 import { flip } from "../utils";
+import { mergeRecursive } from "utils/misc";
 
 export function useHandleInit() {
     const sceneId = useSceneId();
@@ -54,14 +55,6 @@ export function useHandleInit() {
                 const { url, db, ...sceneData } = await loadScene(sceneId);
                 const octreeSceneConfig = await _view.loadSceneFromURL(new URL(url));
 
-                // TODO(?): Set in initScene() and handle effect?
-                // if (sceneData.camera) {
-                //     await _view.switchCameraController(sceneData.camera.kind, {
-                //         position: sceneData.camera.position,
-                //         rotation: sceneData.camera.rotation,
-                //     });
-                // }
-
                 _view.run();
 
                 dispatch(
@@ -74,8 +67,10 @@ export function useHandleInit() {
                             rotation: quat.clone(sceneData.camera?.rotation ?? _view.renderState.camera.rotation),
                             fov: sceneData.camera?.fov ?? _view.renderState.camera.fov,
                         },
+                        deviceProfile: structuredClone(_view.renderContext?.deviceProfile),
                     })
                 );
+
                 dispatchObjectGroups(
                     objectGroupsActions.set(
                         sceneData.objectGroups

@@ -1,5 +1,5 @@
 import type { Bookmark, ObjectGroup } from "@novorender/data-js-api";
-import { SceneConfig as OctreeSceneConfig, RecursivePartial, mergeRecursive } from "@novorender/web_app";
+import { SceneConfig as OctreeSceneConfig, RecursivePartial, TonemappingMode } from "@novorender/web_app";
 import type { BoundingSphere, Camera, EnvironmentDescription, ObjectId, RenderSettings } from "@novorender/webgl-api";
 import { PayloadAction, createAction, createSlice } from "@reduxjs/toolkit";
 import { quat, vec3, vec4 } from "gl-matrix";
@@ -8,6 +8,7 @@ import type { RootState } from "app/store";
 import { LogPoint, MachineLocation } from "features/xsiteManage";
 import { AsyncState, AsyncStatus, ViewMode } from "types/misc";
 import { VecRGB, VecRGBA } from "utils/color";
+import { mergeRecursive } from "utils/misc";
 
 import { SceneConfig } from "./hooks/useHandleInit";
 import { getSubtrees } from "./utils";
@@ -21,6 +22,7 @@ export const initScene = createAction<{
         rotation: quat;
         fov: number;
     };
+    deviceProfile: any; // todo
 }>("initScene");
 
 export const resetView = createAction<{
@@ -340,6 +342,52 @@ const initialState = {
             topDownElevation: undefined as undefined | number,
         },
     },
+    advanced: {
+        dynamicResolutionScaling: true, // todo?
+        msaa: {
+            enabled: true,
+            samples: 16,
+        },
+        toonOutline: {
+            enabled: true,
+            color: [0, 0, 0] as VecRGB,
+        },
+        outlines: {
+            enabled: false,
+            color: [10, 10, 10] as VecRGB,
+            plane: [0, -1, 0, 0] as vec4,
+        },
+        tonemapping: {
+            exposure: 0.5,
+            mode: TonemappingMode.color,
+        },
+        pick: {
+            opacityThreshold: 1,
+        },
+        limits: {
+            maxPrimitives: 5_000_000,
+        },
+        // NOTE(OLA): Debug props should not be saved
+        debug: {
+            showNodeBounds: false,
+        },
+    },
+    deviceProfile: {
+        features: {
+            outline: true,
+        },
+        limits: {
+            maxGPUBytes: 2_000_000_000,
+            maxPrimitives: 10_000_000,
+            maxSamples: 4,
+        },
+        quirks: {
+            iosShaderBug: false,
+        },
+        detailBias: 0.6,
+        renderResolution: 1,
+        framerateTarget: 30,
+    },
 };
 
 type State = typeof initialState;
@@ -604,6 +652,9 @@ export const renderSlice = createSlice({
         setPointerDownState: (state, action: PayloadAction<State["pointerDownState"]>) => {
             state.pointerDownState = action.payload;
         },
+        setPoints: (state, action: PayloadAction<RecursivePartial<State["points"]>>) => {
+            state.points = mergeRecursive(state.points, action.payload);
+        },
         setBackground: (state, action: PayloadAction<Partial<State["background"]>>) => {
             state.background = { ...state.background, ...action.payload };
         },
@@ -619,6 +670,12 @@ export const renderSlice = createSlice({
         setCameraDefaults: (state, action: PayloadAction<RecursivePartial<State["cameraDefaults"]>>) => {
             state.cameraDefaults = mergeRecursive(state.cameraDefaults, action.payload);
         },
+        setAdvanced: (state, action: PayloadAction<RecursivePartial<State["advanced"]>>) => {
+            state.advanced = mergeRecursive(state.advanced, action.payload);
+        },
+        setDeviceProfile: (state, action: PayloadAction<RecursivePartial<State["deviceProfile"]>>) => {
+            state.deviceProfile = mergeRecursive(state.deviceProfile, action.payload);
+        },
     },
     extraReducers: (builder) => {
         builder.addCase(initScene, (state, action) => {
@@ -626,6 +683,7 @@ export const renderSlice = createSlice({
                 sceneData: { customProperties: props, settings, environment, tmZone },
                 sceneConfig,
                 initialCamera,
+                deviceProfile,
             } = action.payload;
 
             state.secondaryHighlight.property = props.highlights?.secondary.property ?? "";
@@ -641,6 +699,7 @@ export const renderSlice = createSlice({
             state.savedCameraPositions.currentIndex = 0;
             state.cameraDefaults.pinhole = props.v1?.camera.pinhole ?? state.cameraDefaults.pinhole;
             state.cameraDefaults.orthographic = props.v1?.camera.orthographic ?? state.cameraDefaults.orthographic;
+
             // background
             state.background.color = settings.background.color ?? state.background.color;
             state.background.blur = settings.background.skyBoxBlur ?? state.background.blur;
@@ -678,6 +737,12 @@ export const renderSlice = createSlice({
 
             // project
             state.project.tmZone = tmZone ?? state.project.tmZone;
+
+            // advanced
+            state.advanced = mergeRecursive(state.advanced, props.v1?.advanced ?? {});
+
+            // device profile
+            state.deviceProfile = mergeRecursive(state.deviceProfile, deviceProfile);
         });
         builder.addCase(resetView, (state, action) => {
             const {
@@ -758,8 +823,11 @@ export const selectBackground = (state: RootState) => state.render.background;
 export const selectSceneStatus = (state: RootState) => state.render.sceneStatus;
 export const selectTerrain = (state: RootState) => state.render.terrain;
 export const selectCameraDefaults = (state: RootState) => state.render.cameraDefaults;
+export const selectAdvanced = (state: RootState) => state.render.advanced;
+export const selectDeviceProfile = (state: RootState) => state.render.deviceProfile;
+export const selectPoints = (state: RootState) => state.render.points;
 
 const { reducer } = renderSlice;
 const actions = { ...renderSlice.actions, initScene, resetView };
-export { reducer as renderReducer, actions as renderActions };
+export { actions as renderActions, reducer as renderReducer };
 export type { State as RenderState };

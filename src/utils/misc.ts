@@ -1,6 +1,7 @@
 import { MeasureEntity, MeasurementValues, PointEntity } from "@novorender/measure-api";
 import { Scene } from "@novorender/webgl-api";
 import { WidgetKey, featuresConfig, defaultEnabledWidgets } from "config/features";
+import { RecursivePartial } from "types/misc";
 
 export function uniqueArray<T>(arr: T[]): T[] {
     return Array.from(new Set(arr));
@@ -182,4 +183,24 @@ export function isRealNumber(num: number): boolean {
 
 export function isRealVec(vec: number[]): boolean {
     return !vec.some((num) => !isRealNumber(num));
+}
+
+export function mergeRecursive<T>(original: T, changes: RecursivePartial<T>): T {
+    const clone = { ...original };
+    for (const key in changes) {
+        const originalValue = original ? original[key] : undefined;
+        const changedValue = changes[key];
+        if (
+            changedValue != undefined &&
+            typeof changedValue == "object" &&
+            !Array.isArray(changedValue) &&
+            !ArrayBuffer.isView(changedValue) &&
+            !(changedValue instanceof Set)
+        ) {
+            clone[key] = mergeRecursive(originalValue as any, changedValue);
+        } else {
+            clone[key] = changedValue as any;
+        }
+    }
+    return clone;
 }

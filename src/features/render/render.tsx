@@ -1,28 +1,29 @@
+import { Box, css, styled } from "@mui/material";
 import { glMatrix, vec4 } from "gl-matrix";
-import { useState, useRef, useCallback, RefCallback } from "react";
-import { Box, styled, css } from "@mui/material";
+import { RefCallback, useCallback, useRef, useState } from "react";
 
-import { PerformanceStats } from "features/performanceStats";
-import { LinearProgress, Loading } from "components";
-import { selectLoadingHandles, selectSceneStatus } from "features/render/renderSlice";
 import { useAppSelector } from "app/store";
-import { Engine2D } from "features/engine2D";
+import { LinearProgress, Loading } from "components";
 import { explorerGlobalsActions, useExplorerGlobals } from "contexts/explorerGlobals";
+import { Engine2D } from "features/engine2D";
+import { PerformanceStats } from "features/performanceStats";
+import { selectLoadingHandles, selectSceneStatus } from "features/render/renderSlice";
 import { AsyncStatus } from "types/misc";
 
-import { SceneError } from "./sceneError";
-import { Stamp } from "./stamp";
-import { Markers } from "./markers";
-import { Images } from "./images";
+import { useCanvasClickHandler } from "./hooks/useCanvasClickHandler";
+import { useHandleAdvancedSettings } from "./hooks/useHandleAdvancedSettings";
 import { useHandleBackground } from "./hooks/useHandleBackground";
+import { useHandleCameraMoved } from "./hooks/useHandleCameraMoved";
+import { useHandleCameraSpeed } from "./hooks/useHandleCameraSpeed";
+import { useHandleCameraState } from "./hooks/useHandleCameraState";
 import { useHandleHighlights } from "./hooks/useHandleHighlights";
 import { useHandleInit } from "./hooks/useHandleInit";
 import { useHandleSubtrees } from "./hooks/useHandleSubtrees";
-import { useCanvasClickHandler } from "./hooks/useCanvasClickHandler";
-import { useHandleCameraMoved } from "./hooks/useHandleCameraMoved";
-import { useHandleCameraState } from "./hooks/useHandleCameraState";
-import { useHandleCameraSpeed } from "./hooks/useHandleCameraSpeed";
 import { useHandleTerrain } from "./hooks/useHandleTerrain";
+import { Images } from "./images";
+import { Markers } from "./markers";
+import { SceneError } from "./sceneError";
+import { Stamp } from "./stamp";
 
 glMatrix.setMatrixArrayType(Array);
 
@@ -80,6 +81,7 @@ export function Render3D() {
     useHandleHighlights();
     useHandleSubtrees();
     useHandleTerrain();
+    useHandleAdvancedSettings();
 
     window.view = view;
 
@@ -95,7 +97,7 @@ export function Render3D() {
             {[AsyncStatus.Initial, AsyncStatus.Loading].includes(sceneStatus.status) && <Loading />}
             {sceneStatus.status === AsyncStatus.Success && view && canvas && (
                 <>
-                    <PerformanceStats />
+                    {/* <PerformanceStats /> */}
                     <Engine2D pointerPos={pointerPos} />
                     <Stamp />
                     <Svg width={canvas.width} height={canvas.height} ref={setSvg}>
@@ -148,6 +150,32 @@ export type CustomProperties = {
         integrations: {
             ditio?: {
                 projectNumber: string;
+            };
+        };
+        advanced: {
+            dynamicResolutionScaling: boolean;
+            msaa: {
+                enabled: boolean;
+                samples: 16;
+            };
+            toonOutline: {
+                enabled: boolean;
+                color: [number, number, number];
+            };
+            outlines: {
+                enabled: false;
+                color: [number, number, number];
+                plane: [number, number, number, number];
+            };
+            tonemapping: {
+                exposure: number;
+                mode: number;
+            };
+            pick: {
+                opacityThreshold: number;
+            };
+            limits: {
+                maxPrimitives: number;
             };
         };
     };

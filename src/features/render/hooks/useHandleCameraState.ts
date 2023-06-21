@@ -3,10 +3,10 @@ import { useEffect, useRef } from "react";
 
 import { useAppDispatch, useAppSelector } from "app/store";
 import { useExplorerGlobals } from "contexts/explorerGlobals";
+import { ViewMode } from "types/misc";
 
 import { CameraType, selectCamera, selectCameraDefaults, selectViewMode } from "..";
 import { flip } from "../utils";
-import { ViewMode } from "types/misc";
 
 export function useHandleCameraState() {
     const {

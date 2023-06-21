@@ -21,6 +21,7 @@ import {
     AdvancedSetting,
     SubtreeStatus,
     renderActions,
+    selectAdvanced,
     selectBackground,
     selectSubtrees,
     selectTerrain,
@@ -28,8 +29,6 @@ import {
 } from "features/render/renderSlice";
 import { ViewMode, getAsyncStateData } from "types/misc";
 import { VecRGBA, rgbToVec, vecToRgb } from "utils/color";
-
-import { togglePickSemiTransparentObjects } from "../utils";
 
 export function SceneSettings({
     save,
@@ -56,16 +55,12 @@ export function SceneSettings({
     const subtrees = useAppSelector(selectSubtrees);
     const background = useAppSelector(selectBackground);
     const terrain = useAppSelector(selectTerrain);
-    // todo semitransparent picking?
+    const advanced = useAppSelector(selectAdvanced);
 
     const [blur, setBlur] = useState(background.blur);
     const [colorPickerAnchor, setColorPickerAnchor] = useState<HTMLElement | null>(null);
     const toggleColorPicker = (event?: MouseEvent<HTMLElement>) => {
         setColorPickerAnchor(!colorPickerAnchor && event?.currentTarget ? event.currentTarget : null);
-    };
-
-    const handleTogglePickSemiTransparentObjects = ({ target: { checked } }: ChangeEvent<HTMLInputElement>) => {
-        dispatch(renderActions.setAdvancedSettings({ [AdvancedSetting.PickSemiTransparentObjects]: checked }));
     };
 
     const handleBlurChange = (_event: Event, value: number | number[]): void => {
@@ -189,7 +184,7 @@ export function SceneSettings({
                         </AccordionDetails>
                     </Accordion>
                 ) : null}
-                {/* <Accordion>
+                <Accordion>
                     <AccordionSummary>Object picking</AccordionSummary>
                     <AccordionDetails>
                         <Box p={1} display="flex" flexDirection="column">
@@ -197,9 +192,14 @@ export function SceneSettings({
                                 sx={{ ml: 0, mb: 1 }}
                                 control={
                                     <Switch
-                                        name={AdvancedSetting.PickSemiTransparentObjects}
-                                        checked={pickSemiTransparentObjects}
-                                        onChange={handleTogglePickSemiTransparentObjects}
+                                        checked={advanced.pick.opacityThreshold < 1}
+                                        onChange={(_evt, checked) =>
+                                            dispatch(
+                                                renderActions.setAdvanced({
+                                                    pick: { opacityThreshold: checked ? 0.1 : 1 },
+                                                })
+                                            )
+                                        }
                                     />
                                 }
                                 label={
@@ -210,7 +210,7 @@ export function SceneSettings({
                             />
                         </Box>
                     </AccordionDetails>
-                </Accordion> */}
+                </Accordion>
                 <Box p={1} mt={1}>
                     <Box>
                         <Button sx={{ mb: 2 }} variant="outlined" color="grey" onClick={toggleColorPicker}>

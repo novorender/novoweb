@@ -1,7 +1,6 @@
 import { Close, Save } from "@mui/icons-material";
 import { Box, Button, IconButton, List, ListItemButton, Snackbar, useTheme } from "@mui/material";
 import { SceneData } from "@novorender/data-js-api";
-import { mergeRecursive } from "@novorender/web_app";
 import { FlightControllerParams, Internal } from "@novorender/webgl-api";
 import { quat, vec3 } from "gl-matrix";
 import { useState } from "react";
@@ -34,6 +33,7 @@ import {
     selectMinimized,
     selectPrimaryMenu,
 } from "slices/explorerSlice";
+import { mergeRecursive } from "utils/misc";
 
 import { useSceneId } from "hooks/useSceneId";
 import { useToggle } from "hooks/useToggle";
@@ -221,7 +221,7 @@ export default function AdvancedSettings() {
             const { url: _url, ...originalScene } = (await dataApi.loadScene(sceneId)) as SceneData;
 
             await dataApi.putScene(
-                mergeRecursive(originalScene, {
+                mergeRecursive<{}>(originalScene, {
                     url: isAdminScene ? scene.id : `${sceneId}:${scene.id}`,
                     customProperties: {
                         v1: {
@@ -255,9 +255,35 @@ export default function AdvancedSettings() {
                                     topDownElevation: undefined,
                                 },
                             },
+                            advanced: {
+                                dynamicResolutionScaling: true,
+                                msaa: {
+                                    enabled: true,
+                                    samples: 16,
+                                },
+                                toonOutline: {
+                                    enabled: false,
+                                    color: [0, 0, 0],
+                                },
+                                outlines: {
+                                    enabled: false,
+                                    color: [10, 10, 10],
+                                    plane: [0, -1, 0, 0],
+                                },
+                                tonemapping: {
+                                    exposure: 0.75,
+                                    mode: 0,
+                                },
+                                pick: {
+                                    opacityThreshold: 1,
+                                },
+                                limits: {
+                                    maxPrimitives: 10_000_000,
+                                },
+                            },
                         },
                     },
-                })
+                }) as any
             );
         } catch (e) {
             console.warn(e);
@@ -316,8 +342,7 @@ export default function AdvancedSettings() {
                     overflow="hidden"
                     flexDirection="column"
                 >
-                    {/* TODO */}
-                    <MemoryRouter initialEntries={["/", "/render"]} initialIndex={1}>
+                    <MemoryRouter>
                         <Switch>
                             <Route path="/" exact>
                                 <Root save={save} saving={saving} />
