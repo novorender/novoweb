@@ -1,5 +1,5 @@
 import { Box, css, styled } from "@mui/material";
-import { glMatrix, vec4 } from "gl-matrix";
+import { glMatrix } from "gl-matrix";
 import { RefCallback, useCallback, useRef, useState } from "react";
 
 import { useAppSelector } from "app/store";
@@ -7,7 +7,7 @@ import { LinearProgress, Loading } from "components";
 import { explorerGlobalsActions, useExplorerGlobals } from "contexts/explorerGlobals";
 import { Engine2D } from "features/engine2D";
 import { PerformanceStats } from "features/performanceStats";
-import { selectLoadingHandles, selectSceneStatus } from "features/render/renderSlice";
+import { selectDebugStats, selectLoadingHandles, selectSceneStatus } from "features/render/renderSlice";
 import { AsyncStatus } from "types/misc";
 
 import { useCanvasClickHandler } from "./hooks/useCanvasClickHandler";
@@ -60,6 +60,7 @@ export function Render3D() {
 
     const loadingHandles = useAppSelector(selectLoadingHandles);
     const sceneStatus = useAppSelector(selectSceneStatus);
+    const debugStats = useAppSelector(selectDebugStats);
 
     const [_svg, setSvg] = useState<null | SVGSVGElement>(null);
 
@@ -97,7 +98,7 @@ export function Render3D() {
             {[AsyncStatus.Initial, AsyncStatus.Loading].includes(sceneStatus.status) && <Loading />}
             {sceneStatus.status === AsyncStatus.Success && view && canvas && (
                 <>
-                    {/* <PerformanceStats /> */}
+                    {debugStats.enabled && <PerformanceStats />}
                     <Engine2D pointerPos={pointerPos} />
                     <Stamp />
                     <Svg width={canvas.width} height={canvas.height} ref={setSvg}>
@@ -110,167 +111,3 @@ export function Render3D() {
         </Box>
     );
 }
-
-export type CustomProperties = {
-    v1?: {
-        camera: {
-            initialState: {
-                kind: "pinhole" | "orthographic";
-                position: [number, number, number];
-                rotation: [number, number, number, number];
-                fov: number;
-            };
-            pinhole: {
-                controller: "cad" | "flight";
-                clipping: {
-                    far: number;
-                    near: number;
-                };
-                speedLevels: {
-                    slow: number;
-                    default: number;
-                    fast: number;
-                };
-                proportionalSpeed: {
-                    enabled: boolean;
-                    min: number;
-                    max: number;
-                };
-            };
-            orthographic: {
-                controller: "ortho";
-                clipping: {
-                    far: number;
-                    near: number;
-                };
-                usePointerLock: boolean;
-                topDownElevation: undefined | number;
-            };
-        };
-        integrations: {
-            ditio?: {
-                projectNumber: string;
-            };
-        };
-        advanced: {
-            dynamicResolutionScaling: boolean;
-            msaa: {
-                enabled: boolean;
-                samples: 16;
-            };
-            toonOutline: {
-                enabled: boolean;
-                color: [number, number, number];
-            };
-            outlines: {
-                enabled: false;
-                color: [number, number, number];
-                plane: [number, number, number, number];
-            };
-            tonemapping: {
-                exposure: number;
-                mode: number;
-            };
-            pick: {
-                opacityThreshold: number;
-            };
-            limits: {
-                maxPrimitives: number;
-            };
-        };
-    };
-    enabledFeatures?: Record<string, boolean>;
-    showStats?: boolean;
-    navigationCube?: boolean;
-    ditioProjectNumber?: string;
-    flightMouseButtonMap?: {
-        rotate: number;
-        pan: number;
-        orbit: number;
-        pivot: number;
-    };
-    flightFingerMap?: {
-        rotate: number;
-        pan: number;
-        orbit: number;
-        pivot: number;
-    };
-    autoFps?: boolean;
-    maxTriangles?: number;
-    triangleLimit?: number;
-    jiraSettings?: {
-        space: string;
-        project: string;
-        component: string;
-    };
-    primaryMenu?: {
-        button1: string;
-        button2: string;
-        button3: string;
-        button4: string;
-        button5: string;
-    };
-    xsiteManageSettings?: {
-        siteId: string;
-    };
-    highlights?: {
-        primary: {
-            color: vec4;
-        };
-        secondary: {
-            color: vec4;
-            property: string;
-        };
-    };
-    cameraSpeedLevels?: {
-        flight: {
-            slow: number;
-            default: number;
-            fast: number;
-        };
-    };
-    pointerLock?: {
-        ortho: boolean;
-    };
-    proportionalCameraSpeed?: {
-        enabled: boolean;
-        min: number;
-        max: number;
-        pickDelay: number;
-    };
-    defaultTopDownElevation?: number;
-    properties?: {
-        stampSettings: {
-            enabled: boolean;
-            properties: string[];
-        };
-        starred: string[];
-    };
-    canvasContextMenu?: {
-        features: string[];
-    };
-    requireConsent?: boolean;
-    features?: {
-        render?: {
-            full: boolean;
-        };
-        debugInfo?: {
-            quality?: boolean;
-            boundingBoxes?: boolean;
-            holdDynamic?: boolean;
-            render?: boolean;
-            queueSize?: boolean;
-            performanceTab?: boolean;
-        };
-        doubleSided?: boolean;
-        bakeResources?: boolean;
-        vr?: boolean;
-        BIM360?: boolean;
-        BIMCollab?: boolean;
-        bimcollab?: boolean;
-        bimTrack?: boolean;
-        ditio?: boolean;
-        jira?: boolean;
-        xsiteManage?: boolean;
-    };
-};

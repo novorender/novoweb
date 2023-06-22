@@ -49,7 +49,7 @@ export function ProjectSettings({ save, saving }: { save: () => Promise<void>; s
                     value={settings.tmZone}
                     onChange={(_event, newValue) => {
                         if (newValue) {
-                            dispatch(renderActions.setProjectSettings({ tmZone: newValue }));
+                            dispatch(renderActions.setProject({ tmZone: newValue }));
                         }
                     }}
                     filterOptions={filter}

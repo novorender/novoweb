@@ -24,11 +24,9 @@ import { ObjectGroup, objectGroupsActions, DispatchObjectGroups } from "contexts
 import { hiddenActions, DispatchHidden } from "contexts/hidden";
 import { highlightActions, DispatchHighlighted } from "contexts/highlighted";
 import {
-    AdvancedSetting,
     CameraSpeedLevel,
     CameraType,
     ObjectVisibility,
-    ProjectSetting,
     renderActions,
     RenderState,
     SelectionBasketMode,
@@ -39,6 +37,7 @@ import { VecRGB, VecRGBA } from "utils/color";
 import { orthoCamActions } from "features/orthoCam";
 import { propertiesActions } from "features/properties/slice";
 import { capitalize } from "utils/misc";
+import { CustomProperties } from "types/project";
 
 import { MAX_FLOAT } from "./consts";
 
@@ -329,6 +328,39 @@ export function getEnvironmentDescription(
 }
 
 export function getSubtrees(
+    hidden: NonNullable<CustomProperties["v1"]>["renderSettings"]["hide"],
+    subtrees: string[]
+): NonNullable<RenderState["subtrees"]> {
+    return {
+        terrain: subtrees.includes("terrain")
+            ? hidden.terrain
+                ? SubtreeStatus.Hidden
+                : SubtreeStatus.Shown
+            : SubtreeStatus.Unavailable,
+        lines: subtrees.includes("lines")
+            ? hidden.lines
+                ? SubtreeStatus.Hidden
+                : SubtreeStatus.Shown
+            : SubtreeStatus.Unavailable,
+        points: subtrees.includes("points")
+            ? hidden.points
+                ? SubtreeStatus.Hidden
+                : SubtreeStatus.Shown
+            : SubtreeStatus.Unavailable,
+        triangles: subtrees.includes("triangles")
+            ? hidden.triangles
+                ? SubtreeStatus.Hidden
+                : SubtreeStatus.Shown
+            : SubtreeStatus.Unavailable,
+        documents: subtrees.includes("documents")
+            ? hidden.documents
+                ? SubtreeStatus.Hidden
+                : SubtreeStatus.Shown
+            : SubtreeStatus.Unavailable,
+    };
+}
+
+export function getLegacySubtrees(
     settings: Internal.RenderSettingsExt["advanced"],
     subtrees: string[]
 ): NonNullable<RenderState["subtrees"]> {

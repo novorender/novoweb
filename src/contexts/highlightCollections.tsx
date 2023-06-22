@@ -1,7 +1,7 @@
 import { ObjectId } from "@novorender/webgl-api";
 import { createContext, Dispatch, MutableRefObject, ReactNode, useContext, useReducer, useRef } from "react";
 
-import { VecRGB, VecRGBA } from "utils/color";
+import { VecRGBA } from "utils/color";
 import { toIdObj, toIdArr } from "utils/objectData";
 
 export enum HighlightCollection {
@@ -12,7 +12,7 @@ const initialState = {
     [HighlightCollection.SecondaryHighlight]: {
         ids: {} as Record<ObjectId, true | undefined>,
         idArr: [] as ObjectId[],
-        color: [1, 1, 0, 1] as VecRGB | VecRGBA,
+        color: [1, 1, 0, 1] as VecRGBA,
     },
 };
 

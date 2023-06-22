@@ -16,7 +16,7 @@ import { ArrowBack, Save } from "@mui/icons-material";
 
 import { Accordion, AccordionDetails, AccordionSummary, Divider, LinearProgress, ScrollBox, Switch } from "components";
 import { useAppDispatch, useAppSelector } from "app/store";
-import { AdvancedSetting, selectAdvancedSettings, renderActions } from "features/render/renderSlice";
+import { renderActions, selectDebugStats, selectNavigationCube } from "features/render";
 import { ButtonKey, defaultEnabledWidgets, featuresConfig, viewerWidgets, WidgetKey } from "config/features";
 import {
     explorerActions,
@@ -36,14 +36,10 @@ export function FeatureSettings({ save, saving }: { save: () => Promise<void>; s
     const isAdminScene = useAppSelector(selectIsAdminScene);
     const enabledWidgets = useAppSelector(selectEnabledWidgets);
     const lockedWidgets = useAppSelector(selectLockedWidgets);
-    const settings = useAppSelector(selectAdvancedSettings);
     const primaryMenu = useAppSelector(selectPrimaryMenu);
     const enabledCanvasContextMenuFeatures = useAppSelector(selectCanvasContextMenuFeatures);
-    const { showPerformance, navigationCube } = settings;
-
-    const handleToggleFeature = ({ target: { name, checked } }: ChangeEvent<HTMLInputElement>) => {
-        dispatch(renderActions.setAdvancedSettings({ [name]: checked }));
-    };
+    const navigationCube = useAppSelector(selectNavigationCube);
+    const debugStats = useAppSelector(selectDebugStats);
 
     const toggleWidget = (key: WidgetKey, checked: boolean) => {
         const keys = enabledWidgets.map((w) => w.key);
@@ -88,9 +84,10 @@ export function FeatureSettings({ save, saving }: { save: () => Promise<void>; s
                         sx={{ ml: 0, mb: 1 }}
                         control={
                             <Switch
-                                name={AdvancedSetting.NavigationCube}
-                                checked={navigationCube}
-                                onChange={handleToggleFeature}
+                                checked={navigationCube.enabled}
+                                onChange={(_evt, checked) =>
+                                    dispatch(renderActions.setNavigationCube({ enabled: checked }))
+                                }
                             />
                         }
                         label={
@@ -103,9 +100,10 @@ export function FeatureSettings({ save, saving }: { save: () => Promise<void>; s
                         sx={{ ml: 0, mb: 1 }}
                         control={
                             <Switch
-                                name={AdvancedSetting.ShowPerformance}
-                                checked={showPerformance}
-                                onChange={handleToggleFeature}
+                                checked={debugStats.enabled}
+                                onChange={(_evt, checked) =>
+                                    dispatch(renderActions.setDebugStats({ enabled: checked }))
+                                }
                             />
                         }
                         label={

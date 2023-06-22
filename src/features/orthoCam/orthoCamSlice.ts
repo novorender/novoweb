@@ -2,7 +2,6 @@ import { createSlice, PayloadAction } from "@reduxjs/toolkit";
 import { vec3 } from "gl-matrix";
 
 import { RootState } from "app/store";
-import { initScene } from "features/render";
 
 const initialState = {
     crossSection: undefined as vec3 | undefined,

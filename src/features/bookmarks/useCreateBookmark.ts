@@ -3,33 +3,33 @@ import { OrthoControllerParams } from "@novorender/webgl-api";
 import { mat4, quat, vec3 } from "gl-matrix";
 
 import { useAppSelector } from "app/store";
-import { isInternalGroup, useLazyObjectGroups } from "contexts/objectGroups";
 import { useExplorerGlobals } from "contexts/explorerGlobals";
 import { useLazyHidden } from "contexts/hidden";
+import { HighlightCollection, useLazyHighlightCollections } from "contexts/highlightCollections";
 import { useLazyHighlighted } from "contexts/highlighted";
+import { isInternalGroup, useLazyObjectGroups } from "contexts/objectGroups";
 import { useLazySelectionBasket } from "contexts/selectionBasket";
-import {
-    ObjectVisibility,
-    selectAdvancedSettings,
-    selectDefaultVisibility,
-    selectMainObject,
-    selectSelectionBasketMode,
-    selectSubtrees,
-    selectViewMode,
-    SubtreeStatus,
-} from "features/render/renderSlice";
-import { selectMeasure } from "features/measure";
-import { selectFollowPath } from "features/followPath";
 import { selectAreaPoints } from "features/area";
-import { selectPointLinePoints } from "features/pointLine";
+import { selectDeviations } from "features/deviations";
+import { selectFollowPath } from "features/followPath";
 import {
     selectManholeCollisionSettings,
     selectManholeCollisionTarget,
     selectManholeMeasureValues,
 } from "features/manhole";
-import { HighlightCollection, useLazyHighlightCollections } from "contexts/highlightCollections";
+import { selectMeasure } from "features/measure";
+import { selectPointLinePoints } from "features/pointLine";
+import {
+    ObjectVisibility,
+    SubtreeStatus,
+    selectBackground,
+    selectDefaultVisibility,
+    selectMainObject,
+    selectSelectionBasketMode,
+    selectSubtrees,
+    selectViewMode,
+} from "features/render";
 import { ViewMode } from "types/misc";
-import { selectDeviations } from "features/deviations";
 
 export function useCreateBookmark() {
     const measurement = useAppSelector(selectMeasure);
@@ -45,7 +45,7 @@ export function useCreateBookmark() {
     const viewMode = useAppSelector(selectViewMode);
     const manholeCollisionSettings = useAppSelector(selectManholeCollisionSettings);
     const deviations = useAppSelector(selectDeviations);
-    const backgroundColor = useAppSelector(selectAdvancedSettings).backgroundColor;
+    const backgroundColor = useAppSelector(selectBackground).color;
 
     const {
         state: { view_OLD: view },

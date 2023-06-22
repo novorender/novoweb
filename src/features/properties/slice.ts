@@ -42,6 +42,14 @@ export const propertiesSlice = createSlice({
 export const selectPropertiesStampSettings = (state: RootState) => state.properties.stampSettings;
 export const selectShowPropertiesStamp = (state: RootState) => state.properties.showStamp;
 export const selectStarredProperties = (state: RootState) => state.properties.starred;
+export const selectPropertiesSettings = (state: RootState) => {
+    return {
+        stamp: {
+            enabled: state.properties.stampSettings.enabled,
+        },
+        starred: Object.keys(state.properties.starred),
+    };
+};
 
 const { actions, reducer } = propertiesSlice;
 export { actions as propertiesActions, reducer as propertiesReducer };

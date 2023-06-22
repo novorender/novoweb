@@ -11,7 +11,7 @@ import { VecRGB, VecRGBA } from "utils/color";
 import { mergeRecursive } from "utils/misc";
 
 import { SceneConfig } from "./hooks/useHandleInit";
-import { getSubtrees } from "./utils";
+import { getLegacySubtrees, getSubtrees } from "./utils";
 
 export const initScene = createAction<{
     sceneData: Omit<SceneConfig, "db" | "url">;
@@ -56,34 +56,6 @@ export enum SubtreeStatus {
     Unavailable,
     Shown,
     Hidden,
-}
-
-export enum AdvancedSetting {
-    Taa = "taa",
-    Ssao = "ssao",
-    AutoFps = "autoFps",
-    ShowBoundingBoxes = "showBoundingBoxes",
-    DoubleSidedMaterials = "doubleSidedMaterials",
-    DoubleSidedTransparentMaterials = "doubleSidedTransparentMaterials",
-    HoldDynamic = "holdDynamic",
-    ShowPerformance = "showPerformance",
-    QualityPoints = "qualityPoints",
-    PointSize = "pointSize",
-    MaxPointSize = "maxPointSize",
-    PointToleranceFactor = "pointToleranceFactor",
-    HeadlightIntensity = "headlightIntensity",
-    HeadlightDistance = "headlightDistance",
-    AmbientLight = "ambientLight",
-    NavigationCube = "navigationCube",
-    TriangleLimit = "triangleLimit",
-    PickSemiTransparentObjects = "pickSemiTransparentObjects",
-}
-
-export enum ProjectSetting {
-    TmZone = "tmZone",
-    DitioProjectNumber = "ditioProjectNumber",
-    Jira = "jira",
-    XsiteManage = "xsiteManage",
 }
 
 export enum SelectionBasketMode {
@@ -187,8 +159,6 @@ type Stamp = { mouseX: number; mouseY: number; pinned: boolean } & (
 
 const initialState = {
     sceneStatus: { status: AsyncStatus.Initial } as AsyncState<void>,
-    environments: [] as EnvironmentDescription[],
-    currentEnvironment: undefined as EnvironmentDescription | undefined,
     mainObject: undefined as ObjectId | undefined,
     defaultVisibility: ObjectVisibility.Neutral,
     selectMultiple: false,
@@ -224,26 +194,6 @@ const initialState = {
         }[],
     },
     camera: { type: CameraType.Pinhole } as MutableCameraState,
-    advancedSettings: {
-        [AdvancedSetting.Taa]: true,
-        [AdvancedSetting.Ssao]: true,
-        [AdvancedSetting.AutoFps]: true,
-        [AdvancedSetting.ShowBoundingBoxes]: false,
-        [AdvancedSetting.DoubleSidedMaterials]: false,
-        [AdvancedSetting.DoubleSidedTransparentMaterials]: false,
-        [AdvancedSetting.HoldDynamic]: false,
-        [AdvancedSetting.ShowPerformance]: false,
-        [AdvancedSetting.QualityPoints]: true,
-        [AdvancedSetting.PointSize]: 1,
-        [AdvancedSetting.MaxPointSize]: 20,
-        [AdvancedSetting.PointToleranceFactor]: 0,
-        [AdvancedSetting.HeadlightIntensity]: 0,
-        [AdvancedSetting.HeadlightDistance]: 0,
-        [AdvancedSetting.AmbientLight]: 0,
-        [AdvancedSetting.NavigationCube]: false,
-        [AdvancedSetting.TriangleLimit]: 0,
-        [AdvancedSetting.PickSemiTransparentObjects]: false,
-    },
     defaultDeviceProfile: {} as any,
     gridDefaults: {
         enabled: false,
@@ -262,12 +212,6 @@ const initialState = {
         majorColor: [0, 0, 0],
         minorColor: [0, 0, 0],
     } as MutableGrid,
-    projectSettings: {
-        [ProjectSetting.TmZone]: "",
-        [ProjectSetting.DitioProjectNumber]: "",
-        [ProjectSetting.Jira]: { space: "", project: "", component: "" },
-        [ProjectSetting.XsiteManage]: { siteId: "" },
-    },
     picker: Picker.Object,
     viewMode: ViewMode.Default,
     loadingHandles: [] as number[],
@@ -388,6 +332,12 @@ const initialState = {
         renderResolution: 1,
         framerateTarget: 30,
     },
+    navigationCube: {
+        enabled: false,
+    },
+    debugStats: {
+        enabled: false,
+    },
 };
 
 type State = typeof initialState;
@@ -398,12 +348,6 @@ export const renderSlice = createSlice({
     reducers: {
         setMainObject: (state, action: PayloadAction<ObjectId | undefined>) => {
             state.mainObject = action.payload;
-        },
-        setEnvironment: (state, action: PayloadAction<EnvironmentDescription | undefined>) => {
-            state.currentEnvironment = action.payload;
-        },
-        setEnvironments: (state, action: PayloadAction<EnvironmentDescription[]>) => {
-            state.environments = action.payload;
         },
         toggleDefaultVisibility: (state) => {
             switch (state.defaultVisibility) {
@@ -570,17 +514,6 @@ export const renderSlice = createSlice({
         resetClippingPlanes: (state) => {
             state.clippingPlanes = initialState.clippingPlanes;
         },
-        resetState: (state) => {
-            return {
-                ...initialState,
-                defaultDeviceProfile: state.defaultDeviceProfile,
-                environments: state.environments,
-                projectSettings: state.projectSettings,
-                savedCameraPositions: { currentIndex: 0, positions: [state.savedCameraPositions.positions[0]] },
-                // cameraSpeedLevels: state.cameraSpeedLevels,
-                currentCameraSpeedLevel: state.currentCameraSpeedLevel,
-            };
-        },
         setCamera: (state, { payload }: PayloadAction<CameraState>) => {
             const goTo =
                 "goTo" in payload && payload.goTo
@@ -604,18 +537,6 @@ export const renderSlice = createSlice({
                 ...(goTo ? { goTo } : {}),
                 ...(zoomTo ? { zoomTo } : {}),
             } as MutableCameraState;
-        },
-        setAdvancedSettings: (state, action: PayloadAction<Partial<State["advancedSettings"]>>) => {
-            state.advancedSettings = {
-                ...state.advancedSettings,
-                ...action.payload,
-            };
-        },
-        setProjectSettings: (state, action: PayloadAction<Partial<State["projectSettings"]>>) => {
-            state.projectSettings = {
-                ...state.projectSettings,
-                ...action.payload,
-            };
         },
         setGridDefaults: (state, action: PayloadAction<Partial<State["gridDefaults"]>>) => {
             state.gridDefaults = { ...state.gridDefaults, ...action.payload };
@@ -676,78 +597,92 @@ export const renderSlice = createSlice({
         setDeviceProfile: (state, action: PayloadAction<RecursivePartial<State["deviceProfile"]>>) => {
             state.deviceProfile = mergeRecursive(state.deviceProfile, action.payload);
         },
+        setProject: (state, action: PayloadAction<RecursivePartial<State["project"]>>) => {
+            state.project = mergeRecursive(state.project, action.payload);
+        },
+        setNavigationCube: (state, action: PayloadAction<RecursivePartial<State["navigationCube"]>>) => {
+            state.navigationCube = mergeRecursive(state.navigationCube, action.payload);
+        },
+        setDebugStats: (state, action: PayloadAction<RecursivePartial<State["debugStats"]>>) => {
+            state.debugStats = mergeRecursive(state.debugStats, action.payload);
+        },
     },
     extraReducers: (builder) => {
         builder.addCase(initScene, (state, action) => {
             const {
-                sceneData: { customProperties: props, settings, environment, tmZone },
+                sceneData: { customProperties: props, settings, tmZone },
                 sceneConfig,
                 initialCamera,
                 deviceProfile,
             } = action.payload;
 
-            state.secondaryHighlight.property = props.highlights?.secondary.property ?? "";
-
-            if (!settings) {
-                return;
-            }
-
-            // Camera
+            // Init camera
             state.camera.type = initialCamera.kind === "orthographic" ? CameraType.Orthographic : CameraType.Pinhole;
             state.camera.goTo = initialCamera;
             state.savedCameraPositions.positions[0] = initialCamera;
             state.savedCameraPositions.currentIndex = 0;
-            state.cameraDefaults.pinhole = props.v1?.camera.pinhole ?? state.cameraDefaults.pinhole;
-            state.cameraDefaults.orthographic = props.v1?.camera.orthographic ?? state.cameraDefaults.orthographic;
-
-            // background
-            state.background.color = settings.background.color ?? state.background.color;
-            state.background.blur = settings.background.skyBoxBlur ?? state.background.blur;
-            state.background.url = environment ?? state.background.url;
-
-            // points
-            state.points.size.pixel = settings.points.size.pixel ?? state.points.size.pixel;
-            state.points.size.maxPixel = settings.points.size.maxPixel ?? state.points.size.maxPixel;
-            state.points.size.metric = settings.points.size.metric ?? state.points.size.metric;
-            state.points.size.toleranceFactor =
-                settings.points.size.toleranceFactor ?? state.points.size.toleranceFactor;
-
-            // deviations
-            state.points.deviation.index = settings.points.deviation.index;
-            state.points.deviation.mixFactor =
-                settings.points.deviation.mode === "mix" ? 1 : settings.points.deviation.mode === "on" ? 0.5 : 0; // TODO map mode to mixFactor?
-            state.points.deviation.colorGradient = {
-                knots: settings.points.deviation.colors.map((deviation) => ({
-                    color: deviation.color,
-                    position: deviation.deviation,
-                })),
-            };
-
-            // subtrees
-            state.subtrees = getSubtrees(settings.advanced, sceneConfig.subtrees ?? ["triangles"]);
-
-            // terrain
-            state.terrain.asBackground = settings.terrain.asBackground;
-            state.terrain.elevationGradient = {
-                knots: settings.terrain.elevationColors.map((node) => ({
-                    position: node.elevation,
-                    color: node.color,
-                })),
-            };
 
             // project
             state.project.tmZone = tmZone ?? state.project.tmZone;
 
-            // advanced
-            state.advanced = mergeRecursive(state.advanced, props.v1?.advanced ?? {});
-
             // device profile
             state.deviceProfile = mergeRecursive(state.deviceProfile, deviceProfile);
+
+            if (props.v1) {
+                const { points, background, terrain, hide, ...advanced } = props.v1.renderSettings;
+                const { debugStats, navigationCube } = props.v1.features;
+                const camera = props.v1.camera;
+
+                state.cameraDefaults.pinhole = camera.pinhole;
+                state.cameraDefaults.orthographic = camera.orthographic;
+                state.background = mergeRecursive(state.background, background);
+                state.points = points;
+                state.subtrees = getSubtrees(hide, sceneConfig.subtrees ?? ["triangles"]);
+                state.terrain = terrain;
+                state.advanced = mergeRecursive(state.advanced, advanced);
+                state.debugStats = debugStats;
+                state.navigationCube = navigationCube;
+            } else if (settings) {
+                // Legacy settings
+
+                state.secondaryHighlight.property = props.highlights?.secondary.property ?? "";
+
+                // background
+                state.background.color = settings.background.color ?? state.background.color;
+                state.background.blur = settings.background.skyBoxBlur ?? state.background.blur;
+                state.background.url = settings.environment
+                    ? `https://api.novorender.com/assets/env/${settings.environment}/`
+                    : state.background.url;
+
+                // points
+                state.points.size = mergeRecursive(state.points.size, settings.points.size);
+                state.points.deviation.index = settings.points.deviation.index;
+                state.points.deviation.mixFactor =
+                    settings.points.deviation.mode === "mix" ? 1 : settings.points.deviation.mode === "on" ? 0.5 : 0; // TODO map mode to mixFactor?
+                state.points.deviation.colorGradient = {
+                    knots: settings.points.deviation.colors.map((deviation) => ({
+                        color: deviation.color,
+                        position: deviation.deviation,
+                    })),
+                };
+
+                // subtrees
+                state.subtrees = getLegacySubtrees(settings.advanced, sceneConfig.subtrees ?? ["triangles"]);
+
+                // terrain
+                state.terrain.asBackground = settings.terrain.asBackground;
+                state.terrain.elevationGradient = {
+                    knots: settings.terrain.elevationColors.map((node) => ({
+                        position: node.elevation,
+                        color: node.color,
+                    })),
+                };
+            }
         });
         builder.addCase(resetView, (state, action) => {
             const {
                 initialCamera,
-                sceneData: { settings },
+                sceneData: { settings, customProperties: props },
             } = action.payload;
 
             // Highlight
@@ -765,31 +700,45 @@ export const renderSlice = createSlice({
                 };
             }
 
-            // background
-            state.background.color = settings.background.color ?? state.background.color;
-
-            // Deviations
-            state.points.deviation.index = settings.points.deviation.index;
-            state.points.deviation.mixFactor =
-                settings.points.deviation.mode === "mix" ? 1 : settings.points.deviation.mode === "on" ? 0.5 : 0; // TODO map mode to mixFactor?
-
-            // Subtrees
-            state.subtrees = getSubtrees(
-                settings.advanced,
-                Object.keys(state.subtrees).filter(
-                    (key: any) => state.subtrees[key as keyof State["subtrees"]] !== SubtreeStatus.Unavailable
-                )
+            const availableSubtrees = Object.keys(state.subtrees).filter(
+                (key: any) => state.subtrees[key as keyof State["subtrees"]] !== SubtreeStatus.Unavailable
             );
 
-            // terrain
-            state.terrain.asBackground = settings.terrain.asBackground;
+            if (props.v1) {
+                const { points, background, terrain, hide } = props.v1.renderSettings;
+
+                // background
+                state.background.color = background.color;
+
+                // deviations
+                state.points.deviation.index = points.deviation.index;
+                state.points.deviation.mixFactor = points.deviation.mixFactor;
+
+                // subtrees
+                state.subtrees = getSubtrees(hide, availableSubtrees);
+
+                // terrain
+                state.terrain.asBackground = terrain.asBackground;
+            } else if (settings) {
+                // background
+                state.background.color = settings.background.color ?? state.background.color;
+
+                // deviations
+                state.points.deviation.index = settings.points.deviation.index;
+                state.points.deviation.mixFactor =
+                    settings.points.deviation.mode === "mix" ? 1 : settings.points.deviation.mode === "on" ? 0.5 : 0; // TODO map mode to mixFactor?
+
+                // subtrees
+                state.subtrees = getLegacySubtrees(settings.advanced, availableSubtrees);
+
+                // terrain
+                state.terrain.asBackground = settings.terrain.asBackground;
+            }
         });
     },
 });
 
 export const selectMainObject = (state: RootState) => state.render.mainObject;
-export const selectEnvironments = (state: RootState) => state.render.environments;
-export const selectCurrentEnvironment = (state: RootState) => state.render.currentEnvironment;
 export const selectDefaultVisibility = (state: RootState) => state.render.defaultVisibility;
 export const selectSelectMultiple = (state: RootState) => state.render.selectMultiple;
 export const selectCameraSpeedLevels = (state: RootState) => state.render.cameraDefaults.pinhole.speedLevels;
@@ -805,7 +754,6 @@ export const selectClippingBox = (state: RootState) => state.render.clippingBox 
 export const selectClippingPlanes = (state: RootState) => state.render.clippingPlanes;
 export const selectCamera = (state: RootState) => state.render.camera as CameraState;
 export const selectCameraType = (state: RootState) => state.render.camera.type;
-export const selectAdvancedSettings = (state: RootState) => state.render.advancedSettings;
 export const selectSecondaryHighlightProperty = (state: RootState) => state.render.secondaryHighlight.property;
 export const selectProjectSettings = (state: RootState) => state.render.project;
 export const selectGridDefaults = (state: RootState) => state.render.gridDefaults;
@@ -826,6 +774,8 @@ export const selectCameraDefaults = (state: RootState) => state.render.cameraDef
 export const selectAdvanced = (state: RootState) => state.render.advanced;
 export const selectDeviceProfile = (state: RootState) => state.render.deviceProfile;
 export const selectPoints = (state: RootState) => state.render.points;
+export const selectNavigationCube = (state: RootState) => state.render.navigationCube;
+export const selectDebugStats = (state: RootState) => state.render.debugStats;
 
 const { reducer } = renderSlice;
 const actions = { ...renderSlice.actions, initScene, resetView };

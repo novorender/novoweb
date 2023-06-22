@@ -1,15 +1,15 @@
 import { Box } from "@mui/material";
 
-import { SelectionModifierMenu } from "features/selectionModifierMenu";
-import { PrimaryMenu } from "features/primaryMenu";
-import { Widgets } from "features/widgets";
 import { useAppSelector } from "app/store";
 import { NavigationCube } from "features/navigationCube";
-import { selectAdvancedSettings } from "features/render/renderSlice";
+import { PrimaryMenu } from "features/primaryMenu";
+import { selectNavigationCube } from "features/render";
+import { SelectionModifierMenu } from "features/selectionModifierMenu";
+import { Widgets } from "features/widgets";
 import { useWidgetLayout } from "features/widgets/useWidgetLayout";
 
 export function Hud() {
-    const { navigationCube } = useAppSelector(selectAdvancedSettings);
+    const navigationCube = useAppSelector(selectNavigationCube);
     const layout = useWidgetLayout();
 
     const getGridLayout = () => {
@@ -38,7 +38,7 @@ export function Hud() {
 
     return (
         <>
-            {navigationCube ? <NavigationCube /> : null}
+            {navigationCube.enabled && <NavigationCube />}
             <Box
                 position="absolute"
                 top={0}

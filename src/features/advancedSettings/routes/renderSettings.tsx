@@ -1,15 +1,11 @@
 import { ArrowBack, Save } from "@mui/icons-material";
 import { Box, Button, FormControlLabel, FormHelperText, Slider, Typography, useTheme } from "@mui/material";
-import { Internal } from "@novorender/webgl-api";
-import { SyntheticEvent, useState } from "react";
+import { useState } from "react";
 import { useHistory } from "react-router-dom";
 
-import { api } from "app";
 import { useAppDispatch, useAppSelector } from "app/store";
 import { Accordion, AccordionDetails, AccordionSummary, Divider, LinearProgress, ScrollBox, Switch } from "components";
-import { useExplorerGlobals } from "contexts/explorerGlobals";
 import {
-    AdvancedSetting,
     Subtree,
     SubtreeStatus,
     renderActions,
@@ -21,20 +17,9 @@ import {
 } from "features/render";
 import { selectUser } from "slices/authSlice";
 
-enum SliderSettings {
-    PointSize,
-    MaxPointSize,
-    PointToleranceFactor,
-    LightExposure,
-    TriangleLimit,
-}
-
 export function RenderSettings({ save, saving }: { save: () => Promise<void>; saving: boolean }) {
     const history = useHistory();
     const theme = useTheme();
-    const {
-        state: { view },
-    } = useExplorerGlobals(true);
 
     const dispatch = useAppDispatch();
     const user = useAppSelector(selectUser);

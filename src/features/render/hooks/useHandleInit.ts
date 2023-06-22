@@ -16,13 +16,12 @@ import { highlightActions, useDispatchHighlighted } from "contexts/highlighted";
 import { GroupStatus, objectGroupsActions, useDispatchObjectGroups } from "contexts/objectGroups";
 import { useSceneId } from "hooks/useSceneId";
 import { AsyncStatus } from "types/misc";
+import { CustomProperties } from "types/project";
 import { VecRGBA } from "utils/color";
 
-import { DeepMutable, renderActions } from "..";
-import { CustomProperties } from "../render";
+import { renderActions } from "..";
 import { Error as SceneError } from "../sceneError";
 import { flip } from "../utils";
-import { mergeRecursive } from "utils/misc";
 
 export function useHandleInit() {
     const sceneId = useSceneId();
@@ -52,7 +51,7 @@ export function useHandleInit() {
             const _view = createView(canvas);
 
             try {
-                const { url, db, ...sceneData } = await loadScene(sceneId);
+                const [{ url, db, ...sceneData }, camera] = await loadScene(sceneId);
                 const octreeSceneConfig = await _view.loadSceneFromURL(new URL(url));
 
                 _view.run();
@@ -62,10 +61,10 @@ export function useHandleInit() {
                         sceneData,
                         sceneConfig: octreeSceneConfig,
                         initialCamera: {
-                            kind: sceneData.camera?.kind ?? _view.renderState.camera.kind,
-                            position: vec3.clone(sceneData.camera?.position ?? _view.renderState.camera.position),
-                            rotation: quat.clone(sceneData.camera?.rotation ?? _view.renderState.camera.rotation),
-                            fov: sceneData.camera?.fov ?? _view.renderState.camera.fov,
+                            kind: camera?.kind ?? _view.renderState.camera.kind,
+                            position: vec3.clone(camera?.position ?? _view.renderState.camera.position),
+                            rotation: quat.clone(camera?.rotation ?? _view.renderState.camera.rotation),
+                            fov: camera?.fov ?? _view.renderState.camera.fov,
                         },
                         deviceProfile: structuredClone(_view.renderContext?.deviceProfile),
                     })
@@ -167,71 +166,61 @@ export function useHandleInit() {
     ]);
 }
 
-export type SceneConfig = Omit<DeepMutable<SceneData>, "camera" | "environment" | "settings" | "customProperties"> & {
+export type SceneConfig = Omit<SceneData, "settings" | "customProperties"> & {
     settings: Internal.RenderSettingsExt;
-    camera?: { kind: "pinhole" | "orthographic"; position: vec3; rotation: quat; fov: number };
-    environment: string;
-    version?: string;
     customProperties: CustomProperties;
 };
 
-export async function loadScene(id: string): Promise<SceneConfig> {
+export type CadCamera = { kind: "pinhole" | "orthographic"; position: vec3; rotation: quat; fov: number };
+export async function loadScene(id: string): Promise<[SceneConfig, CadCamera | undefined]> {
     const res: (SceneData & { version?: string }) | SceneLoadFail = await dataApi.loadScene(id);
+    let camera: CadCamera | undefined = undefined;
 
     if ("error" in res) {
         throw res;
     }
 
-    (window as any).db = res.db;
-
-    let { camera, ..._cfg } = res;
+    let { ..._cfg } = res;
     const cfg = _cfg as SceneConfig;
 
     // Legacy scene config format
     // needs to be flipped.
-    if (!cfg.customProperties?.v1) {
-        if (!camera || !(camera.kind === "ortho" || camera.kind === "flight")) {
-            return cfg;
+    if (!cfg.customProperties?.initialCameraState) {
+        if (cfg.camera && (cfg.camera.kind === "ortho" || cfg.camera.kind === "flight")) {
+            camera =
+                cfg.camera.kind === "ortho"
+                    ? {
+                          kind: "orthographic",
+                          position: flip([
+                              cfg.camera.referenceCoordSys[12],
+                              cfg.camera.referenceCoordSys[13],
+                              cfg.camera.referenceCoordSys[14],
+                          ]),
+                          rotation: rotationFromDirection(
+                              flip([
+                                  cfg.camera.referenceCoordSys[8],
+                                  cfg.camera.referenceCoordSys[9],
+                                  cfg.camera.referenceCoordSys[10],
+                              ])
+                          ),
+                          fov: cfg.camera.fieldOfView,
+                      }
+                    : {
+                          kind: "pinhole",
+                          position: flip(cfg.camera.position),
+                          rotation: computeRotation(0, cfg.camera.pitch, cfg.camera.yaw),
+                          fov: cfg.camera.fieldOfView,
+                      };
         }
-
-        cfg.camera =
-            camera.kind === "ortho"
-                ? {
-                      kind: "orthographic",
-                      position: flip([
-                          camera.referenceCoordSys[12],
-                          camera.referenceCoordSys[13],
-                          camera.referenceCoordSys[14],
-                      ]),
-                      rotation: rotationFromDirection(
-                          flip([camera.referenceCoordSys[8], camera.referenceCoordSys[9], camera.referenceCoordSys[10]])
-                      ),
-                      fov: camera.fieldOfView,
-                  }
-                : {
-                      kind: "pinhole",
-                      position: flip(camera.position),
-                      rotation: computeRotation(0, camera.pitch, camera.yaw),
-                      fov: camera.fieldOfView,
-                  };
-
-        cfg.environment = cfg.settings?.environment
-            ? "https://api.novorender.com/assets/env/" + (cfg.settings.environment as any as string) + "/"
-            : "";
     } else {
-        cfg.camera = cfg.customProperties.v1.camera.initialState;
-
-        // todo save env
-        cfg.environment = cfg.settings?.environment
-            ? "https://api.novorender.com/assets/env/" + (cfg.settings.environment as any as string) + "/"
-            : "";
+        camera = cfg.customProperties.initialCameraState;
     }
 
-    if (cfg.settings && cfg.settings.background) {
+    if (cfg.customProperties.v1 && cfg.settings && cfg.settings.background) {
         cfg.settings.background.color = getBackgroundColor(cfg.settings.background.color);
     }
 
-    return cfg;
+    return [cfg, camera];
 }
 
 function getBackgroundColor(color: vec4 | undefined): vec4 {
