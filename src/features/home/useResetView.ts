@@ -30,10 +30,10 @@ export function useResetView() {
 
     const reset = async ({ resetCamera = true }: { resetCamera?: boolean } | undefined = {}) => {
         try {
-            const { url: _url, db: _db, ...sceneData } = await loadScene(sceneId);
+            const [{ url: _url, db: _db, ...sceneData }, camera] = await loadScene(sceneId);
             const groups = sceneData.objectGroups ?? [];
             const initialCamera = resetCamera
-                ? sceneData.camera ?? {
+                ? camera ?? {
                       kind: "pinhole",
                       position: vec3.clone(homePos.position),
                       rotation: quat.clone(homePos.rotation),
