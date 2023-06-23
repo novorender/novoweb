@@ -2,7 +2,8 @@ import { Box } from "@mui/material";
 import { useEffect, useRef, useState } from "react";
 
 import { useExplorerGlobals } from "contexts/explorerGlobals";
-import { api } from "app";
+import { useAppSelector } from "app/store";
+import { selectDeviceProfile } from "features/render";
 
 const canvas: HTMLCanvasElement = document.createElement("CANVAS") as HTMLCanvasElement;
 canvas.width = 1;
@@ -21,6 +22,7 @@ export function PerformanceStats() {
     const {
         state: { view },
     } = useExplorerGlobals(true);
+    const deviceProfile = useAppSelector(selectDeviceProfile);
     const [stats, setStats] = useState({ ...view.statistics });
     const timer = useRef<ReturnType<typeof setInterval>>();
 
@@ -47,10 +49,9 @@ export function PerformanceStats() {
             maxWidth={700}
         >
             <pre className="stats">
-                Device: {api.deviceProfile.name}; weak: {String(api.deviceProfile.weakDevice)}; Debug profile:{" "}
-                {String((api as any).deviceProfile.debugProfile === true)}
+                Tier: {deviceProfile.tier}; Debug profile: {String(deviceProfile.debugProfile)}
                 <br />
-                APP v{import.meta.env.REACT_APP_VERSION}; API v{api.version};<br />
+                APP v{import.meta.env.REACT_APP_VERSION}; API v{"TODO NEW API"};<br />
                 GPU: {renderer}
                 <br />
                 User agent: {navigator.userAgent}
@@ -59,13 +60,15 @@ export function PerformanceStats() {
                 <br />
                 gpu.render: {stats.render?.gpuTime.draw?.toFixed(2)}
                 <br />
-                gpu.buffers: {((stats.render?.bufferBytes ?? 0) / (1024 * 1024)).toFixed(2) + " MB"}
+                gpu.buffers: {((stats.render?.bufferBytes ?? 0) / (1024 * 1024)).toFixed(2)} MB /{" "}
+                {(deviceProfile.limits.maxGPUBytes / (1024 * 1024)).toFixed(2)} MB
                 <br />
                 gpu.textures: {((stats.render?.textureBytes ?? 0) / (1024 * 1024)).toFixed(2) + " MB"}
                 <br />
                 FPS: {(1000 / (stats.render?.frameInterval ?? 1)).toFixed(0)}
                 <br />
-                Triangles: {formatNumber(stats.render?.triangles ?? 0)}
+                Triangles: {formatNumber(stats.render?.triangles ?? 0)} /{" "}
+                {formatNumber(deviceProfile.limits.maxPrimitives)}
                 <br />
                 Lines: {formatNumber(stats.render?.lines ?? 0)}
                 <br />

@@ -1,6 +1,13 @@
 import { SceneData, SceneLoadFail } from "@novorender/data-js-api";
-import { computeRotation, createView, rotationFromDirection } from "@novorender/web_app";
+import {
+    DeviceProfile,
+    computeRotation,
+    createView,
+    getDeviceProfile,
+    rotationFromDirection,
+} from "@novorender/web_app";
 import { Internal, ObjectDB } from "@novorender/webgl-api";
+import { getGPUTier } from "detect-gpu";
 import { quat, vec3, vec4 } from "gl-matrix";
 import { useEffect, useRef } from "react";
 
@@ -18,6 +25,7 @@ import { useSceneId } from "hooks/useSceneId";
 import { AsyncStatus } from "types/misc";
 import { CustomProperties } from "types/project";
 import { VecRGBA } from "utils/color";
+import { sleep } from "utils/time";
 
 import { renderActions } from "..";
 import { Error as SceneError } from "../sceneError";
@@ -29,7 +37,7 @@ export function useHandleInit() {
     const dispatchHighlightCollections = useDispatchHighlightCollections();
     const dispatchObjectGroups = useDispatchObjectGroups();
     const {
-        state: { view, canvas },
+        state: { canvas },
         dispatch: dispatchGlobals,
     } = useExplorerGlobals();
 
@@ -41,32 +49,44 @@ export function useHandleInit() {
         initView();
 
         async function initView() {
-            if (initialized.current || !canvas || view) {
+            if (initialized.current || !canvas) {
                 return;
             }
 
             initialized.current = true;
             dispatch(renderActions.setSceneStatus({ status: AsyncStatus.Loading }));
 
-            const _view = createView(canvas);
+            const view = createView(canvas);
 
             try {
                 const [{ url, db, ...sceneData }, camera] = await loadScene(sceneId);
-                const octreeSceneConfig = await _view.loadSceneFromURL(new URL(url));
+                const octreeSceneConfig = await view.loadSceneFromURL(new URL(url));
 
-                _view.run();
+                view.run();
+
+                // TODO: sleep pga "render() was not called in... fra view.run()"
+                await sleep(500);
+                const detectedTier = await loadDeviceTier();
+                const storedDeviceProfile = getStoredDeviceProfile();
 
                 dispatch(
                     renderActions.initScene({
                         sceneData,
                         sceneConfig: octreeSceneConfig,
                         initialCamera: {
-                            kind: camera?.kind ?? _view.renderState.camera.kind,
-                            position: vec3.clone(camera?.position ?? _view.renderState.camera.position),
-                            rotation: quat.clone(camera?.rotation ?? _view.renderState.camera.rotation),
-                            fov: camera?.fov ?? _view.renderState.camera.fov,
+                            kind: camera?.kind ?? view.renderState.camera.kind,
+                            position: vec3.clone(camera?.position ?? view.renderState.camera.position),
+                            rotation: quat.clone(camera?.rotation ?? view.renderState.camera.rotation),
+                            fov: camera?.fov ?? view.renderState.camera.fov,
                         },
-                        deviceProfile: structuredClone(_view.renderContext?.deviceProfile),
+                        deviceProfile: storedDeviceProfile
+                            ? { ...storedDeviceProfile, isMobile: detectedTier.isMobile }
+                            : {
+                                  ...(detectedTier.tier >= 0
+                                      ? getDeviceProfile(detectedTier.tier as any)
+                                      : structuredClone(view.deviceProfile)),
+                                  ...detectedTier,
+                              },
                     })
                 );
 
@@ -116,7 +136,7 @@ export function useHandleInit() {
                 dispatchGlobals(
                     explorerGlobalsActions.update({
                         db: db as ObjectDB,
-                        view: _view,
+                        view: view,
                         scene: octreeSceneConfig,
                     })
                 );
@@ -156,7 +176,6 @@ export function useHandleInit() {
         }
     }, [
         canvas,
-        view,
         dispatch,
         sceneId,
         dispatchGlobals,
@@ -232,4 +251,51 @@ function getBackgroundColor(color: vec4 | undefined): vec4 {
     }
 
     return color;
+}
+
+function getStoredDeviceProfile(): (DeviceProfile & { debugProfile: true; tier: 420 }) | undefined {
+    try {
+        const debugProfile =
+            new URLSearchParams(window.location.search).get("debugDeviceProfile") ?? localStorage["debugDeviceProfile"];
+
+        if (debugProfile) {
+            return { ...JSON.parse(debugProfile), debugProfile: true, tier: 420 };
+        }
+    } catch (e) {
+        console.warn(e);
+    }
+}
+
+async function loadDeviceTier(): Promise<{ tier: number; isMobile: boolean }> {
+    try {
+        const tiers = [0, 50, 75, 300];
+        const tierResult = await getGPUTier({
+            mobileTiers: tiers,
+            desktopTiers: tiers,
+        });
+        const isApple = tierResult.device?.includes("apple") || false;
+        const { isMobile, ...gpuTier } = tierResult;
+        let { tier } = gpuTier;
+
+        // GPU is obscured on apple mobile devices and the result is usually much worse than the actual device's GPU.
+        if (isMobile && isApple) {
+            tier = Math.max(1, tier);
+        }
+
+        // All RTX cards belong in tier 3+, but some such as A3000 are not benchmarked and returns tier 1.
+        if (gpuTier.gpu && /RTX/gi.test(gpuTier.gpu)) {
+            tier = Math.max(3, tier);
+        }
+
+        return {
+            tier,
+            isMobile: isMobile ?? false,
+        };
+    } catch (e) {
+        console.warn(e);
+        return {
+            tier: -1337,
+            isMobile: false,
+        };
+    }
 }

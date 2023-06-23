@@ -90,6 +90,7 @@ export function RenderSettings({ save, saving }: { save: () => Promise<void>; sa
                                     control={
                                         <Switch
                                             checked={subtrees && subtrees?.triangles === SubtreeStatus.Shown}
+                                            name="show-triangles"
                                             onChange={() =>
                                                 dispatch(renderActions.toggleSubtree({ subtree: "triangles" }))
                                             }
@@ -106,6 +107,7 @@ export function RenderSettings({ save, saving }: { save: () => Promise<void>; sa
                                     control={
                                         <Switch
                                             checked={advanced.msaa.enabled}
+                                            name="msaa"
                                             onChange={(_evt, checked) =>
                                                 dispatch(renderActions.setAdvanced({ msaa: { enabled: checked } }))
                                             }
@@ -122,6 +124,7 @@ export function RenderSettings({ save, saving }: { save: () => Promise<void>; sa
                                         sx={{ ml: 0, mb: 2 }}
                                         control={
                                             <Switch
+                                                name="debug-bb"
                                                 checked={advanced.debug.showNodeBounds}
                                                 onChange={(_evt, checked) =>
                                                     dispatch(
@@ -187,6 +190,7 @@ export function RenderSettings({ save, saving }: { save: () => Promise<void>; sa
                                     sx={{ ml: 0, mb: 2 }}
                                     control={
                                         <Switch
+                                            name="show-points"
                                             checked={subtrees && subtrees?.points === SubtreeStatus.Shown}
                                             onChange={handleSubtreeToggle("points")}
                                         />
@@ -291,6 +295,7 @@ export function RenderSettings({ save, saving }: { save: () => Promise<void>; sa
                                     sx={{ ml: 0 }}
                                     control={
                                         <Switch
+                                            name="show-lines"
                                             checked={subtrees && subtrees?.lines === SubtreeStatus.Shown}
                                             onChange={handleSubtreeToggle("lines")}
                                         />
@@ -314,6 +319,7 @@ export function RenderSettings({ save, saving }: { save: () => Promise<void>; sa
                                     sx={{ ml: 0, mb: 2 }}
                                     control={
                                         <Switch
+                                            name="show-terrain"
                                             checked={subtrees && subtrees?.terrain === SubtreeStatus.Shown}
                                             onChange={handleSubtreeToggle("terrain")}
                                         />
@@ -328,6 +334,7 @@ export function RenderSettings({ save, saving }: { save: () => Promise<void>; sa
                                     sx={{ ml: 0, mb: 1 }}
                                     control={
                                         <Switch
+                                            name="terrain-as-background"
                                             checked={terrain.asBackground}
                                             onChange={(_evt, checked) =>
                                                 dispatch(renderActions.setTerrain({ asBackground: checked }))
@@ -353,6 +360,7 @@ export function RenderSettings({ save, saving }: { save: () => Promise<void>; sa
                                     sx={{ ml: 0 }}
                                     control={
                                         <Switch
+                                            name="show-documents"
                                             checked={subtrees && subtrees?.documents === SubtreeStatus.Shown}
                                             onChange={handleSubtreeToggle("documents")}
                                         />
@@ -375,6 +383,7 @@ export function RenderSettings({ save, saving }: { save: () => Promise<void>; sa
                                 sx={{ ml: 0, mb: 1 }}
                                 control={
                                     <Switch
+                                        name="toon-outline"
                                         checked={advanced.toonOutline.enabled}
                                         onChange={(_evt, checked) =>
                                             dispatch(renderActions.setAdvanced({ toonOutline: { enabled: checked } }))

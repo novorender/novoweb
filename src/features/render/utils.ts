@@ -15,7 +15,7 @@ import {
 } from "@novorender/webgl-api";
 import { quat, vec3 } from "gl-matrix";
 
-import { api, dataApi, offscreenCanvas } from "app";
+import { api, dataApi } from "app";
 import { featuresConfig, WidgetKey } from "config/features";
 import { groupsActions, selectLoadingIds } from "features/groups";
 import { DeviationMode, deviationsActions } from "features/deviations";
@@ -88,7 +88,7 @@ export function createRendering(
     async function start() {
         running.current = true;
 
-        const ctx = offscreenCanvas ? canvas.getContext("bitmaprenderer") : undefined;
+        const ctx = undefined; // offscreenCanvas ? canvas.getContext("bitmaprenderer") : undefined;
 
         const fpsTable: number[] = [];
         let fps = 0;

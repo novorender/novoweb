@@ -15,7 +15,6 @@ import type { RootState } from "app/store";
 import { uniqueArray } from "utils/misc";
 
 import { CanvasContextMenuFeatureKey, DeepMutable, initScene } from "features/render";
-import { api } from "app";
 
 export enum SceneType {
     Viewer,
@@ -38,8 +37,7 @@ const initialState = {
     userRole: UserRole.Viewer,
     requireConsent: false,
     organization: "",
-    // todo
-    widgets: ["advancedSettings"] as WidgetKey[],
+    widgets: [] as WidgetKey[],
     maximized: [] as WidgetKey[],
     minimized: undefined as undefined | WidgetKey,
     primaryMenu: {
@@ -209,7 +207,7 @@ export const explorerSlice = createSlice({
             state.lockedWidgets = state.lockedWidgets.filter(
                 (widget) => !(customProperties?.features ?? ({} as any))[widget]
             );
-            if (api.deviceProfile.name.includes("Mobile") && !state.lockedWidgets.includes(featuresConfig.images.key)) {
+            if (action.payload.deviceProfile.isMobile && !state.lockedWidgets.includes(featuresConfig.images.key)) {
                 state.lockedWidgets.push(featuresConfig.images.key);
             }
             if (state.sceneType === SceneType.Admin) {

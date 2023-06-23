@@ -46,7 +46,6 @@ export function useHandleAdvancedSettings() {
             return;
         }
 
-        // todo
-        console.log(deviceProfile);
+        view.deviceProfile = structuredClone(deviceProfile);
     }, [view, deviceProfile]);
 }

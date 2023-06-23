@@ -221,58 +221,6 @@ export function CameraSettings({
                 </Box>
             ) : null}
             <ScrollBox height={1} mt={1} pb={3}>
-                {/*
-                TODO
-                 <Accordion>
-                    <AccordionSummary>Headlight</AccordionSummary>
-                    <AccordionDetails>
-                        <Box p={1} display="flex" flexDirection="column">
-                            <Box display="flex" alignItems="center" sx={{ mb: 2 }}>
-                                <Typography
-                                    sx={{
-                                        width: 160,
-                                        flexShrink: 0,
-                                    }}
-                                >
-                                    Headlight intensity
-                                </Typography>
-                                <Slider
-                                    sx={{ mx: 2, flex: "1 1 100%" }}
-                                    min={0}
-                                    max={1}
-                                    step={0.01}
-                                    name={AdvancedSetting.HeadlightIntensity}
-                                    value={intensity}
-                                    valueLabelDisplay="auto"
-                                    onChange={handleSliderChange(AdvancedSetting.HeadlightIntensity)}
-                                    onChangeCommitted={handleSliderCommit(AdvancedSetting.HeadlightIntensity)}
-                                />
-                            </Box>
-                            <Box display="flex" alignItems="center">
-                                <Typography
-                                    sx={{
-                                        width: 160,
-                                        flexShrink: 0,
-                                    }}
-                                >
-                                    Headlight distance
-                                </Typography>
-                                <Slider
-                                    sx={{ mx: 2, flex: "1 1 100%" }}
-                                    min={0}
-                                    max={220}
-                                    step={1}
-                                    scale={scaleHeadlightDistance}
-                                    name={AdvancedSetting.HeadlightDistance}
-                                    value={distance}
-                                    valueLabelDisplay="auto"
-                                    onChange={handleSliderChange(AdvancedSetting.HeadlightDistance)}
-                                    onChangeCommitted={handleSliderCommit(AdvancedSetting.HeadlightDistance)}
-                                />
-                            </Box>
-                        </Box>
-                    </AccordionDetails>
-                </Accordion> */}
                 <Clipping />
                 <Accordion>
                     <AccordionSummary>Movement speed</AccordionSummary>
@@ -433,11 +381,15 @@ export function CameraSettings({
                         <Box p={1} display="flex" flexDirection="column">
                             <BaseDivider sx={{ mb: 1, color: theme.palette.grey[500] }} />
                             <Box display="flex" justifyContent="space-between" alignItems="center">
-                                <InputLabel sx={{ color: "text.primary" }}>Controls</InputLabel>
+                                <InputLabel id="controls-label" sx={{ color: "text.primary" }}>
+                                    Controls
+                                </InputLabel>
                                 <Select
+                                    labelId="controls-label"
                                     sx={{ width: 150 }}
                                     size="small"
                                     value={cameraDefaults.pinhole.controller}
+                                    name="controls"
                                     onChange={({ target: { value } }) => {
                                         if (!controls.map((c) => c.value).includes(value)) {
                                             return;

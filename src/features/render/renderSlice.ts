@@ -13,28 +13,6 @@ import { mergeRecursive } from "utils/misc";
 import { SceneConfig } from "./hooks/useHandleInit";
 import { getLegacySubtrees, getSubtrees } from "./utils";
 
-export const initScene = createAction<{
-    sceneData: Omit<SceneConfig, "db" | "url">;
-    sceneConfig: OctreeSceneConfig;
-    initialCamera: {
-        kind: "pinhole" | "orthographic";
-        position: vec3;
-        rotation: quat;
-        fov: number;
-    };
-    deviceProfile: any; // todo
-}>("initScene");
-
-export const resetView = createAction<{
-    sceneData: Omit<SceneConfig, "db" | "url">;
-    initialCamera?: {
-        kind: "pinhole" | "orthographic";
-        position: vec3;
-        rotation: quat;
-        fov: number;
-    };
-}>("resetView");
-
 export enum CameraSpeedLevel {
     Slow = "slow",
     Default = "default",
@@ -317,6 +295,9 @@ const initialState = {
         },
     },
     deviceProfile: {
+        debugProfile: false,
+        isMobile: false,
+        tier: -1,
         features: {
             outline: true,
         },
@@ -341,6 +322,28 @@ const initialState = {
 };
 
 type State = typeof initialState;
+
+export const initScene = createAction<{
+    sceneData: Omit<SceneConfig, "db" | "url">;
+    sceneConfig: OctreeSceneConfig;
+    initialCamera: {
+        kind: "pinhole" | "orthographic";
+        position: vec3;
+        rotation: quat;
+        fov: number;
+    };
+    deviceProfile: RecursivePartial<State["deviceProfile"]>;
+}>("initScene");
+
+export const resetView = createAction<{
+    sceneData: Omit<SceneConfig, "db" | "url">;
+    initialCamera?: {
+        kind: "pinhole" | "orthographic";
+        position: vec3;
+        rotation: quat;
+        fov: number;
+    };
+}>("resetView");
 
 export const renderSlice = createSlice({
     name: "render",
@@ -626,6 +629,7 @@ export const renderSlice = createSlice({
             state.project.tmZone = tmZone ?? state.project.tmZone;
 
             // device profile
+            console.log(deviceProfile);
             state.deviceProfile = mergeRecursive(state.deviceProfile, deviceProfile);
 
             if (props.v1) {
@@ -649,14 +653,14 @@ export const renderSlice = createSlice({
 
                 // background
                 state.background.color = settings.background.color ?? state.background.color;
-                state.background.blur = settings.background.skyBoxBlur ?? state.background.blur;
+                state.background.blur = (settings.background as any).skyBoxBlur ?? state.background.blur;
                 state.background.url = settings.environment
                     ? `https://api.novorender.com/assets/env/${settings.environment}/`
                     : state.background.url;
 
                 // points
                 state.points.size = mergeRecursive(state.points.size, settings.points.size);
-                state.points.deviation.index = settings.points.deviation.index;
+                state.points.deviation.index = (settings.points.deviation as any).index;
                 state.points.deviation.mixFactor =
                     settings.points.deviation.mode === "mix" ? 1 : settings.points.deviation.mode === "on" ? 0.5 : 0; // TODO map mode to mixFactor?
                 state.points.deviation.colorGradient = {
@@ -724,7 +728,7 @@ export const renderSlice = createSlice({
                 state.background.color = settings.background.color ?? state.background.color;
 
                 // deviations
-                state.points.deviation.index = settings.points.deviation.index;
+                state.points.deviation.index = (settings.points.deviation as any).index;
                 state.points.deviation.mixFactor =
                     settings.points.deviation.mode === "mix" ? 1 : settings.points.deviation.mode === "on" ? 0.5 : 0; // TODO map mode to mixFactor?
 

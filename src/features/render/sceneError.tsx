@@ -1,9 +1,9 @@
-import { Box, Paper, Typography, useTheme, CircularProgress, Alert } from "@mui/material";
+import { Alert, Box, CircularProgress, Paper, Typography, useTheme } from "@mui/material";
 
-import { api, dataApi } from "app";
+import { dataApi } from "app";
+import { useAppSelector } from "app/store";
 import { Accordion, AccordionDetails, AccordionSummary } from "components";
 import { useSceneId } from "hooks/useSceneId";
-import { useAppSelector } from "app/store";
 import { AsyncStatus } from "types/misc";
 
 import { selectSceneStatus } from ".";
@@ -85,7 +85,7 @@ export function SceneError() {
                                 <Box p={1}>
                                     <>
                                         Timestamp: {new Date().toISOString()} <br />
-                                        API: {api.version} <br />
+                                        API: {"TODO API VERSION"} <br />
                                         Dataserver: {(dataApi as any).serviceUrl}
                                         {stack ? (
                                             <Box mt={2}>

@@ -85,6 +85,7 @@ export function FeatureSettings({ save, saving }: { save: () => Promise<void>; s
                         control={
                             <Switch
                                 checked={navigationCube.enabled}
+                                name="navigation-cube"
                                 onChange={(_evt, checked) =>
                                     dispatch(renderActions.setNavigationCube({ enabled: checked }))
                                 }
@@ -101,6 +102,7 @@ export function FeatureSettings({ save, saving }: { save: () => Promise<void>; s
                         control={
                             <Switch
                                 checked={debugStats.enabled}
+                                name="debug-stats"
                                 onChange={(_evt, checked) =>
                                     dispatch(renderActions.setDebugStats({ enabled: checked }))
                                 }
@@ -138,6 +140,7 @@ export function FeatureSettings({ save, saving }: { save: () => Promise<void>; s
                                                         <Checkbox
                                                             size="small"
                                                             color="primary"
+                                                            name={widget.key}
                                                             checked={
                                                                 enabledWidgets.some(
                                                                     (enabled) => enabled.key === widget.key
@@ -176,7 +179,14 @@ export function FeatureSettings({ save, saving }: { save: () => Promise<void>; s
                                     </FormLabel>
                                 </Box>
 
-                                <Select readOnly disabled value={featuresConfig.home.key} id={"primary-menu-button-1"}>
+                                <Select
+                                    readOnly
+                                    disabled
+                                    value={featuresConfig.home.key}
+                                    inputProps={{
+                                        id: "primary-menu-button-1",
+                                    }}
+                                >
                                     <MenuItem value={featuresConfig.home.key}>{featuresConfig.home.name}</MenuItem>
                                 </Select>
                             </FormControl>
@@ -195,7 +205,9 @@ export function FeatureSettings({ save, saving }: { save: () => Promise<void>; s
                                     readOnly
                                     disabled
                                     value={featuresConfig.cameraSpeed.key}
-                                    id={"primary-menu-button-2"}
+                                    inputProps={{
+                                        id: "primary-menu-button-2",
+                                    }}
                                 >
                                     <MenuItem value={featuresConfig.cameraSpeed.key}>
                                         {featuresConfig.cameraSpeed.name}
@@ -217,7 +229,9 @@ export function FeatureSettings({ save, saving }: { save: () => Promise<void>; s
                                     readOnly
                                     disabled
                                     value={featuresConfig.flyToSelected.key}
-                                    id={"primary-menu-button-3"}
+                                    inputProps={{
+                                        id: "primary-menu-button-3",
+                                    }}
                                 >
                                     <MenuItem value={featuresConfig.flyToSelected.key}>
                                         {featuresConfig.flyToSelected.name}
@@ -239,7 +253,9 @@ export function FeatureSettings({ save, saving }: { save: () => Promise<void>; s
                                     readOnly
                                     disabled
                                     value={featuresConfig.stepBack.key}
-                                    id={"primary-menu-button-4"}
+                                    inputProps={{
+                                        id: "primary-menu-button-4",
+                                    }}
                                 >
                                     <MenuItem value={featuresConfig.stepBack.key}>
                                         {featuresConfig.stepBack.name}
@@ -251,7 +267,7 @@ export function FeatureSettings({ save, saving }: { save: () => Promise<void>; s
                                 <Box width={1} display="flex" justifyContent="space-between" alignItems="center">
                                     <FormLabel
                                         sx={{ fontWeight: 600, mb: 0.5, color: "text.secondary" }}
-                                        htmlFor={"primary-menu-button-5"}
+                                        id="primary-menu-button-5-label"
                                     >
                                         Button 5:
                                     </FormLabel>
@@ -266,7 +282,10 @@ export function FeatureSettings({ save, saving }: { save: () => Promise<void>; s
                                         );
                                     }}
                                     value={primaryMenu.button5}
-                                    id={"primary-menu-button-5"}
+                                    labelId="primary-menu-button-5-label"
+                                    inputProps={{
+                                        id: "primary-menu-button-5",
+                                    }}
                                 >
                                     <MenuItem value={featuresConfig.orthoShortcut.key}>
                                         {featuresConfig.orthoShortcut.name}
@@ -291,6 +310,7 @@ export function FeatureSettings({ save, saving }: { save: () => Promise<void>; s
                                             control={
                                                 <Checkbox
                                                     size="small"
+                                                    name={feature.key}
                                                     color="primary"
                                                     checked={enabledCanvasContextMenuFeatures.some(
                                                         (enabled) => enabled === feature.key

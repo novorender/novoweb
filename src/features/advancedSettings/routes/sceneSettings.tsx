@@ -1,7 +1,7 @@
 import { ArrowBack, ColorLens, Save } from "@mui/icons-material";
 import { Autocomplete, Box, Button, FormControlLabel, Slider, Typography, useTheme } from "@mui/material";
 import { quat, vec3 } from "gl-matrix";
-import { ChangeEvent, MouseEvent, SyntheticEvent, useState } from "react";
+import { MouseEvent, SyntheticEvent, useState } from "react";
 import { useHistory } from "react-router-dom";
 
 import { useAppDispatch, useAppSelector } from "app/store";
@@ -18,7 +18,6 @@ import {
 import { useExplorerGlobals } from "contexts/explorerGlobals";
 import { ColorPicker } from "features/colorPicker";
 import {
-    AdvancedSetting,
     SubtreeStatus,
     renderActions,
     selectAdvanced,
@@ -193,6 +192,7 @@ export function SceneSettings({
                                 control={
                                     <Switch
                                         checked={advanced.pick.opacityThreshold < 1}
+                                        name="pick-semi-transparent-objects"
                                         onChange={(_evt, checked) =>
                                             dispatch(
                                                 renderActions.setAdvanced({
