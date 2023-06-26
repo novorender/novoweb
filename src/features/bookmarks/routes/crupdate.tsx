@@ -1,17 +1,16 @@
-import { FormEventHandler, useEffect, useState } from "react";
 import { Autocomplete, Box, Button, Checkbox, FormControlLabel, useTheme } from "@mui/material";
+import { FormEventHandler, useEffect, useState } from "react";
 import { useHistory, useParams } from "react-router-dom";
 import { v4 as uuidv4 } from "uuid";
 
 import { useAppDispatch, useAppSelector } from "app/store";
-import { selectHasAdminCapabilities } from "slices/explorerSlice";
-import { useExplorerGlobals } from "contexts/explorerGlobals";
-
 import { ScrollBox, TextField } from "components";
+import { useExplorerGlobals } from "contexts/explorerGlobals";
 import { useToggle } from "hooks/useToggle";
+import { selectHasAdminCapabilities } from "slices/explorerSlice";
 
+import { BookmarkAccess, bookmarksActions, selectBookmarks } from "../bookmarksSlice";
 import { useCreateBookmark } from "../useCreateBookmark";
-import { BookmarkAccess, selectBookmarks, bookmarksActions } from "../bookmarksSlice";
 
 export function Crupdate() {
     const { id } = useParams<{ id?: string }>();

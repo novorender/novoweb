@@ -124,10 +124,10 @@ export function useHandleInit() {
                 window.document.title = `${sceneData.title} - Novorender`;
                 const resizeObserver = new ResizeObserver((entries) => {
                     for (const entry of entries) {
-                        canvas.width = entry.contentRect.width;
-                        canvas.height = entry.contentRect.height;
                         dispatchGlobals(
-                            explorerGlobalsActions.update({ size: { width: canvas.width, height: canvas.height } })
+                            explorerGlobalsActions.update({
+                                size: { width: entry.contentRect.width, height: entry.contentRect.height },
+                            })
                         );
                     }
                 });

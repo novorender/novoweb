@@ -1,16 +1,17 @@
-import { useEffect, lazy, Suspense } from "react";
 import { Box } from "@mui/material";
+import { Suspense, lazy, useEffect } from "react";
 
-import { explorerActions, selectMaximized, selectWidgets } from "slices/explorerSlice";
 import { useAppDispatch, useAppSelector } from "app/store";
-import { featuresConfig, WidgetKey } from "config/features";
 import { WidgetErrorBoundary, WidgetSkeleton } from "components";
+import { WidgetKey, featuresConfig } from "config/features";
 import { MenuWidget } from "features/menuWidget";
+import { explorerActions, selectMaximized, selectWidgets } from "slices/explorerSlice";
+
 import { useWidgetLayout } from "./useWidgetLayout";
 
 // const Properties = lazy(() => import("features/properties/properties"));
 // const PropertiesTree = lazy(() => import("features/propertiesTree/propertiesTree"));
-// const Bookmarks = lazy(() => import("features/bookmarks/bookmarksWidget"));
+const Bookmarks = lazy(() => import("features/bookmarks/bookmarksWidget"));
 // const ModelTree = lazy(() => import("features/modelTree/modelTree"));
 // const Search = lazy(() => import("features/search/search"));
 // const ClippingBox = lazy(() => import("features/clippingBox/clippingBox"));
@@ -147,9 +148,9 @@ function getWidgetByKey(key: WidgetKey): JSX.Element | string {
         // case featuresConfig.propertyTree.key:
         //     Widget = PropertiesTree;
         //     break;
-        // case featuresConfig.bookmarks.key:
-        //     Widget = Bookmarks;
-        //     break;
+        case featuresConfig.bookmarks.key:
+            Widget = Bookmarks;
+            break;
         // case featuresConfig.groups.key:
         //     Widget = Groups;
         //     break;

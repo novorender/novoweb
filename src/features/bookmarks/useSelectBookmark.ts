@@ -1,34 +1,41 @@
 import { Bookmark } from "@novorender/data-js-api";
+import { rotationFromDirection } from "@novorender/web_app";
 
 import { dataApi } from "app";
 import { useAppDispatch } from "app/store";
-import { ObjectGroup, objectGroupsActions, useDispatchObjectGroups, useLazyObjectGroups } from "contexts/objectGroups";
 import { useExplorerGlobals } from "contexts/explorerGlobals";
 import { hiddenActions, useDispatchHidden } from "contexts/hidden";
-import { highlightActions, useDispatchHighlighted } from "contexts/highlighted";
-import { useDispatchSelectionBasket, selectionBasketActions } from "contexts/selectionBasket";
-import { followPathActions } from "features/followPath";
-import { measureActions } from "features/measure";
-import {
-    CameraType,
-    DeepMutable,
-    ObjectVisibility,
-    renderActions,
-    SelectionBasketMode,
-} from "features/render/renderSlice";
-import { areaActions } from "features/area";
-import { pointLineActions } from "features/pointLine";
-import { groupsActions } from "features/groups";
-import { useSceneId } from "hooks/useSceneId";
-import { manholeActions } from "features/manhole";
-import { ExtendedMeasureEntity, ViewMode } from "types/misc";
 import {
     HighlightCollection,
     highlightCollectionsActions,
     useDispatchHighlightCollections,
 } from "contexts/highlightCollections";
+import { highlightActions, useDispatchHighlighted } from "contexts/highlighted";
+import {
+    GroupStatus,
+    ObjectGroup,
+    objectGroupsActions,
+    useDispatchObjectGroups,
+    useLazyObjectGroups,
+} from "contexts/objectGroups";
+import { selectionBasketActions, useDispatchSelectionBasket } from "contexts/selectionBasket";
+import { areaActions } from "features/area";
+import { followPathActions } from "features/followPath";
+import { groupsActions } from "features/groups";
 import { imagesActions } from "features/images";
-import { DeviationMode, deviationsActions } from "features/deviations";
+import { manholeActions } from "features/manhole";
+import { measureActions } from "features/measure";
+import { pointLineActions } from "features/pointLine";
+import {
+    CameraType,
+    DeepMutable,
+    ObjectVisibility,
+    SelectionBasketMode,
+    renderActions,
+} from "features/render/renderSlice";
+import { flip, flipGLtoCadQuat } from "features/render/utils";
+import { useSceneId } from "hooks/useSceneId";
+import { ExtendedMeasureEntity, ViewMode } from "types/misc";
 
 export function useSelectBookmark() {
     const sceneId = useSceneId();
@@ -45,7 +52,19 @@ export function useSelectBookmark() {
 
     const dispatch = useAppDispatch();
 
-    const select = async (bookmark: Bookmark) => {
+    const select = (bookmark: Bookmark): Promise<void> => {
+        if (!bookmark.v1) {
+            return selectLegacy(bookmark);
+        }
+
+        return selectV1(bookmark.v1);
+    };
+
+    const selectV1 = async (bookmark: Bookmark["v1"]) => {
+        console.log(bookmark, "V1 TODO");
+    };
+
+    const selectLegacy = async (bookmark: Bookmark) => {
         dispatch(imagesActions.setActiveImage(undefined));
 
         const bmHiddenGroup = bookmark.objectGroups?.find((group) => !group.id && group.hidden);
@@ -57,8 +76,7 @@ export function useSelectBookmark() {
 
             return {
                 ...group,
-                selected: bookmarked ? bookmarked.selected : false,
-                hidden: bookmarked ? bookmarked.hidden : false,
+                status: bookmarked?.selected ? GroupStatus.Selected : GroupStatus.Hidden,
             };
         });
 
@@ -70,7 +88,7 @@ export function useSelectBookmark() {
             const highlighted = bmDefaultGroup?.ids ?? [];
             const [toAdd, toLoad] = updatedObjectGroups.reduce(
                 (prev, group) => {
-                    if (!group.selected) {
+                    if (group.status !== GroupStatus.Selected) {
                         return prev;
                     }
 
@@ -86,7 +104,7 @@ export function useSelectBookmark() {
             );
 
             dispatchSelectionBasket(
-                selectionBasketActions.add([...highlighted, ...toAdd.flatMap((group) => group.ids)])
+                selectionBasketActions.add([...highlighted, ...toAdd.flatMap((group) => Array.from(group.ids))])
             );
 
             dispatch(groupsActions.setLoadingIds(true));
@@ -94,15 +112,17 @@ export function useSelectBookmark() {
                 toLoad
                     .filter((group) => !group.ids)
                     .map(async (group) => {
-                        group.ids = await dataApi.getGroupIds(sceneId, group.id).catch(() => {
+                        const ids = await dataApi.getGroupIds(sceneId, group.id).catch(() => {
                             console.warn("failed to load ids for group - ", group.id);
-                            return [];
+                            return [] as number[];
                         });
+
+                        group.ids = new Set(ids);
                     })
             );
             dispatch(groupsActions.setLoadingIds(false));
 
-            dispatchSelectionBasket(selectionBasketActions.add(toLoad.flatMap((group) => group.ids)));
+            dispatchSelectionBasket(selectionBasketActions.add(toLoad.flatMap((group) => Array.from(group.ids))));
             dispatch(renderActions.setDefaultVisibility(ObjectVisibility.Transparent));
             dispatchObjectGroups(
                 objectGroupsActions.set(updatedObjectGroups.map((group) => ({ ...group, selected: false })))
@@ -225,10 +245,38 @@ export function useSelectBookmark() {
             dispatch(renderActions.setClippingPlanes({ planes: [], enabled: false, mode: "union" }));
         }
 
-        if (bookmark.ortho) {
-            dispatch(renderActions.setCamera({ type: CameraType.Orthographic, params: bookmark.ortho }));
+        if (bookmark.ortho?.referenceCoordSys) {
+            dispatch(
+                renderActions.setCamera({
+                    type: CameraType.Orthographic,
+                    goTo: {
+                        position: flip([
+                            bookmark.ortho.referenceCoordSys[12],
+                            bookmark.ortho.referenceCoordSys[13],
+                            bookmark.ortho.referenceCoordSys[14],
+                        ]),
+                        rotation: rotationFromDirection(
+                            flip([
+                                bookmark.ortho.referenceCoordSys[8],
+                                bookmark.ortho.referenceCoordSys[9],
+                                bookmark.ortho.referenceCoordSys[10],
+                            ])
+                        ),
+                        fov: bookmark.ortho.fieldOfView,
+                    },
+                })
+            );
         } else if (bookmark.camera) {
-            dispatch(renderActions.setCamera({ type: CameraType.Pinhole, goTo: bookmark.camera }));
+            dispatch(
+                renderActions.setCamera({
+                    type: CameraType.Pinhole,
+                    goTo: {
+                        position: flip(bookmark.camera.position),
+                        rotation: flipGLtoCadQuat(bookmark.camera.rotation),
+                        fov: bookmark.camera.fieldOfView,
+                    },
+                })
+            );
         }
 
         if (bookmark.grid) {
@@ -299,15 +347,17 @@ export function useSelectBookmark() {
         if (bookmark.deviations) {
             const { mode, index } = bookmark.deviations;
             dispatch(
-                deviationsActions.setDeviations({
-                    index,
-                    mode: mode === "off" ? DeviationMode.Off : mode === "on" ? DeviationMode.On : DeviationMode.Mix,
+                renderActions.setPoints({
+                    deviation: {
+                        index,
+                        mixFactor: mode === "off" ? 0 : mode === "on" ? 1 : 0.5,
+                    },
                 })
             );
         }
 
         if (bookmark.background) {
-            dispatch(renderActions.setAdvancedSettings({ backgroundColor: bookmark.background.color }));
+            dispatch(renderActions.setBackground({ color: bookmark.background.color }));
         }
     };
 

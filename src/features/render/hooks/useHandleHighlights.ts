@@ -57,7 +57,7 @@ export function useHandleHighlights() {
                 return;
             }
 
-            const { colored, hiddenGroups, semiTransparent } = groups.reduceRight(
+            const { colored, hiddenGroups, frozen, semiTransparent } = groups.reduceRight(
                 (prev, group) => {
                     switch (group.status) {
                         case GroupStatus.Selected: {
@@ -72,6 +72,10 @@ export function useHandleHighlights() {
                             }
                             break;
                         }
+                        // case GroupStatus.Frozen: {
+                        //     prev.frozen.push(group);
+                        //     break;
+                        // }
                         default:
                             break;
                     }
@@ -80,10 +84,14 @@ export function useHandleHighlights() {
                 },
                 {
                     colored: [] as ObjectGroup[],
+                    frozen: [] as ObjectGroup[],
                     hiddenGroups: [] as ObjectGroup[],
                     semiTransparent: [] as ObjectGroup[],
                 }
             );
+
+            const allHidden = new Set<number>(hidden);
+            hiddenGroups.forEach((group) => group.ids.forEach((id) => allHidden.add(id)));
 
             view.modifyRenderState({
                 highlights: {
@@ -101,13 +109,9 @@ export function useHandleHighlights() {
                             rgbaTransform: createColorSetHighlight(group.color),
                         })),
                         {
-                            objectIds: new Uint32Array(hidden).sort(),
+                            objectIds: new Uint32Array(allHidden).sort(),
                             rgbaTransform: null,
                         },
-                        ...hiddenGroups.map((group) => ({
-                            objectIds: new Uint32Array([...group.ids]).sort(),
-                            rgbaTransform: null,
-                        })),
                         ...semiTransparent.map((group) => ({
                             objectIds: new Uint32Array([...group.ids]).sort(),
                             rgbaTransform: createTransparentHighlight(group.opacity),
@@ -117,7 +121,7 @@ export function useHandleHighlights() {
                 // scene: {
                 //     filter: {
                 //         objectIds: new Uint32Array(
-                //             new Set([...hidden.flatMap((group) => Array.from(group.ids))])
+                //             new Set([...frozen.flatMap((group) => Array.from(group.ids))])
                 //         ).sort(),
                 //     },
                 // },

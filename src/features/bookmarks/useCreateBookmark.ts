@@ -23,13 +23,16 @@ import {
     ObjectVisibility,
     SubtreeStatus,
     selectBackground,
+    selectClippingPlanes,
     selectDefaultVisibility,
+    selectGrid,
     selectMainObject,
+    selectPoints,
     selectSelectionBasketMode,
     selectSubtrees,
+    selectTerrain,
     selectViewMode,
 } from "features/render";
-import { ViewMode } from "types/misc";
 
 export function useCreateBookmark() {
     const measurement = useAppSelector(selectMeasure);
@@ -44,11 +47,14 @@ export function useCreateBookmark() {
     const manholeCollisionTarget = useAppSelector(selectManholeCollisionTarget);
     const viewMode = useAppSelector(selectViewMode);
     const manholeCollisionSettings = useAppSelector(selectManholeCollisionSettings);
-    const deviations = useAppSelector(selectDeviations);
     const backgroundColor = useAppSelector(selectBackground).color;
+    const clipping = useAppSelector(selectClippingPlanes);
+    const terrain = useAppSelector(selectTerrain);
+    const grid = useAppSelector(selectGrid);
+    const deviations = useAppSelector(selectPoints).deviation;
 
     const {
-        state: { view_OLD: view },
+        state: { view },
     } = useExplorerGlobals(true);
     const objectGroups = useLazyObjectGroups();
     const highlighted = useLazyHighlighted();
@@ -57,157 +63,71 @@ export function useCreateBookmark() {
     const selectionBasket = useLazySelectionBasket();
 
     const create = (img?: string): Omit<Bookmark, "name" | "description" | "img"> & { img?: string } => {
-        const camera = view.camera;
-        const { highlight: _highlight, ...clippingPlanes } = view.settings.clippingPlanes;
-        const { ...clippingVolume } = view.settings.clippingVolume;
-        const selectedOnly = defaultVisibility !== ObjectVisibility.Neutral;
-
-        const selBasket: Bookmark["selectionBasket"] = selectionBasket.current.idArr.length
-            ? {
-                  ids: selectionBasket.current.idArr,
-                  mode: selectionBasketMode,
-              }
-            : undefined;
-
-        const groups = objectGroups.current
-            .map((grp) => ({
-                id: grp.id,
-                selected: grp.selected,
-                hidden: grp.hidden,
-                ids: isInternalGroup(grp) ? grp.ids : undefined,
-            }))
-            .concat({
-                id: "",
-                selected: true,
-                hidden: false,
-                ids: highlighted.current.idArr.concat(
-                    mainObject !== undefined && !highlighted.current.ids[mainObject] ? [mainObject] : []
-                ),
-            })
-            .concat({
-                id: "",
-                selected: false,
-                hidden: true,
-                ids: hidden.current.idArr,
-            });
-
-        let fp: Bookmark["followPath"] | undefined = undefined;
-        if (followPath.selectedIds.length || followPath.selectedPositions.length) {
-            const fpBase = {
-                profile: Number(followPath.profile),
-                currentCenter: followPath.currentCenter,
-            };
-
-            fp = followPath.selectedIds.length
-                ? {
-                      ...fpBase,
-                      ids: followPath.selectedIds,
-                      ...(followPath.drawRoadIds ? { roadIds: followPath.drawRoadIds } : {}),
-                  }
-                : {
-                      ...fpBase,
-                      parametric: followPath.selectedPositions,
-                  };
-        }
-
-        const base = {
+        return {
             img,
-            objectGroups: groups,
-            selectedOnly,
-            clippingVolume,
-            selectionBasket: selBasket,
-            defaultVisibility,
-            followPath: fp,
-            highlightCollections: {
-                [HighlightCollection.SecondaryHighlight]: {
-                    ids: highlightCollections.current[HighlightCollection.SecondaryHighlight].idArr,
+            selectedOnly: false, // legacy
+            v1: {
+                viewMode,
+                grid,
+                clipping: {
+                    ...clipping,
+                    planes: clipping.planes.map((plane) => plane.plane),
                 },
-            },
-            clippingPlanes: {
-                ...clippingPlanes,
-                bounds: {
-                    min: Array.from(clippingPlanes.bounds.min) as Vec3,
-                    max: Array.from(clippingPlanes.bounds.max) as Vec3,
+                camera: view.renderState.camera,
+                options: {
+                    addToSelectionBasket: false,
                 },
+                subtrees: {
+                    triangles: subtrees.triangles === SubtreeStatus.Shown,
+                    points: subtrees.points === SubtreeStatus.Shown,
+                    terrain: subtrees.terrain === SubtreeStatus.Shown,
+                    lines: subtrees.lines === SubtreeStatus.Shown,
+                    documents: subtrees.documents === SubtreeStatus.Shown,
+                },
+                background: {
+                    color: backgroundColor,
+                },
+                terrain: {
+                    asBackground: terrain.asBackground,
+                },
+                deviations: {
+                    index: deviations.index,
+                    mixFactor: deviations.mixFactor,
+                },
+                groups: [],
+                objects: {
+                    defaultVisibility,
+                    mainObject: {
+                        id: mainObject,
+                    },
+                    hidden: { ids: [] },
+                    highlighted: { ids: [] },
+                    highlightCollections: {
+                        secondaryHighlight: {
+                            ids: [],
+                        },
+                    },
+                    selectionBasket: { ids: [] },
+                },
+                measurements: {
+                    area: {
+                        points: [],
+                    },
+                    pointLine: {
+                        points: [],
+                    },
+                    measure: {
+                        entities: [],
+                    },
+                    manhole: {
+                        id: undefined,
+                        collisionTarget: undefined,
+                        collisionSettings: undefined,
+                    },
+                },
+                followPath: undefined,
             },
-            viewMode: viewMode === ViewMode.Panorama ? ViewMode.Default : viewMode,
-            grid: { ...view.settings.grid },
-            deviations: {
-                mode: deviations.mode,
-                index: deviations.index,
-            },
-            background: {
-                color: backgroundColor,
-            },
-            ...(measurement.selectedEntities.length > 0
-                ? { selectedMeasureEntities: measurement.selectedEntities }
-                : {}),
-            ...(areaPts.length ? { area: { pts: areaPts } } : {}),
-            ...(pointLinePts.length ? { pointLine: { pts: pointLinePts } } : {}),
-            ...(manhole
-                ? {
-                      manhole: {
-                          id: manhole.ObjectId,
-                          ...(manholeCollisionTarget
-                              ? {
-                                    collisionTarget: {
-                                        selected: manholeCollisionTarget.selected,
-                                    },
-                                    collisionSettings: manholeCollisionSettings,
-                                }
-                              : {}),
-                      },
-                  }
-                : {}),
-            ...(subtrees
-                ? {
-                      subtrees: {
-                          triangles: subtrees.triangles === SubtreeStatus.Shown,
-                          points: subtrees.points === SubtreeStatus.Shown,
-                          terrain: subtrees.terrain === SubtreeStatus.Shown,
-                          lines: subtrees.lines === SubtreeStatus.Shown,
-                          documents: subtrees.documents === SubtreeStatus.Shown,
-                      },
-                  }
-                : {}),
         };
-
-        if (camera.kind === "pinhole") {
-            const { kind, position, rotation, fieldOfView, near, far } = camera;
-
-            return {
-                ...base,
-                camera: {
-                    kind,
-                    position: vec3.copy(vec3.create(), position),
-                    rotation: quat.copy(quat.create(), rotation),
-                    fieldOfView,
-                    near,
-                    far,
-                },
-            };
-        } else {
-            const params = camera.controller.params as OrthoControllerParams;
-            const safeParams: OrthoControllerParams = {
-                ...params,
-                referenceCoordSys: params.referenceCoordSys
-                    ? (Array.from(params.referenceCoordSys) as mat4)
-                    : undefined,
-                position: params.position ? (Array.from(params.position) as vec3) : undefined,
-            };
-
-            if (!safeParams.referenceCoordSys) {
-                delete safeParams.referenceCoordSys;
-            }
-            if (!safeParams.position) {
-                delete safeParams.position;
-            }
-
-            return {
-                ...base,
-                ortho: safeParams,
-            };
-        }
     };
 
     return create;

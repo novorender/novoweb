@@ -7,7 +7,7 @@ import { AdapterDateFns } from "@mui/x-date-pickers/AdapterDateFns";
 import { createAPI as createDataAPI } from "@novorender/data-js-api";
 import { createMeasureAPI } from "@novorender/measure-api";
 import enLocale from "date-fns/locale/en-GB";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Route, Switch, useHistory } from "react-router-dom";
 
 import { useAppDispatch } from "app/store";
@@ -54,16 +54,18 @@ export function App() {
         msalInstance.setNavigationClient(new CustomNavigationClient(history));
     }, [history]);
 
+    const authenticating = useRef(false);
+
     useEffect(() => {
-        if (authStatus !== Status.Initial) {
+        if (authStatus !== Status.Initial || authenticating.current) {
             return;
         }
 
+        authenticating.current = true;
+        setAuthStatus(Status.Loading);
         auth();
 
         async function auth() {
-            setAuthStatus(Status.Loading);
-
             if (!(await verifyToken())) {
                 await handleMsalReturn();
             } else {
@@ -172,6 +174,7 @@ export function App() {
             }
 
             const user = await getUser(accessToken);
+            console.log({ user, accessToken, todo: "TODO SLETT" });
             if (user) {
                 dispatch(authActions.login({ accessToken, user }));
                 return true;
@@ -194,7 +197,7 @@ export function App() {
                     <StyledEngineProvider injectFirst>
                         <ThemeProvider theme={theme}>
                             <CssBaseline />
-                            {[authStatus].some((status) => status !== Status.Ready) ? (
+                            {authStatus !== Status.Ready ? (
                                 <Loading />
                             ) : (
                                 <Switch>
