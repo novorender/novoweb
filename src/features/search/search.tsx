@@ -1,40 +1,35 @@
-import { ChangeEvent, CSSProperties, FormEvent, useCallback, useEffect, useRef, useState } from "react";
-import { ListOnScrollProps } from "react-window";
-import { Box, Button, Checkbox, FormControlLabel, ListItem, Typography } from "@mui/material";
+import { AddCircle, Visibility } from "@mui/icons-material";
+import { Box, Button, Checkbox, FormControlLabel, ListItemButton, Typography } from "@mui/material";
 import { HierarcicalObjectReference, ObjectId, SearchPattern } from "@novorender/webgl-api";
+import { CSSProperties, ChangeEvent, FormEvent, useCallback, useEffect, useRef, useState } from "react";
+import { ListOnScrollProps } from "react-window";
 
+import { useAppDispatch, useAppSelector } from "app/store";
 import {
-    TextField,
-    Switch,
+    AdvancedSearchInputs,
     LinearProgress,
+    LogoSpeedDial,
     ScrollBox,
+    Switch,
+    TextField,
     Tooltip,
     WidgetContainer,
     WidgetHeader,
-    LogoSpeedDial,
-    AdvancedSearchInputs,
 } from "components";
-import { NodeList } from "features/nodeList/nodeList";
-import WidgetList from "features/widgetList/widgetList";
-
-import { useToggle } from "hooks/useToggle";
-import { useMountedState } from "hooks/useMountedState";
-import { useAbortController } from "hooks/useAbortController";
-
-import { useAppDispatch, useAppSelector } from "app/store";
+import { featuresConfig } from "config/features";
 import { useExplorerGlobals } from "contexts/explorerGlobals";
-import { selectionBasketActions, useDispatchSelectionBasket } from "contexts/selectionBasket";
 import { hiddenActions, useDispatchHidden } from "contexts/hidden";
 import { highlightActions, useDispatchHighlighted, useLazyHighlighted } from "contexts/highlighted";
-import { ObjectVisibility, renderActions } from "features/render/renderSlice";
+import { selectionBasketActions, useDispatchSelectionBasket } from "contexts/selectionBasket";
+import { NodeList } from "features/nodeList/nodeList";
+import { CameraType, ObjectVisibility, renderActions } from "features/render/renderSlice";
+import WidgetList from "features/widgetList/widgetList";
+import { useAbortController } from "hooks/useAbortController";
+import { useMountedState } from "hooks/useMountedState";
+import { useToggle } from "hooks/useToggle";
 import { explorerActions, selectMaximized, selectMinimized, selectUrlSearchQuery } from "slices/explorerSlice";
-
-import { iterateAsync, searchDeepByPatterns, batchedPropertySearch } from "utils/search";
 import { getTotalBoundingSphere } from "utils/objectData";
-import { featuresConfig } from "config/features";
-
-import AddCircleIcon from "@mui/icons-material/AddCircle";
-import VisibilityIcon from "@mui/icons-material/Visibility";
+import { batchedPropertySearch, iterateAsync, searchDeepByPatterns } from "utils/search";
 
 enum Status {
     Initial,
@@ -48,7 +43,7 @@ export default function Search() {
     const dispatchHighlighted = useDispatchHighlighted();
     const dispatchSelectionBasket = useDispatchSelectionBasket();
     const {
-        state: { view_OLD: view, scene_OLD: scene },
+        state: { db },
     } = useExplorerGlobals(true);
 
     const urlSearchQuery = useAppSelector(selectUrlSearchQuery);
@@ -95,6 +90,7 @@ export default function Search() {
     }, [advanced, advancedInputs, simpleInput]);
 
     const search = useCallback(async (): Promise<HierarcicalObjectReference[] | undefined> => {
+        abort();
         const abortSignal = abortController.current.signal;
         const searchPattern = getSearchPattern();
 
@@ -105,7 +101,7 @@ export default function Search() {
         previousSearchPattern.current = searchPattern;
 
         try {
-            const iterator = scene.search({ searchPattern }, abortSignal);
+            const iterator = db.search({ searchPattern }, abortSignal);
 
             const [nodes, done] = await iterateAsync({ iterator, abortSignal, count: 50 });
 
@@ -116,7 +112,7 @@ export default function Search() {
                 throw e;
             }
         }
-    }, [abortController, setSearchResults, scene, getSearchPattern]);
+    }, [abort, abortController, setSearchResults, db, getSearchPattern]);
 
     useEffect(() => {
         if (urlSearchQuery && status === Status.Initial) {
@@ -142,7 +138,7 @@ export default function Search() {
 
                 // Deep search to highlight and fly to
                 await searchDeepByPatterns({
-                    db: scene,
+                    db,
                     searchPatterns,
                     abortSignal,
                     callback: (ids) => {
@@ -155,7 +151,7 @@ export default function Search() {
                     foundRefs = await batchedPropertySearch({
                         property: "id",
                         value: foundIds.map((id) => String(id)),
-                        db: scene,
+                        db,
                         abortSignal,
                     });
                 }
@@ -173,7 +169,7 @@ export default function Search() {
             if (foundRefs.length) {
                 const boundingSphere = getTotalBoundingSphere(foundRefs);
                 if (boundingSphere) {
-                    view.camera.controller.zoomTo(boundingSphere);
+                    dispatch(renderActions.setCamera({ type: CameraType.Pinhole, zoomTo: boundingSphere }));
                 }
             }
 
@@ -202,10 +198,9 @@ export default function Search() {
         search,
         dispatch,
         dispatchSelectionBasket,
-        view,
         abortController,
         dispatchHighlighted,
-        scene,
+        db,
         getSearchPattern,
         setStatus,
         setAllSelected,
@@ -293,7 +288,7 @@ export default function Search() {
                             <Box mb={2}>
                                 <FormControlLabel
                                     sx={{ ml: 0, mr: 3, minHeight: 24 }}
-                                    control={<Switch checked={advanced} onChange={toggleAdvanced} />}
+                                    control={<Switch name="advanced" checked={advanced} onChange={toggleAdvanced} />}
                                     label={
                                         <Box ml={0.5} fontSize={14}>
                                             Advanced
@@ -312,7 +307,7 @@ export default function Search() {
                                                 ])
                                             }
                                         >
-                                            <AddCircleIcon />
+                                            <AddCircle />
                                             <Box ml={0.5}>AND</Box>
                                         </Button>
                                         <Button
@@ -339,7 +334,7 @@ export default function Search() {
                                                 )
                                             }
                                         >
-                                            <AddCircleIcon />
+                                            <AddCircle />
                                             <Box ml={0.5}>OR</Box>
                                         </Button>
                                     </>
@@ -441,7 +436,7 @@ export function CustomParentNode({
     setAllHidden: (state: boolean) => void;
 }) {
     const {
-        state: { scene_OLD: scene },
+        state: { db },
     } = useExplorerGlobals(true);
     const dispatchHighlighted = useDispatchHighlighted();
     const dispatchHidden = useDispatchHidden();
@@ -457,7 +452,7 @@ export function CustomParentNode({
 
         try {
             await searchDeepByPatterns({
-                db: scene,
+                db,
                 searchPatterns,
                 abortSignal,
                 callback,
@@ -500,7 +495,7 @@ export function CustomParentNode({
     };
 
     return (
-        <ListItem disableGutters button style={{ ...style }} sx={{ paddingLeft: 1, paddingRight: 1 }}>
+        <ListItemButton disableGutters style={{ ...style }} sx={{ paddingLeft: 1, paddingRight: 1 }}>
             <Box display="flex" width={1} alignItems="center">
                 <Box display="flex" alignItems="center" width={0} flex={"1 1 100%"}>
                     <Tooltip title={"All results"}>
@@ -510,22 +505,24 @@ export function CustomParentNode({
                     </Tooltip>
                 </Box>
                 <Checkbox
-                    aria-label="Highlight all results"
+                    name="Toggle highlight of all results"
+                    aria-label="Toggle highlight of all results"
                     size="small"
                     onChange={handleChange("select")}
                     checked={allSelected}
                     onClick={(e) => e.stopPropagation()}
                 />
                 <Checkbox
+                    name="Toggle visibility of all results"
                     aria-label="Toggle visibility of all results"
                     size="small"
-                    icon={<VisibilityIcon />}
-                    checkedIcon={<VisibilityIcon color="disabled" />}
+                    icon={<Visibility />}
+                    checkedIcon={<Visibility color="disabled" />}
                     onChange={handleChange("hide")}
                     checked={allHidden}
                     onClick={(e) => e.stopPropagation()}
                 />
             </Box>
-        </ListItem>
+        </ListItemButton>
     );
 }

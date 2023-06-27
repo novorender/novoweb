@@ -311,13 +311,15 @@ function Node({ node, parent, loading, setLoading, abortController, ...props }: 
                     </Tooltip>
                 </Box>
                 <Checkbox
-                    aria-label="Select node"
+                    name="toggle node highlight"
+                    aria-label="toggle node highlight"
                     size="small"
                     checked={selected}
                     onChange={(e) => handleChange("select")(e, node)}
                     onClick={stopPropagation}
                 />
                 <Checkbox
+                    name="toggle node visibility"
                     aria-label="Toggle node visibility"
                     size="small"
                     icon={<Visibility />}
