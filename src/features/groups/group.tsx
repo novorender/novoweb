@@ -1,10 +1,7 @@
-import { MouseEvent, useState } from "react";
-import { Route, Switch, useHistory, useRouteMatch } from "react-router-dom";
-import { Delete, Edit, MoreVert, Visibility, ColorLens, LibraryAdd, Opacity, VisibilityOff } from "@mui/icons-material";
+import { ColorLens, Delete, Edit, LibraryAdd, MoreVert, Opacity, Visibility, VisibilityOff } from "@mui/icons-material";
 import {
     Box,
     Checkbox,
-    css,
     IconButton,
     ListItemButton,
     ListItemButtonProps,
@@ -12,15 +9,18 @@ import {
     ListItemText,
     Menu,
     MenuItem,
-    styled,
     Typography,
+    css,
+    styled,
 } from "@mui/material";
+import { MouseEvent, useState } from "react";
+import { Route, Switch, useHistory, useRouteMatch } from "react-router-dom";
 
-import { Tooltip } from "components";
-import { ColorPicker } from "features/colorPicker";
 import { useAppSelector } from "app/store";
+import { Tooltip } from "components";
+import { GroupStatus, ObjectGroup, objectGroupsActions, useDispatchObjectGroups } from "contexts/objectGroups";
+import { ColorPicker } from "features/colorPicker";
 import { selectHasAdminCapabilities } from "slices/explorerSlice";
-import { ObjectGroup, objectGroupsActions, useDispatchObjectGroups } from "contexts/objectGroups";
 import { rgbToVec, vecToRgb } from "utils/color";
 
 export const StyledListItemButton = styled(ListItemButton)<ListItemButtonProps>(
@@ -61,6 +61,9 @@ export function Group({ group, disabled }: { group: ObjectGroup; disabled: boole
 
     const { r, g, b, a } = vecToRgb(group.color);
 
+    const hidden = group.status === GroupStatus.Hidden;
+    const selected = group.status === GroupStatus.Selected;
+
     return (
         <>
             <StyledListItemButton
@@ -69,8 +72,7 @@ export function Group({ group, disabled }: { group: ObjectGroup; disabled: boole
                 onClick={() =>
                     dispatchObjectGroups(
                         objectGroupsActions.update(group.id, {
-                            selected: !group.selected,
-                            hidden: !group.selected ? false : group.hidden,
+                            status: selected ? GroupStatus.Selected : GroupStatus.None,
                         })
                     )
                 }
@@ -85,14 +87,13 @@ export function Group({ group, disabled }: { group: ObjectGroup; disabled: boole
                         <StyledCheckbox
                             aria-label="toggle group highlighting"
                             size="small"
-                            checked={group.selected}
+                            checked={selected}
                             disabled={disabled}
                             onClick={(event) => event.stopPropagation()}
                             onChange={() =>
                                 dispatchObjectGroups(
                                     objectGroupsActions.update(group.id, {
-                                        selected: !group.selected,
-                                        hidden: !group.selected ? false : group.hidden,
+                                        status: selected ? GroupStatus.Selected : GroupStatus.Hidden,
                                     })
                                 )
                             }
@@ -107,14 +108,13 @@ export function Group({ group, disabled }: { group: ObjectGroup; disabled: boole
                             checkedIcon={
                                 !group.opacity ? <VisibilityOff color="disabled" /> : <Visibility color="disabled" />
                             }
-                            checked={group.hidden}
+                            checked={hidden}
                             disabled={disabled}
                             onClick={(event) => event.stopPropagation()}
                             onChange={() =>
                                 dispatchObjectGroups(
                                     objectGroupsActions.update(group.id, {
-                                        hidden: !group.hidden,
-                                        selected: !group.hidden ? false : group.selected,
+                                        status: hidden ? GroupStatus.Hidden : GroupStatus.Selected,
                                     })
                                 )
                             }

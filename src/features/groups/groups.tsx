@@ -1,22 +1,22 @@
-import { matchPath, MemoryRouter, Route, Switch, useHistory, useLocation, useRouteMatch } from "react-router-dom";
-import { Menu, MenuItem, ListItemIcon, ListItemText, MenuProps, Box, Snackbar, IconButton } from "@mui/material";
 import { Close, Code } from "@mui/icons-material";
+import { Box, IconButton, ListItemIcon, ListItemText, Menu, MenuItem, MenuProps, Snackbar } from "@mui/material";
+import { matchPath, MemoryRouter, Route, Switch, useHistory, useLocation, useRouteMatch } from "react-router-dom";
 
-import { WidgetContainer, LogoSpeedDial, WidgetHeader } from "components";
-import WidgetList from "features/widgetList/widgetList";
 import { useAppDispatch, useAppSelector } from "app/store";
-import { selectMinimized, selectMaximized } from "slices/explorerSlice";
+import { LogoSpeedDial, WidgetContainer, WidgetHeader } from "components";
 import { featuresConfig } from "config/features";
-import { useToggle } from "hooks/useToggle";
+import WidgetList from "features/widgetList/widgetList";
 import { useSceneId } from "hooks/useSceneId";
+import { useToggle } from "hooks/useToggle";
+import { selectMaximized, selectMinimized } from "slices/explorerSlice";
 import { AsyncStatus } from "types/misc";
 
-import { GroupList } from "./routes/groupList";
-import { Crupdate } from "./routes/crupdate";
-import { Save } from "./routes/save";
-import { RenameCollection } from "./routes/renameCollection";
-import { Delete } from "./routes/delete";
 import { groupsActions, selectSaveStatus } from "./groupsSlice";
+import { Crupdate } from "./routes/crupdate";
+import { Delete } from "./routes/delete";
+import { GroupList } from "./routes/groupList";
+import { RenameCollection } from "./routes/renameCollection";
+import { Save } from "./routes/save";
 
 const crupdatePaths = ["/create", "/edit/:id"];
 

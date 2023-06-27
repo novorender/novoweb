@@ -16,7 +16,7 @@ const ModelTree = lazy(() => import("features/modelTree/modelTree"));
 const Search = lazy(() => import("features/search/search"));
 // const ClippingBox = lazy(() => import("features/clippingBox/clippingBox"));
 // const Measure = lazy(() => import("features/measure/measure"));
-// const Groups = lazy(() => import("features/groups/groups"));
+const Groups = lazy(() => import("features/groups/groups"));
 // const ClippingPlanes = lazy(() => import("features/clippingPlanes/clippingPlanes"));
 // const OrthoCam = lazy(() => import("features/orthoCam/orthoCam"));
 // const Images = lazy(() => import("features/images/images"));
@@ -151,9 +151,9 @@ function getWidgetByKey(key: WidgetKey): JSX.Element | string {
         case featuresConfig.bookmarks.key:
             Widget = Bookmarks;
             break;
-        // case featuresConfig.groups.key:
-        //     Widget = Groups;
-        //     break;
+        case featuresConfig.groups.key:
+            Widget = Groups;
+            break;
         case featuresConfig.modelTree.key:
             Widget = ModelTree;
             break;
