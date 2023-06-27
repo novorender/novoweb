@@ -53,7 +53,7 @@ export default function ModelTree() {
     const dispatch = useAppDispatch();
 
     const {
-        state: { scene_OLD: scene },
+        state: { db },
     } = useExplorerGlobals(true);
 
     const [menuOpen, toggleMenu] = useToggle();
@@ -84,7 +84,7 @@ export default function ModelTree() {
             setStatus(Status.Loading);
 
             try {
-                const obj = await getObjectData({ db: scene, id: mainObject });
+                const obj = await getObjectData({ db, id: mainObject });
 
                 if (!obj) {
                     return setStatus(Status.Ready);
@@ -95,7 +95,7 @@ export default function ModelTree() {
                 setStatus(Status.Ready);
             }
         }
-    }, [mainObject, scene, setStatus, setCurrentNode]);
+    }, [mainObject, db, setStatus, setCurrentNode]);
 
     useEffect(() => {
         if (!currentNode) {
@@ -142,10 +142,10 @@ export default function ModelTree() {
                     ? node
                     : node.type === rootNode.type
                     ? undefined
-                    : await searchFirstObjectAtPath({ db: scene, path: parentPath });
+                    : await searchFirstObjectAtPath({ db, path: parentPath });
 
             try {
-                const iterator = scene.search({ parentPath, descentDepth: 1 });
+                const iterator = db.search({ parentPath, descentDepth: 1 }, undefined);
                 const [nodes] = await iterateAsync({ iterator, count: 100 });
 
                 setCurrentDepth({
@@ -165,7 +165,7 @@ export default function ModelTree() {
                 setStatus(Status.Ready);
             }
         }
-    }, [currentNode, currentDepth, scene, setCurrentDepth, setStatus]);
+    }, [currentNode, currentDepth, db, setCurrentDepth, setStatus]);
 
     const loadMore = async () => {
         if (!currentDepth || !currentDepth.iterator || status !== Status.Ready) {
@@ -224,7 +224,7 @@ export default function ModelTree() {
         if (crumbPath) {
             try {
                 setStatus(Status.Loading);
-                const node = await searchFirstObjectAtPath({ db: scene, path: crumbPath });
+                const node = await searchFirstObjectAtPath({ db, path: crumbPath });
 
                 if (node) {
                     dispatch(renderActions.setMainObject(node.id));

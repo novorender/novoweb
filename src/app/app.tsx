@@ -45,6 +45,9 @@ enum Status {
     Ready,
 }
 
+// TODO
+// getDescendants()
+
 export function App() {
     const history = useHistory();
     const [authStatus, setAuthStatus] = useState(Status.Initial);
