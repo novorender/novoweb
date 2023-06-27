@@ -9,7 +9,7 @@ import { explorerActions, selectMaximized, selectWidgets } from "slices/explorer
 
 import { useWidgetLayout } from "./useWidgetLayout";
 
-// const Properties = lazy(() => import("features/properties/properties"));
+const Properties = lazy(() => import("features/properties/properties"));
 // const PropertiesTree = lazy(() => import("features/propertiesTree/propertiesTree"));
 const Bookmarks = lazy(() => import("features/bookmarks/bookmarksWidget"));
 // const ModelTree = lazy(() => import("features/modelTree/modelTree"));
@@ -142,9 +142,9 @@ function getWidgetByKey(key: WidgetKey): JSX.Element | string {
     let Widget: React.LazyExoticComponent<() => JSX.Element>;
 
     switch (key) {
-        // case featuresConfig.properties.key:
-        //     Widget = Properties;
-        //     break;
+        case featuresConfig.properties.key:
+            Widget = Properties;
+            break;
         // case featuresConfig.propertyTree.key:
         //     Widget = PropertiesTree;
         //     break;

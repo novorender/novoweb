@@ -1,42 +1,40 @@
-import { useState, useRef, useEffect, ChangeEvent, ChangeEventHandler, MouseEvent, MutableRefObject } from "react";
+import { ContentCopy, MoreVert, StarOutline } from "@mui/icons-material";
 import {
-    useTheme,
     Box,
-    List,
-    Typography,
     Checkbox,
+    FormControlLabel,
     IconButton,
-    Menu,
-    MenuItem,
+    List,
+    ListItemButton,
     ListItemIcon,
     ListItemText,
-    FormControlLabel,
-    ListItemButton,
+    Menu,
+    MenuItem,
+    Typography,
+    useTheme,
 } from "@mui/material";
 import type { ObjectData, ObjectId } from "@novorender/webgl-api";
 import { useDrag } from "@use-gesture/react";
-import { ContentCopy, MoreVert, StarOutline } from "@mui/icons-material";
+import { ChangeEvent, ChangeEventHandler, MouseEvent, MutableRefObject, useEffect, useRef, useState } from "react";
 
+import { useAppDispatch, useAppSelector } from "app/store";
 import {
-    LinearProgress,
-    ScrollBox,
     Accordion,
-    AccordionSummary,
     AccordionDetails,
-    Tooltip,
+    AccordionSummary,
     Divider,
     IosSwitch,
+    LinearProgress,
+    ScrollBox,
+    Tooltip,
 } from "components";
+import { useExplorerGlobals } from "contexts/explorerGlobals";
+import { highlightActions, useDispatchHighlighted } from "contexts/highlighted";
+import { NodeType } from "features/modelTree/modelTree";
 import { selectMainObject } from "features/render/renderSlice";
-import { useAppDispatch, useAppSelector } from "app/store";
 import { useAbortController } from "hooks/useAbortController";
 import { useMountedState } from "hooks/useMountedState";
-import {
-    getObjectData as getObjectDataUtil,
-    searchFirstObjectAtPath,
-    searchByPatterns,
-    searchDeepByPatterns,
-} from "utils/search";
+import { selectHasAdminCapabilities } from "slices/explorerSlice";
 import {
     extractObjectIds,
     getFileNameFromPath,
@@ -44,18 +42,20 @@ import {
     getParentPath,
     getPropertyDisplayName,
 } from "utils/objectData";
-import { highlightActions, useDispatchHighlighted } from "contexts/highlighted";
-import { NodeType } from "features/modelTree/modelTree";
-import { useExplorerGlobals } from "contexts/explorerGlobals";
-import { selectHasAdminCapabilities } from "slices/explorerSlice";
+import {
+    getObjectData as getObjectDataUtil,
+    searchByPatterns,
+    searchDeepByPatterns,
+    searchFirstObjectAtPath,
+} from "utils/search";
 
+import { ResizeHandle } from "../resizeHandle";
 import {
     propertiesActions,
     selectPropertiesStampSettings,
     selectShowPropertiesStamp,
     selectStarredProperties,
 } from "../slice";
-import { ResizeHandle } from "../resizeHandle";
 
 enum Status {
     Initial,
@@ -83,7 +83,7 @@ export function Root() {
     const stampSettings = useAppSelector(selectPropertiesStampSettings);
     const dispatchHighlighted = useDispatchHighlighted();
     const {
-        state: { scene_OLD: scene },
+        state: { db },
     } = useExplorerGlobals(true);
     const theme = useTheme();
     const dispatch = useAppDispatch();
@@ -133,7 +133,7 @@ export function Root() {
         async function getObjectData(id: number) {
             setStatus(Status.Loading);
 
-            const objectData = await getObjectDataUtil({ db: scene, id });
+            const objectData = await getObjectDataUtil({ db, id });
 
             if (!objectData) {
                 setObject(undefined);
@@ -142,7 +142,7 @@ export function Root() {
             }
 
             const cleanedObjectData = { ...objectData, properties: objectData.properties.slice(0, 100) };
-            const parent = await searchFirstObjectAtPath({ db: scene, path: getParentPath(objectData.path) });
+            const parent = await searchFirstObjectAtPath({ db, path: getParentPath(objectData.path) });
 
             if (parent) {
                 const parentPropertiesObject = createPropertiesObject({
@@ -156,11 +156,11 @@ export function Root() {
 
             setStatus(Status.Initial);
         }
-    }, [mainObject, scene, object, setObject, setStatus]);
+    }, [mainObject, db, object, setObject, setStatus]);
 
     const search = async (searchPatterns: SearchPattern[]) => {
         if (mainObject !== undefined) {
-            const objData = await getObjectDataUtil({ db: scene, id: mainObject });
+            const objData = await getObjectDataUtil({ db, id: mainObject });
 
             if (objData?.type === NodeType.Leaf) {
                 dispatchHighlighted(highlightActions.setIds([mainObject]));
@@ -181,7 +181,7 @@ export function Root() {
         try {
             const deep = searchPatterns.some((pattern) => pattern.deep);
             const baseSearchProps = {
-                scene,
+                db,
                 abortSignal,
                 searchPatterns: searchPatterns.map(({ deep: _deep, ...pattern }) => pattern),
             };
