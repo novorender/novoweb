@@ -33,7 +33,7 @@ declare module "@novorender/data-js-api" {
                         ids: number[];
                     };
                 };
-                selectionBasket: { ids: number[] };
+                selectionBasket: { ids: number[]; mode: number };
             };
             background: {
                 color: [number, number, number, number];

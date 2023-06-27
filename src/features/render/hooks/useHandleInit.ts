@@ -106,7 +106,7 @@ export function useHandleInit() {
                                     ? GroupStatus.Selected
                                     : group.hidden
                                     ? GroupStatus.Hidden
-                                    : GroupStatus.Default,
+                                    : GroupStatus.None,
                                 ids: group.ids ? new Set(group.ids) : (undefined as any), // TODO any?
                             }))
                     )

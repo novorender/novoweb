@@ -66,12 +66,24 @@ export type DeepMutable<T> = { -readonly [P in keyof T]: DeepMutable<T[P]> };
 type CameraState =
     | {
           type: CameraType.Orthographic;
-          goTo?: { position: Camera["position"]; rotation: Camera["rotation"]; fov?: number };
+          goTo?: {
+              position: Camera["position"];
+              rotation: Camera["rotation"];
+              fov?: number;
+              far?: number;
+              near?: number;
+          };
           gridOrigo?: vec3;
       }
     | {
           type: CameraType.Pinhole;
-          goTo?: { position: Camera["position"]; rotation: Camera["rotation"]; fov?: number };
+          goTo?: {
+              position: Camera["position"];
+              rotation: Camera["rotation"];
+              fov?: number;
+              far?: number;
+              near?: number;
+          };
           zoomTo?: BoundingSphere;
       };
 type MutableCameraState = DeepMutable<CameraState>;
@@ -334,6 +346,8 @@ export const resetView = createAction<{
     };
 }>("resetView");
 
+export const selectBookmark = createAction<NonNullable<Bookmark["v1"]>>("selectBookmark");
+
 export const renderSlice = createSlice({
     name: "render",
     initialState: initialState as State,
@@ -424,53 +438,7 @@ export const renderSlice = createSlice({
                     : SubtreeStatus.Shown;
         },
         setSubtreesFromBookmark: (state, action: PayloadAction<Required<Bookmark>["subtrees"]>) => {
-            if (!state.subtrees) {
-                return;
-            }
-
-            state.subtrees.lines =
-                state.subtrees.lines !== SubtreeStatus.Unavailable
-                    ? action.payload.lines
-                        ? SubtreeStatus.Shown
-                        : SubtreeStatus.Hidden
-                    : state.subtrees.lines;
-
-            state.subtrees.points =
-                state.subtrees.points !== SubtreeStatus.Unavailable
-                    ? action.payload.points
-                        ? SubtreeStatus.Shown
-                        : SubtreeStatus.Hidden
-                    : state.subtrees.points;
-
-            state.subtrees.terrain =
-                state.subtrees.terrain !== SubtreeStatus.Unavailable
-                    ? action.payload.terrain
-                        ? SubtreeStatus.Shown
-                        : SubtreeStatus.Hidden
-                    : state.subtrees.terrain;
-
-            state.subtrees.triangles =
-                state.subtrees.triangles !== SubtreeStatus.Unavailable
-                    ? action.payload.triangles
-                        ? SubtreeStatus.Shown
-                        : SubtreeStatus.Hidden
-                    : state.subtrees.triangles;
-
-            state.subtrees.documents =
-                state.subtrees.documents !== SubtreeStatus.Unavailable
-                    ? action.payload.documents
-                        ? SubtreeStatus.Shown
-                        : SubtreeStatus.Hidden
-                    : state.subtrees.documents;
-        },
-        disableAllSubtrees: (state) => {
-            state.subtrees = {
-                terrain: SubtreeStatus.Unavailable,
-                triangles: SubtreeStatus.Unavailable,
-                lines: SubtreeStatus.Unavailable,
-                points: SubtreeStatus.Unavailable,
-                documents: SubtreeStatus.Unavailable,
-            };
+            state.subtrees = subtreesFromBookmark(state.subtrees, action.payload);
         },
         setSelectionBasketMode: (state, action: PayloadAction<State["selectionBasketMode"]>) => {
             state.selectionBasketMode = action.payload;
@@ -679,10 +647,10 @@ export const renderSlice = createSlice({
 
             // Camera
             if (initialCamera) {
-                // todo support ortho
                 state.camera.type =
                     initialCamera.kind === "orthographic" ? CameraType.Orthographic : CameraType.Pinhole;
                 state.camera.goTo = initialCamera;
+                // todo support ortho
                 state.savedCameraPositions = {
                     positions: [initialCamera],
                     currentIndex: 0,
@@ -715,7 +683,7 @@ export const renderSlice = createSlice({
                 // deviations
                 state.points.deviation.index = (settings.points.deviation as any).index;
                 state.points.deviation.mixFactor =
-                    settings.points.deviation.mode === "mix" ? 1 : settings.points.deviation.mode === "on" ? 0.5 : 0; // TODO map mode to mixFactor?
+                    settings.points.deviation.mode === "mix" ? 1 : settings.points.deviation.mode === "on" ? 0.5 : 0;
 
                 // subtrees
                 state.subtrees = getLegacySubtrees(settings.advanced, availableSubtrees);
@@ -724,8 +692,94 @@ export const renderSlice = createSlice({
                 state.terrain.asBackground = settings.terrain.asBackground;
             }
         });
+        builder.addCase(selectBookmark, (state, action) => {
+            const { camera, subtrees, viewMode, objects, background, terrain, deviations, grid, clipping, options } =
+                action.payload;
+
+            state.camera =
+                camera.kind === "orthographic"
+                    ? {
+                          type: CameraType.Orthographic,
+                          goTo: {
+                              position: [...camera.position],
+                              rotation: [...camera.rotation],
+                              fov: camera.fov,
+                              far: camera.far ?? state.cameraDefaults[camera.kind].clipping.far,
+                          },
+                      }
+                    : {
+                          type: CameraType.Pinhole,
+                          goTo: {
+                              position: [...camera.position],
+                              rotation: [...camera.rotation],
+                          },
+                      };
+
+            state.subtrees = subtreesFromBookmark(state.subtrees, subtrees);
+            state.viewMode = viewMode;
+            state.selectionBasketMode = options.addToSelectionBasket
+                ? objects.selectionBasket.mode
+                : state.selectionBasketMode;
+            state.mainObject = objects.mainObject.id;
+            state.defaultVisibility = options.addToSelectionBasket
+                ? ObjectVisibility.Transparent
+                : (objects.defaultVisibility as ObjectVisibility);
+            state.background.color = background.color;
+            state.terrain.asBackground = terrain.asBackground;
+            state.points.deviation.index = deviations.index;
+            state.points.deviation.mixFactor = deviations.mixFactor;
+            state.grid = grid;
+            state.clipping = {
+                ...clipping,
+                planes: clipping.planes.map((plane) => ({ plane, baseW: plane[3] })),
+            };
+        });
     },
 });
+
+function subtreesFromBookmark(
+    current: State["subtrees"],
+    bm: NonNullable<Bookmark["v1"]>["subtrees"]
+): State["subtrees"] {
+    const subtrees = { ...current };
+
+    subtrees.lines =
+        subtrees.lines !== SubtreeStatus.Unavailable
+            ? bm.lines
+                ? SubtreeStatus.Shown
+                : SubtreeStatus.Hidden
+            : subtrees.lines;
+
+    subtrees.points =
+        subtrees.points !== SubtreeStatus.Unavailable
+            ? bm.points
+                ? SubtreeStatus.Shown
+                : SubtreeStatus.Hidden
+            : subtrees.points;
+
+    subtrees.terrain =
+        subtrees.terrain !== SubtreeStatus.Unavailable
+            ? bm.terrain
+                ? SubtreeStatus.Shown
+                : SubtreeStatus.Hidden
+            : subtrees.terrain;
+
+    subtrees.triangles =
+        subtrees.triangles !== SubtreeStatus.Unavailable
+            ? bm.triangles
+                ? SubtreeStatus.Shown
+                : SubtreeStatus.Hidden
+            : subtrees.triangles;
+
+    subtrees.documents =
+        subtrees.documents !== SubtreeStatus.Unavailable
+            ? bm.documents
+                ? SubtreeStatus.Shown
+                : SubtreeStatus.Hidden
+            : subtrees.documents;
+
+    return subtrees;
+}
 
 export const selectMainObject = (state: RootState) => state.render.mainObject;
 export const selectDefaultVisibility = (state: RootState) => state.render.defaultVisibility;
@@ -767,6 +821,6 @@ export const selectNavigationCube = (state: RootState) => state.render.navigatio
 export const selectDebugStats = (state: RootState) => state.render.debugStats;
 
 const { reducer } = renderSlice;
-const actions = { ...renderSlice.actions, initScene, resetView };
+const actions = { ...renderSlice.actions, initScene, resetView, selectBookmark };
 export { actions as renderActions, reducer as renderReducer };
 export type { State as RenderState };

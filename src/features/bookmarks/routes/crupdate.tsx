@@ -91,7 +91,12 @@ export function Crupdate() {
             description,
             grouping: collection,
             access: personal ? BookmarkAccess.Personal : BookmarkAccess.Public,
-            options: { addSelectedToSelectionBasket: addToSelectionBasket },
+            v1: bm.v1
+                ? {
+                      ...bm.v1,
+                      options: { addToSelectionBasket: addToSelectionBasket },
+                  }
+                : undefined,
         });
 
         dispatch(bookmarksActions.setBookmarks(newBookmarks));

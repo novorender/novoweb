@@ -1,16 +1,13 @@
 import { Bookmark } from "@novorender/data-js-api";
-import { OrthoControllerParams } from "@novorender/webgl-api";
-import { mat4, quat, vec3 } from "gl-matrix";
 
 import { useAppSelector } from "app/store";
 import { useExplorerGlobals } from "contexts/explorerGlobals";
 import { useLazyHidden } from "contexts/hidden";
 import { HighlightCollection, useLazyHighlightCollections } from "contexts/highlightCollections";
 import { useLazyHighlighted } from "contexts/highlighted";
-import { isInternalGroup, useLazyObjectGroups } from "contexts/objectGroups";
+import { GroupStatus, isInternalGroup, useLazyObjectGroups } from "contexts/objectGroups";
 import { useLazySelectionBasket } from "contexts/selectionBasket";
 import { selectAreaPoints } from "features/area";
-import { selectDeviations } from "features/deviations";
 import { selectFollowPath } from "features/followPath";
 import {
     selectManholeCollisionSettings,
@@ -20,7 +17,6 @@ import {
 import { selectMeasure } from "features/measure";
 import { selectPointLinePoints } from "features/pointLine";
 import {
-    ObjectVisibility,
     SubtreeStatus,
     selectBackground,
     selectClippingPlanes,
@@ -56,7 +52,7 @@ export function useCreateBookmark() {
     const {
         state: { view },
     } = useExplorerGlobals(true);
-    const objectGroups = useLazyObjectGroups();
+    const groups = useLazyObjectGroups();
     const highlighted = useLazyHighlighted();
     const highlightCollections = useLazyHighlightCollections();
     const hidden = useLazyHidden();
@@ -75,7 +71,7 @@ export function useCreateBookmark() {
                 },
                 camera: view.renderState.camera,
                 options: {
-                    addToSelectionBasket: false,
+                    addToSelectionBasket: false, // flip on create() returned if needed
                 },
                 subtrees: {
                     triangles: subtrees.triangles === SubtreeStatus.Shown,
@@ -94,20 +90,23 @@ export function useCreateBookmark() {
                     index: deviations.index,
                     mixFactor: deviations.mixFactor,
                 },
-                groups: [],
+                groups: groups.current
+                    .filter((group) => !isInternalGroup(group))
+                    .filter((group) => group.status !== GroupStatus.None)
+                    .map(({ id, status }) => ({ id, status })),
                 objects: {
                     defaultVisibility,
                     mainObject: {
                         id: mainObject,
                     },
-                    hidden: { ids: [] },
-                    highlighted: { ids: [] },
+                    hidden: { ids: hidden.current.idArr },
+                    highlighted: { ids: highlighted.current.idArr },
                     highlightCollections: {
                         secondaryHighlight: {
-                            ids: [],
+                            ids: highlightCollections.current[HighlightCollection.SecondaryHighlight].idArr,
                         },
                     },
-                    selectionBasket: { ids: [] },
+                    selectionBasket: { ids: selectionBasket.current.idArr, mode: selectionBasketMode },
                 },
                 measurements: {
                     area: {

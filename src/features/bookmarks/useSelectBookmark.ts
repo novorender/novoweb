@@ -60,8 +60,75 @@ export function useSelectBookmark() {
         return selectV1(bookmark.v1);
     };
 
-    const selectV1 = async (bookmark: Bookmark["v1"]) => {
-        console.log(bookmark, "V1 TODO");
+    const selectV1 = async (bookmark: NonNullable<Bookmark["v1"]>) => {
+        dispatch(renderActions.selectBookmark(bookmark));
+
+        const { objects, groups } = bookmark;
+        dispatchHidden(hiddenActions.setIds(objects.hidden.ids));
+        const updatedGroups = getUpdatedGroups(objectGroups.current, groups);
+
+        if (!bookmark.options.addToSelectionBasket) {
+            dispatchHighlighted(highlightActions.setIds(objects.highlighted.ids));
+            dispatchSelectionBasket(selectionBasketActions.set(objects.selectionBasket.ids));
+            dispatchHighlightCollections(
+                highlightCollectionsActions.setIds(
+                    HighlightCollection.SecondaryHighlight,
+                    objects.highlightCollections.secondaryHighlight.ids
+                )
+            );
+            dispatchObjectGroups(
+                objectGroupsActions.set(
+                    updatedGroups.sort(
+                        (a, b) =>
+                            groups.findIndex((grp) => grp.id === a.id) - groups.findIndex((grp) => grp.id === b.id)
+                    )
+                )
+            );
+        } else {
+            const [toAdd, toLoad] = updatedGroups.reduce(
+                (prev, group) => {
+                    if (group.status !== GroupStatus.Selected) {
+                        return prev;
+                    }
+
+                    if (group.ids) {
+                        prev[0].push(group);
+                    } else {
+                        prev[1].push(group);
+                    }
+
+                    return prev;
+                },
+                [[], []] as [ObjectGroup[], ObjectGroup[]]
+            );
+
+            dispatchSelectionBasket(selectionBasketActions.set(objects.selectionBasket.ids));
+            dispatchSelectionBasket(selectionBasketActions.add(objects.highlighted.ids));
+            dispatchSelectionBasket(selectionBasketActions.add(objects.highlightCollections.secondaryHighlight.ids));
+            dispatchSelectionBasket(selectionBasketActions.add(toAdd.flatMap((group) => Array.from(group.ids))));
+
+            dispatch(groupsActions.setLoadingIds(true));
+            await Promise.all(
+                toLoad
+                    .filter((group) => !group.ids)
+                    .map(async (group) => {
+                        const ids = await dataApi.getGroupIds(sceneId, group.id).catch(() => {
+                            console.warn("failed to load ids for group - ", group.id);
+                            return [] as number[];
+                        });
+
+                        group.ids = new Set(ids);
+                    })
+            );
+            dispatch(groupsActions.setLoadingIds(false));
+
+            dispatchSelectionBasket(selectionBasketActions.add(toLoad.flatMap((group) => Array.from(group.ids))));
+            dispatchObjectGroups(
+                objectGroupsActions.set(updatedGroups.map((group) => ({ ...group, status: GroupStatus.None })))
+            );
+            dispatchHighlighted(highlightActions.setIds([]));
+            dispatchHighlightCollections(highlightCollectionsActions.clearAll());
+        }
     };
 
     const selectLegacy = async (bookmark: Bookmark) => {
@@ -76,7 +143,11 @@ export function useSelectBookmark() {
 
             return {
                 ...group,
-                status: bookmarked?.selected ? GroupStatus.Selected : GroupStatus.Hidden,
+                status: bookmarked?.selected
+                    ? GroupStatus.Selected
+                    : bookmarked?.hidden
+                    ? GroupStatus.Hidden
+                    : GroupStatus.None,
             };
         });
 
@@ -125,7 +196,7 @@ export function useSelectBookmark() {
             dispatchSelectionBasket(selectionBasketActions.add(toLoad.flatMap((group) => Array.from(group.ids))));
             dispatch(renderActions.setDefaultVisibility(ObjectVisibility.Transparent));
             dispatchObjectGroups(
-                objectGroupsActions.set(updatedObjectGroups.map((group) => ({ ...group, selected: false })))
+                objectGroupsActions.set(updatedObjectGroups.map((group) => ({ ...group, status: GroupStatus.None })))
             );
             dispatchHighlighted(highlightActions.setIds([]));
             dispatchHighlightCollections(highlightCollectionsActions.clearAll());
@@ -218,32 +289,33 @@ export function useSelectBookmark() {
 
         dispatch(manholeActions.initFromBookmark(bookmark.manhole));
 
-        if (bookmark.clippingPlanes) {
-            view?.applySettings({ clippingPlanes: { ...bookmark.clippingPlanes, highlight: -1 } });
-            dispatch(
-                renderActions.setClippingBox({
-                    ...bookmark.clippingPlanes,
-                    baseBounds: bookmark.clippingPlanes.bounds,
-                    highlight: -1,
-                    defining: false,
-                })
-            );
-        } else {
-            dispatch(renderActions.resetClippingBox());
-        }
+        // TODO
+        // if (bookmark.clippingPlanes) {
+        //     view?.applySettings({ clippingPlanes: { ...bookmark.clippingPlanes, highlight: -1 } });
+        //     dispatch(
+        //         renderActions.setClippingBox({
+        //             ...bookmark.clippingPlanes,
+        //             baseBounds: bookmark.clippingPlanes.bounds,
+        //             highlight: -1,
+        //             defining: false,
+        //         })
+        //     );
+        // } else {
+        //     dispatch(renderActions.resetClippingBox());
+        // }
 
-        if (bookmark.clippingVolume) {
-            const { enabled, mode, planes } = bookmark.clippingVolume;
-            dispatch(
-                renderActions.setClippingPlanes({
-                    enabled,
-                    mode,
-                    planes: (Array.from(planes) as Vec4[]).map((plane) => ({ plane, baseW: plane[3] })),
-                })
-            );
-        } else {
-            dispatch(renderActions.setClippingPlanes({ planes: [], enabled: false, mode: "union" }));
-        }
+        // if (bookmark.clippingVolume) {
+        //     const { enabled, mode, planes } = bookmark.clippingVolume;
+        //     dispatch(
+        //         renderActions.setClippingPlanes({
+        //             enabled,
+        //             mode,
+        //             planes: (Array.from(planes) as Vec4[]).map((plane) => ({ plane, baseW: plane[3] })),
+        //         })
+        //     );
+        // } else {
+        //     dispatch(renderActions.setClippingPlanes({ planes: [], enabled: false, mode: "union" }));
+        // }
 
         if (bookmark.ortho?.referenceCoordSys) {
             dispatch(
@@ -284,7 +356,7 @@ export function useSelectBookmark() {
                 return;
             }
 
-            dispatch(renderActions.setGridDefaults({ enabled: bookmark.grid.enabled }));
+            // dispatch(renderActions.setGridDefaults({ enabled: bookmark.grid.enabled }));
             dispatch(renderActions.setGrid(bookmark.grid as DeepMutable<typeof bookmark.grid>));
         }
 
@@ -362,4 +434,32 @@ export function useSelectBookmark() {
     };
 
     return select;
+}
+
+function getUpdatedGroups(current: ObjectGroup[], bookmark: NonNullable<Bookmark["v1"]>["groups"]): ObjectGroup[] {
+    return current.map((group) => {
+        const bookmarked = bookmark.find((bookmarked) => bookmarked.id === group.id);
+        let status = GroupStatus.None;
+
+        if (bookmarked) {
+            switch (bookmarked.status) {
+                case "none":
+                    break;
+                case "selected":
+                    status = GroupStatus.Selected;
+                    break;
+                case "hidden":
+                    status = GroupStatus.Hidden;
+                    break;
+                case "frozen":
+                    status = GroupStatus.Frozen;
+                    break;
+            }
+        }
+
+        return {
+            ...group,
+            status,
+        };
+    });
 }

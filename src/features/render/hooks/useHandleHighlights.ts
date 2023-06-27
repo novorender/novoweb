@@ -1,23 +1,24 @@
-import { createNeutralHighlight, createTransparentHighlight, createColorSetHighlight } from "@novorender/web_app";
-import { useRef, useEffect } from "react";
+import { createColorSetHighlight, createNeutralHighlight, createTransparentHighlight } from "@novorender/web_app";
+import { useEffect, useRef } from "react";
 
-import { useAppSelector, useAppDispatch } from "app/store";
+import { dataApi } from "app";
+import { useAppDispatch, useAppSelector } from "app/store";
 import { useExplorerGlobals } from "contexts/explorerGlobals";
 import { useHidden } from "contexts/hidden";
 import { useHighlightCollections } from "contexts/highlightCollections";
 import { useHighlighted } from "contexts/highlighted";
-import { useObjectGroups, GroupStatus, ObjectGroup } from "contexts/objectGroups";
+import { GroupStatus, ObjectGroup, useObjectGroups } from "contexts/objectGroups";
 import { useSelectionBasket } from "contexts/selectionBasket";
 import { useSceneId } from "hooks/useSceneId";
-import { dataApi } from "app";
 
-import { selectDefaultVisibility, ObjectVisibility, renderActions } from "..";
+import { ObjectVisibility, renderActions, selectDefaultVisibility, selectMainObject } from "..";
 
 export function useHandleHighlights() {
     const {
         state: { view },
     } = useExplorerGlobals();
     const sceneId = useSceneId();
+    const mainObject = useAppSelector(selectMainObject);
     const highlighted = useHighlighted();
     const secondaryHighlight = useHighlightCollections()["secondaryHighlight"];
     const hidden = useHidden().idArr;
@@ -97,7 +98,9 @@ export function useHandleHighlights() {
                 highlights: {
                     groups: [
                         {
-                            objectIds: new Uint32Array(highlighted.idArr).sort(),
+                            objectIds: new Uint32Array(
+                                mainObject !== undefined ? highlighted.idArr.concat(mainObject) : highlighted.idArr
+                            ).sort(),
                             rgbaTransform: createColorSetHighlight(highlighted.color),
                         },
                         {
@@ -127,12 +130,23 @@ export function useHandleHighlights() {
                 // },
             });
         }
-    }, [view, dispatch, sceneId, highlighted, secondaryHighlight, hidden, groups, defaultVisibility, basket]);
+    }, [
+        view,
+        dispatch,
+        sceneId,
+        highlighted,
+        secondaryHighlight,
+        hidden,
+        groups,
+        defaultVisibility,
+        basket,
+        mainObject,
+    ]);
 }
 
 async function fillActiveGroupIds(sceneId: string, groups: ObjectGroup[]): Promise<void> {
     const proms: Promise<void>[] = groups.map(async (group) => {
-        if (group.status !== GroupStatus.Default && !group.ids) {
+        if (group.status !== GroupStatus.None && !group.ids) {
             group.ids = new Set(
                 await dataApi.getGroupIds(sceneId, group.id).catch(() => {
                     console.warn("failed to load ids for group - ", group.id);

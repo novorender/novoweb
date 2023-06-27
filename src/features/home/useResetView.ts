@@ -59,7 +59,7 @@ export function useResetView() {
                                     ? GroupStatus.Selected
                                     : saved.hidden
                                     ? GroupStatus.Hidden
-                                    : GroupStatus.Default;
+                                    : GroupStatus.None;
                             }
 
                             return group;

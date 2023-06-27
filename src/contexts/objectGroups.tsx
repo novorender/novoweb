@@ -1,4 +1,3 @@
-import { ObjectGroup as BaseObjectGroup } from "@novorender/data-js-api";
 import { createContext, Dispatch, MutableRefObject, ReactNode, useContext, useReducer, useRef } from "react";
 import { v4 as uuidv4 } from "uuid";
 
@@ -6,10 +5,10 @@ import { VecRGB, VecRGBA } from "utils/color";
 import { SearchPattern } from "@novorender/webgl-api";
 
 export enum GroupStatus {
-    Default,
-    Selected,
-    Hidden,
-    Frozen,
+    None = "none",
+    Selected = "selected",
+    Hidden = "hidden",
+    Frozen = "frozen",
 }
 
 export interface ObjectGroup {
@@ -147,7 +146,7 @@ function reducer(state: State, action: Actions): ObjectGroup[] {
                 search: toCopy.search ? [...toCopy.search] : [],
                 ids: new Set<number>(),
                 color: [...toCopy.color] as ObjectGroup["color"],
-                status: GroupStatus.Default,
+                status: GroupStatus.None,
                 opacity: toCopy.opacity ?? 1,
                 includeDescendants: toCopy.includeDescendants ?? true,
             };
@@ -179,7 +178,7 @@ function reducer(state: State, action: Actions): ObjectGroup[] {
         case ActionTypes.Reset: {
             return state
                 .filter((group) => !isInternalTemporaryGroup(group))
-                .map((group) => ({ ...group, status: GroupStatus.Default }));
+                .map((group) => ({ ...group, status: GroupStatus.None }));
         }
         default: {
             throw new Error(`Unhandled action type`);
