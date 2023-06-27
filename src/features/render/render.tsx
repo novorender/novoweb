@@ -24,6 +24,7 @@ import { Images } from "./images";
 import { Markers } from "./markers";
 import { SceneError } from "./sceneError";
 import { Stamp } from "./stamp";
+import { useHandleInitialBookmark } from "./hooks/useHandleInitialBookmark";
 
 glMatrix.setMatrixArrayType(Array);
 
@@ -75,6 +76,7 @@ export function Render3D() {
     const canvasClickHandler = useCanvasClickHandler();
 
     useHandleInit();
+    useHandleInitialBookmark();
     useHandleCameraMoved();
     useHandleCameraState();
     useHandleCameraSpeed();

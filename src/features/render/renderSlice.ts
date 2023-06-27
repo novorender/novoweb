@@ -644,6 +644,7 @@ export const renderSlice = createSlice({
 
             // Highlight
             state.defaultVisibility = ObjectVisibility.Neutral;
+            state.mainObject = undefined;
 
             // Camera
             if (initialCamera) {
