@@ -14,6 +14,7 @@ import { featuresConfig } from "config/features";
 import WidgetList from "features/widgetList/widgetList";
 import { useAppSelector } from "app/store";
 import { selectMinimized, selectMaximized } from "slices/explorerSlice";
+import { getAssetUrl } from "utils/misc";
 
 type TreeLevel = {
     properties?: TreeLevel[];
@@ -24,7 +25,7 @@ type TreeLevel = {
 
 export default function PropertiesTree() {
     const {
-        state: { scene_OLD: scene },
+        state: { db, view },
     } = useExplorerGlobals(true);
     const dispatchHighlighted = useDispatchHighlighted();
     const [abortController, abort] = useAbortController();
@@ -43,7 +44,7 @@ export default function PropertiesTree() {
             try {
                 const { signal } = abortController.current;
                 await searchDeepByPatterns({
-                    db: scene,
+                    db,
                     searchPatterns: [{ property, value, exact: true }],
                     callback: (ids) => {
                         if (!signal.aborted) {
@@ -57,25 +58,24 @@ export default function PropertiesTree() {
                 }
             } catch {}
         },
-        [scene, dispatchHighlighted, abort, abortController, setSelected]
+        [db, dispatchHighlighted, abort, abortController, setSelected]
     );
 
     useEffect(() => {
         init();
 
         async function init() {
-            const url = new URL((scene as any).assetUrl);
-            url.pathname += "propcache/root";
             try {
-                const resp = await fetch(url.toString());
+                const resp = await fetch(getAssetUrl(view, "propcache/root").toString());
                 const res: { properties?: string[] } = await resp.json();
                 const properties = res.properties?.map((p) => ({ name: p, path: p })) ?? [];
                 setRoot({ properties, name: "root", path: "" });
-            } catch {
+            } catch (e) {
+                console.warn(e);
                 setRoot({ properties: [], name: "root", path: "" });
             }
         }
-    }, [scene, setRoot]);
+    }, [view, setRoot]);
 
     return (
         <>
@@ -196,7 +196,7 @@ function Node({ prop, level, selected, search }: NodeProps) {
     const theme = useTheme();
 
     const {
-        state: { scene_OLD: scene },
+        state: { view },
     } = useExplorerGlobals(true);
 
     const [expanded, setExpanded] = useMountedState<boolean | undefined>(undefined);
@@ -205,25 +205,24 @@ function Node({ prop, level, selected, search }: NodeProps) {
         if (expanded !== undefined) {
             setExpanded(!expanded);
         } else {
-            const url = new URL((scene as any).assetUrl);
             let { path } = prop;
             for (const ic of invalidCharacters) {
                 path = path.replaceAll(ic[0], ic[1]);
             }
-            url.pathname += "propcache/" + path.toLowerCase();
             setExpanded(false);
             try {
-                const resp = await fetch(url.toString());
+                const resp = await fetch(getAssetUrl(view, "propcache/" + path.toLowerCase()).toString());
                 const res: { properties?: string[]; values?: string[] } = await resp.json();
                 prop.properties = res.properties?.map((p) => ({ name: p, path: prop.path + "/" + p })) ?? [];
                 prop.values = res.values ?? [];
-            } catch {
+            } catch (e) {
+                console.warn(e);
                 prop.properties = [];
                 prop.values = [];
             }
             setExpanded(true);
         }
-    }, [scene, expanded, setExpanded, prop]);
+    }, [view, expanded, setExpanded, prop]);
 
     return (
         <Fragment>
@@ -262,22 +261,6 @@ function Node({ prop, level, selected, search }: NodeProps) {
                             {prop.name}
                         </Typography>
                     </Box>
-                    {/* <Checkbox
-                            aria-label="Select node"
-                            size="small"
-                            checked={selected}
-                            onChange={(e) => handleChange("select")(e, node)}
-                            onClick={stopPropagation}
-                        />
-                        <Checkbox
-                            aria-label="Toggle node visibility"
-                            size="small"
-                            icon={<VisibilityIcon />}
-                            checkedIcon={<VisibilityIcon color="disabled" />}
-                            checked={hidden}
-                            onChange={(e) => handleChange("hide")(e, node)}
-                            onClick={stopPropagation}
-                        /> */}
                     {expanded === false && prop.values === undefined ? (
                         <LinearProgress sx={{ bottom: 0, left: 0, right: 0, width: "unset" }} />
                     ) : undefined}

@@ -1,6 +1,7 @@
 import { MeasureEntity, MeasurementValues, PointEntity } from "@novorender/measure-api";
+import { View } from "@novorender/web_app";
 import { Scene } from "@novorender/webgl-api";
-import { WidgetKey, featuresConfig, defaultEnabledWidgets } from "config/features";
+import { WidgetKey, defaultEnabledWidgets, featuresConfig } from "config/features";
 import { RecursivePartial } from "types/misc";
 
 export function uniqueArray<T>(arr: T[]): T[] {
@@ -170,8 +171,12 @@ export function getMeasurementValueKind(val: MeasurementValues): string {
     return "kind" in val ? val.kind : "";
 }
 
-export function getAssetUrl(scene: Scene, path: string): URL {
-    const url = new URL((scene as any).assetUrl);
+export function getAssetUrl(view: View, path: string): URL {
+    const baseUrl = view.renderState.scene?.url ?? "";
+    if (!baseUrl) {
+        throw new Error("No base URL in view.");
+    }
+    const url = new URL(baseUrl);
     url.pathname += path;
 
     return url;

@@ -55,7 +55,7 @@ const Svg = styled("svg")(
 
 export function Render3D() {
     const {
-        state: { view, canvas },
+        state: { view, canvas, scene },
         dispatch: dispatchGlobals,
     } = useExplorerGlobals();
 
@@ -87,6 +87,7 @@ export function Render3D() {
     useHandleAdvancedSettings();
 
     window.view = view;
+    (window as any).scene = scene;
 
     return (
         <Box position="relative" width="100%" height="100%" sx={{ userSelect: "none" }}>

@@ -10,7 +10,7 @@ import { explorerActions, selectMaximized, selectWidgets } from "slices/explorer
 import { useWidgetLayout } from "./useWidgetLayout";
 
 const Properties = lazy(() => import("features/properties/properties"));
-// const PropertiesTree = lazy(() => import("features/propertiesTree/propertiesTree"));
+const PropertiesTree = lazy(() => import("features/propertiesTree/propertiesTree"));
 const Bookmarks = lazy(() => import("features/bookmarks/bookmarksWidget"));
 // const ModelTree = lazy(() => import("features/modelTree/modelTree"));
 // const Search = lazy(() => import("features/search/search"));
@@ -145,9 +145,9 @@ function getWidgetByKey(key: WidgetKey): JSX.Element | string {
         case featuresConfig.properties.key:
             Widget = Properties;
             break;
-        // case featuresConfig.propertyTree.key:
-        //     Widget = PropertiesTree;
-        //     break;
+        case featuresConfig.propertyTree.key:
+            Widget = PropertiesTree;
+            break;
         case featuresConfig.bookmarks.key:
             Widget = Bookmarks;
             break;
