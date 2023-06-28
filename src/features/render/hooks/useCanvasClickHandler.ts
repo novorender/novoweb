@@ -308,19 +308,19 @@ export function useCanvasClickHandler() {
                 }
                 break;
             case Picker.ClippingPlane:
-                // if (!normal) {
-                //     return;
-                // }
+                if (!normal) {
+                    return;
+                }
 
-                // const w = -vec3.dot(normal, position);
+                const w = vec3.dot(normal, position);
 
-                // dispatch(renderActions.setPicker(Picker.Object));
-                // dispatch(
-                //     renderActions.addClippingPlane({
-                //         plane: vec4.fromValues(normal[0], normal[1], normal[2], w) as Vec4,
-                //         baseW: w,
-                //     })
-                // );
+                dispatch(renderActions.setPicker(Picker.Object));
+                dispatch(
+                    renderActions.addClippingPlane({
+                        normalOffset: vec4.fromValues(normal[0], normal[1], normal[2], w) as Vec4,
+                        baseW: w,
+                    })
+                );
                 break;
             case Picker.OrthoPlane:
                 // const orthoController = api.createCameraController({ kind: "ortho" }, canvas);

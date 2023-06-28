@@ -10,6 +10,7 @@ import { PerformanceStats } from "features/performanceStats";
 import { selectDebugStats, selectLoadingHandles, selectSceneStatus } from "features/render/renderSlice";
 import { AsyncStatus } from "types/misc";
 
+import { useHandleClipping } from "features/clippingPlanes/useHandleClipping";
 import { useCanvasClickHandler } from "./hooks/useCanvasClickHandler";
 import { useHandleAdvancedSettings } from "./hooks/useHandleAdvancedSettings";
 import { useHandleBackground } from "./hooks/useHandleBackground";
@@ -18,13 +19,13 @@ import { useHandleCameraSpeed } from "./hooks/useHandleCameraSpeed";
 import { useHandleCameraState } from "./hooks/useHandleCameraState";
 import { useHandleHighlights } from "./hooks/useHandleHighlights";
 import { useHandleInit } from "./hooks/useHandleInit";
+import { useHandleInitialBookmark } from "./hooks/useHandleInitialBookmark";
 import { useHandleSubtrees } from "./hooks/useHandleSubtrees";
 import { useHandleTerrain } from "./hooks/useHandleTerrain";
 import { Images } from "./images";
 import { Markers } from "./markers";
 import { SceneError } from "./sceneError";
 import { Stamp } from "./stamp";
-import { useHandleInitialBookmark } from "./hooks/useHandleInitialBookmark";
 
 glMatrix.setMatrixArrayType(Array);
 
@@ -85,6 +86,7 @@ export function Render3D() {
     useHandleSubtrees();
     useHandleTerrain();
     useHandleAdvancedSettings();
+    useHandleClipping();
 
     window.view = view;
     (window as any).scene = scene;

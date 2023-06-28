@@ -1,20 +1,20 @@
-import { Box, Button, FormControlLabel, Slider } from "@mui/material";
-import { SyntheticEvent, useEffect, useRef, useState } from "react";
-import { vec4 } from "gl-matrix";
 import { DeleteSweep } from "@mui/icons-material";
+import { Box, Button, FormControlLabel, Slider } from "@mui/material";
+import { vec4 } from "gl-matrix";
+import { SyntheticEvent, useEffect, useRef, useState } from "react";
 
 import { useAppDispatch, useAppSelector } from "app/store";
 import { IosSwitch, LogoSpeedDial, ScrollBox, WidgetContainer, WidgetHeader } from "components";
-import { Picker, renderActions, selectClippingPlanes, selectPicker } from "features/render/renderSlice";
-import { useToggle } from "hooks/useToggle";
 import { featuresConfig } from "config/features";
-import WidgetList from "features/widgetList/widgetList";
-import { selectMinimized, selectMaximized } from "slices/explorerSlice";
 import { useExplorerGlobals } from "contexts/explorerGlobals";
+import { Picker, renderActions, selectClippingPlanes, selectPicker } from "features/render/renderSlice";
+import WidgetList from "features/widgetList/widgetList";
+import { useToggle } from "hooks/useToggle";
+import { selectMaximized, selectMinimized } from "slices/explorerSlice";
 
 export default function ClippingPlanes() {
     const {
-        state: { view_OLD: view },
+        state: { view },
     } = useExplorerGlobals(true);
     const [menuOpen, toggleMenu] = useToggle();
     const minimized = useAppSelector(selectMinimized) === featuresConfig.clippingPlanes.key;
@@ -43,19 +43,21 @@ export default function ClippingPlanes() {
 
     useEffect(() => {
         if (planes.length) {
-            setSliders(planes.map((plane) => plane.plane[3]));
+            setSliders(planes.map((plane) => -plane.normalOffset[3]));
         }
     }, [planes]);
 
     const handleSliderChange = (idx: number) => (_event: Event, newValue: number | number[]) => {
-        const plane = planes[idx] ? vec4.clone(planes[idx].plane) : undefined;
+        const selected = planes[idx];
 
-        if (!plane) {
+        if (!selected) {
             return;
         }
 
+        const plane = vec4.clone(selected.normalOffset);
+
         const newVal = typeof newValue === "number" ? newValue : newValue[0];
-        plane[3] = typeof newValue === "number" ? newValue : newValue[0];
+        plane[3] = -newVal;
 
         setSliders((_state) => {
             const state = [..._state];
@@ -63,28 +65,26 @@ export default function ClippingPlanes() {
             return state;
         });
 
-        view.applySettings({
-            clippingVolume: {
-                ...view.settings.clippingVolume,
-                planes: planes.map((p, i) => (i === idx ? plane : p.plane)),
-            },
+        view.modifyRenderState({
+            clipping: { planes: planes.map((p, i) => (i === idx ? { ...selected, normalOffset: plane } : p)) },
         });
     };
 
     const handleSliderChangeCommitted =
         (idx: number) => (_event: Event | SyntheticEvent<Element, Event>, newValue: number | number[]) => {
-            const plane = planes[idx] ? (vec4.clone(planes[idx].plane) as Vec4) : undefined;
+            const selected = planes[idx];
 
-            if (!plane) {
+            if (!selected) {
                 return;
             }
 
+            const plane = vec4.clone(selected.normalOffset);
             const newVal = typeof newValue === "number" ? newValue : newValue[0];
-            plane[3] = newVal;
+            plane[3] = -newVal;
 
             dispatch(
                 renderActions.setClippingPlanes({
-                    planes: planes.map((p, i) => (i === idx ? { ...planes[idx], plane } : p)),
+                    planes: planes.map((p, i) => (i === idx ? { ...selected, normalOffset: plane } : p)),
                 })
             );
         };
@@ -136,9 +136,9 @@ export default function ClippingPlanes() {
                                 <Box mb={2} key={idx}>
                                     Plane {idx + 1}:
                                     <Slider
-                                        min={plane.baseW - 20}
+                                        min={-plane.baseW - 20}
+                                        max={-plane.baseW + 20}
                                         step={0.1}
-                                        max={plane.baseW + 20}
                                         value={sliders[idx]}
                                         onChange={handleSliderChange(idx)}
                                         onChangeCommitted={handleSliderChangeCommitted(idx)}

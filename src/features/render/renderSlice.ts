@@ -194,10 +194,12 @@ const initialState = {
     },
     clipping: {
         enabled: false,
+        draw: false,
         mode: ClippingMode.union,
         planes: [] as {
-            plane: vec4;
+            normalOffset: vec4;
             baseW: number;
+            color: vec4;
         }[],
     },
     grid: {
@@ -242,15 +244,15 @@ const initialState = {
             controller: "flight" as "flight" | "cad",
             clipping: {
                 near: 0.1,
-                far: 1000,
+                far: 3000,
             },
             speedLevels: {
-                slow: 0.01,
-                default: 0.03,
-                fast: 0.15,
+                slow: 0.3,
+                default: 1,
+                fast: 5,
             },
             proportionalSpeed: {
-                enabled: false,
+                enabled: true,
                 min: 5,
                 max: 300,
             },
@@ -274,6 +276,7 @@ const initialState = {
         toonOutline: {
             enabled: true,
             color: [0, 0, 0] as VecRGB,
+            onlyOnIdleFrame: true,
         },
         outlines: {
             enabled: false,
@@ -456,21 +459,23 @@ export const renderSlice = createSlice({
         // resetClippingBox: (state) => {
         //     state.clippingBox = initialState.clippingBox;
         // },
-        // setClippingPlanes: (state, action: PayloadAction<Partial<(typeof initialState)["clippingPlanes"]>>) => {
-        //     if (action.payload.enabled) {
-        //         state.clippingBox.enabled = false;
-        //     }
+        setClippingPlanes: (state, action: PayloadAction<RecursivePartial<State["clipping"]>>) => {
+            if (action.payload.enabled) {
+                // state.clippingBox.enabled = false;
+            }
 
-        //     state.clippingPlanes = { ...state.clippingPlanes, ...action.payload };
-        // },
-        // addClippingPlane: (state, action: PayloadAction<(typeof initialState)["clippingPlanes"]["planes"][number]>) => {
-        //     state.clippingBox.enabled = false;
-        //     state.clippingPlanes.enabled = true;
+            state.clipping = mergeRecursive(state.clipping, action.payload);
+        },
+        addClippingPlane: (state, action: PayloadAction<Omit<State["clipping"]["planes"][number], "color">>) => {
+            // state.clippingBox.enabled = false;
+            // state.clippingPlanes.enabled = true;
 
-        //     if (state.clippingPlanes.planes.length < 6) {
-        //         state.clippingPlanes.planes.push(action.payload);
-        //     }
-        // },
+            state.clipping.enabled = true;
+
+            if (state.clipping.planes.length < 6) {
+                state.clipping.planes.push({ ...action.payload, color: [0, 1, 0, 0.2] });
+            }
+        },
         // resetClippingPlanes: (state) => {
         //     state.clippingPlanes = initialState.clippingPlanes;
         // },
@@ -658,6 +663,9 @@ export const renderSlice = createSlice({
                 };
             }
 
+            // clipping
+            state.clipping = initialState.clipping;
+
             const availableSubtrees = Object.keys(state.subtrees).filter(
                 (key: any) => state.subtrees[key as keyof State["subtrees"]] !== SubtreeStatus.Unavailable
             );
@@ -732,7 +740,12 @@ export const renderSlice = createSlice({
             state.grid = grid;
             state.clipping = {
                 ...clipping,
-                planes: clipping.planes.map((plane) => ({ plane, baseW: plane[3] })),
+                draw: false,
+                planes: clipping.planes.map(({ normalOffset, color }) => ({
+                    normalOffset,
+                    color,
+                    baseW: normalOffset[3],
+                })),
             };
         });
     },
