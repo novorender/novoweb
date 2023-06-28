@@ -1,11 +1,11 @@
 import { Box } from "@mui/material";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef } from "react";
 
 import { useExplorerGlobals } from "contexts/explorerGlobals";
 import { useAppSelector } from "app/store";
 import { selectDeviceProfile } from "features/render";
 
-const canvas: HTMLCanvasElement = document.createElement("CANVAS") as HTMLCanvasElement;
+const canvas: HTMLCanvasElement = document.createElement("canvas") as HTMLCanvasElement;
 canvas.width = 1;
 canvas.height = 1;
 document.body.appendChild(canvas);
@@ -23,8 +23,19 @@ export function PerformanceStats() {
         state: { view },
     } = useExplorerGlobals(true);
     const deviceProfile = useAppSelector(selectDeviceProfile);
-    const [stats, setStats] = useState({ ...view.statistics });
     const timer = useRef<ReturnType<typeof setInterval>>();
+    const cpuTime = useRef<HTMLSpanElement>(null);
+    const gpuTime = useRef<HTMLSpanElement>(null);
+    const bufferBytes = useRef<HTMLSpanElement>(null);
+    const textureBytes = useRef<HTMLSpanElement>(null);
+    const jsMem = useRef<HTMLSpanElement>(null);
+    const fps = useRef<HTMLSpanElement>(null);
+    const triangles = useRef<HTMLSpanElement>(null);
+    const lines = useRef<HTMLSpanElement>(null);
+    const points = useRef<HTMLSpanElement>(null);
+    const drawcalls = useRef<HTMLSpanElement>(null);
+    const resolutionScale = useRef<HTMLSpanElement>(null);
+    const detailBias = useRef<HTMLSpanElement>(null);
 
     useEffect(() => {
         if (timer.current) {
@@ -32,9 +43,43 @@ export function PerformanceStats() {
         }
 
         timer.current = setInterval(() => {
-            setStats({ ...view.statistics });
-        }, 100);
-    }, [view]);
+            const jsMemory = "memory" in performance ? (performance.memory as any).totalJSHeapSize : 0;
+            const stats = view.statistics;
+
+            if (
+                stats &&
+                cpuTime.current &&
+                gpuTime.current &&
+                bufferBytes.current &&
+                textureBytes.current &&
+                jsMem.current &&
+                fps.current &&
+                triangles.current &&
+                lines.current &&
+                points.current &&
+                drawcalls.current &&
+                resolutionScale.current &&
+                detailBias.current
+            ) {
+                cpuTime.current.innerText = stats.render?.cpuTime.draw.toFixed(2) ?? "0";
+                gpuTime.current.innerText = stats.render?.gpuTime.draw?.toFixed(2) ?? "0";
+                bufferBytes.current.innerText = ((stats.render?.bufferBytes ?? 0) / (1024 * 1024)).toFixed(2);
+                textureBytes.current.innerText = ((stats.render?.textureBytes ?? 0) / (1024 * 1024)).toFixed(2);
+                jsMem.current.innerText = (jsMemory / (1024 * 1024)).toFixed(2);
+                fps.current.innerText = (1000 / (stats.render?.frameInterval ?? 1)).toFixed(0);
+                triangles.current.innerText = `${formatNumber(stats.render?.triangles ?? 0)} / ${formatNumber(
+                    deviceProfile.limits.maxPrimitives
+                )}`;
+                lines.current.innerText = formatNumber(stats.render?.lines ?? 0);
+                points.current.innerText = formatNumber(stats.render?.points ?? 0);
+                drawcalls.current.innerText = formatNumber(stats.render?.drawCalls ?? 0);
+                resolutionScale.current.innerText = `${view?.renderState.output.width}x${
+                    view?.renderState.output.height
+                }; scale: ${stats.view?.resolution.toFixed(2)}`;
+                detailBias.current.innerText = stats.view?.detailBias.toFixed(2);
+            }
+        }, 200);
+    }, [view, deviceProfile.limits.maxPrimitives]);
 
     return (
         <Box
@@ -56,30 +101,34 @@ export function PerformanceStats() {
                 <br />
                 User agent: {navigator.userAgent}
                 <br />
-                cpu.render: {stats.render?.cpuTime.draw.toFixed(2)}
+                cpu.render: <span ref={cpuTime}>0</span>
                 <br />
-                gpu.render: {stats.render?.gpuTime.draw?.toFixed(2)}
+                gpu.render: <span ref={gpuTime}>0</span>
                 <br />
-                gpu.buffers: {((stats.render?.bufferBytes ?? 0) / (1024 * 1024)).toFixed(2)} MB /{" "}
+                gpu.buffers: <span ref={bufferBytes}>0</span> MB /{" "}
                 {(deviceProfile.limits.maxGPUBytes / (1024 * 1024)).toFixed(2)} MB
                 <br />
-                gpu.textures: {((stats.render?.textureBytes ?? 0) / (1024 * 1024)).toFixed(2) + " MB"}
+                gpu.textures: <span ref={textureBytes}>0</span> MB
                 <br />
-                FPS: {(1000 / (stats.render?.frameInterval ?? 1)).toFixed(0)}
+                js.memory: <span ref={jsMem}>0</span> MB /{" "}
+                {"memory" in performance
+                    ? ((performance as any).memory.jsHeapSizeLimit / (1024 * 1024)).toFixed(2)
+                    : -420}{" "}
+                MB
                 <br />
-                Triangles: {formatNumber(stats.render?.triangles ?? 0)} /{" "}
-                {formatNumber(deviceProfile.limits.maxPrimitives)}
+                FPS: <span ref={fps}>0</span>
                 <br />
-                Lines: {formatNumber(stats.render?.lines ?? 0)}
+                Triangles: <span ref={triangles}>0</span>
                 <br />
-                Points: {formatNumber(stats.render?.points ?? 0)}
+                Lines: <span ref={lines}>0</span>
                 <br />
-                Drawcalls: {stats.render?.drawCalls ?? 0}
+                Points: <span ref={points}>0</span>
                 <br />
-                Resolution: {view?.renderState.output.width}x{view?.renderState.output.height}; scale:{" "}
-                {stats.view?.resolution.toFixed(2)}
+                Drawcalls: <span ref={drawcalls}>0</span>
                 <br />
-                Detail bias: {stats.view?.detailBias.toFixed(2)}
+                Resolution: <span ref={resolutionScale}>0</span>
+                <br />
+                Detail bias: <span ref={detailBias}>0</span>
             </pre>
         </Box>
     );
