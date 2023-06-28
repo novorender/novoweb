@@ -71,7 +71,7 @@ export function Collection({ collection, disabled }: { collection: string; disab
                 </Box>
                 <Box flex="0 0 auto">
                     <StyledCheckbox
-                        data-test="toggle-highlighting"
+                        name="toggle group highlighting"
                         aria-label="toggle group highlighting"
                         sx={{ marginLeft: "auto" }}
                         size="small"
@@ -92,7 +92,7 @@ export function Collection({ collection, disabled }: { collection: string; disab
                 </Box>
                 <Box flex="0 0 auto">
                     <StyledCheckbox
-                        data-test="toggle-visibility"
+                        name="toggle group visibility"
                         aria-label="toggle group visibility"
                         size="small"
                         icon={<Visibility />}

@@ -72,7 +72,7 @@ export function Group({ group, disabled }: { group: ObjectGroup; disabled: boole
                 onClick={() =>
                     dispatchObjectGroups(
                         objectGroupsActions.update(group.id, {
-                            status: selected ? GroupStatus.Selected : GroupStatus.None,
+                            status: selected ? GroupStatus.None : GroupStatus.Selected,
                         })
                     )
                 }
@@ -85,6 +85,7 @@ export function Group({ group, disabled }: { group: ObjectGroup; disabled: boole
                     </Box>
                     <Box flex="0 0 auto">
                         <StyledCheckbox
+                            name="toggle group highlighting"
                             aria-label="toggle group highlighting"
                             size="small"
                             checked={selected}
@@ -93,7 +94,7 @@ export function Group({ group, disabled }: { group: ObjectGroup; disabled: boole
                             onChange={() =>
                                 dispatchObjectGroups(
                                     objectGroupsActions.update(group.id, {
-                                        status: selected ? GroupStatus.Selected : GroupStatus.Hidden,
+                                        status: selected ? GroupStatus.None : GroupStatus.Selected,
                                     })
                                 )
                             }
@@ -101,7 +102,7 @@ export function Group({ group, disabled }: { group: ObjectGroup; disabled: boole
                     </Box>
                     <Box flex="0 0 auto">
                         <StyledCheckbox
-                            data-test="toggle-visibility"
+                            name="toggle group visibility"
                             aria-label="toggle group visibility"
                             size="small"
                             icon={<Visibility htmlColor={`rgba(${r}, ${g}, ${b}, ${Math.max(a ?? 0, 0.2)})`} />}
@@ -114,7 +115,7 @@ export function Group({ group, disabled }: { group: ObjectGroup; disabled: boole
                             onChange={() =>
                                 dispatchObjectGroups(
                                     objectGroupsActions.update(group.id, {
-                                        status: hidden ? GroupStatus.Hidden : GroupStatus.Selected,
+                                        status: hidden ? GroupStatus.None : GroupStatus.Hidden,
                                     })
                                 )
                             }

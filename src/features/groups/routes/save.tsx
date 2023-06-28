@@ -1,15 +1,15 @@
-import { FormEvent } from "react";
 import { Box, Checkbox, FormControlLabel, useTheme } from "@mui/material";
+import { FormEvent } from "react";
 import { useHistory } from "react-router-dom";
-import { SceneData } from "@novorender/data-js-api";
 
 import { dataApi } from "app";
 import { useAppDispatch, useAppSelector } from "app/store";
-import { isInternalGroup, useLazyObjectGroups } from "contexts/objectGroups";
-import { useExplorerGlobals } from "contexts/explorerGlobals";
-import { useToggle } from "hooks/useToggle";
 import { Confirmation } from "components";
+import { useExplorerGlobals } from "contexts/explorerGlobals";
+import { GroupStatus, isInternalGroup, useLazyObjectGroups } from "contexts/objectGroups";
 import { groupsActions, selectSaveStatus } from "features/groups/groupsSlice";
+import { loadScene } from "features/render/hooks/useHandleInit";
+import { useToggle } from "hooks/useToggle";
 import { AsyncStatus } from "types/misc";
 
 export function Save({ sceneId }: { sceneId: string }) {
@@ -17,7 +17,7 @@ export function Save({ sceneId }: { sceneId: string }) {
     const history = useHistory();
     const dispatch = useAppDispatch();
     const {
-        state: { scene_OLD: scene },
+        state: { scene },
     } = useExplorerGlobals(true);
     const objectGroups = useLazyObjectGroups();
     const [saveState, toggleSaveState] = useToggle();
@@ -29,15 +29,20 @@ export function Save({ sceneId }: { sceneId: string }) {
         dispatch(groupsActions.setSaveStatus(AsyncStatus.Loading));
 
         try {
-            const {
-                url: _url,
-                objectGroups: originalGroups,
-                ...originalScene
-            } = (await dataApi.loadScene(sceneId)) as SceneData;
+            const [{ objectGroups: originalGroups, ...originalScene }] = await loadScene(sceneId);
 
             let updated = originalGroups
                 .filter((group) => !group.id)
-                .concat(objectGroups.current.filter((grp) => !isInternalGroup(grp)));
+                .concat(
+                    objectGroups.current
+                        .filter((grp) => !isInternalGroup(grp))
+                        .map(({ status, ...grp }) => ({
+                            ...grp,
+                            selected: status === GroupStatus.Selected,
+                            hidden: [GroupStatus.Hidden, GroupStatus.Frozen].includes(status),
+                            ids: grp.ids ? Array.from(grp.ids) : undefined,
+                        }))
+                );
 
             if (!saveState) {
                 updated = updated
