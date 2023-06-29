@@ -12,6 +12,8 @@ export function Stamp() {
     const dispatch = useAppDispatch();
     const stamp = useAppSelector(selectStamp);
 
+    console.log(stamp);
+
     if (!stamp) {
         return null;
     }

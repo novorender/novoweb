@@ -26,6 +26,8 @@ import { Images } from "./images";
 import { Markers } from "./markers";
 import { SceneError } from "./sceneError";
 import { Stamp } from "./stamp";
+import { useCanvasEventHandlers } from "./hooks/useCanvasEventHandlers";
+import { useHandleCanvasCursor } from "./hooks/useHandleCanvasCursor";
 
 glMatrix.setMatrixArrayType(Array);
 
@@ -64,7 +66,7 @@ export function Render3D() {
     const sceneStatus = useAppSelector(selectSceneStatus);
     const debugStats = useAppSelector(selectDebugStats);
 
-    const [_svg, setSvg] = useState<null | SVGSVGElement>(null);
+    const [svg, setSvg] = useState<null | SVGSVGElement>(null);
 
     const pointerPos = useRef([0, 0] as [x: number, y: number]);
     const canvasRef: RefCallback<HTMLCanvasElement> = useCallback(
@@ -73,8 +75,6 @@ export function Render3D() {
         },
         [dispatchGlobals]
     );
-
-    const canvasClickHandler = useCanvasClickHandler();
 
     useHandleInit();
     useHandleInitialBookmark();
@@ -88,6 +88,10 @@ export function Render3D() {
     useHandleAdvancedSettings();
     useHandleClipping();
 
+    const useSvgCursor = useHandleCanvasCursor();
+    const onClick = useCanvasClickHandler();
+    const eventHandlers = useCanvasEventHandlers({ pointerPos, useSvgCursor, svg });
+
     window.view = view;
     (window as any).scene = scene;
 
@@ -99,7 +103,7 @@ export function Render3D() {
                 </Box>
             )}
             {sceneStatus.status === AsyncStatus.Error && <SceneError />}
-            <Canvas id="main-canvas" onClick={canvasClickHandler} tabIndex={1} ref={canvasRef} />
+            <Canvas id="main-canvas" onClick={onClick} {...eventHandlers} tabIndex={1} ref={canvasRef} />
             {[AsyncStatus.Initial, AsyncStatus.Loading].includes(sceneStatus.status) && <Loading />}
             {sceneStatus.status === AsyncStatus.Success && view && canvas && (
                 <>

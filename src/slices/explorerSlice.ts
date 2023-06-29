@@ -15,6 +15,7 @@ import type { RootState } from "app/store";
 import { uniqueArray } from "utils/misc";
 
 import { CanvasContextMenuFeatureKey, DeepMutable, initScene } from "features/render";
+import { defaultCanvasContextMenuFeatures } from "features/render/canvasContextMenuStamp";
 
 export enum SceneType {
     Viewer,
@@ -49,8 +50,7 @@ const initialState = {
     },
     contextMenu: {
         canvas: {
-            // features: defaultCanvasContextMenuFeatures as CanvasContextMenuFeatureKey[],
-            features: [] as CanvasContextMenuFeatureKey[], // TODO
+            features: defaultCanvasContextMenuFeatures as CanvasContextMenuFeatureKey[],
         },
     },
     urlSearchQuery: undefined as WritableUrlSearchQuery,

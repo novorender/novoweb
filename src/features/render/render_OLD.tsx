@@ -1159,7 +1159,7 @@ export function Render3D({ onInit }: Props) {
                     svg,
                     view,
                     size,
-                    measurement,
+                    pickResult: measurement,
                     x: e.nativeEvent.offsetX,
                     y: e.nativeEvent.offsetY,
                     color,
@@ -1169,7 +1169,7 @@ export function Render3D({ onInit }: Props) {
                     svg,
                     view,
                     size,
-                    measurement: undefined,
+                    pickResult: undefined,
                     x: e.nativeEvent.offsetX,
                     y: e.nativeEvent.offsetY,
                     color: color,
@@ -1177,7 +1177,7 @@ export function Render3D({ onInit }: Props) {
             }
             return;
         } else {
-            moveSvgCursor({ svg, view, size, measurement: undefined, x: -100, y: -100, color: "" });
+            moveSvgCursor({ svg, view, size, pickResult: undefined, x: -100, y: -100, color: "" });
         }
 
         if (
@@ -1338,7 +1338,7 @@ export function Render3D({ onInit }: Props) {
                         onPointerUp={handlePointerUp}
                         onPointerOut={() => {
                             if (svg && view) {
-                                moveSvgCursor({ svg, view, size, measurement: undefined, x: -100, y: -100, color: "" });
+                                moveSvgCursor({ svg, view, size, pickResult: undefined, x: -100, y: -100, color: "" });
                             }
                         }}
                         onTouchStart={handleTouchDown}

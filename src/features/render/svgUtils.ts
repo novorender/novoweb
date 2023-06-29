@@ -1,5 +1,7 @@
-import { MeasureInfo, View } from "@novorender/webgl-api";
+import { PickSample, View } from "@novorender/web_app";
 import { quat, vec3 } from "gl-matrix";
+
+import { isRealVec } from "utils/misc";
 
 type Size = {
     width: number;
@@ -12,7 +14,7 @@ export function moveSvgCursor({
     size,
     x,
     y,
-    measurement,
+    pickResult,
     color,
 }: {
     svg: SVGSVGElement;
@@ -20,7 +22,7 @@ export function moveSvgCursor({
     size: Size;
     x: number;
     y: number;
-    measurement: MeasureInfo | undefined;
+    pickResult: PickSample | undefined;
     color: string;
 }) {
     if (!svg || !view) {
@@ -34,17 +36,14 @@ export function moveSvgCursor({
         g.innerHTML = "";
         return;
     }
-    let normal =
-        measurement &&
-        measurement.normalVS &&
-        (measurement?.normalVS?.some((v) => Number.isNaN(v)) ? undefined : vec3.clone(measurement.normalVS));
+    let normal = pickResult?.normal && isRealVec(pickResult.normal) ? vec3.clone(pickResult.normal) : undefined;
     if (normal) {
         const { width, height } = size;
-        const { camera } = view;
+        const { camera } = view.renderState;
 
         if (normal[2] < 0.98) {
-            const angleX = (y / height - 0.5) * camera.fieldOfView;
-            const angleY = ((x - width * 0.5) / height) * camera.fieldOfView;
+            const angleX = (y / height - 0.5) * camera.fov;
+            const angleY = ((x - width * 0.5) / height) * camera.fov;
             vec3.transformQuat(normal, normal, quat.fromEuler(quat.create(), angleX, angleY, 0));
             let style = "";
             if (normal[2] < 1) {

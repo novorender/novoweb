@@ -1,4 +1,4 @@
-import { vec3, quat } from "gl-matrix";
+import { quat, vec3 } from "gl-matrix";
 import { useEffect, useRef } from "react";
 
 import { useAppDispatch, useAppSelector } from "app/store";
@@ -37,10 +37,6 @@ export function useHandleCameraState() {
             const controller = view.controllers[pinholeKind.current];
 
             if (state.goTo) {
-                // controller.moveTo({
-                //     position: vec3.clone(state.goTo.position),
-                //     rotation: quat.clone(state.goTo.rotation),
-                // });
                 controller.moveTo(vec3.clone(state.goTo.position), 1000, quat.clone(state.goTo.rotation));
             } else if (state.zoomTo) {
                 controller.zoomTo({
@@ -51,12 +47,7 @@ export function useHandleCameraState() {
 
             view.switchCameraController(controller.kind);
         } else {
-            // const controller = view.controllers["ortho"];
-
             if (state.goTo) {
-                // view.switchCameraController("ortho");
-                // controller.moveTo(vec3.clone(state.goTo.position), 1000, quat.clone(state.goTo.rotation));
-                // controller.updateParams({ fieldOfView: state.goTo.fov });
                 view.switchCameraController("ortho", {
                     position: vec3.clone(state.goTo.position),
                     rotation: quat.clone(state.goTo.rotation),
@@ -83,7 +74,6 @@ export function useHandleCameraState() {
             return;
         }
 
-        // Todo pointerlock
-        // view.controllers["ortho"].input.usePointerLock = defaults.orthographic.usePointerLock;
+        view.controllers["ortho"].updateParams({ usePointerLock: defaults.orthographic.usePointerLock });
     }, [view, defaults.orthographic.usePointerLock]);
 }
