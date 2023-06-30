@@ -18,7 +18,6 @@ export function useHandleArea() {
         if (!measureScene) {
             return;
         }
-        console.log(points);
 
         if (!points.length) {
             dispatch(areaActions.setDrawPoints([]));

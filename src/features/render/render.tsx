@@ -8,6 +8,7 @@ import { explorerGlobalsActions, useExplorerGlobals } from "contexts/explorerGlo
 import { useHandleArea } from "features/area";
 import { useHandleClipping } from "features/clippingPlanes/useHandleClipping";
 import { Engine2D } from "features/engine2D";
+import { useHandleManhole } from "features/manhole";
 import { PerformanceStats } from "features/performanceStats";
 import { useHandlePointLine } from "features/pointLine";
 import { selectDebugStats, selectLoadingHandles, selectSceneStatus } from "features/render/renderSlice";
@@ -91,6 +92,7 @@ export function Render3D() {
     useHandleClipping();
     useHandlePointLine();
     useHandleArea();
+    useHandleManhole();
 
     const useSvgCursor = useHandleCanvasCursor();
     const onClick = useCanvasClickHandler();

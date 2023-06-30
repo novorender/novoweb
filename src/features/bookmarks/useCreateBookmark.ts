@@ -119,9 +119,9 @@ export function useCreateBookmark() {
                         entities: measurement.selectedEntities,
                     },
                     manhole: {
-                        id: undefined,
-                        collisionTarget: undefined,
-                        collisionSettings: undefined,
+                        id: manhole?.ObjectId,
+                        collisionTarget: manholeCollisionTarget,
+                        collisionSettings: manholeCollisionSettings,
                     },
                 },
                 followPath: undefined,

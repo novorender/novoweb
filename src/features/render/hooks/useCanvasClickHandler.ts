@@ -354,10 +354,10 @@ export function useCanvasClickHandler() {
                 }
                 break;
             case Picker.Manhole:
-                // if (result.objectId === -1) {
-                //     return;
-                // }
-                // dispatch(manholeActions.selectObj({ id: result.objectId, pos: position }));
+                if (result.objectId === -1) {
+                    return;
+                }
+                dispatch(manholeActions.selectObj({ id: result.objectId, pos: position }));
                 break;
 
             case Picker.FollowPathObject: {

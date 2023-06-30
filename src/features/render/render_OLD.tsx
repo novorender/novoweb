@@ -63,7 +63,7 @@ import { explorerActions, selectLocalBookmarkId, selectUrlBookmarkId } from "sli
 import { selectDeviations } from "features/deviations";
 import { useSelectBookmark } from "features/bookmarks/useSelectBookmark";
 import { measureActions, useMeasureHoverSettings } from "features/measure";
-import { useHandleManholeUpdates } from "features/manhole";
+import { useHandleManhole } from "features/manhole";
 import { useHandleDitioKeepAlive } from "features/ditio";
 import { useAppDispatch, useAppSelector } from "app/store";
 import { useHandleArea } from "features/area";
@@ -813,7 +813,7 @@ export function Render3D({ onInit }: Props) {
     useHandleArea();
     useHandleCrossSection();
     useHandleLocationMarker();
-    useHandleManholeUpdates();
+    useHandleManhole();
     useHandlePointLine();
     useHandleJiraKeepAlive();
     useHandleXsiteManageKeepAlive();

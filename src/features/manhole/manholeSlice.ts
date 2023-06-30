@@ -4,6 +4,7 @@ import { createSlice, PayloadAction } from "@reduxjs/toolkit";
 import { Bookmark } from "@novorender/data-js-api";
 
 import { RootState } from "app/store";
+import { resetView, selectBookmark } from "features/render";
 
 const initialState = {
     selectedId: undefined as number | undefined,
@@ -29,6 +30,7 @@ export const manholeSlice = createSlice({
                 state.collisionTarget = undefined;
             }
         },
+        // legacy
         initFromBookmark: (state, action: PayloadAction<Bookmark["manhole"]>) => {
             if (!action.payload) {
                 return initialState;
@@ -60,6 +62,21 @@ export const manholeSlice = createSlice({
                 state.collisionSettings = action.payload;
             }
         },
+    },
+    extraReducers(builder) {
+        builder.addCase(selectBookmark, (state, action) => {
+            state.selectedId = action.payload.measurements.manhole.id;
+            if (state.selectedId) {
+                state.collisionTarget = action.payload.measurements.manhole.collisionTarget;
+                state.collisionSettings = action.payload.measurements.manhole.collisionSettings;
+            } else {
+                state.collisionTarget = undefined;
+            }
+        });
+        builder.addCase(resetView, (state) => {
+            state.selectedId = undefined;
+            state.collisionTarget = undefined;
+        });
     },
 });
 
