@@ -1,12 +1,12 @@
-import { useEffect } from "react";
 import { vec3 } from "gl-matrix";
+import { useEffect } from "react";
 
 import { useAppDispatch, useAppSelector } from "app/store";
 import { useExplorerGlobals } from "contexts/explorerGlobals";
 
 import { areaActions, selectAreaPoints } from "./areaSlice";
 
-export function useHandleAreaPoints() {
+export function useHandleArea() {
     const {
         state: { measureScene },
     } = useExplorerGlobals();
@@ -18,6 +18,7 @@ export function useHandleAreaPoints() {
         if (!measureScene) {
             return;
         }
+        console.log(points);
 
         if (!points.length) {
             dispatch(areaActions.setDrawPoints([]));

@@ -5,18 +5,22 @@ import { RefCallback, useCallback, useRef, useState } from "react";
 import { useAppSelector } from "app/store";
 import { LinearProgress, Loading } from "components";
 import { explorerGlobalsActions, useExplorerGlobals } from "contexts/explorerGlobals";
+import { useHandleArea } from "features/area";
+import { useHandleClipping } from "features/clippingPlanes/useHandleClipping";
 import { Engine2D } from "features/engine2D";
 import { PerformanceStats } from "features/performanceStats";
+import { useHandlePointLine } from "features/pointLine";
 import { selectDebugStats, selectLoadingHandles, selectSceneStatus } from "features/render/renderSlice";
 import { AsyncStatus } from "types/misc";
 
-import { useHandleClipping } from "features/clippingPlanes/useHandleClipping";
 import { useCanvasClickHandler } from "./hooks/useCanvasClickHandler";
+import { useCanvasEventHandlers } from "./hooks/useCanvasEventHandlers";
 import { useHandleAdvancedSettings } from "./hooks/useHandleAdvancedSettings";
 import { useHandleBackground } from "./hooks/useHandleBackground";
 import { useHandleCameraMoved } from "./hooks/useHandleCameraMoved";
 import { useHandleCameraSpeed } from "./hooks/useHandleCameraSpeed";
 import { useHandleCameraState } from "./hooks/useHandleCameraState";
+import { useHandleCanvasCursor } from "./hooks/useHandleCanvasCursor";
 import { useHandleHighlights } from "./hooks/useHandleHighlights";
 import { useHandleInit } from "./hooks/useHandleInit";
 import { useHandleInitialBookmark } from "./hooks/useHandleInitialBookmark";
@@ -26,9 +30,6 @@ import { Images } from "./images";
 import { Markers } from "./markers";
 import { SceneError } from "./sceneError";
 import { Stamp } from "./stamp";
-import { useCanvasEventHandlers } from "./hooks/useCanvasEventHandlers";
-import { useHandleCanvasCursor } from "./hooks/useHandleCanvasCursor";
-import { useHandlePointLineUpdates } from "features/pointLine";
 
 glMatrix.setMatrixArrayType(Array);
 
@@ -88,7 +89,8 @@ export function Render3D() {
     useHandleTerrain();
     useHandleAdvancedSettings();
     useHandleClipping();
-    useHandlePointLineUpdates();
+    useHandlePointLine();
+    useHandleArea();
 
     const useSvgCursor = useHandleCanvasCursor();
     const onClick = useCanvasClickHandler();

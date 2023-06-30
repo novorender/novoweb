@@ -2,6 +2,7 @@ import { createSlice, PayloadAction } from "@reduxjs/toolkit";
 import { vec3 } from "gl-matrix";
 
 import { RootState } from "app/store";
+import { resetView, selectBookmark } from "features/render";
 
 const initialState = {
     points: [] as [point: vec3, normal: vec3][],
@@ -30,6 +31,14 @@ export const areaSlice = createSlice({
         undoPoint: (state) => {
             state.points = state.points.slice(0, state.points.length - 1);
         },
+    },
+    extraReducers(builder) {
+        builder.addCase(selectBookmark, (state, action) => {
+            state.points = action.payload.measurements.area.points;
+        });
+        builder.addCase(resetView, (state) => {
+            state.points = [];
+        });
     },
 });
 

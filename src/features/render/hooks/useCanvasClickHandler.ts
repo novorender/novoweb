@@ -41,8 +41,6 @@ import { highlightActions, useDispatchHighlighted, useHighlighted } from "contex
 import { selectShowPropertiesStamp } from "features/properties/slice";
 import { isRealVec } from "utils/misc";
 
-import { pickDeviationArea } from "../utils";
-
 export function useCanvasClickHandler() {
     const dispatch = useAppDispatch();
     const highlightedObjects = useHighlighted();
@@ -371,7 +369,7 @@ export function useCanvasClickHandler() {
                 break;
             }
             case Picker.Area: {
-                // dispatch(areaActions.addPoint([position, normal ?? [0, 0, 0]]));
+                dispatch(areaActions.addPoint([position, normal ?? [0, 0, 0]]));
                 break;
             }
             case Picker.PointLine: {

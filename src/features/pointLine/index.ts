@@ -1,2 +1,2 @@
-export { useHandlePointLineUpdates } from "./useHandlePointLineUpdates";
+export { useHandlePointLine } from "./useHandlePointLine";
 export * from "./pointLineSlice";
