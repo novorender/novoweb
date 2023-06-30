@@ -332,28 +332,28 @@ export function useCanvasClickHandler() {
 
                 break;
             case Picker.Measurement:
-                // if (measure.hover) {
-                //     dispatch(
-                //         measureActions.selectEntity({
-                //             entity: measure.hover as ExtendedMeasureEntity,
-                //             pin: evt.shiftKey,
-                //         })
-                //     );
-                // } else {
-                //     dispatch(measureActions.setLoadingBrep(true));
-                //     const entity = await measureScene?.pickMeasureEntity(
-                //         result.objectId,
-                //         position,
-                //         measurePickSettings
-                //     );
-                //     dispatch(
-                //         measureActions.selectEntity({
-                //             entity: entity?.entity as ExtendedMeasureEntity,
-                //             pin: evt.shiftKey,
-                //         })
-                //     );
-                //     dispatch(measureActions.setLoadingBrep(false));
-                // }
+                if (measure.hover) {
+                    dispatch(
+                        measureActions.selectEntity({
+                            entity: measure.hover as ExtendedMeasureEntity,
+                            pin: evt.shiftKey,
+                        })
+                    );
+                } else {
+                    dispatch(measureActions.setLoadingBrep(true));
+                    const entity = await measureScene?.pickMeasureEntity(
+                        result.objectId,
+                        position,
+                        measurePickSettings
+                    );
+                    dispatch(
+                        measureActions.selectEntity({
+                            entity: entity?.entity as ExtendedMeasureEntity,
+                            pin: evt.shiftKey,
+                        })
+                    );
+                    dispatch(measureActions.setLoadingBrep(false));
+                }
                 break;
             case Picker.Manhole:
                 // if (result.objectId === -1) {

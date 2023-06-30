@@ -81,6 +81,7 @@ export function MeasuredObject({ obj, idx }: { obj: ExtendedMeasureEntity; idx: 
             <AccordionSummary>
                 <Box flex="0 0 auto">
                     <Checkbox
+                        name="pin measured object"
                         aria-label="pin measured object"
                         sx={{ mr: 1, p: 0 }}
                         size="small"
@@ -197,7 +198,7 @@ export function MeasuredResult({ duoMeasurementValues }: { duoMeasurementValues:
                         ) : null}
 
                         {parameters.map((p, idx, arr) => (
-                            <ListItem>
+                            <ListItem key={idx}>
                                 <Grid container>
                                     <Grid item xs={5}>
                                         Parameter {arr.length === 2 ? (idx === 0 ? "A" : "B") : ""}
@@ -484,12 +485,12 @@ export function MeasurementData({
                             <NestedAccordionDetails>
                                 <MeasurementTable
                                     start={
-                                        measureValues.centerLineStart[1] > measureValues.centerLineEnd[1]
+                                        measureValues.centerLineStart[2] > measureValues.centerLineEnd[2]
                                             ? measureValues.centerLineStart
                                             : measureValues.centerLineEnd
                                     }
                                     end={
-                                        measureValues.centerLineStart[1] <= measureValues.centerLineEnd[1]
+                                        measureValues.centerLineStart[2] <= measureValues.centerLineEnd[2]
                                             ? measureValues.centerLineStart
                                             : measureValues.centerLineEnd
                                     }

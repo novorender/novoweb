@@ -31,15 +31,19 @@ export function MeasurementTable({ start, end }: { start: ReadonlyVec3; end: Rea
             <TableBody>
                 <TableRow>
                     <TableCell>Start (m)</TableCell>
-                    <TableCell align="right">{start[0].toFixed(3)}</TableCell>
-                    <TableCell align="right">{(-start[2]).toFixed(3)}</TableCell>
-                    <TableCell align="right">{start[1].toFixed(3)}</TableCell>
+                    {start.map((v, idx) => (
+                        <TableCell key={idx} align="right">
+                            {v.toFixed(3)}
+                        </TableCell>
+                    ))}
                 </TableRow>
                 <TableRow>
                     <TableCell>End (m)</TableCell>
-                    <TableCell align="right">{end[0].toFixed(3)}</TableCell>
-                    <TableCell align="right">{(-end[2]).toFixed(3)}</TableCell>
-                    <TableCell align="right">{end[1].toFixed(3)}</TableCell>
+                    {end.map((v, idx) => (
+                        <TableCell key={idx} align="right">
+                            {v.toFixed(3)}
+                        </TableCell>
+                    ))}
                 </TableRow>
                 <TableRow>
                     <TableCell bold>Difference (m)</TableCell>
@@ -47,10 +51,10 @@ export function MeasurementTable({ start, end }: { start: ReadonlyVec3; end: Rea
                         {Math.abs(delta[0]).toFixed(3)}
                     </TableCell>
                     <TableCell bold align="right">
-                        {Math.abs(delta[2]).toFixed(3)}
+                        {Math.abs(delta[1]).toFixed(3)}
                     </TableCell>
                     <TableCell bold align="right">
-                        {Math.abs(delta[1]).toFixed(3)}
+                        {Math.abs(delta[2]).toFixed(3)}
                     </TableCell>
                 </TableRow>
             </TableBody>

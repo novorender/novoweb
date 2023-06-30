@@ -55,6 +55,7 @@ export default function Measure() {
                             <FormControlLabel
                                 control={
                                     <IosSwitch
+                                        name="toggle pick measurement"
                                         size="medium"
                                         color="primary"
                                         checked={selecting}
