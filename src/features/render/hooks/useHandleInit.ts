@@ -11,7 +11,7 @@ import { getGPUTier } from "detect-gpu";
 import { quat, vec3, vec4 } from "gl-matrix";
 import { useEffect, useRef } from "react";
 
-import { dataApi } from "app";
+import { dataApi, measureApi } from "app";
 import { useAppDispatch } from "app/store";
 import { explorerGlobalsActions, useExplorerGlobals } from "contexts/explorerGlobals";
 import {
@@ -30,6 +30,7 @@ import { sleep } from "utils/time";
 import { renderActions } from "..";
 import { Error as SceneError } from "../sceneError";
 import { flip } from "../utils";
+import { getAssetUrl } from "utils/misc";
 
 export function useHandleInit() {
     const sceneId = useSceneId();
@@ -132,12 +133,15 @@ export function useHandleInit() {
                     }
                 });
 
+                const measureScene = await measureApi.loadScene(getAssetUrl(view, ""));
+
                 resizeObserver.observe(canvas);
                 dispatchGlobals(
                     explorerGlobalsActions.update({
                         db: db as ObjectDB,
                         view: view,
                         scene: octreeSceneConfig,
+                        measureScene,
                     })
                 );
                 dispatch(renderActions.setSceneStatus({ status: AsyncStatus.Success, data: undefined }));

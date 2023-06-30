@@ -55,7 +55,6 @@ export function useCanvasClickHandler() {
 
     const mainObject = useAppSelector(selectMainObject);
     const selectMultiple = useAppSelector(selectSelectMultiple);
-    const clippingBox = useAppSelector(selectClippingBox);
     const cameraState = useAppSelector(selectCamera);
     const measure = useAppSelector(selectMeasure);
     const deviation = useAppSelector(selectDeviations);
@@ -78,8 +77,7 @@ export function useCanvasClickHandler() {
             vec2.dist([pointerDownState.x, pointerDownState.y], [evt.nativeEvent.offsetX, evt.nativeEvent.offsetY]) >=
                 5;
 
-        if (!view || clippingBox.defining || !canvas || longPress || drag) {
-            console.log({ view, def: clippingBox.defining, canvas, longPress, drag });
+        if (!view || !canvas || longPress || drag) {
             return;
         }
 
@@ -227,7 +225,6 @@ export function useCanvasClickHandler() {
                         dispatch(renderActions.setMainObject(result.objectId));
                         dispatchHighlighted(highlightActions.setIds([result.objectId]));
 
-                        console.log(secondaryHighlightProperty);
                         if ((!showPropertiesStamp && !secondaryHighlightProperty) || !db) {
                             return;
                         }
@@ -378,7 +375,7 @@ export function useCanvasClickHandler() {
                 break;
             }
             case Picker.PointLine: {
-                // dispatch(pointLineActions.addPoint(position));
+                dispatch(pointLineActions.addPoint(position));
                 break;
             }
             case Picker.HeightProfileEntity: {

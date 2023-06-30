@@ -1,30 +1,30 @@
-import { DrawProduct, DrawableEntity, MeasureSettings } from "@novorender/measure-api";
 import { css, styled } from "@mui/material";
+import { DrawProduct, DrawableEntity, MeasureSettings } from "@novorender/measure-api";
+import { ReadonlyVec2, mat3, quat, vec2, vec3 } from "gl-matrix";
 import { MutableRefObject, useCallback, useEffect, useRef, useState } from "react";
-import { mat3, quat, ReadonlyVec2, vec2, vec3 } from "gl-matrix";
 
+import { measureApi } from "app";
 import { useAppSelector } from "app/store";
 import { useExplorerGlobals } from "contexts/explorerGlobals";
-import { useHeightProfileMeasureObject } from "features/heightProfile";
-import { selectMeasure, useMeasureObjects } from "features/measure";
+import { selectArea, selectAreaDrawPoints } from "features/area";
 import {
     selectDrawSelectedPositions,
     selectFollowCylindersFrom,
     selectShowTracer,
     usePathMeasureObjects,
 } from "features/followPath";
-import { selectArea, selectAreaDrawPoints } from "features/area";
-import { selectPointLine } from "features/pointLine";
+import { useCrossSection } from "features/followPath/useCrossSection";
+import { useHeightProfileMeasureObject } from "features/heightProfile";
 import {
     selectManholeCollisionTarget,
     selectManholeCollisionValues,
     selectManholeMeasureValues,
 } from "features/manhole";
-import { measureApi } from "app";
-import { AsyncStatus, ViewMode } from "types/misc";
-import { CameraType, selectCameraType, selectGrid, selectViewMode } from "features/render";
+import { selectMeasure, useMeasureObjects } from "features/measure";
 import { selectCrossSectionPoints } from "features/orthoCam";
-import { useCrossSection } from "features/followPath/useCrossSection";
+import { selectPointLine } from "features/pointLine";
+import { CameraType, selectCameraType, selectGrid, selectViewMode } from "features/render";
+import { AsyncStatus, ViewMode } from "types/misc";
 
 import { drawPart, drawProduct, drawTexts } from "./utils";
 
@@ -50,7 +50,7 @@ const hoverLineColor = "rgba(255, 165, 0, 1)";
 
 export function Engine2D({ pointerPos }: { pointerPos: MutableRefObject<Vec2> }) {
     const {
-        state: { size, scene_OLD: scene, view_OLD: view, measureScene },
+        state: { size, view, measureScene },
     } = useExplorerGlobals();
     const [canvas2D, setCanvas2D] = useState<HTMLCanvasElement | null>(null);
     const [context2D, setContext2D] = useState<CanvasRenderingContext2D | null | undefined>(null);
@@ -87,7 +87,7 @@ export function Engine2D({ pointerPos }: { pointerPos: MutableRefObject<Vec2> })
     const renderGridLabels = useCallback(() => {
         if (
             grid.enabled &&
-            (view?.camera?.fieldOfView ?? 250) <= 35 &&
+            (view?.renderState.camera.fov ?? 250) <= 35 &&
             context2D &&
             cameraType === CameraType.Orthographic
         ) {
@@ -95,22 +95,22 @@ export function Engine2D({ pointerPos }: { pointerPos: MutableRefObject<Vec2> })
             const yLen = vec3.len(grid.axisY);
             const pts3d: vec3[] = [];
             const labels: string[] = [];
-            const numLables = Math.min(10, grid.majorLineCount);
+            const numLables = Math.min(10, grid.size2); // TODO: ska ver major?
             for (let i = 0; i < numLables; ++i) {
                 const xLabel = (xLen * i).toFixed(1);
                 const yLabel = (yLen * i).toFixed(1);
-                pts3d.push(vec3.scaleAndAdd(vec3.create(), grid.origo, grid.axisX, i));
+                pts3d.push(vec3.scaleAndAdd(vec3.create(), grid.origin, grid.axisX, i));
                 labels.push(xLabel);
                 if (i === 0) {
                     continue;
                 }
 
-                pts3d.push(vec3.scaleAndAdd(vec3.create(), grid.origo, grid.axisX, -i));
+                pts3d.push(vec3.scaleAndAdd(vec3.create(), grid.origin, grid.axisX, -i));
                 labels.push(`-${xLabel}`);
 
-                pts3d.push(vec3.scaleAndAdd(vec3.create(), grid.origo, grid.axisY, i));
+                pts3d.push(vec3.scaleAndAdd(vec3.create(), grid.origin, grid.axisY, i));
                 labels.push(yLabel);
-                pts3d.push(vec3.scaleAndAdd(vec3.create(), grid.origo, grid.axisY, -i));
+                pts3d.push(vec3.scaleAndAdd(vec3.create(), grid.origin, grid.axisY, -i));
                 labels.push(`-${yLabel}`);
             }
             const pts = measureApi.toPathPoints(pts3d, view);
@@ -124,11 +124,19 @@ export function Engine2D({ pointerPos }: { pointerPos: MutableRefObject<Vec2> })
     const drawId = useRef(0);
     const render = useCallback(async () => {
         if (view && context2D && measureScene && measureApi && canvas2D && size) {
-            const { camera } = view;
+            const { camera } = view.renderState;
             const cameraDirection = vec3.transformQuat(vec3.create(), vec3.fromValues(0, 0, -1), camera.rotation);
             const camSettings = { pos: camera.position, dir: cameraDirection };
             const getDrawMeasureEntity = async (entity?: DrawableEntity, settings?: MeasureSettings) =>
-                entity && measureApi.getDrawMeasureEntity(view, measureScene, entity, settings);
+                entity &&
+                measureApi.getDrawMeasureEntity(
+                    view.renderState.output.width,
+                    view.renderState.output.height,
+                    view.renderState.camera,
+                    measureScene,
+                    entity,
+                    settings
+                );
             const id = ++drawId.current;
 
             const [
@@ -338,7 +346,14 @@ export function Engine2D({ pointerPos }: { pointerPos: MutableRefObject<Vec2> })
             }
 
             if (manholeCollisionValues && (manholeCollisionValues.outer || manholeCollisionValues.inner)) {
-                const colVal = measureApi.getDrawObjectFromPoints(view, manholeCollisionValues.lid, false, true);
+                const colVal = measureApi.getDrawObjectFromPoints(
+                    view.renderState.output.width,
+                    view.renderState.output.height,
+                    view.renderState.camera,
+                    manholeCollisionValues.lid,
+                    false,
+                    true
+                );
                 if (colVal) {
                     colVal.objects.forEach((obj) => {
                         obj.parts.forEach((part) => {
@@ -373,7 +388,14 @@ export function Engine2D({ pointerPos }: { pointerPos: MutableRefObject<Vec2> })
             }
 
             if (areaPoints.length) {
-                const drawProd = measureApi.getDrawObjectFromPoints(view, areaPoints, true, true);
+                const drawProd = measureApi.getDrawObjectFromPoints(
+                    view.renderState.output.width,
+                    view.renderState.output.height,
+                    view.renderState.camera,
+                    areaPoints,
+                    true,
+                    true
+                );
                 if (drawProd) {
                     drawProd.objects.forEach((obj) => {
                         obj.parts.forEach((part) => {
@@ -408,7 +430,16 @@ export function Engine2D({ pointerPos }: { pointerPos: MutableRefObject<Vec2> })
                 roadCrossSectionData.length > 1
             ) {
                 const prods = roadCrossSectionData
-                    .map((road) => measureApi.getDrawObjectFromPoints(view, road.points, false, false))
+                    .map((road) =>
+                        measureApi.getDrawObjectFromPoints(
+                            view.renderState.output.width,
+                            view.renderState.output.height,
+                            view.renderState.camera,
+                            road.points,
+                            false,
+                            false
+                        )
+                    )
                     .filter((prod) => prod) as DrawProduct[];
 
                 if (prods.length) {
@@ -447,7 +478,16 @@ export function Engine2D({ pointerPos }: { pointerPos: MutableRefObject<Vec2> })
             }
 
             if (pointLinePoints.length && pointLineResult) {
-                const drawProd = measureApi.getDrawObjectFromPoints(view, pointLinePoints, false, true, true);
+                const drawProd = measureApi.getDrawObjectFromPoints(
+                    view.renderState.output.width,
+                    view.renderState.output.height,
+                    view.renderState.camera,
+                    pointLinePoints,
+                    false,
+                    true,
+                    true
+                );
+
                 if (drawProd) {
                     drawProd.objects.forEach((obj) => {
                         obj.parts.forEach((part) => {
@@ -471,7 +511,14 @@ export function Engine2D({ pointerPos }: { pointerPos: MutableRefObject<Vec2> })
             }
 
             if (crossSection) {
-                const drawProd = measureApi.getDrawObjectFromPoints(view, crossSection, false, false);
+                const drawProd = measureApi.getDrawObjectFromPoints(
+                    view.renderState.output.width,
+                    view.renderState.output.height,
+                    view.renderState.camera,
+                    crossSection,
+                    false,
+                    false
+                );
                 if (drawProd) {
                     drawProd.objects.forEach((obj) => {
                         obj.parts.forEach((part) => {
@@ -490,7 +537,7 @@ export function Engine2D({ pointerPos }: { pointerPos: MutableRefObject<Vec2> })
                     });
                 }
                 if (crossSection.length > 1) {
-                    const mat = mat3.fromQuat(mat3.create(), view.camera.rotation);
+                    const mat = mat3.fromQuat(mat3.create(), camera.rotation);
                     if (mat[7] === 1) {
                         // top-down
                         let up = vec3.fromValues(mat[6], mat[7], mat[8]);
@@ -501,7 +548,14 @@ export function Engine2D({ pointerPos }: { pointerPos: MutableRefObject<Vec2> })
                         const center = vec3.add(vec3.create(), crossSection[0], crossSection[1]);
                         vec3.scale(center, center, 0.5);
                         const offsetP = vec3.scaleAndAdd(vec3.create(), center, cross, -3);
-                        const arrow = measureApi.getDrawObjectFromPoints(view, [center, offsetP], false, false);
+                        const arrow = measureApi.getDrawObjectFromPoints(
+                            view.renderState.output.width,
+                            view.renderState.output.height,
+                            view.renderState.camera,
+                            [center, offsetP],
+                            false,
+                            false
+                        );
                         if (arrow) {
                             arrow.objects.forEach((obj) => {
                                 obj.parts.forEach((part) => {
@@ -547,7 +601,14 @@ export function Engine2D({ pointerPos }: { pointerPos: MutableRefObject<Vec2> })
                                 colorList.push("brown");
                         }
                     });
-                    const drawProd = measureApi.getDrawObjectFromPoints(view, section.points, false, false);
+                    const drawProd = measureApi.getDrawObjectFromPoints(
+                        view.renderState.output.width,
+                        view.renderState.output.height,
+                        view.renderState.camera,
+                        section.points,
+                        false,
+                        false
+                    );
                     if (drawProd) {
                         drawProd.objects.forEach((obj) => {
                             obj.parts.forEach((part) => {
@@ -565,12 +626,16 @@ export function Engine2D({ pointerPos }: { pointerPos: MutableRefObject<Vec2> })
                         });
                     }
                     const slopeL = measureApi.getDrawText(
-                        view,
+                        view.renderState.output.width,
+                        view.renderState.output.height,
+                        view.renderState.camera,
                         [section.slopes.left.start, section.slopes.left.end],
                         (section.slopes.left.slope * 100).toFixed(1) + "%"
                     );
                     const slopeR = measureApi.getDrawText(
-                        view,
+                        view.renderState.output.width,
+                        view.renderState.output.height,
+                        view.renderState.camera,
                         [section.slopes.right.start, section.slopes.right.end],
                         (section.slopes.right.slope * 100).toFixed(1) + "%"
                     );
@@ -617,24 +682,25 @@ export function Engine2D({ pointerPos }: { pointerPos: MutableRefObject<Vec2> })
 
     useEffect(() => {
         setContext2D(canvas2D?.getContext("2d"));
-    }, [scene, canvas2D]);
+    }, [canvas2D]);
 
     useEffect(() => {
         animate();
         function animate() {
             if (view) {
+                const { camera } = view.renderState;
                 if (
                     cameraType === CameraType.Orthographic ||
                     !prevCamRot.current ||
-                    !quat.exactEquals(prevCamRot.current, view.camera.rotation) ||
+                    !quat.exactEquals(prevCamRot.current, camera.rotation) ||
                     !prevCamPos.current ||
-                    !vec3.exactEquals(prevCamPos.current, view.camera.position) ||
+                    !vec3.exactEquals(prevCamPos.current, camera.position) ||
                     !prevCamPos.current ||
-                    !vec3.exactEquals(prevCamPos.current, view.camera.position) ||
+                    !vec3.exactEquals(prevCamPos.current, camera.position) ||
                     !vec2.exactEquals(prevPointerPos.current, pointerPos.current)
                 ) {
-                    prevCamRot.current = quat.clone(view.camera.rotation);
-                    prevCamPos.current = vec3.clone(view.camera.position);
+                    prevCamRot.current = quat.clone(camera.rotation);
+                    prevCamPos.current = vec3.clone(camera.position);
                     prevPointerPos.current = [...pointerPos.current];
                     render();
                 }

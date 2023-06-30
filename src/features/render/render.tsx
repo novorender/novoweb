@@ -28,6 +28,7 @@ import { SceneError } from "./sceneError";
 import { Stamp } from "./stamp";
 import { useCanvasEventHandlers } from "./hooks/useCanvasEventHandlers";
 import { useHandleCanvasCursor } from "./hooks/useHandleCanvasCursor";
+import { useHandlePointLineUpdates } from "features/pointLine";
 
 glMatrix.setMatrixArrayType(Array);
 
@@ -87,6 +88,7 @@ export function Render3D() {
     useHandleTerrain();
     useHandleAdvancedSettings();
     useHandleClipping();
+    useHandlePointLineUpdates();
 
     const useSvgCursor = useHandleCanvasCursor();
     const onClick = useCanvasClickHandler();

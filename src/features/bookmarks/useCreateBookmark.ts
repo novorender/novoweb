@@ -110,13 +110,13 @@ export function useCreateBookmark() {
                 },
                 measurements: {
                     area: {
-                        points: [],
+                        points: areaPts,
                     },
                     pointLine: {
-                        points: [],
+                        points: pointLinePts,
                     },
                     measure: {
-                        entities: [],
+                        entities: measurement.selectedEntities,
                     },
                     manhole: {
                         id: undefined,

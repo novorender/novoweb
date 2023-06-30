@@ -29,10 +29,10 @@ const AdvancedSettings = lazy(() => import("features/advancedSettings/advancedSe
 // const Ditio = lazy(() => import("features/ditio/ditio"));
 // const MyLocation = lazy(() => import("features/myLocation/myLocation"));
 // const RangeSearch = lazy(() => import("features/rangeSearch/rangeSearch"));
-// const User = lazy(() => import("features/user/user"));
+const User = lazy(() => import("features/user/user"));
 // const HeightProfile = lazy(() => import("features/heightProfile/heightProfile"));
 // const Area = lazy(() => import("features/area/area"));
-// const PointLine = lazy(() => import("features/pointLine/pointLine"));
+const PointLine = lazy(() => import("features/pointLine/pointLine"));
 // const Jira = lazy(() => import("features/jira/jira"));
 // const Manhole = lazy(() => import("features/manhole/manhole"));
 // const XsiteManage = lazy(() => import("features/xsiteManage/xsiteManage"));
@@ -202,18 +202,18 @@ function getWidgetByKey(key: WidgetKey): JSX.Element | string {
         // case featuresConfig.rangeSearch.key:
         //     Widget = RangeSearch;
         //     break;
-        // case featuresConfig.user.key:
-        //     Widget = User;
-        //     break;
+        case featuresConfig.user.key:
+            Widget = User;
+            break;
         // case featuresConfig.heightProfile.key:
         //     Widget = HeightProfile;
         //     break;
         // case featuresConfig.area.key:
         //     Widget = Area;
         //     break;
-        // case featuresConfig.pointLine.key:
-        //     Widget = PointLine;
-        //     break;
+        case featuresConfig.pointLine.key:
+            Widget = PointLine;
+            break;
         // case featuresConfig.jira.key:
         //     Widget = Jira;
         //     break;
