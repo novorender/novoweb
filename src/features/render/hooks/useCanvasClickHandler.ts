@@ -377,11 +377,11 @@ export function useCanvasClickHandler() {
                 break;
             }
             case Picker.HeightProfileEntity: {
-                // if (result.objectId === -1) {
-                //     return;
-                // }
+                if (result.objectId === -1) {
+                    return;
+                }
 
-                // dispatch(heightProfileActions.selectPoint({ id: result.objectId, pos: vec3.clone(position) }));
+                dispatch(heightProfileActions.selectPoint({ id: result.objectId, pos: vec3.clone(position) }));
                 break;
             }
             case Picker.ClippingBox: {

@@ -315,6 +315,7 @@ export function Engine2D({ pointerPos }: { pointerPos: MutableRefObject<Vec2> })
                     5
                 );
             }
+
             if (heightProfileDrawResult) {
                 drawProduct(
                     context2D,
