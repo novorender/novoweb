@@ -62,10 +62,15 @@ export function useHandleCameraState() {
             return;
         }
 
+        const clipping = {
+            ...(state.goTo?.near ? { near: state.goTo.near } : {}),
+            ...(state.goTo?.far ? { far: state.goTo.far } : {}),
+        };
+
         if (state.type === CameraType.Pinhole) {
-            view.modifyRenderState({ camera: { ...defaults.pinhole.clipping } });
+            view.modifyRenderState({ camera: { ...defaults.pinhole.clipping, ...clipping } });
         } else {
-            view.modifyRenderState({ camera: { ...defaults.orthographic.clipping } });
+            view.modifyRenderState({ camera: { ...defaults.orthographic.clipping, ...clipping } });
         }
     }, [state, defaults.pinhole.clipping, defaults.orthographic.clipping, view]);
 

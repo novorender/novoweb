@@ -348,6 +348,7 @@ export function useSelectBookmark() {
                                 ])
                             ),
                             fov: bookmark.ortho.fieldOfView,
+                            far: bookmark.ortho.far,
                         },
                     })
                 );

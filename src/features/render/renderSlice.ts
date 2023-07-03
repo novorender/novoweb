@@ -607,6 +607,7 @@ export const renderSlice = createSlice({
 
                 state.cameraDefaults.pinhole.clipping.far = Math.max((sceneData.camera as any)?.far ?? 0, 1000);
                 state.cameraDefaults.pinhole.clipping.near = Math.max((sceneData.camera as any)?.near ?? 0, 0.1);
+                state.cameraDefaults.orthographic.topDownElevation = props.defaultTopDownElevation;
                 state.secondaryHighlight.property = props.highlights?.secondary.property ?? "";
 
                 // background

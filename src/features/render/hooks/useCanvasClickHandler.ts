@@ -40,6 +40,7 @@ import {
 import { highlightActions, useDispatchHighlighted, useHighlighted } from "contexts/highlighted";
 import { selectShowPropertiesStamp } from "features/properties/slice";
 import { isRealVec } from "utils/misc";
+import { rotationFromDirection } from "@novorender/web_app";
 
 export function useCanvasClickHandler() {
     const dispatch = useAppDispatch();
@@ -104,68 +105,71 @@ export function useCanvasClickHandler() {
 
         switch (picker) {
             case Picker.CrossSection:
-                // if (crossSectionPoint) {
-                //     dispatch(renderActions.setViewMode(ViewMode.CrossSection));
-                //     const mat = mat3.fromQuat(mat3.create(), view.camera.rotation);
-                //     let up = vec3.fromValues(0, 1, 0);
-                //     const topDown = vec3.equals(vec3.fromValues(mat[6], mat[7], mat[8]), up);
-                //     const pos = topDown
-                //         ? vec3.fromValues(result.position[0], crossSectionPoint[1], result.position[2])
-                //         : vec3.copy(vec3.create(), result.position);
+                if (crossSectionPoint) {
+                    dispatch(renderActions.setViewMode(ViewMode.CrossSection));
+                    const mat = mat3.fromQuat(mat3.create(), view.renderState.camera.rotation);
+                    let up = vec3.fromValues(0, 0, 1);
+                    const topDown = vec3.equals(vec3.fromValues(mat[6], mat[7], mat[8]), up);
+                    const pos = topDown
+                        ? vec3.fromValues(result.position[0], result.position[1], crossSectionPoint[2])
+                        : vec3.copy(vec3.create(), result.position);
 
-                //     const right = vec3.sub(vec3.create(), crossSectionPoint, pos);
-                //     const l = vec3.len(right);
-                //     vec3.scale(right, right, 1 / l);
-                //     const p = vec3.scaleAndAdd(vec3.create(), crossSectionPoint, right, l / -2);
-                //     let dir = vec3.cross(vec3.create(), up, right);
+                    const right = vec3.sub(vec3.create(), crossSectionPoint, pos);
+                    const l = vec3.len(right);
+                    vec3.scale(right, right, 1 / l);
+                    const p = vec3.scaleAndAdd(vec3.create(), crossSectionPoint, right, l / -2);
+                    let dir = vec3.cross(vec3.create(), up, right);
 
-                //     if (topDown) {
-                //         const midPt = (measureApi.toMarkerPoints(view, [p]) ?? [])[0];
-                //         if (midPt) {
-                //             const midPick = await view.lastRenderOutput.pick(midPt[0], midPt[1]);
-                //             if (midPick) {
-                //                 vec3.copy(p, midPick.position);
-                //             }
-                //         }
-                //     } else if (right[1] < 0.01) {
-                //         right[1] = 0;
-                //         dir = vec3.clone(up);
-                //         vec3.cross(up, right, dir);
-                //         vec3.normalize(up, up);
-                //     } else {
-                //         vec3.normalize(dir, dir);
-                //     }
-                //     vec3.cross(right, up, dir);
-                //     vec3.normalize(right, right);
+                    if (topDown) {
+                        const midPt = (measureApi.toMarkerPoints(
+                            view.renderState.output.width,
+                            view.renderState.output.width,
+                            view.renderState.camera,
+                            [p]
+                        ) ?? [])[0];
+                        if (midPt) {
+                            const midPick = await view.pick(midPt[0], midPt[1]);
+                            if (midPick) {
+                                vec3.copy(p, midPick.position);
+                            }
+                        }
+                    } else if (right[1] < 0.01) {
+                        right[1] = 0;
+                        dir = vec3.clone(up);
+                        vec3.cross(up, right, dir);
+                        vec3.normalize(up, up);
+                    } else {
+                        vec3.normalize(dir, dir);
+                    }
+                    vec3.cross(right, up, dir);
+                    vec3.normalize(right, right);
 
-                //     const rotation = quat.fromMat3(
-                //         quat.create(),
-                //         mat3.fromValues(right[0], right[1], right[2], up[0], up[1], up[2], dir[0], dir[1], dir[2])
-                //     );
+                    const rotation = quat.fromMat3(
+                        quat.create(),
+                        mat3.fromValues(right[0], right[1], right[2], up[0], up[1], up[2], dir[0], dir[1], dir[2])
+                    );
 
-                //     const orthoMat = mat4.fromRotationTranslation(mat4.create(), rotation, p);
+                    const orthoMat = mat4.fromRotationTranslation(mat4.create(), rotation, p);
 
-                //     dispatch(
-                //         renderActions.setCamera({
-                //             type: CameraType.Orthographic,
-                //             params: {
-                //                 kind: "ortho",
-                //                 referenceCoordSys: orthoMat,
-                //                 fieldOfView: 45,
-                //                 near: -0.001,
-                //                 far: 0.5,
-                //                 position: [0, 0, 0],
-                //             },
-                //             gridOrigo: p as vec3,
-                //         })
-                //     );
-                //     dispatch(renderActions.setPicker(Picker.Object));
-                //     dispatch(orthoCamActions.setCrossSectionPoint(undefined));
-                //     dispatch(orthoCamActions.setCrossSectionHover(undefined));
-                //     dispatch(renderActions.setGrid({ enabled: true }));
-                // } else {
-                //     dispatch(orthoCamActions.setCrossSectionPoint(result.position as vec3));
-                // }
+                    dispatch(
+                        renderActions.setCamera({
+                            type: CameraType.Orthographic,
+                            goTo: {
+                                position: p,
+                                rotation,
+                                fov: 45,
+                                far: 0.5,
+                            },
+                            gridOrigo: p as vec3,
+                        })
+                    );
+                    dispatch(renderActions.setPicker(Picker.Object));
+                    dispatch(orthoCamActions.setCrossSectionPoint(undefined));
+                    dispatch(orthoCamActions.setCrossSectionHover(undefined));
+                    dispatch(renderActions.setGrid({ enabled: true }));
+                } else {
+                    dispatch(orthoCamActions.setCrossSectionPoint(result.position as vec3));
+                }
                 break;
             case Picker.Object:
                 if (
@@ -318,15 +322,21 @@ export function useCanvasClickHandler() {
                 );
                 break;
             case Picker.OrthoPlane:
-                // const orthoController = api.createCameraController({ kind: "ortho" }, canvas);
-                // (orthoController as any).init(position, normal, view.camera);
-                // dispatch(
-                //     renderActions.setCamera({
-                //         type: CameraType.Orthographic,
-                //         params: orthoController.params as OrthoControllerParams,
-                //     })
-                // );
-                // dispatch(renderActions.setPicker(Picker.Object));
+                if (!normal) {
+                    return;
+                }
+
+                dispatch(
+                    renderActions.setCamera({
+                        type: CameraType.Orthographic,
+                        goTo: {
+                            position,
+                            rotation: rotationFromDirection(normal),
+                            fov: 50,
+                        },
+                    })
+                );
+                dispatch(renderActions.setPicker(Picker.Object));
 
                 break;
             case Picker.Measurement:
