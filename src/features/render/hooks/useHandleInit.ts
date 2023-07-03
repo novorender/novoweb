@@ -1,11 +1,5 @@
 import { SceneData, SceneLoadFail } from "@novorender/data-js-api";
-import {
-    DeviceProfile,
-    computeRotation,
-    createView,
-    getDeviceProfile,
-    rotationFromDirection,
-} from "@novorender/web_app";
+import { DeviceProfile, View, computeRotation, getDeviceProfile, rotationFromDirection } from "@novorender/web_app";
 import { Internal, ObjectDB } from "@novorender/webgl-api";
 import { getGPUTier } from "detect-gpu";
 import { quat, vec3, vec4 } from "gl-matrix";
@@ -26,11 +20,11 @@ import { AsyncStatus } from "types/misc";
 import { CustomProperties } from "types/project";
 import { VecRGBA } from "utils/color";
 import { sleep } from "utils/time";
+import { getAssetUrl } from "utils/misc";
 
 import { renderActions } from "..";
 import { Error as SceneError } from "../sceneError";
 import { flip } from "../utils";
-import { getAssetUrl } from "utils/misc";
 
 export function useHandleInit() {
     const sceneId = useSceneId();
@@ -302,4 +296,9 @@ async function loadDeviceTier(): Promise<{ tier: number; isMobile: boolean }> {
             isMobile: false,
         };
     }
+}
+
+function createView(canvas: HTMLCanvasElement, options?: { deviceProfile?: DeviceProfile }): View {
+    const deviceProfile = options?.deviceProfile ?? getDeviceProfile(0);
+    return new (View as any)(canvas, deviceProfile);
 }

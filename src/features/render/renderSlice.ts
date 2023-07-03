@@ -618,14 +618,15 @@ export const renderSlice = createSlice({
 
                 // points
                 state.points.size = mergeRecursive(state.points.size, settings.points.size);
-                state.points.deviation.index = (settings.points.deviation as any).index;
+                state.points.deviation.index = (settings.points.deviation as any)?.index ?? 0;
                 state.points.deviation.mixFactor =
-                    settings.points.deviation.mode === "mix" ? 1 : settings.points.deviation.mode === "on" ? 0.5 : 0; // TODO map mode to mixFactor?
+                    settings.points.deviation?.mode === "mix" ? 1 : settings.points.deviation?.mode === "on" ? 0.5 : 0; // TODO map mode to mixFactor?
                 state.points.deviation.colorGradient = {
-                    knots: settings.points.deviation.colors.map((deviation) => ({
-                        color: deviation.color,
-                        position: deviation.deviation,
-                    })),
+                    knots:
+                        settings.points.deviation?.colors.map((deviation) => ({
+                            color: deviation.color,
+                            position: deviation.deviation,
+                        })) ?? [],
                 };
 
                 // subtrees
