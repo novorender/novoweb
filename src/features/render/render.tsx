@@ -31,6 +31,7 @@ import { Images } from "./images";
 import { Markers } from "./markers";
 import { SceneError } from "./sceneError";
 import { Stamp } from "./stamp";
+import { useHandleLocationMarker } from "features/myLocation";
 
 glMatrix.setMatrixArrayType(Array);
 
@@ -81,7 +82,7 @@ export function Render3D() {
 
     useHandleInit();
     useHandleInitialBookmark();
-    useHandleCameraMoved();
+    useHandleCameraMoved({ svg });
     useHandleCameraState();
     useHandleCameraSpeed();
     useHandleBackground();
@@ -93,6 +94,7 @@ export function Render3D() {
     useHandlePointLine();
     useHandleArea();
     useHandleManhole();
+    useHandleLocationMarker();
 
     const useSvgCursor = useHandleCanvasCursor();
     const onClick = useCanvasClickHandler();

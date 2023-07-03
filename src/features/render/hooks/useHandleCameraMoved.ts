@@ -1,14 +1,15 @@
-import { useEffect, useRef } from "react";
 import { View } from "@novorender/web_app";
 import { quat, vec3 } from "gl-matrix";
+import { useEffect, useRef } from "react";
 
-import { useExplorerGlobals } from "contexts/explorerGlobals";
 import { useAppDispatch, useAppSelector } from "app/store";
+import { useExplorerGlobals } from "contexts/explorerGlobals";
 import { ViewMode } from "types/misc";
 
 import { CameraType, renderActions, selectCameraType, selectSavedCameraPositions, selectViewMode } from "..";
+import { useMoveMarkers } from "./useMoveMarkers";
 
-export function useHandleCameraMoved() {
+export function useHandleCameraMoved({ svg }: { svg: SVGSVGElement | null }) {
     const {
         state: { view },
     } = useExplorerGlobals();
@@ -17,6 +18,7 @@ export function useHandleCameraMoved() {
     const viewMode = useAppSelector(selectViewMode);
     const savedCameraPositions = useAppSelector(selectSavedCameraPositions);
 
+    const moveSvgMarkers = useMoveMarkers(svg);
     const movementTimer = useRef<ReturnType<typeof setTimeout>>();
     const orthoMovementTimer = useRef<ReturnType<typeof setTimeout>>();
 
@@ -31,14 +33,14 @@ export function useHandleCameraMoved() {
             function cameraMoved(view: View) {
                 const hasMoved =
                     !view.prevRenderState ||
-                    (!vec3.equals(view.renderState.camera.position, view.prevRenderState.camera.position) &&
-                        !quat.equals(view.renderState.camera.rotation, view.prevRenderState.camera.rotation));
+                    !vec3.exactEquals(view.renderState.camera.position, view.prevRenderState.camera.position) ||
+                    !quat.exactEquals(view.renderState.camera.rotation, view.prevRenderState.camera.rotation);
 
                 if (!hasMoved) {
                     return;
                 }
-                // TODO
-                // moveSvgMarkers();
+
+                moveSvgMarkers();
                 dispatch(renderActions.setStamp(null));
 
                 if (movementTimer.current) {
@@ -111,7 +113,7 @@ export function useHandleCameraMoved() {
             cameraType,
             // advancedSettings,
             viewMode,
-            // moveSvgMarkers,
+            moveSvgMarkers,
         ]
     );
 }

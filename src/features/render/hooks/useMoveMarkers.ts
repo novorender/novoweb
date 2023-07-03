@@ -12,7 +12,7 @@ import { useExplorerGlobals } from "contexts/explorerGlobals";
 
 export function useMoveMarkers(svg: SVGSVGElement | null) {
     const {
-        state: { view_OLD: view, size },
+        state: { view, size },
     } = useExplorerGlobals();
 
     const images = useAppSelector(selectImages);
@@ -28,7 +28,12 @@ export function useMoveMarkers(svg: SVGSVGElement | null) {
         }
 
         if (myLocationPoint !== undefined) {
-            const myLocationPt = (measureApi.toMarkerPoints(view, [myLocationPoint]) ?? [])[0];
+            const myLocationPt = (measureApi.toMarkerPoints(
+                view.renderState.output.width,
+                view.renderState.output.height,
+                view.renderState.camera,
+                [myLocationPoint]
+            ) ?? [])[0];
             if (myLocationPt) {
                 const marker = svg.children.namedItem("myLocationPoint");
 
@@ -41,7 +46,9 @@ export function useMoveMarkers(svg: SVGSVGElement | null) {
 
         (
             measureApi.toMarkerPoints(
-                view,
+                view.renderState.output.width,
+                view.renderState.output.height,
+                view.renderState.camera,
                 logPoints.map((lpt) => vec3.fromValues(lpt.x, lpt.y, lpt.z))
             ) ?? []
         ).forEach((pos, idx) => {
@@ -53,7 +60,9 @@ export function useMoveMarkers(svg: SVGSVGElement | null) {
         if (showImageMarkers && images.status === AsyncStatus.Success) {
             (
                 measureApi.toMarkerPoints(
-                    view,
+                    view.renderState.output.width,
+                    view.renderState.output.height,
+                    view.renderState.camera,
                     images.data.map((image) => image.position)
                 ) ?? []
             ).forEach((pos, idx) => {
@@ -68,7 +77,9 @@ export function useMoveMarkers(svg: SVGSVGElement | null) {
 
         (
             measureApi.toMarkerPoints(
-                view,
+                view.renderState.output.width,
+                view.renderState.output.height,
+                view.renderState.camera,
                 ditioPostMarkers.map((marker) => marker.position)
             ) ?? []
         ).forEach((pos, idx) => {
@@ -79,7 +90,9 @@ export function useMoveMarkers(svg: SVGSVGElement | null) {
 
         (
             measureApi.toMarkerPoints(
-                view,
+                view.renderState.output.width,
+                view.renderState.output.height,
+                view.renderState.camera,
                 ditioImgMarkers.map((marker) => marker.position)
             ) ?? []
         ).forEach((pos, idx) => {
@@ -90,7 +103,9 @@ export function useMoveMarkers(svg: SVGSVGElement | null) {
 
         (
             measureApi.toMarkerPoints(
-                view,
+                view.renderState.output.width,
+                view.renderState.output.height,
+                view.renderState.camera,
                 machineLocationMarkers.map((marker) => marker.position)
             ) ?? []
         ).forEach((pos, idx) => {
