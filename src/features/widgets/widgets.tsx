@@ -28,7 +28,7 @@ const AdvancedSettings = lazy(() => import("features/advancedSettings/advancedSe
 // const BimTrack = lazy(() => import("features/bimTrack/bimTrack"));
 // const Ditio = lazy(() => import("features/ditio/ditio"));
 const MyLocation = lazy(() => import("features/myLocation/myLocation"));
-// const RangeSearch = lazy(() => import("features/rangeSearch/rangeSearch"));
+const RangeSearch = lazy(() => import("features/rangeSearch/rangeSearch"));
 const User = lazy(() => import("features/user/user"));
 // const HeightProfile = lazy(() => import("features/heightProfile/heightProfile"));
 const Area = lazy(() => import("features/area/area"));
@@ -199,9 +199,9 @@ function getWidgetByKey(key: WidgetKey): JSX.Element | string {
         case featuresConfig.myLocation.key:
             Widget = MyLocation;
             break;
-        // case featuresConfig.rangeSearch.key:
-        //     Widget = RangeSearch;
-        //     break;
+        case featuresConfig.rangeSearch.key:
+            Widget = RangeSearch;
+            break;
         case featuresConfig.user.key:
             Widget = User;
             break;

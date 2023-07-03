@@ -1,23 +1,23 @@
+import { Box, Button, FormControl, FormControlLabel, TextFieldProps } from "@mui/material";
+import { DatePicker } from "@mui/x-date-pickers";
+import { HierarcicalObjectReference, SearchPattern } from "@novorender/webgl-api";
+import { format, isValid, parse } from "date-fns";
 import { CSSProperties, FormEvent, useCallback, useRef, useState } from "react";
 import { ListOnScrollProps } from "react-window";
-import { Box, Button, FormControl, FormControlLabel, TextFieldProps } from "@mui/material";
-import { HierarcicalObjectReference, SearchPattern } from "@novorender/webgl-api";
-import { DatePicker } from "@mui/x-date-pickers";
-import { format, isValid, parse } from "date-fns";
 
-import { LinearProgress, ScrollBox, WidgetContainer, WidgetHeader, LogoSpeedDial, TextField, Switch } from "components";
-import { NodeList } from "features/nodeList/nodeList";
-import WidgetList from "features/widgetList/widgetList";
-import { useToggle } from "hooks/useToggle";
-import { useMountedState } from "hooks/useMountedState";
-import { useAbortController } from "hooks/useAbortController";
-import { useExplorerGlobals } from "contexts/explorerGlobals";
-import { iterateAsync } from "utils/search";
-import { featuresConfig } from "config/features";
-import { CustomParentNode } from "features/search";
 import { useAppSelector } from "app/store";
-import { selectMinimized, selectMaximized } from "slices/explorerSlice";
+import { LinearProgress, LogoSpeedDial, ScrollBox, Switch, TextField, WidgetContainer, WidgetHeader } from "components";
 import { rangeSearchDateFormat } from "config";
+import { featuresConfig } from "config/features";
+import { useExplorerGlobals } from "contexts/explorerGlobals";
+import { NodeList } from "features/nodeList/nodeList";
+import { CustomParentNode } from "features/search";
+import WidgetList from "features/widgetList/widgetList";
+import { useAbortController } from "hooks/useAbortController";
+import { useMountedState } from "hooks/useMountedState";
+import { useToggle } from "hooks/useToggle";
+import { selectMaximized, selectMinimized } from "slices/explorerSlice";
+import { iterateAsync } from "utils/search";
 
 enum Status {
     Initial,
@@ -27,7 +27,7 @@ enum Status {
 
 export default function RangeSearch() {
     const {
-        state: { scene_OLD: scene },
+        state: { db },
     } = useExplorerGlobals(true);
 
     const [menuOpen, toggleMenu] = useToggle();
@@ -60,7 +60,7 @@ export default function RangeSearch() {
         previousSearchPattern.current = searchPattern;
 
         try {
-            const iterator = scene.search({ searchPattern }, abortSignal);
+            const iterator = db.search({ searchPattern }, abortSignal);
 
             const [nodes, done] = await iterateAsync({ iterator, abortSignal, count: 50 });
 
@@ -71,7 +71,7 @@ export default function RangeSearch() {
                 throw e;
             }
         }
-    }, [abortController, setSearchResults, scene, property, min, max]);
+    }, [abortController, setSearchResults, db, property, min, max]);
 
     const handleSubmit = async (e: FormEvent) => {
         e.preventDefault();

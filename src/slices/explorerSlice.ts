@@ -214,10 +214,17 @@ export const explorerSlice = createSlice({
                 state.enabledWidgets = allWidgets;
             } else if (state.userRole !== UserRole.Viewer) {
                 state.enabledWidgets = uniqueArray(
-                    getEnabledFeatures(customProperties).concat(defaultEnabledAdminWidgets)
+                    (customProperties.v1
+                        ? (customProperties.v1.features.widgets.enabled as WidgetKey[])
+                        : getEnabledFeatures(customProperties)
+                    ).concat(defaultEnabledAdminWidgets)
                 );
             } else {
-                state.enabledWidgets = uniqueArray(getEnabledFeatures(customProperties));
+                state.enabledWidgets = uniqueArray(
+                    customProperties.v1
+                        ? (customProperties.v1.features.widgets.enabled as WidgetKey[])
+                        : getEnabledFeatures(customProperties)
+                );
             }
 
             if (customProperties.v1) {
