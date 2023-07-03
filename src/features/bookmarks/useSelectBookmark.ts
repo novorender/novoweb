@@ -263,7 +263,11 @@ export function useSelectBookmark() {
                 const legacySnapTolerance = { edge: 0.032, segment: 0.12, face: 0.07, point: 0.032 };
                 const entities = await Promise.all(
                     bookmark.objectMeasurement.map(async (obj) => {
-                        const entity = await measureScene?.pickMeasureEntity(obj.id, obj.pos, legacySnapTolerance);
+                        const entity = await measureScene?.pickMeasureEntity(
+                            obj.id,
+                            flip(obj.pos),
+                            legacySnapTolerance
+                        );
                         return {
                             ...entity.entity,
                             settings: obj.settings,
@@ -277,7 +281,7 @@ export function useSelectBookmark() {
                     measureActions.setSelectedEntities(
                         bookmark.measurement
                             .slice(0, 2)
-                            .map((pt) => ({ ObjectId: -1, drawKind: "vertex", parameter: pt }))
+                            .map((pt) => ({ ObjectId: -1, drawKind: "vertex", parameter: flip(pt) }))
                     )
                 );
             } else {
@@ -285,18 +289,18 @@ export function useSelectBookmark() {
             }
 
             if (bookmark.area) {
-                dispatch(areaActions.setPoints(bookmark.area.pts));
+                dispatch(areaActions.setPoints(bookmark.area.pts.map(([pt, normal]) => [flip(pt), flip(normal)])));
             } else {
                 dispatch(areaActions.setPoints([]));
             }
 
             if (bookmark.pointLine) {
-                dispatch(pointLineActions.setPoints(bookmark.pointLine.pts));
+                dispatch(pointLineActions.setPoints(bookmark.pointLine.pts.map((pt) => flip(pt))));
             } else {
                 dispatch(pointLineActions.setPoints([]));
             }
 
-            dispatch(manholeActions.initFromBookmark(bookmark.manhole));
+            dispatch(manholeActions.initFromLegacyBookmark(bookmark.manhole));
 
             // TODO
             // if (bookmark.clippingPlanes) {

@@ -606,7 +606,7 @@ export const renderSlice = createSlice({
                 // Legacy settings
 
                 state.cameraDefaults.pinhole.clipping.far = Math.max((sceneData.camera as any)?.far ?? 0, 1000);
-                state.cameraDefaults.pinhole.clipping.far = Math.max((sceneData.camera as any)?.near ?? 0, 0.1);
+                state.cameraDefaults.pinhole.clipping.near = Math.max((sceneData.camera as any)?.near ?? 0, 0.1);
                 state.secondaryHighlight.property = props.highlights?.secondary.property ?? "";
 
                 // background

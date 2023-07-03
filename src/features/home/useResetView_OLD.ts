@@ -61,7 +61,7 @@ export function useResetView_OLD() {
         dispatch(measureActions.clear());
         dispatch(areaActions.setPoints([]));
         dispatch(pointLineActions.setPoints([]));
-        dispatch(manholeActions.initFromBookmark(undefined));
+        dispatch(manholeActions.initFromLegacyBookmark(undefined));
         dispatch(xsiteManageActions.clearLogPoints(undefined));
 
         if (settings) {

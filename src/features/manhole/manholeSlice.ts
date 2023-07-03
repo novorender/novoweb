@@ -1,10 +1,11 @@
-import { vec3 } from "gl-matrix";
-import { ManholeMeasureValues, MeasureEntity, MeasureSettings } from "@novorender/measure-api";
-import { createSlice, PayloadAction } from "@reduxjs/toolkit";
 import { Bookmark } from "@novorender/data-js-api";
+import { ManholeMeasureValues, MeasureEntity, MeasureSettings } from "@novorender/measure-api";
+import { PayloadAction, createSlice } from "@reduxjs/toolkit";
+import { vec3 } from "gl-matrix";
 
 import { RootState } from "app/store";
 import { resetView, selectBookmark } from "features/render";
+import { flip } from "features/render/utils";
 
 const initialState = {
     selectedId: undefined as number | undefined,
@@ -31,13 +32,16 @@ export const manholeSlice = createSlice({
             }
         },
         // legacy
-        initFromBookmark: (state, action: PayloadAction<Bookmark["manhole"]>) => {
+        initFromLegacyBookmark: (state, action: PayloadAction<Bookmark["manhole"]>) => {
             if (!action.payload) {
                 return initialState;
             }
 
             state.selectedId = action.payload.id;
             state.collisionTarget = action.payload.collisionTarget;
+            if (state.collisionTarget?.selected) {
+                state.collisionTarget.selected.pos = flip(state.collisionTarget.selected.pos);
+            }
             state.collisionSettings = action.payload.collisionSettings;
         },
         setManholeValues: (state, action: PayloadAction<State["measureValues"]>) => {
