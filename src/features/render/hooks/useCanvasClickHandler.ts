@@ -300,7 +300,7 @@ export function useCanvasClickHandler() {
                 }
                 break;
             case Picker.ClippingPlane:
-                if (!normal) {
+                if (!normal || result.isEdge) {
                     return;
                 }
 
@@ -315,7 +315,7 @@ export function useCanvasClickHandler() {
                 );
                 break;
             case Picker.OrthoPlane:
-                if (!normal) {
+                if (!normal || result.isEdge) {
                     return;
                 }
 

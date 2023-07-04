@@ -36,7 +36,10 @@ export function moveSvgCursor({
         g.innerHTML = "";
         return;
     }
-    let normal = pickResult?.normal && isRealVec(pickResult.normal) ? vec3.clone(pickResult.normal) : undefined;
+    let normal =
+        !pickResult?.isEdge && pickResult?.normalVS && isRealVec(pickResult.normalVS)
+            ? vec3.clone(pickResult.normalVS)
+            : undefined;
     if (normal) {
         const { width, height } = size;
         const { camera } = view.renderState;
