@@ -13,6 +13,7 @@ import { useSceneId } from "hooks/useSceneId";
 
 import {
     ObjectVisibility,
+    SelectionBasketMode,
     renderActions,
     selectDefaultVisibility,
     selectMainObject,
@@ -67,7 +68,7 @@ export function useHandleHighlights() {
                 return;
             }
 
-            const { colored, hiddenGroups, semiTransparent } = groups.reduceRight(
+            const { colored, hiddenGroups, semiTransparent } = groups.reduce(
                 (prev, group) => {
                     switch (group.status) {
                         case GroupStatus.Selected: {
@@ -102,34 +103,48 @@ export function useHandleHighlights() {
             view.modifyRenderState({
                 highlights: {
                     groups: [
+                        ...(defaultVisibility === ObjectVisibility.Neutral
+                            ? semiTransparent.map((group) => ({
+                                  objectIds: new Uint32Array(group.ids).sort(),
+                                  action: createTransparentHighlight(group.opacity),
+                              }))
+                            : []),
+                        {
+                            objectIds: new Uint32Array(allHidden).sort(),
+                            action: "hide",
+                        },
                         {
                             objectIds: new Uint32Array(basket.idArr).sort(),
                             action: basketColor.use
                                 ? createColorSetHighlight(basketColor.color)
                                 : createNeutralHighlight(),
                         },
-                        {
-                            objectIds: new Uint32Array(
-                                mainObject !== undefined ? highlighted.idArr.concat(mainObject) : highlighted.idArr
-                            ).sort(),
-                            action: createColorSetHighlight(highlighted.color),
-                        },
-                        {
-                            objectIds: new Uint32Array(secondaryHighlight.idArr).sort(),
-                            action: createColorSetHighlight(secondaryHighlight.color),
-                        },
                         ...colored.map((group) => ({
-                            objectIds: new Uint32Array(group.ids).sort(),
+                            objectIds: new Uint32Array(
+                                basketMode === SelectionBasketMode.Loose
+                                    ? group.ids
+                                    : basket.idArr.filter((id) => group.ids.has(id))
+                            ).sort(),
                             action: createColorSetHighlight(group.color),
                         })),
                         {
-                            objectIds: new Uint32Array(allHidden).sort(),
-                            action: "hide",
+                            objectIds: new Uint32Array(
+                                basketMode === SelectionBasketMode.Loose
+                                    ? secondaryHighlight.idArr
+                                    : basket.idArr.filter((id) => secondaryHighlight.ids[id])
+                            ).sort(),
+                            action: createColorSetHighlight(secondaryHighlight.color),
                         },
-                        ...semiTransparent.map((group) => ({
-                            objectIds: new Uint32Array([...group.ids]).sort(),
-                            action: createTransparentHighlight(group.opacity),
-                        })),
+                        {
+                            objectIds: new Uint32Array(
+                                basketMode === SelectionBasketMode.Loose
+                                    ? mainObject !== undefined
+                                        ? highlighted.idArr.concat(mainObject)
+                                        : highlighted.idArr
+                                    : basket.idArr.filter((id) => id === mainObject || highlighted.ids[id])
+                            ).sort(),
+                            action: createColorSetHighlight(highlighted.color),
+                        },
                     ],
                 },
             });

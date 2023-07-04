@@ -19,4 +19,4 @@ export const selectionBasketSlice = createSlice({
 export const selectFlyOnSelect = (state: RootState) => state.selectionBasket.flyOnSelect;
 
 const { actions, reducer } = selectionBasketSlice;
-export { actions as selectionBasketSliceActions, reducer as selectionBasketReducer };
+export { reducer as selectionBasketReducer, actions as selectionBasketSliceActions };

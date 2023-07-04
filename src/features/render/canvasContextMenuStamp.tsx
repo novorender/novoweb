@@ -82,11 +82,10 @@ export function CanvasContextMenuStamp() {
 
             const [obj, ent] = await Promise.all([
                 getObjectData({ db, id: objectId }),
-                Promise.resolve(undefined), // TODO
-                // measureScene
-                //     .pickMeasureEntity(objectId, stamp.data.position)
-                //     .then((res) => (["face"].includes(res.entity.drawKind) ? res.entity : undefined))
-                //     .catch(() => undefined),
+                measureScene
+                    .pickMeasureEntity(objectId, stamp.data.position)
+                    .then((res) => (["face"].includes(res.entity.drawKind) ? res.entity : undefined))
+                    .catch(() => undefined),
             ]);
 
             setMeasureEntity(ent);
@@ -111,6 +110,7 @@ export function CanvasContextMenuStamp() {
     };
 
     const hide = () => {
+        dispatch(renderActions.setMainObject(undefined));
         dispatchHighlighted(highlightActions.remove([stamp.data.object]));
         dispatchHidden(hiddenActions.add([stamp.data.object]));
         dispatchSelectionBasket(selectionBasketActions.remove([stamp.data.object]));
@@ -130,6 +130,7 @@ export function CanvasContextMenuStamp() {
             db,
             searchPatterns: [{ property: properties.layer[0], value: properties.layer[1], exact: true }],
             callback: (ids) => {
+                dispatch(renderActions.setMainObject(undefined));
                 dispatchHighlighted(highlightActions.remove(ids));
                 dispatchSelectionBasket(selectionBasketActions.remove(ids));
                 dispatchHidden(hiddenActions.add(ids));

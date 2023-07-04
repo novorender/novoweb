@@ -1,24 +1,24 @@
 import { ArrowBack, Close, Download } from "@mui/icons-material";
 import { Box, Button, Checkbox, IconButton, ListItemButton, Snackbar, Typography, useTheme } from "@mui/material";
-import { useHistory } from "react-router-dom";
-import { useEffect, useState } from "react";
 import { ObjectData } from "@novorender/webgl-api";
-import AutoSizer from "react-virtualized-auto-sizer";
 import { unparse } from "papaparse";
+import { useEffect, useState } from "react";
+import { useHistory } from "react-router-dom";
+import AutoSizer from "react-virtualized-auto-sizer";
 
 import { Divider, FixedSizeVirualizedList, LinearProgress, TextField } from "components";
 import { useExplorerGlobals } from "contexts/explorerGlobals";
 import { useSelectionBasket } from "contexts/selectionBasket";
 import { useAbortController } from "hooks/useAbortController";
-import { batchedPropertySearch } from "utils/search";
-import { uniqueArray } from "utils/misc";
 import { AsyncStatus } from "types/misc";
+import { uniqueArray } from "utils/misc";
+import { batchedPropertySearch } from "utils/search";
 
 const baseProperties = ["Name", "GUID", "Path"];
 
 export function CsvExport() {
     const {
-        state: { scene_OLD: scene },
+        state: { db },
     } = useExplorerGlobals(true);
     const theme = useTheme();
     const history = useHistory();
@@ -45,7 +45,7 @@ export function CsvExport() {
             const abortSignal = abortController.current.signal;
             try {
                 const nodes = await batchedPropertySearch<ObjectData>({
-                    db: scene,
+                    db,
                     abortSignal,
                     property: "id",
                     value: basket.map((n) => String(n)),
@@ -80,7 +80,7 @@ export function CsvExport() {
                 }
             }
         }
-    }, [scene, basket, abortController, abort]);
+    }, [db, basket, abortController, abort]);
 
     const handleExport = () => {
         if (!filename || !objects) {

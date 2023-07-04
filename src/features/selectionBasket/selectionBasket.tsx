@@ -1,18 +1,18 @@
-import { matchPath, MemoryRouter, Route, Switch, useHistory, useLocation } from "react-router-dom";
 import { FileDownload } from "@mui/icons-material";
 import { Box, ListItemIcon, ListItemText, Menu, MenuItem } from "@mui/material";
+import { MemoryRouter, Route, Switch, matchPath, useHistory, useLocation } from "react-router-dom";
 
-import { WidgetContainer, LogoSpeedDial, WidgetHeader } from "components";
-import WidgetList from "features/widgetList/widgetList";
 import { useAppSelector } from "app/store";
-import { selectMinimized, selectMaximized } from "slices/explorerSlice";
+import { LogoSpeedDial, WidgetContainer, WidgetHeader } from "components";
 import { featuresConfig } from "config/features";
-import { useToggle } from "hooks/useToggle";
 import { useSelectionBasket } from "contexts/selectionBasket";
+import WidgetList from "features/widgetList/widgetList";
+import { useToggle } from "hooks/useToggle";
+import { selectMaximized, selectMinimized } from "slices/explorerSlice";
 
+import { CsvExport } from "./routes/csvExport";
 import { List } from "./routes/list";
 import { Root } from "./routes/root";
-import { CsvExport } from "./routes/csvExport";
 
 export default function SelectionBasketRouter() {
     return (
