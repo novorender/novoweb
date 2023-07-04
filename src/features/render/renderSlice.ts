@@ -87,12 +87,10 @@ type CameraState =
           zoomTo?: BoundingSphere;
       };
 type MutableCameraState = DeepMutable<CameraState>;
-type MutableGrid = DeepMutable<RenderSettings["grid"]>;
 export type ClippingBox = RenderSettings["clippingPlanes"] & {
     defining: boolean;
     baseBounds: RenderSettings["clippingPlanes"]["bounds"];
 };
-type MutableClippingBox = DeepMutable<ClippingBox>;
 type SavedCameraPositions = { currentIndex: number; positions: CameraPosition[] };
 type MutableSavedCameraPositions = DeepMutable<SavedCameraPositions>;
 
@@ -779,7 +777,6 @@ export const selectHomeCameraPosition = (state: RootState) =>
 export const selectSubtrees = (state: RootState) => state.render.subtrees;
 export const selectSelectionBasketMode = (state: RootState) => state.render.selectionBasketMode;
 export const selectSelectionBasketColor = (state: RootState) => state.render.selectionBasketColor;
-export const selectClippingBox = (state: RootState) => ({} as ClippingBox);
 export const selectClippingPlanes = (state: RootState) => state.render.clipping;
 export const selectCamera = (state: RootState) => state.render.camera as CameraState;
 export const selectCameraType = (state: RootState) => state.render.camera.type;

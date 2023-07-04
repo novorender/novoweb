@@ -56,16 +56,15 @@ export function useHandleInit() {
             try {
                 const [{ url, db, ...sceneData }, camera] = await loadScene(sceneId);
                 const octreeSceneConfig = await view.loadSceneFromURL(new URL(url));
-
                 view.run();
 
-                // TODO: sleep pga "render() was not called in... fra view.run()"
+                const detectedTier = await loadDeviceTier();
+
                 while (!view.renderState.scene) {
                     await sleep(1);
                 }
-                const detectedTier = await loadDeviceTier();
-                const storedDeviceProfile = getStoredDeviceProfile();
 
+                const storedDeviceProfile = getStoredDeviceProfile();
                 dispatch(
                     renderActions.initScene({
                         sceneData,
