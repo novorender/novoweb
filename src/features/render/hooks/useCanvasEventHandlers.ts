@@ -204,7 +204,10 @@ export function useCanvasEventHandlers({
         }
 
         if (e.buttons === 0 && useSvgCursor) {
-            const result = await view.pick(e.nativeEvent.offsetX, e.nativeEvent.offsetY, 1);
+            const result = await view.pick(e.nativeEvent.offsetX, e.nativeEvent.offsetY, {
+                sampleDiscRadius: 1,
+                async: false,
+            });
 
             let hoverEnt = prevHoverEnt.current;
             const now = performance.now();
@@ -286,7 +289,9 @@ export function useCanvasEventHandlers({
             subtrees.points === SubtreeStatus.Shown;
         if (setDeviationStamp) {
             const isTouch = e.nativeEvent instanceof PointerEvent && e.nativeEvent.pointerType === "touch";
-            const measurement = await view.pick(e.nativeEvent.offsetX, e.nativeEvent.offsetY, isTouch ? 8 : 1);
+            const measurement = await view.pick(e.nativeEvent.offsetX, e.nativeEvent.offsetY, {
+                sampleDiscRadius: isTouch ? 8 : 1,
+            });
 
             if (measurement?.deviation !== undefined) {
                 dispatch(

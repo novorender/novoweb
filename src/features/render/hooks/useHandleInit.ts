@@ -60,7 +60,9 @@ export function useHandleInit() {
                 view.run();
 
                 // TODO: sleep pga "render() was not called in... fra view.run()"
-                await sleep(500);
+                while (!view.renderState.scene) {
+                    await sleep(1);
+                }
                 const detectedTier = await loadDeviceTier();
                 const storedDeviceProfile = getStoredDeviceProfile();
 

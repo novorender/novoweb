@@ -77,13 +77,15 @@ export function useCanvasClickHandler() {
 
         dispatch(renderActions.setPointerDownState(undefined));
 
-        // TODO spør sigve om tilsvarende
-        // const pickCameraPlane =
-        //     cameraState.type === CameraType.Orthographic &&
-        //     (viewMode === ViewMode.CrossSection || viewMode === ViewMode.FollowPath);
+        const pickCameraPlane =
+            cameraState.type === CameraType.Orthographic &&
+            (viewMode === ViewMode.CrossSection || viewMode === ViewMode.FollowPath);
 
         const isTouch = evt.nativeEvent instanceof PointerEvent && evt.nativeEvent.pointerType === "touch";
-        const result = await view.pick(evt.nativeEvent.offsetX, evt.nativeEvent.offsetY, isTouch ? 8 : 4);
+        const result = await view.pick(evt.nativeEvent.offsetX, evt.nativeEvent.offsetY, {
+            pickCameraPlane,
+            sampleDiscRadius: isTouch ? 8 : 4,
+        });
 
         if (!result) {
             if (picker === Picker.Measurement && measure.hover) {

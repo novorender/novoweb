@@ -11,7 +11,14 @@ import { GroupStatus, ObjectGroup, useObjectGroups } from "contexts/objectGroups
 import { useSelectionBasket } from "contexts/selectionBasket";
 import { useSceneId } from "hooks/useSceneId";
 
-import { ObjectVisibility, renderActions, selectDefaultVisibility, selectMainObject } from "..";
+import {
+    ObjectVisibility,
+    renderActions,
+    selectDefaultVisibility,
+    selectMainObject,
+    selectSelectionBasketColor,
+    selectSelectionBasketMode,
+} from "..";
 
 export function useHandleHighlights() {
     const {
@@ -26,6 +33,8 @@ export function useHandleHighlights() {
     const defaultVisibility = useAppSelector(selectDefaultVisibility);
     const basket = useSelectionBasket();
     const dispatch = useAppDispatch();
+    const basketColor = useAppSelector(selectSelectionBasketColor);
+    const basketMode = useAppSelector(selectSelectionBasketMode);
 
     const id = useRef(0);
 
@@ -44,7 +53,7 @@ export function useHandleHighlights() {
                             ? createNeutralHighlight()
                             : defaultVisibility === ObjectVisibility.SemiTransparent
                             ? createTransparentHighlight(0.5)
-                            : "hide",
+                            : createTransparentHighlight(0),
                 },
             });
 
@@ -94,6 +103,12 @@ export function useHandleHighlights() {
                 highlights: {
                     groups: [
                         {
+                            objectIds: new Uint32Array(basket.idArr).sort(),
+                            action: basketColor.use
+                                ? createColorSetHighlight(basketColor.color)
+                                : createNeutralHighlight(),
+                        },
+                        {
                             objectIds: new Uint32Array(
                                 mainObject !== undefined ? highlighted.idArr.concat(mainObject) : highlighted.idArr
                             ).sort(),
@@ -130,6 +145,8 @@ export function useHandleHighlights() {
         defaultVisibility,
         basket,
         mainObject,
+        basketColor,
+        basketMode,
     ]);
 }
 
