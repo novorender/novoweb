@@ -1,11 +1,11 @@
-import { quat, vec3 } from "gl-matrix";
+import { mat4, quat, vec3 } from "gl-matrix";
 import { useEffect, useRef } from "react";
 
 import { useAppDispatch, useAppSelector } from "app/store";
 import { useExplorerGlobals } from "contexts/explorerGlobals";
 import { ViewMode } from "types/misc";
 
-import { CameraType, selectCamera, selectCameraDefaults, selectViewMode } from "..";
+import { CameraType, renderActions, selectCamera, selectCameraDefaults, selectViewMode } from "..";
 import { flip } from "../utils";
 
 export function useHandleCameraState() {
@@ -29,30 +29,49 @@ export function useHandleCameraState() {
     }, [view, viewMode, defaults.pinhole.controller, pinholeKind]);
 
     useEffect(() => {
-        if (!view) {
-            return;
-        }
-
-        if (state.type === CameraType.Pinhole) {
-            const controller = view.controllers[pinholeKind.current];
-
-            if (state.goTo) {
-                controller.moveTo(vec3.clone(state.goTo.position), 1000, quat.clone(state.goTo.rotation));
-            } else if (state.zoomTo) {
-                controller.zoomTo({
-                    center: flip(state.zoomTo.center),
-                    radius: state.zoomTo.radius,
-                });
+        swapCamera();
+        async function swapCamera() {
+            if (!view) {
+                return;
             }
 
-            view.switchCameraController(controller.kind);
-        } else {
-            if (state.goTo) {
-                view.switchCameraController("ortho", {
-                    position: vec3.clone(state.goTo.position),
-                    rotation: quat.clone(state.goTo.rotation),
-                    fov: state.goTo.fov,
-                });
+            if (state.type === CameraType.Pinhole) {
+                const controller = view.controllers[pinholeKind.current];
+
+                if (state.goTo) {
+                    controller.moveTo(vec3.clone(state.goTo.position), 1000, quat.clone(state.goTo.rotation));
+                } else if (state.zoomTo) {
+                    controller.zoomTo({
+                        center: flip(state.zoomTo.center),
+                        radius: state.zoomTo.radius,
+                    });
+                }
+
+                view.switchCameraController(controller.kind);
+                dispatch(renderActions.setGrid({ enabled: false }));
+            } else {
+                await view.switchCameraController(
+                    "ortho",
+                    state.goTo
+                        ? {
+                              position: vec3.clone(state.goTo.position),
+                              rotation: quat.clone(state.goTo.rotation),
+                              fov: state.goTo.fov,
+                          }
+                        : undefined
+                );
+
+                const mat = mat4.fromQuat(mat4.create(), state.goTo?.rotation ?? view.renderState.camera.rotation);
+                const right = vec3.fromValues(mat[0], mat[1], mat[2]);
+                const up = vec3.fromValues(mat[4], mat[5], mat[6]);
+
+                dispatch(
+                    renderActions.setGrid({
+                        origin: state.gridOrigo ?? state.goTo?.position,
+                        axisY: up,
+                        axisX: right,
+                    })
+                );
             }
         }
     }, [view, dispatch, state]);

@@ -85,42 +85,48 @@ export function Engine2D({ pointerPos }: { pointerPos: MutableRefObject<Vec2> })
     const prevPointerPos = useRef([0, 0] as Vec2);
 
     const renderGridLabels = useCallback(() => {
-        // todo
-        return;
-        // if (
-        //     grid.enabled &&
-        //     (view?.renderState.camera.fov ?? 250) <= 35 &&
-        //     context2D &&
-        //     cameraType === CameraType.Orthographic
-        // ) {
-        //     const xLen = vec3.len(grid.axisX);
-        //     const yLen = vec3.len(grid.axisY);
-        //     const pts3d: vec3[] = [];
-        //     const labels: string[] = [];
-        //     const numLables = Math.min(10, grid.size2); // TODO: ska ver major?
-        //     for (let i = 0; i < numLables; ++i) {
-        //         const xLabel = (xLen * i).toFixed(1);
-        //         const yLabel = (yLen * i).toFixed(1);
-        //         pts3d.push(vec3.scaleAndAdd(vec3.create(), grid.origin, grid.axisX, i));
-        //         labels.push(xLabel);
-        //         if (i === 0) {
-        //             continue;
-        //         }
+        if (
+            !view ||
+            !grid.enabled ||
+            !context2D ||
+            cameraType !== CameraType.Orthographic ||
+            view.renderState.camera.fov > 35
+        ) {
+            return;
+        }
 
-        //         pts3d.push(vec3.scaleAndAdd(vec3.create(), grid.origin, grid.axisX, -i));
-        //         labels.push(`-${xLabel}`);
+        const xLen = vec3.len(grid.axisX);
+        const yLen = vec3.len(grid.axisY);
+        const pts3d: vec3[] = [];
+        const labels: string[] = [];
+        const numLabels = 10;
+        for (let i = 0; i < numLabels; ++i) {
+            const xLabel = (xLen * i * grid.size2).toFixed(1);
+            const yLabel = (yLen * i * grid.size2).toFixed(1);
+            pts3d.push(vec3.scaleAndAdd(vec3.create(), grid.origin, grid.axisX, i * grid.size2));
+            labels.push(xLabel);
+            if (i === 0) {
+                continue;
+            }
 
-        //         pts3d.push(vec3.scaleAndAdd(vec3.create(), grid.origin, grid.axisY, i));
-        //         labels.push(yLabel);
-        //         pts3d.push(vec3.scaleAndAdd(vec3.create(), grid.origin, grid.axisY, -i));
-        //         labels.push(`-${yLabel}`);
-        //     }
-        //     const pts = measureApi.toPathPoints(pts3d, view);
+            pts3d.push(vec3.scaleAndAdd(vec3.create(), grid.origin, grid.axisX, -i * grid.size2));
+            labels.push(`-${xLabel}`);
 
-        //     if (pts) {
-        //         drawTexts(context2D, pts.screenPoints, labels);
-        //     }
-        // }
+            pts3d.push(vec3.scaleAndAdd(vec3.create(), grid.origin, grid.axisY, i * grid.size2));
+            labels.push(yLabel);
+            pts3d.push(vec3.scaleAndAdd(vec3.create(), grid.origin, grid.axisY, -i * grid.size2));
+            labels.push(`-${yLabel}`);
+        }
+        const pts = measureApi.toPathPoints(
+            pts3d,
+            view.renderState.output.width,
+            view.renderState.output.height,
+            view.renderState.camera
+        );
+
+        if (pts) {
+            drawTexts(context2D, pts.screenPoints, labels);
+        }
     }, [grid, context2D, view, cameraType]);
 
     const drawId = useRef(0);

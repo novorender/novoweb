@@ -1,9 +1,10 @@
 import { View } from "@novorender/web_app";
-import { quat, vec3 } from "gl-matrix";
+import { mat3, quat, vec3 } from "gl-matrix";
 import { useEffect, useRef } from "react";
 
 import { useAppDispatch, useAppSelector } from "app/store";
 import { useExplorerGlobals } from "contexts/explorerGlobals";
+import { orthoCamActions, selectCurrentTopDownElevation } from "features/orthoCam";
 import { ViewMode } from "types/misc";
 
 import { CameraType, renderActions, selectCameraType, selectSavedCameraPositions, selectViewMode } from "..";
@@ -17,6 +18,7 @@ export function useHandleCameraMoved({ svg }: { svg: SVGSVGElement | null }) {
     const cameraType = useAppSelector(selectCameraType);
     const viewMode = useAppSelector(selectViewMode);
     const savedCameraPositions = useAppSelector(selectSavedCameraPositions);
+    const currentTopDownElevation = useAppSelector(selectCurrentTopDownElevation);
 
     const moveSvgMarkers = useMoveMarkers(svg);
     const movementTimer = useRef<ReturnType<typeof setTimeout>>();
@@ -56,28 +58,24 @@ export function useHandleCameraMoved({ svg }: { svg: SVGSVGElement | null }) {
                         return;
                     }
 
-                    // TODO ORTHO
+                    const { camera } = (view as any).renderState;
 
                     // Update elevation
-                    // const mat = mat3.fromQuat(mat3.create(), view.camera.rotation);
-                    // const up = [0, 1, 0] as vec3;
-                    // const topDown = vec3.equals(vec3.fromValues(mat[6], mat[7], mat[8]), up);
-                    // const elevation = topDown ? view.camera.controller.params.referenceCoordSys[13] : undefined;
-                    // if (currentTopDownElevation !== elevation) {
-                    //     dispatch(orthoCamActions.setCurrentTopDownElevation(elevation));
-                    // }
+                    const mat = mat3.fromQuat(mat3.create(), camera.rotation);
+                    const up = [0, 0, 1] as vec3;
+                    const topDown = vec3.equals(vec3.fromValues(mat[6], mat[7], mat[8]), up);
+                    const elevation = topDown ? view.renderState.camera.position[2] : undefined;
+                    if (currentTopDownElevation !== elevation) {
+                        dispatch(orthoCamActions.setCurrentTopDownElevation(elevation));
+                    }
 
-                    // // Move grid
-                    // const origo = vec3.clone(view.settings.grid.origo);
-                    // const z = vec3.fromValues(mat[6], mat[7], mat[8]);
-                    // const camPos = vec3.fromValues(
-                    //     view.camera.controller.params.referenceCoordSys[12],
-                    //     view.camera.controller.params.referenceCoordSys[13],
-                    //     view.camera.controller.params.referenceCoordSys[14]
-                    // );
-                    // const delta = vec3.dot(z, vec3.sub(vec3.create(), camPos, origo));
-                    // const newPos = vec3.scaleAndAdd(vec3.create(), origo, z, delta);
-                    // dispatch(renderActions.setGrid({ origo: newPos }));
+                    // Move grid
+                    const origin = vec3.clone(view.renderState.grid.origin);
+                    const z = vec3.fromValues(mat[6], mat[7], mat[8]);
+                    const camPos = vec3.clone(camera.position);
+                    const delta = vec3.dot(z, vec3.sub(vec3.create(), camPos, origin));
+                    const newPos = vec3.scaleAndAdd(vec3.create(), origin, z, delta);
+                    dispatch(renderActions.setGrid({ origin: newPos }));
                 }, 100);
 
                 movementTimer.current = setTimeout(() => {
@@ -105,15 +103,6 @@ export function useHandleCameraMoved({ svg }: { svg: SVGSVGElement | null }) {
                 }, 500);
             }
         },
-        [
-            view,
-            dispatch,
-            // currentTopDownElevation,
-            savedCameraPositions,
-            cameraType,
-            // advancedSettings,
-            viewMode,
-            moveSvgMarkers,
-        ]
+        [view, dispatch, currentTopDownElevation, savedCameraPositions, cameraType, viewMode, moveSvgMarkers]
     );
 }

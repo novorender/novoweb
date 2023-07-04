@@ -21,8 +21,6 @@ export function OrthoShortcut({ position, ...speedDialProps }: Props) {
     const elevation = useAppSelector(selectDefaultTopDownElevation);
     const dispatch = useAppDispatch();
 
-    console.log(elevation);
-
     const handleClick = () => {
         if (cameraType === CameraType.Pinhole) {
             dispatch(

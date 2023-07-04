@@ -1,6 +1,6 @@
 import { MeasureScene } from "@novorender/measure-api";
 import { vec2, vec3 } from "gl-matrix";
-import { MouseEvent, MutableRefObject, PointerEvent, TouchEvent, WheelEvent, useRef } from "react";
+import { MouseEvent, MutableRefObject, PointerEvent as ReactPointerEvent, TouchEvent, WheelEvent, useRef } from "react";
 
 import { isIpad, isIphone } from "app";
 import { useAppDispatch, useAppSelector } from "app/store";
@@ -102,14 +102,14 @@ export function useCanvasEventHandlers({
         moveClippingPlanes(-(e.deltaY / 100));
     };
 
-    const isTouchPointer = useRef(false); // todo
     const onContextMenu = (evt: MouseEvent<HTMLCanvasElement>) => {
-        if (!isTouchPointer.current) {
+        const isTouch = evt.nativeEvent instanceof PointerEvent && evt.nativeEvent.pointerType === "touch";
+        if (!isTouch) {
             return;
         }
 
         evt.preventDefault();
-        handleCanvasContextMenu([evt.clientX, evt.clientY]);
+        handleCanvasContextMenu([evt.clientX, evt.clientY], isTouch);
     };
 
     // Need this until contextmenu event is supported in mobile safari.
@@ -137,7 +137,7 @@ export function useCanvasEventHandlers({
                         vec2.dist(contextMenuTouchState.current.startPos, contextMenuTouchState.current.currentPos) <=
                             10
                     ) {
-                        handleCanvasContextMenu(contextMenuTouchState.current.currentPos);
+                        handleCanvasContextMenu(contextMenuTouchState.current.currentPos, true);
                         contextMenuTouchState.current = undefined;
                     }
                 }, 500),
@@ -197,14 +197,14 @@ export function useCanvasEventHandlers({
     const prevHoverUpdate = useRef(0);
     const prevHoverEnt = useRef<Awaited<ReturnType<MeasureScene["pickMeasureEntityOnCurrentObject"]>>>();
     const previous2dSnapPos = useRef(vec2.create());
-    const onPointerMove = async (e: PointerEvent<HTMLCanvasElement>) => {
+    const onPointerMove = async (e: ReactPointerEvent<HTMLCanvasElement>) => {
         pointerPos.current = [e.nativeEvent.offsetX, e.nativeEvent.offsetY];
         if (!view || !canvas || !svg || (!e.movementY && !e.movementX)) {
             return;
         }
 
         if (e.buttons === 0 && useSvgCursor) {
-            const result = await view.pick(e.nativeEvent.offsetX, e.nativeEvent.offsetY);
+            const result = await view.pick(e.nativeEvent.offsetX, e.nativeEvent.offsetY, 1);
 
             let hoverEnt = prevHoverEnt.current;
             const now = performance.now();
@@ -285,7 +285,8 @@ export function useCanvasEventHandlers({
             e.buttons === 0 &&
             subtrees.points === SubtreeStatus.Shown;
         if (setDeviationStamp) {
-            const measurement = await view.pick(e.nativeEvent.offsetX, e.nativeEvent.offsetY);
+            const isTouch = e.nativeEvent instanceof PointerEvent && e.nativeEvent.pointerType === "touch";
+            const measurement = await view.pick(e.nativeEvent.offsetX, e.nativeEvent.offsetY, isTouch ? 8 : 1);
 
             if (measurement?.deviation !== undefined) {
                 dispatch(
@@ -326,18 +327,16 @@ export function useCanvasEventHandlers({
                 return;
             }
 
-            handleCanvasContextMenu(cursorState.currentPos);
+            handleCanvasContextMenu(cursorState.currentPos, false);
         } else if (e.button !== 0) {
             return;
         }
     };
 
-    const onPointerEnter = (e: PointerEvent<HTMLCanvasElement>) => {
+    const onPointerEnter = (e: ReactPointerEvent<HTMLCanvasElement>) => {
         if (e.pointerType === "mouse") {
-            isTouchPointer.current = false;
             return;
         }
-        isTouchPointer.current = true;
         handleDown(e.nativeEvent.offsetX, e.nativeEvent.offsetY, e.timeStamp);
     };
 

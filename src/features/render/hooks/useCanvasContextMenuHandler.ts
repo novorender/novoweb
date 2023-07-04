@@ -17,12 +17,12 @@ export function useCanvasContextMenuHandler() {
         state: { view },
     } = useExplorerGlobals();
 
-    const handleContextMenu = async (pos: vec2) => {
+    const handleContextMenu = async (pos: vec2, isTouch: boolean) => {
         if (!view || picker !== Picker.Object || !features.length) {
             return;
         }
 
-        const result = await view.pick(pos[0], pos[1]);
+        const result = await view.pick(pos[0], pos[1], isTouch ? 8 : 4);
 
         if (!result || result.objectId === -1) {
             dispatch(renderActions.setStamp(null));

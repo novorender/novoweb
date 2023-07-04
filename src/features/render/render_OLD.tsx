@@ -115,7 +115,7 @@ import {
 } from "./utils";
 import { xAxis, yAxis, axis } from "./consts";
 import { moveSvgCursor } from "./svgUtils";
-import { useHandleGridChanges } from "./hooks/useHandleGridChanges";
+import { useHandleGrid } from "./hooks/useHandleGrid";
 import { useHandleCameraControls } from "./hooks/useHandleCameraControls";
 import { useCanvasClickHandler } from "./hooks/useCanvasClickHandler";
 import { useHandleCanvasCursor } from "./hooks/useHandleCanvasCursor";
@@ -806,7 +806,7 @@ export function Render3D({ onInit }: Props) {
         [cameraState, pointerLock, view, canvas]
     );
 
-    useHandleGridChanges();
+    useHandleGrid();
     useHandleClippingBoxChanges();
     useHandleImageChanges();
     useHandleCameraControls();

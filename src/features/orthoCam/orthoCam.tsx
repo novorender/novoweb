@@ -6,7 +6,6 @@ import { useAppDispatch, useAppSelector } from "app/store";
 import { Divider, IosSwitch, LogoSpeedDial, ScrollBox, Switch, WidgetContainer, WidgetHeader } from "components";
 import { featuresConfig } from "config/features";
 import { useExplorerGlobals } from "contexts/explorerGlobals";
-import { toggleTerrainAsBackground } from "features/advancedSettings";
 import WidgetList from "features/widgetList/widgetList";
 import { useToggle } from "hooks/useToggle";
 
@@ -34,7 +33,7 @@ export default function OrthoCam() {
     const minimized = useAppSelector(selectMinimized) === featuresConfig.orthoCam.key;
     const maximized = useAppSelector(selectMaximized).includes(featuresConfig.orthoCam.key);
     const {
-        state: { view, canvas },
+        state: { view },
     } = useExplorerGlobals(true);
 
     const grid = useAppSelector(selectGrid);
@@ -69,7 +68,6 @@ export default function OrthoCam() {
     };
 
     const toggleGrid = (_e: ChangeEvent<HTMLInputElement>, checked: boolean) => {
-        // dispatch(renderActions.setGridDefaults({ enabled: checked }));
         dispatch(renderActions.setGrid({ enabled: checked }));
     };
 

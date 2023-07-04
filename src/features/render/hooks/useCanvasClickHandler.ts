@@ -1,35 +1,9 @@
-import { OrthoControllerParams } from "@novorender/webgl-api";
-import { mat3, mat4, quat, vec2, vec3, vec4 } from "gl-matrix";
+import { rotationFromDirection } from "@novorender/web_app";
+import { mat3, quat, vec2, vec3, vec4 } from "gl-matrix";
 import { MouseEventHandler, useRef } from "react";
 
-import { api, measureApi } from "app";
+import { measureApi } from "app";
 import { useAppDispatch, useAppSelector } from "app/store";
-import { areaActions } from "features/area";
-import { selectDeviations } from "features/deviations";
-import { followPathActions } from "features/followPath";
-import { heightProfileActions } from "features/heightProfile";
-import { manholeActions } from "features/manhole";
-import { measureActions, selectMeasure, useMeasurePickSettings } from "features/measure";
-import { orthoCamActions, selectCrossSectionPoint } from "features/orthoCam";
-import { pointLineActions } from "features/pointLine";
-import {
-    CameraType,
-    Picker,
-    StampKind,
-    renderActions,
-    selectCamera,
-    selectClippingBox,
-    selectMainObject,
-    selectPicker,
-    selectPointerDownState,
-    selectSecondaryHighlightProperty,
-    selectSelectMultiple,
-    selectStamp,
-    selectViewMode,
-} from "features/render/renderSlice";
-import { useAbortController } from "hooks/useAbortController";
-import { ExtendedMeasureEntity, ViewMode } from "types/misc";
-
 import { useExplorerGlobals } from "contexts/explorerGlobals";
 import {
     HighlightCollection,
@@ -38,9 +12,31 @@ import {
     useHighlightCollections,
 } from "contexts/highlightCollections";
 import { highlightActions, useDispatchHighlighted, useHighlighted } from "contexts/highlighted";
+import { areaActions } from "features/area";
+import { selectDeviations } from "features/deviations";
+import { followPathActions } from "features/followPath";
+import { heightProfileActions } from "features/heightProfile";
+import { manholeActions } from "features/manhole";
+import { measureActions, selectMeasure, useMeasurePickSettings } from "features/measure";
+import { orthoCamActions, selectCrossSectionPoint } from "features/orthoCam";
+import { pointLineActions } from "features/pointLine";
 import { selectShowPropertiesStamp } from "features/properties/slice";
+import {
+    CameraType,
+    Picker,
+    StampKind,
+    renderActions,
+    selectCamera,
+    selectMainObject,
+    selectPicker,
+    selectPointerDownState,
+    selectSecondaryHighlightProperty,
+    selectSelectMultiple,
+    selectViewMode,
+} from "features/render/renderSlice";
+import { useAbortController } from "hooks/useAbortController";
+import { ExtendedMeasureEntity, ViewMode } from "types/misc";
 import { isRealVec } from "utils/misc";
-import { rotationFromDirection } from "@novorender/web_app";
 
 export function useCanvasClickHandler() {
     const dispatch = useAppDispatch();
@@ -61,7 +57,6 @@ export function useCanvasClickHandler() {
     const measurePickSettings = useMeasurePickSettings();
     const crossSectionPoint = useAppSelector(selectCrossSectionPoint);
     const viewMode = useAppSelector(selectViewMode);
-    const stamp = useAppSelector(selectStamp);
     const pointerDownState = useAppSelector(selectPointerDownState);
     const showPropertiesStamp = useAppSelector(selectShowPropertiesStamp);
 
@@ -88,7 +83,7 @@ export function useCanvasClickHandler() {
         //     (viewMode === ViewMode.CrossSection || viewMode === ViewMode.FollowPath);
 
         const isTouch = evt.nativeEvent instanceof PointerEvent && evt.nativeEvent.pointerType === "touch";
-        const result = await view.pick(evt.nativeEvent.offsetX, evt.nativeEvent.offsetY, isTouch ? 16 : 8);
+        const result = await view.pick(evt.nativeEvent.offsetX, evt.nativeEvent.offsetY, isTouch ? 8 : 4);
 
         if (!result) {
             if (picker === Picker.Measurement && measure.hover) {
@@ -148,8 +143,6 @@ export function useCanvasClickHandler() {
                         quat.create(),
                         mat3.fromValues(right[0], right[1], right[2], up[0], up[1], up[2], dir[0], dir[1], dir[2])
                     );
-
-                    const orthoMat = mat4.fromRotationTranslation(mat4.create(), rotation, p);
 
                     dispatch(
                         renderActions.setCamera({

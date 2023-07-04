@@ -167,12 +167,6 @@ const initialState = {
         use: false,
     },
     camera: { type: CameraType.Pinhole } as MutableCameraState,
-    defaultDeviceProfile: {} as any,
-    gridDefaults: {
-        size1: 1001,
-        size2: 4,
-        color: [0.15, 0.15, 0.15],
-    },
     picker: Picker.Object,
     viewMode: ViewMode.Default,
     loadingHandles: [] as number[],
@@ -204,13 +198,16 @@ const initialState = {
     },
     grid: {
         enabled: false,
-        color: [0.15, 0.15, 0.15] as vec3,
+        distance: 500,
         origin: [0, 0, 0] as vec3,
         axisX: [0, 0, 0] as vec3,
         axisY: [0, 0, 0] as vec3,
-        size1: 1001,
-        size2: 4,
-        distance: 0,
+        // color1: [0.65, 0.65, 0.65] as vec3,
+        // color2: [0.15, 0.15, 0.15] as vec3,
+        color1: [1, 0, 0] as vec3,
+        color2: [0, 1, 0] as vec3,
+        size1: 1,
+        size2: 5,
     },
     points: {
         size: {
@@ -424,9 +421,6 @@ export const renderSlice = createSlice({
                 rotation: quat.clone(action.payload.rotation),
             };
         },
-        setDefaultDeviceProfile: (state, action: PayloadAction<State["defaultDeviceProfile"]>) => {
-            state.defaultDeviceProfile = action.payload;
-        },
         setSubtrees: (state, action: PayloadAction<State["subtrees"]>) => {
             state.subtrees = action.payload;
         },
@@ -449,36 +443,16 @@ export const renderSlice = createSlice({
         setSelectionBasketColor: (state, action: PayloadAction<Partial<State["selectionBasketColor"]>>) => {
             state.selectionBasketColor = { ...state.selectionBasketColor, ...action.payload };
         },
-        // setClippingBox: (state, action: PayloadAction<Partial<ClippingBox>>) => {
-        //     if (action.payload.enabled) {
-        //         state.clippingPlanes.enabled = false;
-        //     }
-
-        //     state.clippingBox = { ...state.clippingBox, ...action.payload } as MutableClippingBox;
-        // },
-        // resetClippingBox: (state) => {
-        //     state.clippingBox = initialState.clippingBox;
-        // },
         setClippingPlanes: (state, action: PayloadAction<RecursivePartial<State["clipping"]>>) => {
-            if (action.payload.enabled) {
-                // state.clippingBox.enabled = false;
-            }
-
             state.clipping = mergeRecursive(state.clipping, action.payload);
         },
         addClippingPlane: (state, action: PayloadAction<Omit<State["clipping"]["planes"][number], "color">>) => {
-            // state.clippingBox.enabled = false;
-            // state.clippingPlanes.enabled = true;
-
             state.clipping.enabled = true;
 
             if (state.clipping.planes.length < 6) {
                 state.clipping.planes.push({ ...action.payload, color: [0, 1, 0, 0.2] });
             }
         },
-        // resetClippingPlanes: (state) => {
-        //     state.clippingPlanes = initialState.clippingPlanes;
-        // },
         setCamera: (state, { payload }: PayloadAction<CameraState>) => {
             const goTo =
                 "goTo" in payload && payload.goTo
@@ -502,10 +476,6 @@ export const renderSlice = createSlice({
                 ...(goTo ? { goTo } : {}),
                 ...(zoomTo ? { zoomTo } : {}),
             } as MutableCameraState;
-        },
-        setGridDefaults: (state, action: PayloadAction<Partial<State["gridDefaults"]>>) => {
-            // state.gridDefaults = { ...state.gridDefaults, ...action.payload };
-            // state.grid = { ...state.grid, ...state.gridDefaults };
         },
         setGrid: (state, action: PayloadAction<RecursivePartial<State["grid"]>>) => {
             state.grid = mergeRecursive(state.grid, action.payload);
@@ -815,10 +785,8 @@ export const selectCamera = (state: RootState) => state.render.camera as CameraS
 export const selectCameraType = (state: RootState) => state.render.camera.type;
 export const selectSecondaryHighlightProperty = (state: RootState) => state.render.secondaryHighlight.property;
 export const selectProjectSettings = (state: RootState) => state.render.project;
-export const selectGridDefaults = (state: RootState) => state.render.gridDefaults;
 export const selectGrid = (state: RootState) => state.render.grid;
 export const selectPicker = (state: RootState) => state.render.picker;
-export const selectDefaultDeviceProfile = (state: RootState) => state.render.defaultDeviceProfile;
 export const selectViewMode = (state: RootState) => state.render.viewMode;
 export const selectLoadingHandles = (state: RootState) => state.render.loadingHandles;
 export const selectStamp = (state: RootState) => state.render.stamp;

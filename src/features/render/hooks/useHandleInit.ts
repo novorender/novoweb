@@ -102,7 +102,7 @@ export function useHandleInit() {
                                     : group.hidden
                                     ? GroupStatus.Hidden
                                     : GroupStatus.None,
-                                ids: group.ids ? new Set(group.ids) : (undefined as any), // TODO any?
+                                ids: group.ids ? new Set(group.ids) : (undefined as any),
                             }))
                     )
                 );

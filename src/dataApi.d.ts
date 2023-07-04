@@ -59,13 +59,14 @@ declare module "@novorender/data-js-api" {
             };
             grid: {
                 enabled: boolean;
-                color: [number, number, number];
                 origin: [number, number, number];
+                distance: number;
                 axisX: [number, number, number];
                 axisY: [number, number, number];
+                color1: [number, number, number];
+                color2: [number, number, number];
                 size1: number;
                 size2: number;
-                distance: number;
             };
             terrain: {
                 asBackground: boolean;
