@@ -1,5 +1,5 @@
 import { Bookmark } from "@novorender/data-js-api";
-import { rotationFromDirection } from "@novorender/web_app";
+import { ClippingMode, RenderState, rotationFromDirection } from "@novorender/web_app";
 import { useCallback } from "react";
 
 import { dataApi } from "app";
@@ -31,6 +31,7 @@ import { CameraType, DeepMutable, ObjectVisibility, SelectionBasketMode, renderA
 import { flip, flipGLtoCadQuat } from "features/render/utils";
 import { useSceneId } from "hooks/useSceneId";
 import { ExtendedMeasureEntity, ViewMode } from "types/misc";
+import { vec4 } from "gl-matrix";
 
 export function useSelectBookmark() {
     const sceneId = useSceneId();
@@ -302,33 +303,43 @@ export function useSelectBookmark() {
 
             dispatch(manholeActions.initFromLegacyBookmark(bookmark.manhole));
 
-            // TODO
-            // if (bookmark.clippingPlanes) {
-            //     view?.applySettings({ clippingPlanes: { ...bookmark.clippingPlanes, highlight: -1 } });
-            //     dispatch(
-            //         renderActions.setClippingBox({
-            //             ...bookmark.clippingPlanes,
-            //             baseBounds: bookmark.clippingPlanes.bounds,
-            //             highlight: -1,
-            //             defining: false,
-            //         })
-            //     );
-            // } else {
-            //     dispatch(renderActions.resetClippingBox());
-            // }
+            // TODO(SIGVE): Legacy clipping box
+            if (bookmark.clippingPlanes?.enabled) {
+                // baseW = normalOffset[3] her
+                const planes: { normalOffset: vec4; baseW: number; color: vec4 }[] = [];
 
-            // if (bookmark.clippingVolume) {
-            //     const { enabled, mode, planes } = bookmark.clippingVolume;
-            //     dispatch(
-            //         renderActions.setClippingPlanes({
-            //             enabled,
-            //             mode,
-            //             planes: (Array.from(planes) as Vec4[]).map((plane) => ({ plane, baseW: plane[3] })),
-            //         })
-            //     );
-            // } else {
-            //     dispatch(renderActions.setClippingPlanes({ planes: [], enabled: false, mode: "union" }));
-            // }
+                dispatch(
+                    renderActions.setClippingPlanes({
+                        enabled: true,
+                        mode: ClippingMode.union,
+                        planes,
+                    })
+                );
+            } else if (bookmark.clippingVolume?.enabled) {
+                const { enabled, mode, planes } = bookmark.clippingVolume;
+
+                dispatch(
+                    renderActions.setClippingPlanes({
+                        enabled,
+                        mode: mode === "intersection" ? ClippingMode.intersection : ClippingMode.union,
+                        planes: (
+                            Array.from(
+                                planes.map((plane) => {
+                                    const flipped = flip(plane);
+                                    flipped[3] *= -1;
+                                    return flipped;
+                                })
+                            ) as Vec4[]
+                        ).map((plane) => ({
+                            plane,
+                            baseW: plane[3],
+                            color: [0, 1, 0, 0.2],
+                        })),
+                    })
+                );
+            } else {
+                dispatch(renderActions.setClippingPlanes({ planes: [], enabled: false, mode: ClippingMode.union }));
+            }
 
             if (bookmark.ortho?.referenceCoordSys) {
                 dispatch(
