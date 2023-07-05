@@ -322,19 +322,17 @@ export function useSelectBookmark() {
                     renderActions.setClippingPlanes({
                         enabled,
                         mode: mode === "intersection" ? ClippingMode.intersection : ClippingMode.union,
-                        planes: (
-                            Array.from(
-                                planes.map((plane) => {
-                                    const flipped = flip(plane);
-                                    flipped[3] *= -1;
-                                    return flipped;
-                                })
-                            ) as Vec4[]
-                        ).map((plane) => ({
-                            normalOffset: plane,
-                            baseW: plane[3],
-                            color: [0, 1, 0, 0.2],
-                        })),
+                        planes: planes
+                            .map((plane) => {
+                                const flipped = flip(plane);
+                                flipped[3] *= -1;
+                                return flipped;
+                            })
+                            .map((plane) => ({
+                                normalOffset: plane,
+                                baseW: plane[3],
+                                color: [0, 1, 0, 0.2],
+                            })),
                     })
                 );
             } else {
