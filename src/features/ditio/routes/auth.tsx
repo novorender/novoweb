@@ -1,18 +1,17 @@
+import { Box, Typography, useTheme } from "@mui/material";
 import { useEffect, useState } from "react";
 import { Redirect, useHistory } from "react-router-dom";
-import { Box, Typography, useTheme } from "@mui/material";
 
 import { useAppDispatch, useAppSelector } from "app/store";
 import { LinearProgress, ScrollBox } from "components";
+import { featuresConfig } from "config/features";
+import { StorageKey } from "config/storage";
+import { selectHasAdminCapabilities } from "slices/explorerSlice";
 import { AsyncStatus } from "types/misc";
 import { deleteFromStorage, getFromStorage, saveToStorage } from "utils/storage";
-import { StorageKey } from "config/storage";
-import { featuresConfig } from "config/features";
-import { selectHasAdminCapabilities } from "slices/explorerSlice";
-import { selectProjectSettings } from "features/render/renderSlice";
 
-import { selectAccessToken, ditioActions, selectDitioProject } from "../slice";
 import { useGetAuthConfigQuery, useGetProjectsQuery, useLazyGetTokensQuery, useRefreshTokensMutation } from "../api";
+import { ditioActions, selectAccessToken, selectDitioConfig, selectDitioProject } from "../slice";
 
 let getTokensRequestInitialized = false;
 
@@ -23,7 +22,7 @@ export function Auth() {
     const isAdmin = useAppSelector(selectHasAdminCapabilities);
     const accessToken = useAppSelector(selectAccessToken);
     const project = useAppSelector(selectDitioProject);
-    const { ditioProjectNumber } = useAppSelector(selectProjectSettings);
+    const config = useAppSelector(selectDitioConfig);
     const [error, setError] = useState("");
 
     const { data: authConfig } = useGetAuthConfigQuery();
@@ -123,18 +122,18 @@ export function Auth() {
             return;
         }
 
-        const _project = projects.find((proj) => proj.projectNumber === ditioProjectNumber);
+        const _project = projects.find((proj) => proj.projectNumber === config.projectNumber);
 
         if (_project) {
             dispatch(ditioActions.setProject(_project));
         } else if (isAdmin) {
             history.push("/settings");
-        } else if (!ditioProjectNumber) {
+        } else if (!config.projectNumber) {
             setError(`${featuresConfig.ditio.name} has not yet been set up for this project.`);
         } else {
-            setError(`You do not have access to the ${ditioProjectNumber} ${featuresConfig.ditio.name} project.`);
+            setError(`You do not have access to the ${config.projectNumber} ${featuresConfig.ditio.name} project.`);
         }
-    }, [projects, project, history, isAdmin, dispatch, ditioProjectNumber]);
+    }, [projects, project, history, isAdmin, dispatch, config.projectNumber]);
 
     return project ? (
         <Redirect to="/feed" />

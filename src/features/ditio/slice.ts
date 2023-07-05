@@ -1,6 +1,7 @@
 import { createSlice, PayloadAction } from "@reduxjs/toolkit";
 
 import { RootState } from "app/store";
+import { initScene } from "features/render";
 import { AsyncState, AsyncStatus } from "types/misc";
 
 import { AuthConfig, Project } from "./types";
@@ -19,6 +20,9 @@ export enum FilterType {
 }
 
 const initialState = {
+    config: {
+        projectNumber: "",
+    },
     authConfig: undefined as AuthConfig | undefined,
     accessToken: { status: AsyncStatus.Initial } as AsyncState<string>,
     refreshToken: undefined as undefined | { token: string; refreshIn: number },
@@ -87,12 +91,26 @@ export const ditioSlice = createSlice({
         setHoveredEntity: (state, action: PayloadAction<State["hoveredEntity"]>) => {
             state.hoveredEntity = action.payload;
         },
+        setConfig: (state, action: PayloadAction<State["config"]>) => {
+            state.config = action.payload;
+        },
         resetFilters: (state) => {
             state.filters = initialFilters;
         },
         logOut: () => {
             return initialState;
         },
+    },
+    extraReducers(builder) {
+        builder.addCase(initScene, (state, action) => {
+            const props = action.payload.sceneData.customProperties;
+
+            if (props.integrations?.ditio) {
+                state.config = props.integrations.ditio;
+            } else if (props.ditioProjectNumber) {
+                state.config.projectNumber = props.ditioProjectNumber;
+            }
+        });
     },
 });
 
@@ -108,6 +126,7 @@ export const selectFilters = (state: RootState) => state.ditio.filters;
 export const selectActivePost = (state: RootState) => state.ditio.activePost;
 export const selectActiveImg = (state: RootState) => state.ditio.activeImg;
 export const selectHoveredEntity = (state: RootState) => state.ditio.hoveredEntity;
+export const selectDitioConfig = (state: RootState) => state.ditio.config;
 
 const { actions, reducer } = ditioSlice;
 export { actions as ditioActions, reducer as ditioReducer };

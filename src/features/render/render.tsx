@@ -36,6 +36,7 @@ import { Stamp } from "./stamp";
 import { useHandleJiraKeepAlive } from "features/jira";
 import { useHandleXsiteManageKeepAlive, useHandleXsiteManageMachineLocations } from "features/xsiteManage";
 import { useHandleCrossSection } from "features/orthoCam";
+import { useHandleDitioKeepAlive } from "features/ditio";
 
 glMatrix.setMatrixArrayType(Array);
 
@@ -105,6 +106,7 @@ export function Render3D() {
     useHandleJiraKeepAlive();
     useHandleXsiteManageKeepAlive();
     useHandleXsiteManageMachineLocations();
+    useHandleDitioKeepAlive();
 
     const useSvgCursor = useHandleCanvasCursor();
     const onClick = useCanvasClickHandler();

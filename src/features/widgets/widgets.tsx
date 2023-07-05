@@ -26,7 +26,7 @@ const SelectionBasket = lazy(() => import("features/selectionBasket/selectionBas
 // const Deviations = lazy(() => import("features/deviations/deviations"));
 // const FollowPath = lazy(() => import("features/followPath/followPath"));
 const BimTrack = lazy(() => import("features/bimTrack/bimTrack"));
-// const Ditio = lazy(() => import("features/ditio/ditio"));
+const Ditio = lazy(() => import("features/ditio/ditio"));
 const MyLocation = lazy(() => import("features/myLocation/myLocation"));
 const RangeSearch = lazy(() => import("features/rangeSearch/rangeSearch"));
 const User = lazy(() => import("features/user/user"));
@@ -193,9 +193,9 @@ function getWidgetByKey(key: WidgetKey): JSX.Element | string {
         // case featuresConfig.followPath.key:
         //     Widget = FollowPath;
         //     break;
-        // case featuresConfig.ditio.key:
-        //     Widget = Ditio;
-        //     break;
+        case featuresConfig.ditio.key:
+            Widget = Ditio;
+            break;
         case featuresConfig.myLocation.key:
             Widget = MyLocation;
             break;

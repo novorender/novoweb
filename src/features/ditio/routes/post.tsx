@@ -1,25 +1,26 @@
+import { ArrowBack, LocationOnOutlined } from "@mui/icons-material";
+import { Avatar, Box, Button, ImageList, ImageListItem, Typography, useTheme } from "@mui/material";
+import { format, formatDistance } from "date-fns";
 import { Fragment } from "react";
 import { useHistory, useParams } from "react-router-dom";
-import { Avatar, Box, Button, ImageList, ImageListItem, Typography, useTheme } from "@mui/material";
-import { ArrowBack, LocationOnOutlined } from "@mui/icons-material";
-import { format, formatDistance } from "date-fns";
 
 import { dataApi } from "app";
-import { ScrollBox, Tooltip, Divider, LinearProgress } from "components";
-import { useExplorerGlobals } from "contexts/explorerGlobals";
 import { useAppDispatch, useAppSelector } from "app/store";
+import { Divider, LinearProgress, ScrollBox, Tooltip } from "components";
+import { useExplorerGlobals } from "contexts/explorerGlobals";
 import { CameraType, renderActions, selectProjectSettings } from "features/render";
+import { flip } from "features/render/utils";
 
 import { baseUrl, useGetPostQuery } from "../api";
-import { newLineToHtmlBr } from "./feed";
 import { ditioActions } from "../slice";
+import { newLineToHtmlBr } from "./feed";
 
 export function Post() {
     const theme = useTheme();
     const postId = useParams<{ id: string }>().id;
     const history = useHistory();
     const {
-        state: { view_OLD: view },
+        state: { view },
     } = useExplorerGlobals(true);
 
     const { tmZone } = useAppSelector(selectProjectSettings);
@@ -32,17 +33,19 @@ export function Post() {
             return;
         }
 
-        const pos = dataApi.latLon2tm(
-            { latitude: post.GeoCoordinate.Latitude, longitude: post.GeoCoordinate.Longitude },
-            tmZone
+        const pos = flip(
+            dataApi.latLon2tm(
+                { latitude: post.GeoCoordinate.Latitude, longitude: post.GeoCoordinate.Longitude },
+                tmZone
+            )
         );
 
         dispatch(
             renderActions.setCamera({
                 type: CameraType.Pinhole,
                 goTo: {
-                    position: [pos[0], view.camera.position[1], pos[2]],
-                    rotation: view.camera.rotation,
+                    position: [pos[0], pos[1], view.renderState.camera.position[2]],
+                    rotation: view.renderState.camera.rotation,
                 },
             })
         );

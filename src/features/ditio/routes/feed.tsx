@@ -1,19 +1,19 @@
+import { FilterAlt } from "@mui/icons-material";
+import { Box, Button, FormControlLabel, ListItemButton, Typography, useTheme } from "@mui/material";
 import { Fragment, useEffect, useRef } from "react";
 import { Link, useHistory } from "react-router-dom";
 import AutoSizer from "react-virtualized-auto-sizer";
-import { Box, Button, FormControlLabel, ListItemButton, Typography, useTheme } from "@mui/material";
-import { FilterAlt } from "@mui/icons-material";
 
-import { Tooltip, ImgTooltip, Divider, IosSwitch, LinearProgress, FixedSizeVirualizedList } from "components";
 import { useAppDispatch, useAppSelector } from "app/store";
+import { Divider, FixedSizeVirualizedList, ImgTooltip, IosSwitch, LinearProgress, Tooltip } from "components";
 
 import { baseUrl, useFeedWebRawQuery } from "../api";
 import {
     ditioActions,
     initialFilters,
+    selectDitioProject,
     selectFeedScrollOffset,
     selectFilters,
-    selectDitioProject,
     selectShowDitioMarkers,
 } from "../slice";
 

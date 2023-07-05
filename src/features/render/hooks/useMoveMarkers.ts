@@ -1,14 +1,14 @@
 import { vec3 } from "gl-matrix";
-import { useEffect, useCallback } from "react";
+import { useCallback, useEffect } from "react";
 
-import { selectImages, selectShowImageMarkers } from "features/images";
 import { measureApi } from "app";
-import { useDitioMarkers } from "features/ditio";
 import { useAppSelector } from "app/store";
+import { useExplorerGlobals } from "contexts/explorerGlobals";
+import { useDitioMarkers } from "features/ditio";
+import { selectImages, selectShowImageMarkers } from "features/images";
 import { selectCurrentLocation } from "features/myLocation";
 import { useXsiteManageLogPointMarkers, useXsiteManageMachineMarkers } from "features/xsiteManage";
 import { AsyncStatus } from "types/misc";
-import { useExplorerGlobals } from "contexts/explorerGlobals";
 
 export function useMoveMarkers(svg: SVGSVGElement | null) {
     const {
