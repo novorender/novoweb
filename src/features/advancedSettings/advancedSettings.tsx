@@ -96,7 +96,6 @@ export default function AdvancedSettings() {
                 camera: {
                     ...cameraDefaults,
                 },
-                integrations: {},
                 features: {
                     widgets: {
                         enabled: enabledWidgets.map((widget) => widget.key),

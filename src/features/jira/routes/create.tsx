@@ -1,4 +1,3 @@
-import { useEffect, useRef, useState } from "react";
 import { ArrowBack, Close, Save } from "@mui/icons-material";
 import {
     Autocomplete,
@@ -7,28 +6,29 @@ import {
     FormControl,
     FormHelperText,
     FormLabel,
+    IconButton,
     MenuItem,
     OutlinedInput,
     Select,
-    useTheme,
-    TextField,
     Snackbar,
-    IconButton,
+    TextField,
     TextFieldProps,
+    useTheme,
 } from "@mui/material";
-import { useHistory } from "react-router-dom";
-import { v4 as uuidv4 } from "uuid";
 import { DatePicker } from "@mui/x-date-pickers";
 import { format, isValid } from "date-fns";
+import { useEffect, useRef, useState } from "react";
+import { useHistory } from "react-router-dom";
+import { v4 as uuidv4 } from "uuid";
 
 import { dataApi } from "app";
-import { Divider, LinearProgress, ScrollBox } from "components";
 import { useAppDispatch, useAppSelector } from "app/store";
-import { sleep } from "utils/time";
-import { AsyncStatus } from "types/misc";
-import { useCreateBookmark } from "features/bookmarks/useCreateBookmark";
-import { createCanvasSnapshot } from "utils/misc";
+import { Divider, LinearProgress, ScrollBox } from "components";
 import { useExplorerGlobals } from "contexts/explorerGlobals";
+import { useCreateBookmark } from "features/bookmarks/useCreateBookmark";
+import { AsyncStatus } from "types/misc";
+import { createCanvasSnapshot } from "utils/misc";
+import { sleep } from "utils/time";
 
 import {
     useAddAttachmentMutation,
@@ -39,9 +39,9 @@ import {
 } from "../jiraApi";
 import {
     jiraActions,
-    selectJiraIssueType,
     selectJiraAccessTokenData,
     selectJiraComponent,
+    selectJiraIssueType,
     selectJiraProject,
     selectJiraSpace,
 } from "../jiraSlice";

@@ -2,6 +2,7 @@ import { createSlice, PayloadAction } from "@reduxjs/toolkit";
 
 import { RootState } from "app/store";
 import { AsyncState, AsyncStatus } from "types/misc";
+import { initScene } from "features/render";
 
 import { Component, CurrentUser, IssueType, Project, Space } from "./types";
 
@@ -18,6 +19,7 @@ export const initialFilters = {
 };
 
 const initialState = {
+    config: { space: "", project: "", component: "" },
     space: undefined as undefined | Space,
     project: undefined as undefined | Project,
     component: undefined as undefined | Component,
@@ -62,6 +64,9 @@ export const jiraSlice = createSlice({
         setFilters: (state, action: PayloadAction<Partial<State["filters"]>>) => {
             state.filters = { ...state.filters, ...action.payload };
         },
+        setConfig: (state, action: PayloadAction<State["config"]>) => {
+            state.config = action.payload;
+        },
         clearFilters: (state) => {
             state.filters = {
                 [JiraFilterType.AssignedToMe]: false,
@@ -72,6 +77,17 @@ export const jiraSlice = createSlice({
         logOut: () => {
             return initialState;
         },
+    },
+    extraReducers(builder) {
+        builder.addCase(initScene, (state, action) => {
+            const props = action.payload.sceneData.customProperties;
+
+            if (props.integrations?.jira) {
+                state.config = props.integrations.jira;
+            } else if (props.jiraSettings) {
+                state.config = props.jiraSettings;
+            }
+        });
     },
 });
 
@@ -85,6 +101,7 @@ export const selectJiraComponent = (state: RootState) => state.jira.component;
 export const selectJiraUser = (state: RootState) => state.jira.user;
 export const selectJiraIssueType = (state: RootState) => state.jira.issueType;
 export const selectJiraFilters = (state: RootState) => state.jira.filters;
+export const selectJiraConfig = (state: RootState) => state.jira.config;
 
 const { actions, reducer } = jiraSlice;
 export { actions as jiraActions, reducer as jiraReducer };

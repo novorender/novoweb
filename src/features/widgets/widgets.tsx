@@ -33,7 +33,7 @@ const User = lazy(() => import("features/user/user"));
 const HeightProfile = lazy(() => import("features/heightProfile/heightProfile"));
 const Area = lazy(() => import("features/area/area"));
 const PointLine = lazy(() => import("features/pointLine/pointLine"));
-// const Jira = lazy(() => import("features/jira/jira"));
+const Jira = lazy(() => import("features/jira/jira"));
 const Manhole = lazy(() => import("features/manhole/manhole"));
 // const XsiteManage = lazy(() => import("features/xsiteManage/xsiteManage"));
 
@@ -214,9 +214,9 @@ function getWidgetByKey(key: WidgetKey): JSX.Element | string {
         case featuresConfig.pointLine.key:
             Widget = PointLine;
             break;
-        // case featuresConfig.jira.key:
-        //     Widget = Jira;
-        //     break;
+        case featuresConfig.jira.key:
+            Widget = Jira;
+            break;
         case featuresConfig.manhole.key:
             Widget = Manhole;
             break;

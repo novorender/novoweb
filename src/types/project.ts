@@ -27,19 +27,6 @@ export type ExplorerProjectState = {
             topDownElevation: undefined | number;
         };
     };
-    integrations: {
-        ditio?: {
-            projectNumber: string;
-        };
-        xsiteManage?: {
-            siteId: string;
-        };
-        jira?: {
-            space: string;
-            project: string;
-            component: string;
-        };
-    };
     renderSettings: {
         dynamicResolutionScaling: boolean;
         msaa: {
@@ -140,8 +127,23 @@ export type ExplorerProjectState = {
     };
 };
 
+type Integrations = {
+    jira?: {
+        space: string;
+        project: string;
+        component: string;
+    };
+    ditio?: {
+        projectNumber: string;
+    };
+    xsiteManage: {
+        siteId: string;
+    };
+};
+
 export type CustomProperties = {
     v1?: ExplorerProjectState;
+    integrations?: Integrations;
     initialCameraState?: {
         kind: "pinhole" | "orthographic";
         position: [number, number, number];
