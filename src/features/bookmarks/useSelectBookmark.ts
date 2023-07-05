@@ -374,9 +374,9 @@ export function useSelectBookmark() {
                 );
             }
 
-            if (bookmark.grid) {
-                // dispatch(renderActions.setGridDefaults({ enabled: bookmark.grid.enabled }));
-                dispatch(renderActions.setGrid(bookmark.grid as DeepMutable<typeof bookmark.grid>));
+            if (bookmark.grid?.enabled) {
+                // TODO(OLA): test
+                dispatch(renderActions.setGrid({ origin: flip(bookmark.grid.origo) }));
             }
 
             if (bookmark.followPath) {
