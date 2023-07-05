@@ -25,7 +25,7 @@ const BimCollab = lazy(() => import("features/bimCollab/bimCollab"));
 const SelectionBasket = lazy(() => import("features/selectionBasket/selectionBasket"));
 // const Deviations = lazy(() => import("features/deviations/deviations"));
 // const FollowPath = lazy(() => import("features/followPath/followPath"));
-// const BimTrack = lazy(() => import("features/bimTrack/bimTrack"));
+const BimTrack = lazy(() => import("features/bimTrack/bimTrack"));
 // const Ditio = lazy(() => import("features/ditio/ditio"));
 const MyLocation = lazy(() => import("features/myLocation/myLocation"));
 const RangeSearch = lazy(() => import("features/rangeSearch/rangeSearch"));
@@ -169,9 +169,9 @@ function getWidgetByKey(key: WidgetKey): JSX.Element | string {
         case featuresConfig.bimcollab.key:
             Widget = BimCollab;
             break;
-        // case featuresConfig.bimTrack.key:
-        //     Widget = BimTrack;
-        //     break;
+        case featuresConfig.bimTrack.key:
+            Widget = BimTrack;
+            break;
         case featuresConfig.clippingPlanes.key:
             Widget = ClippingPlanes;
             break;
