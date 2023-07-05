@@ -331,7 +331,7 @@ export function useSelectBookmark() {
                                 })
                             ) as Vec4[]
                         ).map((plane) => ({
-                            plane,
+                            normalOffset: plane,
                             baseW: plane[3],
                             color: [0, 1, 0, 0.2],
                         })),
