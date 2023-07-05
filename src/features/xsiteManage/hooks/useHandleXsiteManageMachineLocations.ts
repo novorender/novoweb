@@ -3,7 +3,8 @@ import { useEffect, useRef } from "react";
 
 import { dataApi } from "app";
 import { useAppDispatch, useAppSelector } from "app/store";
-import { selectProjectSettings } from "features/render/renderSlice";
+import { selectProjectSettings } from "features/render";
+import { flip } from "features/render/utils";
 
 import { selectXsiteManageAccessToken, selectXsiteManageSite, xsiteManageActions } from "../slice";
 import { MachineLocation } from "../types";
@@ -42,7 +43,7 @@ export function useHandleXsiteManageMachineLocations() {
             client.on("message", (_topic, msgBuffer) => {
                 try {
                     const message = JSON.parse(msgBuffer.toString()) as Omit<MachineLocation, "position">;
-                    const position = dataApi.latLon2tm(message, tmZone);
+                    const position = flip(dataApi.latLon2tm(message, tmZone));
                     dispatch(xsiteManageActions.registerMachineLocation({ ...message, position }));
                 } catch (e) {
                     console.warn(e);

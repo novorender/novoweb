@@ -1,11 +1,11 @@
-import { useHistory } from "react-router-dom";
-import { Box, FormControlLabel, ListItemButton, ListItemIcon, ListItemText, useTheme } from "@mui/material";
 import { GpsFixed, GpsOff } from "@mui/icons-material";
-import { useRef, useEffect, useState } from "react";
+import { Box, FormControlLabel, ListItemButton, ListItemIcon, ListItemText, useTheme } from "@mui/material";
+import { useEffect, useRef, useState } from "react";
+import { useHistory } from "react-router-dom";
 import AutoSizer from "react-virtualized-auto-sizer";
 
 import { useAppDispatch, useAppSelector } from "app/store";
-import { LinearProgress, ScrollBox, FixedSizeVirualizedList, Divider, IosSwitch } from "components";
+import { Divider, FixedSizeVirualizedList, IosSwitch, LinearProgress, ScrollBox } from "components";
 import { msToHrs } from "utils/time";
 
 import { useGetMachinesQuery } from "../api";

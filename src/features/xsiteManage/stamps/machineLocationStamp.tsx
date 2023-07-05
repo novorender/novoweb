@@ -1,19 +1,19 @@
-import { quat } from "gl-matrix";
-import { Box, Typography, IconButton, Button } from "@mui/material";
 import { Add, Close, FlightTakeoff } from "@mui/icons-material";
+import { Box, Button, IconButton, Typography } from "@mui/material";
+import { quat } from "gl-matrix";
 
-import { Divider } from "components";
-import { renderActions, CameraType, selectStamp, StampKind } from "features/render";
 import { useAppDispatch, useAppSelector } from "app/store";
+import { Divider } from "components";
 import { useExplorerGlobals } from "contexts/explorerGlobals";
+import { CameraType, StampKind, renderActions, selectStamp } from "features/render";
 
-import { toDBSN } from "../utils";
 import { useGetMachinesQuery } from "../api";
 import { LogPointTime, selectXsiteManageActiveLogPoints, selectXsiteManageSite, xsiteManageActions } from "../slice";
+import { toDBSN } from "../utils";
 
 export function MachineLocationStamp() {
     const {
-        state: { view_OLD: view },
+        state: { view },
     } = useExplorerGlobals();
     const dispatch = useAppDispatch();
     const stamp = useAppSelector(selectStamp);
@@ -53,12 +53,10 @@ export function MachineLocationStamp() {
                                 goTo: {
                                     position: [
                                         stamp.data.location.position[0],
-                                        view
-                                            ? (view.camera.controller as any).outputPosition[1]
-                                            : stamp.data.location.position[1],
-                                        stamp.data.location.position[2],
+                                        stamp.data.location.position[1],
+                                        view ? view.renderState.camera.position[2] : stamp.data.location.position[2],
                                     ],
-                                    rotation: view ? quat.clone(view.camera.rotation) : [0, 0, 0, 1],
+                                    rotation: view ? quat.clone(view.renderState.camera.rotation) : [0, 0, 0, 1],
                                 },
                             })
                         )

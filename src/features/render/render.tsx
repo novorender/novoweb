@@ -33,6 +33,9 @@ import { Images } from "./images";
 import { Markers } from "./markers";
 import { SceneError } from "./sceneError";
 import { Stamp } from "./stamp";
+import { useHandleJiraKeepAlive } from "features/jira";
+import { useHandleXsiteManageKeepAlive, useHandleXsiteManageMachineLocations } from "features/xsiteManage";
+import { useHandleCrossSection } from "features/orthoCam";
 
 glMatrix.setMatrixArrayType(Array);
 
@@ -97,6 +100,11 @@ export function Render3D() {
     useHandleArea();
     useHandleManhole();
     useHandleLocationMarker();
+    useHandleCrossSection();
+
+    useHandleJiraKeepAlive();
+    useHandleXsiteManageKeepAlive();
+    useHandleXsiteManageMachineLocations();
 
     const useSvgCursor = useHandleCanvasCursor();
     const onClick = useCanvasClickHandler();

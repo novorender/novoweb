@@ -1,5 +1,4 @@
-import { useEffect, useState } from "react";
-import { useHistory, useParams } from "react-router-dom";
+import { ArrowBack } from "@mui/icons-material";
 import {
     Autocomplete,
     Box,
@@ -15,12 +14,15 @@ import {
     Typography,
     useTheme,
 } from "@mui/material";
-import { ArrowBack } from "@mui/icons-material";
+import { useEffect, useState } from "react";
+import { useHistory, useParams } from "react-router-dom";
 
-import { LinearProgress, ScrollBox, Divider, TextField } from "components";
 import { useAppDispatch, useAppSelector } from "app/store";
+import { Divider, LinearProgress, ScrollBox, TextField } from "components";
 import { featuresConfig } from "config/features";
 
+import { uniqueArray } from "utils/misc";
+import { useGetAllLogPointsQuery, useGetMachinesQuery } from "../api";
 import {
     LogPointTime,
     selectXsiteManageActiveLogPoints,
@@ -30,8 +32,6 @@ import {
     selectXsiteManageSite,
     xsiteManageActions,
 } from "../slice";
-import { useGetAllLogPointsQuery, useGetMachinesQuery } from "../api";
-import { uniqueArray } from "utils/misc";
 import { toDBSN } from "../utils";
 
 export function Machine() {

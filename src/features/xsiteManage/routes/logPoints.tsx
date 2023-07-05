@@ -1,7 +1,7 @@
-import { Link, useHistory } from "react-router-dom";
 import { ArrowBack } from "@mui/icons-material";
 import { Box, Button, List, ListItemButton, useTheme } from "@mui/material";
 import { format } from "date-fns";
+import { Link, useHistory } from "react-router-dom";
 
 import { useAppSelector } from "app/store";
 import { Divider, LinearProgress, ScrollBox } from "components";

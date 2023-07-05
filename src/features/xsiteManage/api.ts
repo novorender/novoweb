@@ -54,8 +54,8 @@ export const xsiteManageApi = createApi({
                         return {
                             ...pt,
                             x: pt.y,
-                            y: pt.z,
-                            z: -pt.x,
+                            y: pt.x,
+                            z: pt.z,
                         };
                     }
 
@@ -93,8 +93,8 @@ export const xsiteManageApi = createApi({
                             return {
                                 ...pt,
                                 x: pt.y,
-                                y: pt.z,
-                                z: -pt.x,
+                                y: pt.x,
+                                z: pt.z,
                             };
                         }
 

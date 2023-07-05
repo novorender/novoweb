@@ -1,8 +1,8 @@
+import { css, styled } from "@mui/material";
 import { SVGProps } from "react";
-import { styled, css } from "@mui/material";
 
-import { CameraType, renderActions, selectCameraType, selectStamp, StampKind } from "features/render/renderSlice";
 import { useAppDispatch, useAppSelector } from "app/store";
+import { CameraType, renderActions, selectCameraType, selectStamp, StampKind } from "features/render/renderSlice";
 
 import { useXsiteManageMachineMarkers } from "../hooks/useXsiteManageMachineMarkers";
 import {

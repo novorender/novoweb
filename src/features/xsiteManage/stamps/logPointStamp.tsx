@@ -9,7 +9,7 @@ import { useExplorerGlobals } from "contexts/explorerGlobals";
 
 export function LogPointStamp() {
     const {
-        state: { view_OLD: view },
+        state: { view },
     } = useExplorerGlobals();
     const dispatch = useAppDispatch();
     const stamp = useAppSelector(selectStamp);
@@ -42,7 +42,7 @@ export function LogPointStamp() {
                                 type: CameraType.Pinhole,
                                 goTo: {
                                     position: [stamp.data.logPoint.x, stamp.data.logPoint.y, stamp.data.logPoint.z],
-                                    rotation: view ? quat.clone(view.camera.rotation) : [0, 0, 0, 1],
+                                    rotation: view ? quat.clone(view.renderState.camera.rotation) : [0, 0, 0, 1],
                                 },
                             })
                         )

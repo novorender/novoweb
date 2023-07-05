@@ -1,7 +1,6 @@
 import { ArrowBack } from "@mui/icons-material";
 import { LoadingButton } from "@mui/lab";
 import { Autocomplete, Box, Button, CircularProgress, Typography, useTheme } from "@mui/material";
-import { mergeRecursive } from "@novorender/web_app";
 import { FormEventHandler, SyntheticEvent, useState } from "react";
 import { useHistory } from "react-router-dom";
 
@@ -12,6 +11,7 @@ import { useExplorerGlobals } from "contexts/explorerGlobals";
 import { loadScene } from "features/render/hooks/useHandleInit";
 import { selectIsAdminScene } from "slices/explorerSlice";
 import { AsyncState, AsyncStatus } from "types/misc";
+import { mergeRecursive } from "utils/misc";
 
 import { useGetAccessibleResourcesQuery, useGetComponentsQuery, useGetProjectsQuery } from "../jiraApi";
 import {
