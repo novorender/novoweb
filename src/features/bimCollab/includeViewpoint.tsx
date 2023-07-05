@@ -1,30 +1,29 @@
 import { Box, CircularProgress } from "@mui/material";
-import { HierarcicalObjectReference, ObjectId, Scene } from "@novorender/webgl-api";
-import { useStore } from "react-redux";
+import { HierarcicalObjectReference, ObjectDB, ObjectId } from "@novorender/webgl-api";
 import { useEffect } from "react";
+import { useStore } from "react-redux";
 
 import { RootState } from "app/store";
-import { ObjectVisibility, selectDefaultVisibility } from "features/render/renderSlice";
+import { useExplorerGlobals } from "contexts/explorerGlobals";
 import { useLazyHidden } from "contexts/hidden";
 import { useLazyHighlighted } from "contexts/highlighted";
+import { GroupStatus, useLazyObjectGroups } from "contexts/objectGroups";
 import { useLazySelectionBasket } from "contexts/selectionBasket";
-import { useLazyObjectGroups } from "contexts/objectGroups";
-import { useExplorerGlobals } from "contexts/explorerGlobals";
-
+import { ObjectVisibility, selectDefaultVisibility } from "features/render/renderSlice";
 import { useAbortController } from "hooks/useAbortController";
 import { useMountedState } from "hooks/useMountedState";
-import { searchByPatterns } from "utils/search";
-import { getGuids } from "utils/objectData";
-import { sleep } from "utils/time";
+import { Viewpoint } from "types/bcf";
 import {
     createBcfClippingPlanes,
-    createPerspectiveCamera,
     createBcfSnapshot,
     createBcfViewpointComponents,
     createOrthogonalCamera,
+    createPerspectiveCamera,
 } from "utils/bcf";
 import { uniqueArray } from "utils/misc";
-import { Viewpoint } from "types/bcf";
+import { getGuids } from "utils/objectData";
+import { searchByPatterns } from "utils/search";
+import { sleep } from "utils/time";
 
 type BaseViewpoint = Partial<Viewpoint> & Pick<Viewpoint, "snapshot">;
 export type NewViewpoint = BaseViewpoint &
@@ -44,7 +43,7 @@ export function IncludeViewpoint({
     const highlighted = useLazyHighlighted();
     const objectGroups = useLazyObjectGroups();
     const {
-        state: { view_OLD: view, scene_OLD: scene, canvas },
+        state: { view, db, canvas },
     } = useExplorerGlobals(true);
     const store = useStore<RootState>();
 
@@ -71,9 +70,9 @@ export function IncludeViewpoint({
             const abortSignal = abortController.current.signal;
             const state = store.getState();
             const defaultVisibility = selectDefaultVisibility(state);
-            const getSelected = idsToGuids({ scene, abortSignal, ids: highlighted.current.idArr });
+            const getSelected = idsToGuids({ db, abortSignal, ids: highlighted.current.idArr });
             const getExceptions = idsToGuids({
-                scene,
+                db,
                 abortSignal,
                 ids:
                     defaultVisibility === ObjectVisibility.Neutral
@@ -81,9 +80,9 @@ export function IncludeViewpoint({
                         : selectionBasket.current.idArr,
             });
             const getColoring = objectGroups.current
-                .filter((group) => group.selected)
+                .filter((group) => group.status === GroupStatus.Selected)
                 .map(async (group) => {
-                    return { color: group.color, guids: await idsToGuids({ scene, abortSignal, ids: group.ids }) };
+                    return { color: group.color, guids: await idsToGuids({ db, abortSignal, ids: [...group.ids] }) };
                 });
             const [exceptions, selected, coloring] = await Promise.all([
                 getExceptions,
@@ -99,7 +98,9 @@ export function IncludeViewpoint({
 
             const baseVp: BaseViewpoint = {
                 snapshot,
-                clipping_planes: createBcfClippingPlanes(view.settings.clippingVolume.planes),
+                clipping_planes: createBcfClippingPlanes(
+                    view.renderState.clipping.planes.map((plane) => plane.normalOffset)
+                ),
                 components: await createBcfViewpointComponents({
                     coloring,
                     selected,
@@ -108,10 +109,10 @@ export function IncludeViewpoint({
                 }),
             };
 
-            if (view.camera.kind === "orthographic") {
-                setViewpoint({ ...baseVp, orthogonal_camera: createOrthogonalCamera(view.camera) });
-            } else if (view.camera.kind === "pinhole") {
-                setViewpoint({ ...baseVp, perspective_camera: createPerspectiveCamera(view.camera) });
+            if (view.renderState.camera.kind === "orthographic") {
+                setViewpoint({ ...baseVp, orthogonal_camera: createOrthogonalCamera(view.renderState.camera) });
+            } else if (view.renderState.camera.kind === "pinhole") {
+                setViewpoint({ ...baseVp, perspective_camera: createPerspectiveCamera(view.renderState.camera) });
             }
         }
     }, [
@@ -122,7 +123,7 @@ export function IncludeViewpoint({
         hidden,
         selectionBasket,
         highlighted,
-        scene,
+        db,
         abortController,
         abort,
         setLoading,
@@ -150,11 +151,11 @@ export function IncludeViewpoint({
 
 async function idsToGuids({
     ids,
-    scene,
+    db,
     abortSignal,
 }: {
     ids: ObjectId[];
-    scene: Scene;
+    db: ObjectDB;
     abortSignal: AbortSignal;
 }): Promise<string[]> {
     if (!ids.length) {
@@ -188,7 +189,7 @@ async function idsToGuids({
         await Promise.all(
             batches.slice(i * concurrentRequests, i * concurrentRequests + concurrentRequests).map((batch) => {
                 return searchByPatterns({
-                    db: scene,
+                    db,
                     abortSignal,
                     callback,
                     full: true,

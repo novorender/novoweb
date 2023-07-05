@@ -5,6 +5,7 @@ import { ObjectVisibility } from "features/render/renderSlice";
 import { VecRGB, VecRGBA, vecToHex } from "utils/color";
 import { base64UrlEncodeImg, createCanvasSnapshot, uniqueArray } from "utils/misc";
 import { Viewpoint } from "types/bcf";
+import { rotationFromDirection } from "@novorender/web_app";
 
 type Point = {
     x: number;
@@ -28,31 +29,32 @@ export type OrthogonalCamera = {
     view_to_world_scale: number;
 };
 
-export function translatePerspectiveCamera(
-    perspectiveCamera: PerspectiveCamera
-): Pick<Camera, "position" | "rotation" | "fieldOfView"> {
-    // in BCF Z is Y
+export function translatePerspectiveCamera(perspectiveCamera: PerspectiveCamera): {
+    rotation: quat;
+    position: vec3;
+    fov: number;
+} {
     const direction = vec3.negate(
         vec3.create(),
         vec3.fromValues(
             perspectiveCamera.camera_direction.x,
-            perspectiveCamera.camera_direction.z,
-            -perspectiveCamera.camera_direction.y
+            perspectiveCamera.camera_direction.y,
+            perspectiveCamera.camera_direction.z
         )
     );
 
     const upVector = vec3.fromValues(
         perspectiveCamera.camera_up_vector.x,
-        perspectiveCamera.camera_up_vector.z,
-        -perspectiveCamera.camera_up_vector.y
+        perspectiveCamera.camera_up_vector.y,
+        perspectiveCamera.camera_up_vector.z
     );
 
     const cross = vec3.cross(
         vec3.create(),
         vec3.fromValues(
             perspectiveCamera.camera_direction.x,
-            perspectiveCamera.camera_direction.z,
-            -perspectiveCamera.camera_direction.y
+            perspectiveCamera.camera_direction.y,
+            perspectiveCamera.camera_direction.z
         ),
         upVector
     );
@@ -74,111 +76,77 @@ export function translatePerspectiveCamera(
     return {
         position: vec3.fromValues(
             perspectiveCamera.camera_view_point.x,
-            perspectiveCamera.camera_view_point.z,
-            -perspectiveCamera.camera_view_point.y
+            perspectiveCamera.camera_view_point.y,
+            perspectiveCamera.camera_view_point.z
         ),
-        rotation: quaternion,
-        fieldOfView: perspectiveCamera.field_of_view,
+        rotation: rotationFromDirection(direction),
+        fov: perspectiveCamera.field_of_view,
     };
 }
 
-export function translateOrthogonalCamera(
-    orthoCam: OrthogonalCamera
-): Pick<OrthoControllerParams, "referenceCoordSys" | "fieldOfView"> {
+export function translateOrthogonalCamera(orthoCam: OrthogonalCamera): { rotation: quat; position: vec3; fov: number } {
     // in BCF Z is Y
     const direction = vec3.negate(
         vec3.create(),
-        vec3.fromValues(orthoCam.camera_direction.x, orthoCam.camera_direction.z, -orthoCam.camera_direction.y)
-    );
-
-    const upVector = vec3.fromValues(
-        orthoCam.camera_up_vector.x,
-        orthoCam.camera_up_vector.z,
-        -orthoCam.camera_up_vector.y
-    );
-
-    const cross = vec3.cross(
-        vec3.create(),
-        vec3.fromValues(orthoCam.camera_direction.x, orthoCam.camera_direction.z, -orthoCam.camera_direction.y),
-        upVector
-    );
-
-    const referenceCoordSys = mat4.fromValues(
-        cross[0],
-        cross[1],
-        cross[2],
-        0,
-        upVector[0],
-        upVector[1],
-        upVector[2],
-        0,
-        direction[0],
-        direction[1],
-        direction[2],
-        0,
-        orthoCam.camera_view_point.x,
-        orthoCam.camera_view_point.z,
-        -orthoCam.camera_view_point.y,
-        1
+        vec3.fromValues(orthoCam.camera_direction.x, orthoCam.camera_direction.y, orthoCam.camera_direction.z)
     );
 
     return {
-        referenceCoordSys,
-        fieldOfView: orthoCam.view_to_world_scale,
+        rotation: rotationFromDirection(direction),
+        position: vec3.fromValues(
+            orthoCam.camera_view_point.x,
+            orthoCam.camera_view_point.y,
+            orthoCam.camera_view_point.z
+        ),
+        fov: orthoCam.view_to_world_scale,
     };
 }
 
-export function createPerspectiveCamera(
-    camera: Pick<Camera, "position" | "rotation" | "fieldOfView">
-): PerspectiveCamera {
+export function createPerspectiveCamera(camera: { position: vec3; rotation: quat; fov: number }): PerspectiveCamera {
     const cameraDirection = vec3.transformQuat(vec3.create(), vec3.fromValues(0, 0, -1), camera.rotation);
     const cameraUp = vec3.transformQuat(vec3.create(), vec3.fromValues(0, 1, 0), camera.rotation);
 
-    // in BCF Z is Y
     return {
         camera_view_point: {
             x: camera.position[0],
-            y: -camera.position[2],
+            y: camera.position[1],
+            z: camera.position[2],
+        },
+        camera_direction: {
+            x: cameraDirection[0],
+            y: cameraDirection[1],
+            z: cameraDirection[2],
+        },
+        camera_up_vector: {
+            x: cameraUp[0],
+            y: cameraUp[1],
+            z: cameraUp[2],
+        },
+        field_of_view: camera.fov,
+    };
+}
+
+export function createOrthogonalCamera(camera: { position: vec3; rotation: quat; fov: number }): OrthogonalCamera {
+    const cameraDirection = vec3.transformQuat(vec3.create(), vec3.fromValues(0, 0, -1), camera.rotation);
+    const cameraUp = vec3.transformQuat(vec3.create(), vec3.fromValues(0, 1, 0), camera.rotation);
+
+    return {
+        camera_view_point: {
+            x: camera.position[0],
+            y: camera.position[1],
             z: camera.position[1],
         },
         camera_direction: {
             x: cameraDirection[0],
-            y: -cameraDirection[2],
-            z: cameraDirection[1],
+            y: cameraDirection[1],
+            z: cameraDirection[2],
         },
         camera_up_vector: {
             x: cameraUp[0],
-            y: -cameraUp[2],
-            z: cameraUp[1],
+            y: cameraUp[1],
+            z: cameraUp[2],
         },
-        field_of_view: camera.fieldOfView,
-    };
-}
-
-export function createOrthogonalCamera(
-    camera: Pick<Camera, "position" | "rotation" | "fieldOfView">
-): OrthogonalCamera {
-    const cameraDirection = vec3.transformQuat(vec3.create(), vec3.fromValues(0, 0, -1), camera.rotation);
-    const cameraUp = vec3.transformQuat(vec3.create(), vec3.fromValues(0, 1, 0), camera.rotation);
-
-    // in BCF Z is Y
-    return {
-        camera_view_point: {
-            x: camera.position[0],
-            y: -camera.position[2],
-            z: camera.position[1],
-        },
-        camera_direction: {
-            x: cameraDirection[0],
-            y: -cameraDirection[2],
-            z: cameraDirection[1],
-        },
-        camera_up_vector: {
-            x: cameraUp[0],
-            y: -cameraUp[2],
-            z: cameraUp[1],
-        },
-        view_to_world_scale: camera.fieldOfView,
+        view_to_world_scale: camera.fov,
     };
 }
 
@@ -186,11 +154,11 @@ export function translateBcfClippingPlanes(planes: Viewpoint["clipping_planes"])
     return planes.map(({ location, direction }) => {
         return vec4.fromValues(
             direction.x,
+            direction.y,
             direction.z,
-            -direction.y,
-            -vec3.dot(
-                vec3.fromValues(direction.x, direction.z, -direction.y),
-                vec3.fromValues(location.x, location.z, -location.y)
+            vec3.dot(
+                vec3.fromValues(direction.x, direction.y, direction.z),
+                vec3.fromValues(location.x, location.y, location.z)
             )
         ) as Vec4;
     });
@@ -200,8 +168,8 @@ export function createBcfClippingPlanes(
     planes: RenderSettings["clippingVolume"]["planes"]
 ): Viewpoint["clipping_planes"] {
     return planes.map((plane) => {
-        const normal = vec3.fromValues(plane[0], -plane[2], plane[1]);
-        const pointOnPlane = vec3.scale(vec3.create(), normal, -plane[3]);
+        const normal = vec3.fromValues(plane[0], plane[1], plane[2]);
+        const pointOnPlane = vec3.scale(vec3.create(), normal, plane[3]);
 
         return {
             location: {

@@ -10,6 +10,8 @@ import { useHighlighted } from "contexts/highlighted";
 import { useAppDispatch, useAppSelector } from "app/store";
 import { renderActions, selectCameraType } from "features/render/renderSlice";
 
+// TODO FIKS
+
 // prettier-ignore
 const top = [
     1, 0, 0, 
