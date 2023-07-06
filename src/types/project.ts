@@ -63,7 +63,10 @@ export type ExplorerProjectState = {
                 index: number;
                 mixFactor: number;
                 colorGradient: {
-                    knots: any[]; // TODO
+                    knots: {
+                        position: number;
+                        color: [number, number, number, number];
+                    }[];
                 };
             };
         };

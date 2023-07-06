@@ -216,7 +216,7 @@ const initialState = {
             index: 0,
             mixFactor: 1,
             colorGradient: {
-                knots: [] as any[], // TODO
+                knots: [] as { position: number; color: VecRGBA }[], // TODO
             },
         },
     },
@@ -587,7 +587,7 @@ export const renderSlice = createSlice({
                 state.points.size = mergeRecursive(state.points.size, settings.points.size);
                 state.points.deviation.index = (settings.points.deviation as any)?.index ?? 0;
                 state.points.deviation.mixFactor =
-                    settings.points.deviation?.mode === "mix" ? 1 : settings.points.deviation?.mode === "on" ? 0.5 : 0; // TODO map mode to mixFactor?
+                    settings.points.deviation?.mode === "mix" ? 0.5 : settings.points.deviation?.mode === "on" ? 1 : 0;
                 state.points.deviation.colorGradient = {
                     knots:
                         settings.points.deviation?.colors.map((deviation) => ({
@@ -660,7 +660,7 @@ export const renderSlice = createSlice({
                 // deviations
                 state.points.deviation.index = (settings.points.deviation as any).index;
                 state.points.deviation.mixFactor =
-                    settings.points.deviation.mode === "mix" ? 1 : settings.points.deviation.mode === "on" ? 0.5 : 0;
+                    settings.points.deviation.mode === "mix" ? 0.5 : settings.points.deviation.mode === "on" ? 1 : 0;
 
                 // subtrees
                 state.subtrees = getLegacySubtrees(settings.advanced, availableSubtrees);

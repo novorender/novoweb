@@ -1,6 +1,8 @@
 import { createSlice, PayloadAction } from "@reduxjs/toolkit";
 
 import { RootState } from "app/store";
+import { initScene } from "features/render";
+import { capitalize } from "utils/misc";
 
 const initialState = {
     stampSettings: {
@@ -36,6 +38,26 @@ export const propertiesSlice = createSlice({
         unStar: (state, action: PayloadAction<string>) => {
             delete state.starred[action.payload];
         },
+    },
+    extraReducers(builder) {
+        builder.addCase(initScene, (state, action) => {
+            const props = action.payload.sceneData.customProperties;
+
+            if (props.v1) {
+                state.stampSettings = props.v1.features.properties.stamp;
+                state.starred = Object.fromEntries(props.v1.features.properties.starred.map((prop) => [prop, true]));
+            } else if (props.properties) {
+                state.stampSettings = props.properties.stampSettings;
+                state.starred = Object.fromEntries(
+                    props.properties.starred.map((prop: string) => [
+                        ["path", "name"].includes(prop) ? capitalize(prop) : prop,
+                        true,
+                    ])
+                );
+            }
+
+            state.showStamp = state.stampSettings.enabled;
+        });
     },
 });
 
