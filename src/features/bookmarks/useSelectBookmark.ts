@@ -1,5 +1,6 @@
 import { Bookmark } from "@novorender/data-js-api";
-import { ClippingMode, RenderState, rotationFromDirection } from "@novorender/web_app";
+import { ClippingMode, rotationFromDirection } from "@novorender/web_app";
+import { vec4 } from "gl-matrix";
 import { useCallback } from "react";
 
 import { dataApi } from "app";
@@ -27,11 +28,10 @@ import { imagesActions } from "features/images";
 import { manholeActions } from "features/manhole";
 import { measureActions } from "features/measure";
 import { pointLineActions } from "features/pointLine";
-import { CameraType, DeepMutable, ObjectVisibility, SelectionBasketMode, renderActions } from "features/render";
+import { CameraType, ObjectVisibility, SelectionBasketMode, renderActions } from "features/render";
 import { flip, flipGLtoCadQuat } from "features/render/utils";
 import { useSceneId } from "hooks/useSceneId";
 import { ExtendedMeasureEntity, ViewMode } from "types/misc";
-import { vec4 } from "gl-matrix";
 
 export function useSelectBookmark() {
     const sceneId = useSceneId();
@@ -303,16 +303,44 @@ export function useSelectBookmark() {
 
             dispatch(manholeActions.initFromLegacyBookmark(bookmark.manhole));
 
-            // TODO(SIGVE): Legacy clipping box
             if (bookmark.clippingPlanes?.enabled) {
-                // baseW = normalOffset[3] her
-                const planes: { normalOffset: vec4; baseW: number; color: vec4 }[] = [];
+                const makePlane = (p: vec4) => {
+                    return {
+                        normalOffset: p,
+                        baseW: p[3],
+                        color: vec4.fromValues(0, 1, 0, 0.2),
+                    };
+                };
+                const min = bookmark.clippingPlanes.bounds.min;
+                const max = bookmark.clippingPlanes.bounds.max;
+                let planes: { normalOffset: vec4; baseW: number; color: vec4 }[] = [];
+
+                if (bookmark.clippingPlanes.inside) {
+                    planes = [
+                        makePlane(vec4.fromValues(1, 0, 0, min[0])),
+                        makePlane(vec4.fromValues(0, 1, 0, -max[2])),
+                        makePlane(vec4.fromValues(0, 0, 1, min[1])),
+                        makePlane(vec4.fromValues(-1, 0, 0, -max[0])),
+                        makePlane(vec4.fromValues(0, -1, 0, min[2])),
+                        makePlane(vec4.fromValues(0, 0, -1, -max[1])),
+                    ];
+                } else {
+                    planes = [
+                        makePlane(vec4.fromValues(-1, 0, 0, -min[0])),
+                        makePlane(vec4.fromValues(0, -1, 0, max[2])),
+                        makePlane(vec4.fromValues(0, 0, -1, -min[1])),
+                        makePlane(vec4.fromValues(1, 0, 0, max[0])),
+                        makePlane(vec4.fromValues(0, 1, 0, -min[2])),
+                        makePlane(vec4.fromValues(0, 0, 1, max[1])),
+                    ];
+                }
 
                 dispatch(
                     renderActions.setClippingPlanes({
-                        enabled: true,
-                        mode: ClippingMode.union,
                         planes,
+                        enabled: bookmark.clippingPlanes.enabled,
+                        mode: bookmark.clippingPlanes.inside ? ClippingMode.intersection : ClippingMode.union,
+                        draw: false,
                     })
                 );
             } else if (bookmark.clippingVolume?.enabled) {
