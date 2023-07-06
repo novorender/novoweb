@@ -658,7 +658,7 @@ export const renderSlice = createSlice({
                 state.background.color = settings.background.color ?? state.background.color;
 
                 // deviations
-                state.points.deviation.index = (settings.points.deviation as any).index;
+                state.points.deviation.index = (settings.points.deviation as { index?: number }).index ?? 0;
                 state.points.deviation.mixFactor =
                     settings.points.deviation.mode === "mix" ? 0.5 : settings.points.deviation.mode === "on" ? 1 : 0;
 
