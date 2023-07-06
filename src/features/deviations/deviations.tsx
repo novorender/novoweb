@@ -1,23 +1,23 @@
+import { RestartAlt } from "@mui/icons-material";
 import { ListItemIcon, ListItemText, Menu, MenuItem, MenuProps, Typography } from "@mui/material";
 import { Box } from "@mui/system";
-import { RestartAlt } from "@mui/icons-material";
 import { useEffect } from "react";
 import { MemoryRouter, Route, Switch } from "react-router-dom";
 
 import { dataApi } from "app";
-import { featuresConfig } from "config/features";
-import WidgetList from "features/widgetList/widgetList";
-import { LogoSpeedDial, Tooltip, WidgetContainer, WidgetHeader } from "components";
-import { useToggle } from "hooks/useToggle";
-import { useSceneId } from "hooks/useSceneId";
 import { useAppDispatch, useAppSelector } from "app/store";
+import { LogoSpeedDial, Tooltip, WidgetContainer, WidgetHeader } from "components";
+import { featuresConfig } from "config/features";
 import { useExplorerGlobals } from "contexts/explorerGlobals";
+import WidgetList from "features/widgetList/widgetList";
+import { useSceneId } from "hooks/useSceneId";
+import { useToggle } from "hooks/useToggle";
 import { selectIsAdminScene, selectMaximized, selectMinimized } from "slices/explorerSlice";
 
-import { deviationsActions, selectDeviationCalculationStatus, DeviationCalculationStatus } from "./deviationsSlice";
-import { Root } from "./routes/root";
-import { Deviation } from "./routes/deviation";
+import { DeviationCalculationStatus, deviationsActions, selectDeviationCalculationStatus } from "./deviationsSlice";
 import { CrupdateColorStop } from "./routes/crupdateColorStop";
+import { Deviation } from "./routes/deviation";
+import { Root } from "./routes/root";
 
 export default function Deviations() {
     const sceneId = useSceneId();
@@ -63,7 +63,7 @@ function WidgetMenu(props: MenuProps) {
     const dispatch = useAppDispatch();
 
     const {
-        state: { scene_OLD: scene },
+        state: { scene },
     } = useExplorerGlobals(true);
     const isAdminScene = useAppSelector(selectIsAdminScene);
 

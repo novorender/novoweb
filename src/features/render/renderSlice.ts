@@ -796,6 +796,7 @@ export const selectCameraDefaults = (state: RootState) => state.render.cameraDef
 export const selectAdvanced = (state: RootState) => state.render.advanced;
 export const selectDeviceProfile = (state: RootState) => state.render.deviceProfile;
 export const selectPoints = (state: RootState) => state.render.points;
+export const selectDeviations = (state: RootState) => state.render.points.deviation;
 export const selectNavigationCube = (state: RootState) => state.render.navigationCube;
 export const selectDebugStats = (state: RootState) => state.render.debugStats;
 

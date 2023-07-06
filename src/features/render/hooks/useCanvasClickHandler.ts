@@ -13,7 +13,6 @@ import {
 } from "contexts/highlightCollections";
 import { highlightActions, useDispatchHighlighted, useHighlighted } from "contexts/highlighted";
 import { areaActions } from "features/area";
-import { selectDeviations } from "features/deviations";
 import { followPathActions } from "features/followPath";
 import { heightProfileActions } from "features/heightProfile";
 import { manholeActions } from "features/manhole";
@@ -27,6 +26,7 @@ import {
     StampKind,
     renderActions,
     selectCamera,
+    selectDeviations,
     selectMainObject,
     selectPicker,
     selectPointerDownState,
@@ -168,7 +168,7 @@ export function useCanvasClickHandler() {
                 break;
             case Picker.Object:
                 if (
-                    deviation.mode !== "off" &&
+                    deviation.mixFactor !== 0 &&
                     cameraState.type === CameraType.Orthographic &&
                     result.deviation !== undefined
                 ) {

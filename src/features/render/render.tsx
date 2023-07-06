@@ -7,12 +7,17 @@ import { LinearProgress, Loading } from "components";
 import { explorerGlobalsActions, useExplorerGlobals } from "contexts/explorerGlobals";
 import { useHandleArea } from "features/area";
 import { useHandleClipping } from "features/clippingPlanes/useHandleClipping";
+import { useHandleDeviations } from "features/deviations";
+import { useHandleDitioKeepAlive } from "features/ditio";
 import { Engine2D } from "features/engine2D";
+import { useHandleJiraKeepAlive } from "features/jira";
 import { useHandleManhole } from "features/manhole";
 import { useHandleLocationMarker } from "features/myLocation";
+import { useHandleCrossSection } from "features/orthoCam";
 import { PerformanceStats } from "features/performanceStats";
 import { useHandlePointLine } from "features/pointLine";
 import { selectDebugStats, selectLoadingHandles, selectSceneStatus } from "features/render/renderSlice";
+import { useHandleXsiteManageKeepAlive, useHandleXsiteManageMachineLocations } from "features/xsiteManage";
 import { AsyncStatus } from "types/misc";
 
 import { useCanvasClickHandler } from "./hooks/useCanvasClickHandler";
@@ -33,10 +38,6 @@ import { Images } from "./images";
 import { Markers } from "./markers";
 import { SceneError } from "./sceneError";
 import { Stamp } from "./stamp";
-import { useHandleJiraKeepAlive } from "features/jira";
-import { useHandleXsiteManageKeepAlive, useHandleXsiteManageMachineLocations } from "features/xsiteManage";
-import { useHandleCrossSection } from "features/orthoCam";
-import { useHandleDitioKeepAlive } from "features/ditio";
 
 glMatrix.setMatrixArrayType(Array);
 
@@ -102,6 +103,7 @@ export function Render3D() {
     useHandleManhole();
     useHandleLocationMarker();
     useHandleCrossSection();
+    useHandleDeviations();
 
     useHandleJiraKeepAlive();
     useHandleXsiteManageKeepAlive();

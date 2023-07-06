@@ -23,7 +23,7 @@ const OrthoCam = lazy(() => import("features/orthoCam/orthoCam"));
 const AdvancedSettings = lazy(() => import("features/advancedSettings/advancedSettings"));
 const BimCollab = lazy(() => import("features/bimCollab/bimCollab"));
 const SelectionBasket = lazy(() => import("features/selectionBasket/selectionBasket"));
-// const Deviations = lazy(() => import("features/deviations/deviations"));
+const Deviations = lazy(() => import("features/deviations/deviations"));
 // const FollowPath = lazy(() => import("features/followPath/followPath"));
 const BimTrack = lazy(() => import("features/bimTrack/bimTrack"));
 const Ditio = lazy(() => import("features/ditio/ditio"));
@@ -187,9 +187,9 @@ function getWidgetByKey(key: WidgetKey): JSX.Element | string {
         case featuresConfig.selectionBasket.key:
             Widget = SelectionBasket;
             break;
-        // case featuresConfig.deviations.key:
-        //     Widget = Deviations;
-        //     break;
+        case featuresConfig.deviations.key:
+            Widget = Deviations;
+            break;
         // case featuresConfig.followPath.key:
         //     Widget = FollowPath;
         //     break;
