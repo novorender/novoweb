@@ -1,12 +1,13 @@
 import { Box, css, ListItemButton, styled, Typography, useTheme } from "@mui/material";
-import { CSSProperties, useRef } from "react";
+import { CSSProperties, useEffect, useRef, useState } from "react";
 
-import { useExplorerGlobals } from "contexts/explorerGlobals";
 import { useAppDispatch, useAppSelector } from "app/store";
+import { useExplorerGlobals } from "contexts/explorerGlobals";
 import { AsyncStatus } from "types/misc";
+import { handleImageResponse } from "utils/bcf";
 import { getAssetUrl } from "utils/misc";
 
-import { imagesActions, Image, selectActiveImage } from "./imagesSlice";
+import { Image, imagesActions, selectActiveImage } from "./imagesSlice";
 import { isPanorama } from "./utils";
 
 const Img = styled("img")(
@@ -20,7 +21,7 @@ const Img = styled("img")(
 
 export function ImageListItem({ image, style }: { image: Image; style: CSSProperties }) {
     const {
-        state: { scene_OLD: scene },
+        state: { view },
     } = useExplorerGlobals(true);
     const theme = useTheme();
     const dispatch = useAppDispatch();
@@ -28,7 +29,12 @@ export function ImageListItem({ image, style }: { image: Image; style: CSSProper
     const activeImage = useAppSelector(selectActiveImage);
     const isCurrent = activeImage?.image.guid === image.guid;
     const loading = isCurrent && activeImage.status === AsyncStatus.Loading;
-    const url = useRef(getAssetUrl(scene, image.preview).toString());
+    const url = useRef(getAssetUrl(view, image.preview).toString());
+    const [dataUrl, setDataUrl] = useState("");
+
+    useEffect(() => {
+        fetch(url.current).then((res) => handleImageResponse(res).then((data) => setDataUrl(data)));
+    }, [url]);
 
     const viewImage = () => {
         if (isCurrent) {
@@ -72,7 +78,7 @@ export function ImageListItem({ image, style }: { image: Image; style: CSSProper
                     flexShrink={0}
                     flexGrow={0}
                 >
-                    <Img src={url.current} />
+                    <Img src={dataUrl} />
                 </Box>
                 <Box ml={1} flexDirection="column" flexGrow={1} width={0}>
                     <Typography noWrap variant="body1" sx={{ fontWeight: 600, mb: 1 }}>

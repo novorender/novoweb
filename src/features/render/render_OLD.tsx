@@ -26,7 +26,7 @@ import { Box, styled, css } from "@mui/material";
 
 import { PerformanceStats } from "features/performanceStats";
 import { getDataFromUrlHash } from "features/shareLink";
-import { imagesActions, useHandleImageChanges } from "features/images";
+import { imagesActions, useHandleImages } from "features/images";
 import { LinearProgress, Loading } from "components";
 import { api, dataApi, isIpad, isIphone, measureApi } from "app";
 import { useSceneId } from "hooks/useSceneId";
@@ -808,7 +808,7 @@ export function Render3D({ onInit }: Props) {
 
     useHandleGrid();
     useHandleClippingBoxChanges();
-    useHandleImageChanges();
+    useHandleImages();
     useHandleCameraControls();
     useHandleArea();
     useHandleCrossSection();

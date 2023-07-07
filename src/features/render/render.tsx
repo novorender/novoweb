@@ -38,6 +38,7 @@ import { Images } from "./images";
 import { Markers } from "./markers";
 import { SceneError } from "./sceneError";
 import { Stamp } from "./stamp";
+import { useHandleImages } from "features/images";
 
 glMatrix.setMatrixArrayType(Array);
 
@@ -104,6 +105,7 @@ export function Render3D() {
     useHandleLocationMarker();
     useHandleCrossSection();
     useHandleDeviations();
+    useHandleImages();
 
     useHandleJiraKeepAlive();
     useHandleXsiteManageKeepAlive();

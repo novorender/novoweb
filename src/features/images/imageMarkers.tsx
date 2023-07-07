@@ -1,11 +1,11 @@
-import { SVGProps } from "react";
-import { styled, css } from "@mui/material";
 import { CameraAlt } from "@mui/icons-material";
+import { css, styled } from "@mui/material";
+import { SVGProps } from "react";
 
-import { imagesActions, selectActiveImage, selectImages, selectShowImageMarkers } from "features/images";
 import { useAppDispatch, useAppSelector } from "app/store";
-import { AsyncStatus, ViewMode } from "types/misc";
+import { imagesActions, selectActiveImage, selectImages, selectShowImageMarkers } from "features/images";
 import { selectViewMode } from "features/render";
+import { AsyncStatus, ViewMode } from "types/misc";
 
 const Marker = styled((props: SVGProps<SVGGElement>) => (
     <g {...props}>

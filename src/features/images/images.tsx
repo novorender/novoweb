@@ -1,15 +1,15 @@
-import { MemoryRouter, Route, Switch } from "react-router-dom";
 import { Box } from "@mui/material";
+import { MemoryRouter, Route, Switch } from "react-router-dom";
 
+import { useAppSelector } from "app/store";
 import { LogoSpeedDial, WidgetContainer, WidgetHeader } from "components";
 import { featuresConfig } from "config/features";
 import WidgetList from "features/widgetList/widgetList";
-import { useAppSelector } from "app/store";
 import { useToggle } from "hooks/useToggle";
-import { selectMinimized, selectMaximized } from "slices/explorerSlice";
+import { selectMaximized, selectMinimized } from "slices/explorerSlice";
 
-import { Root } from "./routes/root";
 import { Filter } from "./routes/filter";
+import { Root } from "./routes/root";
 
 export default function Images() {
     const [menuOpen, toggleMenu] = useToggle();

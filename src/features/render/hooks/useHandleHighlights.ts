@@ -54,7 +54,7 @@ export function useHandleHighlights() {
                             ? createNeutralHighlight()
                             : defaultVisibility === ObjectVisibility.SemiTransparent
                             ? createTransparentHighlight(0.5)
-                            : createTransparentHighlight(0),
+                            : "hide",
                 },
             });
 
