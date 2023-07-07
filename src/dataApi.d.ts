@@ -93,8 +93,14 @@ declare module "@novorender/data-js-api" {
             };
             followPath:
                 | {
-                      entities: number[] | ExtendedMeasureEntity[];
-                      roadIds: string[];
+                      selected: {
+                          positions?: { id: number; pos: [number, number, number] }[];
+                          landXmlPathId?: number;
+                          ids: number[];
+                      };
+                      drawLayers: {
+                          roadIds: string[];
+                      };
                       profileNumber: number;
                       currentCenter: [number, number, number];
                   }

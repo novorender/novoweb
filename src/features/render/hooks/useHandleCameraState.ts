@@ -39,7 +39,11 @@ export function useHandleCameraState() {
                 const controller = view.controllers[pinholeKind.current];
 
                 if (state.goTo) {
-                    controller.moveTo(vec3.clone(state.goTo.position), 1000, quat.clone(state.goTo.rotation));
+                    controller.moveTo(
+                        vec3.clone(state.goTo.position),
+                        state.goTo.flyTime ?? 1000,
+                        quat.clone(state.goTo.rotation)
+                    );
                 } else if (state.zoomTo) {
                     controller.zoomTo({
                         center: flip(state.zoomTo.center),

@@ -29,6 +29,7 @@ import {
     selectTerrain,
     selectViewMode,
 } from "features/render";
+import { ViewMode } from "types/misc";
 
 export function useCreateBookmark() {
     const measurement = useAppSelector(selectMeasure);
@@ -71,7 +72,7 @@ export function useCreateBookmark() {
                 },
                 camera: view.renderState.camera,
                 options: {
-                    addToSelectionBasket: false, // flip on create() returned if needed
+                    addToSelectionBasket: false, // change on create() return value if needed
                 },
                 subtrees: {
                     triangles: subtrees.triangles === SubtreeStatus.Shown,
@@ -124,7 +125,25 @@ export function useCreateBookmark() {
                         collisionSettings: manholeCollisionSettings,
                     },
                 },
-                followPath: undefined,
+                followPath:
+                    viewMode === ViewMode.FollowPath &&
+                    followPath.currentCenter &&
+                    (followPath.selectedIds.length || followPath.selectedPositions.length)
+                        ? {
+                              selected: {
+                                  positions: followPath.selectedPositions.length
+                                      ? followPath.selectedPositions
+                                      : undefined,
+                                  ids: followPath.selectedIds,
+                                  landXmlPathId: followPath.selectedPath,
+                              },
+                              drawLayers: {
+                                  roadIds: followPath.drawRoadIds ?? [],
+                              },
+                              profileNumber: Number(followPath.profile),
+                              currentCenter: followPath.currentCenter,
+                          }
+                        : undefined,
             },
         };
     };

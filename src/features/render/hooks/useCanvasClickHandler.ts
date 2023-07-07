@@ -366,11 +366,11 @@ export function useCanvasClickHandler() {
                 break;
 
             case Picker.FollowPathObject: {
-                // if (result.objectId === -1) {
-                //     return;
-                // }
+                if (result.objectId === -1) {
+                    return;
+                }
 
-                // dispatch(followPathActions.setSelectedPositions([{ id: result.objectId, pos: position }]));
+                dispatch(followPathActions.setSelectedPositions([{ id: result.objectId, pos: position }]));
                 break;
             }
             case Picker.Area: {

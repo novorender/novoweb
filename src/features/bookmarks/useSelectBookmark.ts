@@ -387,6 +387,7 @@ export function useSelectBookmark() {
                             fov: bookmark.ortho.fieldOfView,
                             far: bookmark.ortho.far,
                         },
+                        gridOrigo: bookmark.grid?.origo ? flip(bookmark.grid.origo) : undefined,
                     })
                 );
             } else if (bookmark.camera) {
@@ -402,10 +403,7 @@ export function useSelectBookmark() {
                 );
             }
 
-            if (bookmark.grid?.enabled) {
-                // TODO(OLA): test
-                dispatch(renderActions.setGrid({ origin: flip(bookmark.grid.origo) }));
-            }
+            dispatch(renderActions.setGrid({ enabled: bookmark.grid?.enabled ?? false }));
 
             if (bookmark.followPath) {
                 const { profile, currentCenter } = bookmark.followPath;
@@ -413,7 +411,7 @@ export function useSelectBookmark() {
                 dispatch(followPathActions.setProfile(String(profile)));
                 dispatch(followPathActions.setView2d(Boolean(bookmark.ortho)));
                 dispatch(followPathActions.setShowGrid(Boolean(bookmark.grid?.enabled)));
-                dispatch(followPathActions.setCurrentCenter(currentCenter as Vec3));
+                dispatch(followPathActions.setCurrentCenter(currentCenter ? flip(currentCenter) : currentCenter));
 
                 if (bookmark.ortho?.far) {
                     dispatch(followPathActions.setClipping(bookmark.ortho.far));
@@ -432,7 +430,11 @@ export function useSelectBookmark() {
                 }
 
                 if ("parametric" in bookmark.followPath) {
-                    dispatch(followPathActions.setSelectedPositions(bookmark.followPath.parametric));
+                    dispatch(
+                        followPathActions.setSelectedPositions(
+                            bookmark.followPath.parametric.map((v) => ({ ...v, pos: flip(v.pos) }))
+                        )
+                    );
                     dispatch(followPathActions.setGoToRouterPath(`/followPos`));
                 } else {
                     if ("ids" in bookmark.followPath) {

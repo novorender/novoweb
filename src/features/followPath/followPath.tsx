@@ -2,17 +2,17 @@ import { Box } from "@mui/material";
 import { PropsWithChildren, useEffect, useRef } from "react";
 import { MemoryRouter, Route, Switch, SwitchProps, useHistory, useLocation } from "react-router-dom";
 
+import { useAppDispatch, useAppSelector } from "app/store";
+import { LogoSpeedDial, WidgetContainer, WidgetHeader } from "components";
 import { featuresConfig } from "config/features";
 import WidgetList from "features/widgetList/widgetList";
-import { LogoSpeedDial, WidgetContainer, WidgetHeader } from "components";
-import { useAppDispatch, useAppSelector } from "app/store";
 import { useToggle } from "hooks/useToggle";
-import { selectMinimized, selectMaximized } from "slices/explorerSlice";
+import { selectMaximized, selectMinimized } from "slices/explorerSlice";
 
 import { followPathActions, selectGoToRouterPath, selectLastViewedRouterPath } from "./followPathSlice";
-import { PathList } from "./routes/pathList";
-import { FollowParametricFromPos } from "./routes/followParametricFromPos";
 import { FollowParametricFromIds } from "./routes/followParametrcFromId";
+import { FollowParametricFromPos } from "./routes/followParametricFromPos";
+import { PathList } from "./routes/pathList";
 
 export default function FollowPath() {
     const [menuOpen, toggleMenu] = useToggle();

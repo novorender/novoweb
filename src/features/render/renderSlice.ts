@@ -72,6 +72,7 @@ type CameraState =
               fov?: number;
               far?: number;
               near?: number;
+              flyTime?: number;
           };
           gridOrigo?: vec3;
       }
@@ -83,6 +84,7 @@ type CameraState =
               fov?: number;
               far?: number;
               near?: number;
+              flyTime?: number;
           };
           zoomTo?: BoundingSphere;
       };
@@ -562,7 +564,7 @@ export const renderSlice = createSlice({
                 state.cameraDefaults.pinhole = camera.pinhole;
                 state.cameraDefaults.orthographic = camera.orthographic;
                 state.background = mergeRecursive(state.background, background);
-                state.points = points;
+                state.points = mergeRecursive(state.points, points);
                 state.subtrees = getSubtrees(hide, sceneConfig.subtrees ?? ["triangles"]);
                 state.terrain = terrain;
                 state.advanced = mergeRecursive(state.advanced, advanced);

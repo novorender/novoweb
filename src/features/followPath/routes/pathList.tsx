@@ -17,22 +17,22 @@ import { useHistory } from "react-router-dom";
 import { useAppDispatch, useAppSelector } from "app/store";
 import { Divider, IosSwitch, LinearProgress, ScrollBox } from "components";
 import { useExplorerGlobals } from "contexts/explorerGlobals";
+import { highlightActions, useDispatchHighlighted, useHighlighted } from "contexts/highlighted";
+import { singleCylinderOptions } from "features/measure";
+import { Picker, renderActions, selectPicker } from "features/render/renderSlice";
 import { AsyncStatus, hasFinished } from "types/misc";
 import { getObjectNameFromPath, getParentPath } from "utils/objectData";
 import { searchByPatterns } from "utils/search";
-import { Picker, renderActions, selectPicker } from "features/render/renderSlice";
-import { highlightActions, useDispatchHighlighted, useHighlighted } from "contexts/highlighted";
-import { singleCylinderOptions } from "features/measure";
 
-import { selectFollowCylindersFrom, followPathActions, selectLandXmlPaths } from "../followPathSlice";
-import { usePathMeasureObjects } from "../usePathMeasureObjects";
+import { followPathActions, selectFollowCylindersFrom, selectLandXmlPaths } from "../followPathSlice";
 import { useFollowPathFromIds } from "../useFollowPathFromIds";
+import { usePathMeasureObjects } from "../usePathMeasureObjects";
 
 export function PathList() {
     const theme = useTheme();
     const history = useHistory<{ prevPath?: string }>();
     const {
-        state: { scene_OLD: scene },
+        state: { db },
     } = useExplorerGlobals(true);
     const highlighted = useHighlighted().idArr;
     const dispatchHighlighted = useDispatchHighlighted();
@@ -76,7 +76,7 @@ export function PathList() {
                 }[];
 
                 await searchByPatterns({
-                    db: scene,
+                    db,
                     searchPatterns: [{ property: "Novorender/Path", value: "true", exact: true }],
                     callback: (refs) =>
                         (paths = paths.concat(
@@ -95,7 +95,7 @@ export function PathList() {
                 );
             }
         }
-    }, [scene, landXmlPaths, dispatch]);
+    }, [db, landXmlPaths, dispatch]);
 
     const isLoading =
         !hasFinished(landXmlPaths) ||
