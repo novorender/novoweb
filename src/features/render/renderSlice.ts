@@ -573,7 +573,7 @@ export const renderSlice = createSlice({
             } else if (settings) {
                 // Legacy settings
 
-                // if (props.flightFingerMap.)
+                // TODO_NEW map legacy to new controllers
 
                 state.cameraDefaults.pinhole.clipping.far = Math.max((sceneData.camera as any)?.far ?? 0, 1000);
                 state.cameraDefaults.pinhole.clipping.near = Math.max((sceneData.camera as any)?.near ?? 0, 0.1);

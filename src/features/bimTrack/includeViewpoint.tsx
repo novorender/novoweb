@@ -43,7 +43,7 @@ export function IncludeViewpoint({
     const highlighted = useLazyHighlighted();
     const objectGroups = useLazyObjectGroups();
     const {
-        state: { view, db, canvas },
+        state: { view, db },
     } = useExplorerGlobals(true);
     const store = useStore<RootState>();
 
@@ -59,7 +59,7 @@ export function IncludeViewpoint({
         }
 
         async function createNewViewpoint() {
-            const snapshot = await createBcfSnapshot(canvas);
+            const snapshot = await createBcfSnapshot(view);
 
             if (!snapshot) {
                 return;
@@ -120,7 +120,6 @@ export function IncludeViewpoint({
         abort,
         setLoading,
         objectGroups,
-        canvas,
     ]);
 
     return (

@@ -1,11 +1,11 @@
-import { Camera, OrthoControllerParams, RenderSettings } from "@novorender/webgl-api";
-import { vec3, mat3, quat, vec4, mat4 } from "gl-matrix";
+import { RenderSettings } from "@novorender/webgl-api";
+import { vec3, quat, vec4 } from "gl-matrix";
 
 import { ObjectVisibility } from "features/render/renderSlice";
 import { VecRGB, VecRGBA, vecToHex } from "utils/color";
 import { base64UrlEncodeImg, createCanvasSnapshot, uniqueArray } from "utils/misc";
 import { Viewpoint } from "types/bcf";
-import { rotationFromDirection } from "@novorender/web_app";
+import { View, rotationFromDirection } from "@novorender/web_app";
 
 type Point = {
     x: number;
@@ -42,36 +42,6 @@ export function translatePerspectiveCamera(perspectiveCamera: PerspectiveCamera)
             perspectiveCamera.camera_direction.z
         )
     );
-
-    const upVector = vec3.fromValues(
-        perspectiveCamera.camera_up_vector.x,
-        perspectiveCamera.camera_up_vector.y,
-        perspectiveCamera.camera_up_vector.z
-    );
-
-    const cross = vec3.cross(
-        vec3.create(),
-        vec3.fromValues(
-            perspectiveCamera.camera_direction.x,
-            perspectiveCamera.camera_direction.y,
-            perspectiveCamera.camera_direction.z
-        ),
-        upVector
-    );
-
-    const matrix3 = mat3.fromValues(
-        cross[0],
-        cross[1],
-        cross[2],
-        upVector[0],
-        upVector[1],
-        upVector[2],
-        direction[0],
-        direction[1],
-        direction[2]
-    );
-
-    const quaternion = quat.normalize(quat.create(), quat.fromMat3(quat.create(), matrix3));
 
     return {
         position: vec3.fromValues(
@@ -186,8 +156,8 @@ export function createBcfClippingPlanes(
     });
 }
 
-export async function createBcfSnapshot(canvas: HTMLCanvasElement): Promise<Viewpoint["snapshot"] | undefined> {
-    const snapshot = await createCanvasSnapshot(canvas, 1500, 1500);
+export async function createBcfSnapshot(view: View): Promise<Viewpoint["snapshot"] | undefined> {
+    const snapshot = await createCanvasSnapshot(view, 1500, 1500);
 
     if (!snapshot) {
         return;

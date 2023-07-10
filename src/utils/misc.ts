@@ -85,11 +85,20 @@ export function capitalize(str: string): string {
 }
 
 export async function createCanvasSnapshot(
-    canvas: HTMLCanvasElement,
+    view: View,
     maxWidth: number,
     maxHeight: number
 ): Promise<string | undefined> {
-    let { width, height } = canvas.getBoundingClientRect();
+    let { width, height } = view.renderState.output;
+
+    const img = document.createElement("img");
+    img.src = await view.getScreenshot();
+    console.log(img, width, height);
+    const screenshotCanvas = document.createElement("canvas");
+    screenshotCanvas.width = width;
+    screenshotCanvas.height = height;
+    const screenshotCtx = screenshotCanvas.getContext("2d")!;
+    screenshotCtx.drawImage(img, 0, 0);
 
     if (width > maxWidth) {
         height = height * (maxWidth / width);
@@ -108,7 +117,7 @@ export async function createCanvasSnapshot(
 
     try {
         {
-            const bitmap = await createImageBitmap(canvas, {
+            const bitmap = await createImageBitmap(screenshotCanvas, {
                 resizeHeight: height,
                 resizeWidth: width,
                 resizeQuality: "high",
@@ -167,6 +176,7 @@ export function mergeRecursive<T>(original: T, changes: RecursivePartial<T>): T 
         const originalValue = original ? original[key] : undefined;
         const changedValue = changes[key];
         if (
+            // eslint-disable-next-line eqeqeq
             changedValue != undefined &&
             typeof changedValue == "object" &&
             !Array.isArray(changedValue) &&

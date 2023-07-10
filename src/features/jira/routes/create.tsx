@@ -51,7 +51,7 @@ export function CreateIssue({ sceneId }: { sceneId: string }) {
     const theme = useTheme();
     const history = useHistory();
     const {
-        state: { canvas },
+        state: { view },
     } = useExplorerGlobals(true);
     const dispatch = useAppDispatch();
 
@@ -122,7 +122,7 @@ export function CreateIssue({ sceneId }: { sceneId: string }) {
         setSaveStatus(AsyncStatus.Loading);
         const bmId = uuidv4();
         const bm = createBookmark();
-        const snapshot = await createCanvasSnapshot(canvas, 5000, 5000);
+        const snapshot = await createCanvasSnapshot(view, 5000, 5000);
         const saved = await dataApi.saveBookmarks(sceneId, [{ ...bm, id: bmId, name: bmId }], { group: bmId });
 
         if (!saved) {
