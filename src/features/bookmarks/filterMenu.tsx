@@ -7,9 +7,6 @@ import { selectUser } from "slices/authSlice";
 
 import { bookmarksActions, selectBookmarkFilters } from "./bookmarksSlice";
 
-// TODO_NEW
-// Filter nye bookmarks?
-
 export function FilterMenu({ ...MenuProps }: MenuProps) {
     const theme = useTheme();
 

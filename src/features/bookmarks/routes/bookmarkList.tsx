@@ -24,6 +24,7 @@ import {
 import { FilterMenu } from "../filterMenu";
 import { Bookmark } from "../bookmark";
 import { Collection } from "../collection";
+import { GroupStatus } from "contexts/objectGroups";
 
 const filterMenuId = "bm-filter-menu";
 
@@ -186,21 +187,48 @@ function applyFilters(bookmarks: ExtendedBookmark[], filters: Filters): Extended
             }
         }
 
-        if (filters.measurements) {
-            if (!(bm.measurement && bm.measurement.length)) {
-                return false;
+        if (bm.v1) {
+            const { measurements, clipping, groups } = bm.v1;
+            if (filters.measurements) {
+                if (
+                    !measurements.area.points.length &&
+                    !measurements.measure.entities.length &&
+                    !measurements.pointLine.points.length &&
+                    measurements.manhole.id === undefined
+                ) {
+                    return false;
+                }
             }
-        }
 
-        if (filters.clipping) {
-            if (!(bm.clippingVolume?.enabled && bm.clippingVolume.planes.length) && !bm.clippingPlanes?.enabled) {
-                return false;
+            if (filters.clipping) {
+                if (!(clipping.enabled && clipping.planes.length)) {
+                    return false;
+                }
             }
-        }
 
-        if (filters.groups) {
-            if (!bm.objectGroups?.filter((grp) => grp.id && (grp.hidden || grp.selected)).length) {
-                return false;
+            if (filters.groups) {
+                if (!groups.filter((grp) => grp.id && grp.status !== GroupStatus.None).length) {
+                    return false;
+                }
+            }
+        } else {
+            // LEGACY
+            if (filters.measurements) {
+                if (!(bm.measurement && bm.measurement.length)) {
+                    return false;
+                }
+            }
+
+            if (filters.clipping) {
+                if (!(bm.clippingVolume?.enabled && bm.clippingVolume.planes.length) && !bm.clippingPlanes?.enabled) {
+                    return false;
+                }
+            }
+
+            if (filters.groups) {
+                if (!bm.objectGroups?.filter((grp) => grp.id && (grp.hidden || grp.selected)).length) {
+                    return false;
+                }
             }
         }
 

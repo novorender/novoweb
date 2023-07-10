@@ -219,7 +219,7 @@ export async function getDescendants({
     console.warn("todo descendants");
     return (
         parentNode.descendants ??
-        // TODO descendant search
+        // TODO_NEW descendant search
         // @ts-ignore
         db.descendants(parentNode, abortSignal).then((ids) => {
             if (!ids.length) {

@@ -28,8 +28,6 @@ export function SceneError() {
 
     const loginUrl = `${window.location.origin}/login/${sceneId}${window.location.search}`;
     if (error === Error.NOT_AUTHORIZED) {
-        // todo
-        alert(error);
         window.location.replace(
             loginUrl +
                 (window.location.search
