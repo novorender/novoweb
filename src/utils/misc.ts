@@ -1,7 +1,5 @@
 import { MeasureEntity, MeasurementValues, PointEntity } from "@novorender/measure-api";
 import { View } from "@novorender/web_app";
-import { Scene } from "@novorender/webgl-api";
-import { WidgetKey, defaultEnabledWidgets, featuresConfig } from "config/features";
 import { RecursivePartial } from "types/misc";
 
 export function uniqueArray<T>(arr: T[]): T[] {
@@ -18,33 +16,6 @@ export function generateRandomString(): string {
     var array = new Uint32Array(56 / 2);
     window.crypto.getRandomValues(array);
     return Array.from(array, (num) => ("0" + num.toString(16)).substr(-2)).join("");
-}
-
-export function enabledFeaturesToFeatureKeys(enabledFeatures: Record<string, boolean>): WidgetKey[] {
-    const dictionary: Record<string, string | string[] | undefined> = {
-        bookmarks: featuresConfig.bookmarks.key,
-        measurement: [featuresConfig.measure.key, featuresConfig.followPath.key],
-        clipping: [featuresConfig.clippingBox.key, featuresConfig.clippingPlanes.key],
-        properties: featuresConfig.properties.key,
-        tree: featuresConfig.modelTree.key,
-        groups: featuresConfig.groups.key,
-        search: featuresConfig.search.key,
-    };
-
-    return uniqueArray(
-        Object.keys(enabledFeatures)
-            .map((key) => ({ key, enabled: enabledFeatures[key] }))
-            .filter((feature) => feature.enabled)
-            .map((feature) => (dictionary[feature.key] ? dictionary[feature.key]! : feature.key))
-            .concat(defaultEnabledWidgets)
-            .flat() as WidgetKey[]
-    );
-}
-
-export function getEnabledFeatures(customProperties: unknown): Record<string, boolean> | undefined {
-    return customProperties && typeof customProperties === "object" && "enabledFeatures" in customProperties
-        ? (customProperties as { enabledFeatures?: Record<string, boolean> }).enabledFeatures
-        : undefined;
 }
 
 export function base64UrlEncode(buffer: ArrayBuffer): string {

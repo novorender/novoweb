@@ -7,19 +7,19 @@ import { getAssetUrl } from "utils/misc";
 
 export function Images() {
     const {
-        state: { scene_OLD: scene },
+        state: { view },
     } = useExplorerGlobals();
     const dispatch = useAppDispatch();
     const activeImage = useAppSelector(selectActiveImage);
     const activeDitioImage = useAppSelector(selectActiveImg);
 
-    if (scene && activeImage && isFlat(activeImage.image)) {
+    if (view && activeImage && isFlat(activeImage.image)) {
         return (
             <ImgModal
                 open={true}
                 onClose={() => dispatch(imagesActions.setActiveImage(undefined))}
                 sx={{ display: "flex", justifyContent: "center", alignItems: "center" }}
-                src={getAssetUrl(scene, activeImage.image.src).toString()}
+                src={getAssetUrl(view, activeImage.image.src).toString()}
             />
         );
     } else if (activeDitioImage) {

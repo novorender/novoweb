@@ -68,18 +68,67 @@ export function RenderSettings({ save, saving }: { save: () => Promise<void>; sa
                 </Box>
             ) : null}
             <ScrollBox height={1} pb={3}>
-                {/* <Box p={1} mt={1}>
+                <Box p={1} display="flex" flexDirection="column">
                     <FormControlLabel
-                        sx={{ ml: 0, mb: 1 }}
-                        control={<Switch name={AdvancedSetting.AutoFps} checked={autoFps} onChange={handleToggle} />}
+                        sx={{ ml: 0, mb: 2 }}
+                        control={
+                            <Switch
+                                checked={advanced.msaa.enabled}
+                                name="msaa"
+                                onChange={(_evt, checked) =>
+                                    dispatch(renderActions.setAdvanced({ msaa: { enabled: checked } }))
+                                }
+                            />
+                        }
                         label={
                             <Box ml={1} fontSize={16}>
-                                Dynamic resolution scaling
+                                Anti-aliasing (MSAA)
                             </Box>
                         }
                     />
-                    <Divider />
-                </Box> */}
+                    <FormControlLabel
+                        sx={{ ml: 0, mb: 1 }}
+                        control={
+                            <Switch
+                                name="toon-outline"
+                                checked={advanced.toonOutline.enabled}
+                                onChange={(_evt, checked) =>
+                                    dispatch(renderActions.setAdvanced({ toonOutline: { enabled: checked } }))
+                                }
+                            />
+                        }
+                        label={
+                            <Box ml={1} fontSize={16}>
+                                Toon outlines
+                            </Box>
+                        }
+                    />
+                    {user?.features?.debugInfo?.boundingBoxes ? (
+                        <FormControlLabel
+                            sx={{ ml: 0, mb: 2 }}
+                            control={
+                                <Switch
+                                    name="debug-bb"
+                                    checked={advanced.debug.showNodeBounds}
+                                    onChange={(_evt, checked) =>
+                                        dispatch(
+                                            renderActions.setAdvanced({
+                                                debug: { showNodeBounds: checked },
+                                            })
+                                        )
+                                    }
+                                />
+                            }
+                            label={
+                                <Box ml={1} fontSize={16}>
+                                    Show node bounds
+                                </Box>
+                            }
+                        />
+                    ) : null}
+                </Box>
+
+                <Divider sx={{ borderColor: theme.palette.grey[300], mb: 2 }} />
                 {showMeshSettings ? (
                     <Accordion>
                         <AccordionSummary>Mesh</AccordionSummary>
@@ -102,46 +151,7 @@ export function RenderSettings({ save, saving }: { save: () => Promise<void>; sa
                                         </Box>
                                     }
                                 />
-                                <FormControlLabel
-                                    sx={{ ml: 0, mb: 2 }}
-                                    control={
-                                        <Switch
-                                            checked={advanced.msaa.enabled}
-                                            name="msaa"
-                                            onChange={(_evt, checked) =>
-                                                dispatch(renderActions.setAdvanced({ msaa: { enabled: checked } }))
-                                            }
-                                        />
-                                    }
-                                    label={
-                                        <Box ml={1} fontSize={16}>
-                                            Anti-aliasing (MSAA)
-                                        </Box>
-                                    }
-                                />
-                                {user?.features?.debugInfo?.boundingBoxes ? (
-                                    <FormControlLabel
-                                        sx={{ ml: 0, mb: 2 }}
-                                        control={
-                                            <Switch
-                                                name="debug-bb"
-                                                checked={advanced.debug.showNodeBounds}
-                                                onChange={(_evt, checked) =>
-                                                    dispatch(
-                                                        renderActions.setAdvanced({
-                                                            debug: { showNodeBounds: checked },
-                                                        })
-                                                    )
-                                                }
-                                            />
-                                        }
-                                        label={
-                                            <Box ml={1} fontSize={16}>
-                                                Show node bounds
-                                            </Box>
-                                        }
-                                    />
-                                ) : null}
+
                                 <Divider sx={{ borderColor: theme.palette.grey[300], my: 2 }} />
 
                                 <Box display="flex" sx={{ mb: 0 }} alignItems="center">
@@ -261,7 +271,7 @@ export function RenderSettings({ save, saving }: { save: () => Promise<void>; sa
                                             flexShrink: 0,
                                         }}
                                     >
-                                        Pt. tolerance factor
+                                        Tolerance factor
                                     </Typography>
                                     <Slider
                                         sx={{ mx: 2, flex: "1 1 100%" }}
@@ -343,7 +353,7 @@ export function RenderSettings({ save, saving }: { save: () => Promise<void>; sa
                                     }
                                     label={
                                         <Box ml={1} fontSize={16}>
-                                            Render terrain as background
+                                            Render as background
                                         </Box>
                                     }
                                 />
@@ -379,26 +389,6 @@ export function RenderSettings({ save, saving }: { save: () => Promise<void>; sa
                     <AccordionSummary>Light</AccordionSummary>
                     <AccordionDetails>
                         <Box p={1} display="flex" flexDirection="column">
-                            <FormControlLabel
-                                sx={{ ml: 0, mb: 1 }}
-                                control={
-                                    <Switch
-                                        name="toon-outline"
-                                        checked={advanced.toonOutline.enabled}
-                                        onChange={(_evt, checked) =>
-                                            dispatch(renderActions.setAdvanced({ toonOutline: { enabled: checked } }))
-                                        }
-                                    />
-                                }
-                                label={
-                                    <Box ml={1} fontSize={16}>
-                                        Toon outlines
-                                    </Box>
-                                }
-                            />
-
-                            <Divider sx={{ borderColor: theme.palette.grey[300], mb: 2 }} />
-
                             <Box display="flex" alignItems="center">
                                 <Typography
                                     sx={{

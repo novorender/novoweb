@@ -278,7 +278,10 @@ export { actions as explorerActions, reducer as explorerReducer };
 function enabledFeaturesToFeatureKeys(enabledFeatures: Record<string, boolean>): WidgetKey[] {
     const dictionary: Record<string, string | string[] | undefined> = {
         measurement: [featuresConfig.measure.key, featuresConfig.orthoCam.key],
-        clipping: [featuresConfig.clippingBox.key, featuresConfig.clippingPlanes.key],
+        clipping: [
+            // featuresConfig.clippingBox.key,
+            featuresConfig.clippingPlanes.key,
+        ],
         tree: featuresConfig.modelTree.key,
         layers: [featuresConfig.selectionBasket.key],
     };

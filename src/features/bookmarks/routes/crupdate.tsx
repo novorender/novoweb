@@ -12,6 +12,8 @@ import { selectHasAdminCapabilities } from "slices/explorerSlice";
 import { BookmarkAccess, bookmarksActions, selectBookmarks } from "../bookmarksSlice";
 import { useCreateBookmark } from "../useCreateBookmark";
 
+// todo create image
+
 export function Crupdate() {
     const { id } = useParams<{ id?: string }>();
     const history = useHistory();

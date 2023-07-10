@@ -34,7 +34,7 @@ import {
     CheckBox,
 } from "@mui/icons-material";
 
-import { ReactComponent as Clipping } from "media/icons/clipping.svg";
+// import { ReactComponent as Clipping } from "media/icons/clipping.svg";
 import { ReactComponent as Run } from "media/icons/run.svg";
 import { ReactComponent as BimTrack } from "media/icons/bimtrack.svg";
 import { ReactComponent as Ditio } from "media/icons/ditio.svg";
@@ -201,13 +201,13 @@ export const featuresConfig = {
         type: FeatureType.Widget,
         defaultLocked: false,
     },
-    clippingBox: {
-        key: "clippingBox",
-        name: "Clipping box",
-        Icon: Clipping,
-        type: FeatureType.Widget,
-        defaultLocked: false,
-    },
+    // clippingBox: {
+    //     key: "clippingBox",
+    //     name: "Clipping box",
+    //     Icon: Clipping,
+    //     type: FeatureType.Widget,
+    //     defaultLocked: false,
+    // },
     measure: {
         key: "measure",
         name: "Measure",

@@ -1,1 +1,0 @@
-export { useHandleClippingBoxChanges } from "./useHandleClippingBoxChanges";

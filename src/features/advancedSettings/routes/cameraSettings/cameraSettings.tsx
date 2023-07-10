@@ -28,9 +28,11 @@ import {
     selectProportionalCameraSpeed,
     selectViewMode,
 } from "features/render";
-
 import { ViewMode } from "types/misc";
+
 import { Clipping } from "./clipping";
+
+// todo map legacy to new controllers
 
 const controls = [
     { label: "Default", value: "flight" },

@@ -29,7 +29,6 @@ export function SceneError() {
     if (error === Error.NOT_AUTHORIZED) {
         // todo
         alert(error);
-        alert(stack);
         window.location.replace(
             loginUrl +
                 (window.location.search

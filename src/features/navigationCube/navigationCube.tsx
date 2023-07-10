@@ -358,7 +358,7 @@ type Path = {
 export function NavigationCube() {
     const theme = useTheme();
     const {
-        state: { view_OLD: view, scene_OLD: scene },
+        state: { view, db },
     } = useExplorerGlobals(true);
     const highlighted = useHighlighted().idArr;
     const prevPivotPt = useRef<ReadonlyVec3>();
@@ -385,7 +385,7 @@ export function NavigationCube() {
             return;
         }
 
-        let pt: ReadonlyVec3 | undefined = vec3.clone(view.camera.position);
+        let pt: ReadonlyVec3 | undefined = vec3.clone(view.renderState.camera.position);
 
         if (highlighted.length) {
             const abortSignal = abortController.current.signal;
@@ -399,7 +399,7 @@ export function NavigationCube() {
                 try {
                     pt =
                         highlightedBoundingSphereCenter.current ??
-                        (await objIdsToTotalBoundingSphere({ ids: highlighted, abortSignal, db: scene }))?.center;
+                        (await objIdsToTotalBoundingSphere({ ids: highlighted, abortSignal, db }))?.center;
 
                     highlightedBoundingSphereCenter.current = pt;
                 } catch {
@@ -416,7 +416,7 @@ export function NavigationCube() {
             return;
         }
 
-        const ab = vec3.sub(vec3.create(), view.camera.position, pt);
+        const ab = vec3.sub(vec3.create(), view.renderState.camera.position, pt);
         const len = vec3.len(ab);
         const mat = rotationMats[face];
         const dir = vec3.fromValues(0, 0, 1);
@@ -432,7 +432,7 @@ export function NavigationCube() {
                 goTo: {
                     position: target,
                     rotation: quat.fromMat3(quat.create(), mat),
-                    fieldOfView: (view.camera.controller.params as { fieldOfView?: number }).fieldOfView,
+                    fov: view.renderState.camera.fov,
                 },
             })
         );
@@ -442,10 +442,10 @@ export function NavigationCube() {
         animate();
 
         function animate() {
-            if (!prevRotation.current || !quat.equals(prevRotation.current, view.camera.rotation)) {
-                prevRotation.current = quat.clone(view.camera.rotation);
+            if (!prevRotation.current || !quat.equals(prevRotation.current, view.renderState.camera.rotation)) {
+                prevRotation.current = quat.clone(view.renderState.camera.rotation);
 
-                const rot = view.camera.rotation;
+                const rot = view.renderState.camera.rotation;
                 const q = quat.fromValues(rot[0], rot[1], -rot[2], rot[3]);
                 cube.setRotation(q);
                 innerCircle.setRotation(q);

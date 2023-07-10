@@ -218,7 +218,7 @@ const initialState = {
             index: 0,
             mixFactor: 1,
             colorGradient: {
-                knots: [] as { position: number; color: VecRGBA }[], // TODO
+                knots: [] as { position: number; color: VecRGBA }[],
             },
         },
     },
@@ -263,7 +263,7 @@ const initialState = {
         },
     },
     advanced: {
-        dynamicResolutionScaling: true, // todo?
+        dynamicResolutionScaling: true,
         msaa: {
             enabled: true,
             samples: 16,
