@@ -55,7 +55,12 @@ export function Root() {
         dispatchSelectionBasket(selectionBasketActions.add(highlighted.concat(fromGroup)));
         dispatchHighlighted(highlightActions.setIds([]));
         dispatchObjectGroups(
-            objectGroupsActions.set(objectGroups.map((group) => ({ ...group, status: GroupStatus.None })))
+            objectGroupsActions.set(
+                objectGroups.map((group) => ({
+                    ...group,
+                    status: group.status === GroupStatus.Selected ? GroupStatus.None : group.status,
+                }))
+            )
         );
     };
 
@@ -65,7 +70,12 @@ export function Root() {
         dispatchSelectionBasket(selectionBasketActions.remove(highlighted.concat(fromGroup)));
         dispatchHighlighted(highlightActions.setIds([]));
         dispatchObjectGroups(
-            objectGroupsActions.set(objectGroups.map((group) => ({ ...group, status: GroupStatus.None })))
+            objectGroupsActions.set(
+                objectGroups.map((group) => ({
+                    ...group,
+                    status: group.status === GroupStatus.Selected ? GroupStatus.None : group.status,
+                }))
+            )
         );
     };
 

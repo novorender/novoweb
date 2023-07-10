@@ -1,4 +1,5 @@
 import { Alert, Box, CircularProgress, Paper, Typography, useTheme } from "@mui/material";
+import { packageVersion as webglApiVersion } from "@novorender/web_app";
 
 import { dataApi } from "app";
 import { useAppSelector } from "app/store";
@@ -84,7 +85,7 @@ export function SceneError() {
                                 <Box p={1}>
                                     <>
                                         Timestamp: {new Date().toISOString()} <br />
-                                        API: {"TODO API VERSION"} <br />
+                                        API: {webglApiVersion} <br />
                                         Dataserver: {(dataApi as any).serviceUrl}
                                         {stack ? (
                                             <Box mt={2}>

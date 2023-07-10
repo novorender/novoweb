@@ -1,8 +1,9 @@
 import { Box } from "@mui/material";
+import { packageVersion as webglApiVersion } from "@novorender/web_app";
 import { useEffect, useRef } from "react";
 
-import { useExplorerGlobals } from "contexts/explorerGlobals";
 import { useAppSelector } from "app/store";
+import { useExplorerGlobals } from "contexts/explorerGlobals";
 import { selectDeviceProfile } from "features/render";
 
 const canvas: HTMLCanvasElement = document.createElement("canvas") as HTMLCanvasElement;
@@ -96,7 +97,7 @@ export function PerformanceStats() {
             <pre className="stats">
                 Tier: {deviceProfile.tier}; Debug profile: {String(deviceProfile.debugProfile)}
                 <br />
-                APP v{import.meta.env.REACT_APP_VERSION}; API v{"TODO NEW API"};<br />
+                APP v{import.meta.env.REACT_APP_VERSION}; API v{webglApiVersion};<br />
                 GPU: {renderer}
                 <br />
                 User agent: {navigator.userAgent}

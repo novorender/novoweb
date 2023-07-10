@@ -1,10 +1,9 @@
 import { LoadingButton } from "@mui/lab";
 import { Box, Button, FormControlLabel, Link, Modal, Typography, useTheme } from "@mui/material";
-import { HierarcicalObjectReference, ObjectId, SearchPattern } from "@novorender/webgl-api";
+import { HierarcicalObjectReference, SearchPattern } from "@novorender/webgl-api";
 import { FormEventHandler, useState } from "react";
 import { useHistory, useRouteMatch } from "react-router-dom";
 
-import { api } from "app";
 import { ScrollBox, Switch, TextField } from "components";
 import { useExplorerGlobals } from "contexts/explorerGlobals";
 import { highlightActions, useDispatchHighlighted } from "contexts/highlighted";
@@ -31,8 +30,8 @@ export function CreateJsonGroup({
 }: {
     savedInputs: SearchPattern[];
     setSavedInputs: React.Dispatch<React.SetStateAction<SearchPattern[]>>;
-    ids: ObjectId[];
-    setIds: (arg: number[] | ((_ids: ObjectId[]) => ObjectId[])) => void;
+    ids: number[];
+    setIds: (arg: number[] | ((_ids: number[]) => number[])) => void;
     includeDescendants: boolean;
     toggleIncludeDescendants: () => void;
 }) {
@@ -129,9 +128,7 @@ export function CreateJsonGroup({
                         <Box mb={3} component="pre" textAlign="center">
                             {"{ "}
                             "searchPattern":{" "}
-                            <Link
-                                href={`https://api.novorender.com/docs/v${api.version}/interfaces/SearchPattern.html`}
-                            >
+                            <Link href={`https://api.novorender.com/docs/v0.4.0/interfaces/SearchPattern.html`}>
                                 SearchPattern
                             </Link>
                             []

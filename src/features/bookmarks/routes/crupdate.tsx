@@ -12,7 +12,7 @@ import { selectHasAdminCapabilities } from "slices/explorerSlice";
 import { BookmarkAccess, bookmarksActions, selectBookmarks } from "../bookmarksSlice";
 import { useCreateBookmark } from "../useCreateBookmark";
 
-// todo create image
+// TODO_NEW: create image
 
 export function Crupdate() {
     const { id } = useParams<{ id?: string }>();

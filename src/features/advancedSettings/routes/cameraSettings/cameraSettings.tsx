@@ -32,7 +32,7 @@ import { ViewMode } from "types/misc";
 
 import { Clipping } from "./clipping";
 
-// todo map legacy to new controllers
+// TODO_NEW map legacy to new controllers
 
 const controls = [
     { label: "Default", value: "flight" },
