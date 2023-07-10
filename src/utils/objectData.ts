@@ -1,6 +1,7 @@
 import { BoundingSphere, HierarcicalObjectReference, ObjectDB, ObjectId } from "@novorender/webgl-api";
 import { vec3 } from "gl-matrix";
 import { batchedPropertySearch } from "./search";
+import { flip } from "features/render/utils";
 
 export function decodeObjPathName(str: string) {
     try {
@@ -81,7 +82,7 @@ export function getTotalBoundingSphere(nodes: HierarcicalObjectReference[]): Bou
         const sphere = node.bounds?.sphere;
 
         if (sphere) {
-            spheres.push(sphere);
+            spheres.push({ ...sphere, center: flip(sphere.center) });
         }
     }
 

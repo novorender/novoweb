@@ -1,14 +1,15 @@
-import { Fragment, useEffect, useRef, useState } from "react";
-import { mat3, quat, ReadonlyVec3, vec2, vec3 } from "gl-matrix";
 import { css, styled, useTheme } from "@mui/material";
+import { ReadonlyVec3, mat3, quat, vec2, vec3 } from "gl-matrix";
+import { Fragment, useEffect, useRef, useState } from "react";
 
-import { useExplorerGlobals } from "contexts/explorerGlobals";
-import { useMountedState } from "hooks/useMountedState";
-import { useAbortController } from "hooks/useAbortController";
-import { objIdsToTotalBoundingSphere } from "utils/objectData";
-import { useHighlighted } from "contexts/highlighted";
 import { useAppDispatch, useAppSelector } from "app/store";
+import { useExplorerGlobals } from "contexts/explorerGlobals";
+import { useHighlighted } from "contexts/highlighted";
 import { renderActions, selectCameraType } from "features/render/renderSlice";
+import { flip, flipGLtoCadQuat } from "features/render/utils";
+import { useAbortController } from "hooks/useAbortController";
+import { useMountedState } from "hooks/useMountedState";
+import { objIdsToTotalBoundingSphere } from "utils/objectData";
 
 // TODO FIKS
 
@@ -416,7 +417,7 @@ export function NavigationCube() {
             return;
         }
 
-        const ab = vec3.sub(vec3.create(), view.renderState.camera.position, pt);
+        const ab = vec3.sub(vec3.create(), (view as any).renderStateGL.camera.position, [pt[0], pt[2], -pt[1]]);
         const len = vec3.len(ab);
         const mat = rotationMats[face];
         const dir = vec3.fromValues(0, 0, 1);
@@ -424,14 +425,14 @@ export function NavigationCube() {
         vec3.scale(dir, dir, len);
 
         vec3.transformMat3(ab, ab, mat);
-        const target = vec3.add(vec3.create(), pt, dir);
+        const target = vec3.add(vec3.create(), [pt[0], pt[2], -pt[1]], dir);
 
         dispatch(
             renderActions.setCamera({
                 type: cameraType,
                 goTo: {
-                    position: target,
-                    rotation: quat.fromMat3(quat.create(), mat),
+                    position: flip(target),
+                    rotation: flipGLtoCadQuat(quat.fromMat3(quat.create(), mat)),
                     fov: view.renderState.camera.fov,
                 },
             })
@@ -442,10 +443,13 @@ export function NavigationCube() {
         animate();
 
         function animate() {
-            if (!prevRotation.current || !quat.equals(prevRotation.current, view.renderState.camera.rotation)) {
-                prevRotation.current = quat.clone(view.renderState.camera.rotation);
+            if (
+                !prevRotation.current ||
+                !quat.equals(prevRotation.current, (view as any).renderStateGL.camera.rotation)
+            ) {
+                prevRotation.current = quat.clone((view as any).renderStateGL.camera.rotation);
 
-                const rot = view.renderState.camera.rotation;
+                const rot = (view as any).renderStateGL.camera.rotation;
                 const q = quat.fromValues(rot[0], rot[1], -rot[2], rot[3]);
                 cube.setRotation(q);
                 innerCircle.setRotation(q);

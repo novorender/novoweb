@@ -45,10 +45,7 @@ export function useHandleCameraState() {
                         quat.clone(state.goTo.rotation)
                     );
                 } else if (state.zoomTo) {
-                    controller.zoomTo({
-                        center: flip(state.zoomTo.center),
-                        radius: state.zoomTo.radius,
-                    });
+                    controller.zoomTo(state.zoomTo);
                 }
 
                 view.switchCameraController(controller.kind);
