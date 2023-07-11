@@ -36,7 +36,8 @@ export function useHandleCameraMoved({ svg }: { svg: SVGSVGElement | null }) {
                 const hasMoved =
                     !view.prevRenderState ||
                     !vec3.exactEquals(view.renderState.camera.position, view.prevRenderState.camera.position) ||
-                    !quat.exactEquals(view.renderState.camera.rotation, view.prevRenderState.camera.rotation);
+                    !quat.exactEquals(view.renderState.camera.rotation, view.prevRenderState.camera.rotation) ||
+                    view.renderState.camera.fov !== view.prevRenderState.camera.fov;
 
                 if (!hasMoved) {
                     return;
