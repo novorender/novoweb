@@ -17,7 +17,9 @@ export function useHandleCameraState() {
     const viewMode = useAppSelector(selectViewMode);
     const dispatch = useAppDispatch();
 
-    const pinholeKind = useRef<"flight" | "cad" | "panorama">(defaults.pinhole.controller);
+    const pinholeKind = useRef<"flight" | "special" | "cadMiddlePan" | "cadRightPan" | "panorama">(
+        defaults.pinhole.controller
+    );
 
     useEffect(() => {
         if (!view) {

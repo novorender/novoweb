@@ -34,7 +34,9 @@ import { Clipping } from "./clipping";
 
 const controls = [
     { label: "Default", value: "flight" },
-    { label: "CAD", value: "cad" },
+    { label: "CAD (right button pan)", value: "cadRightPan" },
+    { label: "CAD (middle button pan)", value: "cadMiddlePan" },
+    { label: "Special", value: "special" },
 ];
 
 export function CameraSettings({

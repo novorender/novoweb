@@ -16,9 +16,6 @@ export enum Error {
     LEGACY_BINARY_FORMAT = "LEGACY_BINARY_FORMAT",
 }
 
-// todo_new error 404 webgl_bin
-// todo_new quirks warning
-
 export function SceneError() {
     const theme = useTheme();
     const sceneId = useSceneId();

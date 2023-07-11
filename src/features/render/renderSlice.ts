@@ -236,7 +236,7 @@ const initialState = {
     },
     cameraDefaults: {
         pinhole: {
-            controller: "flight" as "flight" | "cad",
+            controller: "flight" as "flight" | "cadMiddlePan" | "cadRightPan" | "special",
             clipping: {
                 near: 0.1,
                 far: 3000,
@@ -574,7 +574,17 @@ export const renderSlice = createSlice({
             } else if (settings) {
                 // Legacy settings
 
-                // TODO_NEW map legacy to new controllers
+                if (props.flightFingerMap) {
+                    const { rotate, orbit, pan } = props.flightFingerMap;
+                    state.cameraDefaults.pinhole.controller =
+                        rotate === 1
+                            ? "flight"
+                            : orbit === 1
+                            ? pan === 2
+                                ? "cadRightPan"
+                                : "cadMiddlePan"
+                            : "special";
+                }
 
                 state.cameraDefaults.pinhole.clipping.far = Math.max((sceneData.camera as any)?.far ?? 0, 1000);
                 state.cameraDefaults.pinhole.clipping.near = Math.max((sceneData.camera as any)?.near ?? 0, 0.1);

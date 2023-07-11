@@ -1,7 +1,7 @@
 export type ExplorerProjectState = {
     camera: {
         pinhole: {
-            controller: "cad" | "flight";
+            controller: "flight" | "special" | "cadRightPan" | "cadMiddlePan";
             clipping: {
                 far: number;
                 near: number;

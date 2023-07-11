@@ -236,25 +236,6 @@ export function PerformanceSettings() {
                     />
                 </Box>
 
-                <FormControlLabel
-                    control={
-                        <Checkbox
-                            name="ios-shader-bug"
-                            size="small"
-                            color="primary"
-                            checked={deviceProfile.quirks.iosShaderBug}
-                            onChange={(_evt, checked) =>
-                                dispatch(renderActions.setDeviceProfile({ quirks: { iosShaderBug: checked } }))
-                            }
-                        />
-                    }
-                    label={
-                        <Box mr={0.5} sx={{ userSelect: "none" }}>
-                            iOS shader bug
-                        </Box>
-                    }
-                />
-
                 <Divider sx={{ mt: 0.5, mb: 2 }} />
 
                 <Button variant="outlined" onClick={handleShare} color="grey">
