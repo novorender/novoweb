@@ -3,7 +3,6 @@ import { ImgModal } from "components";
 import { useExplorerGlobals } from "contexts/explorerGlobals";
 import { ditioActions, selectActiveImg } from "features/ditio";
 import { imagesActions, isFlat, selectActiveImage } from "features/images";
-import { getAssetUrl } from "utils/misc";
 
 export function Images() {
     const {
@@ -19,7 +18,7 @@ export function Images() {
                 open={true}
                 onClose={() => dispatch(imagesActions.setActiveImage(undefined))}
                 sx={{ display: "flex", justifyContent: "center", alignItems: "center" }}
-                src={getAssetUrl(view, activeImage.image.src).toString()}
+                src={activeImage.image.src.startsWith("data:image") ? activeImage.image.src : ""}
             />
         );
     } else if (activeDitioImage) {

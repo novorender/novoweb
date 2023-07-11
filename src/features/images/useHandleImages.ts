@@ -6,6 +6,7 @@ import { useExplorerGlobals } from "contexts/explorerGlobals";
 import { CameraType, renderActions } from "features/render/renderSlice";
 import { useAbortController } from "hooks/useAbortController";
 import { AsyncStatus, ViewMode } from "types/misc";
+import { handleImageResponse } from "utils/bcf";
 import { getAssetUrl } from "utils/misc";
 import { sleep } from "utils/time";
 
@@ -51,15 +52,18 @@ export function useHandleImages() {
                 loadFlatImage(activeImage.image, view);
             }
 
-            function loadFlatImage(image: FlatImage, view: View) {
+            async function loadFlatImage(image: FlatImage, view: View) {
                 dispatch(
                     renderActions.setCamera({
                         type: CameraType.Pinhole,
                         goTo: { position: image.position, rotation: view.renderState.camera.rotation },
                     })
                 );
+                const src = await fetch(getAssetUrl(view, image.src).toString()).then((res) =>
+                    handleImageResponse(res)
+                );
                 dispatch(renderActions.setViewMode(ViewMode.Default));
-                dispatch(imagesActions.setActiveImage({ image, status: AsyncStatus.Success }));
+                dispatch(imagesActions.setActiveImage({ image: { ...image, src }, status: AsyncStatus.Success }));
             }
 
             async function loadPanorama(panorama: PanoramaImage, view: View) {
