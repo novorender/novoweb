@@ -1,20 +1,21 @@
-import { ReactNode, useEffect } from "react";
 import { SearchPattern } from "@novorender/webgl-api";
+import { ReactNode, useEffect } from "react";
 
-import { getOAuthState } from "utils/auth";
-import { Hud } from "features/hud";
-import { Render3D } from "features/render";
-import { Consent } from "features/consent";
 import { useAppDispatch } from "app/store";
-import { explorerActions } from "slices/explorerSlice";
-import { HiddenProvider } from "contexts/hidden";
-import { ObjectGroupsProvider } from "contexts/objectGroups";
-import { HighlightedProvider } from "contexts/highlighted";
-import { SelectionBasketProvider } from "contexts/selectionBasket";
 import { ExplorerGlobalsProvider, useExplorerGlobals } from "contexts/explorerGlobals";
+import { HiddenProvider } from "contexts/hidden";
 import { HighlightCollectionsProvider } from "contexts/highlightCollections";
+import { HighlightedProvider } from "contexts/highlighted";
+import { ObjectGroupsProvider } from "contexts/objectGroups";
+import { SelectionBasketProvider } from "contexts/selectionBasket";
+import { Consent } from "features/consent";
+import { Hud } from "features/hud";
 import { MsalInteraction } from "features/msalInteraction";
+import { QuirkAlert } from "features/quirkAlert";
+import { Render3D } from "features/render";
 import { VersionAlert } from "features/versionAlert";
+import { explorerActions } from "slices/explorerSlice";
+import { getOAuthState } from "utils/auth";
 
 export function Explorer() {
     return (
@@ -63,6 +64,7 @@ function ExplorerBase() {
             {view && scene && !disableHud ? <Hud /> : null}
             <Consent />
             <VersionAlert />
+            <QuirkAlert />
             <MsalInteraction />
         </>
     );
