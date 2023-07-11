@@ -306,7 +306,8 @@ const initialState = {
             maxSamples: 4,
         },
         quirks: {
-            iosShaderBug: false,
+            adreno600: false,
+            slowShaderRecompile: false,
         },
         detailBias: 0.6,
         renderResolution: 1,

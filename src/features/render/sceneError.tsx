@@ -13,7 +13,11 @@ export enum Error {
     UNKNOWN_ERROR = "UNKNOWN_ERROR",
     INVALID_SCENE = "INVALID_SCENE",
     NOT_AUTHORIZED = "NOT_AUTHORIZED",
+    LEGACY_BINARY_FORMAT = "LEGACY_BINARY_FORMAT",
 }
+
+// todo_new error 404 webgl_bin
+// todo_new quirks warning
 
 export function SceneError() {
     const theme = useTheme();
@@ -64,6 +68,13 @@ export function SceneError() {
                                 browser such as Chrome or Edge.
                             </Alert>
                         )}
+                        {error === Error.LEGACY_BINARY_FORMAT && (
+                            <Alert severity="warning" sx={{ mb: 2 }}>
+                                This scene needs to be updated. An admin can{" "}
+                                <a href="https://novorender.com/manuals/update-scene/">follow the steps shown here</a>{" "}
+                                to update the scene.
+                            </Alert>
+                        )}
                         <Typography paragraph>
                             {error === Error.UNKNOWN_ERROR ? (
                                 "Failed to download the scene. Please try again later."
@@ -71,11 +82,7 @@ export function SceneError() {
                                 <>
                                     The scene with id <em>{sceneId}</em> does not exist.
                                 </>
-                            ) : (
-                                <>
-                                    You do not have access to the scene <em>{sceneId}</em>.
-                                </>
-                            )}
+                            ) : null}
                         </Typography>
                         <Accordion>
                             <AccordionSummary>Details</AccordionSummary>

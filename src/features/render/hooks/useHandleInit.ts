@@ -159,17 +159,26 @@ export function useHandleInit() {
                         );
                     }
                 } else if (e instanceof Error) {
-                    dispatch(
-                        renderActions.setSceneStatus({
-                            status: AsyncStatus.Error,
-                            msg: SceneError.UNKNOWN_ERROR,
-                            stack: e.stack
-                                ? e.stack
-                                : typeof e.cause === "string"
-                                ? e.cause
-                                : `${e.name}: ${e.message}`,
-                        })
-                    );
+                    if (e.message === "HTTP Error:404 404") {
+                        dispatch(
+                            renderActions.setSceneStatus({
+                                status: AsyncStatus.Error,
+                                msg: SceneError.LEGACY_BINARY_FORMAT,
+                            })
+                        );
+                    } else {
+                        dispatch(
+                            renderActions.setSceneStatus({
+                                status: AsyncStatus.Error,
+                                msg: SceneError.UNKNOWN_ERROR,
+                                stack: e.stack
+                                    ? e.stack
+                                    : typeof e.cause === "string"
+                                    ? e.cause
+                                    : `${e.name}: ${e.message}`,
+                            })
+                        );
+                    }
                 }
             }
         }
