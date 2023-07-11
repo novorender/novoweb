@@ -69,7 +69,7 @@ const Svg = styled("svg")(
 
 export function Render3D() {
     const {
-        state: { view, canvas, scene },
+        state: { view, canvas, scene, size },
         dispatch: dispatchGlobals,
     } = useExplorerGlobals();
 
@@ -134,7 +134,7 @@ export function Render3D() {
                     {debugStats.enabled && <PerformanceStats />}
                     <Engine2D pointerPos={pointerPos} />
                     <Stamp />
-                    <Svg width={canvas.width} height={canvas.height} ref={setSvg}>
+                    <Svg width={size.width} height={size.height} ref={setSvg}>
                         <Markers />
                         <g id="cursor" />
                     </Svg>

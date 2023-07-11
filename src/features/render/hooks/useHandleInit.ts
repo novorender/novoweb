@@ -122,7 +122,10 @@ export function useHandleInit() {
                     for (const entry of entries) {
                         dispatchGlobals(
                             explorerGlobalsActions.update({
-                                size: { width: entry.contentRect.width, height: entry.contentRect.height },
+                                size: {
+                                    width: Math.round(entry.contentRect.width * devicePixelRatio),
+                                    height: Math.round(entry.contentRect.height * devicePixelRatio),
+                                },
                             })
                         );
                     }
