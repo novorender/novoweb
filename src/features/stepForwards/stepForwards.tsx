@@ -10,7 +10,6 @@ import {
     selectViewMode,
 } from "features/render/renderSlice";
 import { useAppDispatch, useAppSelector } from "app/store";
-import { useExplorerGlobals } from "contexts/explorerGlobals";
 import { ViewMode } from "types/misc";
 
 type Props = SpeedDialActionProps & {
