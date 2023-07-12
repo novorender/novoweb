@@ -117,17 +117,12 @@ export function Engine2D({ pointerPos }: { pointerPos: MutableRefObject<Vec2> })
             pts3d.push(vec3.scaleAndAdd(vec3.create(), grid.origin, grid.axisY, -i * grid.size2));
             labels.push(`-${yLabel}`);
         }
-        const pts = measureApi.toPathPoints(
-            pts3d,
-            view.renderState.output.width,
-            view.renderState.output.height,
-            view.renderState.camera
-        );
+        const pts = measureApi.toPathPoints(pts3d, size.width, size.height, view.renderState.camera);
 
         if (pts) {
             drawTexts(context2D, pts.screenPoints, labels);
         }
-    }, [grid, context2D, view, cameraType]);
+    }, [grid, context2D, view, cameraType, size]);
 
     const drawId = useRef(0);
     const render = useCallback(async () => {
@@ -138,8 +133,8 @@ export function Engine2D({ pointerPos }: { pointerPos: MutableRefObject<Vec2> })
             const getDrawMeasureEntity = async (entity?: DrawableEntity, settings?: MeasureSettings) =>
                 entity &&
                 measureApi.getDrawMeasureEntity(
-                    view.renderState.output.width,
-                    view.renderState.output.height,
+                    size.width,
+                    size.height,
                     view.renderState.camera,
                     measureScene,
                     entity,
@@ -356,8 +351,8 @@ export function Engine2D({ pointerPos }: { pointerPos: MutableRefObject<Vec2> })
 
             if (manholeCollisionValues && (manholeCollisionValues.outer || manholeCollisionValues.inner)) {
                 const colVal = measureApi.getDrawObjectFromPoints(
-                    view.renderState.output.width,
-                    view.renderState.output.height,
+                    size.width,
+                    size.height,
                     view.renderState.camera,
                     manholeCollisionValues.lid,
                     false,
@@ -398,8 +393,8 @@ export function Engine2D({ pointerPos }: { pointerPos: MutableRefObject<Vec2> })
 
             if (areaPoints.length) {
                 const drawProd = measureApi.getDrawObjectFromPoints(
-                    view.renderState.output.width,
-                    view.renderState.output.height,
+                    size.width,
+                    size.height,
                     view.renderState.camera,
                     areaPoints,
                     true,
@@ -441,8 +436,8 @@ export function Engine2D({ pointerPos }: { pointerPos: MutableRefObject<Vec2> })
                 const prods = roadCrossSectionData
                     .map((road) =>
                         measureApi.getDrawObjectFromPoints(
-                            view.renderState.output.width,
-                            view.renderState.output.height,
+                            size.width,
+                            size.height,
                             view.renderState.camera,
                             road.points,
                             false,
@@ -488,8 +483,8 @@ export function Engine2D({ pointerPos }: { pointerPos: MutableRefObject<Vec2> })
 
             if (pointLinePoints.length && pointLineResult) {
                 const drawProd = measureApi.getDrawObjectFromPoints(
-                    view.renderState.output.width,
-                    view.renderState.output.height,
+                    size.width,
+                    size.height,
                     view.renderState.camera,
                     pointLinePoints,
                     false,
@@ -521,8 +516,8 @@ export function Engine2D({ pointerPos }: { pointerPos: MutableRefObject<Vec2> })
 
             if (crossSection) {
                 const drawProd = measureApi.getDrawObjectFromPoints(
-                    view.renderState.output.width,
-                    view.renderState.output.height,
+                    size.width,
+                    size.height,
                     view.renderState.camera,
                     crossSection,
                     false,
@@ -558,8 +553,8 @@ export function Engine2D({ pointerPos }: { pointerPos: MutableRefObject<Vec2> })
                         vec3.scale(center, center, 0.5);
                         const offsetP = vec3.scaleAndAdd(vec3.create(), center, cross, -3);
                         const arrow = measureApi.getDrawObjectFromPoints(
-                            view.renderState.output.width,
-                            view.renderState.output.height,
+                            size.width,
+                            size.height,
                             view.renderState.camera,
                             [center, offsetP],
                             false,
@@ -611,8 +606,8 @@ export function Engine2D({ pointerPos }: { pointerPos: MutableRefObject<Vec2> })
                         }
                     });
                     const drawProd = measureApi.getDrawObjectFromPoints(
-                        view.renderState.output.width,
-                        view.renderState.output.height,
+                        size.width,
+                        size.height,
                         view.renderState.camera,
                         section.points,
                         false,
@@ -635,15 +630,15 @@ export function Engine2D({ pointerPos }: { pointerPos: MutableRefObject<Vec2> })
                         });
                     }
                     const slopeL = measureApi.getDrawText(
-                        view.renderState.output.width,
-                        view.renderState.output.height,
+                        size.width,
+                        size.height,
                         view.renderState.camera,
                         [section.slopes.left.start, section.slopes.left.end],
                         (section.slopes.left.slope * 100).toFixed(1) + "%"
                     );
                     const slopeR = measureApi.getDrawText(
-                        view.renderState.output.width,
-                        view.renderState.output.height,
+                        size.width,
+                        size.height,
                         view.renderState.camera,
                         [section.slopes.right.start, section.slopes.right.end],
                         (section.slopes.right.slope * 100).toFixed(1) + "%"

@@ -574,6 +574,7 @@ export const renderSlice = createSlice({
             } else if (settings) {
                 // Legacy settings
 
+                // controls
                 if (props.flightFingerMap) {
                     const { rotate, orbit, pan } = props.flightFingerMap;
                     state.cameraDefaults.pinhole.controller =
@@ -585,6 +586,8 @@ export const renderSlice = createSlice({
                                 : "cadMiddlePan"
                             : "special";
                 }
+
+                state.navigationCube.enabled = Boolean(props.navigationCube);
 
                 state.cameraDefaults.pinhole.clipping.far = Math.max((sceneData.camera as any)?.far ?? 0, 1000);
                 state.cameraDefaults.pinhole.clipping.near = Math.max((sceneData.camera as any)?.near ?? 0, 0.1);

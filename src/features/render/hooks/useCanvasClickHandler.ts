@@ -45,7 +45,7 @@ export function useCanvasClickHandler() {
     const dispatchHighlightCollections = useDispatchHighlightCollections();
     const highlightCollections = useHighlightCollections();
     const {
-        state: { view, canvas, db, measureScene },
+        state: { view, canvas, db, measureScene, size },
     } = useExplorerGlobals();
 
     const mainObject = useAppSelector(selectMainObject);
@@ -118,12 +118,9 @@ export function useCanvasClickHandler() {
                     let dir = vec3.cross(vec3.create(), up, right);
 
                     if (topDown) {
-                        const midPt = (measureApi.toMarkerPoints(
-                            view.renderState.output.width,
-                            view.renderState.output.width,
-                            view.renderState.camera,
-                            [p]
-                        ) ?? [])[0];
+                        const midPt = (measureApi.toMarkerPoints(size.width, size.width, view.renderState.camera, [
+                            p,
+                        ]) ?? [])[0];
                         if (midPt) {
                             const midPick = await view.pick(midPt[0], midPt[1]);
                             if (midPick) {

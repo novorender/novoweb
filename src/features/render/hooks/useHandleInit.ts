@@ -123,8 +123,8 @@ export function useHandleInit() {
                         dispatchGlobals(
                             explorerGlobalsActions.update({
                                 size: {
-                                    width: Math.round(entry.contentRect.width * devicePixelRatio),
-                                    height: Math.round(entry.contentRect.height * devicePixelRatio),
+                                    width: entry.contentRect.width,
+                                    height: entry.contentRect.height,
                                 },
                             })
                         );
