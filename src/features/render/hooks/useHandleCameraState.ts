@@ -38,6 +38,7 @@ export function useHandleCameraState() {
 
             if (state.type === CameraType.Pinhole) {
                 const controller = view.controllers[pinholeKind.current];
+                view.switchCameraController(controller.kind);
 
                 if (state.goTo) {
                     controller.moveTo(
@@ -49,7 +50,6 @@ export function useHandleCameraState() {
                     controller.zoomTo(state.zoomTo);
                 }
 
-                view.switchCameraController(controller.kind);
                 dispatch(renderActions.setGrid({ enabled: false }));
             } else {
                 await view.switchCameraController(
