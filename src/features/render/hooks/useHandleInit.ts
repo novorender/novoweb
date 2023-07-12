@@ -55,7 +55,9 @@ export function useHandleInit() {
 
             try {
                 const [{ url, db, ...sceneData }, camera] = await loadScene(sceneId);
-                const octreeSceneConfig = await view.loadSceneFromURL(new URL(url));
+                const webgl2Bin = new URL(url);
+                webgl2Bin.pathname += "webgl2_bin/";
+                const octreeSceneConfig = await view.loadSceneFromURL(webgl2Bin);
                 view.run();
 
                 const detectedTier = await loadDeviceTier();

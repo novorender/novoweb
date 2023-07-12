@@ -155,7 +155,7 @@ export function getAssetUrl(view: View, path: string): URL {
     if (!baseUrl) {
         throw new Error("No base URL in view.");
     }
-    const url = new URL(baseUrl);
+    const url = new URL(baseUrl.replace("webgl2_bin/", ""));
     url.pathname += path;
 
     return url;
