@@ -1,6 +1,6 @@
-import { SceneData, SceneLoadFail } from "@novorender/data-js-api";
+import { ObjectDB, SceneData, SceneLoadFail } from "@novorender/data-js-api";
 import { DeviceProfile, View, computeRotation, getDeviceProfile, rotationFromDirection } from "@novorender/web_app";
-import { Internal, ObjectDB } from "@novorender/webgl-api";
+import { Internal } from "@novorender/webgl-api";
 import { getGPUTier } from "detect-gpu";
 import { quat, vec3, vec4 } from "gl-matrix";
 import { useEffect, useRef } from "react";
@@ -19,8 +19,8 @@ import { useSceneId } from "hooks/useSceneId";
 import { AsyncStatus } from "types/misc";
 import { CustomProperties } from "types/project";
 import { VecRGBA } from "utils/color";
-import { sleep } from "utils/time";
 import { getAssetUrl } from "utils/misc";
+import { sleep } from "utils/time";
 
 import { renderActions } from "..";
 import { Error as SceneError } from "../sceneError";

@@ -1,5 +1,6 @@
 import { Box, CircularProgress } from "@mui/material";
-import { HierarcicalObjectReference, ObjectDB, ObjectId } from "@novorender/webgl-api";
+import { ObjectDB } from "@novorender/data-js-api";
+import { HierarcicalObjectReference, ObjectId } from "@novorender/webgl-api";
 import { useEffect } from "react";
 import { useStore } from "react-redux";
 

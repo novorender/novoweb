@@ -52,7 +52,7 @@
         "@mui/lab": "^5.0.0-alpha.58",
         "@mui/material": "^5.8.0",
         "@mui/x-date-pickers": "^5.0.10",
-        "@novorender/data-js-api": "0.2.25",
+        "@novorender/data-js-api": "0.2.26",
         "@novorender/measure-api": "0.1.5",
         "@novorender/web_app": "file:../new-api/dist",
         "@novorender/webgl-api": "0.4.59",

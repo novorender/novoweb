@@ -1,7 +1,7 @@
-import { ObjectDB } from "@novorender/webgl-api";
+import { ObjectDB } from "@novorender/data-js-api";
 import { MeasureScene } from "@novorender/measure-api";
-import { createContext, Dispatch, ReactNode, useContext, useReducer } from "react";
 import { SceneConfig as OctreeSceneConfig, View } from "@novorender/web_app";
+import { createContext, Dispatch, ReactNode, useContext, useReducer } from "react";
 
 // Values that are used all over the place within Explorer, but are unserializable go here instead of redux store.
 
@@ -90,4 +90,4 @@ function useExplorerGlobals(expectHydrated?: boolean): ContextType {
     return context;
 }
 
-export { ExplorerGlobalsProvider, useExplorerGlobals, actions as explorerGlobalsActions };
+export { actions as explorerGlobalsActions, ExplorerGlobalsProvider, useExplorerGlobals };

@@ -1,7 +1,8 @@
 import { Add, ArrowBack, Edit } from "@mui/icons-material";
 import { Box, Button, List, ListItem, Typography, useTheme } from "@mui/material";
+import { ObjectDB } from "@novorender/data-js-api";
 import { ClippingMode } from "@novorender/web_app";
-import { HierarcicalObjectReference, ObjectDB } from "@novorender/webgl-api";
+import { HierarcicalObjectReference } from "@novorender/webgl-api";
 import { Link, useHistory, useParams } from "react-router-dom";
 
 import { useAppDispatch } from "app/store";

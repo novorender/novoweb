@@ -1,4 +1,5 @@
-import { HierarcicalObjectReference, ObjectDB, ObjectData, ObjectId, SearchPattern } from "@novorender/webgl-api";
+import { ObjectDB } from "@novorender/data-js-api";
+import { HierarcicalObjectReference, ObjectData, ObjectId, SearchPattern } from "@novorender/webgl-api";
 
 import { NodeType } from "features/modelTree/modelTree";
 
@@ -219,8 +220,6 @@ export async function getDescendants({
     console.warn("todo descendants");
     return (
         parentNode.descendants ??
-        // TODO_NEW descendant search
-        // @ts-ignore
         db.descendants(parentNode, abortSignal).then((ids) => {
             if (!ids.length) {
                 // Probably not cached so throw to handle fallback in catch
