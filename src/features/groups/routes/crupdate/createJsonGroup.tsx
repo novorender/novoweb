@@ -1,17 +1,16 @@
-import { FormEventHandler, useState } from "react";
-import { Box, Typography, Button, Modal, useTheme, Link, FormControlLabel } from "@mui/material";
 import { LoadingButton } from "@mui/lab";
-import { HierarcicalObjectReference, ObjectId, SearchPattern } from "@novorender/webgl-api";
+import { Box, Button, FormControlLabel, Link, Modal, Typography, useTheme } from "@mui/material";
+import { HierarcicalObjectReference, SearchPattern } from "@novorender/webgl-api";
+import { FormEventHandler, useState } from "react";
 import { useHistory, useRouteMatch } from "react-router-dom";
 
-import { api } from "app";
-import { ScrollBox, TextField, Switch } from "components";
+import { ScrollBox, Switch, TextField } from "components";
 import { useExplorerGlobals } from "contexts/explorerGlobals";
 import { highlightActions, useDispatchHighlighted } from "contexts/highlighted";
 import { useAbortController } from "hooks/useAbortController";
 import { useMountedState } from "hooks/useMountedState";
-import { searchByPatterns, searchDeepByPatterns } from "utils/search";
 import { uniqueArray } from "utils/misc";
+import { searchByPatterns, searchDeepByPatterns } from "utils/search";
 
 enum Status {
     Initial,
@@ -31,8 +30,8 @@ export function CreateJsonGroup({
 }: {
     savedInputs: SearchPattern[];
     setSavedInputs: React.Dispatch<React.SetStateAction<SearchPattern[]>>;
-    ids: ObjectId[];
-    setIds: (arg: number[] | ((_ids: ObjectId[]) => ObjectId[])) => void;
+    ids: number[];
+    setIds: (arg: number[] | ((_ids: number[]) => number[])) => void;
     includeDescendants: boolean;
     toggleIncludeDescendants: () => void;
 }) {
@@ -40,7 +39,7 @@ export function CreateJsonGroup({
     const match = useRouteMatch();
     const theme = useTheme();
     const {
-        state: { scene },
+        state: { db },
     } = useExplorerGlobals(true);
     const dispatchHighlighted = useDispatchHighlighted();
 
@@ -71,7 +70,7 @@ export function CreateJsonGroup({
         if (includeDescendants) {
             await searchDeepByPatterns({
                 abortSignal,
-                scene,
+                db,
                 searchPatterns,
                 callback: (result: number[]) => {
                     setIds((state) => state.concat(result));
@@ -81,7 +80,7 @@ export function CreateJsonGroup({
         } else {
             await searchByPatterns({
                 abortSignal,
-                scene,
+                db,
                 searchPatterns,
                 callback: (result: HierarcicalObjectReference[]) => {
                     const idArr = result.map((res) => res.id);
@@ -129,9 +128,7 @@ export function CreateJsonGroup({
                         <Box mb={3} component="pre" textAlign="center">
                             {"{ "}
                             "searchPattern":{" "}
-                            <Link
-                                href={`https://api.novorender.com/docs/v${api.version}/interfaces/SearchPattern.html`}
-                            >
+                            <Link href={`https://api.novorender.com/docs/v0.4.0/interfaces/SearchPattern.html`}>
                                 SearchPattern
                             </Link>
                             []

@@ -3,7 +3,7 @@ import { createSlice, PayloadAction } from "@reduxjs/toolkit";
 import { vec3 } from "gl-matrix";
 
 import { RootState } from "app/store";
-import { DeepMutable } from "features/render/renderSlice";
+import { DeepMutable, resetView, selectBookmark } from "features/render/renderSlice";
 import { ExtendedMeasureEntity } from "types/misc";
 import { SnapKind } from "./config";
 
@@ -70,6 +70,14 @@ export const measureSlice = createSlice({
         setLoadingBrep: (state, action: PayloadAction<State["loadingBrep"]>) => {
             state.loadingBrep = action.payload;
         },
+    },
+    extraReducers(builder) {
+        builder.addCase(selectBookmark, (state, action) => {
+            state.selectedEntities = action.payload.measurements.measure.entities;
+        });
+        builder.addCase(resetView, (state) => {
+            state.selectedEntities = [];
+        });
     },
 });
 

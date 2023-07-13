@@ -9,20 +9,18 @@ import {
     OpenReason,
     Box,
 } from "@mui/material";
+import { ArrowUpward, ArrowDownward } from "@mui/icons-material";
 
-import { MultipleSelection } from "features/multipleSelection";
-import { ClearView } from "features/clearView";
-import { ViewOnlySelected } from "features/viewOnlySelected";
-import { SelectionColor } from "features/selectionColor";
-import { HideSelected } from "features/hideSelected";
-import { ToggleSubtrees } from "features/toggleSubtrees";
 import { useAppDispatch, useAppSelector } from "app/store";
 import { useToggle } from "hooks/useToggle";
 import { renderActions, selectMainObject } from "features/render";
-
-import ArrowUpwardIcon from "@mui/icons-material/ArrowUpward";
-import ArrowDownwardIcon from "@mui/icons-material/ArrowDownward";
+import { ToggleSubtrees } from "features/toggleSubtrees";
+import { MultipleSelection } from "features/multipleSelection";
+import { SelectionColor } from "features/selectionColor";
+import { ViewOnlySelected } from "features/viewOnlySelected";
+import { HideSelected } from "features/hideSelected";
 import { ClearSelection } from "features/clearSelection";
+import { ClearView } from "features/clearView";
 
 export function SelectionModifierMenu() {
     const theme = useTheme();
@@ -63,7 +61,7 @@ export function SelectionModifierMenu() {
                         size: isSmall ? "small" : "large",
                     } as Partial<FabProps<"button">>
                 }
-                icon={<SpeedDialIcon icon={<ArrowUpwardIcon />} openIcon={<ArrowDownwardIcon />} />}
+                icon={<SpeedDialIcon icon={<ArrowUpward />} openIcon={<ArrowDownward />} />}
                 onClick={() => dispatch(renderActions.setStamp(null))}
             >
                 <ClearView />

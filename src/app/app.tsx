@@ -1,60 +1,39 @@
-import { useEffect, useState } from "react";
+import { InteractionRequiredAuthError, PublicClientApplication } from "@azure/msal-browser";
+import { MsalProvider } from "@azure/msal-react";
 import { CssBaseline } from "@mui/material";
-import { ThemeProvider, StyledEngineProvider } from "@mui/material/styles";
+import { StyledEngineProvider, ThemeProvider } from "@mui/material/styles";
 import { LocalizationProvider } from "@mui/x-date-pickers";
 import { AdapterDateFns } from "@mui/x-date-pickers/AdapterDateFns";
-import enLocale from "date-fns/locale/en-GB";
-import { createAPI } from "@novorender/webgl-api";
-import { createMeasureAPI } from "@novorender/measure-api";
 import { createAPI as createDataAPI } from "@novorender/data-js-api";
-import { MsalProvider } from "@azure/msal-react";
-import { InteractionRequiredAuthError, PublicClientApplication } from "@azure/msal-browser";
-import { Route, useHistory, Switch } from "react-router-dom";
-import { getGPUTier } from "detect-gpu";
+import { createMeasureAPI } from "@novorender/measure-api";
+import enLocale from "date-fns/locale/en-GB";
+import { useEffect, useRef, useState } from "react";
+import { Route, Switch, useHistory } from "react-router-dom";
 
-import { theme } from "app/theme";
 import { useAppDispatch } from "app/store";
+import { theme } from "app/theme";
 import { Loading } from "components";
+import { dataServerBaseUrl } from "config";
+import { loginRequest, msalConfig } from "config/auth";
+import { StorageKey } from "config/storage";
 import { Explorer } from "pages/explorer";
 import { Login } from "pages/login";
 import { authActions } from "slices/authSlice";
-import { loginRequest, msalConfig } from "config/auth";
-import { dataServerBaseUrl } from "config";
 import {
     CustomNavigationClient,
     getAccessToken,
+    getAuthHeader,
     getOAuthState,
     getStoredActiveMsalAccount,
     getUser,
     storeActiveAccount,
 } from "utils/auth";
-import { getAuthHeader } from "utils/auth";
-import { StorageKey } from "config/storage";
 import { deleteFromStorage, getFromStorage } from "utils/storage";
 
 export const isIpad =
     /\biPad/.test(navigator.userAgent) ||
     (/\bMobile\b/.test(navigator.userAgent) && /\bMacintosh\b/.test(navigator.userAgent));
 export const isIphone = /\biPhone/.test(navigator.userAgent);
-export const offscreenCanvas = !(isIpad || isIphone) && "OffscreenCanvas" in window;
-
-export const api = createAPI({
-    noOffscreenCanvas: !offscreenCanvas,
-    scriptBaseUrl: window.location.origin + "/novorender/webgl-api/",
-});
-
-try {
-    const debugProfile =
-        new URLSearchParams(window.location.search).get("debugDeviceProfile") ?? localStorage["debugDeviceProfile"];
-
-    if (debugProfile) {
-        api.deviceProfile = { ...api.deviceProfile, ...JSON.parse(debugProfile), debugProfile: true };
-        console.log(api.version, "using debug device profile");
-    }
-} catch (e) {
-    console.warn(e);
-}
-const deviceProfileInitialized = (api.deviceProfile as any).debugProfile ? Promise.resolve() : loadDeviceProfile();
 
 export const dataApi = createDataAPI({ authHeader: getAuthHeader, serviceUrl: dataServerBaseUrl });
 export const measureApi = createMeasureAPI(window.location.origin + "/novorender/measure-api/");
@@ -69,23 +48,24 @@ enum Status {
 export function App() {
     const history = useHistory();
     const [authStatus, setAuthStatus] = useState(Status.Initial);
-    const [deviceProfileStatus, setDeviceProfileStatus] = useState(Status.Initial);
     const dispatch = useAppDispatch();
 
     useEffect(() => {
         msalInstance.setNavigationClient(new CustomNavigationClient(history));
     }, [history]);
 
+    const authenticating = useRef(false);
+
     useEffect(() => {
-        if (authStatus !== Status.Initial) {
+        if (authStatus !== Status.Initial || authenticating.current) {
             return;
         }
 
+        authenticating.current = true;
+        setAuthStatus(Status.Loading);
         auth();
 
         async function auth() {
-            setAuthStatus(Status.Loading);
-
             if (!(await verifyToken())) {
                 await handleMsalReturn();
             } else {
@@ -202,20 +182,6 @@ export function App() {
     }, [authStatus, dispatch, history]);
 
     useEffect(() => {
-        loadDeviceProfile();
-
-        async function loadDeviceProfile() {
-            if (deviceProfileStatus !== Status.Initial) {
-                return;
-            }
-
-            setDeviceProfileStatus(Status.Loading);
-            await deviceProfileInitialized;
-            setDeviceProfileStatus(Status.Ready);
-        }
-    }, [deviceProfileStatus]);
-
-    useEffect(() => {
         const state = getOAuthState();
 
         if (state && state.sceneId) {
@@ -230,7 +196,7 @@ export function App() {
                     <StyledEngineProvider injectFirst>
                         <ThemeProvider theme={theme}>
                             <CssBaseline />
-                            {[authStatus, deviceProfileStatus].some((status) => status !== Status.Ready) ? (
+                            {authStatus !== Status.Ready ? (
                                 <Loading />
                             ) : (
                                 <Switch>
@@ -254,130 +220,4 @@ export function App() {
             </LocalizationProvider>
         </>
     );
-}
-
-async function loadDeviceProfile(): Promise<void> {
-    try {
-        const tiers = [0, 50, 75, 300];
-        const tierResult = await getGPUTier({
-            mobileTiers: tiers,
-            desktopTiers: tiers,
-        });
-        const isApple = tierResult.device?.includes("apple") || false;
-        const { isMobile, fps, ...gpuTier } = tierResult;
-        let { tier } = gpuTier;
-
-        // GPU is obscured on apple mobile devices and the result is usually much worse than the actual device's GPU.
-        if (isMobile && isApple) {
-            tier = Math.max(1, tier);
-        }
-
-        // All RTX cards belong in tier 3+, but some such as A3000 are not benchmarked and returns tier 1.
-        if (gpuTier.gpu && /RTX/gi.test(gpuTier.gpu)) {
-            tier = Math.max(3, tier);
-        }
-
-        const { name } = api.deviceProfile;
-        api.deviceProfile = {
-            ...api.deviceProfile,
-            orthoDetailBias: 0,
-            name: `${api.deviceProfile.name}${/tier/i.test(name) ? "" : `; tier${tier} (${fps})`}${
-                /(pc|mobile)/i.test(name) ? "" : `; ${isMobile ? "Mobile" : "PC"}`
-            }`,
-        };
-
-        switch (tier) {
-            case 0:
-                const fhd = 1920 * 1080;
-                const screen = window.screen.width * window.screen.height;
-
-                if (screen > fhd) {
-                    api.deviceProfile = {
-                        ...api.deviceProfile,
-                        renderResolution: fhd / screen,
-                    };
-                }
-                return;
-            case 1:
-                if (isMobile) {
-                    api.deviceProfile = {
-                        ...api.deviceProfile,
-                        renderResolution: 1,
-                        orthoDetailBias: 1.5,
-                    };
-
-                    if (isApple) {
-                        api.deviceProfile = {
-                            ...api.deviceProfile,
-                            orthoDetailBias: 2.75,
-                            triangleLimit: Math.max(7_500_000, api.deviceProfile.triangleLimit),
-                            gpuBytesLimit: Math.max(500_000_000, api.deviceProfile.gpuBytesLimit),
-                        };
-                    } else {
-                        api.deviceProfile = {
-                            ...api.deviceProfile,
-                            gpuBytesLimit: Math.max(700_000_000, api.deviceProfile.gpuBytesLimit),
-                        };
-                    }
-                } else {
-                    api.deviceProfile = {
-                        ...api.deviceProfile,
-                        orthoDetailBias: 1.5,
-                        gpuBytesLimit: Math.max(1_000_000, api.deviceProfile.gpuBytesLimit),
-                        detailBias: Math.max(0.4, api.deviceProfile.detailBias),
-                    };
-                }
-                return;
-            case 2:
-                if (isMobile) {
-                    api.deviceProfile = {
-                        ...api.deviceProfile,
-                        orthoDetailBias: 2.75,
-                        triangleLimit: Math.max(7_500_000, api.deviceProfile.triangleLimit),
-                        weakDevice: false,
-                    };
-
-                    if (isApple) {
-                        api.deviceProfile = {
-                            ...api.deviceProfile,
-                            gpuBytesLimit: Math.max(500_000_000, api.deviceProfile.gpuBytesLimit),
-                        };
-                    } else {
-                        api.deviceProfile = {
-                            ...api.deviceProfile,
-                            gpuBytesLimit: Math.max(1_000_000_000, api.deviceProfile.gpuBytesLimit),
-                            detailBias: Math.max(0.5, api.deviceProfile.detailBias),
-                        };
-                    }
-                } else {
-                    api.deviceProfile = {
-                        ...api.deviceProfile,
-                        orthoDetailBias: 2.75,
-                        weakDevice: false,
-                    };
-                }
-                return;
-            case 3:
-                if (isMobile) {
-                    api.deviceProfile = {
-                        ...api.deviceProfile,
-                        orthoDetailBias: 2.75,
-                        weakDevice: false,
-                    };
-                } else {
-                    api.deviceProfile = {
-                        ...api.deviceProfile,
-                        detailBias: Math.max(1.5, api.deviceProfile.detailBias),
-                        orthoDetailBias: 10,
-                        triangleLimit: Math.max(20_000_000, api.deviceProfile.triangleLimit),
-                        gpuBytesLimit: Math.max(4_000_000_000, api.deviceProfile.gpuBytesLimit),
-                        renderResolution: 1,
-                        weakDevice: false,
-                    };
-                }
-                return;
-        }
-    } catch (e) {
-        console.warn(e);
-    }
 }

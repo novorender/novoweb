@@ -1,27 +1,17 @@
-import type {
-    API,
-    BoundingSphere,
-    Camera,
-    EnvironmentDescription,
-    FlightControllerParams,
-    ObjectId,
-    OrthoControllerParams,
-    RenderSettings,
-} from "@novorender/webgl-api";
 import type { Bookmark, ObjectGroup } from "@novorender/data-js-api";
-import { createSlice, createAsyncThunk, PayloadAction } from "@reduxjs/toolkit";
-import { mat4, quat, vec3, vec4 } from "gl-matrix";
+import { ClippingMode, SceneConfig as OctreeSceneConfig, RecursivePartial, TonemappingMode } from "@novorender/web_app";
+import type { BoundingSphere, Camera, EnvironmentDescription, ObjectId, RenderSettings } from "@novorender/webgl-api";
+import { PayloadAction, createAction, createSlice } from "@reduxjs/toolkit";
+import { quat, vec3, vec4 } from "gl-matrix";
 
 import type { RootState } from "app/store";
-import { VecRGB, VecRGBA } from "utils/color";
-import { defaultFlightControls } from "config/camera";
-import { ViewMode } from "types/misc";
 import { LogPoint, MachineLocation } from "features/xsiteManage";
+import { AsyncState, AsyncStatus, ViewMode } from "types/misc";
+import { VecRGB, VecRGBA } from "utils/color";
+import { mergeRecursive } from "utils/misc";
 
-export const fetchEnvironments = createAsyncThunk("novorender/fetchEnvironments", async (api: API) => {
-    const envs = await api.availableEnvironments("https://api.novorender.com/assets/env/index.json");
-    return envs;
-});
+import { SceneConfig } from "./hooks/useHandleInit";
+import { getLegacySubtrees, getSubtrees } from "./utils";
 
 export enum CameraSpeedLevel {
     Slow = "slow",
@@ -37,49 +27,13 @@ export enum ObjectVisibility {
 
 export enum CameraType {
     Orthographic,
-    Flight,
+    Pinhole,
 }
 
 export enum SubtreeStatus {
     Unavailable,
     Shown,
     Hidden,
-}
-
-export enum AdvancedSetting {
-    Taa = "taa",
-    Ssao = "ssao",
-    AutoFps = "autoFps",
-    ShowBoundingBoxes = "showBoundingBoxes",
-    DoubleSidedMaterials = "doubleSidedMaterials",
-    DoubleSidedTransparentMaterials = "doubleSidedTransparentMaterials",
-    HoldDynamic = "holdDynamic",
-    ShowPerformance = "showPerformance",
-    CameraNearClipping = "cameraNearClipping",
-    CameraFarClipping = "cameraFarClipping",
-    QualityPoints = "qualityPoints",
-    PointSize = "pointSize",
-    MaxPointSize = "maxPointSize",
-    PointToleranceFactor = "pointToleranceFactor",
-    HeadlightIntensity = "headlightIntensity",
-    HeadlightDistance = "headlightDistance",
-    AmbientLight = "ambientLight",
-    NavigationCube = "navigationCube",
-    TerrainAsBackground = "terrainAsBackground",
-    MouseButtonMap = "mouseButtonMap",
-    FingerMap = "fingerMap",
-    BackgroundColor = "backgroundColor",
-    TriangleLimit = "triangleLimit",
-    SkyBoxBlur = "skyBoxBlur",
-    SecondaryHighlight = "secondaryHighlight",
-    PickSemiTransparentObjects = "pickSemiTransparentObjects",
-}
-
-export enum ProjectSetting {
-    TmZone = "tmZone",
-    DitioProjectNumber = "ditioProjectNumber",
-    Jira = "jira",
-    XsiteManage = "xsiteManage",
 }
 
 export enum SelectionBasketMode {
@@ -112,22 +66,33 @@ export type DeepMutable<T> = { -readonly [P in keyof T]: DeepMutable<T[P]> };
 type CameraState =
     | {
           type: CameraType.Orthographic;
-          params?: OrthoControllerParams;
-          goTo?: { position: Camera["position"]; rotation: Camera["rotation"]; fieldOfView?: number };
+          goTo?: {
+              position: Camera["position"];
+              rotation: Camera["rotation"];
+              fov?: number;
+              far?: number;
+              near?: number;
+              flyTime?: number;
+          };
           gridOrigo?: vec3;
       }
     | {
-          type: CameraType.Flight;
-          goTo?: { position: Camera["position"]; rotation: Camera["rotation"]; fieldOfView?: number };
+          type: CameraType.Pinhole;
+          goTo?: {
+              position: Camera["position"];
+              rotation: Camera["rotation"];
+              fov?: number;
+              far?: number;
+              near?: number;
+              flyTime?: number;
+          };
           zoomTo?: BoundingSphere;
       };
 type MutableCameraState = DeepMutable<CameraState>;
-type MutableGrid = DeepMutable<RenderSettings["grid"]>;
 export type ClippingBox = RenderSettings["clippingPlanes"] & {
     defining: boolean;
     baseBounds: RenderSettings["clippingPlanes"]["bounds"];
 };
-type MutableClippingBox = DeepMutable<ClippingBox>;
 type SavedCameraPositions = { currentIndex: number; positions: CameraPosition[] };
 type MutableSavedCameraPositions = DeepMutable<SavedCameraPositions>;
 
@@ -183,113 +148,25 @@ type Stamp = { mouseX: number; mouseY: number; pinned: boolean } & (
 );
 
 const initialState = {
-    environments: [] as EnvironmentDescription[],
-    currentEnvironment: undefined as EnvironmentDescription | undefined,
+    sceneStatus: { status: AsyncStatus.Initial } as AsyncState<void>,
     mainObject: undefined as ObjectId | undefined,
     defaultVisibility: ObjectVisibility.Neutral,
     selectMultiple: false,
-    cameraSpeedLevels: {
-        flight: {
-            [CameraSpeedLevel.Slow]: 0.01,
-            [CameraSpeedLevel.Default]: 0.03,
-            [CameraSpeedLevel.Fast]: 0.15,
-        },
-    },
-    proportionalCameraSpeed: {
-        enabled: true,
-        min: 5,
-        max: 300,
-        pickDelay: 500,
-    } as NonNullable<FlightControllerParams["proportionalCameraSpeed"]> & { enabled: boolean },
-    pointerLock: {
-        ortho: false,
-    },
     currentCameraSpeedLevel: CameraSpeedLevel.Default,
     savedCameraPositions: { currentIndex: -1, positions: [] } as MutableSavedCameraPositions,
-    subtrees: undefined as
-        | undefined
-        | {
-              triangles: SubtreeStatus;
-              lines: SubtreeStatus;
-              terrain: SubtreeStatus;
-              points: SubtreeStatus;
-              documents: SubtreeStatus;
-          },
+    subtrees: {
+        triangles: SubtreeStatus.Unavailable,
+        lines: SubtreeStatus.Unavailable,
+        terrain: SubtreeStatus.Unavailable,
+        points: SubtreeStatus.Unavailable,
+        documents: SubtreeStatus.Unavailable,
+    },
     selectionBasketMode: SelectionBasketMode.Loose,
     selectionBasketColor: {
         color: [0, 0, 1, 1] as VecRGB | VecRGBA,
         use: false,
     },
-    clippingBox: {
-        defining: false,
-        enabled: false,
-        inside: true,
-        showBox: false,
-        highlight: -1,
-        bounds: { min: [0, 0, 0], max: [0, 0, 0] },
-        baseBounds: { min: [0, 0, 0], max: [0, 0, 0] },
-    } as MutableClippingBox,
-    clippingPlanes: {
-        enabled: false,
-        mode: "union" as "union" | "intersection",
-        planes: [] as {
-            plane: Vec4;
-            baseW: number;
-        }[],
-    },
-    camera: { type: CameraType.Flight } as MutableCameraState,
-    advancedSettings: {
-        [AdvancedSetting.Taa]: true,
-        [AdvancedSetting.Ssao]: true,
-        [AdvancedSetting.AutoFps]: true,
-        [AdvancedSetting.ShowBoundingBoxes]: false,
-        [AdvancedSetting.DoubleSidedMaterials]: false,
-        [AdvancedSetting.DoubleSidedTransparentMaterials]: false,
-        [AdvancedSetting.HoldDynamic]: false,
-        [AdvancedSetting.ShowPerformance]: false,
-        [AdvancedSetting.CameraNearClipping]: 0,
-        [AdvancedSetting.CameraFarClipping]: 0,
-        [AdvancedSetting.QualityPoints]: true,
-        [AdvancedSetting.PointSize]: 1,
-        [AdvancedSetting.MaxPointSize]: 20,
-        [AdvancedSetting.PointToleranceFactor]: 0,
-        [AdvancedSetting.HeadlightIntensity]: 0,
-        [AdvancedSetting.HeadlightDistance]: 0,
-        [AdvancedSetting.AmbientLight]: 0,
-        [AdvancedSetting.NavigationCube]: false,
-        [AdvancedSetting.TerrainAsBackground]: false,
-        [AdvancedSetting.FingerMap]: defaultFlightControls.touch,
-        [AdvancedSetting.MouseButtonMap]: defaultFlightControls.mouse,
-        [AdvancedSetting.BackgroundColor]: [0.75, 0.75, 0.75, 1] as VecRGBA,
-        [AdvancedSetting.TriangleLimit]: 0,
-        [AdvancedSetting.SkyBoxBlur]: 0,
-        [AdvancedSetting.SecondaryHighlight]: { property: "" },
-        [AdvancedSetting.PickSemiTransparentObjects]: false,
-    },
-    defaultDeviceProfile: {} as any,
-    gridDefaults: {
-        enabled: false,
-        majorLineCount: 1001,
-        minorLineCount: 4,
-        majorColor: [0.15, 0.15, 0.15] as Vec3,
-        minorColor: [0.65, 0.65, 0.65] as Vec3,
-    },
-    grid: {
-        enabled: false,
-        majorLineCount: 1001,
-        minorLineCount: 4,
-        origo: [0, 0, 0],
-        axisX: [0, 0, 0],
-        axisY: [0, 0, 0],
-        majorColor: [0, 0, 0],
-        minorColor: [0, 0, 0],
-    } as MutableGrid,
-    projectSettings: {
-        [ProjectSetting.TmZone]: "",
-        [ProjectSetting.DitioProjectNumber]: "",
-        [ProjectSetting.Jira]: { space: "", project: "", component: "" },
-        [ProjectSetting.XsiteManage]: { siteId: "" },
-    },
+    camera: { type: CameraType.Pinhole } as MutableCameraState,
     picker: Picker.Object,
     viewMode: ViewMode.Default,
     loadingHandles: [] as number[],
@@ -301,9 +178,174 @@ const initialState = {
               x: number;
               y: number;
           },
+
+    // NEW
+    background: {
+        environments: { status: AsyncStatus.Initial } as AsyncState<EnvironmentDescription[]>,
+        color: [0, 0, 0, 1] as vec4,
+        url: "",
+        blur: 0,
+    },
+    clipping: {
+        enabled: false,
+        draw: false,
+        mode: ClippingMode.union,
+        planes: [] as {
+            normalOffset: vec4;
+            baseW: number;
+            color: vec4;
+        }[],
+    },
+    grid: {
+        enabled: false,
+        distance: 500,
+        origin: [0, 0, 0] as vec3,
+        axisX: [0, 0, 0] as vec3,
+        axisY: [0, 0, 0] as vec3,
+        color1: [0.65, 0.65, 0.65] as vec3,
+        color2: [0.15, 0.15, 0.15] as vec3,
+        size1: 1,
+        size2: 5,
+    },
+    points: {
+        size: {
+            pixel: 1,
+            maxPixel: 1,
+            metric: 1,
+            toleranceFactor: 1,
+        },
+        deviation: {
+            index: 0,
+            mixFactor: 1,
+            colorGradient: {
+                knots: [] as { position: number; color: VecRGBA }[],
+            },
+        },
+    },
+    terrain: {
+        asBackground: false,
+        elevationGradient: {
+            knots: [] as { position: number; color: VecRGB }[],
+        },
+    },
+    secondaryHighlight: {
+        property: "",
+    },
+    project: {
+        tmZone: "",
+    },
+    cameraDefaults: {
+        pinhole: {
+            controller: "flight" as "flight" | "cadMiddlePan" | "cadRightPan" | "special",
+            clipping: {
+                near: 0.1,
+                far: 3000,
+            },
+            speedLevels: {
+                slow: 0.3,
+                default: 1,
+                fast: 5,
+            },
+            proportionalSpeed: {
+                enabled: true,
+                min: 5,
+                max: 300,
+            },
+        },
+        orthographic: {
+            controller: "ortho" as const,
+            clipping: {
+                near: -0.1,
+                far: 1000,
+            },
+            usePointerLock: false,
+            topDownElevation: undefined as undefined | number,
+        },
+    },
+    advanced: {
+        dynamicResolutionScaling: true,
+        msaa: {
+            enabled: true,
+            samples: 16,
+        },
+        toonOutline: {
+            enabled: true,
+            color: [0, 0, 0] as VecRGB,
+            onlyOnIdleFrame: true,
+        },
+        outlines: {
+            enabled: false,
+            color: [10, 10, 10] as VecRGB,
+            plane: [0, -1, 0, 0] as vec4,
+        },
+        tonemapping: {
+            exposure: 0.5,
+            mode: TonemappingMode.color,
+        },
+        pick: {
+            opacityThreshold: 1,
+        },
+        limits: {
+            maxPrimitives: 5_000_000,
+        },
+        // NOTE(OLA): Debug props should not be saved
+        debug: {
+            showNodeBounds: false,
+        },
+    },
+    deviceProfile: {
+        debugProfile: false,
+        isMobile: false,
+        tier: -1,
+        features: {
+            outline: true,
+        },
+        limits: {
+            maxGPUBytes: 2_000_000_000,
+            maxPrimitives: 10_000_000,
+            maxSamples: 4,
+        },
+        quirks: {
+            adreno600: false,
+            slowShaderRecompile: false,
+        },
+        detailBias: 0.6,
+        renderResolution: 1,
+        framerateTarget: 30,
+    },
+    navigationCube: {
+        enabled: false,
+    },
+    debugStats: {
+        enabled: false,
+    },
 };
 
 type State = typeof initialState;
+
+export const initScene = createAction<{
+    sceneData: Omit<SceneConfig, "db" | "url">;
+    sceneConfig: OctreeSceneConfig;
+    initialCamera: {
+        kind: "pinhole" | "orthographic";
+        position: vec3;
+        rotation: quat;
+        fov: number;
+    };
+    deviceProfile: RecursivePartial<State["deviceProfile"]>;
+}>("initScene");
+
+export const resetView = createAction<{
+    sceneData: Omit<SceneConfig, "db" | "url">;
+    initialCamera?: {
+        kind: "pinhole" | "orthographic";
+        position: vec3;
+        rotation: quat;
+        fov: number;
+    };
+}>("resetView");
+
+export const selectBookmark = createAction<NonNullable<Bookmark["v1"]>>("selectBookmark");
 
 export const renderSlice = createSlice({
     name: "render",
@@ -311,9 +353,6 @@ export const renderSlice = createSlice({
     reducers: {
         setMainObject: (state, action: PayloadAction<ObjectId | undefined>) => {
             state.mainObject = action.payload;
-        },
-        setEnvironment: (state, action: PayloadAction<EnvironmentDescription | undefined>) => {
-            state.currentEnvironment = action.payload;
         },
         toggleDefaultVisibility: (state) => {
             switch (state.defaultVisibility) {
@@ -357,24 +396,29 @@ export const renderSlice = createSlice({
                 .slice(0, state.savedCameraPositions.currentIndex + 1)
                 .concat({
                     position: vec3.clone(action.payload.position),
-                    rotation: vec4.clone(action.payload.rotation),
+                    rotation: quat.clone(action.payload.rotation),
                 });
             state.savedCameraPositions.currentIndex = state.savedCameraPositions.positions.length - 1;
         },
         undoCameraPosition: (state) => {
             state.savedCameraPositions.currentIndex = state.savedCameraPositions.currentIndex - 1;
+            state.camera = {
+                type: CameraType.Pinhole,
+                goTo: state.savedCameraPositions.positions[state.savedCameraPositions.currentIndex],
+            };
         },
         redoCameraPosition: (state) => {
             state.savedCameraPositions.currentIndex = state.savedCameraPositions.currentIndex + 1;
+            state.camera = {
+                type: CameraType.Pinhole,
+                goTo: state.savedCameraPositions.positions[state.savedCameraPositions.currentIndex],
+            };
         },
         setHomeCameraPos: (state, action: PayloadAction<CameraPosition>) => {
             state.savedCameraPositions.positions[0] = {
                 position: vec3.clone(action.payload.position),
-                rotation: vec4.clone(action.payload.rotation),
+                rotation: quat.clone(action.payload.rotation),
             };
-        },
-        setDefaultDeviceProfile: (state, action: PayloadAction<State["defaultDeviceProfile"]>) => {
-            state.defaultDeviceProfile = action.payload;
         },
         setSubtrees: (state, action: PayloadAction<State["subtrees"]>) => {
             state.subtrees = action.payload;
@@ -390,53 +434,7 @@ export const renderSlice = createSlice({
                     : SubtreeStatus.Shown;
         },
         setSubtreesFromBookmark: (state, action: PayloadAction<Required<Bookmark>["subtrees"]>) => {
-            if (!state.subtrees) {
-                return;
-            }
-
-            state.subtrees.lines =
-                state.subtrees.lines !== SubtreeStatus.Unavailable
-                    ? action.payload.lines
-                        ? SubtreeStatus.Shown
-                        : SubtreeStatus.Hidden
-                    : state.subtrees.lines;
-
-            state.subtrees.points =
-                state.subtrees.points !== SubtreeStatus.Unavailable
-                    ? action.payload.points
-                        ? SubtreeStatus.Shown
-                        : SubtreeStatus.Hidden
-                    : state.subtrees.points;
-
-            state.subtrees.terrain =
-                state.subtrees.terrain !== SubtreeStatus.Unavailable
-                    ? action.payload.terrain
-                        ? SubtreeStatus.Shown
-                        : SubtreeStatus.Hidden
-                    : state.subtrees.terrain;
-
-            state.subtrees.triangles =
-                state.subtrees.triangles !== SubtreeStatus.Unavailable
-                    ? action.payload.triangles
-                        ? SubtreeStatus.Shown
-                        : SubtreeStatus.Hidden
-                    : state.subtrees.triangles;
-
-            state.subtrees.documents =
-                state.subtrees.documents !== SubtreeStatus.Unavailable
-                    ? action.payload.documents
-                        ? SubtreeStatus.Shown
-                        : SubtreeStatus.Hidden
-                    : state.subtrees.documents;
-        },
-        disableAllSubtrees: (state) => {
-            state.subtrees = {
-                terrain: SubtreeStatus.Unavailable,
-                triangles: SubtreeStatus.Unavailable,
-                lines: SubtreeStatus.Unavailable,
-                points: SubtreeStatus.Unavailable,
-                documents: SubtreeStatus.Unavailable,
-            };
+            state.subtrees = subtreesFromBookmark(state.subtrees, action.payload);
         },
         setSelectionBasketMode: (state, action: PayloadAction<State["selectionBasketMode"]>) => {
             state.selectionBasketMode = action.payload;
@@ -444,44 +442,15 @@ export const renderSlice = createSlice({
         setSelectionBasketColor: (state, action: PayloadAction<Partial<State["selectionBasketColor"]>>) => {
             state.selectionBasketColor = { ...state.selectionBasketColor, ...action.payload };
         },
-        setClippingBox: (state, action: PayloadAction<Partial<ClippingBox>>) => {
-            if (action.payload.enabled) {
-                state.clippingPlanes.enabled = false;
-            }
+        setClippingPlanes: (state, action: PayloadAction<RecursivePartial<State["clipping"]>>) => {
+            state.clipping = mergeRecursive(state.clipping, action.payload);
+        },
+        addClippingPlane: (state, action: PayloadAction<Omit<State["clipping"]["planes"][number], "color">>) => {
+            state.clipping.enabled = true;
 
-            state.clippingBox = { ...state.clippingBox, ...action.payload } as MutableClippingBox;
-        },
-        resetClippingBox: (state) => {
-            state.clippingBox = initialState.clippingBox;
-        },
-        setClippingPlanes: (state, action: PayloadAction<Partial<(typeof initialState)["clippingPlanes"]>>) => {
-            if (action.payload.enabled) {
-                state.clippingBox.enabled = false;
+            if (state.clipping.planes.length < 6) {
+                state.clipping.planes.push({ ...action.payload, color: [0, 1, 0, 0.2] });
             }
-
-            state.clippingPlanes = { ...state.clippingPlanes, ...action.payload };
-        },
-        addClippingPlane: (state, action: PayloadAction<(typeof initialState)["clippingPlanes"]["planes"][number]>) => {
-            state.clippingBox.enabled = false;
-            state.clippingPlanes.enabled = true;
-
-            if (state.clippingPlanes.planes.length < 6) {
-                state.clippingPlanes.planes.push(action.payload);
-            }
-        },
-        resetClippingPlanes: (state) => {
-            state.clippingPlanes = initialState.clippingPlanes;
-        },
-        resetState: (state) => {
-            return {
-                ...initialState,
-                defaultDeviceProfile: state.defaultDeviceProfile,
-                environments: state.environments,
-                projectSettings: state.projectSettings,
-                savedCameraPositions: { currentIndex: 0, positions: [state.savedCameraPositions.positions[0]] },
-                cameraSpeedLevels: state.cameraSpeedLevels,
-                currentCameraSpeedLevel: state.currentCameraSpeedLevel,
-            };
         },
         setCamera: (state, { payload }: PayloadAction<CameraState>) => {
             const goTo =
@@ -501,50 +470,14 @@ export const renderSlice = createSlice({
                       }
                     : undefined;
 
-            const params =
-                "params" in payload && payload.params
-                    ? {
-                          ...payload.params,
-                          ...(payload.params.referenceCoordSys
-                              ? { referenceCoordSys: Array.from(payload.params.referenceCoordSys) as mat4 }
-                              : {}),
-                          ...(payload.params.position ? { position: Array.from(payload.params.position) as vec3 } : {}),
-                      }
-                    : undefined;
-
             state.camera = {
                 ...payload,
                 ...(goTo ? { goTo } : {}),
                 ...(zoomTo ? { zoomTo } : {}),
-                ...(params ? { params } : {}),
             } as MutableCameraState;
         },
-        setCameraSpeedLevels: (state, { payload }: PayloadAction<Partial<State["cameraSpeedLevels"]>>) => {
-            state.cameraSpeedLevels = { ...state.cameraSpeedLevels, ...payload };
-        },
-        setAdvancedSettings: (state, action: PayloadAction<Partial<State["advancedSettings"]>>) => {
-            state.advancedSettings = {
-                ...state.advancedSettings,
-                ...action.payload,
-            };
-        },
-        setProjectSettings: (state, action: PayloadAction<Partial<State["projectSettings"]>>) => {
-            state.projectSettings = {
-                ...state.projectSettings,
-                ...action.payload,
-            };
-        },
-        setGridDefaults: (state, action: PayloadAction<Partial<State["gridDefaults"]>>) => {
-            state.gridDefaults = { ...state.gridDefaults, ...action.payload };
-            state.grid = { ...state.grid, ...state.gridDefaults };
-        },
-        setGrid: (state, action: PayloadAction<Partial<State["grid"]>>) => {
-            state.grid = {
-                ...state.grid,
-                ...state.gridDefaults,
-                enabled: state.grid.enabled,
-                ...action.payload,
-            } as MutableGrid;
+        setGrid: (state, action: PayloadAction<RecursivePartial<State["grid"]>>) => {
+            state.grid = mergeRecursive(state.grid, action.payload);
         },
         setPicker: (state, action: PayloadAction<State["picker"]>) => {
             state.picker = action.payload;
@@ -566,29 +499,304 @@ export const renderSlice = createSlice({
         setStamp: (state, action: PayloadAction<State["stamp"]>) => {
             state.stamp = action.payload;
         },
-        setPointerLock: (state, action: PayloadAction<Partial<State["pointerLock"]>>) => {
-            state.pointerLock = { ...state.pointerLock, ...action.payload };
-        },
-        setProportionalCameraSpeed: (state, action: PayloadAction<Partial<State["proportionalCameraSpeed"]>>) => {
-            state.proportionalCameraSpeed = { ...state.proportionalCameraSpeed, ...action.payload };
-        },
         setPointerDownState: (state, action: PayloadAction<State["pointerDownState"]>) => {
             state.pointerDownState = action.payload;
         },
+        setPoints: (state, action: PayloadAction<RecursivePartial<State["points"]>>) => {
+            state.points = mergeRecursive(state.points, action.payload);
+        },
+        setBackground: (state, action: PayloadAction<Partial<State["background"]>>) => {
+            state.background = { ...state.background, ...action.payload };
+        },
+        setTerrain: (state, action: PayloadAction<Partial<State["terrain"]>>) => {
+            state.terrain = { ...state.terrain, ...action.payload };
+        },
+        setSecondaryHighlight: (state, action: PayloadAction<Partial<State["secondaryHighlight"]>>) => {
+            state.secondaryHighlight = { ...state.secondaryHighlight, ...action.payload };
+        },
+        setSceneStatus: (state, action: PayloadAction<State["sceneStatus"]>) => {
+            state.sceneStatus = action.payload;
+        },
+        setCameraDefaults: (state, action: PayloadAction<RecursivePartial<State["cameraDefaults"]>>) => {
+            state.cameraDefaults = mergeRecursive(state.cameraDefaults, action.payload);
+        },
+        setAdvanced: (state, action: PayloadAction<RecursivePartial<State["advanced"]>>) => {
+            state.advanced = mergeRecursive(state.advanced, action.payload);
+        },
+        setDeviceProfile: (state, action: PayloadAction<RecursivePartial<State["deviceProfile"]>>) => {
+            state.deviceProfile = mergeRecursive(state.deviceProfile, action.payload);
+        },
+        setProject: (state, action: PayloadAction<RecursivePartial<State["project"]>>) => {
+            state.project = mergeRecursive(state.project, action.payload);
+        },
+        setNavigationCube: (state, action: PayloadAction<RecursivePartial<State["navigationCube"]>>) => {
+            state.navigationCube = mergeRecursive(state.navigationCube, action.payload);
+        },
+        setDebugStats: (state, action: PayloadAction<RecursivePartial<State["debugStats"]>>) => {
+            state.debugStats = mergeRecursive(state.debugStats, action.payload);
+        },
     },
     extraReducers: (builder) => {
-        builder.addCase(fetchEnvironments.fulfilled, (state, action) => {
-            state.environments = action.payload as DeepMutable<typeof action.payload>;
+        builder.addCase(initScene, (state, action) => {
+            const {
+                sceneData: { customProperties: props, settings, tmZone, ...sceneData },
+                sceneConfig,
+                initialCamera,
+                deviceProfile,
+            } = action.payload;
+
+            // Init camera
+            state.camera.type = initialCamera.kind === "orthographic" ? CameraType.Orthographic : CameraType.Pinhole;
+            state.camera.goTo = initialCamera;
+            state.savedCameraPositions.positions[0] = initialCamera;
+            state.savedCameraPositions.currentIndex = 0;
+
+            // project
+            state.project.tmZone = tmZone ?? state.project.tmZone;
+
+            // device profile
+            state.deviceProfile = mergeRecursive(state.deviceProfile, deviceProfile);
+
+            if (props.v1) {
+                const { points, background, terrain, hide, ...advanced } = props.v1.renderSettings;
+                const { debugStats, navigationCube } = props.v1.features;
+                const camera = props.v1.camera;
+
+                state.cameraDefaults.pinhole = camera.pinhole;
+                state.cameraDefaults.orthographic = camera.orthographic;
+                state.background = mergeRecursive(state.background, background);
+                state.points = mergeRecursive(state.points, points);
+                state.subtrees = getSubtrees(hide, sceneConfig.subtrees ?? ["triangles"]);
+                state.terrain = terrain;
+                state.advanced = mergeRecursive(state.advanced, advanced);
+                state.debugStats = debugStats;
+                state.navigationCube = navigationCube;
+            } else if (settings) {
+                // Legacy settings
+
+                // controls
+                if (props.flightFingerMap) {
+                    const { rotate, orbit, pan } = props.flightFingerMap;
+                    state.cameraDefaults.pinhole.controller =
+                        rotate === 1
+                            ? "flight"
+                            : orbit === 1
+                            ? pan === 2
+                                ? "cadRightPan"
+                                : "cadMiddlePan"
+                            : "special";
+                }
+
+                state.navigationCube.enabled = Boolean(props.navigationCube);
+
+                state.cameraDefaults.pinhole.clipping.far = Math.max((sceneData.camera as any)?.far ?? 0, 1000);
+                state.cameraDefaults.pinhole.clipping.near = Math.max((sceneData.camera as any)?.near ?? 0, 0.1);
+                state.cameraDefaults.orthographic.topDownElevation = props.defaultTopDownElevation;
+                state.secondaryHighlight.property = props.highlights?.secondary.property ?? "";
+
+                // background
+                state.background.color = settings.background.color ?? state.background.color;
+                state.background.blur = (settings.background as any).skyBoxBlur ?? state.background.blur;
+                state.background.url = settings.environment
+                    ? `https://api.novorender.com/assets/env/${settings.environment}/`
+                    : state.background.url;
+
+                // points
+                state.points.size = mergeRecursive(state.points.size, settings.points.size);
+                state.points.deviation.index = (settings.points.deviation as any)?.index ?? 0;
+                state.points.deviation.mixFactor =
+                    settings.points.deviation?.mode === "mix" ? 0.5 : settings.points.deviation?.mode === "on" ? 1 : 0;
+                state.points.deviation.colorGradient = {
+                    knots:
+                        settings.points.deviation?.colors.map((deviation) => ({
+                            color: deviation.color,
+                            position: deviation.deviation,
+                        })) ?? [],
+                };
+
+                // subtrees
+                state.subtrees = getLegacySubtrees(settings.advanced, sceneConfig.subtrees ?? ["triangles"]);
+
+                // terrain
+                state.terrain.asBackground = settings.terrain.asBackground;
+                state.terrain.elevationGradient = {
+                    knots: settings.terrain.elevationColors.map((node) => ({
+                        position: node.elevation,
+                        color: node.color,
+                    })),
+                };
+            }
+        });
+        builder.addCase(resetView, (state, action) => {
+            const {
+                initialCamera,
+                sceneData: { settings, customProperties: props },
+            } = action.payload;
+
+            // Highlight
+            state.defaultVisibility = ObjectVisibility.Neutral;
+            state.mainObject = undefined;
+
+            // Camera
+            if (initialCamera) {
+                state.camera.type =
+                    initialCamera.kind === "orthographic" ? CameraType.Orthographic : CameraType.Pinhole;
+                state.camera.goTo = initialCamera;
+                // todo support ortho
+                state.savedCameraPositions = {
+                    positions: [initialCamera],
+                    currentIndex: 0,
+                };
+            }
+
+            // clipping
+            state.clipping = initialState.clipping;
+
+            const availableSubtrees = Object.keys(state.subtrees).filter(
+                (key: any) => state.subtrees[key as keyof State["subtrees"]] !== SubtreeStatus.Unavailable
+            );
+
+            if (props.v1) {
+                const { points, background, terrain, hide } = props.v1.renderSettings;
+
+                // background
+                state.background.color = background.color;
+
+                // deviations
+                state.points.deviation.index = points.deviation.index;
+                state.points.deviation.mixFactor = points.deviation.mixFactor;
+
+                // subtrees
+                state.subtrees = getSubtrees(hide, availableSubtrees);
+
+                // terrain
+                state.terrain.asBackground = terrain.asBackground;
+                state.terrain.elevationGradient = {
+                    knots: settings.terrain.elevationColors.map((node) => ({
+                        position: node.elevation,
+                        color: node.color,
+                    })),
+                };
+            } else if (settings) {
+                // background
+                state.background.color = settings.background.color ?? state.background.color;
+
+                // deviations
+                state.points.deviation.index = (settings.points.deviation as { index?: number }).index ?? 0;
+                state.points.deviation.mixFactor =
+                    settings.points.deviation.mode === "mix" ? 0.5 : settings.points.deviation.mode === "on" ? 1 : 0;
+
+                // subtrees
+                state.subtrees = getLegacySubtrees(settings.advanced, availableSubtrees);
+
+                // terrain
+                state.terrain.asBackground = settings.terrain.asBackground;
+                state.terrain.elevationGradient = {
+                    knots: settings.terrain.elevationColors.map((node) => ({
+                        position: node.elevation,
+                        color: node.color,
+                    })),
+                };
+            }
+        });
+        builder.addCase(selectBookmark, (state, action) => {
+            const { camera, subtrees, viewMode, objects, background, terrain, deviations, grid, clipping, options } =
+                action.payload;
+
+            state.camera =
+                camera.kind === "orthographic"
+                    ? {
+                          type: CameraType.Orthographic,
+                          goTo: {
+                              position: [...camera.position],
+                              rotation: [...camera.rotation],
+                              fov: camera.fov,
+                              far: camera.far ?? state.cameraDefaults[camera.kind].clipping.far,
+                          },
+                      }
+                    : {
+                          type: CameraType.Pinhole,
+                          goTo: {
+                              position: [...camera.position],
+                              rotation: [...camera.rotation],
+                          },
+                      };
+
+            state.subtrees = subtreesFromBookmark(state.subtrees, subtrees);
+            state.viewMode = viewMode;
+            state.selectionBasketMode = options.addToSelectionBasket
+                ? objects.selectionBasket.mode
+                : state.selectionBasketMode;
+            state.mainObject = objects.mainObject.id;
+            state.defaultVisibility = options.addToSelectionBasket
+                ? ObjectVisibility.Transparent
+                : (objects.defaultVisibility as ObjectVisibility);
+            state.background.color = background.color;
+            state.terrain.asBackground = terrain.asBackground;
+            state.points.deviation.index = deviations.index;
+            state.points.deviation.mixFactor = deviations.mixFactor;
+            state.grid = grid;
+            state.clipping = {
+                ...clipping,
+                draw: false,
+                planes: clipping.planes.map(({ normalOffset, color }) => ({
+                    normalOffset,
+                    color,
+                    baseW: normalOffset[3],
+                })),
+            };
         });
     },
 });
 
+function subtreesFromBookmark(
+    current: State["subtrees"],
+    bm: NonNullable<Bookmark["v1"]>["subtrees"]
+): State["subtrees"] {
+    const subtrees = { ...current };
+
+    subtrees.lines =
+        subtrees.lines !== SubtreeStatus.Unavailable
+            ? bm.lines
+                ? SubtreeStatus.Shown
+                : SubtreeStatus.Hidden
+            : subtrees.lines;
+
+    subtrees.points =
+        subtrees.points !== SubtreeStatus.Unavailable
+            ? bm.points
+                ? SubtreeStatus.Shown
+                : SubtreeStatus.Hidden
+            : subtrees.points;
+
+    subtrees.terrain =
+        subtrees.terrain !== SubtreeStatus.Unavailable
+            ? bm.terrain
+                ? SubtreeStatus.Shown
+                : SubtreeStatus.Hidden
+            : subtrees.terrain;
+
+    subtrees.triangles =
+        subtrees.triangles !== SubtreeStatus.Unavailable
+            ? bm.triangles
+                ? SubtreeStatus.Shown
+                : SubtreeStatus.Hidden
+            : subtrees.triangles;
+
+    subtrees.documents =
+        subtrees.documents !== SubtreeStatus.Unavailable
+            ? bm.documents
+                ? SubtreeStatus.Shown
+                : SubtreeStatus.Hidden
+            : subtrees.documents;
+
+    return subtrees;
+}
+
 export const selectMainObject = (state: RootState) => state.render.mainObject;
-export const selectEnvironments = (state: RootState) => state.render.environments;
-export const selectCurrentEnvironment = (state: RootState) => state.render.currentEnvironment;
 export const selectDefaultVisibility = (state: RootState) => state.render.defaultVisibility;
 export const selectSelectMultiple = (state: RootState) => state.render.selectMultiple;
-export const selectCameraSpeedLevels = (state: RootState) => state.render.cameraSpeedLevels;
+export const selectCameraSpeedLevels = (state: RootState) => state.render.cameraDefaults.pinhole.speedLevels;
 export const selectCurrentCameraSpeedLevel = (state: RootState) => state.render.currentCameraSpeedLevel;
 export const selectSavedCameraPositions = (state: RootState) =>
     state.render.savedCameraPositions as SavedCameraPositions;
@@ -597,25 +805,32 @@ export const selectHomeCameraPosition = (state: RootState) =>
 export const selectSubtrees = (state: RootState) => state.render.subtrees;
 export const selectSelectionBasketMode = (state: RootState) => state.render.selectionBasketMode;
 export const selectSelectionBasketColor = (state: RootState) => state.render.selectionBasketColor;
-export const selectClippingBox = (state: RootState) => state.render.clippingBox as ClippingBox;
-export const selectClippingPlanes = (state: RootState) => state.render.clippingPlanes;
+export const selectClippingPlanes = (state: RootState) => state.render.clipping;
 export const selectCamera = (state: RootState) => state.render.camera as CameraState;
 export const selectCameraType = (state: RootState) => state.render.camera.type;
-export const selectAdvancedSettings = (state: RootState) => state.render.advancedSettings;
-export const selectSecondaryHighlightProperty = (state: RootState) =>
-    state.render.advancedSettings.secondaryHighlight.property;
-export const selectProjectSettings = (state: RootState) => state.render.projectSettings;
-export const selectGridDefaults = (state: RootState) => state.render.gridDefaults;
-export const selectGrid = (state: RootState) => state.render.grid as RenderSettings["grid"];
+export const selectSecondaryHighlightProperty = (state: RootState) => state.render.secondaryHighlight.property;
+export const selectProjectSettings = (state: RootState) => state.render.project;
+export const selectGrid = (state: RootState) => state.render.grid;
 export const selectPicker = (state: RootState) => state.render.picker;
-export const selectDefaultDeviceProfile = (state: RootState) => state.render.defaultDeviceProfile;
 export const selectViewMode = (state: RootState) => state.render.viewMode;
 export const selectLoadingHandles = (state: RootState) => state.render.loadingHandles;
 export const selectStamp = (state: RootState) => state.render.stamp;
-export const selectPointerLock = (state: RootState) => state.render.pointerLock;
-export const selectProportionalCameraSpeed = (state: RootState) => state.render.proportionalCameraSpeed;
+export const selectPointerLock = (state: RootState) => state.render.cameraDefaults.orthographic.usePointerLock;
+export const selectProportionalCameraSpeed = (state: RootState) =>
+    state.render.cameraDefaults.pinhole.proportionalSpeed;
 export const selectPointerDownState = (state: RootState) => state.render.pointerDownState;
+export const selectBackground = (state: RootState) => state.render.background;
+export const selectSceneStatus = (state: RootState) => state.render.sceneStatus;
+export const selectTerrain = (state: RootState) => state.render.terrain;
+export const selectCameraDefaults = (state: RootState) => state.render.cameraDefaults;
+export const selectAdvanced = (state: RootState) => state.render.advanced;
+export const selectDeviceProfile = (state: RootState) => state.render.deviceProfile;
+export const selectPoints = (state: RootState) => state.render.points;
+export const selectDeviations = (state: RootState) => state.render.points.deviation;
+export const selectNavigationCube = (state: RootState) => state.render.navigationCube;
+export const selectDebugStats = (state: RootState) => state.render.debugStats;
 
-const { reducer, actions } = renderSlice;
-export { reducer as renderReducer, actions as renderActions };
+const { reducer } = renderSlice;
+const actions = { ...renderSlice.actions, initScene, resetView, selectBookmark };
+export { actions as renderActions, reducer as renderReducer };
 export type { State as RenderState };

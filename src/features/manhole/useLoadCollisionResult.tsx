@@ -55,8 +55,8 @@ export function useLoadCollisionResult() {
                                   outerCollision.point,
                                   vec3.fromValues(
                                       outerCollision.point[0],
-                                      manhole.bottomOuterElevation,
-                                      outerCollision.point[2]
+                                      outerCollision.point[1],
+                                      manhole.bottomOuterElevation
                                   ),
                               ]
                             : undefined,
@@ -66,8 +66,8 @@ export function useLoadCollisionResult() {
                                       innerCollision.point,
                                       vec3.fromValues(
                                           innerCollision.point[0],
-                                          manhole.bottomInnerElevation,
-                                          innerCollision.point[2]
+                                          innerCollision.point[1],
+                                          manhole.bottomInnerElevation
                                       ),
                                   ]
                                 : undefined,
@@ -76,16 +76,16 @@ export function useLoadCollisionResult() {
                                   innerCollision.point,
                                   vec3.fromValues(
                                       innerCollision.point[0],
-                                      manhole.topElevation,
-                                      innerCollision.point[2]
+                                      innerCollision.point[1],
+                                      manhole.topElevation
                                   ),
                               ]
                             : [
                                   outerCollision!.point,
                                   vec3.fromValues(
                                       outerCollision!.point[0],
-                                      manhole.topElevation,
-                                      outerCollision!.point[2]
+                                      outerCollision!.point[1],
+                                      manhole.topElevation
                                   ),
                               ],
                     })

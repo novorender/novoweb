@@ -1,11 +1,10 @@
-import { FormEvent, useState } from "react";
 import { TextField } from "@mui/material";
+import { FormEvent, useState } from "react";
 import { useHistory, useParams } from "react-router-dom";
 
-import { Confirmation } from "components";
 import { useAppDispatch, useAppSelector } from "app/store";
-
-import { deviationsActions, selectDeviations } from "../deviationsSlice";
+import { Confirmation } from "components";
+import { renderActions, selectDeviations } from "features/render";
 
 export function CrupdateColorStop() {
     const history = useHistory();
@@ -14,16 +13,16 @@ export function CrupdateColorStop() {
     const deviations = useAppSelector(selectDeviations);
     const dispatch = useAppDispatch();
 
-    const editing = idx !== undefined ? deviations.colors[idx] : undefined;
-    const [deviationNumber, setDeviationNumber] = useState(editing ? String(editing.deviation) : "");
+    const editing = idx !== undefined ? deviations.colorGradient.knots[idx] : undefined;
+    const [deviationNumber, setDeviationNumber] = useState(editing ? String(editing.position) : "");
     const [error, setError] = useState("");
 
     const handleSubmit = (e: FormEvent) => {
         e.preventDefault();
 
         if (
-            deviations.colors.some(
-                (deviation) => deviation.deviation === Number(deviationNumber) && deviation !== editing
+            deviations.colorGradient.knots.some(
+                (deviation) => deviation.position === Number(deviationNumber) && deviation !== editing
             )
         ) {
             setError("A deviation with this value already exists.");
@@ -31,14 +30,18 @@ export function CrupdateColorStop() {
         }
 
         const newDeviations = editing
-            ? deviations.colors.map((deviation) =>
-                  deviation === editing ? { ...editing, deviation: Number(deviationNumber) } : deviation
+            ? deviations.colorGradient.knots.map((deviation) =>
+                  deviation === editing ? { ...editing, position: Number(deviationNumber) } : deviation
               )
-            : deviations.colors.concat({ deviation: Number(deviationNumber), color: [1, 0, 0, 1] });
+            : deviations.colorGradient.knots.concat({ position: Number(deviationNumber), color: [1, 0, 0, 1] });
 
         dispatch(
-            deviationsActions.setDeviations({
-                colors: [...newDeviations].sort((a, b) => b.deviation - a.deviation),
+            renderActions.setPoints({
+                deviation: {
+                    colorGradient: {
+                        knots: [...newDeviations].sort((a, b) => b.position - a.position),
+                    },
+                },
             })
         );
 

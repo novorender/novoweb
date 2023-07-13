@@ -1,10 +1,10 @@
+import { MeasureEntity } from "@novorender/measure-api";
 import { createSlice, PayloadAction } from "@reduxjs/toolkit";
 import { vec3 } from "gl-matrix";
-import { MeasureEntity } from "@novorender/measure-api";
 
 import { RootState } from "app/store";
-import { AsyncState, AsyncStatus } from "types/misc";
 import { DeepMutable } from "features/render/renderSlice";
+import { AsyncState, AsyncStatus } from "types/misc";
 
 type SelectedEntity = AsyncState<MeasureEntity | undefined>;
 type WritableSelectedEntity = DeepMutable<SelectedEntity>;

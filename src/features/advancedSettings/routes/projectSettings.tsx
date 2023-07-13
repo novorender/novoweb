@@ -1,14 +1,11 @@
-import { useTheme, Box, Button, Autocomplete, createFilterOptions } from "@mui/material";
-import { useHistory } from "react-router-dom";
 import { ArrowBack, Save } from "@mui/icons-material";
-import { useState } from "react";
+import { Autocomplete, Box, Button, createFilterOptions, useTheme } from "@mui/material";
+import { useHistory } from "react-router-dom";
 
 import { dataApi } from "app";
-import { Divider, LinearProgress, ScrollBox, TextField } from "components";
 import { useAppDispatch, useAppSelector } from "app/store";
-import { ProjectSetting, renderActions, selectProjectSettings } from "features/render/renderSlice";
-import { selectLockedWidgets } from "slices/explorerSlice";
-import { featuresConfig } from "config/features";
+import { Divider, LinearProgress, ScrollBox, TextField } from "components";
+import { renderActions, selectProjectSettings } from "features/render/renderSlice";
 
 const filter = createFilterOptions<string>();
 
@@ -17,10 +14,7 @@ export function ProjectSettings({ save, saving }: { save: () => Promise<void>; s
     const theme = useTheme();
 
     const settings = useAppSelector(selectProjectSettings);
-    const lockedWidgets = useAppSelector(selectLockedWidgets);
     const dispatch = useAppDispatch();
-
-    const [ditioProject, setDitioProject] = useState(settings.ditioProjectNumber);
 
     const wkZones = dataApi.getWKZones();
 
@@ -52,10 +46,10 @@ export function ProjectSettings({ save, saving }: { save: () => Promise<void>; s
                     clearOnBlur
                     handleHomeEndKeys
                     options={wkZones}
-                    value={settings[ProjectSetting.TmZone] || null}
+                    value={settings.tmZone}
                     onChange={(_event, newValue) => {
                         if (newValue) {
-                            dispatch(renderActions.setProjectSettings({ [ProjectSetting.TmZone]: newValue }));
+                            dispatch(renderActions.setProject({ tmZone: newValue }));
                         }
                     }}
                     filterOptions={filter}
@@ -70,21 +64,6 @@ export function ProjectSettings({ save, saving }: { save: () => Promise<void>; s
                     )}
                     ListboxProps={{ style: { maxHeight: "200px" } }}
                 />
-                {!lockedWidgets.includes(featuresConfig.ditio.key) ? (
-                    <TextField
-                        sx={{ mt: 2 }}
-                        fullWidth
-                        size="medium"
-                        label="Ditio project number"
-                        value={ditioProject}
-                        onChange={({ target: { value } }) => setDitioProject(value)}
-                        onBlur={() =>
-                            dispatch(
-                                renderActions.setProjectSettings({ [ProjectSetting.DitioProjectNumber]: ditioProject })
-                            )
-                        }
-                    />
-                ) : null}
             </ScrollBox>
         </>
     );

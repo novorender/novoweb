@@ -1,20 +1,20 @@
+import { CropLandscape, Layers, LayersClear, Straighten, VisibilityOff } from "@mui/icons-material";
+import { Box, ListItemIcon, ListItemText, MenuItem } from "@mui/material";
+import { MeasureEntity } from "@novorender/measure-api";
 import { vec3, vec4 } from "gl-matrix";
 import { useEffect, useState } from "react";
-import { Box, ListItemIcon, ListItemText, MenuItem } from "@mui/material";
-import { CropLandscape, Layers, LayersClear, Straighten, VisibilityOff } from "@mui/icons-material";
-import { MeasureEntity } from "@novorender/measure-api";
 
-import { renderActions, selectClippingPlanes, selectStamp, StampKind } from "features/render";
 import { useAppDispatch, useAppSelector } from "app/store";
+import { LinearProgress } from "components";
 import { useExplorerGlobals } from "contexts/explorerGlobals";
-import { getFilePathFromObjectPath } from "utils/objectData";
 import { hiddenActions, useDispatchHidden } from "contexts/hidden";
 import { highlightActions, useDispatchHighlighted } from "contexts/highlighted";
 import { selectionBasketActions, useDispatchSelectionBasket } from "contexts/selectionBasket";
-import { searchDeepByPatterns } from "utils/search";
 import { measureActions } from "features/measure";
-import { LinearProgress } from "components";
+import { renderActions, selectClippingPlanes, selectStamp, StampKind } from "features/render";
 import { selectCanvasContextMenuFeatures } from "slices/explorerSlice";
+import { getFilePathFromObjectPath } from "utils/objectData";
+import { getObjectData, searchDeepByPatterns } from "utils/search";
 
 export const canvasContextMenuConfig = {
     hide: {
@@ -56,7 +56,7 @@ export function CanvasContextMenuStamp() {
     const dispatchHighlighted = useDispatchHighlighted();
     const dispatchSelectionBasket = useDispatchSelectionBasket();
     const {
-        state: { scene, measureScene },
+        state: { db, measureScene },
     } = useExplorerGlobals(true);
 
     const features = useAppSelector(selectCanvasContextMenuFeatures);
@@ -81,7 +81,7 @@ export function CanvasContextMenuStamp() {
             const objectId = stamp.data.object;
 
             const [obj, ent] = await Promise.all([
-                scene.getObjectReference(objectId).loadMetaData(),
+                getObjectData({ db, id: objectId }),
                 measureScene
                     .pickMeasureEntity(objectId, stamp.data.position)
                     .then((res) => (["face"].includes(res.entity.drawKind) ? res.entity : undefined))
@@ -90,8 +90,8 @@ export function CanvasContextMenuStamp() {
 
             setMeasureEntity(ent);
 
-            const file = getFilePathFromObjectPath(obj.path);
-            const layer = obj.properties.find(([key]) =>
+            const file = getFilePathFromObjectPath(obj?.path ?? "");
+            const layer = obj?.properties.find(([key]) =>
                 ["ifcClass", "dwg/layer"].map((str) => str.toLowerCase()).includes(key.toLowerCase())
             );
             setProperties({
@@ -99,7 +99,7 @@ export function CanvasContextMenuStamp() {
                 file: file ? ["path", file] : undefined,
             });
         }
-    }, [stamp, scene, measureScene, dispatch]);
+    }, [stamp, db, measureScene, dispatch]);
 
     if (stamp?.kind !== StampKind.CanvasContextMenu) {
         return null;
@@ -110,6 +110,7 @@ export function CanvasContextMenuStamp() {
     };
 
     const hide = () => {
+        dispatch(renderActions.setMainObject(undefined));
         dispatchHighlighted(highlightActions.remove([stamp.data.object]));
         dispatchHidden(hiddenActions.add([stamp.data.object]));
         dispatchSelectionBasket(selectionBasketActions.remove([stamp.data.object]));
@@ -126,9 +127,10 @@ export function CanvasContextMenuStamp() {
         close();
 
         await searchDeepByPatterns({
-            scene,
+            db,
             searchPatterns: [{ property: properties.layer[0], value: properties.layer[1], exact: true }],
             callback: (ids) => {
+                dispatch(renderActions.setMainObject(undefined));
                 dispatchHighlighted(highlightActions.remove(ids));
                 dispatchSelectionBasket(selectionBasketActions.remove(ids));
                 dispatchHidden(hiddenActions.add(ids));
@@ -149,7 +151,7 @@ export function CanvasContextMenuStamp() {
         close();
 
         await searchDeepByPatterns({
-            scene,
+            db,
             searchPatterns: [{ property: properties.file[0], value: properties.file[1], exact: true }],
             callback: (ids) => {
                 dispatchHighlighted(highlightActions.remove(ids));
@@ -181,10 +183,10 @@ export function CanvasContextMenuStamp() {
             return;
         }
 
-        const w = -vec3.dot(normal, position);
+        const w = vec3.dot(normal, position);
         dispatch(
             renderActions.addClippingPlane({
-                plane: vec4.fromValues(normal[0], normal[1], normal[2], w) as Vec4,
+                normalOffset: vec4.fromValues(normal[0], normal[1], normal[2], w),
                 baseW: w,
             })
         );

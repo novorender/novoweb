@@ -1,3 +1,5 @@
+import { vec2, vec3 } from "gl-matrix";
+
 import { useAppDispatch, useAppSelector } from "app/store";
 import { useExplorerGlobals } from "contexts/explorerGlobals";
 import { highlightActions, useDispatchHighlighted } from "contexts/highlighted";
@@ -15,12 +17,12 @@ export function useCanvasContextMenuHandler() {
         state: { view },
     } = useExplorerGlobals();
 
-    const handleContextMenu = async (pos: Vec2) => {
+    const handleContextMenu = async (pos: vec2, isTouch: boolean) => {
         if (!view || picker !== Picker.Object || !features.length) {
             return;
         }
 
-        const result = await view.lastRenderOutput?.pick(pos[0], pos[1]);
+        const result = await view.pick(pos[0], pos[1], { sampleDiscRadius: isTouch ? 8 : 4 });
 
         if (!result || result.objectId === -1) {
             dispatch(renderActions.setStamp(null));
@@ -34,8 +36,8 @@ export function useCanvasContextMenuHandler() {
                 kind: StampKind.CanvasContextMenu,
                 data: {
                     object: result.objectId,
-                    position: [...result.position] as Vec3,
-                    normal: isRealVec([...result.normal]) ? ([...result.normal] as Vec3) : undefined,
+                    position: [...result.position] as vec3,
+                    normal: isRealVec(result.normal) ? [...result.normal] : undefined,
                 },
                 pinned: true,
                 mouseX: pos[0],

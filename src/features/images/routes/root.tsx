@@ -1,29 +1,31 @@
-import { Box, Button, FormControlLabel, Typography, useTheme } from "@mui/material";
 import { CancelPresentation, FilterAlt } from "@mui/icons-material";
-import { Scene, SearchPattern } from "@novorender/webgl-api";
+import { Box, Button, FormControlLabel, Typography, useTheme } from "@mui/material";
+import { ObjectDB } from "@novorender/data-js-api";
+import { SearchPattern } from "@novorender/webgl-api";
 import { useEffect } from "react";
 import { useHistory } from "react-router-dom";
-import { FixedSizeList } from "react-window";
 import AutoSizer from "react-virtualized-auto-sizer";
+import { FixedSizeList } from "react-window";
 
 import { dataApi } from "app";
+import { store, useAppDispatch, useAppSelector } from "app/store";
 import { IosSwitch, LinearProgress, withCustomScrollbar } from "components";
 import { useExplorerGlobals } from "contexts/explorerGlobals";
-import { store, useAppDispatch, useAppSelector } from "app/store";
 import { selectProjectSettings } from "features/render/renderSlice";
 import { AsyncStatus, hasFinished } from "types/misc";
 
+import { flip, flipGLtoCadQuat } from "features/render/utils";
+import { ImageListItem } from "../imageListItem";
 import {
-    imagesActions,
     Image,
-    selectImages,
-    selectShowImageMarkers,
-    selectActiveImage,
-    selectImageFilter,
     ImageFilter,
     ImageType,
+    imagesActions,
+    selectActiveImage,
+    selectImageFilter,
+    selectImages,
+    selectShowImageMarkers,
 } from "../imagesSlice";
-import { ImageListItem } from "../imageListItem";
 
 const StyledFixedSizeList = withCustomScrollbar(FixedSizeList) as typeof FixedSizeList;
 
@@ -31,7 +33,7 @@ export function Root() {
     const theme = useTheme();
     const history = useHistory();
     const {
-        state: { scene },
+        state: { db },
     } = useExplorerGlobals(true);
 
     const images = useAppSelector(selectImages);
@@ -43,9 +45,9 @@ export function Root() {
 
     useEffect(() => {
         if (images.status === AsyncStatus.Initial) {
-            loadImages(scene, tmZone, filter);
+            loadImages(db, tmZone, filter);
         }
-    }, [images, scene, tmZone, filter]);
+    }, [images, db, tmZone, filter]);
 
     const toggleShowMarkers = () => {
         dispatch(imagesActions.setShowMarkers(!showMarkers));
@@ -132,7 +134,7 @@ export function Root() {
     );
 }
 
-async function loadImages(scene: Scene, tmZone: string, filter: ImageFilter) {
+async function loadImages(db: ObjectDB, tmZone: string, filter: ImageFilter) {
     try {
         const images: Image[] = [];
         const searchPattern: SearchPattern[] = [{ property: "Image/Preview", value: "", exact: true }];
@@ -152,10 +154,13 @@ async function loadImages(scene: Scene, tmZone: string, filter: ImageFilter) {
             });
         }
 
-        for await (const img of scene.search({
-            searchPattern,
-            full: true,
-        })) {
+        for await (const img of db.search(
+            {
+                searchPattern,
+                full: true,
+            },
+            undefined
+        )) {
             const image = await img.loadMetaData();
             const name = image.name;
             // NOTE(OLA): GUID property was not always uppercase
@@ -177,14 +182,14 @@ async function loadImages(scene: Scene, tmZone: string, filter: ImageFilter) {
                     name,
                     guid,
                     preview,
-                    position: JSON.parse(pos[1]),
+                    position: flip(JSON.parse(pos[1])),
                 };
 
                 if (gltf) {
                     images.push({
                         ...base,
                         gltf: gltf[1],
-                        rotation: JSON.parse(rot[1]),
+                        rotation: flipGLtoCadQuat(JSON.parse(rot[1])),
                     });
                 } else if (src) {
                     images.push({
@@ -194,10 +199,12 @@ async function loadImages(scene: Scene, tmZone: string, filter: ImageFilter) {
                 }
             } else if (lat && lon && tmZone) {
                 const elevation = image.properties.find((prop) => prop[0] === "Image/Elevation");
-                const position = dataApi.latLon2tm({ latitude: Number(lat[1]), longitude: Number(lon[1]) }, tmZone);
+                const position = flip(
+                    dataApi.latLon2tm({ latitude: Number(lat[1]), longitude: Number(lon[1]) }, tmZone)
+                );
 
                 if (elevation) {
-                    position[1] = Number(elevation[1]);
+                    position[2] = Number(elevation[1]);
                 }
 
                 const base = {

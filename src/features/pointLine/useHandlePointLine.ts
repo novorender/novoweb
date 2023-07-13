@@ -5,7 +5,7 @@ import { useExplorerGlobals } from "contexts/explorerGlobals";
 
 import { pointLineActions, selectPointLine } from "./pointLineSlice";
 
-export function useHandlePointLineUpdates() {
+export function useHandlePointLine() {
     const {
         state: { measureScene },
     } = useExplorerGlobals();

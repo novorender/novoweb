@@ -10,7 +10,6 @@ import {
     selectViewMode,
 } from "features/render/renderSlice";
 import { useAppDispatch, useAppSelector } from "app/store";
-import { useExplorerGlobals } from "contexts/explorerGlobals";
 import { ViewMode } from "types/misc";
 
 type Props = SpeedDialActionProps & {
@@ -23,10 +22,7 @@ export function StepBack({ position, ...speedDialProps }: Props) {
     const viewMode = useAppSelector(selectViewMode);
     const cameraType = useAppSelector(selectCameraType);
     const canStepBack =
-        savedCameraPositions.currentIndex >= 1 && viewMode !== ViewMode.Panorama && cameraType === CameraType.Flight;
-    const {
-        state: { view },
-    } = useExplorerGlobals(true);
+        savedCameraPositions.currentIndex >= 1 && viewMode !== ViewMode.Panorama && cameraType === CameraType.Pinhole;
 
     const dispatch = useAppDispatch();
 
@@ -38,7 +34,6 @@ export function StepBack({ position, ...speedDialProps }: Props) {
         }
 
         dispatch(renderActions.undoCameraPosition());
-        view.camera.controller.moveTo(step.position, step.rotation);
     };
 
     const disabled = !canStepBack;

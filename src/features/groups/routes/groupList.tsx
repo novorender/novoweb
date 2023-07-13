@@ -3,7 +3,13 @@ import { Box, Button, IconButton, Typography, useTheme } from "@mui/material";
 import { useHistory } from "react-router-dom";
 
 import { Divider, LinearProgress, ScrollBox } from "components";
-import { objectGroupsActions, useObjectGroups, useDispatchObjectGroups, isInternalGroup } from "contexts/objectGroups";
+import {
+    objectGroupsActions,
+    useObjectGroups,
+    useDispatchObjectGroups,
+    isInternalGroup,
+    GroupStatus,
+} from "contexts/objectGroups";
 import { selectHasAdminCapabilities } from "slices/explorerSlice";
 import { useAppSelector } from "app/store";
 import { AsyncStatus } from "types/misc";
@@ -37,8 +43,8 @@ export function GroupList() {
         .sort((a, b) => a.name.localeCompare(b.name, "en", { sensitivity: "accent" }));
 
     const isLoading = loadingIds || saveStatus === AsyncStatus.Loading;
-    const allSelected = !objectGroups.some((group) => !group.selected);
-    const allHidden = !objectGroups.some((group) => !group.hidden);
+    const allSelected = objectGroups.every((group) => group.status === GroupStatus.Selected);
+    const allHidden = objectGroups.every((group) => group.status === GroupStatus.Hidden);
 
     return (
         <>
@@ -55,7 +61,9 @@ export function GroupList() {
                         <Button
                             color="grey"
                             onClick={() => dispatchObjectGroups(objectGroupsActions.groupSelected())}
-                            disabled={isLoading || singles.filter((group) => group.selected).length < 2}
+                            disabled={
+                                isLoading || singles.filter((group) => group.status === GroupStatus.Selected).length < 2
+                            }
                         >
                             <CheckCircle sx={{ mr: 1 }} />
                             Group selected
@@ -88,8 +96,7 @@ export function GroupList() {
                         objectGroups.forEach((group) =>
                             dispatchObjectGroups(
                                 objectGroupsActions.update(group.id, {
-                                    selected: !allSelected,
-                                    hidden: !allSelected ? false : group.hidden,
+                                    status: allSelected ? GroupStatus.None : GroupStatus.Selected,
                                 })
                             )
                         )
@@ -104,6 +111,7 @@ export function GroupList() {
                         {objectGroups.length ? (
                             <>
                                 <StyledCheckbox
+                                    name="toggle all groups highlighting"
                                     aria-label="toggle all groups highlighting"
                                     size="small"
                                     checked={allSelected}
@@ -113,14 +121,14 @@ export function GroupList() {
                                         objectGroups.forEach((group) =>
                                             dispatchObjectGroups(
                                                 objectGroupsActions.update(group.id, {
-                                                    selected: !allSelected,
-                                                    hidden: !allSelected ? false : group.hidden,
+                                                    status: allSelected ? GroupStatus.None : GroupStatus.Selected,
                                                 })
                                             )
                                         )
                                     }
                                 />
                                 <StyledCheckbox
+                                    name="toggle all groups visibility"
                                     aria-label="toggle all groups visibility"
                                     size="small"
                                     icon={<Visibility />}
@@ -132,8 +140,7 @@ export function GroupList() {
                                         objectGroups.forEach((group) =>
                                             dispatchObjectGroups(
                                                 objectGroupsActions.update(group.id, {
-                                                    hidden: !allHidden,
-                                                    selected: !allHidden ? false : group.selected,
+                                                    status: allHidden ? GroupStatus.None : GroupStatus.Hidden,
                                                 })
                                             )
                                         )

@@ -1,9 +1,9 @@
-import { useEffect, useState } from "react";
 import { MeasureEntity } from "@novorender/measure-api";
 import { vec3 } from "gl-matrix";
+import { useEffect, useState } from "react";
 
-import { useExplorerGlobals } from "contexts/explorerGlobals";
 import { useAppDispatch, useAppSelector } from "app/store";
+import { useExplorerGlobals } from "contexts/explorerGlobals";
 import { AsyncStatus } from "types/misc";
 
 import { heightProfileActions, selectSelectedPoint } from "./heightProfileSlice";

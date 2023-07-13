@@ -2,12 +2,6 @@ import { BaseQueryFn, createApi, FetchArgs, fetchBaseQuery, FetchBaseQueryError 
 
 import { RootState } from "app/store";
 import { StorageKey } from "config/storage";
-import { generateCodeChallenge } from "utils/auth";
-import { generateRandomString } from "utils/misc";
-import { handleImageResponse } from "utils/bcf";
-import { getFromStorage, saveToStorage } from "utils/storage";
-import { sleep } from "utils/time";
-
 import {
     AuthInfo,
     Coloring,
@@ -21,6 +15,11 @@ import {
     Viewpoint,
     Visibility,
 } from "types/bcf";
+import { generateCodeChallenge } from "utils/auth";
+import { handleImageResponse } from "utils/bcf";
+import { generateRandomString } from "utils/misc";
+import { getFromStorage, saveToStorage } from "utils/storage";
+import { sleep } from "utils/time";
 
 import { NewViewpoint } from "./includeViewpoint";
 

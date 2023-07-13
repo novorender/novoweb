@@ -1,31 +1,31 @@
-import { useRef, useEffect } from "react";
-import { DynamicObject, View, Scene, DynamicAsset } from "@novorender/webgl-api";
+import { loadGLTF, RenderStateDynamicObject, View } from "@novorender/web_app";
+import { useEffect, useRef } from "react";
 
-import { api } from "app";
 import { useAppDispatch, useAppSelector } from "app/store";
 import { useExplorerGlobals } from "contexts/explorerGlobals";
-import { useAbortController } from "hooks/useAbortController";
 import { CameraType, renderActions } from "features/render/renderSlice";
-import { sleep } from "utils/time";
-import { getAssetUrl } from "utils/misc";
+import { useAbortController } from "hooks/useAbortController";
 import { AsyncStatus, ViewMode } from "types/misc";
+import { handleImageResponse } from "utils/bcf";
+import { getAssetUrl } from "utils/misc";
+import { sleep } from "utils/time";
 
 import { FlatImage, imagesActions, PanoramaImage, selectActiveImage } from "./imagesSlice";
 import { isPanorama } from "./utils";
 
-export function useHandleImageChanges() {
+export function useHandleImages() {
     const {
-        state: { view, scene },
+        state: { view },
     } = useExplorerGlobals();
     const dispatch = useAppDispatch();
 
     const activeImage = useAppSelector(selectActiveImage);
-    const currentPanorama = useRef<{ image: PanoramaImage; obj?: DynamicObject; asset?: DynamicAsset }>();
+    const currentPanorama = useRef<{ image: PanoramaImage; obj?: RenderStateDynamicObject }>();
     const [abortController, abort] = useAbortController();
 
     useEffect(
         function handleImageChanges() {
-            if (!view || !scene) {
+            if (!view) {
                 return;
             }
 
@@ -37,55 +37,57 @@ export function useHandleImageChanges() {
             }
 
             abort();
-            currentPanorama.current?.obj?.dispose();
-            currentPanorama.current?.asset?.dispose();
+            view.modifyRenderState({ dynamic: { objects: [] } });
             currentPanorama.current = undefined;
 
             if (!activeImage) {
                 dispatch(renderActions.setViewMode(ViewMode.Default));
-                dispatch(renderActions.setCamera({ type: CameraType.Flight }));
+                dispatch(renderActions.setCamera({ type: CameraType.Pinhole }));
                 return;
             }
 
             if (isPanorama(activeImage.image)) {
-                loadPanorama(activeImage.image, view, scene);
+                loadPanorama(activeImage.image, view);
             } else {
                 loadFlatImage(activeImage.image, view);
             }
 
-            function loadFlatImage(image: FlatImage, view: View) {
+            async function loadFlatImage(image: FlatImage, view: View) {
                 dispatch(
                     renderActions.setCamera({
-                        type: CameraType.Flight,
-                        goTo: { position: image.position, rotation: view.camera.rotation },
+                        type: CameraType.Pinhole,
+                        goTo: { position: image.position, rotation: view.renderState.camera.rotation },
                     })
                 );
+                const src = await fetch(getAssetUrl(view, image.src).toString()).then((res) =>
+                    handleImageResponse(res)
+                );
                 dispatch(renderActions.setViewMode(ViewMode.Default));
-                dispatch(imagesActions.setActiveImage({ image, status: AsyncStatus.Success }));
+                dispatch(imagesActions.setActiveImage({ image: { ...image, src }, status: AsyncStatus.Success }));
             }
 
-            async function loadPanorama(panorama: PanoramaImage, view: View, scene: Scene) {
+            async function loadPanorama(panorama: PanoramaImage, view: View) {
                 const abortSignal = abortController.current.signal;
 
-                const rotation = panorama.rotation ?? view.camera.rotation;
+                const rotation = panorama.rotation ?? view.renderState.camera.rotation;
+                dispatch(renderActions.setViewMode(ViewMode.Panorama));
                 dispatch(
                     renderActions.setCamera({
-                        type: CameraType.Flight,
+                        type: CameraType.Pinhole,
                         goTo: { position: panorama.position, rotation },
                     })
                 );
-                dispatch(renderActions.setViewMode(ViewMode.Panorama));
                 currentPanorama.current = { image: panorama };
 
                 let start = Date.now();
-                if (view.camera.controller.params.kind === "flight") {
-                    start += view.camera.controller.params.flightTime * 1000;
+                if (view.renderState.camera.kind === "pinhole") {
+                    start += 1000;
                 }
 
-                const url = getAssetUrl(scene, panorama.gltf);
-                const asset = await api.loadAsset(url);
+                const url = getAssetUrl(view, panorama.gltf);
+                const obj = (await loadGLTF(url).catch(() => []))[0];
 
-                if (!asset) {
+                if (!obj) {
                     dispatch(renderActions.setViewMode(ViewMode.Default));
                     return;
                 }
@@ -99,13 +101,15 @@ export function useHandleImageChanges() {
                     return;
                 }
 
-                const obj = scene.createDynamicObject(asset);
-                currentPanorama.current = { image: panorama, obj, asset };
-                obj.position = panorama.position;
-                obj.visible = true;
+                currentPanorama.current = { image: panorama, obj };
+                view.modifyRenderState({
+                    dynamic: {
+                        objects: [{ ...obj, instances: [{ position: panorama.position }] }],
+                    },
+                });
                 dispatch(imagesActions.setActiveImage({ image: panorama, status: AsyncStatus.Success }));
             }
         },
-        [activeImage, scene, view, dispatch, abortController, abort]
+        [activeImage, view, dispatch, abortController, abort]
     );
 }

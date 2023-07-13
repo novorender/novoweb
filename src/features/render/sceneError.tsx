@@ -1,15 +1,34 @@
-import { Box, Paper, Typography, useTheme, CircularProgress, Alert } from "@mui/material";
+import { Alert, Box, CircularProgress, Paper, Typography, useTheme } from "@mui/material";
+import { packageVersion as webglApiVersion } from "@novorender/web_app";
 
-import { api, dataApi } from "app";
+import { dataApi } from "app";
+import { useAppSelector } from "app/store";
 import { Accordion, AccordionDetails, AccordionSummary } from "components";
+import { useSceneId } from "hooks/useSceneId";
+import { AsyncStatus } from "types/misc";
 
-import { Status } from "./render";
+import { selectSceneStatus } from ".";
 
-export function SceneError({ id, error, msg }: { id: string; error: Exclude<Status, Status.Initial>; msg?: string }) {
+export enum Error {
+    UNKNOWN_ERROR = "UNKNOWN_ERROR",
+    INVALID_SCENE = "INVALID_SCENE",
+    NOT_AUTHORIZED = "NOT_AUTHORIZED",
+    LEGACY_BINARY_FORMAT = "LEGACY_BINARY_FORMAT",
+}
+
+export function SceneError() {
     const theme = useTheme();
-    const loginUrl = `${window.location.origin}/login/${id}${window.location.search}`;
+    const sceneId = useSceneId();
+    const status = useAppSelector(selectSceneStatus);
 
-    if (error === Status.AuthError) {
+    if (status.status !== AsyncStatus.Error) {
+        return null;
+    }
+
+    const { msg: error, stack } = status;
+
+    const loginUrl = `${window.location.origin}/login/${sceneId}${window.location.search}`;
+    if (error === Error.NOT_AUTHORIZED) {
         window.location.replace(
             loginUrl +
                 (window.location.search
@@ -28,36 +47,39 @@ export function SceneError({ id, error, msg }: { id: string; error: Exclude<Stat
             alignItems="center"
             height={"100vh"}
         >
-            {error === Status.AuthError ? (
+            {error === Error.NOT_AUTHORIZED ? (
                 <CircularProgress />
             ) : (
                 <Paper sx={{ minWidth: 320, maxWidth: `min(600px, 90%)`, wordBreak: "break-word", p: 2 }}>
                     <Box>
                         <Typography paragraph variant="h4" component="h1" align="center">
-                            {error === Status.ServerError
+                            {error === Error.UNKNOWN_ERROR
                                 ? "An error occurred"
-                                : error === Status.NoSceneError
+                                : error === Error.INVALID_SCENE
                                 ? `Scene not found`
                                 : "Unable to load scene"}
                         </Typography>
-                        {error === Status.ServerError && (
+                        {error === Error.UNKNOWN_ERROR && (
                             <Alert severity="warning" sx={{ mb: 2 }}>
                                 Make sure you are using an up to date version of either Safari or a Chromium based
                                 browser such as Chrome or Edge.
                             </Alert>
                         )}
+                        {error === Error.LEGACY_BINARY_FORMAT && (
+                            <Alert severity="warning" sx={{ mb: 2 }}>
+                                This scene needs to be updated. An admin can{" "}
+                                <a href="https://novorender.com/manuals/update-scene/">follow the steps shown here</a>{" "}
+                                to update the scene.
+                            </Alert>
+                        )}
                         <Typography paragraph>
-                            {error === Status.ServerError ? (
+                            {error === Error.UNKNOWN_ERROR ? (
                                 "Failed to download the scene. Please try again later."
-                            ) : error === Status.NoSceneError ? (
+                            ) : error === Error.INVALID_SCENE ? (
                                 <>
-                                    The scene with id <em>{id}</em> does not exist.
+                                    The scene with id <em>{sceneId}</em> does not exist.
                                 </>
-                            ) : (
-                                <>
-                                    You do not have access to the scene <em>{id}</em>.
-                                </>
-                            )}
+                            ) : null}
                         </Typography>
                         <Accordion>
                             <AccordionSummary>Details</AccordionSummary>
@@ -65,12 +87,12 @@ export function SceneError({ id, error, msg }: { id: string; error: Exclude<Stat
                                 <Box p={1}>
                                     <>
                                         Timestamp: {new Date().toISOString()} <br />
-                                        API: {api.version} <br />
+                                        API: {webglApiVersion} <br />
                                         Dataserver: {(dataApi as any).serviceUrl}
-                                        {msg ? (
+                                        {stack ? (
                                             <Box mt={2}>
                                                 ERROR: <br />
-                                                {msg}
+                                                {stack}
                                             </Box>
                                         ) : null}
                                     </>
@@ -82,8 +104,4 @@ export function SceneError({ id, error, msg }: { id: string; error: Exclude<Stat
             )}
         </Box>
     );
-}
-
-export function isSceneError(status: Status): status is Exclude<Status, Status.Initial> {
-    return [Status.AuthError, Status.NoSceneError, Status.ServerError].includes(status);
 }

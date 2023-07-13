@@ -1,25 +1,35 @@
-import { Link, MemoryRouter, Route, Switch } from "react-router-dom";
 import { Close, Save } from "@mui/icons-material";
 import { Box, Button, IconButton, List, ListItemButton, Snackbar, useTheme } from "@mui/material";
-import { SceneData } from "@novorender/data-js-api";
-import { FlightControllerParams, Internal } from "@novorender/webgl-api";
+import { quat, vec3 } from "gl-matrix";
+import { useState } from "react";
+import { Link, MemoryRouter, Route, Switch } from "react-router-dom";
 
 import { dataApi } from "app";
 import { useAppSelector } from "app/store";
-import { featuresConfig, FeatureType } from "config/features";
 import { Divider, LinearProgress, LogoSpeedDial, ScrollBox, WidgetContainer, WidgetHeader } from "components";
-import WidgetList from "features/widgetList/widgetList";
+import { featuresConfig } from "config/features";
 import { useExplorerGlobals } from "contexts/explorerGlobals";
+import { HighlightCollection, useHighlightCollections } from "contexts/highlightCollections";
+import { useHighlighted } from "contexts/highlighted";
+import { selectPropertiesSettings } from "features/properties/slice";
 import {
-    selectAdvancedSettings,
-    selectCameraSpeedLevels,
-    selectCurrentEnvironment,
-    selectPointerLock,
-    selectProjectSettings,
-    selectProportionalCameraSpeed,
-    selectSubtrees,
+    Subtree,
     SubtreeStatus,
+    selectAdvanced,
+    selectBackground,
+    selectCameraDefaults,
+    selectDebugStats,
+    selectNavigationCube,
+    selectPoints,
+    selectProjectSettings,
+    selectSecondaryHighlightProperty,
+    selectSubtrees,
+    selectTerrain,
 } from "features/render";
+import { loadScene } from "features/render/hooks/useHandleInit";
+import WidgetList from "features/widgetList/widgetList";
+import { useSceneId } from "hooks/useSceneId";
+import { useToggle } from "hooks/useToggle";
 import {
     selectCanvasContextMenuFeatures,
     selectEnabledWidgets,
@@ -28,21 +38,16 @@ import {
     selectMinimized,
     selectPrimaryMenu,
 } from "slices/explorerSlice";
-import { useHighlighted } from "contexts/highlighted";
-import { useHighlightCollections } from "contexts/highlightCollections";
-import { selectDefaultTopDownElevation } from "features/orthoCam";
-
-import { useMountedState } from "hooks/useMountedState";
-import { useSceneId } from "hooks/useSceneId";
-import { useToggle } from "hooks/useToggle";
+import { CustomProperties } from "types/project";
+import { mergeRecursive } from "utils/misc";
 
 import { CameraSettings } from "./routes/cameraSettings";
 import { FeatureSettings } from "./routes/featureSettings";
-import { RenderSettings } from "./routes/renderSettings";
-import { ProjectSettings } from "./routes/projectSettings";
-import { SceneSettings } from "./routes/sceneSettings";
-import { PerformanceSettings } from "./routes/performanceSettings";
 import { ObjectSelectionSettings } from "./routes/objectSelectionSettings";
+import { PerformanceSettings } from "./routes/performanceSettings";
+import { ProjectSettings } from "./routes/projectSettings";
+import { RenderSettings } from "./routes/renderSettings";
+import { SceneSettings } from "./routes/sceneSettings";
 
 enum Status {
     Idle,
@@ -54,177 +59,110 @@ enum Status {
 export default function AdvancedSettings() {
     const sceneId = useSceneId();
     const {
-        state: { scene, view },
+        state: { scene },
     } = useExplorerGlobals(true);
-
-    const isAdminScene = useAppSelector(selectIsAdminScene);
-    const subtrees = useAppSelector(selectSubtrees);
-    const settings = useAppSelector(selectAdvancedSettings);
-    const currentEnvironment = useAppSelector(selectCurrentEnvironment);
-    const projectSettings = useAppSelector(selectProjectSettings);
-    const cameraSpeedLevels = useAppSelector(selectCameraSpeedLevels);
-    const enabledWidgets = useAppSelector(selectEnabledWidgets);
-    const primaryMenu = useAppSelector(selectPrimaryMenu);
-    const proportionalCameraSpeed = useAppSelector(selectProportionalCameraSpeed);
-    const pointerLock = useAppSelector(selectPointerLock);
-    const defaultTopDownElevation = useAppSelector(selectDefaultTopDownElevation);
-    const canvasContextMenuFeatures = useAppSelector(selectCanvasContextMenuFeatures);
-    const primaryHighlightColor = useHighlighted().color;
-    const secondaryHighlightColor = useHighlightCollections().secondaryHighlight.color;
-
     const [menuOpen, toggleMenu] = useToggle();
     const minimized = useAppSelector(selectMinimized) === featuresConfig.advancedSettings.key;
     const maximized = useAppSelector(selectMaximized).includes(featuresConfig.advancedSettings.key);
-    const [status, setStatus] = useMountedState(Status.Idle);
+    const [status, setStatus] = useState(Status.Idle);
     const saving = status === Status.Saving;
+
+    const isAdminScene = useAppSelector(selectIsAdminScene);
+    const subtrees = useAppSelector(selectSubtrees);
+    const cameraDefaults = useAppSelector(selectCameraDefaults);
+    const advanced = useAppSelector(selectAdvanced);
+    const points = useAppSelector(selectPoints);
+    const terrain = useAppSelector(selectTerrain);
+    const background = useAppSelector(selectBackground);
+    const enabledWidgets = useAppSelector(selectEnabledWidgets);
+    const projectSettings = useAppSelector(selectProjectSettings);
+    const primaryMenu = useAppSelector(selectPrimaryMenu);
+    const canvasCtxMenu = useAppSelector(selectCanvasContextMenuFeatures);
+    const propertiesSettings = useAppSelector(selectPropertiesSettings);
+    const secondaryHighlightProperty = useAppSelector(selectSecondaryHighlightProperty);
+    const primaryHighlightColor = useHighlighted().color;
+    const secondaryHighlightColor = useHighlightCollections()[HighlightCollection.SecondaryHighlight].color;
+    const debugStats = useAppSelector(selectDebugStats);
+    const navigationCube = useAppSelector(selectNavigationCube);
 
     const save = async () => {
         setStatus(Status.Saving);
 
         try {
-            const {
-                url: _url,
-                customProperties = {},
-                camera,
-                ...originalScene
-            } = (await dataApi.loadScene(sceneId)) as SceneData;
+            const [originalScene] = await loadScene(sceneId);
 
-            const originalSettings = originalScene.settings as undefined | Internal.RenderSettingsExt;
+            const v1: NonNullable<CustomProperties["v1"]> = {
+                renderSettings: { ...advanced, points, hide: subtreesToHide(subtrees), terrain, background },
+                camera: {
+                    ...cameraDefaults,
+                },
+                features: {
+                    widgets: {
+                        enabled: enabledWidgets.map((widget) => widget.key),
+                    },
+                    properties: propertiesSettings,
+                    navigationCube: navigationCube,
+                    debugStats: debugStats,
+                    primaryMenu: {
+                        buttons: Object.values(primaryMenu),
+                    },
+                    contextMenus: {
+                        canvas: {
+                            primary: {
+                                features: canvasCtxMenu,
+                            },
+                        },
+                    },
+                },
+                highlights: {
+                    primary: {
+                        color: primaryHighlightColor,
+                    },
+                    secondary: {
+                        color: secondaryHighlightColor,
+                        property: secondaryHighlightProperty,
+                    },
+                },
+            };
 
-            await dataApi.putScene({
-                ...originalScene,
+            const updated = mergeRecursive(originalScene, {
                 url: isAdminScene ? scene.id : `${sceneId}:${scene.id}`,
-                settings: !originalSettings
-                    ? view.settings
-                    : ({
-                          ...originalSettings,
-                          advanced: {
-                              ...originalSettings.advanced,
-                              hideTriangles: subtrees?.triangles === SubtreeStatus.Hidden,
-                              hidePoints: subtrees?.points === SubtreeStatus.Hidden,
-                              hideTerrain: subtrees?.terrain === SubtreeStatus.Hidden,
-                              hideLines: subtrees?.lines === SubtreeStatus.Hidden,
-                              hideDocuments: subtrees?.documents === SubtreeStatus.Hidden,
-                              doubleSided: {
-                                  opaque: settings.doubleSidedMaterials,
-                                  transparent: settings.doubleSidedTransparentMaterials,
-                              },
-                          },
-                          diagnostics: {
-                              ...originalSettings.diagnostics,
-                              holdDynamic: settings.holdDynamic,
-                              showBoundingBoxes: settings.showBoundingBoxes,
-                          },
-                          light: {
-                              ...originalSettings.light,
-                              camera: {
-                                  ...originalSettings.light.camera,
-                                  brightness: settings.headlightIntensity,
-                                  distance: settings.headlightDistance,
-                              },
-                              ambient: {
-                                  ...originalSettings.light.ambient,
-                                  brightness: settings.ambientLight,
-                              },
-                          },
-                          points: {
-                              ...originalSettings.points,
-                              shape: settings.qualityPoints ? "disc" : "square",
-                              size: {
-                                  ...originalSettings.points.size,
-                                  pixel: settings.pointSize,
-                                  maxPixel: settings.maxPointSize,
-                                  toleranceFactor: settings.pointToleranceFactor,
-                              },
-                          },
-                          terrain: {
-                              ...originalSettings.terrain,
-                              asBackground: settings.terrainAsBackground,
-                          },
-                          background: {
-                              ...originalSettings.background,
-                              color: settings.backgroundColor,
-                              skyBoxBlur: settings.skyBoxBlur,
-                          },
-                          pickBuffer: {
-                              includeTransparent: settings.pickSemiTransparentObjects,
-                          },
-                          ...(currentEnvironment ? { environment: currentEnvironment.name } : {}),
-                      } as Internal.RenderSettingsExt),
-                ...(camera && camera.kind === "flight"
-                    ? {
-                          camera: {
-                              ...(camera as Required<FlightControllerParams>),
-                              far: Math.max(1000, settings.cameraFarClipping),
-                              near: Math.max(0.001, settings.cameraNearClipping),
-                          },
-                      }
-                    : {}),
                 customProperties: {
-                    ...customProperties,
-                    primaryMenu,
-                    cameraSpeedLevels,
-                    pointerLock,
-                    proportionalCameraSpeed,
-                    defaultTopDownElevation,
-                    showStats: settings.showPerformance,
-                    navigationCube: settings.navigationCube,
-                    ditioProjectNumber: projectSettings.ditioProjectNumber,
-                    flightMouseButtonMap: settings.mouseButtonMap,
-                    flightFingerMap: settings.fingerMap,
-                    triangleLimit: settings.triangleLimit,
-                    enabledFeatures: {
-                        ...Object.fromEntries(
-                            enabledWidgets
-                                .filter((widget) => widget.type === FeatureType.Widget)
-                                .map((widget) => [widget.key, true]) as [string, any]
-                        ),
-                        enabledOrgs: customProperties?.enabledFeatures?.enabledOrgs,
-                        admins: customProperties?.enabledFeatures?.admins,
-                        expiration: customProperties?.enabledFeatures?.expiration,
-                        transparentBackground: customProperties?.enabledFeatures?.transparentBackground,
-                        requireConsent: customProperties?.enabledFeatures?.requireConsent,
-                    },
-                    highlights: {
-                        primary: {
-                            color: primaryHighlightColor,
-                        },
-                        secondary: {
-                            color: secondaryHighlightColor,
-                            property: settings.secondaryHighlight.property,
-                        },
-                    },
-                    canvasContextMenu: {
-                        features: canvasContextMenuFeatures,
-                    },
+                    v1,
                 },
                 tmZone: projectSettings.tmZone,
             });
-        } catch {
+
+            await dataApi.putScene(updated);
+
+            return setStatus(Status.SaveSuccess);
+        } catch (e) {
+            console.warn(e);
             return setStatus(Status.SaveError);
         }
-
-        setStatus(Status.SaveSuccess);
     };
 
-    const saveCameraPos = async (camera: Required<FlightControllerParams>) => {
-        if (camera.kind !== "flight") {
-            return;
-        }
-
+    const saveCameraPos = async (cameraState: {
+        kind: "pinhole" | "orthographic";
+        position: vec3;
+        rotation: quat;
+        fov: number;
+    }) => {
         setStatus(Status.Saving);
 
         try {
-            const { url: _url, ...originalScene } = (await dataApi.loadScene(sceneId)) as SceneData;
+            const [originalScene] = await loadScene(sceneId);
 
-            await dataApi.putScene({
-                ...originalScene,
-                url: isAdminScene ? scene.id : `${sceneId}:${scene.id}`,
-                camera: {
-                    ...camera,
-                },
-            });
-        } catch {
+            await dataApi.putScene(
+                mergeRecursive(originalScene, {
+                    url: isAdminScene ? scene.id : `${sceneId}:${scene.id}`,
+                    customProperties: {
+                        initialCameraState: cameraState,
+                    },
+                })
+            );
+        } catch (e) {
+            console.warn(e);
             return setStatus(Status.SaveError);
         }
 
@@ -369,4 +307,16 @@ function Root({ save, saving }: { save: () => Promise<void>; saving: boolean }) 
             </ScrollBox>
         </>
     );
+}
+
+function subtreesToHide(
+    subtrees: Record<Subtree, SubtreeStatus>
+): NonNullable<CustomProperties["v1"]>["renderSettings"]["hide"] {
+    return {
+        terrain: subtrees.terrain === SubtreeStatus.Hidden,
+        triangles: subtrees.triangles === SubtreeStatus.Hidden,
+        points: subtrees.points === SubtreeStatus.Hidden,
+        documents: subtrees.documents === SubtreeStatus.Hidden,
+        lines: subtrees.lines === SubtreeStatus.Hidden,
+    };
 }

@@ -1,40 +1,36 @@
+import { Add, ArrowBack, Delete, Edit, MoreVert, Palette, Save } from "@mui/icons-material";
 import {
+    Box,
+    Button,
     IconButton,
+    List,
     ListItemButton,
     ListItemIcon,
     ListItemText,
     Menu,
     MenuItem,
-    Typography,
-    SelectChangeEvent,
-    Box,
-    Button,
     Select,
-    List,
+    SelectChangeEvent,
+    Typography,
     useTheme,
 } from "@mui/material";
-import { Add, ArrowBack, Delete, Edit, MoreVert, Palette, Save } from "@mui/icons-material";
-import { MouseEvent, useState, ChangeEvent } from "react";
+import { ChangeEvent, MouseEvent, useState } from "react";
 import { ColorResult } from "react-color";
-import { SceneData } from "@novorender/data-js-api";
 import { useHistory } from "react-router-dom";
 
 import { dataApi } from "app";
-import { ColorPicker } from "features/colorPicker";
-import { rgbToVec, VecRGBA, vecToRgb } from "utils/color";
 import { useAppDispatch, useAppSelector } from "app/store";
-import { useExplorerGlobals } from "contexts/explorerGlobals";
-import { selectHasAdminCapabilities } from "slices/explorerSlice";
-import { AsyncStatus } from "types/misc";
 import { Divider, LinearProgress, ScrollBox } from "components";
+import { useExplorerGlobals } from "contexts/explorerGlobals";
+import { ColorPicker } from "features/colorPicker";
+import { renderActions, selectDeviations } from "features/render";
+import { loadScene } from "features/render/hooks/useHandleInit";
+import { selectHasAdminCapabilities, selectIsAdminScene } from "slices/explorerSlice";
+import { AsyncStatus } from "types/misc";
+import { VecRGBA, rgbToVec, vecToRgb } from "utils/color";
+import { mergeRecursive } from "utils/misc";
 
-import {
-    selectDeviations,
-    deviationsActions,
-    Deviation as DeviationType,
-    DeviationMode,
-    selectDeviationProfilesData,
-} from "../deviationsSlice";
+import { selectDeviationProfilesData } from "../deviationsSlice";
 
 export function Deviation({ sceneId }: { sceneId: string }) {
     const theme = useTheme();
@@ -42,20 +38,24 @@ export function Deviation({ sceneId }: { sceneId: string }) {
     const {
         state: { scene },
     } = useExplorerGlobals(true);
-
+    const isAdminScene = useAppSelector(selectIsAdminScene);
     const deviations = useAppSelector(selectDeviations);
     const profiles = useAppSelector(selectDeviationProfilesData);
     const dispatch = useAppDispatch();
     const isAdmin = useAppSelector(selectHasAdminCapabilities);
     const [saveStatus, setSaveStatus] = useState(AsyncStatus.Initial);
 
-    const handleModeChange = (evt: SelectChangeEvent | ChangeEvent<HTMLInputElement>) =>
+    const handleModeChange = (evt: SelectChangeEvent | ChangeEvent<HTMLInputElement>) => {
+        const mixFactor = evt.target.value === "on" ? 1 : evt.target.value === "mix" ? 0.5 : 0;
+
         dispatch(
-            deviationsActions.setDeviations({
-                ...deviations,
-                mode: evt.target.value as DeviationMode,
+            renderActions.setPoints({
+                deviation: {
+                    mixFactor,
+                },
             })
         );
+    };
 
     const handleSave = async () => {
         const id = sceneId;
@@ -63,23 +63,39 @@ export function Deviation({ sceneId }: { sceneId: string }) {
         setSaveStatus(AsyncStatus.Loading);
 
         try {
-            const { url: _url, settings, ...originalScene } = (await dataApi.loadScene(id)) as SceneData;
+            const [originalScene] = await loadScene(id);
 
-            if (settings) {
-                await dataApi.putScene({
-                    ...originalScene,
-                    url: `${id}:${scene.id}`,
-                    settings: {
-                        ...settings,
-                        points: {
-                            ...settings.points,
-                            deviation: {
-                                ...deviations,
-                                colors: [...deviations.colors].sort((a, b) => a.deviation - b.deviation),
-                            },
-                        },
+            if (originalScene.customProperties.v1) {
+                const updated = mergeRecursive(originalScene, {
+                    url: isAdminScene ? scene.id : `${sceneId}:${scene.id}`,
+                    customProperties: {
+                        v1: { renderSettings: { points: { deviation: deviations } } },
                     },
                 });
+
+                dataApi.putScene(updated);
+            } else {
+                const settings = originalScene.settings;
+                if (settings) {
+                    await dataApi.putScene({
+                        ...originalScene,
+                        url: `${id}:${scene.id}`,
+                        settings: {
+                            ...settings,
+                            points: {
+                                ...settings.points,
+                                deviation: {
+                                    ...deviations,
+                                    mode:
+                                        deviations.mixFactor === 0 ? "off" : deviations.mixFactor === 1 ? "on" : "mix",
+                                    colors: deviations.colorGradient.knots
+                                        .map((deviation) => ({ deviation: deviation.position, color: deviation.color }))
+                                        .sort((a, b) => a.deviation - b.deviation),
+                                },
+                            },
+                        },
+                    });
+                }
             }
 
             setSaveStatus(AsyncStatus.Initial);
@@ -100,18 +116,19 @@ export function Deviation({ sceneId }: { sceneId: string }) {
                         <ArrowBack sx={{ mr: 1 }} /> Back
                     </Button>
                     <Select
+                        name="deviations mode"
                         variant="standard"
                         label="mode"
                         size="small"
-                        value={deviations.mode}
+                        value={deviations.mixFactor === 1 ? "on" : deviations.mixFactor === 0 ? "off" : "mix"}
                         sx={{ minWidth: 50, lineHeight: "normal" }}
                         inputProps={{ sx: { p: 0, fontSize: 14 } }}
                         onChange={handleModeChange}
                         disabled={loading}
                     >
-                        <MenuItem value={DeviationMode.On}>On</MenuItem>
-                        <MenuItem value={DeviationMode.Mix}>Mix</MenuItem>
-                        <MenuItem value={DeviationMode.Off}>Off</MenuItem>
+                        <MenuItem value={"on"}>On</MenuItem>
+                        <MenuItem value={"mix"}>Mix</MenuItem>
+                        <MenuItem value={"off"}>Off</MenuItem>
                     </Select>
                     {isAdmin ? (
                         <Button disabled={loading} color="grey" onClick={handleSave}>
@@ -129,8 +146,8 @@ export function Deviation({ sceneId }: { sceneId: string }) {
             ) : null}
             <ScrollBox height={1} pb={3}>
                 <List>
-                    {deviations.colors.map((deviation) => (
-                        <ColorStop key={deviation.deviation} deviation={deviation} disabled={loading} />
+                    {deviations.colorGradient.knots.map((deviation) => (
+                        <ColorStop key={deviation.position} deviation={deviation} disabled={loading} />
                     ))}
                 </List>
                 <Box display="flex" justifyContent="flex-end" pr={2}>
@@ -143,7 +160,7 @@ export function Deviation({ sceneId }: { sceneId: string }) {
     );
 }
 
-function ColorStop({ deviation, disabled }: { deviation: DeviationType; disabled?: boolean }) {
+function ColorStop({ deviation, disabled }: { deviation: { position: number; color: VecRGBA }; disabled?: boolean }) {
     const history = useHistory();
 
     const deviations = useAppSelector(selectDeviations);
@@ -166,20 +183,26 @@ function ColorStop({ deviation, disabled }: { deviation: DeviationType; disabled
 
     const handleColorChange = ({ rgb }: ColorResult) => {
         dispatch(
-            deviationsActions.setDeviations({
-                ...deviations,
-                colors: deviations.colors.map((devi) =>
-                    devi === deviation ? { ...deviation, color: rgbToVec(rgb) as VecRGBA } : devi
-                ),
+            renderActions.setPoints({
+                deviation: {
+                    colorGradient: {
+                        knots: deviations.colorGradient.knots.map((devi) =>
+                            devi === deviation ? { ...deviation, color: rgbToVec(rgb) as VecRGBA } : devi
+                        ),
+                    },
+                },
             })
         );
     };
 
     const handleDelete = () => {
         dispatch(
-            deviationsActions.setDeviations({
-                ...deviations,
-                colors: deviations.colors.filter((devi) => devi !== deviation),
+            renderActions.setPoints({
+                deviation: {
+                    colorGradient: {
+                        knots: deviations.colorGradient.knots.filter((devi) => devi !== deviation),
+                    },
+                },
             })
         );
     };
@@ -190,7 +213,7 @@ function ColorStop({ deviation, disabled }: { deviation: DeviationType; disabled
             <ListItemButton
                 disableGutters
                 dense
-                key={deviation.deviation}
+                key={deviation.position}
                 sx={{ px: 1, display: "flex" }}
                 onClick={(evt) => {
                     evt.stopPropagation();
@@ -198,7 +221,7 @@ function ColorStop({ deviation, disabled }: { deviation: DeviationType; disabled
                 }}
             >
                 <Typography flex="1 1 auto">
-                    {Math.sign(deviation.deviation) === 1 ? `+${deviation.deviation}` : deviation.deviation}
+                    {Math.sign(deviation.position) === 1 ? `+${deviation.position}` : deviation.position}
                 </Typography>
                 <IconButton
                     size="small"
@@ -219,7 +242,7 @@ function ColorStop({ deviation, disabled }: { deviation: DeviationType; disabled
                     disabled={disabled}
                     onClick={(evt) => {
                         evt.stopPropagation();
-                        history.push(`/deviation/edit/${deviations.colors.indexOf(deviation)}`);
+                        history.push(`/deviation/edit/${deviations.colorGradient.knots.indexOf(deviation)}`);
                     }}
                 >
                     <Edit fontSize="small" />
@@ -240,7 +263,7 @@ function ColorStop({ deviation, disabled }: { deviation: DeviationType; disabled
                 anchorEl={menuAnchor}
                 open={Boolean(menuAnchor)}
                 onClose={closeMenu}
-                id={`${deviation.deviation}-menu`}
+                id={`${deviation.position}-menu`}
                 MenuListProps={{ sx: { maxWidth: "100%" } }}
             >
                 <MenuItem key="delete" onClick={handleDelete}>

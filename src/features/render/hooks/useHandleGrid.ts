@@ -2,9 +2,9 @@ import { useEffect } from "react";
 
 import { useAppSelector } from "app/store";
 import { useExplorerGlobals } from "contexts/explorerGlobals";
-import { selectGrid } from "features/render/renderSlice";
+import { selectGrid } from "features/render";
 
-export function useHandleGridChanges() {
+export function useHandleGrid() {
     const {
         state: { view },
     } = useExplorerGlobals();
@@ -15,6 +15,6 @@ export function useHandleGridChanges() {
             return;
         }
 
-        view.applySettings({ grid });
+        view.modifyRenderState({ grid });
     }, [view, grid]);
 }

@@ -1,9 +1,9 @@
 import { ArrowBack } from "@mui/icons-material";
-import { Button, useTheme, Box, FormControl, InputLabel, MenuItem, OutlinedInput, Select } from "@mui/material";
-import { useHistory, useParams } from "react-router-dom";
+import { Box, Button, FormControl, InputLabel, MenuItem, OutlinedInput, Select, useTheme } from "@mui/material";
 import { FormEventHandler, useEffect, useState } from "react";
+import { useHistory, useParams } from "react-router-dom";
 
-import { LinearProgress, Divider } from "components";
+import { Divider, LinearProgress } from "components";
 
 import { useGetProjectExtensionsQuery, useGetTopicQuery, useUpdateTopicMutation } from "../bimCollabApi";
 

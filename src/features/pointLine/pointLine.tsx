@@ -1,25 +1,25 @@
-import { useEffect, useRef } from "react";
-import { Box, Button, Checkbox, FormControlLabel } from "@mui/material";
 import { DeleteSweep, Undo } from "@mui/icons-material";
+import { Box, Button, Checkbox, FormControlLabel } from "@mui/material";
+import { useEffect, useRef } from "react";
 
 import { useAppDispatch, useAppSelector } from "app/store";
 import {
+    Accordion,
+    AccordionDetails,
+    AccordionSummary,
+    Divider,
     IosSwitch,
-    ScrollBox,
     LogoSpeedDial,
+    ScrollBox,
+    VertexTable,
     WidgetContainer,
     WidgetHeader,
-    Accordion,
-    AccordionSummary,
-    AccordionDetails,
-    Divider,
-    VertexTable,
 } from "components";
 import { featuresConfig } from "config/features";
+import { Picker, renderActions, selectPicker } from "features/render/renderSlice";
 import WidgetList from "features/widgetList/widgetList";
 import { useToggle } from "hooks/useToggle";
-import { Picker, renderActions, selectPicker } from "features/render/renderSlice";
-import { selectMinimized, selectMaximized } from "slices/explorerSlice";
+import { selectMaximized, selectMinimized } from "slices/explorerSlice";
 
 import { pointLineActions, selectPointLine } from "./pointLineSlice";
 
@@ -60,6 +60,7 @@ export default function PointLine() {
                             <FormControlLabel
                                 control={
                                     <IosSwitch
+                                        name="toggle select points"
                                         size="medium"
                                         color="primary"
                                         checked={selecting}
@@ -96,6 +97,7 @@ export default function PointLine() {
                         <FormControlLabel
                             control={
                                 <Checkbox
+                                    name="toggle lock elevation"
                                     size="medium"
                                     color="primary"
                                     checked={lockElevation}

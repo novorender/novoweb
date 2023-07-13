@@ -1,49 +1,54 @@
-import { useParams, Link, useHistory } from "react-router-dom";
-import { useTheme, Box, Button, Typography, List, ListItem } from "@mui/material";
 import { Add, ArrowBack, Edit } from "@mui/icons-material";
-import { HierarcicalObjectReference, Scene } from "@novorender/webgl-api";
+import { Box, Button, List, ListItem, Typography, useTheme } from "@mui/material";
+import { ObjectDB } from "@novorender/data-js-api";
+import { HierarcicalObjectReference } from "@novorender/webgl-api";
+import { Link, useHistory, useParams } from "react-router-dom";
 
+import { useAppDispatch } from "app/store";
 import {
     Accordion,
     AccordionDetails,
     AccordionSummary,
+    Divider,
     ImgModal,
     ImgTooltip,
     LinearProgress,
     ScrollBox,
     Tooltip,
-    Divider,
 } from "components";
-
-import { useAppDispatch } from "app/store";
-import { renderActions, ObjectVisibility, CameraType } from "features/render/renderSlice";
-import { useDispatchHidden, hiddenActions } from "contexts/hidden";
-import { useDispatchHighlighted, highlightActions } from "contexts/highlighted";
-import { useDispatchSelectionBasket, selectionBasketActions } from "contexts/selectionBasket";
-import { objectGroupsActions, InternalTemporaryGroup, useDispatchObjectGroups } from "contexts/objectGroups";
 import { useExplorerGlobals } from "contexts/explorerGlobals";
-
+import { hiddenActions, useDispatchHidden } from "contexts/hidden";
+import { highlightActions, useDispatchHighlighted } from "contexts/highlighted";
+import {
+    GroupStatus,
+    InternalTemporaryGroup,
+    objectGroupsActions,
+    useDispatchObjectGroups,
+} from "contexts/objectGroups";
+import { selectionBasketActions, useDispatchSelectionBasket } from "contexts/selectionBasket";
+import { CameraType, ObjectVisibility, renderActions } from "features/render/renderSlice";
 import { useAbortController } from "hooks/useAbortController";
 import { useMountedState } from "hooks/useMountedState";
 import { useToggle } from "hooks/useToggle";
+import type { Comment } from "types/bcf";
+import { translateBcfClippingPlanes, translateOrthogonalCamera, translatePerspectiveCamera } from "utils/bcf";
+import { hexToVec } from "utils/color";
 import { extractObjectIds } from "utils/objectData";
 import { searchByPatterns } from "utils/search";
-import { hexToVec } from "utils/color";
 import { sleep } from "utils/time";
-import { translateBcfClippingPlanes, translateOrthogonalCamera, translatePerspectiveCamera } from "utils/bcf";
-import type { Comment } from "types/bcf";
 
+import { ClippingMode } from "@novorender/web_app";
 import {
-    useGetTopicQuery,
-    useGetCommentsQuery,
-    useGetViewpointsQuery,
-    useGetThumbnailQuery,
-    useGetViewpointQuery,
     useGetColoringQuery,
-    useGetSelectionQuery,
-    useGetVisibilityQuery,
-    useGetSnapshotQuery,
+    useGetCommentsQuery,
     useGetProjectExtensionsQuery,
+    useGetSelectionQuery,
+    useGetSnapshotQuery,
+    useGetThumbnailQuery,
+    useGetTopicQuery,
+    useGetViewpointQuery,
+    useGetViewpointsQuery,
+    useGetVisibilityQuery,
 } from "../bimCollabApi";
 
 export function Topic() {
@@ -250,7 +255,7 @@ function CommentListItem({
     const dispatchSelectionBasket = useDispatchSelectionBasket();
     const dispatchObjectGroups = useDispatchObjectGroups();
     const {
-        state: { scene },
+        state: { db },
     } = useExplorerGlobals(true);
 
     const [modalOpen, toggleModal] = useToggle();
@@ -281,14 +286,14 @@ function CommentListItem({
             .filter((exception) => exception !== undefined) as string[];
 
         const getVisibilityExceptions = visibilityExceptionGuids.length
-            ? guidsToIds({ scene, abortSignal, guids: visibilityExceptionGuids })
+            ? guidsToIds({ db, abortSignal, guids: visibilityExceptionGuids })
             : Promise.resolve([]);
 
         const selectionGuids = selection
             ?.map((obj) => obj.ifc_guid)
             .filter((exception) => exception !== undefined) as string[];
         const getSelection = selectionGuids.length
-            ? guidsToIds({ scene, abortSignal, guids: selectionGuids })
+            ? guidsToIds({ db, abortSignal, guids: selectionGuids })
             : Promise.resolve([]);
 
         const getColorGroups =
@@ -304,7 +309,7 @@ function CommentListItem({
                           .filter((item) => item.components.length)
                           .map(async (item) => ({
                               color: hexToVec(item.color, item.color.length === 8),
-                              ids: await guidsToIds({ scene, abortSignal, guids: item.components as string[] }),
+                              ids: await guidsToIds({ db, abortSignal, guids: item.components as string[] }),
                           }))
                   )
                 : Promise.resolve([]);
@@ -340,12 +345,14 @@ function CommentListItem({
                 objectGroupsActions.add(
                     colorGroups.map((item, index) => ({
                         id: `Temporary BIMcollab viewpoint group ${index}`,
-                        ids: item.ids,
+                        ids: new Set(item.ids),
                         color: item.color,
-                        selected: true,
-                        hidden: false,
+                        status: GroupStatus.Selected,
                         grouping: InternalTemporaryGroup.BIMcollab,
                         name: `BIMcollab ${index + 1}`,
+                        search: [],
+                        includeDescendants: false,
+                        opacity: 0,
                     }))
                 )
             );
@@ -354,7 +361,7 @@ function CommentListItem({
         if (viewpoint?.perspective_camera) {
             const camera = translatePerspectiveCamera(viewpoint.perspective_camera);
 
-            dispatch(renderActions.setCamera({ type: CameraType.Flight, goTo: camera }));
+            dispatch(renderActions.setCamera({ type: CameraType.Pinhole, goTo: camera }));
         }
 
         if (viewpoint?.orthogonal_camera) {
@@ -363,22 +370,18 @@ function CommentListItem({
             dispatch(
                 renderActions.setCamera({
                     type: CameraType.Orthographic,
-                    params: {
-                        kind: "ortho",
-                        ...camera,
-                    },
+                    goTo: camera,
                 })
             );
         }
 
-        dispatch(renderActions.resetClippingBox());
         if (viewpoint?.clipping_planes?.length) {
             const planes = translateBcfClippingPlanes(viewpoint.clipping_planes);
             dispatch(
                 renderActions.setClippingPlanes({
                     enabled: true,
-                    mode: "union",
-                    planes: planes.map((plane) => ({ plane, baseW: plane[3] })),
+                    mode: ClippingMode.union,
+                    planes: planes.map((plane) => ({ normalOffset: plane, baseW: plane[3] })),
                 })
             );
         } else {
@@ -455,7 +458,7 @@ function CommentListItem({
     );
 }
 
-async function guidsToIds({ guids, scene, abortSignal }: { guids: string[]; scene: Scene; abortSignal: AbortSignal }) {
+async function guidsToIds({ guids, db, abortSignal }: { guids: string[]; db: ObjectDB; abortSignal: AbortSignal }) {
     let ids = [] as number[];
 
     const batchSize = 100;
@@ -480,7 +483,7 @@ async function guidsToIds({ guids, scene, abortSignal }: { guids: string[]; scen
         await Promise.all(
             batches.slice(i * concurrentRequests, i * concurrentRequests + concurrentRequests).map((batch) => {
                 return searchByPatterns({
-                    scene,
+                    db,
                     callback,
                     abortSignal,
                     searchPatterns: [

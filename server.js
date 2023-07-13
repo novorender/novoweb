@@ -139,6 +139,11 @@ app.use(
     })
 );
 
+app.use("/*", (_req, res, next) => {
+    res.header("Cross-Origin-Opener-Policy", "same-origin");
+    res.header("Cross-Origin-Embedder-Policy", "require-corp");
+    next();
+});
 app.get("/", sendIndex);
 app.use("/", express.static("dist"));
 app.use(

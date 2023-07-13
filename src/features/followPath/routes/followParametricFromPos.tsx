@@ -1,5 +1,7 @@
+import { Box } from "@mui/material";
 import { FollowParametricObject } from "@novorender/measure-api";
 import { useEffect, useState } from "react";
+import { useHistory } from "react-router-dom";
 
 import { useAppDispatch } from "app/store";
 import { LinearProgress } from "components";
@@ -9,8 +11,6 @@ import { AsyncStatus } from "types/misc";
 import { Follow } from "../follow";
 import { followPathActions } from "../followPathSlice";
 import { usePathMeasureObjects } from "../usePathMeasureObjects";
-import { useHistory } from "react-router-dom";
-import { Box } from "@mui/material";
 
 export function FollowParametricFromPos() {
     const history = useHistory();

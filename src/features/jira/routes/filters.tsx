@@ -1,10 +1,10 @@
+import { ArrowBack } from "@mui/icons-material";
+import { Box, Button, FormControlLabel, useTheme } from "@mui/material";
 import { FormEvent, useState } from "react";
 import { useHistory } from "react-router-dom";
-import { Box, Button, FormControlLabel, useTheme } from "@mui/material";
-import { ArrowBack } from "@mui/icons-material";
 
-import { ScrollBox, Divider, Switch as SwitchInput } from "components";
 import { useAppDispatch, useAppSelector } from "app/store";
+import { Divider, ScrollBox, Switch as SwitchInput } from "components";
 
 import { initialFilters, jiraActions, JiraFilterType, selectJiraFilters } from "../jiraSlice";
 

@@ -1,4 +1,6 @@
-import { BoundingSphere, HierarcicalObjectReference, ObjectId, Scene } from "@novorender/webgl-api";
+import { ObjectDB } from "@novorender/data-js-api";
+import { BoundingSphere, HierarcicalObjectReference, ObjectId } from "@novorender/webgl-api";
+import { flip } from "features/render/utils";
 import { vec3 } from "gl-matrix";
 import { batchedPropertySearch } from "./search";
 
@@ -56,18 +58,18 @@ export function getFileNameFromPath(path: string): string | null {
 export async function objIdsToTotalBoundingSphere({
     ids,
     abortSignal,
-    scene,
+    db,
 }: {
     ids: number[];
     abortSignal: AbortSignal;
-    scene: Scene;
+    db: ObjectDB;
 }) {
     let nodes = [] as HierarcicalObjectReference[];
 
     nodes = await batchedPropertySearch({
+        db,
         property: "id",
         value: ids.map((id) => String(id)),
-        scene,
         abortSignal,
     });
 
@@ -81,7 +83,7 @@ export function getTotalBoundingSphere(nodes: HierarcicalObjectReference[]): Bou
         const sphere = node.bounds?.sphere;
 
         if (sphere) {
-            spheres.push(sphere);
+            spheres.push({ ...sphere, center: flip(sphere.center) });
         }
     }
 

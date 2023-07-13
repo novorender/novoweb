@@ -1,36 +1,9 @@
-import { mat3, mat4, quat, vec2, vec3, vec4 } from "gl-matrix";
+import { rotationFromDirection } from "@novorender/web_app";
+import { mat3, quat, vec2, vec3, vec4 } from "gl-matrix";
 import { MouseEventHandler, useRef } from "react";
-import { OrthoControllerParams } from "@novorender/webgl-api";
 
-import { api, measureApi } from "app";
-import {
-    renderActions,
-    selectClippingBox,
-    selectMainObject,
-    selectSelectMultiple,
-    CameraType,
-    selectCamera,
-    selectPicker,
-    Picker,
-    selectViewMode,
-    selectSecondaryHighlightProperty,
-    StampKind,
-    selectStamp,
-    selectPointerDownState,
-} from "features/render/renderSlice";
-import { selectDeviations } from "features/deviations";
-import { measureActions, selectMeasure, useMeasurePickSettings } from "features/measure";
-import { manholeActions } from "features/manhole";
+import { measureApi } from "app";
 import { useAppDispatch, useAppSelector } from "app/store";
-import { followPathActions } from "features/followPath";
-import { areaActions } from "features/area";
-import { heightProfileActions } from "features/heightProfile";
-import { pointLineActions } from "features/pointLine";
-import { ExtendedMeasureEntity, ViewMode } from "types/misc";
-import { orthoCamActions, selectCrossSectionPoint } from "features/orthoCam";
-import { useAbortController } from "hooks/useAbortController";
-
-import { useHighlighted, highlightActions, useDispatchHighlighted } from "contexts/highlighted";
 import { useExplorerGlobals } from "contexts/explorerGlobals";
 import {
     HighlightCollection,
@@ -38,10 +11,32 @@ import {
     useDispatchHighlightCollections,
     useHighlightCollections,
 } from "contexts/highlightCollections";
-import { isRealVec } from "utils/misc";
+import { highlightActions, useDispatchHighlighted, useHighlighted } from "contexts/highlighted";
+import { areaActions } from "features/area";
+import { followPathActions } from "features/followPath";
+import { heightProfileActions } from "features/heightProfile";
+import { manholeActions } from "features/manhole";
+import { measureActions, selectMeasure, useMeasurePickSettings } from "features/measure";
+import { orthoCamActions, selectCrossSectionPoint } from "features/orthoCam";
+import { pointLineActions } from "features/pointLine";
 import { selectShowPropertiesStamp } from "features/properties/slice";
-
-import { pickDeviationArea } from "../utils";
+import {
+    CameraType,
+    Picker,
+    StampKind,
+    renderActions,
+    selectCamera,
+    selectDeviations,
+    selectMainObject,
+    selectPicker,
+    selectPointerDownState,
+    selectSecondaryHighlightProperty,
+    selectSelectMultiple,
+    selectViewMode,
+} from "features/render/renderSlice";
+import { useAbortController } from "hooks/useAbortController";
+import { ExtendedMeasureEntity, ViewMode } from "types/misc";
+import { isRealVec } from "utils/misc";
 
 export function useCanvasClickHandler() {
     const dispatch = useAppDispatch();
@@ -50,12 +45,11 @@ export function useCanvasClickHandler() {
     const dispatchHighlightCollections = useDispatchHighlightCollections();
     const highlightCollections = useHighlightCollections();
     const {
-        state: { view, scene, canvas, measureScene },
+        state: { view, canvas, db, measureScene, size },
     } = useExplorerGlobals();
 
     const mainObject = useAppSelector(selectMainObject);
     const selectMultiple = useAppSelector(selectSelectMultiple);
-    const clippingBox = useAppSelector(selectClippingBox);
     const cameraState = useAppSelector(selectCamera);
     const measure = useAppSelector(selectMeasure);
     const deviation = useAppSelector(selectDeviations);
@@ -63,7 +57,6 @@ export function useCanvasClickHandler() {
     const measurePickSettings = useMeasurePickSettings();
     const crossSectionPoint = useAppSelector(selectCrossSectionPoint);
     const viewMode = useAppSelector(selectViewMode);
-    const stamp = useAppSelector(selectStamp);
     const pointerDownState = useAppSelector(selectPointerDownState);
     const showPropertiesStamp = useAppSelector(selectShowPropertiesStamp);
 
@@ -78,7 +71,7 @@ export function useCanvasClickHandler() {
             vec2.dist([pointerDownState.x, pointerDownState.y], [evt.nativeEvent.offsetX, evt.nativeEvent.offsetY]) >=
                 5;
 
-        if (!view?.lastRenderOutput || clippingBox.defining || !canvas || !scene || longPress || drag) {
+        if (!view || !canvas || longPress || drag) {
             return;
         }
 
@@ -88,42 +81,11 @@ export function useCanvasClickHandler() {
             cameraState.type === CameraType.Orthographic &&
             (viewMode === ViewMode.CrossSection || viewMode === ViewMode.FollowPath);
 
-        const result = await view.lastRenderOutput.pick(
-            evt.nativeEvent.offsetX,
-            evt.nativeEvent.offsetY,
-            pickCameraPlane
-        );
-
-        if (picker === Picker.Object && deviation.mode !== "off" && cameraState.type === CameraType.Orthographic) {
-            const isTouch = evt.nativeEvent instanceof PointerEvent && evt.nativeEvent.pointerType === "touch";
-            const pickSize = isTouch ? 16 : 0;
-            const deviation = await pickDeviationArea({
-                view,
-                size: pickSize,
-                clickX: evt.nativeEvent.offsetX,
-                clickY: evt.nativeEvent.offsetY,
-            });
-
-            if (deviation) {
-                dispatch(
-                    renderActions.setStamp({
-                        kind: StampKind.Deviation,
-                        mouseX: evt.nativeEvent.offsetX,
-                        mouseY: evt.nativeEvent.offsetY,
-                        pinned: false,
-                        data: {
-                            deviation: deviation,
-                        },
-                    })
-                );
-
-                return;
-            } else if (stamp?.kind === StampKind.Deviation) {
-                dispatch(renderActions.setStamp(null));
-            }
-        } else if (stamp?.kind === StampKind.Deviation) {
-            dispatch(renderActions.setStamp(null));
-        }
+        const isTouch = evt.nativeEvent instanceof PointerEvent && evt.nativeEvent.pointerType === "touch";
+        const result = await view.pick(evt.nativeEvent.offsetX, evt.nativeEvent.offsetY, {
+            pickCameraPlane,
+            sampleDiscRadius: isTouch ? 8 : 4,
+        });
 
         if (!result) {
             if (picker === Picker.Measurement && measure.hover) {
@@ -135,7 +97,6 @@ export function useCanvasClickHandler() {
             }
             return;
         }
-
         const normal = isRealVec([...result.normal]) ? vec3.clone(result.normal) : undefined;
         const position = vec3.clone(result.position);
 
@@ -143,11 +104,11 @@ export function useCanvasClickHandler() {
             case Picker.CrossSection:
                 if (crossSectionPoint) {
                     dispatch(renderActions.setViewMode(ViewMode.CrossSection));
-                    const mat = mat3.fromQuat(mat3.create(), view.camera.rotation);
-                    let up = vec3.fromValues(0, 1, 0);
+                    const mat = mat3.fromQuat(mat3.create(), view.renderState.camera.rotation);
+                    let up = vec3.fromValues(0, 0, 1);
                     const topDown = vec3.equals(vec3.fromValues(mat[6], mat[7], mat[8]), up);
                     const pos = topDown
-                        ? vec3.fromValues(result.position[0], crossSectionPoint[1], result.position[2])
+                        ? vec3.fromValues(result.position[0], result.position[1], crossSectionPoint[2])
                         : vec3.copy(vec3.create(), result.position);
 
                     const right = vec3.sub(vec3.create(), crossSectionPoint, pos);
@@ -157,9 +118,11 @@ export function useCanvasClickHandler() {
                     let dir = vec3.cross(vec3.create(), up, right);
 
                     if (topDown) {
-                        const midPt = (measureApi.toMarkerPoints(view, [p]) ?? [])[0];
+                        const midPt = (measureApi.toMarkerPoints(size.width, size.width, view.renderState.camera, [
+                            p,
+                        ]) ?? [])[0];
                         if (midPt) {
-                            const midPick = await view.lastRenderOutput.pick(midPt[0], midPt[1]);
+                            const midPick = await view.pick(midPt[0], midPt[1]);
                             if (midPick) {
                                 vec3.copy(p, midPick.position);
                             }
@@ -180,18 +143,14 @@ export function useCanvasClickHandler() {
                         mat3.fromValues(right[0], right[1], right[2], up[0], up[1], up[2], dir[0], dir[1], dir[2])
                     );
 
-                    const orthoMat = mat4.fromRotationTranslation(mat4.create(), rotation, p);
-
                     dispatch(
                         renderActions.setCamera({
                             type: CameraType.Orthographic,
-                            params: {
-                                kind: "ortho",
-                                referenceCoordSys: orthoMat,
-                                fieldOfView: 45,
-                                near: -0.001,
+                            goTo: {
+                                position: p,
+                                rotation,
+                                fov: 45,
                                 far: 0.5,
-                                position: [0, 0, 0],
                             },
                             gridOrigo: p as vec3,
                         })
@@ -205,6 +164,25 @@ export function useCanvasClickHandler() {
                 }
                 break;
             case Picker.Object:
+                if (
+                    deviation.mixFactor !== 0 &&
+                    cameraState.type === CameraType.Orthographic &&
+                    result.deviation !== undefined
+                ) {
+                    dispatch(
+                        renderActions.setStamp({
+                            kind: StampKind.Deviation,
+                            mouseX: evt.nativeEvent.offsetX,
+                            mouseY: evt.nativeEvent.offsetY,
+                            pinned: false,
+                            data: {
+                                deviation: result.deviation,
+                            },
+                        })
+                    );
+                    return;
+                }
+
                 if (result.objectId === -1) {
                     dispatch(renderActions.setStamp(null));
                     return;
@@ -241,7 +219,11 @@ export function useCanvasClickHandler() {
                         dispatch(renderActions.setMainObject(result.objectId));
                         dispatchHighlighted(highlightActions.setIds([result.objectId]));
 
-                        const metadata = await scene?.getObjectReference(result.objectId).loadMetaData();
+                        if ((!showPropertiesStamp && !secondaryHighlightProperty) || !db) {
+                            return;
+                        }
+
+                        const metadata = await db.getObjectMetdata(result.objectId);
 
                         if (showPropertiesStamp) {
                             dispatch(
@@ -289,7 +271,7 @@ export function useCanvasClickHandler() {
                         dispatch(renderActions.addLoadingHandle(loadingHandle));
 
                         try {
-                            const iterator = scene.search(
+                            const iterator = db.search(
                                 {
                                     searchPattern: [
                                         { property: secondaryHighlightProperty, value: query, exact: true },
@@ -317,27 +299,33 @@ export function useCanvasClickHandler() {
                 }
                 break;
             case Picker.ClippingPlane:
-                if (!normal) {
+                if (!normal || result.isEdge) {
                     return;
                 }
 
-                const w = -vec3.dot(normal, position);
+                const w = vec3.dot(normal, position);
 
                 dispatch(renderActions.setPicker(Picker.Object));
                 dispatch(
                     renderActions.addClippingPlane({
-                        plane: vec4.fromValues(normal[0], normal[1], normal[2], w) as Vec4,
+                        normalOffset: vec4.fromValues(normal[0], normal[1], normal[2], w) as Vec4,
                         baseW: w,
                     })
                 );
                 break;
             case Picker.OrthoPlane:
-                const orthoController = api.createCameraController({ kind: "ortho" }, canvas);
-                (orthoController as any).init(position, normal, view.camera);
+                if (!normal || result.isEdge) {
+                    return;
+                }
+
                 dispatch(
                     renderActions.setCamera({
                         type: CameraType.Orthographic,
-                        params: orthoController.params as OrthoControllerParams,
+                        goTo: {
+                            position,
+                            rotation: rotationFromDirection(normal),
+                            fov: 50,
+                        },
                     })
                 );
                 dispatch(renderActions.setPicker(Picker.Object));

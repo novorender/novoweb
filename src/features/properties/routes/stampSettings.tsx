@@ -13,12 +13,14 @@ import {
 import { FormEventHandler, useEffect, useState } from "react";
 import { useHistory } from "react-router-dom";
 
-import { Divider, IosSwitch, ScrollBox, TextField } from "components";
-import { useAppDispatch, useAppSelector } from "app/store";
-import { useExplorerGlobals } from "contexts/explorerGlobals";
-import { AsyncStatus } from "types/misc";
 import { dataApi } from "app";
+import { useAppDispatch, useAppSelector } from "app/store";
+import { Divider, IosSwitch, ScrollBox, TextField } from "components";
+import { useExplorerGlobals } from "contexts/explorerGlobals";
+import { loadScene } from "features/render/hooks/useHandleInit";
 import { selectIsAdminScene } from "slices/explorerSlice";
+import { AsyncStatus } from "types/misc";
+import { mergeRecursive } from "utils/misc";
 
 import { propertiesActions, selectPropertiesStampSettings, selectStarredProperties } from "../slice";
 
@@ -62,29 +64,42 @@ export function StampSettings({ sceneId }: { sceneId: string }) {
         setSaveStatus(AsyncStatus.Loading);
 
         try {
-            const res = await dataApi.loadScene(sceneId);
+            const [originalScene] = await loadScene(sceneId);
 
-            if ("error" in res) {
-                throw new Error("Error loading scene");
+            if (originalScene.customProperties.v1) {
+                const updated = mergeRecursive(originalScene, {
+                    url: isAdminScene ? scene.id : `${sceneId}:${scene.id}`,
+                    customProperties: {
+                        v1: {
+                            features: {
+                                properties: {
+                                    stamp: settings,
+                                    starred: starredArr,
+                                },
+                            },
+                        },
+                    },
+                });
+
+                dataApi.putScene(updated);
+            } else {
+                dataApi.putScene({
+                    ...originalScene,
+                    url: isAdminScene ? scene.id : `${sceneId}:${scene.id}`,
+                    customProperties: {
+                        ...originalScene.customProperties,
+                        properties: {
+                            stampSettings: settings,
+                            starred: starredArr,
+                        },
+                    },
+                });
             }
 
-            const { url: _url, customProperties = {}, ...originalScene } = res;
-
-            dataApi.putScene({
-                ...originalScene,
-                url: isAdminScene ? scene.id : `${sceneId}:${scene.id}`,
-                customProperties: {
-                    ...customProperties,
-                    properties: {
-                        stampSettings: settings,
-                        starred: starredArr,
-                    },
-                },
-            });
             setSaveStatus(AsyncStatus.Success);
         } catch {
             setSaveStatus(AsyncStatus.Error);
-            console.warn("Failed to save Xsite Manage settings.");
+            console.warn("Failed to save starred properties.");
         }
     };
 

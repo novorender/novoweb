@@ -1,5 +1,4 @@
-import { Dispatch, MouseEvent, SetStateAction, useState } from "react";
-import { SearchPattern } from "@novorender/webgl-api";
+import { Cancel, Close, DragHandle, MoreVert, NotInterested } from "@mui/icons-material";
 import {
     Box,
     Button,
@@ -12,7 +11,8 @@ import {
     styled,
 } from "@mui/material";
 import { css } from "@mui/styled-engine";
-import { Cancel, Close, DragHandle, MoreVert, NotInterested } from "@mui/icons-material";
+import { SearchPattern } from "@novorender/webgl-api";
+import { Dispatch, MouseEvent, SetStateAction, useState } from "react";
 
 import { ScrollBox } from "./scrollBox";
 import { TextField } from "./textField";
@@ -92,7 +92,6 @@ function AdvancedInput({
     return (
         <Box display="flex" alignItems="center" mb={isLast ? 0 : 1}>
             <TextField
-                autoComplete="novorender-property-name"
                 autoFocus={isLast}
                 id={`advanced-search-property-${index}`}
                 label={"Name"}
@@ -105,7 +104,6 @@ function AdvancedInput({
                 }
             />
             <TextField
-                autoComplete="novorender-property-value"
                 id={`advanced-search-value-${index}`}
                 label={"Value"}
                 fullWidth
