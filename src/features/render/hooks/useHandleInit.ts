@@ -63,7 +63,7 @@ export function useHandleInit() {
                 const detectedTier = await loadDeviceTier();
 
                 while (!view.renderState.scene) {
-                    await sleep(1);
+                    await sleep(50);
                 }
 
                 const storedDeviceProfile = getStoredDeviceProfile();
@@ -144,6 +144,8 @@ export function useHandleInit() {
                         measureScene,
                     })
                 );
+
+                await sleep(1000);
                 dispatch(renderActions.setSceneStatus({ status: AsyncStatus.Success, data: undefined }));
             } catch (e) {
                 console.warn(e);

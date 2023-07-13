@@ -1,7 +1,7 @@
 import { SearchPattern } from "@novorender/webgl-api";
 import { ReactNode, useEffect } from "react";
 
-import { useAppDispatch } from "app/store";
+import { useAppDispatch, useAppSelector } from "app/store";
 import { ExplorerGlobalsProvider, useExplorerGlobals } from "contexts/explorerGlobals";
 import { HiddenProvider } from "contexts/hidden";
 import { HighlightCollectionsProvider } from "contexts/highlightCollections";
@@ -12,9 +12,10 @@ import { Consent } from "features/consent";
 import { Hud } from "features/hud";
 import { MsalInteraction } from "features/msalInteraction";
 import { QuirkAlert } from "features/quirkAlert";
-import { Render3D } from "features/render";
+import { Render3D, selectSceneStatus } from "features/render";
 import { VersionAlert } from "features/versionAlert";
 import { explorerActions } from "slices/explorerSlice";
+import { AsyncStatus } from "types/misc";
 import { getOAuthState } from "utils/auth";
 
 export function Explorer() {
@@ -32,6 +33,7 @@ function ExplorerBase() {
     const {
         state: { view, scene },
     } = useExplorerGlobals();
+    const sceneStatus = useAppSelector(selectSceneStatus);
 
     useEffect(() => {
         const oAuthState = getOAuthState();
@@ -61,7 +63,7 @@ function ExplorerBase() {
     return (
         <>
             <Render3D />
-            {view && scene && !disableHud ? <Hud /> : null}
+            {sceneStatus.status === AsyncStatus.Success && view && scene && !disableHud ? <Hud /> : null}
             <Consent />
             <VersionAlert />
             <QuirkAlert />

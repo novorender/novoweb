@@ -1,4 +1,4 @@
-import { createColorSetHighlight, createNeutralHighlight, createTransparentHighlight } from "@novorender/web_app";
+import { createNeutralHighlight, createRGBATransformHighlight, createTransparentHighlight } from "@novorender/web_app";
 import { useEffect, useRef } from "react";
 
 import { dataApi } from "app";
@@ -20,6 +20,7 @@ import {
     selectSelectionBasketColor,
     selectSelectionBasketMode,
 } from "..";
+import { VecRGB, VecRGBA } from "utils/color";
 
 export function useHandleHighlights() {
     const {
@@ -116,7 +117,7 @@ export function useHandleHighlights() {
                         {
                             objectIds: new Uint32Array(basket.idArr).sort(),
                             action: basketColor.use
-                                ? createColorSetHighlight(basketColor.color)
+                                ? createColorTransform(basketColor.color)
                                 : createNeutralHighlight(),
                         },
                         ...colored.map((group) => ({
@@ -125,7 +126,7 @@ export function useHandleHighlights() {
                                     ? group.ids
                                     : basket.idArr.filter((id) => group.ids.has(id))
                             ).sort(),
-                            action: createColorSetHighlight(group.color),
+                            action: createColorTransform(group.color),
                         })),
                         {
                             objectIds: new Uint32Array(
@@ -133,7 +134,7 @@ export function useHandleHighlights() {
                                     ? secondaryHighlight.idArr
                                     : basket.idArr.filter((id) => secondaryHighlight.ids[id])
                             ).sort(),
-                            action: createColorSetHighlight(secondaryHighlight.color),
+                            action: createColorTransform(secondaryHighlight.color),
                         },
                         {
                             objectIds: new Uint32Array(
@@ -143,7 +144,7 @@ export function useHandleHighlights() {
                                         : highlighted.idArr
                                     : basket.idArr.filter((id) => id === mainObject || highlighted.ids[id])
                             ).sort(),
-                            action: createColorSetHighlight(highlighted.color),
+                            action: createColorTransform(highlighted.color),
                         },
                     ],
                 },
@@ -179,4 +180,13 @@ async function fillActiveGroupIds(sceneId: string, groups: ObjectGroup[]): Promi
 
     await Promise.all(proms);
     return;
+}
+
+function createColorTransform([r, g, b, a = 1]: VecRGB | VecRGBA) {
+    return createRGBATransformHighlight({
+        red: { scale: r, offset: r * 0.3 },
+        green: { scale: g, offset: g * 0.3 },
+        blue: { scale: b, offset: b * 0.3 },
+        opacity: a,
+    });
 }

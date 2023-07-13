@@ -671,6 +671,12 @@ export const renderSlice = createSlice({
 
                 // terrain
                 state.terrain.asBackground = terrain.asBackground;
+                state.terrain.elevationGradient = {
+                    knots: settings.terrain.elevationColors.map((node) => ({
+                        position: node.elevation,
+                        color: node.color,
+                    })),
+                };
             } else if (settings) {
                 // background
                 state.background.color = settings.background.color ?? state.background.color;
@@ -685,6 +691,12 @@ export const renderSlice = createSlice({
 
                 // terrain
                 state.terrain.asBackground = settings.terrain.asBackground;
+                state.terrain.elevationGradient = {
+                    knots: settings.terrain.elevationColors.map((node) => ({
+                        position: node.elevation,
+                        color: node.color,
+                    })),
+                };
             }
         });
         builder.addCase(selectBookmark, (state, action) => {
