@@ -48,8 +48,8 @@ export function useSelectBookmark() {
 
     const dispatch = useAppDispatch();
 
-    const selectV1 = useCallback(
-        async (bookmark: NonNullable<Bookmark["v1"]>) => {
+    const selectExplorerState = useCallback(
+        async (bookmark: NonNullable<Bookmark["explorerState"]>) => {
             dispatch(renderActions.selectBookmark(bookmark));
 
             const { objects, groups } = bookmark;
@@ -493,19 +493,22 @@ export function useSelectBookmark() {
 
     const select = useCallback(
         (bookmark: Bookmark): Promise<void> => {
-            if (!bookmark.v1) {
+            if (!bookmark.explorerState) {
                 return selectLegacy(bookmark);
             }
 
-            return selectV1(bookmark.v1);
+            return selectExplorerState(bookmark.explorerState);
         },
-        [selectV1, selectLegacy]
+        [selectExplorerState, selectLegacy]
     );
 
     return select;
 }
 
-function getUpdatedGroups(current: ObjectGroup[], bookmark: NonNullable<Bookmark["v1"]>["groups"]): ObjectGroup[] {
+function getUpdatedGroups(
+    current: ObjectGroup[],
+    bookmark: NonNullable<Bookmark["explorerState"]>["groups"]
+): ObjectGroup[] {
     return current.map((group) => {
         const bookmarked = bookmark.find((bookmarked) => bookmarked.id === group.id);
         let status = GroupStatus.None;

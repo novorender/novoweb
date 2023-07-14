@@ -91,7 +91,7 @@ export default function AdvancedSettings() {
         try {
             const [originalScene] = await loadScene(sceneId);
 
-            const v1: NonNullable<CustomProperties["v1"]> = {
+            const explorerProjectState: NonNullable<CustomProperties["explorerProjectState"]> = {
                 renderSettings: { ...advanced, points, hide: subtreesToHide(subtrees), terrain, background },
                 camera: cameraDefaults,
                 features: {
@@ -126,7 +126,7 @@ export default function AdvancedSettings() {
             const updated = mergeRecursive(originalScene, {
                 url: isAdminScene ? scene.id : `${sceneId}:${scene.id}`,
                 customProperties: {
-                    v1,
+                    explorerProjectState,
                 },
                 tmZone: projectSettings.tmZone,
             });
@@ -309,7 +309,7 @@ function Root({ save, saving }: { save: () => Promise<void>; saving: boolean }) 
 
 function subtreesToHide(
     subtrees: Record<Subtree, SubtreeStatus>
-): NonNullable<CustomProperties["v1"]>["renderSettings"]["hide"] {
+): NonNullable<CustomProperties["explorerProjectState"]>["renderSettings"]["hide"] {
     return {
         terrain: subtrees.terrain === SubtreeStatus.Hidden,
         triangles: subtrees.triangles === SubtreeStatus.Hidden,

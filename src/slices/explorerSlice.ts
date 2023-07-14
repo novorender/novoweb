@@ -214,22 +214,22 @@ export const explorerSlice = createSlice({
                 state.enabledWidgets = allWidgets;
             } else if (state.userRole !== UserRole.Viewer) {
                 state.enabledWidgets = uniqueArray(
-                    (customProperties.v1
-                        ? (customProperties.v1.features.widgets.enabled as WidgetKey[])
+                    (customProperties.explorerProjectState
+                        ? (customProperties.explorerProjectState.features.widgets.enabled as WidgetKey[])
                         : getEnabledFeatures(customProperties)
                     ).concat(defaultEnabledAdminWidgets)
                 );
             } else {
                 state.enabledWidgets = uniqueArray(
-                    customProperties.v1
-                        ? (customProperties.v1.features.widgets.enabled as WidgetKey[])
+                    customProperties.explorerProjectState
+                        ? (customProperties.explorerProjectState.features.widgets.enabled as WidgetKey[])
                         : getEnabledFeatures(customProperties)
                 );
             }
 
-            if (customProperties.v1) {
-                const [button1, button2, button3, button4, button5] = customProperties.v1.features.primaryMenu
-                    .buttons as ButtonKey[];
+            if (customProperties.explorerProjectState) {
+                const [button1, button2, button3, button4, button5] = customProperties.explorerProjectState.features
+                    .primaryMenu.buttons as ButtonKey[];
 
                 state.primaryMenu = {
                     button1,
@@ -239,7 +239,7 @@ export const explorerSlice = createSlice({
                     button5,
                 };
 
-                const ctxMenuFeatures = customProperties.v1.features.contextMenus.canvas.primary
+                const ctxMenuFeatures = customProperties.explorerProjectState.features.contextMenus.canvas.primary
                     .features as CanvasContextMenuFeatureKey[];
                 state.contextMenu.canvas.features = ctxMenuFeatures;
             } else {

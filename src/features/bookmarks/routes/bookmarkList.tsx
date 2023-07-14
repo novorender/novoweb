@@ -187,8 +187,8 @@ function applyFilters(bookmarks: ExtendedBookmark[], filters: Filters): Extended
             }
         }
 
-        if (bm.v1) {
-            const { measurements, clipping, groups } = bm.v1;
+        if (bm.explorerState) {
+            const { measurements, clipping, groups } = bm.explorerState;
             if (filters.measurements) {
                 if (
                     !measurements.area.points.length &&

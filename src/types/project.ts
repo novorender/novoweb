@@ -145,7 +145,7 @@ type Integrations = {
 };
 
 export type CustomProperties = {
-    v1?: ExplorerProjectState;
+    explorerProjectState?: ExplorerProjectState;
     integrations?: Integrations;
     initialCameraState?: {
         kind: "pinhole" | "orthographic";

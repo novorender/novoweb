@@ -43,9 +43,11 @@ export const propertiesSlice = createSlice({
         builder.addCase(initScene, (state, action) => {
             const props = action.payload.sceneData.customProperties;
 
-            if (props.v1) {
-                state.stampSettings = props.v1.features.properties.stamp;
-                state.starred = Object.fromEntries(props.v1.features.properties.starred.map((prop) => [prop, true]));
+            if (props.explorerProjectState) {
+                state.stampSettings = props.explorerProjectState.features.properties.stamp;
+                state.starred = Object.fromEntries(
+                    props.explorerProjectState.features.properties.starred.map((prop) => [prop, true])
+                );
             } else if (props.properties) {
                 state.stampSettings = props.properties.stampSettings;
                 state.starred = Object.fromEntries(

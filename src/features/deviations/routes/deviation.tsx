@@ -65,11 +65,11 @@ export function Deviation({ sceneId }: { sceneId: string }) {
         try {
             const [originalScene] = await loadScene(id);
 
-            if (originalScene.customProperties.v1) {
+            if (originalScene.customProperties.explorerProjectState) {
                 const updated = mergeRecursive(originalScene, {
                     url: isAdminScene ? scene.id : `${sceneId}:${scene.id}`,
                     customProperties: {
-                        v1: { renderSettings: { points: { deviation: deviations } } },
+                        explorerProjectState: { renderSettings: { points: { deviation: deviations } } },
                     },
                 });
 

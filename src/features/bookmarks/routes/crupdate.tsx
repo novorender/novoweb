@@ -92,9 +92,9 @@ export function Crupdate() {
             description,
             grouping: collection,
             access: personal ? BookmarkAccess.Personal : BookmarkAccess.Public,
-            v1: bm.v1
+            explorerState: bm.explorerState
                 ? {
-                      ...bm.v1,
+                      ...bm.explorerState,
                       options: { addToSelectionBasket: addToSelectionBasket },
                   }
                 : undefined,

@@ -66,11 +66,11 @@ export function StampSettings({ sceneId }: { sceneId: string }) {
         try {
             const [originalScene] = await loadScene(sceneId);
 
-            if (originalScene.customProperties.v1) {
+            if (originalScene.customProperties.explorerProjectState) {
                 const updated = mergeRecursive(originalScene, {
                     url: isAdminScene ? scene.id : `${sceneId}:${scene.id}`,
                     customProperties: {
-                        v1: {
+                        explorerProjectState: {
                             features: {
                                 properties: {
                                     stamp: settings,

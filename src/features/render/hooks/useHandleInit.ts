@@ -250,7 +250,7 @@ export async function loadScene(id: string): Promise<[SceneConfig, CadCamera | u
         camera = cfg.customProperties.initialCameraState;
     }
 
-    if (cfg.customProperties.v1 && cfg.settings && cfg.settings.background) {
+    if (cfg.customProperties.explorerProjectState && cfg.settings && cfg.settings.background) {
         cfg.settings.background.color = getBackgroundColor(cfg.settings.background.color);
     }
 

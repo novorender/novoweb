@@ -5,7 +5,7 @@ import { RenderState, SubtreeStatus } from "features/render/renderSlice";
 import { CustomProperties } from "types/project";
 
 export function getSubtrees(
-    hidden: NonNullable<CustomProperties["v1"]>["renderSettings"]["hide"],
+    hidden: NonNullable<CustomProperties["explorerProjectState"]>["renderSettings"]["hide"],
     subtrees: string[]
 ): NonNullable<RenderState["subtrees"]> {
     return {

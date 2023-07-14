@@ -345,7 +345,7 @@ export const resetView = createAction<{
     };
 }>("resetView");
 
-export const selectBookmark = createAction<NonNullable<Bookmark["v1"]>>("selectBookmark");
+export const selectBookmark = createAction<NonNullable<Bookmark["explorerState"]>>("selectBookmark");
 
 export const renderSlice = createSlice({
     name: "render",
@@ -557,11 +557,11 @@ export const renderSlice = createSlice({
             // device profile
             state.deviceProfile = mergeRecursive(state.deviceProfile, deviceProfile);
 
-            if (props.v1) {
-                const { points, background, terrain, hide, ...advanced } = props.v1.renderSettings;
-                const { debugStats, navigationCube } = props.v1.features;
-                const { highlights } = props.v1;
-                const camera = props.v1.camera;
+            if (props.explorerProjectState) {
+                const { points, background, terrain, hide, ...advanced } = props.explorerProjectState.renderSettings;
+                const { debugStats, navigationCube } = props.explorerProjectState.features;
+                const { highlights } = props.explorerProjectState;
+                const camera = props.explorerProjectState.camera;
 
                 state.cameraDefaults.pinhole = camera.pinhole;
                 state.cameraDefaults.orthographic = camera.orthographic;
@@ -682,8 +682,8 @@ export const renderSlice = createSlice({
                 (key: any) => state.subtrees[key as keyof State["subtrees"]] !== SubtreeStatus.Unavailable
             );
 
-            if (props.v1) {
-                const { points, background, terrain, hide } = props.v1.renderSettings;
+            if (props.explorerProjectState) {
+                const { points, background, terrain, hide } = props.explorerProjectState.renderSettings;
 
                 // background
                 state.background.color = background.color;
@@ -777,7 +777,7 @@ export const renderSlice = createSlice({
 
 function subtreesFromBookmark(
     current: State["subtrees"],
-    bm: NonNullable<Bookmark["v1"]>["subtrees"]
+    bm: NonNullable<Bookmark["explorerState"]>["subtrees"]
 ): State["subtrees"] {
     const subtrees = { ...current };
 

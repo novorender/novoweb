@@ -63,7 +63,7 @@ export function useCreateBookmark() {
         return {
             img,
             selectedOnly: false, // legacy
-            v1: {
+            explorerState: {
                 viewMode,
                 grid,
                 clipping: {
