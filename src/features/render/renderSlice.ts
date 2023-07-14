@@ -182,7 +182,7 @@ const initialState = {
     // NEW
     background: {
         environments: { status: AsyncStatus.Initial } as AsyncState<EnvironmentDescription[]>,
-        color: [0, 0, 0, 1] as vec4,
+        color: [0.75, 0.75, 0.75, 1] as vec4,
         url: "",
         blur: 0,
     },
@@ -210,7 +210,7 @@ const initialState = {
     points: {
         size: {
             pixel: 1,
-            maxPixel: 1,
+            maxPixel: 20,
             metric: 1,
             toleranceFactor: 1,
         },

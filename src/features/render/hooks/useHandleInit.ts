@@ -145,7 +145,7 @@ export function useHandleInit() {
                     })
                 );
 
-                await sleep(1000);
+                await sleep(1500);
                 dispatch(renderActions.setSceneStatus({ status: AsyncStatus.Success, data: undefined }));
             } catch (e) {
                 console.warn(e);
@@ -250,7 +250,7 @@ export async function loadScene(id: string): Promise<[SceneConfig, CadCamera | u
         camera = cfg.customProperties.initialCameraState;
     }
 
-    if (cfg.customProperties.explorerProjectState && cfg.settings && cfg.settings.background) {
+    if (!cfg.customProperties.explorerProjectState && cfg.settings && cfg.settings.background) {
         cfg.settings.background.color = getBackgroundColor(cfg.settings.background.color);
     }
 
@@ -261,7 +261,7 @@ function getBackgroundColor(color: vec4 | undefined): vec4 {
     const grey: vec4 = [0.75, 0.75, 0.75, 1];
     const legacyBlue: vec4 = [0, 0, 0.25, 1];
 
-    if (!color || vec4.equals(color, legacyBlue)) {
+    if (!color || vec4.exactEquals(color, legacyBlue)) {
         return grey;
     }
 
