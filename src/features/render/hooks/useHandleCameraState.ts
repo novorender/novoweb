@@ -26,7 +26,6 @@ export function useHandleCameraState() {
         }
 
         pinholeKind.current = viewMode === ViewMode.Panorama ? "panorama" : defaults.pinhole.controller;
-        view.switchCameraController(pinholeKind.current);
     }, [view, viewMode, defaults.pinhole.controller, pinholeKind]);
 
     useEffect(() => {
@@ -38,7 +37,7 @@ export function useHandleCameraState() {
 
             if (state.type === CameraType.Pinhole) {
                 const controller = view.controllers[pinholeKind.current];
-                view.switchCameraController(controller.kind);
+                view.switchCameraController(controller.kind, { fov: 60 });
 
                 if (state.goTo) {
                     controller.moveTo(
