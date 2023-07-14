@@ -93,9 +93,7 @@ export default function AdvancedSettings() {
 
             const v1: NonNullable<CustomProperties["v1"]> = {
                 renderSettings: { ...advanced, points, hide: subtreesToHide(subtrees), terrain, background },
-                camera: {
-                    ...cameraDefaults,
-                },
+                camera: cameraDefaults,
                 features: {
                     widgets: {
                         enabled: enabledWidgets.map((widget) => widget.key),

@@ -90,7 +90,6 @@ export default function Search() {
     }, [advanced, advancedInputs, simpleInput]);
 
     const search = useCallback(async (): Promise<HierarcicalObjectReference[] | undefined> => {
-        abort();
         const abortSignal = abortController.current.signal;
         const searchPattern = getSearchPattern();
 
@@ -112,7 +111,7 @@ export default function Search() {
                 throw e;
             }
         }
-    }, [abort, abortController, setSearchResults, db, getSearchPattern]);
+    }, [abortController, setSearchResults, db, getSearchPattern]);
 
     useEffect(() => {
         if (urlSearchQuery && status === Status.Initial) {

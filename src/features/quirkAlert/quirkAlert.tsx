@@ -52,7 +52,7 @@ export function QuirkAlert() {
                     <Typography mb={2}>
                         It looks like your device is running on an Adreno 600. This may result in unexpected behaviour
                         while using certain Novorender features such as clipping planes and toon outlines. <br />
-                        Please get in touch if you notice any issues.
+                        Please get in touch with support if you notice any issues.
                     </Typography>
                     <FormControlLabel
                         sx={{ mb: 2 }}

@@ -69,7 +69,9 @@ export function SceneError() {
                             <Alert severity="warning" sx={{ mb: 2 }}>
                                 This scene needs to be updated. An admin can{" "}
                                 <a href="https://novorender.com/manuals/update-scene/">follow the steps shown here</a>{" "}
-                                to update the scene.
+                                to update the scene. The process may take a few minutes to complete. <br /> <br />
+                                Please get in touch with support if you are still seeing this error after updating the
+                                scene.
                             </Alert>
                         )}
                         <Typography paragraph>

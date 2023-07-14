@@ -560,6 +560,7 @@ export const renderSlice = createSlice({
             if (props.v1) {
                 const { points, background, terrain, hide, ...advanced } = props.v1.renderSettings;
                 const { debugStats, navigationCube } = props.v1.features;
+                const { highlights } = props.v1;
                 const camera = props.v1.camera;
 
                 state.cameraDefaults.pinhole = camera.pinhole;
@@ -568,9 +569,18 @@ export const renderSlice = createSlice({
                 state.points = mergeRecursive(state.points, points);
                 state.subtrees = getSubtrees(hide, sceneConfig.subtrees ?? ["triangles"]);
                 state.terrain = terrain;
+                state.terrain.elevationGradient = settings
+                    ? {
+                          knots: settings.terrain.elevationColors.map((node) => ({
+                              position: node.elevation,
+                              color: node.color,
+                          })),
+                      }
+                    : state.terrain.elevationGradient;
                 state.advanced = mergeRecursive(state.advanced, advanced);
-                state.debugStats = debugStats;
-                state.navigationCube = navigationCube;
+                state.debugStats.enabled = debugStats.enabled || window.location.search.includes("debug=true");
+                state.navigationCube.enabled = !state.debugStats.enabled && navigationCube.enabled;
+                state.secondaryHighlight.property = highlights.secondary.property;
             } else if (settings) {
                 // Legacy settings
 
@@ -587,11 +597,27 @@ export const renderSlice = createSlice({
                             : "special";
                 }
 
-                state.navigationCube.enabled = Boolean(props.navigationCube);
+                // corner features
+                state.debugStats.enabled = Boolean(props.showStats) || window.location.search.includes("debug=true");
+                state.navigationCube.enabled = !state.debugStats.enabled && Boolean(props.navigationCube);
 
+                // camera
                 state.cameraDefaults.pinhole.clipping.far = Math.max((sceneData.camera as any)?.far ?? 0, 1000);
                 state.cameraDefaults.pinhole.clipping.near = Math.max((sceneData.camera as any)?.near ?? 0, 0.1);
                 state.cameraDefaults.orthographic.topDownElevation = props.defaultTopDownElevation;
+                state.cameraDefaults.orthographic.usePointerLock =
+                    props.pointerLock !== undefined
+                        ? props.pointerLock.ortho
+                        : state.cameraDefaults.orthographic.usePointerLock;
+                state.cameraDefaults.pinhole.speedLevels = props.cameraSpeedLevels?.flight
+                    ? {
+                          slow: props.cameraSpeedLevels.flight.slow * 33,
+                          default: props.cameraSpeedLevels.flight.default * 33,
+                          fast: props.cameraSpeedLevels.flight.fast * 33,
+                      }
+                    : state.cameraDefaults.pinhole.speedLevels;
+
+                // highlight
                 state.secondaryHighlight.property = props.highlights?.secondary.property ?? "";
 
                 // background

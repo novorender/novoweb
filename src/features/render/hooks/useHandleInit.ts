@@ -268,13 +268,13 @@ function getBackgroundColor(color: vec4 | undefined): vec4 {
     return color;
 }
 
-function getStoredDeviceProfile(): (DeviceProfile & { debugProfile: true; tier: 420 }) | undefined {
+function getStoredDeviceProfile(): (DeviceProfile & { debugProfile: true; tier: 3 }) | undefined {
     try {
         const debugProfile =
             new URLSearchParams(window.location.search).get("debugDeviceProfile") ?? localStorage["debugDeviceProfile"];
 
         if (debugProfile) {
-            return { ...JSON.parse(debugProfile), debugProfile: true, tier: 420 };
+            return { ...JSON.parse(debugProfile), debugProfile: true, tier: 3 };
         }
     } catch (e) {
         console.warn(e);
