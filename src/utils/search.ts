@@ -217,7 +217,6 @@ export async function getDescendants({
     parentNode: HierarcicalObjectReference;
     abortSignal?: AbortSignal;
 }): Promise<ObjectId[]> {
-    console.warn("todo descendants");
     return (
         parentNode.descendants ??
         db.descendants(parentNode, abortSignal).then((ids) => {

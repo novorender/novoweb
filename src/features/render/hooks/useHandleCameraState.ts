@@ -37,7 +37,7 @@ export function useHandleCameraState() {
 
             if (state.type === CameraType.Pinhole) {
                 const controller = view.controllers[pinholeKind.current];
-                view.switchCameraController(controller.kind, { fov: 60 });
+                view.switchCameraController(controller.kind);
 
                 if (state.goTo) {
                     controller.moveTo(
