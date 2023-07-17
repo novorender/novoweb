@@ -124,13 +124,7 @@ export function Follow({ fpObj }: { fpObj: FollowParametricObject }) {
                 );
             } else {
                 dispatch(renderActions.setGrid({ enabled: false }));
-                const w = vec3.dot(dir, pt);
-                dispatch(
-                    renderActions.setClippingPlanes({
-                        enabled: true,
-                        planes: [{ normalOffset: [dir[0], dir[1], dir[2], w], baseW: w, color: [0, 1, 0, 0.2] }],
-                    })
-                );
+
                 dispatch(
                     renderActions.setCamera({
                         type: CameraType.Pinhole,
@@ -142,6 +136,13 @@ export function Follow({ fpObj }: { fpObj: FollowParametricObject }) {
                 );
             }
 
+            const w = vec3.dot(dir, pt);
+            dispatch(
+                renderActions.setClippingPlanes({
+                    enabled: true,
+                    planes: [{ normalOffset: [dir[0], dir[1], dir[2], w], baseW: w, color: [0, 1, 0, 0.2] }],
+                })
+            );
             dispatch(followPathActions.setCurrentCenter(pt as Vec3));
             dispatch(followPathActions.setPtHeight(pt[2]));
         },

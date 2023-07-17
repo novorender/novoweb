@@ -20,6 +20,7 @@ import { selectDebugStats, selectLoadingHandles, selectSceneStatus } from "featu
 import { useHandleXsiteManageKeepAlive, useHandleXsiteManageMachineLocations } from "features/xsiteManage";
 import { AsyncStatus } from "types/misc";
 
+import { useHandleImages } from "features/images";
 import { useCanvasClickHandler } from "./hooks/useCanvasClickHandler";
 import { useCanvasEventHandlers } from "./hooks/useCanvasEventHandlers";
 import { useHandleAdvancedSettings } from "./hooks/useHandleAdvancedSettings";
@@ -32,13 +33,13 @@ import { useHandleGrid } from "./hooks/useHandleGrid";
 import { useHandleHighlights } from "./hooks/useHandleHighlights";
 import { useHandleInit } from "./hooks/useHandleInit";
 import { useHandleInitialBookmark } from "./hooks/useHandleInitialBookmark";
+import { useHandleOutlines } from "./hooks/useHandleOutlines";
 import { useHandleSubtrees } from "./hooks/useHandleSubtrees";
 import { useHandleTerrain } from "./hooks/useHandleTerrain";
 import { Images } from "./images";
 import { Markers } from "./markers";
 import { SceneError } from "./sceneError";
 import { Stamp } from "./stamp";
-import { useHandleImages } from "features/images";
 
 glMatrix.setMatrixArrayType(Array);
 
@@ -106,6 +107,7 @@ export function Render3D() {
     useHandleCrossSection();
     useHandleDeviations();
     useHandleImages();
+    useHandleOutlines();
 
     useHandleJiraKeepAlive();
     useHandleXsiteManageKeepAlive();
