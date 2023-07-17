@@ -29,7 +29,7 @@ export function CrupdateColorStop() {
             return;
         }
 
-        const newDeviations = editing
+        const knots = editing
             ? deviations.colorGradient.knots.map((deviation) =>
                   deviation === editing ? { ...editing, position: Number(deviationNumber) } : deviation
               )
@@ -39,7 +39,7 @@ export function CrupdateColorStop() {
             renderActions.setPoints({
                 deviation: {
                     colorGradient: {
-                        knots: [...newDeviations].sort((a, b) => b.position - a.position),
+                        knots,
                     },
                 },
             })

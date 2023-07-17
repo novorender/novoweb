@@ -146,9 +146,11 @@ export function Deviation({ sceneId }: { sceneId: string }) {
             ) : null}
             <ScrollBox height={1} pb={3}>
                 <List>
-                    {deviations.colorGradient.knots.map((deviation) => (
-                        <ColorStop key={deviation.position} deviation={deviation} disabled={loading} />
-                    ))}
+                    {[...deviations.colorGradient.knots]
+                        .sort((a, b) => b.position - a.position)
+                        .map((deviation) => (
+                            <ColorStop key={deviation.position} deviation={deviation} disabled={loading} />
+                        ))}
                 </List>
                 <Box display="flex" justifyContent="flex-end" pr={2}>
                     <Button size="small" onClick={() => history.push("/deviation/add")}>

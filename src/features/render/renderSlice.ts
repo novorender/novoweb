@@ -504,6 +504,7 @@ export const renderSlice = createSlice({
         },
         setPoints: (state, action: PayloadAction<RecursivePartial<State["points"]>>) => {
             state.points = mergeRecursive(state.points, action.payload);
+            state.points.deviation.colorGradient.knots.sort((a, b) => a.position - b.position);
         },
         setBackground: (state, action: PayloadAction<Partial<State["background"]>>) => {
             state.background = { ...state.background, ...action.payload };
