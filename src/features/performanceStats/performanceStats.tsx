@@ -34,6 +34,7 @@ export function PerformanceStats() {
     const triangles = useRef<HTMLSpanElement>(null);
     const lines = useRef<HTMLSpanElement>(null);
     const points = useRef<HTMLSpanElement>(null);
+    const primitives = useRef<HTMLSpanElement>(null);
     const drawcalls = useRef<HTMLSpanElement>(null);
     const resolutionScale = useRef<HTMLSpanElement>(null);
     const detailBias = useRef<HTMLSpanElement>(null);
@@ -58,6 +59,7 @@ export function PerformanceStats() {
                 triangles.current &&
                 lines.current &&
                 points.current &&
+                primitives.current &&
                 drawcalls.current &&
                 resolutionScale.current &&
                 detailBias.current
@@ -68,11 +70,12 @@ export function PerformanceStats() {
                 textureBytes.current.innerText = ((stats.render?.textureBytes ?? 0) / (1024 * 1024)).toFixed(2);
                 jsMem.current.innerText = (jsMemory / (1024 * 1024)).toFixed(2);
                 fps.current.innerText = (1000 / (stats.render?.frameInterval ?? 1)).toFixed(0);
-                triangles.current.innerText = `${formatNumber(stats.render?.triangles ?? 0)} / ${formatNumber(
-                    deviceProfile.limits.maxPrimitives
-                )}`;
+                triangles.current.innerText = `${formatNumber(stats.render?.triangles ?? 0)}`;
                 lines.current.innerText = formatNumber(stats.render?.lines ?? 0);
                 points.current.innerText = formatNumber(stats.render?.points ?? 0);
+                primitives.current.innerText = `${formatNumber(stats.render?.primitives ?? 0)} / ${formatNumber(
+                    deviceProfile.limits.maxPrimitives
+                )}`;
                 drawcalls.current.innerText = formatNumber(stats.render?.drawCalls ?? 0);
                 resolutionScale.current.innerText = `${view?.renderState.output.width}x${
                     view?.renderState.output.height
@@ -119,11 +122,9 @@ export function PerformanceStats() {
                 <br />
                 FPS: <span ref={fps}>0</span>
                 <br />
-                Triangles: <span ref={triangles}>0</span>
+                T/P/L: <span ref={triangles}>0</span> / <span ref={points}>0</span> / <span ref={lines}>0</span>
                 <br />
-                Lines: <span ref={lines}>0</span>
-                <br />
-                Points: <span ref={points}>0</span>
+                Primitives: <span ref={primitives}>0</span>
                 <br />
                 Drawcalls: <span ref={drawcalls}>0</span>
                 <br />

@@ -20,11 +20,6 @@ export function PerformanceSettings() {
     const [triangleLimit, setTriangleLimit] = useState(String(deviceProfile.limits.maxPrimitives));
     const [sampleLimit, setSampleLimit] = useState(String(deviceProfile.limits.maxSamples));
 
-    // const [orthoDetailBias, setOrthoDetailBias] = useState(String(deviceProfile.orthoDetailBias));
-    // const [textureResolution, setTextureResolution] = useState(String(deviceProfile.textureResolution));
-    // const [throttleFrames, setThrottleFrames] = useState(String(deviceProfile.throttleFrames));
-    // const [weakDevice, setWeakDevice] = useState(deviceProfile.weakDevice);
-
     const handleChange = (setState: typeof setDetailBias) => (e: ChangeEvent<HTMLInputElement>) => {
         setState(e.target.value);
     };

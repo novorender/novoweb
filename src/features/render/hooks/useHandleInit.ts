@@ -80,10 +80,10 @@ export function useHandleInit() {
                         deviceProfile: storedDeviceProfile
                             ? { ...storedDeviceProfile, isMobile: detectedTier.isMobile }
                             : {
+                                  ...detectedTier,
                                   ...(detectedTier.tier >= 0
                                       ? getDeviceProfile(detectedTier.tier as any)
                                       : structuredClone(view.deviceProfile)),
-                                  ...detectedTier,
                               },
                     })
                 );
@@ -268,20 +268,20 @@ function getBackgroundColor(color: vec4 | undefined): vec4 {
     return color;
 }
 
-function getStoredDeviceProfile(): (DeviceProfile & { debugProfile: true; tier: 3 }) | undefined {
+function getStoredDeviceProfile(): (DeviceProfile & { debugProfile: true; tier: 0 }) | undefined {
     try {
         const debugProfile =
             new URLSearchParams(window.location.search).get("debugDeviceProfile") ?? localStorage["debugDeviceProfile"];
 
         if (debugProfile) {
-            return { ...JSON.parse(debugProfile), debugProfile: true, tier: 3 };
+            return { tier: 0, ...JSON.parse(debugProfile), debugProfile: true };
         }
     } catch (e) {
         console.warn(e);
     }
 }
 
-async function loadDeviceTier(): Promise<{ tier: number; isMobile: boolean }> {
+async function loadDeviceTier(): Promise<{ tier: -1 | DeviceProfile["tier"]; isMobile: boolean }> {
     try {
         const tiers = [0, 50, 75, 300];
         const tierResult = await getGPUTier({
@@ -303,13 +303,13 @@ async function loadDeviceTier(): Promise<{ tier: number; isMobile: boolean }> {
         }
 
         return {
-            tier,
+            tier: tier as DeviceProfile["tier"],
             isMobile: isMobile ?? false,
         };
     } catch (e) {
         console.warn(e);
         return {
-            tier: -1337,
+            tier: -1,
             isMobile: false,
         };
     }

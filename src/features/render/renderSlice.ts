@@ -1,5 +1,11 @@
 import type { Bookmark, ObjectGroup } from "@novorender/data-js-api";
-import { ClippingMode, SceneConfig as OctreeSceneConfig, RecursivePartial, TonemappingMode } from "@novorender/web_app";
+import {
+    ClippingMode,
+    DeviceProfile,
+    SceneConfig as OctreeSceneConfig,
+    RecursivePartial,
+    TonemappingMode,
+} from "@novorender/web_app";
 import type { BoundingSphere, Camera, EnvironmentDescription, ObjectId, RenderSettings } from "@novorender/webgl-api";
 import { PayloadAction, createAction, createSlice } from "@reduxjs/toolkit";
 import { quat, vec3, vec4 } from "gl-matrix";
@@ -296,7 +302,7 @@ const initialState = {
     deviceProfile: {
         debugProfile: false,
         isMobile: false,
-        tier: -1,
+        tier: 0 as DeviceProfile["tier"],
         features: {
             outline: true,
         },

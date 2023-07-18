@@ -1,5 +1,5 @@
 import { ArrowBack, Save } from "@mui/icons-material";
-import { Box, Button, FormControlLabel, FormHelperText, Slider, Typography, useTheme } from "@mui/material";
+import { Box, Button, FormControlLabel, Slider, Typography, useTheme } from "@mui/material";
 import { useState } from "react";
 import { useHistory } from "react-router-dom";
 
@@ -10,7 +10,6 @@ import {
     SubtreeStatus,
     renderActions,
     selectAdvanced,
-    selectDeviceProfile,
     selectPoints,
     selectSubtrees,
     selectTerrain,
@@ -24,7 +23,7 @@ export function RenderSettings({ save, saving }: { save: () => Promise<void>; sa
     const dispatch = useAppDispatch();
     const user = useAppSelector(selectUser);
     const subtrees = useAppSelector(selectSubtrees);
-    const deviceProfile = useAppSelector(selectDeviceProfile);
+    // const deviceProfile = useAppSelector(selectDeviceProfile);
     const advanced = useAppSelector(selectAdvanced);
     const points = useAppSelector(selectPoints);
     const terrain = useAppSelector(selectTerrain);
@@ -33,7 +32,7 @@ export function RenderSettings({ save, saving }: { save: () => Promise<void>; sa
     const [maxSize, setMaxSize] = useState(points.size.maxPixel);
     const [toleranceFactor, setToleranceFactor] = useState(points.size.toleranceFactor);
     const [lightExposure, setLightExposure] = useState(advanced.tonemapping.exposure);
-    const [maxTris, setMaxTris] = useState(advanced.limits.maxPrimitives);
+    // const [maxTris, setMaxTris] = useState(advanced.limits.maxPrimitives);
 
     const handleSubtreeToggle = (subtree: Subtree) => () => {
         dispatch(renderActions.toggleSubtree({ subtree }));
@@ -152,7 +151,7 @@ export function RenderSettings({ save, saving }: { save: () => Promise<void>; sa
                                     }
                                 />
 
-                                <Divider sx={{ borderColor: theme.palette.grey[300], my: 2 }} />
+                                {/* <Divider sx={{ borderColor: theme.palette.grey[300], my: 2 }} />
 
                                 <Box display="flex" sx={{ mb: 0 }} alignItems="center">
                                     <Typography
@@ -186,7 +185,7 @@ export function RenderSettings({ save, saving }: { save: () => Promise<void>; sa
                                 <FormHelperText>
                                     Value is in millions. Max for this device is{" "}
                                     {deviceProfile.limits.maxPrimitives / 1_000_000} million.
-                                </FormHelperText>
+                                </FormHelperText> */}
                             </Box>
                         </AccordionDetails>
                     </Accordion>
