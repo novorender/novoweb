@@ -2,7 +2,7 @@ import { useEffect } from "react";
 
 import { useAppSelector } from "app/store";
 
-import { selectAdvanced, selectDeviceProfile, selectPoints } from "..";
+import { selectAdvanced, selectPoints } from "..";
 import { useExplorerGlobals } from "contexts/explorerGlobals";
 
 export function useHandleAdvancedSettings() {
@@ -11,7 +11,6 @@ export function useHandleAdvancedSettings() {
     } = useExplorerGlobals();
     const settings = useAppSelector(selectAdvanced);
     const pointSize = useAppSelector(selectPoints).size;
-    const deviceProfile = useAppSelector(selectDeviceProfile);
 
     useEffect(() => {
         if (!view) {
@@ -40,12 +39,4 @@ export function useHandleAdvancedSettings() {
             },
         });
     }, [view, pointSize]);
-
-    useEffect(() => {
-        if (!view) {
-            return;
-        }
-
-        view.deviceProfile = structuredClone(deviceProfile);
-    }, [view, deviceProfile]);
 }

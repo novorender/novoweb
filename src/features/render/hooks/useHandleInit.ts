@@ -51,7 +51,18 @@ export function useHandleInit() {
             initialized.current = true;
             dispatch(renderActions.setSceneStatus({ status: AsyncStatus.Loading }));
 
-            const view = createView(canvas);
+            const detectedTier = await loadDeviceTier();
+            const storedDeviceProfile = getStoredDeviceProfile();
+            const deviceProfile = storedDeviceProfile
+                ? { ...storedDeviceProfile, isMobile: detectedTier.isMobile }
+                : {
+                      ...detectedTier,
+                      ...(detectedTier.tier >= 0
+                          ? getDeviceProfile(detectedTier.tier as DeviceProfile["tier"])
+                          : getDeviceProfile(0)),
+                  };
+
+            const view = createView(canvas, { deviceProfile });
 
             try {
                 const [{ url, db, ...sceneData }, camera] = await loadScene(sceneId);
@@ -60,13 +71,10 @@ export function useHandleInit() {
                 const octreeSceneConfig = await view.loadSceneFromURL(webgl2Bin);
                 view.run();
 
-                const detectedTier = await loadDeviceTier();
-
                 while (!view.renderState.scene) {
                     await sleep(50);
                 }
 
-                const storedDeviceProfile = getStoredDeviceProfile();
                 dispatch(
                     renderActions.initScene({
                         sceneData,
@@ -77,14 +85,7 @@ export function useHandleInit() {
                             rotation: quat.clone(camera?.rotation ?? view.renderState.camera.rotation),
                             fov: camera?.fov ?? view.renderState.camera.fov,
                         },
-                        deviceProfile: storedDeviceProfile
-                            ? { ...storedDeviceProfile, isMobile: detectedTier.isMobile }
-                            : {
-                                  ...detectedTier,
-                                  ...(detectedTier.tier >= 0
-                                      ? getDeviceProfile(detectedTier.tier as any)
-                                      : structuredClone(view.deviceProfile)),
-                              },
+                        deviceProfile,
                     })
                 );
 
@@ -145,7 +146,7 @@ export function useHandleInit() {
                     })
                 );
 
-                await sleep(1500);
+                await sleep(2000);
                 dispatch(renderActions.setSceneStatus({ status: AsyncStatus.Success, data: undefined }));
             } catch (e) {
                 console.warn(e);
