@@ -254,7 +254,7 @@ const initialState = {
             },
             proportionalSpeed: {
                 enabled: true,
-                min: 5,
+                min: 0.1,
                 max: 300,
             },
         },
