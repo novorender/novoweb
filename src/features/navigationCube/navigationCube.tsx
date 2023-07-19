@@ -6,7 +6,6 @@ import { useAppDispatch, useAppSelector } from "app/store";
 import { useExplorerGlobals } from "contexts/explorerGlobals";
 import { useHighlighted } from "contexts/highlighted";
 import { renderActions, selectCameraType } from "features/render/renderSlice";
-import { flip, flipGLtoCadQuat } from "features/render/utils";
 import { useAbortController } from "hooks/useAbortController";
 import { useMountedState } from "hooks/useMountedState";
 import { objIdsToTotalBoundingSphere } from "utils/objectData";
@@ -14,14 +13,14 @@ import { objIdsToTotalBoundingSphere } from "utils/objectData";
 // TODO FIKS
 
 // prettier-ignore
-const top = [
+const back = [
     1, 0, 0, 
     0, 0, -1,
     0, 1, 0
 ] as mat3;
 
 // prettier-ignore
-const bottom = [
+const front = [
     1, 0, 0, 
     0, 0, 1,
     0, -1, 0
@@ -42,14 +41,14 @@ const right = [
 ] as mat3;
 
 // prettier-ignore
-const front = [
+const top = [
     1, 0, 0, 
     0, 1, 0, 
     0, 0, 1
 ] as mat3;
 
 // prettier-ignore
-const back = [
+const bottom = [
     -1, 0, 0, 
     0, 1, 0, 
     0, 0, -1
@@ -417,7 +416,7 @@ export function NavigationCube() {
             return;
         }
 
-        const ab = vec3.sub(vec3.create(), (view as any).renderStateGL.camera.position, [pt[0], pt[2], -pt[1]]);
+        const ab = vec3.sub(vec3.create(), view.renderState.camera.position, [pt[0], pt[1], pt[2]]);
         const len = vec3.len(ab);
         const mat = rotationMats[face];
         const dir = vec3.fromValues(0, 0, 1);
@@ -425,14 +424,14 @@ export function NavigationCube() {
         vec3.scale(dir, dir, len);
 
         vec3.transformMat3(ab, ab, mat);
-        const target = vec3.add(vec3.create(), [pt[0], pt[2], -pt[1]], dir);
+        const target = vec3.add(vec3.create(), [pt[0], pt[1], pt[2]], dir);
 
         dispatch(
             renderActions.setCamera({
                 type: cameraType,
                 goTo: {
-                    position: flip(target),
-                    rotation: flipGLtoCadQuat(quat.fromMat3(quat.create(), mat)),
+                    position: target,
+                    rotation: quat.fromMat3(quat.create(), mat),
                     fov: view.renderState.camera.fov,
                 },
             })
