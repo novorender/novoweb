@@ -1,6 +1,5 @@
 import { Close } from "@mui/icons-material";
 import { IconButton, Snackbar, Typography } from "@mui/material";
-import { CameraControllerParams, RenderSettings } from "@novorender/webgl-api";
 import { useState } from "react";
 import { v4 as uuidv4 } from "uuid";
 
@@ -107,19 +106,4 @@ export function ShareLink() {
             </WidgetMenuButtonWrapper>
         </>
     );
-}
-
-type UrlData = {
-    camera?: CameraControllerParams;
-    settings?: Partial<RenderSettings>;
-    mainObject?: number;
-};
-
-export function getDataFromUrlHash(): UrlData {
-    try {
-        return window.location.hash ? JSON.parse(atob(window.location.hash.slice(1))) : {};
-    } catch (e) {
-        console.warn(e);
-        return {};
-    }
 }
