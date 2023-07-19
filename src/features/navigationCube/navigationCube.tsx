@@ -234,7 +234,7 @@ const createCircle = (radius: number, y: number) => {
     const step = 0.01745;
 
     for (let x = 0; x < Math.PI * 2; x += step) {
-        circle.push(vec3.fromValues(radius * Math.cos(x), y, radius * Math.sin(x)));
+        circle.push(vec3.fromValues(radius * Math.cos(x), radius * Math.sin(x), y));
     }
 
     return circle;
@@ -245,9 +245,9 @@ class Circle {
     originalPts: vec3[];
     pts: vec3[];
 
-    constructor(radius: number, y: number) {
-        this.originalPts = createCircle(radius, y);
-        this.pts = createCircle(radius, y);
+    constructor(radius: number, z: number) {
+        this.originalPts = createCircle(radius, z);
+        this.pts = createCircle(radius, z);
         this.radius = radius;
     }
 
@@ -302,17 +302,17 @@ class Triangle {
     pts: vec3[];
     size: number;
 
-    constructor(size: number, y: number, radius: number) {
+    constructor(size: number, z: number, radius: number) {
         this.size = size;
         this.pts = [
-            vec3.fromValues(0, y, 0 + radius),
-            vec3.fromValues(size / 3, y, -size + radius),
-            vec3.fromValues(-(size / 3), y, -size + radius),
+            vec3.fromValues(0, 0 + radius, z),
+            vec3.fromValues(size / 3, -size + radius, z),
+            vec3.fromValues(-(size / 3), -size + radius, z),
         ];
         this.originalPts = [
-            vec3.fromValues(0, y, 0 + radius),
-            vec3.fromValues(size / 3, y, -size + radius),
-            vec3.fromValues(-(size / 3), y, -size + radius),
+            vec3.fromValues(0, 0 + radius, z),
+            vec3.fromValues(size / 3, -size + radius, z),
+            vec3.fromValues(-(size / 3), -size + radius, z),
         ];
     }
 
@@ -346,8 +346,8 @@ const cubeSize = 85;
 const triangleSize = 15;
 const radius = cubeSize + triangleSize;
 const cube = new Cube([0, 0, 0], cubeSize);
-const innerCircle = new Circle(radius, -(radius / 2) - 10);
-const triangle = new Triangle(15, -(radius / 2) - 10, radius);
+const innerCircle = new Circle(radius, radius / 2 + 10);
+const triangle = new Triangle(15, radius / 2 + 10, radius);
 
 type Path = {
     id: string;
