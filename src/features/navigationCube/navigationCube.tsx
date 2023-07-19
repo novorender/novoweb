@@ -54,14 +54,14 @@ const bottom = [
     0, 0, -1
 ] as mat3;
 
-const ids = ["bottom", "right", "top", "left", "back", "front"] as const;
+const ids = ["front", "right", "back", "left", "bottom", "top"] as const;
 const rotationMats = {
-    bottom,
-    right,
-    top,
-    left,
-    back,
     front,
+    right,
+    back,
+    left,
+    bottom,
+    top,
 } as { [k: string]: mat3 };
 
 class Face {
@@ -442,13 +442,10 @@ export function NavigationCube() {
         animate();
 
         function animate() {
-            if (
-                !prevRotation.current ||
-                !quat.equals(prevRotation.current, (view as any).renderStateGL.camera.rotation)
-            ) {
-                prevRotation.current = quat.clone((view as any).renderStateGL.camera.rotation);
+            if (!prevRotation.current || !quat.equals(prevRotation.current, view.renderState.camera.rotation)) {
+                prevRotation.current = quat.clone(view.renderState.camera.rotation);
 
-                const rot = (view as any).renderStateGL.camera.rotation;
+                const rot = view.renderState.camera.rotation;
                 const q = quat.fromValues(rot[0], rot[1], -rot[2], rot[3]);
                 cube.setRotation(q);
                 innerCircle.setRotation(q);
