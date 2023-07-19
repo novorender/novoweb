@@ -80,6 +80,7 @@ export function Render3D() {
 
     const [svg, setSvg] = useState<null | SVGSVGElement>(null);
 
+    const engine2dRenderFn = useRef<VoidFunction | undefined>();
     const pointerPos = useRef([0, 0] as [x: number, y: number]);
     const canvasRef: RefCallback<HTMLCanvasElement> = useCallback(
         (el) => {
@@ -90,7 +91,7 @@ export function Render3D() {
 
     useHandleInit();
     useHandleInitialBookmark();
-    useHandleCameraMoved({ svg });
+    useHandleCameraMoved({ svg, engine2dRenderFn });
     useHandleCameraState();
     useHandleCameraSpeed();
     useHandleGrid();
@@ -134,7 +135,7 @@ export function Render3D() {
             {sceneStatus.status === AsyncStatus.Success && view && canvas && (
                 <>
                     {debugStats.enabled && <PerformanceStats />}
-                    <Engine2D pointerPos={pointerPos} />
+                    <Engine2D pointerPos={pointerPos} renderFnRef={engine2dRenderFn} />
                     <Stamp />
                     <Svg width={size.width} height={size.height} ref={setSvg}>
                         <Markers />

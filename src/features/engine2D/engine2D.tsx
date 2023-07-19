@@ -48,14 +48,18 @@ const measurementInactiveLineColor = "rgba(255, 255, 0, 0.4)";
 const hoverFillColor = "rgba(0, 170, 200, 0.3)";
 const hoverLineColor = "rgba(255, 165, 0, 1)";
 
-export function Engine2D({ pointerPos }: { pointerPos: MutableRefObject<Vec2> }) {
+export function Engine2D({
+    pointerPos,
+    renderFnRef,
+}: {
+    pointerPos: MutableRefObject<Vec2>;
+    renderFnRef: MutableRefObject<VoidFunction | undefined>;
+}) {
     const {
         state: { size, view, measureScene },
     } = useExplorerGlobals();
     const [canvas2D, setCanvas2D] = useState<HTMLCanvasElement | null>(null);
     const [context2D, setContext2D] = useState<CanvasRenderingContext2D | null | undefined>(null);
-
-    const animationFrameId = useRef<number>(-1);
 
     const prevCamPos = useRef<vec3>();
     const prevCamRot = useRef<quat>();
@@ -689,7 +693,9 @@ export function Engine2D({ pointerPos }: { pointerPos: MutableRefObject<Vec2> })
     }, [canvas2D]);
 
     useEffect(() => {
-        animate();
+        renderFnRef.current = animate;
+        return () => (renderFnRef.current = undefined);
+
         function animate() {
             if (view) {
                 const { camera } = view.renderState;
@@ -709,11 +715,8 @@ export function Engine2D({ pointerPos }: { pointerPos: MutableRefObject<Vec2> })
                     render();
                 }
             }
-
-            animationFrameId.current = requestAnimationFrame(() => animate());
         }
-        return () => cancelAnimationFrame(animationFrameId.current);
-    }, [view, render, grid, renderGridLabels, cameraType, pointerPos]);
+    }, [view, render, grid, cameraType, pointerPos, renderFnRef]);
 
     return <Canvas2D id="canvas2D" ref={setCanvas2D} width={size.width} height={size.height} />;
 }
