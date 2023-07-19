@@ -10,8 +10,6 @@ import { useAbortController } from "hooks/useAbortController";
 import { useMountedState } from "hooks/useMountedState";
 import { objIdsToTotalBoundingSphere } from "utils/objectData";
 
-// TODO FIKS
-
 // prettier-ignore
 const back = [
     1, 0, 0, 
