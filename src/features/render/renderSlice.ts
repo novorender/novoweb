@@ -6,7 +6,7 @@ import {
     RecursivePartial,
     TonemappingMode,
 } from "@novorender/web_app";
-import type { BoundingSphere, Camera, EnvironmentDescription, ObjectId, RenderSettings } from "@novorender/webgl-api";
+import type { BoundingSphere, Camera, EnvironmentDescription } from "@novorender/webgl-api";
 import { PayloadAction, createAction, createSlice } from "@reduxjs/toolkit";
 import { quat, vec3, vec4 } from "gl-matrix";
 
@@ -95,10 +95,6 @@ type CameraState =
           zoomTo?: BoundingSphere;
       };
 type MutableCameraState = DeepMutable<CameraState>;
-export type ClippingBox = RenderSettings["clippingPlanes"] & {
-    defining: boolean;
-    baseBounds: RenderSettings["clippingPlanes"]["bounds"];
-};
 type SavedCameraPositions = { currentIndex: number; positions: CameraPosition[] };
 type MutableSavedCameraPositions = DeepMutable<SavedCameraPositions>;
 
@@ -155,7 +151,7 @@ type Stamp = { mouseX: number; mouseY: number; pinned: boolean } & (
 
 const initialState = {
     sceneStatus: { status: AsyncStatus.Initial } as AsyncState<void>,
-    mainObject: undefined as ObjectId | undefined,
+    mainObject: undefined as number | undefined,
     defaultVisibility: ObjectVisibility.Neutral,
     selectMultiple: false,
     currentCameraSpeedLevel: CameraSpeedLevel.Default,
@@ -357,7 +353,7 @@ export const renderSlice = createSlice({
     name: "render",
     initialState: initialState as State,
     reducers: {
-        setMainObject: (state, action: PayloadAction<ObjectId | undefined>) => {
+        setMainObject: (state, action: PayloadAction<number | undefined>) => {
             state.mainObject = action.payload;
         },
         toggleDefaultVisibility: (state) => {
