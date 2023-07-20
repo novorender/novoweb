@@ -21,7 +21,7 @@ const formatNumber = new Intl.NumberFormat("en-US").format;
 
 export function PerformanceStats() {
     const {
-        state: { view },
+        state: { view, scene },
     } = useExplorerGlobals(true);
     const deviceProfile = useAppSelector(selectDeviceProfile);
     const timer = useRef<ReturnType<typeof setInterval>>();
@@ -38,6 +38,9 @@ export function PerformanceStats() {
     const drawcalls = useRef<HTMLSpanElement>(null);
     const resolutionScale = useRef<HTMLSpanElement>(null);
     const detailBias = useRef<HTMLSpanElement>(null);
+
+    window.view = view;
+    (window as any).scene = scene;
 
     useEffect(() => {
         if (timer.current) {
