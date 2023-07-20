@@ -14,7 +14,7 @@ export function getTopDownParams({ view, elevation }: { view: View; elevation: n
 
     return {
         position,
-        rotation: rotationFromDirection([0, 0, 1]),
+        rotation: rotationFromDirection([0, 0, 1], view.renderState.camera.rotation),
         fov: 100,
     };
 }
