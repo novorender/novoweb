@@ -303,6 +303,12 @@ async function loadDeviceTier(): Promise<{ tier: -1 | DeviceProfile["tier"]; isM
             tier = Math.max(3, tier);
         }
 
+        // Intel HD Graphics are given tier 2 for some reason, but beloing in tier 0.
+        // " " before HD in regex to not catch UHD
+        if (gpuTier.gpu && / HD Graphics /gi.test(gpuTier.gpu)) {
+            tier = 0;
+        }
+
         return {
             tier: tier as DeviceProfile["tier"],
             isMobile: isMobile ?? false,
