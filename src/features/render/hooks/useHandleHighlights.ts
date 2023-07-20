@@ -10,6 +10,7 @@ import { useHighlighted } from "contexts/highlighted";
 import { GroupStatus, ObjectGroup, useObjectGroups } from "contexts/objectGroups";
 import { useSelectionBasket } from "contexts/selectionBasket";
 import { useSceneId } from "hooks/useSceneId";
+import { VecRGB, VecRGBA } from "utils/color";
 
 import {
     ObjectVisibility,
@@ -20,7 +21,6 @@ import {
     selectSelectionBasketColor,
     selectSelectionBasketMode,
 } from "..";
-import { VecRGB, VecRGBA } from "utils/color";
 
 export function useHandleHighlights() {
     const {

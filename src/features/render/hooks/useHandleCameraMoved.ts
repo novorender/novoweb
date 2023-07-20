@@ -15,7 +15,7 @@ export function useHandleCameraMoved({
     engine2dRenderFn,
 }: {
     svg: SVGSVGElement | null;
-    engine2dRenderFn: MutableRefObject<VoidFunction | undefined>;
+    engine2dRenderFn: MutableRefObject<((isIdleFrame: boolean) => void) | undefined>;
 }) {
     const {
         state: { view },
@@ -36,20 +36,21 @@ export function useHandleCameraMoved({
                 return;
             }
 
-            view.render = () => cameraMoved(view);
+            view.render = (isIdleFrame) => cameraMoved(isIdleFrame, view);
 
-            function cameraMoved(view: View) {
+            function cameraMoved(isIdleFrame: boolean, view: View) {
+                engine2dRenderFn.current?.(isIdleFrame);
+
                 const hasMoved =
                     !view.prevRenderState ||
                     !vec3.exactEquals(view.renderState.camera.position, view.prevRenderState.camera.position) ||
                     !quat.exactEquals(view.renderState.camera.rotation, view.prevRenderState.camera.rotation) ||
                     view.renderState.camera.fov !== view.prevRenderState.camera.fov;
 
-                if (!hasMoved) {
+                if (isIdleFrame || !hasMoved) {
                     return;
                 }
 
-                engine2dRenderFn.current?.();
                 moveSvgMarkers();
                 dispatch(renderActions.setStamp(null));
 

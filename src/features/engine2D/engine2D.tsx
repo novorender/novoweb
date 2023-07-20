@@ -53,16 +53,13 @@ export function Engine2D({
     renderFnRef,
 }: {
     pointerPos: MutableRefObject<Vec2>;
-    renderFnRef: MutableRefObject<VoidFunction | undefined>;
+    renderFnRef: MutableRefObject<((isIdleFrame: boolean) => void) | undefined>;
 }) {
     const {
         state: { size, view, measureScene },
     } = useExplorerGlobals();
     const [canvas2D, setCanvas2D] = useState<HTMLCanvasElement | null>(null);
     const [context2D, setContext2D] = useState<CanvasRenderingContext2D | null | undefined>(null);
-
-    const prevCamPos = useRef<vec3>();
-    const prevCamRot = useRef<quat>();
 
     const heightProfileMeasureObject = useHeightProfileMeasureObject();
     const measureObjects = useMeasureObjects();
@@ -696,24 +693,21 @@ export function Engine2D({
         renderFnRef.current = animate;
         return () => (renderFnRef.current = undefined);
 
-        function animate() {
+        function animate(isIdleFrame: boolean) {
             if (view) {
-                const { camera } = view.renderState;
-                if (
-                    cameraType === CameraType.Orthographic ||
-                    !prevCamRot.current ||
-                    !quat.exactEquals(prevCamRot.current, camera.rotation) ||
-                    !prevCamPos.current ||
-                    !vec3.exactEquals(prevCamPos.current, camera.position) ||
-                    !prevCamPos.current ||
-                    !vec3.exactEquals(prevCamPos.current, camera.position) ||
-                    !vec2.exactEquals(prevPointerPos.current, pointerPos.current)
-                ) {
-                    prevCamRot.current = quat.clone(camera.rotation);
-                    prevCamPos.current = vec3.clone(camera.position);
-                    prevPointerPos.current = [...pointerPos.current];
-                    render();
+                const run =
+                    !view.prevRenderState ||
+                    !vec3.exactEquals(view.renderState.camera.position, view.prevRenderState.camera.position) ||
+                    !quat.exactEquals(view.renderState.camera.rotation, view.prevRenderState.camera.rotation) ||
+                    view.renderState.camera.fov !== view.prevRenderState.camera.fov ||
+                    !vec2.exactEquals(prevPointerPos.current, pointerPos.current);
+
+                if (isIdleFrame || !run) {
+                    return;
                 }
+
+                prevPointerPos.current = [...pointerPos.current];
+                render();
             }
         }
     }, [view, render, grid, cameraType, pointerPos, renderFnRef]);
