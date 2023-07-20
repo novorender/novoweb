@@ -33,6 +33,10 @@ export default defineConfig(({ mode }) => {
                 : true,
             host: true,
             open: true,
+            headers: {
+                "Cross-Origin-Opener-Policy": "same-origin",
+                "Cross-Origin-Embedder-Policy": "require-corp",
+            },
             proxy: {
                 "/bimtrack/token": {
                     target: "https://auth.bimtrackapp.co//connect/token",

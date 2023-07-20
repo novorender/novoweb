@@ -1,26 +1,26 @@
-import { MemoryRouter, Route, Switch, useHistory } from "react-router-dom";
-import { Box, ListItemIcon, ListItemText, Menu, MenuItem, MenuProps } from "@mui/material";
 import { Logout, SettingsRounded } from "@mui/icons-material";
+import { Box, ListItemIcon, ListItemText, Menu, MenuItem, MenuProps } from "@mui/material";
+import { MemoryRouter, Route, Switch, useHistory } from "react-router-dom";
 
 import { useAppDispatch, useAppSelector } from "app/store";
 import { LogoSpeedDial, WidgetContainer, WidgetHeader } from "components";
 import { featuresConfig } from "config/features";
-import WidgetList from "features/widgetList/widgetList";
-import { useToggle } from "hooks/useToggle";
-import { selectMinimized, selectMaximized, selectHasAdminCapabilities } from "slices/explorerSlice";
-import { useSceneId } from "hooks/useSceneId";
-import { deleteFromStorage } from "utils/storage";
 import { StorageKey } from "config/storage";
+import WidgetList from "features/widgetList/widgetList";
+import { useSceneId } from "hooks/useSceneId";
+import { useToggle } from "hooks/useToggle";
+import { selectHasAdminCapabilities, selectMaximized, selectMinimized } from "slices/explorerSlice";
+import { deleteFromStorage } from "utils/storage";
 
+import { jiraActions, selectJiraAccessTokenData } from "./jiraSlice";
 import { Auth } from "./routes/auth";
-import { Login } from "./routes/login";
-import { Issues } from "./routes/issues";
-import { Settings } from "./routes/settings";
-import { Filters } from "./routes/filters";
-import { Issue } from "./routes/issue";
 import { CreateIssue } from "./routes/create";
 import { CreateComment } from "./routes/createComment";
-import { jiraActions, selectJiraAccessTokenData } from "./jiraSlice";
+import { Filters } from "./routes/filters";
+import { Issue } from "./routes/issue";
+import { Issues } from "./routes/issues";
+import { Login } from "./routes/login";
+import { Settings } from "./routes/settings";
 
 export default function Jira() {
     const sceneId = useSceneId();

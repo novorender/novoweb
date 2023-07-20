@@ -6,7 +6,7 @@ import { AsyncStatus } from "types/misc";
 import { deleteFromStorage } from "utils/storage";
 
 import { useRefreshTokensMutation } from "../api";
-import { xsiteManageActions, selectXsiteManageRefreshToken } from "../slice";
+import { selectXsiteManageRefreshToken, xsiteManageActions } from "../slice";
 
 export function useHandleXsiteManageKeepAlive() {
     const dispatch = useAppDispatch();

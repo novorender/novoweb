@@ -1,26 +1,26 @@
-import { MemoryRouter, Route, Switch, SwitchProps, useHistory, useLocation, useRouteMatch } from "react-router-dom";
-import { Box, ListItemIcon, ListItemText, Menu, MenuItem, MenuProps } from "@mui/material";
 import { Logout, SettingsRounded } from "@mui/icons-material";
-import { useEffect, PropsWithChildren, useRef } from "react";
+import { Box, ListItemIcon, ListItemText, Menu, MenuItem, MenuProps } from "@mui/material";
+import { PropsWithChildren, useEffect, useRef } from "react";
+import { MemoryRouter, Route, Switch, SwitchProps, useHistory, useLocation, useRouteMatch } from "react-router-dom";
 
 import { useAppDispatch, useAppSelector } from "app/store";
 import { LogoSpeedDial, WidgetContainer, WidgetHeader } from "components";
 import { featuresConfig } from "config/features";
-import WidgetList from "features/widgetList/widgetList";
-import { useToggle } from "hooks/useToggle";
-import { selectMinimized, selectMaximized, selectHasAdminCapabilities } from "slices/explorerSlice";
-import { useSceneId } from "hooks/useSceneId";
-import { AsyncStatus } from "types/misc";
 import { StorageKey } from "config/storage";
+import WidgetList from "features/widgetList/widgetList";
+import { useSceneId } from "hooks/useSceneId";
+import { useToggle } from "hooks/useToggle";
+import { selectHasAdminCapabilities, selectMaximized, selectMinimized } from "slices/explorerSlice";
+import { AsyncStatus } from "types/misc";
 import { deleteFromStorage } from "utils/storage";
 
 import { Auth } from "./routes/auth";
+import { LogPoint } from "./routes/logPoint";
+import { LogPoints } from "./routes/logPoints";
 import { Login } from "./routes/login";
+import { Machine } from "./routes/machine";
 import { Machines } from "./routes/machines";
 import { Settings } from "./routes/settings";
-import { LogPoints } from "./routes/logPoints";
-import { LogPoint } from "./routes/logPoint";
-import { Machine } from "./routes/machine";
 import {
     selectXsiteManageAccessToken,
     selectXsiteManageClickedMachineMarker,

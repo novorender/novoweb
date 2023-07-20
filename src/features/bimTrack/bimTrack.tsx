@@ -1,27 +1,26 @@
 import { Box } from "@mui/material";
 import { useCallback, useEffect } from "react";
-import { MemoryRouter, Switch, Route } from "react-router-dom";
+import { MemoryRouter, Route, Switch } from "react-router-dom";
 
-import { LinearProgress, LogoSpeedDial, WidgetContainer, WidgetHeader } from "components";
-import WidgetList from "features/widgetList/widgetList";
 import { useAppDispatch, useAppSelector } from "app/store";
-import { StorageKey } from "config/storage";
+import { LinearProgress, LogoSpeedDial, WidgetContainer, WidgetHeader } from "components";
 import { featuresConfig } from "config/features";
-import { getFromStorage, saveToStorage, deleteFromStorage } from "utils/storage";
-import { createOAuthStateString } from "utils/auth";
+import { StorageKey } from "config/storage";
+import WidgetList from "features/widgetList/widgetList";
 import { useSceneId } from "hooks/useSceneId";
 import { useToggle } from "hooks/useToggle";
+import { selectMaximized, selectMinimized } from "slices/explorerSlice";
 import { AuthInfo } from "types/bcf";
-import { selectMinimized, selectMaximized } from "slices/explorerSlice";
+import { createOAuthStateString } from "utils/auth";
+import { deleteFromStorage, getFromStorage, saveToStorage } from "utils/storage";
 
-import { Filters } from "./routes/filters";
-import { Topic } from "./routes/topic";
-import { Project } from "./routes/project";
-import { Projects } from "./routes/projects";
-import { CreateTopic } from "./routes/createTopic";
-import { CreateComment } from "./routes/createComment";
-import { EditTopic } from "./routes/editTopic";
-
+import {
+    getCode,
+    useGetAuthInfoMutation,
+    useGetCurrentUserQuery,
+    useGetTokenMutation,
+    useRefreshTokenMutation,
+} from "./bimTrackApi";
 import {
     bimTrackActions,
     BimTrackStatus,
@@ -30,13 +29,13 @@ import {
     selectAuthInfo,
     selectStatus,
 } from "./bimTrackSlice";
-import {
-    getCode,
-    useGetAuthInfoMutation,
-    useGetCurrentUserQuery,
-    useGetTokenMutation,
-    useRefreshTokenMutation,
-} from "./bimTrackApi";
+import { CreateComment } from "./routes/createComment";
+import { CreateTopic } from "./routes/createTopic";
+import { EditTopic } from "./routes/editTopic";
+import { Filters } from "./routes/filters";
+import { Project } from "./routes/project";
+import { Projects } from "./routes/projects";
+import { Topic } from "./routes/topic";
 
 export default function BimTrack() {
     const sceneId = useSceneId();

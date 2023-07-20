@@ -1,8 +1,8 @@
+import { Box, css, styled } from "@mui/material";
 import { SVGProps } from "react";
-import { Box, styled, css } from "@mui/material";
 
-import { renderActions, selectStamp, StampKind } from "features/render/renderSlice";
 import { useAppDispatch, useAppSelector } from "app/store";
+import { StampKind, renderActions, selectStamp } from "features/render";
 
 import { useXsiteManageLogPointMarkers } from "../hooks/useXsiteManageLogPointMarkers";
 
@@ -30,10 +30,9 @@ const LogPointMarker = styled(
 
 export function LogPointMarkers() {
     const stamp = useAppSelector(selectStamp);
-
     const logPoints = useXsiteManageLogPointMarkers();
-
     const dispatch = useAppDispatch();
+
     return (
         <>
             {logPoints.map((pt, idx) => (

@@ -1,28 +1,28 @@
-import AutoSizer from "react-virtualized-auto-sizer";
-import { CSSProperties } from "react";
-import { useParams, Link, useHistory } from "react-router-dom";
 import { Add, ArrowBack, FilterAlt } from "@mui/icons-material";
-import { Box, Button, Typography, ListItem, useTheme } from "@mui/material";
+import { Box, Button, ListItem, Typography, useTheme } from "@mui/material";
 import { isAfter, isSameDay, parseISO } from "date-fns";
+import { CSSProperties } from "react";
+import { Link, useHistory, useParams } from "react-router-dom";
+import AutoSizer from "react-virtualized-auto-sizer";
 
 import { useAppSelector } from "app/store";
-import { LinearProgress, Tooltip, ImgTooltip, Divider, FixedSizeVirualizedList } from "components";
+import { Divider, FixedSizeVirualizedList, ImgTooltip, LinearProgress, Tooltip } from "components";
 import { Topic } from "types/bcf";
 
 import {
+    useGetProjectExtensionsQuery,
     useGetProjectQuery,
+    useGetThumbnailQuery,
     useGetTopicsQuery,
     useGetViewpointsQuery,
-    useGetThumbnailQuery,
-    useGetProjectExtensionsQuery,
 } from "../bimCollabApi";
 import {
+    FilterModifier,
+    FilterModifiers,
     FilterType,
     Filters,
-    selectFilters,
-    FilterModifiers,
-    FilterModifier,
     selectFilterModifiers,
+    selectFilters,
 } from "../bimCollabSlice";
 
 export function Project() {

@@ -1,15 +1,16 @@
-import { Box, Button, List, ListItemButton, Typography, useTheme } from "@mui/material";
-import { Redirect, useHistory } from "react-router-dom";
 import { Settings } from "@mui/icons-material";
+import { Box, Button, List, ListItemButton, Typography, useTheme } from "@mui/material";
 import { useEffect } from "react";
+import { Redirect, useHistory } from "react-router-dom";
 
+import { useAppDispatch, useAppSelector } from "app/store";
 import { Divider, LinearProgress, ScrollBox } from "components";
 import { useExplorerGlobals } from "contexts/explorerGlobals";
-import { useAppDispatch, useAppSelector } from "app/store";
 import { AsyncStatus, hasFinished } from "types/misc";
 import { getAssetUrl } from "utils/misc";
 
-import { deviationsActions, selectDeviationProfiles, selectDeviations } from "../deviationsSlice";
+import { deviationsActions, selectDeviationProfiles } from "../deviationsSlice";
+import { renderActions, selectDeviations } from "features/render";
 
 type DeviationConfig = {
     pointToTriangle: {
@@ -35,7 +36,7 @@ export function Root() {
     const history = useHistory();
     const theme = useTheme();
     const {
-        state: { scene },
+        state: { view },
     } = useExplorerGlobals(true);
     const deviations = useAppSelector(selectDeviations);
     const profiles = useAppSelector(selectDeviationProfiles);
@@ -49,7 +50,7 @@ export function Root() {
                 return;
             }
 
-            const url = getAssetUrl(scene, "deviations.json").toString();
+            const url = getAssetUrl(view, "deviations.json").toString();
 
             dispatch(deviationsActions.setProfiles({ status: AsyncStatus.Loading }));
 
@@ -69,7 +70,7 @@ export function Root() {
                 dispatch(deviationsActions.setProfiles({ status: AsyncStatus.Success, data: [] }));
             }
         }
-    }, [scene, dispatch, profiles]);
+    }, [view, dispatch, profiles]);
 
     if (profiles.status === AsyncStatus.Success && profiles.data.length <= 1) {
         return <Redirect to="/deviation" />;
@@ -109,7 +110,7 @@ export function Root() {
                                 {profiles.data.map((deviation, idx) => (
                                     <ListItemButton
                                         disableGutters
-                                        onClick={() => dispatch(deviationsActions.setDeviations({ index: idx }))}
+                                        onClick={() => dispatch(renderActions.setPoints({ deviation: { index: idx } }))}
                                         key={idx}
                                         selected={idx === deviations.index}
                                         sx={{ px: 1 }}

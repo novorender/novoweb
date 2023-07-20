@@ -1,5 +1,4 @@
-import { FormEvent, SyntheticEvent, useCallback, useEffect, useState } from "react";
-import { FollowParametricObject } from "@novorender/measure-api";
+import { ArrowBack, ArrowForward, Edit, RestartAlt } from "@mui/icons-material";
 import {
     Box,
     Button,
@@ -13,36 +12,38 @@ import {
     Typography,
     useTheme,
 } from "@mui/material";
-import { ArrowBack, ArrowForward, Edit, RestartAlt } from "@mui/icons-material";
-import { HierarcicalObjectReference, OrthoControllerParams } from "@novorender/webgl-api";
-import { vec3, quat, mat3, mat4, glMatrix } from "gl-matrix";
+import { FollowParametricObject } from "@novorender/measure-api";
+import { HierarcicalObjectReference } from "@novorender/webgl-api";
+import { vec3 } from "gl-matrix";
+import { FormEvent, SyntheticEvent, useCallback, useEffect, useState } from "react";
 import { useHistory } from "react-router-dom";
+import { rotationFromDirection } from "@novorender/web_app";
 
-import { IosSwitch, Divider, ScrollBox, Accordion, AccordionSummary, AccordionDetails, Tooltip } from "components";
 import { useAppDispatch, useAppSelector } from "app/store";
-import { CameraType, renderActions } from "features/render/renderSlice";
+import { Accordion, AccordionDetails, AccordionSummary, Divider, IosSwitch, ScrollBox, Tooltip } from "components";
 import { useExplorerGlobals } from "contexts/explorerGlobals";
+import { CameraType, renderActions } from "features/render/renderSlice";
 import { AsyncStatus, ViewMode } from "types/misc";
 import { searchByPatterns } from "utils/search";
 
 import {
     followPathActions,
+    selectAutoRecenter,
+    selectAutoStepSize,
+    selectClipping,
+    selectCurrentCenter,
+    selectDrawRoadIds,
+    selectLandXmlPaths,
     selectProfile,
+    selectProfileRange,
     selectPtHeight,
+    selectResetPositionOnInit,
+    selectRoadIds,
+    selectSelectedPath,
+    selectShowGrid,
+    selectShowTracer,
     selectStep,
     selectView2d,
-    selectProfileRange,
-    selectClipping,
-    selectShowGrid,
-    selectAutoRecenter,
-    selectCurrentCenter,
-    selectAutoStepSize,
-    selectResetPositionOnInit,
-    selectSelectedPath,
-    selectLandXmlPaths,
-    selectDrawRoadIds,
-    selectRoadIds,
-    selectShowTracer,
 } from "./followPathSlice";
 
 const profileFractionDigits = 3;
@@ -51,7 +52,7 @@ export function Follow({ fpObj }: { fpObj: FollowParametricObject }) {
     const theme = useTheme();
     const history = useHistory();
     const {
-        state: { view, scene },
+        state: { view, db },
     } = useExplorerGlobals(true);
 
     const currentCenter = useAppSelector(selectCurrentCenter);
@@ -97,39 +98,20 @@ export function Follow({ fpObj }: { fpObj: FollowParametricObject }) {
 
             const offset =
                 keepOffset && currentCenter
-                    ? vec3.sub(vec3.create(), currentCenter, view.camera.position)
+                    ? vec3.sub(vec3.create(), currentCenter, view.renderState.camera.position)
                     : vec3.fromValues(0, 0, 0);
             const offsetPt = vec3.sub(vec3.create(), pt, offset);
+            const rotation = rotationFromDirection(dir);
 
-            const up = glMatrix.equals(Math.abs(vec3.dot(vec3.fromValues(0, 1, 0), dir)), 1)
-                ? vec3.fromValues(0, 0, 1)
-                : vec3.fromValues(0, 1, 0);
-
-            const right = vec3.cross(vec3.create(), up, dir);
-
-            vec3.cross(up, dir, right);
-            vec3.normalize(up, up);
-
-            vec3.cross(right, up, dir);
-            vec3.normalize(right, right);
-
-            const rotation = quat.fromMat3(
-                quat.create(),
-                mat3.fromValues(right[0], right[1], right[2], up[0], up[1], up[2], dir[0], dir[1], dir[2])
-            );
             if (view2d) {
-                const mat = mat4.fromRotationTranslation(mat4.create(), rotation, offsetPt);
-
                 dispatch(
                     renderActions.setCamera({
                         type: CameraType.Orthographic,
-                        params: {
-                            kind: "ortho",
-                            referenceCoordSys: mat,
-                            fieldOfView: view.camera.fieldOfView,
-                            near: -0.001,
+                        goTo: {
+                            rotation,
+                            position: offsetPt,
+                            fov: view.renderState.camera.fov,
                             far: clipping,
-                            position: [0, 0, 0],
                         },
                         gridOrigo: pt as vec3,
                     })
@@ -142,26 +124,27 @@ export function Follow({ fpObj }: { fpObj: FollowParametricObject }) {
                 );
             } else {
                 dispatch(renderActions.setGrid({ enabled: false }));
-                const w = -vec3.dot(dir, pt);
-                dispatch(
-                    renderActions.setClippingPlanes({
-                        enabled: true,
-                        planes: [{ plane: [dir[0], dir[1], dir[2], w], baseW: w }],
-                    })
-                );
+
                 dispatch(
                     renderActions.setCamera({
-                        type: CameraType.Flight,
+                        type: CameraType.Pinhole,
                         goTo: {
                             position: offsetPt,
-                            rotation: keepOffset ? ([...view.camera.rotation] as Vec4) : rotation,
+                            rotation: keepOffset ? ([...view.renderState.camera.rotation] as Vec4) : rotation,
                         },
                     })
                 );
             }
 
+            const w = vec3.dot(dir, pt);
+            dispatch(
+                renderActions.setClippingPlanes({
+                    enabled: true,
+                    planes: [{ normalOffset: [dir[0], dir[1], dir[2], w], baseW: w, color: [0, 1, 0, 0.2] }],
+                })
+            );
             dispatch(followPathActions.setCurrentCenter(pt as Vec3));
-            dispatch(followPathActions.setPtHeight(pt[1]));
+            dispatch(followPathActions.setPtHeight(pt[2]));
         },
         [clipping, currentCenter, dispatch, fpObj, view]
     );
@@ -187,7 +170,7 @@ export function Follow({ fpObj }: { fpObj: FollowParametricObject }) {
                 let roadIds: string[] = [];
                 let references = [] as HierarcicalObjectReference[];
                 await searchByPatterns({
-                    scene,
+                    db,
                     searchPatterns: [{ property: "Centerline", value: pathName, exact: true }],
                     callback: (refs) => (references = references.concat(refs)),
                 });
@@ -213,7 +196,7 @@ export function Follow({ fpObj }: { fpObj: FollowParametricObject }) {
                 }
             }
         }
-    }, [dispatch, paths, scene, selectedPath, drawRoadIds, roadIds]);
+    }, [dispatch, paths, db, selectedPath, drawRoadIds, roadIds]);
 
     useEffect(() => {
         if (!resetPosition || !fpObj) {
@@ -223,19 +206,7 @@ export function Follow({ fpObj }: { fpObj: FollowParametricObject }) {
         dispatch(followPathActions.toggleResetPositionOnInit(false));
         dispatch(followPathActions.setProfile(fpObj.parameterBounds.start.toFixed(3)));
         goToProfile({ view2d, showGrid, keepOffset: false, p: fpObj.parameterBounds.start });
-    }, [
-        view2d,
-        showGrid,
-        profile,
-        goToProfile,
-        autoRecenter,
-        resetPosition,
-        dispatch,
-        fpObj,
-        paths,
-        scene,
-        selectedPath,
-    ]);
+    }, [view2d, showGrid, profile, goToProfile, autoRecenter, resetPosition, dispatch, fpObj, paths, selectedPath]);
 
     const handle2dChange = () => {
         const newState = !view2d;
@@ -348,8 +319,8 @@ export function Follow({ fpObj }: { fpObj: FollowParametricObject }) {
         }
 
         setClipping(newValue);
-        if (view.camera.controller.params.kind === "ortho") {
-            (view.camera.controller.params as OrthoControllerParams).far = newValue;
+        if (view.renderState.camera.kind === "orthographic") {
+            view.modifyRenderState({ camera: { far: newValue } });
         }
     };
 

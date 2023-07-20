@@ -1,10 +1,11 @@
-import { useEffect, useRef } from "react";
 import { vec3 } from "gl-matrix";
+import { useEffect, useRef } from "react";
 
 import { dataApi } from "app";
 import { useAppDispatch, useAppSelector } from "app/store";
-import { selectProjectSettings } from "features/render/renderSlice";
 import { useExplorerGlobals } from "contexts/explorerGlobals";
+import { selectProjectSettings } from "features/render/renderSlice";
+import { flip } from "features/render/utils";
 
 import { LocationStatus, myLocationActions, selectShowLocationMarker } from "./myLocationSlice";
 
@@ -44,8 +45,12 @@ export function useHandleLocationMarker() {
                     return;
                 }
 
-                const scenePos = dataApi.latLon2tm(pos.coords, tmZone);
-                const outOfBounds = vec3.dist(scenePos, scene.boundingSphere.center) > scene.boundingSphere.radius;
+                // TODO flip dataapi
+                const scenePos = flip(dataApi.latLon2tm(pos.coords, tmZone));
+                scenePos[2] = pos.coords.altitude ?? view.renderState.camera.position[2];
+                const outOfBounds =
+                    vec3.dist(scenePos, scene.boundingSphere.center) >
+                    scene.boundingSphere.radius + pos.coords.accuracy * 2;
 
                 if (outOfBounds) {
                     dispatch(
@@ -59,11 +64,7 @@ export function useHandleLocationMarker() {
                 }
 
                 lastUpdate.current = now;
-                dispatch(
-                    myLocationActions.setCurrentLocation(
-                        vec3.fromValues(scenePos[0], pos.coords.altitude ?? view.camera.position[1], scenePos[2])
-                    )
-                );
+                dispatch(myLocationActions.setCurrentLocation(scenePos));
                 dispatch(myLocationActions.setAccuracy(pos.coords.accuracy));
                 dispatch(myLocationActions.setSatus({ status: LocationStatus.Idle }));
             }

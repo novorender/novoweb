@@ -11,13 +11,13 @@ import {
     TextFieldProps,
     useTheme,
 } from "@mui/material";
-import { useHistory } from "react-router-dom";
 import { DatePicker } from "@mui/x-date-pickers";
 import { format, isValid, parse } from "date-fns";
 import { FormEventHandler, useState } from "react";
+import { useHistory } from "react-router-dom";
 
-import { Divider, ScrollBox, TextField } from "components";
 import { useAppDispatch, useAppSelector } from "app/store";
+import { Divider, ScrollBox, TextField } from "components";
 import { rangeSearchDateFormat } from "config";
 
 import { imagesActions, ImageType, selectImageFilter } from "../imagesSlice";

@@ -39,10 +39,10 @@ export function LogPointStamp() {
                     onClick={() =>
                         dispatch(
                             renderActions.setCamera({
-                                type: CameraType.Flight,
+                                type: CameraType.Pinhole,
                                 goTo: {
                                     position: [stamp.data.logPoint.x, stamp.data.logPoint.y, stamp.data.logPoint.z],
-                                    rotation: view ? quat.clone(view.camera.rotation) : [0, 0, 0, 1],
+                                    rotation: view ? quat.clone(view.renderState.camera.rotation) : [0, 0, 0, 1],
                                 },
                             })
                         )

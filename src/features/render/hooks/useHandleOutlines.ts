@@ -2,19 +2,21 @@ import { useEffect } from "react";
 
 import { useAppSelector } from "app/store";
 import { useExplorerGlobals } from "contexts/explorerGlobals";
-import { selectGrid } from "features/render/renderSlice";
+import { ViewMode } from "types/misc";
 
-export function useHandleGridChanges() {
+import { selectViewMode } from "..";
+
+export function useHandleOutlines() {
     const {
         state: { view },
     } = useExplorerGlobals();
-    const grid = useAppSelector(selectGrid);
+    const viewMode = useAppSelector(selectViewMode);
 
     useEffect(() => {
         if (!view) {
             return;
         }
 
-        view.applySettings({ grid });
-    }, [view, grid]);
+        view.modifyRenderState({ outlines: { enabled: viewMode === ViewMode.FollowPath } });
+    }, [view, viewMode]);
 }

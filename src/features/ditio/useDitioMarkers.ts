@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 
 import { useAppSelector } from "app/store";
 import { CameraType, selectCameraType, selectProjectSettings } from "features/render";
+import { flip } from "features/render/utils";
 
 import { baseUrl, useFeedWebRawQuery, useGetPostQuery } from "./api";
 import {
@@ -63,7 +64,7 @@ export function useDitioMarkers() {
             .slice(0, 100)
             .map(({ id, geoLocation }) => ({
                 id,
-                position: dataApi.latLon2tm({ longitude: geoLocation!.lon, latitude: geoLocation!.lat }, tmZone),
+                position: flip(dataApi.latLon2tm({ longitude: geoLocation!.lon, latitude: geoLocation!.lat }, tmZone)),
             }));
 
         if (hoveredEntity?.kind === "post") {
@@ -91,7 +92,7 @@ export function useDitioMarkers() {
 
         let markers = post.Images.map((img) => ({
             id: img.FileReferenceId,
-            position: dataApi.latLon2tm({ longitude: img.Longitude, latitude: img.Latitude }, tmZone),
+            position: flip(dataApi.latLon2tm({ longitude: img.Longitude, latitude: img.Latitude }, tmZone)),
             src: `${baseUrl}/${img.UrlLg}`,
         }));
 

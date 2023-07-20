@@ -1,10 +1,10 @@
-import { FormEventHandler, useState } from "react";
 import { Autocomplete, Box, useTheme } from "@mui/material";
+import { FormEventHandler, useState } from "react";
 import { useHistory, useLocation } from "react-router-dom";
 
-import { Confirmation, TextField } from "components";
-import { objectGroupsActions, useObjectGroups, useDispatchObjectGroups } from "contexts/objectGroups";
 import { useAppDispatch } from "app/store";
+import { Confirmation, TextField } from "components";
+import { objectGroupsActions, useDispatchObjectGroups, useObjectGroups } from "contexts/objectGroups";
 
 import { groupsActions } from "../groupsSlice";
 

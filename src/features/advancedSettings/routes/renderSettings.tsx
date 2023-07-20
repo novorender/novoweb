@@ -1,151 +1,42 @@
-import { useState, ChangeEvent, SyntheticEvent } from "react";
-import { useTheme, Box, Button, FormControlLabel, Slider, Typography, FormHelperText } from "@mui/material";
-import { Internal } from "@novorender/webgl-api";
-import { useHistory } from "react-router-dom";
 import { ArrowBack, Save } from "@mui/icons-material";
+import { Box, Button, FormControlLabel, Slider, Typography, useTheme } from "@mui/material";
+import { useState } from "react";
+import { useHistory } from "react-router-dom";
 
-import { Accordion, AccordionDetails, AccordionSummary, Divider, LinearProgress, ScrollBox, Switch } from "components";
 import { useAppDispatch, useAppSelector } from "app/store";
-import { useExplorerGlobals } from "contexts/explorerGlobals";
+import { Accordion, AccordionDetails, AccordionSummary, Divider, LinearProgress, ScrollBox, Switch } from "components";
 import {
-    AdvancedSetting,
-    selectAdvancedSettings,
-    renderActions,
-    selectSubtrees,
-    SubtreeStatus,
     Subtree,
-    selectDefaultDeviceProfile,
-} from "features/render/renderSlice";
+    SubtreeStatus,
+    renderActions,
+    selectAdvanced,
+    selectPoints,
+    selectSubtrees,
+    selectTerrain,
+} from "features/render";
 import { selectUser } from "slices/authSlice";
-import { api } from "app";
-
-import {
-    toggleShowBoundingBox,
-    toggleDoubleSidedMaterials,
-    toggleDoubleSidedTransparentMaterials,
-    toggleHoldDynamic,
-    toggleQualityPoints,
-    toggleTerrainAsBackground,
-} from "../utils";
-
-type SliderSettings =
-    | AdvancedSetting.PointSize
-    | AdvancedSetting.MaxPointSize
-    | AdvancedSetting.PointToleranceFactor
-    | AdvancedSetting.AmbientLight
-    | AdvancedSetting.TriangleLimit;
 
 export function RenderSettings({ save, saving }: { save: () => Promise<void>; saving: boolean }) {
     const history = useHistory();
     const theme = useTheme();
-    const {
-        state: { view },
-    } = useExplorerGlobals(true);
 
     const dispatch = useAppDispatch();
     const user = useAppSelector(selectUser);
     const subtrees = useAppSelector(selectSubtrees);
-    const defaultDeviceProfile = useAppSelector(selectDefaultDeviceProfile);
-    const settings = useAppSelector(selectAdvancedSettings);
-    const {
-        taa,
-        ssao,
-        autoFps,
-        showBoundingBoxes,
-        doubleSidedMaterials,
-        doubleSidedTransparentMaterials,
-        holdDynamic,
-        qualityPoints,
-        pointSize,
-        maxPointSize,
-        pointToleranceFactor,
-        ambientLight,
-        terrainAsBackground,
-        triangleLimit,
-    } = settings;
+    // const deviceProfile = useAppSelector(selectDeviceProfile);
+    const advanced = useAppSelector(selectAdvanced);
+    const points = useAppSelector(selectPoints);
+    const terrain = useAppSelector(selectTerrain);
 
-    const [size, setSize] = useState(pointSize);
-    const [maxSize, setMaxSize] = useState(maxPointSize);
-    const [toleranceFactor, setToleranceFactor] = useState(pointToleranceFactor);
-    const [ambLight, setAmbLight] = useState(ambientLight);
-    const [maxTris, setMaxTris] = useState(triangleLimit);
+    const [size, setSize] = useState(points.size.pixel);
+    const [maxSize, setMaxSize] = useState(points.size.maxPixel);
+    const [toleranceFactor, setToleranceFactor] = useState(points.size.toleranceFactor);
+    const [lightExposure, setLightExposure] = useState(advanced.tonemapping.exposure);
+    // const [maxTris, setMaxTris] = useState(advanced.limits.maxPrimitives);
 
     const handleSubtreeToggle = (subtree: Subtree) => () => {
         dispatch(renderActions.toggleSubtree({ subtree }));
     };
-
-    const handleToggle = ({ target: { name, checked } }: ChangeEvent<HTMLInputElement>) => {
-        dispatch(renderActions.setAdvancedSettings({ [name]: checked }));
-
-        switch (name) {
-            case AdvancedSetting.ShowBoundingBoxes:
-                return toggleShowBoundingBox(view);
-            case AdvancedSetting.DoubleSidedMaterials:
-                return toggleDoubleSidedMaterials(view);
-            case AdvancedSetting.DoubleSidedTransparentMaterials:
-                return toggleDoubleSidedTransparentMaterials(view);
-            case AdvancedSetting.HoldDynamic:
-                return toggleHoldDynamic(view);
-            case AdvancedSetting.QualityPoints:
-                return toggleQualityPoints(view);
-            case AdvancedSetting.TerrainAsBackground:
-                return toggleTerrainAsBackground(view);
-            default:
-                return;
-        }
-    };
-
-    const handleSliderChange =
-        (kind: SliderSettings) =>
-        (_event: Event, value: number | number[]): void => {
-            if (Array.isArray(value)) {
-                return;
-            }
-
-            const { points, light } = view.settings as Internal.RenderSettingsExt;
-
-            switch (kind) {
-                case AdvancedSetting.PointSize:
-                    setSize(value);
-                    points.size.pixel = value;
-                    return;
-                case AdvancedSetting.MaxPointSize:
-                    setMaxSize(value);
-                    points.size.maxPixel = value;
-                    return;
-                case AdvancedSetting.PointToleranceFactor:
-                    setToleranceFactor(value);
-                    points.size.toleranceFactor = value;
-                    return;
-                case AdvancedSetting.AmbientLight:
-                    setAmbLight(value);
-                    light.ambient.brightness = value;
-                    view.invalidateCamera();
-                    return;
-                case AdvancedSetting.TriangleLimit:
-                    setMaxTris(value);
-                    return;
-            }
-        };
-
-    const handleSliderCommit =
-        (kind: SliderSettings) => (_event: Event | SyntheticEvent<Element, Event>, value: number | number[]) => {
-            if (Array.isArray(value)) {
-                return;
-            }
-
-            switch (kind) {
-                case AdvancedSetting.PointSize:
-                case AdvancedSetting.MaxPointSize:
-                case AdvancedSetting.PointToleranceFactor:
-                case AdvancedSetting.AmbientLight:
-                    dispatch(renderActions.setAdvancedSettings({ [kind]: value }));
-                    return;
-                case AdvancedSetting.TriangleLimit:
-                    (api as any).deviceProfile.triangleLimit = Math.min(value, defaultDeviceProfile.triangleLimit);
-                    dispatch(renderActions.setAdvancedSettings({ [kind]: value }));
-            }
-        };
 
     const showPointSettings = subtrees?.points !== SubtreeStatus.Unavailable;
     const showMeshSettings = subtrees?.triangles !== SubtreeStatus.Unavailable;
@@ -176,18 +67,67 @@ export function RenderSettings({ save, saving }: { save: () => Promise<void>; sa
                 </Box>
             ) : null}
             <ScrollBox height={1} pb={3}>
-                <Box p={1} mt={1}>
+                <Box p={1} display="flex" flexDirection="column">
                     <FormControlLabel
-                        sx={{ ml: 0, mb: 1 }}
-                        control={<Switch name={AdvancedSetting.AutoFps} checked={autoFps} onChange={handleToggle} />}
+                        sx={{ ml: 0, mb: 2 }}
+                        control={
+                            <Switch
+                                checked={advanced.msaa.enabled}
+                                name="msaa"
+                                onChange={(_evt, checked) =>
+                                    dispatch(renderActions.setAdvanced({ msaa: { enabled: checked } }))
+                                }
+                            />
+                        }
                         label={
                             <Box ml={1} fontSize={16}>
-                                Dynamic resolution scaling
+                                Anti-aliasing (MSAA)
                             </Box>
                         }
                     />
-                    <Divider />
+                    <FormControlLabel
+                        sx={{ ml: 0, mb: 1 }}
+                        control={
+                            <Switch
+                                name="toon-outline"
+                                checked={advanced.toonOutline.enabled}
+                                onChange={(_evt, checked) =>
+                                    dispatch(renderActions.setAdvanced({ toonOutline: { enabled: checked } }))
+                                }
+                            />
+                        }
+                        label={
+                            <Box ml={1} fontSize={16}>
+                                Toon outlines
+                            </Box>
+                        }
+                    />
+                    {user?.features?.debugInfo?.boundingBoxes ? (
+                        <FormControlLabel
+                            sx={{ ml: 0, mb: 2 }}
+                            control={
+                                <Switch
+                                    name="debug-bb"
+                                    checked={advanced.debug.showNodeBounds}
+                                    onChange={(_evt, checked) =>
+                                        dispatch(
+                                            renderActions.setAdvanced({
+                                                debug: { showNodeBounds: checked },
+                                            })
+                                        )
+                                    }
+                                />
+                            }
+                            label={
+                                <Box ml={1} fontSize={16}>
+                                    Show node bounds
+                                </Box>
+                            }
+                        />
+                    ) : null}
                 </Box>
+
+                <Divider sx={{ borderColor: theme.palette.grey[300], mb: 2 }} />
                 {showMeshSettings ? (
                     <Accordion>
                         <AccordionSummary>Mesh</AccordionSummary>
@@ -198,7 +138,10 @@ export function RenderSettings({ save, saving }: { save: () => Promise<void>; sa
                                     control={
                                         <Switch
                                             checked={subtrees && subtrees?.triangles === SubtreeStatus.Shown}
-                                            onChange={handleSubtreeToggle("triangles")}
+                                            name="show-triangles"
+                                            onChange={() =>
+                                                dispatch(renderActions.toggleSubtree({ subtree: "triangles" }))
+                                            }
                                         />
                                     }
                                     label={
@@ -207,87 +150,8 @@ export function RenderSettings({ save, saving }: { save: () => Promise<void>; sa
                                         </Box>
                                     }
                                 />
-                                <FormControlLabel
-                                    sx={{ ml: 0, mb: 2 }}
-                                    control={
-                                        <Switch name={AdvancedSetting.Taa} checked={taa} onChange={handleToggle} />
-                                    }
-                                    label={
-                                        <Box ml={1} fontSize={16}>
-                                            Temporal anti-aliasing (TAA)
-                                        </Box>
-                                    }
-                                />
-                                {user?.features?.debugInfo?.boundingBoxes ? (
-                                    <FormControlLabel
-                                        sx={{ ml: 0, mb: 2 }}
-                                        control={
-                                            <Switch
-                                                name={AdvancedSetting.ShowBoundingBoxes}
-                                                checked={showBoundingBoxes}
-                                                onChange={handleToggle}
-                                            />
-                                        }
-                                        label={
-                                            <Box ml={1} fontSize={16}>
-                                                Show bounding boxes
-                                            </Box>
-                                        }
-                                    />
-                                ) : null}
-                                {user?.features?.doubleSided ? (
-                                    <>
-                                        <FormControlLabel
-                                            sx={{ ml: 0, mb: 2 }}
-                                            control={
-                                                <Switch
-                                                    name={AdvancedSetting.DoubleSidedMaterials}
-                                                    checked={doubleSidedMaterials}
-                                                    onChange={handleToggle}
-                                                />
-                                            }
-                                            label={
-                                                <Box ml={1} fontSize={16}>
-                                                    Double sided materials
-                                                </Box>
-                                            }
-                                        />
-                                        <FormControlLabel
-                                            sx={{ ml: 0, mb: 2 }}
-                                            control={
-                                                <Switch
-                                                    name={AdvancedSetting.DoubleSidedTransparentMaterials}
-                                                    checked={doubleSidedTransparentMaterials}
-                                                    onChange={handleToggle}
-                                                />
-                                            }
-                                            label={
-                                                <Box ml={1} fontSize={16}>
-                                                    Double sided transparent materials
-                                                </Box>
-                                            }
-                                        />
-                                    </>
-                                ) : null}
-                                {user?.features?.debugInfo?.holdDynamic ? (
-                                    <FormControlLabel
-                                        sx={{ ml: 0, mb: 2 }}
-                                        control={
-                                            <Switch
-                                                name={AdvancedSetting.HoldDynamic}
-                                                checked={holdDynamic}
-                                                onChange={handleToggle}
-                                            />
-                                        }
-                                        label={
-                                            <Box ml={1} fontSize={16}>
-                                                Hold dynamic
-                                            </Box>
-                                        }
-                                    />
-                                ) : null}
 
-                                <Divider sx={{ borderColor: theme.palette.grey[300], my: 2 }} />
+                                {/* <Divider sx={{ borderColor: theme.palette.grey[300], my: 2 }} />
 
                                 <Box display="flex" sx={{ mb: 0 }} alignItems="center">
                                     <Typography
@@ -304,17 +168,24 @@ export function RenderSettings({ save, saving }: { save: () => Promise<void>; sa
                                         max={20_000_000}
                                         step={500_000}
                                         valueLabelFormat={(value) => value / 1_000_000}
-                                        name={AdvancedSetting.TriangleLimit}
                                         value={maxTris}
                                         valueLabelDisplay="auto"
-                                        onChange={handleSliderChange(AdvancedSetting.TriangleLimit)}
-                                        onChangeCommitted={handleSliderCommit(AdvancedSetting.TriangleLimit)}
+                                        onChange={(_evt, value) =>
+                                            !Array.isArray(value) ? setMaxTris(value) : undefined
+                                        }
+                                        onChangeCommitted={(_evt, value) =>
+                                            !Array.isArray(value)
+                                                ? dispatch(
+                                                      renderActions.setAdvanced({ limits: { maxPrimitives: value } })
+                                                  )
+                                                : undefined
+                                        }
                                     />
                                 </Box>
                                 <FormHelperText>
                                     Value is in millions. Max for this device is{" "}
-                                    {defaultDeviceProfile.triangleLimit / 1_000_000} million.
-                                </FormHelperText>
+                                    {deviceProfile.limits.maxPrimitives / 1_000_000} million.
+                                </FormHelperText> */}
                             </Box>
                         </AccordionDetails>
                     </Accordion>
@@ -328,6 +199,7 @@ export function RenderSettings({ save, saving }: { save: () => Promise<void>; sa
                                     sx={{ ml: 0, mb: 2 }}
                                     control={
                                         <Switch
+                                            name="show-points"
                                             checked={subtrees && subtrees?.points === SubtreeStatus.Shown}
                                             onChange={handleSubtreeToggle("points")}
                                         />
@@ -335,21 +207,6 @@ export function RenderSettings({ save, saving }: { save: () => Promise<void>; sa
                                     label={
                                         <Box ml={1} fontSize={16}>
                                             Show
-                                        </Box>
-                                    }
-                                />
-                                <FormControlLabel
-                                    sx={{ ml: 0, mb: 1 }}
-                                    control={
-                                        <Switch
-                                            name={AdvancedSetting.QualityPoints}
-                                            checked={qualityPoints}
-                                            onChange={handleToggle}
-                                        />
-                                    }
-                                    label={
-                                        <Box ml={1} fontSize={16}>
-                                            Quality points
                                         </Box>
                                     }
                                 />
@@ -370,11 +227,14 @@ export function RenderSettings({ save, saving }: { save: () => Promise<void>; sa
                                         min={0}
                                         max={2}
                                         step={0.1}
-                                        name={AdvancedSetting.PointSize}
                                         value={size}
                                         valueLabelDisplay="auto"
-                                        onChange={handleSliderChange(AdvancedSetting.PointSize)}
-                                        onChangeCommitted={handleSliderCommit(AdvancedSetting.PointSize)}
+                                        onChange={(_evt, value) => (!Array.isArray(value) ? setSize(value) : undefined)}
+                                        onChangeCommitted={(_evt, value) =>
+                                            !Array.isArray(value)
+                                                ? dispatch(renderActions.setPoints({ size: { pixel: value } }))
+                                                : undefined
+                                        }
                                     />
                                 </Box>
                                 <Box display="flex" sx={{ mb: 2 }} alignItems="center">
@@ -391,11 +251,16 @@ export function RenderSettings({ save, saving }: { save: () => Promise<void>; sa
                                         min={1}
                                         max={100}
                                         step={1}
-                                        name={AdvancedSetting.MaxPointSize}
                                         value={maxSize}
                                         valueLabelDisplay="auto"
-                                        onChange={handleSliderChange(AdvancedSetting.MaxPointSize)}
-                                        onChangeCommitted={handleSliderCommit(AdvancedSetting.MaxPointSize)}
+                                        onChange={(_evt, value) =>
+                                            !Array.isArray(value) ? setMaxSize(value) : undefined
+                                        }
+                                        onChangeCommitted={(_evt, value) =>
+                                            !Array.isArray(value)
+                                                ? dispatch(renderActions.setPoints({ size: { maxPixel: value } }))
+                                                : undefined
+                                        }
                                     />
                                 </Box>
                                 <Box display="flex" alignItems="center">
@@ -405,18 +270,25 @@ export function RenderSettings({ save, saving }: { save: () => Promise<void>; sa
                                             flexShrink: 0,
                                         }}
                                     >
-                                        Pt. tolerance factor
+                                        Tolerance factor
                                     </Typography>
                                     <Slider
                                         sx={{ mx: 2, flex: "1 1 100%" }}
                                         min={0}
                                         max={2}
                                         step={0.05}
-                                        name={AdvancedSetting.PointToleranceFactor}
                                         value={toleranceFactor}
                                         valueLabelDisplay="auto"
-                                        onChange={handleSliderChange(AdvancedSetting.PointToleranceFactor)}
-                                        onChangeCommitted={handleSliderCommit(AdvancedSetting.PointToleranceFactor)}
+                                        onChange={(_evt, value) =>
+                                            !Array.isArray(value) ? setToleranceFactor(value) : undefined
+                                        }
+                                        onChangeCommitted={(_evt, value) =>
+                                            !Array.isArray(value)
+                                                ? dispatch(
+                                                      renderActions.setPoints({ size: { toleranceFactor: value } })
+                                                  )
+                                                : undefined
+                                        }
                                     />
                                 </Box>
                             </Box>
@@ -432,6 +304,7 @@ export function RenderSettings({ save, saving }: { save: () => Promise<void>; sa
                                     sx={{ ml: 0 }}
                                     control={
                                         <Switch
+                                            name="show-lines"
                                             checked={subtrees && subtrees?.lines === SubtreeStatus.Shown}
                                             onChange={handleSubtreeToggle("lines")}
                                         />
@@ -455,6 +328,7 @@ export function RenderSettings({ save, saving }: { save: () => Promise<void>; sa
                                     sx={{ ml: 0, mb: 2 }}
                                     control={
                                         <Switch
+                                            name="show-terrain"
                                             checked={subtrees && subtrees?.terrain === SubtreeStatus.Shown}
                                             onChange={handleSubtreeToggle("terrain")}
                                         />
@@ -469,14 +343,16 @@ export function RenderSettings({ save, saving }: { save: () => Promise<void>; sa
                                     sx={{ ml: 0, mb: 1 }}
                                     control={
                                         <Switch
-                                            name={AdvancedSetting.TerrainAsBackground}
-                                            checked={terrainAsBackground}
-                                            onChange={handleToggle}
+                                            name="terrain-as-background"
+                                            checked={terrain.asBackground}
+                                            onChange={(_evt, checked) =>
+                                                dispatch(renderActions.setTerrain({ asBackground: checked }))
+                                            }
                                         />
                                     }
                                     label={
                                         <Box ml={1} fontSize={16}>
-                                            Render terrain as background
+                                            Render as background
                                         </Box>
                                     }
                                 />
@@ -493,6 +369,7 @@ export function RenderSettings({ save, saving }: { save: () => Promise<void>; sa
                                     sx={{ ml: 0 }}
                                     control={
                                         <Switch
+                                            name="show-documents"
                                             checked={subtrees && subtrees?.documents === SubtreeStatus.Shown}
                                             onChange={handleSubtreeToggle("documents")}
                                         />
@@ -511,18 +388,6 @@ export function RenderSettings({ save, saving }: { save: () => Promise<void>; sa
                     <AccordionSummary>Light</AccordionSummary>
                     <AccordionDetails>
                         <Box p={1} display="flex" flexDirection="column">
-                            <FormControlLabel
-                                sx={{ ml: 0, mb: 1 }}
-                                control={<Switch name={AdvancedSetting.Ssao} checked={ssao} onChange={handleToggle} />}
-                                label={
-                                    <Box ml={1} fontSize={16}>
-                                        Screen space ambient occlusion (SSAO)
-                                    </Box>
-                                }
-                            />
-
-                            <Divider sx={{ borderColor: theme.palette.grey[300], mb: 2 }} />
-
                             <Box display="flex" alignItems="center">
                                 <Typography
                                     sx={{
@@ -530,18 +395,23 @@ export function RenderSettings({ save, saving }: { save: () => Promise<void>; sa
                                         flexShrink: 0,
                                     }}
                                 >
-                                    Ambient light
+                                    Light exposure
                                 </Typography>
                                 <Slider
                                     sx={{ mx: 2, flex: "1 1 100%" }}
                                     min={0}
                                     max={1}
                                     step={0.01}
-                                    name={AdvancedSetting.AmbientLight}
-                                    value={ambLight}
+                                    value={lightExposure}
                                     valueLabelDisplay="auto"
-                                    onChange={handleSliderChange(AdvancedSetting.AmbientLight)}
-                                    onChangeCommitted={handleSliderCommit(AdvancedSetting.AmbientLight)}
+                                    onChange={(_evt, value) =>
+                                        !Array.isArray(value) ? setLightExposure(value) : undefined
+                                    }
+                                    onChangeCommitted={(_evt, value) =>
+                                        !Array.isArray(value)
+                                            ? dispatch(renderActions.setAdvanced({ tonemapping: { exposure: value } }))
+                                            : undefined
+                                    }
                                 />
                             </Box>
                         </Box>

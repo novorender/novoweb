@@ -1,9 +1,11 @@
-import { vec3 } from "gl-matrix";
-import { ManholeMeasureValues, MeasureEntity, MeasureSettings } from "@novorender/measure-api";
-import { createSlice, PayloadAction } from "@reduxjs/toolkit";
 import { Bookmark } from "@novorender/data-js-api";
+import { ManholeMeasureValues, MeasureEntity, MeasureSettings } from "@novorender/measure-api";
+import { PayloadAction, createSlice } from "@reduxjs/toolkit";
+import { vec3 } from "gl-matrix";
 
 import { RootState } from "app/store";
+import { resetView, selectBookmark } from "features/render";
+import { flip } from "features/render/utils";
 
 const initialState = {
     selectedId: undefined as number | undefined,
@@ -29,13 +31,17 @@ export const manholeSlice = createSlice({
                 state.collisionTarget = undefined;
             }
         },
-        initFromBookmark: (state, action: PayloadAction<Bookmark["manhole"]>) => {
+        // legacy
+        initFromLegacyBookmark: (state, action: PayloadAction<Bookmark["manhole"]>) => {
             if (!action.payload) {
                 return initialState;
             }
 
             state.selectedId = action.payload.id;
             state.collisionTarget = action.payload.collisionTarget;
+            if (state.collisionTarget?.selected) {
+                state.collisionTarget.selected.pos = flip(state.collisionTarget.selected.pos);
+            }
             state.collisionSettings = action.payload.collisionSettings;
         },
         setManholeValues: (state, action: PayloadAction<State["measureValues"]>) => {
@@ -60,6 +66,21 @@ export const manholeSlice = createSlice({
                 state.collisionSettings = action.payload;
             }
         },
+    },
+    extraReducers(builder) {
+        builder.addCase(selectBookmark, (state, action) => {
+            state.selectedId = action.payload.measurements.manhole.id;
+            if (state.selectedId) {
+                state.collisionTarget = action.payload.measurements.manhole.collisionTarget;
+                state.collisionSettings = action.payload.measurements.manhole.collisionSettings;
+            } else {
+                state.collisionTarget = undefined;
+            }
+        });
+        builder.addCase(resetView, (state) => {
+            state.selectedId = undefined;
+            state.collisionTarget = undefined;
+        });
     },
 });
 

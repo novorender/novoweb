@@ -1,9 +1,8 @@
 import { Search } from "@mui/icons-material";
-import { Menu, MenuItem, InputAdornment, Typography, Checkbox, MenuProps, useTheme } from "@mui/material";
-
-import { TextField } from "components";
+import { Checkbox, InputAdornment, Menu, MenuItem, MenuProps, Typography, useTheme } from "@mui/material";
 
 import { useAppDispatch, useAppSelector } from "app/store";
+import { TextField } from "components";
 import { selectUser } from "slices/authSlice";
 
 import { bookmarksActions, selectBookmarkFilters } from "./bookmarksSlice";

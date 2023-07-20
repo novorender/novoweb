@@ -1,24 +1,25 @@
-import { Box, Button, FormControlLabel } from "@mui/material";
 import { MyLocation as MyLocationIcon } from "@mui/icons-material";
+import { Box, Button, FormControlLabel } from "@mui/material";
 import { vec3 } from "gl-matrix";
 
 import { dataApi } from "app";
+import { useAppDispatch, useAppSelector } from "app/store";
 import { IosSwitch, LinearProgress, LogoSpeedDial, ScrollBox, WidgetContainer, WidgetHeader } from "components";
 import { featuresConfig } from "config/features";
+import { useExplorerGlobals } from "contexts/explorerGlobals";
+import { renderActions, selectCameraType, selectProjectSettings } from "features/render";
+import { flip } from "features/render/utils";
 import WidgetList from "features/widgetList/widgetList";
 import { useToggle } from "hooks/useToggle";
-import { useExplorerGlobals } from "contexts/explorerGlobals";
-import { useAppDispatch, useAppSelector } from "app/store";
-import { renderActions, selectCameraType, selectProjectSettings } from "features/render/renderSlice";
-import { selectMinimized, selectMaximized } from "slices/explorerSlice";
+import { selectMaximized, selectMinimized } from "slices/explorerSlice";
 
 import {
-    myLocationActions,
-    selectShowLocationMarker,
     LocationStatus,
-    selectLocationStatus,
+    myLocationActions,
     selectCurrentLocation,
     selectLocationAccuracy,
+    selectLocationStatus,
+    selectShowLocationMarker,
 } from "./myLocationSlice";
 
 export default function MyLocation() {
@@ -44,7 +45,7 @@ export default function MyLocation() {
                     type: cameraType,
                     goTo: {
                         position: currentLocation,
-                        rotation: view.camera.rotation,
+                        rotation: view.renderState.camera.rotation,
                     },
                 })
             );
@@ -58,11 +59,12 @@ export default function MyLocation() {
             timeout: 30000,
         });
 
-        function handlePositionSuccess(pos: GeolocationPosition) {
-            const scenePos = dataApi.latLon2tm(pos.coords, tmZone);
+        function handlePositionSuccess(geoPos: GeolocationPosition) {
+            const position = flip(dataApi.latLon2tm(geoPos.coords, tmZone));
+            position[2] = geoPos.coords.altitude ?? view.renderState.camera.position[2];
             const outOfBounds =
-                vec3.dist(scenePos, scene.boundingSphere.center) >
-                scene.boundingSphere.radius + pos.coords.accuracy * 2;
+                vec3.dist(position, scene.boundingSphere.center) >
+                scene.boundingSphere.radius + geoPos.coords.accuracy * 2;
 
             if (outOfBounds) {
                 dispatch(
@@ -79,13 +81,13 @@ export default function MyLocation() {
                 renderActions.setCamera({
                     type: cameraType,
                     goTo: {
-                        position: [scenePos[0], pos.coords.altitude ?? view.camera.position[1], scenePos[2]],
-                        rotation: view.camera.rotation,
+                        position,
+                        rotation: view.renderState.camera.rotation,
                     },
                 })
             );
 
-            dispatch(myLocationActions.setAccuracy(pos.coords.accuracy));
+            dispatch(myLocationActions.setAccuracy(geoPos.coords.accuracy));
             dispatch(myLocationActions.setSatus({ status: LocationStatus.Idle }));
         }
 
@@ -113,6 +115,7 @@ export default function MyLocation() {
                                 disabled={!tmZone}
                                 control={
                                     <IosSwitch
+                                        name="show location marker"
                                         size="medium"
                                         color="primary"
                                         checked={showMarker}

@@ -1,5 +1,5 @@
+import { PayloadAction, createSlice } from "@reduxjs/toolkit";
 import { quat, vec3 } from "gl-matrix";
-import { createSlice, PayloadAction } from "@reduxjs/toolkit";
 
 import { RootState } from "app/store";
 import { AsyncState, AsyncStatus } from "types/misc";

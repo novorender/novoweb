@@ -1,4 +1,4 @@
-import { Table, TableHead, TableRow, Box, TableBody } from "@mui/material";
+import { Box, Table, TableBody, TableHead, TableRow } from "@mui/material";
 import { ReadonlyVec3 } from "gl-matrix";
 
 import { TableCell } from "components";
@@ -30,9 +30,11 @@ export function VertexTable({ vertices, text }: { vertices: ReadonlyVec3[]; text
                 {vertices.map((p, i) => (
                     <TableRow key={i}>
                         <TableCell> {text && text.length > i ? text[i] : "Vertex"}</TableCell>
-                        <TableCell align="right">{p[0].toFixed(3)}</TableCell>
-                        <TableCell align="right">{-p[2].toFixed(3)}</TableCell>
-                        <TableCell align="right">{p[1].toFixed(3)}</TableCell>
+                        {p.map((v, idx) => (
+                            <TableCell key={idx} align="right">
+                                {v.toFixed(3)}
+                            </TableCell>
+                        ))}
                     </TableRow>
                 ))}
             </TableBody>

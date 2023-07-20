@@ -3,14 +3,13 @@ import { createApi, fetchBaseQuery } from "@reduxjs/toolkit/query/react";
 import { RootState } from "app/store";
 import { StorageKey } from "config/storage";
 import { AsyncStatus } from "types/misc";
-
 import { getFromStorage } from "utils/storage";
-import { FeedFilters } from "./slice";
 
+import { FeedFilters } from "./slice";
 import { AuthConfig, Post, Project, RawPost } from "./types";
 
 export const identityServer = "https://identity.ditio.no/";
-export const baseUrl = import.meta.env.NODE_ENV === "development" ? "/ditio" : "https://ditio-api-v3.azurewebsites.net";
+export const baseUrl = "/ditio";
 
 export const ditioClientId = window.ditioClientId || import.meta.env.REACT_APP_DITIO_CLIENT_ID || "";
 const clientSecret = window.ditioClientSecret || import.meta.env.REACT_APP_DITIO_CLIENT_SECRET || "";

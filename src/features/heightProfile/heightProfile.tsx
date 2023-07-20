@@ -1,5 +1,4 @@
-import { useEffect, useState } from "react";
-import { MeasureError, Profile } from "@novorender/measure-api";
+import { Close, DeleteSweep, Timeline } from "@mui/icons-material";
 import {
     Box,
     Button,
@@ -13,8 +12,9 @@ import {
     Typography,
     useTheme,
 } from "@mui/material";
+import { MeasureError, Profile } from "@novorender/measure-api";
 import { ParentSizeModern } from "@visx/responsive";
-import { Close, DeleteSweep, Timeline } from "@mui/icons-material";
+import { useEffect, useState } from "react";
 
 import { useAppDispatch, useAppSelector } from "app/store";
 import {
@@ -26,15 +26,15 @@ import {
     WidgetContainer,
     WidgetHeader,
 } from "components";
-import { useToggle } from "hooks/useToggle";
 import { featuresConfig } from "config/features";
-import WidgetList from "features/widgetList/widgetList";
-import { selectMinimized, selectMaximized } from "slices/explorerSlice";
 import { useExplorerGlobals } from "contexts/explorerGlobals";
-import { AsyncState, AsyncStatus, hasFinished } from "types/misc";
 import { highlightActions, useDispatchHighlighted, useHighlighted } from "contexts/highlighted";
-import { Picker, renderActions, selectPicker } from "features/render/renderSlice";
 import { singleCylinderOptions } from "features/measure";
+import { Picker, renderActions, selectPicker } from "features/render/renderSlice";
+import WidgetList from "features/widgetList/widgetList";
+import { useToggle } from "hooks/useToggle";
+import { selectMaximized, selectMinimized } from "slices/explorerSlice";
+import { AsyncState, AsyncStatus, hasFinished } from "types/misc";
 
 import { HeightProfileChart } from "./heightProfileChart";
 import {

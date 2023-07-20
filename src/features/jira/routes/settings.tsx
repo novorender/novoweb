@@ -1,27 +1,28 @@
-import { Autocomplete, Box, Button, CircularProgress, Typography, useTheme } from "@mui/material";
-import { LoadingButton } from "@mui/lab";
-import { useHistory } from "react-router-dom";
-import { FormEventHandler, SyntheticEvent, useState } from "react";
-import { SceneData } from "@novorender/data-js-api";
 import { ArrowBack } from "@mui/icons-material";
+import { LoadingButton } from "@mui/lab";
+import { Autocomplete, Box, Button, CircularProgress, Typography, useTheme } from "@mui/material";
+import { FormEventHandler, SyntheticEvent, useState } from "react";
+import { useHistory } from "react-router-dom";
 
 import { dataApi } from "app";
-import { selectIsAdminScene } from "slices/explorerSlice";
-import { useExplorerGlobals } from "contexts/explorerGlobals";
 import { useAppDispatch, useAppSelector } from "app/store";
-import { AsyncState, AsyncStatus } from "types/misc";
-import { renderActions, selectProjectSettings } from "features/render/renderSlice";
 import { Divider, ScrollBox, TextField } from "components";
+import { useExplorerGlobals } from "contexts/explorerGlobals";
+import { loadScene } from "features/render/hooks/useHandleInit";
+import { selectIsAdminScene } from "slices/explorerSlice";
+import { AsyncState, AsyncStatus } from "types/misc";
+import { mergeRecursive } from "utils/misc";
 
-import { Component, Project, Space } from "../types";
+import { useGetAccessibleResourcesQuery, useGetComponentsQuery, useGetProjectsQuery } from "../jiraApi";
 import {
     jiraActions,
     selectJiraAccessTokenData,
     selectJiraComponent,
+    selectJiraConfig,
     selectJiraProject,
     selectJiraSpace,
 } from "../jiraSlice";
-import { useGetAccessibleResourcesQuery, useGetComponentsQuery, useGetProjectsQuery } from "../jiraApi";
+import { Component, Project, Space } from "../types";
 
 export function Settings({ sceneId }: { sceneId: string }) {
     const history = useHistory();
@@ -32,7 +33,7 @@ export function Settings({ sceneId }: { sceneId: string }) {
 
     const dispatch = useAppDispatch();
     const isAdminScene = useAppSelector(selectIsAdminScene);
-    const { jira: settings } = useAppSelector(selectProjectSettings);
+    const config = useAppSelector(selectJiraConfig);
     const accessToken = useAppSelector(selectJiraAccessTokenData);
     const currentProject = useAppSelector(selectJiraProject);
     const currentSpace = useAppSelector(selectJiraSpace);
@@ -47,7 +48,7 @@ export function Settings({ sceneId }: { sceneId: string }) {
         currentSpace
             ? currentSpace
             : accessibleResources
-            ? accessibleResources.find((resource) => resource.name === settings?.space) ?? accessibleResources[0]
+            ? accessibleResources.find((resource) => resource.name === config?.space) ?? accessibleResources[0]
             : null
     );
     const [project, setProject] = useState<Project | null>(currentProject ?? null);
@@ -91,36 +92,30 @@ export function Settings({ sceneId }: { sceneId: string }) {
         }
 
         setSaving({ status: AsyncStatus.Loading });
-        const jiraSettings = {
+        const configToSave = {
             space: space.name,
             project: project.key,
             component: component.name,
         };
 
-        dispatch(
-            renderActions.setProjectSettings({
-                jira: jiraSettings,
-            })
-        );
+        dispatch(jiraActions.setConfig(configToSave));
         dispatch(jiraActions.setSpace(space));
         dispatch(jiraActions.setProject(project));
         dispatch(jiraActions.setComponent(component));
 
         try {
-            const {
-                url: _url,
-                customProperties = {},
-                ...originalScene
-            } = (await dataApi.loadScene(sceneId)) as SceneData;
+            const [originalScene] = await loadScene(sceneId);
 
-            dataApi.putScene({
-                ...originalScene,
+            const updated = mergeRecursive(originalScene, {
                 url: isAdminScene ? scene.id : `${sceneId}:${scene.id}`,
                 customProperties: {
-                    ...customProperties,
-                    jiraSettings,
+                    integrations: {
+                        jira: configToSave,
+                    },
                 },
             });
+
+            dataApi.putScene(updated);
         } catch {
             console.warn("Failed to save Jira settings.");
         }

@@ -11,7 +11,7 @@ import {
     useState,
 } from "react";
 
-import { VecRGB, VecRGBA } from "utils/color";
+import { VecRGBA } from "utils/color";
 import { toIdObj, toIdArr } from "utils/objectData";
 
 // Highlighted/hidden/objectgroups may end up having huge (1M+) collections of objectIds and receive a lot of back-to-back state updates.
@@ -20,7 +20,7 @@ import { toIdObj, toIdArr } from "utils/objectData";
 const initialState = {
     ids: {} as Record<ObjectId, true | undefined>,
     idArr: [] as ObjectId[],
-    color: [1, 0, 0, 1] as VecRGB | VecRGBA,
+    color: [1, 0, 0, 1] as VecRGBA,
 };
 
 type State = typeof initialState;
@@ -70,7 +70,7 @@ function set(payload: { color: State["color"]; ids: ObjectId[] }) {
 
 const actions = { add, remove, setIds, setColor, set };
 
-type Actions = ReturnType<typeof actions[keyof typeof actions]>;
+type Actions = ReturnType<(typeof actions)[keyof typeof actions]>;
 type DispatchHighlighted = Dispatch<Actions>;
 type LazyState = MutableRefObject<State>;
 

@@ -1,14 +1,14 @@
+import { Settings } from "@mui/icons-material";
 import { Box, ListItemIcon, ListItemText, Menu, MenuItem, MenuProps } from "@mui/material";
 import { MemoryRouter, Route, Switch, matchPath, useHistory, useLocation } from "react-router-dom";
-import { Settings } from "@mui/icons-material";
 
-import { WidgetContainer, WidgetHeader, LogoSpeedDial } from "components";
 import { useAppSelector } from "app/store";
-import { useToggle } from "hooks/useToggle";
+import { LogoSpeedDial, WidgetContainer, WidgetHeader } from "components";
 import { featuresConfig } from "config/features";
-import { selectHasAdminCapabilities, selectMaximized, selectMinimized } from "slices/explorerSlice";
 import WidgetList from "features/widgetList/widgetList";
 import { useSceneId } from "hooks/useSceneId";
+import { useToggle } from "hooks/useToggle";
+import { selectHasAdminCapabilities, selectMaximized, selectMinimized } from "slices/explorerSlice";
 
 import { Root } from "./routes/root";
 import { StampSettings } from "./routes/stampSettings";

@@ -1,6 +1,7 @@
 import { createSlice, PayloadAction } from "@reduxjs/toolkit";
 
 import { RootState } from "app/store";
+import { initScene } from "features/render";
 import { AsyncState, AsyncStatus } from "types/misc";
 
 import { MachineLocation, Site } from "./types";
@@ -14,6 +15,9 @@ export enum LogPointTime {
 }
 
 const initialState = {
+    config: {
+        siteId: "",
+    },
     accessToken: { status: AsyncStatus.Initial } as AsyncState<string>,
     refreshToken: undefined as undefined | { token: string; refreshIn: number },
     site: undefined as undefined | Site,
@@ -76,6 +80,9 @@ export const xsiteManageSlice = createSlice({
         setClickedMarker: (state, action: PayloadAction<State["clickedMachineMarker"]>) => {
             state.clickedMachineMarker = action.payload;
         },
+        setConfig: (state, action: PayloadAction<State["config"]>) => {
+            state.config = action.payload;
+        },
         setHoveredMachine: (state, action: PayloadAction<State["hoveredMachine"]>) => {
             state.hoveredMachine = action.payload;
         },
@@ -97,6 +104,17 @@ export const xsiteManageSlice = createSlice({
             }
         },
     },
+    extraReducers(builder) {
+        builder.addCase(initScene, (state, action) => {
+            const props = action.payload.sceneData.customProperties;
+
+            if (props.integrations?.xsiteManage) {
+                state.config = props.integrations.xsiteManage;
+            } else if (props.xsiteManageSettings) {
+                state.config = props.xsiteManageSettings;
+            }
+        });
+    },
 });
 
 export const selectXsiteManageAccessToken = (state: RootState) => state.xsiteManage.accessToken;
@@ -114,6 +132,7 @@ export const selectXsiteManageMachinesScrollOffset = (state: RootState) => state
 export const selectXsiteManageShowMachineMarkers = (state: RootState) => state.xsiteManage.showMachineMarkers;
 export const selectXsiteManageHoveredMachine = (state: RootState) => state.xsiteManage.hoveredMachine;
 export const selectXsiteManageShowLogPointMarkers = (state: RootState) => state.xsiteManage.showLogPointMarkers;
+export const selectXsiteManageConfig = (state: RootState) => state.xsiteManage.config;
 
 const { actions, reducer } = xsiteManageSlice;
 export { actions as xsiteManageActions, reducer as xsiteManageReducer };

@@ -1,14 +1,14 @@
 import { vec3 } from "gl-matrix";
-import { useEffect, useCallback } from "react";
+import { useCallback, useEffect } from "react";
 
-import { selectImages, selectShowImageMarkers } from "features/images";
 import { measureApi } from "app";
-import { useDitioMarkers } from "features/ditio";
 import { useAppSelector } from "app/store";
+import { useExplorerGlobals } from "contexts/explorerGlobals";
+import { useDitioMarkers } from "features/ditio";
+import { selectImages, selectShowImageMarkers } from "features/images";
 import { selectCurrentLocation } from "features/myLocation";
 import { useXsiteManageLogPointMarkers, useXsiteManageMachineMarkers } from "features/xsiteManage";
 import { AsyncStatus } from "types/misc";
-import { useExplorerGlobals } from "contexts/explorerGlobals";
 
 export function useMoveMarkers(svg: SVGSVGElement | null) {
     const {
@@ -28,7 +28,9 @@ export function useMoveMarkers(svg: SVGSVGElement | null) {
         }
 
         if (myLocationPoint !== undefined) {
-            const myLocationPt = (measureApi.toMarkerPoints(view, [myLocationPoint]) ?? [])[0];
+            const myLocationPt = (measureApi.toMarkerPoints(size.width, size.height, view.renderState.camera, [
+                myLocationPoint,
+            ]) ?? [])[0];
             if (myLocationPt) {
                 const marker = svg.children.namedItem("myLocationPoint");
 
@@ -41,7 +43,9 @@ export function useMoveMarkers(svg: SVGSVGElement | null) {
 
         (
             measureApi.toMarkerPoints(
-                view,
+                size.width,
+                size.height,
+                view.renderState.camera,
                 logPoints.map((lpt) => vec3.fromValues(lpt.x, lpt.y, lpt.z))
             ) ?? []
         ).forEach((pos, idx) => {
@@ -53,7 +57,9 @@ export function useMoveMarkers(svg: SVGSVGElement | null) {
         if (showImageMarkers && images.status === AsyncStatus.Success) {
             (
                 measureApi.toMarkerPoints(
-                    view,
+                    size.width,
+                    size.height,
+                    view.renderState.camera,
                     images.data.map((image) => image.position)
                 ) ?? []
             ).forEach((pos, idx) => {
@@ -68,7 +74,9 @@ export function useMoveMarkers(svg: SVGSVGElement | null) {
 
         (
             measureApi.toMarkerPoints(
-                view,
+                size.width,
+                size.height,
+                view.renderState.camera,
                 ditioPostMarkers.map((marker) => marker.position)
             ) ?? []
         ).forEach((pos, idx) => {
@@ -79,7 +87,9 @@ export function useMoveMarkers(svg: SVGSVGElement | null) {
 
         (
             measureApi.toMarkerPoints(
-                view,
+                size.width,
+                size.height,
+                view.renderState.camera,
                 ditioImgMarkers.map((marker) => marker.position)
             ) ?? []
         ).forEach((pos, idx) => {
@@ -90,7 +100,9 @@ export function useMoveMarkers(svg: SVGSVGElement | null) {
 
         (
             measureApi.toMarkerPoints(
-                view,
+                size.width,
+                size.height,
+                view.renderState.camera,
                 machineLocationMarkers.map((marker) => marker.position)
             ) ?? []
         ).forEach((pos, idx) => {

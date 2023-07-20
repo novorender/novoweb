@@ -17,7 +17,7 @@ export const sorting = [
     featuresConfig.measure.key,
     featuresConfig.shareLink.key,
     featuresConfig.clippingPlanes.key,
-    featuresConfig.clippingBox.key,
+    // featuresConfig.clippingBox.key,
     featuresConfig.orthoCam.key,
     featuresConfig.images.key,
     featuresConfig.propertyTree.key,

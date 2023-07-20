@@ -1,12 +1,12 @@
-import { useState } from "react";
-import { useTheme, Box, Typography, CircularProgress } from "@mui/material";
 import { LoadingButton } from "@mui/lab";
+import { Box, CircularProgress, Typography, useTheme } from "@mui/material";
+import { useState } from "react";
 import { v4 as uuidv4 } from "uuid";
 
 import { ScrollBox } from "components";
 import { featuresConfig } from "config/features";
-import { createOAuthStateString } from "utils/auth";
 import { useCreateBookmark } from "features/bookmarks/useCreateBookmark";
+import { createOAuthStateString } from "utils/auth";
 
 import { jiraClientId, jiraIdentityServer } from "../jiraApi";
 

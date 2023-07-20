@@ -1,15 +1,15 @@
-import { useHistory, useParams } from "react-router-dom";
-import { Box, Button, Typography, useTheme } from "@mui/material";
 import { ArrowBack, LocationOnOutlined } from "@mui/icons-material";
+import { Box, Button, Typography, useTheme } from "@mui/material";
+import { useHistory, useParams } from "react-router-dom";
 
-import { LinearProgress, ScrollBox, Divider } from "components";
 import { useAppDispatch, useAppSelector } from "app/store";
-import { CameraType, renderActions } from "features/render/renderSlice";
-import { useExplorerGlobals } from "contexts/explorerGlobals";
+import { Divider, LinearProgress, ScrollBox } from "components";
 import { featuresConfig } from "config/features";
+import { useExplorerGlobals } from "contexts/explorerGlobals";
+import { CameraType, renderActions } from "features/render/renderSlice";
 
-import { selectXsiteManageSite } from "../slice";
 import { useGetAllLogPointsQuery } from "../api";
+import { selectXsiteManageSite } from "../slice";
 
 export function LogPoint() {
     const theme = useTheme();
@@ -40,10 +40,10 @@ export function LogPoint() {
 
         dispatch(
             renderActions.setCamera({
-                type: CameraType.Flight,
+                type: CameraType.Pinhole,
                 goTo: {
                     position: [pt.x, pt.y, pt.z],
-                    rotation: view.camera.rotation,
+                    rotation: view.renderState.camera.rotation,
                 },
             })
         );

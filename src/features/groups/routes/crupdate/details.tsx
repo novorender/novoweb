@@ -1,13 +1,19 @@
-import { ObjectId, SearchPattern } from "@novorender/webgl-api";
-import { useHistory } from "react-router-dom";
-import { FormEventHandler, useState } from "react";
 import { ArrowBack } from "@mui/icons-material";
 import { Autocomplete, Box, Button, useTheme } from "@mui/material";
+import { ObjectId, SearchPattern } from "@novorender/webgl-api";
+import { FormEventHandler, useState } from "react";
+import { useHistory } from "react-router-dom";
 import { v4 as uuidv4 } from "uuid";
 
 import { Divider, ScrollBox, TextField } from "components";
-import { ObjectGroup, objectGroupsActions, useObjectGroups, useDispatchObjectGroups } from "contexts/objectGroups";
 import { highlightActions, useDispatchHighlighted } from "contexts/highlighted";
+import {
+    GroupStatus,
+    ObjectGroup,
+    objectGroupsActions,
+    useDispatchObjectGroups,
+    useObjectGroups,
+} from "contexts/objectGroups";
 
 export function Details({
     savedInputs,
@@ -69,12 +75,11 @@ export function Details({
     const createGroup = () => {
         const newGroup: ObjectGroup = {
             name,
-            ids,
             includeDescendants,
+            ids: new Set(ids),
             grouping: collection,
             id: uuidv4(),
-            selected: true,
-            hidden: false,
+            status: GroupStatus.Selected,
             search: [...savedInputs],
             color: [1, 0, 0, 1],
             opacity: 0,
@@ -91,9 +96,9 @@ export function Details({
 
         dispatchObjectGroups(
             objectGroupsActions.update(groupToEdit.id, {
-                ids,
                 name,
                 includeDescendants,
+                ids: new Set(ids),
                 grouping: collection,
                 search: [...savedInputs],
             })

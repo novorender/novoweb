@@ -1,1 +1,1 @@
-export { ShareLink, getDataFromUrlHash } from "./shareLink";
+export { ShareLink } from "./shareLink";
