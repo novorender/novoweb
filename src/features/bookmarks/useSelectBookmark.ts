@@ -1,6 +1,6 @@
 import { Bookmark } from "@novorender/data-js-api";
-import { ClippingMode, rotationFromDirection } from "@novorender/web_app";
-import { vec4 } from "gl-matrix";
+import { ClippingMode } from "@novorender/web_app";
+import { mat3, quat, vec4 } from "gl-matrix";
 import { useCallback } from "react";
 
 import { dataApi } from "app";
@@ -368,6 +368,11 @@ export function useSelectBookmark() {
             }
 
             if (bookmark.ortho?.referenceCoordSys) {
+                const m = bookmark.ortho.referenceCoordSys;
+                const q = quat.fromMat3(
+                    quat.create(),
+                    mat3.fromValues(m[0], m[1], m[2], m[4], m[5], m[6], m[8], m[9], m[10])
+                );
                 dispatch(
                     renderActions.setCamera({
                         type: CameraType.Orthographic,
@@ -377,13 +382,7 @@ export function useSelectBookmark() {
                                 bookmark.ortho.referenceCoordSys[13],
                                 bookmark.ortho.referenceCoordSys[14],
                             ]),
-                            rotation: rotationFromDirection(
-                                flip([
-                                    bookmark.ortho.referenceCoordSys[8],
-                                    bookmark.ortho.referenceCoordSys[9],
-                                    bookmark.ortho.referenceCoordSys[10],
-                                ])
-                            ),
+                            rotation: flipGLtoCadQuat(q),
                             fov: bookmark.ortho.fieldOfView,
                             far: bookmark.ortho.far,
                         },
