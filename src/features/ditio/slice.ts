@@ -1,6 +1,7 @@
 import { createSlice, PayloadAction } from "@reduxjs/toolkit";
 
 import { RootState } from "app/store";
+import { initScene } from "features/render";
 import { AsyncState, AsyncStatus } from "types/misc";
 
 import { AuthConfig, Project } from "./types";
@@ -19,10 +20,13 @@ export enum FilterType {
 }
 
 const initialState = {
+    config: {
+        projectNumber: "",
+    },
     authConfig: undefined as AuthConfig | undefined,
     accessToken: { status: AsyncStatus.Initial } as AsyncState<string>,
     refreshToken: undefined as undefined | { token: string; refreshIn: number },
-    showMarkers: false,
+    showMarkers: true,
     clickedMarker: "",
     lastViewedPath: "/",
     project: undefined as undefined | Project,
@@ -33,6 +37,9 @@ const initialState = {
         [FilterType.DateFrom]: "",
         [FilterType.DateTo]: "",
     },
+    activePost: "",
+    activeImg: "",
+    hoveredEntity: undefined as { kind: "post" | "image"; id: string } | undefined,
 };
 
 export const initialFilters = initialState.filters;
@@ -75,12 +82,35 @@ export const ditioSlice = createSlice({
         setFilters: (state, action: PayloadAction<Partial<FeedFilters>>) => {
             state.filters = { ...state.filters, ...action.payload };
         },
+        setActivePost: (state, action: PayloadAction<State["activePost"]>) => {
+            state.activePost = action.payload;
+        },
+        setActiveImg: (state, action: PayloadAction<State["activeImg"]>) => {
+            state.activeImg = action.payload;
+        },
+        setHoveredEntity: (state, action: PayloadAction<State["hoveredEntity"]>) => {
+            state.hoveredEntity = action.payload;
+        },
+        setConfig: (state, action: PayloadAction<State["config"]>) => {
+            state.config = action.payload;
+        },
         resetFilters: (state) => {
             state.filters = initialFilters;
         },
         logOut: () => {
             return initialState;
         },
+    },
+    extraReducers(builder) {
+        builder.addCase(initScene, (state, action) => {
+            const props = action.payload.sceneData.customProperties;
+
+            if (props.integrations?.ditio) {
+                state.config = props.integrations.ditio;
+            } else if (props.ditioProjectNumber) {
+                state.config.projectNumber = props.ditioProjectNumber;
+            }
+        });
     },
 });
 
@@ -93,6 +123,10 @@ export const selectLastViewedPath = (state: RootState) => state.ditio.lastViewed
 export const selectDitioProject = (state: RootState) => state.ditio.project;
 export const selectFeedScrollOffset = (state: RootState) => state.ditio.feedScrollOffset;
 export const selectFilters = (state: RootState) => state.ditio.filters;
+export const selectActivePost = (state: RootState) => state.ditio.activePost;
+export const selectActiveImg = (state: RootState) => state.ditio.activeImg;
+export const selectHoveredEntity = (state: RootState) => state.ditio.hoveredEntity;
+export const selectDitioConfig = (state: RootState) => state.ditio.config;
 
 const { actions, reducer } = ditioSlice;
 export { actions as ditioActions, reducer as ditioReducer };

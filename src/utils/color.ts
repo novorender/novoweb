@@ -51,7 +51,7 @@ export function vecToRgb(color: VecRGB | VecRGBA): RGB {
     };
 }
 
-export function rgbToVec(color: RGB): VecRGB | VecRGBA {
+export function rgbToVec(color: RGB): VecRGBA {
     return [color.r / 255, color.g / 255, color.b / 255, color.a ?? 1];
 }
 

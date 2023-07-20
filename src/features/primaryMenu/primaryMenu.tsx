@@ -7,6 +7,7 @@ import {
     CloseReason,
     OpenReason,
     SpeedDialActionProps,
+    Box,
 } from "@mui/material";
 import { Add, Close } from "@mui/icons-material";
 
@@ -18,8 +19,9 @@ import { FlyToSelected } from "features/flyToSelected";
 import { OrthoShortcut } from "features/orthoShortcut";
 import { useToggle } from "hooks/useToggle";
 import { ButtonKey, featuresConfig } from "config/features";
-import { useAppSelector } from "app/store";
+import { useAppDispatch, useAppSelector } from "app/store";
 import { selectPrimaryMenu } from "slices/explorerSlice";
+import { renderActions } from "features/render";
 
 const positions = {
     small: [
@@ -73,6 +75,7 @@ export function PrimaryMenu() {
     const theme = useTheme();
     const isSmall = useMediaQuery(theme.breakpoints.down("md"));
     const primaryMenu = useAppSelector(selectPrimaryMenu);
+    const dispatch = useAppDispatch();
 
     const handleToggle = (reason: OpenReason | CloseReason) => {
         if (!["toggle", "escapeKeyDown"].includes(reason)) {
@@ -85,27 +88,35 @@ export function PrimaryMenu() {
     const pos = isSmall ? positions.small : positions.large;
 
     return (
-        <SpeedDial
-            open={open}
-            onOpen={(_event, reason) => handleToggle(reason)}
-            onClose={(_event, reason) => handleToggle(reason)}
-            ariaLabel="Primary menu"
-            FabProps={
-                {
-                    color: "secondary",
-                    size: isSmall ? "small" : "large",
-                    "data-test": "canvas-navigation-menu-fab",
-                } as Partial<FabProps<"button", { "data-test": string }>>
-            }
-            icon={<SpeedDialIcon open={false} icon={<Add />} openIcon={<Close />} />}
-            sx={{ position: "relative" }}
+        <Box
+            sx={{ px: { xs: 12, xl: 0 }, mr: { xs: 0, xl: -3.5 }, gridColumn: "2 / 3", gridRow: "2 / 2" }}
+            justifySelf={{ xs: "center", xl: "end" }}
+            display="flex"
+            alignItems={"flex-end"}
         >
-            <FeatureButton featureKey={primaryMenu.button1} position={pos[0]} />
-            <FeatureButton featureKey={primaryMenu.button2} position={pos[1]} />
-            <FeatureButton featureKey={primaryMenu.button3} position={pos[2]} />
-            <FeatureButton featureKey={primaryMenu.button4} position={pos[3]} />
-            <FeatureButton featureKey={primaryMenu.button5} position={pos[4]} />
-        </SpeedDial>
+            <SpeedDial
+                open={open}
+                onOpen={(_event, reason) => handleToggle(reason)}
+                onClose={(_event, reason) => handleToggle(reason)}
+                ariaLabel="Primary menu"
+                FabProps={
+                    {
+                        color: "secondary",
+                        size: isSmall ? "small" : "large",
+                        "data-test": "canvas-navigation-menu-fab",
+                    } as Partial<FabProps<"button", { "data-test": string }>>
+                }
+                icon={<SpeedDialIcon open={false} icon={<Add />} openIcon={<Close />} />}
+                sx={{ position: "relative", gridColumn: "2 / 3", gridRow: "2 / 2" }}
+                onClick={() => dispatch(renderActions.setStamp(null))}
+            >
+                <FeatureButton featureKey={primaryMenu.button1} position={pos[0]} />
+                <FeatureButton featureKey={primaryMenu.button2} position={pos[1]} />
+                <FeatureButton featureKey={primaryMenu.button3} position={pos[2]} />
+                <FeatureButton featureKey={primaryMenu.button4} position={pos[3]} />
+                <FeatureButton featureKey={primaryMenu.button5} position={pos[4]} />
+            </SpeedDial>
+        </Box>
     );
 }
 

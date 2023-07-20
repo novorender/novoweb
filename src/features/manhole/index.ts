@@ -1,2 +1,2 @@
-export { useHandleManholeUpdates } from "./useHandleManholeUpdates";
+export { useHandleManhole } from "./useHandleManhole";
 export * from "./manholeSlice";

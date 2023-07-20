@@ -1,17 +1,17 @@
+import { Autocomplete, Box, Button, Checkbox, FormControlLabel, useTheme } from "@mui/material";
 import { FormEventHandler, useEffect, useState } from "react";
-import { Box, Button, Checkbox, FormControlLabel, useTheme } from "@mui/material";
 import { useHistory, useParams } from "react-router-dom";
 import { v4 as uuidv4 } from "uuid";
 
 import { useAppDispatch, useAppSelector } from "app/store";
-import { selectHasAdminCapabilities } from "slices/explorerSlice";
-import { useExplorerGlobals } from "contexts/explorerGlobals";
-
 import { ScrollBox, TextField } from "components";
+import { useExplorerGlobals } from "contexts/explorerGlobals";
 import { useToggle } from "hooks/useToggle";
+import { selectHasAdminCapabilities } from "slices/explorerSlice";
 
+import { BookmarkAccess, bookmarksActions, selectBookmarks } from "../bookmarksSlice";
 import { useCreateBookmark } from "../useCreateBookmark";
-import { BookmarkAccess, selectBookmarks, bookmarksActions } from "../bookmarksSlice";
+import { View } from "@novorender/web_app";
 
 export function Crupdate() {
     const { id } = useParams<{ id?: string }>();
@@ -25,7 +25,7 @@ export function Crupdate() {
     const dispatch = useAppDispatch();
 
     const {
-        state: { canvas },
+        state: { view },
     } = useExplorerGlobals(true);
     const createBookmark = useCreateBookmark();
 
@@ -38,6 +38,22 @@ export function Crupdate() {
     );
     const [bmImg, setBmImg] = useState("");
 
+    const collections = Array.from(
+        bookmarks.reduce((set, bookmark) => {
+            if (bookmark.grouping) {
+                bookmark.grouping.split("/").forEach((_collection, idx, arr) => {
+                    set.add(arr.slice(0, -idx).join("/"));
+                });
+
+                set.add(bookmark.grouping);
+            }
+
+            return set;
+        }, new Set<string>())
+    )
+        .filter((collection) => collection !== "")
+        .sort((a, b) => a.localeCompare(b, "en", { sensitivity: "accent" }));
+
     useEffect(() => {
         if (bmImg) {
             return;
@@ -46,9 +62,9 @@ export function Crupdate() {
         if (bmToEdit) {
             setBmImg(bmToEdit.img ?? "");
         } else {
-            createBookmarkImg(canvas).then((img) => setBmImg(img));
+            createBookmarkImg(view).then((img) => setBmImg(img));
         }
-    }, [bmImg, bmToEdit, canvas]);
+    }, [bmImg, bmToEdit, view]);
 
     const handleSubmit: FormEventHandler = (e) => {
         e.preventDefault();
@@ -67,7 +83,7 @@ export function Crupdate() {
             return;
         }
 
-        const bm = createBookmark(await createBookmarkImg(canvas));
+        const bm = createBookmark(await createBookmarkImg(view));
 
         const newBookmarks = bookmarks.concat({
             ...bm,
@@ -76,7 +92,12 @@ export function Crupdate() {
             description,
             grouping: collection,
             access: personal ? BookmarkAccess.Personal : BookmarkAccess.Public,
-            options: { addSelectedToSelectionBasket: addToSelectionBasket },
+            explorerState: bm.explorerState
+                ? {
+                      ...bm.explorerState,
+                      options: { addToSelectionBasket: addToSelectionBasket },
+                  }
+                : undefined,
         });
 
         dispatch(bookmarksActions.setBookmarks(newBookmarks));
@@ -87,7 +108,7 @@ export function Crupdate() {
             return;
         }
 
-        const img = await createBookmarkImg(canvas);
+        const img = await createBookmarkImg(view);
 
         const newBookmarks = bookmarks.map((bm) =>
             bm === bmToEdit
@@ -143,23 +164,26 @@ export function Crupdate() {
                         rows={4}
                         sx={{ mb: 2 }}
                     />
-                    <TextField
+
+                    <Autocomplete
+                        sx={{ mb: 2 }}
+                        id="bookmark-collection"
+                        options={collections}
                         value={collection}
-                        onChange={(e) => setCollection(e.target.value)}
-                        id={"bookmark-collection"}
-                        label={"Collection"}
-                        fullWidth
-                        autoComplete="off"
-                        inputProps={{ list: "collections" }}
-                        sx={{ mb: 1 }}
-                    />
-                    <datalist id="collections">
-                        {Array.from(new Set(bookmarks.filter((bm) => bm.grouping).map((bm) => bm.grouping))).map(
-                            (coll) => (
-                                <option key={coll} value={coll} />
-                            )
+                        onChange={(_e, value) => setCollection(value ?? "")}
+                        freeSolo
+                        size="small"
+                        renderInput={(params) => (
+                            <TextField
+                                {...params}
+                                onChange={(e) => {
+                                    setCollection(e.target.value);
+                                }}
+                                label="Collection"
+                            />
                         )}
-                    </datalist>
+                    />
+
                     <Box>
                         <FormControlLabel
                             control={
@@ -208,10 +232,9 @@ export function Crupdate() {
     );
 }
 
-async function createBookmarkImg(canvas: HTMLCanvasElement): Promise<string> {
-    const isWindows = /\bWindows\b/.test(navigator.userAgent);
-    let width = isWindows ? canvas.width : canvas.clientWidth;
-    let height = isWindows ? canvas.height : canvas.clientHeight;
+async function createBookmarkImg(view: View): Promise<string> {
+    let width = view.renderState.output.width;
+    let height = view.renderState.output.height;
     let dx = 0;
     let dy = 0;
 
@@ -225,17 +248,9 @@ async function createBookmarkImg(canvas: HTMLCanvasElement): Promise<string> {
     dist.height = 70;
     dist.width = 100;
     const ctx = dist.getContext("2d", { alpha: true, desynchronized: false })!;
-    ctx.drawImage(
-        canvas,
-        Math.round(dx / 2),
-        Math.round(dy / 2),
-        width - dx,
-        height - dy,
-        0,
-        0,
-        dist.width,
-        dist.height
-    );
+    const img = document.createElement("img");
+    img.src = await view.getScreenshot();
+    ctx.drawImage(img, Math.round(dx / 2), Math.round(dy / 2), width - dx, height - dy, 0, 0, dist.width, dist.height);
 
     return dist.toDataURL("image/jpeg");
 }

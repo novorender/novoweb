@@ -1,24 +1,14 @@
+import { Box, Typography, useTheme } from "@mui/material";
 import { useEffect, useState } from "react";
 import { Redirect, useHistory } from "react-router-dom";
-import { Box, Typography, useTheme } from "@mui/material";
 
 import { useAppDispatch, useAppSelector } from "app/store";
 import { LinearProgress, ScrollBox } from "components";
-import { AsyncStatus } from "types/misc";
-import { selectProjectSettings } from "slices/renderSlice";
-import { deleteFromStorage, getFromStorage, saveToStorage } from "utils/storage";
 import { StorageKey } from "config/storage";
 import { selectHasAdminCapabilities } from "slices/explorerSlice";
+import { AsyncStatus } from "types/misc";
+import { deleteFromStorage, getFromStorage, saveToStorage } from "utils/storage";
 
-import {
-    jiraActions,
-    selectJiraSpace,
-    selectJiraAccessToken,
-    selectJiraAccessTokenData,
-    selectJiraProject,
-    selectJiraComponent,
-    selectJiraUser,
-} from "../jiraSlice";
 import {
     useGetAccessibleResourcesQuery,
     useGetComponentsQuery,
@@ -27,6 +17,16 @@ import {
     useLazyGetTokensQuery,
     useRefreshTokensMutation,
 } from "../jiraApi";
+import {
+    jiraActions,
+    selectJiraAccessToken,
+    selectJiraAccessTokenData,
+    selectJiraComponent,
+    selectJiraConfig,
+    selectJiraProject,
+    selectJiraSpace,
+    selectJiraUser,
+} from "../jiraSlice";
 
 let getTokensRequestInitialized = false;
 
@@ -41,7 +41,7 @@ export function Auth() {
     const space = useAppSelector(selectJiraSpace);
     const project = useAppSelector(selectJiraProject);
     const component = useAppSelector(selectJiraComponent);
-    const { jira: jiraSettings } = useAppSelector(selectProjectSettings);
+    const config = useAppSelector(selectJiraConfig);
     const [error, setError] = useState("");
 
     const [getTokens, { data: tokensResponse, error: tokensError }] = useLazyGetTokensQuery();
@@ -132,55 +132,55 @@ export function Auth() {
             return;
         }
 
-        const _space = accessibleResources.find((resource) => resource.name === jiraSettings?.space.toLowerCase());
+        const _space = accessibleResources.find((resource) => resource.name === config?.space.toLowerCase());
 
         if (_space) {
             dispatch(jiraActions.setSpace(_space));
         } else if (isAdmin) {
             history.push("/settings");
-        } else if (!jiraSettings.space) {
+        } else if (!config.space) {
             setError(`Jira has not yet been set up for this project.`);
         } else {
-            setError(`You do not have access to the ${jiraSettings?.space} Jira space.`);
+            setError(`You do not have access to the ${config?.space} Jira space.`);
         }
-    }, [accessibleResources, history, isAdmin, dispatch, jiraSettings, space]);
+    }, [accessibleResources, history, isAdmin, dispatch, config, space]);
 
     useEffect(() => {
         if (!projects || project) {
             return;
         }
 
-        const _project = projects.find((project) => project.key === jiraSettings?.project);
+        const _project = projects.find((project) => project.key === config?.project);
 
         if (_project) {
             dispatch(jiraActions.setProject(_project));
         } else if (isAdmin) {
             history.push("/settings");
-        } else if (!jiraSettings.project) {
+        } else if (!config.project) {
             setError(`Jira has not yet been set up for this project.`);
         } else {
-            setError(`You do not have access to the ${jiraSettings?.project} Jira project.`);
+            setError(`You do not have access to the ${config?.project} Jira project.`);
         }
-    }, [projects, history, isAdmin, dispatch, jiraSettings, project]);
+    }, [projects, history, isAdmin, dispatch, config, project]);
 
     useEffect(() => {
         if (!components || component) {
             return;
         }
 
-        const _component = components.find((component) => component.name === jiraSettings?.component);
+        const _component = components.find((component) => component.name === config?.component);
 
         if (_component) {
             dispatch(jiraActions.setComponent(_component));
             history.push("/issues");
         } else if (isAdmin) {
             history.push("/settings");
-        } else if (!jiraSettings.component) {
+        } else if (!config.component) {
             setError(`Jira has not yet been set up for this project.`);
         } else {
-            setError(`You do not have access to the ${jiraSettings?.component} Jira component.`);
+            setError(`You do not have access to the ${config?.component} Jira component.`);
         }
-    }, [components, history, isAdmin, dispatch, jiraSettings, component]);
+    }, [components, history, isAdmin, dispatch, config, component]);
 
     useEffect(() => {
         if (error || !(accessibleResourcesError || projectsError || componentsError || userError)) {
@@ -204,7 +204,11 @@ export function Auth() {
     } else if (accessToken.status === AsyncStatus.Error) {
         return <ErrorMsg>{accessToken.msg}</ErrorMsg>;
     } else {
-        return <LinearProgress />;
+        return (
+            <Box position="relative">
+                <LinearProgress />
+            </Box>
+        );
     }
 }
 

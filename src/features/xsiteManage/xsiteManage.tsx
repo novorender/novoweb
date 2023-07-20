@@ -1,35 +1,42 @@
-import { MemoryRouter, Route, Switch, useHistory, useRouteMatch } from "react-router-dom";
-import { Box, ListItemIcon, ListItemText, Menu, MenuItem, MenuProps } from "@mui/material";
 import { Logout, SettingsRounded } from "@mui/icons-material";
+import { Box, ListItemIcon, ListItemText, Menu, MenuItem, MenuProps } from "@mui/material";
+import { PropsWithChildren, useEffect, useRef } from "react";
+import { MemoryRouter, Route, Switch, SwitchProps, useHistory, useLocation, useRouteMatch } from "react-router-dom";
 
 import { useAppDispatch, useAppSelector } from "app/store";
 import { LogoSpeedDial, WidgetContainer, WidgetHeader } from "components";
 import { featuresConfig } from "config/features";
-import WidgetList from "features/widgetList/widgetList";
-import { useToggle } from "hooks/useToggle";
-import { selectMinimized, selectMaximized, selectHasAdminCapabilities } from "slices/explorerSlice";
-import { useSceneId } from "hooks/useSceneId";
-import { AsyncStatus } from "types/misc";
 import { StorageKey } from "config/storage";
+import WidgetList from "features/widgetList/widgetList";
+import { useSceneId } from "hooks/useSceneId";
+import { useToggle } from "hooks/useToggle";
+import { selectHasAdminCapabilities, selectMaximized, selectMinimized } from "slices/explorerSlice";
+import { AsyncStatus } from "types/misc";
 import { deleteFromStorage } from "utils/storage";
 
 import { Auth } from "./routes/auth";
+import { LogPoint } from "./routes/logPoint";
+import { LogPoints } from "./routes/logPoints";
 import { Login } from "./routes/login";
+import { Machine } from "./routes/machine";
 import { Machines } from "./routes/machines";
 import { Settings } from "./routes/settings";
-import { LogPoints } from "./routes/logPoints";
-import { LogPoint } from "./routes/logPoint";
-import { Machine } from "./routes/machine";
-import { selectXsiteManageAccessToken, xsiteManageActions } from "./slice";
+import {
+    selectXsiteManageAccessToken,
+    selectXsiteManageClickedMachineMarker,
+    selectXsiteManageLastViewedPath,
+    xsiteManageActions,
+} from "./slice";
 
 export default function XsiteManage() {
     const [menuOpen, toggleMenu] = useToggle();
     const minimized = useAppSelector(selectMinimized) === featuresConfig.xsiteManage.key;
-    const maximized = useAppSelector(selectMaximized) === featuresConfig.xsiteManage.key;
+    const maximized = useAppSelector(selectMaximized).includes(featuresConfig.xsiteManage.key);
+    const lastViewedPath = useAppSelector(selectXsiteManageLastViewedPath);
     const sceneId = useSceneId();
 
     return (
-        <MemoryRouter>
+        <MemoryRouter initialEntries={["/machines", lastViewedPath]} initialIndex={1}>
             <WidgetContainer minimized={minimized} maximized={maximized}>
                 <WidgetHeader WidgetMenu={WidgetMenu} widget={featuresConfig.xsiteManage} disableShadow />
                 <Box
@@ -38,7 +45,7 @@ export default function XsiteManage() {
                     flexGrow={1}
                     overflow="hidden"
                 >
-                    <Switch>
+                    <CustomSwitch>
                         <Route path="/" exact>
                             <Auth />
                         </Route>
@@ -48,19 +55,19 @@ export default function XsiteManage() {
                         <Route path="/machines" exact>
                             <Machines />
                         </Route>
-                        <Route path="/machine/:id" exact>
+                        <Route path="/machines/:id" exact>
                             <Machine />
                         </Route>
                         <Route path="/log-points" exact>
                             <LogPoints />
                         </Route>
-                        <Route path="/log-point/:id" exact>
+                        <Route path="/log-points/:id" exact>
                             <LogPoint />
                         </Route>
                         <Route path="/settings" exact>
                             <Settings sceneId={sceneId} />
                         </Route>
-                    </Switch>
+                    </CustomSwitch>
                 </Box>
                 {menuOpen && <WidgetList widgetKey={featuresConfig.xsiteManage.key} onSelect={toggleMenu} />}
             </WidgetContainer>
@@ -148,4 +155,35 @@ function SettingsMenuItem({ onClose }: { onClose: MenuProps["onClose"] }) {
             </MenuItem>
         </div>
     );
+}
+
+function CustomSwitch(props: PropsWithChildren<SwitchProps>) {
+    const history = useHistory();
+    const location = useLocation();
+    const willUnmount = useRef(false);
+    const clickedMarker = useAppSelector(selectXsiteManageClickedMachineMarker);
+    const dispatch = useAppDispatch();
+
+    useEffect(() => {
+        if (clickedMarker) {
+            history.push(`/machines/${clickedMarker}`);
+            dispatch(xsiteManageActions.setClickedMarker(""));
+        }
+    }, [dispatch, history, clickedMarker]);
+
+    useEffect(() => {
+        return () => {
+            willUnmount.current = true;
+        };
+    }, []);
+
+    useEffect(() => {
+        return () => {
+            if (willUnmount.current) {
+                dispatch(xsiteManageActions.setLastViewedPath(location.pathname));
+            }
+        };
+    }, [location, dispatch]);
+
+    return <Switch {...props} />;
 }

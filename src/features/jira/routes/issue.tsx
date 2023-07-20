@@ -1,13 +1,13 @@
-import { useEffect, useState, Fragment } from "react";
 import { AddCircle, ArrowBack, FlightTakeoff, OpenInNew } from "@mui/icons-material";
 import { Box, Button, Typography, useTheme } from "@mui/material";
-import { useHistory, useParams } from "react-router-dom";
 import { format, parse } from "date-fns";
+import { Fragment, useEffect, useState } from "react";
+import { useHistory, useParams } from "react-router-dom";
 
-import { Divider, ImgModal, LinearProgress, ScrollBox } from "components";
-import { useAppSelector } from "app/store";
-import { useSelectBookmark } from "features/bookmarks/useSelectBookmark";
 import { dataApi } from "app";
+import { useAppSelector } from "app/store";
+import { Divider, ImgModal, LinearProgress, ScrollBox } from "components";
+import { useSelectBookmark } from "features/bookmarks/useSelectBookmark";
 import { useToggle } from "hooks/useToggle";
 
 import {
@@ -159,7 +159,7 @@ export function Issue({ sceneId }: { sceneId: string }) {
             </Box>
 
             {(isLoadingIssue || loadingBookmark || isLoadingFullImage || isLoadingThumbnail) && (
-                <Box>
+                <Box position="relative">
                     <LinearProgress />
                 </Box>
             )}

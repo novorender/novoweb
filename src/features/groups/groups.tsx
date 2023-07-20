@@ -1,22 +1,22 @@
-import { matchPath, MemoryRouter, Route, Switch, useHistory, useLocation, useRouteMatch } from "react-router-dom";
-import { Menu, MenuItem, ListItemIcon, ListItemText, MenuProps, Box, Snackbar, IconButton } from "@mui/material";
 import { Close, Code } from "@mui/icons-material";
+import { Box, IconButton, ListItemIcon, ListItemText, Menu, MenuItem, MenuProps, Snackbar } from "@mui/material";
+import { matchPath, MemoryRouter, Route, Switch, useHistory, useLocation, useRouteMatch } from "react-router-dom";
 
-import { WidgetContainer, LogoSpeedDial, WidgetHeader } from "components";
-import WidgetList from "features/widgetList/widgetList";
 import { useAppDispatch, useAppSelector } from "app/store";
-import { selectMinimized, selectMaximized } from "slices/explorerSlice";
+import { LogoSpeedDial, WidgetContainer, WidgetHeader } from "components";
 import { featuresConfig } from "config/features";
-import { useToggle } from "hooks/useToggle";
+import WidgetList from "features/widgetList/widgetList";
 import { useSceneId } from "hooks/useSceneId";
+import { useToggle } from "hooks/useToggle";
+import { selectMaximized, selectMinimized } from "slices/explorerSlice";
 import { AsyncStatus } from "types/misc";
 
-import { GroupList } from "./routes/groupList";
-import { Crupdate } from "./routes/crupdate";
-import { Save } from "./routes/save";
-import { RenameCollection } from "./routes/renameCollection";
-import { Delete } from "./routes/delete";
 import { groupsActions, selectSaveStatus } from "./groupsSlice";
+import { Crupdate } from "./routes/crupdate";
+import { Delete } from "./routes/delete";
+import { GroupList } from "./routes/groupList";
+import { RenameCollection } from "./routes/renameCollection";
+import { Save } from "./routes/save";
 
 const crupdatePaths = ["/create", "/edit/:id"];
 
@@ -24,7 +24,7 @@ export default function Groups() {
     const sceneId = useSceneId();
     const [menuOpen, toggleMenu] = useToggle();
     const minimized = useAppSelector(selectMinimized) === featuresConfig.groups.key;
-    const maximized = useAppSelector(selectMaximized) === featuresConfig.groups.key;
+    const maximized = useAppSelector(selectMaximized).includes(featuresConfig.groups.key);
     const saveStatus = useAppSelector(selectSaveStatus);
     const dispatch = useAppDispatch();
 
@@ -69,9 +69,6 @@ export default function Groups() {
                     height={1}
                 >
                     <Switch>
-                        <Route path="/" exact>
-                            <GroupList />
-                        </Route>
                         <Route path={crupdatePaths}>
                             <Crupdate sceneId={sceneId} />
                         </Route>
@@ -84,17 +81,15 @@ export default function Groups() {
                         <Route path="/renameCollection">
                             <RenameCollection />
                         </Route>
+                        <Route path="/">
+                            <GroupList />
+                        </Route>
                     </Switch>
                 </Box>
 
                 {menuOpen && <WidgetList widgetKey={featuresConfig.groups.key} onSelect={toggleMenu} />}
             </WidgetContainer>
-            <LogoSpeedDial
-                open={menuOpen}
-                toggle={toggleMenu}
-                testId={`${featuresConfig.groups.key}-widget-menu-fab`}
-                ariaLabel="toggle widget menu"
-            />
+            <LogoSpeedDial open={menuOpen} toggle={toggleMenu} ariaLabel="toggle widget menu" />
         </MemoryRouter>
     );
 }

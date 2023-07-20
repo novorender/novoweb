@@ -4,14 +4,14 @@ import { Box, CircularProgress, SpeedDialActionProps } from "@mui/material";
 
 import { SpeedDialAction } from "components";
 import { featuresConfig } from "config/features";
-import { panoramasActions, PanoramaStatus } from "features/panoramas";
+import { imagesActions } from "features/images";
 import { useHighlighted } from "contexts/highlighted";
 import { useAbortController } from "hooks/useAbortController";
 import { useMountedState } from "hooks/useMountedState";
 import { objIdsToTotalBoundingSphere } from "utils/objectData";
 import { useExplorerGlobals } from "contexts/explorerGlobals";
 import { useAppDispatch } from "app/store";
-import { CameraType, renderActions } from "slices/renderSlice";
+import { CameraType, renderActions } from "features/render/renderSlice";
 
 enum Status {
     Initial,
@@ -26,7 +26,7 @@ export function FlyToSelected({ position, ...speedDialProps }: Props) {
     const { name, Icon } = featuresConfig.flyToSelected;
     const highlighted = useHighlighted().idArr;
     const {
-        state: { scene },
+        state: { db },
     } = useExplorerGlobals(true);
     const dispatch = useAppDispatch();
 
@@ -47,7 +47,8 @@ export function FlyToSelected({ position, ...speedDialProps }: Props) {
         }
 
         if (previousBoundingSphere.current) {
-            dispatch(renderActions.setCamera({ type: CameraType.Flight, zoomTo: previousBoundingSphere.current }));
+            dispatch(renderActions.setCamera({ type: CameraType.Pinhole, zoomTo: previousBoundingSphere.current }));
+            dispatch(imagesActions.setActiveImage(undefined));
             return;
         }
 
@@ -55,29 +56,30 @@ export function FlyToSelected({ position, ...speedDialProps }: Props) {
 
         const abortSignal = abortController.current.signal;
         try {
-            const boundingSphere = await objIdsToTotalBoundingSphere({ ids: highlighted, abortSignal, scene });
+            const boundingSphere = await objIdsToTotalBoundingSphere({ ids: highlighted, abortSignal, db });
 
             if (boundingSphere) {
                 previousBoundingSphere.current = boundingSphere;
-                dispatch(renderActions.setCamera({ type: CameraType.Flight, zoomTo: boundingSphere }));
-                dispatch(panoramasActions.setStatus(PanoramaStatus.Initial));
+                dispatch(renderActions.setCamera({ type: CameraType.Pinhole, zoomTo: boundingSphere }));
+                dispatch(imagesActions.setActiveImage(undefined));
             }
         } finally {
             setStatus(Status.Initial);
         }
     };
 
+    const disabled = !highlighted.length;
     return (
         <SpeedDialAction
             {...speedDialProps}
             data-test="flyToSelected"
             FabProps={{
                 ...speedDialProps.FabProps,
+                disabled,
                 style: { ...position, position: "absolute" },
-                disabled: !highlighted.length,
             }}
             onClick={handleClick}
-            title={name}
+            title={disabled ? undefined : name}
             icon={
                 <Box
                     width={1}

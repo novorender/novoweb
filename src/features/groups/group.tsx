@@ -1,10 +1,7 @@
-import { MouseEvent, useState } from "react";
-import { useHistory } from "react-router-dom";
-import { Delete, Edit, MoreVert, Visibility, ColorLens, LibraryAdd } from "@mui/icons-material";
+import { ColorLens, Delete, Edit, LibraryAdd, MoreVert, Opacity, Visibility, VisibilityOff } from "@mui/icons-material";
 import {
     Box,
     Checkbox,
-    css,
     IconButton,
     ListItemButton,
     ListItemButtonProps,
@@ -12,15 +9,18 @@ import {
     ListItemText,
     Menu,
     MenuItem,
-    styled,
     Typography,
+    css,
+    styled,
 } from "@mui/material";
+import { MouseEvent, useState } from "react";
+import { Route, Switch, useHistory, useRouteMatch } from "react-router-dom";
 
-import { Tooltip } from "components";
-import { ColorPicker } from "features/colorPicker";
 import { useAppSelector } from "app/store";
+import { Tooltip } from "components";
+import { GroupStatus, ObjectGroup, objectGroupsActions, useDispatchObjectGroups } from "contexts/objectGroups";
+import { ColorPicker } from "features/colorPicker";
 import { selectHasAdminCapabilities } from "slices/explorerSlice";
-import { ObjectGroup, objectGroupsActions, useDispatchObjectGroups } from "contexts/objectGroups";
 import { rgbToVec, vecToRgb } from "utils/color";
 
 export const StyledListItemButton = styled(ListItemButton)<ListItemButtonProps>(
@@ -38,6 +38,7 @@ export const StyledCheckbox = styled(Checkbox)`
 
 export function Group({ group, disabled }: { group: ObjectGroup; disabled: boolean }) {
     const history = useHistory();
+    const match = useRouteMatch();
     const isAdmin = useAppSelector(selectHasAdminCapabilities);
     const dispatchObjectGroups = useDispatchObjectGroups();
 
@@ -50,6 +51,7 @@ export function Group({ group, disabled }: { group: ObjectGroup; disabled: boole
 
     const openMenu = (e: MouseEvent<HTMLButtonElement>) => {
         e.stopPropagation();
+        history.replace(match.path);
         setMenuAnchor(e.currentTarget.parentElement);
     };
 
@@ -59,6 +61,9 @@ export function Group({ group, disabled }: { group: ObjectGroup; disabled: boole
 
     const { r, g, b, a } = vecToRgb(group.color);
 
+    const hidden = group.status === GroupStatus.Hidden;
+    const selected = group.status === GroupStatus.Selected;
+
     return (
         <>
             <StyledListItemButton
@@ -67,8 +72,7 @@ export function Group({ group, disabled }: { group: ObjectGroup; disabled: boole
                 onClick={() =>
                     dispatchObjectGroups(
                         objectGroupsActions.update(group.id, {
-                            selected: !group.selected,
-                            hidden: !group.selected ? false : group.hidden,
+                            status: selected ? GroupStatus.None : GroupStatus.Selected,
                         })
                     )
                 }
@@ -81,16 +85,16 @@ export function Group({ group, disabled }: { group: ObjectGroup; disabled: boole
                     </Box>
                     <Box flex="0 0 auto">
                         <StyledCheckbox
+                            name="toggle group highlighting"
                             aria-label="toggle group highlighting"
                             size="small"
-                            checked={group.selected}
+                            checked={selected}
                             disabled={disabled}
                             onClick={(event) => event.stopPropagation()}
                             onChange={() =>
                                 dispatchObjectGroups(
                                     objectGroupsActions.update(group.id, {
-                                        selected: !group.selected,
-                                        hidden: !group.selected ? false : group.hidden,
+                                        status: selected ? GroupStatus.None : GroupStatus.Selected,
                                     })
                                 )
                             }
@@ -98,19 +102,20 @@ export function Group({ group, disabled }: { group: ObjectGroup; disabled: boole
                     </Box>
                     <Box flex="0 0 auto">
                         <StyledCheckbox
-                            data-test="toggle-visibility"
+                            name="toggle group visibility"
                             aria-label="toggle group visibility"
                             size="small"
                             icon={<Visibility htmlColor={`rgba(${r}, ${g}, ${b}, ${Math.max(a ?? 0, 0.2)})`} />}
-                            checkedIcon={<Visibility color="disabled" />}
-                            checked={group.hidden}
+                            checkedIcon={
+                                !group.opacity ? <VisibilityOff color="disabled" /> : <Visibility color="disabled" />
+                            }
+                            checked={hidden}
                             disabled={disabled}
                             onClick={(event) => event.stopPropagation()}
                             onChange={() =>
                                 dispatchObjectGroups(
                                     objectGroupsActions.update(group.id, {
-                                        hidden: !group.hidden,
-                                        selected: !group.hidden ? false : group.selected,
+                                        status: hidden ? GroupStatus.None : GroupStatus.Hidden,
                                     })
                                 )
                             }
@@ -133,7 +138,7 @@ export function Group({ group, disabled }: { group: ObjectGroup; disabled: boole
             <ColorPicker
                 open={Boolean(colorPickerAnchor)}
                 anchorEl={colorPickerAnchor}
-                onClose={() => toggleColorPicker()}
+                onClose={() => setColorPickerAnchor(null)}
                 color={group.color}
                 onChangeComplete={({ rgb }) =>
                     dispatchObjectGroups(objectGroupsActions.update(group.id, { color: rgbToVec(rgb) }))
@@ -145,49 +150,72 @@ export function Group({ group, disabled }: { group: ObjectGroup; disabled: boole
                 open={Boolean(menuAnchor)}
                 onClose={closeMenu}
                 id={`${group.id}-menu`}
-                MenuListProps={{ sx: { maxWidth: "100%" } }}
+                MenuListProps={{ sx: { maxWidth: "100%", minWidth: 100 } }}
             >
-                {(isAdmin
-                    ? [
-                          <MenuItem
-                              key="edit"
-                              onClick={() => {
-                                  history.push("/edit/" + group.id);
-                              }}
-                          >
-                              <ListItemIcon>
-                                  <Edit fontSize="small" />
-                              </ListItemIcon>
-                              <ListItemText>Edit</ListItemText>
-                          </MenuItem>,
-                          <MenuItem
-                              key="duplicate"
-                              onClick={() => {
-                                  dispatchObjectGroups(objectGroupsActions.copy(group.id));
-                                  closeMenu();
-                              }}
-                          >
-                              <ListItemIcon>
-                                  <LibraryAdd fontSize="small" />
-                              </ListItemIcon>
-                              <ListItemText>Duplicate</ListItemText>
-                          </MenuItem>,
-                          <MenuItem key="delete" onClick={() => history.push("/delete/" + group.id)}>
-                              <ListItemIcon>
-                                  <Delete fontSize="small" />
-                              </ListItemIcon>
-                              <ListItemText>Delete</ListItemText>
-                          </MenuItem>,
-                      ]
-                    : []
-                ).concat(
-                    <MenuItem key="color" onClick={toggleColorPicker}>
-                        <ListItemIcon>
-                            <ColorLens sx={{ color: `rgb(${r}, ${g}, ${b})` }} fontSize="small" />
-                        </ListItemIcon>
-                        <ListItemText>Select color</ListItemText>
-                    </MenuItem>
-                )}
+                <Switch>
+                    <Route path={match.path} exact>
+                        {(isAdmin
+                            ? [
+                                  <MenuItem
+                                      key="edit"
+                                      onClick={() => {
+                                          history.push("/edit/" + group.id);
+                                      }}
+                                  >
+                                      <ListItemIcon>
+                                          <Edit fontSize="small" />
+                                      </ListItemIcon>
+                                      <ListItemText>Edit</ListItemText>
+                                  </MenuItem>,
+                                  <MenuItem
+                                      key="duplicate"
+                                      onClick={() => {
+                                          dispatchObjectGroups(objectGroupsActions.copy(group.id));
+                                          closeMenu();
+                                      }}
+                                  >
+                                      <ListItemIcon>
+                                          <LibraryAdd fontSize="small" />
+                                      </ListItemIcon>
+                                      <ListItemText>Duplicate</ListItemText>
+                                  </MenuItem>,
+                                  <MenuItem key="delete" onClick={() => history.push("/delete/" + group.id)}>
+                                      <ListItemIcon>
+                                          <Delete fontSize="small" />
+                                      </ListItemIcon>
+                                      <ListItemText>Delete</ListItemText>
+                                  </MenuItem>,
+                              ]
+                            : []
+                        ).concat(
+                            <MenuItem key="color" onClick={toggleColorPicker}>
+                                <ListItemIcon>
+                                    <ColorLens sx={{ color: `rgb(${r}, ${g}, ${b})` }} fontSize="small" />
+                                </ListItemIcon>
+                                <ListItemText>Color</ListItemText>
+                            </MenuItem>,
+                            <MenuItem key="opacity" onClick={() => history.replace(match.path + "/opacity")}>
+                                <ListItemIcon>
+                                    <Opacity fontSize="small" />
+                                </ListItemIcon>
+                                <ListItemText>Hidden transparency</ListItemText>
+                            </MenuItem>
+                        )}
+                    </Route>
+                    <Route path={match.path + "/opacity"} exact>
+                        {[0, 0.25, 0.5, 0.75].map((opacity) => (
+                            <MenuItem
+                                selected={(group.opacity ?? 0) === opacity}
+                                key={opacity}
+                                onClick={() => {
+                                    dispatchObjectGroups(objectGroupsActions.update(group.id, { opacity }));
+                                }}
+                            >
+                                <ListItemText>{(1 - opacity) * 100}%</ListItemText>
+                            </MenuItem>
+                        ))}
+                    </Route>
+                </Switch>
             </Menu>
         </>
     );

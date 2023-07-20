@@ -1,21 +1,21 @@
-import { Autocomplete, Box, Button, CircularProgress, Typography, useTheme } from "@mui/material";
-import { LoadingButton } from "@mui/lab";
-import { useHistory } from "react-router-dom";
-import { FormEventHandler, SyntheticEvent, useState } from "react";
-import { SceneData } from "@novorender/data-js-api";
 import { ArrowBack } from "@mui/icons-material";
+import { LoadingButton } from "@mui/lab";
+import { Autocomplete, Box, Button, CircularProgress, Typography, useTheme } from "@mui/material";
+import { FormEventHandler, SyntheticEvent, useState } from "react";
+import { useHistory } from "react-router-dom";
 
 import { dataApi } from "app";
-import { selectIsAdminScene } from "slices/explorerSlice";
-import { useExplorerGlobals } from "contexts/explorerGlobals";
 import { useAppDispatch, useAppSelector } from "app/store";
-import { AsyncState, AsyncStatus } from "types/misc";
-import { renderActions, selectProjectSettings } from "slices/renderSlice";
 import { Divider, ScrollBox, TextField } from "components";
 import { featuresConfig } from "config/features";
+import { useExplorerGlobals } from "contexts/explorerGlobals";
+import { loadScene } from "features/render/hooks/useHandleInit";
+import { selectIsAdminScene } from "slices/explorerSlice";
+import { AsyncState, AsyncStatus } from "types/misc";
+import { mergeRecursive } from "utils/misc";
 
-import { selectAccessToken, ditioActions, selectDitioProject } from "../slice";
 import { useGetProjectsQuery } from "../api";
+import { ditioActions, selectAccessToken, selectDitioConfig, selectDitioProject } from "../slice";
 import { Project } from "../types";
 
 export function Settings({ sceneId }: { sceneId: string }) {
@@ -27,7 +27,7 @@ export function Settings({ sceneId }: { sceneId: string }) {
 
     const dispatch = useAppDispatch();
     const isAdminScene = useAppSelector(selectIsAdminScene);
-    const { ditioProjectNumber } = useAppSelector(selectProjectSettings);
+    const config = useAppSelector(selectDitioConfig);
     const accessToken = useAppSelector(selectAccessToken);
     const currentProject = useAppSelector(selectDitioProject);
 
@@ -43,7 +43,7 @@ export function Settings({ sceneId }: { sceneId: string }) {
         currentProject
             ? currentProject
             : projects
-            ? projects.find((proj) => proj.projectNumber === ditioProjectNumber) ?? projects[0]
+            ? projects.find((proj) => proj.projectNumber === config.projectNumber) ?? projects[0]
             : null
     );
     const [saving, setSaving] = useState<AsyncState<true>>({ status: AsyncStatus.Initial });
@@ -65,28 +65,26 @@ export function Settings({ sceneId }: { sceneId: string }) {
 
         setSaving({ status: AsyncStatus.Loading });
 
-        dispatch(
-            renderActions.setProjectSettings({
-                ditioProjectNumber: project.projectNumber,
-            })
-        );
+        const configToSave = {
+            projectNumber: project.projectNumber,
+        };
+
+        dispatch(ditioActions.setConfig(configToSave));
         dispatch(ditioActions.setProject(project));
 
         try {
-            const {
-                url: _url,
-                customProperties = {},
-                ...originalScene
-            } = (await dataApi.loadScene(sceneId)) as SceneData;
+            const [originalScene] = await loadScene(sceneId);
 
-            dataApi.putScene({
-                ...originalScene,
+            const updated = mergeRecursive(originalScene, {
                 url: isAdminScene ? scene.id : `${sceneId}:${scene.id}`,
                 customProperties: {
-                    ...customProperties,
-                    ditioProjectNumber: project.projectNumber,
+                    integrations: {
+                        ditio: configToSave,
+                    },
                 },
             });
+
+            dataApi.putScene(updated);
         } catch {
             console.warn(`Failed to save ${featuresConfig.ditio.name} settings.`);
         }
@@ -116,7 +114,7 @@ export function Settings({ sceneId }: { sceneId: string }) {
                     id="ditio-settings_projects"
                     fullWidth
                     options={projects ?? []}
-                    getOptionLabel={(opt) => opt.name}
+                    getOptionLabel={(opt) => `${opt.name} (${opt.projectNumber})`}
                     value={project}
                     isOptionEqualToValue={(opt, val) => opt.id === val.id}
                     onChange={handleProjectChange}

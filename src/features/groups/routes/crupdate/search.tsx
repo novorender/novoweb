@@ -1,15 +1,15 @@
-import { ObjectId, SearchPattern } from "@novorender/webgl-api";
-import { useHistory, useRouteMatch } from "react-router-dom";
-import { FormEventHandler, useState } from "react";
 import { AddCircle, ArrowBack, ArrowForward } from "@mui/icons-material";
 import { Box, Button, useTheme } from "@mui/material";
+import { ObjectId, SearchPattern } from "@novorender/webgl-api";
+import { FormEventHandler, useState } from "react";
+import { useHistory, useRouteMatch } from "react-router-dom";
 
 import { AdvancedSearchInputs, Divider, LinearProgress, ScrollBox } from "components";
 import { useExplorerGlobals } from "contexts/explorerGlobals";
-import { useAbortController } from "hooks/useAbortController";
 import { highlightActions, useDispatchHighlighted } from "contexts/highlighted";
-import { searchDeepByPatterns } from "utils/search";
+import { useAbortController } from "hooks/useAbortController";
 import { uniqueArray } from "utils/misc";
+import { searchDeepByPatterns } from "utils/search";
 
 export function Search({
     savedInputs,
@@ -27,7 +27,7 @@ export function Search({
     const history = useHistory();
     const dispatchHighlighted = useDispatchHighlighted();
     const {
-        state: { scene },
+        state: { db },
     } = useExplorerGlobals(true);
 
     const [searching, setSearching] = useState(false);
@@ -48,7 +48,7 @@ export function Search({
 
         await searchDeepByPatterns({
             abortSignal,
-            scene,
+            db,
             searchPatterns: inputs,
             callback: (result) => {
                 setIds((state) => state.concat(result));
@@ -94,7 +94,7 @@ export function Search({
                 </>
             </Box>
             {searching ? (
-                <Box>
+                <Box position="relative">
                     <LinearProgress />
                 </Box>
             ) : null}

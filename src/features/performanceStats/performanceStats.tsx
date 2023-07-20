@@ -1,10 +1,12 @@
 import { Box } from "@mui/material";
+import { packageVersion as webglApiVersion } from "@novorender/web_app";
 import { useEffect, useRef } from "react";
 
+import { useAppSelector } from "app/store";
 import { useExplorerGlobals } from "contexts/explorerGlobals";
-import { api } from "app";
+import { selectDeviceProfile } from "features/render";
 
-const canvas: HTMLCanvasElement = document.createElement("CANVAS") as HTMLCanvasElement;
+const canvas: HTMLCanvasElement = document.createElement("canvas") as HTMLCanvasElement;
 canvas.width = 1;
 canvas.height = 1;
 document.body.appendChild(canvas);
@@ -19,133 +21,117 @@ const formatNumber = new Intl.NumberFormat("en-US").format;
 
 export function PerformanceStats() {
     const {
-        state: { canvas, view },
+        state: { view },
     } = useExplorerGlobals(true);
+    const deviceProfile = useAppSelector(selectDeviceProfile);
+    const timer = useRef<ReturnType<typeof setInterval>>();
+    const cpuTime = useRef<HTMLSpanElement>(null);
+    const gpuTime = useRef<HTMLSpanElement>(null);
+    const bufferBytes = useRef<HTMLSpanElement>(null);
+    const textureBytes = useRef<HTMLSpanElement>(null);
+    const jsMem = useRef<HTMLSpanElement>(null);
+    const fps = useRef<HTMLSpanElement>(null);
+    const triangles = useRef<HTMLSpanElement>(null);
+    const lines = useRef<HTMLSpanElement>(null);
+    const points = useRef<HTMLSpanElement>(null);
+    const primitives = useRef<HTMLSpanElement>(null);
+    const drawcalls = useRef<HTMLSpanElement>(null);
+    const resolutionScale = useRef<HTMLSpanElement>(null);
+    const detailBias = useRef<HTMLSpanElement>(null);
 
-    const detailBiasRef = useRef<HTMLTableCellElement | null>(null);
-    const fpsRef = useRef<HTMLTableCellElement | null>(null);
-    const trianglesRef = useRef<HTMLTableCellElement | null>(null);
-    const pointsRef = useRef<HTMLTableCellElement | null>(null);
-    const renderCallsRef = useRef<HTMLTableCellElement | null>(null);
-    const resolutionRef = useRef<HTMLTableCellElement | null>(null);
-    const jsMemoryRef = useRef<HTMLTableCellElement | null>(null);
-    const gpuMemoryRef = useRef<HTMLTableCellElement | null>(null);
+    useEffect(() => {
+        if (timer.current) {
+            clearInterval(timer.current);
+        }
 
-    useEffect(
-        function startPerformanceStats() {
-            const interval = setInterval(update, 200);
+        timer.current = setInterval(() => {
+            const jsMemory = "memory" in performance ? (performance.memory as any).totalJSHeapSize : 0;
+            const stats = view.statistics;
 
-            return () => {
-                clearInterval(interval);
-            };
-
-            function update() {
-                const { performanceStatistics: stats } = view;
-
-                if (detailBiasRef.current) {
-                    detailBiasRef.current.innerText = `${
-                        api.deviceProfile.detailBias
-                    } (active: ${view.settings.quality.detail.value.toFixed(
-                        2
-                    )}, idle: ${view.lastRenderOutput?.isIdleFrame()})`;
-                }
-
-                if (fpsRef.current) {
-                    fpsRef.current.innerText = (stats as { fps?: number }).fps?.toFixed(0) ?? "0";
-                }
-
-                if (trianglesRef.current) {
-                    trianglesRef.current.innerText = `${formatNumber(stats.triangles)} / ${formatNumber(
-                        api.deviceProfile.triangleLimit
-                    )}`;
-                }
-
-                if (pointsRef.current) {
-                    pointsRef.current.innerText = String(formatNumber(stats.points));
-                }
-
-                if (renderCallsRef.current) {
-                    renderCallsRef.current.innerText = String(stats.drawCalls);
-                }
-
-                if (resolutionRef.current) {
-                    const scale = (stats as any).resolutionScale ?? 1;
-                    const w = canvas.clientWidth * scale;
-                    const h = canvas.clientHeight * scale;
-
-                    resolutionRef.current.innerText = `${w.toFixed(0)}x${h.toFixed(0)} - scale: ${scale}`;
-                }
-
-                if (jsMemoryRef.current && "memory" in performance) {
-                    jsMemoryRef.current.innerText = `${((performance as any).memory.totalJSHeapSize / 1e6).toFixed(
-                        0
-                    )} / ${((performance as any).memory.jsHeapSizeLimit / 1e6).toFixed(0)} MB`;
-                }
-
-                if (gpuMemoryRef.current && stats.gpuBytes !== undefined) {
-                    gpuMemoryRef.current.innerText = `${Math.round(stats.gpuBytes / 1e6)} MB / ${
-                        api.deviceProfile.gpuBytesLimit / 1e6
-                    } MB`;
-                }
+            if (
+                stats &&
+                cpuTime.current &&
+                gpuTime.current &&
+                bufferBytes.current &&
+                textureBytes.current &&
+                jsMem.current &&
+                fps.current &&
+                triangles.current &&
+                lines.current &&
+                points.current &&
+                primitives.current &&
+                drawcalls.current &&
+                resolutionScale.current &&
+                detailBias.current
+            ) {
+                cpuTime.current.innerText = stats.render?.cpuTime.draw.toFixed(2) ?? "0";
+                gpuTime.current.innerText = stats.render?.gpuTime.draw?.toFixed(2) ?? "0";
+                bufferBytes.current.innerText = ((stats.render?.bufferBytes ?? 0) / (1024 * 1024)).toFixed(2);
+                textureBytes.current.innerText = ((stats.render?.textureBytes ?? 0) / (1024 * 1024)).toFixed(2);
+                jsMem.current.innerText = (jsMemory / (1024 * 1024)).toFixed(2);
+                fps.current.innerText = (1000 / (stats.render?.frameInterval ?? 1)).toFixed(0);
+                triangles.current.innerText = `${formatNumber(stats.render?.triangles ?? 0)}`;
+                lines.current.innerText = formatNumber(stats.render?.lines ?? 0);
+                points.current.innerText = formatNumber(stats.render?.points ?? 0);
+                primitives.current.innerText = `${formatNumber(stats.render?.primitives ?? 0)} / ${formatNumber(
+                    deviceProfile.limits.maxPrimitives
+                )}`;
+                drawcalls.current.innerText = formatNumber(stats.render?.drawCalls ?? 0);
+                resolutionScale.current.innerText = `${view?.renderState.output.width}x${
+                    view?.renderState.output.height
+                }; scale: ${stats.view?.resolution.toFixed(2)}`;
+                detailBias.current.innerText = stats.view?.detailBias.toFixed(2);
             }
-        },
-        [view, canvas]
-    );
+        }, 200);
+    }, [view, deviceProfile.limits.maxPrimitives]);
 
     return (
-        <Box color="lime" fontWeight={"bold"} position="absolute" top={16} left={16} sx={{ pointerEvents: "none" }}>
-            <Box component="table" sx={{ "& td": { verticalAlign: "top" } }}>
-                <tbody>
-                    <tr>
-                        <td>Device:</td>
-                        <td>
-                            {api.deviceProfile.name}; weak: {String(api.deviceProfile.weakDevice)}; APP v
-                            {import.meta.env.REACT_APP_VERSION}; API v{api.version}; Debug profile:{" "}
-                            {String((api as any).deviceProfile.debugProfile === true)}
-                        </td>
-                    </tr>
-                    <tr>
-                        <td>GPU:</td>
-                        <td>{renderer}</td>
-                    </tr>
-                    <tr>
-                        <td>User agent</td>
-                        <td>{navigator.userAgent}</td>
-                    </tr>
-                    <tr>
-                        <td>Detail bias:</td>
-                        <td ref={detailBiasRef}>{api.deviceProfile.detailBias}</td>
-                    </tr>
-                    <tr>
-                        <td>Resolution:</td>
-                        <td ref={resolutionRef}>69x420</td>
-                    </tr>
-                    <tr>
-                        <td>FPS:</td>
-                        <td ref={fpsRef}>123</td>
-                    </tr>
-                    <tr>
-                        <td>Triangles:</td>
-                        <td ref={trianglesRef}>69</td>
-                    </tr>
-                    <tr>
-                        <td>Points:</td>
-                        <td ref={pointsRef}>1337</td>
-                    </tr>
-                    <tr>
-                        <td>Render calls:</td>
-                        <td ref={renderCallsRef}>99</td>
-                    </tr>
-                    <tr>
-                        <td>JS memory:</td>
-                        <td ref={jsMemoryRef}>666</td>
-                    </tr>
-                    <tr>
-                        <td>GPU memory</td>
-                        <td ref={gpuMemoryRef}>??? / {api.deviceProfile.gpuBytesLimit / 1e6} MB</td>
-                    </tr>
-                </tbody>
-            </Box>
+        <Box
+            color="lime"
+            fontWeight={"bold"}
+            position="absolute"
+            top={0}
+            left={0}
+            px={1}
+            bgcolor={"rgba(0,0,0,0.4)"}
+            sx={{ pointerEvents: "none", "& pre": { textWrap: "wrap" } }}
+            maxWidth={700}
+        >
+            <pre className="stats">
+                Tier: {deviceProfile.tier}; Debug profile: {String(deviceProfile.debugProfile)}
+                <br />
+                APP v{import.meta.env.REACT_APP_VERSION}; API v{webglApiVersion};<br />
+                GPU: {renderer}
+                <br />
+                User agent: {navigator.userAgent}
+                <br />
+                cpu.render: <span ref={cpuTime}>0</span>
+                <br />
+                gpu.render: <span ref={gpuTime}>0</span>
+                <br />
+                gpu.buffers: <span ref={bufferBytes}>0</span> MB /{" "}
+                {(deviceProfile.limits.maxGPUBytes / (1024 * 1024)).toFixed(2)} MB
+                <br />
+                gpu.textures: <span ref={textureBytes}>0</span> MB
+                <br />
+                js.memory: <span ref={jsMem}>0</span> MB /{" "}
+                {"memory" in performance
+                    ? ((performance as any).memory.jsHeapSizeLimit / (1024 * 1024)).toFixed(2)
+                    : -420}{" "}
+                MB
+                <br />
+                FPS: <span ref={fps}>0</span>
+                <br />
+                T/P/L: <span ref={triangles}>0</span> / <span ref={points}>0</span> / <span ref={lines}>0</span>
+                <br />
+                Primitives: <span ref={primitives}>0</span>
+                <br />
+                Drawcalls: <span ref={drawcalls}>0</span>
+                <br />
+                Resolution: <span ref={resolutionScale}>0</span>
+                <br />
+                Detail bias: <span ref={detailBias}>0</span>
+            </pre>
         </Box>
     );
 }

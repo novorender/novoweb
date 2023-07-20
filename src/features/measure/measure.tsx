@@ -8,7 +8,7 @@ import WidgetList from "features/widgetList/widgetList";
 import { useToggle } from "hooks/useToggle";
 import { featuresConfig } from "config/features";
 import { selectMinimized, selectMaximized } from "slices/explorerSlice";
-import { Picker, renderActions, selectPicker } from "slices/renderSlice";
+import { Picker, renderActions, selectPicker } from "features/render/renderSlice";
 import { ExtendedMeasureEntity } from "types/misc";
 
 import { measureActions, selectMeasure } from "./measureSlice";
@@ -18,7 +18,7 @@ import { snapKinds } from "./config";
 export default function Measure() {
     const [menuOpen, toggleMenu] = useToggle();
     const minimized = useAppSelector(selectMinimized) === featuresConfig.measure.key;
-    const maximized = useAppSelector(selectMaximized) === featuresConfig.measure.key;
+    const maximized = useAppSelector(selectMaximized).includes(featuresConfig.measure.key);
     const { duoMeasurementValues } = useAppSelector(selectMeasure);
 
     const dispatch = useAppDispatch();
@@ -55,6 +55,7 @@ export default function Measure() {
                             <FormControlLabel
                                 control={
                                     <IosSwitch
+                                        name="toggle pick measurement"
                                         size="medium"
                                         color="primary"
                                         checked={selecting}
@@ -65,7 +66,7 @@ export default function Measure() {
                                         }
                                     />
                                 }
-                                label={<Box fontSize={14}>Selecting</Box>}
+                                label={<Box fontSize={14}>Select</Box>}
                             />
                             <Select
                                 sx={{ width: "auto", minWidth: 110, lineHeight: "normal" }}
@@ -97,7 +98,7 @@ export default function Measure() {
                     ) : null}
                 </WidgetHeader>
                 {loadingBrep ? (
-                    <Box>
+                    <Box position="relative">
                         <LinearProgress />
                     </Box>
                 ) : null}
@@ -109,11 +110,7 @@ export default function Measure() {
                 </ScrollBox>
                 {menuOpen && <WidgetList widgetKey={featuresConfig.measure.key} onSelect={toggleMenu} />}
             </WidgetContainer>
-            <LogoSpeedDial
-                open={menuOpen}
-                toggle={toggleMenu}
-                testId={`${featuresConfig.measure.key}-widget-menu-fab`}
-            />
+            <LogoSpeedDial open={menuOpen} toggle={toggleMenu} />
         </>
     );
 }

@@ -1,35 +1,27 @@
-import { Box, Typography, useTheme, Button } from "@mui/material";
+import { Box, Button, Typography, useTheme } from "@mui/material";
 import { FormEventHandler, useCallback, useEffect, useState } from "react";
-import { MemoryRouter, Switch, Route } from "react-router-dom";
+import { MemoryRouter, Route, Switch } from "react-router-dom";
 
-import { AuthInfo } from "types/bcf";
-import WidgetList from "features/widgetList/widgetList";
-import { LinearProgress, LogoSpeedDial, TextField, WidgetContainer, WidgetHeader } from "components";
 import { useAppDispatch, useAppSelector } from "app/store";
-import { StorageKey } from "config/storage";
+import { LinearProgress, LogoSpeedDial, TextField, WidgetContainer, WidgetHeader } from "components";
 import { featuresConfig } from "config/features";
-import { getFromStorage, saveToStorage, deleteFromStorage } from "utils/storage";
-import { createOAuthStateString, getOAuthState } from "utils/auth";
+import { StorageKey } from "config/storage";
+import WidgetList from "features/widgetList/widgetList";
 import { useSceneId } from "hooks/useSceneId";
 import { useToggle } from "hooks/useToggle";
-import { selectMinimized, selectMaximized } from "slices/explorerSlice";
+import { selectMaximized, selectMinimized } from "slices/explorerSlice";
+import { AuthInfo } from "types/bcf";
+import { createOAuthStateString, getOAuthState } from "utils/auth";
+import { deleteFromStorage, getFromStorage, saveToStorage } from "utils/storage";
 
+import { CreateComment } from "./routes/createComment";
+import { CreateTopic } from "./routes/createTopic";
+import { EditTopic } from "./routes/editTopic";
 import { Filters } from "./routes/filters";
-import { Topic } from "./routes/topic";
 import { Project } from "./routes/project";
 import { Projects } from "./routes/projects";
-import { CreateTopic } from "./routes/createTopic";
-import { CreateComment } from "./routes/createComment";
-import { EditTopic } from "./routes/editTopic";
+import { Topic } from "./routes/topic";
 
-import {
-    bimCollabActions,
-    FilterType,
-    selectAccessToken,
-    selectAuthInfo,
-    selectSpace,
-    selectVersion,
-} from "./bimCollabSlice";
 import {
     getCode,
     useGetAuthInfoMutation,
@@ -38,6 +30,14 @@ import {
     useGetVersionsMutation,
     useRefreshTokenMutation,
 } from "./bimCollabApi";
+import {
+    bimCollabActions,
+    FilterType,
+    selectAccessToken,
+    selectAuthInfo,
+    selectSpace,
+    selectVersion,
+} from "./bimCollabSlice";
 
 export default function BimCollab() {
     const sceneId = useSceneId();
@@ -49,7 +49,7 @@ export default function BimCollab() {
 
     const [menuOpen, toggleMenu] = useToggle();
     const minimized = useAppSelector(selectMinimized) === featuresConfig.bimcollab.key;
-    const maximized = useAppSelector(selectMaximized) === featuresConfig.bimcollab.key;
+    const maximized = useAppSelector(selectMaximized).includes(featuresConfig.bimcollab.key);
 
     const { data: user } = useGetCurrentUserQuery(undefined, { skip: !accessToken });
     const [getToken] = useGetTokenMutation();
@@ -225,17 +225,14 @@ export default function BimCollab() {
                             </Switch>
                         </MemoryRouter>
                     ) : (
-                        <LinearProgress />
+                        <Box position="relative">
+                            <LinearProgress />
+                        </Box>
                     )}
                 </Box>
                 {menuOpen && <WidgetList widgetKey={featuresConfig.bimcollab.key} onSelect={toggleMenu} />}
             </WidgetContainer>
-            <LogoSpeedDial
-                open={menuOpen}
-                toggle={toggleMenu}
-                testId={`${featuresConfig.bimcollab.key}-widget-menu-fab`}
-                ariaLabel="toggle widget menu"
-            />
+            <LogoSpeedDial open={menuOpen} toggle={toggleMenu} ariaLabel="toggle widget menu" />
         </>
     );
 }

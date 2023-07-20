@@ -1,15 +1,14 @@
-import { Visibility, MoreVert, Edit, Clear } from "@mui/icons-material";
+import { Clear, Edit, MoreVert, Visibility, VisibilityOff } from "@mui/icons-material";
 import { Box, IconButton, List, ListItemIcon, ListItemText, Menu, MenuItem } from "@mui/material";
-import { useState, MouseEvent } from "react";
+import { MouseEvent, useState } from "react";
 import { useHistory } from "react-router-dom";
 
 import { useAppDispatch, useAppSelector } from "app/store";
-import { objectGroupsActions, useObjectGroups, useDispatchObjectGroups } from "contexts/objectGroups";
-import { selectHasAdminCapabilities } from "slices/explorerSlice";
 import { Accordion, AccordionDetails, AccordionSummary } from "components";
+import { GroupStatus, objectGroupsActions, useDispatchObjectGroups, useObjectGroups } from "contexts/objectGroups";
+import { selectHasAdminCapabilities } from "slices/explorerSlice";
 
-import { StyledCheckbox } from "./group";
-import { Group } from "./group";
+import { Group, StyledCheckbox } from "./group";
 import { groupsActions, selectIsCollectionExpanded } from "./groupsSlice";
 
 export function Collection({ collection, disabled }: { collection: string; disabled: boolean }) {
@@ -50,8 +49,9 @@ export function Collection({ collection, disabled }: { collection: string; disab
     const name = collection.split("/").pop() ?? "";
     const collectionGroups = objectGroups.filter((group) => group.grouping === collection);
     const nestedGroups = objectGroups.filter((group) => group.grouping?.startsWith(collection));
-    const allGroupedSelected = !nestedGroups.some((group) => !group.selected);
-    const allGroupedHidden = !nestedGroups.some((group) => !group.hidden);
+    const allSelected = nestedGroups.every((group) => group.status === GroupStatus.Selected);
+    const allHidden = nestedGroups.every((group) => group.status === GroupStatus.Hidden);
+    const allFullyHidden = nestedGroups.every((group) => group.opacity && group.opacity === 0);
 
     return (
         <Accordion
@@ -71,7 +71,7 @@ export function Collection({ collection, disabled }: { collection: string; disab
                 </Box>
                 <Box flex="0 0 auto">
                     <StyledCheckbox
-                        data-test="toggle-highlighting"
+                        name="toggle group highlighting"
                         aria-label="toggle group highlighting"
                         sx={{ marginLeft: "auto" }}
                         size="small"
@@ -80,36 +80,36 @@ export function Collection({ collection, disabled }: { collection: string; disab
                             nestedGroups.forEach((group) =>
                                 dispatchObjectGroups(
                                     objectGroupsActions.update(group.id, {
-                                        selected: !allGroupedSelected,
-                                        hidden: !allGroupedSelected ? false : group.hidden,
+                                        status: allSelected ? GroupStatus.None : GroupStatus.Selected,
                                     })
                                 )
                             )
                         }
-                        checked={allGroupedSelected}
+                        checked={allSelected}
                         onClick={(event) => event.stopPropagation()}
                         onFocus={(event) => event.stopPropagation()}
                     />
                 </Box>
                 <Box flex="0 0 auto">
                     <StyledCheckbox
-                        data-test="toggle-visibility"
+                        name="toggle group visibility"
                         aria-label="toggle group visibility"
                         size="small"
                         icon={<Visibility />}
-                        checkedIcon={<Visibility color="disabled" />}
+                        checkedIcon={
+                            allFullyHidden ? <VisibilityOff color="disabled" /> : <Visibility color="disabled" />
+                        }
                         disabled={disabled}
                         onChange={() =>
                             nestedGroups.forEach((group) =>
                                 dispatchObjectGroups(
                                     objectGroupsActions.update(group.id, {
-                                        hidden: !allGroupedHidden,
-                                        selected: !allGroupedHidden ? false : group.selected,
+                                        status: allHidden ? GroupStatus.None : GroupStatus.Hidden,
                                     })
                                 )
                             )
                         }
-                        checked={allGroupedHidden}
+                        checked={allHidden}
                         onClick={(event) => event.stopPropagation()}
                         onFocus={(event) => event.stopPropagation()}
                     />

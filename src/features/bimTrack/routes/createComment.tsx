@@ -1,16 +1,16 @@
-import { useState, FormEvent } from "react";
-import { useHistory, useParams } from "react-router-dom";
-import { Box, Button, useTheme, FormControlLabel } from "@mui/material";
 import { ArrowBack } from "@mui/icons-material";
+import { Box, Button, FormControlLabel, useTheme } from "@mui/material";
+import { FormEvent, useState } from "react";
+import { useHistory, useParams } from "react-router-dom";
 
 import { Divider, IosSwitch, LinearProgress, ScrollBox, TextField, Tooltip } from "components";
 import { useToggle } from "hooks/useToggle";
 
 import {
-    useGetProjectQuery,
-    useGetProjectExtensionsQuery,
     useCreateCommentMutation,
     useCreateViewpointMutation,
+    useGetProjectExtensionsQuery,
+    useGetProjectQuery,
 } from "../bimTrackApi";
 import { IncludeViewpoint, NewViewpoint } from "../includeViewpoint";
 
@@ -48,7 +48,11 @@ export function CreateComment() {
     };
 
     if (!project || !extensions) {
-        return <LinearProgress />;
+        return (
+            <Box position="relative">
+                <LinearProgress />
+            </Box>
+        );
     }
 
     const disabled = creatingComment || creatingViewpoint;

@@ -3,7 +3,7 @@ import { createSlice, PayloadAction } from "@reduxjs/toolkit";
 import { vec3 } from "gl-matrix";
 
 import { RootState } from "app/store";
-import { DeepWritable } from "slices/renderSlice";
+import { DeepMutable, resetView, selectBookmark } from "features/render/renderSlice";
 import { ExtendedMeasureEntity } from "types/misc";
 import { SnapKind } from "./config";
 
@@ -13,8 +13,8 @@ export type SelectedMeasureObj = {
     settings?: MeasureSettings;
 };
 
-type WriteableMeasureEntity = DeepWritable<MeasureEntity>;
-type WriteableExtendedMeasureEntity = DeepWritable<ExtendedMeasureEntity>;
+type WriteableMeasureEntity = DeepMutable<MeasureEntity>;
+type WriteableExtendedMeasureEntity = DeepMutable<ExtendedMeasureEntity>;
 
 const initialState = {
     selectedEntities: [] as WriteableExtendedMeasureEntity[],
@@ -31,9 +31,13 @@ export const measureSlice = createSlice({
     name: "measure",
     initialState: initialState,
     reducers: {
-        selectEntity: (state, action: PayloadAction<ExtendedMeasureEntity>) => {
+        selectEntity: (state, action: PayloadAction<{ entity: ExtendedMeasureEntity; pin?: boolean }>) => {
             const selectIdx = [1, undefined].includes(state.pinned) ? 0 : 1;
-            state.selectedEntities[selectIdx] = action.payload as WriteableExtendedMeasureEntity;
+            state.selectedEntities[selectIdx] = action.payload.entity as WriteableExtendedMeasureEntity;
+
+            if (action.payload.pin) {
+                state.pinned = selectIdx;
+            }
         },
         selectHoverObj: (state, action: PayloadAction<MeasureEntity | undefined>) => {
             state.hover = action.payload as WriteableMeasureEntity | undefined;
@@ -66,6 +70,14 @@ export const measureSlice = createSlice({
         setLoadingBrep: (state, action: PayloadAction<State["loadingBrep"]>) => {
             state.loadingBrep = action.payload;
         },
+    },
+    extraReducers(builder) {
+        builder.addCase(selectBookmark, (state, action) => {
+            state.selectedEntities = action.payload.measurements.measure.entities;
+        });
+        builder.addCase(resetView, (state) => {
+            state.selectedEntities = [];
+        });
     },
 });
 

@@ -1,18 +1,26 @@
 import { useEffect } from "react";
-import { useTheme, useMediaQuery, FabProps, SpeedDial, SpeedDialIcon, CloseReason, OpenReason } from "@mui/material";
+import {
+    useTheme,
+    useMediaQuery,
+    FabProps,
+    SpeedDial,
+    SpeedDialIcon,
+    CloseReason,
+    OpenReason,
+    Box,
+} from "@mui/material";
+import { ArrowUpward, ArrowDownward } from "@mui/icons-material";
 
-import { MultipleSelection } from "features/multipleSelection";
-import { ClearSelection } from "features/clearSelection";
-import { ViewOnlySelected } from "features/viewOnlySelected";
-import { SelectionColor } from "features/selectionColor";
-import { HideSelected } from "features/hideSelected";
-import { ToggleSubtrees } from "features/toggleSubtrees";
-import { useAppSelector } from "app/store";
+import { useAppDispatch, useAppSelector } from "app/store";
 import { useToggle } from "hooks/useToggle";
-import { selectMainObject } from "slices/renderSlice";
-
-import ArrowUpwardIcon from "@mui/icons-material/ArrowUpward";
-import ArrowDownwardIcon from "@mui/icons-material/ArrowDownward";
+import { renderActions, selectMainObject } from "features/render";
+import { ToggleSubtrees } from "features/toggleSubtrees";
+import { MultipleSelection } from "features/multipleSelection";
+import { SelectionColor } from "features/selectionColor";
+import { ViewOnlySelected } from "features/viewOnlySelected";
+import { HideSelected } from "features/hideSelected";
+import { ClearSelection } from "features/clearSelection";
+import { ClearView } from "features/clearView";
 
 export function SelectionModifierMenu() {
     const theme = useTheme();
@@ -20,6 +28,7 @@ export function SelectionModifierMenu() {
     const [interacted, toggleInteracted] = useToggle(isSmall);
     const mainObject = useAppSelector(selectMainObject);
     const [open, toggle] = useToggle();
+    const dispatch = useAppDispatch();
 
     useEffect(() => {
         if (!interacted && mainObject !== undefined && !open) {
@@ -40,27 +49,29 @@ export function SelectionModifierMenu() {
     };
 
     return (
-        <SpeedDial
-            data-test="selection-modifier-menu"
-            open={open}
-            onOpen={(_event, reason) => handleToggle(reason)}
-            onClose={(_event, reason) => handleToggle(reason)}
-            ariaLabel="selection modifiers"
-            FabProps={
-                {
-                    color: "secondary",
-                    size: isSmall ? "small" : "large",
-                    "data-test": "selection-modifier-menu-fab",
-                } as Partial<FabProps<"button", { "data-test": string }>>
-            }
-            icon={<SpeedDialIcon icon={<ArrowUpwardIcon />} openIcon={<ArrowDownwardIcon />} />}
-        >
-            <ClearSelection />
-            <HideSelected />
-            <ViewOnlySelected />
-            <SelectionColor />
-            <MultipleSelection />
-            <ToggleSubtrees />
-        </SpeedDial>
+        <Box sx={{ gridColumn: "1 / 2", gridRow: "2 / 2" }} display="flex" alignItems={"flex-end"}>
+            <SpeedDial
+                open={open}
+                onOpen={(_event, reason) => handleToggle(reason)}
+                onClose={(_event, reason) => handleToggle(reason)}
+                ariaLabel="selection modifiers"
+                FabProps={
+                    {
+                        color: "secondary",
+                        size: isSmall ? "small" : "large",
+                    } as Partial<FabProps<"button">>
+                }
+                icon={<SpeedDialIcon icon={<ArrowUpward />} openIcon={<ArrowDownward />} />}
+                onClick={() => dispatch(renderActions.setStamp(null))}
+            >
+                <ClearView />
+                <ClearSelection />
+                <HideSelected />
+                <ViewOnlySelected />
+                <SelectionColor />
+                <MultipleSelection />
+                <ToggleSubtrees />
+            </SpeedDial>
+        </Box>
     );
 }

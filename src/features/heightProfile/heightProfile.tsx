@@ -1,5 +1,4 @@
-import { useEffect, useState } from "react";
-import { MeasureError, Profile } from "@novorender/measure-api";
+import { Close, DeleteSweep, Timeline } from "@mui/icons-material";
 import {
     Box,
     Button,
@@ -13,8 +12,9 @@ import {
     Typography,
     useTheme,
 } from "@mui/material";
+import { MeasureError, Profile } from "@novorender/measure-api";
 import { ParentSizeModern } from "@visx/responsive";
-import { Close, DeleteSweep, Timeline } from "@mui/icons-material";
+import { useEffect, useState } from "react";
 
 import { useAppDispatch, useAppSelector } from "app/store";
 import {
@@ -26,15 +26,15 @@ import {
     WidgetContainer,
     WidgetHeader,
 } from "components";
-import { useToggle } from "hooks/useToggle";
 import { featuresConfig } from "config/features";
-import WidgetList from "features/widgetList/widgetList";
-import { selectMinimized, selectMaximized } from "slices/explorerSlice";
 import { useExplorerGlobals } from "contexts/explorerGlobals";
-import { AsyncState, AsyncStatus, hasFinished } from "types/misc";
 import { highlightActions, useDispatchHighlighted, useHighlighted } from "contexts/highlighted";
-import { Picker, renderActions, selectPicker } from "slices/renderSlice";
 import { singleCylinderOptions } from "features/measure";
+import { Picker, renderActions, selectPicker } from "features/render/renderSlice";
+import WidgetList from "features/widgetList/widgetList";
+import { useToggle } from "hooks/useToggle";
+import { selectMaximized, selectMinimized } from "slices/explorerSlice";
+import { AsyncState, AsyncStatus, hasFinished } from "types/misc";
 
 import { HeightProfileChart } from "./heightProfileChart";
 import {
@@ -50,7 +50,7 @@ export default function HeightProfile() {
     const theme = useTheme();
     const [menuOpen, toggleMenu] = useToggle();
     const minimized = useAppSelector(selectMinimized) === featuresConfig.heightProfile.key;
-    const maximized = useAppSelector(selectMaximized) === featuresConfig.heightProfile.key;
+    const maximized = useAppSelector(selectMaximized).includes(featuresConfig.heightProfile.key);
     const {
         state: { measureScene },
     } = useExplorerGlobals(true);
@@ -264,7 +264,7 @@ export default function HeightProfile() {
                                 <ParentSizeModern>
                                     {(parent) => (
                                         <HeightProfileChart
-                                            pts={profile.data.profilePoints as [number, number][]}
+                                            pts={profile.data.profilePoints as Vec2[]}
                                             height={parent.height}
                                             width={parent.width}
                                         />
@@ -335,11 +335,7 @@ export default function HeightProfile() {
                 </ScrollBox>
                 {menuOpen && <WidgetList widgetKey={featuresConfig.heightProfile.key} onSelect={toggleMenu} />}
             </WidgetContainer>
-            <LogoSpeedDial
-                open={menuOpen}
-                toggle={toggleMenu}
-                testId={`${featuresConfig.heightProfile.key}-widget-menu-fab`}
-            />
+            <LogoSpeedDial open={menuOpen} toggle={toggleMenu} />
         </>
     );
 }

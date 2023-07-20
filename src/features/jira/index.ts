@@ -1,3 +1,3 @@
 export { jiraApi } from "./jiraApi";
-export { useHandleJiraKeepAlive } from "./useHandleJiraKeepAlive";
 export * from "./jiraSlice";
+export { useHandleJiraKeepAlive } from "./useHandleJiraKeepAlive";

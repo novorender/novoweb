@@ -1,48 +1,51 @@
-import { ChangeEvent, useState } from "react";
-import { useTheme, Box, Button, FormControlLabel, Checkbox, CheckboxProps } from "@mui/material";
-import { useHistory } from "react-router-dom";
 import { ArrowBack, DeleteSweep, Save, Share } from "@mui/icons-material";
+import { Box, Button, Checkbox, FormControlLabel, useTheme } from "@mui/material";
+import { ChangeEvent, useState } from "react";
+import { useHistory } from "react-router-dom";
 
+import { useAppDispatch, useAppSelector } from "app/store";
 import { Divider, ScrollBox, TextField } from "components";
-import { api } from "app";
+import { renderActions, selectDeviceProfile } from "features/render";
 
 export function PerformanceSettings() {
     const history = useHistory();
     const theme = useTheme();
+    const dispatch = useAppDispatch();
+    const deviceProfile = useAppSelector(selectDeviceProfile);
 
-    const [detailBias, setDetailBias] = useState(String(api.deviceProfile.detailBias));
-    const [gpuBytesLimit, setGpuBytesLimit] = useState(String(api.deviceProfile.gpuBytesLimit));
-    const [renderResolution, setRenderResolution] = useState(String(api.deviceProfile.renderResolution));
-    const [textureResolution, setTextureResolution] = useState(String(api.deviceProfile.textureResolution));
-    const [throttleFrames, setThrottleFrames] = useState(String(api.deviceProfile.throttleFrames));
-    const [triangleLimit, setTriangleLimit] = useState(String(api.deviceProfile.triangleLimit));
-    const [weakDevice, setWeakDevice] = useState(api.deviceProfile.weakDevice);
+    const [detailBias, setDetailBias] = useState(String(deviceProfile.detailBias));
+    const [gpuBytesLimit, setGpuBytesLimit] = useState(String(deviceProfile.limits.maxGPUBytes));
+    const [renderResolution, setRenderResolution] = useState(String(deviceProfile.renderResolution));
+    const [framerateTarget, setFramerateTarget] = useState(String(deviceProfile.framerateTarget));
+    const [triangleLimit, setTriangleLimit] = useState(String(deviceProfile.limits.maxPrimitives));
+    const [sampleLimit, setSampleLimit] = useState(String(deviceProfile.limits.maxSamples));
 
     const handleChange = (setState: typeof setDetailBias) => (e: ChangeEvent<HTMLInputElement>) => {
         setState(e.target.value);
-        api.deviceProfile = {
-            ...api.deviceProfile,
-            [e.target.name]: Number(e.target.value),
-        };
     };
 
-    const toggleWeakDevice: CheckboxProps["onChange"] = (e, checked) => {
-        setWeakDevice(checked);
-        api.deviceProfile = {
-            ...api.deviceProfile,
-            weakDevice: checked,
-        };
+    const handleBlur = () => {
+        dispatch(
+            renderActions.setDeviceProfile({
+                detailBias: Number(detailBias),
+                limits: {
+                    maxGPUBytes: Number(gpuBytesLimit),
+                    maxPrimitives: Number(triangleLimit),
+                    maxSamples: Number(sampleLimit),
+                },
+                framerateTarget: Number(framerateTarget),
+                renderResolution: Number(renderResolution),
+            })
+        );
     };
 
     const handleShare = async () => {
-        const { name: _name, hasMajorPerformanceCaveat: _hmpc, discreteGPU: _dGPU, ...toShare } = api.deviceProfile;
-
         const blob = new Blob(
             [
                 encodeURI(
                     `${window.location.origin}${
                         window.location.pathname
-                    }?debug=true&debugDeviceProfile=${JSON.stringify(toShare)}`
+                    }?debug=true&debugDeviceProfile=${JSON.stringify(deviceProfile)}`
                 ),
             ],
             {
@@ -72,7 +75,7 @@ export function PerformanceSettings() {
     };
 
     const handleSave = () => {
-        localStorage["debugDeviceProfile"] = JSON.stringify(api.deviceProfile);
+        localStorage["debugDeviceProfile"] = JSON.stringify(deviceProfile);
     };
 
     const handleDelete = () => {
@@ -109,7 +112,18 @@ export function PerformanceSettings() {
                     name="detailBias"
                     value={detailBias}
                     onChange={handleChange(setDetailBias)}
+                    onBlur={handleBlur}
                 />
+
+                {/* <TextField
+                    sx={{ mt: 2 }}
+                    fullWidth
+                    size="medium"
+                    label="Ortho detail bias"
+                    name="orthoDetailBias"
+                    value={orthoDetailBias}
+                    onChange={handleChange(setOrthoDetailBias)}
+                /> */}
 
                 <TextField
                     sx={{ mt: 2 }}
@@ -119,6 +133,7 @@ export function PerformanceSettings() {
                     name="triangleLimit"
                     value={triangleLimit}
                     onChange={handleChange(setTriangleLimit)}
+                    onBlur={handleBlur}
                 />
 
                 <TextField
@@ -129,6 +144,18 @@ export function PerformanceSettings() {
                     name="gpuBytesLimit"
                     value={gpuBytesLimit}
                     onChange={handleChange(setGpuBytesLimit)}
+                    onBlur={handleBlur}
+                />
+
+                <TextField
+                    sx={{ mt: 2 }}
+                    fullWidth
+                    size="medium"
+                    label="Sample limit"
+                    name="sampleLimit"
+                    value={sampleLimit}
+                    onChange={handleChange(setSampleLimit)}
+                    onBlur={handleBlur}
                 />
 
                 <TextField
@@ -139,9 +166,10 @@ export function PerformanceSettings() {
                     name="renderResolution"
                     value={renderResolution}
                     onChange={handleChange(setRenderResolution)}
+                    onBlur={handleBlur}
                 />
 
-                <TextField
+                {/* <TextField
                     sx={{ mt: 2 }}
                     fullWidth
                     size="medium"
@@ -149,9 +177,9 @@ export function PerformanceSettings() {
                     name="textureResolution"
                     value={textureResolution}
                     onChange={handleChange(setTextureResolution)}
-                />
+                /> */}
 
-                <TextField
+                {/* <TextField
                     sx={{ mt: 2 }}
                     fullWidth
                     size="medium"
@@ -159,18 +187,49 @@ export function PerformanceSettings() {
                     name="throttleFrames"
                     value={throttleFrames}
                     onChange={handleChange(setThrottleFrames)}
+                /> */}
+
+                <TextField
+                    sx={{ mt: 2 }}
+                    fullWidth
+                    size="medium"
+                    label="Framerate target"
+                    value={framerateTarget}
+                    onChange={handleChange(setFramerateTarget)}
+                    onBlur={handleBlur}
                 />
 
                 <Divider sx={{ my: 0.5 }} />
 
-                <FormControlLabel
+                {/* <FormControlLabel
                     control={<Checkbox size="small" color="primary" checked={weakDevice} onChange={toggleWeakDevice} />}
                     label={
                         <Box mr={0.5} sx={{ userSelect: "none" }}>
                             Weak device
                         </Box>
                     }
-                />
+                /> */}
+
+                <Box>
+                    <FormControlLabel
+                        control={
+                            <Checkbox
+                                name="outline"
+                                size="small"
+                                color="primary"
+                                checked={deviceProfile.features.outline}
+                                onChange={(_evt, checked) =>
+                                    dispatch(renderActions.setDeviceProfile({ features: { outline: checked } }))
+                                }
+                            />
+                        }
+                        label={
+                            <Box mr={0.5} sx={{ userSelect: "none" }}>
+                                Outline
+                            </Box>
+                        }
+                    />
+                </Box>
 
                 <Divider sx={{ mt: 0.5, mb: 2 }} />
 

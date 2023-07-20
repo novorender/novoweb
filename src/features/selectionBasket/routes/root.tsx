@@ -1,23 +1,22 @@
-import { useEffect, useState, MouseEvent } from "react";
 import { AddCircle, ColorLens, DeleteSweep, RemoveCircle } from "@mui/icons-material";
-import { Box, Button, Typography, RadioGroup, FormControlLabel, Radio, useTheme, Link as MuiLink } from "@mui/material";
+import { Box, Button, FormControlLabel, Link as MuiLink, Radio, RadioGroup, Typography, useTheme } from "@mui/material";
+import { MouseEvent, useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 
 import { useAppDispatch, useAppSelector } from "app/store";
 import { Divider, IosSwitch, ScrollBox } from "components";
-
-import { objectGroupsActions, useObjectGroups, useDispatchObjectGroups } from "contexts/objectGroups";
 import { highlightActions, useDispatchHighlighted, useHighlighted } from "contexts/highlighted";
-import { useDispatchSelectionBasket, useSelectionBasket, selectionBasketActions } from "contexts/selectionBasket";
+import { GroupStatus, objectGroupsActions, useDispatchObjectGroups, useObjectGroups } from "contexts/objectGroups";
+import { selectionBasketActions, useDispatchSelectionBasket, useSelectionBasket } from "contexts/selectionBasket";
+import { ColorPicker } from "features/colorPicker";
 import {
     ObjectVisibility,
+    SelectionBasketMode,
     renderActions,
     selectDefaultVisibility,
-    SelectionBasketMode,
     selectSelectionBasketColor,
     selectSelectionBasketMode,
-} from "slices/renderSlice";
-import { ColorPicker } from "features/colorPicker";
+} from "features/render/renderSlice";
 import { rgbToVec, vecToRgb } from "utils/color";
 
 export function Root() {
@@ -41,7 +40,7 @@ export function Root() {
         setColorPickerAnchor(!colorPickerAnchor && event?.currentTarget ? event.currentTarget : null);
     };
 
-    const selectedGroups = objectGroups.filter((group) => group.selected);
+    const selectedGroups = objectGroups.filter((group) => group.status === GroupStatus.Selected);
     const hasHighlighted = highlighted.length || selectedGroups.length;
 
     useEffect(() => {
@@ -51,19 +50,33 @@ export function Root() {
     }, [visible, mode, dispatch]);
 
     const handleAdd = () => {
-        const fromGroup = selectedGroups.map((grp) => grp.ids).flat();
+        const fromGroup = selectedGroups.flatMap((grp) => [...grp.ids]);
 
         dispatchSelectionBasket(selectionBasketActions.add(highlighted.concat(fromGroup)));
         dispatchHighlighted(highlightActions.setIds([]));
-        dispatchObjectGroups(objectGroupsActions.set(objectGroups.map((group) => ({ ...group, selected: false }))));
+        dispatchObjectGroups(
+            objectGroupsActions.set(
+                objectGroups.map((group) => ({
+                    ...group,
+                    status: group.status === GroupStatus.Selected ? GroupStatus.None : group.status,
+                }))
+            )
+        );
     };
 
     const handleRemove = () => {
-        const fromGroup = selectedGroups.map((grp) => grp.ids).flat();
+        const fromGroup = selectedGroups.flatMap((grp) => [...grp.ids]);
 
         dispatchSelectionBasket(selectionBasketActions.remove(highlighted.concat(fromGroup)));
         dispatchHighlighted(highlightActions.setIds([]));
-        dispatchObjectGroups(objectGroupsActions.set(objectGroups.map((group) => ({ ...group, selected: false }))));
+        dispatchObjectGroups(
+            objectGroupsActions.set(
+                objectGroups.map((group) => ({
+                    ...group,
+                    status: group.status === GroupStatus.Selected ? GroupStatus.None : group.status,
+                }))
+            )
+        );
     };
 
     const handleClear = () => {
@@ -109,6 +122,7 @@ export function Root() {
                 <FormControlLabel
                     control={
                         <IosSwitch
+                            name="toggle highlight only from basket"
                             size="medium"
                             color="primary"
                             disabled={!visible.length}
@@ -151,6 +165,7 @@ export function Root() {
                 <FormControlLabel
                     control={
                         <IosSwitch
+                            name="toggle use natural colors"
                             size="medium"
                             color="primary"
                             checked={!color.use}

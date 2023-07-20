@@ -3,21 +3,16 @@ import { vec3 } from "gl-matrix";
 
 import { RootState } from "app/store";
 import { AsyncState, AsyncStatus } from "types/misc";
-import { ObjectId } from "@novorender/webgl-api";
+import { selectBookmark } from "features/render";
 
-export type LandXmlPath = {
+type LandXmlPath = {
     id: number;
     name: string;
 };
 
-export type ParametricPath = {
-    id: number;
-    pos: vec3;
-};
-
 const initialState = {
     paths: { status: AsyncStatus.Initial } as AsyncState<LandXmlPath[]>,
-    currentCenter: undefined as undefined | [number, number, number],
+    currentCenter: undefined as undefined | Vec3,
     profile: "",
     step: "1",
     ptHeight: undefined as undefined | number,
@@ -29,11 +24,18 @@ const initialState = {
     clipping: 0.1,
     lastViewedRouterPath: "/",
     goToRouterPath: "",
-    selectedPositions: [] as ParametricPath[],
+    selectedPositions: [] as {
+        id: number;
+        pos: vec3;
+    }[],
     drawSelectedPositions: true,
-    selectedIds: [] as ObjectId[],
+    selectedIds: [] as number[],
     resetPositionOnInit: false,
     followCylindersFrom: "center" as "center" | "top" | "bottom",
+    drawRoadIds: undefined as string[] | undefined,
+    roadIds: undefined as string[] | undefined,
+    selectedPath: undefined as undefined | LandXmlPath["id"],
+    showTracer: false,
 };
 
 type State = typeof initialState;
@@ -84,6 +86,9 @@ export const followPathSlice = createSlice({
         toggleDrawSelectedPositions: (state, action: PayloadAction<State["drawSelectedPositions"] | undefined>) => {
             state.drawSelectedPositions = action.payload !== undefined ? action.payload : !state.drawSelectedPositions;
         },
+        toggleShowTracer: (state, action: PayloadAction<State["showTracer"] | undefined>) => {
+            state.showTracer = action.payload !== undefined ? action.payload : !state.showTracer;
+        },
         setSelectedPositions: (state, action: PayloadAction<State["selectedPositions"]>) => {
             state.selectedPositions = action.payload;
         },
@@ -96,6 +101,58 @@ export const followPathSlice = createSlice({
         setFollowFrom: (state, action: PayloadAction<State["followCylindersFrom"]>) => {
             state.followCylindersFrom = action.payload;
         },
+        setDrawRoadIds: (state, action: PayloadAction<State["drawRoadIds"]>) => {
+            state.drawRoadIds = action.payload;
+        },
+        addDrawRoad: (state, action: PayloadAction<string>) => {
+            state.drawRoadIds?.push(action.payload);
+        },
+        removeDrawRoad: (state, action: PayloadAction<string>) => {
+            if (state.drawRoadIds) {
+                state.drawRoadIds = state.drawRoadIds.filter((id) => id !== action.payload);
+            }
+        },
+        setRoadIds: (state, action: PayloadAction<State["roadIds"]>) => {
+            state.roadIds = action.payload;
+        },
+        setSelectedPath: (state, action: PayloadAction<State["selectedPath"]>) => {
+            state.selectedPath = action.payload;
+        },
+    },
+    extraReducers(builder) {
+        builder.addCase(selectBookmark, (state, action) => {
+            const { followPath: fp, grid, camera } = action.payload;
+
+            if (!fp) {
+                return;
+            }
+
+            state.drawSelectedPositions = false;
+            state.drawRoadIds = fp.drawLayers.roadIds;
+            state.currentCenter = fp.currentCenter;
+            state.profile = String(fp.profileNumber);
+            state.ptHeight = fp.currentCenter[2];
+            state.showGrid = grid.enabled;
+            state.view2d = camera.kind === "orthographic";
+
+            if (state.view2d) {
+                state.clipping = action.payload.camera.far;
+            }
+
+            if (fp.selected.positions?.length) {
+                state.selectedPositions = fp.selected.positions;
+                state.selectedIds = [];
+                state.selectedPath = undefined;
+                state.drawRoadIds = undefined;
+                state.goToRouterPath = "/followPos";
+            } else {
+                state.selectedPositions = [];
+                state.selectedIds = fp.selected.ids;
+                state.selectedPath = fp.selected.landXmlPathId;
+                state.drawRoadIds = fp.drawLayers.roadIds;
+                state.goToRouterPath = "/followIds";
+            }
+        });
     },
 });
 
@@ -118,6 +175,10 @@ export const selectDrawSelectedPositions = (state: RootState) => state.followPat
 export const selectSelectedIds = (state: RootState) => state.followPath.selectedIds;
 export const selectResetPositionOnInit = (state: RootState) => state.followPath.resetPositionOnInit;
 export const selectFollowCylindersFrom = (state: RootState) => state.followPath.followCylindersFrom;
+export const selectSelectedPath = (state: RootState) => state.followPath.selectedPath;
+export const selectDrawRoadIds = (state: RootState) => state.followPath.drawRoadIds;
+export const selectRoadIds = (state: RootState) => state.followPath.roadIds;
+export const selectShowTracer = (state: RootState) => state.followPath.showTracer;
 
 const { actions, reducer } = followPathSlice;
 export { actions as followPathActions, reducer as followPathReducer };

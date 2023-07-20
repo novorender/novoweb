@@ -1,14 +1,16 @@
-import { CameraControllerParams, RenderSettings } from "@novorender/webgl-api";
 import { Close } from "@mui/icons-material";
-import { Snackbar, IconButton, Typography } from "@mui/material";
+import { IconButton, Snackbar, Typography } from "@mui/material";
+import { useState } from "react";
 import { v4 as uuidv4 } from "uuid";
 
 import { dataApi } from "app";
-import { featuresConfig } from "config/features";
+import { useAppSelector } from "app/store";
 import { WidgetMenuButtonWrapper } from "components";
+import { featuresConfig } from "config/features";
 import { useCreateBookmark } from "features/bookmarks/useCreateBookmark";
-import { useMountedState } from "hooks/useMountedState";
+import { selectViewMode } from "features/render";
 import { useSceneId } from "hooks/useSceneId";
+import { ViewMode } from "types/misc";
 
 enum Status {
     Initial,
@@ -20,12 +22,13 @@ export function ShareLink() {
     const { Icon, name } = featuresConfig.shareLink;
 
     const createBookmark = useCreateBookmark();
+    const viewMode = useAppSelector(selectViewMode);
     const sceneId = useSceneId();
 
-    const [status, setStatus] = useMountedState(Status.Initial);
+    const [status, setStatus] = useState(Status.Initial);
 
     const createLink = async () => {
-        if (status !== Status.Initial) {
+        if (status !== Status.Initial || viewMode === ViewMode.Panorama) {
             return;
         }
 
@@ -91,7 +94,11 @@ export function ShareLink() {
                     </IconButton>
                 }
             />
-            <WidgetMenuButtonWrapper activeCurrent={status !== Status.Initial} onClick={createLink}>
+            <WidgetMenuButtonWrapper
+                activeCurrent={status !== Status.Initial}
+                activeElsewhere={viewMode === ViewMode.Panorama}
+                onClick={createLink}
+            >
                 <IconButton size="large">
                     <Icon />
                 </IconButton>
@@ -99,19 +106,4 @@ export function ShareLink() {
             </WidgetMenuButtonWrapper>
         </>
     );
-}
-
-type UrlData = {
-    camera?: CameraControllerParams;
-    settings?: Partial<RenderSettings>;
-    mainObject?: number;
-};
-
-export function getDataFromUrlHash(): UrlData {
-    try {
-        return window.location.hash ? JSON.parse(atob(window.location.hash.slice(1))) : {};
-    } catch (e) {
-        console.warn(e);
-        return {};
-    }
 }

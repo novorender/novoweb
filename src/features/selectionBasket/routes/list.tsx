@@ -1,27 +1,27 @@
-import { useEffect, useState } from "react";
-import { useHistory } from "react-router-dom";
-import { HierarcicalObjectReference } from "@novorender/webgl-api";
 import { ArrowBack, Flight } from "@mui/icons-material";
 import {
     Box,
     Button,
+    Checkbox,
+    FormControlLabel,
     ListItemButton,
-    useTheme,
     List as MuiList,
     Typography,
-    FormControlLabel,
-    Checkbox,
+    useTheme,
 } from "@mui/material";
+import { HierarcicalObjectReference } from "@novorender/webgl-api";
+import { useEffect, useState } from "react";
+import { useHistory } from "react-router-dom";
 
-import { ScrollBox, Divider, LinearProgress } from "components";
-import { useSelectionBasket } from "contexts/selectionBasket";
-import { getObjectNameFromPath, getTotalBoundingSphere } from "utils/objectData";
-import { AsyncState, AsyncStatus, hasFinished } from "types/misc";
-import { useExplorerGlobals } from "contexts/explorerGlobals";
-import { useAbortController } from "hooks/useAbortController";
 import { useAppDispatch, useAppSelector } from "app/store";
-import { CameraType, renderActions, selectCameraType, selectMainObject } from "slices/renderSlice";
+import { Divider, LinearProgress, ScrollBox } from "components";
+import { useExplorerGlobals } from "contexts/explorerGlobals";
 import { highlightActions, useDispatchHighlighted } from "contexts/highlighted";
+import { useSelectionBasket } from "contexts/selectionBasket";
+import { CameraType, renderActions, selectCameraType, selectMainObject } from "features/render/renderSlice";
+import { useAbortController } from "hooks/useAbortController";
+import { AsyncState, AsyncStatus, hasFinished } from "types/misc";
+import { getObjectNameFromPath, getTotalBoundingSphere } from "utils/objectData";
 
 import { selectFlyOnSelect, selectionBasketSliceActions } from "../selectionBasketSlice";
 
@@ -29,7 +29,7 @@ export function List() {
     const theme = useTheme();
     const history = useHistory();
     const {
-        state: { scene, view },
+        state: { db },
     } = useExplorerGlobals(true);
 
     const [abortController, abort] = useAbortController();
@@ -64,7 +64,7 @@ export function List() {
             const abortSignal = abortController.current.signal;
             setObjects({ status: AsyncStatus.Loading });
             try {
-                const iterator = scene.search(
+                const iterator = db.search(
                     {
                         searchPattern: [{ property: "id", value: basket.slice(0, 100).map(String) }],
                     },
@@ -89,7 +89,7 @@ export function List() {
                 setObjects({ status: AsyncStatus.Error, msg: "An error occurred while loading object data." });
             }
         }
-    }, [basket, scene, abortController, objects]);
+    }, [basket, db, abortController, objects]);
 
     return (
         <>
@@ -105,12 +105,13 @@ export function List() {
                     <FormControlLabel
                         control={
                             <Checkbox
+                                name="fly to object when selected"
                                 size="medium"
                                 color="primary"
-                                disabled={cameraType !== CameraType.Flight}
-                                checked={cameraType === CameraType.Flight && flyOnSelect}
+                                disabled={cameraType !== CameraType.Pinhole}
+                                checked={cameraType === CameraType.Pinhole && flyOnSelect}
                                 onChange={() => {
-                                    if (cameraType !== CameraType.Flight) {
+                                    if (cameraType !== CameraType.Pinhole) {
                                         return;
                                     }
 
@@ -122,12 +123,12 @@ export function List() {
                     />
                     <Button
                         disabled={
-                            cameraType !== CameraType.Flight ||
+                            cameraType !== CameraType.Pinhole ||
                             !(objects.status === AsyncStatus.Success && objects.data.length)
                         }
                         onClick={() => {
                             if (
-                                cameraType !== CameraType.Flight ||
+                                cameraType !== CameraType.Pinhole ||
                                 !(objects.status === AsyncStatus.Success && objects.data.length)
                             ) {
                                 return;
@@ -135,7 +136,7 @@ export function List() {
 
                             const sphere = getTotalBoundingSphere(objects.data);
                             if (sphere) {
-                                view.camera.controller.zoomTo(sphere);
+                                dispatch(renderActions.setCamera({ type: CameraType.Pinhole, zoomTo: sphere }));
                             }
                         }}
                         color="grey"
@@ -146,7 +147,7 @@ export function List() {
                 </Box>
             </Box>
             {!hasFinished(objects) ? (
-                <Box>
+                <Box position="relative">
                     <LinearProgress />
                 </Box>
             ) : objects.status === AsyncStatus.Error ? (
@@ -174,7 +175,12 @@ export function List() {
                                             dispatchHighlighted(highlightActions.setIds([obj.id]));
 
                                             if (flyOnSelect && obj.bounds?.sphere) {
-                                                view.camera.controller.zoomTo(obj.bounds.sphere);
+                                                dispatch(
+                                                    renderActions.setCamera({
+                                                        type: CameraType.Pinhole,
+                                                        zoomTo: obj.bounds.sphere,
+                                                    })
+                                                );
                                             }
                                         }}
                                     >

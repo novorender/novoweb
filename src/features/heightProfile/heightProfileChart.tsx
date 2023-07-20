@@ -1,22 +1,22 @@
-import { Fragment, useCallback, TouchEvent, MouseEvent, useMemo } from "react";
-import { bisectLeft, min, max } from "d3-array";
 import { Box, Typography, useTheme } from "@mui/material";
-import { vec2 } from "gl-matrix";
-import { scaleLinear } from "@visx/scale";
 import { Axis, Orientation } from "@visx/axis";
-import { LinearGradient } from "@visx/gradient";
-import { LinePath, Line } from "@visx/shape";
-import { Group } from "@visx/group";
-import { Grid } from "@visx/grid";
-import { Text } from "@visx/text";
-import { GlyphCircle } from "@visx/glyph";
-import { TooltipWithBounds, useTooltip, defaultStyles } from "@visx/tooltip";
 import { localPoint } from "@visx/event";
+import { GlyphCircle } from "@visx/glyph";
+import { LinearGradient } from "@visx/gradient";
+import { Grid } from "@visx/grid";
+import { Group } from "@visx/group";
+import { scaleLinear } from "@visx/scale";
+import { Line, LinePath } from "@visx/shape";
+import { Text } from "@visx/text";
+import { TooltipWithBounds, defaultStyles, useTooltip } from "@visx/tooltip";
+import { bisectLeft, max, min } from "d3-array";
+import { vec2 } from "gl-matrix";
+import { Fragment, MouseEvent, TouchEvent, useCallback, useMemo } from "react";
 
 export const epsilon = 1e-3;
 
-const getX = (d: [number, number]) => d[0];
-const getY = (d: [number, number]) => d[1];
+const getX = (d: Vec2) => d[0];
+const getY = (d: Vec2) => d[1];
 
 const margin = {
     top: 48,
@@ -32,7 +32,7 @@ export function HeightProfileChart({
 }: {
     width: number;
     height: number;
-    pts: [number, number][];
+    pts: Vec2[];
 }) {
     const theme = useTheme();
     const {
@@ -152,7 +152,7 @@ export function HeightProfileChart({
                         onMouseLeave={() => hideTooltip()}
                         pointerEvents="auto"
                     />
-                    <LinePath<[number, number]>
+                    <LinePath<Vec2>
                         data={pts}
                         x={(d) => xScale(getX(d)) ?? 0}
                         y={(d) => yScale(getY(d)) ?? 0}

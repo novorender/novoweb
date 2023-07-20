@@ -3,7 +3,6 @@ import {
     BlurOn,
     Cameraswitch,
     Category,
-    CheckBox,
     ColorLens,
     CropLandscape,
     Domain,
@@ -27,13 +26,15 @@ import {
     Undo,
     Visibility,
     VisibilityOff,
-    VrpanoOutlined,
     LinearScale,
     FiberSmartRecord,
     GpsFixed,
+    Image,
+    RestartAlt,
+    CheckBox,
 } from "@mui/icons-material";
 
-import { ReactComponent as Clipping } from "media/icons/clipping.svg";
+// import { ReactComponent as Clipping } from "media/icons/clipping.svg";
 import { ReactComponent as Run } from "media/icons/run.svg";
 import { ReactComponent as BimTrack } from "media/icons/bimtrack.svg";
 import { ReactComponent as Ditio } from "media/icons/ditio.svg";
@@ -200,13 +201,13 @@ export const featuresConfig = {
         type: FeatureType.Widget,
         defaultLocked: false,
     },
-    clippingBox: {
-        key: "clippingBox",
-        name: "Clipping box",
-        Icon: Clipping,
-        type: FeatureType.Widget,
-        defaultLocked: false,
-    },
+    // clippingBox: {
+    //     key: "clippingBox",
+    //     name: "Clipping box",
+    //     Icon: Clipping,
+    //     type: FeatureType.Widget,
+    //     defaultLocked: false,
+    // },
     measure: {
         key: "measure",
         name: "Measure",
@@ -236,15 +237,12 @@ export const featuresConfig = {
         type: FeatureType.Widget,
         defaultLocked: false,
     },
-    panoramas: {
-        key: "panoramas",
-        name: "Panoramas",
-        Icon: VrpanoOutlined,
+    images: {
+        key: "images",
+        name: "Images",
+        Icon: Image,
         type: FeatureType.Widget,
         defaultLocked: false,
-        dependencies: {
-            subtrees: [["points"]],
-        },
     },
     deviations: {
         key: "deviations",
@@ -254,7 +252,7 @@ export const featuresConfig = {
         defaultLocked: false,
         tags: [featureTags.review.key],
         dependencies: {
-            subtrees: [["points", "triangles"]],
+            subtrees: [["points"]],
         },
     },
     followPath: {
@@ -332,6 +330,13 @@ export const featuresConfig = {
         key: "hideSelected",
         name: "Hide selected",
         Icon: VisibilityOff,
+        type: FeatureType.Button,
+        defaultLocked: false,
+    },
+    clearView: {
+        key: "clearView",
+        name: "Clear",
+        Icon: RestartAlt,
         type: FeatureType.Button,
         defaultLocked: false,
     },

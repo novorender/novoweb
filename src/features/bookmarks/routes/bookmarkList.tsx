@@ -4,10 +4,12 @@ import { Box, Button, List, useTheme } from "@mui/material";
 import { useState, MouseEvent, useEffect } from "react";
 
 import { dataApi } from "app";
-import { Accordion, AccordionSummary, AccordionDetails, Divider, LinearProgress, ScrollBox } from "components";
+import { Divider, LinearProgress, ScrollBox } from "components";
 import { useAppDispatch, useAppSelector } from "app/store";
 import { selectUser } from "slices/authSlice";
 import { useSceneId } from "hooks/useSceneId";
+import { ViewMode } from "types/misc";
+import { selectViewMode } from "features/render/renderSlice";
 
 import {
     Filters,
@@ -21,6 +23,8 @@ import {
 } from "../bookmarksSlice";
 import { FilterMenu } from "../filterMenu";
 import { Bookmark } from "../bookmark";
+import { Collection } from "../collection";
+import { GroupStatus } from "contexts/objectGroups";
 
 const filterMenuId = "bm-filter-menu";
 
@@ -29,6 +33,7 @@ export function BookmarkList() {
     const history = useHistory();
     const sceneId = useSceneId();
 
+    const viewMode = useAppSelector(selectViewMode);
     const status = useAppSelector(selectBookmarksStatus);
     const user = useAppSelector(selectUser);
     const bookmarks = useAppSelector(selectBookmarks);
@@ -77,6 +82,21 @@ export function BookmarkList() {
         }
     };
 
+    const collections = Array.from(
+        filteredBookmarks.reduce((set, bookmark) => {
+            if (bookmark.grouping) {
+                const collection = bookmark.grouping.split("/")[0];
+                set.add(collection);
+            }
+
+            return set;
+        }, new Set<string>())
+    ).sort((a, b) => a.localeCompare(b, "en", { sensitivity: "accent" }));
+
+    const singles = filteredBookmarks
+        .filter((bookmark) => !bookmark.grouping)
+        .sort((a, b) => a.name.localeCompare(b.name, "en", { sensitivity: "accent" }));
+
     return (
         <>
             <Box boxShadow={theme.customShadows.widgetHeader}>
@@ -99,7 +119,7 @@ export function BookmarkList() {
                                     <Button
                                         color="grey"
                                         onClick={() => history.push("/create")}
-                                        disabled={status !== BookmarksStatus.Running}
+                                        disabled={status !== BookmarksStatus.Running || viewMode === ViewMode.Panorama}
                                     >
                                         <AddCircle sx={{ mr: 1 }} />
                                         Add bookmark
@@ -118,29 +138,23 @@ export function BookmarkList() {
                     </Box>
                 </Box>
             </Box>
-            <Box display="flex" flexDirection="column" height={1} pb={2}>
-                {[BookmarksStatus.Loading, BookmarksStatus.Saving].includes(status) ? <LinearProgress /> : null}
-                <ScrollBox display="flex" flexDirection="column" height={1} pb={2}>
-                    {arrangeColllections(filteredBookmarks).map((collection) =>
-                        !collection.name ? (
-                            <List key="ungrouped">
-                                {collection.bookmarks.map((bookmark, index) => (
-                                    <Bookmark bookmark={bookmark} key={bookmark.name + index} />
-                                ))}
-                            </List>
-                        ) : (
-                            <Accordion key={collection.name}>
-                                <AccordionSummary>{collection.name}</AccordionSummary>
-                                <AccordionDetails>
-                                    {collection.bookmarks.map((bookmark, index) => (
-                                        <Bookmark bookmark={bookmark} key={bookmark.name + index} />
-                                    ))}
-                                </AccordionDetails>
-                            </Accordion>
-                        )
-                    )}
-                </ScrollBox>
-            </Box>
+            {[BookmarksStatus.Loading, BookmarksStatus.Saving].includes(status) ? (
+                <Box position="relative">
+                    <LinearProgress />
+                </Box>
+            ) : null}
+            <ScrollBox display="flex" flexDirection="column" height={1} pb={2}>
+                {singles.length > 0 && (
+                    <List>
+                        {singles.map((bookmark, idx) => (
+                            <Bookmark bookmark={bookmark} key={bookmark.id ?? bookmark.name + idx} />
+                        ))}
+                    </List>
+                )}
+                {collections.map((collection) => (
+                    <Collection bookmarks={filteredBookmarks} key={collection} collection={collection} />
+                ))}
+            </ScrollBox>
             <FilterMenu
                 anchorEl={filterMenuAnchor}
                 open={Boolean(filterMenuAnchor)}
@@ -173,60 +187,51 @@ function applyFilters(bookmarks: ExtendedBookmark[], filters: Filters): Extended
             }
         }
 
-        if (filters.measurements) {
-            if (!(bm.measurement && bm.measurement.length)) {
-                return false;
+        if (bm.explorerState) {
+            const { measurements, clipping, groups } = bm.explorerState;
+            if (filters.measurements) {
+                if (
+                    !measurements.area.points.length &&
+                    !measurements.measure.entities.length &&
+                    !measurements.pointLine.points.length &&
+                    measurements.manhole.id === undefined
+                ) {
+                    return false;
+                }
             }
-        }
 
-        if (filters.clipping) {
-            if (!(bm.clippingVolume?.enabled && bm.clippingVolume.planes.length) && !bm.clippingPlanes?.enabled) {
-                return false;
+            if (filters.clipping) {
+                if (!(clipping.enabled && clipping.planes.length)) {
+                    return false;
+                }
             }
-        }
 
-        if (filters.groups) {
-            if (!bm.objectGroups?.filter((grp) => grp.id && (grp.hidden || grp.selected)).length) {
-                return false;
+            if (filters.groups) {
+                if (!groups.filter((grp) => grp.id && grp.status !== GroupStatus.None).length) {
+                    return false;
+                }
+            }
+        } else {
+            // LEGACY
+            if (filters.measurements) {
+                if (!(bm.measurement && bm.measurement.length)) {
+                    return false;
+                }
+            }
+
+            if (filters.clipping) {
+                if (!(bm.clippingVolume?.enabled && bm.clippingVolume.planes.length) && !bm.clippingPlanes?.enabled) {
+                    return false;
+                }
+            }
+
+            if (filters.groups) {
+                if (!bm.objectGroups?.filter((grp) => grp.id && (grp.hidden || grp.selected)).length) {
+                    return false;
+                }
             }
         }
 
         return true;
     });
-}
-
-type BmCollection = {
-    name: string;
-    bookmarks: ExtendedBookmark[];
-};
-
-function arrangeColllections(bookmarks: ExtendedBookmark[]): BmCollection[] {
-    let done = [] as string[];
-
-    return bookmarks
-        .reduce((prev, curr, idx, arr) => {
-            let toReturn = [...prev];
-
-            if (idx === 0) {
-                const ungrouped = arr
-                    .filter((bm) => !bm.grouping)
-                    .sort((a, b) => a.name.localeCompare(b.name, "en", { sensitivity: "accent" }));
-                toReturn = toReturn.concat({ name: "", bookmarks: ungrouped });
-            }
-
-            if (curr.grouping && !done.includes(curr.grouping)) {
-                const collection = {
-                    name: curr.grouping,
-                    bookmarks: arr
-                        .filter((bm) => bm.grouping === curr.grouping)
-                        .sort((a, b) => a.name.localeCompare(b.name, "en", { sensitivity: "accent" })),
-                };
-
-                toReturn = toReturn.concat(collection);
-                done = done.concat(curr.grouping);
-            }
-
-            return toReturn;
-        }, [] as BmCollection[])
-        .sort((a, b) => a.name.localeCompare(b.name, "en", { sensitivity: "accent" }));
 }

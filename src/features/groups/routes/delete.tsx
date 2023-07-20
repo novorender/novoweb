@@ -1,5 +1,5 @@
-import { useHistory, useParams } from "react-router-dom";
 import { Box, useTheme } from "@mui/material";
+import { useHistory, useParams } from "react-router-dom";
 
 import { Confirmation } from "components";
 import { objectGroupsActions, useDispatchObjectGroups } from "contexts/objectGroups";

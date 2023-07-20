@@ -2,12 +2,12 @@ import { configureStore, combineReducers } from "@reduxjs/toolkit";
 import { TypedUseSelectorHook, useDispatch, useSelector } from "react-redux";
 import { setupListeners } from "@reduxjs/toolkit/query";
 
-import { renderReducer } from "slices/renderSlice";
+import { renderReducer } from "features/render/renderSlice";
 import { explorerReducer } from "slices/explorerSlice";
 import { authReducer } from "slices/authSlice";
 import { groupsReducer } from "features/groups";
 import { bookmarksReducer } from "features/bookmarks";
-import { panoramasReducer } from "features/panoramas";
+import { imagesReduces } from "features/images";
 import { followPathReducer } from "features/followPath";
 import { deviationsReducer } from "features/deviations";
 import { measureReducer } from "features/measure";
@@ -24,6 +24,7 @@ import { jiraApi, jiraReducer } from "features/jira";
 import { manholeReducer } from "features/manhole";
 import { selectionBasketReducer } from "features/selectionBasket";
 import { xsiteManageReducer, xsiteManageApi } from "features/xsiteManage";
+import { propertiesReducer } from "features/properties/slice";
 
 const rootReducer = combineReducers({
     explorer: explorerReducer,
@@ -31,7 +32,7 @@ const rootReducer = combineReducers({
     auth: authReducer,
     groups: groupsReducer,
     bookmarks: bookmarksReducer,
-    panoramas: panoramasReducer,
+    images: imagesReduces,
     followPath: followPathReducer,
     deviations: deviationsReducer,
     measure: measureReducer,
@@ -43,6 +44,7 @@ const rootReducer = combineReducers({
     bimCollab: bimCollabReducer,
     heightProfile: heightProfileReducer,
     selectionBasket: selectionBasketReducer,
+    properties: propertiesReducer,
     [bimCollabApi.reducerPath]: bimCollabApi.reducer,
     bimTrack: bimTrackReducer,
     [bimTrackApi.reducerPath]: bimTrackApi.reducer,

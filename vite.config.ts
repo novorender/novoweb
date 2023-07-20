@@ -4,28 +4,39 @@ import react from "@vitejs/plugin-react";
 import envCompatible from "vite-plugin-env-compatible";
 import svgr from "vite-plugin-svgr";
 import basicSsl from "@vitejs/plugin-basic-ssl";
+import { existsSync } from "node:fs";
 
 // https://vitejs.dev/config/
 export default defineConfig(({ mode }) => {
     const env = loadEnv(mode, process.cwd());
+    const ownCerts = existsSync("./localhost.crt") && existsSync("./localhost.key");
 
     return {
         optimizeDeps: {
-            exclude: ["@novorender/measure-api"],
+            exclude: ["@novorender/measure-api", "@novorender/webgl-api"],
         },
         envPrefix: "REACT_APP_",
         plugins: [
             react({ fastRefresh: false }),
             envCompatible(),
             svgr({ svgrOptions: { titleProp: true } }),
-            basicSsl(),
+            ...(ownCerts ? [] : [basicSsl()]),
         ],
         define: { ...env },
         server: {
             port: Number(process.env.PORT) || 3000,
-            https: true,
+            https: ownCerts
+                ? {
+                      cert: "./localhost.crt",
+                      key: "./localhost.key",
+                  }
+                : true,
             host: true,
             open: true,
+            headers: {
+                "Cross-Origin-Opener-Policy": "same-origin",
+                "Cross-Origin-Embedder-Policy": "require-corp",
+            },
             proxy: {
                 "/bimtrack/token": {
                     target: "https://auth.bimtrackapp.co//connect/token",

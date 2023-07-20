@@ -1,21 +1,31 @@
-import { ObjectGroup as BaseObjectGroup } from "@novorender/data-js-api";
 import { createContext, Dispatch, MutableRefObject, ReactNode, useContext, useReducer, useRef } from "react";
 import { v4 as uuidv4 } from "uuid";
 
 import { VecRGB, VecRGBA } from "utils/color";
+import { SearchPattern } from "@novorender/webgl-api";
 
-export interface ObjectGroup extends BaseObjectGroup {
-    ids: number[];
+export enum GroupStatus {
+    None = "none",
+    Selected = "selected",
+    Hidden = "hidden",
+    Frozen = "frozen",
+}
+
+export interface ObjectGroup {
+    id: string;
+    name: string;
+    grouping: string;
+    ids: Set<number>;
     color: VecRGB | VecRGBA;
+    status: GroupStatus;
+    opacity: number;
+    search: SearchPattern[];
+    includeDescendants: boolean;
 }
 
 const initialState = [] as ObjectGroup[];
 
 type State = typeof initialState;
-
-export enum InternalGroup {
-    Checklist = "NOVORENDER_INTERNAL/Checklists",
-}
 
 export enum InternalTemporaryGroup {
     BIMcollab = "NOVORENDER_INTERNAL_TMP/BIMcollab temporary",
@@ -81,7 +91,7 @@ function groupSelected() {
 
 const actions = { update, set, add, copy, reset, groupSelected, delete: deleteGroup };
 
-type Actions = ReturnType<typeof actions[keyof typeof actions]>;
+type Actions = ReturnType<(typeof actions)[keyof typeof actions]>;
 type DispatchObjectGroups = Dispatch<Actions>;
 type LazyContextType = MutableRefObject<State>;
 
@@ -133,11 +143,12 @@ function reducer(state: State, action: Actions): ObjectGroup[] {
                 name,
                 id: uuidv4(),
                 grouping: toCopy.grouping,
-                search: toCopy.search ? [...toCopy.search] : undefined,
-                ids: [],
+                search: toCopy.search ? [...toCopy.search] : [],
+                ids: new Set<number>(),
                 color: [...toCopy.color] as ObjectGroup["color"],
-                selected: false,
-                hidden: false,
+                status: GroupStatus.None,
+                opacity: toCopy.opacity ?? 1,
+                includeDescendants: toCopy.includeDescendants ?? true,
             };
 
             return state.concat(copy);
@@ -154,7 +165,7 @@ function reducer(state: State, action: Actions): ObjectGroup[] {
             }
 
             return state.map((group) => {
-                if (group.grouping || !group.selected) {
+                if (group.grouping || group.status !== GroupStatus.Selected) {
                     return group;
                 }
 
@@ -167,7 +178,7 @@ function reducer(state: State, action: Actions): ObjectGroup[] {
         case ActionTypes.Reset: {
             return state
                 .filter((group) => !isInternalTemporaryGroup(group))
-                .map((group) => ({ ...group, selected: false, hidden: false }));
+                .map((group) => ({ ...group, status: GroupStatus.None }));
         }
         default: {
             throw new Error(`Unhandled action type`);

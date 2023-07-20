@@ -2,10 +2,15 @@ import type { SpeedDialActionProps } from "@mui/material";
 
 import { SpeedDialAction } from "components";
 import { featuresConfig } from "config/features";
-import { selectSavedCameraPositions, renderActions, selectCameraType, CameraType } from "slices/renderSlice";
+import {
+    selectSavedCameraPositions,
+    renderActions,
+    selectCameraType,
+    CameraType,
+    selectViewMode,
+} from "features/render/renderSlice";
 import { useAppDispatch, useAppSelector } from "app/store";
-import { useExplorerGlobals } from "contexts/explorerGlobals";
-import { selectActivePanorama } from "features/panoramas";
+import { ViewMode } from "types/misc";
 
 type Props = SpeedDialActionProps & {
     position?: { top?: number; right?: number; bottom?: number; left?: number };
@@ -14,15 +19,12 @@ type Props = SpeedDialActionProps & {
 export function StepForwards({ position, ...speedDialProps }: Props) {
     const { name, Icon } = featuresConfig["stepForwards"];
     const savedCameraPositions = useAppSelector(selectSavedCameraPositions);
-    const activePanorama = useAppSelector(selectActivePanorama);
+    const viewMode = useAppSelector(selectViewMode);
     const cameraType = useAppSelector(selectCameraType);
     const canStepForwards =
         savedCameraPositions.currentIndex < savedCameraPositions.positions.length - 1 &&
-        !activePanorama &&
-        cameraType === CameraType.Flight;
-    const {
-        state: { view },
-    } = useExplorerGlobals(true);
+        viewMode !== ViewMode.Panorama &&
+        cameraType === CameraType.Pinhole;
 
     const dispatch = useAppDispatch();
 
@@ -34,20 +36,20 @@ export function StepForwards({ position, ...speedDialProps }: Props) {
         }
 
         dispatch(renderActions.redoCameraPosition());
-        view.camera.controller.moveTo(step.position, step.rotation);
     };
 
+    const disabled = !canStepForwards;
     return (
         <SpeedDialAction
             {...speedDialProps}
             data-test="step-forwards"
             FabProps={{
-                disabled: !canStepForwards,
+                disabled,
                 ...speedDialProps.FabProps,
                 style: { ...position, position: "absolute" },
             }}
             onClick={handleClick}
-            title={name}
+            title={disabled ? undefined : name}
             icon={<Icon />}
         />
     );

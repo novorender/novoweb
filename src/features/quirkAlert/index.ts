@@ -1,0 +1,1 @@
+export { QuirkAlert } from "./quirkAlert";

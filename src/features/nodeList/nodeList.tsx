@@ -1,26 +1,20 @@
-import { ChangeEvent, forwardRef, MouseEventHandler, CSSProperties, MutableRefObject } from "react";
+import { Folder, Visibility } from "@mui/icons-material";
+import { Box, Checkbox, ListItem, ListItemProps, Typography, useTheme } from "@mui/material";
 import { HierarcicalObjectReference } from "@novorender/webgl-api";
-import { FixedSizeList, FixedSizeListProps, ListOnScrollProps } from "react-window";
+import { CSSProperties, ChangeEvent, MouseEventHandler, MutableRefObject, forwardRef } from "react";
 import AutoSizer from "react-virtualized-auto-sizer";
-import { ListItemProps, useTheme, ListItem, Box, Typography, Checkbox } from "@mui/material";
+import { FixedSizeListProps, ListOnScrollProps } from "react-window";
 
 import { useAppDispatch } from "app/store";
-import { Tooltip, withCustomScrollbar } from "components";
-import { NodeType } from "features/modelTree/modelTree";
-
-import { getDescendants, searchByParentPath } from "utils/search";
-import { extractObjectIds, getObjectNameFromPath } from "utils/objectData";
-
-import { highlightActions, useDispatchHighlighted, useIsHighlighted } from "contexts/highlighted";
-import { hiddenGroupActions, useDispatchHidden, useIsHidden } from "contexts/hidden";
+import { FixedSizeVirualizedList, Tooltip } from "components";
 import { useExplorerGlobals } from "contexts/explorerGlobals";
-import { renderActions } from "slices/renderSlice";
-
-import FolderIcon from "@mui/icons-material/Folder";
-import VisibilityIcon from "@mui/icons-material/Visibility";
-import { useDispatchSelectionBasket, selectionBasketActions } from "contexts/selectionBasket";
-
-const StyledFixedSizeList = withCustomScrollbar(FixedSizeList) as typeof FixedSizeList;
+import { hiddenActions, useDispatchHidden, useIsHidden } from "contexts/hidden";
+import { highlightActions, useDispatchHighlighted, useIsHighlighted } from "contexts/highlighted";
+import { selectionBasketActions, useDispatchSelectionBasket } from "contexts/selectionBasket";
+import { NodeType } from "features/modelTree/modelTree";
+import { renderActions } from "features/render";
+import { extractObjectIds, getObjectNameFromPath } from "utils/objectData";
+import { getDescendants, searchByParentPath } from "utils/search";
 
 type Props = {
     nodes: HierarcicalObjectReference[];
@@ -40,7 +34,7 @@ export const NodeList = forwardRef<any, Props>(
         return (
             <AutoSizer>
                 {({ height, width }) => (
-                    <StyledFixedSizeList
+                    <FixedSizeVirualizedList
                         style={{ paddingLeft: theme.spacing(1), paddingRight: theme.spacing(1) }}
                         onScroll={onScroll}
                         height={height}
@@ -81,7 +75,7 @@ export const NodeList = forwardRef<any, Props>(
                                 </>
                             );
                         }}
-                    </StyledFixedSizeList>
+                    </FixedSizeVirualizedList>
                 )}
             </AutoSizer>
         );
@@ -100,7 +94,7 @@ function Node({ node, parent, loading, setLoading, abortController, ...props }: 
     const theme = useTheme();
 
     const {
-        state: { scene },
+        state: { db },
     } = useExplorerGlobals(true);
     const dispatch = useAppDispatch();
     const dispatchHighlighted = useDispatchHighlighted();
@@ -140,7 +134,7 @@ function Node({ node, parent, loading, setLoading, abortController, ...props }: 
     const select = async (node: HierarcicalObjectReference) => {
         if (node.type === NodeType.Leaf) {
             dispatchHighlighted(highlightActions.add([node.id]));
-            dispatchHidden(hiddenGroupActions.remove([node.id]));
+            dispatchHidden(hiddenActions.remove([node.id]));
             dispatch(renderActions.setMainObject(node.id));
             return;
         }
@@ -150,26 +144,26 @@ function Node({ node, parent, loading, setLoading, abortController, ...props }: 
 
         try {
             try {
-                await getDescendants({ scene, parentNode: node, abortSignal }).then((ids) => {
+                await getDescendants({ db, parentNode: node, abortSignal }).then((ids) => {
                     dispatchHighlighted(highlightActions.add(ids));
-                    dispatchHidden(hiddenGroupActions.remove(ids));
+                    dispatchHidden(hiddenActions.remove(ids));
                 });
             } catch {
                 await searchByParentPath({
-                    scene,
+                    db,
                     abortSignal,
                     parentPath: node.path,
                     callback: (refs) => {
                         const ids = extractObjectIds(refs);
                         dispatchHighlighted(highlightActions.add(ids));
-                        dispatchHidden(hiddenGroupActions.remove(ids));
+                        dispatchHidden(hiddenActions.remove(ids));
                     },
                 });
             }
 
             if (!abortSignal.aborted) {
                 dispatchHighlighted(highlightActions.add([node.id]));
-                dispatchHidden(hiddenGroupActions.remove([node.id]));
+                dispatchHidden(hiddenActions.remove([node.id]));
                 setLoading(false);
             }
         } catch {
@@ -191,12 +185,12 @@ function Node({ node, parent, loading, setLoading, abortController, ...props }: 
 
         try {
             try {
-                await getDescendants({ scene, parentNode: node, abortSignal }).then((ids) =>
+                await getDescendants({ db, parentNode: node, abortSignal }).then((ids) =>
                     dispatchHighlighted(highlightActions.remove(ids))
                 );
             } catch {
                 await searchByParentPath({
-                    scene,
+                    db,
                     abortSignal,
                     parentPath: node.path,
                     callback: (refs) => dispatchHighlighted(highlightActions.remove(extractObjectIds(refs))),
@@ -213,7 +207,7 @@ function Node({ node, parent, loading, setLoading, abortController, ...props }: 
 
     const hide = async (node: HierarcicalObjectReference) => {
         if (node.type === NodeType.Leaf) {
-            dispatchHidden(hiddenGroupActions.add([node.id]));
+            dispatchHidden(hiddenActions.add([node.id]));
             dispatchHighlighted(highlightActions.remove([node.id]));
             dispatchSelectionBasket(selectionBasketActions.remove([node.id]));
             return;
@@ -224,25 +218,25 @@ function Node({ node, parent, loading, setLoading, abortController, ...props }: 
 
         try {
             try {
-                await getDescendants({ scene, parentNode: node, abortSignal }).then((ids) => {
-                    dispatchHidden(hiddenGroupActions.add(ids));
+                await getDescendants({ db, parentNode: node, abortSignal }).then((ids) => {
+                    dispatchHidden(hiddenActions.add(ids));
                     dispatchHighlighted(highlightActions.remove(ids));
                 });
             } catch {
                 await searchByParentPath({
-                    scene,
+                    db,
                     abortSignal,
                     parentPath: node.path,
                     callback: (refs) => {
                         const ids = extractObjectIds(refs);
-                        dispatchHidden(hiddenGroupActions.add(ids));
+                        dispatchHidden(hiddenActions.add(ids));
                         dispatchHighlighted(highlightActions.remove(ids));
                     },
                 });
             }
 
             if (!abortSignal.aborted) {
-                dispatchHidden(hiddenGroupActions.add([node.id]));
+                dispatchHidden(hiddenActions.add([node.id]));
                 dispatchHighlighted(highlightActions.remove([node.id]));
                 setLoading(false);
             }
@@ -255,25 +249,25 @@ function Node({ node, parent, loading, setLoading, abortController, ...props }: 
 
     const show = async (node: HierarcicalObjectReference) => {
         if (node.type === NodeType.Leaf) {
-            return dispatchHidden(hiddenGroupActions.remove([node.id]));
+            return dispatchHidden(hiddenActions.remove([node.id]));
         }
 
-        dispatchHidden(hiddenGroupActions.remove([node.id]));
+        dispatchHidden(hiddenActions.remove([node.id]));
 
         setLoading(true);
         const abortSignal = abortController.current.signal;
 
         try {
             try {
-                await getDescendants({ scene, parentNode: node, abortSignal }).then((ids) =>
-                    dispatchHidden(hiddenGroupActions.remove(ids))
+                await getDescendants({ db, parentNode: node, abortSignal }).then((ids) =>
+                    dispatchHidden(hiddenActions.remove(ids))
                 );
             } catch {
                 await searchByParentPath({
-                    scene,
+                    db,
                     abortSignal,
                     parentPath: node.path,
-                    callback: (refs) => dispatchHidden(hiddenGroupActions.remove(extractObjectIds(refs))),
+                    callback: (refs) => dispatchHidden(hiddenActions.remove(extractObjectIds(refs))),
                 });
             }
         } catch {
@@ -309,7 +303,7 @@ function Node({ node, parent, loading, setLoading, abortController, ...props }: 
                         },
                     }}
                 >
-                    {!parent ? node.type === NodeType.Internal ? <FolderIcon fontSize="small" /> : null : null}
+                    {!parent ? node.type === NodeType.Internal ? <Folder fontSize="small" /> : null : null}
                     <Tooltip title={parent ? "Folder" : pathName}>
                         <Typography color={parent ? "textSecondary" : "textPrimary"} noWrap={true}>
                             {parent ? "Folder" : pathName}
@@ -317,17 +311,19 @@ function Node({ node, parent, loading, setLoading, abortController, ...props }: 
                     </Tooltip>
                 </Box>
                 <Checkbox
-                    aria-label="Select node"
+                    name="toggle node highlight"
+                    aria-label="toggle node highlight"
                     size="small"
                     checked={selected}
                     onChange={(e) => handleChange("select")(e, node)}
                     onClick={stopPropagation}
                 />
                 <Checkbox
+                    name="toggle node visibility"
                     aria-label="Toggle node visibility"
                     size="small"
-                    icon={<VisibilityIcon />}
-                    checkedIcon={<VisibilityIcon color="disabled" />}
+                    icon={<Visibility />}
+                    checkedIcon={<Visibility color="disabled" />}
                     checked={hidden}
                     onChange={(e) => handleChange("hide")(e, node)}
                     onClick={stopPropagation}

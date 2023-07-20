@@ -1,5 +1,6 @@
 import { MeasureEntity, MeasurementValues, PointEntity } from "@novorender/measure-api";
-import { WidgetKey, featuresConfig, defaultEnabledWidgets } from "config/features";
+import { View } from "@novorender/web_app";
+import { RecursivePartial } from "types/misc";
 
 export function uniqueArray<T>(arr: T[]): T[] {
     return Array.from(new Set(arr));
@@ -15,33 +16,6 @@ export function generateRandomString(): string {
     var array = new Uint32Array(56 / 2);
     window.crypto.getRandomValues(array);
     return Array.from(array, (num) => ("0" + num.toString(16)).substr(-2)).join("");
-}
-
-export function enabledFeaturesToFeatureKeys(enabledFeatures: Record<string, boolean>): WidgetKey[] {
-    const dictionary: Record<string, string | string[] | undefined> = {
-        bookmarks: featuresConfig.bookmarks.key,
-        measurement: [featuresConfig.measure.key, featuresConfig.followPath.key],
-        clipping: [featuresConfig.clippingBox.key, featuresConfig.clippingPlanes.key],
-        properties: featuresConfig.properties.key,
-        tree: featuresConfig.modelTree.key,
-        groups: featuresConfig.groups.key,
-        search: featuresConfig.search.key,
-    };
-
-    return uniqueArray(
-        Object.keys(enabledFeatures)
-            .map((key) => ({ key, enabled: enabledFeatures[key] }))
-            .filter((feature) => feature.enabled)
-            .map((feature) => (dictionary[feature.key] ? dictionary[feature.key]! : feature.key))
-            .concat(defaultEnabledWidgets)
-            .flat() as WidgetKey[]
-    );
-}
-
-export function getEnabledFeatures(customProperties: unknown): Record<string, boolean> | undefined {
-    return customProperties && typeof customProperties === "object" && "enabledFeatures" in customProperties
-        ? (customProperties as { enabledFeatures?: Record<string, boolean> }).enabledFeatures
-        : undefined;
 }
 
 export function base64UrlEncode(buffer: ArrayBuffer): string {
@@ -111,11 +85,19 @@ export function capitalize(str: string): string {
 }
 
 export async function createCanvasSnapshot(
-    canvas: HTMLCanvasElement,
+    view: View,
     maxWidth: number,
     maxHeight: number
 ): Promise<string | undefined> {
-    let { width, height } = canvas.getBoundingClientRect();
+    let { width, height } = view.renderState.output;
+
+    const img = document.createElement("img");
+    img.src = await view.getScreenshot();
+    const screenshotCanvas = document.createElement("canvas");
+    screenshotCanvas.width = width;
+    screenshotCanvas.height = height;
+    const screenshotCtx = screenshotCanvas.getContext("2d")!;
+    screenshotCtx.drawImage(img, 0, 0);
 
     if (width > maxWidth) {
         height = height * (maxWidth / width);
@@ -134,7 +116,7 @@ export async function createCanvasSnapshot(
 
     try {
         {
-            const bitmap = await createImageBitmap(canvas, {
+            const bitmap = await createImageBitmap(screenshotCanvas, {
                 resizeHeight: height,
                 resizeWidth: width,
                 resizeQuality: "high",
@@ -166,4 +148,44 @@ export function measureObjectIsVertex(measureObject: MeasureEntity | undefined):
 
 export function getMeasurementValueKind(val: MeasurementValues): string {
     return "kind" in val ? val.kind : "";
+}
+
+export function getAssetUrl(view: View, path: string): URL {
+    const baseUrl = view.renderState.scene?.url ?? "";
+    if (!baseUrl) {
+        throw new Error("No base URL in view.");
+    }
+    const url = new URL(baseUrl.replace("webgl2_bin/", ""));
+    url.pathname += path;
+
+    return url;
+}
+
+export function isRealNumber(num: number): boolean {
+    return !Number.isNaN(num) && Number.isFinite(num);
+}
+
+export function isRealVec(vec: number[]): boolean {
+    return !vec.some((num) => !isRealNumber(num));
+}
+
+export function mergeRecursive<T>(original: T, changes: RecursivePartial<T>): T {
+    const clone = { ...original };
+    for (const key in changes) {
+        const originalValue = original ? original[key] : undefined;
+        const changedValue = changes[key];
+        if (
+            // eslint-disable-next-line eqeqeq
+            changedValue != undefined &&
+            typeof changedValue == "object" &&
+            !Array.isArray(changedValue) &&
+            !ArrayBuffer.isView(changedValue) &&
+            !(changedValue instanceof Set)
+        ) {
+            clone[key] = mergeRecursive(originalValue as any, changedValue);
+        } else {
+            clone[key] = changedValue as any;
+        }
+    }
+    return clone;
 }

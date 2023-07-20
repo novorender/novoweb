@@ -1,15 +1,16 @@
+import { Box } from "@mui/material";
 import { FollowParametricObject } from "@novorender/measure-api";
 import { useEffect, useState } from "react";
+import { useHistory } from "react-router-dom";
 
 import { useAppDispatch } from "app/store";
 import { LinearProgress } from "components";
-import { Picker, renderActions } from "slices/renderSlice";
+import { Picker, renderActions } from "features/render/renderSlice";
 import { AsyncStatus } from "types/misc";
 
 import { Follow } from "../follow";
 import { followPathActions } from "../followPathSlice";
 import { usePathMeasureObjects } from "../usePathMeasureObjects";
-import { useHistory } from "react-router-dom";
 
 export function FollowParametricFromPos() {
     const history = useHistory();
@@ -40,5 +41,11 @@ export function FollowParametricFromPos() {
         setFollowing(fp);
     }, [objects, following, dispatch, history]);
 
-    return following ? <Follow fpObj={following} /> : <LinearProgress />;
+    return following ? (
+        <Follow fpObj={following} />
+    ) : (
+        <Box position="relative">
+            <LinearProgress />
+        </Box>
+    );
 }

@@ -1,27 +1,25 @@
-import { Fragment, useEffect, useRef } from "react";
-import { Link } from "react-router-dom";
-import { FixedSizeList } from "react-window";
-import AutoSizer from "react-virtualized-auto-sizer";
-import { Box, Button, FormControlLabel, ListItemButton, Typography, useTheme } from "@mui/material";
 import { FilterAlt } from "@mui/icons-material";
+import { Box, Button, FormControlLabel, ListItemButton, Typography, useTheme } from "@mui/material";
+import { Fragment, useEffect, useRef } from "react";
+import { Link, useHistory } from "react-router-dom";
+import AutoSizer from "react-virtualized-auto-sizer";
 
-import { Tooltip, ImgTooltip, Divider, IosSwitch, LinearProgress, withCustomScrollbar } from "components";
 import { useAppDispatch, useAppSelector } from "app/store";
+import { Divider, FixedSizeVirualizedList, ImgTooltip, IosSwitch, LinearProgress, Tooltip } from "components";
 
 import { baseUrl, useFeedWebRawQuery } from "../api";
 import {
     ditioActions,
     initialFilters,
+    selectDitioProject,
     selectFeedScrollOffset,
     selectFilters,
-    selectDitioProject,
     selectShowDitioMarkers,
 } from "../slice";
 
-const StyledFixedSizeList = withCustomScrollbar(FixedSizeList) as typeof FixedSizeList;
-
 export function Feed() {
     const theme = useTheme();
+    const history = useHistory();
 
     const dispatch = useAppDispatch();
     const showMarkers = useAppSelector(selectShowDitioMarkers);
@@ -70,7 +68,7 @@ export function Feed() {
                             }
                             label={
                                 <Box fontSize={14} sx={{ userSelect: "none" }}>
-                                    Show 2D markers
+                                    2D markers
                                 </Box>
                             }
                         />
@@ -78,7 +76,9 @@ export function Feed() {
                 </>
             </Box>
             {isLoading ? (
-                <LinearProgress />
+                <Box position="relative">
+                    <LinearProgress />
+                </Box>
             ) : !feed ? (
                 <Typography>Unable to load feed.</Typography>
             ) : !feed.length ? (
@@ -107,7 +107,7 @@ export function Feed() {
                 <Box flex={"1 1 100%"}>
                     <AutoSizer>
                         {({ height, width }) => (
-                            <StyledFixedSizeList
+                            <FixedSizeVirualizedList
                                 style={{ paddingLeft: theme.spacing(1), paddingRight: theme.spacing(1) }}
                                 height={height}
                                 width={width}
@@ -131,8 +131,18 @@ export function Feed() {
                                                 alignItems="flex-start"
                                                 overflow="hidden"
                                                 sx={{ color: "text.primary", textDecoration: "none" }}
-                                                component={Link}
-                                                to={`/post/${post.id}`}
+                                                onClick={() => {
+                                                    history.push(`/post/${post.id}`);
+                                                    dispatch(ditioActions.setActivePost(post.id));
+                                                }}
+                                                onMouseEnter={() => {
+                                                    dispatch(
+                                                        ditioActions.setHoveredEntity({ kind: "post", id: post.id })
+                                                    );
+                                                }}
+                                                onMouseLeave={() => {
+                                                    dispatch(ditioActions.setHoveredEntity(undefined));
+                                                }}
                                             >
                                                 <Box
                                                     bgcolor={theme.palette.grey[200]}
@@ -197,7 +207,7 @@ export function Feed() {
                                         </ListItemButton>
                                     );
                                 }}
-                            </StyledFixedSizeList>
+                            </FixedSizeVirualizedList>
                         )}
                     </AutoSizer>
                 </Box>

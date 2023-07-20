@@ -5,13 +5,13 @@ import { Grain, LineAxis, PictureAsPdf, Terrain, Token } from "@mui/icons-materi
 import { SpeedDialAction, WidgetMenuButtonWrapper } from "components";
 import { featuresConfig } from "config/features";
 import { useAppDispatch, useAppSelector } from "app/store";
-import { renderActions, selectSubtrees, SubtreeStatus } from "slices/renderSlice";
-import { selectActivePanorama } from "features/panoramas";
+import { renderActions, selectSubtrees, selectViewMode, SubtreeStatus } from "features/render/renderSlice";
+import { ViewMode } from "types/misc";
 
 export function ToggleSubtrees(speedDialProps: SpeedDialActionProps) {
     const { name, Icon } = featuresConfig["toggleSubtrees"];
     const subtrees = useAppSelector(selectSubtrees);
-    const activePanorama = useAppSelector(selectActivePanorama);
+    const viewMode = useAppSelector(selectViewMode);
     const dispatch = useAppDispatch();
     const [menuAnchor, setMenuAnchor] = useState<HTMLElement | null>(null);
 
@@ -29,13 +29,14 @@ export function ToggleSubtrees(speedDialProps: SpeedDialActionProps) {
         setMenuAnchor(null);
     };
 
+    const disabled = viewMode === ViewMode.Panorama;
     return (
         <>
             <SpeedDialAction
                 {...speedDialProps}
                 data-test="toggle-subtrees"
                 FabProps={{
-                    disabled: activePanorama !== undefined,
+                    disabled,
                     ...speedDialProps.FabProps,
                 }}
                 onClick={openMenu}
@@ -44,7 +45,7 @@ export function ToggleSubtrees(speedDialProps: SpeedDialActionProps) {
             />
             <Menu
                 anchorEl={menuAnchor}
-                open={Boolean(menuAnchor)}
+                open={Boolean(menuAnchor) && !disabled}
                 onClick={(e) => e.stopPropagation()}
                 onClose={closeMenu}
                 anchorOrigin={{ horizontal: 50, vertical: -35 }}

@@ -1,22 +1,23 @@
+import { Box, Button, FormControl, FormControlLabel, TextFieldProps } from "@mui/material";
+import { DatePicker } from "@mui/x-date-pickers";
+import { HierarcicalObjectReference, SearchPattern } from "@novorender/webgl-api";
+import { format, isValid, parse } from "date-fns";
 import { CSSProperties, FormEvent, useCallback, useRef, useState } from "react";
 import { ListOnScrollProps } from "react-window";
-import { Box, Button, FormControl, FormControlLabel, TextFieldProps } from "@mui/material";
-import { HierarcicalObjectReference, SearchPattern } from "@novorender/webgl-api";
-import { DatePicker } from "@mui/x-date-pickers";
-import { format, isValid, parse } from "date-fns";
 
-import { LinearProgress, ScrollBox, WidgetContainer, WidgetHeader, LogoSpeedDial, TextField, Switch } from "components";
-import { NodeList } from "features/nodeList/nodeList";
-import WidgetList from "features/widgetList/widgetList";
-import { useToggle } from "hooks/useToggle";
-import { useMountedState } from "hooks/useMountedState";
-import { useAbortController } from "hooks/useAbortController";
-import { useExplorerGlobals } from "contexts/explorerGlobals";
-import { iterateAsync } from "utils/search";
-import { featuresConfig } from "config/features";
-import { CustomParentNode } from "features/search";
 import { useAppSelector } from "app/store";
-import { selectMinimized, selectMaximized } from "slices/explorerSlice";
+import { LinearProgress, LogoSpeedDial, ScrollBox, Switch, TextField, WidgetContainer, WidgetHeader } from "components";
+import { rangeSearchDateFormat } from "config";
+import { featuresConfig } from "config/features";
+import { useExplorerGlobals } from "contexts/explorerGlobals";
+import { NodeList } from "features/nodeList/nodeList";
+import { CustomParentNode } from "features/search";
+import WidgetList from "features/widgetList/widgetList";
+import { useAbortController } from "hooks/useAbortController";
+import { useMountedState } from "hooks/useMountedState";
+import { useToggle } from "hooks/useToggle";
+import { selectMaximized, selectMinimized } from "slices/explorerSlice";
+import { iterateAsync } from "utils/search";
 
 enum Status {
     Initial,
@@ -24,16 +25,14 @@ enum Status {
     Error,
 }
 
-const dateFormat = "yyyyMMdd'z'";
-
 export default function RangeSearch() {
     const {
-        state: { scene },
+        state: { db },
     } = useExplorerGlobals(true);
 
     const [menuOpen, toggleMenu] = useToggle();
     const minimized = useAppSelector(selectMinimized) === featuresConfig.rangeSearch.key;
-    const maximized = useAppSelector(selectMaximized) === featuresConfig.rangeSearch.key;
+    const maximized = useAppSelector(selectMaximized).includes(featuresConfig.rangeSearch.key);
 
     const [dates, toggleDates] = useToggle();
     const [property, setProperty] = useState("");
@@ -61,7 +60,7 @@ export default function RangeSearch() {
         previousSearchPattern.current = searchPattern;
 
         try {
-            const iterator = scene.search({ searchPattern }, abortSignal);
+            const iterator = db.search({ searchPattern }, abortSignal);
 
             const [nodes, done] = await iterateAsync({ iterator, abortSignal, count: 50 });
 
@@ -72,7 +71,7 @@ export default function RangeSearch() {
                 throw e;
             }
         }
-    }, [abortController, setSearchResults, scene, property, min, max]);
+    }, [abortController, setSearchResults, db, property, min, max]);
 
     const handleSubmit = async (e: FormEvent) => {
         e.preventDefault();
@@ -149,17 +148,19 @@ export default function RangeSearch() {
                                         <FormControl size="small" sx={{ width: 1, mr: 1 }}>
                                             <DatePicker
                                                 label="Min"
-                                                value={min ? parse(String(min), dateFormat, new Date()) : null}
+                                                value={
+                                                    min ? parse(String(min), rangeSearchDateFormat, new Date()) : null
+                                                }
                                                 onChange={(newDate: Date | null, keyboardInput) =>
                                                     setMin(
                                                         newDate
                                                             ? isValid(newDate)
-                                                                ? format(newDate, dateFormat)
+                                                                ? format(newDate, rangeSearchDateFormat)
                                                                 : keyboardInput ?? ""
                                                             : ""
                                                     )
                                                 }
-                                                inputFormat={dateFormat}
+                                                inputFormat={rangeSearchDateFormat}
                                                 disableMaskedInput={true}
                                                 renderInput={(params: TextFieldProps) => (
                                                     <TextField {...params} size="small" />
@@ -169,17 +170,19 @@ export default function RangeSearch() {
                                         <FormControl size="small" sx={{ width: 1 }}>
                                             <DatePicker
                                                 label="Max"
-                                                value={max ? parse(String(max), dateFormat, new Date()) : null}
+                                                value={
+                                                    max ? parse(String(max), rangeSearchDateFormat, new Date()) : null
+                                                }
                                                 onChange={(newDate: Date | null, keyboardInput) =>
                                                     setMax(
                                                         newDate
                                                             ? isValid(newDate)
-                                                                ? format(newDate, dateFormat)
+                                                                ? format(newDate, rangeSearchDateFormat)
                                                                 : keyboardInput ?? ""
                                                             : ""
                                                     )
                                                 }
-                                                inputFormat={dateFormat}
+                                                inputFormat={rangeSearchDateFormat}
                                                 disableMaskedInput={true}
                                                 renderInput={(params: TextFieldProps) => (
                                                     <TextField {...params} size="small" />
@@ -242,7 +245,11 @@ export default function RangeSearch() {
                     ) : null}
                 </WidgetHeader>
                 <Box display={menuOpen || minimized ? "none" : "flex"} flexDirection="column" height={1}>
-                    {status === Status.Loading ? <LinearProgress /> : null}
+                    {status === Status.Loading ? (
+                        <Box position="relative">
+                            <LinearProgress />
+                        </Box>
+                    ) : null}
                     <ScrollBox flex={"1 1 100%"}>
                         {status === Status.Error ? (
                             <Box px={1} pt={1}>
@@ -281,11 +288,7 @@ export default function RangeSearch() {
                 </Box>
                 {menuOpen && <WidgetList widgetKey={featuresConfig.rangeSearch.key} onSelect={toggleMenu} />}
             </WidgetContainer>
-            <LogoSpeedDial
-                open={menuOpen}
-                toggle={toggleMenu}
-                testId={`${featuresConfig.rangeSearch.key}-widget-menu-fab`}
-            />
+            <LogoSpeedDial open={menuOpen} toggle={toggleMenu} />
         </>
     );
 }

@@ -1,16 +1,18 @@
-import { Fragment, useState } from "react";
-import { useHistory, useParams } from "react-router-dom";
-import { Avatar, Box, Button, ImageList, ImageListItem, Typography, useTheme } from "@mui/material";
 import { ArrowBack, LocationOnOutlined } from "@mui/icons-material";
+import { Avatar, Box, Button, ImageList, ImageListItem, Typography, useTheme } from "@mui/material";
 import { format, formatDistance } from "date-fns";
+import { Fragment } from "react";
+import { useHistory, useParams } from "react-router-dom";
 
 import { dataApi } from "app";
-import { ScrollBox, Tooltip, Divider, ImgModal, LinearProgress } from "components";
-import { useExplorerGlobals } from "contexts/explorerGlobals";
 import { useAppDispatch, useAppSelector } from "app/store";
-import { CameraType, renderActions, selectProjectSettings } from "slices/renderSlice";
+import { Divider, LinearProgress, ScrollBox, Tooltip } from "components";
+import { useExplorerGlobals } from "contexts/explorerGlobals";
+import { CameraType, renderActions, selectProjectSettings } from "features/render";
+import { flip } from "features/render/utils";
 
 import { baseUrl, useGetPostQuery } from "../api";
+import { ditioActions } from "../slice";
 import { newLineToHtmlBr } from "./feed";
 
 export function Post() {
@@ -23,7 +25,6 @@ export function Post() {
 
     const { tmZone } = useAppSelector(selectProjectSettings);
     const dispatch = useAppDispatch();
-    const [modalImg, setModalImg] = useState("");
 
     const { data: post, isFetching } = useGetPostQuery({ postId });
 
@@ -32,17 +33,19 @@ export function Post() {
             return;
         }
 
-        const pos = dataApi.latLon2tm(
-            { latitude: post.GeoCoordinate.Latitude, longitude: post.GeoCoordinate.Longitude },
-            tmZone
+        const pos = flip(
+            dataApi.latLon2tm(
+                { latitude: post.GeoCoordinate.Latitude, longitude: post.GeoCoordinate.Longitude },
+                tmZone
+            )
         );
 
         dispatch(
             renderActions.setCamera({
-                type: CameraType.Flight,
+                type: CameraType.Pinhole,
                 goTo: {
-                    position: [pos[0], view.camera.position[1], pos[2]],
-                    rotation: view.camera.rotation,
+                    position: [pos[0], pos[1], view.renderState.camera.position[2]],
+                    rotation: view.renderState.camera.rotation,
                 },
             })
         );
@@ -55,7 +58,13 @@ export function Post() {
                     <Divider />
                 </Box>
                 <Box display="flex">
-                    <Button onClick={() => history.push("/")} color="grey">
+                    <Button
+                        onClick={() => {
+                            history.push("/");
+                            dispatch(ditioActions.setActivePost(""));
+                        }}
+                        color="grey"
+                    >
                         <ArrowBack sx={{ mr: 1 }} />
                         Back
                     </Button>
@@ -109,11 +118,19 @@ export function Post() {
                                 <ImageListItem
                                     sx={{ cursor: "pointer", bgcolor: "transparent", padding: 0, border: 0 }}
                                     component={"button"}
-                                    onClick={() => setModalImg(`${baseUrl}/${image.UrlLg}`)}
+                                    onClick={() => dispatch(ditioActions.setActiveImg(`${baseUrl}/${image.UrlLg}`))}
                                     key={image.FileReferenceId}
                                     cols={1}
+                                    onMouseEnter={() => {
+                                        dispatch(
+                                            ditioActions.setHoveredEntity({ kind: "image", id: image.FileReferenceId })
+                                        );
+                                    }}
+                                    onMouseLeave={() => {
+                                        dispatch(ditioActions.setHoveredEntity(undefined));
+                                    }}
                                 >
-                                    <img src={`${baseUrl}/${image.UrlM}`} alt={image.Name} loading="lazy" />
+                                    <img src={`${baseUrl}/${image.UrlSm}`} alt={image.Name} loading="lazy" />
                                 </ImageListItem>
                             ))}
                         </ImageList>
@@ -168,12 +185,6 @@ export function Post() {
                     ) : null}
                 </ScrollBox>
             )}
-            <ImgModal
-                open={Boolean(modalImg)}
-                onClose={() => setModalImg("")}
-                sx={{ display: "flex", justifyContent: "center", alignItems: "center" }}
-                src={modalImg}
-            />
         </>
     );
 }

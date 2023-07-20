@@ -1,18 +1,22 @@
+import { Box, Typography, useTheme } from "@mui/material";
 import { useEffect, useState } from "react";
 import { Redirect, useHistory } from "react-router-dom";
-import { Box, Typography, useTheme } from "@mui/material";
 
 import { useAppDispatch, useAppSelector } from "app/store";
 import { LinearProgress, ScrollBox } from "components";
+import { featuresConfig } from "config/features";
+import { StorageKey } from "config/storage";
+import { selectHasAdminCapabilities } from "slices/explorerSlice";
 import { AsyncStatus } from "types/misc";
 import { deleteFromStorage, getFromStorage, saveToStorage } from "utils/storage";
-import { StorageKey } from "config/storage";
 
-import { selectXsiteManageAccessToken, selectXsiteManageSite, xsiteManageActions } from "../slice";
 import { useGetSitesQuery, useLazyGetTokensQuery, useRefreshTokensMutation } from "../api";
-import { featuresConfig } from "config/features";
-import { selectProjectSettings } from "slices/renderSlice";
-import { selectHasAdminCapabilities } from "slices/explorerSlice";
+import {
+    selectXsiteManageAccessToken,
+    selectXsiteManageConfig,
+    selectXsiteManageSite,
+    xsiteManageActions,
+} from "../slice";
 
 let getTokensRequestInitialized = false;
 
@@ -23,7 +27,7 @@ export function Auth() {
     const isAdmin = useAppSelector(selectHasAdminCapabilities);
     const accessToken = useAppSelector(selectXsiteManageAccessToken);
     const site = useAppSelector(selectXsiteManageSite);
-    const { xsiteManage: xsiteManageSettings } = useAppSelector(selectProjectSettings);
+    const config = useAppSelector(selectXsiteManageConfig);
     const [error, setError] = useState("");
 
     const [getTokens, { data: tokensResponse, error: tokensError }] = useLazyGetTokensQuery();
@@ -116,20 +120,18 @@ export function Auth() {
             return;
         }
 
-        const _site = sites.items.find((site) => site.siteId === xsiteManageSettings?.siteId);
+        const _site = sites.items.find((site) => site.siteId === config?.siteId);
 
         if (_site) {
             dispatch(xsiteManageActions.setSite(_site));
         } else if (isAdmin) {
             history.push("/settings");
-        } else if (!xsiteManageSettings.siteId) {
+        } else if (!config.siteId) {
             setError(`${featuresConfig.xsiteManage.name} has not yet been set up for this project.`);
         } else {
-            setError(
-                `You do not have access to the ${xsiteManageSettings.siteId} ${featuresConfig.xsiteManage.name} site.`
-            );
+            setError(`You do not have access to the ${config.siteId} ${featuresConfig.xsiteManage.name} site.`);
         }
-    }, [sites, history, isAdmin, dispatch, xsiteManageSettings, site]);
+    }, [sites, history, isAdmin, dispatch, config, site]);
 
     return site ? (
         <Redirect to="/machines" />
@@ -138,7 +140,9 @@ export function Auth() {
     ) : sitesError || tokensError || accessToken.status === AsyncStatus.Error ? (
         <ErrorMsg>An error occurred.</ErrorMsg>
     ) : (
-        <LinearProgress />
+        <Box position="relative">
+            <LinearProgress />
+        </Box>
     );
 }
 

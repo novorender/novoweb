@@ -1,28 +1,28 @@
+import { Box } from "@mui/material";
 import { PropsWithChildren, useEffect, useRef } from "react";
 import { MemoryRouter, Route, Switch, SwitchProps, useHistory, useLocation } from "react-router-dom";
-import { Box } from "@mui/material";
 
+import { useAppDispatch, useAppSelector } from "app/store";
 import { LogoSpeedDial, WidgetContainer, WidgetHeader } from "components";
 import { featuresConfig } from "config/features";
 import WidgetList from "features/widgetList/widgetList";
-import { useAppDispatch, useAppSelector } from "app/store";
-import { useToggle } from "hooks/useToggle";
 import { useSceneId } from "hooks/useSceneId";
-import { selectMinimized, selectMaximized } from "slices/explorerSlice";
+import { useToggle } from "hooks/useToggle";
+import { selectMaximized, selectMinimized } from "slices/explorerSlice";
 
-import { ditioActions, selectClickedMarker, selectLastViewedPath } from "./slice";
-import { Feed } from "./routes/feed";
-import { Post } from "./routes/post";
-import { Filters } from "./routes/filters";
 import { Auth } from "./routes/auth";
+import { Feed } from "./routes/feed";
+import { Filters } from "./routes/filters";
 import { Login } from "./routes/login";
+import { Post } from "./routes/post";
 import { Settings } from "./routes/settings";
+import { ditioActions, selectClickedMarker, selectLastViewedPath } from "./slice";
 
 export default function Ditio() {
     const sceneId = useSceneId();
     const [menuOpen, toggleMenu] = useToggle();
     const minimized = useAppSelector(selectMinimized) === featuresConfig.ditio.key;
-    const maximized = useAppSelector(selectMaximized) === featuresConfig.ditio.key;
+    const maximized = useAppSelector(selectMaximized).includes(featuresConfig.ditio.key);
     const lastViewedPath = useAppSelector(selectLastViewedPath);
 
     return (
@@ -60,7 +60,7 @@ export default function Ditio() {
                 </Box>
                 {menuOpen && <WidgetList widgetKey={featuresConfig.ditio.key} onSelect={toggleMenu} />}
             </WidgetContainer>
-            <LogoSpeedDial open={menuOpen} toggle={toggleMenu} testId={`${featuresConfig.ditio.key}-widget-menu-fab`} />
+            <LogoSpeedDial open={menuOpen} toggle={toggleMenu} />
         </>
     );
 }

@@ -29,7 +29,7 @@ export function Crupdate({ sceneId }: { sceneId: string }) {
             return { status: AsyncStatus.Initial };
         }
 
-        return { status: AsyncStatus.Success, data: groupToEdit?.ids ?? [] };
+        return { status: AsyncStatus.Success, data: groupToEdit?.ids ? Array.from(groupToEdit.ids) : [] };
     });
 
     const setIdsData = useCallback((arg: ObjectId[] | ((_ids: ObjectId[]) => ObjectId[])) => {
@@ -56,7 +56,7 @@ export function Crupdate({ sceneId }: { sceneId: string }) {
             try {
                 const _ids = await dataApi.getGroupIds(sceneId, groupToEdit.id);
 
-                dispatchObjectGroups(objectGroupsActions.update(groupToEdit.id, { ids: _ids }));
+                dispatchObjectGroups(objectGroupsActions.update(groupToEdit.id, { ids: new Set(_ids) }));
                 setIds({ status: AsyncStatus.Success, data: _ids });
             } catch (e) {
                 console.warn(e);
@@ -68,7 +68,11 @@ export function Crupdate({ sceneId }: { sceneId: string }) {
     switch (ids.status) {
         case AsyncStatus.Initial:
         case AsyncStatus.Loading:
-            return <LinearProgress />;
+            return (
+                <Box position="relative">
+                    <LinearProgress />
+                </Box>
+            );
         case AsyncStatus.Error:
             return <Box p={1}>{ids.msg}</Box>;
         case AsyncStatus.Success:

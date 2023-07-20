@@ -2,7 +2,7 @@ import { DrawPart, DrawProduct } from "@novorender/measure-api";
 import { ReadonlyVec2, ReadonlyVec3, vec2, vec3 } from "gl-matrix";
 
 export interface ColorSettings {
-    lineColor?: string | CanvasGradient;
+    lineColor?: string | CanvasGradient | string[];
     fillColor?: string;
     pointColor?: string | { start: string; middle: string; end: string };
     outlineColor?: string;
@@ -11,7 +11,7 @@ export interface ColorSettings {
 }
 
 export interface TextSettings {
-    type: "distance" | "center";
+    type: "centerOfLine" | "center" | "default";
     unit?: string;
     customText?: string[];
 }
@@ -21,15 +21,24 @@ export interface CameraSettings {
     dir: ReadonlyVec3;
 }
 
+type CapStyle = "arrow";
+
+export interface LineCap {
+    end?: CapStyle;
+    start?: CapStyle;
+}
+
 export function drawProduct(
     ctx: CanvasRenderingContext2D,
     camera: CameraSettings,
     product: DrawProduct,
     colorSettings: ColorSettings,
-    pixelWidth: number
+    pixelWidth: number,
+    textSettings?: TextSettings,
+    lineCap?: LineCap
 ) {
     for (const obj of product.objects) {
-        if (colorSettings.complexCylinder && obj.kind === "cylinder" && obj.parts.length === 3) {
+        if (colorSettings.complexCylinder && obj.kind === "cylinder") {
             let startCol = "red";
             let endCol = "lime";
             const cylinderLine = obj.parts[0];
@@ -49,23 +58,35 @@ export function drawProduct(
                     camera,
                     cylinderLine,
                     { lineColor: gradient, outlineColor: "rgba(80, 80, 80, .8)" },
-                    pixelWidth
+                    pixelWidth,
+                    { type: "centerOfLine", unit: " " }
                 );
             }
 
             for (let i = 1; i < 3; ++i) {
-                const col = i === 1 ? startCol : endCol;
+                const top = i === 1;
+                const col = top ? startCol : endCol;
                 drawPart(
                     ctx,
                     camera,
                     obj.parts[i],
                     { lineColor: col, outlineColor: "rgba(80, 80, 80, .8)" },
-                    pixelWidth
+                    pixelWidth,
+                    { type: "center" }
                 );
+            }
+
+            if (textSettings) {
+                for (let i = 3; i < obj.parts.length; ++i) {
+                    drawPart(ctx, camera, obj.parts[i], colorSettings, pixelWidth, textSettings, lineCap);
+                }
             }
         } else {
             obj.parts.forEach((part) => {
-                drawPart(ctx, camera, part, colorSettings, pixelWidth);
+                if (part.drawType === "text" && !textSettings) {
+                    return;
+                }
+                drawPart(ctx, camera, part, colorSettings, pixelWidth, textSettings, lineCap);
             });
         }
     }
@@ -77,19 +98,28 @@ export function drawPart(
     part: DrawPart,
     colorSettings: ColorSettings,
     pixelWidth: number,
-    textSettings?: TextSettings
+    textSettings?: TextSettings,
+    lineCap?: LineCap
 ): boolean {
     if (part.vertices2D) {
         ctx.lineWidth = pixelWidth;
-        ctx.strokeStyle = colorSettings.lineColor ?? "black";
         ctx.fillStyle = colorSettings.fillColor ?? "transparent";
+        ctx.strokeStyle = getLineColor(colorSettings.lineColor, 0);
         if (part.drawType === "angle" && part.vertices2D.length === 3 && part.text) {
             return drawAngle(ctx, camera, part);
+        } else if (part.drawType === "text") {
+            return drawTextPart(ctx, part);
         } else if (part.drawType === "lines" || part.drawType === "filled") {
-            return drawLinesOrPolygon(ctx, part, colorSettings, textSettings);
+            return drawLinesOrPolygon(ctx, part, colorSettings, textSettings, lineCap);
         } else if (part.drawType === "vertex") {
             return drawPoints(ctx, part, colorSettings);
         }
+    }
+    return false;
+}
+function drawTextPart(ctx: CanvasRenderingContext2D, part: DrawPart) {
+    if (part.drawType === "text" && !Array.isArray(part.text) && part.text && part.vertices2D) {
+        return drawText(ctx, part.vertices2D, part.text);
     }
     return false;
 }
@@ -154,7 +184,7 @@ function drawAngle(ctx: CanvasRenderingContext2D, camera: CameraSettings, part: 
         ctx.arc(anglePoint[0], anglePoint[1], 50, angleA, angleB);
         ctx.stroke();
 
-        if (part.text) {
+        if (part.text && !Array.isArray(part.text)) {
             ctx.fillStyle = "white";
             ctx.strokeStyle = "black";
             ctx.lineWidth = 2;
@@ -176,13 +206,38 @@ function drawLinesOrPolygon(
     ctx: CanvasRenderingContext2D,
     part: DrawPart,
     colorSettings: ColorSettings,
-    text?: TextSettings
+    text?: TextSettings,
+    lineCap?: LineCap
 ) {
+    const lineColArray = colorSettings.lineColor !== undefined && Array.isArray(colorSettings.lineColor);
     if (part.vertices2D) {
+        if (lineCap?.start === "arrow") {
+            const dir = vec2.sub(vec2.create(), part.vertices2D[1], part.vertices2D[0]);
+            ctx.fillStyle = colorSettings.outlineColor ?? "black";
+            vec2.normalize(dir, dir);
+            drawArrow(ctx, part.vertices2D[0], dir, 20);
+        }
         ctx.beginPath();
         ctx.moveTo(part.vertices2D[0][0], part.vertices2D[0][1]);
+
         for (let i = 1; i < part.vertices2D.length; ++i) {
             ctx.lineTo(part.vertices2D[i][0], part.vertices2D[i][1]);
+            if (lineCap?.end === "arrow") {
+                ctx.fillStyle = colorSettings.outlineColor ?? "black";
+                ctx.stroke();
+                const dir = vec2.sub(vec2.create(), part.vertices2D[i], part.vertices2D[i - 1]);
+                vec2.normalize(dir, dir);
+                drawArrow(ctx, part.vertices2D[i], dir, 20);
+                ctx.beginPath();
+                ctx.moveTo(part.vertices2D[i][0], part.vertices2D[i][1]);
+            }
+            if (lineColArray) {
+                ctx.strokeStyle = getLineColor(colorSettings.lineColor, i - 1);
+                ctx.lineCap = "butt";
+                ctx.stroke();
+                ctx.beginPath();
+                ctx.moveTo(part.vertices2D[i][0], part.vertices2D[i][1]);
+            }
         }
 
         if (part.voids) {
@@ -203,14 +258,14 @@ function drawLinesOrPolygon(
             ctx.fill();
         }
 
-        if (colorSettings.outlineColor && colorSettings.lineColor) {
+        if (colorSettings.outlineColor && colorSettings.lineColor && !lineColArray) {
             const tmpWidth = ctx.lineWidth;
             ctx.lineWidth *= 2;
             ctx.strokeStyle = colorSettings.outlineColor;
             ctx.lineCap = "round";
             ctx.stroke();
             ctx.lineWidth = tmpWidth;
-            ctx.strokeStyle = colorSettings.lineColor;
+            ctx.strokeStyle = getLineColor(colorSettings.lineColor, 0);
             ctx.lineCap = "butt";
         }
 
@@ -231,53 +286,60 @@ function drawLinesOrPolygon(
         }
 
         if (text && (text.customText?.length || part.text)) {
-            ctx.strokeStyle = "black";
-            ctx.fillStyle = "white";
-            ctx.lineWidth = 2;
-            ctx.font = `bold ${16}px "Open Sans", sans-serif`;
-            ctx.textBaseline = "bottom";
-            ctx.textAlign = "center";
-
-            if (text.type === "distance") {
+            if (text.type === "centerOfLine") {
                 const points = part.vertices2D;
                 for (let i = 0; i < points.length - 1; ++i) {
-                    const textStr = `${
-                        text.customText && i < text.customText.length ? text.customText[i] : part.text
-                    } ${text.unit ? text.unit : "m"}`;
-                    let dir =
-                        points[i][0] > points[i + 1][0]
-                            ? vec2.sub(vec2.create(), points[i], points[i + 1])
-                            : vec2.sub(vec2.create(), points[i + 1], points[i]);
-                    const pixLen = ctx.measureText(textStr).width + 20;
-                    if (vec2.sqrLen(dir) > pixLen * pixLen) {
-                        const center = vec2.create();
-                        vec2.lerp(center, points[i], points[i + 1], 0.5);
-                        const x = center[0];
-                        const y = center[1];
-                        vec2.normalize(dir, dir);
-                        const angle = Math.atan2(dir[1], dir[0]);
-                        ctx.translate(x, y);
-                        ctx.rotate(angle);
-                        ctx.strokeText(textStr, 0, 0);
-                        ctx.fillText(textStr, 0, 0);
-                        ctx.resetTransform();
+                    let textStr = `${text.customText && i < text.customText.length ? text.customText[i] : part.text}`;
+                    if (textStr.length === 0) {
+                        continue;
                     }
+                    textStr += `${text.unit ? text.unit : "m"}`;
+                    drawText(ctx, [points[i], points[i + 1]], textStr);
                 }
             } else if (text.type === "center" && part.vertices2D.length > 2) {
-                const center = vec2.create();
-                for (const p of part.vertices2D) {
-                    vec2.add(center, center, p);
-                }
                 const textStr = `${
                     text.customText && text.customText.length > 0 ? text.customText : part.text ? part.text : ""
                 } ${text.unit ? text.unit : "m"}`;
-                ctx.strokeText(textStr, center[0] / part.vertices2D.length, center[1] / part.vertices2D.length);
-                ctx.fillText(textStr, center[0] / part.vertices2D.length, center[1] / part.vertices2D.length);
+                drawText(ctx, part.vertices2D, textStr);
+            } else if (part.text && Array.isArray(part.text) && part.text.length > 0) {
+                const points = part.vertices2D;
+                for (let i = 0; i < points.length - 1 && i < part.text[0].length; ++i) {
+                    if (part.text[0][i].length === 0) {
+                        continue;
+                    }
+                    const textStr = part.text[0][i] + `${text.unit ? text.unit : "m"}`;
+                    drawText(ctx, [points[i], points[i + 1]], textStr);
+                }
+                if (part.voids) {
+                    for (let j = 0; j < part.voids.length && j < part.text.length - 1; ++j) {
+                        const voidVerts = part.voids[j].vertices2D;
+                        if (voidVerts) {
+                            for (let i = 0; i < voidVerts.length - 1 && i < part.text[j].length; ++i) {
+                                if (part.text[j + 1][i].length === 0) {
+                                    continue;
+                                }
+                                const textStr = part.text[j + 1][i] + `${text.unit ? text.unit : "m"}`;
+                                drawText(ctx, [voidVerts[i], voidVerts[i + 1]], textStr);
+                            }
+                        }
+                    }
+                }
             }
         }
         return true;
     }
     return false;
+}
+
+function getLineColor(lineColor: string | CanvasGradient | string[] | undefined, idx: number) {
+    if (lineColor) {
+        return Array.isArray(lineColor)
+            ? idx < lineColor.length
+                ? lineColor[idx]
+                : lineColor[lineColor.length - 1]
+            : lineColor;
+    }
+    return "black";
 }
 
 function getPointColor(
@@ -326,4 +388,55 @@ export function drawTexts(ctx: CanvasRenderingContext2D, positions: ReadonlyVec2
         ctx.strokeText(texts[i], positions[i][0], positions[i][1]);
         ctx.fillText(texts[i], positions[i][0], positions[i][1]);
     }
+}
+
+export function drawText(ctx: CanvasRenderingContext2D, vertices2D: ReadonlyVec2[], text: string) {
+    ctx.strokeStyle = "black";
+    ctx.fillStyle = "white";
+    ctx.lineWidth = 2;
+    ctx.font = `bold ${16}px "Open Sans", sans-serif`;
+    ctx.textBaseline = "bottom";
+    ctx.textAlign = "center";
+    if (vertices2D.length === 1) {
+        ctx.strokeText(text, vertices2D[0][0], vertices2D[0][1]);
+        ctx.fillText(text, vertices2D[0][0], vertices2D[0][1]);
+    } else if (vertices2D.length === 2) {
+        let dir =
+            vertices2D[0][0] > vertices2D[1][0]
+                ? vec2.sub(vec2.create(), vertices2D[0], vertices2D[1])
+                : vec2.sub(vec2.create(), vertices2D[1], vertices2D[0]);
+        const pixLen = ctx.measureText(text).width + 20;
+        if (vec2.sqrLen(dir) > pixLen * pixLen) {
+            const center = vec2.create();
+            vec2.lerp(center, vertices2D[0], vertices2D[1], 0.5);
+            const x = center[0];
+            const y = center[1];
+            vec2.normalize(dir, dir);
+            const angle = Math.atan2(dir[1], dir[0]);
+            ctx.translate(x, y);
+            ctx.rotate(angle);
+            ctx.strokeText(text, 0, 0);
+            ctx.fillText(text, 0, 0);
+            ctx.resetTransform();
+        }
+    } else {
+        const center = vec2.create();
+        for (const p of vertices2D) {
+            vec2.add(center, center, p);
+        }
+        ctx.strokeText(text, center[0] / vertices2D.length, center[1] / vertices2D.length);
+        ctx.fillText(text, center[0] / vertices2D.length, center[1] / vertices2D.length);
+    }
+    return true;
+}
+
+function drawArrow(ctx: CanvasRenderingContext2D, currentPos: ReadonlyVec2, dir: ReadonlyVec2, pixels: number) {
+    const scaledDir = vec2.scale(vec2.create(), dir, pixels);
+    ctx.beginPath();
+    ctx.moveTo(currentPos[0], currentPos[1]);
+    ctx.lineTo(currentPos[0] + scaledDir[1] / 2, currentPos[1] - scaledDir[0] / 2);
+    ctx.lineTo(currentPos[0] + scaledDir[0], currentPos[1] + scaledDir[1]);
+    ctx.lineTo(currentPos[0] - scaledDir[1] / 2, currentPos[1] + scaledDir[0] / 2);
+    ctx.closePath();
+    ctx.fill();
 }

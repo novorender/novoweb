@@ -1,24 +1,24 @@
-import { Fragment, useEffect, useRef, useState } from "react";
-import { mat3, quat, ReadonlyVec3, vec2, vec3 } from "gl-matrix";
 import { css, styled, useTheme } from "@mui/material";
+import { ReadonlyVec3, mat3, quat, vec2, vec3 } from "gl-matrix";
+import { Fragment, useEffect, useRef, useState } from "react";
 
-import { useExplorerGlobals } from "contexts/explorerGlobals";
-import { useMountedState } from "hooks/useMountedState";
-import { useAbortController } from "hooks/useAbortController";
-import { objIdsToTotalBoundingSphere } from "utils/objectData";
-import { useHighlighted } from "contexts/highlighted";
 import { useAppDispatch, useAppSelector } from "app/store";
-import { renderActions, selectCameraType } from "slices/renderSlice";
+import { useExplorerGlobals } from "contexts/explorerGlobals";
+import { useHighlighted } from "contexts/highlighted";
+import { renderActions, selectCameraType } from "features/render/renderSlice";
+import { useAbortController } from "hooks/useAbortController";
+import { useMountedState } from "hooks/useMountedState";
+import { objIdsToTotalBoundingSphere } from "utils/objectData";
 
 // prettier-ignore
-const top = [
+const back = [
     1, 0, 0, 
     0, 0, -1,
     0, 1, 0
 ] as mat3;
 
 // prettier-ignore
-const bottom = [
+const front = [
     1, 0, 0, 
     0, 0, 1,
     0, -1, 0
@@ -39,27 +39,27 @@ const right = [
 ] as mat3;
 
 // prettier-ignore
-const front = [
+const top = [
     1, 0, 0, 
     0, 1, 0, 
     0, 0, 1
 ] as mat3;
 
 // prettier-ignore
-const back = [
+const bottom = [
     -1, 0, 0, 
     0, 1, 0, 
     0, 0, -1
 ] as mat3;
 
-const ids = ["bottom", "right", "top", "left", "back", "front"] as const;
+const ids = ["front", "right", "back", "left", "bottom", "top"] as const;
 const rotationMats = {
-    bottom,
-    right,
-    top,
-    left,
-    back,
     front,
+    right,
+    back,
+    left,
+    bottom,
+    top,
 } as { [k: string]: mat3 };
 
 class Face {
@@ -232,7 +232,7 @@ const createCircle = (radius: number, y: number) => {
     const step = 0.01745;
 
     for (let x = 0; x < Math.PI * 2; x += step) {
-        circle.push(vec3.fromValues(radius * Math.cos(x), y, radius * Math.sin(x)));
+        circle.push(vec3.fromValues(radius * Math.cos(x), radius * Math.sin(x), y));
     }
 
     return circle;
@@ -243,9 +243,9 @@ class Circle {
     originalPts: vec3[];
     pts: vec3[];
 
-    constructor(radius: number, y: number) {
-        this.originalPts = createCircle(radius, y);
-        this.pts = createCircle(radius, y);
+    constructor(radius: number, z: number) {
+        this.originalPts = createCircle(radius, z);
+        this.pts = createCircle(radius, z);
         this.radius = radius;
     }
 
@@ -300,17 +300,17 @@ class Triangle {
     pts: vec3[];
     size: number;
 
-    constructor(size: number, y: number, radius: number) {
+    constructor(size: number, z: number, radius: number) {
         this.size = size;
         this.pts = [
-            vec3.fromValues(0, y, 0 + radius),
-            vec3.fromValues(size / 3, y, -size + radius),
-            vec3.fromValues(-(size / 3), y, -size + radius),
+            vec3.fromValues(0, 0 + radius, z),
+            vec3.fromValues(size / 3, -size + radius, z),
+            vec3.fromValues(-(size / 3), -size + radius, z),
         ];
         this.originalPts = [
-            vec3.fromValues(0, y, 0 + radius),
-            vec3.fromValues(size / 3, y, -size + radius),
-            vec3.fromValues(-(size / 3), y, -size + radius),
+            vec3.fromValues(0, 0 + radius, z),
+            vec3.fromValues(size / 3, -size + radius, z),
+            vec3.fromValues(-(size / 3), -size + radius, z),
         ];
     }
 
@@ -344,8 +344,8 @@ const cubeSize = 85;
 const triangleSize = 15;
 const radius = cubeSize + triangleSize;
 const cube = new Cube([0, 0, 0], cubeSize);
-const innerCircle = new Circle(radius, -(radius / 2) - 10);
-const triangle = new Triangle(15, -(radius / 2) - 10, radius);
+const innerCircle = new Circle(radius, radius / 2 + 10);
+const triangle = new Triangle(15, radius / 2 + 10, radius);
 
 type Path = {
     id: string;
@@ -356,7 +356,7 @@ type Path = {
 export function NavigationCube() {
     const theme = useTheme();
     const {
-        state: { view, scene },
+        state: { view, db },
     } = useExplorerGlobals(true);
     const highlighted = useHighlighted().idArr;
     const prevPivotPt = useRef<ReadonlyVec3>();
@@ -383,7 +383,7 @@ export function NavigationCube() {
             return;
         }
 
-        let pt: ReadonlyVec3 | undefined;
+        let pt: ReadonlyVec3 | undefined = vec3.clone(view.renderState.camera.position);
 
         if (highlighted.length) {
             const abortSignal = abortController.current.signal;
@@ -397,31 +397,16 @@ export function NavigationCube() {
                 try {
                     pt =
                         highlightedBoundingSphereCenter.current ??
-                        (await objIdsToTotalBoundingSphere({ ids: highlighted, abortSignal, scene }))?.center;
+                        (await objIdsToTotalBoundingSphere({ ids: highlighted, abortSignal, db }))?.center;
 
                     highlightedBoundingSphereCenter.current = pt;
                 } catch {
-                    if (!abortSignal.aborted) {
-                        pt = prevPivotPt.current;
+                    if (abortSignal.aborted) {
+                        pt = undefined;
                     }
                 }
 
                 setLoading(false);
-            }
-        } else if (prevPivotPt.current) {
-            pt = prevPivotPt.current;
-        } else {
-            const sceneCenterDist = vec3.len(
-                vec3.sub(vec3.create(), view.camera.position, scene.boundingSphere.center)
-            );
-
-            if (sceneCenterDist <= 500) {
-                pt = scene.boundingSphere.center;
-            } else {
-                pt = (
-                    await view.lastRenderOutput?.pick(view.settings.display.width / 2, view.settings.display.width / 2)
-                )?.position;
-                prevPivotPt.current = pt;
             }
         }
 
@@ -429,7 +414,7 @@ export function NavigationCube() {
             return;
         }
 
-        const ab = vec3.sub(vec3.create(), view.camera.position, pt);
+        const ab = vec3.sub(vec3.create(), view.renderState.camera.position, [pt[0], pt[1], pt[2]]);
         const len = vec3.len(ab);
         const mat = rotationMats[face];
         const dir = vec3.fromValues(0, 0, 1);
@@ -437,7 +422,7 @@ export function NavigationCube() {
         vec3.scale(dir, dir, len);
 
         vec3.transformMat3(ab, ab, mat);
-        const target = vec3.add(vec3.create(), pt, dir);
+        const target = vec3.add(vec3.create(), [pt[0], pt[1], pt[2]], dir);
 
         dispatch(
             renderActions.setCamera({
@@ -445,7 +430,7 @@ export function NavigationCube() {
                 goTo: {
                     position: target,
                     rotation: quat.fromMat3(quat.create(), mat),
-                    fieldOfView: (view.camera.controller.params as { fieldOfView?: number }).fieldOfView,
+                    fov: view.renderState.camera.fov,
                 },
             })
         );
@@ -455,10 +440,10 @@ export function NavigationCube() {
         animate();
 
         function animate() {
-            if (!prevRotation.current || !quat.equals(prevRotation.current, view.camera.rotation)) {
-                prevRotation.current = quat.clone(view.camera.rotation);
+            if (!prevRotation.current || !quat.equals(prevRotation.current, view.renderState.camera.rotation)) {
+                prevRotation.current = quat.clone(view.renderState.camera.rotation);
 
-                const rot = view.camera.rotation;
+                const rot = view.renderState.camera.rotation;
                 const q = quat.fromValues(rot[0], rot[1], -rot[2], rot[3]);
                 cube.setRotation(q);
                 innerCircle.setRotation(q);

@@ -7,9 +7,9 @@ export function Slope({ start, end }: { start: ReadonlyVec3; end: ReadonlyVec3 }
     const sub = vec3.sub(vec3.create(), start, end);
     const dir = vec3.normalize(vec3.create(), sub);
 
-    const horizontal = Math.abs(dir[1]) < epsilon;
-    const vertical = Math.abs(Math.abs(dir[1]) - 1) < epsilon;
-    const planarVec = vec2.fromValues(sub[0], sub[2]);
+    const horizontal = Math.abs(dir[2]) < epsilon;
+    const vertical = Math.abs(Math.abs(dir[2]) - 1) < epsilon;
+    const planarVec = vec2.fromValues(sub[0], sub[1]);
 
     return (
         <Grid container>
@@ -21,7 +21,7 @@ export function Slope({ start, end }: { start: ReadonlyVec3; end: ReadonlyVec3 }
                     ? "Vertical"
                     : horizontal
                     ? "Horizontal"
-                    : `${(Math.abs(sub[1] / vec2.len(planarVec)) * 100).toFixed(2)} %`}
+                    : `${(Math.abs(sub[2] / vec2.len(planarVec)) * 100).toFixed(2)} %`}
             </Grid>
         </Grid>
     );

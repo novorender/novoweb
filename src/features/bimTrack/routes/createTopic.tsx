@@ -1,34 +1,34 @@
+import { ArrowBack } from "@mui/icons-material";
 import {
     Box,
-    useTheme,
     Button,
-    FormControlLabel,
+    Checkbox,
     FormControl,
+    FormControlLabel,
     InputLabel,
+    ListItemText,
     MenuItem,
     OutlinedInput,
     Select,
-    Checkbox,
-    ListItemText,
     TextFieldProps,
+    useTheme,
 } from "@mui/material";
 import { DatePicker } from "@mui/x-date-pickers";
-import { useParams, useHistory } from "react-router-dom";
-import { FormEvent, useState } from "react";
-import { ArrowBack } from "@mui/icons-material";
 import { isValid, set } from "date-fns";
+import { FormEvent, useState } from "react";
+import { useHistory, useParams } from "react-router-dom";
 
 import { Divider, IosSwitch, LinearProgress, ScrollBox, TextField, Tooltip } from "components";
 import { useToggle } from "hooks/useToggle";
 
 import {
+    useCreateCommentMutation,
+    useCreateTopicMutation,
+    useCreateViewpointMutation,
     useGetProjectExtensionsQuery,
     useGetProjectQuery,
-    useCreateTopicMutation,
-    useCreateCommentMutation,
-    useCreateViewpointMutation,
 } from "../bimTrackApi";
-import { NewViewpoint, IncludeViewpoint } from "../includeViewpoint";
+import { IncludeViewpoint, NewViewpoint } from "../includeViewpoint";
 
 const today = new Date();
 
@@ -109,7 +109,11 @@ export function CreateTopic() {
     };
 
     if (!project || !extensions) {
-        return <LinearProgress />;
+        return (
+            <Box position="relative">
+                <LinearProgress />
+            </Box>
+        );
     }
 
     const disabled = creatingTopic || creatingComment || creatingViewpoint;

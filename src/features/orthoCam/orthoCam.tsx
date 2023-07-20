@@ -1,40 +1,39 @@
-import { ChangeEvent, useState, MouseEvent } from "react";
-import { Box, Button, FormControlLabel } from "@mui/material";
 import { ArrowDownward, ColorLens } from "@mui/icons-material";
+import { Box, Button, FormControlLabel, Typography } from "@mui/material";
+import { ChangeEvent, MouseEvent, useState } from "react";
 
 import { useAppDispatch, useAppSelector } from "app/store";
-import { IosSwitch, LogoSpeedDial, ScrollBox, Switch, WidgetContainer, WidgetHeader } from "components";
+import { Divider, IosSwitch, LogoSpeedDial, ScrollBox, Switch, WidgetContainer, WidgetHeader } from "components";
 import { featuresConfig } from "config/features";
 import { useExplorerGlobals } from "contexts/explorerGlobals";
-import { toggleTerrainAsBackground } from "features/advancedSettings";
 import WidgetList from "features/widgetList/widgetList";
 import { useToggle } from "hooks/useToggle";
 
+import { ColorPicker } from "features/colorPicker";
 import {
-    AdvancedSetting,
     CameraType,
-    renderActions,
-    selectAdvancedSettings,
-    selectCameraType,
-    selectSubtrees,
+    Picker,
     SubtreeStatus,
+    renderActions,
+    selectBackground,
+    selectCameraType,
     selectGrid,
     selectPicker,
-    Picker,
-} from "slices/renderSlice";
-import { selectMinimized, selectMaximized } from "slices/explorerSlice";
-import { ColorPicker } from "features/colorPicker";
-import { rgbToVec, VecRGBA, vecToRgb } from "utils/color";
+    selectSubtrees,
+    selectTerrain,
+} from "features/render/renderSlice";
+import { selectMaximized, selectMinimized } from "slices/explorerSlice";
+import { VecRGBA, rgbToVec, vecToRgb } from "utils/color";
 
+import { orthoCamActions, selectCurrentTopDownElevation, selectDefaultTopDownElevation } from "./orthoCamSlice";
 import { getTopDownParams } from "./utils";
-import { orthoCamActions } from "./orthoCamSlice";
 
 export default function OrthoCam() {
     const [menuOpen, toggleMenu] = useToggle();
     const minimized = useAppSelector(selectMinimized) === featuresConfig.orthoCam.key;
-    const maximized = useAppSelector(selectMaximized) === featuresConfig.orthoCam.key;
+    const maximized = useAppSelector(selectMaximized).includes(featuresConfig.orthoCam.key);
     const {
-        state: { view, canvas },
+        state: { view },
     } = useExplorerGlobals(true);
 
     const grid = useAppSelector(selectGrid);
@@ -42,43 +41,41 @@ export default function OrthoCam() {
     const picker = useAppSelector(selectPicker);
     const selectingCrossSection = picker === Picker.CrossSection;
     const selectingOrthoPoint = picker === Picker.OrthoPlane;
-    const { terrainAsBackground } = useAppSelector(selectAdvancedSettings);
     const subtrees = useAppSelector(selectSubtrees);
-    const backgroundColor = useAppSelector(selectAdvancedSettings).backgroundColor;
+    const background = useAppSelector(selectBackground);
+    const terrain = useAppSelector(selectTerrain);
+    const defaultTopDownElevation = useAppSelector(selectDefaultTopDownElevation);
+    const currentElevation = useAppSelector(selectCurrentTopDownElevation);
     const dispatch = useAppDispatch();
 
     const [colorPickerAnchor, setColorPickerAnchor] = useState<HTMLElement | null>(null);
     const toggleColorPicker = (event?: MouseEvent<HTMLElement>) => {
         setColorPickerAnchor(!colorPickerAnchor && event?.currentTarget ? event.currentTarget : null);
     };
-    const { r, g, b } = vecToRgb(backgroundColor);
+    const { r, g, b } = vecToRgb(background.color);
 
     const togglePick = () => {
         if (cameraType === CameraType.Orthographic || selectingOrthoPoint) {
             dispatch(renderActions.setPicker(Picker.Object));
-            dispatch(renderActions.setCamera({ type: CameraType.Flight }));
+            dispatch(renderActions.setCamera({ type: CameraType.Pinhole }));
         } else {
             dispatch(renderActions.setPicker(Picker.OrthoPlane));
         }
     };
 
     const toggleTerrain = (_event: ChangeEvent<HTMLInputElement>, checked: boolean) => {
-        dispatch(renderActions.setAdvancedSettings({ [AdvancedSetting.TerrainAsBackground]: checked }));
-        toggleTerrainAsBackground(view);
+        dispatch(renderActions.setTerrain({ asBackground: checked }));
     };
 
     const toggleGrid = (_e: ChangeEvent<HTMLInputElement>, checked: boolean) => {
-        dispatch(renderActions.setGridDefaults({ enabled: checked }));
         dispatch(renderActions.setGrid({ enabled: checked }));
     };
 
     const handleTopDown = () => {
-        const params = getTopDownParams({ view, canvas });
-
         dispatch(
             renderActions.setCamera({
                 type: CameraType.Orthographic,
-                params,
+                goTo: getTopDownParams({ view, elevation: defaultTopDownElevation }),
             })
         );
     };
@@ -128,8 +125,8 @@ export default function OrthoCam() {
                             sx={{ ml: 0, mb: 2 }}
                             control={
                                 <Switch
-                                    name={AdvancedSetting.TerrainAsBackground}
-                                    checked={terrainAsBackground}
+                                    name={"terrain as background"}
+                                    checked={terrain.asBackground}
                                     onChange={toggleTerrain}
                                 />
                             }
@@ -142,6 +139,12 @@ export default function OrthoCam() {
                     ) : null}
                     {cameraType === CameraType.Orthographic ? (
                         <>
+                            {currentElevation && (
+                                <>
+                                    <Typography>Elevation: {currentElevation.toFixed(3)}</Typography>
+                                    <Divider sx={{ my: 1 }} />
+                                </>
+                            )}
                             <FormControlLabel
                                 sx={{ ml: 0, mb: 2 }}
                                 control={<Switch name={"Show grid"} checked={grid.enabled} onChange={toggleGrid} />}
@@ -188,22 +191,17 @@ export default function OrthoCam() {
                 open={Boolean(colorPickerAnchor)}
                 anchorEl={colorPickerAnchor}
                 onClose={() => toggleColorPicker()}
-                color={backgroundColor}
+                color={background.color}
                 onChangeComplete={({ rgb }) => {
                     const rgba = rgbToVec(rgb) as VecRGBA;
-                    view.applySettings({ background: { color: rgba } });
                     dispatch(
-                        renderActions.setAdvancedSettings({
-                            [AdvancedSetting.BackgroundColor]: rgba,
+                        renderActions.setBackground({
+                            color: rgba,
                         })
                     );
                 }}
             />
-            <LogoSpeedDial
-                open={menuOpen}
-                toggle={toggleMenu}
-                testId={`${featuresConfig.orthoCam.key}-widget-menu-fab`}
-            />
+            <LogoSpeedDial open={menuOpen} toggle={toggleMenu} />
         </>
     );
 }

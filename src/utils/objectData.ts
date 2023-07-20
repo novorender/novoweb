@@ -1,4 +1,6 @@
-import { BoundingSphere, HierarcicalObjectReference, ObjectId, Scene } from "@novorender/webgl-api";
+import { ObjectDB } from "@novorender/data-js-api";
+import { BoundingSphere, HierarcicalObjectReference, ObjectId } from "@novorender/webgl-api";
+import { flip } from "features/render/utils";
 import { vec3 } from "gl-matrix";
 import { batchedPropertySearch } from "./search";
 
@@ -26,21 +28,48 @@ export function getObjectNameFromPath(path: string): string {
     return decodeObjPathName(arr.length ? arr.pop()! : path);
 }
 
+export function getFilePathFromObjectPath(objectPath: string): string | null {
+    //https://novorender.com/formats-integrations/
+    const match = objectPath.match(
+        /^(?<path>.+\.(dem|dwg|dxf|ifc|xml|kof|nwd|obj|pdms|rvm|step|stp|wms|wmts|pts|las|e57|jpg|jpeg|tif|tiff|pdf))/i
+    )?.groups;
+
+    if (!match || !match.path) {
+        return null;
+    }
+
+    return match.path;
+}
+
+export function getFileNameFromPath(path: string): string | null {
+    const filePath = getFilePathFromObjectPath(path);
+
+    if (!filePath) {
+        return null;
+    }
+
+    if (!filePath.includes("/")) {
+        return filePath;
+    }
+
+    return filePath.split("/").at(-1) ?? null;
+}
+
 export async function objIdsToTotalBoundingSphere({
     ids,
     abortSignal,
-    scene,
+    db,
 }: {
     ids: number[];
     abortSignal: AbortSignal;
-    scene: Scene;
+    db: ObjectDB;
 }) {
     let nodes = [] as HierarcicalObjectReference[];
 
     nodes = await batchedPropertySearch({
+        db,
         property: "id",
         value: ids.map((id) => String(id)),
-        scene,
         abortSignal,
     });
 
@@ -54,7 +83,7 @@ export function getTotalBoundingSphere(nodes: HierarcicalObjectReference[]): Bou
         const sphere = node.bounds?.sphere;
 
         if (sphere) {
-            spheres.push(sphere);
+            spheres.push({ ...sphere, center: flip(sphere.center) });
         }
     }
 
@@ -95,4 +124,22 @@ export function getGuid(ref: HierarcicalObjectReference): Promise<string> {
         const guid = obj.properties.find((prop) => prop[0] === "GUID");
         return guid ? guid[1] : "";
     });
+}
+
+export function getPropertyDisplayName(property: string): string {
+    let decoded: string | undefined = undefined;
+
+    try {
+        decoded = decodeURIComponent(property);
+    } catch (e) {
+        console.warn(`Failed to decode property "${property}".`);
+    }
+
+    const display = decoded ?? property;
+
+    return display[0]?.toUpperCase() + display.slice(1);
+}
+
+export function isUrl(str: string): boolean {
+    return str.startsWith("http");
 }

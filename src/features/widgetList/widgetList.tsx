@@ -7,8 +7,6 @@ import { WidgetKey, featuresConfig } from "config/features";
 import { Root } from "./routes/root";
 import { Tag } from "./routes/tag";
 
-type Props = { widgetKey?: WidgetKey; onSelect: () => void };
-
 export const sorting = [
     featuresConfig.properties.key,
     featuresConfig.modelTree.key,
@@ -19,9 +17,9 @@ export const sorting = [
     featuresConfig.measure.key,
     featuresConfig.shareLink.key,
     featuresConfig.clippingPlanes.key,
-    featuresConfig.clippingBox.key,
+    // featuresConfig.clippingBox.key,
     featuresConfig.orthoCam.key,
-    featuresConfig.panoramas.key,
+    featuresConfig.images.key,
     featuresConfig.propertyTree.key,
     featuresConfig.manhole.key,
     featuresConfig.area.key,
@@ -31,7 +29,7 @@ export const sorting = [
     featuresConfig.advancedSettings.key,
 ] as WidgetKey[];
 
-export default function WidgetList({ widgetKey, onSelect }: Props) {
+export default function WidgetList({ widgetKey, onSelect }: { widgetKey?: WidgetKey; onSelect: () => void }) {
     const activeWidgets = useAppSelector(selectWidgets);
     const dispatch = useAppDispatch();
 
@@ -51,8 +49,11 @@ export default function WidgetList({ widgetKey, onSelect }: Props) {
         dispatch(explorerActions.replaceWidgetSlot({ replace: widgetKey, key }));
     };
 
+    const config = widgetKey ? featuresConfig[widgetKey] : undefined;
+    const tag = config && "tags" in config ? config.tags[0] : undefined;
+
     return (
-        <MemoryRouter>
+        <MemoryRouter initialEntries={tag ? ["/", `/tag/${tag}`] : undefined} initialIndex={tag ? 1 : 0}>
             <Switch>
                 <Route path="/" exact>
                     <Root currentWidget={widgetKey} handleClick={handleClick} />

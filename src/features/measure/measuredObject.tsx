@@ -73,16 +73,15 @@ export function MeasuredObject({ obj, idx }: { obj: ExtendedMeasureEntity; idx: 
 
     const kind = !measureObject ? "" : measureValues ? getMeasurementValueKind(measureValues) : "point";
 
-    const _idx = idx === 0 ? "a" : "b";
-    const useCylinderMeasureSettings =
-        duoMeasurementValues &&
-        (!duoMeasurementValues.validMeasureSettings || duoMeasurementValues.validMeasureSettings[_idx]);
+    const _idx = idx === 0 ? "measureInfoA" : "measureInfoB";
+    const useCylinderMeasureSettings = duoMeasurementValues && duoMeasurementValues[_idx]?.validMeasureSettings;
 
     return (
         <Accordion defaultExpanded={true}>
             <AccordionSummary>
                 <Box flex="0 0 auto">
                     <Checkbox
+                        name="pin measured object"
                         aria-label="pin measured object"
                         sx={{ mr: 1, p: 0 }}
                         size="small"
@@ -138,13 +137,17 @@ export function MeasuredResult({ duoMeasurementValues }: { duoMeasurementValues:
         return null;
     }
 
-    const pts =
-        duoMeasurementValues.pointA && duoMeasurementValues.pointB
-            ? [duoMeasurementValues.pointA, duoMeasurementValues.pointB]
-            : duoMeasurementValues.normalPoints;
+    const hasMeasurePoints = duoMeasurementValues.measureInfoA?.point && duoMeasurementValues.measureInfoB?.point;
+    const pts = hasMeasurePoints
+        ? [duoMeasurementValues.measureInfoA.point, duoMeasurementValues.measureInfoB.point]
+        : duoMeasurementValues.normalPoints;
 
-    const showSlope = duoMeasurementValues.pointA && duoMeasurementValues.pointB;
-    const showPlanarDiff = duoMeasurementValues.pointA && duoMeasurementValues.pointB;
+    const showSlope = hasMeasurePoints;
+    const showPlanarDiff = hasMeasurePoints;
+    const parameters = [
+        duoMeasurementValues.measureInfoA?.parameter,
+        duoMeasurementValues.measureInfoB?.parameter,
+    ].filter((p) => typeof p === "number") as number[];
     return (
         <Accordion defaultExpanded={true}>
             <AccordionSummary sx={{ fontWeight: 600 }}>Result</AccordionSummary>
@@ -187,14 +190,29 @@ export function MeasuredResult({ duoMeasurementValues }: { duoMeasurementValues:
                                 </Grid>
                             </ListItem>
                         ) : null}
+
                         {showPlanarDiff ? (
                             <ListItem>
-                                <PlanarDiff start={duoMeasurementValues.pointA!} end={duoMeasurementValues.pointB!} />
+                                <PlanarDiff start={pts![0]} end={pts![1]} />
                             </ListItem>
                         ) : null}
+
+                        {parameters.map((p, idx, arr) => (
+                            <ListItem key={idx}>
+                                <Grid container>
+                                    <Grid item xs={5}>
+                                        Parameter {arr.length === 2 ? (idx === 0 ? "A" : "B") : ""}
+                                    </Grid>
+                                    <Grid item xs={5}>
+                                        {p.toFixed(3)}
+                                    </Grid>
+                                </Grid>
+                            </ListItem>
+                        ))}
+
                         {showSlope ? (
                             <ListItem>
-                                <Slope start={duoMeasurementValues.pointA!} end={duoMeasurementValues.pointB!} />
+                                <Slope start={pts![0]} end={pts![1]} />
                             </ListItem>
                         ) : null}
                     </List>
@@ -466,8 +484,16 @@ export function MeasurementData({
                             <NestedAccordionSummary>Components</NestedAccordionSummary>
                             <NestedAccordionDetails>
                                 <MeasurementTable
-                                    start={measureValues.centerLineStart}
-                                    end={measureValues.centerLineEnd}
+                                    start={
+                                        measureValues.centerLineStart[2] > measureValues.centerLineEnd[2]
+                                            ? measureValues.centerLineStart
+                                            : measureValues.centerLineEnd
+                                    }
+                                    end={
+                                        measureValues.centerLineStart[2] <= measureValues.centerLineEnd[2]
+                                            ? measureValues.centerLineStart
+                                            : measureValues.centerLineEnd
+                                    }
                                 />
                             </NestedAccordionDetails>
                         </Accordion>

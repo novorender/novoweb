@@ -12,6 +12,9 @@ import { StorageKey } from "config/storage";
 import { dataServerBaseUrl } from "config";
 import { WidgetKey } from "config/features";
 
+let prevMsalToken = "";
+let nrToken = "";
+
 export async function getAuthHeader(): Promise<AuthenticationHeader> {
     const {
         auth: { accessToken, msalAccount },
@@ -64,7 +67,12 @@ export async function getAuthHeader(): Promise<AuthenticationHeader> {
                 throw new Error("failed to acquire access token");
             }
 
-            return { header: "Authorization", value: `Bearer ${response.accessToken}` };
+            if (prevMsalToken !== response.accessToken) {
+                prevMsalToken = response.accessToken;
+                nrToken = await getAccessToken(response.accessToken);
+            }
+
+            return { header: "Authorization", value: `Bearer ${nrToken}` };
         } catch (e) {
             console.warn(e);
             deleteFromStorage(StorageKey.MsalActiveAccount);

@@ -3,6 +3,7 @@ import { createSlice, PayloadAction } from "@reduxjs/toolkit";
 import { vec3 } from "gl-matrix";
 
 import { RootState } from "app/store";
+import { resetView, selectBookmark } from "features/render";
 
 const initialState = {
     points: [] as vec3[],
@@ -25,7 +26,7 @@ export const pointLineSlice = createSlice({
         addPoint: (state, action: PayloadAction<vec3>) => {
             if (state.lockElevation && state.points.length) {
                 const prevPoint = state.points.slice(-1)[0];
-                state.points = state.points.concat([[action.payload[0], prevPoint[1], action.payload[2]]]);
+                state.points = state.points.concat([[action.payload[0], action.payload[1], prevPoint[2]]]);
             } else {
                 state.points = state.points.concat([action.payload]);
             }
@@ -36,6 +37,14 @@ export const pointLineSlice = createSlice({
         toggleLockElevation: (state) => {
             state.lockElevation = !state.lockElevation;
         },
+    },
+    extraReducers(builder) {
+        builder.addCase(selectBookmark, (state, action) => {
+            state.points = action.payload.measurements.pointLine.points;
+        });
+        builder.addCase(resetView, (state) => {
+            state.points = [];
+        });
     },
 });
 

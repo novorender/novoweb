@@ -1,26 +1,32 @@
-import { DrawableEntity, MeasureSettings } from "@novorender/measure-api";
 import { css, styled } from "@mui/material";
-import { useCallback, useEffect, useRef, useState } from "react";
-import { quat, ReadonlyVec2, vec2, vec3 } from "gl-matrix";
+import { DrawProduct, DrawableEntity, MeasureSettings } from "@novorender/measure-api";
+import { ReadonlyVec2, mat3, quat, vec2, vec3 } from "gl-matrix";
+import { MutableRefObject, useCallback, useEffect, useRef, useState } from "react";
 
+import { measureApi } from "app";
 import { useAppSelector } from "app/store";
 import { useExplorerGlobals } from "contexts/explorerGlobals";
-import { useHeightProfileMeasureObject } from "features/heightProfile";
-import { selectMeasure, useMeasureObjects } from "features/measure";
-import { selectDrawSelectedPositions, selectFollowCylindersFrom, usePathMeasureObjects } from "features/followPath";
 import { selectArea, selectAreaDrawPoints } from "features/area";
-import { selectPointLine } from "features/pointLine";
+import {
+    selectDrawSelectedPositions,
+    selectFollowCylindersFrom,
+    selectShowTracer,
+    usePathMeasureObjects,
+} from "features/followPath";
+import { useCrossSection } from "features/followPath/useCrossSection";
+import { useHeightProfileMeasureObject } from "features/heightProfile";
 import {
     selectManholeCollisionTarget,
     selectManholeCollisionValues,
     selectManholeMeasureValues,
 } from "features/manhole";
-import { measureApi } from "app";
-import { AsyncStatus } from "types/misc";
-import { CameraType, selectCameraType, selectGrid } from "slices/renderSlice";
-
-import { drawPart, drawProduct, drawTexts } from "../engine2D/utils";
+import { selectMeasure, useMeasureObjects } from "features/measure";
 import { selectCrossSectionPoints } from "features/orthoCam";
+import { selectPointLine } from "features/pointLine";
+import { CameraType, selectCameraType, selectGrid, selectViewMode } from "features/render";
+import { AsyncStatus, ViewMode } from "types/misc";
+
+import { drawPart, drawProduct, drawTexts } from "./utils";
 
 const Canvas2D = styled("canvas")(
     () => css`
@@ -29,7 +35,6 @@ const Canvas2D = styled("canvas")(
         top: 0;
         width: 100%;
         height: 100%;
-        overflow: visible;
         pointer-events: none;
     `
 );
@@ -43,21 +48,24 @@ const measurementInactiveLineColor = "rgba(255, 255, 0, 0.4)";
 const hoverFillColor = "rgba(0, 170, 200, 0.3)";
 const hoverLineColor = "rgba(255, 165, 0, 1)";
 
-export function Engine2D() {
+export function Engine2D({
+    pointerPos,
+    renderFnRef,
+}: {
+    pointerPos: MutableRefObject<Vec2>;
+    renderFnRef: MutableRefObject<((isIdleFrame: boolean) => void) | undefined>;
+}) {
     const {
-        state: { size, scene, view, measureScene },
+        state: { size, view, measureScene },
     } = useExplorerGlobals();
     const [canvas2D, setCanvas2D] = useState<HTMLCanvasElement | null>(null);
     const [context2D, setContext2D] = useState<CanvasRenderingContext2D | null | undefined>(null);
 
-    const animationFrameId = useRef<number>(-1);
-
-    const prevCamPos = useRef<vec3>();
-    const prevCamRot = useRef<quat>();
-
     const heightProfileMeasureObject = useHeightProfileMeasureObject();
     const measureObjects = useMeasureObjects();
     const pathMeasureObjects = usePathMeasureObjects();
+    const roadCrossSection = useCrossSection();
+    const roadCrossSectionData = roadCrossSection.status === AsyncStatus.Success ? roadCrossSection.data : undefined;
     const pathMeasureObjectsData =
         pathMeasureObjects.status === AsyncStatus.Success ? pathMeasureObjects.data : undefined;
     const areaValue = useAppSelector(selectArea);
@@ -72,51 +80,67 @@ export function Engine2D() {
     const measure = useAppSelector(selectMeasure);
     const cameraType = useAppSelector(selectCameraType);
     const grid = useAppSelector(selectGrid);
+    const viewMode = useAppSelector(selectViewMode);
+    const showTracer = useAppSelector(selectShowTracer);
+
+    const prevPointerPos = useRef([0, 0] as Vec2);
 
     const renderGridLabels = useCallback(() => {
         if (
-            grid.enabled &&
-            (view?.camera?.fieldOfView ?? 250) <= 35 &&
-            context2D &&
-            cameraType === CameraType.Orthographic
+            !view ||
+            !grid.enabled ||
+            !context2D ||
+            cameraType !== CameraType.Orthographic ||
+            view.renderState.camera.fov > 35
         ) {
-            const xLen = vec3.len(grid.axisX);
-            const yLen = vec3.len(grid.axisY);
-            const pts3d: vec3[] = [];
-            const labels: string[] = [];
-            const numLables = Math.min(10, grid.majorLineCount);
-            for (let i = 0; i < numLables; ++i) {
-                const xLabel = (xLen * i).toFixed(1);
-                const yLabel = (yLen * i).toFixed(1);
-                pts3d.push(vec3.scaleAndAdd(vec3.create(), grid.origo, grid.axisX, i));
-                labels.push(xLabel);
-                if (i === 0) {
-                    continue;
-                }
-
-                pts3d.push(vec3.scaleAndAdd(vec3.create(), grid.origo, grid.axisX, -i));
-                labels.push(`-${xLabel}`);
-
-                pts3d.push(vec3.scaleAndAdd(vec3.create(), grid.origo, grid.axisY, i));
-                labels.push(yLabel);
-                pts3d.push(vec3.scaleAndAdd(vec3.create(), grid.origo, grid.axisY, -i));
-                labels.push(`-${yLabel}`);
-            }
-            const pts = measureApi.toPathPoints(pts3d, view);
-            if (pts) {
-                drawTexts(context2D, pts[0], labels);
-            }
+            return;
         }
-    }, [grid, context2D, view, cameraType]);
+
+        const xLen = vec3.len(grid.axisX);
+        const yLen = vec3.len(grid.axisY);
+        const pts3d: vec3[] = [];
+        const labels: string[] = [];
+        const numLabels = 10;
+        for (let i = 0; i < numLabels; ++i) {
+            const xLabel = (xLen * i * grid.size2).toFixed(1);
+            const yLabel = (yLen * i * grid.size2).toFixed(1);
+            pts3d.push(vec3.scaleAndAdd(vec3.create(), grid.origin, grid.axisX, i * grid.size2));
+            labels.push(xLabel);
+            if (i === 0) {
+                continue;
+            }
+
+            pts3d.push(vec3.scaleAndAdd(vec3.create(), grid.origin, grid.axisX, -i * grid.size2));
+            labels.push(`-${xLabel}`);
+
+            pts3d.push(vec3.scaleAndAdd(vec3.create(), grid.origin, grid.axisY, i * grid.size2));
+            labels.push(yLabel);
+            pts3d.push(vec3.scaleAndAdd(vec3.create(), grid.origin, grid.axisY, -i * grid.size2));
+            labels.push(`-${yLabel}`);
+        }
+        const pts = measureApi.toPathPoints(pts3d, size.width, size.height, view.renderState.camera);
+
+        if (pts) {
+            drawTexts(context2D, pts.screenPoints, labels);
+        }
+    }, [grid, context2D, view, cameraType, size]);
 
     const drawId = useRef(0);
     const render = useCallback(async () => {
         if (view && context2D && measureScene && measureApi && canvas2D && size) {
-            const { camera } = view;
+            const { camera } = view.renderState;
             const cameraDirection = vec3.transformQuat(vec3.create(), vec3.fromValues(0, 0, -1), camera.rotation);
             const camSettings = { pos: camera.position, dir: cameraDirection };
             const getDrawMeasureEntity = async (entity?: DrawableEntity, settings?: MeasureSettings) =>
-                entity && measureApi.getDrawMeasureEntity(view, measureScene, entity, settings);
+                entity &&
+                measureApi.getDrawMeasureEntity(
+                    size.width,
+                    size.height,
+                    view.renderState.camera,
+                    measureScene,
+                    entity,
+                    settings
+                );
             const id = ++drawId.current;
 
             const [
@@ -168,7 +192,8 @@ export function Engine2D() {
                             pointColor: inactiveDueToHover ? measurementInactivePointColor : measurementPointColor,
                             complexCylinder: true,
                         },
-                        3
+                        3,
+                        { type: "default" }
                     );
                 }
             });
@@ -211,7 +236,7 @@ export function Engine2D() {
                                 },
                                 3,
                                 {
-                                    type: "distance",
+                                    type: "centerOfLine",
                                 }
                             );
                             break;
@@ -223,49 +248,49 @@ export function Engine2D() {
                                 { lineColor: "black", pointColor: "black", displayAllPoints: true },
                                 3,
                                 {
-                                    type: "distance",
+                                    type: "centerOfLine",
                                 }
                             );
                             break;
                         case "x-axis":
                             drawPart(context2D, camSettings, part, { lineColor: "red" }, 3, {
-                                type: "distance",
+                                type: "centerOfLine",
                             });
                             break;
                         case "y-axis":
                             drawPart(context2D, camSettings, part, { lineColor: "blue" }, 3, {
-                                type: "distance",
+                                type: "centerOfLine",
                             });
                             break;
                         case "z-axis":
                             drawPart(context2D, camSettings, part, { lineColor: "green" }, 3, {
-                                type: "distance",
+                                type: "centerOfLine",
                             });
                             break;
                         case "xy-plane":
                             drawPart(context2D, camSettings, part, { lineColor: "purple" }, 3, {
-                                type: "distance",
+                                type: "centerOfLine",
                             });
                             break;
                         case "z-angle":
                             drawPart(context2D, camSettings, part, { lineColor: "green" }, 2, {
-                                type: "distance",
+                                type: "centerOfLine",
                             });
                             break;
                         case "xz-angle":
                             drawPart(context2D, camSettings, part, { lineColor: "purple" }, 2, {
-                                type: "distance",
+                                type: "centerOfLine",
                             });
                             break;
                         case "cylinder-angle":
                             cylinderAngleDrawn = drawPart(context2D, camSettings, part, { lineColor: "blue" }, 2, {
-                                type: "distance",
+                                type: "centerOfLine",
                             });
                             break;
                         case "cylinder-angle-line":
                             if (cylinderAngleDrawn) {
                                 drawPart(context2D, camSettings, part, { lineColor: "blue" }, 2, {
-                                    type: "distance",
+                                    type: "centerOfLine",
                                 });
                             }
                             break;
@@ -294,6 +319,7 @@ export function Engine2D() {
                     5
                 );
             }
+
             if (heightProfileDrawResult) {
                 drawProduct(
                     context2D,
@@ -325,7 +351,14 @@ export function Engine2D() {
             }
 
             if (manholeCollisionValues && (manholeCollisionValues.outer || manholeCollisionValues.inner)) {
-                const colVal = measureApi.getDrawObjectFromPoints(view, manholeCollisionValues.lid, false, true);
+                const colVal = measureApi.getDrawObjectFromPoints(
+                    size.width,
+                    size.height,
+                    view.renderState.camera,
+                    manholeCollisionValues.lid,
+                    false,
+                    true
+                );
                 if (colVal) {
                     colVal.objects.forEach((obj) => {
                         obj.parts.forEach((part) => {
@@ -340,7 +373,7 @@ export function Engine2D() {
                                 },
                                 2,
                                 {
-                                    type: "distance",
+                                    type: "centerOfLine",
                                     customText: [
                                         vec3
                                             .len(
@@ -360,7 +393,14 @@ export function Engine2D() {
             }
 
             if (areaPoints.length) {
-                const drawProd = measureApi.getDrawObjectFromPoints(view, areaPoints, true, true);
+                const drawProd = measureApi.getDrawObjectFromPoints(
+                    size.width,
+                    size.height,
+                    view.renderState.camera,
+                    areaPoints,
+                    true,
+                    true
+                );
                 if (drawProd) {
                     drawProd.objects.forEach((obj) => {
                         obj.parts.forEach((part) => {
@@ -386,10 +426,74 @@ export function Engine2D() {
                 }
             }
 
+            //Measure tracer
+            if (
+                showTracer &&
+                cameraType === CameraType.Orthographic &&
+                viewMode === ViewMode.FollowPath &&
+                roadCrossSectionData &&
+                roadCrossSectionData.length > 1
+            ) {
+                const prods = roadCrossSectionData
+                    .map((road) =>
+                        measureApi.getDrawObjectFromPoints(
+                            size.width,
+                            size.height,
+                            view.renderState.camera,
+                            road.points,
+                            false,
+                            false
+                        )
+                    )
+                    .filter((prod) => prod) as DrawProduct[];
+
+                if (prods.length) {
+                    let line = {
+                        start: vec2.fromValues(pointerPos.current[0], size.height),
+                        end: vec2.fromValues(pointerPos.current[0], 0),
+                    };
+
+                    const normal = measureApi.get2dNormal(prods[0], line);
+                    if (normal) {
+                        line = {
+                            start: vec2.scaleAndAdd(vec2.create(), normal.position, normal.normal, size.height),
+                            end: vec2.scaleAndAdd(vec2.create(), normal.position, normal.normal, -size.height),
+                        };
+                    }
+
+                    const traceDraw = measureApi.traceDrawObjects(prods, line);
+                    traceDraw.objects.forEach((obj) => {
+                        obj.parts.forEach((part) => {
+                            drawPart(
+                                context2D,
+                                camSettings,
+                                part,
+                                {
+                                    lineColor: "black",
+                                    displayAllPoints: true,
+                                },
+                                2,
+                                {
+                                    type: "default",
+                                }
+                            );
+                        });
+                    });
+                }
+            }
+
             if (pointLinePoints.length && pointLineResult) {
-                const drawProd = measureApi.getDrawObjectFromPoints(view, pointLinePoints, false, true);
+                const drawProd = measureApi.getDrawObjectFromPoints(
+                    size.width,
+                    size.height,
+                    view.renderState.camera,
+                    pointLinePoints,
+                    false,
+                    true,
+                    true
+                );
+
                 if (drawProd) {
-                    const textList = pointLineResult.segmentLengts.map((v) => v.toFixed(2));
                     drawProd.objects.forEach((obj) => {
                         obj.parts.forEach((part) => {
                             drawPart(
@@ -403,8 +507,7 @@ export function Engine2D() {
                                 },
                                 2,
                                 {
-                                    type: "distance",
-                                    customText: textList,
+                                    type: "default",
                                 }
                             );
                         });
@@ -413,7 +516,14 @@ export function Engine2D() {
             }
 
             if (crossSection) {
-                const drawProd = measureApi.getDrawObjectFromPoints(view, crossSection, false, false);
+                const drawProd = measureApi.getDrawObjectFromPoints(
+                    size.width,
+                    size.height,
+                    view.renderState.camera,
+                    crossSection,
+                    false,
+                    false
+                );
                 if (drawProd) {
                     drawProd.objects.forEach((obj) => {
                         obj.parts.forEach((part) => {
@@ -431,6 +541,114 @@ export function Engine2D() {
                         });
                     });
                 }
+                if (crossSection.length > 1) {
+                    const mat = mat3.fromQuat(mat3.create(), camera.rotation);
+                    if (mat[8] === 1) {
+                        // top-down
+                        let up = vec3.fromValues(mat[6], mat[7], mat[8]);
+                        const dir = vec3.sub(vec3.create(), crossSection[1], crossSection[0]);
+                        vec3.normalize(dir, dir);
+                        const cross = vec3.cross(vec3.create(), dir, up);
+                        vec3.normalize(cross, cross);
+                        const center = vec3.add(vec3.create(), crossSection[0], crossSection[1]);
+                        vec3.scale(center, center, 0.5);
+                        const offsetP = vec3.scaleAndAdd(vec3.create(), center, cross, -3);
+                        const arrow = measureApi.getDrawObjectFromPoints(
+                            size.width,
+                            size.height,
+                            view.renderState.camera,
+                            [center, offsetP],
+                            false,
+                            false
+                        );
+                        if (arrow) {
+                            arrow.objects.forEach((obj) => {
+                                obj.parts.forEach((part) => {
+                                    drawPart(
+                                        context2D,
+                                        camSettings,
+                                        part,
+                                        {
+                                            lineColor: "black",
+                                            pointColor: "black",
+                                        },
+                                        2,
+                                        undefined,
+                                        { end: "arrow" }
+                                    );
+                                });
+                            });
+                        }
+                    }
+                }
+            }
+
+            if (roadCrossSectionData && viewMode === ViewMode.FollowPath) {
+                roadCrossSectionData.forEach((section) => {
+                    const colorList: string[] = [];
+                    section.codes.forEach((c) => {
+                        switch (c) {
+                            case 10:
+                                return;
+                            case 0:
+                                colorList.push("green");
+                                break;
+                            case 1:
+                                colorList.push("#333232");
+                                break;
+                            case 2:
+                                colorList.push("black");
+                                break;
+                            case 3:
+                                colorList.push("blue");
+                                break;
+                            default:
+                                colorList.push("brown");
+                        }
+                    });
+                    const drawProd = measureApi.getDrawObjectFromPoints(
+                        size.width,
+                        size.height,
+                        view.renderState.camera,
+                        section.points,
+                        false,
+                        false
+                    );
+                    if (drawProd) {
+                        drawProd.objects.forEach((obj) => {
+                            obj.parts.forEach((part) => {
+                                drawPart(
+                                    context2D,
+                                    camSettings,
+                                    part,
+                                    {
+                                        lineColor: colorList,
+                                    },
+                                    2,
+                                    { type: "default" }
+                                );
+                            });
+                        });
+                    }
+                    const slopeL = measureApi.getDrawText(
+                        size.width,
+                        size.height,
+                        view.renderState.camera,
+                        [section.slopes.left.start, section.slopes.left.end],
+                        (section.slopes.left.slope * 100).toFixed(1) + "%"
+                    );
+                    const slopeR = measureApi.getDrawText(
+                        size.width,
+                        size.height,
+                        view.renderState.camera,
+                        [section.slopes.right.start, section.slopes.right.end],
+                        (section.slopes.right.slope * 100).toFixed(1) + "%"
+                    );
+                    if (slopeL && slopeR) {
+                        drawProduct(context2D, camSettings, slopeL, {}, 3, { type: "default" });
+                        drawProduct(context2D, camSettings, slopeR, {}, 3, { type: "default" });
+                    }
+                });
             }
         }
     }, [
@@ -456,6 +674,11 @@ export function Engine2D() {
         measure.hover,
         measure.pinned,
         crossSection,
+        roadCrossSectionData,
+        viewMode,
+        cameraType,
+        pointerPos,
+        showTracer,
     ]);
 
     useEffect(() => {
@@ -464,29 +687,30 @@ export function Engine2D() {
 
     useEffect(() => {
         setContext2D(canvas2D?.getContext("2d"));
-    }, [scene, canvas2D]);
+    }, [canvas2D]);
 
     useEffect(() => {
-        animate();
-        function animate() {
-            if (view) {
-                if (
-                    cameraType === CameraType.Orthographic ||
-                    !prevCamRot.current ||
-                    !quat.exactEquals(prevCamRot.current, view.camera.rotation) ||
-                    !prevCamPos.current ||
-                    !vec3.exactEquals(prevCamPos.current, view.camera.position)
-                ) {
-                    prevCamRot.current = quat.clone(view.camera.rotation);
-                    prevCamPos.current = vec3.clone(view.camera.position);
-                    render();
-                }
-            }
+        renderFnRef.current = animate;
+        return () => (renderFnRef.current = undefined);
 
-            animationFrameId.current = requestAnimationFrame(() => animate());
+        function animate(isIdleFrame: boolean) {
+            if (view) {
+                const run =
+                    !view.prevRenderState ||
+                    !vec3.exactEquals(view.renderState.camera.position, view.prevRenderState.camera.position) ||
+                    !quat.exactEquals(view.renderState.camera.rotation, view.prevRenderState.camera.rotation) ||
+                    view.renderState.camera.fov !== view.prevRenderState.camera.fov ||
+                    !vec2.exactEquals(prevPointerPos.current, pointerPos.current);
+
+                if (isIdleFrame || !run) {
+                    return;
+                }
+
+                prevPointerPos.current = [...pointerPos.current];
+                render();
+            }
         }
-        return () => cancelAnimationFrame(animationFrameId.current);
-    }, [view, render, grid, renderGridLabels, cameraType]);
+    }, [view, render, grid, cameraType, pointerPos, renderFnRef]);
 
     return <Canvas2D id="canvas2D" ref={setCanvas2D} width={size.width} height={size.height} />;
 }

@@ -1,17 +1,26 @@
 import { Paper, PaperProps, styled, css } from "@mui/material";
+import { useAppDispatch } from "app/store";
+import { renderActions } from "features/render";
 
 type StyleProps = {
     minimized?: boolean;
     maximized?: boolean;
 };
 
-export const WidgetContainer = styled((props: PaperProps) => <Paper elevation={4} {...props} />, {
+const ConnectedPaper = (props: PaperProps) => {
+    const dispatch = useAppDispatch();
+
+    return <Paper elevation={4} {...props} onClick={() => dispatch(renderActions.setStamp(null))} />;
+};
+
+export const WidgetContainer = styled(ConnectedPaper, {
     shouldForwardProp: (prop) => prop !== "minimized" && prop !== "maximized",
 })<StyleProps>(
     ({ theme, minimized, maximized }) => css`
         pointer-events: auto;
         border-radius: ${theme.shape.borderRadius}px;
         height: ${minimized ? "auto" : "100%"};
+        max-height: min(50vh, 400px);
         position: absolute;
         left: ${theme.spacing(1)};
         right: ${theme.spacing(1)};
@@ -19,31 +28,26 @@ export const WidgetContainer = styled((props: PaperProps) => <Paper elevation={4
         display: flex;
         flex-direction: column;
         z-index: 1051;
+        flex-grow: 1;
+
+        // Needed to contain snackbars inside widget
+        transform: translate(0px, 0px);
 
         ${theme.breakpoints.up("sm")} {
-            min-width: 384px;
-            max-width: 20vw;
             width: 100%;
-            min-height: min(365px, 100%);
             position: static;
-            transform: translateX(-20px) translateY(40px);
-        }
-
-        ${theme.breakpoints.up("md")} {
-            transform: translateX(-30px) translateY(46px);
+            max-height: 100%;
         }
 
         ${maximized
             ? css`
                   max-height: calc(100% - ${theme.spacing(2)});
                   bottom: ${theme.spacing(1)};
-              `
-            : css`
-                  max-height: min(50vh, 400px);
 
                   ${theme.breakpoints.up("sm")} {
-                      max-height: calc(50% - 80px);
+                      max-height: 100%;
                   }
-              `}
+              `
+            : ""}
     `
 );

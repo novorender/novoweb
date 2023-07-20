@@ -35,7 +35,7 @@ export class WidgetErrorBoundary extends Component<{ widgetKey: WidgetKey; child
 function WidgetError({ widgetKey }: { widgetKey: WidgetKey }) {
     const config = featuresConfig[widgetKey];
     const minimized = useAppSelector(selectMinimized) === config.key;
-    const maximized = useAppSelector(selectMaximized) === config.key;
+    const maximized = useAppSelector(selectMaximized).includes(config.key);
     const [menuOpen, toggleMenu] = useToggle();
 
     return (

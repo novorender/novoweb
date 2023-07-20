@@ -1,4 +1,3 @@
-import { ChangeEvent } from "react";
 import {
     useTheme,
     Box,
@@ -16,7 +15,7 @@ import { ArrowBack, Save } from "@mui/icons-material";
 
 import { Accordion, AccordionDetails, AccordionSummary, Divider, LinearProgress, ScrollBox, Switch } from "components";
 import { useAppDispatch, useAppSelector } from "app/store";
-import { AdvancedSetting, selectAdvancedSettings, renderActions } from "slices/renderSlice";
+import { renderActions, selectDebugStats, selectNavigationCube } from "features/render";
 import { ButtonKey, defaultEnabledWidgets, featuresConfig, viewerWidgets, WidgetKey } from "config/features";
 import {
     explorerActions,
@@ -24,7 +23,9 @@ import {
     selectEnabledWidgets,
     selectIsAdminScene,
     selectPrimaryMenu,
+    selectCanvasContextMenuFeatures,
 } from "slices/explorerSlice";
+import { CanvasContextMenuFeatureKey, canvasContextMenuFeatures } from "features/render";
 
 export function FeatureSettings({ save, saving }: { save: () => Promise<void>; saving: boolean }) {
     const history = useHistory();
@@ -34,18 +35,24 @@ export function FeatureSettings({ save, saving }: { save: () => Promise<void>; s
     const isAdminScene = useAppSelector(selectIsAdminScene);
     const enabledWidgets = useAppSelector(selectEnabledWidgets);
     const lockedWidgets = useAppSelector(selectLockedWidgets);
-    const settings = useAppSelector(selectAdvancedSettings);
     const primaryMenu = useAppSelector(selectPrimaryMenu);
-    const { showPerformance, navigationCube } = settings;
-
-    const handleToggleFeature = ({ target: { name, checked } }: ChangeEvent<HTMLInputElement>) => {
-        dispatch(renderActions.setAdvancedSettings({ [name]: checked }));
-    };
+    const enabledCanvasContextMenuFeatures = useAppSelector(selectCanvasContextMenuFeatures);
+    const navigationCube = useAppSelector(selectNavigationCube);
+    const debugStats = useAppSelector(selectDebugStats);
 
     const toggleWidget = (key: WidgetKey, checked: boolean) => {
         const keys = enabledWidgets.map((w) => w.key);
 
         dispatch(explorerActions.setEnabledWidgets(checked ? keys.concat(key) : keys.filter((k) => k !== key)));
+    };
+
+    const toggleCanvasContextMenuFeature = (key: CanvasContextMenuFeatureKey, checked: boolean) => {
+        const keys = enabledCanvasContextMenuFeatures;
+        dispatch(
+            explorerActions.setCanvasContextMenu({
+                features: checked ? keys.concat(key) : keys.filter((k) => k !== key),
+            })
+        );
     };
 
     return (
@@ -66,7 +73,7 @@ export function FeatureSettings({ save, saving }: { save: () => Promise<void>; s
                 </Box>
             </Box>
             {saving ? (
-                <Box>
+                <Box position="relative">
                     <LinearProgress />
                 </Box>
             ) : null}
@@ -76,9 +83,11 @@ export function FeatureSettings({ save, saving }: { save: () => Promise<void>; s
                         sx={{ ml: 0, mb: 1 }}
                         control={
                             <Switch
-                                name={AdvancedSetting.NavigationCube}
-                                checked={navigationCube}
-                                onChange={handleToggleFeature}
+                                checked={navigationCube.enabled}
+                                name="navigation-cube"
+                                onChange={(_evt, checked) =>
+                                    dispatch(renderActions.setNavigationCube({ enabled: checked }))
+                                }
                             />
                         }
                         label={
@@ -91,9 +100,11 @@ export function FeatureSettings({ save, saving }: { save: () => Promise<void>; s
                         sx={{ ml: 0, mb: 1 }}
                         control={
                             <Switch
-                                name={AdvancedSetting.ShowPerformance}
-                                checked={showPerformance}
-                                onChange={handleToggleFeature}
+                                checked={debugStats.enabled}
+                                name="debug-stats"
+                                onChange={(_evt, checked) =>
+                                    dispatch(renderActions.setDebugStats({ enabled: checked }))
+                                }
                             />
                         }
                         label={
@@ -128,6 +139,7 @@ export function FeatureSettings({ save, saving }: { save: () => Promise<void>; s
                                                         <Checkbox
                                                             size="small"
                                                             color="primary"
+                                                            name={widget.key}
                                                             checked={
                                                                 enabledWidgets.some(
                                                                     (enabled) => enabled.key === widget.key
@@ -166,7 +178,14 @@ export function FeatureSettings({ save, saving }: { save: () => Promise<void>; s
                                     </FormLabel>
                                 </Box>
 
-                                <Select readOnly disabled value={featuresConfig.home.key} id={"primary-menu-button-1"}>
+                                <Select
+                                    readOnly
+                                    disabled
+                                    value={featuresConfig.home.key}
+                                    inputProps={{
+                                        id: "primary-menu-button-1",
+                                    }}
+                                >
                                     <MenuItem value={featuresConfig.home.key}>{featuresConfig.home.name}</MenuItem>
                                 </Select>
                             </FormControl>
@@ -185,7 +204,9 @@ export function FeatureSettings({ save, saving }: { save: () => Promise<void>; s
                                     readOnly
                                     disabled
                                     value={featuresConfig.cameraSpeed.key}
-                                    id={"primary-menu-button-2"}
+                                    inputProps={{
+                                        id: "primary-menu-button-2",
+                                    }}
                                 >
                                     <MenuItem value={featuresConfig.cameraSpeed.key}>
                                         {featuresConfig.cameraSpeed.name}
@@ -207,7 +228,9 @@ export function FeatureSettings({ save, saving }: { save: () => Promise<void>; s
                                     readOnly
                                     disabled
                                     value={featuresConfig.flyToSelected.key}
-                                    id={"primary-menu-button-3"}
+                                    inputProps={{
+                                        id: "primary-menu-button-3",
+                                    }}
                                 >
                                     <MenuItem value={featuresConfig.flyToSelected.key}>
                                         {featuresConfig.flyToSelected.name}
@@ -229,7 +252,9 @@ export function FeatureSettings({ save, saving }: { save: () => Promise<void>; s
                                     readOnly
                                     disabled
                                     value={featuresConfig.stepBack.key}
-                                    id={"primary-menu-button-4"}
+                                    inputProps={{
+                                        id: "primary-menu-button-4",
+                                    }}
                                 >
                                     <MenuItem value={featuresConfig.stepBack.key}>
                                         {featuresConfig.stepBack.name}
@@ -241,7 +266,7 @@ export function FeatureSettings({ save, saving }: { save: () => Promise<void>; s
                                 <Box width={1} display="flex" justifyContent="space-between" alignItems="center">
                                     <FormLabel
                                         sx={{ fontWeight: 600, mb: 0.5, color: "text.secondary" }}
-                                        htmlFor={"primary-menu-button-5"}
+                                        id="primary-menu-button-5-label"
                                     >
                                         Button 5:
                                     </FormLabel>
@@ -256,7 +281,10 @@ export function FeatureSettings({ save, saving }: { save: () => Promise<void>; s
                                         );
                                     }}
                                     value={primaryMenu.button5}
-                                    id={"primary-menu-button-5"}
+                                    labelId="primary-menu-button-5-label"
+                                    inputProps={{
+                                        id: "primary-menu-button-5",
+                                    }}
                                 >
                                     <MenuItem value={featuresConfig.orthoShortcut.key}>
                                         {featuresConfig.orthoShortcut.name}
@@ -267,6 +295,39 @@ export function FeatureSettings({ save, saving }: { save: () => Promise<void>; s
                                 </Select>
                             </FormControl>
                         </Box>
+                    </AccordionDetails>
+                </Accordion>
+                <Accordion>
+                    <AccordionSummary>Context menu</AccordionSummary>
+                    <AccordionDetails>
+                        <Grid container p={1}>
+                            {[...canvasContextMenuFeatures]
+                                .sort((a, b) => a.name.localeCompare(b.name, "en", { sensitivity: "accent" }))
+                                .map((feature) => (
+                                    <Grid item xs={6} key={feature.key}>
+                                        <FormControlLabel
+                                            control={
+                                                <Checkbox
+                                                    size="small"
+                                                    name={feature.key}
+                                                    color="primary"
+                                                    checked={enabledCanvasContextMenuFeatures.some(
+                                                        (enabled) => enabled === feature.key
+                                                    )}
+                                                    onChange={(_e, checked) => {
+                                                        toggleCanvasContextMenuFeature(feature.key, checked);
+                                                    }}
+                                                />
+                                            }
+                                            label={
+                                                <Box mr={0.5} sx={{ userSelect: "none" }}>
+                                                    {feature.name}
+                                                </Box>
+                                            }
+                                        />
+                                    </Grid>
+                                ))}
+                        </Grid>
                     </AccordionDetails>
                 </Accordion>
             </ScrollBox>

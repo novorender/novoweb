@@ -1,14 +1,14 @@
-import { useState } from "react";
-import { useTheme, Box, Typography, CircularProgress } from "@mui/material";
 import { LoadingButton } from "@mui/lab";
+import { Box, CircularProgress, Typography, useTheme } from "@mui/material";
+import { useState } from "react";
 
 import { LinearProgress, ScrollBox } from "components";
 import { featuresConfig } from "config/features";
-import { createOAuthStateString, generateCodeChallenge } from "utils/auth";
+import { StorageKey } from "config/storage";
 import { useCreateBookmark } from "features/bookmarks/useCreateBookmark";
+import { createOAuthStateString, generateCodeChallenge } from "utils/auth";
 import { generateRandomString } from "utils/misc";
 import { saveToStorage } from "utils/storage";
-import { StorageKey } from "config/storage";
 
 import { ditioClientId, useGetAuthConfigQuery } from "../api";
 

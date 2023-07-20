@@ -16,7 +16,7 @@ export default function User() {
     const [menuOpen, toggleMenu] = useToggle();
 
     const minimized = useAppSelector(selectMinimized) === featuresConfig.user.key;
-    const maximized = useAppSelector(selectMaximized) === featuresConfig.user.key;
+    const maximized = useAppSelector(selectMaximized).includes(featuresConfig.user.key);
 
     const user = useAppSelector(selectUser);
 
@@ -29,7 +29,7 @@ export default function User() {
                 </ScrollBox>
                 {menuOpen && <WidgetList widgetKey={featuresConfig.user.key} onSelect={toggleMenu} />}
             </WidgetContainer>
-            <LogoSpeedDial open={menuOpen} toggle={toggleMenu} testId={`${featuresConfig.user.key}-widget-menu-fab`} />
+            <LogoSpeedDial open={menuOpen} toggle={toggleMenu} />
         </>
     );
 }

@@ -1,14 +1,14 @@
-import { useEffect, useRef } from "react";
-import { Box, Button, FormControlLabel } from "@mui/material";
 import { DeleteSweep, Undo } from "@mui/icons-material";
+import { Box, Button, FormControlLabel } from "@mui/material";
+import { useEffect, useRef } from "react";
 
 import { useAppDispatch, useAppSelector } from "app/store";
-import { IosSwitch, ScrollBox, LogoSpeedDial, WidgetContainer, WidgetHeader } from "components";
+import { IosSwitch, LogoSpeedDial, ScrollBox, WidgetContainer, WidgetHeader } from "components";
 import { featuresConfig } from "config/features";
+import { Picker, renderActions, selectPicker } from "features/render/renderSlice";
 import WidgetList from "features/widgetList/widgetList";
 import { useToggle } from "hooks/useToggle";
-import { Picker, renderActions, selectPicker } from "slices/renderSlice";
-import { selectMinimized, selectMaximized } from "slices/explorerSlice";
+import { selectMaximized, selectMinimized } from "slices/explorerSlice";
 
 import { areaActions, selectArea, selectAreaPoints } from "./areaSlice";
 
@@ -16,7 +16,7 @@ export default function Area() {
     const [menuOpen, toggleMenu] = useToggle();
 
     const minimized = useAppSelector(selectMinimized) === featuresConfig.area.key;
-    const maximized = useAppSelector(selectMaximized) === featuresConfig.area.key;
+    const maximized = useAppSelector(selectMaximized).includes(featuresConfig.area.key);
 
     const selecting = useAppSelector(selectPicker) === Picker.Area;
     const points = useAppSelector(selectAreaPoints);
@@ -58,7 +58,7 @@ export default function Area() {
                                         }
                                     />
                                 }
-                                label={<Box fontSize={14}>Selecting</Box>}
+                                label={<Box fontSize={14}>Select</Box>}
                             />
                             <Button
                                 disabled={!points.length}
@@ -84,7 +84,7 @@ export default function Area() {
                 </ScrollBox>
                 {menuOpen && <WidgetList widgetKey={featuresConfig.area.key} onSelect={toggleMenu} />}
             </WidgetContainer>
-            <LogoSpeedDial open={menuOpen} toggle={toggleMenu} testId={`${featuresConfig.area.key}-widget-menu-fab`} />
+            <LogoSpeedDial open={menuOpen} toggle={toggleMenu} />
         </>
     );
 }

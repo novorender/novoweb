@@ -17,22 +17,22 @@ import { useHistory } from "react-router-dom";
 import { useAppDispatch, useAppSelector } from "app/store";
 import { Divider, IosSwitch, LinearProgress, ScrollBox } from "components";
 import { useExplorerGlobals } from "contexts/explorerGlobals";
+import { highlightActions, useDispatchHighlighted, useHighlighted } from "contexts/highlighted";
+import { singleCylinderOptions } from "features/measure";
+import { Picker, renderActions, selectPicker } from "features/render/renderSlice";
 import { AsyncStatus, hasFinished } from "types/misc";
 import { getObjectNameFromPath, getParentPath } from "utils/objectData";
 import { searchByPatterns } from "utils/search";
-import { Picker, renderActions, selectPicker } from "slices/renderSlice";
-import { highlightActions, useDispatchHighlighted, useHighlighted } from "contexts/highlighted";
-import { singleCylinderOptions } from "features/measure";
 
-import { selectFollowCylindersFrom, followPathActions, LandXmlPath, selectLandXmlPaths } from "../followPathSlice";
-import { usePathMeasureObjects } from "../usePathMeasureObjects";
+import { followPathActions, selectFollowCylindersFrom, selectLandXmlPaths } from "../followPathSlice";
 import { useFollowPathFromIds } from "../useFollowPathFromIds";
+import { usePathMeasureObjects } from "../usePathMeasureObjects";
 
 export function PathList() {
     const theme = useTheme();
     const history = useHistory<{ prevPath?: string }>();
     const {
-        state: { scene },
+        state: { db },
     } = useExplorerGlobals(true);
     const highlighted = useHighlighted().idArr;
     const dispatchHighlighted = useDispatchHighlighted();
@@ -70,10 +70,13 @@ export function PathList() {
             dispatch(followPathActions.setPaths({ status: AsyncStatus.Loading }));
 
             try {
-                let paths = [] as LandXmlPath[];
+                let paths = [] as {
+                    id: number;
+                    name: string;
+                }[];
 
                 await searchByPatterns({
-                    scene,
+                    db,
                     searchPatterns: [{ property: "Novorender/Path", value: "true", exact: true }],
                     callback: (refs) =>
                         (paths = paths.concat(
@@ -92,7 +95,7 @@ export function PathList() {
                 );
             }
         }
-    }, [scene, landXmlPaths, dispatch]);
+    }, [db, landXmlPaths, dispatch]);
 
     const isLoading =
         !hasFinished(landXmlPaths) ||
@@ -141,6 +144,8 @@ export function PathList() {
                             disabled={!canFollowSelected}
                             onClick={() => {
                                 dispatch(followPathActions.toggleResetPositionOnInit(true));
+                                dispatch(followPathActions.setRoadIds(undefined));
+                                dispatch(followPathActions.setDrawRoadIds(undefined));
 
                                 if (selectingPos) {
                                     history.push("/followPos");
@@ -195,9 +200,12 @@ export function PathList() {
                                     disabled={selectingPos}
                                     key={path.id}
                                     onClick={() => {
+                                        dispatch(followPathActions.setSelectedPath(path.id));
                                         dispatch(followPathActions.toggleResetPositionOnInit(true));
-                                        dispatch(renderActions.setMainObject(path.id));
                                         dispatch(followPathActions.setSelectedIds([path.id]));
+                                        dispatch(followPathActions.setRoadIds(undefined));
+                                        dispatch(followPathActions.setDrawRoadIds(undefined));
+                                        dispatch(renderActions.setMainObject(path.id));
                                         dispatchHighlighted(highlightActions.setIds([path.id]));
                                         history.push(`/followIds`);
                                     }}

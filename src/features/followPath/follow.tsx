@@ -1,39 +1,49 @@
-import { FormEvent, SyntheticEvent, useCallback, useEffect, useState } from "react";
-import { FollowParametricObject } from "@novorender/measure-api";
+import { ArrowBack, ArrowForward, Edit, RestartAlt } from "@mui/icons-material";
 import {
     Box,
     Button,
+    Checkbox,
     FormControlLabel,
     Grid,
     InputAdornment,
+    ListItemButton,
     OutlinedInput,
     Slider,
     Typography,
     useTheme,
 } from "@mui/material";
-import { ArrowBack, ArrowForward, Edit, RestartAlt } from "@mui/icons-material";
-import { FlightControllerParams, OrthoControllerParams } from "@novorender/webgl-api";
-import { vec3, quat, mat3, mat4, glMatrix } from "gl-matrix";
+import { FollowParametricObject } from "@novorender/measure-api";
+import { HierarcicalObjectReference } from "@novorender/webgl-api";
+import { vec3 } from "gl-matrix";
+import { FormEvent, SyntheticEvent, useCallback, useEffect, useState } from "react";
 import { useHistory } from "react-router-dom";
+import { rotationFromDirection } from "@novorender/web_app";
 
-import { IosSwitch, Divider, ScrollBox } from "components";
 import { useAppDispatch, useAppSelector } from "app/store";
-import { CameraType, renderActions } from "slices/renderSlice";
+import { Accordion, AccordionDetails, AccordionSummary, Divider, IosSwitch, ScrollBox, Tooltip } from "components";
 import { useExplorerGlobals } from "contexts/explorerGlobals";
+import { CameraType, renderActions } from "features/render/renderSlice";
+import { AsyncStatus, ViewMode } from "types/misc";
+import { searchByPatterns } from "utils/search";
 
 import {
     followPathActions,
+    selectAutoRecenter,
+    selectAutoStepSize,
+    selectClipping,
+    selectCurrentCenter,
+    selectDrawRoadIds,
+    selectLandXmlPaths,
     selectProfile,
+    selectProfileRange,
     selectPtHeight,
+    selectResetPositionOnInit,
+    selectRoadIds,
+    selectSelectedPath,
+    selectShowGrid,
+    selectShowTracer,
     selectStep,
     selectView2d,
-    selectProfileRange,
-    selectClipping,
-    selectShowGrid,
-    selectAutoRecenter,
-    selectCurrentCenter,
-    selectAutoStepSize,
-    selectResetPositionOnInit,
 } from "./followPathSlice";
 
 const profileFractionDigits = 3;
@@ -42,7 +52,7 @@ export function Follow({ fpObj }: { fpObj: FollowParametricObject }) {
     const theme = useTheme();
     const history = useHistory();
     const {
-        state: { view },
+        state: { view, db },
     } = useExplorerGlobals(true);
 
     const currentCenter = useAppSelector(selectCurrentCenter);
@@ -55,7 +65,12 @@ export function Follow({ fpObj }: { fpObj: FollowParametricObject }) {
     const ptHeight = useAppSelector(selectPtHeight);
     const profileRange = useAppSelector(selectProfileRange);
     const resetPosition = useAppSelector(selectResetPositionOnInit);
+    const selectedPath = useAppSelector(selectSelectedPath);
+    const paths = useAppSelector(selectLandXmlPaths);
     const _clipping = useAppSelector(selectClipping);
+    const roadIds = useAppSelector(selectRoadIds);
+    const drawRoadIds = useAppSelector(selectDrawRoadIds);
+    const showTracer = useAppSelector(selectShowTracer);
 
     const [clipping, setClipping] = useState(_clipping);
 
@@ -83,42 +98,20 @@ export function Follow({ fpObj }: { fpObj: FollowParametricObject }) {
 
             const offset =
                 keepOffset && currentCenter
-                    ? vec3.sub(vec3.create(), currentCenter, view.camera.position)
+                    ? vec3.sub(vec3.create(), currentCenter, view.renderState.camera.position)
                     : vec3.fromValues(0, 0, 0);
             const offsetPt = vec3.sub(vec3.create(), pt, offset);
-            const dist = vec3.dot(vec3.sub(vec3.create(), offsetPt, pt), dir);
-            vec3.scaleAndAdd(offsetPt, offsetPt, dir, -dist);
-
-            const up = glMatrix.equals(Math.abs(vec3.dot(vec3.fromValues(0, 1, 0), dir)), 1)
-                ? vec3.fromValues(0, 0, 1)
-                : vec3.fromValues(0, 1, 0);
-
-            const right = vec3.cross(vec3.create(), up, dir);
-
-            vec3.cross(up, dir, right);
-            vec3.normalize(up, up);
-
-            vec3.cross(right, up, dir);
-            vec3.normalize(right, right);
-
-            const rotation = quat.fromMat3(
-                quat.create(),
-                mat3.fromValues(right[0], right[1], right[2], up[0], up[1], up[2], dir[0], dir[1], dir[2])
-            );
+            const rotation = rotationFromDirection(dir);
 
             if (view2d) {
-                const mat = mat4.fromRotationTranslation(mat4.create(), rotation, offsetPt);
-
                 dispatch(
                     renderActions.setCamera({
                         type: CameraType.Orthographic,
-                        params: {
-                            kind: "ortho",
-                            referenceCoordSys: mat,
-                            fieldOfView: view.camera.fieldOfView,
-                            near: -0.001,
+                        goTo: {
+                            rotation,
+                            position: offsetPt,
+                            fov: view.renderState.camera.fov,
                             far: clipping,
-                            position: [0, 0, 0],
                         },
                         gridOrigo: pt as vec3,
                     })
@@ -131,19 +124,27 @@ export function Follow({ fpObj }: { fpObj: FollowParametricObject }) {
                 );
             } else {
                 dispatch(renderActions.setGrid({ enabled: false }));
+
                 dispatch(
                     renderActions.setCamera({
-                        type: CameraType.Flight,
+                        type: CameraType.Pinhole,
                         goTo: {
                             position: offsetPt,
-                            rotation,
+                            rotation: keepOffset ? ([...view.renderState.camera.rotation] as Vec4) : rotation,
                         },
                     })
                 );
             }
 
-            dispatch(followPathActions.setCurrentCenter(pt as [number, number, number]));
-            dispatch(followPathActions.setPtHeight(pt[1]));
+            const w = vec3.dot(dir, pt);
+            dispatch(
+                renderActions.setClippingPlanes({
+                    enabled: true,
+                    planes: [{ normalOffset: [dir[0], dir[1], dir[2], w], baseW: w, color: [0, 1, 0, 0.2] }],
+                })
+            );
+            dispatch(followPathActions.setCurrentCenter(pt as Vec3));
+            dispatch(followPathActions.setPtHeight(pt[2]));
         },
         [clipping, currentCenter, dispatch, fpObj, view]
     );
@@ -155,6 +156,49 @@ export function Follow({ fpObj }: { fpObj: FollowParametricObject }) {
     }, [fpObj, dispatch]);
 
     useEffect(() => {
+        loadCrossSection();
+
+        async function loadCrossSection() {
+            if (selectedPath !== undefined && paths.status === AsyncStatus.Success && !roadIds) {
+                const path = paths.data.find((p) => p.id === selectedPath);
+
+                if (!path) {
+                    return;
+                }
+
+                const pathName = path.name;
+                let roadIds: string[] = [];
+                let references = [] as HierarcicalObjectReference[];
+                await searchByPatterns({
+                    db,
+                    searchPatterns: [{ property: "Centerline", value: pathName, exact: true }],
+                    callback: (refs) => (references = references.concat(refs)),
+                });
+                await Promise.all(
+                    references.map(async (r) => {
+                        const data = await r.loadMetaData();
+                        const prop = data.properties.find((p) => p[0] === "Novorender/road");
+                        if (prop) {
+                            try {
+                                const ids = JSON.parse(prop[1]) as string[];
+                                ids.forEach((roadId) => roadIds.push(roadId));
+                            } catch (e) {
+                                console.warn(e);
+                                roadIds.push(prop[1]);
+                            }
+                        }
+                    })
+                );
+
+                dispatch(followPathActions.setRoadIds(roadIds));
+                if (!drawRoadIds) {
+                    dispatch(followPathActions.setDrawRoadIds(roadIds));
+                }
+            }
+        }
+    }, [dispatch, paths, db, selectedPath, drawRoadIds, roadIds]);
+
+    useEffect(() => {
         if (!resetPosition || !fpObj) {
             return;
         }
@@ -162,7 +206,7 @@ export function Follow({ fpObj }: { fpObj: FollowParametricObject }) {
         dispatch(followPathActions.toggleResetPositionOnInit(false));
         dispatch(followPathActions.setProfile(fpObj.parameterBounds.start.toFixed(3)));
         goToProfile({ view2d, showGrid, keepOffset: false, p: fpObj.parameterBounds.start });
-    }, [view2d, showGrid, profile, goToProfile, autoRecenter, resetPosition, dispatch, fpObj]);
+    }, [view2d, showGrid, profile, goToProfile, autoRecenter, resetPosition, dispatch, fpObj, paths, selectedPath]);
 
     const handle2dChange = () => {
         const newState = !view2d;
@@ -275,7 +319,9 @@ export function Follow({ fpObj }: { fpObj: FollowParametricObject }) {
         }
 
         setClipping(newValue);
-        (view.camera.controller.params as FlightControllerParams | OrthoControllerParams).far = newValue;
+        if (view.renderState.camera.kind === "orthographic") {
+            view.modifyRenderState({ camera: { far: newValue } });
+        }
     };
 
     const handleClippingCommit = (_event: Event | SyntheticEvent<Element, Event>, newValue: number | number[]) => {
@@ -289,6 +335,14 @@ export function Follow({ fpObj }: { fpObj: FollowParametricObject }) {
             dispatch(followPathActions.setStep(String(newValue)));
         }
     };
+
+    useEffect(() => {
+        dispatch(renderActions.setViewMode(ViewMode.FollowPath));
+
+        return () => {
+            dispatch(renderActions.setViewMode(ViewMode.Default));
+        };
+    }, [dispatch]);
 
     return (
         <>
@@ -325,160 +379,231 @@ export function Follow({ fpObj }: { fpObj: FollowParametricObject }) {
                     </Box>
                 </>
             </Box>
-            <ScrollBox p={1} pt={2} pb={4}>
-                <Grid container columnSpacing={0} rowSpacing={2}>
-                    <Grid item xs={6}>
-                        <Typography sx={{ mb: 0.5 }}>Profile start:</Typography>
-                        <OutlinedInput
-                            size="small"
-                            fullWidth
-                            readOnly
-                            color="secondary"
-                            value={profileRange?.min.toFixed(profileFractionDigits) ?? ""}
-                        />
-                    </Grid>
-                    <Grid item xs={6}>
-                        <Typography sx={{ mb: 0.5 }}>Profile end:</Typography>
-                        <OutlinedInput
-                            size="small"
-                            fullWidth
-                            readOnly
-                            color="secondary"
-                            value={profileRange?.max.toFixed(profileFractionDigits) ?? ""}
-                        />
-                    </Grid>
-                    <Grid item xs={6}>
-                        <Typography sx={{ mb: 0.5 }}>Height:</Typography>
-                        <OutlinedInput
-                            size="small"
-                            fullWidth
-                            readOnly
-                            color="secondary"
-                            value={ptHeight?.toFixed(profileFractionDigits) ?? ""}
-                        />
-                    </Grid>
-                    <Grid item xs={6} component="form" onSubmit={handleProfileSubmit}>
-                        <Typography sx={{ mb: 0.5 }}>Profile:</Typography>
-                        <OutlinedInput
-                            value={profile}
-                            inputProps={{ inputMode: "numeric", pattern: "[0-9,.]*" }}
-                            onChange={(e) => dispatch(followPathActions.setProfile(e.target.value.replace(",", ".")))}
-                            fullWidth
-                            size="small"
-                            sx={{ fontWeight: 600 }}
-                            endAdornment={
-                                <InputAdornment position="end">
-                                    <Edit fontSize="small" />
-                                </InputAdornment>
-                            }
-                        />
-                    </Grid>
-                    <Grid pt={0} item xs={6}>
-                        <Typography sx={{ mb: 0.5 }}>Step size (meters):</Typography>
-                        <OutlinedInput
-                            value={autoStepSize ? String(clipping) : step}
-                            inputProps={{ inputMode: "numeric", pattern: "[0-9,.]*" }}
-                            onChange={(e) => {
-                                dispatch(followPathActions.setAutoStepSize(false));
-                                dispatch(followPathActions.setStep(e.target.value.replace(",", ".")));
-                            }}
-                            size="small"
-                            fullWidth
-                            sx={{ fontWeight: 600 }}
-                            endAdornment={
-                                <InputAdornment position="end">
-                                    <Edit fontSize="small" />
-                                </InputAdornment>
-                            }
-                        />
-                    </Grid>
-                    <Grid item xs={6} display="flex" alignItems="flex-end">
-                        <Box display="flex" width={1}>
-                            <Button
+            <ScrollBox pt={2} pb={4}>
+                <Box px={1}>
+                    <Grid container columnSpacing={0} rowSpacing={2}>
+                        <Grid item xs={6}>
+                            <Typography sx={{ mb: 0.5 }}>Profile start:</Typography>
+                            <OutlinedInput
+                                size="small"
                                 fullWidth
-                                disabled={profileRange?.min.toFixed(profileFractionDigits) === profile}
-                                color="grey"
-                                onClick={handlePrev}
-                                variant="contained"
-                                sx={{ borderRadius: 0, boxShadow: "none", opacity: 0.7 }}
-                                size="large"
-                            >
-                                <ArrowBack />
-                            </Button>
-                            <Button
+                                readOnly
+                                color="secondary"
+                                value={profileRange?.min.toFixed(profileFractionDigits) ?? ""}
+                            />
+                        </Grid>
+                        <Grid item xs={6}>
+                            <Typography sx={{ mb: 0.5 }}>Profile end:</Typography>
+                            <OutlinedInput
+                                size="small"
                                 fullWidth
-                                disabled={profileRange?.max.toFixed(profileFractionDigits) === profile}
-                                color="grey"
-                                onClick={handleNext}
-                                variant="contained"
-                                sx={{ borderRadius: 0, boxShadow: "none" }}
-                                size="large"
-                            >
-                                <ArrowForward />
-                            </Button>
-                        </Box>
-                    </Grid>
-                </Grid>
-
-                <Divider sx={{ mt: 2, mb: 1 }} />
-
-                <Box display="flex" flexDirection="column">
-                    <FormControlLabel
-                        control={
-                            <IosSwitch
-                                size="medium"
-                                color="primary"
-                                checked={autoRecenter}
-                                onChange={handleAutoRecenterChange}
+                                readOnly
+                                color="secondary"
+                                value={profileRange?.max.toFixed(profileFractionDigits) ?? ""}
                             />
-                        }
-                        label={<Box>Automatically recenter</Box>}
-                    />
-
-                    {view2d ? (
-                        <>
-                            <FormControlLabel
-                                control={
-                                    <IosSwitch
-                                        size="medium"
-                                        color="primary"
-                                        checked={showGrid}
-                                        onChange={handleGridChange}
-                                    />
+                        </Grid>
+                        <Grid item xs={6}>
+                            <Typography sx={{ mb: 0.5 }}>Height:</Typography>
+                            <OutlinedInput
+                                size="small"
+                                fullWidth
+                                readOnly
+                                color="secondary"
+                                value={ptHeight?.toFixed(profileFractionDigits) ?? ""}
+                            />
+                        </Grid>
+                        <Grid item xs={6} component="form" onSubmit={handleProfileSubmit}>
+                            <Typography sx={{ mb: 0.5 }}>Profile:</Typography>
+                            <OutlinedInput
+                                value={profile}
+                                inputProps={{ inputMode: "numeric", pattern: "[0-9,.]*" }}
+                                onChange={(e) =>
+                                    dispatch(followPathActions.setProfile(e.target.value.replace(",", ".")))
                                 }
-                                label={<Box>Show grid</Box>}
-                            />
-
-                            <FormControlLabel
-                                control={
-                                    <IosSwitch
-                                        size="medium"
-                                        color="primary"
-                                        checked={autoStepSize}
-                                        onChange={handleAutoStepSizeChange}
-                                    />
+                                fullWidth
+                                size="small"
+                                sx={{ fontWeight: 600 }}
+                                endAdornment={
+                                    <InputAdornment position="end">
+                                        <Edit fontSize="small" />
+                                    </InputAdornment>
                                 }
-                                label={<Box>Match step size to clipping distance</Box>}
                             />
-
-                            <Divider sx={{ my: 1 }} />
-
-                            <Typography>Clipping: {clipping} m</Typography>
-                            <Box mx={2}>
-                                <Slider
-                                    getAriaLabel={() => "Clipping near/far"}
-                                    value={clipping}
-                                    min={0.01}
-                                    max={1}
-                                    step={0.01}
-                                    onChange={handleClippingChange}
-                                    onChangeCommitted={handleClippingCommit}
-                                    valueLabelDisplay="off"
-                                />
+                        </Grid>
+                        <Grid pt={0} item xs={6}>
+                            <Typography sx={{ mb: 0.5 }}>Step size (meters):</Typography>
+                            <OutlinedInput
+                                value={autoStepSize ? String(clipping) : step}
+                                inputProps={{ inputMode: "numeric", pattern: "[0-9,.]*" }}
+                                onChange={(e) => {
+                                    dispatch(followPathActions.setAutoStepSize(false));
+                                    dispatch(followPathActions.setStep(e.target.value.replace(",", ".")));
+                                }}
+                                size="small"
+                                fullWidth
+                                sx={{ fontWeight: 600 }}
+                                endAdornment={
+                                    <InputAdornment position="end">
+                                        <Edit fontSize="small" />
+                                    </InputAdornment>
+                                }
+                            />
+                        </Grid>
+                        <Grid item xs={6} display="flex" alignItems="flex-end">
+                            <Box display="flex" width={1}>
+                                <Button
+                                    fullWidth
+                                    disabled={profileRange?.min.toFixed(profileFractionDigits) === profile}
+                                    color="grey"
+                                    onClick={handlePrev}
+                                    variant="contained"
+                                    sx={{ borderRadius: 0, boxShadow: "none", opacity: 0.7 }}
+                                    size="large"
+                                >
+                                    <ArrowBack />
+                                </Button>
+                                <Button
+                                    fullWidth
+                                    disabled={profileRange?.max.toFixed(profileFractionDigits) === profile}
+                                    color="grey"
+                                    onClick={handleNext}
+                                    variant="contained"
+                                    sx={{ borderRadius: 0, boxShadow: "none" }}
+                                    size="large"
+                                >
+                                    <ArrowForward />
+                                </Button>
                             </Box>
-                        </>
-                    ) : null}
+                        </Grid>
+                    </Grid>
+
+                    <Divider sx={{ mt: 2, mb: 1 }} />
+
+                    <Box display="flex" flexDirection="column" mb={2}>
+                        <FormControlLabel
+                            control={
+                                <IosSwitch
+                                    size="medium"
+                                    color="primary"
+                                    checked={autoRecenter}
+                                    onChange={handleAutoRecenterChange}
+                                />
+                            }
+                            label={<Box>Automatically recenter</Box>}
+                        />
+
+                        {view2d ? (
+                            <>
+                                <FormControlLabel
+                                    control={
+                                        <IosSwitch
+                                            size="medium"
+                                            color="primary"
+                                            checked={showGrid}
+                                            onChange={handleGridChange}
+                                        />
+                                    }
+                                    label={<Box>Show grid</Box>}
+                                />
+
+                                <FormControlLabel
+                                    control={
+                                        <IosSwitch
+                                            size="medium"
+                                            color="primary"
+                                            checked={autoStepSize}
+                                            onChange={handleAutoStepSizeChange}
+                                        />
+                                    }
+                                    label={<Box>Match step size to clipping distance</Box>}
+                                />
+
+                                <Divider sx={{ my: 1 }} />
+
+                                <Typography>Clipping: {clipping} m</Typography>
+                                <Box mx={2}>
+                                    <Slider
+                                        getAriaLabel={() => "Clipping near/far"}
+                                        value={clipping}
+                                        min={0.01}
+                                        max={1}
+                                        step={0.01}
+                                        onChange={handleClippingChange}
+                                        onChangeCommitted={handleClippingCommit}
+                                        valueLabelDisplay="off"
+                                    />
+                                </Box>
+                            </>
+                        ) : null}
+                    </Box>
                 </Box>
+                {roadIds && roadIds.length >= 1 && (
+                    <Accordion>
+                        <AccordionSummary>Road layers</AccordionSummary>
+                        <AccordionDetails>
+                            <Box px={1}>
+                                <Divider sx={{ borderColor: theme.palette.grey[300] }} />
+                                <FormControlLabel
+                                    control={
+                                        <IosSwitch
+                                            size="medium"
+                                            color="primary"
+                                            checked={showTracer}
+                                            onChange={() => {
+                                                dispatch(followPathActions.toggleShowTracer());
+                                            }}
+                                        />
+                                    }
+                                    label={<Box>Enable tracer (2D)</Box>}
+                                />
+                                <Divider sx={{ borderColor: theme.palette.grey[300] }} />
+                            </Box>
+                            {roadIds.map((road) => (
+                                <ListItemButton
+                                    key={road}
+                                    disableGutters
+                                    sx={{
+                                        px: 1,
+                                    }}
+                                    onClick={() => {
+                                        if (drawRoadIds?.includes(road)) {
+                                            dispatch(followPathActions.removeDrawRoad(road));
+                                        } else {
+                                            dispatch(followPathActions.addDrawRoad(road));
+                                        }
+                                    }}
+                                >
+                                    <Box
+                                        sx={{
+                                            display: "flex",
+                                            alignItems: "center",
+                                            width: 0,
+                                            flex: "1 1 100%",
+                                        }}
+                                    >
+                                        <Tooltip title={road}>
+                                            <Typography noWrap>{road}</Typography>
+                                        </Tooltip>
+                                    </Box>
+                                    <Checkbox
+                                        aria-label={"Select property"}
+                                        size="small"
+                                        sx={{ py: 0 }}
+                                        checked={drawRoadIds?.includes(road)}
+                                        onChange={(_e, checked) => {
+                                            if (checked) {
+                                                dispatch(followPathActions.addDrawRoad(road));
+                                            } else {
+                                                dispatch(followPathActions.removeDrawRoad(road));
+                                            }
+                                        }}
+                                        onClick={(e) => e.stopPropagation()}
+                                    />
+                                </ListItemButton>
+                            ))}
+                        </AccordionDetails>
+                    </Accordion>
+                )}
             </ScrollBox>
         </>
     );

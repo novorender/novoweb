@@ -9,7 +9,7 @@ import { NodeList } from "features/nodeList/nodeList";
 import WidgetList from "features/widgetList/widgetList";
 
 import { useAppDispatch, useAppSelector } from "app/store";
-import { renderActions, selectMainObject } from "slices/renderSlice";
+import { renderActions, selectMainObject } from "features/render/renderSlice";
 import { useExplorerGlobals } from "contexts/explorerGlobals";
 
 import { useAbortController } from "hooks/useAbortController";
@@ -53,12 +53,12 @@ export default function ModelTree() {
     const dispatch = useAppDispatch();
 
     const {
-        state: { scene },
+        state: { db },
     } = useExplorerGlobals(true);
 
     const [menuOpen, toggleMenu] = useToggle();
     const minimized = useAppSelector(selectMinimized) === featuresConfig.modelTree.key;
-    const maximized = useAppSelector(selectMaximized) === featuresConfig.modelTree.key;
+    const maximized = useAppSelector(selectMaximized).includes(featuresConfig.modelTree.key);
     const [status, setStatus] = useMountedState(Status.Loading);
     const [currentDepth, setCurrentDepth] = useMountedState<TreeLevel | undefined>(undefined);
     const [currentNode, setCurrentNode] = useMountedState<HierarcicalObjectReference | RootNode | undefined>(undefined);
@@ -84,7 +84,7 @@ export default function ModelTree() {
             setStatus(Status.Loading);
 
             try {
-                const obj = await getObjectData({ scene, id: mainObject });
+                const obj = await getObjectData({ db, id: mainObject });
 
                 if (!obj) {
                     return setStatus(Status.Ready);
@@ -95,7 +95,7 @@ export default function ModelTree() {
                 setStatus(Status.Ready);
             }
         }
-    }, [mainObject, scene, setStatus, setCurrentNode]);
+    }, [mainObject, db, setStatus, setCurrentNode]);
 
     useEffect(() => {
         if (!currentNode) {
@@ -142,10 +142,10 @@ export default function ModelTree() {
                     ? node
                     : node.type === rootNode.type
                     ? undefined
-                    : await searchFirstObjectAtPath({ scene, path: parentPath });
+                    : await searchFirstObjectAtPath({ db, path: parentPath });
 
             try {
-                const iterator = scene.search({ parentPath, descentDepth: 1 });
+                const iterator = db.search({ parentPath, descentDepth: 1 }, undefined);
                 const [nodes] = await iterateAsync({ iterator, count: 100 });
 
                 setCurrentDepth({
@@ -165,7 +165,7 @@ export default function ModelTree() {
                 setStatus(Status.Ready);
             }
         }
-    }, [currentNode, currentDepth, scene, setCurrentDepth, setStatus]);
+    }, [currentNode, currentDepth, db, setCurrentDepth, setStatus]);
 
     const loadMore = async () => {
         if (!currentDepth || !currentDepth.iterator || status !== Status.Ready) {
@@ -224,7 +224,7 @@ export default function ModelTree() {
         if (crumbPath) {
             try {
                 setStatus(Status.Loading);
-                const node = await searchFirstObjectAtPath({ scene, path: crumbPath });
+                const node = await searchFirstObjectAtPath({ db, path: crumbPath });
 
                 if (node) {
                     dispatch(renderActions.setMainObject(node.id));
@@ -270,7 +270,11 @@ export default function ModelTree() {
                     )}
                 />
                 <Box display={menuOpen || minimized ? "none" : "flex"} flexDirection="column" height={1}>
-                    {status === Status.Loading ? <LinearProgress /> : null}
+                    {status === Status.Loading ? (
+                        <Box position="relative">
+                            <LinearProgress />
+                        </Box>
+                    ) : null}
                     {currentDepth ? (
                         <>
                             <Box px={1}>
@@ -303,11 +307,7 @@ export default function ModelTree() {
                 </Box>
                 {menuOpen && <WidgetList widgetKey={featuresConfig.modelTree.key} onSelect={toggleMenu} />}
             </WidgetContainer>
-            <LogoSpeedDial
-                open={menuOpen}
-                toggle={toggleMenu}
-                testId={`${featuresConfig.modelTree.key}-widget-menu-fab`}
-            />
+            <LogoSpeedDial open={menuOpen} toggle={toggleMenu} />
         </>
     );
 }

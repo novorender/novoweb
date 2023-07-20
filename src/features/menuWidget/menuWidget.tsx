@@ -15,28 +15,26 @@ export function MenuWidget() {
     return (
         <>
             {open ? (
-                <WidgetContainer data-test="menu-widget" sx={{ height: 1, display: "flex", flexDirection: "column" }}>
-                    <Box height="100%" display="flex" flexDirection="column">
-                        <Box display="flex" p={1}>
-                            <Box display="flex" alignItems="center">
-                                <NovorenderIcon
-                                    style={{ fill: theme.palette.primary.main, marginRight: theme.spacing(1) }}
-                                />
-                                <Typography variant="body1" component="h2">
-                                    Functions
-                                </Typography>
-                            </Box>
-                            <Box ml="auto">
-                                <IconButton size="small" onClick={toggle}>
-                                    <Close />
-                                </IconButton>
-                            </Box>
+                <WidgetContainer>
+                    <Box display="flex" p={1}>
+                        <Box display="flex" alignItems="center">
+                            <NovorenderIcon
+                                style={{ fill: theme.palette.primary.main, marginRight: theme.spacing(1) }}
+                            />
+                            <Typography variant="body1" component="h2">
+                                Functions
+                            </Typography>
                         </Box>
-                        <WidgetList onSelect={toggle} />
+                        <Box ml="auto">
+                            <IconButton size="small" onClick={toggle}>
+                                <Close />
+                            </IconButton>
+                        </Box>
                     </Box>
+                    <WidgetList onSelect={toggle} />
                 </WidgetContainer>
             ) : null}
-            <LogoSpeedDial open={open} toggle={toggle} testId="widget-menu-fab" />
+            <LogoSpeedDial open={open} toggle={toggle} />
         </>
     );
 }
