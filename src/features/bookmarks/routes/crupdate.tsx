@@ -250,6 +250,9 @@ async function createBookmarkImg(view: View): Promise<string> {
     const ctx = dist.getContext("2d", { alpha: true, desynchronized: false })!;
     const img = document.createElement("img");
     img.src = await view.getScreenshot();
+    await new Promise((resolve) => {
+        img.onload = () => resolve(true);
+    });
     ctx.drawImage(img, Math.round(dx / 2), Math.round(dy / 2), width - dx, height - dy, 0, 0, dist.width, dist.height);
 
     return dist.toDataURL("image/jpeg");

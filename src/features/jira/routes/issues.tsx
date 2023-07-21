@@ -149,7 +149,16 @@ export function Issues() {
                                 sx={{ px: 1 }}
                                 disableGutters
                                 key={issue.key}
-                                onClick={() => history.push(`/issue/${issue.key}`)}
+                                onClick={() => {
+                                    history.push(`/issue/${issue.key}`);
+                                    dispatch(jiraActions.setActiveIssue(issue.key));
+                                }}
+                                onMouseEnter={() => {
+                                    dispatch(jiraActions.setHoveredEntity(issue.key));
+                                }}
+                                onMouseLeave={() => {
+                                    dispatch(jiraActions.setHoveredEntity(""));
+                                }}
                             >
                                 {issue.key} - {issue.fields.summary}
                             </ListItemButton>

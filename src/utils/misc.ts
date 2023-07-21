@@ -93,6 +93,9 @@ export async function createCanvasSnapshot(
 
     const img = document.createElement("img");
     img.src = await view.getScreenshot();
+    await new Promise((resolve) => {
+        img.onload = () => resolve(true);
+    });
     const screenshotCanvas = document.createElement("canvas");
     screenshotCanvas.width = width;
     screenshotCanvas.height = height;

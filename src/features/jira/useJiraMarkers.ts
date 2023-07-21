@@ -13,6 +13,7 @@ import {
     selectJiraUser,
     selectMetaCustomfieldKey,
 } from "./jiraSlice";
+import { isRealVec } from "utils/misc";
 
 type JiraMarkerData = {
     position: vec3;
@@ -59,7 +60,7 @@ export function useJiraMarkers() {
 
                     return undefined;
                 })
-                .filter((marker) => marker !== undefined)
+                .filter((marker) => marker !== undefined && isRealVec(marker.position))
                 .slice(0, 100) as JiraMarkerData[]
         );
     }, [issues, metaCustomfieldKey, showMarkers]);

@@ -1,8 +1,8 @@
 import { createSlice, PayloadAction } from "@reduxjs/toolkit";
 
 import { RootState } from "app/store";
-import { AsyncState, AsyncStatus } from "types/misc";
 import { initScene } from "features/render";
+import { AsyncState, AsyncStatus } from "types/misc";
 
 import { Component, CurrentUser, IssueType, Project, Space } from "./types";
 
@@ -31,6 +31,10 @@ const initialState = {
     user: undefined as undefined | CurrentUser,
     filters: initialFilters,
     showMarkers: true,
+    clickedMarker: "",
+    lastViewedPath: "/",
+    activeIssue: "",
+    hoveredEntity: "",
 };
 
 type State = typeof initialState;
@@ -79,6 +83,18 @@ export const jiraSlice = createSlice({
                 state.showMarkers = action.payload;
             }
         },
+        setLastViewedPath: (state, action: PayloadAction<State["lastViewedPath"]>) => {
+            state.lastViewedPath = action.payload;
+        },
+        setClickedMarker: (state, action: PayloadAction<State["clickedMarker"]>) => {
+            state.clickedMarker = action.payload;
+        },
+        setActiveIssue: (state, action: PayloadAction<State["activeIssue"]>) => {
+            state.activeIssue = action.payload;
+        },
+        setHoveredEntity: (state, action: PayloadAction<State["hoveredEntity"]>) => {
+            state.hoveredEntity = action.payload;
+        },
         clearFilters: (state) => {
             state.filters = {
                 [JiraFilterType.AssignedToMe]: false,
@@ -116,6 +132,10 @@ export const selectJiraFilters = (state: RootState) => state.jira.filters;
 export const selectJiraConfig = (state: RootState) => state.jira.config;
 export const selectMetaCustomfieldKey = (state: RootState) => state.jira.metaCustomfieldKey;
 export const selectJiraShowMarkers = (state: RootState) => state.jira.showMarkers;
+export const selectJiraClickedMarker = (state: RootState) => state.jira.clickedMarker;
+export const selectJiraLastViewedPath = (state: RootState) => state.jira.lastViewedPath;
+export const selectJiraActiveIssue = (state: RootState) => state.jira.activeIssue;
+export const selectJiraHoveredEntity = (state: RootState) => state.jira.hoveredEntity;
 
 const { actions, reducer } = jiraSlice;
 export { actions as jiraActions, reducer as jiraReducer };

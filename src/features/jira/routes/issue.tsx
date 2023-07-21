@@ -33,7 +33,7 @@ export function Issue({ sceneId }: { sceneId: string }) {
 
     const {
         data: issue,
-        isFetching: _isFetchingIssue,
+        isFetching: isFetchingIssue,
         isLoading: isLoadingIssue,
         isError: isErrorIssue,
     } = useGetIssueQuery(
@@ -50,17 +50,17 @@ export function Issue({ sceneId }: { sceneId: string }) {
         { skip: !project }
     );
 
-    const { data: thumbnail, isLoading: isLoadingThumbnail } = useGetAttachmentThumbnailQuery(
+    const { data: thumbnail, isFetching: isFetchingThumbnail } = useGetAttachmentThumbnailQuery(
         { id: imageAttachmentId },
         { skip: !imageAttachmentId }
     );
-    const { data: fullImage, isLoading: isLoadingFullImage } = useGetAttachmentContentQuery(
+    const { data: fullImage, isFetching: isFetchingFullImage } = useGetAttachmentContentQuery(
         { id: imageAttachmentId },
         { skip: !imageAttachmentId || !modalOpen }
     );
 
     useEffect(() => {
-        if (!issue || imageAttachmentId) {
+        if (!issue) {
             return;
         }
 
@@ -71,10 +71,10 @@ export function Issue({ sceneId }: { sceneId: string }) {
         if (nrImage) {
             setImageAttachmentId(nrImage.id);
         }
-    }, [imageAttachmentId, issue]);
+    }, [issue]);
 
     useEffect(() => {
-        if (!issue || bookmarkId) {
+        if (!issue) {
             return;
         }
 
@@ -96,7 +96,7 @@ export function Issue({ sceneId }: { sceneId: string }) {
         } catch (e) {
             console.warn(e);
         }
-    }, [bookmarkId, issue]);
+    }, [issue]);
 
     const handleGoToBookmark = async () => {
         if (!bookmarkId) {
@@ -158,7 +158,7 @@ export function Issue({ sceneId }: { sceneId: string }) {
                 </Box>
             </Box>
 
-            {(isLoadingIssue || loadingBookmark || isLoadingFullImage || isLoadingThumbnail) && (
+            {(isLoadingIssue || isFetchingIssue || loadingBookmark || isFetchingFullImage || isFetchingThumbnail) && (
                 <Box position="relative">
                     <LinearProgress />
                 </Box>
@@ -168,7 +168,7 @@ export function Issue({ sceneId }: { sceneId: string }) {
                 <>An error occurred while loading issue {key}</>
             ) : (
                 issue &&
-                !isLoadingThumbnail && (
+                !isFetchingThumbnail && (
                     <ScrollBox p={1} pt={1} pb={4}>
                         {thumbnail && (
                             <Box
@@ -318,7 +318,7 @@ export function Issue({ sceneId }: { sceneId: string }) {
                         </Box>
                         <ImgModal
                             src={fullImage ?? thumbnail ?? ""}
-                            open={modalOpen && !isLoadingFullImage}
+                            open={modalOpen && !isFetchingFullImage}
                             onClose={toggleModal}
                         />
                     </ScrollBox>
