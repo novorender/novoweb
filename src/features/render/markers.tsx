@@ -1,6 +1,7 @@
 import { DitioMarkers } from "features/ditio";
 import { ImageMarkers } from "features/images";
-import { MyLocationMarker } from "features/myLocation/myLocationMarker";
+import { JiraMarkers } from "features/jira";
+import { MyLocationMarker } from "features/myLocation";
 import { LogPointMarkers, MachineLocationMarkers } from "features/xsiteManage";
 
 export function Markers() {
@@ -11,6 +12,7 @@ export function Markers() {
             <ImageMarkers />
             <MachineLocationMarkers />
             <LogPointMarkers />
+            <JiraMarkers />
         </>
     );
 }

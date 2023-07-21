@@ -1,19 +1,26 @@
 import { AddCircle, FilterAlt } from "@mui/icons-material";
-import { Box, Button, List, ListItemButton, Typography, useTheme } from "@mui/material";
+import { Box, Button, FormControlLabel, List, ListItemButton, Typography, useTheme } from "@mui/material";
 import { useEffect } from "react";
 import { useHistory } from "react-router-dom";
 
 import { useAppDispatch, useAppSelector } from "app/store";
-import { Divider, LinearProgress, ScrollBox } from "components";
+import { Divider, IosSwitch, LinearProgress, ScrollBox } from "components";
 
-import { useGetCurrentUserQuery, useGetIssuesQuery, useGetPermissionsQuery } from "../jiraApi";
+import {
+    useGetCurrentUserQuery,
+    useGetIssuesQuery,
+    useGetNovorenderMetaCustomFieldQuery,
+    useGetPermissionsQuery,
+} from "../jiraApi";
 import {
     jiraActions,
     selectJiraAccessTokenData,
     selectJiraComponent,
     selectJiraFilters,
     selectJiraProject,
+    selectJiraShowMarkers,
     selectJiraUser,
+    selectMetaCustomfieldKey,
 } from "../jiraSlice";
 
 export function Issues() {
@@ -24,12 +31,14 @@ export function Issues() {
     const component = useAppSelector(selectJiraComponent);
     const accessToken = useAppSelector(selectJiraAccessTokenData);
     const currentUser = useAppSelector(selectJiraUser);
+    const metaCustomfieldKey = useAppSelector(selectMetaCustomfieldKey);
     const filters = useAppSelector(selectJiraFilters);
+    const showMarkers = useAppSelector(selectJiraShowMarkers);
     const dispatch = useAppDispatch();
 
     // todo pagination / load on scroll whatever
     const {
-        data: issues = [],
+        data: issues,
         isFetching: isFetchingIssues,
         isLoading: isLoadingIssues,
         isError: isErrorIssues,
@@ -59,6 +68,10 @@ export function Issues() {
         skip: !accessToken,
     });
 
+    const { data: metaCustomfieldKeyRes } = useGetNovorenderMetaCustomFieldQuery(undefined, {
+        skip: !accessToken,
+    });
+
     useEffect(() => {
         if (!user || currentUser) {
             return;
@@ -66,6 +79,14 @@ export function Issues() {
 
         dispatch(jiraActions.setUser(user));
     }, [dispatch, user, currentUser]);
+
+    useEffect(() => {
+        if (!metaCustomfieldKeyRes || metaCustomfieldKey) {
+            return;
+        }
+
+        dispatch(jiraActions.setMetaCustomfieldKey(metaCustomfieldKeyRes));
+    }, [dispatch, metaCustomfieldKey, metaCustomfieldKeyRes]);
 
     return (
         <>
@@ -84,6 +105,21 @@ export function Issues() {
                             <FilterAlt sx={{ mr: 1 }} />
                             Filters
                         </Button>
+                        {metaCustomfieldKey && (
+                            <FormControlLabel
+                                control={
+                                    <IosSwitch
+                                        size="medium"
+                                        color="primary"
+                                        checked={showMarkers}
+                                        onChange={() => {
+                                            dispatch(jiraActions.toggleShowMarkers());
+                                        }}
+                                    />
+                                }
+                                label={<Box fontSize={14}>Markers</Box>}
+                            />
+                        )}
                         {permissions.includes("CREATE_ISSUES") && (
                             <Button
                                 onClick={() => {
@@ -106,7 +142,7 @@ export function Issues() {
             <ScrollBox p={1} pb={3}>
                 {isErrorIssues && !issues ? (
                     "An error occurred."
-                ) : isLoadingIssues ? null : issues.length ? (
+                ) : isLoadingIssues ? null : issues?.length ? (
                     <List sx={{ mx: -1 }} dense disablePadding>
                         {issues.map((issue) => (
                             <ListItemButton

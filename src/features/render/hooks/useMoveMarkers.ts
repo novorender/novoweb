@@ -6,6 +6,7 @@ import { useAppSelector } from "app/store";
 import { useExplorerGlobals } from "contexts/explorerGlobals";
 import { useDitioMarkers } from "features/ditio";
 import { selectImages, selectShowImageMarkers } from "features/images";
+import { useJiraMarkers } from "features/jira";
 import { selectCurrentLocation } from "features/myLocation";
 import { useXsiteManageLogPointMarkers, useXsiteManageMachineMarkers } from "features/xsiteManage";
 import { AsyncStatus } from "types/misc";
@@ -21,6 +22,7 @@ export function useMoveMarkers(svg: SVGSVGElement | null) {
     const [ditioPostMarkers, ditioImgMarkers] = useDitioMarkers();
     const logPoints = useXsiteManageLogPointMarkers();
     const machineLocationMarkers = useXsiteManageMachineMarkers();
+    const jiraMarkers = useJiraMarkers();
 
     const moveSvgMarkers = useCallback(() => {
         if (!view || !svg || !size) {
@@ -110,6 +112,19 @@ export function useMoveMarkers(svg: SVGSVGElement | null) {
                 .namedItem(`machineMarker-${machineLocationMarkers[idx].machineId}`)
                 ?.setAttribute("transform", pos ? `translate(${pos[0] - 25} ${pos[1] - 25})` : "translate(-100 -100)");
         });
+
+        (
+            measureApi.toMarkerPoints(
+                size.width,
+                size.height,
+                view.renderState.camera,
+                jiraMarkers.map((marker) => marker.position)
+            ) ?? []
+        ).forEach((pos, idx) => {
+            svg.children
+                .namedItem(`jiraIssueMarker-${jiraMarkers[idx].key}`)
+                ?.setAttribute("transform", pos ? `translate(${pos[0] - 25} ${pos[1] - 25})` : "translate(-100 -100)");
+        });
     }, [
         view,
         svg,
@@ -121,6 +136,7 @@ export function useMoveMarkers(svg: SVGSVGElement | null) {
         images,
         showImageMarkers,
         machineLocationMarkers,
+        jiraMarkers,
     ]);
 
     useEffect(() => {

@@ -1,2 +1,3 @@
-export { useHandleLocationMarker } from "./useHandleLocationMarker";
+export { MyLocationMarker } from "./myLocationMarker";
 export * from "./myLocationSlice";
+export { useHandleLocationMarker } from "./useHandleLocationMarker";

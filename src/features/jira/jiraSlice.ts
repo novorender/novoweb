@@ -23,12 +23,14 @@ const initialState = {
     space: undefined as undefined | Space,
     project: undefined as undefined | Project,
     component: undefined as undefined | Component,
+    metaCustomfieldKey: "",
     accessToken: { status: AsyncStatus.Initial } as AsyncState<string>,
     prevAccessToken: "",
     refreshToken: undefined as undefined | { token: string; refreshIn: number },
     issueType: undefined as undefined | IssueType,
     user: undefined as undefined | CurrentUser,
     filters: initialFilters,
+    showMarkers: true,
 };
 
 type State = typeof initialState;
@@ -61,11 +63,21 @@ export const jiraSlice = createSlice({
         setUser: (state, action: PayloadAction<State["user"]>) => {
             state.user = action.payload;
         },
+        setMetaCustomfieldKey: (state, action: PayloadAction<State["metaCustomfieldKey"]>) => {
+            state.metaCustomfieldKey = action.payload;
+        },
         setFilters: (state, action: PayloadAction<Partial<State["filters"]>>) => {
             state.filters = { ...state.filters, ...action.payload };
         },
         setConfig: (state, action: PayloadAction<State["config"]>) => {
             state.config = action.payload;
+        },
+        toggleShowMarkers: (state, action: PayloadAction<State["showMarkers"] | undefined>) => {
+            if (action.payload === undefined) {
+                state.showMarkers = !state.showMarkers;
+            } else {
+                state.showMarkers = action.payload;
+            }
         },
         clearFilters: (state) => {
             state.filters = {
@@ -102,6 +114,8 @@ export const selectJiraUser = (state: RootState) => state.jira.user;
 export const selectJiraIssueType = (state: RootState) => state.jira.issueType;
 export const selectJiraFilters = (state: RootState) => state.jira.filters;
 export const selectJiraConfig = (state: RootState) => state.jira.config;
+export const selectMetaCustomfieldKey = (state: RootState) => state.jira.metaCustomfieldKey;
+export const selectJiraShowMarkers = (state: RootState) => state.jira.showMarkers;
 
 const { actions, reducer } = jiraSlice;
 export { actions as jiraActions, reducer as jiraReducer };
