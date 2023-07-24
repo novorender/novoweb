@@ -12,8 +12,8 @@ import { objIdsToTotalBoundingSphere } from "utils/objectData";
 
 // prettier-ignore
 const back = [
-    1, 0, 0, 
-    0, 0, -1,
+    -1, 0, 0, 
+    0, 0, 1, 
     0, 1, 0
 ] as mat3;
 
@@ -26,15 +26,15 @@ const front = [
 
 // prettier-ignore
 const left = [
+    0, -1, 0, 
     0, 0, 1, 
-    0, 1, 0, 
     -1, 0, 0
 ] as mat3;
 
 // prettier-ignore
 const right = [
-    0, 0, -1, 
     0, 1, 0, 
+    0, 0, 1, 
     1, 0, 0
 ] as mat3;
 
