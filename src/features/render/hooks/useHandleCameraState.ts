@@ -88,9 +88,15 @@ export function useHandleCameraState() {
         };
 
         if (state.type === CameraType.Pinhole) {
-            view.modifyRenderState({ camera: { ...defaults.pinhole.clipping, ...clipping } });
+            view.modifyRenderState({
+                points: { useProjectedPosition: false },
+                camera: { ...defaults.pinhole.clipping, ...clipping },
+            });
         } else {
-            view.modifyRenderState({ camera: { ...defaults.orthographic.clipping, ...clipping } });
+            view.modifyRenderState({
+                points: { useProjectedPosition: view.isTopDown() },
+                camera: { ...defaults.orthographic.clipping, ...clipping },
+            });
         }
     }, [state, defaults.pinhole.clipping, defaults.orthographic.clipping, view]);
 
