@@ -22,17 +22,19 @@ export function moveSvgCursor({
     size: Size;
     x: number;
     y: number;
-    pickResult: {
-        position: vec3;
-        normal: vec3;
-        isEdge: boolean | undefined;
-        normalVS: vec3;
-        x: number;
-        y: number;
-        objectId: number;
-        deviation?: number | undefined;
-        depth: number;
-    };
+    pickResult:
+        | {
+              position: vec3;
+              normal: vec3;
+              isEdge: boolean | undefined;
+              normalVS: vec3;
+              x: number;
+              y: number;
+              objectId: number;
+              deviation?: number | undefined;
+              depth: number;
+          }
+        | undefined;
     color: string;
 }) {
     if (!svg || !view) {
