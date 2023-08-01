@@ -5,7 +5,7 @@ import { ObjectVisibility } from "features/render/renderSlice";
 import { VecRGB, VecRGBA, vecToHex } from "utils/color";
 import { base64UrlEncodeImg, createCanvasSnapshot, uniqueArray } from "utils/misc";
 import { Viewpoint } from "types/bcf";
-import { View, rotationFromDirection } from "@novorender/web_app";
+import { rotationFromDirection } from "@novorender/web_app";
 
 type Point = {
     x: number;
@@ -156,8 +156,8 @@ export function createBcfClippingPlanes(
     });
 }
 
-export async function createBcfSnapshot(view: View): Promise<Viewpoint["snapshot"] | undefined> {
-    const snapshot = await createCanvasSnapshot(view, 1500, 1500);
+export async function createBcfSnapshot(canvas: HTMLCanvasElement): Promise<Viewpoint["snapshot"] | undefined> {
+    const snapshot = await createCanvasSnapshot(canvas, 1500, 1500);
 
     if (!snapshot) {
         return;
