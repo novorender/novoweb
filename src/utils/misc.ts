@@ -85,19 +85,17 @@ export function capitalize(str: string): string {
 }
 
 export async function createCanvasSnapshot(
-    view: View,
+    canvas: HTMLCanvasElement,
     maxWidth: number,
     maxHeight: number
 ): Promise<string | undefined> {
-    let { width, height } = view.renderState.output;
+    let { width, height } = canvas;
 
-    const img = document.createElement("img");
-    img.src = await view.getScreenshot();
     const screenshotCanvas = document.createElement("canvas");
     screenshotCanvas.width = width;
     screenshotCanvas.height = height;
     const screenshotCtx = screenshotCanvas.getContext("2d")!;
-    screenshotCtx.drawImage(img, 0, 0);
+    screenshotCtx.drawImage(canvas, 0, 0);
 
     if (width > maxWidth) {
         height = height * (maxWidth / width);

@@ -240,8 +240,11 @@ export function useCanvasEventHandlers({
                     dispatch(measureActions.selectHoverObj(hoverEnt?.entity));
                     prevHoverEnt.current = hoverEnt;
                 } else if (picker === Picker.CrossSection) {
-                    if (crossSectionPoint && result) {
-                        dispatch(orthoCamActions.setCrossSectionHover(result.position as vec3));
+                    const position =
+                        result?.position ??
+                        view.worldPositionFromPixelPosition(e.nativeEvent.offsetX, e.nativeEvent.offsetY);
+                    if (crossSectionPoint && position) {
+                        dispatch(orthoCamActions.setCrossSectionHover(position as vec3));
                     }
                 }
             }

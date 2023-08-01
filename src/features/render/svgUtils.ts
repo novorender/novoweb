@@ -1,4 +1,4 @@
-import { PickSample, View } from "@novorender/web_app";
+import { View } from "@novorender/web_app";
 import { quat, vec3 } from "gl-matrix";
 
 import { isRealVec } from "utils/misc";
@@ -22,7 +22,19 @@ export function moveSvgCursor({
     size: Size;
     x: number;
     y: number;
-    pickResult: PickSample | undefined;
+    pickResult:
+        | {
+              position: vec3;
+              normal: vec3;
+              isEdge: boolean | undefined;
+              normalVS: vec3;
+              x: number;
+              y: number;
+              objectId: number;
+              deviation?: number | undefined;
+              depth: number;
+          }
+        | undefined;
     color: string;
 }) {
     if (!svg || !view) {

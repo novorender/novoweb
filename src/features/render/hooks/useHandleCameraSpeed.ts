@@ -22,6 +22,7 @@ export function useHandleCameraSpeed() {
             Object.values(view.controllers).forEach((controller) => {
                 controller.updateParams({
                     linearVelocity: levels[currentLevel],
+                    rotationalVelocity: levels[currentLevel],
                     proportionalCameraSpeed: proportionalSpeed.enabled
                         ? {
                               min: proportionalSpeed.min,
