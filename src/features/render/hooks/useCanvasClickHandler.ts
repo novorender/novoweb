@@ -140,9 +140,16 @@ export function useCanvasClickHandler() {
                                 position: p,
                                 rotation,
                                 fov: 45,
-                                far: 0.5,
+                                far: 0.01,
                             },
                             gridOrigo: p as vec3,
+                        })
+                    );
+                    const w = vec3.dot(dir, p);
+                    dispatch(
+                        renderActions.setClippingPlanes({
+                            enabled: true,
+                            planes: [{ normalOffset: [dir[0], dir[1], dir[2], w], baseW: w, color: [0, 1, 0, 0.2] }],
                         })
                     );
                     dispatch(renderActions.setPicker(Picker.Object));
