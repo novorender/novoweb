@@ -117,7 +117,7 @@ export function Render3D() {
 
     const useSvgCursor = useHandleCanvasCursor();
     const onClick = useCanvasClickHandler();
-    const eventHandlers = useCanvasEventHandlers({ pointerPos, useSvgCursor, svg });
+    const eventHandlers = useCanvasEventHandlers({ pointerPos, useSvgCursor, svg, renderFnRef: engine2dRenderFn });
 
     return (
         <Box position="relative" width="100%" height="100%" sx={{ userSelect: "none" }}>
