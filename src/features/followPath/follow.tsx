@@ -525,7 +525,7 @@ export function Follow({ fpObj }: { fpObj: FollowParametricObject }) {
                                     <Slider
                                         getAriaLabel={() => "Clipping near/far"}
                                         value={clipping}
-                                        min={0.01}
+                                        min={0.001}
                                         max={1}
                                         step={0.01}
                                         onChange={handleClippingChange}
