@@ -317,7 +317,7 @@ async function loadDeviceTier(): Promise<{ tier: -1 | DeviceProfile["tier"]; isM
         }
 
         if (gpuTier.gpu && /Quadro/gi.test(gpuTier.gpu)) {
-            tier = Math.min(2, tier);
+            tier = Math.max(2, tier);
         }
 
         return {
