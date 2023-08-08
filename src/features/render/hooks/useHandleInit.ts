@@ -316,6 +316,10 @@ async function loadDeviceTier(): Promise<{ tier: -1 | DeviceProfile["tier"]; isM
             tier = 0;
         }
 
+        if (gpuTier.gpu && /Quadro T1000/gi.test(gpuTier.gpu)) {
+            tier = 2;
+        }
+
         return {
             tier: tier as DeviceProfile["tier"],
             isMobile: isMobile ?? false,
