@@ -5,7 +5,7 @@ import {
     SceneConfig as OctreeSceneConfig,
     RecursivePartial,
     TonemappingMode,
-} from "@novorender/web_app";
+} from "@novorender/api";
 import type { BoundingSphere, Camera, EnvironmentDescription } from "@novorender/webgl-api";
 import { PayloadAction, createAction, createSlice } from "@reduxjs/toolkit";
 import { quat, vec3, vec4 } from "gl-matrix";

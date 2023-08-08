@@ -1,5 +1,5 @@
 import { Bookmark } from "@novorender/data-js-api";
-import { ClippingMode } from "@novorender/web_app";
+import { ClippingMode } from "@novorender/api";
 import { mat3, quat, vec4 } from "gl-matrix";
 import { useCallback } from "react";
 

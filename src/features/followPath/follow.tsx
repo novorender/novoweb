@@ -17,7 +17,7 @@ import { HierarcicalObjectReference } from "@novorender/webgl-api";
 import { vec3 } from "gl-matrix";
 import { FormEvent, SyntheticEvent, useCallback, useEffect, useState } from "react";
 import { useHistory } from "react-router-dom";
-import { rotationFromDirection } from "@novorender/web_app";
+import { rotationFromDirection } from "@novorender/api";
 
 import { useAppDispatch, useAppSelector } from "app/store";
 import { Accordion, AccordionDetails, AccordionSummary, Divider, IosSwitch, ScrollBox, Tooltip } from "components";

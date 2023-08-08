@@ -1,4 +1,4 @@
-import { createNeutralHighlight, createRGBATransformHighlight, createTransparentHighlight } from "@novorender/web_app";
+import { createNeutralHighlight, createRGBATransformHighlight, createTransparentHighlight } from "@novorender/api";
 import { useEffect, useRef } from "react";
 
 import { dataApi } from "app";
