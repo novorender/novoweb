@@ -47,7 +47,7 @@ export function useHandleCameraMoved({
                     !quat.exactEquals(view.renderState.camera.rotation, view.prevRenderState.camera.rotation) ||
                     view.renderState.camera.fov !== view.prevRenderState.camera.fov;
 
-                if (isIdleFrame || !hasMoved) {
+                if (isIdleFrame && !hasMoved) {
                     return;
                 }
 

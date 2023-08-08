@@ -28,10 +28,12 @@ export function useCanvasEventHandlers({
     pointerPos,
     useSvgCursor,
     svg,
+    renderFnRef,
 }: {
     pointerPos: MutableRefObject<[x: number, y: number]>;
     useSvgCursor: boolean;
     svg: SVGSVGElement | null;
+    renderFnRef: MutableRefObject<((isIdleFrame: boolean) => void) | undefined>;
 }) {
     const {
         state: { view, canvas, measureScene, size },
@@ -199,6 +201,8 @@ export function useCanvasEventHandlers({
     const previous2dSnapPos = useRef(vec2.create());
     const onPointerMove = async (e: ReactPointerEvent<HTMLCanvasElement>) => {
         pointerPos.current = [e.nativeEvent.offsetX, e.nativeEvent.offsetY];
+        renderFnRef.current?.(false);
+
         if (!view || !canvas || !svg || (!e.movementY && !e.movementX)) {
             return;
         }
