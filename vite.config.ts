@@ -13,7 +13,7 @@ export default defineConfig(({ mode }) => {
 
     return {
         optimizeDeps: {
-            exclude: ["@novorender/measure-api", "@novorender/webgl-api"],
+            exclude: ["@novorender/measure-api", "@novorender/webgl-api", "@novorender/api"],
         },
         envPrefix: "REACT_APP_",
         plugins: [
@@ -27,9 +27,9 @@ export default defineConfig(({ mode }) => {
             port: Number(process.env.PORT) || 3000,
             https: ownCerts
                 ? {
-                      cert: "./localhost.crt",
-                      key: "./localhost.key",
-                  }
+                    cert: "./localhost.crt",
+                    key: "./localhost.key",
+                }
                 : true,
             host: true,
             open: true,

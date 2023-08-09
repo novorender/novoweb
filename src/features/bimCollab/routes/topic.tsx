@@ -37,7 +37,7 @@ import { extractObjectIds } from "utils/objectData";
 import { searchByPatterns } from "utils/search";
 import { sleep } from "utils/time";
 
-import { ClippingMode } from "@novorender/web_app";
+import { ClippingMode } from "@novorender/api";
 import {
     useGetColoringQuery,
     useGetCommentsQuery,

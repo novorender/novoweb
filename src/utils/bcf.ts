@@ -5,7 +5,7 @@ import { ObjectVisibility } from "features/render/renderSlice";
 import { VecRGB, VecRGBA, vecToHex } from "utils/color";
 import { base64UrlEncodeImg, createCanvasSnapshot, uniqueArray } from "utils/misc";
 import { Viewpoint } from "types/bcf";
-import { rotationFromDirection } from "@novorender/web_app";
+import { rotationFromDirection } from "@novorender/api";
 
 type Point = {
     x: number;

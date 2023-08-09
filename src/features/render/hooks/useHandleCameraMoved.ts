@@ -1,4 +1,4 @@
-import { View } from "@novorender/web_app";
+import { View } from "@novorender/api";
 import { mat3, quat, vec3 } from "gl-matrix";
 import { MutableRefObject, useEffect, useRef } from "react";
 

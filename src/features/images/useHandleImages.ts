@@ -1,4 +1,4 @@
-import { loadGLTF, RenderStateDynamicObject, View } from "@novorender/web_app";
+import { downloadGLTF, RenderStateDynamicObject, View } from "@novorender/api";
 import { useEffect, useRef } from "react";
 
 import { useAppDispatch, useAppSelector } from "app/store";
@@ -85,7 +85,7 @@ export function useHandleImages() {
                 }
 
                 const url = getAssetUrl(view, panorama.gltf);
-                const obj = (await loadGLTF(url).catch(() => []))[0];
+                const obj = (await downloadGLTF(url).catch(() => []))[0];
 
                 if (!obj) {
                     dispatch(renderActions.setViewMode(ViewMode.Default));

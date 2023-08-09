@@ -1,5 +1,5 @@
 import { Alert, Box, CircularProgress, Paper, Typography, useTheme } from "@mui/material";
-import { packageVersion as webglApiVersion } from "@novorender/web_app";
+import { packageVersion as webglApiVersion } from "@novorender/api";
 
 import { dataApi } from "app";
 import { useAppSelector } from "app/store";

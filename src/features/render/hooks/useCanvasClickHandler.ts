@@ -1,4 +1,4 @@
-import { rotationFromDirection } from "@novorender/web_app";
+import { rotationFromDirection } from "@novorender/api";
 import { mat3, quat, vec2, vec3, vec4 } from "gl-matrix";
 import { MouseEventHandler, useRef } from "react";
 
