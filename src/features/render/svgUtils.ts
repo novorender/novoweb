@@ -26,7 +26,7 @@ export function moveSvgCursor({
         | {
               position: vec3;
               normal: vec3;
-              isEdge: boolean | undefined;
+              sampleType: "edge" | "corner" | "surface" | undefined;
               normalVS: vec3;
               x: number;
               y: number;
@@ -49,7 +49,7 @@ export function moveSvgCursor({
         return;
     }
     let normal =
-        !pickResult?.isEdge && pickResult?.normalVS && isRealVec(pickResult.normalVS)
+        pickResult?.sampleType === "surface" && pickResult?.normalVS && isRealVec(pickResult.normalVS)
             ? vec3.clone(pickResult.normalVS)
             : undefined;
     if (normal) {
@@ -74,9 +74,15 @@ export function moveSvgCursor({
             g.innerHTML = `<circle r="20" fill="rgba(255,255,255,0.25)" /><circle r="2" fill=${color} />`;
         }
     } else {
-        g.innerHTML = `<path d="M-10,-10L10,10M-10,10L10,-10" stroke-width="2" stroke-linecap="round" stroke="${
-            color || "red"
-        }"/>`;
+        if (pickResult?.sampleType === "edge") {
+            g.innerHTML = `<path d="M-12,0L12,0M0,-7L0,7" stroke-width="2" stroke-linecap="round" stroke="${
+                color || "red"
+            }"/>`;
+        } else {
+            g.innerHTML = `<path d="M-10,-10L10,10M-10,10L10,-10" stroke-width="2" stroke-linecap="round" stroke="${
+                color || "red"
+            }"/>`;
+        }
     }
     g.setAttribute("transform", `translate(${x},${y})`);
 }

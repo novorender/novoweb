@@ -313,7 +313,7 @@ export function useCanvasClickHandler() {
                 }
                 break;
             case Picker.ClippingPlane:
-                if (!normal || result.isEdge) {
+                if (!normal || result.sampleType !== "surface") {
                     return;
                 }
 
@@ -328,7 +328,7 @@ export function useCanvasClickHandler() {
                 );
                 break;
             case Picker.OrthoPlane:
-                if (!normal || result.isEdge) {
+                if (!normal || result.sampleType !== "surface") {
                     return;
                 }
 

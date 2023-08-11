@@ -209,7 +209,7 @@ export function useCanvasEventHandlers({
 
         if (e.buttons === 0 && useSvgCursor) {
             const result = await view.pick(e.nativeEvent.offsetX, e.nativeEvent.offsetY, {
-                sampleDiscRadius: 1,
+                sampleDiscRadius: 4,
                 async: false,
             });
 
