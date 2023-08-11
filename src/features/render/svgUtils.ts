@@ -16,6 +16,7 @@ export function moveSvgCursor({
     y,
     pickResult,
     color,
+    overrideKind = undefined,
 }: {
     svg: SVGSVGElement;
     view: View;
@@ -36,6 +37,7 @@ export function moveSvgCursor({
           }
         | undefined;
     color: string;
+    overrideKind: "edge" | "corner" | "surface" | undefined;
 }) {
     if (!svg || !view) {
         return;
@@ -48,8 +50,10 @@ export function moveSvgCursor({
         g.innerHTML = "";
         return;
     }
+    const kind = (overrideKind ? overrideKind : pickResult?.sampleType) ?? "corner";
+
     let normal =
-        pickResult?.sampleType === "surface" && pickResult?.normalVS && isRealVec(pickResult.normalVS)
+        kind === "surface" && pickResult?.normalVS && isRealVec(pickResult.normalVS)
             ? vec3.clone(pickResult.normalVS)
             : undefined;
     if (normal) {
@@ -74,7 +78,7 @@ export function moveSvgCursor({
             g.innerHTML = `<circle r="20" fill="rgba(255,255,255,0.25)" /><circle r="2" fill=${color} />`;
         }
     } else {
-        if (pickResult?.sampleType === "edge") {
+        if (kind === "edge") {
             g.innerHTML = `<path d="M-12,0L12,0M0,-7L0,7" stroke-width="2" stroke-linecap="round" stroke="${
                 color || "red"
             }"/>`;
