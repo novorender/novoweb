@@ -209,7 +209,7 @@ export function useCanvasEventHandlers({
 
         if (e.buttons === 0 && useSvgCursor) {
             const result = await view.pick(e.nativeEvent.offsetX, e.nativeEvent.offsetY, {
-                sampleDiscRadius: 1,
+                sampleDiscRadius: 4,
                 async: false,
             });
 
@@ -271,6 +271,7 @@ export function useCanvasEventHandlers({
                     x: e.nativeEvent.offsetX,
                     y: e.nativeEvent.offsetY,
                     color,
+                    overrideKind: undefined,
                 });
             } else {
                 moveSvgCursor({
@@ -281,11 +282,21 @@ export function useCanvasEventHandlers({
                     x: e.nativeEvent.offsetX,
                     y: e.nativeEvent.offsetY,
                     color: color,
+                    overrideKind: hoverEnt.entity.drawKind === "edge" ? "edge" : "corner",
                 });
             }
             return;
         } else {
-            moveSvgCursor({ svg, view, size, pickResult: undefined, x: -100, y: -100, color: "" });
+            moveSvgCursor({
+                svg,
+                view,
+                size,
+                pickResult: undefined,
+                x: -100,
+                y: -100,
+                color: "",
+                overrideKind: undefined,
+            });
         }
 
         const setDeviationStamp =
@@ -354,7 +365,16 @@ export function useCanvasEventHandlers({
 
     const onPointerOut = () => {
         if (svg && view) {
-            moveSvgCursor({ svg, view, size, pickResult: undefined, x: -100, y: -100, color: "" });
+            moveSvgCursor({
+                svg,
+                view,
+                size,
+                pickResult: undefined,
+                x: -100,
+                y: -100,
+                color: "",
+                overrideKind: undefined,
+            });
         }
     };
 
