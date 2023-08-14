@@ -1,4 +1,4 @@
-import { View } from "@novorender/web_app";
+import { View } from "@novorender/api";
 import { mat3, quat, vec3 } from "gl-matrix";
 import { MutableRefObject, useEffect, useRef } from "react";
 
@@ -47,7 +47,7 @@ export function useHandleCameraMoved({
                     !quat.exactEquals(view.renderState.camera.rotation, view.prevRenderState.camera.rotation) ||
                     view.renderState.camera.fov !== view.prevRenderState.camera.fov;
 
-                if (isIdleFrame || !hasMoved) {
+                if (isIdleFrame && !hasMoved) {
                     return;
                 }
 

@@ -1,4 +1,4 @@
-import { rotationFromDirection } from "@novorender/web_app";
+import { rotationFromDirection } from "@novorender/api";
 import { mat3, quat, vec2, vec3, vec4 } from "gl-matrix";
 import { MouseEventHandler, useRef } from "react";
 
@@ -87,29 +87,19 @@ export function useCanvasClickHandler() {
             sampleDiscRadius: isTouch ? 8 : 4,
         });
 
-        if (!result) {
-            if (picker === Picker.Measurement && measure.hover) {
-                dispatch(
-                    measureActions.selectEntity({ entity: measure.hover as ExtendedMeasureEntity, pin: evt.shiftKey })
-                );
-            } else if (picker === Picker.Object) {
-                dispatch(renderActions.setStamp(null));
-            }
-            return;
-        }
-        const normal = isRealVec([...result.normal]) ? vec3.clone(result.normal) : undefined;
-        const position = vec3.clone(result.position);
-
-        switch (picker) {
-            case Picker.CrossSection:
+        if (picker === Picker.CrossSection) {
+            const position =
+                result?.position ??
+                view.worldPositionFromPixelPosition(evt.nativeEvent.offsetX, evt.nativeEvent.offsetY);
+            if (position) {
                 if (crossSectionPoint) {
                     dispatch(renderActions.setViewMode(ViewMode.CrossSection));
                     const mat = mat3.fromQuat(mat3.create(), view.renderState.camera.rotation);
                     let up = vec3.fromValues(0, 0, 1);
                     const topDown = vec3.equals(vec3.fromValues(mat[6], mat[7], mat[8]), up);
                     const pos = topDown
-                        ? vec3.fromValues(result.position[0], result.position[1], crossSectionPoint[2])
-                        : vec3.copy(vec3.create(), result.position);
+                        ? vec3.fromValues(position[0], position[1], crossSectionPoint[2])
+                        : vec3.copy(vec3.create(), position);
 
                     const right = vec3.sub(vec3.create(), crossSectionPoint, pos);
                     const l = vec3.len(right);
@@ -118,7 +108,7 @@ export function useCanvasClickHandler() {
                     let dir = vec3.cross(vec3.create(), up, right);
 
                     if (topDown) {
-                        const midPt = (measureApi.toMarkerPoints(size.width, size.width, view.renderState.camera, [
+                        const midPt = (measureApi.toMarkerPoints(size.width, size.height, view.renderState.camera, [
                             p,
                         ]) ?? [])[0];
                         if (midPt) {
@@ -150,9 +140,16 @@ export function useCanvasClickHandler() {
                                 position: p,
                                 rotation,
                                 fov: 45,
-                                far: 0.5,
+                                far: 0.01,
                             },
                             gridOrigo: p as vec3,
+                        })
+                    );
+                    const w = vec3.dot(dir, p);
+                    dispatch(
+                        renderActions.setClippingPlanes({
+                            enabled: true,
+                            planes: [{ normalOffset: [dir[0], dir[1], dir[2], w], baseW: w, color: [0, 1, 0, 0.2] }],
                         })
                     );
                     dispatch(renderActions.setPicker(Picker.Object));
@@ -160,9 +157,26 @@ export function useCanvasClickHandler() {
                     dispatch(orthoCamActions.setCrossSectionHover(undefined));
                     dispatch(renderActions.setGrid({ enabled: true }));
                 } else {
-                    dispatch(orthoCamActions.setCrossSectionPoint(result.position as vec3));
+                    dispatch(orthoCamActions.setCrossSectionPoint(position as vec3));
                 }
-                break;
+                return;
+            }
+        }
+
+        if (!result) {
+            if (picker === Picker.Measurement && measure.hover) {
+                dispatch(
+                    measureActions.selectEntity({ entity: measure.hover as ExtendedMeasureEntity, pin: evt.shiftKey })
+                );
+            } else if (picker === Picker.Object) {
+                dispatch(renderActions.setStamp(null));
+            }
+            return;
+        }
+        const normal = isRealVec([...result.normal]) ? vec3.clone(result.normal) : undefined;
+        const position = vec3.clone(result.position);
+
+        switch (picker) {
             case Picker.Object:
                 if (
                     deviation.mixFactor !== 0 &&
@@ -299,7 +313,7 @@ export function useCanvasClickHandler() {
                 }
                 break;
             case Picker.ClippingPlane:
-                if (!normal || result.isEdge) {
+                if (!normal || result.sampleType !== "surface") {
                     return;
                 }
 
@@ -314,7 +328,7 @@ export function useCanvasClickHandler() {
                 );
                 break;
             case Picker.OrthoPlane:
-                if (!normal || result.isEdge) {
+                if (!normal || result.sampleType !== "surface") {
                     return;
                 }
 

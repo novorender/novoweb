@@ -1,6 +1,6 @@
 import { ObjectDB } from "@novorender/data-js-api";
 import { MeasureScene } from "@novorender/measure-api";
-import { SceneConfig as OctreeSceneConfig, View } from "@novorender/web_app";
+import { SceneConfig as OctreeSceneConfig, View } from "@novorender/api";
 import { createContext, Dispatch, ReactNode, useContext, useReducer } from "react";
 
 // Values that are used all over the place within Explorer, but are unserializable go here instead of redux store.

@@ -1,5 +1,5 @@
 import { MeasureEntity, MeasurementValues, PointEntity } from "@novorender/measure-api";
-import { View } from "@novorender/web_app";
+import { View } from "@novorender/api";
 import { RecursivePartial } from "types/misc";
 
 export function uniqueArray<T>(arr: T[]): T[] {
@@ -85,22 +85,11 @@ export function capitalize(str: string): string {
 }
 
 export async function createCanvasSnapshot(
-    view: View,
+    canvas: HTMLCanvasElement,
     maxWidth: number,
     maxHeight: number
 ): Promise<string | undefined> {
-    let { width, height } = view.renderState.output;
-
-    const img = document.createElement("img");
-    img.src = await view.getScreenshot();
-    await new Promise((resolve) => {
-        img.onload = () => resolve(true);
-    });
-    const screenshotCanvas = document.createElement("canvas");
-    screenshotCanvas.width = width;
-    screenshotCanvas.height = height;
-    const screenshotCtx = screenshotCanvas.getContext("2d")!;
-    screenshotCtx.drawImage(img, 0, 0);
+    let { width, height } = canvas;
 
     if (width > maxWidth) {
         height = height * (maxWidth / width);
@@ -119,7 +108,7 @@ export async function createCanvasSnapshot(
 
     try {
         {
-            const bitmap = await createImageBitmap(screenshotCanvas, {
+            const bitmap = await createImageBitmap(canvas, {
                 resizeHeight: height,
                 resizeWidth: width,
                 resizeQuality: "high",

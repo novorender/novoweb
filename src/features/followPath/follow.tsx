@@ -17,7 +17,7 @@ import { HierarcicalObjectReference } from "@novorender/webgl-api";
 import { vec3 } from "gl-matrix";
 import { FormEvent, SyntheticEvent, useCallback, useEffect, useState } from "react";
 import { useHistory } from "react-router-dom";
-import { rotationFromDirection } from "@novorender/web_app";
+import { rotationFromDirection } from "@novorender/api";
 
 import { useAppDispatch, useAppSelector } from "app/store";
 import { Accordion, AccordionDetails, AccordionSummary, Divider, IosSwitch, ScrollBox, Tooltip } from "components";
@@ -525,7 +525,7 @@ export function Follow({ fpObj }: { fpObj: FollowParametricObject }) {
                                     <Slider
                                         getAriaLabel={() => "Clipping near/far"}
                                         value={clipping}
-                                        min={0.01}
+                                        min={0.001}
                                         max={1}
                                         step={0.01}
                                         onChange={handleClippingChange}

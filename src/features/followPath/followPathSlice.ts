@@ -21,7 +21,7 @@ const initialState = {
     showGrid: true,
     autoRecenter: false,
     autoStepSize: false,
-    clipping: 0.1,
+    clipping: 0.01,
     lastViewedRouterPath: "/",
     goToRouterPath: "",
     selectedPositions: [] as {
