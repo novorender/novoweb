@@ -5,7 +5,7 @@ import { Fragment, useEffect, useState } from "react";
 import { useHistory, useParams } from "react-router-dom";
 
 import { dataApi } from "app";
-import { useAppSelector } from "app/store";
+import { useAppDispatch, useAppSelector } from "app/store";
 import { Divider, ImgModal, LinearProgress, ScrollBox } from "components";
 import { useSelectBookmark } from "features/bookmarks/useSelectBookmark";
 import { useToggle } from "hooks/useToggle";
@@ -16,13 +16,14 @@ import {
     useGetIssueQuery,
     useGetPermissionsQuery,
 } from "../jiraApi";
-import { selectJiraProject, selectJiraSpace } from "../jiraSlice";
+import { jiraActions, selectJiraProject, selectJiraSpace } from "../jiraSlice";
 
 export function Issue({ sceneId }: { sceneId: string }) {
     const theme = useTheme();
     const history = useHistory();
     const key = useParams<{ key: string }>().key;
 
+    const dispatch = useAppDispatch();
     const space = useAppSelector(selectJiraSpace);
     const project = useAppSelector(selectJiraProject);
     const [bookmarkId, setBookmarkId] = useState("");
@@ -133,7 +134,13 @@ export function Issue({ sceneId }: { sceneId: string }) {
                     <Divider />
                 </Box>
                 <Box display="flex" justifyContent="space-between">
-                    <Button onClick={() => history.push("/issues")} color="grey">
+                    <Button
+                        onClick={() => {
+                            history.push("/issues");
+                            dispatch(jiraActions.setActiveIssue(""));
+                        }}
+                        color="grey"
+                    >
                         <ArrowBack sx={{ mr: 1 }} />
                         Back
                     </Button>

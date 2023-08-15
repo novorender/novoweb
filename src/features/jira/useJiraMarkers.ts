@@ -2,18 +2,19 @@ import { vec3 } from "gl-matrix";
 import { useEffect, useState } from "react";
 
 import { useAppSelector } from "app/store";
+import { isRealVec } from "utils/misc";
 
 import { useGetIssuesQuery } from "./jiraApi";
 import {
     selectJiraAccessTokenData,
     selectJiraComponent,
     selectJiraFilters,
+    selectJiraHoveredEntity,
     selectJiraProject,
     selectJiraShowMarkers,
     selectJiraUser,
     selectMetaCustomfieldKey,
 } from "./jiraSlice";
-import { isRealVec } from "utils/misc";
 
 type JiraMarkerData = {
     position: vec3;
@@ -31,6 +32,7 @@ export function useJiraMarkers() {
     const metaCustomfieldKey = useAppSelector(selectMetaCustomfieldKey);
     const filters = useAppSelector(selectJiraFilters);
     const showMarkers = useAppSelector(selectJiraShowMarkers);
+    const hoveredEntity = useAppSelector(selectJiraHoveredEntity);
 
     const { data: issues } = useGetIssuesQuery(
         {
@@ -64,6 +66,20 @@ export function useJiraMarkers() {
                 .slice(0, 100) as JiraMarkerData[]
         );
     }, [issues, metaCustomfieldKey, showMarkers]);
+
+    useEffect(() => {
+        setMarkers((state) => {
+            const hoveredMarker = state.find((marker) => marker.key === hoveredEntity);
+
+            if (hoveredMarker) {
+                const res = state.filter((marker) => marker !== hoveredMarker);
+                res.push(hoveredMarker);
+                return res;
+            }
+
+            return state;
+        });
+    }, [hoveredEntity]);
 
     return markers;
 }
