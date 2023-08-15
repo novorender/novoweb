@@ -11,7 +11,7 @@ import { hiddenActions, useDispatchHidden } from "contexts/hidden";
 import { highlightActions, useDispatchHighlighted } from "contexts/highlighted";
 import { selectionBasketActions, useDispatchSelectionBasket } from "contexts/selectionBasket";
 import { measureActions } from "features/measure";
-import { renderActions, selectClippingPlanes, selectStamp, StampKind } from "features/render";
+import { ObjectVisibility, renderActions, selectClippingPlanes, selectStamp, StampKind } from "features/render";
 import { selectCanvasContextMenuFeatures } from "slices/explorerSlice";
 import { getFilePathFromObjectPath } from "utils/objectData";
 import { getObjectData, searchDeepByPatterns } from "utils/search";
@@ -160,6 +160,7 @@ export function CanvasContextMenuStamp() {
             },
         });
 
+        dispatch(renderActions.setDefaultVisibility(ObjectVisibility.SemiTransparent));
         dispatch(renderActions.removeLoadingHandle(handle));
     };
 
