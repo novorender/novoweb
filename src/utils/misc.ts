@@ -91,12 +91,6 @@ export async function createCanvasSnapshot(
 ): Promise<string | undefined> {
     let { width, height } = canvas;
 
-    const screenshotCanvas = document.createElement("canvas");
-    screenshotCanvas.width = width;
-    screenshotCanvas.height = height;
-    const screenshotCtx = screenshotCanvas.getContext("2d")!;
-    screenshotCtx.drawImage(canvas, 0, 0);
-
     if (width > maxWidth) {
         height = height * (maxWidth / width);
         width = maxWidth;
@@ -114,7 +108,7 @@ export async function createCanvasSnapshot(
 
     try {
         {
-            const bitmap = await createImageBitmap(screenshotCanvas, {
+            const bitmap = await createImageBitmap(canvas, {
                 resizeHeight: height,
                 resizeWidth: width,
                 resizeQuality: "high",

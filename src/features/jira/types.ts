@@ -190,19 +190,10 @@ export type Issue = {
             hierarchyLevel: number;
         };
         timespent: null;
-        customfield_10030: null;
         project: Project;
-        customfield_10031: [];
-        customfield_10032: null;
         fixVersions: [];
-        customfield_10033: null;
         aggregatetimespent: null;
-        customfield_10034: null;
         resolution: null;
-        customfield_10036: null;
-        customfield_10027: null;
-        customfield_10028: null;
-        customfield_10029: null;
         resolutiondate: null;
         workratio: number;
         lastViewed: string;
@@ -213,31 +204,13 @@ export type Issue = {
             isWatching: true;
         };
         created: string;
-        customfield_10020: null;
-        customfield_10021: null;
-        customfield_10022: null;
         priority: {
             self: string;
             iconUrl: string;
             name: string;
             id: string;
         };
-        customfield_10023: null;
-        customfield_10024: null;
-        customfield_10025: null;
-        customfield_10026: null;
         labels: [];
-        customfield_10016: null;
-        customfield_10017: null;
-        customfield_10018: {
-            hasEpicLinkFieldDependency: boolean;
-            showField: boolean;
-            nonEditableReason: {
-                reason: string;
-                message: string;
-            };
-        };
-        customfield_10019: string;
         aggregatetimeoriginalestimate: null;
         timeestimate: null;
         versions: [];
@@ -261,17 +234,9 @@ export type Issue = {
         components: Component[];
         timeoriginalestimate: null;
         description: AtlassianDocumentFormat;
-        customfield_10010: null;
-        customfield_10014: null;
-        customfield_10015: string;
         timetracking: {};
-        customfield_10005: null;
-        customfield_10006: null;
-        customfield_10007: null;
         security: null;
-        customfield_10008: null;
         aggregatetimeestimate: null;
-        customfield_10009: null;
         attachment: {
             self: string;
             id: string;
@@ -295,15 +260,8 @@ export type Issue = {
         summary: string;
         creator: Assignee;
         subtasks: [];
-        customfield_10040: string;
-        customfield_10041: null;
-        customfield_10042: null;
         reporter: Assignee;
         aggregateprogress: { progress: number; total: number };
-        customfield_10001: null;
-        customfield_10002: null;
-        customfield_10003: null;
-        customfield_10004: null;
         environment: null;
         duedate: string | null;
         progress: { progress: number; total: number };
@@ -320,6 +278,7 @@ export type Issue = {
             startAt: number;
         };
         worklog: { startAt: number; maxResults: number; total: number; worklogs: [] };
+        [key: string]: any;
     };
 };
 
@@ -335,3 +294,15 @@ type Comment = {
 };
 
 type AtlassianDocumentFormat = any;
+
+export type Field = {
+    id: string;
+    key: string;
+    name: string;
+    custom: boolean;
+    orderable: boolean;
+    navigable: boolean;
+    searchable: boolean;
+    clauseNames: string[];
+    schema: {};
+};
