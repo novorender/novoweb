@@ -214,7 +214,7 @@ const initialState = {
             pixel: 1,
             maxPixel: 20,
             metric: 1,
-            toleranceFactor: 1,
+            toleranceFactor: 0.4,
         },
         deviation: {
             index: 0,
