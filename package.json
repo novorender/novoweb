@@ -1,6 +1,6 @@
 {
     "name": "novoweb",
-    "version": "0.45.0",
+    "version": "0.46.0",
     "description": "Novorender frontend",
     "main": "index.js",
     "scripts": {
@@ -52,7 +52,7 @@
         "@mui/lab": "^5.0.0-alpha.58",
         "@mui/material": "^5.8.0",
         "@mui/x-date-pickers": "^5.0.10",
-        "@novorender/api": "0.0.7",
+        "@novorender/api": "0.0.8",
         "@novorender/data-js-api": "0.2.26",
         "@novorender/measure-api": "0.1.11",
         "@novorender/webgl-api": "0.4.59",
