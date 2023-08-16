@@ -28,10 +28,12 @@ export function useCanvasEventHandlers({
     pointerPos,
     useSvgCursor,
     svg,
+    renderFnRef,
 }: {
     pointerPos: MutableRefObject<[x: number, y: number]>;
     useSvgCursor: boolean;
     svg: SVGSVGElement | null;
+    renderFnRef: MutableRefObject<((isIdleFrame: boolean) => void) | undefined>;
 }) {
     const {
         state: { view, canvas, measureScene, size },
@@ -199,13 +201,15 @@ export function useCanvasEventHandlers({
     const previous2dSnapPos = useRef(vec2.create());
     const onPointerMove = async (e: ReactPointerEvent<HTMLCanvasElement>) => {
         pointerPos.current = [e.nativeEvent.offsetX, e.nativeEvent.offsetY];
+        renderFnRef.current?.(false);
+
         if (!view || !canvas || !svg || (!e.movementY && !e.movementX)) {
             return;
         }
 
         if (e.buttons === 0 && useSvgCursor) {
             const result = await view.pick(e.nativeEvent.offsetX, e.nativeEvent.offsetY, {
-                sampleDiscRadius: 1,
+                sampleDiscRadius: 4,
                 async: false,
             });
 
@@ -240,8 +244,11 @@ export function useCanvasEventHandlers({
                     dispatch(measureActions.selectHoverObj(hoverEnt?.entity));
                     prevHoverEnt.current = hoverEnt;
                 } else if (picker === Picker.CrossSection) {
-                    if (crossSectionPoint && result) {
-                        dispatch(orthoCamActions.setCrossSectionHover(result.position as vec3));
+                    const position =
+                        result?.position ??
+                        view.worldPositionFromPixelPosition(e.nativeEvent.offsetX, e.nativeEvent.offsetY);
+                    if (crossSectionPoint && position) {
+                        dispatch(orthoCamActions.setCrossSectionHover(position as vec3));
                     }
                 }
             }
@@ -264,6 +271,7 @@ export function useCanvasEventHandlers({
                     x: e.nativeEvent.offsetX,
                     y: e.nativeEvent.offsetY,
                     color,
+                    overrideKind: undefined,
                 });
             } else {
                 moveSvgCursor({
@@ -274,11 +282,21 @@ export function useCanvasEventHandlers({
                     x: e.nativeEvent.offsetX,
                     y: e.nativeEvent.offsetY,
                     color: color,
+                    overrideKind: hoverEnt.entity.drawKind === "edge" ? "edge" : "corner",
                 });
             }
             return;
         } else {
-            moveSvgCursor({ svg, view, size, pickResult: undefined, x: -100, y: -100, color: "" });
+            moveSvgCursor({
+                svg,
+                view,
+                size,
+                pickResult: undefined,
+                x: -100,
+                y: -100,
+                color: "",
+                overrideKind: undefined,
+            });
         }
 
         const setDeviationStamp =
@@ -347,7 +365,16 @@ export function useCanvasEventHandlers({
 
     const onPointerOut = () => {
         if (svg && view) {
-            moveSvgCursor({ svg, view, size, pickResult: undefined, x: -100, y: -100, color: "" });
+            moveSvgCursor({
+                svg,
+                view,
+                size,
+                pickResult: undefined,
+                x: -100,
+                y: -100,
+                color: "",
+                overrideKind: undefined,
+            });
         }
     };
 

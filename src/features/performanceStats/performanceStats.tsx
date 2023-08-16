@@ -1,5 +1,5 @@
 import { Box } from "@mui/material";
-import { packageVersion as webglApiVersion } from "@novorender/web_app";
+import { packageVersion as webglApiVersion } from "@novorender/api";
 import { useEffect, useRef } from "react";
 
 import { useAppSelector } from "app/store";

@@ -37,7 +37,7 @@ export function useHandleCameraState() {
 
             if (state.type === CameraType.Pinhole) {
                 const controller = view.controllers[pinholeKind.current];
-                view.switchCameraController(controller.kind);
+                view.switchCameraController(pinholeKind.current);
 
                 if (state.goTo) {
                     controller.moveTo(
@@ -75,7 +75,7 @@ export function useHandleCameraState() {
                 );
             }
         }
-    }, [view, dispatch, state]);
+    }, [view, dispatch, state, defaults.pinhole.controller]);
 
     useEffect(() => {
         if (!view) {
@@ -88,9 +88,15 @@ export function useHandleCameraState() {
         };
 
         if (state.type === CameraType.Pinhole) {
-            view.modifyRenderState({ camera: { ...defaults.pinhole.clipping, ...clipping } });
+            view.modifyRenderState({
+                points: { useProjectedPosition: false },
+                camera: { ...defaults.pinhole.clipping, ...clipping },
+            });
         } else {
-            view.modifyRenderState({ camera: { ...defaults.orthographic.clipping, ...clipping } });
+            view.modifyRenderState({
+                points: { useProjectedPosition: view.isTopDown() },
+                camera: { ...defaults.orthographic.clipping, ...clipping },
+            });
         }
     }, [state, defaults.pinhole.clipping, defaults.orthographic.clipping, view]);
 

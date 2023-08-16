@@ -1,5 +1,5 @@
 import { Alert, Box, CircularProgress, Paper, Typography, useTheme } from "@mui/material";
-import { packageVersion as webglApiVersion } from "@novorender/web_app";
+import { packageVersion as webglApiVersion } from "@novorender/api";
 
 import { dataApi } from "app";
 import { useAppSelector } from "app/store";
@@ -12,6 +12,7 @@ import { selectSceneStatus } from ".";
 export enum Error {
     UNKNOWN_ERROR = "UNKNOWN_ERROR",
     INVALID_SCENE = "INVALID_SCENE",
+    DELETED_SCENE = "DELETED_SCENE",
     NOT_AUTHORIZED = "NOT_AUTHORIZED",
     LEGACY_BINARY_FORMAT = "LEGACY_BINARY_FORMAT",
 }
@@ -57,32 +58,44 @@ export function SceneError() {
                                 ? "An error occurred"
                                 : error === Error.INVALID_SCENE
                                 ? `Scene not found`
+                                : error === Error.DELETED_SCENE
+                                ? "Deleted scene"
                                 : "Unable to load scene"}
                         </Typography>
-                        {error === Error.UNKNOWN_ERROR && (
-                            <Alert severity="warning" sx={{ mb: 2 }}>
-                                Make sure you are using an up to date version of either Safari or a Chromium based
-                                browser such as Chrome or Edge.
-                            </Alert>
-                        )}
-                        {error === Error.LEGACY_BINARY_FORMAT && (
-                            <Alert severity="warning" sx={{ mb: 2 }}>
-                                This scene needs to be updated. An admin can{" "}
-                                <a href="https://novorender.com/manuals/update-scene/">follow the steps shown here</a>{" "}
-                                to update the scene. The process may take a few minutes to complete. <br /> <br />
-                                Please get in touch with support if you are still seeing this error after updating the
-                                scene.
-                            </Alert>
-                        )}
-                        <Typography paragraph>
-                            {error === Error.UNKNOWN_ERROR ? (
-                                "Failed to download the scene. Please try again later."
-                            ) : error === Error.INVALID_SCENE ? (
+                        <Alert severity="warning" sx={{ mb: 2 }}>
+                            {error === Error.UNKNOWN_ERROR && (
+                                <>
+                                    Make sure you are using an up to date version of either Safari or a Chromium based
+                                    browser such as Chrome or Edge.
+                                </>
+                            )}
+                            {error === Error.LEGACY_BINARY_FORMAT && (
+                                <>
+                                    This scene needs to be updated. An admin can{" "}
+                                    <a href="https://novorender.com/manuals/update-scene/">
+                                        follow the steps shown here
+                                    </a>{" "}
+                                    to update the scene. The process may take a few minutes to complete. <br /> <br />
+                                    Please get in touch with support if you are still seeing this error after updating
+                                    the scene.
+                                </>
+                            )}
+                            {error === Error.UNKNOWN_ERROR && (
+                                <>"Failed to download the scene. Please try again later.</>
+                            )}
+                            {error === Error.INVALID_SCENE && (
                                 <>
                                     The scene with id <em>{sceneId}</em> does not exist.
                                 </>
-                            ) : null}
-                        </Typography>
+                            )}
+                            {error === Error.DELETED_SCENE && (
+                                <>
+                                    The scene has been deleted. If this was done by mistake please contact support and
+                                    we will try to recover it.
+                                </>
+                            )}
+                        </Alert>
+
                         <Accordion>
                             <AccordionSummary>Details</AccordionSummary>
                             <AccordionDetails>

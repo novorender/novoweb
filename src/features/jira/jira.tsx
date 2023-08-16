@@ -1,6 +1,7 @@
 import { Logout, SettingsRounded } from "@mui/icons-material";
 import { Box, ListItemIcon, ListItemText, Menu, MenuItem, MenuProps } from "@mui/material";
-import { MemoryRouter, Route, Switch, useHistory } from "react-router-dom";
+import { PropsWithChildren, useEffect, useRef } from "react";
+import { MemoryRouter, Route, Switch, SwitchProps, useHistory, useLocation } from "react-router-dom";
 
 import { useAppDispatch, useAppSelector } from "app/store";
 import { LogoSpeedDial, WidgetContainer, WidgetHeader } from "components";
@@ -12,7 +13,7 @@ import { useToggle } from "hooks/useToggle";
 import { selectHasAdminCapabilities, selectMaximized, selectMinimized } from "slices/explorerSlice";
 import { deleteFromStorage } from "utils/storage";
 
-import { jiraActions, selectJiraAccessTokenData } from "./jiraSlice";
+import { jiraActions, selectJiraAccessTokenData, selectJiraClickedMarker, selectJiraLastViewedPath } from "./jiraSlice";
 import { Auth } from "./routes/auth";
 import { CreateIssue } from "./routes/create";
 import { CreateComment } from "./routes/createComment";
@@ -25,11 +26,12 @@ import { Settings } from "./routes/settings";
 export default function Jira() {
     const sceneId = useSceneId();
     const [menuOpen, toggleMenu] = useToggle();
+    const lastViewedPath = useAppSelector(selectJiraLastViewedPath);
     const minimized = useAppSelector(selectMinimized) === featuresConfig.jira.key;
     const maximized = useAppSelector(selectMaximized).includes(featuresConfig.jira.key);
 
     return (
-        <MemoryRouter>
+        <MemoryRouter initialEntries={["/issues", lastViewedPath]} initialIndex={1}>
             <WidgetContainer minimized={minimized} maximized={maximized}>
                 <WidgetHeader WidgetMenu={WidgetMenu} widget={featuresConfig.jira} disableShadow />
                 <Box
@@ -38,7 +40,7 @@ export default function Jira() {
                     flexGrow={1}
                     overflow="hidden"
                 >
-                    <Switch>
+                    <CustomSwitch>
                         <Route path="/" exact>
                             <Auth />
                         </Route>
@@ -63,7 +65,7 @@ export default function Jira() {
                         <Route path="/createComment/:key">
                             <CreateComment />
                         </Route>
-                    </Switch>
+                    </CustomSwitch>
                 </Box>
                 {menuOpen && <WidgetList widgetKey={featuresConfig.jira.key} onSelect={toggleMenu} />}
             </WidgetContainer>
@@ -146,4 +148,37 @@ function SettingsMenuItem({ onClose }: { onClose: MenuProps["onClose"] }) {
             </MenuItem>
         </div>
     );
+}
+
+function CustomSwitch(props: PropsWithChildren<SwitchProps>) {
+    const history = useHistory();
+    const location = useLocation();
+    const willUnmount = useRef(false);
+    const clickedMarker = useAppSelector(selectJiraClickedMarker);
+    const dispatch = useAppDispatch();
+
+    useEffect(() => {
+        if (clickedMarker) {
+            history.push(`/issue/${clickedMarker}`);
+            dispatch(jiraActions.setClickedMarker(""));
+        }
+    }, [dispatch, history, clickedMarker]);
+
+    useEffect(() => {
+        return () => {
+            willUnmount.current = true;
+        };
+    }, []);
+
+    useEffect(() => {
+        return () => {
+            if (willUnmount.current) {
+                dispatch(
+                    jiraActions.setLastViewedPath(location.pathname.startsWith("/issue") ? location.pathname : "/")
+                );
+            }
+        };
+    }, [location, dispatch]);
+
+    return <Switch {...props} />;
 }

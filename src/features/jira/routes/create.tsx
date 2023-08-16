@@ -44,6 +44,7 @@ import {
     selectJiraIssueType,
     selectJiraProject,
     selectJiraSpace,
+    selectMetaCustomfieldKey,
 } from "../jiraSlice";
 import { Assignee, CreateIssueMetadata } from "../types";
 
@@ -51,7 +52,7 @@ export function CreateIssue({ sceneId }: { sceneId: string }) {
     const theme = useTheme();
     const history = useHistory();
     const {
-        state: { view },
+        state: { canvas },
     } = useExplorerGlobals(true);
     const dispatch = useAppDispatch();
 
@@ -60,6 +61,7 @@ export function CreateIssue({ sceneId }: { sceneId: string }) {
     const space = useAppSelector(selectJiraSpace);
     const project = useAppSelector(selectJiraProject);
     const component = useAppSelector(selectJiraComponent);
+    const metaCustomfieldKey = useAppSelector(selectMetaCustomfieldKey);
     const [formValues, setFormValues] = useState({} as { [key: string]: any });
     const [assigneeOptions, setAssigneeOptions] = useState([] as Assignee[]);
     const [loadingAssignees, setLoadingAssignees] = useState(false);
@@ -77,7 +79,7 @@ export function CreateIssue({ sceneId }: { sceneId: string }) {
         isLoading: _isLoadingIssuesTypes,
         isError: _isErrorIssuesTypes,
     } = useGetIssueTypesQuery({
-        project: project?.key ?? "",
+        projectId: project?.id ?? "",
     });
 
     const {
@@ -122,7 +124,7 @@ export function CreateIssue({ sceneId }: { sceneId: string }) {
         setSaveStatus(AsyncStatus.Loading);
         const bmId = uuidv4();
         const bm = createBookmark();
-        const snapshot = await createCanvasSnapshot(view, 5000, 5000);
+        const snapshot = await createCanvasSnapshot(canvas, 5000, 5000);
         const saved = await dataApi.saveBookmarks(sceneId, [{ ...bm, id: bmId, name: bmId }], { group: bmId });
 
         if (!saved) {
@@ -132,6 +134,9 @@ export function CreateIssue({ sceneId }: { sceneId: string }) {
 
         const body = {
             fields: {
+                ...(metaCustomfieldKey
+                    ? { [metaCustomfieldKey]: JSON.stringify({ position: bm.explorerState?.camera.position }) }
+                    : {}),
                 issuetype: {
                     name: issueType.name,
                 },
@@ -288,7 +293,13 @@ export function CreateIssue({ sceneId }: { sceneId: string }) {
                                 </FormLabel>
                             </Box>
 
-                            <Select readOnly value={project.key} id={"project"}>
+                            <Select
+                                readOnly
+                                value={project.key}
+                                inputProps={{
+                                    id: "project",
+                                }}
+                            >
                                 <MenuItem value={project.key}>
                                     {project.key} - {project.name}
                                 </MenuItem>
@@ -309,7 +320,9 @@ export function CreateIssue({ sceneId }: { sceneId: string }) {
                             <Select
                                 MenuProps={{ sx: { maxHeight: 300 } }}
                                 value={issueType?.id ?? ""}
-                                id={"issueType"}
+                                inputProps={{
+                                    id: "issueType",
+                                }}
                                 onChange={(e) =>
                                     dispatch(
                                         jiraActions.setIssueType(issueTypes.find((type) => type.id === e.target.value))
@@ -380,7 +393,10 @@ export function CreateIssue({ sceneId }: { sceneId: string }) {
                                             }}
                                             maxRows={5}
                                             minRows={5}
-                                            id={"description"}
+                                            name="description"
+                                            inputProps={{
+                                                id: "description",
+                                            }}
                                         />
                                     </FormControl>
                                 )}
@@ -484,7 +500,9 @@ export function CreateIssue({ sceneId }: { sceneId: string }) {
                                             component.id,
                                             ...(components ? formValues["issueComponents"] ?? [] : []),
                                         ]}
-                                        id={"issueComponents"}
+                                        inputProps={{
+                                            id: "issueComponents",
+                                        }}
                                         onChange={({ target: { value } }) => {
                                             if (!Array.isArray(value)) {
                                                 return;

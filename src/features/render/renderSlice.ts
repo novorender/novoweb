@@ -5,7 +5,7 @@ import {
     SceneConfig as OctreeSceneConfig,
     RecursivePartial,
     TonemappingMode,
-} from "@novorender/web_app";
+} from "@novorender/api";
 import type { BoundingSphere, Camera, EnvironmentDescription } from "@novorender/webgl-api";
 import { PayloadAction, createAction, createSlice } from "@reduxjs/toolkit";
 import { quat, vec3, vec4 } from "gl-matrix";
@@ -214,7 +214,7 @@ const initialState = {
             pixel: 1,
             maxPixel: 20,
             metric: 1,
-            toleranceFactor: 1,
+            toleranceFactor: 0.4,
         },
         deviation: {
             index: 0,

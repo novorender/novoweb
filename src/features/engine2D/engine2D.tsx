@@ -692,7 +692,6 @@ export function Engine2D({
     useEffect(() => {
         renderFnRef.current = animate;
         return () => (renderFnRef.current = undefined);
-
         function animate(isIdleFrame: boolean) {
             if (view) {
                 const run =
@@ -700,7 +699,7 @@ export function Engine2D({
                     !vec3.exactEquals(view.renderState.camera.position, view.prevRenderState.camera.position) ||
                     !quat.exactEquals(view.renderState.camera.rotation, view.prevRenderState.camera.rotation) ||
                     view.renderState.camera.fov !== view.prevRenderState.camera.fov ||
-                    !vec2.exactEquals(prevPointerPos.current, pointerPos.current);
+                    (showTracer && !vec2.exactEquals(prevPointerPos.current, pointerPos.current));
 
                 if (isIdleFrame || !run) {
                     return;
@@ -710,7 +709,7 @@ export function Engine2D({
                 render();
             }
         }
-    }, [view, render, grid, cameraType, pointerPos, renderFnRef]);
+    }, [view, render, grid, cameraType, pointerPos, renderFnRef, showTracer]);
 
     return <Canvas2D id="canvas2D" ref={setCanvas2D} width={size.width} height={size.height} />;
 }

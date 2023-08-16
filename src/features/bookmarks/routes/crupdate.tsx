@@ -11,7 +11,6 @@ import { selectHasAdminCapabilities } from "slices/explorerSlice";
 
 import { BookmarkAccess, bookmarksActions, selectBookmarks } from "../bookmarksSlice";
 import { useCreateBookmark } from "../useCreateBookmark";
-import { View } from "@novorender/web_app";
 
 export function Crupdate() {
     const { id } = useParams<{ id?: string }>();
@@ -23,9 +22,8 @@ export function Crupdate() {
 
     const isAdmin = useAppSelector(selectHasAdminCapabilities);
     const dispatch = useAppDispatch();
-
     const {
-        state: { view },
+        state: { view, canvas },
     } = useExplorerGlobals(true);
     const createBookmark = useCreateBookmark();
 
@@ -62,9 +60,9 @@ export function Crupdate() {
         if (bmToEdit) {
             setBmImg(bmToEdit.img ?? "");
         } else {
-            createBookmarkImg(view).then((img) => setBmImg(img));
+            createBookmarkImg(canvas).then((img) => setBmImg(img));
         }
-    }, [bmImg, bmToEdit, view]);
+    }, [bmImg, bmToEdit, view, canvas]);
 
     const handleSubmit: FormEventHandler = (e) => {
         e.preventDefault();
@@ -83,7 +81,7 @@ export function Crupdate() {
             return;
         }
 
-        const bm = createBookmark(await createBookmarkImg(view));
+        const bm = createBookmark(await createBookmarkImg(canvas));
 
         const newBookmarks = bookmarks.concat({
             ...bm,
@@ -108,7 +106,7 @@ export function Crupdate() {
             return;
         }
 
-        const img = await createBookmarkImg(view);
+        const img = await createBookmarkImg(canvas);
 
         const newBookmarks = bookmarks.map((bm) =>
             bm === bmToEdit
@@ -232,9 +230,9 @@ export function Crupdate() {
     );
 }
 
-async function createBookmarkImg(view: View): Promise<string> {
-    let width = view.renderState.output.width;
-    let height = view.renderState.output.height;
+async function createBookmarkImg(canvas: HTMLCanvasElement): Promise<string> {
+    let width = canvas.width;
+    let height = canvas.height;
     let dx = 0;
     let dy = 0;
 
@@ -248,9 +246,18 @@ async function createBookmarkImg(view: View): Promise<string> {
     dist.height = 70;
     dist.width = 100;
     const ctx = dist.getContext("2d", { alpha: true, desynchronized: false })!;
-    const img = document.createElement("img");
-    img.src = await view.getScreenshot();
-    ctx.drawImage(img, Math.round(dx / 2), Math.round(dy / 2), width - dx, height - dy, 0, 0, dist.width, dist.height);
+
+    ctx.drawImage(
+        canvas,
+        Math.round(dx / 2),
+        Math.round(dy / 2),
+        width - dx,
+        height - dy,
+        0,
+        0,
+        dist.width,
+        dist.height
+    );
 
     return dist.toDataURL("image/jpeg");
 }

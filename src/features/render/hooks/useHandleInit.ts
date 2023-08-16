@@ -1,5 +1,12 @@
 import { ObjectDB, SceneData, SceneLoadFail } from "@novorender/data-js-api";
-import { DeviceProfile, View, computeRotation, getDeviceProfile, rotationFromDirection } from "@novorender/web_app";
+import {
+    DeviceProfile,
+    View,
+    computeRotation,
+    downloadImports,
+    getDeviceProfile,
+    rotationFromDirection,
+} from "@novorender/api";
 import { Internal } from "@novorender/webgl-api";
 import { getGPUTier } from "detect-gpu";
 import { quat, vec3, vec4 } from "gl-matrix";
@@ -62,7 +69,7 @@ export function useHandleInit() {
                           : getDeviceProfile(0)),
                   };
 
-            const view = createView(canvas, { deviceProfile });
+            const view = await createView(canvas, { deviceProfile });
 
             try {
                 const [{ url, db, ...sceneData }, camera] = await loadScene(sceneId);
@@ -160,6 +167,10 @@ export function useHandleInit() {
                     } else if (error === "Scene not found") {
                         dispatch(
                             renderActions.setSceneStatus({ status: AsyncStatus.Error, msg: SceneError.INVALID_SCENE })
+                        );
+                    } else if (error === "Scene deleted") {
+                        dispatch(
+                            renderActions.setSceneStatus({ status: AsyncStatus.Error, msg: SceneError.DELETED_SCENE })
                         );
                     } else {
                         dispatch(
@@ -309,6 +320,10 @@ async function loadDeviceTier(): Promise<{ tier: -1 | DeviceProfile["tier"]; isM
             tier = 0;
         }
 
+        if (gpuTier.gpu && /Quadro/gi.test(gpuTier.gpu)) {
+            tier = Math.max(2, tier);
+        }
+
         return {
             tier: tier as DeviceProfile["tier"],
             isMobile: isMobile ?? false,
@@ -322,7 +337,8 @@ async function loadDeviceTier(): Promise<{ tier: -1 | DeviceProfile["tier"]; isM
     }
 }
 
-function createView(canvas: HTMLCanvasElement, options?: { deviceProfile?: DeviceProfile }): View {
+async function createView(canvas: HTMLCanvasElement, options?: { deviceProfile?: DeviceProfile }): Promise<View> {
     const deviceProfile = options?.deviceProfile ?? getDeviceProfile(0);
-    return new (View as any)(canvas, deviceProfile);
+    const imports = await downloadImports({ baseUrl: "/novorender/api/" });
+    return new View(canvas, deviceProfile, imports);
 }

@@ -2,7 +2,6 @@ import { useEffect } from "react";
 
 import { useAppSelector } from "app/store";
 import { useExplorerGlobals } from "contexts/explorerGlobals";
-import { ViewMode } from "types/misc";
 
 import { selectViewMode } from "..";
 
@@ -17,6 +16,6 @@ export function useHandleOutlines() {
             return;
         }
 
-        view.modifyRenderState({ outlines: { enabled: viewMode === ViewMode.FollowPath } });
+        //view.modifyRenderState({ outlines: { enabled: viewMode === ViewMode.FollowPath } });
     }, [view, viewMode]);
 }
