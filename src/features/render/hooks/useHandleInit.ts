@@ -168,6 +168,10 @@ export function useHandleInit() {
                         dispatch(
                             renderActions.setSceneStatus({ status: AsyncStatus.Error, msg: SceneError.INVALID_SCENE })
                         );
+                    } else if (error === "Scene deleted") {
+                        dispatch(
+                            renderActions.setSceneStatus({ status: AsyncStatus.Error, msg: SceneError.DELETED_SCENE })
+                        );
                     } else {
                         dispatch(
                             renderActions.setSceneStatus({ status: AsyncStatus.Error, msg: SceneError.UNKNOWN_ERROR })

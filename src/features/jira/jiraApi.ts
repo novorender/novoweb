@@ -4,7 +4,17 @@ import { AsyncStatus } from "types/misc";
 import { handleImageResponse } from "utils/bcf";
 
 import { initialFilters, selectJiraAccessToken, selectJiraSpace } from "./jiraSlice";
-import { Component, CreateIssueMetadata, CurrentUser, Issue, IssueType, Permission, Project, Space } from "./types";
+import {
+    Component,
+    CreateIssueMetadata,
+    CurrentUser,
+    Field,
+    Issue,
+    IssueType,
+    Permission,
+    Project,
+    Space,
+} from "./types";
 
 export const jiraIdentityServer = "https://auth.atlassian.com/authorize";
 export const jiraClientId = window.jiraClientId || import.meta.env.REACT_APP_JIRA_CLIENT_ID || "";
@@ -125,6 +135,14 @@ export const jiraApi = createApi({
                 responseHandler: handleImageResponse,
             }),
         }),
+        getNovorenderMetaCustomField: builder.query<string, void>({
+            query: () => ({
+                url: `field`,
+            }),
+            transformResponse: (res: Field[]) => {
+                return res.find((field) => field.name === "NOVORENDER_META")?.key ?? "";
+            },
+        }),
         createComment: builder.mutation<any, { body: any; issueKey: string }>({
             query: ({ body, issueKey }) => ({
                 url: `issue/${issueKey}/comment`,
@@ -145,14 +163,16 @@ export const jiraApi = createApi({
             transformResponse: (res: { projects: { issuetypes: CreateIssueMetadata[] }[] }) =>
                 res.projects[0]?.issuetypes[0]?.fields,
         }),
-        getIssueTypes: builder.query<IssueType[], { project: string }>({
-            query: () => `issuetype`,
-            transformResponse: (res: IssueType[], _meta, args) =>
-                res.filter(
-                    (issueType) =>
-                        (!issueType.scope || issueType.scope.project.key === args.project) &&
-                        issueType.hierarchyLevel === 0 // No sub-tasks or epic type tasks
-                ),
+        getIssueTypes: builder.query<IssueType[], { projectId: string }>({
+            // NOTE(OLA) Marked as experimental.
+            // Use commented lines (and pass in project key instead of id) if thist stops working.
+            query: ({ projectId }) => `/issuetype/project?projectId=${projectId}&level=0`,
+            // transformResponse: (res: IssueType[], _meta, args) =>
+            //     res.filter(
+            //         (issueType) =>
+            //             (!issueType.scope || issueType.scope.project.key === args.project) &&
+            //             issueType.hierarchyLevel === 0 // No sub-tasks or epic type tasks
+            //     ),
         }),
         getAccessibleResources: builder.query<Space[], { accessToken: string }>({
             queryFn: async ({ accessToken }) => {
@@ -286,6 +306,7 @@ export const {
     useAddAttachmentMutation,
     useGetAttachmentThumbnailQuery,
     useGetAttachmentContentQuery,
+    useGetNovorenderMetaCustomFieldQuery,
     useGetAccessibleResourcesQuery,
     useRefreshTokensMutation,
     useGetProjectsQuery,
