@@ -134,7 +134,7 @@ export function CreateIssue({ sceneId }: { sceneId: string }) {
 
         const body = {
             fields: {
-                ...(metaCustomfieldKey
+                ...(metaCustomfieldKey && createIssueMetadata && createIssueMetadata[metaCustomfieldKey]
                     ? { [metaCustomfieldKey]: JSON.stringify({ position: bm.explorerState?.camera.position }) }
                     : {}),
                 issuetype: {
