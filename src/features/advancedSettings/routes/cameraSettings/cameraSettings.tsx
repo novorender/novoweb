@@ -21,9 +21,11 @@ import { useExplorerGlobals } from "contexts/explorerGlobals";
 import { selectDefaultTopDownElevation } from "features/orthoCam";
 import {
     CameraSpeedLevel,
+    CameraType,
     renderActions,
     selectCameraDefaults,
     selectCameraSpeedLevels,
+    selectCameraType,
     selectPointerLock,
     selectProportionalCameraSpeed,
     selectViewMode,
@@ -67,6 +69,7 @@ export function CameraSettings({
     const usePointerLock = useAppSelector(selectPointerLock);
     const defaultTopDownElevation = useAppSelector(selectDefaultTopDownElevation);
     const viewMode = useAppSelector(selectViewMode);
+    const cameraType = useAppSelector(selectCameraType);
 
     // const [distance, setDistance] = useState(() => {
     //     const d = headlightDistance.toString();
@@ -399,6 +402,11 @@ export function CameraSettings({
                                         dispatch(
                                             renderActions.setCameraDefaults({ pinhole: { controller: value as any } })
                                         );
+
+                                        if (cameraType === CameraType.Pinhole) {
+                                            // Trigger new controller
+                                            dispatch(renderActions.setCamera({ type: CameraType.Pinhole }));
+                                        }
                                     }}
                                     input={<OutlinedInput />}
                                 >

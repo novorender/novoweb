@@ -3,7 +3,7 @@ import { useEffect, useRef } from "react";
 
 import { useAppDispatch, useAppSelector } from "app/store";
 import { useExplorerGlobals } from "contexts/explorerGlobals";
-import { CameraType, renderActions } from "features/render/renderSlice";
+import { CameraType, renderActions, selectViewMode } from "features/render/renderSlice";
 import { useAbortController } from "hooks/useAbortController";
 import { AsyncStatus, ViewMode } from "types/misc";
 import { handleImageResponse } from "utils/bcf";
@@ -20,6 +20,7 @@ export function useHandleImages() {
     const dispatch = useAppDispatch();
 
     const activeImage = useAppSelector(selectActiveImage);
+    const viewMode = useAppSelector(selectViewMode);
     const currentPanorama = useRef<{ image: PanoramaImage; obj?: RenderStateDynamicObject }>();
     const [abortController, abort] = useAbortController();
 
@@ -41,8 +42,10 @@ export function useHandleImages() {
             currentPanorama.current = undefined;
 
             if (!activeImage) {
-                dispatch(renderActions.setViewMode(ViewMode.Default));
-                dispatch(renderActions.setCamera({ type: CameraType.Pinhole }));
+                if (viewMode === ViewMode.Panorama) {
+                    dispatch(renderActions.setViewMode(ViewMode.Default));
+                    dispatch(renderActions.setCamera({ type: CameraType.Pinhole }));
+                }
                 return;
             }
 
@@ -110,6 +113,6 @@ export function useHandleImages() {
                 dispatch(imagesActions.setActiveImage({ image: panorama, status: AsyncStatus.Success }));
             }
         },
-        [activeImage, view, dispatch, abortController, abort]
+        [activeImage, view, dispatch, abortController, abort, viewMode]
     );
 }
