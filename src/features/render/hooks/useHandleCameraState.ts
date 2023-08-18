@@ -75,7 +75,7 @@ export function useHandleCameraState() {
                 );
             }
         }
-    }, [view, dispatch, state, defaults.pinhole.controller]);
+    }, [view, dispatch, state]);
 
     useEffect(() => {
         if (!view) {

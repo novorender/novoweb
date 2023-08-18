@@ -1,6 +1,6 @@
 import { css, styled } from "@mui/material";
 import { DrawProduct, DrawableEntity, MeasureSettings } from "@novorender/measure-api";
-import { ReadonlyVec2, mat3, quat, vec2, vec3 } from "gl-matrix";
+import { ReadonlyVec2, mat3, vec2, vec3 } from "gl-matrix";
 import { MutableRefObject, useCallback, useEffect, useRef, useState } from "react";
 
 import { measureApi } from "app";
@@ -53,7 +53,7 @@ export function Engine2D({
     renderFnRef,
 }: {
     pointerPos: MutableRefObject<Vec2>;
-    renderFnRef: MutableRefObject<((isIdleFrame: boolean) => void) | undefined>;
+    renderFnRef: MutableRefObject<((moved: boolean) => void) | undefined>;
 }) {
     const {
         state: { size, view, measureScene },
@@ -692,16 +692,11 @@ export function Engine2D({
     useEffect(() => {
         renderFnRef.current = animate;
         return () => (renderFnRef.current = undefined);
-        function animate(isIdleFrame: boolean) {
+        function animate(moved: boolean) {
             if (view) {
-                const run =
-                    !view.prevRenderState ||
-                    !vec3.exactEquals(view.renderState.camera.position, view.prevRenderState.camera.position) ||
-                    !quat.exactEquals(view.renderState.camera.rotation, view.prevRenderState.camera.rotation) ||
-                    view.renderState.camera.fov !== view.prevRenderState.camera.fov ||
-                    (showTracer && !vec2.exactEquals(prevPointerPos.current, pointerPos.current));
+                const run = moved || (showTracer && !vec2.exactEquals(prevPointerPos.current, pointerPos.current));
 
-                if (isIdleFrame || !run) {
+                if (!run) {
                     return;
                 }
 

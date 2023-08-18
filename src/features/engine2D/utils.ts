@@ -307,7 +307,7 @@ function drawLinesOrPolygon(
                     if (part.text[0][i].length === 0) {
                         continue;
                     }
-                    const textStr = part.text[0][i] + `${text.unit ? text.unit : ""}`;
+                    const textStr = part.text[0][i] + `${text.unit ? text.unit : "m"}`;
                     drawText(ctx, [points[i], points[i + 1]], textStr);
                 }
                 if (part.voids) {

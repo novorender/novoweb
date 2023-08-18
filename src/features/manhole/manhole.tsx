@@ -85,6 +85,7 @@ export default function Manhole() {
             }
         }
     }, [collisionTarget, collisionSettings, measureScene]);
+    const hasLid = !manhole?.top.innerRadius;
 
     const collisionTargetKind = !collisionTarget
         ? ""
@@ -160,7 +161,7 @@ export default function Manhole() {
                                 <Box p={1}>
                                     <Grid container>
                                         <Grid item xs={6}>
-                                            Elevation lid:
+                                            {hasLid ? "Elevation lid:" : "Elevation top:"}
                                         </Grid>
                                         <Grid item xs={4} mb={1}>
                                             {manhole.topElevation.toFixed(3)} m
@@ -179,7 +180,7 @@ export default function Manhole() {
                                         {manhole.top.outerRadius && (
                                             <>
                                                 <Grid item xs={6} mb={1}>
-                                                    Diameter lid:
+                                                    {hasLid ? "Diameter lid:" : "Diameter top:"}
                                                 </Grid>
                                                 <Grid item xs={4}>
                                                     {(manhole.top.outerRadius * 2).toFixed(3)} m
@@ -198,7 +199,7 @@ export default function Manhole() {
                                         </Grid>
 
                                         <Grid item xs={6} mb={1}>
-                                            Depth:
+                                            {hasLid ? "Depth from lid:" : "Depth from top:"}
                                         </Grid>
                                         <Grid item xs={4}>
                                             {(
@@ -212,7 +213,7 @@ export default function Manhole() {
                                         {collisionValues && (
                                             <>
                                                 <Grid item xs={6} mb={1}>
-                                                    Collision depth from lid:
+                                                    {hasLid ? "Collision depth from lid:" : "Collision depth from top:"}
                                                 </Grid>
                                                 <Grid item xs={4}>
                                                     {vec3

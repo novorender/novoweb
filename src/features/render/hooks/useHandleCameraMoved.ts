@@ -15,7 +15,7 @@ export function useHandleCameraMoved({
     engine2dRenderFn,
 }: {
     svg: SVGSVGElement | null;
-    engine2dRenderFn: MutableRefObject<((isIdleFrame: boolean) => void) | undefined>;
+    engine2dRenderFn: MutableRefObject<((moved: boolean) => void) | undefined>;
 }) {
     const {
         state: { view },
@@ -30,6 +30,8 @@ export function useHandleCameraMoved({
     const movementTimer = useRef<ReturnType<typeof setTimeout>>();
     const orthoMovementTimer = useRef<ReturnType<typeof setTimeout>>();
 
+    const prevCameraType = useRef(cameraType);
+
     useEffect(
         function initCameraMovedTracker() {
             if (!view) {
@@ -38,16 +40,13 @@ export function useHandleCameraMoved({
 
             view.render = (isIdleFrame) => cameraMoved(isIdleFrame, view);
 
-            function cameraMoved(isIdleFrame: boolean, view: View) {
-                engine2dRenderFn.current?.(isIdleFrame);
+            function cameraMoved(_isIdleFrame: boolean, view: View) {
+                const moved = view.activeController.moving || prevCameraType.current !== cameraType;
+                prevCameraType.current = cameraType;
 
-                const hasMoved =
-                    !view.prevRenderState ||
-                    !vec3.exactEquals(view.renderState.camera.position, view.prevRenderState.camera.position) ||
-                    !quat.exactEquals(view.renderState.camera.rotation, view.prevRenderState.camera.rotation) ||
-                    view.renderState.camera.fov !== view.prevRenderState.camera.fov;
+                engine2dRenderFn.current?.(moved);
 
-                if (isIdleFrame && !hasMoved) {
+                if (!moved) {
                     return;
                 }
 
@@ -67,7 +66,7 @@ export function useHandleCameraMoved({
                         return;
                     }
 
-                    const { camera } = (view as any).renderState;
+                    const { camera } = view.renderState;
 
                     // Update elevation
                     const mat = mat3.fromQuat(mat3.create(), camera.rotation);
@@ -88,25 +87,32 @@ export function useHandleCameraMoved({
                 }, 100);
 
                 movementTimer.current = setTimeout(() => {
-                    if (
-                        cameraType !== CameraType.Pinhole ||
-                        viewMode === ViewMode.Panorama ||
-                        view.renderState.camera.kind !== "pinhole"
-                    ) {
+                    if (viewMode === ViewMode.Panorama) {
                         return;
                     }
 
-                    const { position, rotation } = view.renderState.camera;
+                    const { position, rotation, fov } = view.renderState.camera;
+                    const kind =
+                        view.renderState.camera.kind === "orthographic" ? CameraType.Orthographic : CameraType.Pinhole;
                     const lastPos = savedCameraPositions.positions[savedCameraPositions.currentIndex];
 
-                    if (lastPos && vec3.equals(position, lastPos.position) && quat.equals(rotation, lastPos.rotation)) {
+                    if (
+                        lastPos &&
+                        vec3.equals(position, lastPos.position) &&
+                        quat.equals(rotation, lastPos.rotation) &&
+                        lastPos.fov &&
+                        lastPos.fov === fov &&
+                        kind === lastPos.kind
+                    ) {
                         return;
                     }
 
                     dispatch(
                         renderActions.saveCameraPosition({
+                            kind: cameraType,
                             position: vec3.clone(position),
                             rotation: quat.clone(rotation),
+                            fov,
                         })
                     );
                 }, 500);

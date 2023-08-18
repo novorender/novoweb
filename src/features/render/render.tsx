@@ -80,7 +80,7 @@ export function Render3D() {
 
     const [svg, setSvg] = useState<null | SVGSVGElement>(null);
 
-    const engine2dRenderFn = useRef<((isIdleFrame: boolean) => void) | undefined>();
+    const engine2dRenderFn = useRef<((moved: boolean) => void) | undefined>();
     const pointerPos = useRef([0, 0] as [x: number, y: number]);
     const canvasRef: RefCallback<HTMLCanvasElement> = useCallback(
         (el) => {

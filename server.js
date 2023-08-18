@@ -139,6 +139,18 @@ app.use(
     })
 );
 
+app.use(
+    "/ditio",
+    createProxyMiddleware({
+        target: "https://ditio-api-v3.azurewebsites.net",
+        // target: "https://ditio-api-test.azurewebsites.net",
+        pathRewrite: {
+            "^/ditio": "", // remove base path
+        },
+        changeOrigin: true,
+    })
+);
+
 app.use("/*", (_req, res, next) => {
     res.header("Cross-Origin-Opener-Policy", "same-origin");
     res.header("Cross-Origin-Embedder-Policy", "require-corp");
