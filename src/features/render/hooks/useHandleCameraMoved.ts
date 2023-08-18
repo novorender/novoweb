@@ -41,13 +41,7 @@ export function useHandleCameraMoved({
             function cameraMoved(isIdleFrame: boolean, view: View) {
                 engine2dRenderFn.current?.(isIdleFrame);
 
-                const hasMoved =
-                    !view.prevRenderState ||
-                    !vec3.exactEquals(view.renderState.camera.position, view.prevRenderState.camera.position) ||
-                    !quat.exactEquals(view.renderState.camera.rotation, view.prevRenderState.camera.rotation) ||
-                    view.renderState.camera.fov !== view.prevRenderState.camera.fov;
-
-                if (isIdleFrame && !hasMoved) {
+                if (!view.activeController.moving) {
                     return;
                 }
 
