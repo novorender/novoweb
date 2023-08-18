@@ -5,10 +5,10 @@ import { MouseEvent, MutableRefObject, PointerEvent as ReactPointerEvent, TouchE
 import { isIpad, isIphone } from "app";
 import { useAppDispatch, useAppSelector } from "app/store";
 import { useExplorerGlobals } from "contexts/explorerGlobals";
+import { selectShowTracer } from "features/followPath";
 import { measureActions, useMeasureHoverSettings } from "features/measure";
 import { orthoCamActions, selectCrossSectionPoint } from "features/orthoCam";
 
-import { useCanvasContextMenuHandler } from "./useCanvasContextMenuHandler";
 import {
     CameraType,
     Picker,
@@ -23,6 +23,7 @@ import {
     selectSubtrees,
 } from "..";
 import { moveSvgCursor } from "../svgUtils";
+import { useCanvasContextMenuHandler } from "./useCanvasContextMenuHandler";
 
 export function useCanvasEventHandlers({
     pointerPos,
@@ -47,6 +48,7 @@ export function useCanvasEventHandlers({
     const stamp = useAppSelector(selectStamp);
     const subtrees = useAppSelector(selectSubtrees);
     const cameraType = useAppSelector(selectCameraType);
+    const roadLayerTracerEnabled = useAppSelector(selectShowTracer);
     const dispatch = useAppDispatch();
 
     const clippingPlaneCommitTimer = useRef<ReturnType<typeof setTimeout>>();
@@ -201,7 +203,11 @@ export function useCanvasEventHandlers({
     const previous2dSnapPos = useRef(vec2.create());
     const onPointerMove = async (e: ReactPointerEvent<HTMLCanvasElement>) => {
         pointerPos.current = [e.nativeEvent.offsetX, e.nativeEvent.offsetY];
-        renderFnRef.current?.(false);
+
+        if (roadLayerTracerEnabled) {
+            // TODO: dont call renderfn directly from here.
+            renderFnRef.current?.(false);
+        }
 
         if (!view || !canvas || !svg || (!e.movementY && !e.movementX)) {
             return;
