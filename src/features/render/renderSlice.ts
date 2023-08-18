@@ -63,7 +63,7 @@ export enum Picker {
 
 export type Subtree = keyof NonNullable<State["subtrees"]>;
 
-type CameraPosition = Pick<Camera, "position" | "rotation">;
+type CameraStep = { position: vec3; rotation: quat; fov?: number; kind: CameraType };
 export type ObjectGroups = { default: ObjectGroup; defaultHidden: ObjectGroup; custom: ObjectGroup[] };
 
 // Redux toolkit with immer removes readonly modifier of state in the reducer so we get ts errors
@@ -94,9 +94,8 @@ type CameraState =
           };
           zoomTo?: BoundingSphere;
       };
-type MutableCameraState = DeepMutable<CameraState>;
-type SavedCameraPositions = { currentIndex: number; positions: CameraPosition[] };
-type MutableSavedCameraPositions = DeepMutable<SavedCameraPositions>;
+
+type SavedCameraPositions = { currentIndex: number; positions: CameraStep[] };
 
 export enum StampKind {
     LogPoint,
@@ -155,7 +154,7 @@ const initialState = {
     defaultVisibility: ObjectVisibility.Neutral,
     selectMultiple: false,
     currentCameraSpeedLevel: CameraSpeedLevel.Default,
-    savedCameraPositions: { currentIndex: -1, positions: [] } as MutableSavedCameraPositions,
+    savedCameraPositions: { currentIndex: -1, positions: [] as CameraStep[] },
     subtrees: {
         triangles: SubtreeStatus.Unavailable,
         lines: SubtreeStatus.Unavailable,
@@ -168,7 +167,7 @@ const initialState = {
         color: [0, 0, 1, 1] as VecRGB | VecRGBA,
         use: false,
     },
-    camera: { type: CameraType.Pinhole } as MutableCameraState,
+    camera: { type: CameraType.Pinhole } as CameraState,
     picker: Picker.Object,
     viewMode: ViewMode.Default,
     loadingHandles: [] as number[],
@@ -393,10 +392,11 @@ export const renderSlice = createSlice({
          * @remarks
          * Deletes camera positions already saved at higher indexes
          */
-        saveCameraPosition: (state, action: PayloadAction<CameraPosition>) => {
+        saveCameraPosition: (state, action: PayloadAction<CameraStep>) => {
             state.savedCameraPositions.positions = state.savedCameraPositions.positions
                 .slice(0, state.savedCameraPositions.currentIndex + 1)
                 .concat({
+                    ...action.payload,
                     position: vec3.clone(action.payload.position),
                     rotation: quat.clone(action.payload.rotation),
                 });
@@ -404,20 +404,23 @@ export const renderSlice = createSlice({
         },
         undoCameraPosition: (state) => {
             state.savedCameraPositions.currentIndex = state.savedCameraPositions.currentIndex - 1;
+            const step = state.savedCameraPositions.positions[state.savedCameraPositions.currentIndex];
             state.camera = {
-                type: CameraType.Pinhole,
-                goTo: state.savedCameraPositions.positions[state.savedCameraPositions.currentIndex],
+                type: step.kind,
+                goTo: step,
             };
         },
         redoCameraPosition: (state) => {
             state.savedCameraPositions.currentIndex = state.savedCameraPositions.currentIndex + 1;
+            const step = state.savedCameraPositions.positions[state.savedCameraPositions.currentIndex];
             state.camera = {
-                type: CameraType.Pinhole,
-                goTo: state.savedCameraPositions.positions[state.savedCameraPositions.currentIndex],
+                type: step.kind,
+                goTo: step,
             };
         },
-        setHomeCameraPos: (state, action: PayloadAction<CameraPosition>) => {
+        setHomeCameraPos: (state, action: PayloadAction<CameraStep>) => {
             state.savedCameraPositions.positions[0] = {
+                ...action.payload,
                 position: vec3.clone(action.payload.position),
                 rotation: quat.clone(action.payload.rotation),
             };
@@ -476,7 +479,7 @@ export const renderSlice = createSlice({
                 ...payload,
                 ...(goTo ? { goTo } : {}),
                 ...(zoomTo ? { zoomTo } : {}),
-            } as MutableCameraState;
+            };
         },
         setGrid: (state, action: PayloadAction<RecursivePartial<State["grid"]>>) => {
             state.grid = mergeRecursive(state.grid, action.payload);
@@ -551,7 +554,7 @@ export const renderSlice = createSlice({
             // Init camera
             state.camera.type = initialCamera.kind === "orthographic" ? CameraType.Orthographic : CameraType.Pinhole;
             state.camera.goTo = initialCamera;
-            state.savedCameraPositions.positions[0] = initialCamera;
+            state.savedCameraPositions.positions[0] = { ...initialCamera, kind: state.camera.type };
             state.savedCameraPositions.currentIndex = 0;
 
             // project
@@ -671,9 +674,8 @@ export const renderSlice = createSlice({
                 state.camera.type =
                     initialCamera.kind === "orthographic" ? CameraType.Orthographic : CameraType.Pinhole;
                 state.camera.goTo = initialCamera;
-                // todo support ortho
                 state.savedCameraPositions = {
-                    positions: [initialCamera],
+                    positions: [{ ...initialCamera, kind: state.camera.type }],
                     currentIndex: 0,
                 };
             }
@@ -830,7 +832,7 @@ export const selectCurrentCameraSpeedLevel = (state: RootState) => state.render.
 export const selectSavedCameraPositions = (state: RootState) =>
     state.render.savedCameraPositions as SavedCameraPositions;
 export const selectHomeCameraPosition = (state: RootState) =>
-    state.render.savedCameraPositions.positions[0] as CameraPosition;
+    state.render.savedCameraPositions.positions[0] as CameraStep;
 export const selectSubtrees = (state: RootState) => state.render.subtrees;
 export const selectSelectionBasketMode = (state: RootState) => state.render.selectionBasketMode;
 export const selectSelectionBasketColor = (state: RootState) => state.render.selectionBasketColor;

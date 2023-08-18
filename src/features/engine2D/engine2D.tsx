@@ -53,7 +53,7 @@ export function Engine2D({
     renderFnRef,
 }: {
     pointerPos: MutableRefObject<Vec2>;
-    renderFnRef: MutableRefObject<((isIdleFrame: boolean) => void) | undefined>;
+    renderFnRef: MutableRefObject<((moved: boolean) => void) | undefined>;
 }) {
     const {
         state: { size, view, measureScene },
@@ -692,11 +692,9 @@ export function Engine2D({
     useEffect(() => {
         renderFnRef.current = animate;
         return () => (renderFnRef.current = undefined);
-        function animate(_isIdleFrame: boolean) {
+        function animate(moved: boolean) {
             if (view) {
-                const run =
-                    view.activeController.moving ||
-                    (showTracer && !vec2.exactEquals(prevPointerPos.current, pointerPos.current));
+                const run = moved || (showTracer && !vec2.exactEquals(prevPointerPos.current, pointerPos.current));
 
                 if (!run) {
                     return;

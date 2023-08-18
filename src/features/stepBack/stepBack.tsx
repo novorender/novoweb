@@ -2,13 +2,7 @@ import type { SpeedDialActionProps } from "@mui/material";
 
 import { SpeedDialAction } from "components";
 import { featuresConfig } from "config/features";
-import {
-    selectSavedCameraPositions,
-    renderActions,
-    CameraType,
-    selectCameraType,
-    selectViewMode,
-} from "features/render/renderSlice";
+import { selectSavedCameraPositions, renderActions, selectViewMode } from "features/render/renderSlice";
 import { useAppDispatch, useAppSelector } from "app/store";
 import { ViewMode } from "types/misc";
 
@@ -20,9 +14,7 @@ export function StepBack({ position, ...speedDialProps }: Props) {
     const { name, Icon } = featuresConfig["stepBack"];
     const savedCameraPositions = useAppSelector(selectSavedCameraPositions);
     const viewMode = useAppSelector(selectViewMode);
-    const cameraType = useAppSelector(selectCameraType);
-    const canStepBack =
-        savedCameraPositions.currentIndex >= 1 && viewMode !== ViewMode.Panorama && cameraType === CameraType.Pinhole;
+    const canStepBack = savedCameraPositions.currentIndex >= 1 && viewMode !== ViewMode.Panorama;
 
     const dispatch = useAppDispatch();
 
