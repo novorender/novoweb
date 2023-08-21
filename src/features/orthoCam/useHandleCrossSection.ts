@@ -1,10 +1,10 @@
 import { useEffect } from "react";
 
 import { useAppDispatch, useAppSelector } from "app/store";
+import { CameraType, renderActions, selectCameraType, selectViewMode } from "features/render";
+import { ViewMode } from "types/misc";
 
 import { orthoCamActions } from "./orthoCamSlice";
-import { CameraType, renderActions, selectCameraType, selectViewMode } from "features/render/renderSlice";
-import { ViewMode } from "types/misc";
 
 export function useHandleCrossSection() {
     const cameraType = useAppSelector(selectCameraType);

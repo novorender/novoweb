@@ -1,14 +1,11 @@
 import { ArrowDownward, ColorLens } from "@mui/icons-material";
-import { Box, Button, FormControlLabel, Typography } from "@mui/material";
-import { ChangeEvent, MouseEvent, useState } from "react";
+import { Box, Button, FormControlLabel, Slider, Typography } from "@mui/material";
+import { ChangeEvent, MouseEvent, SyntheticEvent, useState } from "react";
 
 import { useAppDispatch, useAppSelector } from "app/store";
 import { Divider, IosSwitch, LogoSpeedDial, ScrollBox, Switch, WidgetContainer, WidgetHeader } from "components";
 import { featuresConfig } from "config/features";
 import { useExplorerGlobals } from "contexts/explorerGlobals";
-import WidgetList from "features/widgetList/widgetList";
-import { useToggle } from "hooks/useToggle";
-
 import { ColorPicker } from "features/colorPicker";
 import {
     CameraType,
@@ -21,12 +18,17 @@ import {
     selectPicker,
     selectSubtrees,
     selectTerrain,
+    selectViewMode,
 } from "features/render/renderSlice";
+import WidgetList from "features/widgetList/widgetList";
+import { useToggle } from "hooks/useToggle";
 import { selectMaximized, selectMinimized } from "slices/explorerSlice";
+import { ViewMode } from "types/misc";
 import { VecRGBA, rgbToVec, vecToRgb } from "utils/color";
 
 import {
     orthoCamActions,
+    selectCrossSectionClipping,
     selectCurrentTopDownElevation,
     selectDefaultTopDownElevation,
     selectTopDownSnapToAxis,
@@ -52,7 +54,11 @@ export default function OrthoCam() {
     const snapToNearestAxis = useAppSelector(selectTopDownSnapToAxis) === undefined;
     const defaultTopDownElevation = useAppSelector(selectDefaultTopDownElevation);
     const currentElevation = useAppSelector(selectCurrentTopDownElevation);
+    const viewMode = useAppSelector(selectViewMode);
+    const crossSectionClipping = useAppSelector(selectCrossSectionClipping);
     const dispatch = useAppDispatch();
+
+    const [clipping, setClipping] = useState(crossSectionClipping);
 
     const [colorPickerAnchor, setColorPickerAnchor] = useState<HTMLElement | null>(null);
     const toggleColorPicker = (event?: MouseEvent<HTMLElement>) => {
@@ -94,6 +100,23 @@ export default function OrthoCam() {
             dispatch(orthoCamActions.setCrossSectionPoint(undefined));
             dispatch(orthoCamActions.setCrossSectionHover(undefined));
         }
+    };
+
+    const handleClippingChange = (_event: Event, newValue: number | number[]) => {
+        if (Array.isArray(newValue) || view.renderState.camera.kind !== "orthographic") {
+            return;
+        }
+
+        setClipping(newValue);
+        view.modifyRenderState({ camera: { far: newValue } });
+    };
+
+    const handleClippingCommit = (_event: Event | SyntheticEvent<Element, Event>, newValue: number | number[]) => {
+        if (Array.isArray(newValue) || view.renderState.camera.kind !== "orthographic") {
+            return;
+        }
+
+        dispatch(orthoCamActions.setCrossSectionClipping(newValue));
     };
 
     return (
@@ -188,6 +211,25 @@ export default function OrthoCam() {
                                     Background color
                                 </Button>
                             </Box>
+
+                            {viewMode === ViewMode.CrossSection && (
+                                <>
+                                    <Divider sx={{ my: 1 }} />
+                                    <Typography>Clipping: {clipping} m</Typography>
+                                    <Box mx={2}>
+                                        <Slider
+                                            getAriaLabel={() => "Clipping far"}
+                                            value={clipping}
+                                            min={0.001}
+                                            max={1}
+                                            step={0.01}
+                                            onChange={handleClippingChange}
+                                            onChangeCommitted={handleClippingCommit}
+                                            valueLabelDisplay="off"
+                                        />
+                                    </Box>
+                                </>
+                            )}
                         </>
                     ) : null}
                 </ScrollBox>

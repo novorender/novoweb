@@ -17,7 +17,7 @@ import { followPathActions } from "features/followPath";
 import { heightProfileActions } from "features/heightProfile";
 import { manholeActions } from "features/manhole";
 import { measureActions, selectMeasure, useMeasurePickSettings } from "features/measure";
-import { orthoCamActions, selectCrossSectionPoint } from "features/orthoCam";
+import { orthoCamActions, selectCrossSectionClipping, selectCrossSectionPoint } from "features/orthoCam";
 import { pointLineActions } from "features/pointLine";
 import { selectShowPropertiesStamp } from "features/properties/slice";
 import {
@@ -56,6 +56,7 @@ export function useCanvasClickHandler() {
     const picker = useAppSelector(selectPicker);
     const measurePickSettings = useMeasurePickSettings();
     const crossSectionPoint = useAppSelector(selectCrossSectionPoint);
+    const crossSectionClipping = useAppSelector(selectCrossSectionClipping);
     const viewMode = useAppSelector(selectViewMode);
     const pointerDownState = useAppSelector(selectPointerDownState);
     const showPropertiesStamp = useAppSelector(selectShowPropertiesStamp);
@@ -140,7 +141,7 @@ export function useCanvasClickHandler() {
                                 position: p,
                                 rotation,
                                 fov: 45,
-                                far: 0.01,
+                                far: crossSectionClipping,
                             },
                             gridOrigo: p as vec3,
                         })
