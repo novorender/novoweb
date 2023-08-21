@@ -29,6 +29,8 @@ export const orthoCamSlice = createSlice({
 
 export const selectDefaultTopDownElevation = (state: RootState) =>
     state.render.cameraDefaults.orthographic.topDownElevation;
+
+export const selectTopDownSnapToAxis = (state: RootState) => state.render.cameraDefaults.orthographic.topDownSnapToAxis;
 export const selectCurrentTopDownElevation = (state: RootState) => state.orthoCam.currentTopDownElevation;
 export const selectCrossSectionPoint = (state: RootState) => state.orthoCam.crossSection;
 export const selectCrossSectionHover = (state: RootState) => state.orthoCam.crossSectionHover;

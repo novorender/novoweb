@@ -25,6 +25,7 @@ export type ExplorerProjectState = {
             };
             usePointerLock: boolean;
             topDownElevation: undefined | number;
+            topDownSnapToAxis?: "north";
         };
     };
     renderSettings: {

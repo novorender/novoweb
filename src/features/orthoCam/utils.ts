@@ -1,7 +1,15 @@
 import { View, rotationFromDirection } from "@novorender/api";
 import { quat, vec3 } from "gl-matrix";
 
-export function getTopDownParams({ view, elevation }: { view: View; elevation: number | undefined }): {
+export function getTopDownParams({
+    view,
+    elevation,
+    snapToNearestAxis,
+}: {
+    view: View;
+    elevation: number | undefined;
+    snapToNearestAxis?: boolean;
+}): {
     position: vec3;
     rotation: quat;
     fov: number;
@@ -14,7 +22,7 @@ export function getTopDownParams({ view, elevation }: { view: View; elevation: n
 
     return {
         position,
-        rotation: rotationFromDirection([0, 0, 1], view.renderState.camera.rotation),
+        rotation: rotationFromDirection([0, 0, 1], snapToNearestAxis ? view.renderState.camera.rotation : undefined),
         fov: 100,
     };
 }

@@ -25,7 +25,12 @@ import {
 import { selectMaximized, selectMinimized } from "slices/explorerSlice";
 import { VecRGBA, rgbToVec, vecToRgb } from "utils/color";
 
-import { orthoCamActions, selectCurrentTopDownElevation, selectDefaultTopDownElevation } from "./orthoCamSlice";
+import {
+    orthoCamActions,
+    selectCurrentTopDownElevation,
+    selectDefaultTopDownElevation,
+    selectTopDownSnapToAxis,
+} from "./orthoCamSlice";
 import { getTopDownParams } from "./utils";
 
 export default function OrthoCam() {
@@ -44,6 +49,7 @@ export default function OrthoCam() {
     const subtrees = useAppSelector(selectSubtrees);
     const background = useAppSelector(selectBackground);
     const terrain = useAppSelector(selectTerrain);
+    const snapToNearestAxis = useAppSelector(selectTopDownSnapToAxis) === undefined;
     const defaultTopDownElevation = useAppSelector(selectDefaultTopDownElevation);
     const currentElevation = useAppSelector(selectCurrentTopDownElevation);
     const dispatch = useAppDispatch();
@@ -75,7 +81,7 @@ export default function OrthoCam() {
         dispatch(
             renderActions.setCamera({
                 type: CameraType.Orthographic,
-                goTo: getTopDownParams({ view, elevation: defaultTopDownElevation }),
+                goTo: getTopDownParams({ view, elevation: defaultTopDownElevation, snapToNearestAxis }),
             })
         );
     };

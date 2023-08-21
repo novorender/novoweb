@@ -18,7 +18,7 @@ import { useHistory } from "react-router-dom";
 import { useAppDispatch, useAppSelector } from "app/store";
 import { Accordion, AccordionDetails, AccordionSummary, Divider, LinearProgress, ScrollBox, Switch } from "components";
 import { useExplorerGlobals } from "contexts/explorerGlobals";
-import { selectDefaultTopDownElevation } from "features/orthoCam";
+import { selectDefaultTopDownElevation, selectTopDownSnapToAxis } from "features/orthoCam";
 import {
     CameraSpeedLevel,
     CameraType,
@@ -67,6 +67,7 @@ export function CameraSettings({
     // const { headlightIntensity, headlightDistance } = settings;
     const cameraDefaults = useAppSelector(selectCameraDefaults);
     const usePointerLock = useAppSelector(selectPointerLock);
+    const topDownSnapToNearestAxis = useAppSelector(selectTopDownSnapToAxis) === undefined;
     const defaultTopDownElevation = useAppSelector(selectDefaultTopDownElevation);
     const viewMode = useAppSelector(selectViewMode);
     const cameraType = useAppSelector(selectCameraType);
@@ -444,6 +445,31 @@ export function CameraSettings({
                                 label={
                                     <Box ml={1} fontSize={16}>
                                         Reset pointer when released
+                                    </Box>
+                                }
+                            />
+                            <FormControlLabel
+                                sx={{ ml: 0, mb: 1 }}
+                                control={
+                                    <Switch
+                                        name={"topDownSnapToAxis"}
+                                        checked={!topDownSnapToNearestAxis}
+                                        onChange={() => {
+                                            dispatch(
+                                                renderActions.setCameraDefaults({
+                                                    orthographic: {
+                                                        topDownSnapToAxis: topDownSnapToNearestAxis
+                                                            ? "north"
+                                                            : undefined,
+                                                    },
+                                                })
+                                            );
+                                        }}
+                                    />
+                                }
+                                label={
+                                    <Box ml={1} fontSize={16}>
+                                        Top-down snap to north
                                     </Box>
                                 }
                             />
