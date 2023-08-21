@@ -12,9 +12,9 @@ import { store, useAppDispatch, useAppSelector } from "app/store";
 import { IosSwitch, LinearProgress, withCustomScrollbar } from "components";
 import { useExplorerGlobals } from "contexts/explorerGlobals";
 import { selectProjectSettings } from "features/render/renderSlice";
+import { flip, flipGLtoCadQuat } from "features/render/utils";
 import { AsyncStatus, hasFinished } from "types/misc";
 
-import { flip, flipGLtoCadQuat } from "features/render/utils";
 import { ImageListItem } from "../imageListItem";
 import {
     Image,
@@ -38,7 +38,6 @@ export function Root() {
 
     const images = useAppSelector(selectImages);
     const filter = useAppSelector(selectImageFilter);
-    const activeImage = useAppSelector(selectActiveImage);
     const showMarkers = useAppSelector(selectShowImageMarkers);
     const { tmZone } = useAppSelector(selectProjectSettings);
     const dispatch = useAppDispatch();
@@ -66,21 +65,10 @@ export function Root() {
                     }
                     label={<Box fontSize={14}>Show markers</Box>}
                 />
-                <Button
-                    color="grey"
-                    onClick={() => dispatch(imagesActions.setActiveImage(undefined))}
-                    disabled={!activeImage}
-                >
-                    <CancelPresentation sx={{ mr: 1 }} />
-                    Cancel
-                </Button>
+                <Cancel />
             </Box>
 
-            {(!hasFinished(images) || activeImage?.status === AsyncStatus.Loading) && (
-                <Box>
-                    <LinearProgress />
-                </Box>
-            )}
+            <Progress />
 
             {hasFinished(images) ? (
                 images.status === AsyncStatus.Error ? (
@@ -97,7 +85,7 @@ export function Root() {
                                     width={width}
                                     itemSize={80}
                                     overscanCount={3}
-                                    itemCount={images.data.length ?? 0}
+                                    itemCount={images.data.length}
                                 >
                                     {({ index, style }) => <ImageListItem image={images.data[index]} style={style} />}
                                 </StyledFixedSizeList>
@@ -131,6 +119,34 @@ export function Root() {
                 )
             ) : null}
         </>
+    );
+}
+
+// NOTE(OLA): Moved <Cancel /> and <Progress /> out of main component as activeImage changes caused images in list to reload.
+function Cancel() {
+    const dispatch = useAppDispatch();
+    const activeImage = useAppSelector(selectActiveImage);
+
+    return (
+        <Button color="grey" onClick={() => dispatch(imagesActions.setActiveImage(undefined))} disabled={!activeImage}>
+            <CancelPresentation sx={{ mr: 1 }} />
+            Cancel
+        </Button>
+    );
+}
+
+function Progress() {
+    const images = useAppSelector(selectImages);
+    const activeImage = useAppSelector(selectActiveImage);
+
+    if (hasFinished(images) && activeImage?.status !== AsyncStatus.Loading) {
+        return null;
+    }
+
+    return (
+        <Box>
+            <LinearProgress />
+        </Box>
     );
 }
 
