@@ -326,7 +326,7 @@ export function Issue({ sceneId }: { sceneId: string }) {
                         <ImgModal
                             src={fullImage ?? thumbnail ?? ""}
                             open={modalOpen && !isFetchingFullImage}
-                            onClose={toggleModal}
+                            onClose={() => toggleModal()}
                         />
                     </ScrollBox>
                 )

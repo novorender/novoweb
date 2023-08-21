@@ -9,18 +9,20 @@ import { useExplorerGlobals } from "contexts/explorerGlobals";
 import { highlightActions, useDispatchHighlighted } from "contexts/highlighted";
 import { useAbortController } from "hooks/useAbortController";
 import { uniqueArray } from "utils/misc";
-import { searchDeepByPatterns } from "utils/search";
+import { searchByPatterns, searchDeepByPatterns } from "utils/search";
 
 export function Search({
     savedInputs,
     setSavedInputs,
     ids,
     setIds,
+    toggleIncludeDescendants,
 }: {
     savedInputs: SearchPattern[];
     setSavedInputs: React.Dispatch<React.SetStateAction<SearchPattern[]>>;
     ids: ObjectId[];
     setIds: (arg: number[] | ((_ids: ObjectId[]) => ObjectId[])) => void;
+    toggleIncludeDescendants: (val?: boolean) => void;
 }) {
     const match = useRouteMatch();
     const theme = useTheme();
@@ -46,17 +48,31 @@ export function Search({
         setSavedInputs(inputs);
         setSearching(true);
 
-        await searchDeepByPatterns({
-            abortSignal,
-            db,
-            searchPatterns: inputs,
-            callback: (result) => {
-                setIds((state) => state.concat(result));
-                dispatchHighlighted(highlightActions.add(result));
-            },
-        }).catch(() => {});
+        const deep = inputs.every((input) => !input.exclude);
+        if (deep) {
+            await searchDeepByPatterns({
+                abortSignal,
+                db,
+                searchPatterns: inputs,
+                callback: (result) => {
+                    setIds((state) => state.concat(result));
+                    dispatchHighlighted(highlightActions.add(result));
+                },
+            }).catch(() => {});
+        } else {
+            await searchByPatterns({
+                abortSignal,
+                db,
+                searchPatterns: inputs,
+                callback: (result) => {
+                    setIds((state) => state.concat(result.map((res) => res.id)));
+                    dispatchHighlighted(highlightActions.add(result.map((res) => res.id)));
+                },
+            }).catch(() => {});
+        }
 
         setIds((ids) => uniqueArray(ids));
+        toggleIncludeDescendants(deep);
         setSearching(false);
     };
 

@@ -84,6 +84,7 @@ export function Crupdate({ sceneId }: { sceneId: string }) {
                             setSavedInputs={setSavedInputs}
                             ids={ids.data}
                             setIds={setIdsData}
+                            toggleIncludeDescendants={toggleIncludeDescendants}
                         />
                     </Route>
                     <Route path={match.path + "/json"} exact>

@@ -211,7 +211,7 @@ export default function HeightProfile() {
                                     profile.status !== AsyncStatus.Success || !profile.data.profilePoints.length
                                 )}
                                 color="grey"
-                                onClick={toggleModal}
+                                onClick={() => toggleModal()}
                             >
                                 <Timeline sx={{ mr: 1 }} />
                                 Show
@@ -237,7 +237,7 @@ export default function HeightProfile() {
                         >
                             <IconButton
                                 aria-label="close"
-                                onClick={toggleModal}
+                                onClick={() => toggleModal()}
                                 sx={{
                                     position: "absolute",
                                     top: { xs: theme.spacing(3), sm: theme.spacing(5), md: theme.spacing(9) },

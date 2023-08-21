@@ -26,7 +26,7 @@ export function MenuWidget() {
                             </Typography>
                         </Box>
                         <Box ml="auto">
-                            <IconButton size="small" onClick={toggle}>
+                            <IconButton size="small" onClick={() => toggle()}>
                                 <Close />
                             </IconButton>
                         </Box>

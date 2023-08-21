@@ -76,7 +76,7 @@ function ProjectListItem({ project }: { project: Project }) {
             </ListItem>
             <ImgModal
                 open={modalOpen}
-                onClose={toggleModal}
+                onClose={() => toggleModal()}
                 sx={{ display: "flex", justifyContent: "center", alignItems: "center" }}
                 src={src}
             />

@@ -154,7 +154,7 @@ export function Login() {
                                         <InputAdornment position="end">
                                             <IconButton
                                                 aria-label="toggle password visibility"
-                                                onClick={toggleShowPassword}
+                                                onClick={() => toggleShowPassword()}
                                                 size="large"
                                             >
                                                 {showPassword ? <VisibilityOff /> : <Visibility />}

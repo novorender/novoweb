@@ -211,7 +211,7 @@ export default function RangeSearch() {
 
                             <FormControlLabel
                                 sx={{ ml: 0, mr: 3, mb: 2, minHeight: 24 }}
-                                control={<Switch checked={dates} onChange={toggleDates} />}
+                                control={<Switch checked={dates} onChange={() => toggleDates()} />}
                                 label={
                                     <Box ml={0.5} fontSize={14}>
                                         Dates

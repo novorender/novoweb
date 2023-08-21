@@ -65,7 +65,14 @@ export function VersionAlert() {
                     </Typography>
                     <FormControlLabel
                         sx={{ mb: 2 }}
-                        control={<Checkbox size="small" color="primary" checked={hideNext} onChange={toggleHideNext} />}
+                        control={
+                            <Checkbox
+                                size="small"
+                                color="primary"
+                                checked={hideNext}
+                                onChange={() => toggleHideNext()}
+                            />
+                        }
                         label={
                             <Box mr={0.5} sx={{ userSelect: "none" }}>
                                 Don't show again
