@@ -9,6 +9,7 @@ import {
     MenuItem,
     OutlinedInput,
     Select,
+    Typography,
     useTheme,
 } from "@mui/material";
 import { quat, vec3 } from "gl-matrix";
@@ -227,6 +228,10 @@ export function CameraSettings({
                 </Box>
             ) : null}
             <ScrollBox height={1} mt={1} pb={3}>
+                <Typography p={1} pb={0} variant="h6" fontWeight={600}>
+                    Camera settings
+                </Typography>
+                <Divider sx={{ my: 1 }} />
                 <Clipping />
                 <Accordion>
                     <AccordionSummary>Movement speed</AccordionSummary>

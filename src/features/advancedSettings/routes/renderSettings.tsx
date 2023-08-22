@@ -66,7 +66,11 @@ export function RenderSettings({ save, saving }: { save: () => Promise<void>; sa
                     <LinearProgress />
                 </Box>
             ) : null}
-            <ScrollBox height={1} pb={3}>
+            <ScrollBox height={1} mt={1} pb={3}>
+                <Typography p={1} pb={0} variant="h6" fontWeight={600}>
+                    Render settings
+                </Typography>
+                <Divider sx={{ my: 1 }} />
                 <Box p={1} display="flex" flexDirection="column">
                     <FormControlLabel
                         sx={{ ml: 0, mb: 2 }}

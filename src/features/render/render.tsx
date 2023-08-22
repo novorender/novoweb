@@ -10,6 +10,7 @@ import { useHandleClipping } from "features/clippingPlanes/useHandleClipping";
 import { useHandleDeviations } from "features/deviations";
 import { useHandleDitioKeepAlive } from "features/ditio";
 import { Engine2D } from "features/engine2D";
+import { useHandleImages } from "features/images";
 import { useHandleJiraKeepAlive } from "features/jira";
 import { useHandleManhole } from "features/manhole";
 import { useHandleLocationMarker } from "features/myLocation";
@@ -20,7 +21,6 @@ import { selectDebugStats, selectLoadingHandles, selectSceneStatus } from "featu
 import { useHandleXsiteManageKeepAlive, useHandleXsiteManageMachineLocations } from "features/xsiteManage";
 import { AsyncStatus } from "types/misc";
 
-import { useHandleImages } from "features/images";
 import { useCanvasClickHandler } from "./hooks/useCanvasClickHandler";
 import { useCanvasEventHandlers } from "./hooks/useCanvasEventHandlers";
 import { useHandleAdvancedSettings } from "./hooks/useHandleAdvancedSettings";

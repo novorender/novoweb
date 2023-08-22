@@ -1,5 +1,5 @@
 import { ArrowBack, Save } from "@mui/icons-material";
-import { Autocomplete, Box, Button, createFilterOptions, useTheme } from "@mui/material";
+import { Autocomplete, Box, Button, Typography, createFilterOptions, useTheme } from "@mui/material";
 import { useHistory } from "react-router-dom";
 
 import { dataApi } from "app";
@@ -40,7 +40,11 @@ export function ProjectSettings({ save, saving }: { save: () => Promise<void>; s
                     <LinearProgress />
                 </Box>
             ) : null}
-            <ScrollBox height={1} px={1} py={3}>
+            <ScrollBox height={1} px={1} mt={1} pb={3}>
+                <Typography pt={1} variant="h6" fontWeight={600}>
+                    Project settings
+                </Typography>
+                <Divider sx={{ my: 1, mb: 2 }} />
                 <Autocomplete
                     selectOnFocus
                     clearOnBlur

@@ -9,6 +9,7 @@ import {
     FormLabel,
     Select,
     MenuItem,
+    Typography,
 } from "@mui/material";
 import { useHistory } from "react-router-dom";
 import { ArrowBack, Save } from "@mui/icons-material";
@@ -77,7 +78,11 @@ export function FeatureSettings({ save, saving }: { save: () => Promise<void>; s
                     <LinearProgress />
                 </Box>
             ) : null}
-            <ScrollBox height={1} pb={3}>
+            <ScrollBox height={1} mt={1} pb={3}>
+                <Typography p={1} pb={0} variant="h6" fontWeight={600}>
+                    Feature settings
+                </Typography>
+                <Divider sx={{ my: 1 }} />
                 <Box p={1} mt={1} display="flex" flexDirection="column">
                     <FormControlLabel
                         sx={{ ml: 0, mb: 1 }}
