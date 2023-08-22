@@ -189,8 +189,8 @@ class Cube {
 const CubeContainer = styled("svg", { shouldForwardProp: (prop) => prop !== "loading" })<{ loading?: boolean }>(
     ({ loading }) => css`
         position: absolute;
-        top: 20px;
-        left: 20px;
+        top: 30px;
+        left: 30px;
         overflow: visible;
         pointer-events: none;
         -webkit-tap-highlight-color: rgba(0, 0, 0, 0);
@@ -284,7 +284,7 @@ class Circle {
             return {
                 kind: "circle",
                 path,
-                zIndex: batch.reduce((tot, v) => (tot += v[2]), 0),
+                zIndex: 0,
                 id: `circle-${this.radius}-${idx}`,
             };
         });
@@ -295,22 +295,24 @@ class Circle {
     }
 }
 
-class Triangle {
-    originalPts: vec3[];
-    pts: vec3[];
+class Compass {
+    originalPts: [vec3, vec3, vec3, vec3];
+    pts: [vec3, vec3, vec3, vec3];
     size: number;
 
     constructor(size: number, z: number, radius: number) {
         this.size = size;
         this.pts = [
             vec3.fromValues(0, 0 + radius, z),
-            vec3.fromValues(size / 3, -size + radius, z),
-            vec3.fromValues(-(size / 3), -size + radius, z),
+            vec3.fromValues(0 + radius, 0, z),
+            vec3.fromValues(0, 0 - radius, z),
+            vec3.fromValues(0 - radius, 0, z),
         ];
         this.originalPts = [
             vec3.fromValues(0, 0 + radius, z),
-            vec3.fromValues(size / 3, -size + radius, z),
-            vec3.fromValues(-(size / 3), -size + radius, z),
+            vec3.fromValues(0 + radius, 0, z),
+            vec3.fromValues(0, 0 - radius, z),
+            vec3.fromValues(0 - radius, 0, z),
         ];
     }
 
@@ -319,23 +321,21 @@ class Triangle {
     }
 
     setRotation(rot: quat) {
-        this.pts = this.originalPts.map((p) => vec3.transformQuat(vec3.create(), p, rot));
+        this.pts = this.originalPts.map((p) => vec3.transformQuat(vec3.create(), p, rot)) as typeof this.originalPts;
     }
 
-    toPath(dx: number, dy: number): Path {
-        const pt1 = this.project(this.pts[0]);
-        const pt2 = this.project(this.pts[1]);
-        const pt3 = this.project(this.pts[2]);
-
-        const path = `M${pt1[0] + dx} ${-pt1[1] + dy} L ${pt2[0] + dx} ${-pt2[1] + dy} ${pt3[0] + dx} ${
-            -pt3[1] + dy
-        } L ${pt1[0] + dx} ${-pt1[1] + dy}`;
+    toPaths(): Path {
+        const n = this.project(this.pts[0]);
+        const e = this.project(this.pts[1]);
+        const s = this.project(this.pts[2]);
+        const w = this.project(this.pts[3]);
 
         return {
-            kind: "triangle",
-            path,
-            zIndex: this.pts.reduce((tot, v) => (tot += v[2]), 0),
-            id: `triangle-${this.size}`,
+            kind: "compass",
+            path: "",
+            pts: [n, e, s, w],
+            zIndex: -1,
+            id: `compass-${this.size}`,
         };
     }
 }
@@ -345,13 +345,17 @@ const triangleSize = 15;
 const radius = cubeSize + triangleSize;
 const cube = new Cube([0, 0, 0], cubeSize);
 const innerCircle = new Circle(radius, radius / 2 + 10);
-const triangle = new Triangle(15, radius / 2 + 10, radius);
+const compass = new Compass(15, radius / 2 + 10, radius);
 
 type Path = {
     id: string;
     zIndex: number;
     path: string;
-} & ({ kind: "cube"; center: { x: number; y: number } } | { kind: "triangle" | "circle" });
+} & (
+    | { kind: "cube"; center: { x: number; y: number } }
+    | { kind: "compass"; pts: [n: vec2, e: vec2, s: vec2, w: vec2] }
+    | { kind: "circle" }
+);
 
 export function NavigationCube() {
     const theme = useTheme();
@@ -362,7 +366,7 @@ export function NavigationCube() {
     const prevPivotPt = useRef<ReadonlyVec3>();
     const [circlePaths, setCirclePaths] = useState([] as Path[]);
     const [cubePaths, setCubePaths] = useState([] as Path[]);
-    const [trianglePaths, setTrianglePath] = useState([] as Path[]);
+    const [compassPaths, setCompassPath] = useState([] as Path[]);
     const [loading, setLoading] = useMountedState(false);
     const [abortController, abort] = useAbortController();
     const cameraType = useAppSelector(selectCameraType);
@@ -447,11 +451,11 @@ export function NavigationCube() {
                 const q = quat.fromValues(rot[0], rot[1], -rot[2], rot[3]);
                 cube.setRotation(q);
                 innerCircle.setRotation(q);
-                triangle.setRotation(q);
+                compass.setRotation(q);
 
                 setCubePaths(cube.toPaths(cubeSize, cubeSize));
                 setCirclePaths(innerCircle.toPaths(cubeSize, cubeSize));
-                setTrianglePath([triangle.toPath(cubeSize, cubeSize)]);
+                setCompassPath([compass.toPaths()]);
             }
 
             animationFrameId.current = requestAnimationFrame(() => animate());
@@ -475,7 +479,38 @@ export function NavigationCube() {
                 </linearGradient>
             </defs>
 
-            {[...cubePaths, ...circlePaths, ...trianglePaths]
+            {circlePaths.map((path) =>
+                path.kind === "circle" ? (
+                    <path
+                        stroke={"rgba(100,100,100, .3)"}
+                        fill={"none"}
+                        strokeWidth={1}
+                        d={path.path}
+                        key={`${path.id}`}
+                        id={path.id}
+                    />
+                ) : null
+            )}
+
+            {compassPaths.map((path) =>
+                path.kind === "compass"
+                    ? path.pts.map((pt, i) => (
+                          <text
+                              key={i}
+                              x={pt[0] + cubeSize}
+                              y={-pt[1] + cubeSize}
+                              dominantBaseline="middle"
+                              textAnchor="middle"
+                              fill="#fff"
+                              fontWeight={"bold"}
+                          >
+                              {i === 0 ? "N" : i === 1 ? "E" : i === 2 ? "S" : "W"}
+                          </text>
+                      ))
+                    : null
+            )}
+
+            {[...cubePaths]
                 .sort((a, b) => b.zIndex - a.zIndex)
                 .map((path) =>
                     path.kind === "cube" ? (
@@ -511,16 +546,7 @@ export function NavigationCube() {
                                 </text>
                             </g>
                         </Fragment>
-                    ) : (
-                        <path
-                            stroke={path.kind === "triangle" ? theme.palette.primary.main : "rgba(100,100,100, .3)"}
-                            fill={path.kind === "triangle" ? theme.palette.primary.dark : "none"}
-                            strokeWidth={1}
-                            d={path.path}
-                            key={`${path.id}`}
-                            id={path.id}
-                        />
-                    )
+                    ) : null
                 )}
         </CubeContainer>
     );
