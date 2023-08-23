@@ -163,10 +163,31 @@ export const jiraApi = createApi({
             transformResponse: (res: { projects: { issuetypes: CreateIssueMetadata[] }[] }) =>
                 res.projects[0]?.issuetypes[0]?.fields,
         }),
-        getIssueTypes: builder.query<IssueType[], { projectId: string }>({
+        getIssueTypes: builder.query<IssueType[], { projectId: string; space: string; accessToken: string }>({
             // NOTE(OLA) Marked as experimental.
             // Use commented lines (and pass in project key instead of id) if thist stops working.
-            query: ({ projectId }) => `/issuetype/project?projectId=${projectId}&level=0`,
+            queryFn: async ({ space, accessToken, projectId }) => {
+                return fetch(
+                    `https://api.atlassian.com/ex/jira/${space}/rest/api/3/issuetype/project?projectId=${projectId}&level=0`,
+                    {
+                        headers: { Authorization: `Bearer ${accessToken}` },
+                    }
+                )
+                    .then((res) => {
+                        if (!res.ok) {
+                            throw res.statusText;
+                        }
+                        return res.json();
+                    })
+                    .then((data) => {
+                        if (data.error) {
+                            return { error: data.error };
+                        }
+                        return { data };
+                    })
+                    .catch((error) => ({ error }));
+            },
+            // query: ({ projectId }) => `/issuetype/project?projectId=${projectId}&level=0`,
             // transformResponse: (res: IssueType[], _meta, args) =>
             //     res.filter(
             //         (issueType) =>

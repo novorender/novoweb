@@ -78,9 +78,14 @@ export function CreateIssue({ sceneId }: { sceneId: string }) {
         isFetching: _isFetchingIssuesTypes,
         isLoading: _isLoadingIssuesTypes,
         isError: _isErrorIssuesTypes,
-    } = useGetIssueTypesQuery({
-        projectId: project?.id ?? "",
-    });
+    } = useGetIssueTypesQuery(
+        {
+            accessToken,
+            projectId: project?.id ?? "",
+            space: space?.id ?? "",
+        },
+        { skip: !accessToken || !project || !space, refetchOnMountOrArgChange: true }
+    );
 
     const {
         data: createIssueMetadata,

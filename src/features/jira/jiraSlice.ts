@@ -30,7 +30,16 @@ const initialState = {
     issueType: undefined as undefined | IssueType,
     user: undefined as undefined | CurrentUser,
     filters: initialFilters,
-    showMarkers: true,
+    markers: {
+        show: true,
+        issueTypes: { "10004": { icon: "build" } } as {
+            [issueTypeId: string]:
+                | {
+                      icon: string;
+                  }
+                | undefined;
+        },
+    },
     clickedMarker: "",
     lastViewedPath: "/",
     activeIssue: "",
@@ -76,12 +85,15 @@ export const jiraSlice = createSlice({
         setConfig: (state, action: PayloadAction<State["config"]>) => {
             state.config = action.payload;
         },
-        toggleShowMarkers: (state, action: PayloadAction<State["showMarkers"] | undefined>) => {
+        toggleShowMarkers: (state, action: PayloadAction<State["markers"]["show"] | undefined>) => {
             if (action.payload === undefined) {
-                state.showMarkers = !state.showMarkers;
+                state.markers.show = !state.markers.show;
             } else {
-                state.showMarkers = action.payload;
+                state.markers.show = action.payload;
             }
+        },
+        setMarkersConfig: (state, action: PayloadAction<Partial<State["markers"]>>) => {
+            state.markers = { ...state.markers, ...action.payload };
         },
         setLastViewedPath: (state, action: PayloadAction<State["lastViewedPath"]>) => {
             state.lastViewedPath = action.payload;
@@ -111,7 +123,9 @@ export const jiraSlice = createSlice({
             const props = action.payload.sceneData.customProperties;
 
             if (props.integrations?.jira) {
-                state.config = props.integrations.jira;
+                const { markers, ...baseConfig } = props.integrations.jira;
+                state.config = baseConfig;
+                state.markers = { ...state.markers, ...markers };
             } else if (props.jiraSettings) {
                 state.config = props.jiraSettings;
             }
@@ -131,7 +145,8 @@ export const selectJiraIssueType = (state: RootState) => state.jira.issueType;
 export const selectJiraFilters = (state: RootState) => state.jira.filters;
 export const selectJiraConfig = (state: RootState) => state.jira.config;
 export const selectMetaCustomfieldKey = (state: RootState) => state.jira.metaCustomfieldKey;
-export const selectJiraShowMarkers = (state: RootState) => state.jira.showMarkers;
+export const selectJiraShowMarkers = (state: RootState) => state.jira.markers.show;
+export const selectJiraMarkersConfig = (state: RootState) => state.jira.markers;
 export const selectJiraClickedMarker = (state: RootState) => state.jira.clickedMarker;
 export const selectJiraLastViewedPath = (state: RootState) => state.jira.lastViewedPath;
 export const selectJiraActiveIssue = (state: RootState) => state.jira.activeIssue;

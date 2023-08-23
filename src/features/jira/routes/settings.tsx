@@ -1,28 +1,47 @@
-import { ArrowBack } from "@mui/icons-material";
+import { AccessAlarm, Announcement, ArrowBack, Build, Engineering, HeadsetMic, ViewInAr } from "@mui/icons-material";
 import { LoadingButton } from "@mui/lab";
-import { Autocomplete, Box, Button, CircularProgress, Typography, useTheme } from "@mui/material";
+import {
+    AccordionDetails,
+    Autocomplete,
+    Box,
+    Button,
+    CircularProgress,
+    List,
+    ListItem,
+    ListItemIcon,
+    MenuItem,
+    Select,
+    Typography,
+    useTheme,
+} from "@mui/material";
 import { FormEventHandler, SyntheticEvent, useState } from "react";
 import { useHistory } from "react-router-dom";
 
 import { dataApi } from "app";
 import { useAppDispatch, useAppSelector } from "app/store";
-import { Divider, ScrollBox, TextField } from "components";
+import { Accordion, AccordionSummary, Divider, ScrollBox, TextField } from "components";
 import { useExplorerGlobals } from "contexts/explorerGlobals";
 import { loadScene } from "features/render/hooks/useHandleInit";
 import { selectIsAdminScene } from "slices/explorerSlice";
 import { AsyncState, AsyncStatus } from "types/misc";
 import { mergeRecursive } from "utils/misc";
 
-import { useGetAccessibleResourcesQuery, useGetComponentsQuery, useGetProjectsQuery } from "../jiraApi";
+import {
+    useGetAccessibleResourcesQuery,
+    useGetComponentsQuery,
+    useGetIssueTypesQuery,
+    useGetProjectsQuery,
+} from "../jiraApi";
 import {
     jiraActions,
     selectJiraAccessTokenData,
     selectJiraComponent,
     selectJiraConfig,
+    selectJiraMarkersConfig,
     selectJiraProject,
     selectJiraSpace,
 } from "../jiraSlice";
-import { Component, Project, Space } from "../types";
+import { Component, IssueType, Project, Space } from "../types";
 
 export function Settings({ sceneId }: { sceneId: string }) {
     const history = useHistory();
@@ -38,6 +57,7 @@ export function Settings({ sceneId }: { sceneId: string }) {
     const currentProject = useAppSelector(selectJiraProject);
     const currentSpace = useAppSelector(selectJiraSpace);
     const currentComponent = useAppSelector(selectJiraComponent);
+    const currentMarkerConfig = useAppSelector(selectJiraMarkersConfig);
 
     const { data: accessibleResources } = useGetAccessibleResourcesQuery(
         { accessToken: accessToken },
@@ -54,6 +74,7 @@ export function Settings({ sceneId }: { sceneId: string }) {
     const [project, setProject] = useState<Project | null>(currentProject ?? null);
     const [component, setComponent] = useState<Component | null>(currentComponent ?? null);
     const [saving, setSaving] = useState<AsyncState<true>>({ status: AsyncStatus.Initial });
+    const [markers, setMarkers] = useState(currentMarkerConfig);
 
     const { data: projects, isFetching: isFetchingProjects } = useGetProjectsQuery(
         { space: space?.id ?? "", accessToken },
@@ -63,6 +84,15 @@ export function Settings({ sceneId }: { sceneId: string }) {
     const { data: components, isFetching: isFetchingComponents } = useGetComponentsQuery(
         { space: space?.id ?? "", project: project?.key ?? "", accessToken },
         { skip: !space || !accessToken || !project }
+    );
+
+    const { data: issueTypes = [], isFetching: isFetchingIssuesTypes } = useGetIssueTypesQuery(
+        {
+            accessToken,
+            projectId: project?.id ?? "",
+            space: space?.id ?? "",
+        },
+        { skip: !accessToken || !project || !space, refetchOnMountOrArgChange: true }
     );
 
     const handleSpaceChange = (e: SyntheticEvent, value: Space | null) => {
@@ -92,13 +122,21 @@ export function Settings({ sceneId }: { sceneId: string }) {
         }
 
         setSaving({ status: AsyncStatus.Loading });
-        const configToSave = {
+        const baseConfig = {
             space: space.name,
             project: project.key,
             component: component.name,
         };
 
-        dispatch(jiraActions.setConfig(configToSave));
+        const configToSave = {
+            ...baseConfig,
+            markers: {
+                issueTypes: markers.issueTypes,
+            },
+        };
+
+        dispatch(jiraActions.setConfig(baseConfig));
+        dispatch(jiraActions.setMarkersConfig(configToSave.markers));
         dispatch(jiraActions.setSpace(space));
         dispatch(jiraActions.setProject(project));
         dispatch(jiraActions.setComponent(component));
@@ -194,6 +232,33 @@ export function Settings({ sceneId }: { sceneId: string }) {
                     renderInput={(params) => <TextField label="Component" required {...params} />}
                 />
 
+                <Accordion disabled={!project || isFetchingIssuesTypes} sx={{ mb: 2 }}>
+                    <AccordionSummary>Marker icons</AccordionSummary>
+                    <AccordionDetails>
+                        <List dense disablePadding>
+                            {issueTypes.map((issueType) => (
+                                <MarkerIconListItem
+                                    key={issueType.id}
+                                    issueType={issueType}
+                                    icon={markers.issueTypes[issueType.id]?.icon ?? "announcement"}
+                                    setIcon={(icon) =>
+                                        setMarkers((state) => ({
+                                            ...state,
+                                            issueTypes: {
+                                                ...state.issueTypes,
+                                                [issueType.id]: {
+                                                    ...state.issueTypes[issueType.id],
+                                                    icon,
+                                                },
+                                            },
+                                        }))
+                                    }
+                                />
+                            ))}
+                        </List>
+                    </AccordionDetails>
+                </Accordion>
+
                 <Box display="flex" justifyContent="space-between">
                     <Button
                         disabled={!currentSpace || !currentProject || !currentComponent}
@@ -224,5 +289,63 @@ export function Settings({ sceneId }: { sceneId: string }) {
                 </Box>
             </ScrollBox>
         </>
+    );
+}
+
+function MarkerIconListItem({
+    issueType,
+    icon,
+    setIcon,
+}: {
+    issueType: IssueType;
+    icon: string;
+    setIcon: (icon: string) => void;
+}) {
+    return (
+        <ListItem disablePadding sx={{ display: "block" }}>
+            <Box
+                sx={{
+                    display: "flex",
+                    width: 1,
+                    justifyContent: "space-between",
+                    alignItems: "center",
+                }}
+            >
+                <Box>{issueType.name}</Box>
+                <Select size="small" value={icon} onChange={(event) => setIcon(event.target.value)}>
+                    <MenuItem value="announcement">
+                        <ListItemIcon>
+                            <Announcement fontSize="small" />
+                        </ListItemIcon>
+                    </MenuItem>
+                    <MenuItem value="engineering">
+                        <ListItemIcon>
+                            <Engineering fontSize="small" />
+                        </ListItemIcon>
+                    </MenuItem>
+                    <MenuItem value="headsetMic">
+                        <ListItemIcon>
+                            <HeadsetMic fontSize="small" />
+                        </ListItemIcon>
+                    </MenuItem>
+                    <MenuItem value="viewInAr">
+                        <ListItemIcon>
+                            <ViewInAr fontSize="small" />
+                        </ListItemIcon>
+                    </MenuItem>
+                    <MenuItem value="accessAlarm">
+                        <ListItemIcon>
+                            <AccessAlarm fontSize="small" />
+                        </ListItemIcon>
+                    </MenuItem>
+                    <MenuItem value="build">
+                        <ListItemIcon>
+                            <Build fontSize="small" />
+                        </ListItemIcon>
+                    </MenuItem>
+                </Select>
+            </Box>
+            <Divider sx={(theme) => ({ my: 1, borderColor: theme.palette.grey[300] })} />
+        </ListItem>
     );
 }
