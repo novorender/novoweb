@@ -136,6 +136,15 @@ type Integrations = {
         space: string;
         project: string;
         component: string;
+        markers?: {
+            issueTypes: {
+                [issueTypeId: string]:
+                    | {
+                          icon: string;
+                      }
+                    | undefined;
+            };
+        };
     };
     ditio?: {
         projectNumber: string;

@@ -19,6 +19,7 @@ import {
     selectJiraAccessTokenData,
     selectJiraComponent,
     selectJiraConfig,
+    selectJiraMarkersConfig,
     selectJiraProject,
     selectJiraSpace,
 } from "../jiraSlice";
@@ -38,6 +39,7 @@ export function Settings({ sceneId }: { sceneId: string }) {
     const currentProject = useAppSelector(selectJiraProject);
     const currentSpace = useAppSelector(selectJiraSpace);
     const currentComponent = useAppSelector(selectJiraComponent);
+    const markers = useAppSelector(selectJiraMarkersConfig);
 
     const { data: accessibleResources } = useGetAccessibleResourcesQuery(
         { accessToken: accessToken },
@@ -92,13 +94,21 @@ export function Settings({ sceneId }: { sceneId: string }) {
         }
 
         setSaving({ status: AsyncStatus.Loading });
-        const configToSave = {
+        const baseConfig = {
             space: space.name,
             project: project.key,
             component: component.name,
         };
 
-        dispatch(jiraActions.setConfig(configToSave));
+        const configToSave = {
+            ...baseConfig,
+            markers: {
+                issueTypes: markers.issueTypes,
+            },
+        };
+
+        dispatch(jiraActions.setConfig(baseConfig));
+        dispatch(jiraActions.setMarkersConfig(configToSave.markers));
         dispatch(jiraActions.setSpace(space));
         dispatch(jiraActions.setProject(project));
         dispatch(jiraActions.setComponent(component));

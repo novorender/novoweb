@@ -10,8 +10,8 @@ import {
     selectJiraComponent,
     selectJiraFilters,
     selectJiraHoveredEntity,
+    selectJiraMarkersConfig,
     selectJiraProject,
-    selectJiraShowMarkers,
     selectJiraUser,
     selectMetaCustomfieldKey,
 } from "./jiraSlice";
@@ -19,6 +19,7 @@ import {
 type JiraMarkerData = {
     position: vec3;
     key: string;
+    icon: string;
 };
 
 const empty = [] as JiraMarkerData[];
@@ -31,8 +32,9 @@ export function useJiraMarkers() {
     const currentUser = useAppSelector(selectJiraUser);
     const metaCustomfieldKey = useAppSelector(selectMetaCustomfieldKey);
     const filters = useAppSelector(selectJiraFilters);
-    const showMarkers = useAppSelector(selectJiraShowMarkers);
     const hoveredEntity = useAppSelector(selectJiraHoveredEntity);
+    const config = useAppSelector(selectJiraMarkersConfig);
+    const showMarkers = config.show;
 
     const { data: issues } = useGetIssuesQuery(
         {
@@ -55,7 +57,11 @@ export function useJiraMarkers() {
                 .filter((issue) => issue.fields[metaCustomfieldKey])
                 .map((issue): JiraMarkerData | undefined => {
                     try {
-                        return { key: issue.key, ...JSON.parse(issue.fields[metaCustomfieldKey]) };
+                        return {
+                            key: issue.key,
+                            ...JSON.parse(issue.fields[metaCustomfieldKey]),
+                            icon: config.issueTypes[issue.fields.issuetype.id]?.icon ?? "default",
+                        };
                     } catch (e) {
                         console.warn("error parsing NOVORENDER_META of issue", issue.key);
                     }
@@ -65,7 +71,7 @@ export function useJiraMarkers() {
                 .filter((marker) => marker !== undefined && isRealVec(marker.position))
                 .slice(0, 100) as JiraMarkerData[]
         );
-    }, [issues, metaCustomfieldKey, showMarkers]);
+    }, [issues, metaCustomfieldKey, showMarkers, config.issueTypes]);
 
     useEffect(() => {
         setMarkers((state) => {
