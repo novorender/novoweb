@@ -564,6 +564,9 @@ export const renderSlice = createSlice({
             // device profile
             state.deviceProfile = mergeRecursive(state.deviceProfile, deviceProfile);
 
+            // Misc
+            state.debugStats.enabled = window.location.search.includes("debug=true");
+
             if (props.explorerProjectState) {
                 const { points, background, terrain, hide, ...advanced } = props.explorerProjectState.renderSettings;
                 const { debugStats, navigationCube } = props.explorerProjectState.features;
@@ -588,7 +591,7 @@ export const renderSlice = createSlice({
                       }
                     : state.terrain.elevationGradient;
                 state.advanced = mergeRecursive(state.advanced, advanced);
-                state.debugStats.enabled = debugStats.enabled || window.location.search.includes("debug=true");
+                state.debugStats.enabled = debugStats.enabled || state.debugStats.enabled;
                 state.navigationCube.enabled = !state.debugStats.enabled && navigationCube.enabled;
                 state.secondaryHighlight.property = highlights.secondary.property;
             } else if (settings) {
@@ -608,7 +611,7 @@ export const renderSlice = createSlice({
                 }
 
                 // corner features
-                state.debugStats.enabled = Boolean(props.showStats) || window.location.search.includes("debug=true");
+                state.debugStats.enabled = Boolean(props.showStats) || state.debugStats.enabled;
                 state.navigationCube.enabled = !state.debugStats.enabled && Boolean(props.navigationCube);
 
                 // camera
@@ -661,6 +664,11 @@ export const renderSlice = createSlice({
                         color: node.color,
                     })),
                 };
+            } else {
+                state.subtrees = getSubtrees(
+                    { terrain: false, triangles: false, points: false, documents: false, lines: false },
+                    sceneConfig.subtrees ?? ["triangles"]
+                );
             }
         });
         builder.addCase(resetView, (state, action) => {
