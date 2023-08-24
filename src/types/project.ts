@@ -25,6 +25,7 @@ export type ExplorerProjectState = {
             };
             usePointerLock: boolean;
             topDownElevation: undefined | number;
+            topDownSnapToAxis?: "north";
         };
     };
     renderSettings: {
@@ -135,6 +136,15 @@ type Integrations = {
         space: string;
         project: string;
         component: string;
+        markers?: {
+            issueTypes: {
+                [issueTypeId: string]:
+                    | {
+                          icon: string;
+                      }
+                    | undefined;
+            };
+        };
     };
     ditio?: {
         projectNumber: string;

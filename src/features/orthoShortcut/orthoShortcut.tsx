@@ -4,7 +4,7 @@ import { useAppDispatch, useAppSelector } from "app/store";
 import { SpeedDialAction } from "components";
 import { featuresConfig } from "config/features";
 import { useExplorerGlobals } from "contexts/explorerGlobals";
-import { getTopDownParams, selectDefaultTopDownElevation } from "features/orthoCam";
+import { getTopDownParams, selectDefaultTopDownElevation, selectTopDownSnapToAxis } from "features/orthoCam";
 import { CameraType, renderActions, selectCameraType } from "features/render";
 
 type Props = SpeedDialActionProps & {
@@ -19,12 +19,16 @@ export function OrthoShortcut({ position, ...speedDialProps }: Props) {
 
     const cameraType = useAppSelector(selectCameraType);
     const elevation = useAppSelector(selectDefaultTopDownElevation);
+    const snapToNearestAxis = useAppSelector(selectTopDownSnapToAxis) === undefined;
     const dispatch = useAppDispatch();
 
     const handleClick = () => {
         if (cameraType === CameraType.Pinhole) {
             dispatch(
-                renderActions.setCamera({ type: CameraType.Orthographic, goTo: getTopDownParams({ view, elevation }) })
+                renderActions.setCamera({
+                    type: CameraType.Orthographic,
+                    goTo: getTopDownParams({ view, elevation, snapToNearestAxis }),
+                })
             );
             dispatch(renderActions.setTerrain({ asBackground: true }));
         } else {

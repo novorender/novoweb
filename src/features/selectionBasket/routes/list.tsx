@@ -19,6 +19,7 @@ import { useExplorerGlobals } from "contexts/explorerGlobals";
 import { highlightActions, useDispatchHighlighted } from "contexts/highlighted";
 import { useSelectionBasket } from "contexts/selectionBasket";
 import { CameraType, renderActions, selectCameraType, selectMainObject } from "features/render/renderSlice";
+import { flip } from "features/render/utils";
 import { useAbortController } from "hooks/useAbortController";
 import { AsyncState, AsyncStatus, hasFinished } from "types/misc";
 import { getObjectNameFromPath, getTotalBoundingSphere } from "utils/objectData";
@@ -178,7 +179,10 @@ export function List() {
                                                 dispatch(
                                                     renderActions.setCamera({
                                                         type: CameraType.Pinhole,
-                                                        zoomTo: obj.bounds.sphere,
+                                                        zoomTo: {
+                                                            center: flip(obj.bounds.sphere.center),
+                                                            radius: obj.bounds.sphere.radius,
+                                                        },
                                                     })
                                                 );
                                             }

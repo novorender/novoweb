@@ -523,7 +523,7 @@ export function Follow({ fpObj }: { fpObj: FollowParametricObject }) {
                                 <Typography>Clipping: {clipping} m</Typography>
                                 <Box mx={2}>
                                     <Slider
-                                        getAriaLabel={() => "Clipping near/far"}
+                                        getAriaLabel={() => "Clipping far"}
                                         value={clipping}
                                         min={0.001}
                                         max={1}

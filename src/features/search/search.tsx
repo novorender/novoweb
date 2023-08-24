@@ -287,7 +287,9 @@ export default function Search() {
                             <Box mb={2}>
                                 <FormControlLabel
                                     sx={{ ml: 0, mr: 3, minHeight: 24 }}
-                                    control={<Switch name="advanced" checked={advanced} onChange={toggleAdvanced} />}
+                                    control={
+                                        <Switch name="advanced" checked={advanced} onChange={() => toggleAdvanced()} />
+                                    }
                                     label={
                                         <Box ml={0.5} fontSize={14}>
                                             Advanced

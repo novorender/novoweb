@@ -68,7 +68,11 @@ export function ObjectSelectionSettings({ save, saving }: { save: () => Promise<
                     <LinearProgress />
                 </Box>
             ) : null}
-            <ScrollBox height={1} px={1} pt={2} pb={3}>
+            <ScrollBox height={1} px={1} mt={1} pb={3}>
+                <Typography pt={1} variant="h6" fontWeight={600}>
+                    Object selection settings
+                </Typography>
+                <Divider sx={{ my: 1 }} />
                 <Typography fontWeight={600} mb={1}>
                     Primary
                 </Typography>

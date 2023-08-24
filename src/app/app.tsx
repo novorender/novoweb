@@ -47,17 +47,24 @@ enum Status {
 
 export function App() {
     const history = useHistory();
+    const [msalStatus, setMsalStatus] = useState(Status.Initial);
     const [authStatus, setAuthStatus] = useState(Status.Initial);
     const dispatch = useAppDispatch();
 
     useEffect(() => {
-        msalInstance.setNavigationClient(new CustomNavigationClient(history));
-    }, [history]);
+        msalInstance.initialize().then(() => setMsalStatus(Status.Ready));
+    }, []);
+
+    useEffect(() => {
+        if (msalStatus === Status.Ready) {
+            msalInstance.setNavigationClient(new CustomNavigationClient(history));
+        }
+    }, [msalStatus, history]);
 
     const authenticating = useRef(false);
 
     useEffect(() => {
-        if (authStatus !== Status.Initial || authenticating.current) {
+        if (authStatus !== Status.Initial || authenticating.current || msalStatus !== Status.Ready) {
             return;
         }
 
@@ -90,44 +97,52 @@ export function App() {
                         return;
                     }
 
-                    return msalInstance
-                        .ssoSilent({
-                            ...loginRequest,
-                            account,
-                            sid: account.idTokenClaims?.sid,
-                            loginHint: account.idTokenClaims?.login_hint,
-                            authority: account.tenantId
-                                ? `https://login.microsoftonline.com/${account.tenantId}`
-                                : loginRequest.authority,
-                        })
-                        .catch(() => {
-                            return msalInstance.acquireTokenSilent({
+                    return (
+                        msalInstance // .ssoSilent({
+                            //     ...loginRequest,
+                            //     account,
+                            //     sid: account.idTokenClaims?.sid,
+                            //     loginHint: account.idTokenClaims?.login_hint,
+                            //     authority: account.tenantId
+                            //         ? `https://login.microsoftonline.com/${account.tenantId}`
+                            //         : loginRequest.authority,
+                            // })
+                            // .catch(() => {
+                            //     return msalInstance.acquireTokenSilent({
+                            //         ...loginRequest,
+                            //         account,
+                            //         authority: account.tenantId
+                            //             ? `https://login.microsoftonline.com/${account.tenantId}`
+                            //             : loginRequest.authority,
+                            //     });
+                            // })
+                            .acquireTokenSilent({
                                 ...loginRequest,
                                 account,
                                 authority: account.tenantId
                                     ? `https://login.microsoftonline.com/${account.tenantId}`
                                     : loginRequest.authority,
-                            });
-                        })
-                        .catch((e) => {
-                            if (e instanceof InteractionRequiredAuthError) {
-                                return msalInstance
-                                    .acquireTokenPopup({
-                                        ...loginRequest,
-                                        account,
-                                        sid: account.idTokenClaims?.sid,
-                                        loginHint: account.idTokenClaims?.login_hint,
-                                        authority: account.tenantId
-                                            ? `https://login.microsoftonline.com/${account.tenantId}`
-                                            : loginRequest.authority,
-                                    })
-                                    .catch(() => {
-                                        dispatch(authActions.setMsalInteractionRequired(true));
-                                    });
-                            } else {
-                                throw e;
-                            }
-                        });
+                            })
+                            .catch((e) => {
+                                if (e instanceof InteractionRequiredAuthError) {
+                                    return msalInstance
+                                        .acquireTokenPopup({
+                                            ...loginRequest,
+                                            account,
+                                            sid: account.idTokenClaims?.sid,
+                                            loginHint: account.idTokenClaims?.login_hint,
+                                            authority: account.tenantId
+                                                ? `https://login.microsoftonline.com/${account.tenantId}`
+                                                : loginRequest.authority,
+                                        })
+                                        .catch(() => {
+                                            dispatch(authActions.setMsalInteractionRequired(true));
+                                        });
+                                } else {
+                                    throw e;
+                                }
+                            })
+                    );
                 });
 
                 if (res) {
@@ -146,7 +161,8 @@ export function App() {
                     dispatch(authActions.login({ accessToken: res.accessToken, msalAccount: res.account, user }));
                 }
             } catch (e) {
-                console.warn(e);
+                deleteFromStorage(StorageKey.MsalActiveAccount);
+                console.warn("msal:", e);
             }
         }
 
@@ -179,7 +195,7 @@ export function App() {
                 return true;
             }
         }
-    }, [authStatus, dispatch, history]);
+    }, [authStatus, dispatch, history, msalStatus]);
 
     useEffect(() => {
         const state = getOAuthState();

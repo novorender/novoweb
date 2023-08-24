@@ -134,7 +134,11 @@ export function CreateTopic() {
                     <FormControlLabel
                         sx={{ m: 0, pl: 1, display: "flex", alignItems: "center" }}
                         control={
-                            <IosSwitch checked={includeViewpoint} color="primary" onChange={toggleIncludeViewpoint} />
+                            <IosSwitch
+                                checked={includeViewpoint}
+                                color="primary"
+                                onChange={() => toggleIncludeViewpoint()}
+                            />
                         }
                         label={
                             <Box fontSize={14} lineHeight={"24.5px"} fontWeight={500}>

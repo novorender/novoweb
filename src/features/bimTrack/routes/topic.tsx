@@ -141,7 +141,7 @@ export function Topic() {
             </Box>
             <ScrollBox height={1} width={1} horizontal sx={{ mt: 1 }}>
                 <Box p={1} sx={{ "& > img": { width: "100%", maxHeight: 150, objectFit: "cover", cursor: "pointer" } }}>
-                    {snapshot ? <img onClick={toggleModal} src={snapshot} alt="" /> : null}
+                    {snapshot ? <img onClick={() => toggleModal()} src={snapshot} alt="" /> : null}
                     <Accordion>
                         <AccordionSummary>
                             <Typography variant="h6" fontWeight={600}>
@@ -210,7 +210,7 @@ export function Topic() {
                     ))}
                 </List>
             </ScrollBox>
-            <ImgModal src={snapshot ?? ""} open={modalOpen} onClose={toggleModal} />
+            <ImgModal src={snapshot ?? ""} open={modalOpen} onClose={() => toggleModal()} />
         </>
     );
 }
@@ -386,7 +386,7 @@ function CommentListItem({
                     </Box>
                 </Box>
             </ListItem>
-            <ImgModal open={modalOpen} onClose={toggleModal} src={snapshot ?? ""} />
+            <ImgModal open={modalOpen} onClose={() => toggleModal()} src={snapshot ?? ""} />
         </>
     );
 }

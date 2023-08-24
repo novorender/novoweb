@@ -261,6 +261,7 @@ const initialState = {
             },
             usePointerLock: false,
             topDownElevation: undefined as undefined | number,
+            topDownSnapToAxis: undefined as undefined | "north",
         },
     },
     advanced: {
@@ -570,7 +571,10 @@ export const renderSlice = createSlice({
                 const camera = props.explorerProjectState.camera;
 
                 state.cameraDefaults.pinhole = camera.pinhole;
-                state.cameraDefaults.orthographic = camera.orthographic;
+                state.cameraDefaults.orthographic = mergeRecursive(
+                    state.cameraDefaults.orthographic,
+                    camera.orthographic
+                );
                 state.background = mergeRecursive(state.background, background);
                 state.points = mergeRecursive(state.points, points);
                 state.subtrees = getSubtrees(hide, sceneConfig.subtrees ?? ["triangles"]);

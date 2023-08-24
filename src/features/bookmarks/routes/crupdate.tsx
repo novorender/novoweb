@@ -188,7 +188,7 @@ export function Crupdate() {
                                 <Checkbox
                                     color="primary"
                                     checked={addToSelectionBasket}
-                                    onChange={toggleAddToSelectionBasket}
+                                    onChange={() => toggleAddToSelectionBasket()}
                                 />
                             }
                             label={<Box mr={0.5}>Add selected to selection basket</Box>}
@@ -197,7 +197,7 @@ export function Crupdate() {
                     {isAdmin ? (
                         <FormControlLabel
                             sx={{ mb: 2 }}
-                            control={<Checkbox color="primary" checked={!personal} onChange={togglePersonal} />}
+                            control={<Checkbox color="primary" checked={!personal} onChange={() => togglePersonal()} />}
                             label={<Box mr={0.5}>Public</Box>}
                         />
                     ) : null}

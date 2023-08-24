@@ -1,5 +1,5 @@
 import { ArrowBack, DeleteSweep, Save, Share } from "@mui/icons-material";
-import { Box, Button, Checkbox, FormControlLabel, useTheme } from "@mui/material";
+import { Box, Button, Checkbox, FormControlLabel, Typography, useTheme } from "@mui/material";
 import { ChangeEvent, useState } from "react";
 import { useHistory } from "react-router-dom";
 
@@ -103,7 +103,11 @@ export function PerformanceSettings() {
                     </Button>
                 </Box>
             </Box>
-            <ScrollBox height={1} px={1} pt={2} mb={4}>
+            <ScrollBox height={1} px={1} mt={1} mb={4}>
+                <Typography pt={1} variant="h6" fontWeight={600}>
+                    Performance settings
+                </Typography>
+                <Divider sx={{ my: 1 }} />
                 <TextField
                     sx={{ mt: 2 }}
                     fullWidth

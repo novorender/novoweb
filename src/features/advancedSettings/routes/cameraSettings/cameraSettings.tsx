@@ -9,6 +9,7 @@ import {
     MenuItem,
     OutlinedInput,
     Select,
+    Typography,
     useTheme,
 } from "@mui/material";
 import { quat, vec3 } from "gl-matrix";
@@ -18,7 +19,7 @@ import { useHistory } from "react-router-dom";
 import { useAppDispatch, useAppSelector } from "app/store";
 import { Accordion, AccordionDetails, AccordionSummary, Divider, LinearProgress, ScrollBox, Switch } from "components";
 import { useExplorerGlobals } from "contexts/explorerGlobals";
-import { selectDefaultTopDownElevation } from "features/orthoCam";
+import { selectDefaultTopDownElevation, selectTopDownSnapToAxis } from "features/orthoCam";
 import {
     CameraSpeedLevel,
     CameraType,
@@ -67,6 +68,7 @@ export function CameraSettings({
     // const { headlightIntensity, headlightDistance } = settings;
     const cameraDefaults = useAppSelector(selectCameraDefaults);
     const usePointerLock = useAppSelector(selectPointerLock);
+    const topDownSnapToNearestAxis = useAppSelector(selectTopDownSnapToAxis) === undefined;
     const defaultTopDownElevation = useAppSelector(selectDefaultTopDownElevation);
     const viewMode = useAppSelector(selectViewMode);
     const cameraType = useAppSelector(selectCameraType);
@@ -226,6 +228,10 @@ export function CameraSettings({
                 </Box>
             ) : null}
             <ScrollBox height={1} mt={1} pb={3}>
+                <Typography p={1} pb={0} variant="h6" fontWeight={600}>
+                    Camera settings
+                </Typography>
+                <Divider sx={{ my: 1 }} />
                 <Clipping />
                 <Accordion>
                     <AccordionSummary>Movement speed</AccordionSummary>
@@ -444,6 +450,31 @@ export function CameraSettings({
                                 label={
                                     <Box ml={1} fontSize={16}>
                                         Reset pointer when released
+                                    </Box>
+                                }
+                            />
+                            <FormControlLabel
+                                sx={{ ml: 0, mb: 1 }}
+                                control={
+                                    <Switch
+                                        name={"topDownSnapToAxis"}
+                                        checked={!topDownSnapToNearestAxis}
+                                        onChange={() => {
+                                            dispatch(
+                                                renderActions.setCameraDefaults({
+                                                    orthographic: {
+                                                        topDownSnapToAxis: topDownSnapToNearestAxis
+                                                            ? "north"
+                                                            : undefined,
+                                                    },
+                                                })
+                                            );
+                                        }}
+                                    />
+                                }
+                                label={
+                                    <Box ml={1} fontSize={16}>
+                                        Top-down snap to north
                                     </Box>
                                 }
                             />
