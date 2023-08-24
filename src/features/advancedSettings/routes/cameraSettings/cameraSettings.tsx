@@ -474,7 +474,7 @@ export function CameraSettings({
                                 }
                                 label={
                                     <Box ml={1} fontSize={16}>
-                                        Top-down snap to north
+                                        Top-down point north
                                     </Box>
                                 }
                             />
