@@ -725,9 +725,9 @@ export const renderSlice = createSlice({
                 state.background.color = settings.background.color ?? state.background.color;
 
                 // deviations
-                state.points.deviation.index = (settings.points.deviation as { index?: number }).index ?? 0;
+                state.points.deviation.index = (settings.points.deviation as { index?: number })?.index ?? 0;
                 state.points.deviation.mixFactor =
-                    settings.points.deviation.mode === "mix" ? 0.5 : settings.points.deviation.mode === "on" ? 1 : 0;
+                    settings.points.deviation?.mode === "mix" ? 0.5 : settings.points.deviation?.mode === "on" ? 1 : 0;
 
                 // subtrees
                 state.subtrees = getLegacySubtrees(settings.advanced, availableSubtrees);

@@ -71,7 +71,7 @@ export function useResetView() {
                 )
             );
         } catch (e) {
-            console.warn("Failed to load scene.");
+            console.warn(e);
         }
     };
 
