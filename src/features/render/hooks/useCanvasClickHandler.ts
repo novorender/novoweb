@@ -37,6 +37,9 @@ import {
 import { useAbortController } from "hooks/useAbortController";
 import { ExtendedMeasureEntity, ViewMode } from "types/misc";
 import { isRealVec } from "utils/misc";
+import { searchByPatterns, searchDeepByPatterns } from "utils/search";
+import { NodeType } from "features/modelTree/modelTree";
+import { extractObjectIds } from "utils/objectData";
 
 export function useCanvasClickHandler() {
     const dispatch = useAppDispatch();
@@ -286,18 +289,24 @@ export function useCanvasClickHandler() {
                         dispatch(renderActions.addLoadingHandle(loadingHandle));
 
                         try {
-                            const iterator = db.search(
-                                {
-                                    searchPattern: [
-                                        { property: secondaryHighlightProperty, value: query, exact: true },
-                                    ],
-                                },
-                                abortSignal
-                            );
-
                             const res: number[] = [];
-                            for await (const item of iterator) {
-                                res.push(item.id);
+
+                            const baseSearchProps = {
+                                db,
+                                abortSignal,
+                                searchPatterns: [{ property: secondaryHighlightProperty, value: query, exact: true }],
+                            };
+
+                            if (metadata.type === NodeType.Internal) {
+                                await searchDeepByPatterns({
+                                    ...baseSearchProps,
+                                    callback: (ids) => res.push(...ids),
+                                });
+                            } else {
+                                await searchByPatterns({
+                                    ...baseSearchProps,
+                                    callback: (refs) => res.push(...extractObjectIds(refs)),
+                                });
                             }
 
                             dispatchHighlightCollections(

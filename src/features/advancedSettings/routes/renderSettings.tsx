@@ -73,7 +73,7 @@ export function RenderSettings({ save, saving }: { save: () => Promise<void>; sa
                 <Divider sx={{ my: 1 }} />
                 <Box p={1} display="flex" flexDirection="column">
                     <FormControlLabel
-                        sx={{ ml: 0, mb: 2 }}
+                        sx={{ ml: 0, mb: 1 }}
                         control={
                             <Switch
                                 checked={advanced.msaa.enabled}

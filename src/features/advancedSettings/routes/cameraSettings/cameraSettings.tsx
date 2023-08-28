@@ -431,7 +431,7 @@ export function CameraSettings({
                 <Accordion>
                     <AccordionSummary>2D</AccordionSummary>
                     <AccordionDetails>
-                        <Box px={1} mt={1}>
+                        <Box px={1} mt={1} display={"flex"} flexDirection={"column"}>
                             <FormControlLabel
                                 sx={{ ml: 0, mb: 1 }}
                                 control={
