@@ -12,7 +12,6 @@ import {
     Typography,
     useTheme,
 } from "@mui/material";
-import { MeasureError, Profile } from "@novorender/measure-api";
 import { ParentSizeModern } from "@visx/responsive";
 import { useEffect, useState } from "react";
 
@@ -43,6 +42,7 @@ import {
     selectHeightProfileMeasureEntity,
     selectSelectedPoint,
 } from "./heightProfileSlice";
+import { MeasureError, Profile } from "@novorender/api/types/measure";
 
 const maxObjects = 50;
 
@@ -52,7 +52,7 @@ export default function HeightProfile() {
     const minimized = useAppSelector(selectMinimized) === featuresConfig.heightProfile.key;
     const maximized = useAppSelector(selectMaximized).includes(featuresConfig.heightProfile.key);
     const {
-        state: { measureScene },
+        state: { measureView },
     } = useExplorerGlobals(true);
 
     const selectingEntity = useAppSelector(selectPicker) === Picker.HeightProfileEntity;
@@ -95,7 +95,7 @@ export default function HeightProfile() {
             setProfile({ status: AsyncStatus.Loading });
 
             try {
-                const profile = await measureScene.getProfileViewFromMultiSelect(highlighted, {
+                const profile = await measureView.profile.viewFromMultiSelect(highlighted, {
                     cylinderMeasure: selectCylindersFrom,
                 });
 
@@ -143,7 +143,7 @@ export default function HeightProfile() {
             setProfile({ status: AsyncStatus.Loading });
 
             try {
-                const profile = await measureScene.getProfileViewFromEntity(selectedEntity.data!, {
+                const profile = await measureView.profile.viewFromEntity(selectedEntity.data!, {
                     cylinderMeasure: selectCylindersFrom,
                 });
 
@@ -159,7 +159,7 @@ export default function HeightProfile() {
                 });
             }
         }
-    }, [highlighted, measureScene, selectingEntity, selectedEntity, selectedPoint, selectCylindersFrom]);
+    }, [highlighted, measureView, selectingEntity, selectedEntity, selectedPoint, selectCylindersFrom]);
 
     // NOTE(OLA):
     // Always show options while waiting for measure api to tell if Profile is of cylinders.

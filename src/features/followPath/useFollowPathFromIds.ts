@@ -1,4 +1,3 @@
-import { FollowParametricObject } from "@novorender/measure-api";
 import { useEffect, useState } from "react";
 
 import { useAppDispatch, useAppSelector } from "app/store";
@@ -6,10 +5,11 @@ import { useExplorerGlobals } from "contexts/explorerGlobals";
 import { AsyncState, AsyncStatus } from "types/misc";
 
 import { selectFollowCylindersFrom, selectSelectedIds } from "./followPathSlice";
+import { FollowParametricObject } from "@novorender/api/types/measure";
 
 export function useFollowPathFromIds() {
     const {
-        state: { measureScene },
+        state: { view },
     } = useExplorerGlobals(true);
 
     const followFrom = useAppSelector(selectFollowCylindersFrom);
@@ -23,9 +23,10 @@ export function useFollowPathFromIds() {
 
         async function loadFpObjects() {
             setObjects({ status: AsyncStatus.Loading });
+            const measureView = await view.measure;
 
             try {
-                const fp = await measureScene.followParametricObjects(toFollow, {
+                const fp = await measureView.followPath.followParametricObjects(toFollow, {
                     cylinderMeasure: followFrom,
                 });
 
@@ -39,7 +40,7 @@ export function useFollowPathFromIds() {
                 setObjects({ status: AsyncStatus.Error, msg: "An error occurred." });
             }
         }
-    }, [toFollow, measureScene, dispatch, followFrom]);
+    }, [toFollow, view, dispatch, followFrom]);
 
     return objects;
 }

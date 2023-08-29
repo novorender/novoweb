@@ -1,11 +1,11 @@
 import { Bookmark } from "@novorender/data-js-api";
-import { ManholeMeasureValues, MeasureEntity, MeasureSettings } from "@novorender/measure-api";
 import { PayloadAction, createSlice } from "@reduxjs/toolkit";
 import { vec3 } from "gl-matrix";
 
 import { RootState } from "app/store";
 import { resetView, selectBookmark } from "features/render";
 import { flip } from "features/render/utils";
+import { ManholeMeasureValues, MeasureEntity, MeasureSettings } from "@novorender/api/types/measure";
 
 const initialState = {
     selectedId: undefined as number | undefined,

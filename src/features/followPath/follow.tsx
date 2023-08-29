@@ -12,7 +12,6 @@ import {
     Typography,
     useTheme,
 } from "@mui/material";
-import { FollowParametricObject } from "@novorender/measure-api";
 import { HierarcicalObjectReference } from "@novorender/webgl-api";
 import { vec3 } from "gl-matrix";
 import { FormEvent, SyntheticEvent, useCallback, useEffect, useState } from "react";
@@ -45,6 +44,7 @@ import {
     selectStep,
     selectView2d,
 } from "./followPathSlice";
+import { FollowParametricObject } from "@novorender/api/types/measure";
 
 const profileFractionDigits = 3;
 

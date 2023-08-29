@@ -1,11 +1,11 @@
 import { useEffect, useState } from "react";
-import { FollowParametricObject, MeasureEntity } from "@novorender/measure-api";
 import { vec3 } from "gl-matrix";
 
 import { useExplorerGlobals } from "contexts/explorerGlobals";
 import { useAppDispatch, useAppSelector } from "app/store";
 import { selectFollowCylindersFrom, selectSelectedPositions } from "./followPathSlice";
 import { AsyncState, AsyncStatus } from "types/misc";
+import { FollowParametricObject, MeasureEntity } from "@novorender/api/types/measure";
 
 type ExtendedMeasureObject = {
     fp?: FollowParametricObject;
@@ -14,7 +14,7 @@ type ExtendedMeasureObject = {
 
 export function usePathMeasureObjects() {
     const {
-        state: { measureScene },
+        state: { measureView },
     } = useExplorerGlobals();
 
     const selected = useAppSelector(selectSelectedPositions);
@@ -29,15 +29,11 @@ export function usePathMeasureObjects() {
         getMeasureObjects();
 
         async function getMeasureObjects() {
-            if (!measureScene) {
-                return;
-            }
-
             setMeasureObjects({ status: AsyncStatus.Loading });
             const mObjects = (
                 await Promise.all(
                     selected.map((obj) =>
-                        measureScene
+                        measureView?.core
                             .pickMeasureEntity(obj.id, obj.pos)
                             .then((_mObj) => {
                                 const mObj = _mObj.entity as ExtendedMeasureObject;
@@ -48,9 +44,13 @@ export function usePathMeasureObjects() {
                                 if (mObj.drawKind === "vertex") {
                                     return;
                                 }
-                                mObj.fp = await measureScene.followParametricObjectFromPosition(obj.id, obj.pos, {
-                                    cylinderMeasure: followFrom,
-                                });
+                                mObj.fp = await measureView.followPath.followParametricObjectFromPosition(
+                                    obj.id,
+                                    obj.pos,
+                                    {
+                                        cylinderMeasure: followFrom,
+                                    }
+                                );
                                 mObj.pos = obj.pos;
                                 return mObj;
                             })
@@ -61,7 +61,7 @@ export function usePathMeasureObjects() {
 
             setMeasureObjects({ status: AsyncStatus.Success, data: mObjects });
         }
-    }, [measureScene, selected, dispatch, followFrom]);
+    }, [measureView, selected, dispatch, followFrom]);
 
     return measureObjects;
 }

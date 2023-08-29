@@ -2,7 +2,6 @@ import { DeleteSweep, PushPin } from "@mui/icons-material";
 import { useRef, useEffect, useState } from "react";
 import { Box, Button, capitalize, Checkbox, FormControlLabel, Grid } from "@mui/material";
 import { vec3 } from "gl-matrix";
-import { MeasurementValues } from "@novorender/measure-api";
 
 import { useAppDispatch, useAppSelector } from "app/store";
 import {
@@ -36,10 +35,11 @@ import {
     selectManholeCollisionValues,
     selectManholeCollisionSettings,
 } from "./manholeSlice";
+import { CylinerMeasureType, MeasurementValues } from "@novorender/api/types/measure";
 
 export default function Manhole() {
     const {
-        state: { measureScene },
+        state: { view },
     } = useExplorerGlobals(true);
     const [menuOpen, toggleMenu] = useToggle();
     const minimized = useAppSelector(selectMinimized) === featuresConfig.manhole.key;
@@ -78,13 +78,14 @@ export default function Manhole() {
         getMeasureValues();
 
         async function getMeasureValues() {
+            const measureView = await view.measure;
             if (collisionTarget?.entity) {
-                setMeasureValues(await measureScene.measure(collisionTarget.entity, undefined, collisionSettings));
+                setMeasureValues(await measureView.core.measure(collisionTarget.entity, undefined, collisionSettings));
             } else {
                 setMeasureValues(undefined);
             }
         }
-    }, [collisionTarget, collisionSettings, measureScene]);
+    }, [collisionTarget, collisionSettings, view]);
     const hasLid = !manhole?.top.innerRadius;
 
     const collisionTargetKind = !collisionTarget
@@ -403,7 +404,7 @@ export default function Manhole() {
                                                 onSettingsChange={(newValue) => {
                                                     dispatch(
                                                         manholeActions.setCollisionSettings({
-                                                            cylinderMeasure: newValue,
+                                                            cylinderMeasure: newValue as CylinerMeasureType,
                                                         })
                                                     );
                                                 }}

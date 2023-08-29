@@ -1,4 +1,3 @@
-import { MeasureEntity } from "@novorender/measure-api";
 import { vec3 } from "gl-matrix";
 import { useEffect, useState } from "react";
 
@@ -7,6 +6,7 @@ import { useExplorerGlobals } from "contexts/explorerGlobals";
 import { AsyncStatus } from "types/misc";
 
 import { heightProfileActions, selectSelectedPoint } from "./heightProfileSlice";
+import { MeasureEntity } from "@novorender/api/types/measure";
 
 type ExtendedMeasureEntity = MeasureEntity & {
     pos: vec3;
@@ -14,7 +14,7 @@ type ExtendedMeasureEntity = MeasureEntity & {
 
 export function useHeightProfileMeasureObject() {
     const {
-        state: { measureScene },
+        state: { measureView },
     } = useExplorerGlobals();
 
     const point = useAppSelector(selectSelectedPoint);
@@ -26,10 +26,6 @@ export function useHeightProfileMeasureObject() {
         getMeasureObjects();
 
         async function getMeasureObjects() {
-            if (!measureScene) {
-                return;
-            }
-
             if (!point) {
                 dispatch(
                     heightProfileActions.setSelectedEntity({
@@ -54,7 +50,7 @@ export function useHeightProfileMeasureObject() {
             try {
                 dispatch(heightProfileActions.setSelectedEntity({ status: AsyncStatus.Loading }));
 
-                const mObject = await measureScene.pickMeasureEntity(point.id, point.pos).then((_mObj) => {
+                const mObject = await measureView?.core.pickMeasureEntity(point.id, point.pos).then((_mObj) => {
                     const mObj = _mObj.entity as ExtendedMeasureEntity;
                     mObj.pos = point.pos;
 
@@ -78,7 +74,7 @@ export function useHeightProfileMeasureObject() {
                 setMeasureObjects(undefined);
             }
         }
-    }, [measureScene, setMeasureObjects, point, dispatch]);
+    }, [measureView, setMeasureObjects, point, dispatch]);
 
     return measureObjects;
 }

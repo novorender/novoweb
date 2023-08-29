@@ -1,4 +1,4 @@
-import { MeasureEntity, MeasureSettings } from "@novorender/measure-api";
+import { MeasureEntity, MeasureSettings } from "@novorender/api/types/measure";
 
 export enum AsyncStatus {
     Initial,

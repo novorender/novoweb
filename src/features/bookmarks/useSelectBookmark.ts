@@ -43,7 +43,7 @@ export function useSelectBookmark() {
     const dispatchObjectGroups = useDispatchObjectGroups();
 
     const {
-        state: { measureScene },
+        state: { measureView },
     } = useExplorerGlobals();
 
     const dispatch = useAppDispatch();
@@ -257,14 +257,14 @@ export function useSelectBookmark() {
             if (bookmark.selectedMeasureEntities) {
                 dispatch(measureActions.setSelectedEntities(bookmark.selectedMeasureEntities));
             } else if (bookmark.objectMeasurement) {
-                if (!measureScene) {
+                if (!measureView) {
                     return;
                 }
 
                 const legacySnapTolerance = { edge: 0.032, segment: 0.12, face: 0.07, point: 0.032 };
                 const entities = await Promise.all(
                     bookmark.objectMeasurement.map(async (obj) => {
-                        const entity = await measureScene?.pickMeasureEntity(
+                        const entity = await measureView.core.pickMeasureEntity(
                             obj.id,
                             flip(obj.pos),
                             legacySnapTolerance
@@ -486,7 +486,7 @@ export function useSelectBookmark() {
             dispatchSelectionBasket,
             objectGroups,
             sceneId,
-            measureScene,
+            measureView,
         ]
     );
 

@@ -7,4 +7,3 @@ const options = {
 
 fs.cpSync("node_modules/@novorender/webgl-api", "public/novorender/webgl-api", options);
 fs.cpSync("node_modules/@novorender/api/public", "public/novorender/api", options);
-fs.cpSync("node_modules/@novorender/measure-api/build", "public/novorender/measure-api", options);

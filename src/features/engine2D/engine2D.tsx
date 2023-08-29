@@ -1,9 +1,7 @@
 import { css, styled } from "@mui/material";
-import { DrawProduct, DrawableEntity, MeasureSettings } from "@novorender/measure-api";
 import { ReadonlyVec2, mat3, vec2, vec3 } from "gl-matrix";
 import { MutableRefObject, useCallback, useEffect, useRef, useState } from "react";
 
-import { measureApi } from "app";
 import { useAppSelector } from "app/store";
 import { useExplorerGlobals } from "contexts/explorerGlobals";
 import { selectArea, selectAreaDrawPoints } from "features/area";
@@ -27,6 +25,7 @@ import { CameraType, selectCameraType, selectGrid, selectViewMode } from "featur
 import { AsyncStatus, ViewMode } from "types/misc";
 
 import { drawPart, drawProduct, drawTexts } from "./utils";
+import { DrawProduct, DrawableEntity, MeasureSettings } from "@novorender/api/types/measure";
 
 const Canvas2D = styled("canvas")(
     () => css`
@@ -56,7 +55,7 @@ export function Engine2D({
     renderFnRef: MutableRefObject<((moved: boolean) => void) | undefined>;
 }) {
     const {
-        state: { size, view, measureScene },
+        state: { size, view, measureView },
     } = useExplorerGlobals();
     const [canvas2D, setCanvas2D] = useState<HTMLCanvasElement | null>(null);
     const [context2D, setContext2D] = useState<CanvasRenderingContext2D | null | undefined>(null);
@@ -118,29 +117,21 @@ export function Engine2D({
             pts3d.push(vec3.scaleAndAdd(vec3.create(), grid.origin, grid.axisY, -i * grid.size2));
             labels.push(`-${yLabel}`);
         }
-        const pts = measureApi.toPathPoints(pts3d, size.width, size.height, view.renderState.camera);
+        const pts = measureView?.draw.toScreenSpace(pts3d);
 
         if (pts) {
             drawTexts(context2D, pts.screenPoints, labels);
         }
-    }, [grid, context2D, view, cameraType, size]);
+    }, [grid, context2D, measureView, view, cameraType]);
 
     const drawId = useRef(0);
     const render = useCallback(async () => {
-        if (view && context2D && measureScene && measureApi && canvas2D && size) {
+        if (view && context2D && canvas2D && size && measureView) {
             const { camera } = view.renderState;
             const cameraDirection = vec3.transformQuat(vec3.create(), vec3.fromValues(0, 0, -1), camera.rotation);
             const camSettings = { pos: camera.position, dir: cameraDirection };
             const getDrawMeasureEntity = async (entity?: DrawableEntity, settings?: MeasureSettings) =>
-                entity &&
-                measureApi.getDrawMeasureEntity(
-                    size.width,
-                    size.height,
-                    view.renderState.camera,
-                    measureScene,
-                    entity,
-                    settings
-                );
+                entity && measureView.draw.getDrawEntity(entity, settings);
             const id = ++drawId.current;
 
             const [
@@ -351,14 +342,7 @@ export function Engine2D({
             }
 
             if (manholeCollisionValues && (manholeCollisionValues.outer || manholeCollisionValues.inner)) {
-                const colVal = measureApi.getDrawObjectFromPoints(
-                    size.width,
-                    size.height,
-                    view.renderState.camera,
-                    manholeCollisionValues.lid,
-                    false,
-                    true
-                );
+                const colVal = measureView.draw.getDrawObjectFromPoints(manholeCollisionValues.lid, false, true);
                 if (colVal) {
                     colVal.objects.forEach((obj) => {
                         obj.parts.forEach((part) => {
@@ -393,14 +377,7 @@ export function Engine2D({
             }
 
             if (areaPoints.length) {
-                const drawProd = measureApi.getDrawObjectFromPoints(
-                    size.width,
-                    size.height,
-                    view.renderState.camera,
-                    areaPoints,
-                    true,
-                    true
-                );
+                const drawProd = measureView.draw.getDrawObjectFromPoints(areaPoints, true, true);
                 if (drawProd) {
                     drawProd.objects.forEach((obj) => {
                         obj.parts.forEach((part) => {
@@ -435,16 +412,7 @@ export function Engine2D({
                 roadCrossSectionData.length > 1
             ) {
                 const prods = roadCrossSectionData
-                    .map((road) =>
-                        measureApi.getDrawObjectFromPoints(
-                            size.width,
-                            size.height,
-                            view.renderState.camera,
-                            road.points,
-                            false,
-                            false
-                        )
-                    )
+                    .map((road) => measureView.draw.getDrawObjectFromPoints(road.points, false, false))
                     .filter((prod) => prod) as DrawProduct[];
 
                 if (prods.length) {
@@ -453,7 +421,7 @@ export function Engine2D({
                         end: vec2.fromValues(pointerPos.current[0], 0),
                     };
 
-                    const normal = measureApi.get2dNormal(prods[0], line);
+                    const normal = measureView.draw.get2dNormal(prods[0], line);
                     if (normal) {
                         line = {
                             start: vec2.scaleAndAdd(vec2.create(), normal.position, normal.normal, size.height),
@@ -461,7 +429,7 @@ export function Engine2D({
                         };
                     }
 
-                    const traceDraw = measureApi.traceDrawObjects(prods, line);
+                    const traceDraw = measureView.draw.getTraceDrawOject(prods, line);
                     traceDraw.objects.forEach((obj) => {
                         obj.parts.forEach((part) => {
                             drawPart(
@@ -483,15 +451,7 @@ export function Engine2D({
             }
 
             if (pointLinePoints.length && pointLineResult) {
-                const drawProd = measureApi.getDrawObjectFromPoints(
-                    size.width,
-                    size.height,
-                    view.renderState.camera,
-                    pointLinePoints,
-                    false,
-                    true,
-                    true
-                );
+                const drawProd = measureView.draw.getDrawObjectFromPoints(pointLinePoints, false, true, true);
 
                 if (drawProd) {
                     drawProd.objects.forEach((obj) => {
@@ -516,14 +476,7 @@ export function Engine2D({
             }
 
             if (crossSection) {
-                const drawProd = measureApi.getDrawObjectFromPoints(
-                    size.width,
-                    size.height,
-                    view.renderState.camera,
-                    crossSection,
-                    false,
-                    false
-                );
+                const drawProd = measureView.draw.getDrawObjectFromPoints(crossSection, false, false);
                 if (drawProd) {
                     drawProd.objects.forEach((obj) => {
                         obj.parts.forEach((part) => {
@@ -553,14 +506,7 @@ export function Engine2D({
                         const center = vec3.add(vec3.create(), crossSection[0], crossSection[1]);
                         vec3.scale(center, center, 0.5);
                         const offsetP = vec3.scaleAndAdd(vec3.create(), center, cross, -3);
-                        const arrow = measureApi.getDrawObjectFromPoints(
-                            size.width,
-                            size.height,
-                            view.renderState.camera,
-                            [center, offsetP],
-                            false,
-                            false
-                        );
+                        const arrow = measureView.draw.getDrawObjectFromPoints([center, offsetP], false, false);
                         if (arrow) {
                             arrow.objects.forEach((obj) => {
                                 obj.parts.forEach((part) => {
@@ -606,14 +552,7 @@ export function Engine2D({
                                 colorList.push("brown");
                         }
                     });
-                    const drawProd = measureApi.getDrawObjectFromPoints(
-                        size.width,
-                        size.height,
-                        view.renderState.camera,
-                        section.points,
-                        false,
-                        false
-                    );
+                    const drawProd = measureView.draw.getDrawObjectFromPoints(section.points, false, false);
                     if (drawProd) {
                         drawProd.objects.forEach((obj) => {
                             obj.parts.forEach((part) => {
@@ -630,17 +569,11 @@ export function Engine2D({
                             });
                         });
                     }
-                    const slopeL = measureApi.getDrawText(
-                        size.width,
-                        size.height,
-                        view.renderState.camera,
+                    const slopeL = measureView.draw.getDrawText(
                         [section.slopes.left.start, section.slopes.left.end],
                         (section.slopes.left.slope * 100).toFixed(1) + "%"
                     );
-                    const slopeR = measureApi.getDrawText(
-                        size.width,
-                        size.height,
-                        view.renderState.camera,
+                    const slopeR = measureView.draw.getDrawText(
                         [section.slopes.right.start, section.slopes.right.end],
                         (section.slopes.right.slope * 100).toFixed(1) + "%"
                     );
@@ -653,9 +586,9 @@ export function Engine2D({
         }
     }, [
         view,
+        measureView,
         context2D,
         measure.duoMeasurementValues,
-        measureScene,
         canvas2D,
         measureObjects,
         areaPoints,

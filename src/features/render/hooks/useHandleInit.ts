@@ -1,18 +1,11 @@
 import { ObjectDB, SceneData, SceneLoadFail } from "@novorender/data-js-api";
-import {
-    DeviceProfile,
-    View,
-    computeRotation,
-    downloadImports,
-    getDeviceProfile,
-    rotationFromDirection,
-} from "@novorender/api";
+import { DeviceProfile, View, computeRotation, getDeviceProfile, rotationFromDirection } from "@novorender/api";
 import { Internal } from "@novorender/webgl-api";
 import { getGPUTier } from "detect-gpu";
 import { quat, vec3, vec4 } from "gl-matrix";
 import { useEffect, useRef } from "react";
 
-import { dataApi, measureApi } from "app";
+import { dataApi } from "app";
 import { useAppDispatch } from "app/store";
 import { explorerGlobalsActions, useExplorerGlobals } from "contexts/explorerGlobals";
 import {
@@ -26,7 +19,6 @@ import { useSceneId } from "hooks/useSceneId";
 import { AsyncStatus } from "types/misc";
 import { CustomProperties } from "types/project";
 import { VecRGBA } from "utils/color";
-import { getAssetUrl } from "utils/misc";
 import { sleep } from "utils/time";
 
 import { renderActions } from "..";
@@ -73,9 +65,8 @@ export function useHandleInit() {
 
             try {
                 const [{ url, db, ...sceneData }, camera] = await loadScene(sceneId);
-                const webgl2Bin = new URL(url);
-                webgl2Bin.pathname += "webgl2_bin/";
-                const octreeSceneConfig = await view.loadSceneFromURL(webgl2Bin);
+                const octreeSceneConfig = await view.loadSceneFromURL(new URL(url));
+                const measureView = await view.measure;
                 view.run();
 
                 while (!view.renderState.scene) {
@@ -141,15 +132,13 @@ export function useHandleInit() {
                     }
                 });
 
-                const measureScene = await measureApi.loadScene(getAssetUrl(view, ""));
-
                 resizeObserver.observe(canvas);
                 dispatchGlobals(
                     explorerGlobalsActions.update({
                         db: db as ObjectDB,
                         view: view,
                         scene: octreeSceneConfig,
-                        measureScene,
+                        measureView,
                     })
                 );
 
@@ -339,6 +328,6 @@ async function loadDeviceTier(): Promise<{ tier: -1 | DeviceProfile["tier"]; isM
 
 async function createView(canvas: HTMLCanvasElement, options?: { deviceProfile?: DeviceProfile }): Promise<View> {
     const deviceProfile = options?.deviceProfile ?? getDeviceProfile(0);
-    const imports = await downloadImports({ baseUrl: "/novorender/api/" });
+    const imports = await View.downloadImports({ baseUrl: "/novorender/api/" });
     return new View(canvas, deviceProfile, imports);
 }

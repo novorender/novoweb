@@ -1,9 +1,9 @@
 import { useEffect, useState } from "react";
-import { SnapTolerance } from "@novorender/measure-api";
 
 import { useAppSelector } from "app/store";
 
 import { selectMeasure } from "./measureSlice";
+import { SnapTolerance } from "@novorender/api/types/measure";
 
 export function useMeasureHoverSettings(): SnapTolerance {
     const measure = useAppSelector(selectMeasure);
