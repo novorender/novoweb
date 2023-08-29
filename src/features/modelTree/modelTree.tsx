@@ -1,36 +1,29 @@
+import { ContentCopy } from "@mui/icons-material";
 import { Box, ListItemIcon, ListItemText, Menu, MenuItem } from "@mui/material";
-import { useRef, useEffect } from "react";
-import { ListOnScrollProps } from "react-window";
 import { HierarcicalObjectReference } from "@novorender/webgl-api";
-
-import { Divider, LinearProgress, LogoSpeedDial, WidgetContainer, WidgetHeader } from "components";
-import { Breadcrumbs } from "features/breadcrumbs";
-import { NodeList } from "features/nodeList/nodeList";
-import WidgetList from "features/widgetList/widgetList";
+import { useEffect, useRef } from "react";
+import { ListOnScrollProps } from "react-window";
 
 import { useAppDispatch, useAppSelector } from "app/store";
-import { renderActions, selectMainObject } from "features/render/renderSlice";
+import { Divider, LinearProgress, LogoSpeedDial, WidgetContainer, WidgetHeader } from "components";
+import { featuresConfig } from "config/features";
 import { useExplorerGlobals } from "contexts/explorerGlobals";
-
+import { Breadcrumbs } from "features/breadcrumbs";
+import { NodeList } from "features/nodeList/nodeList";
+import { renderActions, selectMainObject } from "features/render";
+import WidgetList from "features/widgetList/widgetList";
 import { useAbortController } from "hooks/useAbortController";
 import { useMountedState } from "hooks/useMountedState";
 import { useToggle } from "hooks/useToggle";
-import { getObjectData, iterateAsync, searchFirstObjectAtPath } from "utils/search";
+import { selectMaximized, selectMinimized } from "slices/explorerSlice";
+import { NodeType } from "types/misc";
 import { getParentPath } from "utils/objectData";
-import { featuresConfig } from "config/features";
-import { ContentCopy } from "@mui/icons-material";
-import { selectMinimized, selectMaximized } from "slices/explorerSlice";
+import { getObjectData, iterateAsync, searchFirstObjectAtPath } from "utils/search";
 
 enum Status {
     Ready,
     Loading,
 }
-
-// the NodeType in api does not work with --isolatedModules
-export const NodeType = {
-    Internal: 0,
-    Leaf: 1,
-};
 
 type TreeLevel = {
     nodes: HierarcicalObjectReference[];

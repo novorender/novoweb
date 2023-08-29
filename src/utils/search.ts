@@ -1,7 +1,7 @@
 import { ObjectDB } from "@novorender/data-js-api";
 import { HierarcicalObjectReference, ObjectData, ObjectId, SearchPattern } from "@novorender/webgl-api";
 
-import { NodeType } from "features/modelTree/modelTree";
+import { NodeType } from "types/misc";
 
 import { sleep } from "./time";
 

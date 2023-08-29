@@ -30,11 +30,11 @@ import {
 } from "components";
 import { useExplorerGlobals } from "contexts/explorerGlobals";
 import { highlightActions, useDispatchHighlighted } from "contexts/highlighted";
-import { NodeType } from "features/modelTree/modelTree";
 import { selectMainObject } from "features/render/renderSlice";
 import { useAbortController } from "hooks/useAbortController";
 import { useMountedState } from "hooks/useMountedState";
 import { selectHasAdminCapabilities } from "slices/explorerSlice";
+import { NodeType } from "types/misc";
 import {
     extractObjectIds,
     getFileNameFromPath,
