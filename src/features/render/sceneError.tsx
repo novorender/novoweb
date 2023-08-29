@@ -63,25 +63,17 @@ export function SceneError() {
                                 : "Unable to load scene"}
                         </Typography>
                         <Alert severity="warning" sx={{ mb: 2 }}>
+                            {error === Error.LEGACY_BINARY_FORMAT && (
+                                <>There is an issue with this scene. Please contact support.</>
+                            )}
                             {error === Error.UNKNOWN_ERROR && (
                                 <>
+                                    Failed to download the scene. Please try again later.
+                                    <br />
+                                    <br />
                                     Make sure you are using an up to date version of either Safari or a Chromium based
                                     browser such as Chrome or Edge.
                                 </>
-                            )}
-                            {error === Error.LEGACY_BINARY_FORMAT && (
-                                <>
-                                    This scene needs to be updated. An admin can{" "}
-                                    <a href="https://novorender.com/manuals/update-scene/">
-                                        follow the steps shown here
-                                    </a>{" "}
-                                    to update the scene. The process may take a few minutes to complete. <br /> <br />
-                                    Please get in touch with support if you are still seeing this error after updating
-                                    the scene.
-                                </>
-                            )}
-                            {error === Error.UNKNOWN_ERROR && (
-                                <>"Failed to download the scene. Please try again later.</>
                             )}
                             {error === Error.INVALID_SCENE && (
                                 <>
