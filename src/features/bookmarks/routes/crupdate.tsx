@@ -32,7 +32,11 @@ export function Crupdate() {
     const [collection, setCollection] = useState(bmToEdit?.grouping ?? "");
     const [personal, togglePersonal] = useToggle(bmToEdit ? bmToEdit.access === BookmarkAccess.Personal : true);
     const [addToSelectionBasket, toggleAddToSelectionBasket] = useToggle(
-        bmToEdit ? bmToEdit.options?.addSelectedToSelectionBasket : false
+        bmToEdit
+            ? bmToEdit.explorerState
+                ? bmToEdit.explorerState.options.addToSelectionBasket
+                : bmToEdit.options?.addSelectedToSelectionBasket
+            : false
     );
     const [bmImg, setBmImg] = useState("");
 
@@ -90,12 +94,9 @@ export function Crupdate() {
             description,
             grouping: collection,
             access: personal ? BookmarkAccess.Personal : BookmarkAccess.Public,
-            explorerState: bm.explorerState
-                ? {
-                      ...bm.explorerState,
-                      options: { addToSelectionBasket: addToSelectionBasket },
-                  }
-                : undefined,
+            ...(bm.explorerState
+                ? { explorerState: { ...bm.explorerState, options: { addToSelectionBasket } } }
+                : { options: { addSelectedToSelectionBasket: addToSelectionBasket } }), // legacy
         });
 
         dispatch(bookmarksActions.setBookmarks(newBookmarks));
@@ -117,7 +118,9 @@ export function Crupdate() {
                       description,
                       grouping: collection,
                       access: personal ? BookmarkAccess.Personal : BookmarkAccess.Public,
-                      options: { addSelectedToSelectionBasket: addToSelectionBasket },
+                      ...(bm.explorerState
+                          ? { explorerState: { ...bm.explorerState, options: { addToSelectionBasket } } }
+                          : { options: { addSelectedToSelectionBasket: addToSelectionBasket } }), // legacy
                   }
                 : bm
         );
