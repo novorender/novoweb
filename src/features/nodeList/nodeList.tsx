@@ -11,8 +11,8 @@ import { useExplorerGlobals } from "contexts/explorerGlobals";
 import { hiddenActions, useDispatchHidden, useIsHidden } from "contexts/hidden";
 import { highlightActions, useDispatchHighlighted, useIsHighlighted } from "contexts/highlighted";
 import { selectionBasketActions, useDispatchSelectionBasket } from "contexts/selectionBasket";
-import { NodeType } from "features/modelTree/modelTree";
 import { renderActions } from "features/render";
+import { NodeType } from "types/misc";
 import { extractObjectIds, getObjectNameFromPath } from "utils/objectData";
 import { getDescendants, searchByParentPath } from "utils/search";
 

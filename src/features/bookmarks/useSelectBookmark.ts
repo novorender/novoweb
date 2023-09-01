@@ -113,9 +113,15 @@ export function useSelectBookmark() {
                 );
                 dispatch(groupsActions.setLoadingIds(false));
 
+                console.log(toLoad);
+
                 dispatchSelectionBasket(selectionBasketActions.add(toLoad.flatMap((group) => Array.from(group.ids))));
                 dispatchObjectGroups(
-                    objectGroupsActions.set(updatedGroups.map((group) => ({ ...group, status: GroupStatus.None })))
+                    objectGroupsActions.set(
+                        updatedGroups.map((group) =>
+                            group.status === GroupStatus.Selected ? { ...group, status: GroupStatus.None } : group
+                        )
+                    )
                 );
                 dispatchHighlighted(highlightActions.setIds([]));
                 dispatchHighlightCollections(highlightCollectionsActions.clearAll());

@@ -35,11 +35,10 @@ import {
     selectViewMode,
 } from "features/render/renderSlice";
 import { useAbortController } from "hooks/useAbortController";
-import { ExtendedMeasureEntity, ViewMode } from "types/misc";
+import { ExtendedMeasureEntity, NodeType, ViewMode } from "types/misc";
 import { isRealVec } from "utils/misc";
-import { searchByPatterns, searchDeepByPatterns } from "utils/search";
-import { NodeType } from "features/modelTree/modelTree";
 import { extractObjectIds } from "utils/objectData";
+import { searchByPatterns, searchDeepByPatterns } from "utils/search";
 
 export function useCanvasClickHandler() {
     const dispatch = useAppDispatch();

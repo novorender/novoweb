@@ -1,4 +1,4 @@
-import { Bookmark } from "@novorender/data-js-api";
+import { Bookmark, ExplorerBookmarkState } from "@novorender/data-js-api";
 
 import { useAppSelector } from "app/store";
 import { useExplorerGlobals } from "contexts/explorerGlobals";
@@ -59,7 +59,9 @@ export function useCreateBookmark() {
     const hidden = useLazyHidden();
     const selectionBasket = useLazySelectionBasket();
 
-    const create = (img?: string): Omit<Bookmark, "name" | "description" | "img"> & { img?: string } => {
+    const create = (
+        img?: string
+    ): Omit<Bookmark, "name" | "description" | "img"> & { img?: string; explorerState: ExplorerBookmarkState } => {
         return {
             img,
             selectedOnly: false, // legacy
