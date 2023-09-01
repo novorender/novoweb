@@ -32,7 +32,11 @@ export function Crupdate() {
     const [collection, setCollection] = useState(bmToEdit?.grouping ?? "");
     const [personal, togglePersonal] = useToggle(bmToEdit ? bmToEdit.access === BookmarkAccess.Personal : true);
     const [addToSelectionBasket, toggleAddToSelectionBasket] = useToggle(
-        bmToEdit ? bmToEdit.options?.addSelectedToSelectionBasket : false
+        bmToEdit
+            ? bmToEdit.explorerState
+                ? bmToEdit.explorerState.options.addToSelectionBasket
+                : bmToEdit.options?.addSelectedToSelectionBasket
+            : false
     );
     const [bmImg, setBmImg] = useState("");
 
@@ -90,12 +94,10 @@ export function Crupdate() {
             description,
             grouping: collection,
             access: personal ? BookmarkAccess.Personal : BookmarkAccess.Public,
-            explorerState: bm.explorerState
-                ? {
-                      ...bm.explorerState,
-                      options: { addToSelectionBasket: addToSelectionBasket },
-                  }
-                : undefined,
+            explorerState: {
+                ...bm.explorerState!,
+                options: { addToSelectionBasket: addToSelectionBasket },
+            },
         });
 
         dispatch(bookmarksActions.setBookmarks(newBookmarks));
@@ -106,20 +108,23 @@ export function Crupdate() {
             return;
         }
 
-        const img = await createBookmarkImg(canvas);
+        const bm = createBookmark(await createBookmarkImg(canvas));
 
-        const newBookmarks = bookmarks.map((bm) =>
-            bm === bmToEdit
+        const newBookmarks = bookmarks.map((bookmark) =>
+            bookmark === bmToEdit
                 ? {
-                      ...createBookmark(img),
+                      ...bm,
                       id: bmToEdit.id,
                       name,
                       description,
                       grouping: collection,
                       access: personal ? BookmarkAccess.Personal : BookmarkAccess.Public,
-                      options: { addSelectedToSelectionBasket: addToSelectionBasket },
+                      explorerState: {
+                          ...bm.explorerState!,
+                          options: { addToSelectionBasket: addToSelectionBasket },
+                      },
                   }
-                : bm
+                : bookmark
         );
 
         dispatch(bookmarksActions.setBookmarks(newBookmarks));
