@@ -154,7 +154,17 @@ export function Bookmark({ bookmark }: { bookmark: ExtendedBookmark }) {
                     <MenuItem
                         key="edit"
                         onClick={async () => {
-                            selectBookmark({ ...bookmark, options: { addSelectedToSelectionBasket: false } });
+                            selectBookmark({
+                                ...bookmark,
+                                ...(bookmark.explorerState
+                                    ? {
+                                          explorerState: {
+                                              ...bookmark.explorerState,
+                                              options: { addToSelectionBasket: false },
+                                          },
+                                      }
+                                    : { options: { addSelectedToSelectionBasket: false } }), // legacy
+                            });
                             history.push(`/edit/${bookmark.id}`);
                         }}
                     >

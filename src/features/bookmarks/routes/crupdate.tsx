@@ -94,9 +94,10 @@ export function Crupdate() {
             description,
             grouping: collection,
             access: personal ? BookmarkAccess.Personal : BookmarkAccess.Public,
-            ...(bm.explorerState
-                ? { explorerState: { ...bm.explorerState, options: { addToSelectionBasket } } }
-                : { options: { addSelectedToSelectionBasket: addToSelectionBasket } }), // legacy
+            explorerState: {
+                ...bm.explorerState!,
+                options: { addToSelectionBasket: addToSelectionBasket },
+            },
         });
 
         dispatch(bookmarksActions.setBookmarks(newBookmarks));
@@ -107,22 +108,23 @@ export function Crupdate() {
             return;
         }
 
-        const img = await createBookmarkImg(canvas);
+        const bm = createBookmark(await createBookmarkImg(canvas));
 
-        const newBookmarks = bookmarks.map((bm) =>
-            bm === bmToEdit
+        const newBookmarks = bookmarks.map((bookmark) =>
+            bookmark === bmToEdit
                 ? {
-                      ...createBookmark(img),
+                      ...bm,
                       id: bmToEdit.id,
                       name,
                       description,
                       grouping: collection,
                       access: personal ? BookmarkAccess.Personal : BookmarkAccess.Public,
-                      ...(bm.explorerState
-                          ? { explorerState: { ...bm.explorerState, options: { addToSelectionBasket } } }
-                          : { options: { addSelectedToSelectionBasket: addToSelectionBasket } }), // legacy
+                      explorerState: {
+                          ...bm.explorerState!,
+                          options: { addToSelectionBasket: addToSelectionBasket },
+                      },
                   }
-                : bm
+                : bookmark
         );
 
         dispatch(bookmarksActions.setBookmarks(newBookmarks));
