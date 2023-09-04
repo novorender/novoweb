@@ -1,6 +1,6 @@
 import { CropLandscape, Layers, LayersClear, Straighten, VisibilityOff } from "@mui/icons-material";
 import { Box, ListItemIcon, ListItemText, MenuItem } from "@mui/material";
-import { MeasureEntity } from "@novorender/measure-api";
+import { MeasureEntity } from "@novorender/api";
 import { vec3, vec4 } from "gl-matrix";
 import { useEffect, useState } from "react";
 
@@ -11,7 +11,7 @@ import { hiddenActions, useDispatchHidden } from "contexts/hidden";
 import { highlightActions, useDispatchHighlighted } from "contexts/highlighted";
 import { selectionBasketActions, useDispatchSelectionBasket } from "contexts/selectionBasket";
 import { measureActions } from "features/measure";
-import { ObjectVisibility, renderActions, selectClippingPlanes, selectStamp, StampKind } from "features/render";
+import { ObjectVisibility, StampKind, renderActions, selectClippingPlanes, selectStamp } from "features/render";
 import { selectCanvasContextMenuFeatures } from "slices/explorerSlice";
 import { getFilePathFromObjectPath } from "utils/objectData";
 import { getObjectData, searchDeepByPatterns } from "utils/search";
@@ -56,7 +56,7 @@ export function CanvasContextMenuStamp() {
     const dispatchHighlighted = useDispatchHighlighted();
     const dispatchSelectionBasket = useDispatchSelectionBasket();
     const {
-        state: { db, measureScene },
+        state: { db, measureView },
     } = useExplorerGlobals(true);
 
     const features = useAppSelector(selectCanvasContextMenuFeatures);
@@ -82,7 +82,7 @@ export function CanvasContextMenuStamp() {
 
             const [obj, ent] = await Promise.all([
                 getObjectData({ db, id: objectId }),
-                measureScene
+                measureView.core
                     .pickMeasureEntity(objectId, stamp.data.position)
                     .then((res) => (["face"].includes(res.entity.drawKind) ? res.entity : undefined))
                     .catch(() => undefined),
@@ -99,7 +99,7 @@ export function CanvasContextMenuStamp() {
                 file: file ? ["path", file] : undefined,
             });
         }
-    }, [stamp, db, measureScene, dispatch]);
+    }, [stamp, db, measureView, dispatch]);
 
     if (stamp?.kind !== StampKind.CanvasContextMenu) {
         return null;

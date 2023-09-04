@@ -1,33 +1,33 @@
-import { vec3 } from "gl-matrix";
-import { useEffect, useState } from "react";
-import { DuoMeasurementValues, MeasurementValues, MeasureSettings } from "@novorender/measure-api";
+import { PushPin } from "@mui/icons-material";
 import {
     Box,
     Checkbox,
-    capitalize,
     Grid,
+    InputLabel,
     List,
     ListItem,
+    MenuItem,
+    OutlinedInput,
+    Select,
+    capitalize,
     css,
     styled,
-    Select,
-    InputLabel,
-    OutlinedInput,
-    MenuItem,
 } from "@mui/material";
-import { PushPin } from "@mui/icons-material";
+import { CylinerMeasureType, DuoMeasurementValues, MeasureSettings, MeasurementValues } from "@novorender/api";
+import { vec3 } from "gl-matrix";
+import { useEffect, useState } from "react";
 
-import { Accordion, AccordionDetails, AccordionSummary, VertexTable, MeasurementTable } from "components";
 import { useAppDispatch, useAppSelector } from "app/store";
+import { Accordion, AccordionDetails, AccordionSummary, MeasurementTable, VertexTable } from "components";
 import { useExplorerGlobals } from "contexts/explorerGlobals";
-import { getMeasurementValueKind, measureObjectIsVertex } from "utils/misc";
 import { ExtendedMeasureEntity } from "types/misc";
+import { getMeasurementValueKind, measureObjectIsVertex } from "utils/misc";
 
-import { measureActions, selectMeasure } from "./measureSlice";
-import { Slope } from "./slope";
-import { PlanarDiff } from "./planarDiff";
-import { useMeasureObjects } from "./useMeasureObjects";
 import { cylinderOptions } from "./config";
+import { measureActions, selectMeasure } from "./measureSlice";
+import { PlanarDiff } from "./planarDiff";
+import { Slope } from "./slope";
+import { useMeasureObjects } from "./useMeasureObjects";
 
 const NestedAccordionSummary = styled(AccordionSummary)(
     ({ theme }) => css`
@@ -49,7 +49,7 @@ const NestedAccordionDetails = styled(AccordionDetails)(
 
 export function MeasuredObject({ obj, idx }: { obj: ExtendedMeasureEntity; idx: number }) {
     const {
-        state: { measureScene },
+        state: { measureView },
     } = useExplorerGlobals(true);
 
     const dispatch = useAppDispatch();
@@ -64,12 +64,12 @@ export function MeasuredObject({ obj, idx }: { obj: ExtendedMeasureEntity; idx: 
 
         async function getMeasureValues() {
             if (measureObject) {
-                setMeasureValues(await measureScene.measure(measureObject, undefined, measureObject.settings));
+                setMeasureValues(await measureView.core.measure(measureObject, undefined, measureObject.settings));
             } else {
                 setMeasureValues(undefined);
             }
         }
-    }, [measureObject, measureScene]);
+    }, [measureObject, measureView]);
 
     const kind = !measureObject ? "" : measureValues ? getMeasurementValueKind(measureValues) : "point";
 
@@ -116,7 +116,7 @@ export function MeasuredObject({ obj, idx }: { obj: ExtendedMeasureEntity; idx: 
                                 measureActions.setSettings({
                                     idx,
                                     settings: {
-                                        cylinderMeasure: newValue,
+                                        cylinderMeasure: newValue as CylinerMeasureType,
                                     },
                                 })
                             );

@@ -1,11 +1,11 @@
+import { rotationFromDirection } from "@novorender/api";
 import { RenderSettings } from "@novorender/webgl-api";
-import { vec3, quat, vec4 } from "gl-matrix";
+import { quat, vec3, vec4 } from "gl-matrix";
 
 import { ObjectVisibility } from "features/render/renderSlice";
+import { Viewpoint } from "types/bcf";
 import { VecRGB, VecRGBA, vecToHex } from "utils/color";
 import { base64UrlEncodeImg, createCanvasSnapshot, uniqueArray } from "utils/misc";
-import { Viewpoint } from "types/bcf";
-import { rotationFromDirection } from "@novorender/api";
 
 type Point = {
     x: number;

@@ -1,5 +1,5 @@
+import { SnapTolerance } from "@novorender/api";
 import { useEffect, useState } from "react";
-import { SnapTolerance } from "@novorender/measure-api";
 
 import { useAppSelector } from "app/store";
 

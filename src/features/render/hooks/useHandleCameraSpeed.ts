@@ -1,7 +1,7 @@
 import { useEffect } from "react";
 
-import { useExplorerGlobals } from "contexts/explorerGlobals";
 import { useAppSelector } from "app/store";
+import { useExplorerGlobals } from "contexts/explorerGlobals";
 
 import { selectCameraSpeedLevels, selectCurrentCameraSpeedLevel, selectProportionalCameraSpeed } from "..";
 
@@ -20,16 +20,18 @@ export function useHandleCameraSpeed() {
             }
 
             Object.values(view.controllers).forEach((controller) => {
-                controller.updateParams({
-                    linearVelocity: levels[currentLevel],
-                    rotationalVelocity: levels[currentLevel],
-                    proportionalCameraSpeed: proportionalSpeed.enabled
-                        ? {
-                              min: proportionalSpeed.min,
-                              max: proportionalSpeed.max,
-                          }
-                        : undefined,
-                });
+                if ("updateParams" in controller) {
+                    controller.updateParams({
+                        linearVelocity: levels[currentLevel],
+                        rotationalVelocity: levels[currentLevel],
+                        proportionalCameraSpeed: proportionalSpeed.enabled
+                            ? {
+                                  min: proportionalSpeed.min,
+                                  max: proportionalSpeed.max,
+                              }
+                            : undefined,
+                    });
+                }
             });
         },
         [levels, currentLevel, proportionalSpeed, view]

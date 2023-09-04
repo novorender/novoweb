@@ -5,7 +5,6 @@ import { StyledEngineProvider, ThemeProvider } from "@mui/material/styles";
 import { LocalizationProvider } from "@mui/x-date-pickers";
 import { AdapterDateFns } from "@mui/x-date-pickers/AdapterDateFns";
 import { createAPI as createDataAPI } from "@novorender/data-js-api";
-import { createMeasureAPI } from "@novorender/measure-api";
 import enLocale from "date-fns/locale/en-GB";
 import { useEffect, useRef, useState } from "react";
 import { Route, Switch, useHistory } from "react-router-dom";
@@ -36,7 +35,6 @@ export const isIpad =
 export const isIphone = /\biPhone/.test(navigator.userAgent);
 
 export const dataApi = createDataAPI({ authHeader: getAuthHeader, serviceUrl: dataServerBaseUrl });
-export const measureApi = createMeasureAPI(window.location.origin + "/novorender/measure-api/");
 export const msalInstance = new PublicClientApplication(msalConfig);
 
 enum Status {

@@ -1,15 +1,15 @@
+import { DuoMeasurementValues } from "@novorender/api";
 import { useEffect, useState } from "react";
-import { DuoMeasurementValues } from "@novorender/measure-api";
 
-import { useExplorerGlobals } from "contexts/explorerGlobals";
 import { useAppDispatch, useAppSelector } from "app/store";
+import { useExplorerGlobals } from "contexts/explorerGlobals";
 import { ExtendedMeasureEntity } from "types/misc";
 
 import { measureActions, selectMeasureEntities } from "./measureSlice";
 
 export function useMeasureObjects() {
     const {
-        state: { measureScene },
+        state: { view },
     } = useExplorerGlobals();
 
     const selectedEntities = useAppSelector(selectMeasureEntities);
@@ -21,21 +21,19 @@ export function useMeasureObjects() {
         getMeasureObjects();
 
         async function getMeasureObjects() {
-            if (!measureScene) {
-                return;
-            }
+            const measureView = await view?.measure;
 
             dispatch(measureActions.setLoadingBrep(true));
             const mObjects = await Promise.all(
                 selectedEntities.map(async (obj) => {
                     const ent = obj as ExtendedMeasureEntity;
                     if (ent.settings?.cylinderMeasure === "top") {
-                        const swappedEnt = await measureScene.swapCylinder(ent, "outer");
+                        const swappedEnt = await measureView?.core.swapCylinder(ent, "outer");
                         if (swappedEnt) {
                             return { ...swappedEnt, settings: ent.settings };
                         }
                     } else if (ent.settings?.cylinderMeasure === "bottom") {
-                        const swappedEnt = await measureScene.swapCylinder(ent, "inner");
+                        const swappedEnt = await measureView?.core.swapCylinder(ent, "inner");
                         if (swappedEnt) {
                             return { ...swappedEnt, settings: ent.settings };
                         }
@@ -55,7 +53,7 @@ export function useMeasureObjects() {
 
             let res: DuoMeasurementValues | undefined;
 
-            res = (await measureScene
+            res = (await measureView?.core
                 .measure(obj1, obj2, obj1.settings, obj2.settings)
                 .catch((e) => console.warn(e))) as DuoMeasurementValues | undefined;
 
@@ -63,7 +61,7 @@ export function useMeasureObjects() {
             setMeasureObjects(mObjects);
             dispatch(measureActions.setLoadingBrep(false));
         }
-    }, [measureScene, setMeasureObjects, selectedEntities, dispatch]);
+    }, [view, setMeasureObjects, selectedEntities, dispatch]);
 
     return measureObjects;
 }

@@ -13,7 +13,7 @@ export default defineConfig(({ mode }) => {
 
     return {
         optimizeDeps: {
-            exclude: ["@novorender/measure-api", "@novorender/webgl-api", "@novorender/api"],
+            exclude: ["@novorender/webgl-api", "@novorender/api"],
         },
         envPrefix: "REACT_APP_",
         plugins: [

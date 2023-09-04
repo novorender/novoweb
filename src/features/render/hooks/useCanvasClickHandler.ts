@@ -2,7 +2,6 @@ import { rotationFromDirection } from "@novorender/api";
 import { mat3, quat, vec2, vec3, vec4 } from "gl-matrix";
 import { MouseEventHandler, useRef } from "react";
 
-import { measureApi } from "app";
 import { useAppDispatch, useAppSelector } from "app/store";
 import { useExplorerGlobals } from "contexts/explorerGlobals";
 import {
@@ -47,7 +46,7 @@ export function useCanvasClickHandler() {
     const dispatchHighlightCollections = useDispatchHighlightCollections();
     const highlightCollections = useHighlightCollections();
     const {
-        state: { view, canvas, db, measureScene, size },
+        state: { view, canvas, db },
     } = useExplorerGlobals();
 
     const mainObject = useAppSelector(selectMainObject);
@@ -77,6 +76,8 @@ export function useCanvasClickHandler() {
         if (!view || !canvas || longPress || drag) {
             return;
         }
+
+        const measureView = await view.measure;
 
         dispatch(renderActions.setPointerDownState(undefined));
 
@@ -111,9 +112,7 @@ export function useCanvasClickHandler() {
                     let dir = vec3.cross(vec3.create(), up, right);
 
                     if (topDown) {
-                        const midPt = (measureApi.toMarkerPoints(size.width, size.height, view.renderState.camera, [
-                            p,
-                        ]) ?? [])[0];
+                        const midPt = (measureView.draw.toMarkerPoints([p]) ?? [])[0];
                         if (midPt) {
                             const midPick = await view.pick(midPt[0], midPt[1]);
                             if (midPick) {
@@ -364,7 +363,7 @@ export function useCanvasClickHandler() {
                     );
                 } else {
                     dispatch(measureActions.setLoadingBrep(true));
-                    const entity = await measureScene?.pickMeasureEntity(
+                    const entity = await measureView.core.pickMeasureEntity(
                         result.objectId,
                         position,
                         measurePickSettings

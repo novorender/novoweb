@@ -1,4 +1,4 @@
-import { MeasureScene } from "@novorender/measure-api";
+import { CoreModule } from "@novorender/api";
 import { vec2, vec3 } from "gl-matrix";
 import { MouseEvent, MutableRefObject, PointerEvent as ReactPointerEvent, TouchEvent, WheelEvent, useRef } from "react";
 
@@ -37,7 +37,7 @@ export function useCanvasEventHandlers({
     renderFnRef: MutableRefObject<((isIdleFrame: boolean) => void) | undefined>;
 }) {
     const {
-        state: { view, canvas, measureScene, size },
+        state: { view, canvas, measureView, size },
     } = useExplorerGlobals();
     const handleCanvasContextMenu = useCanvasContextMenuHandler();
     const measureHoverSettings = useMeasureHoverSettings();
@@ -199,7 +199,7 @@ export function useCanvasEventHandlers({
     };
 
     const prevHoverUpdate = useRef(0);
-    const prevHoverEnt = useRef<Awaited<ReturnType<MeasureScene["pickMeasureEntityOnCurrentObject"]>>>();
+    const prevHoverEnt = useRef<Awaited<ReturnType<CoreModule["pickMeasureEntityOnCurrentObject"]>>>();
     const previous2dSnapPos = useRef(vec2.create());
     const onPointerMove = async (e: ReactPointerEvent<HTMLCanvasElement>) => {
         pointerPos.current = [e.nativeEvent.offsetX, e.nativeEvent.offsetY];
@@ -227,11 +227,11 @@ export function useCanvasEventHandlers({
                 prevHoverUpdate.current = now;
 
                 if (picker === Picker.Measurement) {
-                    if (measureScene && result) {
+                    if (measureView && result) {
                         const dist = hoverEnt?.connectionPoint && vec3.dist(result.position, hoverEnt.connectionPoint);
 
                         if (!dist || dist > 0.2) {
-                            hoverEnt = await measureScene.pickMeasureEntityOnCurrentObject(
+                            hoverEnt = await measureView.core.pickMeasureEntityOnCurrentObject(
                                 result.objectId,
                                 result.position,
                                 measureHoverSettings

@@ -13,7 +13,7 @@ import {
 
 export function useLoadCollisionTarget() {
     const {
-        state: { measureScene },
+        state: { measureView },
     } = useExplorerGlobals();
 
     const obj = useAppSelector(selectManholeCollisionTarget)?.selected;
@@ -25,23 +25,23 @@ export function useLoadCollisionTarget() {
         getMeasureEntity();
 
         async function getMeasureEntity() {
-            if (!measureScene || !obj) {
+            if (!measureView || !obj) {
                 return;
             }
 
             dispatch(manholeActions.setLoadingBrep(true));
             const entity = (await (obj.id === -1
                 ? { ObjectId: -1, drawKind: "vertex", parameter: obj.pos }
-                : measureScene
+                : measureView.core
                       .pickMeasureEntity(obj.id, obj.pos)
                       .then(async (_mObj) => {
                           if (settings?.cylinderMeasure === "top") {
-                              const swappedEnt = await measureScene.swapCylinder(_mObj.entity, "outer");
+                              const swappedEnt = await measureView.core.swapCylinder(_mObj.entity, "outer");
                               if (swappedEnt) {
                                   _mObj.entity = swappedEnt;
                               }
                           } else if (settings?.cylinderMeasure === "bottom") {
-                              const swappedEnt = await measureScene.swapCylinder(_mObj.entity, "inner");
+                              const swappedEnt = await measureView.core.swapCylinder(_mObj.entity, "inner");
                               if (swappedEnt) {
                                   _mObj.entity = swappedEnt;
                               }
@@ -56,7 +56,7 @@ export function useLoadCollisionTarget() {
             dispatch(manholeActions.setCollisionEntity(entity));
             dispatch(manholeActions.setLoadingBrep(false));
         }
-    }, [measureScene, dispatch, obj, manhole, settings]);
+    }, [measureView, dispatch, obj, manhole, settings]);
 
     return;
 }

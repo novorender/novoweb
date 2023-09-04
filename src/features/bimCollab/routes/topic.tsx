@@ -1,5 +1,6 @@
 import { Add, ArrowBack, Edit } from "@mui/icons-material";
 import { Box, Button, List, ListItem, Typography, useTheme } from "@mui/material";
+import { ClippingMode } from "@novorender/api";
 import { ObjectDB } from "@novorender/data-js-api";
 import { HierarcicalObjectReference } from "@novorender/webgl-api";
 import { Link, useHistory, useParams } from "react-router-dom";
@@ -37,7 +38,6 @@ import { extractObjectIds } from "utils/objectData";
 import { searchByPatterns } from "utils/search";
 import { sleep } from "utils/time";
 
-import { ClippingMode } from "@novorender/api";
 import {
     useGetColoringQuery,
     useGetCommentsQuery,

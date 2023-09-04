@@ -1,7 +1,6 @@
+import { MeasureView, SceneConfig as OctreeSceneConfig, View } from "@novorender/api";
 import { ObjectDB } from "@novorender/data-js-api";
-import { MeasureScene } from "@novorender/measure-api";
-import { SceneConfig as OctreeSceneConfig, View } from "@novorender/api";
-import { createContext, Dispatch, ReactNode, useContext, useReducer } from "react";
+import { Dispatch, ReactNode, createContext, useContext, useReducer } from "react";
 
 // Values that are used all over the place within Explorer, but are unserializable go here instead of redux store.
 
@@ -10,16 +9,16 @@ const initialState = {
     scene: undefined as undefined | OctreeSceneConfig,
     db: undefined as undefined | ObjectDB,
     canvas: null as null | HTMLCanvasElement,
-    measureScene: undefined as undefined | MeasureScene,
+    measureView: undefined as undefined | MeasureView,
     size: { width: 0, height: 0 },
 };
 
 type State = typeof initialState;
 type HydratedState = Pick<
     { [K in keyof State]: NonNullable<State[K]> },
-    "view" | "scene" | "db" | "canvas" | "measureScene"
+    "view" | "scene" | "db" | "canvas" | "measureView"
 > &
-    Omit<State, "view" | "scene" | "db" | "canvas" | "measureScene">;
+    Omit<State, "view" | "scene" | "db" | "canvas" | "measureView">;
 
 enum ActionTypes {
     Set,
@@ -90,4 +89,4 @@ function useExplorerGlobals(expectHydrated?: boolean): ContextType {
     return context;
 }
 
-export { actions as explorerGlobalsActions, ExplorerGlobalsProvider, useExplorerGlobals };
+export { ExplorerGlobalsProvider, actions as explorerGlobalsActions, useExplorerGlobals };
