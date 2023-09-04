@@ -36,3 +36,9 @@ export enum ViewMode {
 }
 
 export type RecursivePartial<T> = { [P in keyof T]?: RecursivePartial<T[P]> };
+
+// the NodeType in api does not work with --isolatedModules
+export const NodeType = {
+    Internal: 0,
+    Leaf: 1,
+};
