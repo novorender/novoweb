@@ -1,3 +1,4 @@
+import { CoreModule } from "@novorender/api";
 import { vec2, vec3 } from "gl-matrix";
 import { MouseEvent, MutableRefObject, PointerEvent as ReactPointerEvent, TouchEvent, WheelEvent, useRef } from "react";
 
@@ -23,7 +24,6 @@ import {
 } from "..";
 import { moveSvgCursor } from "../svgUtils";
 import { useCanvasContextMenuHandler } from "./useCanvasContextMenuHandler";
-import { CoreModule } from "@novorender/api/types/measure";
 
 export function useCanvasEventHandlers({
     pointerPos,

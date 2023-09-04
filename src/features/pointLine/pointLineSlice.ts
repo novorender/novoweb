@@ -1,9 +1,9 @@
+import { LineStripMeasureValues } from "@novorender/api";
 import { createSlice, PayloadAction } from "@reduxjs/toolkit";
 import { vec3 } from "gl-matrix";
 
 import { RootState } from "app/store";
 import { resetView, selectBookmark } from "features/render";
-import { LineStripMeasureValues } from "@novorender/api/types/measure";
 
 const initialState = {
     points: [] as vec3[],

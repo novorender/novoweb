@@ -1,5 +1,5 @@
-import { ObjectDB, SceneData, SceneLoadFail } from "@novorender/data-js-api";
 import { DeviceProfile, View, computeRotation, getDeviceProfile, rotationFromDirection } from "@novorender/api";
+import { ObjectDB, SceneData, SceneLoadFail } from "@novorender/data-js-api";
 import { Internal } from "@novorender/webgl-api";
 import { getGPUTier } from "detect-gpu";
 import { quat, vec3, vec4 } from "gl-matrix";

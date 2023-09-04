@@ -1,3 +1,4 @@
+import { MeasureEntity } from "@novorender/api";
 import { vec3 } from "gl-matrix";
 import { useEffect, useState } from "react";
 
@@ -6,7 +7,6 @@ import { useExplorerGlobals } from "contexts/explorerGlobals";
 import { AsyncStatus } from "types/misc";
 
 import { heightProfileActions, selectSelectedPoint } from "./heightProfileSlice";
-import { MeasureEntity } from "@novorender/api/types/measure";
 
 type ExtendedMeasureEntity = MeasureEntity & {
     pos: vec3;

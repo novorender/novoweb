@@ -1,11 +1,12 @@
-import { useEffect, useState } from "react";
+import { FollowParametricObject, MeasureEntity } from "@novorender/api";
 import { vec3 } from "gl-matrix";
+import { useEffect, useState } from "react";
 
-import { useExplorerGlobals } from "contexts/explorerGlobals";
 import { useAppDispatch, useAppSelector } from "app/store";
-import { selectFollowCylindersFrom, selectSelectedPositions } from "./followPathSlice";
+import { useExplorerGlobals } from "contexts/explorerGlobals";
 import { AsyncState, AsyncStatus } from "types/misc";
-import { FollowParametricObject, MeasureEntity } from "@novorender/api/types/measure";
+
+import { selectFollowCylindersFrom, selectSelectedPositions } from "./followPathSlice";
 
 type ExtendedMeasureObject = {
     fp?: FollowParametricObject;

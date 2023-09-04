@@ -12,6 +12,7 @@ import {
     Typography,
     useTheme,
 } from "@mui/material";
+import { MeasureError, Profile } from "@novorender/api";
 import { ParentSizeModern } from "@visx/responsive";
 import { useEffect, useState } from "react";
 
@@ -42,7 +43,6 @@ import {
     selectHeightProfileMeasureEntity,
     selectSelectedPoint,
 } from "./heightProfileSlice";
-import { MeasureError, Profile } from "@novorender/api/types/measure";
 
 const maxObjects = 50;
 

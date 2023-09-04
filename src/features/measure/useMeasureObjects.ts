@@ -1,11 +1,11 @@
+import { DuoMeasurementValues } from "@novorender/api";
 import { useEffect, useState } from "react";
 
-import { useExplorerGlobals } from "contexts/explorerGlobals";
 import { useAppDispatch, useAppSelector } from "app/store";
+import { useExplorerGlobals } from "contexts/explorerGlobals";
 import { ExtendedMeasureEntity } from "types/misc";
 
 import { measureActions, selectMeasureEntities } from "./measureSlice";
-import { DuoMeasurementValues } from "@novorender/api/types/measure";
 
 export function useMeasureObjects() {
     const {

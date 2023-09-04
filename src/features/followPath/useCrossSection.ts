@@ -1,3 +1,4 @@
+import { RoadCrossSection } from "@novorender/api";
 import { useEffect, useState } from "react";
 
 import { useAppDispatch, useAppSelector } from "app/store";
@@ -5,7 +6,6 @@ import { useExplorerGlobals } from "contexts/explorerGlobals";
 import { AsyncState, AsyncStatus } from "types/misc";
 
 import { selectDrawRoadIds, selectFollowCylindersFrom, selectProfile, selectSelectedIds } from "./followPathSlice";
-import { RoadCrossSection } from "@novorender/api/types/measure";
 
 export function useCrossSection() {
     const {

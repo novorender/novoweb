@@ -1,5 +1,6 @@
 import { CropLandscape, Layers, LayersClear, Straighten, VisibilityOff } from "@mui/icons-material";
 import { Box, ListItemIcon, ListItemText, MenuItem } from "@mui/material";
+import { MeasureEntity } from "@novorender/api";
 import { vec3, vec4 } from "gl-matrix";
 import { useEffect, useState } from "react";
 
@@ -10,11 +11,10 @@ import { hiddenActions, useDispatchHidden } from "contexts/hidden";
 import { highlightActions, useDispatchHighlighted } from "contexts/highlighted";
 import { selectionBasketActions, useDispatchSelectionBasket } from "contexts/selectionBasket";
 import { measureActions } from "features/measure";
-import { ObjectVisibility, renderActions, selectClippingPlanes, selectStamp, StampKind } from "features/render";
+import { ObjectVisibility, StampKind, renderActions, selectClippingPlanes, selectStamp } from "features/render";
 import { selectCanvasContextMenuFeatures } from "slices/explorerSlice";
 import { getFilePathFromObjectPath } from "utils/objectData";
 import { getObjectData, searchDeepByPatterns } from "utils/search";
-import { MeasureEntity } from "@novorender/api/types/measure";
 
 export const canvasContextMenuConfig = {
     hide: {

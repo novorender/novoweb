@@ -1,3 +1,4 @@
+import { DuoMeasurementValues, MeasureEntity, MeasureSettings } from "@novorender/api";
 import { createSlice, PayloadAction } from "@reduxjs/toolkit";
 import { vec3 } from "gl-matrix";
 
@@ -5,7 +6,6 @@ import { RootState } from "app/store";
 import { DeepMutable, resetView, selectBookmark } from "features/render/renderSlice";
 import { ExtendedMeasureEntity } from "types/misc";
 import { SnapKind } from "./config";
-import { DuoMeasurementValues, MeasureEntity, MeasureSettings } from "@novorender/api/types/measure";
 
 export type SelectedMeasureObj = {
     id: number;

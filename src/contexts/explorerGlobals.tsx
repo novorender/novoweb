@@ -1,7 +1,6 @@
+import { MeasureView, SceneConfig as OctreeSceneConfig, View } from "@novorender/api";
 import { ObjectDB } from "@novorender/data-js-api";
-import { SceneConfig as OctreeSceneConfig, View } from "@novorender/api";
-import { createContext, Dispatch, ReactNode, useContext, useReducer } from "react";
-import { MeasureView } from "@novorender/api/types/measure";
+import { Dispatch, ReactNode, createContext, useContext, useReducer } from "react";
 
 // Values that are used all over the place within Explorer, but are unserializable go here instead of redux store.
 
@@ -90,4 +89,4 @@ function useExplorerGlobals(expectHydrated?: boolean): ContextType {
     return context;
 }
 
-export { actions as explorerGlobalsActions, ExplorerGlobalsProvider, useExplorerGlobals };
+export { ExplorerGlobalsProvider, actions as explorerGlobalsActions, useExplorerGlobals };

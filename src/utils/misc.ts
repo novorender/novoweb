@@ -1,5 +1,4 @@
-import { View } from "@novorender/api";
-import { MeasureEntity, MeasurementValues, PointEntity } from "@novorender/api/types/measure";
+import { MeasureEntity, MeasurementValues, PointEntity, View } from "@novorender/api";
 import { RecursivePartial } from "types/misc";
 
 export function uniqueArray<T>(arr: T[]): T[] {

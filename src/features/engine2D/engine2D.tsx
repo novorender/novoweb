@@ -1,4 +1,5 @@
 import { css, styled } from "@mui/material";
+import { DrawProduct, DrawableEntity, MeasureSettings } from "@novorender/api";
 import { ReadonlyVec2, mat3, vec2, vec3 } from "gl-matrix";
 import { MutableRefObject, useCallback, useEffect, useRef, useState } from "react";
 
@@ -25,7 +26,6 @@ import { CameraType, selectCameraType, selectGrid, selectViewMode } from "featur
 import { AsyncStatus, ViewMode } from "types/misc";
 
 import { drawPart, drawProduct, drawTexts } from "./utils";
-import { DrawProduct, DrawableEntity, MeasureSettings } from "@novorender/api/types/measure";
 
 const Canvas2D = styled("canvas")(
     () => css`

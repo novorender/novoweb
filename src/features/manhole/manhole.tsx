@@ -1,7 +1,8 @@
 import { DeleteSweep, PushPin } from "@mui/icons-material";
-import { useRef, useEffect, useState } from "react";
-import { Box, Button, capitalize, Checkbox, FormControlLabel, Grid } from "@mui/material";
+import { Box, Button, Checkbox, FormControlLabel, Grid, capitalize } from "@mui/material";
+import { CylinerMeasureType, MeasurementValues } from "@novorender/api";
 import { vec3 } from "gl-matrix";
+import { useEffect, useRef, useState } from "react";
 
 import { useAppDispatch, useAppSelector } from "app/store";
 import {
@@ -12,30 +13,29 @@ import {
     LinearProgress,
     LogoSpeedDial,
     ScrollBox,
+    VertexTable,
     WidgetContainer,
     WidgetHeader,
-    VertexTable,
 } from "components";
+import { featuresConfig } from "config/features";
+import { useExplorerGlobals } from "contexts/explorerGlobals";
+import { MeasurementData } from "features/measure/measuredObject";
+import { Picker, renderActions, selectPicker } from "features/render/renderSlice";
 import WidgetList from "features/widgetList/widgetList";
 import { useToggle } from "hooks/useToggle";
-import { featuresConfig } from "config/features";
-import { selectMinimized, selectMaximized } from "slices/explorerSlice";
-import { Picker, renderActions, selectPicker } from "features/render/renderSlice";
-import { MeasurementData } from "features/measure/measuredObject";
-import { useExplorerGlobals } from "contexts/explorerGlobals";
-import { measureObjectIsVertex, getMeasurementValueKind } from "utils/misc";
+import { selectMaximized, selectMinimized } from "slices/explorerSlice";
+import { getMeasurementValueKind, measureObjectIsVertex } from "utils/misc";
 
 import {
     manholeActions,
-    selectManholeMeasureValues,
-    selectManholeId,
     selectIsLoadingManholeBrep,
     selectIsManholePinned,
+    selectManholeCollisionSettings,
     selectManholeCollisionTarget,
     selectManholeCollisionValues,
-    selectManholeCollisionSettings,
+    selectManholeId,
+    selectManholeMeasureValues,
 } from "./manholeSlice";
-import { CylinerMeasureType, MeasurementValues } from "@novorender/api/types/measure";
 
 export default function Manhole() {
     const {

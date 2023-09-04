@@ -1,4 +1,4 @@
-import { DrawPart, DrawProduct } from "@novorender/api/types/measure";
+import { DrawPart, DrawProduct } from "@novorender/api";
 import { ReadonlyVec2, ReadonlyVec3, vec2, vec3 } from "gl-matrix";
 
 export interface ColorSettings {
