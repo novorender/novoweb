@@ -1,4 +1,4 @@
-import { RoadCrossSection } from "@novorender/measure-api";
+import { RoadCrossSection } from "@novorender/api";
 import { useEffect, useState } from "react";
 
 import { useAppDispatch, useAppSelector } from "app/store";
@@ -9,7 +9,7 @@ import { selectDrawRoadIds, selectFollowCylindersFrom, selectProfile, selectSele
 
 export function useCrossSection() {
     const {
-        state: { measureScene },
+        state: { measureView },
     } = useExplorerGlobals();
 
     const followProfile = useAppSelector(selectProfile);
@@ -24,9 +24,6 @@ export function useCrossSection() {
         loadCrossSections();
 
         async function loadCrossSections() {
-            if (measureScene === undefined) {
-                return;
-            }
             if (roadIds === undefined || followProfile.length === 0) {
                 setObjects({ status: AsyncStatus.Success, data: [] });
                 return;
@@ -34,7 +31,7 @@ export function useCrossSection() {
             setObjects({ status: AsyncStatus.Loading });
 
             try {
-                const fp = await measureScene.getCrossSections(roadIds, Number(followProfile));
+                const fp = await measureView?.road.getCrossSections(roadIds, Number(followProfile));
 
                 if (!fp) {
                     setObjects({ status: AsyncStatus.Error, msg: "Cross section not found." });
@@ -46,7 +43,7 @@ export function useCrossSection() {
                 setObjects({ status: AsyncStatus.Error, msg: "An error occurred." });
             }
         }
-    }, [toFollow, measureScene, dispatch, followFrom, roadIds, followProfile]);
+    }, [toFollow, measureView, dispatch, followFrom, roadIds, followProfile]);
 
     return objects;
 }

@@ -1,4 +1,4 @@
-import { LineStripMeasureValues } from "@novorender/measure-api";
+import { LineStripMeasureValues } from "@novorender/api";
 import { createSlice, PayloadAction } from "@reduxjs/toolkit";
 import { vec3 } from "gl-matrix";
 

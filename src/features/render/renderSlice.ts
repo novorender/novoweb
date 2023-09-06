@@ -1,4 +1,3 @@
-import type { Bookmark, ObjectGroup } from "@novorender/data-js-api";
 import {
     ClippingMode,
     DeviceProfile,
@@ -6,6 +5,7 @@ import {
     RecursivePartial,
     TonemappingMode,
 } from "@novorender/api";
+import type { Bookmark, ObjectGroup } from "@novorender/data-js-api";
 import type { BoundingSphere, Camera, EnvironmentDescription } from "@novorender/webgl-api";
 import { PayloadAction, createAction, createSlice } from "@reduxjs/toolkit";
 import { quat, vec3, vec4 } from "gl-matrix";

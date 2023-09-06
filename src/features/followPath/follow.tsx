@@ -12,12 +12,11 @@ import {
     Typography,
     useTheme,
 } from "@mui/material";
-import { FollowParametricObject } from "@novorender/measure-api";
+import { FollowParametricObject, rotationFromDirection } from "@novorender/api";
 import { HierarcicalObjectReference } from "@novorender/webgl-api";
 import { vec3 } from "gl-matrix";
 import { FormEvent, SyntheticEvent, useCallback, useEffect, useState } from "react";
 import { useHistory } from "react-router-dom";
-import { rotationFromDirection } from "@novorender/api";
 
 import { useAppDispatch, useAppSelector } from "app/store";
 import { Accordion, AccordionDetails, AccordionSummary, Divider, IosSwitch, ScrollBox, Tooltip } from "components";

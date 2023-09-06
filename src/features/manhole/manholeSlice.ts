@@ -1,5 +1,5 @@
+import { ManholeMeasureValues, MeasureEntity, MeasureSettings } from "@novorender/api";
 import { Bookmark } from "@novorender/data-js-api";
-import { ManholeMeasureValues, MeasureEntity, MeasureSettings } from "@novorender/measure-api";
 import { PayloadAction, createSlice } from "@reduxjs/toolkit";
 import { vec3 } from "gl-matrix";
 

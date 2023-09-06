@@ -1,4 +1,4 @@
-import { DuoMeasurementValues, MeasureEntity, MeasureSettings } from "@novorender/measure-api";
+import { DuoMeasurementValues, MeasureEntity, MeasureSettings } from "@novorender/api";
 import { createSlice, PayloadAction } from "@reduxjs/toolkit";
 import { vec3 } from "gl-matrix";
 

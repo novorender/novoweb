@@ -1,4 +1,4 @@
-import { MeasureEntity } from "@novorender/measure-api";
+import { MeasureEntity } from "@novorender/api";
 import { createSlice, PayloadAction } from "@reduxjs/toolkit";
 import { vec3 } from "gl-matrix";
 

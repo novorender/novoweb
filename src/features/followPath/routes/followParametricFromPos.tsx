@@ -1,5 +1,5 @@
 import { Box } from "@mui/material";
-import { FollowParametricObject } from "@novorender/measure-api";
+import { FollowParametricObject } from "@novorender/api";
 import { useEffect, useState } from "react";
 import { useHistory } from "react-router-dom";
 
