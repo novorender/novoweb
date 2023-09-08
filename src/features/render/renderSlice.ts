@@ -714,12 +714,14 @@ export const renderSlice = createSlice({
 
                 // terrain
                 state.terrain.asBackground = terrain.asBackground;
-                state.terrain.elevationGradient = {
-                    knots: settings.terrain.elevationColors.map((node) => ({
-                        position: node.elevation,
-                        color: node.color,
-                    })),
-                };
+                state.terrain.elevationGradient = settings
+                    ? {
+                          knots: settings.terrain.elevationColors.map((node) => ({
+                              position: node.elevation,
+                              color: node.color,
+                          })),
+                      }
+                    : state.terrain.elevationGradient;
             } else if (settings) {
                 // background
                 state.background.color = settings.background.color ?? state.background.color;
