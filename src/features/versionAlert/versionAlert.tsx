@@ -35,7 +35,12 @@ export function VersionAlert() {
     const major = match.major ? parseInt(match.major) : 0;
     const minor = match.minor ? parseInt(match.minor) : 0;
 
-    if (!match.device || !major || (major >= minSupportedMajor && minor >= minSupportedMinor)) {
+    if (
+        !match.device ||
+        !major ||
+        major > minSupportedMajor ||
+        (major === minSupportedMajor && minor >= minSupportedMinor)
+    ) {
         return null;
     }
 
