@@ -378,7 +378,8 @@ export const allWidgets = Object.values(featuresConfig)
     .map((widget) => widget.key as WidgetKey);
 export const defaultEnabledAdminWidgets = Object.values(featuresConfig)
     .filter((widget) => [FeatureType.AdminWidget].includes(widget.type))
-    .map((widget) => widget.key as WidgetKey);
+    .map((widget) => widget.key as WidgetKey)
+    .concat(defaultEnabledWidgets);
 export const defaultLockedWidgets = Object.values(featuresConfig)
     .filter((widget) => widget.defaultLocked)
     .map((widget) => widget.key as WidgetKey);
