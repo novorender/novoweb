@@ -35,7 +35,7 @@ import { CameraType, selectCameraType, selectGrid, selectViewMode } from "featur
 import { AsyncStatus, ViewMode } from "types/misc";
 
 import { drawLineStrip, drawPart, drawPoint, drawProduct, drawTexts } from "./utils";
-import { rgbToHex } from "utils/color";
+import { vecToHex } from "utils/color";
 
 const Canvas2D = styled("canvas")(
     () => css`
@@ -223,7 +223,7 @@ export function Engine2D({
                 drawTexts(context2D, pts2d, labels, 20);
 
                 if (deviations?.line) {
-                    drawLineStrip(context2D, deviations.line, rgbToHex(followDeviations.lineColor));
+                    drawLineStrip(context2D, deviations.line, vecToHex(followDeviations.lineColor));
                 }
             }
 

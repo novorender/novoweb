@@ -4,7 +4,7 @@ import { vec3 } from "gl-matrix";
 import { RootState } from "app/store";
 import { AsyncState, AsyncStatus } from "types/misc";
 import { selectBookmark } from "features/render";
-import { RGBColor } from "react-color";
+import { VecRGBA } from "utils/color";
 
 type LandXmlPath = {
     id: number;
@@ -23,7 +23,7 @@ const initialState = {
     autoRecenter: false,
     deviations: {
         line: true,
-        lineColor: { r: 0.0, g: 0.0, b: 0.0 } as RGBColor,
+        lineColor: [0, 0, 0, 1] as VecRGBA,
         prioritization: "minimum" as "minimum" | "maximum",
     },
     autoStepSize: false,
@@ -167,14 +167,11 @@ export const followPathSlice = createSlice({
                 state.drawRoadIds = fp.drawLayers.roadIds;
                 state.goToRouterPath = "/followIds";
             }
-            if (fp.deviations.prioritization) {
-                state.deviations.prioritization = fp.deviations.prioritization;
-            }
-            if (fp.deviations.line !== undefined) {
-                state.deviations.line = fp.deviations.line;
-            }
-            if (fp.deviations.lineColor !== undefined) {
-                state.deviations.lineColor = fp.deviations.lineColor;
+
+            if (fp.deviations) {
+                state.deviations = fp.deviations;
+            } else {
+                state.deviations.line = false;
             }
         });
     },

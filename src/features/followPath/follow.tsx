@@ -47,7 +47,7 @@ import {
     selectStep,
     selectView2d,
 } from "./followPathSlice";
-import { rgbToVec } from "utils/color";
+import { rgbToVec, vecToRgb } from "utils/color";
 import { ColorPicker } from "features/colorPicker";
 
 const profileFractionDigits = 3;
@@ -363,7 +363,7 @@ export function Follow({ fpObj }: { fpObj: FollowParametricObject }) {
         };
     }, [dispatch]);
 
-    const { r, g, b } = deviations.lineColor;
+    const { r, g, b } = vecToRgb(deviations.lineColor);
 
     return (
         <>
@@ -558,36 +558,47 @@ export function Follow({ fpObj }: { fpObj: FollowParametricObject }) {
                         ) : null}
                     </Box>
                 </Box>
-                <Accordion>
-                    <AccordionSummary>Deviations</AccordionSummary>
-                    <AccordionDetails>
-                        <FormControlLabel
-                            control={
-                                <IosSwitch
-                                    size="medium"
-                                    color="primary"
-                                    checked={deviations.line}
-                                    onChange={handleToggleLine}
-                                />
-                            }
-                            label={<Box>Show deviation line</Box>}
-                        />
-                        <Button sx={{ mb: 2 }} variant="outlined" color="grey" onClick={toggleColorPicker}>
-                            <ColorLens sx={{ mr: 1, color: `rgb(${r}, ${g}, ${b})` }} fontSize="small" />
-                            Line color
-                        </Button>
-                        <Typography fontWeight={600}>Prioritization</Typography>
-                        <RadioGroup
-                            aria-label="Prioritize deviations"
-                            value={deviations.prioritization}
-                            onChange={handlePrioritizationChanged}
-                            name="radio-buttons-group"
-                        >
-                            <FormControlLabel value={"maximum"} control={<Radio />} label="Maximum" />
-                            <FormControlLabel value={"minimum"} control={<Radio />} label="Minimum" />
-                        </RadioGroup>
-                    </AccordionDetails>
-                </Accordion>
+
+                {view2d && (
+                    <Accordion>
+                        <AccordionSummary>Deviations</AccordionSummary>
+                        <AccordionDetails sx={{ p: 1, display: "flex", flexDirection: "column" }}>
+                            <FormControlLabel
+                                sx={{ mb: 1 }}
+                                control={
+                                    <IosSwitch
+                                        size="medium"
+                                        color="primary"
+                                        checked={deviations.line}
+                                        onChange={handleToggleLine}
+                                    />
+                                }
+                                label={<Box>Show deviation line</Box>}
+                            />
+                            <Button
+                                sx={{ mb: 1, alignSelf: "start" }}
+                                variant="outlined"
+                                color="grey"
+                                onClick={toggleColorPicker}
+                            >
+                                <ColorLens sx={{ mr: 1, color: `rgb(${r}, ${g}, ${b})` }} fontSize="small" />
+                                Line color
+                            </Button>
+                            <Divider sx={{ my: 1, borderColor: theme.palette.grey[300] }} />
+                            <Typography fontWeight={600}>Prioritization</Typography>
+                            <RadioGroup
+                                aria-label="Prioritize deviations"
+                                value={deviations.prioritization}
+                                onChange={handlePrioritizationChanged}
+                                name="radio-buttons-group"
+                            >
+                                <FormControlLabel value={"maximum"} control={<Radio />} label="Maximum" />
+                                <FormControlLabel value={"minimum"} control={<Radio />} label="Minimum" />
+                            </RadioGroup>
+                        </AccordionDetails>
+                    </Accordion>
+                )}
+
                 {roadIds && roadIds.length >= 1 && (
                     <Accordion>
                         <AccordionSummary>Road layers</AccordionSummary>
@@ -660,10 +671,9 @@ export function Follow({ fpObj }: { fpObj: FollowParametricObject }) {
                 open={Boolean(colorPickerAnchor)}
                 anchorEl={colorPickerAnchor}
                 onClose={() => toggleColorPicker()}
-                color={rgbToVec(deviations.lineColor)}
+                color={deviations.lineColor}
                 onChangeComplete={({ rgb }) => {
-                    const color = rgb;
-                    dispatch(followPathActions.setDeviationLineColor(color));
+                    dispatch(followPathActions.setDeviationLineColor(rgbToVec(rgb)));
                 }}
             />
         </>
