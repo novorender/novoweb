@@ -191,7 +191,6 @@ export function Engine2D({
                             centerPoint2d: sp.points2d[0],
                             centerPoint3d: centerLinePos,
                         };
-                        console.log(projection);
                         if (sp.screenPoints.length > 0) {
                             centerLine2dPos = vec2.clone(sp.screenPoints[0]);
                         }
@@ -206,7 +205,6 @@ export function Engine2D({
             context2D.clearRect(0, 0, canvas2D.width, canvas2D.height);
 
             if (deviations) {
-                console.log(deviations);
                 const pts2d: vec2[] = [];
                 const labels: string[] = [];
                 if (centerLine2dPos) {
