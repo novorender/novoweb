@@ -361,26 +361,21 @@ function getPointColor(
 function drawPoints(ctx: CanvasRenderingContext2D, part: DrawPart, colorSettings: ColorSettings) {
     if (part.vertices2D) {
         for (let i = 0; i < part.vertices2D.length; ++i) {
-            ctx.fillStyle = colorSettings.pointColor
+            const color = colorSettings.pointColor
                 ? getPointColor(colorSettings.pointColor, i, part.vertices2D.length)
                 : colorSettings.fillColor ?? "black";
-            ctx.lineWidth = 2;
-            ctx.strokeStyle = "black";
-            ctx.beginPath();
-            ctx.arc(part.vertices2D[i][0], part.vertices2D[i][1], 5, 0, 2 * Math.PI);
-            ctx.fill();
-            ctx.stroke();
+            drawPoint(ctx, part.vertices2D[i], color);
         }
         return true;
     }
     return false;
 }
 
-export function drawTexts(ctx: CanvasRenderingContext2D, positions: ReadonlyVec2[], texts: string[]) {
+export function drawTexts(ctx: CanvasRenderingContext2D, positions: ReadonlyVec2[], texts: string[], size?: number) {
     ctx.strokeStyle = "black";
     ctx.fillStyle = "white";
     ctx.lineWidth = 2;
-    ctx.font = `bold ${16}px "Open Sans", sans-serif`;
+    ctx.font = `bold ${size ?? 16}px "Open Sans", sans-serif`;
     ctx.textBaseline = "top";
     ctx.textAlign = "center";
 
@@ -388,6 +383,37 @@ export function drawTexts(ctx: CanvasRenderingContext2D, positions: ReadonlyVec2
         ctx.strokeText(texts[i], positions[i][0], positions[i][1]);
         ctx.fillText(texts[i], positions[i][0], positions[i][1]);
     }
+}
+
+export function drawLineStrip(
+    ctx: CanvasRenderingContext2D,
+    vertices2D: ReadonlyVec2[],
+    color?: string,
+    lineWidth?: number
+) {
+    ctx.beginPath();
+    ctx.moveTo(vertices2D[0][0], vertices2D[0][1]);
+
+    for (let i = 1; i < vertices2D.length; ++i) {
+        ctx.lineTo(vertices2D[i][0], vertices2D[i][1]);
+    }
+    const tmpLineWidth = ctx.lineWidth;
+    ctx.lineWidth = lineWidth ?? 2;
+    ctx.strokeStyle = color ?? "black";
+    ctx.lineCap = "round";
+    ctx.lineWidth = tmpLineWidth;
+
+    ctx.stroke();
+}
+
+export function drawPoint(ctx: CanvasRenderingContext2D, point: ReadonlyVec2, color?: string) {
+    ctx.fillStyle = color ?? "black";
+    ctx.lineWidth = 2;
+    ctx.strokeStyle = "black";
+    ctx.beginPath();
+    ctx.arc(point[0], point[1], 5, 0, 2 * Math.PI);
+    ctx.fill();
+    ctx.stroke();
 }
 
 export function drawText(ctx: CanvasRenderingContext2D, vertices2D: ReadonlyVec2[], text: string) {

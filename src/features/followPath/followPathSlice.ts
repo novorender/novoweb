@@ -4,6 +4,7 @@ import { vec3 } from "gl-matrix";
 import { RootState } from "app/store";
 import { AsyncState, AsyncStatus } from "types/misc";
 import { selectBookmark } from "features/render";
+import { RGBColor } from "react-color";
 
 type LandXmlPath = {
     id: number;
@@ -20,6 +21,11 @@ const initialState = {
     view2d: false,
     showGrid: true,
     autoRecenter: false,
+    deviations: {
+        line: true,
+        lineColor: { r: 0.0, g: 0.0, b: 0.0 } as RGBColor,
+        prioritization: "minimum" as "minimum" | "maximum",
+    },
     autoStepSize: false,
     clipping: 0.01,
     lastViewedRouterPath: "/",
@@ -73,6 +79,15 @@ export const followPathSlice = createSlice({
         },
         setAutoRecenter: (state, action: PayloadAction<State["autoRecenter"]>) => {
             state.autoRecenter = action.payload;
+        },
+        setShowDeviationLine: (state, action: PayloadAction<State["deviations"]["line"]>) => {
+            state.deviations.line = action.payload;
+        },
+        setDeviationPrioritization: (state, action: PayloadAction<State["deviations"]["prioritization"]>) => {
+            state.deviations.prioritization = action.payload;
+        },
+        setDeviationLineColor: (state, action: PayloadAction<State["deviations"]["lineColor"]>) => {
+            state.deviations.lineColor = action.payload;
         },
         setAutoStepSize: (state, action: PayloadAction<State["autoStepSize"]>) => {
             state.autoStepSize = action.payload;
@@ -152,6 +167,15 @@ export const followPathSlice = createSlice({
                 state.drawRoadIds = fp.drawLayers.roadIds;
                 state.goToRouterPath = "/followIds";
             }
+            if (fp.deviations.prioritization) {
+                state.deviations.prioritization = fp.deviations.prioritization;
+            }
+            if (fp.deviations.line !== undefined) {
+                state.deviations.line = fp.deviations.line;
+            }
+            if (fp.deviations.lineColor !== undefined) {
+                state.deviations.lineColor = fp.deviations.lineColor;
+            }
         });
     },
 });
@@ -167,6 +191,7 @@ export const selectProfileRange = (state: RootState) => state.followPath.profile
 export const selectClipping = (state: RootState) => state.followPath.clipping;
 export const selectShowGrid = (state: RootState) => state.followPath.showGrid;
 export const selectAutoRecenter = (state: RootState) => state.followPath.autoRecenter;
+export const selectFollowDeviations = (state: RootState) => state.followPath.deviations;
 export const selectAutoStepSize = (state: RootState) => state.followPath.autoStepSize;
 export const selectLastViewedRouterPath = (state: RootState) => state.followPath.lastViewedRouterPath;
 export const selectGoToRouterPath = (state: RootState) => state.followPath.goToRouterPath;

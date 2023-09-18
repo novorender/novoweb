@@ -97,6 +97,11 @@ declare module "@novorender/data-js-api" {
                   };
                   profileNumber: number;
                   currentCenter: [number, number, number];
+                  deviations: {
+                      prioritization?: "minimum" | "maximum";
+                      line?: boolean;
+                      lineColor: RGBColor;
+                  };
               }
             | undefined;
     };

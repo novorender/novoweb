@@ -1,5 +1,11 @@
 import { css, styled } from "@mui/material";
-import { DrawProduct, DrawableEntity, MeasureSettings } from "@novorender/api";
+import {
+    DrawProduct,
+    DrawableEntity,
+    MeasureSettings,
+    DeviationInspections,
+    DeviationProjection,
+} from "@novorender/api";
 import { ReadonlyVec2, mat3, vec2, vec3 } from "gl-matrix";
 import { MutableRefObject, useCallback, useEffect, useRef, useState } from "react";
 
@@ -7,10 +13,13 @@ import { useAppSelector } from "app/store";
 import { useExplorerGlobals } from "contexts/explorerGlobals";
 import { selectArea, selectAreaDrawPoints } from "features/area";
 import {
+    selectCurrentCenter,
     selectDrawSelectedPositions,
     selectFollowCylindersFrom,
+    selectProfile,
     selectShowTracer,
     usePathMeasureObjects,
+    selectFollowDeviations,
 } from "features/followPath";
 import { useCrossSection } from "features/followPath/useCrossSection";
 import { useHeightProfileMeasureObject } from "features/heightProfile";
@@ -25,7 +34,8 @@ import { selectPointLine } from "features/pointLine";
 import { CameraType, selectCameraType, selectGrid, selectViewMode } from "features/render";
 import { AsyncStatus, ViewMode } from "types/misc";
 
-import { drawPart, drawProduct, drawTexts } from "./utils";
+import { drawLineStrip, drawPart, drawPoint, drawProduct, drawTexts } from "./utils";
+import { rgbToHex } from "utils/color";
 
 const Canvas2D = styled("canvas")(
     () => css`
@@ -81,6 +91,10 @@ export function Engine2D({
     const grid = useAppSelector(selectGrid);
     const viewMode = useAppSelector(selectViewMode);
     const showTracer = useAppSelector(selectShowTracer);
+
+    const centerLinePos = useAppSelector(selectCurrentCenter);
+    const centerLineProfile = useAppSelector(selectProfile);
+    const followDeviations = useAppSelector(selectFollowDeviations);
 
     const prevPointerPos = useRef([0, 0] as Vec2);
 
@@ -166,7 +180,54 @@ export function Engine2D({
                 return;
             }
 
+            let deviations: undefined | DeviationInspections = undefined;
+            let centerLine2dPos: undefined | vec2 = undefined;
+            if (viewMode === ViewMode.FollowPath && cameraType === CameraType.Orthographic) {
+                let projection: undefined | DeviationProjection = undefined;
+                if (centerLinePos) {
+                    const sp = measureView.draw.toScreenSpace([centerLinePos]);
+                    if (sp && sp.points2d.length > 0) {
+                        projection = {
+                            centerPoint2d: sp.points2d[0],
+                            centerPoint3d: centerLinePos,
+                        };
+                        console.log(projection);
+                        if (sp.screenPoints.length > 0) {
+                            centerLine2dPos = vec2.clone(sp.screenPoints[0]);
+                        }
+                    }
+                }
+                deviations = await view.inspectDeviations({
+                    deviationPrioritization: followDeviations.prioritization,
+                    projection,
+                    generateLine: followDeviations.line,
+                });
+            }
             context2D.clearRect(0, 0, canvas2D.width, canvas2D.height);
+
+            if (deviations) {
+                console.log(deviations);
+                const pts2d: vec2[] = [];
+                const labels: string[] = [];
+                if (centerLine2dPos) {
+                    drawPoint(context2D, centerLine2dPos, "black");
+                    centerLine2dPos[1] += 20;
+                    drawTexts(context2D, [centerLine2dPos], [`H: ${centerLinePos![2].toFixed(3)}`], 24);
+                    centerLine2dPos[1] -= 50;
+                    drawTexts(context2D, [centerLine2dPos], ["P: " + centerLineProfile], 24);
+                }
+                if (deviations) {
+                    for (const d of deviations.labels) {
+                        pts2d.push(d.position);
+                        labels.push(d.deviation);
+                    }
+                }
+                drawTexts(context2D, pts2d, labels, 20);
+
+                if (deviations?.line) {
+                    drawLineStrip(context2D, deviations.line, rgbToHex(followDeviations.lineColor));
+                }
+            }
 
             renderGridLabels();
 
@@ -612,6 +673,9 @@ export function Engine2D({
         cameraType,
         pointerPos,
         showTracer,
+        centerLinePos,
+        centerLineProfile,
+        followDeviations,
     ]);
 
     useEffect(() => {
@@ -627,7 +691,10 @@ export function Engine2D({
         return () => (renderFnRef.current = undefined);
         function animate(moved: boolean) {
             if (view) {
-                const run = moved || (showTracer && !vec2.exactEquals(prevPointerPos.current, pointerPos.current));
+                const run =
+                    moved ||
+                    (showTracer && !vec2.exactEquals(prevPointerPos.current, pointerPos.current)) ||
+                    (viewMode === ViewMode.FollowPath && cameraType === CameraType.Orthographic);
 
                 if (!run) {
                     return;
@@ -637,7 +704,7 @@ export function Engine2D({
                 render();
             }
         }
-    }, [view, render, grid, cameraType, pointerPos, renderFnRef, showTracer]);
+    }, [view, render, grid, cameraType, pointerPos, renderFnRef, showTracer, followDeviations, viewMode]);
 
     return <Canvas2D id="canvas2D" ref={setCanvas2D} width={size.width} height={size.height} />;
 }
