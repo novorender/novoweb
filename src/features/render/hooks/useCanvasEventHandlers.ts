@@ -34,7 +34,7 @@ export function useCanvasEventHandlers({
     pointerPos: MutableRefObject<[x: number, y: number]>;
     useSvgCursor: boolean;
     svg: SVGSVGElement | null;
-    renderFnRef: MutableRefObject<((isIdleFrame: boolean) => void) | undefined>;
+    renderFnRef: MutableRefObject<((moved: boolean, isIdleFrame: boolean) => void) | undefined>;
 }) {
     const {
         state: { view, canvas, measureView, size },
@@ -206,7 +206,7 @@ export function useCanvasEventHandlers({
 
         if (roadLayerTracerEnabled) {
             // TODO: dont call renderfn directly from here.
-            renderFnRef.current?.(false);
+            renderFnRef.current?.(false, false);
         }
 
         if (!view || !canvas || !svg || (!e.movementY && !e.movementX)) {
