@@ -6,6 +6,7 @@ import { areaReducer } from "features/area";
 import { bimCollabApi, bimCollabReducer } from "features/bimCollab";
 import { bimTrackApi, bimTrackReducer } from "features/bimTrack";
 import { bookmarksReducer } from "features/bookmarks";
+import { clippingOutlineReducer } from "features/clippingOutline";
 import { deviationsReducer } from "features/deviations";
 import { ditioReducer } from "features/ditio";
 import { ditioApi } from "features/ditio";
@@ -45,6 +46,7 @@ const rootReducer = combineReducers({
     myLocation: myLocationReducer,
     bimCollab: bimCollabReducer,
     heightProfile: heightProfileReducer,
+    clippingOutline: clippingOutlineReducer,
     selectionBasket: selectionBasketReducer,
     properties: propertiesReducer,
     offline: offlineReducer,

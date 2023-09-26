@@ -6,6 +6,7 @@ import { MutableRefObject, useCallback, useEffect, useRef, useState } from "reac
 import { useAppSelector } from "app/store";
 import { useExplorerGlobals } from "contexts/explorerGlobals";
 import { selectArea, selectAreaDrawPoints } from "features/area";
+import { GetMeasurePointsFromTracer, selectOutlineLasers } from "features/clippingOutline";
 import {
     selectCurrentCenter,
     selectDrawSelectedPositions,
@@ -92,6 +93,8 @@ export function Engine2D({
     const centerLineProfile = useAppSelector(selectProfile);
     const followDeviations = useAppSelector(selectFollowDeviations);
 
+    const outlineLasers = useAppSelector(selectOutlineLasers);
+
     const prevPointerPos = useRef([0, 0] as Vec2);
 
     const renderGridLabels = useCallback(() => {
@@ -151,19 +154,16 @@ export function Engine2D({
                     viewMode === ViewMode.FollowPath && cameraType === CameraType.Orthographic && idleFrame;
                 if (showDeviationLables) {
                     if (centerLinePos) {
-                        const sp = measureView.draw.toScreenSpace([centerLinePos]);
-                        if (sp && sp.points2d.length > 0) {
+                        const sp = measureView.draw.toMarkerPoints([centerLinePos]);
+                        if (sp && sp.length > 0 && sp[0]) {
                             projection = {
-                                centerPoint2d: sp.points2d[0],
+                                centerPoint2d: sp[0],
                                 centerPoint3d: centerLinePos,
                             };
-                            if (sp.screenPoints.length > 0) {
-                                centerLine2dPos = vec2.clone(sp.screenPoints[0]);
-                            }
+                            centerLine2dPos = vec2.clone(sp[0]);
                         }
                     }
                 }
-
                 const [
                     duoDrawResult,
                     measureObjectsDrawResult,
@@ -226,6 +226,53 @@ export function Engine2D({
                     if (deviations?.line) {
                         drawLineStrip(context2D, deviations.line, vecToHex(followDeviations.lineColor));
                     }
+                }
+
+                for (const trace of outlineLasers) {
+                    const renderTrace = (drawProd: DrawProduct | undefined, color: string) => {
+                        if (drawProd) {
+                            drawProd.objects.forEach((obj) => {
+                                obj.parts.forEach((part) => {
+                                    drawPart(
+                                        context2D,
+                                        camSettings,
+                                        part,
+                                        {
+                                            lineColor: color,
+                                        },
+                                        2,
+                                        {
+                                            type: "default",
+                                        }
+                                    );
+                                });
+                            });
+                        }
+                    };
+
+                    const { left, right, up, down, measurementX: x, measurementY: y } = trace;
+                    if (x) {
+                        const tracePts = GetMeasurePointsFromTracer(x, left, right);
+                        if (tracePts) {
+                            renderTrace(
+                                measureView.draw.getDrawObjectFromPoints(tracePts, false, false, true, 2),
+                                "blue"
+                            );
+                        }
+                    }
+                    if (y) {
+                        const tracePts = GetMeasurePointsFromTracer(y, down, up);
+                        if (tracePts) {
+                            renderTrace(
+                                measureView.draw.getDrawObjectFromPoints(tracePts, false, false, true, 2),
+                                "green"
+                            );
+                        }
+                    }
+                    // const sp = measureView.draw.toMarkerPoints([trace.tracePosition]);
+                    // if (sp && sp.length > 0 && sp[0]) {
+                    //     drawPoint(context2D, sp[0], "white");
+                    // }
                 }
 
                 renderGridLabels();
@@ -681,6 +728,7 @@ export function Engine2D({
             centerLinePos,
             centerLineProfile,
             followDeviations,
+            outlineLasers,
         ]
     );
 

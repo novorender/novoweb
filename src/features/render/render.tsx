@@ -10,6 +10,7 @@ import { useHandleClipping } from "features/clippingPlanes/useHandleClipping";
 import { useHandleDeviations } from "features/deviations";
 import { useHandleDitioKeepAlive } from "features/ditio";
 import { Engine2D } from "features/engine2D";
+import { Engine2DInteractions } from "features/engine2D/engine2DInteractions";
 import { useHandleImages } from "features/images";
 import { useHandleJiraKeepAlive } from "features/jira";
 import { useHandleManhole } from "features/manhole";
@@ -117,9 +118,9 @@ export function Render3D() {
     useHandleDitioKeepAlive();
     useHandleOffline();
 
-    const useSvgCursor = useHandleCanvasCursor();
+    const cursor = useHandleCanvasCursor();
     const onClick = useCanvasClickHandler();
-    const eventHandlers = useCanvasEventHandlers({ pointerPos, useSvgCursor, svg, renderFnRef: engine2dRenderFn });
+    const eventHandlers = useCanvasEventHandlers({ pointerPos, cursor, svg, renderFnRef: engine2dRenderFn });
 
     return (
         <Box position="relative" width="100%" height="100%" sx={{ userSelect: "none" }}>
@@ -138,6 +139,7 @@ export function Render3D() {
                     <Stamp />
                     <Svg width={size.width} height={size.height} ref={setSvg}>
                         <Markers />
+                        <Engine2DInteractions />
                         <g id="cursor" />
                     </Svg>
                     <Images />

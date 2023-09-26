@@ -9,6 +9,7 @@ import { useHighlightCollections } from "contexts/highlightCollections";
 import { useHighlighted } from "contexts/highlighted";
 import { GroupStatus, ObjectGroup, useObjectGroups } from "contexts/objectGroups";
 import { useSelectionBasket } from "contexts/selectionBasket";
+import { selectOutlineGroups } from "features/clippingOutline";
 import { useSceneId } from "hooks/useSceneId";
 
 import {
@@ -36,6 +37,7 @@ export function useHandleHighlights() {
     const dispatch = useAppDispatch();
     const basketColor = useAppSelector(selectSelectionBasketColor);
     const basketMode = useAppSelector(selectSelectionBasketMode);
+    const outlineGroups = useAppSelector(selectOutlineGroups);
 
     const id = useRef(0);
 
@@ -109,6 +111,10 @@ export function useHandleHighlights() {
                                   action: createTransparentHighlight(group.opacity),
                               }))
                             : []),
+                        ...outlineGroups.map((group) => ({
+                            objectIds: new Uint32Array(group.ids).sort(),
+                            outlineColor: group.color,
+                        })),
                         {
                             objectIds: new Uint32Array(allHidden).sort(),
                             action: "hide",
@@ -163,6 +169,7 @@ export function useHandleHighlights() {
         mainObject,
         basketColor,
         basketMode,
+        outlineGroups,
     ]);
 }
 

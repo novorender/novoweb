@@ -11,7 +11,7 @@ export function useHandleCanvasCursor() {
     } = useExplorerGlobals();
     const picker = useAppSelector(selectPicker);
     const loadingHandles = useAppSelector(selectLoadingHandles);
-    const [usingSvgCursor, setUsingSvgCursor] = useState(false);
+    const [usingSvgCursor, setUsingSvgCursor] = useState<"measure" | "cross" | "standard">("standard");
     const loading = loadingHandles.length !== 0;
 
     useEffect(() => {
@@ -19,7 +19,7 @@ export function useHandleCanvasCursor() {
             return;
         }
 
-        const svgCursor = [
+        const measureCursor = [
             Picker.CrossSection,
             Picker.Measurement,
             Picker.OrthoPlane,
@@ -31,7 +31,7 @@ export function useHandleCanvasCursor() {
             Picker.HeightProfileEntity,
         ].includes(picker);
 
-        setUsingSvgCursor(svgCursor);
+        setUsingSvgCursor(measureCursor ? "measure" : picker === Picker.OutlineLaser ? "cross" : "standard");
     }, [picker, canvas]);
 
     useEffect(() => {
@@ -39,7 +39,7 @@ export function useHandleCanvasCursor() {
             return;
         }
 
-        if (usingSvgCursor) {
+        if (usingSvgCursor !== "standard") {
             canvas.style.cursor = "none";
         } else if (loading) {
             canvas.style.cursor = "wait";

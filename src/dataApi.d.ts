@@ -105,6 +105,16 @@ declare module "@novorender/data-js-api" {
                   };
               }
             | undefined;
+        outlineMeasure:
+            | {
+                  laserPlane: ReadonlyVec4;
+                  lasers: {
+                      laserPosition: ReadonlyVec3;
+                      measurementX?: { start: ReadonlyVec3; end: ReadonlyVec3 };
+                      measurementY?: { start: ReadonlyVec3; end: ReadonlyVec3 };
+                  }[];
+              }
+            | undefined;
     };
 
     interface Bookmark {
