@@ -144,6 +144,11 @@ export function useCreateBookmark() {
                               },
                               profileNumber: Number(followPath.profile),
                               currentCenter: followPath.currentCenter,
+                              deviations: {
+                                  prioritization: followPath.deviations.prioritization,
+                                  line: followPath.deviations.line,
+                                  lineColor: followPath.deviations.lineColor,
+                              },
                           }
                         : undefined,
             },

@@ -569,6 +569,7 @@ export const renderSlice = createSlice({
 
             if (props.explorerProjectState) {
                 const { points, background, terrain, hide, ...advanced } = props.explorerProjectState.renderSettings;
+                points.size.metric = 0; //Variable that cannot be set on novoweb and have had 2 different default. Forcing to 0;
                 const { debugStats, navigationCube } = props.explorerProjectState.features;
                 const { highlights } = props.explorerProjectState;
                 const camera = props.explorerProjectState.camera;

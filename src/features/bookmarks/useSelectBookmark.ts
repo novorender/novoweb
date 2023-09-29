@@ -113,8 +113,6 @@ export function useSelectBookmark() {
                 );
                 dispatch(groupsActions.setLoadingIds(false));
 
-                console.log(toLoad);
-
                 dispatchSelectionBasket(selectionBasketActions.add(toLoad.flatMap((group) => Array.from(group.ids))));
                 dispatchObjectGroups(
                     objectGroupsActions.set(

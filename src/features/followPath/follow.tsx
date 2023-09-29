@@ -1,4 +1,4 @@
-import { ArrowBack, ArrowForward, Edit, RestartAlt } from "@mui/icons-material";
+import { ArrowBack, ArrowForward, ColorLens, Edit, RestartAlt } from "@mui/icons-material";
 import {
     Box,
     Button,
@@ -8,6 +8,8 @@ import {
     InputAdornment,
     ListItemButton,
     OutlinedInput,
+    Radio,
+    RadioGroup,
     Slider,
     Typography,
     useTheme,
@@ -15,7 +17,7 @@ import {
 import { FollowParametricObject, rotationFromDirection } from "@novorender/api";
 import { HierarcicalObjectReference } from "@novorender/webgl-api";
 import { vec3 } from "gl-matrix";
-import { FormEvent, SyntheticEvent, useCallback, useEffect, useState } from "react";
+import { FormEvent, SyntheticEvent, useCallback, useEffect, useState, MouseEvent } from "react";
 import { useHistory } from "react-router-dom";
 
 import { useAppDispatch, useAppSelector } from "app/store";
@@ -31,6 +33,7 @@ import {
     selectAutoStepSize,
     selectClipping,
     selectCurrentCenter,
+    selectFollowDeviations,
     selectDrawRoadIds,
     selectLandXmlPaths,
     selectProfile,
@@ -44,6 +47,8 @@ import {
     selectStep,
     selectView2d,
 } from "./followPathSlice";
+import { rgbToVec, vecToRgb } from "utils/color";
+import { ColorPicker } from "features/colorPicker";
 
 const profileFractionDigits = 3;
 
@@ -70,6 +75,7 @@ export function Follow({ fpObj }: { fpObj: FollowParametricObject }) {
     const roadIds = useAppSelector(selectRoadIds);
     const drawRoadIds = useAppSelector(selectDrawRoadIds);
     const showTracer = useAppSelector(selectShowTracer);
+    const deviations = useAppSelector(selectFollowDeviations);
 
     const [clipping, setClipping] = useState(_clipping);
 
@@ -235,6 +241,20 @@ export function Follow({ fpObj }: { fpObj: FollowParametricObject }) {
         dispatch(followPathActions.setAutoRecenter(recenter));
     };
 
+    const handleToggleLine = () => {
+        const newShowLine = !deviations.line;
+        dispatch(followPathActions.setShowDeviationLine(newShowLine));
+    };
+
+    const [colorPickerAnchor, setColorPickerAnchor] = useState<HTMLElement | null>(null);
+    const toggleColorPicker = (event?: MouseEvent<HTMLElement>) => {
+        setColorPickerAnchor(!colorPickerAnchor && event?.currentTarget ? event.currentTarget : null);
+    };
+
+    const handlePrioritizationChanged = (_: any, value: string) => {
+        dispatch(followPathActions.setDeviationPrioritization(value as "minimum" | "maximum"));
+    };
+
     const handleAutoStepSizeChange = () => {
         if (!autoStepSize) {
             dispatch(followPathActions.setStep(String(clipping)));
@@ -342,6 +362,8 @@ export function Follow({ fpObj }: { fpObj: FollowParametricObject }) {
             dispatch(renderActions.setViewMode(ViewMode.Default));
         };
     }, [dispatch]);
+
+    const { r, g, b } = vecToRgb(deviations.lineColor);
 
     return (
         <>
@@ -536,6 +558,47 @@ export function Follow({ fpObj }: { fpObj: FollowParametricObject }) {
                         ) : null}
                     </Box>
                 </Box>
+
+                {view2d && (
+                    <Accordion>
+                        <AccordionSummary>Deviations</AccordionSummary>
+                        <AccordionDetails sx={{ p: 1, display: "flex", flexDirection: "column" }}>
+                            <FormControlLabel
+                                sx={{ mb: 1 }}
+                                control={
+                                    <IosSwitch
+                                        size="medium"
+                                        color="primary"
+                                        checked={deviations.line}
+                                        onChange={handleToggleLine}
+                                    />
+                                }
+                                label={<Box>Show deviation line</Box>}
+                            />
+                            <Button
+                                sx={{ mb: 1, alignSelf: "start" }}
+                                variant="outlined"
+                                color="grey"
+                                onClick={toggleColorPicker}
+                            >
+                                <ColorLens sx={{ mr: 1, color: `rgb(${r}, ${g}, ${b})` }} fontSize="small" />
+                                Line color
+                            </Button>
+                            <Divider sx={{ my: 1, borderColor: theme.palette.grey[300] }} />
+                            <Typography fontWeight={600}>Prioritization</Typography>
+                            <RadioGroup
+                                aria-label="Prioritize deviations"
+                                value={deviations.prioritization}
+                                onChange={handlePrioritizationChanged}
+                                name="radio-buttons-group"
+                            >
+                                <FormControlLabel value={"maximum"} control={<Radio />} label="Maximum" />
+                                <FormControlLabel value={"minimum"} control={<Radio />} label="Minimum" />
+                            </RadioGroup>
+                        </AccordionDetails>
+                    </Accordion>
+                )}
+
                 {roadIds && roadIds.length >= 1 && (
                     <Accordion>
                         <AccordionSummary>Road layers</AccordionSummary>
@@ -604,6 +667,15 @@ export function Follow({ fpObj }: { fpObj: FollowParametricObject }) {
                     </Accordion>
                 )}
             </ScrollBox>
+            <ColorPicker
+                open={Boolean(colorPickerAnchor)}
+                anchorEl={colorPickerAnchor}
+                onClose={() => toggleColorPicker()}
+                color={deviations.lineColor}
+                onChangeComplete={({ rgb }) => {
+                    dispatch(followPathActions.setDeviationLineColor(rgbToVec(rgb)));
+                }}
+            />
         </>
     );
 }
