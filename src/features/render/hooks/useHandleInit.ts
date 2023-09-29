@@ -328,7 +328,8 @@ async function loadDeviceTier(): Promise<{ tier: -1 | DeviceProfile["tier"]; isM
 
 async function createView(canvas: HTMLCanvasElement, options?: { deviceProfile?: DeviceProfile }): Promise<View> {
     const deviceProfile = options?.deviceProfile ?? getDeviceProfile(0);
-    const url = new URL("/novorender/api/", import.meta.url);
+    const url = new URL("/novorender/api/", window.location.origin);
+
     const imports = await View.downloadImports({ baseUrl: url });
     return new View(canvas, deviceProfile, imports);
 }
