@@ -22,7 +22,7 @@ export function useHandleBackground() {
             }
 
             dispatch(renderActions.setBackground({ environments: { status: AsyncStatus.Loading } }));
-            const envs = await view.availableEnvironments("https://api.novorender.com/assets/env/index.json");
+            const envs = await view.availableEnvironments(new URL("https://api.novorender.com/assets/env/index.json"));
             dispatch(renderActions.setBackground({ environments: { status: AsyncStatus.Success, data: envs } }));
         }
     }, [view, dispatch, environments]);
