@@ -42,6 +42,7 @@ const initialState = {
     roadIds: undefined as string[] | undefined,
     selectedPath: undefined as undefined | LandXmlPath["id"],
     showTracer: false,
+    traceVertical: false,
 };
 
 type State = typeof initialState;
@@ -103,6 +104,9 @@ export const followPathSlice = createSlice({
         },
         toggleShowTracer: (state, action: PayloadAction<State["showTracer"] | undefined>) => {
             state.showTracer = action.payload !== undefined ? action.payload : !state.showTracer;
+        },
+        toggleTraceVerical: (state, action: PayloadAction<State["traceVertical"] | undefined>) => {
+            state.traceVertical = action.payload !== undefined ? action.payload : !state.traceVertical;
         },
         setSelectedPositions: (state, action: PayloadAction<State["selectedPositions"]>) => {
             state.selectedPositions = action.payload;
@@ -201,6 +205,7 @@ export const selectSelectedPath = (state: RootState) => state.followPath.selecte
 export const selectDrawRoadIds = (state: RootState) => state.followPath.drawRoadIds;
 export const selectRoadIds = (state: RootState) => state.followPath.roadIds;
 export const selectShowTracer = (state: RootState) => state.followPath.showTracer;
+export const selectVerticalTracer = (state: RootState) => state.followPath.traceVertical;
 
 const { actions, reducer } = followPathSlice;
 export { actions as followPathActions, reducer as followPathReducer };
