@@ -177,7 +177,10 @@ export function useCanvasClickHandler() {
             }
             return;
         }
-        const normal = isRealVec([...result.normal]) ? vec3.clone(result.normal) : undefined;
+        const normal =
+            isRealVec([...result.normal]) && vec3.dot(result.normal, result.normal) !== 0
+                ? vec3.clone(result.normal)
+                : undefined;
         const position = vec3.clone(result.position);
 
         switch (picker) {
@@ -408,7 +411,12 @@ export function useCanvasClickHandler() {
                 break;
             }
             case Picker.Area: {
-                dispatch(areaActions.addPoint([position, normal ?? [0, 0, 0]]));
+                let useNormal = normal;
+                if (normal === undefined && cameraType === CameraType.Orthographic) {
+                    useNormal = vec3.fromValues(0, 0, 1);
+                    vec3.transformQuat(useNormal, useNormal, view.renderState.camera.rotation);
+                }
+                dispatch(areaActions.addPoint([position, useNormal ?? [0, 0, 0]]));
                 break;
             }
             case Picker.PointLine: {
