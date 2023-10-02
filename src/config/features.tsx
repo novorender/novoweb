@@ -32,6 +32,7 @@ import {
     Image,
     RestartAlt,
     CheckBox,
+    SsidChart,
 } from "@mui/icons-material";
 
 // import { ReactComponent as Clipping } from "media/icons/clipping.svg";
@@ -212,6 +213,14 @@ export const featuresConfig = {
         key: "measure",
         name: "Measure",
         Icon: Straighten,
+        type: FeatureType.Widget,
+        defaultLocked: false,
+        tags: [featureTags.review.key],
+    },
+    clippingOutline: {
+        key: "clippingOutline",
+        name: "Clipping outline",
+        Icon: SsidChart,
         type: FeatureType.Widget,
         defaultLocked: false,
         tags: [featureTags.review.key],
