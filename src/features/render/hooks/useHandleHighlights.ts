@@ -144,6 +144,7 @@ export function useHandleHighlights() {
                                     : basket.idArr.filter((id) => id === mainObject || highlighted.ids[id])
                             ).sort(),
                             action: createColorSetHighlight(highlighted.color),
+                            outlineColor: [highlighted.color[0], highlighted.color[1], highlighted.color[3]],
                         },
                     ],
                 },

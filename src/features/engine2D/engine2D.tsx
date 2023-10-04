@@ -14,6 +14,7 @@ import {
     selectShowTracer,
     usePathMeasureObjects,
     selectFollowDeviations,
+    selectVerticalTracer,
 } from "features/followPath";
 import { useCrossSection } from "features/followPath/useCrossSection";
 import { useHeightProfileMeasureObject } from "features/heightProfile";
@@ -85,6 +86,7 @@ export function Engine2D({
     const grid = useAppSelector(selectGrid);
     const viewMode = useAppSelector(selectViewMode);
     const showTracer = useAppSelector(selectShowTracer);
+    const traceVerical = useAppSelector(selectVerticalTracer);
 
     const centerLinePos = useAppSelector(selectCurrentCenter);
     const centerLineProfile = useAppSelector(selectProfile);
@@ -481,12 +483,14 @@ export function Engine2D({
                             end: vec2.fromValues(pointerPos.current[0], 0),
                         };
 
-                        const normal = measureView.draw.get2dNormal(prods[0], line);
-                        if (normal) {
-                            line = {
-                                start: vec2.scaleAndAdd(vec2.create(), normal.position, normal.normal, size.height),
-                                end: vec2.scaleAndAdd(vec2.create(), normal.position, normal.normal, -size.height),
-                            };
+                        if (!traceVerical) {
+                            const normal = measureView.draw.get2dNormal(prods[0], line);
+                            if (normal) {
+                                line = {
+                                    start: vec2.scaleAndAdd(vec2.create(), normal.position, normal.normal, size.height),
+                                    end: vec2.scaleAndAdd(vec2.create(), normal.position, normal.normal, -size.height),
+                                };
+                            }
                         }
 
                         const traceDraw = measureView.draw.getTraceDrawOject(prods, line);
@@ -673,6 +677,7 @@ export function Engine2D({
             cameraType,
             pointerPos,
             showTracer,
+            traceVerical,
             centerLinePos,
             centerLineProfile,
             followDeviations,

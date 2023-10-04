@@ -46,6 +46,7 @@ import {
     selectShowTracer,
     selectStep,
     selectView2d,
+    selectVerticalTracer,
 } from "./followPathSlice";
 import { rgbToVec, vecToRgb } from "utils/color";
 import { ColorPicker } from "features/colorPicker";
@@ -75,6 +76,7 @@ export function Follow({ fpObj }: { fpObj: FollowParametricObject }) {
     const roadIds = useAppSelector(selectRoadIds);
     const drawRoadIds = useAppSelector(selectDrawRoadIds);
     const showTracer = useAppSelector(selectShowTracer);
+    const traceVerical = useAppSelector(selectVerticalTracer);
     const deviations = useAppSelector(selectFollowDeviations);
 
     const [clipping, setClipping] = useState(_clipping);
@@ -617,6 +619,20 @@ export function Follow({ fpObj }: { fpObj: FollowParametricObject }) {
                                         />
                                     }
                                     label={<Box>Enable tracer (2D)</Box>}
+                                />
+                                <FormControlLabel
+                                    control={
+                                        <IosSwitch
+                                            size="medium"
+                                            color="primary"
+                                            checked={traceVerical}
+                                            onChange={() => {
+                                                dispatch(followPathActions.toggleTraceVerical());
+                                            }}
+                                            disabled={!showTracer}
+                                        />
+                                    }
+                                    label={<Box>Vertical measure</Box>}
                                 />
                                 <Divider sx={{ borderColor: theme.palette.grey[300] }} />
                             </Box>
