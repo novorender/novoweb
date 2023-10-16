@@ -151,31 +151,33 @@ app.use(
     })
 );
 
+// NOTE(OLA): Omega sends invalid headers which crashes http-proxy-middleware on nodejs version > 18.16.0
 app.use("/omega365", async (req, res) => {
-    const url = new URL("https://nyeveier.pims365.no" + req.originalUrl.replace(/^\/omega365/, ""));
-    const json = await fetch(url, {
-        headers: req.headers,
-    })
-        .then((res) => res.json())
-        .catch((e) => {
-            console.log(e);
-            return {};
+    try {
+        const url = new URL("https://nyeveier.pims365.no" + req.originalUrl.replace(/^\/omega365/, ""));
+        const omegaRes = await fetch(url, {
+            headers: {
+                authorization: req.headers.authorization,
+            },
         });
-    res.json(json);
-});
 
-// app.use(
-//     "/omega365",
-//     createProxyMiddleware({
-//         target: "https://restore-nyeveier.pims365.no",
-//         pathRewrite: {
-//             "^/omega365": "", // remove base path
-//         },
-//         changeOrigin: true,
-//         // headers: {
-//         // },
-//     })
-// );
+        if (omegaRes.ok) {
+            const cookieHeaders = omegaRes.headers.getSetCookie();
+            cookieHeaders.forEach((header) => res.append("set-cookie", header));
+            const json = await omegaRes.json();
+            res.json(json);
+        } else {
+            if (omegaRes.status >= 500) {
+                res.status(omegaRes.status).send();
+            } else {
+                res.status(401).send();
+            }
+        }
+    } catch (e) {
+        console.warn(e);
+        res.status(500).send();
+    }
+});
 
 app.use("/*", (_req, res, next) => {
     res.header("Cross-Origin-Opener-Policy", "same-origin");
