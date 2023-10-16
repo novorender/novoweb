@@ -11,10 +11,6 @@ export default defineConfig(({ mode }) => {
     const env = loadEnv(mode, process.cwd());
     const ownCerts = existsSync("./localhost.crt") && existsSync("./localhost.key");
 
-    // todo
-    // const token = Buffer.from(`${process.env.OMEGA365_USR}:${process.env.OMEGA365_PWD}`).toString("base64");
-    // console.log("b64", process.env.OMEGA365_USR, process.env.OMEGA365_PWD, token);
-
     return {
         optimizeDeps: {
             exclude: ["@novorender/webgl-api", "@novorender/api"],
