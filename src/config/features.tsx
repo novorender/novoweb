@@ -58,8 +58,8 @@ export const featureTags = {
 } as const;
 
 export const featuresConfig = {
-    omega365: {
-        key: "omega365",
+    omegaPims365: {
+        key: "omegaPims365",
         name: "Omega 365",
         Icon: Attachment,
         type: FeatureType.Widget,

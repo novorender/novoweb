@@ -220,7 +220,7 @@ function getWidgetByKey(key: WidgetKey): JSX.Element | string {
         case featuresConfig.xsiteManage.key:
             Widget = XsiteManage;
             break;
-        case featuresConfig.omega365.key:
+        case featuresConfig.omegaPims365.key:
             Widget = Omega365;
             break;
         default:
