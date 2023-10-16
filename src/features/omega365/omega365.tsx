@@ -57,8 +57,8 @@ type Omega365Document = {
 const coClassVariants = ["CoClass/CoClass code", "CoClass/CoClass", "CoClass/coClassCode"];
 export default function Omega365() {
     const [menuOpen, toggleMenu] = useToggle();
-    const minimized = useAppSelector(selectMinimized) === featuresConfig.omega365.key;
-    const maximized = useAppSelector(selectMaximized).includes(featuresConfig.omega365.key);
+    const minimized = useAppSelector(selectMinimized) === featuresConfig.omegaPims365.key;
+    const maximized = useAppSelector(selectMaximized).includes(featuresConfig.omegaPims365.key);
     const mainObject = useAppSelector(selectMainObject);
     const apiKey = useAppSelector(selectOmega365ApiKey);
     const status = useAppSelector(selectOmega365Status);
@@ -153,7 +153,7 @@ export default function Omega365() {
     return (
         <>
             <WidgetContainer minimized={minimized} maximized={maximized}>
-                <WidgetHeader widget={featuresConfig.omega365} />
+                <WidgetHeader widget={featuresConfig.omegaPims365} />
                 {!apiKey && !minimized && !menuOpen ? (
                     status !== AsyncStatus.Success ? (
                         <Box>
@@ -195,7 +195,7 @@ export default function Omega365() {
                         </ScrollBox>
                     </>
                 )}
-                {menuOpen && <WidgetList widgetKey={featuresConfig.omega365.key} onSelect={toggleMenu} />}
+                {menuOpen && <WidgetList widgetKey={featuresConfig.omegaPims365.key} onSelect={toggleMenu} />}
             </WidgetContainer>
             <LogoSpeedDial open={menuOpen} toggle={toggleMenu} />
         </>
