@@ -15,7 +15,7 @@ export function useHandleCameraMoved({
     engine2dRenderFn,
 }: {
     svg: SVGSVGElement | null;
-    engine2dRenderFn: MutableRefObject<((moved: boolean) => void) | undefined>;
+    engine2dRenderFn: MutableRefObject<((moved: boolean, idleframe: boolean) => void) | undefined>;
 }) {
     const {
         state: { view },
@@ -40,11 +40,11 @@ export function useHandleCameraMoved({
 
             view.render = (isIdleFrame) => cameraMoved(isIdleFrame, view);
 
-            function cameraMoved(_isIdleFrame: boolean, view: View) {
+            function cameraMoved(isIdleFrame: boolean, view: View) {
                 const moved = view.activeController.moving || prevCameraType.current !== cameraType;
                 prevCameraType.current = cameraType;
 
-                engine2dRenderFn.current?.(moved);
+                engine2dRenderFn.current?.(moved, isIdleFrame);
 
                 if (!moved) {
                     return;

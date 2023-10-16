@@ -86,9 +86,11 @@ export function useCanvasClickHandler() {
             (viewMode === ViewMode.CrossSection || viewMode === ViewMode.FollowPath);
 
         const isTouch = evt.nativeEvent instanceof PointerEvent && evt.nativeEvent.pointerType === "touch";
+        const pickOutline = measure.snapKind === "clippingOutline" && picker === Picker.Measurement;
         const result = await view.pick(evt.nativeEvent.offsetX, evt.nativeEvent.offsetY, {
             pickCameraPlane,
             sampleDiscRadius: isTouch ? 8 : 4,
+            pickOutline,
         });
 
         if (picker === Picker.CrossSection) {
@@ -358,6 +360,19 @@ export function useCanvasClickHandler() {
                     dispatch(
                         measureActions.selectEntity({
                             entity: measure.hover as ExtendedMeasureEntity,
+                            pin: evt.shiftKey,
+                        })
+                    );
+                }
+                if (measure.snapKind === "clippingOutline") {
+                    const pointEntity = {
+                        drawKind: "vertex",
+                        ObjectId: result.objectId,
+                        parameter: result.position,
+                    };
+                    dispatch(
+                        measureActions.selectEntity({
+                            entity: pointEntity as ExtendedMeasureEntity,
                             pin: evt.shiftKey,
                         })
                     );

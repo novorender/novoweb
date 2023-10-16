@@ -14,7 +14,6 @@ const PropertiesTree = lazy(() => import("features/propertiesTree/propertiesTree
 const Bookmarks = lazy(() => import("features/bookmarks/bookmarksWidget"));
 const ModelTree = lazy(() => import("features/modelTree/modelTree"));
 const Search = lazy(() => import("features/search/search"));
-// const ClippingBox = lazy(() => import("features/clippingBox/clippingBox"));
 const Measure = lazy(() => import("features/measure/measure"));
 const Groups = lazy(() => import("features/groups/groups"));
 const ClippingPlanes = lazy(() => import("features/clippingPlanes/clippingPlanes"));
@@ -36,6 +35,7 @@ const PointLine = lazy(() => import("features/pointLine/pointLine"));
 const Jira = lazy(() => import("features/jira/jira"));
 const Manhole = lazy(() => import("features/manhole/manhole"));
 const XsiteManage = lazy(() => import("features/xsiteManage/xsiteManage"));
+const Omega365 = lazy(() => import("features/omega365/omega365"));
 
 export function Widgets() {
     const layout = useWidgetLayout();
@@ -160,9 +160,6 @@ function getWidgetByKey(key: WidgetKey): JSX.Element | string {
         case featuresConfig.search.key:
             Widget = Search;
             break;
-        // case featuresConfig.clippingBox.key:
-        //     Widget = ClippingBox;
-        //     break;
         case featuresConfig.measure.key:
             Widget = Measure;
             break;
@@ -222,6 +219,9 @@ function getWidgetByKey(key: WidgetKey): JSX.Element | string {
             break;
         case featuresConfig.xsiteManage.key:
             Widget = XsiteManage;
+            break;
+        case featuresConfig.omega365.key:
+            Widget = Omega365;
             break;
         default:
             return key;

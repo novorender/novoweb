@@ -303,7 +303,7 @@ async function loadDeviceTier(): Promise<{ tier: -1 | DeviceProfile["tier"]; isM
             tier = Math.max(3, tier);
         }
 
-        // Intel HD Graphics are given tier 2 for some reason, but beloing in tier 0.
+        // Intel HD Graphics are given tier 2 for some reason, but belonging in tier 0.
         // " " before HD in regex to not catch UHD
         if (gpuTier.gpu && / HD Graphics /gi.test(gpuTier.gpu)) {
             tier = 0;
@@ -328,6 +328,8 @@ async function loadDeviceTier(): Promise<{ tier: -1 | DeviceProfile["tier"]; isM
 
 async function createView(canvas: HTMLCanvasElement, options?: { deviceProfile?: DeviceProfile }): Promise<View> {
     const deviceProfile = options?.deviceProfile ?? getDeviceProfile(0);
-    const imports = await View.downloadImports({ baseUrl: "/novorender/api/" });
+    const url = new URL("/novorender/api/", window.location.origin);
+
+    const imports = await View.downloadImports({ baseUrl: url });
     return new View(canvas, deviceProfile, imports);
 }

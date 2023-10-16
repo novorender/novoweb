@@ -6,7 +6,7 @@ import { RootState } from "app/store";
 const initialState = {
     crossSection: undefined as vec3 | undefined,
     crossSectionHover: undefined as vec3 | undefined,
-    crossSectionClipping: 0.001,
+    crossSectionClipping: 0.01,
     currentTopDownElevation: undefined as number | undefined,
 };
 

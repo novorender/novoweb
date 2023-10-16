@@ -25,6 +25,7 @@ import { manholeReducer } from "features/manhole";
 import { selectionBasketReducer } from "features/selectionBasket";
 import { xsiteManageReducer, xsiteManageApi } from "features/xsiteManage";
 import { propertiesReducer } from "features/properties/slice";
+import { omega365Reducer } from "features/omega365";
 
 const rootReducer = combineReducers({
     explorer: explorerReducer,
@@ -45,6 +46,7 @@ const rootReducer = combineReducers({
     heightProfile: heightProfileReducer,
     selectionBasket: selectionBasketReducer,
     properties: propertiesReducer,
+    omega365: omega365Reducer,
     [bimCollabApi.reducerPath]: bimCollabApi.reducer,
     bimTrack: bimTrackReducer,
     [bimTrackApi.reducerPath]: bimTrackApi.reducer,

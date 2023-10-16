@@ -14,8 +14,13 @@ import { ExtendedMeasureEntity } from "types/misc";
 import { measureActions, selectMeasure } from "./measureSlice";
 import { MeasuredObject, MeasuredResult } from "./measuredObject";
 import { snapKinds } from "./config";
+import { useExplorerGlobals } from "contexts/explorerGlobals";
 
 export default function Measure() {
+    const {
+        state: { view },
+    } = useExplorerGlobals(true);
+
     const [menuOpen, toggleMenu] = useToggle();
     const minimized = useAppSelector(selectMinimized) === featuresConfig.measure.key;
     const maximized = useAppSelector(selectMaximized).includes(featuresConfig.measure.key);
@@ -25,6 +30,11 @@ export default function Measure() {
     const { selectedEntities, loadingBrep, snapKind } = useAppSelector(selectMeasure);
     const selecting = useAppSelector(selectPicker) === Picker.Measurement;
     const isInitial = useRef(true);
+    const hasClippingOutline =
+        view.renderState.clipping.enabled &&
+        view.renderState.clipping.planes.some((a) => {
+            return a.outline?.enabled === true;
+        });
 
     useEffect(() => {
         if (isInitial.current) {
@@ -42,7 +52,7 @@ export default function Measure() {
         };
     }, [dispatch]);
 
-    const onSelectSettingsChange = (newValue: "all" | "point" | "curve" | "surface") => {
+    const onSelectSettingsChange = (newValue: "all" | "point" | "curve" | "surface" | "clippingOutline") => {
         dispatch(measureActions.selectPickSettings(newValue));
     };
 
@@ -75,13 +85,19 @@ export default function Measure() {
                                 size="small"
                                 value={snapKind}
                                 onChange={(event) =>
-                                    onSelectSettingsChange(event.target.value as "all" | "point" | "curve" | "surface")
+                                    onSelectSettingsChange(
+                                        event.target.value as "all" | "point" | "curve" | "surface" | "clippingOutline"
+                                    )
                                 }
                                 input={<OutlinedInput fullWidth />}
                             >
                                 <ListSubheader>Snap to</ListSubheader>
                                 {snapKinds.map((opt) => (
-                                    <MenuItem key={opt.val} value={opt.val}>
+                                    <MenuItem
+                                        key={opt.val}
+                                        value={opt.val}
+                                        disabled={opt.val === "clippingOutline" && !hasClippingOutline}
+                                    >
                                         {opt.label}
                                     </MenuItem>
                                 ))}
