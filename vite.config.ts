@@ -17,7 +17,7 @@ export default defineConfig(({ mode }) => {
         },
         envPrefix: "REACT_APP_",
         plugins: [
-            react({ fastRefresh: false }),
+            react(),
             envCompatible(),
             svgr({ svgrOptions: { titleProp: true } }),
             ...(ownCerts ? [] : [basicSsl()]),
