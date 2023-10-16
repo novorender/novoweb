@@ -32,6 +32,7 @@ import {
     Image,
     RestartAlt,
     CheckBox,
+    Attachment,
 } from "@mui/icons-material";
 
 // import { ReactComponent as Clipping } from "media/icons/clipping.svg";
@@ -57,6 +58,14 @@ export const featureTags = {
 } as const;
 
 export const featuresConfig = {
+    omega365: {
+        key: "omega365",
+        name: "Omega 365",
+        Icon: Attachment,
+        type: FeatureType.Widget,
+        // NOTE(OLA): POC! Enable only for nye veier
+        defaultLocked: true,
+    },
     xsiteManage: {
         key: "xsiteManage",
         name: "Xsite Manage",

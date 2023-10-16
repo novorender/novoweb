@@ -11,6 +11,10 @@ export default defineConfig(({ mode }) => {
     const env = loadEnv(mode, process.cwd());
     const ownCerts = existsSync("./localhost.crt") && existsSync("./localhost.key");
 
+    // todo
+    // const token = Buffer.from(`${process.env.OMEGA365_USR}:${process.env.OMEGA365_PWD}`).toString("base64");
+    // console.log("b64", process.env.OMEGA365_USR, process.env.OMEGA365_PWD, token);
+
     return {
         optimizeDeps: {
             exclude: ["@novorender/webgl-api", "@novorender/api"],
@@ -27,9 +31,9 @@ export default defineConfig(({ mode }) => {
             port: Number(process.env.PORT) || 3000,
             https: ownCerts
                 ? {
-                    cert: "./localhost.crt",
-                    key: "./localhost.key",
-                }
+                      cert: "./localhost.crt",
+                      key: "./localhost.key",
+                  }
                 : true,
             host: true,
             open: true,
@@ -58,6 +62,12 @@ export default defineConfig(({ mode }) => {
                 "/xsitemanage": {
                     target: "https://api.prod.xsitemanage.com",
                     rewrite: (path) => path.replace(/^\/xsitemanage/, ""),
+                    changeOrigin: true,
+                },
+                // NOTE(OLA): Omega365 returns invalid headers and proxy crashes on nodejs version > 18.16.0
+                "/omega365": {
+                    target: "https://nyeveier.pims365.no",
+                    rewrite: (path) => path.replace(/^\/omega365/, ""),
                     changeOrigin: true,
                 },
             },

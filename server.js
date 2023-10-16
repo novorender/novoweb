@@ -151,6 +151,32 @@ app.use(
     })
 );
 
+app.use("/omega365", async (req, res) => {
+    const url = new URL("https://nyeveier.pims365.no" + req.originalUrl.replace(/^\/omega365/, ""));
+    const json = await fetch(url, {
+        headers: req.headers,
+    })
+        .then((res) => res.json())
+        .catch((e) => {
+            console.log(e);
+            return {};
+        });
+    res.json(json);
+});
+
+// app.use(
+//     "/omega365",
+//     createProxyMiddleware({
+//         target: "https://restore-nyeveier.pims365.no",
+//         pathRewrite: {
+//             "^/omega365": "", // remove base path
+//         },
+//         changeOrigin: true,
+//         // headers: {
+//         // },
+//     })
+// );
+
 app.use("/*", (_req, res, next) => {
     res.header("Cross-Origin-Opener-Policy", "same-origin");
     res.header("Cross-Origin-Embedder-Policy", "require-corp");
@@ -172,4 +198,13 @@ if (process.env.PORT) {
 } else {
     const https = require("https");
     https.createServer({}, app).listen(443);
+    // https
+    //     .createServer(
+    //         {
+    //             cert: fs.readFileSync("./localhost.crt"),
+    //             key: fs.readFileSync("./localhost.key"),
+    //         },
+    //         app
+    //     )
+    //     .listen(5000);
 }

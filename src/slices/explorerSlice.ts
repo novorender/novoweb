@@ -217,7 +217,9 @@ export const explorerSlice = createSlice({
                     (customProperties.explorerProjectState
                         ? (customProperties.explorerProjectState.features.widgets.enabled as WidgetKey[])
                         : getEnabledFeatures(customProperties)
-                    ).concat(defaultEnabledAdminWidgets)
+                    )
+                        .concat(defaultEnabledAdminWidgets)
+                        .concat(defaultEnabledWidgets)
                 );
             } else {
                 state.enabledWidgets = uniqueArray(
