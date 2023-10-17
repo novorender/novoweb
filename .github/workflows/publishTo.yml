@@ -15,6 +15,11 @@ on:
                 description: "Deploy Slot"
                 required: true
                 default: "feature-1"
+                type: choice
+                options:
+                    - "feature-1"
+                    - "feature-2"
+                    - "feature-3"
 env:
     AZURE_WEBAPP_NAME: novorender-explorer # set this to your application's name
     AZURE_WEBAPP_PACKAGE_PATH: "." # set this to the path to your web app project, defaults to the repository root
