@@ -40,6 +40,7 @@ import { Images } from "./images";
 import { Markers } from "./markers";
 import { SceneError } from "./sceneError";
 import { Stamp } from "./stamp";
+import { Engine2DInteractions } from "features/engine2D/engine2DInteractions";
 
 glMatrix.setMatrixArrayType(Array);
 
@@ -115,9 +116,9 @@ export function Render3D() {
     useHandleXsiteManageMachineLocations();
     useHandleDitioKeepAlive();
 
-    const useSvgCursor = useHandleCanvasCursor();
+    const cursor = useHandleCanvasCursor();
     const onClick = useCanvasClickHandler();
-    const eventHandlers = useCanvasEventHandlers({ pointerPos, useSvgCursor, svg, renderFnRef: engine2dRenderFn });
+    const eventHandlers = useCanvasEventHandlers({ pointerPos, cursor, svg, renderFnRef: engine2dRenderFn });
 
     return (
         <Box position="relative" width="100%" height="100%" sx={{ userSelect: "none" }}>
@@ -136,6 +137,7 @@ export function Render3D() {
                     <Stamp />
                     <Svg width={size.width} height={size.height} ref={setSvg}>
                         <Markers />
+                        <Engine2DInteractions />
                         <g id="cursor" />
                     </Svg>
                     <Images />

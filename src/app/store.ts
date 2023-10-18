@@ -19,6 +19,7 @@ import { areaReducer } from "features/area";
 import { orthoCamReducer } from "features/orthoCam";
 import { pointLineReducer } from "features/pointLine";
 import { heightProfileReducer } from "features/heightProfile";
+import { clippingOutlineReducer } from "features/clippingOutline";
 import { myLocationReducer } from "features/myLocation";
 import { jiraApi, jiraReducer } from "features/jira";
 import { manholeReducer } from "features/manhole";
@@ -44,6 +45,7 @@ const rootReducer = combineReducers({
     myLocation: myLocationReducer,
     bimCollab: bimCollabReducer,
     heightProfile: heightProfileReducer,
+    clippingOutline: clippingOutlineReducer,
     selectionBasket: selectionBasketReducer,
     properties: propertiesReducer,
     omega365: omega365Reducer,

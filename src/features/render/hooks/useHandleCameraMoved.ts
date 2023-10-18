@@ -9,6 +9,7 @@ import { ViewMode } from "types/misc";
 
 import { CameraType, renderActions, selectCameraType, selectSavedCameraPositions, selectViewMode } from "..";
 import { useMoveMarkers } from "./useMoveMarkers";
+import { useMove2DInteractions } from "./useMove2DInteractions";
 
 export function useHandleCameraMoved({
     svg,
@@ -27,6 +28,8 @@ export function useHandleCameraMoved({
     const currentTopDownElevation = useAppSelector(selectCurrentTopDownElevation);
 
     const moveSvgMarkers = useMoveMarkers(svg);
+    const moveSvgInteractions = useMove2DInteractions(svg);
+
     const movementTimer = useRef<ReturnType<typeof setTimeout>>();
     const orthoMovementTimer = useRef<ReturnType<typeof setTimeout>>();
 
@@ -51,6 +54,7 @@ export function useHandleCameraMoved({
                 }
 
                 moveSvgMarkers();
+                moveSvgInteractions();
                 dispatch(renderActions.setStamp(null));
 
                 if (movementTimer.current) {
@@ -126,6 +130,7 @@ export function useHandleCameraMoved({
             cameraType,
             viewMode,
             moveSvgMarkers,
+            moveSvgInteractions,
             engine2dRenderFn,
         ]
     );
