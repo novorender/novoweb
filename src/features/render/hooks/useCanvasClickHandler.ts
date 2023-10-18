@@ -1,5 +1,5 @@
 import { rotationFromDirection } from "@novorender/api";
-import { mat3, quat, vec2, vec3, vec4 } from "gl-matrix";
+import { ReadonlyVec3, mat3, quat, vec2, vec3, vec4 } from "gl-matrix";
 import { MouseEventHandler, useRef } from "react";
 
 import { useAppDispatch, useAppSelector } from "app/store";
@@ -25,6 +25,8 @@ import {
     StampKind,
     renderActions,
     selectCamera,
+    selectCameraType,
+    selectClippingPlanes,
     selectDeviations,
     selectMainObject,
     selectPicker,
@@ -38,6 +40,8 @@ import { ExtendedMeasureEntity, NodeType, ViewMode } from "types/misc";
 import { isRealVec } from "utils/misc";
 import { extractObjectIds } from "utils/objectData";
 import { searchByPatterns, searchDeepByPatterns } from "utils/search";
+import { clippingOutlineActions } from "features/clippingOutline";
+import { getOutlineLaser } from "features/clippingOutline/useOutlineLaser";
 
 export function useCanvasClickHandler() {
     const dispatch = useAppDispatch();
@@ -49,6 +53,7 @@ export function useCanvasClickHandler() {
         state: { view, canvas, db },
     } = useExplorerGlobals();
 
+    const cameraType = useAppSelector(selectCameraType);
     const mainObject = useAppSelector(selectMainObject);
     const selectMultiple = useAppSelector(selectSelectMultiple);
     const cameraState = useAppSelector(selectCamera);
@@ -61,6 +66,7 @@ export function useCanvasClickHandler() {
     const viewMode = useAppSelector(selectViewMode);
     const pointerDownState = useAppSelector(selectPointerDownState);
     const showPropertiesStamp = useAppSelector(selectShowPropertiesStamp);
+    const { planes } = useAppSelector(selectClippingPlanes);
 
     const [secondaryHighlightAbortController, abortSecondaryHighlight] = useAbortController();
     const currentSecondaryHighlightQuery = useRef("");
@@ -92,6 +98,30 @@ export function useCanvasClickHandler() {
             sampleDiscRadius: isTouch ? 8 : 4,
             pickOutline,
         });
+
+        if (picker === Picker.OutlineLaser) {
+            let tracePosition: ReadonlyVec3 | undefined = undefined;
+            if (cameraState.type === CameraType.Orthographic) {
+                tracePosition = view.worldPositionFromPixelPosition(evt.nativeEvent.offsetX, evt.nativeEvent.offsetY);
+            } else if (result && view.renderState.clipping.enabled && view.renderState.clipping.planes.length > 0) {
+                const plane = view.renderState.clipping.planes[0].normalOffset;
+                const planeDir = vec3.fromValues(plane[0], plane[1], plane[2]);
+                const camPos = view.renderState.camera.position;
+                const lineDir = vec3.sub(vec3.create(), result.position, camPos);
+                vec3.normalize(lineDir, lineDir);
+                const t = (plane[3] - vec3.dot(planeDir, camPos)) / vec3.dot(planeDir, lineDir);
+                tracePosition = vec3.scaleAndAdd(vec3.create(), camPos, lineDir, t);
+            }
+            if (tracePosition) {
+                dispatch(clippingOutlineActions.setLaserPlane(view.renderState.clipping.planes[0].normalOffset));
+                const laser = await getOutlineLaser(tracePosition, view, cameraState.type, planes[0].normalOffset);
+                if (laser) {
+                    dispatch(clippingOutlineActions.addLaser(laser));
+                }
+            }
+
+            return;
+        }
 
         if (picker === Picker.CrossSection) {
             const position =
@@ -149,6 +179,7 @@ export function useCanvasClickHandler() {
                             gridOrigo: p as vec3,
                         })
                     );
+                    dispatch(renderActions.setBackground({ color: [0, 0, 0, 1] }));
                     const w = vec3.dot(dir, p);
                     dispatch(
                         renderActions.setClippingPlanes({

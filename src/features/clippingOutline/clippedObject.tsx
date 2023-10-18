@@ -1,10 +1,10 @@
-import { ColorLens, Visibility } from "@mui/icons-material";
-import { Box, Button, Checkbox, ListItemButton, ListItemButtonProps, Typography, css, styled } from "@mui/material";
-import { MouseEvent, useState } from "react";
+import { Visibility } from "@mui/icons-material";
+import { Box, Checkbox, ListItemButton, ListItemButtonProps, Typography, css, styled } from "@mui/material";
+import { useState } from "react";
 
 import { Tooltip } from "components";
 import { ColorPicker } from "features/colorPicker";
-import { VecRGB, vecToRgb } from "utils/color";
+import { VecRGB } from "utils/color";
 import { hiddenActions, useDispatchHidden } from "contexts/hidden";
 import { highlightActions, useDispatchHighlighted } from "contexts/highlighted";
 
@@ -32,9 +32,9 @@ export function ClippedObject({ file }: { file: ClippedFile }) {
     const [colorPickerAnchor, setColorPickerAnchor] = useState<HTMLElement | null>(null);
     const [hidden, setSetHidden] = useState(false);
 
-    const toggleColorPicker = (event?: MouseEvent<HTMLElement>) => {
-        setColorPickerAnchor(!colorPickerAnchor && event?.currentTarget ? event.currentTarget : null);
-    };
+    // const toggleColorPicker = (event?: MouseEvent<HTMLElement>) => {
+    //     setColorPickerAnchor(!colorPickerAnchor && event?.currentTarget ? event.currentTarget : null);
+    // };
 
     const toggleHidden = () => {
         setSetHidden(!hidden);
@@ -52,7 +52,7 @@ export function ClippedObject({ file }: { file: ClippedFile }) {
         }
     };
 
-    const { r, g, b } = vecToRgb(file.color);
+    // const { r, g, b } = vecToRgb(file.color);
 
     return (
         <>
@@ -75,11 +75,11 @@ export function ClippedObject({ file }: { file: ClippedFile }) {
                             onChange={toggleHidden}
                         />
                     </Box>
-                    <Box flex="0 0 auto">
+                    {/* <Box flex="0 0 auto">
                         <Button sx={{ padding: 0, alignSelf: "start" }} color="grey" onClick={toggleColorPicker}>
                             <ColorLens sx={{ color: `rgb(${r}, ${g}, ${b})` }} fontSize="small" />
                         </Button>
-                    </Box>
+                    </Box> */}
                 </Box>
             </ListItemButton>
             <ColorPicker

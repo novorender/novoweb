@@ -8,6 +8,12 @@ import { useLazyHighlighted } from "contexts/highlighted";
 import { GroupStatus, isInternalGroup, useLazyObjectGroups } from "contexts/objectGroups";
 import { useLazySelectionBasket } from "contexts/selectionBasket";
 import { selectAreaPoints } from "features/area";
+import {
+    GetMeasurePointsFromTracer,
+    TraceMeasurement,
+    selectOutlineLaserPlane,
+    selectOutlineLasers,
+} from "features/clippingOutline";
 import { selectFollowPath } from "features/followPath";
 import {
     selectManholeCollisionSettings,
@@ -29,6 +35,7 @@ import {
     selectTerrain,
     selectViewMode,
 } from "features/render";
+import { ReadonlyVec3 } from "gl-matrix";
 import { ViewMode } from "types/misc";
 
 export function useCreateBookmark() {
@@ -49,6 +56,8 @@ export function useCreateBookmark() {
     const terrain = useAppSelector(selectTerrain);
     const grid = useAppSelector(selectGrid);
     const deviations = useAppSelector(selectPoints).deviation;
+    const outlineLasers = useAppSelector(selectOutlineLasers);
+    const laserPlane = useAppSelector(selectOutlineLaserPlane);
 
     const {
         state: { view },
@@ -58,6 +67,22 @@ export function useCreateBookmark() {
     const highlightCollections = useLazyHighlightCollections();
     const hidden = useLazyHidden();
     const selectionBasket = useLazySelectionBasket();
+
+    const copyTraceMeasurement = (
+        measurement: TraceMeasurement | undefined,
+        laserPosition: ReadonlyVec3,
+        startAr: ReadonlyVec3[],
+        endAr: ReadonlyVec3[]
+    ) => {
+        if (measurement) {
+            const pts = GetMeasurePointsFromTracer(measurement, startAr, endAr);
+            if (pts) {
+                return { laserPosition: laserPosition, start: pts[0], end: pts[1] };
+            }
+            return undefined;
+        }
+        return undefined;
+    };
 
     const create = (
         img?: string
@@ -149,6 +174,37 @@ export function useCreateBookmark() {
                                   line: followPath.deviations.line,
                                   lineColor: followPath.deviations.lineColor,
                               },
+                          }
+                        : undefined,
+
+                outlineMeasure:
+                    outlineLasers.length > 0 && laserPlane
+                        ? {
+                              laserPlane,
+                              lasers: outlineLasers
+                                  .map((t) => {
+                                      let measurementX = copyTraceMeasurement(
+                                          t.measurementX,
+                                          t.laserPosition,
+                                          t.left,
+                                          t.right
+                                      );
+                                      let measurementY = copyTraceMeasurement(
+                                          t.measurementY,
+                                          t.laserPosition,
+                                          t.down,
+                                          t.up
+                                      );
+                                      if (measurementX === undefined && measurementX === undefined) {
+                                          return undefined;
+                                      }
+                                      return { laserPosition: t.laserPosition, measurementX, measurementY };
+                                  })
+                                  .filter((f) => f !== undefined) as {
+                                  laserPosition: ReadonlyVec3;
+                                  measurementX?: { start: ReadonlyVec3; end: ReadonlyVec3 };
+                                  measurementY?: { start: ReadonlyVec3; end: ReadonlyVec3 };
+                              }[],
                           }
                         : undefined,
             },
