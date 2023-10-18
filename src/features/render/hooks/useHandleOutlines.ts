@@ -44,7 +44,7 @@ export function useHandleOutlines() {
         updateClippedFiles();
         async function updateClippedFiles() {
             const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
-            await sleep(500);
+            await sleep(1000);
             if (db && view && groupRef.current.length === 0) {
                 const getFileId = async (fileName: string) => {
                     const iterator = db.search({ parentPath: fileName, descentDepth: 0 }, undefined);

@@ -195,7 +195,7 @@ export function useCreateBookmark() {
                                           t.down,
                                           t.up
                                       );
-                                      if (measurementX === undefined && measurementX === undefined) {
+                                      if (measurementX === undefined && measurementY === undefined) {
                                           return undefined;
                                       }
                                       return { laserPosition: t.laserPosition, measurementX, measurementY };
