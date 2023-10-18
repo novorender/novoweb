@@ -188,7 +188,6 @@ export function useCanvasClickHandler() {
                     dispatch(renderActions.setPicker(Picker.Object));
                     dispatch(orthoCamActions.setCrossSectionPoint(undefined));
                     dispatch(orthoCamActions.setCrossSectionHover(undefined));
-                    dispatch(renderActions.setGrid({ enabled: true }));
                 } else {
                     dispatch(orthoCamActions.setCrossSectionPoint(position as vec3));
                 }
