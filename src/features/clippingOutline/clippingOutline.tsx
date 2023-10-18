@@ -148,7 +148,7 @@ export default function ClippingOutline() {
                                             }}
                                         />
                                     }
-                                    label={<Box fontSize={14}>Trace</Box>}
+                                    label={<Box fontSize={14}>Laser</Box>}
                                 />
                                 <Button
                                     onClick={() => dispatch(clippingOutlineActions.clear())}

@@ -4,7 +4,7 @@ import { useState } from "react";
 
 import { Tooltip } from "components";
 import { ColorPicker } from "features/colorPicker";
-import { VecRGB } from "utils/color";
+import { VecRGB, vecToRgb } from "utils/color";
 import { hiddenActions, useDispatchHidden } from "contexts/hidden";
 import { highlightActions, useDispatchHighlighted } from "contexts/highlighted";
 
@@ -52,7 +52,7 @@ export function ClippedObject({ file }: { file: ClippedFile }) {
         }
     };
 
-    // const { r, g, b } = vecToRgb(file.color);
+    const { r, g, b } = vecToRgb(file.color);
 
     return (
         <>
@@ -68,7 +68,7 @@ export function ClippedObject({ file }: { file: ClippedFile }) {
                             name="toggle group visibility"
                             aria-label="toggle group visibility"
                             size="small"
-                            icon={<Visibility htmlColor={`rgba(0,0,0,1)`} />}
+                            icon={<Visibility htmlColor={`rgba(${r}, ${g}, ${b}, ${1})`} />}
                             checkedIcon={<Visibility color="disabled" />}
                             checked={hidden}
                             onClick={(event) => event.stopPropagation()}

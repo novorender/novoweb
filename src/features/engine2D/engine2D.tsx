@@ -254,14 +254,17 @@ export function Engine2D({
                     if (x) {
                         const tracePts = GetMeasurePointsFromTracer(x, left, right);
                         if (tracePts) {
-                            renderTrace(measureView.draw.getDrawObjectFromPoints(tracePts, false, false, true), "blue");
+                            renderTrace(
+                                measureView.draw.getDrawObjectFromPoints(tracePts, false, false, true, 2),
+                                "blue"
+                            );
                         }
                     }
                     if (y) {
                         const tracePts = GetMeasurePointsFromTracer(y, down, up);
                         if (tracePts) {
                             renderTrace(
-                                measureView.draw.getDrawObjectFromPoints(tracePts, false, false, true),
+                                measureView.draw.getDrawObjectFromPoints(tracePts, false, false, true, 2),
                                 "green"
                             );
                         }
