@@ -1,12 +1,12 @@
+import type { SpeedDialActionProps } from "@mui/material";
 import { MouseEvent, useState } from "react";
 import type { ColorResult } from "react-color";
-import type { SpeedDialActionProps } from "@mui/material";
 
 import { SpeedDialAction } from "components";
 import { featuresConfig } from "config/features";
-import { rgbToVec } from "utils/color";
-import { ColorPicker } from "features/colorPicker";
 import { highlightActions, useDispatchHighlighted, useHighlighted } from "contexts/highlighted";
+import { ColorPicker } from "features/colorPicker";
+import { rgbToVec } from "utils/color";
 
 type Props = SpeedDialActionProps;
 

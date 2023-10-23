@@ -17,11 +17,11 @@ import {
     useGetViewpointsQuery,
 } from "../bimTrackApi";
 import {
+    bimTrackActions,
     FilterModifier,
     FilterModifiers,
-    FilterType,
     Filters,
-    bimTrackActions,
+    FilterType,
     selectFilterModifiers,
     selectFilters,
 } from "../bimTrackSlice";

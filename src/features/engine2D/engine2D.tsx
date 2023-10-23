@@ -1,6 +1,6 @@
 import { css, styled } from "@mui/material";
-import { DrawProduct, DrawableEntity, MeasureSettings, DeviationProjection } from "@novorender/api";
-import { ReadonlyVec2, mat3, vec2, vec3 } from "gl-matrix";
+import { DeviationProjection, DrawableEntity, DrawProduct, MeasureSettings } from "@novorender/api";
+import { mat3, ReadonlyVec2, vec2, vec3 } from "gl-matrix";
 import { MutableRefObject, useCallback, useEffect, useRef, useState } from "react";
 
 import { useAppSelector } from "app/store";
@@ -10,11 +10,11 @@ import {
     selectCurrentCenter,
     selectDrawSelectedPositions,
     selectFollowCylindersFrom,
+    selectFollowDeviations,
     selectProfile,
     selectShowTracer,
-    usePathMeasureObjects,
-    selectFollowDeviations,
     selectVerticalTracer,
+    usePathMeasureObjects,
 } from "features/followPath";
 import { useCrossSection } from "features/followPath/useCrossSection";
 import { useHeightProfileMeasureObject } from "features/heightProfile";
@@ -28,9 +28,9 @@ import { selectCrossSectionPoints } from "features/orthoCam";
 import { selectPointLine } from "features/pointLine";
 import { CameraType, selectCameraType, selectGrid, selectViewMode } from "features/render";
 import { AsyncStatus, ViewMode } from "types/misc";
+import { vecToHex } from "utils/color";
 
 import { drawLineStrip, drawPart, drawPoint, drawProduct, drawTexts } from "./utils";
-import { vecToHex } from "utils/color";
 
 const Canvas2D = styled("canvas")(
     () => css`

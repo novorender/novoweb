@@ -1,11 +1,11 @@
 import type { SpeedDialActionProps } from "@mui/material";
 
+import { useAppDispatch, useAppSelector } from "app/store";
 import { SpeedDialAction } from "components";
 import { featuresConfig } from "config/features";
-import { renderActions, selectMainObject } from "features/render";
-import { useAppDispatch, useAppSelector } from "app/store";
-import { highlightActions, useDispatchHighlighted, useHighlighted } from "contexts/highlighted";
 import { highlightCollectionsActions, useDispatchHighlightCollections } from "contexts/highlightCollections";
+import { highlightActions, useDispatchHighlighted, useHighlighted } from "contexts/highlighted";
+import { renderActions, selectMainObject } from "features/render";
 
 type Props = SpeedDialActionProps;
 

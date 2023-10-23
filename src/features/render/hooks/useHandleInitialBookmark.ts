@@ -2,11 +2,10 @@ import { useEffect } from "react";
 
 import { dataApi } from "app";
 import { useAppDispatch, useAppSelector } from "app/store";
-import { explorerActions, selectLocalBookmarkId, selectUrlBookmarkId } from "slices/explorerSlice";
-
 import { useExplorerGlobals } from "contexts/explorerGlobals";
-import { useSceneId } from "hooks/useSceneId";
 import { useSelectBookmark } from "features/bookmarks/useSelectBookmark";
+import { useSceneId } from "hooks/useSceneId";
+import { explorerActions, selectLocalBookmarkId, selectUrlBookmarkId } from "slices/explorerSlice";
 
 export function useHandleInitialBookmark() {
     const sceneId = useSceneId();

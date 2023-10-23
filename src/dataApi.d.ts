@@ -1,5 +1,6 @@
 declare module "@novorender/data-js-api" {
     import { vec3 } from "gl-matrix";
+
     import { ExtendedMeasureEntity, ViewMode } from "types/misc";
 
     type ExplorerBookmarkState = {

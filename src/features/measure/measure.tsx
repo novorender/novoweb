@@ -1,20 +1,20 @@
 import { DeleteSweep } from "@mui/icons-material";
-import { useRef, useEffect } from "react";
 import { Box, Button, FormControlLabel, ListSubheader, MenuItem, OutlinedInput, Select } from "@mui/material";
+import { useEffect, useRef } from "react";
 
 import { useAppDispatch, useAppSelector } from "app/store";
 import { IosSwitch, LinearProgress, LogoSpeedDial, ScrollBox, WidgetContainer, WidgetHeader } from "components";
+import { featuresConfig } from "config/features";
+import { useExplorerGlobals } from "contexts/explorerGlobals";
+import { Picker, renderActions, selectPicker } from "features/render/renderSlice";
 import WidgetList from "features/widgetList/widgetList";
 import { useToggle } from "hooks/useToggle";
-import { featuresConfig } from "config/features";
-import { selectMinimized, selectMaximized } from "slices/explorerSlice";
-import { Picker, renderActions, selectPicker } from "features/render/renderSlice";
+import { selectMaximized, selectMinimized } from "slices/explorerSlice";
 import { ExtendedMeasureEntity } from "types/misc";
 
-import { measureActions, selectMeasure } from "./measureSlice";
-import { MeasuredObject, MeasuredResult } from "./measuredObject";
 import { snapKinds } from "./config";
-import { useExplorerGlobals } from "contexts/explorerGlobals";
+import { MeasuredObject, MeasuredResult } from "./measuredObject";
+import { measureActions, selectMeasure } from "./measureSlice";
 
 export default function Measure() {
     const {

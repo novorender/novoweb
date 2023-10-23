@@ -2,7 +2,7 @@ import { ObjectId } from "@novorender/webgl-api";
 import { createContext, Dispatch, MutableRefObject, ReactNode, useContext, useReducer, useRef } from "react";
 
 import { VecRGBA } from "utils/color";
-import { toIdObj, toIdArr } from "utils/objectData";
+import { toIdArr, toIdObj } from "utils/objectData";
 
 export enum HighlightCollection {
     SecondaryHighlight = "secondaryHighlight",

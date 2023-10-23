@@ -2,6 +2,7 @@ import { useEffect, useRef } from "react";
 
 import { useAppDispatch, useAppSelector } from "app/store";
 import { StorageKey } from "config/storage";
+import { selectConfig } from "slices/explorerSlice";
 import { AsyncStatus } from "types/misc";
 import { deleteFromStorage, saveToStorage } from "utils/storage";
 
@@ -11,6 +12,7 @@ import { jiraActions, selectJiraRefreshToken } from "./jiraSlice";
 export function useHandleJiraKeepAlive() {
     const dispatch = useAppDispatch();
     const refreshToken = useAppSelector(selectJiraRefreshToken);
+    const config = useAppSelector(selectConfig);
     const [refreshTokens] = useRefreshTokensMutation();
     const timeoutId = useRef<number>();
 
@@ -29,7 +31,7 @@ export function useHandleJiraKeepAlive() {
         }
 
         timeoutId.current = window.setTimeout(async () => {
-            const res = await refreshTokens({ refreshToken: refreshToken.token });
+            const res = await refreshTokens({ refreshToken: refreshToken.token, config });
 
             if ("data" in res) {
                 saveToStorage(StorageKey.JiraRefreshToken, res.data.refresh_token);
@@ -49,7 +51,7 @@ export function useHandleJiraKeepAlive() {
             window.clearTimeout(timeoutId.current);
             timeoutId.current = undefined;
         };
-    }, [refreshToken, dispatch, refreshTokens]);
+    }, [refreshToken, dispatch, refreshTokens, config]);
 
     return;
 }

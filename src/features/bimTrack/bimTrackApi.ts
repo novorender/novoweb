@@ -22,8 +22,6 @@ import { sleep } from "utils/time";
 
 import { NewViewpoint } from "./includeViewpoint";
 
-const clientId = window.bimTrackClientId || import.meta.env.REACT_APP_BIMTRACK_CLIENT_ID || "";
-const clientSecret = window.bimTrackClientSecret || import.meta.env.REACT_APP_BIMTRACK_CLIENT_SECRET || "";
 const callbackUrl = window.location.origin + "/";
 const scope = "openid offline_access BcfWebApi";
 
@@ -161,12 +159,15 @@ export const bimTrackApi = createApi({
                 method: "POST",
             }),
         }),
-        getToken: builder.mutation<{ access_token: string; refresh_token: string }, { code: string }>({
-            queryFn: ({ code }) => {
+        getToken: builder.mutation<
+            { access_token: string; refresh_token: string },
+            { code: string; config: { bimTrackClientId: string; bimTrackClientSecret: string } }
+        >({
+            queryFn: ({ code, config }) => {
                 const body = new URLSearchParams();
                 body.set("code", code);
-                body.set("client_id", clientId);
-                body.set("client_secret", clientSecret);
+                body.set("client_id", config.bimTrackClientId);
+                body.set("client_secret", config.bimTrackClientSecret);
                 body.set("grant_type", "authorization_code");
                 body.set("redirect_uri", callbackUrl);
                 body.set("code_verifier", getFromStorage(StorageKey.BimTrackCodeVerifier));
@@ -181,12 +182,15 @@ export const bimTrackApi = createApi({
                     .catch((error) => ({ error }));
             },
         }),
-        refreshToken: builder.mutation<{ access_token: string; refresh_token: string }, { refreshToken: string }>({
-            queryFn: ({ refreshToken }) => {
+        refreshToken: builder.mutation<
+            { access_token: string; refresh_token: string },
+            { refreshToken: string; config: { bimTrackClientId: string; bimTrackClientSecret: string } }
+        >({
+            queryFn: ({ refreshToken, config }) => {
                 const body = new URLSearchParams();
                 body.set("refresh_token", refreshToken);
-                body.set("client_id", clientId);
-                body.set("client_secret", clientSecret);
+                body.set("client_id", config.bimTrackClientId);
+                body.set("client_secret", config.bimTrackClientSecret);
                 body.set("grant_type", "refresh_token");
 
                 return fetch("/bimtrack/token", {
@@ -227,7 +231,11 @@ export const {
     useRefreshTokenMutation,
 } = bimTrackApi;
 
-export async function getCode(authUrl: string, state: string) {
+export async function getCode(
+    authUrl: string,
+    state: string,
+    config: { bimTrackClientId: string; bimTrackClientSecret: string }
+) {
     const verifier = generateRandomString();
     const challenge = await generateCodeChallenge(verifier);
     saveToStorage(StorageKey.BimTrackCodeVerifier, verifier);
@@ -235,7 +243,7 @@ export async function getCode(authUrl: string, state: string) {
     window.location.href =
         authUrl +
         `?response_type=code` +
-        `&client_id=${clientId}` +
+        `&client_id=${config.bimTrackClientId}` +
         `&scope=${scope}` +
         `&redirect_uri=${callbackUrl}` +
         `&code_challenge=${challenge}` +

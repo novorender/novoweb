@@ -28,7 +28,7 @@ import { imagesActions } from "features/images";
 import { manholeActions } from "features/manhole";
 import { measureActions } from "features/measure";
 import { pointLineActions } from "features/pointLine";
-import { CameraType, ObjectVisibility, SelectionBasketMode, renderActions } from "features/render";
+import { CameraType, ObjectVisibility, renderActions, SelectionBasketMode } from "features/render";
 import { flip, flipGLtoCadQuat } from "features/render/utils";
 import { useSceneId } from "hooks/useSceneId";
 import { ExtendedMeasureEntity, ViewMode } from "types/misc";

@@ -2,8 +2,8 @@ import { createSlice, PayloadAction } from "@reduxjs/toolkit";
 import { vec3 } from "gl-matrix";
 
 import { RootState } from "app/store";
-import { AsyncState, AsyncStatus } from "types/misc";
 import { selectBookmark } from "features/render";
+import { AsyncState, AsyncStatus } from "types/misc";
 import { VecRGBA } from "utils/color";
 
 type LandXmlPath = {

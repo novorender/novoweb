@@ -1,6 +1,7 @@
 /public/novorender
 /build
 /dist
+/dev-dist
 /coverage
 /docs
 /node_modules

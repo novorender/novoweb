@@ -1,10 +1,9 @@
-import { Box, Typography, IconButton, useTheme } from "@mui/material";
 import { Close } from "@mui/icons-material";
+import { Box, IconButton, Typography, useTheme } from "@mui/material";
 
 import { LogoSpeedDial, WidgetContainer } from "components";
 import WidgetList from "features/widgetList/widgetList";
 import { useToggle } from "hooks/useToggle";
-
 import { ReactComponent as NovorenderIcon } from "media/icons/novorender-small.svg";
 
 export function MenuWidget() {

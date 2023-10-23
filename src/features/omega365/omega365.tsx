@@ -1,4 +1,5 @@
-import { AccountCircle, Download, OpenInNew, Visibility, VisibilityOff, Lock } from "@mui/icons-material";
+import { AccountCircle, Download, Lock, OpenInNew, Visibility, VisibilityOff } from "@mui/icons-material";
+import { LoadingButton } from "@mui/lab";
 import {
     Box,
     Button,
@@ -33,8 +34,8 @@ import { useToggle } from "hooks/useToggle";
 import { selectMaximized, selectMinimized } from "slices/explorerSlice";
 import { AsyncState, AsyncStatus, hasFinished } from "types/misc";
 import { getObjectData } from "utils/search";
+
 import { omega365Actions, selectOmega365ApiKey, selectOmega365Status } from "./omega365Slice";
-import { LoadingButton } from "@mui/lab";
 
 type Omega365Document = {
     Orgstruktur_ID: number;

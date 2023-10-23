@@ -1,5 +1,5 @@
 import { DeleteSweep, PushPin } from "@mui/icons-material";
-import { Box, Button, Checkbox, FormControlLabel, Grid, capitalize } from "@mui/material";
+import { Box, Button, capitalize, Checkbox, FormControlLabel, Grid } from "@mui/material";
 import { CylinerMeasureType, MeasurementValues } from "@novorender/api";
 import { vec3 } from "gl-matrix";
 import { useEffect, useRef, useState } from "react";

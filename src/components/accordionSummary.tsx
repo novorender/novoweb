@@ -1,13 +1,12 @@
+import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import {
     AccordionSummary as MuiAccordionSummary,
-    AccordionSummaryProps,
-    styled,
     accordionSummaryClasses,
+    AccordionSummaryProps,
     Color,
+    styled,
 } from "@mui/material";
 import { css } from "@mui/styled-engine";
-
-import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 
 export const AccordionSummary = styled(
     (props: AccordionSummaryProps) => <MuiAccordionSummary expandIcon={<ExpandMoreIcon />} {...props} />,

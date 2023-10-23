@@ -1,11 +1,11 @@
 import { Box } from "@mui/material";
-import { Suspense, lazy, useEffect } from "react";
+import { lazy, Suspense, useEffect } from "react";
 
 import { useAppDispatch, useAppSelector } from "app/store";
 import { WidgetErrorBoundary, WidgetSkeleton } from "components";
-import { WidgetKey, featuresConfig } from "config/features";
+import { featuresConfig, WidgetKey } from "config/features";
 import { MenuWidget } from "features/menuWidget";
-import { explorerActions, selectMaximized, selectWidgets } from "slices/explorerSlice";
+import { explorerActions, selectIsOnline, selectMaximized, selectWidgets } from "slices/explorerSlice";
 
 import { useWidgetLayout } from "./useWidgetLayout";
 
@@ -35,11 +35,13 @@ const PointLine = lazy(() => import("features/pointLine/pointLine"));
 const Jira = lazy(() => import("features/jira/jira"));
 const Manhole = lazy(() => import("features/manhole/manhole"));
 const XsiteManage = lazy(() => import("features/xsiteManage/xsiteManage"));
+const Offline = lazy(() => import("features/offline/offline"));
 const Omega365 = lazy(() => import("features/omega365/omega365"));
 
 export function Widgets() {
     const layout = useWidgetLayout();
     const maximized = useAppSelector(selectMaximized);
+    const isOnline = useAppSelector(selectIsOnline);
 
     const slots = useAppSelector(selectWidgets);
     const dispatch = useAppDispatch();
@@ -53,6 +55,16 @@ export function Widgets() {
         },
         [layout, slots, dispatch, maximized]
     );
+
+    useEffect(() => {
+        if (!isOnline) {
+            slots.forEach((slot) => {
+                if (!featuresConfig[slot].offline) {
+                    dispatch(explorerActions.removeWidgetSlot(slot));
+                }
+            });
+        }
+    }, [dispatch, isOnline, slots]);
 
     const getGridLayout = () => {
         if (layout.widgets === 4) {
@@ -219,6 +231,9 @@ function getWidgetByKey(key: WidgetKey): JSX.Element | string {
             break;
         case featuresConfig.xsiteManage.key:
             Widget = XsiteManage;
+            break;
+        case featuresConfig.offline.key:
+            Widget = Offline;
             break;
         case featuresConfig.omegaPims365.key:
             Widget = Omega365;

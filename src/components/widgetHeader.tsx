@@ -1,10 +1,10 @@
-import { MouseEvent, ReactNode, useEffect, useState } from "react";
-import { Box, IconButton, MenuProps, Typography, useMediaQuery, useTheme } from "@mui/material";
 import { Close, CropSquare, Minimize, MoreVert } from "@mui/icons-material";
+import { Box, IconButton, MenuProps, Typography, useMediaQuery, useTheme } from "@mui/material";
+import { MouseEvent, ReactNode, useEffect, useState } from "react";
 
-import { Widget } from "config/features";
-import { Divider } from "components";
 import { useAppDispatch, useAppSelector } from "app/store";
+import { Divider } from "components";
+import { Widget } from "config/features";
 import { explorerActions, selectMaximized, selectMinimized } from "slices/explorerSlice";
 
 export function WidgetHeader({

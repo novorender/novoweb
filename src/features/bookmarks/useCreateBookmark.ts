@@ -17,7 +17,6 @@ import {
 import { selectMeasure } from "features/measure";
 import { selectPointLinePoints } from "features/pointLine";
 import {
-    SubtreeStatus,
     selectBackground,
     selectClippingPlanes,
     selectDefaultVisibility,
@@ -28,6 +27,7 @@ import {
     selectSubtrees,
     selectTerrain,
     selectViewMode,
+    SubtreeStatus,
 } from "features/render";
 import { ViewMode } from "types/misc";
 

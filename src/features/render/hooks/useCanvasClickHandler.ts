@@ -22,7 +22,6 @@ import { selectShowPropertiesStamp } from "features/properties/slice";
 import {
     CameraType,
     Picker,
-    StampKind,
     renderActions,
     selectCamera,
     selectDeviations,
@@ -32,6 +31,7 @@ import {
     selectSecondaryHighlightProperty,
     selectSelectMultiple,
     selectViewMode,
+    StampKind,
 } from "features/render/renderSlice";
 import { useAbortController } from "hooks/useAbortController";
 import { ExtendedMeasureEntity, NodeType, ViewMode } from "types/misc";

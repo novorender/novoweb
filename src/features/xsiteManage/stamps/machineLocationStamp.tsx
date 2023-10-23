@@ -5,7 +5,7 @@ import { quat } from "gl-matrix";
 import { useAppDispatch, useAppSelector } from "app/store";
 import { Divider } from "components";
 import { useExplorerGlobals } from "contexts/explorerGlobals";
-import { CameraType, StampKind, renderActions, selectStamp } from "features/render";
+import { CameraType, renderActions, selectStamp, StampKind } from "features/render";
 
 import { useGetMachinesQuery } from "../api";
 import { LogPointTime, selectXsiteManageActiveLogPoints, selectXsiteManageSite, xsiteManageActions } from "../slice";

@@ -1,13 +1,12 @@
 import type { SpeedDialActionProps } from "@mui/material";
 
+import { useAppDispatch, useAppSelector } from "app/store";
 import { SpeedDialAction } from "components";
 import { featuresConfig } from "config/features";
 import { CameraSpeedLevel, renderActions, selectCurrentCameraSpeedLevel } from "features/render";
-import { useAppDispatch, useAppSelector } from "app/store";
-
-import { ReactComponent as WalkIcon } from "media/icons/walk.svg";
 import { ReactComponent as RunIcon } from "media/icons/run.svg";
 import { ReactComponent as SprintIcon } from "media/icons/sprint.svg";
+import { ReactComponent as WalkIcon } from "media/icons/walk.svg";
 
 type Props = SpeedDialActionProps & {
     position?: { top?: number; right?: number; bottom?: number; left?: number };

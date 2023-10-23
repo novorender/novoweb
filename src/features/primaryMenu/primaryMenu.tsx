@@ -1,27 +1,27 @@
-import {
-    useTheme,
-    useMediaQuery,
-    FabProps,
-    SpeedDial,
-    SpeedDialIcon,
-    CloseReason,
-    OpenReason,
-    SpeedDialActionProps,
-    Box,
-} from "@mui/material";
 import { Add, Close } from "@mui/icons-material";
+import {
+    Box,
+    CloseReason,
+    FabProps,
+    OpenReason,
+    SpeedDial,
+    SpeedDialActionProps,
+    SpeedDialIcon,
+    useMediaQuery,
+    useTheme,
+} from "@mui/material";
 
+import { useAppDispatch, useAppSelector } from "app/store";
+import { ButtonKey, featuresConfig } from "config/features";
 import { CameraSpeed } from "features/cameraSpeed";
+import { FlyToSelected } from "features/flyToSelected";
+import { Home } from "features/home";
+import { OrthoShortcut } from "features/orthoShortcut";
+import { renderActions } from "features/render";
 import { StepBack } from "features/stepBack";
 import { StepForwards } from "features/stepForwards";
-import { Home } from "features/home";
-import { FlyToSelected } from "features/flyToSelected";
-import { OrthoShortcut } from "features/orthoShortcut";
 import { useToggle } from "hooks/useToggle";
-import { ButtonKey, featuresConfig } from "config/features";
-import { useAppDispatch, useAppSelector } from "app/store";
 import { selectPrimaryMenu } from "slices/explorerSlice";
-import { renderActions } from "features/render";
 
 const positions = {
     small: [

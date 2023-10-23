@@ -7,14 +7,12 @@ import { Link, MemoryRouter, Route, Switch } from "react-router-dom";
 import { dataApi } from "app";
 import { useAppSelector } from "app/store";
 import { Divider, LinearProgress, LogoSpeedDial, ScrollBox, WidgetContainer, WidgetHeader } from "components";
-import { FeatureType, defaultEnabledAdminWidgets, featuresConfig } from "config/features";
+import { defaultEnabledAdminWidgets, featuresConfig, FeatureType } from "config/features";
 import { useExplorerGlobals } from "contexts/explorerGlobals";
 import { HighlightCollection, useHighlightCollections } from "contexts/highlightCollections";
 import { useHighlighted } from "contexts/highlighted";
 import { selectPropertiesSettings } from "features/properties/slice";
 import {
-    Subtree,
-    SubtreeStatus,
     selectAdvanced,
     selectBackground,
     selectCameraDefaults,
@@ -25,6 +23,8 @@ import {
     selectSecondaryHighlightProperty,
     selectSubtrees,
     selectTerrain,
+    Subtree,
+    SubtreeStatus,
 } from "features/render";
 import { loadScene } from "features/render/hooks/useHandleInit";
 import WidgetList from "features/widgetList/widgetList";

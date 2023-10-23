@@ -1,20 +1,19 @@
-import { Box, CircularProgress, IconButton, List, ListItem, Typography, useTheme } from "@mui/material";
 import { AddBoxOutlined, IndeterminateCheckBoxOutlined, LabelOutlined } from "@mui/icons-material";
-import { useEffect, useCallback, Fragment } from "react";
+import { Box, CircularProgress, IconButton, List, ListItem, Typography, useTheme } from "@mui/material";
+import { Fragment, useCallback, useEffect } from "react";
 
-import { LinearProgress, LogoSpeedDial, ScrollBox, WidgetContainer, WidgetHeader } from "components";
-import { useExplorerGlobals } from "contexts/explorerGlobals";
-
-import { useMountedState } from "hooks/useMountedState";
-import { searchDeepByPatterns } from "utils/search";
-import { highlightActions, useDispatchHighlighted } from "contexts/highlighted";
-import { useAbortController } from "hooks/useAbortController";
-import { useToggle } from "hooks/useToggle";
-import { featuresConfig } from "config/features";
-import WidgetList from "features/widgetList/widgetList";
 import { useAppSelector } from "app/store";
-import { selectMinimized, selectMaximized } from "slices/explorerSlice";
+import { LinearProgress, LogoSpeedDial, ScrollBox, WidgetContainer, WidgetHeader } from "components";
+import { featuresConfig } from "config/features";
+import { useExplorerGlobals } from "contexts/explorerGlobals";
+import { highlightActions, useDispatchHighlighted } from "contexts/highlighted";
+import WidgetList from "features/widgetList/widgetList";
+import { useAbortController } from "hooks/useAbortController";
+import { useMountedState } from "hooks/useMountedState";
+import { useToggle } from "hooks/useToggle";
+import { selectMaximized, selectMinimized } from "slices/explorerSlice";
 import { getAssetUrl } from "utils/misc";
+import { searchDeepByPatterns } from "utils/search";
 
 type TreeLevel = {
     properties?: TreeLevel[];

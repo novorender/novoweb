@@ -1,9 +1,9 @@
 import { useEffect } from "react";
 
 import { useAppSelector } from "app/store";
+import { useExplorerGlobals } from "contexts/explorerGlobals";
 
 import { selectAdvanced, selectPoints } from "..";
-import { useExplorerGlobals } from "contexts/explorerGlobals";
 
 export function useHandleAdvancedSettings() {
     const {

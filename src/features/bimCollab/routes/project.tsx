@@ -19,8 +19,8 @@ import {
 import {
     FilterModifier,
     FilterModifiers,
-    FilterType,
     Filters,
+    FilterType,
     selectFilterModifiers,
     selectFilters,
 } from "../bimCollabSlice";

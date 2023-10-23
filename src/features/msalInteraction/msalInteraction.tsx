@@ -1,12 +1,11 @@
-import { Box, Button, Modal, Typography, useTheme } from "@mui/material";
 import { GppMaybe } from "@mui/icons-material";
+import { Box, Button, Modal, Typography, useTheme } from "@mui/material";
 
-import { useAppSelector } from "app/store";
-import { selectMsalAccount, selectMsalInteractionRequired } from "slices/authSlice";
-
-import { ScrollBox } from "components";
 import { msalInstance } from "app";
+import { useAppSelector } from "app/store";
+import { ScrollBox } from "components";
 import { loginRequest } from "config/auth";
+import { selectMsalAccount, selectMsalInteractionRequired } from "slices/authSlice";
 
 export function MsalInteraction() {
     const theme = useTheme();

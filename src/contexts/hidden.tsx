@@ -11,7 +11,7 @@ import {
     useState,
 } from "react";
 
-import { toIdObj, toIdArr } from "utils/objectData";
+import { toIdArr, toIdObj } from "utils/objectData";
 
 const initialState = {
     ids: {} as Record<ObjectId, true | undefined>,

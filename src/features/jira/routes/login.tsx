@@ -3,17 +3,20 @@ import { Box, CircularProgress, Typography, useTheme } from "@mui/material";
 import { useState } from "react";
 import { v4 as uuidv4 } from "uuid";
 
+import { useAppSelector } from "app/store";
 import { ScrollBox } from "components";
 import { featuresConfig } from "config/features";
 import { useCreateBookmark } from "features/bookmarks/useCreateBookmark";
+import { selectConfig } from "slices/explorerSlice";
 import { createOAuthStateString } from "utils/auth";
 
-import { jiraClientId, jiraIdentityServer } from "../jiraApi";
+import { jiraIdentityServer } from "../jiraApi";
 
 export function Login({ sceneId }: { sceneId: string }) {
     const theme = useTheme();
     const [loading, setLoading] = useState(false);
     const createBookmark = useCreateBookmark();
+    const config = useAppSelector(selectConfig);
 
     const handleLoginRedirect = () => {
         const id = uuidv4();
@@ -36,7 +39,7 @@ export function Login({ sceneId }: { sceneId: string }) {
         window.location.href =
             jiraIdentityServer +
             "?audience=api.atlassian.com" +
-            `&client_id=${jiraClientId}` +
+            `&client_id=${config.jiraClientId}` +
             "&scope=offline_access%20read%3Ajira-work%20manage%3Ajira-project%20manage%3Ajira-configuration%20read%3Ajira-user%20write%3Ajira-work%20manage%3Ajira-webhook%20manage%3Ajira-data-provider" +
             `&redirect_uri=${window.location.origin}` +
             `&state=${state}` +

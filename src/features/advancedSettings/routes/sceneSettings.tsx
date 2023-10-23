@@ -18,16 +18,16 @@ import {
 import { useExplorerGlobals } from "contexts/explorerGlobals";
 import { ColorPicker } from "features/colorPicker";
 import {
-    SubtreeStatus,
     renderActions,
     selectAdvanced,
     selectBackground,
     selectSubtrees,
     selectTerrain,
     selectViewMode,
+    SubtreeStatus,
 } from "features/render/renderSlice";
-import { ViewMode, getAsyncStateData } from "types/misc";
-import { VecRGBA, rgbToVec, vecToRgb } from "utils/color";
+import { getAsyncStateData, ViewMode } from "types/misc";
+import { rgbToVec, VecRGBA, vecToRgb } from "utils/color";
 
 export function SceneSettings({
     save,

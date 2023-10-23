@@ -1,4 +1,4 @@
-import { Switch, styled, switchClasses } from "@mui/material/";
+import { styled, Switch, switchClasses } from "@mui/material/";
 import { css } from "@mui/styled-engine";
 
 export const IosSwitch = styled(Switch)(

@@ -1,6 +1,6 @@
 import { CoreModule } from "@novorender/api";
 import { vec2, vec3 } from "gl-matrix";
-import { MouseEvent, MutableRefObject, PointerEvent as ReactPointerEvent, TouchEvent, WheelEvent, useRef } from "react";
+import { MouseEvent, MutableRefObject, PointerEvent as ReactPointerEvent, TouchEvent, useRef, WheelEvent } from "react";
 
 import { isIpad, isIphone } from "app";
 import { useAppDispatch, useAppSelector } from "app/store";
@@ -12,8 +12,6 @@ import { orthoCamActions, selectCrossSectionPoint } from "features/orthoCam";
 import {
     CameraType,
     Picker,
-    StampKind,
-    SubtreeStatus,
     renderActions,
     selectCameraType,
     selectClippingPlanes,
@@ -21,6 +19,8 @@ import {
     selectPoints,
     selectStamp,
     selectSubtrees,
+    StampKind,
+    SubtreeStatus,
 } from "..";
 import { moveSvgCursor } from "../svgUtils";
 import { useCanvasContextMenuHandler } from "./useCanvasContextMenuHandler";

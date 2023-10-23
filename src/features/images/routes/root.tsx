@@ -19,8 +19,8 @@ import { ImageListItem } from "../imageListItem";
 import {
     Image,
     ImageFilter,
-    ImageType,
     imagesActions,
+    ImageType,
     selectActiveImage,
     selectImageFilter,
     selectImages,

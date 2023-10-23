@@ -1,17 +1,17 @@
-import { useEffect, useRef } from "react";
-import { BoundingSphere } from "@novorender/webgl-api";
 import { Box, CircularProgress, SpeedDialActionProps } from "@mui/material";
+import { BoundingSphere } from "@novorender/webgl-api";
+import { useEffect, useRef } from "react";
 
+import { useAppDispatch } from "app/store";
 import { SpeedDialAction } from "components";
 import { featuresConfig } from "config/features";
-import { imagesActions } from "features/images";
+import { useExplorerGlobals } from "contexts/explorerGlobals";
 import { useHighlighted } from "contexts/highlighted";
+import { imagesActions } from "features/images";
+import { CameraType, renderActions } from "features/render/renderSlice";
 import { useAbortController } from "hooks/useAbortController";
 import { useMountedState } from "hooks/useMountedState";
 import { objIdsToTotalBoundingSphere } from "utils/objectData";
-import { useExplorerGlobals } from "contexts/explorerGlobals";
-import { useAppDispatch } from "app/store";
-import { CameraType, renderActions } from "features/render/renderSlice";
 
 enum Status {
     Initial,

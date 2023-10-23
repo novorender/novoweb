@@ -1,30 +1,28 @@
+import { Box } from "@mui/material";
 import { useEffect } from "react";
 import { MemoryRouter, Route, Switch } from "react-router-dom";
-import { Box } from "@mui/material";
 import { v4 as uuidv4 } from "uuid";
 
 import { dataApi } from "app";
 import { useAppDispatch, useAppSelector } from "app/store";
-import { selectUser } from "slices/authSlice";
-import { selectMaximized, selectMinimized } from "slices/explorerSlice";
-
+import { LogoSpeedDial, WidgetContainer, WidgetHeader } from "components";
 import { featuresConfig } from "config/features";
-import { WidgetContainer, LogoSpeedDial, WidgetHeader } from "components";
 import WidgetList from "features/widgetList/widgetList";
-
-import { useToggle } from "hooks/useToggle";
 import { useSceneId } from "hooks/useSceneId";
+import { useToggle } from "hooks/useToggle";
+import { selectUser } from "slices/authSlice";
+import { selectIsOnline, selectMaximized, selectMinimized } from "slices/explorerSlice";
 
 import {
-    selectBookmarksStatus,
-    selectBookmarks,
+    BookmarkAccess,
     bookmarksActions,
     BookmarksStatus,
-    BookmarkAccess,
+    selectBookmarks,
+    selectBookmarksStatus,
 } from "./bookmarksSlice";
 import { BookmarkList } from "./routes/bookmarkList";
-import { Delete } from "./routes/delete";
 import { Crupdate } from "./routes/crupdate";
+import { Delete } from "./routes/delete";
 import { RenameCollection } from "./routes/renameCollection";
 
 export default function Bookmarks() {
@@ -33,6 +31,7 @@ export default function Bookmarks() {
     const maximized = useAppSelector(selectMaximized).includes(featuresConfig.bookmarks.key);
     const sceneId = useSceneId();
 
+    const isOnline = useAppSelector(selectIsOnline);
     const user = useAppSelector(selectUser);
     const bookmarks = useAppSelector(selectBookmarks);
     const status = useAppSelector(selectBookmarksStatus);
@@ -49,7 +48,7 @@ export default function Bookmarks() {
             try {
                 const [publicBmks, personalBmks] = await Promise.all([
                     dataApi.getBookmarks(sceneId),
-                    user ? dataApi.getBookmarks(sceneId, { personal: true }) : Promise.resolve([]),
+                    user || !isOnline ? dataApi.getBookmarks(sceneId, { personal: true }) : Promise.resolve([]),
                 ]);
 
                 dispatch(
@@ -65,7 +64,7 @@ export default function Bookmarks() {
                 dispatch(bookmarksActions.setStatus(BookmarksStatus.Error));
             }
         }
-    }, [bookmarks, dispatch, sceneId, status, user]);
+    }, [bookmarks, dispatch, sceneId, status, user, isOnline]);
 
     return (
         <>

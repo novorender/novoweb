@@ -1,5 +1,5 @@
 import { Grid } from "@mui/material";
-import { vec3, vec2, ReadonlyVec3 } from "gl-matrix";
+import { ReadonlyVec3, vec2, vec3 } from "gl-matrix";
 
 export function PlanarDiff({ start, end }: { start: ReadonlyVec3; end: ReadonlyVec3 }) {
     const diff = vec3.sub(vec3.create(), start, end);

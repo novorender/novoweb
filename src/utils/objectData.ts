@@ -1,7 +1,9 @@
 import { ObjectDB } from "@novorender/data-js-api";
 import { BoundingSphere, HierarcicalObjectReference, ObjectId } from "@novorender/webgl-api";
-import { flip } from "features/render/utils";
 import { vec3 } from "gl-matrix";
+
+import { flip } from "features/render/utils";
+
 import { batchedPropertySearch } from "./search";
 
 export function decodeObjPathName(str: string) {

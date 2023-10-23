@@ -7,7 +7,7 @@ import { ListOnScrollProps } from "react-window";
 
 import { useAppSelector } from "app/store";
 import { LinearProgress, LogoSpeedDial, ScrollBox, Switch, TextField, WidgetContainer, WidgetHeader } from "components";
-import { rangeSearchDateFormat } from "config";
+import { rangeSearchDateFormat } from "config/app";
 import { featuresConfig } from "config/features";
 import { useExplorerGlobals } from "contexts/explorerGlobals";
 import { NodeList } from "features/nodeList/nodeList";

@@ -1,21 +1,21 @@
-import { useState, FormEvent, ChangeEvent } from "react";
 import { useMsal } from "@azure/msal-react";
-import { useTheme, Box, OutlinedInput, IconButton, InputAdornment, FormControl, CircularProgress } from "@mui/material";
-import { useHistory } from "react-router-dom";
+import { AccountCircle, Lock, Visibility, VisibilityOff } from "@mui/icons-material";
 import { LoadingButton } from "@mui/lab";
-import { Lock, Visibility, VisibilityOff, AccountCircle } from "@mui/icons-material";
+import { Box, CircularProgress, FormControl, IconButton, InputAdornment, OutlinedInput, useTheme } from "@mui/material";
+import { ChangeEvent, FormEvent, useState } from "react";
+import { useHistory } from "react-router-dom";
 
-import { dataServerBaseUrl } from "config";
+import { useAppDispatch } from "app/store";
+import { ScrollBox } from "components";
+import { dataServerBaseUrl } from "config/app";
 import { loginRequest } from "config/auth";
 import { StorageKey } from "config/storage";
-import { useAppDispatch } from "app/store";
+import { useSceneId } from "hooks/useSceneId";
+import { useToggle } from "hooks/useToggle";
+import { ReactComponent as NovorenderLogo } from "media/img/novorender_logo_RGB_2021.svg";
 import { authActions } from "slices/authSlice";
 import { login } from "utils/auth";
-import { ScrollBox } from "components";
-import { ReactComponent as NovorenderLogo } from "media/img/novorender_logo_RGB_2021.svg";
 import { deleteFromStorage, saveToStorage } from "utils/storage";
-import { useToggle } from "hooks/useToggle";
-import { useSceneId } from "hooks/useSceneId";
 
 export function Login() {
     const theme = useTheme();

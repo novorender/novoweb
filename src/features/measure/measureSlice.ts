@@ -5,6 +5,7 @@ import { vec3 } from "gl-matrix";
 import { RootState } from "app/store";
 import { DeepMutable, resetView, selectBookmark } from "features/render/renderSlice";
 import { ExtendedMeasureEntity } from "types/misc";
+
 import { SnapKind } from "./config";
 
 export type SelectedMeasureObj = {

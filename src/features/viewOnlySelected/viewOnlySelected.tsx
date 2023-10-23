@@ -1,10 +1,9 @@
 import type { SpeedDialActionProps } from "@mui/material";
 
+import { useAppDispatch, useAppSelector } from "app/store";
 import { SpeedDialAction } from "components";
 import { featuresConfig } from "config/features";
-
-import { useAppDispatch, useAppSelector } from "app/store";
-import { selectDefaultVisibility, renderActions, ObjectVisibility } from "features/render/renderSlice";
+import { ObjectVisibility, renderActions, selectDefaultVisibility } from "features/render/renderSlice";
 
 type Props = SpeedDialActionProps;
 

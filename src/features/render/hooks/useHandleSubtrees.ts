@@ -4,7 +4,7 @@ import { useAppSelector } from "app/store";
 import { useExplorerGlobals } from "contexts/explorerGlobals";
 import { ViewMode } from "types/misc";
 
-import { SubtreeStatus, selectSubtrees, selectViewMode } from "..";
+import { selectSubtrees, selectViewMode, SubtreeStatus } from "..";
 
 export function useHandleSubtrees() {
     const {

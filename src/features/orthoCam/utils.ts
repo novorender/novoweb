@@ -1,4 +1,4 @@
-import { View, rotationFromDirection } from "@novorender/api";
+import { rotationFromDirection, View } from "@novorender/api";
 import { quat, vec3 } from "gl-matrix";
 
 export function getTopDownParams({

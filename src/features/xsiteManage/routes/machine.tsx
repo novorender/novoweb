@@ -20,8 +20,8 @@ import { useHistory, useParams } from "react-router-dom";
 import { useAppDispatch, useAppSelector } from "app/store";
 import { Divider, LinearProgress, ScrollBox, TextField } from "components";
 import { featuresConfig } from "config/features";
-
 import { uniqueArray } from "utils/misc";
+
 import { useGetAllLogPointsQuery, useGetMachinesQuery } from "../api";
 import {
     LogPointTime,

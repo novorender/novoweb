@@ -14,6 +14,7 @@ import { useHandleImages } from "features/images";
 import { useHandleJiraKeepAlive } from "features/jira";
 import { useHandleManhole } from "features/manhole";
 import { useHandleLocationMarker } from "features/myLocation";
+import { useHandleOffline } from "features/offline";
 import { useHandleCrossSection } from "features/orthoCam";
 import { PerformanceStats } from "features/performanceStats";
 import { useHandlePointLine } from "features/pointLine";
@@ -114,6 +115,7 @@ export function Render3D() {
     useHandleXsiteManageKeepAlive();
     useHandleXsiteManageMachineLocations();
     useHandleDitioKeepAlive();
+    useHandleOffline();
 
     const useSvgCursor = useHandleCanvasCursor();
     const onClick = useCanvasClickHandler();

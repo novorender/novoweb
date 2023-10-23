@@ -10,6 +10,7 @@ import { featuresConfig } from "config/features";
 import { useCreateBookmark } from "features/bookmarks/useCreateBookmark";
 import { selectViewMode } from "features/render";
 import { useSceneId } from "hooks/useSceneId";
+import { selectIsOnline } from "slices/explorerSlice";
 import { ViewMode } from "types/misc";
 
 enum Status {
@@ -19,16 +20,19 @@ enum Status {
 }
 
 export function ShareLink() {
-    const { Icon, name } = featuresConfig.shareLink;
+    const { Icon, name, offline } = featuresConfig.shareLink;
 
     const createBookmark = useCreateBookmark();
     const viewMode = useAppSelector(selectViewMode);
+    const isOnline = useAppSelector(selectIsOnline);
     const sceneId = useSceneId();
 
     const [status, setStatus] = useState(Status.Initial);
 
+    const disabled = (!isOnline && !offline) || viewMode === ViewMode.Panorama;
+
     const createLink = async () => {
-        if (status !== Status.Initial || viewMode === ViewMode.Panorama) {
+        if (status !== Status.Initial || disabled) {
             return;
         }
 
@@ -96,10 +100,10 @@ export function ShareLink() {
             />
             <WidgetMenuButtonWrapper
                 activeCurrent={status !== Status.Initial}
-                activeElsewhere={viewMode === ViewMode.Panorama}
+                activeElsewhere={disabled}
                 onClick={createLink}
             >
-                <IconButton size="large">
+                <IconButton disabled={disabled} size="large">
                     <Icon />
                 </IconButton>
                 <Typography>{name}</Typography>

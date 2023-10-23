@@ -6,9 +6,10 @@
     "scripts": {
         "build": "npm run eslint && npm run typescript && vite build",
         "dev": "vite",
+        "preview": "vite preview",
         "typescript": "tsc --noEmit",
         "eslint": "eslint src/ --max-warnings=0",
-        "start": "node server.js",
+        "start": "node server.mjs",
         "dependencies": "node scripts/dependencies.js"
     },
     "repository": {
@@ -30,17 +31,20 @@
         "@types/react-router-dom": "^5.1.8",
         "@types/react-virtualized-auto-sizer": "^1.0.1",
         "@types/react-window": "^1.8.3",
+        "@types/serviceworker": "^0.0.74",
         "@types/uuid": "^8.3.3",
         "@vitejs/plugin-basic-ssl": "^1.0.1",
         "@vitejs/plugin-react": "^4.1.0",
         "eslint-config-prettier": "^8.8.0",
         "eslint-config-react-app": "^7.0.1",
+        "eslint-plugin-simple-import-sort": "^10.0.0",
         "husky": "^7.0.2",
         "lint-staged": "^11.1.2",
         "prettier": "^2.3.2",
         "typescript": "^5.1.6",
         "vite": "^4.4.11",
         "vite-plugin-env-compatible": "^1.1.1",
+        "vite-plugin-pwa": "^0.16.5",
         "vite-plugin-svgr": "^2.4.0"
     },
     "dependencies": {
@@ -52,7 +56,7 @@
         "@mui/lab": "^5.0.0-alpha.58",
         "@mui/material": "^5.8.0",
         "@mui/x-date-pickers": "^5.0.10",
-        "@novorender/api": "0.0.29",
+        "@novorender/api": "0.0.38",
         "@novorender/data-js-api": "0.2.26",
         "@novorender/webgl-api": "0.4.59",
         "@reduxjs/toolkit": "^1.8.1",

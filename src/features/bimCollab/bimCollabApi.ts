@@ -23,8 +23,6 @@ import { sleep } from "utils/time";
 
 import { NewViewpoint } from "./includeViewpoint";
 
-const clientId = window.bimCollabClientId || import.meta.env.REACT_APP_BIMCOLLAB_CLIENT_ID || "";
-const clientSecret = window.bimCollabClientSecret || import.meta.env.REACT_APP_BIMCOLLAB_CLIENT_SECRET || "";
 const callbackUrl = window.location.origin + "/";
 const scope = "openid offline_access bcf";
 
@@ -192,37 +190,42 @@ export const bimCollabApi = createApi({
                 method: "POST",
             }),
         }),
-        getToken: builder.mutation<{ access_token: string; refresh_token: string }, { tokenUrl: string; code: string }>(
-            {
-                queryFn: ({ code, tokenUrl }) => {
-                    const body = new URLSearchParams();
-                    body.set("code", code);
-                    body.set("client_id", clientId);
-                    body.set("client_secret", clientSecret);
-                    body.set("grant_type", "authorization_code");
-                    body.set("redirect_uri", callbackUrl);
-                    body.set("code_verifier", getFromStorage(StorageKey.BimCollabCodeVerifier));
+        getToken: builder.mutation<
+            { access_token: string; refresh_token: string },
+            { tokenUrl: string; code: string; config: { bimCollabClientId: string; bimCollabClientSecret: string } }
+        >({
+            queryFn: ({ code, tokenUrl, config }) => {
+                const body = new URLSearchParams();
+                body.set("code", code);
+                body.set("client_id", config.bimCollabClientId);
+                body.set("client_secret", config.bimCollabClientSecret);
+                body.set("grant_type", "authorization_code");
+                body.set("redirect_uri", callbackUrl);
+                body.set("code_verifier", getFromStorage(StorageKey.BimCollabCodeVerifier));
 
-                    return fetch(tokenUrl, {
-                        method: "POST",
-                        headers: { "Content-Type": "application/x-www-form-urlencoded" },
-                        body,
-                    })
-                        .then((res) => res.json())
-                        .then((data) => ({ data }))
-                        .catch((error) => ({ error }));
-                },
-            }
-        ),
+                return fetch(tokenUrl, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/x-www-form-urlencoded" },
+                    body,
+                })
+                    .then((res) => res.json())
+                    .then((data) => ({ data }))
+                    .catch((error) => ({ error }));
+            },
+        }),
         refreshToken: builder.mutation<
             { access_token: string; refresh_token: string },
-            { tokenUrl: string; refreshToken: string }
+            {
+                tokenUrl: string;
+                refreshToken: string;
+                config: { bimCollabClientId: string; bimCollabClientSecret: string };
+            }
         >({
-            queryFn: ({ refreshToken, tokenUrl }) => {
+            queryFn: ({ refreshToken, tokenUrl, config }) => {
                 const body = new URLSearchParams();
                 body.set("refresh_token", refreshToken);
-                body.set("client_id", clientId);
-                body.set("client_secret", clientSecret);
+                body.set("client_id", config.bimCollabClientId);
+                body.set("client_secret", config.bimCollabClientSecret);
                 body.set("grant_type", "refresh_token");
 
                 return fetch(tokenUrl, {
@@ -265,7 +268,7 @@ export const {
     useRefreshTokenMutation,
 } = bimCollabApi;
 
-export async function getCode(authUrl: string, state: string) {
+export async function getCode(authUrl: string, state: string, config: { bimCollabClientId: string }) {
     const verifier = generateRandomString();
     const challenge = await generateCodeChallenge(verifier);
     saveToStorage(StorageKey.BimCollabCodeVerifier, verifier);
@@ -273,7 +276,7 @@ export async function getCode(authUrl: string, state: string) {
     window.location.href =
         authUrl +
         `?response_type=code` +
-        `&client_id=${clientId}` +
+        `&client_id=${config.bimCollabClientId}` +
         `&scope=${scope}` +
         `&redirect_uri=${callbackUrl}` +
         `&code_challenge=${challenge}` +

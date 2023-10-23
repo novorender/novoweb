@@ -10,9 +10,6 @@ import { AuthConfig, Post, Project, RawPost } from "./types";
 
 export const identityServer = "https://identity.ditio.no/";
 export const baseUrl = "/ditio";
-
-export const ditioClientId = window.ditioClientId || import.meta.env.REACT_APP_DITIO_CLIENT_ID || "";
-const clientSecret = window.ditioClientSecret || import.meta.env.REACT_APP_DITIO_CLIENT_SECRET || "";
 const callbackUrl = window.location.origin;
 
 const rawBaseQuery = fetchBaseQuery({
@@ -82,13 +79,13 @@ export const ditioApi = createApi({
         }),
         getTokens: builder.query<
             { access_token: string; refresh_token: string; expires_in: number },
-            { tokenEndpoint: string; code: string }
+            { tokenEndpoint: string; code: string; config: { ditioClientId: string; ditioClientSecret: string } }
         >({
-            queryFn: ({ code, tokenEndpoint }) => {
+            queryFn: ({ code, tokenEndpoint, config }) => {
                 const body = new URLSearchParams();
                 body.set("code", code);
-                body.set("client_id", ditioClientId);
-                body.set("client_secret", clientSecret);
+                body.set("client_id", config.ditioClientId);
+                body.set("client_secret", config.ditioClientSecret);
                 body.set("grant_type", "authorization_code");
                 body.set("redirect_uri", callbackUrl);
                 body.set("code_verifier", getFromStorage(StorageKey.DitioCodeVerifier));
@@ -111,13 +108,17 @@ export const ditioApi = createApi({
         }),
         refreshTokens: builder.mutation<
             { access_token: string; refresh_token: string; expires_in: number },
-            { tokenEndpoint: string; refreshToken: string }
+            {
+                tokenEndpoint: string;
+                refreshToken: string;
+                config: { ditioClientId: string; ditioClientSecret: string };
+            }
         >({
-            queryFn: ({ refreshToken, tokenEndpoint }) => {
+            queryFn: ({ refreshToken, tokenEndpoint, config }) => {
                 const body = new URLSearchParams();
                 body.set("refresh_token", refreshToken);
-                body.set("client_id", ditioClientId);
-                body.set("client_secret", clientSecret);
+                body.set("client_id", config.ditioClientId);
+                body.set("client_secret", config.ditioClientSecret);
                 body.set("grant_type", "refresh_token");
 
                 return fetch(tokenEndpoint, {

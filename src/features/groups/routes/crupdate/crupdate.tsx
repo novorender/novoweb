@@ -1,13 +1,13 @@
-import { ObjectId, SearchPattern } from "@novorender/webgl-api";
-import { Route, Switch, useParams, useRouteMatch } from "react-router-dom";
-import { useCallback, useEffect, useState } from "react";
 import { Box } from "@mui/material";
+import { ObjectId, SearchPattern } from "@novorender/webgl-api";
+import { useCallback, useEffect, useState } from "react";
+import { Route, Switch, useParams, useRouteMatch } from "react-router-dom";
 
-import { LinearProgress } from "components";
-import { objectGroupsActions, useObjectGroups, useDispatchObjectGroups } from "contexts/objectGroups";
 import { dataApi } from "app";
-import { AsyncState, AsyncStatus } from "types/misc";
+import { LinearProgress } from "components";
+import { objectGroupsActions, useDispatchObjectGroups, useObjectGroups } from "contexts/objectGroups";
 import { useToggle } from "hooks/useToggle";
+import { AsyncState, AsyncStatus } from "types/misc";
 
 import { CreateJsonGroup } from "./createJsonGroup";
 import { Details } from "./details";

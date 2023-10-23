@@ -1,5 +1,5 @@
-import { createSelector, createSlice, PayloadAction } from "@reduxjs/toolkit";
 import { Bookmark } from "@novorender/data-js-api";
+import { createSelector, createSlice, PayloadAction } from "@reduxjs/toolkit";
 
 import { RootState } from "app/store";
 

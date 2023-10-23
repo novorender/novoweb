@@ -2,17 +2,20 @@ import { LoadingButton } from "@mui/lab";
 import { Box, CircularProgress, Typography, useTheme } from "@mui/material";
 import { useState } from "react";
 
+import { useAppSelector } from "app/store";
 import { ScrollBox } from "components";
 import { featuresConfig } from "config/features";
 import { useCreateBookmark } from "features/bookmarks/useCreateBookmark";
+import { selectConfig } from "slices/explorerSlice";
 import { createOAuthStateString } from "utils/auth";
 
-import { xsiteManageAuthServer, xsiteManageClientId } from "../api";
+import { xsiteManageAuthServer } from "../api";
 
 export function Login({ sceneId }: { sceneId: string }) {
     const theme = useTheme();
     const [loading, setLoading] = useState(false);
     const createBookmark = useCreateBookmark();
+    const config = useAppSelector(selectConfig);
 
     const handleLoginRedirect = () => {
         const bookmarkId = window.crypto.randomUUID();
@@ -36,7 +39,7 @@ export function Login({ sceneId }: { sceneId: string }) {
             xsiteManageAuthServer +
             `/login` +
             "?response_type=code" +
-            `&client_id=${xsiteManageClientId}` +
+            `&client_id=${config.xsiteManageClientId}` +
             `&redirect_uri=${window.location.origin}` +
             `&state=${state}`;
     };

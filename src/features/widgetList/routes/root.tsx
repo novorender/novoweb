@@ -1,11 +1,11 @@
-import { useHistory } from "react-router-dom";
 import { Box, Grid, IconButton, Typography, useTheme } from "@mui/material";
+import { useHistory } from "react-router-dom";
 
 import { useAppSelector } from "app/store";
-import { selectLockedWidgets, selectEnabledWidgets, selectWidgets } from "slices/explorerSlice";
-import { WidgetKey, featuresConfig, Widget, FeatureTag, FeatureType, featureTags } from "config/features";
 import { ScrollBox, WidgetMenuButtonWrapper } from "components";
+import { featuresConfig, FeatureTag, featureTags, FeatureType, Widget, WidgetKey } from "config/features";
 import { ShareLink } from "features/shareLink";
+import { selectEnabledWidgets, selectIsOnline, selectLockedWidgets, selectWidgets } from "slices/explorerSlice";
 
 import { sorting } from "../widgetList";
 
@@ -22,6 +22,7 @@ export function Root({
     const enabledWidgets = useAppSelector(selectEnabledWidgets);
     const lockedWidgets = useAppSelector(selectLockedWidgets);
     const activeWidgets = useAppSelector(selectWidgets);
+    const isOnline = useAppSelector(selectIsOnline);
 
     return (
         <>
@@ -50,10 +51,11 @@ export function Root({
                             }
                             return prev.concat(curr);
                         }, [] as (Widget | FeatureTag)[])
-                        .map(({ Icon, name, key, type }) => {
+                        .map(({ Icon, name, key, type, ...widget }) => {
                             const activeCurrent = type !== FeatureType.Tag ? key === currentWidget : undefined;
                             const activeElsewhere =
                                 type !== FeatureType.Tag ? !activeCurrent && activeWidgets.includes(key) : undefined;
+                            const unavailable = !isOnline && "offline" in widget && !widget.offline;
                             const activeTag =
                                 type === FeatureType.Tag &&
                                 activeWidgets.some((widgetKey) => {
@@ -68,15 +70,17 @@ export function Root({
                                     ) : (
                                         <WidgetMenuButtonWrapper
                                             activeCurrent={activeCurrent}
-                                            activeElsewhere={activeElsewhere}
+                                            activeElsewhere={activeElsewhere || unavailable}
                                             activeTag={activeTag}
                                             onClick={
                                                 type === FeatureType.Tag
                                                     ? () => history.push(`/tag/${key}`)
+                                                    : unavailable
+                                                    ? undefined
                                                     : handleClick(key)
                                             }
                                         >
-                                            <IconButton disabled={activeElsewhere} size="large">
+                                            <IconButton disabled={activeElsewhere || unavailable} size="large">
                                                 <Icon />
                                             </IconButton>
                                             <Typography>{name}</Typography>

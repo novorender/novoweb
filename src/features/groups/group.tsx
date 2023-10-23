@@ -2,6 +2,7 @@ import { ColorLens, Delete, Edit, LibraryAdd, MoreVert, Opacity, Visibility, Vis
 import {
     Box,
     Checkbox,
+    css,
     IconButton,
     ListItemButton,
     ListItemButtonProps,
@@ -9,9 +10,8 @@ import {
     ListItemText,
     Menu,
     MenuItem,
-    Typography,
-    css,
     styled,
+    Typography,
 } from "@mui/material";
 import { MouseEvent, useState } from "react";
 import { Route, Switch, useHistory, useRouteMatch } from "react-router-dom";

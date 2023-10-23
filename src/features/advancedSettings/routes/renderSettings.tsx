@@ -6,13 +6,13 @@ import { useHistory } from "react-router-dom";
 import { useAppDispatch, useAppSelector } from "app/store";
 import { Accordion, AccordionDetails, AccordionSummary, Divider, LinearProgress, ScrollBox, Switch } from "components";
 import {
-    Subtree,
-    SubtreeStatus,
     renderActions,
     selectAdvanced,
     selectPoints,
     selectSubtrees,
     selectTerrain,
+    Subtree,
+    SubtreeStatus,
 } from "features/render";
 import { selectUser } from "slices/authSlice";
 

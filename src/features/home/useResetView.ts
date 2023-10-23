@@ -4,11 +4,11 @@ import { useAppDispatch, useAppSelector } from "app/store";
 import { hiddenActions, useDispatchHidden } from "contexts/hidden";
 import { highlightCollectionsActions, useDispatchHighlightCollections } from "contexts/highlightCollections";
 import { highlightActions, useDispatchHighlighted } from "contexts/highlighted";
+import { GroupStatus, objectGroupsActions, useDispatchObjectGroups, useLazyObjectGroups } from "contexts/objectGroups";
 import { selectionBasketActions, useDispatchSelectionBasket } from "contexts/selectionBasket";
 import { renderActions, selectHomeCameraPosition } from "features/render";
 import { loadScene } from "features/render/hooks/useHandleInit";
 import { useSceneId } from "hooks/useSceneId";
-import { GroupStatus, objectGroupsActions, useDispatchObjectGroups, useLazyObjectGroups } from "contexts/objectGroups";
 
 export function useResetView() {
     const sceneId = useSceneId();

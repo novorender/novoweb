@@ -1,11 +1,11 @@
-import { quat } from "gl-matrix";
-import { Box, Typography, IconButton, Button } from "@mui/material";
 import { Close, FlightTakeoff } from "@mui/icons-material";
+import { Box, Button, IconButton, Typography } from "@mui/material";
+import { quat } from "gl-matrix";
 
-import { Divider } from "components";
-import { renderActions, CameraType, selectStamp, StampKind } from "features/render";
 import { useAppDispatch, useAppSelector } from "app/store";
+import { Divider } from "components";
 import { useExplorerGlobals } from "contexts/explorerGlobals";
+import { CameraType, renderActions, selectStamp, StampKind } from "features/render";
 
 export function LogPointStamp() {
     const {

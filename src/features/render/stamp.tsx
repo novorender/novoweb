@@ -1,10 +1,10 @@
 import { Menu, popoverClasses } from "@mui/material";
 
-import { renderActions, selectStamp, StampKind } from "features/render";
 import { useAppDispatch, useAppSelector } from "app/store";
-import { LogPointStamp, MachineLocationStamp } from "features/xsiteManage";
 import { DeviationStamp } from "features/deviations";
 import { PropertiesStamp } from "features/properties";
+import { renderActions, selectStamp, StampKind } from "features/render";
+import { LogPointStamp, MachineLocationStamp } from "features/xsiteManage";
 
 import { CanvasContextMenuStamp } from "./canvasContextMenuStamp";
 

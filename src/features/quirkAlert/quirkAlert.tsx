@@ -1,9 +1,9 @@
-import { Box, Button, Checkbox, FormControlLabel, Modal, Typography, useTheme } from "@mui/material";
 import { Warning } from "@mui/icons-material";
+import { Box, Button, Checkbox, FormControlLabel, Modal, Typography, useTheme } from "@mui/material";
 
-import { useToggle } from "hooks/useToggle";
-import { selectDeviceProfile } from "features/render";
 import { useAppSelector } from "app/store";
+import { selectDeviceProfile } from "features/render";
+import { useToggle } from "hooks/useToggle";
 
 const quirk = "adreno600";
 const storageKey = `ignore_quirk_warning_${quirk}`;

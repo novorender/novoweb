@@ -1,4 +1,4 @@
-import { TooltipProps, Box, tooltipClasses, styled, Tooltip as MuiTooltip } from "@mui/material";
+import { Box, styled, Tooltip as MuiTooltip, tooltipClasses, TooltipProps } from "@mui/material";
 import { css } from "@mui/styled-engine";
 import { ImgHTMLAttributes, MouseEvent } from "react";
 

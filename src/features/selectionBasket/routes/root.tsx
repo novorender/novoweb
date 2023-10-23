@@ -11,9 +11,9 @@ import { selectionBasketActions, useDispatchSelectionBasket, useSelectionBasket 
 import { ColorPicker } from "features/colorPicker";
 import {
     ObjectVisibility,
-    SelectionBasketMode,
     renderActions,
     selectDefaultVisibility,
+    SelectionBasketMode,
     selectSelectionBasketColor,
     selectSelectionBasketMode,
 } from "features/render/renderSlice";

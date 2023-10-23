@@ -1,11 +1,11 @@
 import { Component } from "react";
 
+import { useAppSelector } from "app/store";
 import { LogoSpeedDial, WidgetContainer, WidgetHeader } from "components";
 import { featuresConfig, WidgetKey } from "config/features";
-import { useAppSelector } from "app/store";
-import { selectMaximized, selectMinimized } from "slices/explorerSlice";
-import { useToggle } from "hooks/useToggle";
 import WidgetList from "features/widgetList/widgetList";
+import { useToggle } from "hooks/useToggle";
+import { selectMaximized, selectMinimized } from "slices/explorerSlice";
 
 import { ScrollBox } from "./scrollBox";
 

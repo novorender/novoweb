@@ -1,7 +1,9 @@
 import { PushPin } from "@mui/icons-material";
 import {
     Box,
+    capitalize,
     Checkbox,
+    css,
     Grid,
     InputLabel,
     List,
@@ -9,11 +11,9 @@ import {
     MenuItem,
     OutlinedInput,
     Select,
-    capitalize,
-    css,
     styled,
 } from "@mui/material";
-import { CylinerMeasureType, DuoMeasurementValues, MeasureSettings, MeasurementValues } from "@novorender/api";
+import { CylinerMeasureType, DuoMeasurementValues, MeasurementValues, MeasureSettings } from "@novorender/api";
 import { vec3 } from "gl-matrix";
 import { useEffect, useState } from "react";
 

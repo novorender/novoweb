@@ -1,32 +1,32 @@
+import { ArrowBack, Save } from "@mui/icons-material";
 import {
-    useTheme,
     Box,
     Button,
-    FormControlLabel,
     Checkbox,
-    Grid,
     FormControl,
+    FormControlLabel,
     FormLabel,
-    Select,
+    Grid,
     MenuItem,
+    Select,
     Typography,
+    useTheme,
 } from "@mui/material";
 import { useHistory } from "react-router-dom";
-import { ArrowBack, Save } from "@mui/icons-material";
 
-import { Accordion, AccordionDetails, AccordionSummary, Divider, LinearProgress, ScrollBox, Switch } from "components";
 import { useAppDispatch, useAppSelector } from "app/store";
-import { renderActions, selectDebugStats, selectNavigationCube } from "features/render";
+import { Accordion, AccordionDetails, AccordionSummary, Divider, LinearProgress, ScrollBox, Switch } from "components";
+import { CanvasContextMenuFeatureKey, canvasContextMenuFeatures } from "config/canvasContextMenu";
 import { ButtonKey, defaultEnabledWidgets, featuresConfig, viewerWidgets, WidgetKey } from "config/features";
+import { renderActions, selectDebugStats, selectNavigationCube } from "features/render";
 import {
     explorerActions,
-    selectLockedWidgets,
+    selectCanvasContextMenuFeatures,
     selectEnabledWidgets,
     selectIsAdminScene,
+    selectLockedWidgets,
     selectPrimaryMenu,
-    selectCanvasContextMenuFeatures,
 } from "slices/explorerSlice";
-import { CanvasContextMenuFeatureKey, canvasContextMenuFeatures } from "features/render";
 
 export function FeatureSettings({ save, saving }: { save: () => Promise<void>; saving: boolean }) {
     const history = useHistory();

@@ -10,7 +10,6 @@ import { ColorPicker } from "features/colorPicker";
 import {
     CameraType,
     Picker,
-    SubtreeStatus,
     renderActions,
     selectBackground,
     selectCameraType,
@@ -19,12 +18,13 @@ import {
     selectSubtrees,
     selectTerrain,
     selectViewMode,
+    SubtreeStatus,
 } from "features/render/renderSlice";
 import WidgetList from "features/widgetList/widgetList";
 import { useToggle } from "hooks/useToggle";
 import { selectMaximized, selectMinimized } from "slices/explorerSlice";
 import { ViewMode } from "types/misc";
-import { VecRGBA, rgbToVec, vecToRgb } from "utils/color";
+import { rgbToVec, VecRGBA, vecToRgb } from "utils/color";
 
 import {
     orthoCamActions,

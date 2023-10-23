@@ -1,10 +1,8 @@
 import { useHistory, useParams } from "react-router-dom";
 
-import { Confirmation } from "components";
-
-import { useAppDispatch, useAppSelector } from "app/store";
-
 import { dataApi } from "app";
+import { useAppDispatch, useAppSelector } from "app/store";
+import { Confirmation } from "components";
 import { useSceneId } from "hooks/useSceneId";
 
 import { BookmarkAccess, bookmarksActions, selectBookmarks } from "../bookmarksSlice";

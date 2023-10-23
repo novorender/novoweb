@@ -1,5 +1,5 @@
+import { alpha, Box, BoxProps, iconButtonClasses, styled } from "@mui/material";
 import { css } from "@mui/styled-engine";
-import { styled, Box, BoxProps, iconButtonClasses, alpha } from "@mui/material";
 
 export const WidgetMenuButtonWrapper = styled(Box, {
     shouldForwardProp: (prop: string) => !["activeCurrent", "activeElsewhere", "activeTag"].includes(prop),
@@ -8,7 +8,7 @@ export const WidgetMenuButtonWrapper = styled(Box, {
         display: flex;
         flex-direction: column;
         align-items: center;
-        cursor: pointer;
+        cursor: ${activeElsewhere ? "default" : "pointer"};
         opacity: ${activeElsewhere ? 0.3 : 1};
 
         &:hover .${iconButtonClasses.root}:not(:disabled) {

@@ -1,4 +1,5 @@
 import { BaseQueryFn, createApi, FetchArgs, fetchBaseQuery, FetchBaseQueryError } from "@reduxjs/toolkit/query/react";
+
 import { RootState } from "app/store";
 import { AsyncStatus } from "types/misc";
 import { handleImageResponse } from "utils/bcf";
@@ -17,8 +18,6 @@ import {
 } from "./types";
 
 export const jiraIdentityServer = "https://auth.atlassian.com/authorize";
-export const jiraClientId = window.jiraClientId || import.meta.env.REACT_APP_JIRA_CLIENT_ID || "";
-export const jiraClientSecret = window.jiraClientSecret || import.meta.env.REACT_APP_JIRA_CLIENT_SECRET || "";
 
 const rawBaseQuery = fetchBaseQuery({
     baseUrl: "/",
@@ -255,48 +254,49 @@ export const jiraApi = createApi({
                     .catch((error) => ({ error }));
             },
         }),
-        getTokens: builder.query<{ access_token: string; refresh_token: string; expires_in: number }, { code: string }>(
-            {
-                queryFn: async ({ code }) => {
-                    return fetch("https://auth.atlassian.com/oauth/token", {
-                        method: "POST",
-                        headers: { "Content-Type": "application/json" },
-                        body: JSON.stringify({
-                            grant_type: "authorization_code",
-                            client_id: jiraClientId,
-                            client_secret: jiraClientSecret,
-                            code: code,
-                            redirect_uri: window.location.origin,
-                        }),
+        getTokens: builder.query<
+            { access_token: string; refresh_token: string; expires_in: number },
+            { code: string; config: { jiraClientId: string; jiraClientSecret: string } }
+        >({
+            queryFn: async ({ code, config }) => {
+                return fetch("https://auth.atlassian.com/oauth/token", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({
+                        grant_type: "authorization_code",
+                        client_id: config.jiraClientId,
+                        client_secret: config.jiraClientSecret,
+                        code: code,
+                        redirect_uri: window.location.origin,
+                    }),
+                })
+                    .then((res) => {
+                        if (!res.ok) {
+                            throw res.statusText;
+                        }
+                        return res.json();
                     })
-                        .then((res) => {
-                            if (!res.ok) {
-                                throw res.statusText;
-                            }
-                            return res.json();
-                        })
-                        .then((data) => {
-                            if (data.error) {
-                                return { error: data.error };
-                            }
-                            return { data };
-                        })
-                        .catch((error) => ({ error }));
-                },
-            }
-        ),
+                    .then((data) => {
+                        if (data.error) {
+                            return { error: data.error };
+                        }
+                        return { data };
+                    })
+                    .catch((error) => ({ error }));
+            },
+        }),
         refreshTokens: builder.mutation<
             { access_token: string; refresh_token: string; expires_in: number },
-            { refreshToken: string }
+            { refreshToken: string; config: { jiraClientId: string; jiraClientSecret: string } }
         >({
-            queryFn: async ({ refreshToken }) => {
+            queryFn: async ({ refreshToken, config }) => {
                 return fetch("https://auth.atlassian.com/oauth/token", {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
                     body: JSON.stringify({
                         grant_type: "refresh_token",
-                        client_id: jiraClientId,
-                        client_secret: jiraClientSecret,
+                        client_id: config.jiraClientId,
+                        client_secret: config.jiraClientSecret,
                         refresh_token: refreshToken,
                         redirect_uri: window.location.origin,
                     }),

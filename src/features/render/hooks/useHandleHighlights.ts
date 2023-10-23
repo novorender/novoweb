@@ -13,9 +13,9 @@ import { useSceneId } from "hooks/useSceneId";
 
 import {
     ObjectVisibility,
-    SelectionBasketMode,
     renderActions,
     selectDefaultVisibility,
+    SelectionBasketMode,
     selectMainObject,
     selectSelectionBasketColor,
     selectSelectionBasketMode,

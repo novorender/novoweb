@@ -2,16 +2,16 @@ import { AddCircle, CheckCircle, MoreVert, Save, Visibility } from "@mui/icons-m
 import { Box, Button, IconButton, Typography, useTheme } from "@mui/material";
 import { useHistory } from "react-router-dom";
 
+import { useAppSelector } from "app/store";
 import { Divider, LinearProgress, ScrollBox } from "components";
 import {
-    objectGroupsActions,
-    useObjectGroups,
-    useDispatchObjectGroups,
-    isInternalGroup,
     GroupStatus,
+    isInternalGroup,
+    objectGroupsActions,
+    useDispatchObjectGroups,
+    useObjectGroups,
 } from "contexts/objectGroups";
 import { selectHasAdminCapabilities } from "slices/explorerSlice";
-import { useAppSelector } from "app/store";
 import { AsyncStatus } from "types/misc";
 
 import { Collection } from "../collection";

@@ -1,5 +1,5 @@
+import { Box, CircularProgress, SpeedDialActionProps } from "@mui/material";
 import { useState } from "react";
-import { SpeedDialActionProps, Box, CircularProgress } from "@mui/material";
 
 import { SpeedDialAction } from "components";
 import { featuresConfig } from "config/features";

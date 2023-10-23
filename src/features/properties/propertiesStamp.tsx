@@ -1,15 +1,15 @@
-import { Box, Typography, IconButton, List } from "@mui/material";
 import { Close } from "@mui/icons-material";
-import { useEffect, useRef, useState } from "react";
+import { Box, IconButton, List, Typography } from "@mui/material";
 import { useDrag } from "@use-gesture/react";
+import { useEffect, useRef, useState } from "react";
 
+import { useAppDispatch, useAppSelector } from "app/store";
 import { Divider, ScrollBox, Tooltip } from "components";
 import { renderActions, selectStamp, StampKind } from "features/render";
-import { useAppDispatch, useAppSelector } from "app/store";
 import { getFileNameFromPath, getFilePathFromObjectPath, getPropertyDisplayName, isUrl } from "utils/objectData";
 
-import { selectShowPropertiesStamp, selectStarredProperties } from "./slice";
 import { ResizeHandle } from "./resizeHandle";
+import { selectShowPropertiesStamp, selectStarredProperties } from "./slice";
 
 export function PropertiesStamp() {
     const dispatch = useAppDispatch();

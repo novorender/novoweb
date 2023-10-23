@@ -15,9 +15,9 @@ import { AsyncStatus } from "types/misc";
 import { deleteFromStorage } from "utils/storage";
 
 import { Auth } from "./routes/auth";
+import { Login } from "./routes/login";
 import { LogPoint } from "./routes/logPoint";
 import { LogPoints } from "./routes/logPoints";
-import { Login } from "./routes/login";
 import { Machine } from "./routes/machine";
 import { Machines } from "./routes/machines";
 import { Settings } from "./routes/settings";
