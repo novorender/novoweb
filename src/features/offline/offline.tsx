@@ -230,23 +230,25 @@ function AllDownloadedScenes({ synchronizing }: { synchronizing: boolean }) {
                                     Last synchronized:{" "}
                                     {scene.lastSync ? new Date(scene.lastSync).toLocaleString() : "unknown"}
                                 </Typography>
-                                <Box
-                                    sx={{
-                                        my: 2,
-                                        display: "flex",
-                                        justifyContent: "flex-end",
-                                    }}
-                                >
-                                    <Button
-                                        size="small"
-                                        variant="contained"
-                                        disabled={!isOnline || synchronizing}
-                                        onClick={() => dispatch(offlineActions.setAction({ action: "readSize" }))}
+                                {isCurrent && (
+                                    <Box
+                                        sx={{
+                                            my: 2,
+                                            display: "flex",
+                                            justifyContent: "flex-end",
+                                        }}
                                     >
-                                        <Sync fontSize="small" sx={{ mr: 1 }} />
-                                        Update size
-                                    </Button>
-                                </Box>
+                                        <Button
+                                            size="small"
+                                            variant="contained"
+                                            disabled={!isOnline || synchronizing}
+                                            onClick={() => dispatch(offlineActions.setAction({ action: "readSize" }))}
+                                        >
+                                            <Sync fontSize="small" sx={{ mr: 1 }} />
+                                            Update Size
+                                        </Button>
+                                    </Box>
+                                )}
                                 <Typography mt={2} fontWeight={600}>
                                     Viewer scenes
                                 </Typography>
