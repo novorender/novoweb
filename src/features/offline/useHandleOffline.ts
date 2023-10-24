@@ -117,6 +117,21 @@ export function useHandleOffline() {
                         break;
                     }
 
+                    if ((await scene.readManifest(abortController.current.signal, getSasKey(view))) === undefined) {
+                        dispatch(
+                            offlineActions.addScene({
+                                id: scene.id,
+                                name: scene.id,
+                                status: "invalid format",
+                                lastSync: new Date().toISOString(),
+                                progress: "",
+                                size: 0,
+                                viewerScenes: [],
+                            })
+                        );
+                        break;
+                    }
+
                     const sceneData = await dataApi.loadScene(viewerSceneId);
                     if ("error" in sceneData) {
                         scene.logger?.status("error");
@@ -165,6 +180,25 @@ export function useHandleOffline() {
                     scene.logger = createLogger(parentSceneId);
                     break;
                 }
+                case "readSize": {
+                    const scene =
+                        offlineWorkerState.scenes.get(parentSceneId) ??
+                        (await offlineWorkerState.addScene(parentSceneId));
+
+                    if (!scene) {
+                        break;
+                    }
+                    const size = await scene.getUsedSize();
+                    dispatch(
+                        offlineActions.updateScene({
+                            id: parentSceneId,
+                            updates: {
+                                size,
+                            },
+                        })
+                    );
+                    break;
+                }
                 case "fullSync": {
                     const scene =
                         offlineWorkerState.scenes.get(parentSceneId) ??
@@ -207,6 +241,7 @@ export function useHandleOffline() {
                     };
                     storage.set(toStore);
 
+                    scene.logger = createLogger(parentSceneId);
                     dispatch(
                         offlineActions.addScene({
                             id: scene.id,
@@ -218,8 +253,6 @@ export function useHandleOffline() {
                             viewerScenes: toStore.viewerScenes,
                         })
                     );
-
-                    scene.logger = createLogger(parentSceneId);
                     scene.sync(abortController.current.signal, getSasKey(view));
                     break;
                 }
@@ -269,7 +302,9 @@ function useCreateLogger() {
                 progress: (done, target) => {
                     if (done !== undefined && target !== undefined) {
                         const progress = ((done / target) * 100).toFixed(2);
-                        dispatch(offlineActions.updateScene({ id: parentSceneId, updates: { progress } }));
+                        dispatch(
+                            offlineActions.updateScene({ id: parentSceneId, updates: { progress, size: target } })
+                        );
                     } else {
                         dispatch(offlineActions.updateScene({ id: parentSceneId, updates: { progress: "" } }));
                     }

@@ -18,7 +18,9 @@ const initialState = {
             }[];
         };
     },
-    action: undefined as undefined | { id?: string; action: "delete" | "fullSync" | "incrementalSync" | "pause" },
+    action: undefined as
+        | undefined
+        | { id?: string; action: "delete" | "fullSync" | "incrementalSync" | "pause" | "readSize" },
 };
 
 type State = typeof initialState;

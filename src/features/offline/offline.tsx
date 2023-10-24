@@ -47,7 +47,7 @@ export default function Offline() {
                 )}
                 {!menuOpen && !minimized && (
                     <ScrollBox p={1} pt={2}>
-                        {!currentParentScene || !currentViewerScene ? (
+                        {!currentParentScene || (!currentViewerScene && currentParentScene.id !== viewerSceneId) ? (
                             <Pending />
                         ) : (
                             <>
@@ -58,10 +58,13 @@ export default function Offline() {
                                 )}
                                 {currentParentScene.status === "error" && <DownloadError />}
                                 {currentParentScene.status === "aborted" && <Interrupted />}
+                                {currentParentScene.status === "invalid format" && <OlderFormat />}
                             </>
                         )}
 
-                        <AllDownloadedScenes />
+                        <AllDownloadedScenes
+                            synchronizing={currentParentScene && currentParentScene.status === "synchronizing"}
+                        />
                     </ScrollBox>
                 )}
                 {menuOpen && <WidgetList widgetKey={featuresConfig.offline.key} onSelect={toggleMenu} />}
@@ -116,13 +119,21 @@ function DownloadError() {
     const dispatch = useAppDispatch();
     return (
         <>
-            An error occured while downloading scene. <br />
+            This scene cannot be downloaded, please contact support. <br />
             <Button
                 disabled={action !== undefined}
                 onClick={() => dispatch(offlineActions.setAction({ action: "fullSync" }))}
             >
                 Try again
             </Button>
+        </>
+    );
+}
+
+function OlderFormat() {
+    return (
+        <>
+            This scene is not made ready for download, please contact support. <br />
         </>
     );
 }
@@ -185,7 +196,7 @@ function Incremental() {
     );
 }
 
-function AllDownloadedScenes() {
+function AllDownloadedScenes({ synchronizing }: { synchronizing: boolean }) {
     const {
         state: { view },
     } = useExplorerGlobals(true);
@@ -219,7 +230,23 @@ function AllDownloadedScenes() {
                                     Last synchronized:{" "}
                                     {scene.lastSync ? new Date(scene.lastSync).toLocaleString() : "unknown"}
                                 </Typography>
-
+                                <Box
+                                    sx={{
+                                        my: 2,
+                                        display: "flex",
+                                        justifyContent: "flex-end",
+                                    }}
+                                >
+                                    <Button
+                                        size="small"
+                                        variant="contained"
+                                        disabled={!isOnline || synchronizing}
+                                        onClick={() => dispatch(offlineActions.setAction({ action: "readSize" }))}
+                                    >
+                                        <Sync fontSize="small" sx={{ mr: 1 }} />
+                                        Update size
+                                    </Button>
+                                </Box>
                                 <Typography mt={2} fontWeight={600}>
                                     Viewer scenes
                                 </Typography>
@@ -258,7 +285,7 @@ function AllDownloadedScenes() {
                                                         <Button
                                                             size="small"
                                                             variant="contained"
-                                                            disabled={!isOnline}
+                                                            disabled={!isOnline || synchronizing}
                                                             onClick={() =>
                                                                 dispatch(
                                                                     offlineActions.setAction({ action: "fullSync" })
