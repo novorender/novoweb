@@ -30,6 +30,7 @@ export function useHandleOutlines() {
     const tracesRef = useRef(outlineLasers);
     const tracePlaneRef = useRef(tracePlane);
     const groupRef = useRef(outlineGroups);
+    const generationRef = useRef(0);
 
     useEffect(() => {
         tracesRef.current = outlineLasers;
@@ -93,10 +94,18 @@ export function useHandleOutlines() {
 
         async function updateTraces() {
             if (planes.length === 0) {
+                if (tracesRef.current.length > 0) {
+                    dispatch(clippingOutlineActions.clear());
+                }
                 return;
             }
+            generationRef.current++;
+            const generation = generationRef.current;
             const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
             await sleep(100);
+            if (generation < generationRef.current) {
+                return;
+            }
             const measureView = await view?.measure;
             const currentTracePlane = tracePlaneRef.current;
             const currentTraces = tracesRef.current;
@@ -104,11 +113,16 @@ export function useHandleOutlines() {
                 const newPlane = planes[0].normalOffset;
                 const oldDir = vec3.fromValues(currentTracePlane[0], currentTracePlane[1], currentTracePlane[2]);
                 const newDir = vec3.fromValues(newPlane[0], newPlane[1], newPlane[2]);
+                if (generation < generationRef.current) {
+                    return;
+                }
+
                 if (vec3.dot(oldDir, newDir) < 0.9) {
                     dispatch(clippingOutlineActions.setLaserPlane(undefined));
                     dispatch(clippingOutlineActions.clear());
                     return;
                 }
+
                 const diff = newPlane[3] - currentTracePlane[3];
                 if (diff === 0) {
                     return;
@@ -138,16 +152,21 @@ export function useHandleOutlines() {
                                 up: outlineValues.up.map((p) => p.position),
                                 laserPosition: newTracerPosition,
                                 measurementX:
-                                    outlineValues.left.length > 0 && outlineValues.right.length > 0
+                                    trace.measurementX &&
+                                    outlineValues.left.length > 0 &&
+                                    outlineValues.right.length > 0
                                         ? { startIdx: 0, endIdx: 0 }
                                         : undefined,
                                 measurementY:
-                                    outlineValues.down.length > 0 && outlineValues.up.length > 0
+                                    trace.measurementY && outlineValues.down.length > 0 && outlineValues.up.length > 0
                                         ? { startIdx: 0, endIdx: 0 }
                                         : undefined,
                             });
                         }
                     }
+                }
+                if (generation < generationRef.current) {
+                    return;
                 }
                 dispatch(clippingOutlineActions.setLaserPlane(view.renderState.clipping.planes[0].normalOffset));
                 dispatch(clippingOutlineActions.setLasers(newTraces));

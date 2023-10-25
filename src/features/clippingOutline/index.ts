@@ -1,1 +1,1 @@
-export * from "./clippingOutlineSlice";
+export * from "./outlineLaserSlice";

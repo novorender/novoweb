@@ -1,7 +1,7 @@
 import { Theme, css, styled } from "@mui/material";
 import { useAppDispatch, useAppSelector } from "app/store";
 import { Fragment, SVGProps } from "react";
-import { clippingOutlineActions, selectOutlineLasers } from "./clippingOutlineSlice";
+import { clippingOutlineActions, selectOutlineLasers } from "./outlineLaserSlice";
 import { useExplorerGlobals } from "contexts/explorerGlobals";
 import { selectCamera, selectClippingPlanes } from "features/render";
 import { getOutlineLaser } from "./useOutlineLaser";
@@ -105,8 +105,14 @@ export function ClippingTracerInteractions() {
     const outlineLaser = useAppSelector(selectOutlineLasers);
     const updateTracer = async (idx: number) => {
         const trace = outlineLaser[idx];
-        let newTrace = await getOutlineLaser(trace.laserPosition, view, type, planes[0].normalOffset);
+        const newTrace = await getOutlineLaser(trace.laserPosition, view, type, planes[0].normalOffset);
         if (newTrace) {
+            if (trace.measurementX === undefined) {
+                newTrace.measurementX = undefined;
+            }
+            if (trace.measurementY === undefined) {
+                newTrace.measurementY = undefined;
+            }
             dispatch(clippingOutlineActions.setLaser({ idx, trace: newTrace }));
         }
     };

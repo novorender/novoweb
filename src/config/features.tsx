@@ -33,7 +33,7 @@ import {
     RestartAlt,
     CheckBox,
     Attachment,
-    SsidChart,
+    Height,
 } from "@mui/icons-material";
 
 // import { ReactComponent as Clipping } from "media/icons/clipping.svg";
@@ -226,10 +226,10 @@ export const featuresConfig = {
         defaultLocked: false,
         tags: [featureTags.review.key],
     },
-    clippingOutline: {
-        key: "clippingOutline",
-        name: "Clipping outline",
-        Icon: SsidChart,
+    outlineLaser: {
+        key: "outlineLaser",
+        name: "Outline laser",
+        Icon: Height,
         type: FeatureType.Widget,
         defaultLocked: false,
         tags: [featureTags.review.key],

@@ -53,7 +53,7 @@ export function useMove2DInteractions(svg: SVGSVGElement | null) {
                     const [l, r] = measureView.draw.toMarkerPoints(tracePts);
                     translate(`leftMarker-${i}`, l);
                     translate(`rightMarker-${i}`, r);
-                    trace.measurementY?.start
+                    trace.measurementX?.start
                         ? translateAction(`updateXTracer-${i}`, l, r)
                         : translateAction(`removeXTracer-${i}`, l, r);
                 }

@@ -22,7 +22,7 @@ import { getFilePathFromObjectPath } from "utils/objectData";
 import { ClippedFile, ClippedObject } from "./clippedObject";
 import { VecRGB } from "utils/color";
 import { searchByPatterns } from "utils/search";
-import { clippingOutlineActions, selectOutlineGroups, selectOutlineLasers } from "./clippingOutlineSlice";
+import { clippingOutlineActions, selectOutlineGroups, selectOutlineLasers } from "./outlineLaserSlice";
 import {
     CameraType,
     Picker,
@@ -44,8 +44,8 @@ export default function ClippingOutline() {
         state: { view, db },
     } = useExplorerGlobals(true);
     const [menuOpen, toggleMenu] = useToggle();
-    const minimized = useAppSelector(selectMinimized) === featuresConfig.clippingOutline.key;
-    const maximized = useAppSelector(selectMaximized).includes(featuresConfig.clippingOutline.key);
+    const minimized = useAppSelector(selectMinimized) === featuresConfig.outlineLaser.key;
+    const maximized = useAppSelector(selectMaximized).includes(featuresConfig.outlineLaser.key);
 
     const { planes } = useAppSelector(selectClippingPlanes);
     const clippedFiles = useAppSelector(selectOutlineGroups);
@@ -119,7 +119,7 @@ export default function ClippingOutline() {
     return (
         <>
             <WidgetContainer minimized={minimized} maximized={maximized}>
-                <WidgetHeader widget={featuresConfig.clippingOutline} disableShadow={menuOpen}>
+                <WidgetHeader widget={featuresConfig.outlineLaser} disableShadow={menuOpen}>
                     {!menuOpen && !minimized ? (
                         <>
                             <Box display="flex" justifyContent="space-between" alignItems="center">
@@ -184,27 +184,47 @@ export default function ClippingOutline() {
                         <AccordionSummary>Clipping plane</AccordionSummary>
                         <AccordionDetails>
                             <Box flex="0 0 auto">
-                                <FormControlLabel
-                                    sx={{ marginLeft: 0 }}
-                                    control={
-                                        <IosSwitch
-                                            disabled={planes.length > 5}
-                                            checked={picker === Picker.ClippingPlane}
-                                            color="primary"
-                                            onChange={() =>
-                                                dispatch(
-                                                    renderActions.setPicker(
-                                                        picker === Picker.ClippingPlane
-                                                            ? Picker.Object
-                                                            : Picker.ClippingPlane
+                                <Box
+                                    sx={{
+                                        my: 2,
+                                        display: "flex",
+                                        justifyContent: "space-between",
+                                        alignItems: "center",
+                                    }}
+                                >
+                                    <FormControlLabel
+                                        sx={{ marginLeft: 0 }}
+                                        control={
+                                            <IosSwitch
+                                                disabled={planes.length > 5}
+                                                checked={picker === Picker.ClippingPlane}
+                                                color="primary"
+                                                onChange={() =>
+                                                    dispatch(
+                                                        renderActions.setPicker(
+                                                            picker === Picker.ClippingPlane
+                                                                ? Picker.Object
+                                                                : Picker.ClippingPlane
+                                                        )
                                                     )
-                                                )
-                                            }
-                                        />
-                                    }
-                                    labelPlacement="start"
-                                    label={<Box>Select</Box>}
-                                />
+                                                }
+                                            />
+                                        }
+                                        labelPlacement="start"
+                                        label={<Box>Select</Box>}
+                                    />
+
+                                    <Button
+                                        onClick={() => {
+                                            dispatch(renderActions.setClippingPlanes({ planes: [], enabled: false }));
+                                        }}
+                                        color="grey"
+                                        disabled={!planes.length}
+                                    >
+                                        <DeleteSweep sx={{ mr: 1 }} />
+                                        Clear
+                                    </Button>
+                                </Box>
                                 <Planes />
                             </Box>
                         </AccordionDetails>
@@ -250,7 +270,7 @@ export default function ClippingOutline() {
                         </AccordionDetails>
                     </Accordion> */}
                         <Accordion>
-                            <AccordionSummary>Clipped objects</AccordionSummary>
+                            <AccordionSummary>Model list</AccordionSummary>
                             <AccordionDetails>
                                 <Box flex="0 0 auto">
                                     <Button onClick={() => updateClippedFiles()} color="grey">
@@ -266,7 +286,7 @@ export default function ClippingOutline() {
                         </Accordion>
                     </Accordion>
                 </ScrollBox>
-                {menuOpen && <WidgetList widgetKey={featuresConfig.clippingOutline.key} onSelect={toggleMenu} />}
+                {menuOpen && <WidgetList widgetKey={featuresConfig.outlineLaser.key} onSelect={toggleMenu} />}
             </WidgetContainer>
             <LogoSpeedDial open={menuOpen} toggle={toggleMenu} />
         </>
