@@ -25,7 +25,6 @@ export function useHandleArea() {
             return;
         }
 
-        console.log(points.map((pts) => pts[1]));
         const area = measureView.core.areaFromPolygon(
             points.map((pts) => pts[0]),
             points.map((pts) => pts[1])
