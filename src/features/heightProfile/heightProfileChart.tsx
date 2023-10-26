@@ -8,7 +8,7 @@ import { Group } from "@visx/group";
 import { scaleLinear } from "@visx/scale";
 import { Line, LinePath } from "@visx/shape";
 import { Text } from "@visx/text";
-import { TooltipWithBounds, defaultStyles, useTooltip } from "@visx/tooltip";
+import { defaultStyles, TooltipWithBounds, useTooltip } from "@visx/tooltip";
 import { bisectLeft, max, min } from "d3-array";
 import { vec2 } from "gl-matrix";
 import { Fragment, MouseEvent, TouchEvent, useCallback, useMemo } from "react";

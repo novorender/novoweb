@@ -5,12 +5,11 @@ import { Link } from "react-router-dom";
 import { useAppSelector } from "app/store";
 import { ImgModal, ImgTooltip, LinearProgress, ScrollBox } from "components";
 import { useToggle } from "hooks/useToggle";
+import fallbackImage from "media/img/bimcollab_fallback.png";
 import { Project } from "types/bcf";
 
 import { useGetProjectsQuery } from "../bimCollabApi";
 import { selectSpace } from "../bimCollabSlice";
-
-import fallbackImage from "media/img/bimcollab_fallback.png";
 
 export function Projects() {
     const theme = useTheme();

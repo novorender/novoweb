@@ -9,18 +9,10 @@ import { StorageKey } from "config/storage";
 import WidgetList from "features/widgetList/widgetList";
 import { useSceneId } from "hooks/useSceneId";
 import { useToggle } from "hooks/useToggle";
-import { selectMaximized, selectMinimized } from "slices/explorerSlice";
+import { selectConfig, selectMaximized, selectMinimized } from "slices/explorerSlice";
 import { AuthInfo } from "types/bcf";
 import { createOAuthStateString, getOAuthState } from "utils/auth";
 import { deleteFromStorage, getFromStorage, saveToStorage } from "utils/storage";
-
-import { CreateComment } from "./routes/createComment";
-import { CreateTopic } from "./routes/createTopic";
-import { EditTopic } from "./routes/editTopic";
-import { Filters } from "./routes/filters";
-import { Project } from "./routes/project";
-import { Projects } from "./routes/projects";
-import { Topic } from "./routes/topic";
 
 import {
     getCode,
@@ -38,6 +30,13 @@ import {
     selectSpace,
     selectVersion,
 } from "./bimCollabSlice";
+import { CreateComment } from "./routes/createComment";
+import { CreateTopic } from "./routes/createTopic";
+import { EditTopic } from "./routes/editTopic";
+import { Filters } from "./routes/filters";
+import { Project } from "./routes/project";
+import { Projects } from "./routes/projects";
+import { Topic } from "./routes/topic";
 
 export default function BimCollab() {
     const sceneId = useSceneId();
@@ -46,6 +45,7 @@ export default function BimCollab() {
     const authInfo = useAppSelector(selectAuthInfo);
     const accessToken = useAppSelector(selectAccessToken);
     const dispatch = useAppDispatch();
+    const config = useAppSelector(selectConfig);
 
     const [menuOpen, toggleMenu] = useToggle();
     const minimized = useAppSelector(selectMinimized) === featuresConfig.bimcollab.key;
@@ -67,7 +67,7 @@ export default function BimCollab() {
                 if (code) {
                     window.history.replaceState(null, "", window.location.pathname.replace("Callback", ""));
 
-                    const res = await getToken({ tokenUrl: authInfo.oauth2_token_url, code });
+                    const res = await getToken({ tokenUrl: authInfo.oauth2_token_url, code, config });
 
                     if (!("data" in res)) {
                         throw new Error("token request failed");
@@ -80,6 +80,7 @@ export default function BimCollab() {
                     return res.data.access_token;
                 } else if (storedRefreshToken) {
                     const res = await refreshToken({
+                        config,
                         tokenUrl: authInfo.oauth2_token_url,
                         refreshToken: storedRefreshToken,
                     });
@@ -106,13 +107,13 @@ export default function BimCollab() {
                         sceneId,
                     });
 
-                    await getCode(authInfo.oauth2_auth_url, state);
+                    await getCode(authInfo.oauth2_auth_url, state, config);
                 }
 
                 return "";
             }
         },
-        [getToken, refreshToken, sceneId]
+        [getToken, refreshToken, sceneId, config]
     );
 
     useEffect(() => {

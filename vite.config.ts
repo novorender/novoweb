@@ -1,15 +1,178 @@
+import { existsSync } from "node:fs";
+
+import basicSsl from "@vitejs/plugin-basic-ssl";
+import react from "@vitejs/plugin-react";
 import { resolve } from "path";
 import { defineConfig, loadEnv } from "vite";
-import react from "@vitejs/plugin-react";
 import envCompatible from "vite-plugin-env-compatible";
+import { VitePWA, VitePWAOptions } from "vite-plugin-pwa";
 import svgr from "vite-plugin-svgr";
-import basicSsl from "@vitejs/plugin-basic-ssl";
-import { existsSync } from "node:fs";
+
+const pwaOptions: Partial<VitePWAOptions> = {
+    mode: "production",
+    base: "/",
+    registerType: "prompt",
+    workbox: {
+        cacheId: "novorender-explorer",
+        maximumFileSizeToCacheInBytes: 15e6,
+        globPatterns: ["**/*"],
+        runtimeCaching: [
+            {
+                urlPattern: /^https:\/\/fonts\.googleapis\.com\/.*/i,
+                handler: "CacheFirst",
+                options: {
+                    cacheName: "google-fonts-cache",
+                    expiration: {
+                        maxEntries: 10,
+                        maxAgeSeconds: 60 * 60 * 24 * 365, // <== 365 days
+                    },
+                    cacheableResponse: {
+                        statuses: [0, 200],
+                    },
+                },
+            },
+            {
+                urlPattern: /^https:\/\/fonts\.gstatic\.com\/.*/i,
+                handler: "CacheFirst",
+                options: {
+                    cacheName: "gstatic-fonts-cache",
+                    expiration: {
+                        maxEntries: 10,
+                        maxAgeSeconds: 60 * 60 * 24 * 365, // <== 365 days
+                    },
+                    cacheableResponse: {
+                        statuses: [0, 200],
+                    },
+                },
+            },
+            // Scene config
+            {
+                urlPattern: /^https:\/\/data(-staging)?\.novorender\.com\/api\/scenes\/[\w]{32}$/i,
+                handler: "NetworkFirst",
+                options: {
+                    cacheableResponse: {
+                        statuses: [0, 200],
+                        headers: {
+                            "x-explorer-cacheable": "true",
+                        },
+                    },
+                },
+            },
+            // Scene groups/bookmarks etc.
+            {
+                urlPattern: /^https:\/\/data(-staging)?\.novorender\.com\/api\/scenes\/[\w]{32}\/.+/i,
+                handler: "NetworkFirst",
+                options: {
+                    cacheableResponse: {
+                        statuses: [0, 200],
+                    },
+                },
+            },
+            // Device tier
+            {
+                urlPattern: /https:\/\/unpkg.com\/detect-gpu@[\d]+\.[\d]+\.[\d]+\/dist\/benchmarks/,
+                handler: "NetworkFirst",
+                options: {
+                    cacheableResponse: {
+                        statuses: [0, 200],
+                    },
+                },
+            },
+            // Skybox environments
+            {
+                urlPattern: /^https:\/\/api.novorender.com\/assets\/env/,
+                handler: "NetworkFirst",
+                options: {
+                    cacheableResponse: {
+                        statuses: [0, 200],
+                    },
+                },
+            },
+            {
+                urlPattern: (options) => {
+                    if (!options.sameOrigin) {
+                        return false;
+                    }
+
+                    return /^\/config.json$/i.test(options.url.pathname);
+                },
+                handler: "NetworkFirst",
+                options: {
+                    cacheableResponse: {
+                        statuses: [0, 200],
+                    },
+                },
+            },
+        ],
+    },
+    manifest: {
+        id: "novorender-explorer_novoweb",
+        name: "Novorender explorer",
+        short_name: "Novorender explorer",
+        description: "The worlds most powerful Digital Twin & BIM platform",
+        theme_color: "#D61E5C",
+        icons: [
+            {
+                src: "/novorender_logo_192x192.png",
+                type: "image/png",
+            },
+            {
+                src: "/novorender_logo_512x512.png",
+                type: "image/png",
+            },
+        ],
+    },
+};
+
+const ownCerts = existsSync("./localhost.crt") && existsSync("./localhost.key");
+const serverOptions = {
+    https: ownCerts
+        ? {
+              cert: "./localhost.crt",
+              key: "./localhost.key",
+          }
+        : true,
+    host: true,
+    open: true,
+    headers: {
+        "Cross-Origin-Opener-Policy": "same-origin",
+        "Cross-Origin-Embedder-Policy": "require-corp",
+    },
+    proxy: {
+        "/bimtrack/token": {
+            target: "https://auth.bimtrackapp.co//connect/token",
+            rewrite: (path) => path.replace(/^\/bimtrack\/token/, ""),
+            changeOrigin: true,
+        },
+        "/bimtrack/bcf/2.1": {
+            // target: "https://bcfrestapi.bimtrackapp.co/bcf/2.1/",
+            target: "https://bcfrestapi-bt02.bimtrackapp.co/bcf/2.1/",
+            rewrite: (path) => path.replace(/^\/bimtrack\/bcf\/2.1/, ""),
+            changeOrigin: true,
+        },
+        "/ditio": {
+            target: "https://ditio-api-v3.azurewebsites.net",
+            // target: "https://ditio-api-test.azurewebsites.net",
+            rewrite: (path) => path.replace(/^\/ditio/, ""),
+            changeOrigin: true,
+        },
+        "/xsitemanage": {
+            target: "https://api.prod.xsitemanage.com",
+            rewrite: (path) => path.replace(/^\/xsitemanage/, ""),
+            changeOrigin: true,
+        },
+        // NOTE(OLA): Omega365 returns invalid headers and proxy crashes on nodejs version > 18.16.0
+        "/omega365": {
+            target: "https://nyeveier.pims365.no",
+            rewrite: (path) => path.replace(/^\/omega365/, ""),
+            changeOrigin: true,
+        },
+    },
+};
 
 // https://vitejs.dev/config/
 export default defineConfig(({ mode }) => {
     const env = loadEnv(mode, process.cwd());
-    const ownCerts = existsSync("./localhost.crt") && existsSync("./localhost.key");
 
     return {
         optimizeDeps: {
@@ -17,61 +180,20 @@ export default defineConfig(({ mode }) => {
         },
         envPrefix: "REACT_APP_",
         plugins: [
-            react({ fastRefresh: false }),
+            react(),
             envCompatible(),
             svgr({ svgrOptions: { titleProp: true } }),
             ...(ownCerts ? [] : [basicSsl()]),
+            VitePWA(pwaOptions),
         ],
         define: { ...env },
         server: {
             port: Number(process.env.PORT) || 3000,
-            https: ownCerts
-                ? {
-                      cert: "./localhost.crt",
-                      key: "./localhost.key",
-                  }
-                : true,
-            host: true,
-            open: true,
-            headers: {
-                "Cross-Origin-Opener-Policy": "same-origin",
-                "Cross-Origin-Embedder-Policy": "require-corp",
-            },
-            proxy: {
-                "/bimtrack/token": {
-                    target: "https://auth.bimtrackapp.co//connect/token",
-                    rewrite: (path) => path.replace(/^\/bimtrack\/token/, ""),
-                    changeOrigin: true,
-                },
-                "/bimtrack/bcf/2.1": {
-                    // target: "https://bcfrestapi.bimtrackapp.co/bcf/2.1/",
-                    target: "https://bcfrestapi-bt02.bimtrackapp.co/bcf/2.1/",
-                    rewrite: (path) => path.replace(/^\/bimtrack\/bcf\/2.1/, ""),
-                    changeOrigin: true,
-                },
-                "/ditio": {
-                    target: "https://ditio-api-v3.azurewebsites.net",
-                    // target: "https://ditio-api-test.azurewebsites.net",
-                    rewrite: (path) => path.replace(/^\/ditio/, ""),
-                    changeOrigin: true,
-                },
-                "/xsitemanage": {
-                    target: "https://api.prod.xsitemanage.com",
-                    rewrite: (path) => path.replace(/^\/xsitemanage/, ""),
-                    changeOrigin: true,
-                },
-                // NOTE(OLA): Omega365 returns invalid headers and proxy crashes on nodejs version > 18.16.0
-                "/omega365": {
-                    target: "https://nyeveier.pims365.no",
-                    rewrite: (path) => path.replace(/^\/omega365/, ""),
-                    changeOrigin: true,
-                },
-            },
+            ...serverOptions,
         },
         preview: {
-            port: Number(process.env.PORT) || 3000,
-            https: true,
-            host: true,
+            port: Number(process.env.PORT) || 5000,
+            ...serverOptions,
         },
         resolve: {
             alias: [

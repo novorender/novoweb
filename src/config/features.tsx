@@ -1,20 +1,29 @@
 import {
     AccountTreeRounded,
+    Attachment,
     BlurOn,
     Cameraswitch,
     Category,
+    CheckBox,
     ColorLens,
     CropLandscape,
     Domain,
+    DownloadForOffline,
+    FiberSmartRecord,
     FlightTakeoff,
     Folder,
+    GpsFixed,
     Gradient,
+    Height,
     Home,
+    Image,
     Layers,
+    LinearScale,
     List,
     MyLocation,
     Person,
     Redo,
+    RestartAlt,
     RouteOutlined,
     Search,
     Settings,
@@ -26,20 +35,12 @@ import {
     Undo,
     Visibility,
     VisibilityOff,
-    LinearScale,
-    FiberSmartRecord,
-    GpsFixed,
-    Image,
-    RestartAlt,
-    CheckBox,
-    Attachment,
 } from "@mui/icons-material";
 
-// import { ReactComponent as Clipping } from "media/icons/clipping.svg";
-import { ReactComponent as Run } from "media/icons/run.svg";
 import { ReactComponent as BimTrack } from "media/icons/bimtrack.svg";
 import { ReactComponent as Ditio } from "media/icons/ditio.svg";
 import { ReactComponent as Jira } from "media/icons/jira-software.svg";
+import { ReactComponent as Run } from "media/icons/run.svg";
 
 export enum FeatureType {
     Button,
@@ -65,6 +66,7 @@ export const featuresConfig = {
         type: FeatureType.Widget,
         // NOTE(OLA): POC! Enable only for nye veier
         defaultLocked: true,
+        offline: false,
     },
     xsiteManage: {
         key: "xsiteManage",
@@ -72,6 +74,7 @@ export const featuresConfig = {
         Icon: GpsFixed,
         type: FeatureType.Widget,
         defaultLocked: true,
+        offline: false,
     },
     jira: {
         key: "jira",
@@ -79,6 +82,7 @@ export const featuresConfig = {
         Icon: Jira,
         type: FeatureType.Widget,
         defaultLocked: true,
+        offline: false,
     },
     area: {
         key: "area",
@@ -87,6 +91,7 @@ export const featuresConfig = {
         type: FeatureType.Widget,
         defaultLocked: false,
         tags: [featureTags.review.key],
+        offline: true,
     },
     pointLine: {
         key: "pointLine",
@@ -95,6 +100,7 @@ export const featuresConfig = {
         type: FeatureType.Widget,
         defaultLocked: false,
         tags: [featureTags.review.key],
+        offline: true,
     },
     manhole: {
         key: "manhole",
@@ -103,6 +109,7 @@ export const featuresConfig = {
         type: FeatureType.Widget,
         defaultLocked: false,
         tags: [featureTags.review.key],
+        offline: true,
     },
     heightProfile: {
         key: "heightProfile",
@@ -111,6 +118,7 @@ export const featuresConfig = {
         type: FeatureType.Widget,
         defaultLocked: false,
         tags: [featureTags.review.key],
+        offline: true,
     },
     user: {
         key: "user",
@@ -118,6 +126,7 @@ export const featuresConfig = {
         Icon: Person,
         type: FeatureType.Widget,
         defaultLocked: false,
+        offline: false,
     },
     rangeSearch: {
         key: "rangeSearch",
@@ -125,6 +134,7 @@ export const featuresConfig = {
         Icon: Search,
         type: FeatureType.Widget,
         defaultLocked: false,
+        offline: false,
     },
     ditio: {
         key: "ditio",
@@ -132,6 +142,7 @@ export const featuresConfig = {
         Icon: Ditio,
         type: FeatureType.Widget,
         defaultLocked: true,
+        offline: false,
     },
     myLocation: {
         key: "myLocation",
@@ -139,6 +150,7 @@ export const featuresConfig = {
         Icon: MyLocation,
         type: FeatureType.Widget,
         defaultLocked: false,
+        offline: true,
     },
     bimcollab: {
         key: "bimcollab",
@@ -146,6 +158,7 @@ export const featuresConfig = {
         Icon: Domain,
         type: FeatureType.Widget,
         defaultLocked: true,
+        offline: false,
     },
     bimTrack: {
         key: "bimTrack",
@@ -153,6 +166,7 @@ export const featuresConfig = {
         Icon: BimTrack,
         type: FeatureType.Widget,
         defaultLocked: true,
+        offline: false,
     },
     advancedSettings: {
         key: "advancedSettings",
@@ -160,6 +174,7 @@ export const featuresConfig = {
         Icon: Settings,
         type: FeatureType.AdminWidget,
         defaultLocked: false,
+        offline: false,
     },
     selectionBasket: {
         key: "selectionBasket",
@@ -167,6 +182,7 @@ export const featuresConfig = {
         Icon: Layers,
         type: FeatureType.Widget,
         defaultLocked: false,
+        offline: true,
     },
     modelTree: {
         key: "modelTree",
@@ -174,6 +190,7 @@ export const featuresConfig = {
         Icon: Category,
         type: FeatureType.Widget,
         defaultLocked: false,
+        offline: false,
     },
     properties: {
         key: "properties",
@@ -181,6 +198,7 @@ export const featuresConfig = {
         Icon: List,
         type: FeatureType.Widget,
         defaultLocked: false,
+        offline: false,
     },
     propertyTree: {
         key: "propertyTree",
@@ -188,6 +206,7 @@ export const featuresConfig = {
         Icon: AccountTreeRounded,
         type: FeatureType.Widget,
         defaultLocked: false,
+        offline: false,
     },
     bookmarks: {
         key: "bookmarks",
@@ -195,6 +214,7 @@ export const featuresConfig = {
         Icon: Star,
         type: FeatureType.Widget,
         defaultLocked: false,
+        offline: true,
     },
     groups: {
         key: "groups",
@@ -202,6 +222,7 @@ export const featuresConfig = {
         Icon: Folder,
         type: FeatureType.Widget,
         defaultLocked: false,
+        offline: true,
     },
     search: {
         key: "search",
@@ -209,20 +230,24 @@ export const featuresConfig = {
         Icon: Search,
         type: FeatureType.Widget,
         defaultLocked: false,
+        offline: false,
     },
-    // clippingBox: {
-    //     key: "clippingBox",
-    //     name: "Clipping box",
-    //     Icon: Clipping,
-    //     type: FeatureType.Widget,
-    //     defaultLocked: false,
-    // },
     measure: {
         key: "measure",
         name: "Measure",
         Icon: Straighten,
         type: FeatureType.Widget,
         defaultLocked: false,
+        offline: true,
+        tags: [featureTags.review.key],
+    },
+    outlineLaser: {
+        key: "outlineLaser",
+        name: "Outline laser",
+        Icon: Height,
+        type: FeatureType.Widget,
+        defaultLocked: false,
+        offline: true,
         tags: [featureTags.review.key],
     },
     shareLink: {
@@ -231,6 +256,7 @@ export const featuresConfig = {
         Icon: Share,
         type: FeatureType.Widget,
         defaultLocked: false,
+        offline: false,
     },
     clippingPlanes: {
         key: "clippingPlanes",
@@ -238,6 +264,7 @@ export const featuresConfig = {
         Icon: CropLandscape,
         type: FeatureType.Widget,
         defaultLocked: false,
+        offline: true,
     },
     orthoCam: {
         key: "orthoCam",
@@ -245,6 +272,7 @@ export const featuresConfig = {
         Icon: Cameraswitch,
         type: FeatureType.Widget,
         defaultLocked: false,
+        offline: true,
     },
     images: {
         key: "images",
@@ -252,6 +280,7 @@ export const featuresConfig = {
         Icon: Image,
         type: FeatureType.Widget,
         defaultLocked: false,
+        offline: false,
     },
     deviations: {
         key: "deviations",
@@ -259,6 +288,7 @@ export const featuresConfig = {
         Icon: BlurOn,
         type: FeatureType.Widget,
         defaultLocked: false,
+        offline: true,
         tags: [featureTags.review.key],
         dependencies: {
             subtrees: [["points"]],
@@ -270,6 +300,7 @@ export const featuresConfig = {
         Icon: RouteOutlined,
         type: FeatureType.Widget,
         defaultLocked: false,
+        offline: true,
         tags: [featureTags.review.key],
     },
     home: {
@@ -278,6 +309,7 @@ export const featuresConfig = {
         Icon: Home,
         type: FeatureType.Button,
         defaultLocked: false,
+        offline: true,
     },
     stepBack: {
         key: "stepBack",
@@ -285,6 +317,7 @@ export const featuresConfig = {
         Icon: Undo,
         type: FeatureType.Button,
         defaultLocked: false,
+        offline: true,
     },
     stepForwards: {
         key: "stepForwards",
@@ -292,6 +325,7 @@ export const featuresConfig = {
         Icon: Redo,
         type: FeatureType.Button,
         defaultLocked: false,
+        offline: true,
     },
     orthoShortcut: {
         key: "orthoShortcut",
@@ -299,6 +333,7 @@ export const featuresConfig = {
         Icon: Cameraswitch,
         type: FeatureType.Button,
         defaultLocked: false,
+        offline: true,
     },
     cameraSpeed: {
         key: "cameraSpeed",
@@ -306,6 +341,7 @@ export const featuresConfig = {
         Icon: Run,
         type: FeatureType.Button,
         defaultLocked: false,
+        offline: true,
     },
     flyToSelected: {
         key: "flyToSelected",
@@ -313,6 +349,7 @@ export const featuresConfig = {
         Icon: FlightTakeoff,
         type: FeatureType.Button,
         defaultLocked: false,
+        offline: false,
     },
     multipleSelection: {
         key: "multipleSelection",
@@ -320,6 +357,7 @@ export const featuresConfig = {
         Icon: Layers,
         type: FeatureType.Button,
         defaultLocked: false,
+        offline: true,
     },
     selectionColor: {
         key: "selectionColor",
@@ -327,6 +365,7 @@ export const featuresConfig = {
         Icon: ColorLens,
         type: FeatureType.Button,
         defaultLocked: false,
+        offline: true,
     },
     viewOnlySelected: {
         key: "viewOnlySelected",
@@ -334,6 +373,7 @@ export const featuresConfig = {
         Icon: Visibility,
         type: FeatureType.Button,
         defaultLocked: false,
+        offline: true,
     },
     hideSelected: {
         key: "hideSelected",
@@ -341,6 +381,7 @@ export const featuresConfig = {
         Icon: VisibilityOff,
         type: FeatureType.Button,
         defaultLocked: false,
+        offline: true,
     },
     clearView: {
         key: "clearView",
@@ -348,6 +389,7 @@ export const featuresConfig = {
         Icon: RestartAlt,
         type: FeatureType.Button,
         defaultLocked: false,
+        offline: true,
     },
     clearSelection: {
         key: "clearSelection",
@@ -355,6 +397,7 @@ export const featuresConfig = {
         Icon: CheckBox,
         type: FeatureType.Button,
         defaultLocked: false,
+        offline: true,
     },
     toggleSubtrees: {
         key: "toggleSubtrees",
@@ -362,6 +405,15 @@ export const featuresConfig = {
         Icon: Gradient,
         type: FeatureType.Button,
         defaultLocked: false,
+        offline: true,
+    },
+    offline: {
+        key: "offline",
+        name: "Offline",
+        Icon: DownloadForOffline,
+        type: FeatureType.Widget,
+        defaultLocked: true,
+        offline: true,
     },
 } as const;
 

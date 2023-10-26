@@ -10,6 +10,7 @@ import { AsyncStatus } from "types/misc";
 import { selectSceneStatus } from ".";
 
 export enum Error {
+    OFFLINE_UNAVAILABLE = "OFFLINE_UNAVAILABLE",
     UNKNOWN_ERROR = "UNKNOWN_ERROR",
     INVALID_SCENE = "INVALID_SCENE",
     DELETED_SCENE = "DELETED_SCENE",
@@ -56,6 +57,8 @@ export function SceneError() {
                         <Typography paragraph variant="h4" component="h1" align="center">
                             {error === Error.UNKNOWN_ERROR
                                 ? "An error occurred"
+                                : error === Error.OFFLINE_UNAVAILABLE
+                                ? `Offline scene not found`
                                 : error === Error.INVALID_SCENE
                                 ? `Scene not found`
                                 : error === Error.DELETED_SCENE
@@ -73,6 +76,12 @@ export function SceneError() {
                                     <br />
                                     Make sure you are using an up to date version of either Safari or a Chromium based
                                     browser such as Chrome or Edge.
+                                </>
+                            )}
+                            {error === Error.OFFLINE_UNAVAILABLE && (
+                                <>
+                                    The scene with id <em>{sceneId}</em> has not been downloaded for your device and
+                                    browser.
                                 </>
                             )}
                             {error === Error.INVALID_SCENE && (

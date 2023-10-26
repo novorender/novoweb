@@ -18,7 +18,7 @@ import { useHistory } from "react-router-dom";
 
 import { useAppDispatch, useAppSelector } from "app/store";
 import { Divider, ScrollBox, TextField } from "components";
-import { rangeSearchDateFormat } from "config";
+import { rangeSearchDateFormat } from "config/app";
 
 import { imagesActions, ImageType, selectImageFilter } from "../imagesSlice";
 

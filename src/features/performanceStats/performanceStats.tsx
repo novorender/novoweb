@@ -5,6 +5,7 @@ import { useEffect, useRef } from "react";
 import { useAppSelector } from "app/store";
 import { useExplorerGlobals } from "contexts/explorerGlobals";
 import { selectDeviceProfile } from "features/render";
+import { selectIsOnline } from "slices/explorerSlice";
 
 const canvas: HTMLCanvasElement = document.createElement("canvas") as HTMLCanvasElement;
 canvas.width = 1;
@@ -24,6 +25,7 @@ export function PerformanceStats() {
         state: { view, scene },
     } = useExplorerGlobals(true);
     const deviceProfile = useAppSelector(selectDeviceProfile);
+    const isOnline = useAppSelector(selectIsOnline);
     const timer = useRef<ReturnType<typeof setInterval>>();
     const cpuTime = useRef<HTMLSpanElement>(null);
     const gpuTime = useRef<HTMLSpanElement>(null);
@@ -101,7 +103,8 @@ export function PerformanceStats() {
             maxWidth={700}
         >
             <pre className="stats">
-                Tier: {deviceProfile.tier}; Debug profile: {String(deviceProfile.debugProfile)}
+                {!isOnline && "OFFLINE; "}Tier: {deviceProfile.tier}; Debug profile:{" "}
+                {String(deviceProfile.debugProfile)}
                 <br />
                 APP v{import.meta.env.REACT_APP_VERSION}; API v{webglApiVersion};<br />
                 GPU: {renderer}

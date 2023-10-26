@@ -1,4 +1,5 @@
-import { DeviceProfile, View, computeRotation, getDeviceProfile, rotationFromDirection } from "@novorender/api";
+import { computeRotation, DeviceProfile, getDeviceProfile, rotationFromDirection, View } from "@novorender/api";
+import { manageOfflineStorage } from "@novorender/api/offline";
 import { ObjectDB, SceneData, SceneLoadFail } from "@novorender/data-js-api";
 import { Internal } from "@novorender/webgl-api";
 import { getGPUTier } from "detect-gpu";
@@ -15,6 +16,7 @@ import {
 } from "contexts/highlightCollections";
 import { highlightActions, useDispatchHighlighted } from "contexts/highlighted";
 import { GroupStatus, objectGroupsActions, useDispatchObjectGroups } from "contexts/objectGroups";
+import OfflineWorker from "features/offline/worker?worker";
 import { useSceneId } from "hooks/useSceneId";
 import { AsyncStatus } from "types/misc";
 import { CustomProperties } from "types/project";
@@ -64,6 +66,7 @@ export function useHandleInit() {
             const view = await createView(canvas, { deviceProfile });
 
             try {
+                const offlineWorkerState = await manageOfflineStorage(new OfflineWorker());
                 const [{ url, db, ...sceneData }, camera] = await loadScene(sceneId);
                 const octreeSceneConfig = await view.loadSceneFromURL(new URL(url));
                 const measureView = await view.measure;
@@ -139,6 +142,7 @@ export function useHandleInit() {
                         view: view,
                         scene: octreeSceneConfig,
                         measureView,
+                        offlineWorkerState,
                     })
                 );
 
@@ -163,7 +167,10 @@ export function useHandleInit() {
                         );
                     } else {
                         dispatch(
-                            renderActions.setSceneStatus({ status: AsyncStatus.Error, msg: SceneError.UNKNOWN_ERROR })
+                            renderActions.setSceneStatus({
+                                status: AsyncStatus.Error,
+                                msg: navigator.onLine ? SceneError.UNKNOWN_ERROR : SceneError.OFFLINE_UNAVAILABLE,
+                            })
                         );
                     }
                 } else if (e instanceof Error) {
@@ -178,7 +185,7 @@ export function useHandleInit() {
                         dispatch(
                             renderActions.setSceneStatus({
                                 status: AsyncStatus.Error,
-                                msg: SceneError.UNKNOWN_ERROR,
+                                msg: navigator.onLine ? SceneError.UNKNOWN_ERROR : SceneError.OFFLINE_UNAVAILABLE,
                                 stack: e.stack
                                     ? e.stack
                                     : typeof e.cause === "string"

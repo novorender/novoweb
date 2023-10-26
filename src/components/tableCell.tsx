@@ -1,4 +1,4 @@
-import { TableCell as MuiTableCell, css, styled, TableCellProps } from "@mui/material";
+import { css, styled, TableCell as MuiTableCell, TableCellProps } from "@mui/material";
 
 export const TableCell = styled(MuiTableCell, { shouldForwardProp: (prop) => prop !== "bold" })<
     TableCellProps & { bold?: boolean }

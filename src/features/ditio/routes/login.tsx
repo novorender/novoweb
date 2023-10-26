@@ -2,15 +2,17 @@ import { LoadingButton } from "@mui/lab";
 import { Box, CircularProgress, Typography, useTheme } from "@mui/material";
 import { useState } from "react";
 
+import { useAppSelector } from "app/store";
 import { LinearProgress, ScrollBox } from "components";
 import { featuresConfig } from "config/features";
 import { StorageKey } from "config/storage";
 import { useCreateBookmark } from "features/bookmarks/useCreateBookmark";
+import { selectConfig } from "slices/explorerSlice";
 import { createOAuthStateString, generateCodeChallenge } from "utils/auth";
 import { generateRandomString } from "utils/misc";
 import { saveToStorage } from "utils/storage";
 
-import { ditioClientId, useGetAuthConfigQuery } from "../api";
+import { useGetAuthConfigQuery } from "../api";
 
 const scope = "openid ditioapiv3 offline_access";
 
@@ -18,6 +20,7 @@ export function Login({ sceneId }: { sceneId: string }) {
     const theme = useTheme();
     const [loading, setLoading] = useState(false);
     const createBookmark = useCreateBookmark();
+    const config = useAppSelector(selectConfig);
 
     const { data: authConfig, isLoading: isLoadingAuthConfig, isError } = useGetAuthConfigQuery();
 
@@ -45,7 +48,7 @@ export function Login({ sceneId }: { sceneId: string }) {
         window.location.href =
             authConfig?.authorization_endpoint +
             `?response_type=code` +
-            `&client_id=${ditioClientId}` +
+            `&client_id=${config.ditioClientId}` +
             `&scope=${scope}` +
             `&redirect_uri=${window.location.origin}` +
             `&code_challenge=${challenge}` +

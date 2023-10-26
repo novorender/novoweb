@@ -1,9 +1,8 @@
 import { Box, Button, Modal, Typography, useTheme } from "@mui/material";
+
 import { useAppDispatch, useAppSelector } from "app/store";
-
-import { explorerActions, selectOrganization, selectRequireConsent } from "slices/explorerSlice";
-
 import { ReactComponent as ConsentIcon } from "media/icons/consent.svg";
+import { explorerActions, selectOrganization, selectRequireConsent } from "slices/explorerSlice";
 
 export function Consent() {
     const theme = useTheme();

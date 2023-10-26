@@ -1,26 +1,26 @@
-import { useEffect } from "react";
+import { ArrowDownward, ArrowUpward } from "@mui/icons-material";
 import {
-    useTheme,
-    useMediaQuery,
+    Box,
+    CloseReason,
     FabProps,
+    OpenReason,
     SpeedDial,
     SpeedDialIcon,
-    CloseReason,
-    OpenReason,
-    Box,
+    useMediaQuery,
+    useTheme,
 } from "@mui/material";
-import { ArrowUpward, ArrowDownward } from "@mui/icons-material";
+import { useEffect } from "react";
 
 import { useAppDispatch, useAppSelector } from "app/store";
-import { useToggle } from "hooks/useToggle";
-import { renderActions, selectMainObject } from "features/render";
-import { ToggleSubtrees } from "features/toggleSubtrees";
-import { MultipleSelection } from "features/multipleSelection";
-import { SelectionColor } from "features/selectionColor";
-import { ViewOnlySelected } from "features/viewOnlySelected";
-import { HideSelected } from "features/hideSelected";
 import { ClearSelection } from "features/clearSelection";
 import { ClearView } from "features/clearView";
+import { HideSelected } from "features/hideSelected";
+import { MultipleSelection } from "features/multipleSelection";
+import { renderActions, selectMainObject } from "features/render";
+import { SelectionColor } from "features/selectionColor";
+import { ToggleSubtrees } from "features/toggleSubtrees";
+import { ViewOnlySelected } from "features/viewOnlySelected";
+import { useToggle } from "hooks/useToggle";
 
 export function SelectionModifierMenu() {
     const theme = useTheme();

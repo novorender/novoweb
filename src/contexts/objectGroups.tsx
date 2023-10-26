@@ -1,8 +1,8 @@
+import { SearchPattern } from "@novorender/webgl-api";
 import { createContext, Dispatch, MutableRefObject, ReactNode, useContext, useReducer, useRef } from "react";
 import { v4 as uuidv4 } from "uuid";
 
 import { VecRGB, VecRGBA } from "utils/color";
-import { SearchPattern } from "@novorender/webgl-api";
 
 export enum GroupStatus {
     None = "none",

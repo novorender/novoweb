@@ -1,6 +1,6 @@
 import { CoreModule } from "@novorender/api";
 import { vec2, vec3 } from "gl-matrix";
-import { MouseEvent, MutableRefObject, PointerEvent as ReactPointerEvent, TouchEvent, WheelEvent, useRef } from "react";
+import { MouseEvent, MutableRefObject, PointerEvent as ReactPointerEvent, TouchEvent, useRef, WheelEvent } from "react";
 
 import { isIpad, isIphone } from "app";
 import { useAppDispatch, useAppSelector } from "app/store";
@@ -12,8 +12,6 @@ import { orthoCamActions, selectCrossSectionPoint } from "features/orthoCam";
 import {
     CameraType,
     Picker,
-    StampKind,
-    SubtreeStatus,
     renderActions,
     selectCameraType,
     selectClippingPlanes,
@@ -21,18 +19,20 @@ import {
     selectPoints,
     selectStamp,
     selectSubtrees,
+    StampKind,
+    SubtreeStatus,
 } from "..";
 import { moveSvgCursor } from "../svgUtils";
 import { useCanvasContextMenuHandler } from "./useCanvasContextMenuHandler";
 
 export function useCanvasEventHandlers({
     pointerPos,
-    useSvgCursor,
+    cursor,
     svg,
     renderFnRef,
 }: {
     pointerPos: MutableRefObject<[x: number, y: number]>;
-    useSvgCursor: boolean;
+    cursor: "measure" | "cross" | "standard";
     svg: SVGSVGElement | null;
     renderFnRef: MutableRefObject<((moved: boolean, isIdleFrame: boolean) => void) | undefined>;
 }) {
@@ -213,7 +213,7 @@ export function useCanvasEventHandlers({
             return;
         }
 
-        if (e.buttons === 0 && useSvgCursor) {
+        if (e.buttons === 0 && cursor === "measure") {
             const result = await view.pick(e.nativeEvent.offsetX, e.nativeEvent.offsetY, {
                 sampleDiscRadius: 4,
                 async: false,
@@ -292,6 +292,17 @@ export function useCanvasEventHandlers({
                 });
             }
             return;
+        } else if (cursor === "cross") {
+            moveSvgCursor({
+                svg,
+                view,
+                size,
+                pickResult: undefined,
+                x: e.nativeEvent.offsetX,
+                y: e.nativeEvent.offsetY,
+                color: "white",
+                overrideKind: "cross",
+            });
         } else {
             moveSvgCursor({
                 svg,

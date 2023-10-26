@@ -1,10 +1,10 @@
 import { useEffect } from "react";
 
-import { useAppSelector, useAppDispatch } from "app/store";
+import { useAppDispatch, useAppSelector } from "app/store";
 import { useExplorerGlobals } from "contexts/explorerGlobals";
 import { AsyncStatus } from "types/misc";
 
-import { selectBackground, renderActions } from "..";
+import { renderActions, selectBackground } from "..";
 
 export function useHandleBackground() {
     const {

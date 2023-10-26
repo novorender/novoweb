@@ -1,14 +1,14 @@
 import { Clear, Edit, MoreVert } from "@mui/icons-material";
-import { useHistory } from "react-router-dom";
-import { useState, MouseEvent } from "react";
 import { Box, IconButton, List, ListItemIcon, ListItemText, Menu, MenuItem } from "@mui/material";
+import { MouseEvent, useState } from "react";
+import { useHistory } from "react-router-dom";
 
 import { useAppDispatch, useAppSelector } from "app/store";
 import { Accordion, AccordionDetails, AccordionSummary } from "components";
 import { selectHasAdminCapabilities } from "slices/explorerSlice";
 
-import { bookmarksActions, ExtendedBookmark, selectIsCollectionExpanded } from "./bookmarksSlice";
 import { Bookmark } from "./bookmark";
+import { bookmarksActions, ExtendedBookmark, selectIsCollectionExpanded } from "./bookmarksSlice";
 
 export function Collection({ collection, bookmarks }: { collection: string; bookmarks: ExtendedBookmark[] }) {
     const history = useHistory();

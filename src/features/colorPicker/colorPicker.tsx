@@ -1,6 +1,6 @@
+import { Box, Popover, PopoverProps } from "@mui/material";
 import { useState } from "react";
 import { ChromePicker, ColorChangeHandler } from "react-color";
-import { Box, Popover, PopoverProps } from "@mui/material";
 
 import { VecRGB, VecRGBA, vecToRgb } from "utils/color";
 

@@ -17,14 +17,16 @@ import {
 import { FollowParametricObject, rotationFromDirection } from "@novorender/api";
 import { HierarcicalObjectReference } from "@novorender/webgl-api";
 import { vec3 } from "gl-matrix";
-import { FormEvent, SyntheticEvent, useCallback, useEffect, useState, MouseEvent } from "react";
+import { FormEvent, MouseEvent, SyntheticEvent, useCallback, useEffect, useState } from "react";
 import { useHistory } from "react-router-dom";
 
 import { useAppDispatch, useAppSelector } from "app/store";
 import { Accordion, AccordionDetails, AccordionSummary, Divider, IosSwitch, ScrollBox, Tooltip } from "components";
 import { useExplorerGlobals } from "contexts/explorerGlobals";
+import { ColorPicker } from "features/colorPicker";
 import { CameraType, renderActions } from "features/render/renderSlice";
 import { AsyncStatus, ViewMode } from "types/misc";
+import { rgbToVec, vecToRgb } from "utils/color";
 import { searchByPatterns } from "utils/search";
 
 import {
@@ -33,8 +35,8 @@ import {
     selectAutoStepSize,
     selectClipping,
     selectCurrentCenter,
-    selectFollowDeviations,
     selectDrawRoadIds,
+    selectFollowDeviations,
     selectLandXmlPaths,
     selectProfile,
     selectProfileRange,
@@ -45,11 +47,9 @@ import {
     selectShowGrid,
     selectShowTracer,
     selectStep,
-    selectView2d,
     selectVerticalTracer,
+    selectView2d,
 } from "./followPathSlice";
-import { rgbToVec, vecToRgb } from "utils/color";
-import { ColorPicker } from "features/colorPicker";
 
 const profileFractionDigits = 3;
 

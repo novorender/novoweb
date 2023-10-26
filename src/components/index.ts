@@ -1,5 +1,6 @@
-import { withCustomScrollbar } from "./scrollBox";
 import { FixedSizeList } from "react-window";
+
+import { withCustomScrollbar } from "./scrollBox";
 
 export const FixedSizeVirualizedList = withCustomScrollbar(FixedSizeList) as typeof FixedSizeList;
 

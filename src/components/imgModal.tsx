@@ -1,5 +1,5 @@
 import { Close } from "@mui/icons-material";
-import { Modal, ModalProps, styled, IconButton } from "@mui/material";
+import { IconButton, Modal, ModalProps, styled } from "@mui/material";
 import { css } from "@mui/styled-engine";
 
 export const ImgModal = styled(({ src, ...props }: Omit<ModalProps, "children"> & { src: string }) => {

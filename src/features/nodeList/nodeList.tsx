@@ -1,7 +1,7 @@
 import { Folder, Visibility } from "@mui/icons-material";
 import { Box, Checkbox, ListItem, ListItemProps, Typography, useTheme } from "@mui/material";
 import { HierarcicalObjectReference } from "@novorender/webgl-api";
-import { CSSProperties, ChangeEvent, MouseEventHandler, MutableRefObject, forwardRef } from "react";
+import { ChangeEvent, CSSProperties, forwardRef, MouseEventHandler, MutableRefObject } from "react";
 import AutoSizer from "react-virtualized-auto-sizer";
 import { FixedSizeListProps, ListOnScrollProps } from "react-window";
 

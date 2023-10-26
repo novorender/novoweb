@@ -1,5 +1,5 @@
-import { Box, Button, Checkbox, FormControlLabel, Modal, Typography, useTheme } from "@mui/material";
 import { Warning } from "@mui/icons-material";
+import { Box, Button, Checkbox, FormControlLabel, Modal, Typography, useTheme } from "@mui/material";
 
 import { useToggle } from "hooks/useToggle";
 

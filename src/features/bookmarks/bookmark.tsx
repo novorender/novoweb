@@ -1,28 +1,27 @@
-import { MouseEvent, useState } from "react";
-import { useHistory } from "react-router-dom";
+import { Delete, Edit, MoreVert, Share } from "@mui/icons-material";
 import {
-    useTheme,
     Box,
-    Typography,
-    styled,
-    tooltipClasses,
-    TooltipProps,
-    Tooltip as MuiTooltip,
     IconButton,
-    Menu,
-    MenuItem,
+    ListItemButton,
     ListItemIcon,
     ListItemText,
-    ListItemButton,
+    Menu,
+    MenuItem,
+    styled,
+    Tooltip as MuiTooltip,
+    tooltipClasses,
+    TooltipProps,
+    Typography,
+    useTheme,
 } from "@mui/material";
-import { Delete, Edit, MoreVert, Share } from "@mui/icons-material";
 import { css } from "@mui/styled-engine";
-
-import { Tooltip } from "components";
+import { MouseEvent, useState } from "react";
+import { useHistory } from "react-router-dom";
 
 import { useAppSelector } from "app/store";
-import { selectHasAdminCapabilities } from "slices/explorerSlice";
+import { Tooltip } from "components";
 import { selectUser } from "slices/authSlice";
+import { selectHasAdminCapabilities } from "slices/explorerSlice";
 
 import { BookmarkAccess, ExtendedBookmark } from "./bookmarksSlice";
 import { useSelectBookmark } from "./useSelectBookmark";

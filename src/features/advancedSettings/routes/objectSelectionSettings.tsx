@@ -14,7 +14,7 @@ import {
 import { highlightActions, useDispatchHighlighted, useHighlighted } from "contexts/highlighted";
 import { ColorPicker } from "features/colorPicker";
 import { renderActions, selectSecondaryHighlightProperty } from "features/render/renderSlice";
-import { VecRGBA, rgbToVec, vecToRgb } from "utils/color";
+import { rgbToVec, VecRGBA, vecToRgb } from "utils/color";
 
 export function ObjectSelectionSettings({ save, saving }: { save: () => Promise<void>; saving: boolean }) {
     const history = useHistory();

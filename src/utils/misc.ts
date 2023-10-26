@@ -1,4 +1,5 @@
 import { MeasureEntity, MeasurementValues, PointEntity, View } from "@novorender/api";
+
 import { RecursivePartial } from "types/misc";
 
 export function uniqueArray<T>(arr: T[]): T[] {
@@ -179,4 +180,32 @@ export function mergeRecursive<T>(original: T, changes: RecursivePartial<T>): T 
         }
     }
     return clone;
+}
+
+/**
+ * Format file size in metric prefix, i.e. where K = 1000;
+ * @param fileSize The byte size to format. Undefined numbers are reported as "<unknown>".
+ * @returns The size formated in "bytes", "KB", "MB" etc.
+ */
+export function formatFileSizeMetric(fileSize: number | undefined) {
+    if (fileSize === undefined) {
+        return "<unknown>";
+    }
+
+    let size = Math.abs(fileSize);
+
+    if (Number.isNaN(size)) {
+        return "Invalid file size";
+    }
+
+    if (size === 0) {
+        return "0 bytes";
+    }
+
+    const units = ["bytes", "KB", "MB", "GB", "TB"];
+    let quotient = Math.floor(Math.log10(size) / 3);
+    quotient = quotient < units.length ? quotient : units.length - 1;
+    size /= 1000 ** quotient;
+
+    return `${+size.toFixed(2)} ${units[quotient]}`;
 }

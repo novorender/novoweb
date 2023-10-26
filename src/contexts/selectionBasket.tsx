@@ -1,7 +1,7 @@
 import { ObjectId } from "@novorender/webgl-api";
 import { createContext, Dispatch, MutableRefObject, ReactNode, useContext, useReducer, useRef } from "react";
 
-import { toIdObj, toIdArr } from "utils/objectData";
+import { toIdArr, toIdObj } from "utils/objectData";
 
 const initialState = {
     ids: {} as Record<ObjectId, true | undefined>,
@@ -39,7 +39,7 @@ function set(ids: ObjectId[]) {
 
 const actions = { add, remove, set };
 
-type Actions = ReturnType<typeof actions[keyof typeof actions]>;
+type Actions = ReturnType<(typeof actions)[keyof typeof actions]>;
 type DispatchSelectionBasket = Dispatch<Actions>;
 type LazyState = MutableRefObject<State>;
 

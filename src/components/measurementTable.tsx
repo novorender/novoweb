@@ -1,4 +1,4 @@
-import { Table, TableHead, TableRow, Box, TableBody } from "@mui/material";
+import { Box, Table, TableBody, TableHead, TableRow } from "@mui/material";
 import { ReadonlyVec3, vec3 } from "gl-matrix";
 
 import { TableCell } from "components";

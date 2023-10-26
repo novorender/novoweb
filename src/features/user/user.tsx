@@ -1,16 +1,16 @@
 import { Box, Button, Grid } from "@mui/material";
 
-import { LogoSpeedDial, ScrollBox, WidgetContainer, WidgetHeader } from "components";
-import { useToggle } from "hooks/useToggle";
-import { featuresConfig } from "config/features";
-import WidgetList from "features/widgetList/widgetList";
-import { useAppSelector } from "app/store";
-import { selectMsalAccount, selectUser, User as UserType } from "slices/authSlice";
-import { useSceneId } from "hooks/useSceneId";
-import { deleteFromStorage } from "utils/storage";
-import { StorageKey } from "config/storage";
 import { msalInstance } from "app";
+import { useAppSelector } from "app/store";
+import { LogoSpeedDial, ScrollBox, WidgetContainer, WidgetHeader } from "components";
+import { featuresConfig } from "config/features";
+import { StorageKey } from "config/storage";
+import WidgetList from "features/widgetList/widgetList";
+import { useSceneId } from "hooks/useSceneId";
+import { useToggle } from "hooks/useToggle";
+import { selectMsalAccount, selectUser, User as UserType } from "slices/authSlice";
 import { selectMaximized, selectMinimized, selectUserRole, UserRole } from "slices/explorerSlice";
+import { deleteFromStorage } from "utils/storage";
 
 export default function User() {
     const [menuOpen, toggleMenu] = useToggle();

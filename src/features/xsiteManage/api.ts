@@ -7,7 +7,6 @@ import { selectXsiteManageAccessToken } from "./slice";
 import { LogPoint, Machine, Site } from "./types";
 
 export const xsiteManageAuthServer = "https://auth.prod.xsitemanage.com";
-export const xsiteManageClientId = window.xsiteManageClientId || import.meta.env.REACT_APP_XSITEMANAGE_CLIENT_ID || "";
 const maxPageSize = 100;
 
 const baseQuery = retry(
@@ -105,9 +104,9 @@ export const xsiteManageApi = createApi({
         }),
         getTokens: builder.query<
             { access_token: string; id_token: string; refresh_token: string; expires_in: number },
-            { code: string }
+            { code: string; config: { xsiteManageClientId: string } }
         >({
-            queryFn: async ({ code }) => {
+            queryFn: async ({ code, config }) => {
                 return fetch(xsiteManageAuthServer + "/oauth2/token", {
                     method: "POST",
                     headers: { "Content-Type": "application/x-www-form-urlencoded" },
@@ -115,7 +114,7 @@ export const xsiteManageApi = createApi({
                         grant_type: "authorization_code",
                         code: code,
                         redirect_uri: window.location.origin,
-                        client_id: xsiteManageClientId,
+                        client_id: config.xsiteManageClientId,
                     }),
                 })
                     .then((res) => {
@@ -135,15 +134,15 @@ export const xsiteManageApi = createApi({
         }),
         refreshTokens: builder.mutation<
             { access_token: string; id_token: string; expires_in: number },
-            { refreshToken: string }
+            { refreshToken: string; config: { xsiteManageClientId: string } }
         >({
-            queryFn: async ({ refreshToken }) => {
+            queryFn: async ({ refreshToken, config }) => {
                 return fetch(xsiteManageAuthServer + "/oauth2/token", {
                     method: "POST",
                     headers: { "Content-Type": "application/x-www-form-urlencoded" },
                     body: new URLSearchParams({
                         grant_type: "refresh_token",
-                        client_id: xsiteManageClientId,
+                        client_id: config.xsiteManageClientId,
                         refresh_token: refreshToken,
                         redirect_uri: window.location.origin,
                     }),

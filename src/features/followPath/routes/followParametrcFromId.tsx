@@ -1,7 +1,7 @@
 import { Box } from "@mui/material";
-import { LinearProgress } from "components";
 import { Redirect } from "react-router-dom";
 
+import { LinearProgress } from "components";
 import { AsyncStatus } from "types/misc";
 
 import { Follow } from "../follow";

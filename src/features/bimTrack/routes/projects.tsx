@@ -2,11 +2,10 @@ import { Box, css, List, ListItem, styled, Typography, useTheme } from "@mui/mat
 import { Link } from "react-router-dom";
 
 import { LinearProgress, ScrollBox } from "components";
+import fallbackImage from "media/img/bimtrack.png";
 import { Project } from "types/bcf";
 
 import { useGetProjectsQuery } from "../bimTrackApi";
-
-import fallbackImage from "media/img/bimtrack.png";
 
 export function Projects() {
     const theme = useTheme();

@@ -1,12 +1,11 @@
+import MoreHorizIcon from "@mui/icons-material/MoreHoriz";
+import NavigateNextIcon from "@mui/icons-material/NavigateNext";
 import { Box, Button, Menu, styled, useTheme } from "@mui/material";
 import { css } from "@mui/styled-engine";
-import { useState, useEffect, forwardRef, HTMLProps } from "react";
+import { forwardRef, HTMLProps, useEffect, useState } from "react";
 
-import { decodeObjPathName } from "utils/objectData";
-
-import NavigateNextIcon from "@mui/icons-material/NavigateNext";
-import MoreHorizIcon from "@mui/icons-material/MoreHoriz";
 import { Tooltip } from "components";
+import { decodeObjPathName } from "utils/objectData";
 
 const BreadcrumbSeparator = styled((props: HTMLProps<HTMLDivElement>) => (
     <div {...props} aria-hidden>

@@ -1,6 +1,7 @@
 import { InteractionRequiredAuthError, PublicClientApplication } from "@azure/msal-browser";
 import { MsalProvider } from "@azure/msal-react";
-import { CssBaseline } from "@mui/material";
+import { LoadingButton } from "@mui/lab";
+import { CircularProgress, CssBaseline, Paper, Snackbar, snackbarContentClasses } from "@mui/material";
 import { StyledEngineProvider, ThemeProvider } from "@mui/material/styles";
 import { LocalizationProvider } from "@mui/x-date-pickers";
 import { AdapterDateFns } from "@mui/x-date-pickers/AdapterDateFns";
@@ -8,16 +9,18 @@ import { createAPI as createDataAPI } from "@novorender/data-js-api";
 import enLocale from "date-fns/locale/en-GB";
 import { useEffect, useRef, useState } from "react";
 import { Route, Switch, useHistory } from "react-router-dom";
+import { useRegisterSW } from "virtual:pwa-register/react";
 
 import { useAppDispatch } from "app/store";
 import { theme } from "app/theme";
 import { Loading } from "components";
-import { dataServerBaseUrl } from "config";
+import { dataServerBaseUrl } from "config/app";
 import { loginRequest, msalConfig } from "config/auth";
 import { StorageKey } from "config/storage";
 import { Explorer } from "pages/explorer";
 import { Login } from "pages/login";
 import { authActions } from "slices/authSlice";
+import { explorerActions } from "slices/explorerSlice";
 import {
     CustomNavigationClient,
     getAccessToken,
@@ -47,7 +50,29 @@ export function App() {
     const history = useHistory();
     const [msalStatus, setMsalStatus] = useState(Status.Initial);
     const [authStatus, setAuthStatus] = useState(Status.Initial);
+    const [configStatus, setConfigStatus] = useState(
+        import.meta.env.MODE === "development" ? Status.Ready : Status.Initial
+    );
     const dispatch = useAppDispatch();
+
+    const {
+        needRefresh: [needRefresh],
+        updateServiceWorker,
+    } = useRegisterSW({
+        immediate: false,
+    });
+
+    useEffect(() => {
+        const handleOnline = () => dispatch(explorerActions.toggleIsOnline(true));
+        const handleOffline = () => dispatch(explorerActions.toggleIsOnline(false));
+        window.addEventListener("online", handleOnline);
+        window.addEventListener("offline", handleOffline);
+
+        return () => {
+            window.removeEventListener("online", handleOnline);
+            window.removeEventListener("offline", handleOffline);
+        };
+    }, [dispatch]);
 
     useEffect(() => {
         msalInstance.initialize().then(() => setMsalStatus(Status.Ready));
@@ -60,7 +85,6 @@ export function App() {
     }, [msalStatus, history]);
 
     const authenticating = useRef(false);
-
     useEffect(() => {
         if (authStatus !== Status.Initial || authenticating.current || msalStatus !== Status.Ready) {
             return;
@@ -95,52 +119,33 @@ export function App() {
                         return;
                     }
 
-                    return (
-                        msalInstance // .ssoSilent({
-                            //     ...loginRequest,
-                            //     account,
-                            //     sid: account.idTokenClaims?.sid,
-                            //     loginHint: account.idTokenClaims?.login_hint,
-                            //     authority: account.tenantId
-                            //         ? `https://login.microsoftonline.com/${account.tenantId}`
-                            //         : loginRequest.authority,
-                            // })
-                            // .catch(() => {
-                            //     return msalInstance.acquireTokenSilent({
-                            //         ...loginRequest,
-                            //         account,
-                            //         authority: account.tenantId
-                            //             ? `https://login.microsoftonline.com/${account.tenantId}`
-                            //             : loginRequest.authority,
-                            //     });
-                            // })
-                            .acquireTokenSilent({
-                                ...loginRequest,
-                                account,
-                                authority: account.tenantId
-                                    ? `https://login.microsoftonline.com/${account.tenantId}`
-                                    : loginRequest.authority,
-                            })
-                            .catch((e) => {
-                                if (e instanceof InteractionRequiredAuthError) {
-                                    return msalInstance
-                                        .acquireTokenPopup({
-                                            ...loginRequest,
-                                            account,
-                                            sid: account.idTokenClaims?.sid,
-                                            loginHint: account.idTokenClaims?.login_hint,
-                                            authority: account.tenantId
-                                                ? `https://login.microsoftonline.com/${account.tenantId}`
-                                                : loginRequest.authority,
-                                        })
-                                        .catch(() => {
-                                            dispatch(authActions.setMsalInteractionRequired(true));
-                                        });
-                                } else {
-                                    throw e;
-                                }
-                            })
-                    );
+                    return msalInstance
+                        .acquireTokenSilent({
+                            ...loginRequest,
+                            account,
+                            authority: account.tenantId
+                                ? `https://login.microsoftonline.com/${account.tenantId}`
+                                : loginRequest.authority,
+                        })
+                        .catch((e) => {
+                            if (e instanceof InteractionRequiredAuthError) {
+                                return msalInstance
+                                    .acquireTokenPopup({
+                                        ...loginRequest,
+                                        account,
+                                        sid: account.idTokenClaims?.sid,
+                                        loginHint: account.idTokenClaims?.login_hint,
+                                        authority: account.tenantId
+                                            ? `https://login.microsoftonline.com/${account.tenantId}`
+                                            : loginRequest.authority,
+                                    })
+                                    .catch(() => {
+                                        dispatch(authActions.setMsalInteractionRequired(true));
+                                    });
+                            } else {
+                                throw e;
+                            }
+                        });
                 });
 
                 if (res) {
@@ -203,6 +208,43 @@ export function App() {
         }
     }, [history]);
 
+    useEffect(() => {
+        if (configStatus !== Status.Initial) {
+            return;
+        }
+
+        let timeOutId = 0;
+        setConfigStatus(Status.Loading);
+        initConfig();
+
+        async function initConfig() {
+            let attempt = 0;
+            const load = () =>
+                fetch("/config.json")
+                    .then((res) => res.json())
+                    .catch(async () => {
+                        if (attempt < 2) {
+                            return new Promise((resolve) => {
+                                timeOutId = setTimeout(async () => {
+                                    ++attempt;
+                                    resolve(await load());
+                                }, Math.pow(2, attempt) * 1000);
+                            });
+                        }
+                    });
+
+            const cfg = await load();
+            if (cfg) {
+                dispatch(explorerActions.setConfig(cfg));
+            }
+            setConfigStatus(Status.Ready);
+        }
+
+        return () => {
+            clearTimeout(timeOutId);
+        };
+    }, [dispatch, configStatus]);
+
     return (
         <>
             <LocalizationProvider dateAdapter={AdapterDateFns} adapterLocale={enLocale}>
@@ -210,28 +252,76 @@ export function App() {
                     <StyledEngineProvider injectFirst>
                         <ThemeProvider theme={theme}>
                             <CssBaseline />
-                            {authStatus !== Status.Ready ? (
+                            {authStatus !== Status.Ready || configStatus !== Status.Ready ? (
                                 <Loading />
                             ) : (
-                                <Switch>
-                                    <Route path="/login/:id">
-                                        <Login />
-                                    </Route>
-                                    <Route path="/callback">
-                                        <Loading />
-                                    </Route>
-                                    <Route path="/explorer/:id?">
-                                        <Explorer />
-                                    </Route>
-                                    <Route path="/:id?">
-                                        <Explorer />
-                                    </Route>
-                                </Switch>
+                                <>
+                                    {needRefresh && <UpdatePrompt update={() => updateServiceWorker(true)} />}
+                                    <Switch>
+                                        <Route path="/login/:id">
+                                            <Login />
+                                        </Route>
+                                        <Route path="/callback">
+                                            <Loading />
+                                        </Route>
+                                        <Route path="/explorer/:id?">
+                                            <Explorer />
+                                        </Route>
+                                        <Route path="/:id?">
+                                            <Explorer />
+                                        </Route>
+                                    </Switch>
+                                </>
                             )}
                         </ThemeProvider>
                     </StyledEngineProvider>
                 </MsalProvider>
             </LocalizationProvider>
         </>
+    );
+}
+
+function UpdatePrompt({ update }: { update: () => void }) {
+    const [updating, setUpdating] = useState(false);
+
+    return (
+        <Snackbar
+            anchorOrigin={{ vertical: "bottom", horizontal: "center" }}
+            sx={{
+                bottom: { xs: 132, sm: "auto" },
+                top: { xs: "auto", sm: 32 },
+                [`& .${snackbarContentClasses.root}`]: {
+                    py: 2,
+                },
+            }}
+            open={true}
+            message={"A new version is available."}
+        >
+            <Paper
+                sx={{
+                    px: 2,
+                    py: 1.5,
+                    background: (theme) => theme.palette.secondary.main,
+                    color: "#fff",
+                }}
+            >
+                <>
+                    A new version is available.
+                    <LoadingButton
+                        loading={updating}
+                        loadingIndicator={<CircularProgress size={20} />}
+                        variant={"contained"}
+                        size="small"
+                        onClick={() => {
+                            setUpdating(true);
+                            update();
+                        }}
+                        sx={{ ml: 2, color: "#fff" }}
+                    >
+                        Update
+                    </LoadingButton>
+                </>
+            </Paper>
+        </Snackbar>
     );
 }

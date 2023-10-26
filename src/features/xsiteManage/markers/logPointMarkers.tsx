@@ -2,7 +2,7 @@ import { Box, css, styled } from "@mui/material";
 import { SVGProps } from "react";
 
 import { useAppDispatch, useAppSelector } from "app/store";
-import { StampKind, renderActions, selectStamp } from "features/render";
+import { renderActions, selectStamp, StampKind } from "features/render";
 
 import { useXsiteManageLogPointMarkers } from "../hooks/useXsiteManageLogPointMarkers";
 

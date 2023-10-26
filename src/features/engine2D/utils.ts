@@ -144,6 +144,7 @@ function drawAngle(ctx: CanvasRenderingContext2D, camera: CameraSettings, part: 
         const dirCamB = vec3.sub(vec3.create(), part.vertices3D[2], camera.pos);
         const dirCamP = vec3.sub(vec3.create(), part.vertices3D[0], camera.pos);
         const norm = vec3.cross(vec3.create(), dirA, dirB);
+        vec3.normalize(norm, norm);
         vec3.normalize(dirCamA, dirCamA);
         vec3.normalize(dirCamB, dirCamB);
         vec3.normalize(dirCamP, dirCamP);
@@ -160,43 +161,55 @@ function drawAngle(ctx: CanvasRenderingContext2D, camera: CameraSettings, part: 
         }
         vec2.scale(d0, d0, 1 / l0);
         vec2.scale(d1, d1, 1 / l1);
-        const dir = vec2.add(vec2.create(), d1, d0);
-        const dirLen = vec2.len(dir);
-        if (dirLen < 0.001) {
-            vec2.set(dir, 0, 1);
+        if (part.text && part.text === "90.0°") {
+            const start = vec2.scaleAndAdd(vec2.create(), anglePoint, d0, 20);
+            const mid = vec2.scaleAndAdd(vec2.create(), start, d1, 20);
+            const end = vec2.scaleAndAdd(vec2.create(), mid, d0, -20);
+            ctx.beginPath();
+            ctx.moveTo(start[0], start[1]);
+            ctx.lineTo(mid[0], mid[1]);
+            ctx.lineTo(end[0], end[1]);
+            ctx.stroke();
         } else {
-            vec2.scale(dir, dir, 1 / dirLen);
+            const dir = vec2.add(vec2.create(), d1, d0);
+            const dirLen = vec2.len(dir);
+            if (dirLen < 0.001) {
+                vec2.set(dir, 0, 1);
+            } else {
+                vec2.scale(dir, dir, 1 / dirLen);
+            }
+
+            let angleA = Math.atan2(d0[1], d0[0]);
+            let angleB = Math.atan2(d1[1], d1[0]);
+
+            const sw = d0[0] * d1[1] - d0[1] * d1[0];
+
+            if (sw < 0) {
+                const tmp = angleA;
+                angleA = angleB;
+                angleB = tmp;
+            }
+
+            ctx.beginPath();
+
+            ctx.arc(anglePoint[0], anglePoint[1], 50, angleA, angleB);
+            ctx.stroke();
+
+            if (part.text && !Array.isArray(part.text)) {
+                ctx.fillStyle = "white";
+                ctx.strokeStyle = "black";
+                ctx.lineWidth = 2;
+                ctx.font = `bold ${16}px "Open Sans", sans-serif`;
+
+                const textX = anglePoint[0] + dir[0] * 25;
+                const textY = anglePoint[1] + dir[1] * 25;
+                ctx.translate(textX, textY);
+                ctx.strokeText(part.text, 0, 0);
+                ctx.fillText(part.text, 0, 0);
+                ctx.resetTransform();
+            }
         }
 
-        let angleA = Math.atan2(d0[1], d0[0]);
-        let angleB = Math.atan2(d1[1], d1[0]);
-
-        const sw = d0[0] * d1[1] - d0[1] * d1[0];
-
-        if (sw < 0) {
-            const tmp = angleA;
-            angleA = angleB;
-            angleB = tmp;
-        }
-
-        ctx.beginPath();
-
-        ctx.arc(anglePoint[0], anglePoint[1], 50, angleA, angleB);
-        ctx.stroke();
-
-        if (part.text && !Array.isArray(part.text)) {
-            ctx.fillStyle = "white";
-            ctx.strokeStyle = "black";
-            ctx.lineWidth = 2;
-            ctx.font = `bold ${16}px "Open Sans", sans-serif`;
-
-            const textX = anglePoint[0] + dir[0] * 25;
-            const textY = anglePoint[1] + dir[1] * 25;
-            ctx.translate(textX, textY);
-            ctx.strokeText(part.text, 0, 0);
-            ctx.fillText(part.text, 0, 0);
-            ctx.resetTransform();
-        }
         return true;
     }
     return false;

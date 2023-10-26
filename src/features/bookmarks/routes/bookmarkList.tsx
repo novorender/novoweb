@@ -1,30 +1,30 @@
-import { useHistory } from "react-router-dom";
-import { FilterAlt, AddCircle, Save } from "@mui/icons-material";
+import { AddCircle, FilterAlt, Save } from "@mui/icons-material";
 import { Box, Button, List, useTheme } from "@mui/material";
-import { useState, MouseEvent, useEffect } from "react";
+import { MouseEvent, useEffect, useState } from "react";
+import { useHistory } from "react-router-dom";
 
 import { dataApi } from "app";
-import { Divider, LinearProgress, ScrollBox } from "components";
 import { useAppDispatch, useAppSelector } from "app/store";
-import { selectUser } from "slices/authSlice";
-import { useSceneId } from "hooks/useSceneId";
-import { ViewMode } from "types/misc";
+import { Divider, LinearProgress, ScrollBox } from "components";
+import { GroupStatus } from "contexts/objectGroups";
 import { selectViewMode } from "features/render/renderSlice";
+import { useSceneId } from "hooks/useSceneId";
+import { selectUser } from "slices/authSlice";
+import { ViewMode } from "types/misc";
 
+import { Bookmark } from "../bookmark";
 import {
+    BookmarkAccess,
+    bookmarksActions,
+    BookmarksStatus,
+    ExtendedBookmark,
     Filters,
     selectBookmarkFilters,
     selectBookmarks,
-    BookmarksStatus,
     selectBookmarksStatus,
-    BookmarkAccess,
-    ExtendedBookmark,
-    bookmarksActions,
 } from "../bookmarksSlice";
-import { FilterMenu } from "../filterMenu";
-import { Bookmark } from "../bookmark";
 import { Collection } from "../collection";
-import { GroupStatus } from "contexts/objectGroups";
+import { FilterMenu } from "../filterMenu";
 
 const filterMenuId = "bm-filter-menu";
 

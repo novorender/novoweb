@@ -5,10 +5,32 @@
         "@typescript-eslint/no-unused-vars": [
             1,
             { "vars": "all", "varsIgnorePattern": "^_", "args": "after-used", "argsIgnorePattern": "^_" }
+        ],
+        "simple-import-sort/imports": [
+            "error",
+            {
+                "groups": [
+                    // Side effect imports.
+                    ["^\\u0000"],
+                    // Node.js builtins prefixed with `node:`.
+                    ["^node:"],
+                    // Packages.
+                    // Things that start with a letter (or digit or underscore), or `@` followed by a letter.
+                    ["^@?\\w"],
+                    // App imports
+                    ["^(app|pages|features|components|hooks|slices|contexts|config|utils|types|media)"],
+                    // Anything not matched in another group.
+                    ["^"],
+                    // Relative imports.
+                    // Anything that starts with a dot.
+                    ["^\\."]
+                ]
+            }
         ]
     },
+    "plugins": ["simple-import-sort"],
     "parserOptions": {
-        "ecmaVersion": 2020,
+        "ecmaVersion": 2023,
         "sourceType": "module"
     },
     "settings": {

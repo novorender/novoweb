@@ -5,7 +5,7 @@ import { Redirect, useHistory } from "react-router-dom";
 import { useAppDispatch, useAppSelector } from "app/store";
 import { LinearProgress, ScrollBox } from "components";
 import { StorageKey } from "config/storage";
-import { selectHasAdminCapabilities } from "slices/explorerSlice";
+import { selectConfig, selectHasAdminCapabilities } from "slices/explorerSlice";
 import { AsyncStatus } from "types/misc";
 import { deleteFromStorage, getFromStorage, saveToStorage } from "utils/storage";
 
@@ -42,6 +42,7 @@ export function Auth() {
     const project = useAppSelector(selectJiraProject);
     const component = useAppSelector(selectJiraComponent);
     const config = useAppSelector(selectJiraConfig);
+    const explorerConfig = useAppSelector(selectConfig);
     const [error, setError] = useState("");
 
     const [getTokens, { data: tokensResponse, error: tokensError }] = useLazyGetTokensQuery();
@@ -81,11 +82,11 @@ export function Auth() {
                 window.history.replaceState(null, "", window.location.pathname);
                 dispatch(jiraActions.setAccessToken({ status: AsyncStatus.Loading }));
                 getTokensRequestInitialized = true;
-                getTokens({ code });
+                getTokens({ code, config: explorerConfig });
             } else if (refreshToken) {
                 dispatch(jiraActions.setAccessToken({ status: AsyncStatus.Loading }));
 
-                const res = await refreshTokens({ refreshToken });
+                const res = await refreshTokens({ refreshToken, config: explorerConfig });
 
                 if ("data" in res) {
                     saveToStorage(StorageKey.JiraRefreshToken, res.data.refresh_token);
@@ -103,7 +104,7 @@ export function Auth() {
                 history.push("/login");
             }
         }
-    }, [accessToken, getTokens, dispatch, history, refreshTokens]);
+    }, [accessToken, getTokens, dispatch, history, refreshTokens, explorerConfig]);
 
     useEffect(() => {
         if (accessToken.status !== AsyncStatus.Loading || !(tokensResponse || tokensError)) {

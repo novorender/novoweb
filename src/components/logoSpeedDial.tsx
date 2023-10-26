@@ -1,4 +1,3 @@
-import { SyntheticEvent } from "react";
 import { Close } from "@mui/icons-material";
 import {
     Box,
@@ -12,10 +11,12 @@ import {
     useMediaQuery,
     useTheme,
 } from "@mui/material";
-import { ReactComponent as NovorenderIcon } from "media/icons/novorender-small.svg";
+import { SyntheticEvent } from "react";
 
-import { useAppDispatch } from "app/store";
+import { useAppDispatch, useAppSelector } from "app/store";
 import { renderActions } from "features/render";
+import { ReactComponent as NovorenderIcon } from "media/icons/novorender-small.svg";
+import { selectIsOnline } from "slices/explorerSlice";
 
 export function LogoSpeedDial({
     open,
@@ -25,6 +26,7 @@ export function LogoSpeedDial({
 }: Omit<SpeedDialProps, "ariaLabel"> & { ariaLabel?: string; toggle: () => void }) {
     const theme = useTheme();
     const isSmall = useMediaQuery(theme.breakpoints.down("md"));
+    const isOnline = useAppSelector(selectIsOnline);
     const dispatch = useAppDispatch();
 
     const handleToggle = (_event: SyntheticEvent<{}, Event>, reason: OpenReason | CloseReason) => {
@@ -57,7 +59,7 @@ export function LogoSpeedDial({
                 FabProps={
                     {
                         ...props.FabProps,
-                        color: open ? "secondary" : "primary",
+                        color: open ? (isOnline ? "secondary" : "primary") : isOnline ? "primary" : "secondary",
                         size: isSmall ? "small" : "large",
                     } as Partial<FabProps<"button">>
                 }

@@ -2,6 +2,7 @@ import { useEffect, useRef } from "react";
 
 import { useAppDispatch, useAppSelector } from "app/store";
 import { StorageKey } from "config/storage";
+import { selectConfig } from "slices/explorerSlice";
 import { AsyncStatus } from "types/misc";
 import { deleteFromStorage, getFromStorage, saveToStorage } from "utils/storage";
 
@@ -13,6 +14,7 @@ export function useHandleDitioKeepAlive() {
     const refreshToken = useAppSelector(selectDitioRefreshToken);
     const [refreshTokens] = useRefreshTokensMutation();
     const { data: authConfig } = useGetAuthConfigQuery(undefined, { skip: !refreshToken });
+    const config = useAppSelector(selectConfig);
 
     const timeoutId = useRef<number>();
     useEffect(() => {
@@ -42,6 +44,7 @@ export function useHandleDitioKeepAlive() {
             const res = await refreshTokens({
                 tokenEndpoint: authConfig?.token_endpoint ?? "",
                 refreshToken: refreshToken.token,
+                config,
             });
 
             if ("data" in res) {
@@ -65,7 +68,7 @@ export function useHandleDitioKeepAlive() {
             window.clearTimeout(timeoutId.current);
             timeoutId.current = undefined;
         };
-    }, [refreshToken, dispatch, refreshTokens, authConfig]);
+    }, [refreshToken, dispatch, refreshTokens, authConfig, config]);
 
     return;
 }

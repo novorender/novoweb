@@ -1,21 +1,20 @@
-import { createSelector, createSlice, PayloadAction } from "@reduxjs/toolkit";
 import { SearchPattern } from "@novorender/webgl-api";
+import { createSelector, createSlice, PayloadAction } from "@reduxjs/toolkit";
 
+import type { RootState } from "app/store";
+import { CanvasContextMenuFeatureKey, defaultCanvasContextMenuFeatures } from "config/canvasContextMenu";
 import {
-    featuresConfig,
-    WidgetKey,
-    Widget,
+    allWidgets,
+    ButtonKey,
+    defaultEnabledAdminWidgets,
     defaultEnabledWidgets,
     defaultLockedWidgets,
-    ButtonKey,
-    allWidgets,
-    defaultEnabledAdminWidgets,
+    featuresConfig,
+    Widget,
+    WidgetKey,
 } from "config/features";
-import type { RootState } from "app/store";
+import { DeepMutable, initScene } from "features/render";
 import { uniqueArray } from "utils/misc";
-
-import { CanvasContextMenuFeatureKey, DeepMutable, initScene } from "features/render";
-import { defaultCanvasContextMenuFeatures } from "features/render/canvasContextMenuStamp";
 
 export enum SceneType {
     Viewer,
@@ -32,6 +31,7 @@ type UrlSearchQuery = undefined | string | SearchPattern[];
 type WritableUrlSearchQuery = DeepMutable<UrlSearchQuery>;
 
 const initialState = {
+    isOnline: navigator.onLine,
     enabledWidgets: defaultEnabledWidgets,
     lockedWidgets: defaultLockedWidgets,
     sceneType: SceneType.Viewer,
@@ -50,12 +50,24 @@ const initialState = {
     },
     contextMenu: {
         canvas: {
-            features: defaultCanvasContextMenuFeatures as CanvasContextMenuFeatureKey[],
+            features: defaultCanvasContextMenuFeatures,
         },
     },
     urlSearchQuery: undefined as WritableUrlSearchQuery,
     urlBookmarkId: undefined as undefined | string,
     localBookmarkId: undefined as undefined | string,
+    config: {
+        dataServerUrl: (import.meta.env.REACT_APP_DATA_SERVER_URL ?? "https://data.novorender.com/api") as string,
+        bimCollabClientSecret: (import.meta.env.REACT_APP_BIMCOLLAB_CLIENT_SECRET ?? "") as string,
+        bimCollabClientId: (import.meta.env.REACT_APP_BIMCOLLAB_CLIENT_ID ?? "") as string,
+        bimTrackClientSecret: (import.meta.env.REACT_APP_BIMTRACK_CLIENT_SECRET ?? "") as string,
+        bimTrackClientId: (import.meta.env.REACT_APP_BIMTRACK_CLIENT_ID ?? "") as string,
+        ditioClientSecret: (import.meta.env.REACT_APP_DITIO_CLIENT_SECRET ?? "") as string,
+        ditioClientId: (import.meta.env.REACT_APP_DITIO_CLIENT_ID ?? "") as string,
+        jiraClientId: (import.meta.env.REACT_APP_JIRA_CLIENT_ID ?? "") as string,
+        jiraClientSecret: (import.meta.env.REACT_APP_JIRA_CLIENT_SECRET ?? "") as string,
+        xsiteManageClientId: (import.meta.env.REACT_APP_XSITEMANAGE_CLIENT_ID ?? "") as string,
+    },
 };
 
 type State = typeof initialState;
@@ -195,6 +207,12 @@ export const explorerSlice = createSlice({
         setCanvasContextMenu: (state, action: PayloadAction<Partial<State["contextMenu"]["canvas"]>>) => {
             state.contextMenu.canvas = { ...state.contextMenu.canvas, ...action.payload };
         },
+        toggleIsOnline: (state, action: PayloadAction<State["isOnline"] | undefined>) => {
+            state.isOnline = action.payload !== undefined ? action.payload : !state.isOnline;
+        },
+        setConfig: (state, action: PayloadAction<State["config"]>) => {
+            state.config = action.payload;
+        },
     },
     extraReducers(builder) {
         builder.addCase(initScene, (state, action) => {
@@ -269,6 +287,8 @@ export const selectPrimaryMenu = (state: RootState) => state.explorer.primaryMen
 export const selectIsAdminScene = (state: RootState) => state.explorer.sceneType === SceneType.Admin;
 export const selectHasAdminCapabilities = (state: RootState) => state.explorer.userRole !== UserRole.Viewer;
 export const selectCanvasContextMenuFeatures = (state: RootState) => state.explorer.contextMenu.canvas.features;
+export const selectIsOnline = (state: RootState) => state.explorer.isOnline;
+export const selectConfig = (state: RootState) => state.explorer.config;
 
 export const selectEnabledWidgets = createSelector(
     (state: RootState) => state.explorer.enabledWidgets,

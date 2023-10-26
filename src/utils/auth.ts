@@ -1,16 +1,17 @@
-import { AuthenticationHeader } from "@novorender/data-js-api";
 import { AccountInfo, InteractionRequiredAuthError, NavigationClient, NavigationOptions } from "@azure/msal-browser";
+import { AuthenticationHeader } from "@novorender/data-js-api";
 import { History } from "history";
 
 import { msalInstance } from "app";
 import { store } from "app/store";
+import { dataServerBaseUrl } from "config/app";
 import { loginRequest } from "config/auth";
-import { authActions, User } from "slices/authSlice";
-import { sha256, base64UrlEncode } from "utils/misc";
-import { deleteFromStorage, getFromStorage, saveToStorage } from "./storage";
-import { StorageKey } from "config/storage";
-import { dataServerBaseUrl } from "config";
 import { WidgetKey } from "config/features";
+import { StorageKey } from "config/storage";
+import { authActions, User } from "slices/authSlice";
+import { base64UrlEncode, sha256 } from "utils/misc";
+
+import { deleteFromStorage, getFromStorage, saveToStorage } from "./storage";
 
 let prevMsalToken = "";
 let nrToken = "";
@@ -31,17 +32,6 @@ export async function getAuthHeader(): Promise<AuthenticationHeader> {
                         ? `https://login.microsoftonline.com/${msalAccount.tenantId}`
                         : loginRequest.authority,
                 })
-                // .catch(() => {
-                //     return msalInstance.ssoSilent({
-                //         ...loginRequest,
-                //         sid: msalAccount.idTokenClaims?.sid,
-                //         loginHint: msalAccount.idTokenClaims?.login_hint,
-                //         account: msalAccount,
-                //         authority: msalAccount.tenantId
-                //             ? `https://login.microsoftonline.com/${msalAccount.tenantId}`
-                //             : loginRequest.authority,
-                //     });
-                // })
                 .catch((e) => {
                     if (e instanceof InteractionRequiredAuthError) {
                         return msalInstance

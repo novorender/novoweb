@@ -1,6 +1,7 @@
 import { MeasureView, SceneConfig as OctreeSceneConfig, View } from "@novorender/api";
+import { OfflineViewState } from "@novorender/api/offline";
 import { ObjectDB } from "@novorender/data-js-api";
-import { Dispatch, ReactNode, createContext, useContext, useReducer } from "react";
+import { createContext, Dispatch, ReactNode, useContext, useReducer } from "react";
 
 // Values that are used all over the place within Explorer, but are unserializable go here instead of redux store.
 
@@ -11,14 +12,15 @@ const initialState = {
     canvas: null as null | HTMLCanvasElement,
     measureView: undefined as undefined | MeasureView,
     size: { width: 0, height: 0 },
+    offlineWorkerState: undefined as undefined | OfflineViewState,
 };
 
 type State = typeof initialState;
 type HydratedState = Pick<
     { [K in keyof State]: NonNullable<State[K]> },
-    "view" | "scene" | "db" | "canvas" | "measureView"
+    "view" | "scene" | "db" | "canvas" | "measureView" | "offlineWorkerState"
 > &
-    Omit<State, "view" | "scene" | "db" | "canvas" | "measureView">;
+    Omit<State, "view" | "scene" | "db" | "canvas" | "measureView" | "offlineWorkerState">;
 
 enum ActionTypes {
     Set,

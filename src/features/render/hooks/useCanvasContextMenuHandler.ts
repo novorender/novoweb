@@ -6,7 +6,7 @@ import { highlightActions, useDispatchHighlighted } from "contexts/highlighted";
 import { selectCanvasContextMenuFeatures } from "slices/explorerSlice";
 import { isRealVec } from "utils/misc";
 
-import { Picker, StampKind, renderActions, selectPicker } from "../renderSlice";
+import { Picker, renderActions, selectPicker, StampKind } from "../renderSlice";
 
 export function useCanvasContextMenuHandler() {
     const dispatch = useAppDispatch();

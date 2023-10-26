@@ -6,7 +6,7 @@ import { useAppDispatch, useAppSelector } from "app/store";
 import { LinearProgress, ScrollBox } from "components";
 import { featuresConfig } from "config/features";
 import { StorageKey } from "config/storage";
-import { selectHasAdminCapabilities } from "slices/explorerSlice";
+import { selectConfig, selectHasAdminCapabilities } from "slices/explorerSlice";
 import { AsyncStatus } from "types/misc";
 import { deleteFromStorage, getFromStorage, saveToStorage } from "utils/storage";
 
@@ -28,6 +28,7 @@ export function Auth() {
     const accessToken = useAppSelector(selectXsiteManageAccessToken);
     const site = useAppSelector(selectXsiteManageSite);
     const config = useAppSelector(selectXsiteManageConfig);
+    const explorerConfig = useAppSelector(selectConfig);
     const [error, setError] = useState("");
 
     const [getTokens, { data: tokensResponse, error: tokensError }] = useLazyGetTokensQuery();
@@ -54,7 +55,7 @@ export function Auth() {
                 window.history.replaceState(null, "", window.location.pathname);
                 dispatch(xsiteManageActions.setAccessToken({ status: AsyncStatus.Loading }));
                 getTokensRequestInitialized = true;
-                getTokens({ code });
+                getTokens({ code, config: explorerConfig });
             } else if (storedRefreshToken) {
                 try {
                     const refreshToken = JSON.parse(storedRefreshToken) as { token: string; expires: number };
@@ -65,7 +66,7 @@ export function Auth() {
 
                     dispatch(xsiteManageActions.setAccessToken({ status: AsyncStatus.Loading }));
 
-                    const res = await refreshTokens({ refreshToken: refreshToken.token });
+                    const res = await refreshTokens({ refreshToken: refreshToken.token, config: explorerConfig });
 
                     if ("data" in res) {
                         dispatch(
@@ -93,7 +94,7 @@ export function Auth() {
                 history.push("/login");
             }
         }
-    }, [accessToken, getTokens, dispatch, history, refreshTokens]);
+    }, [accessToken, getTokens, dispatch, history, refreshTokens, explorerConfig]);
 
     useEffect(() => {
         if (accessToken.status !== AsyncStatus.Loading || !(tokensResponse || tokensError)) {

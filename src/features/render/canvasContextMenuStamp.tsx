@@ -6,49 +6,16 @@ import { useEffect, useState } from "react";
 
 import { useAppDispatch, useAppSelector } from "app/store";
 import { LinearProgress } from "components";
+import { canvasContextMenuConfig as config } from "config/canvasContextMenu";
 import { useExplorerGlobals } from "contexts/explorerGlobals";
 import { hiddenActions, useDispatchHidden } from "contexts/hidden";
 import { highlightActions, useDispatchHighlighted } from "contexts/highlighted";
 import { selectionBasketActions, useDispatchSelectionBasket } from "contexts/selectionBasket";
 import { measureActions } from "features/measure";
-import { ObjectVisibility, StampKind, renderActions, selectClippingPlanes, selectStamp } from "features/render";
+import { ObjectVisibility, renderActions, selectClippingPlanes, selectStamp, StampKind } from "features/render";
 import { selectCanvasContextMenuFeatures } from "slices/explorerSlice";
 import { getFilePathFromObjectPath } from "utils/objectData";
 import { getObjectData, searchDeepByPatterns } from "utils/search";
-
-export const canvasContextMenuConfig = {
-    hide: {
-        key: "hide",
-        name: "Hide",
-    },
-    hideLayer: {
-        key: "hideLayer",
-        name: "Hide class / layer",
-    },
-    addFileToBasket: {
-        key: "addFileToBasket",
-        name: "Add file to selection basket",
-    },
-    measure: {
-        key: "measure",
-        name: "Measure",
-    },
-    clip: {
-        key: "clip",
-        name: "Add clipping plane",
-    },
-} as const;
-
-const config = canvasContextMenuConfig;
-export const canvasContextMenuFeatures = Object.values(config);
-export const defaultCanvasContextMenuFeatures = [
-    config.hide.key,
-    config.hideLayer.key,
-    config.addFileToBasket.key,
-    config.measure.key,
-    config.clip.key,
-];
-export type CanvasContextMenuFeatureKey = keyof typeof config;
 
 export function CanvasContextMenuStamp() {
     const dispatch = useAppDispatch();

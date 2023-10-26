@@ -27,7 +27,7 @@ import { renderActions, selectDeviations } from "features/render";
 import { loadScene } from "features/render/hooks/useHandleInit";
 import { selectHasAdminCapabilities, selectIsAdminScene } from "slices/explorerSlice";
 import { AsyncStatus } from "types/misc";
-import { VecRGBA, rgbToVec, vecToRgb } from "utils/color";
+import { rgbToVec, VecRGBA, vecToRgb } from "utils/color";
 import { mergeRecursive } from "utils/misc";
 
 import { selectDeviationProfilesData } from "../deviationsSlice";

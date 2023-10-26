@@ -1,5 +1,6 @@
 declare module "@novorender/data-js-api" {
     import { vec3 } from "gl-matrix";
+
     import { ExtendedMeasureEntity, ViewMode } from "types/misc";
 
     type ExplorerBookmarkState = {
@@ -102,6 +103,16 @@ declare module "@novorender/data-js-api" {
                       line: boolean;
                       lineColor: [number, number, number, number];
                   };
+              }
+            | undefined;
+        outlineMeasure:
+            | {
+                  laserPlane: ReadonlyVec4;
+                  lasers: {
+                      laserPosition: ReadonlyVec3;
+                      measurementX?: { start: ReadonlyVec3; end: ReadonlyVec3 };
+                      measurementY?: { start: ReadonlyVec3; end: ReadonlyVec3 };
+                  }[];
               }
             | undefined;
     };
