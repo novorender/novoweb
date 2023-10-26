@@ -7,7 +7,7 @@ import { Link, MemoryRouter, Route, Switch } from "react-router-dom";
 import { dataApi } from "app";
 import { useAppSelector } from "app/store";
 import { Divider, LinearProgress, LogoSpeedDial, ScrollBox, WidgetContainer, WidgetHeader } from "components";
-import { defaultEnabledAdminWidgets, featuresConfig, FeatureType } from "config/features";
+import { featuresConfig, FeatureType } from "config/features";
 import { useExplorerGlobals } from "contexts/explorerGlobals";
 import { HighlightCollection, useHighlightCollections } from "contexts/highlightCollections";
 import { useHighlighted } from "contexts/highlighted";
@@ -97,11 +97,7 @@ export default function AdvancedSettings() {
                 features: {
                     widgets: {
                         enabled: enabledWidgets
-                            .filter(
-                                (widget) =>
-                                    widget.type !== FeatureType.AdminWidget ||
-                                    defaultEnabledAdminWidgets.includes(widget.key)
-                            )
+                            .filter((widget) => widget.type !== FeatureType.AdminWidget)
                             .map((widget) => widget.key),
                     },
                     properties: propertiesSettings,
