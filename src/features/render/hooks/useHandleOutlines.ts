@@ -45,6 +45,7 @@ export function useHandleOutlines() {
     useEffect(() => {
         updateClippedFiles();
         async function updateClippedFiles() {
+            //This function will not work unless the pick buffer is ready. As this can be called from bookmark a long sleep is required for everything to be set up
             const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
             await sleep(1000);
             if (db && view && groupRef.current.length === 0) {
@@ -102,6 +103,7 @@ export function useHandleOutlines() {
             }
             generationRef.current++;
             const generation = generationRef.current;
+            //We need a sleep to make sure the pick buffer is ready.
             const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
             await sleep(100);
             if (generation < generationRef.current) {
