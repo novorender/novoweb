@@ -23,7 +23,7 @@ export function useHandleCameraSpeed() {
                 if ("updateParams" in controller) {
                     controller.updateParams({
                         linearVelocity: levels[currentLevel],
-                        rotationalVelocity: levels[currentLevel],
+                        rotationalVelocity: 1,
                         proportionalCameraSpeed: proportionalSpeed.enabled
                             ? {
                                   min: proportionalSpeed.min,
