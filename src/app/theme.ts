@@ -25,6 +25,17 @@ declare module "@mui/material/styles/createTheme" {
             widgetHeader: string;
         };
     }
+
+    interface ThemeOptions {
+        customBreakPoints: {
+            height: {
+                sm: number;
+            };
+        };
+        customShadows: {
+            widgetHeader: string;
+        };
+    }
 }
 
 let theme = createTheme({
