@@ -163,17 +163,17 @@ function Pending() {
                 <Button
                     sx={{ my: 2 }}
                     disabled={action !== undefined}
-                    onClick={() => dispatch(offlineActions.setAction({ action: "incrementalSync" }))}
+                    onClick={() => dispatch(offlineActions.setAction({ action: "fullSync" }))}
                 >
-                    Incremental
+                    Full download
                 </Button>
                 <Button
                     sx={{ my: 2 }}
                     variant="contained"
                     disabled={action !== undefined}
-                    onClick={() => dispatch(offlineActions.setAction({ action: "fullSync" }))}
+                    onClick={() => dispatch(offlineActions.setAction({ action: "incrementalSync" }))}
                 >
-                    Full download
+                    Incremental
                 </Button>
             </Box>
         </>

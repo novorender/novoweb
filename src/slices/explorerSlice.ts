@@ -10,6 +10,7 @@ import {
     defaultEnabledWidgets,
     defaultLockedWidgets,
     featuresConfig,
+    FeatureType,
     Widget,
     WidgetKey,
 } from "config/features";
@@ -242,7 +243,9 @@ export const explorerSlice = createSlice({
             } else {
                 state.enabledWidgets = uniqueArray(
                     (customProperties.explorerProjectState
-                        ? (customProperties.explorerProjectState.features.widgets.enabled as WidgetKey[])
+                        ? (customProperties.explorerProjectState.features.widgets.enabled as WidgetKey[]).filter(
+                              (key) => featuresConfig[key].type !== FeatureType.AdminWidget
+                          )
                         : getEnabledFeatures(customProperties)
                     ).concat(defaultEnabledWidgets)
                 );

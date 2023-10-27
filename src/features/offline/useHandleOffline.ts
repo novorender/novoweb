@@ -216,7 +216,7 @@ export function useHandleOffline() {
 
                     await Promise.all([
                         dataApi.getBookmarks(viewerSceneId),
-                        dataApi.getBookmarks(viewerSceneId, { personal: true }),
+                        user ? dataApi.getBookmarks(viewerSceneId, { personal: true }) : Promise.resolve(),
                         ...sceneData.objectGroups
                             .filter((group) => group.id && !group.ids)
                             .map((group) => dataApi.getGroupIds(viewerSceneId, group.id)),

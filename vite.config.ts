@@ -175,6 +175,9 @@ export default defineConfig(({ mode }) => {
     const env = loadEnv(mode, process.cwd());
 
     return {
+        build: {
+            sourcemap: true,
+        },
         optimizeDeps: {
             exclude: ["@novorender/webgl-api", "@novorender/api"],
         },
