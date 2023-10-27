@@ -118,8 +118,18 @@ export function drawPart(
     return false;
 }
 function drawTextPart(ctx: CanvasRenderingContext2D, part: DrawPart) {
-    if (part.drawType === "text" && !Array.isArray(part.text) && part.text && part.vertices2D) {
-        return drawText(ctx, part.vertices2D, part.text);
+    if (part.drawType === "text" && part.text && part.vertices2D) {
+        if (Array.isArray(part.text)) {
+            if (part.text.length === 1 && part.text[0].length === part.vertices2D.length) {
+                for (let i = 0; i < part.text.length; ++i) {
+                    drawText(ctx, [part.vertices2D[i]], part.text[0][i]);
+                }
+                return true;
+            }
+            return false;
+        } else {
+            return drawText(ctx, part.vertices2D, part.text);
+        }
     }
     return false;
 }
