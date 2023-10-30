@@ -244,7 +244,7 @@ export const explorerSlice = createSlice({
                 state.enabledWidgets = uniqueArray(
                     (customProperties.explorerProjectState
                         ? (customProperties.explorerProjectState.features.widgets.enabled as WidgetKey[]).filter(
-                              (key) => featuresConfig[key].type !== FeatureType.AdminWidget
+                              (key) => featuresConfig[key] && featuresConfig[key].type !== FeatureType.AdminWidget
                           )
                         : getEnabledFeatures(customProperties)
                     ).concat(defaultEnabledWidgets)
