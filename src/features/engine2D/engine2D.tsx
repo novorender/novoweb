@@ -175,11 +175,19 @@ export function Engine2D({
                     deviations,
                 ] = await Promise.all([
                     getDrawMeasureEntity(measure.duoMeasurementValues),
-                    Promise.all(measureObjects.map((obj) => getDrawMeasureEntity(obj, obj.settings))),
+                    Promise.all(
+                        measureObjects.map((obj) =>
+                            getDrawMeasureEntity(obj, {
+                                ...obj.settings,
+                                segmentLabelInterval: cameraType === CameraType.Pinhole ? 10 : 0,
+                            })
+                        )
+                    ),
                     Promise.all(
                         (drawSelectedPaths ? pathMeasureObjectsData ?? [] : []).map((obj) =>
                             getDrawMeasureEntity(obj, {
                                 cylinderMeasure: drawPathSettings,
+                                segmentLabelInterval: cameraType === CameraType.Pinhole ? 10 : 0,
                             })
                         )
                     ),

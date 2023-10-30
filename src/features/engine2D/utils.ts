@@ -108,7 +108,7 @@ export function drawPart(
         if (part.drawType === "angle" && part.vertices2D.length === 3 && part.text) {
             return drawAngle(ctx, camera, part);
         } else if (part.drawType === "text") {
-            return drawTextPart(ctx, part);
+            return drawTextPart(ctx, part, camera);
         } else if (part.drawType === "lines" || part.drawType === "filled") {
             return drawLinesOrPolygon(ctx, part, colorSettings, textSettings, lineCap);
         } else if (part.drawType === "vertex") {
@@ -117,11 +117,55 @@ export function drawPart(
     }
     return false;
 }
-function drawTextPart(ctx: CanvasRenderingContext2D, part: DrawPart) {
+function drawTextPart(ctx: CanvasRenderingContext2D, part: DrawPart, camera: CameraSettings) {
     if (part.drawType === "text" && part.text && part.vertices2D) {
         if (Array.isArray(part.text)) {
-            if (part.text.length === 1 && part.text[0].length === part.vertices2D.length) {
-                for (let i = 0; i < part.text.length; ++i) {
+            if (part.text.length === 1) {
+                let index = 0;
+                let bestCase = Number.MAX_VALUE;
+                for (; index < part.text[0].length && index < part.vertices2D.length; ++index) {
+                    //Binary search could improve performance
+                    const dist = vec3.dist(part.vertices3D[index], camera.pos);
+                    if (dist > bestCase) {
+                        break;
+                    }
+                    bestCase = dist;
+                }
+
+                let incrementer = 1;
+                let numSinceInrement = 0;
+                let prevPos: ReadonlyVec2 | undefined;
+                for (
+                    let i = index;
+                    i < part.text[0].length && i < part.vertices2D.length;
+                    i += incrementer, numSinceInrement++
+                ) {
+                    if (numSinceInrement === 5) {
+                        incrementer *= 2;
+                        numSinceInrement = 0;
+                    }
+                    if (prevPos) {
+                        if (vec2.dist(prevPos, part.vertices2D[i]) < 50) {
+                            continue;
+                        }
+                    }
+                    prevPos = part.vertices2D[i];
+                    drawText(ctx, [part.vertices2D[i]], part.text[0][i]);
+                }
+
+                incrementer = 1;
+                numSinceInrement = 0;
+                for (let i = index - 1; i >= 0; i -= incrementer, numSinceInrement++) {
+                    if (numSinceInrement === 5) {
+                        incrementer *= 2;
+                        numSinceInrement = 0;
+                    }
+                    if (prevPos) {
+                        if (vec2.dist(prevPos, part.vertices2D[i]) < 50) {
+                            continue;
+                        }
+                    }
+                    prevPos = part.vertices2D[i];
                     drawText(ctx, [part.vertices2D[i]], part.text[0][i]);
                 }
                 return true;

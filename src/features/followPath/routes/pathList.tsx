@@ -18,7 +18,7 @@ import { useAppDispatch, useAppSelector } from "app/store";
 import { Divider, IosSwitch, LinearProgress, ScrollBox } from "components";
 import { useExplorerGlobals } from "contexts/explorerGlobals";
 import { highlightActions, useDispatchHighlighted, useHighlighted } from "contexts/highlighted";
-import { singleCylinderOptions } from "features/measure";
+import { measureActions, singleCylinderOptions } from "features/measure";
 import { Picker, renderActions, selectPicker } from "features/render/renderSlice";
 import { AsyncStatus, hasFinished } from "types/misc";
 import { getObjectNameFromPath, getParentPath } from "utils/objectData";
@@ -32,7 +32,7 @@ export function PathList() {
     const theme = useTheme();
     const history = useHistory<{ prevPath?: string }>();
     const {
-        state: { db },
+        state: { db, view },
     } = useExplorerGlobals(true);
     const highlighted = useHighlighted().idArr;
     const dispatchHighlighted = useDispatchHighlighted();
@@ -199,7 +199,7 @@ export function PathList() {
                                 <ListItemButton
                                     disabled={selectingPos}
                                     key={path.id}
-                                    onClick={() => {
+                                    onClick={async () => {
                                         dispatch(followPathActions.setSelectedPath(path.id));
                                         dispatch(followPathActions.toggleResetPositionOnInit(true));
                                         dispatch(followPathActions.setSelectedIds([path.id]));
@@ -208,6 +208,13 @@ export function PathList() {
                                         dispatch(renderActions.setMainObject(path.id));
                                         dispatchHighlighted(highlightActions.setIds([path.id]));
                                         history.push(`/followIds`);
+                                        const measureView = await view.measure;
+                                        if (measureView) {
+                                            const segment = await measureView.core.pickCurveSegment(path.id);
+                                            if (segment) {
+                                                dispatch(measureActions.selectEntity({ entity: segment, pin: true }));
+                                            }
+                                        }
                                     }}
                                     disableGutters
                                     color="primary"
