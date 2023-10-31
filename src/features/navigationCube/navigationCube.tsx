@@ -360,7 +360,7 @@ type Path = {
 export function NavigationCube() {
     const theme = useTheme();
     const {
-        state: { view, db },
+        state: { view, db, scene },
     } = useExplorerGlobals(true);
     const highlighted = useHighlighted().idArr;
     const prevPivotPt = useRef<ReadonlyVec3>();
@@ -401,7 +401,14 @@ export function NavigationCube() {
                 try {
                     pt =
                         highlightedBoundingSphereCenter.current ??
-                        (await objIdsToTotalBoundingSphere({ ids: highlighted, abortSignal, db }))?.center;
+                        (
+                            await objIdsToTotalBoundingSphere({
+                                ids: highlighted,
+                                abortSignal,
+                                db,
+                                flip: !vec3.equals(scene.up ?? [0, 1, 0], [0, 0, 1]),
+                            })
+                        )?.center;
 
                     highlightedBoundingSphereCenter.current = pt;
                 } catch {

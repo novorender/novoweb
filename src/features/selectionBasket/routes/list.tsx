@@ -10,6 +10,7 @@ import {
     useTheme,
 } from "@mui/material";
 import { HierarcicalObjectReference } from "@novorender/webgl-api";
+import { vec3 } from "gl-matrix";
 import { useEffect, useState } from "react";
 import { useHistory } from "react-router-dom";
 
@@ -30,7 +31,7 @@ export function List() {
     const theme = useTheme();
     const history = useHistory();
     const {
-        state: { db },
+        state: { db, scene },
     } = useExplorerGlobals(true);
 
     const [abortController, abort] = useAbortController();
@@ -135,7 +136,9 @@ export function List() {
                                 return;
                             }
 
-                            const sphere = getTotalBoundingSphere(objects.data);
+                            const sphere = getTotalBoundingSphere(objects.data, {
+                                flip: !vec3.equals(scene.up ?? [0, 1, 0], [0, 0, 1]),
+                            });
                             if (sphere) {
                                 dispatch(renderActions.setCamera({ type: CameraType.Pinhole, zoomTo: sphere }));
                             }
@@ -176,11 +179,14 @@ export function List() {
                                             dispatchHighlighted(highlightActions.setIds([obj.id]));
 
                                             if (flyOnSelect && obj.bounds?.sphere) {
+                                                const isGlSpace = !vec3.equals(scene?.up ?? [0, 1, 0], [0, 0, 1]);
                                                 dispatch(
                                                     renderActions.setCamera({
                                                         type: CameraType.Pinhole,
                                                         zoomTo: {
-                                                            center: flip(obj.bounds.sphere.center),
+                                                            center: isGlSpace
+                                                                ? flip(obj.bounds.sphere.center)
+                                                                : obj.bounds.sphere.center,
                                                             radius: obj.bounds.sphere.radius,
                                                         },
                                                     })

@@ -1,6 +1,7 @@
 import { AddCircle, Visibility } from "@mui/icons-material";
 import { Box, Button, Checkbox, FormControlLabel, ListItemButton, Typography } from "@mui/material";
 import { HierarcicalObjectReference, ObjectId, SearchPattern } from "@novorender/webgl-api";
+import { vec3 } from "gl-matrix";
 import { ChangeEvent, CSSProperties, FormEvent, useCallback, useEffect, useRef, useState } from "react";
 import { ListOnScrollProps } from "react-window";
 
@@ -43,7 +44,7 @@ export default function Search() {
     const dispatchHighlighted = useDispatchHighlighted();
     const dispatchSelectionBasket = useDispatchSelectionBasket();
     const {
-        state: { db },
+        state: { db, scene },
     } = useExplorerGlobals(true);
 
     const urlSearchQuery = useAppSelector(selectUrlSearchQuery);
@@ -166,7 +167,9 @@ export default function Search() {
             dispatch(explorerActions.setUrlSearchQuery(undefined));
 
             if (foundRefs.length) {
-                const boundingSphere = getTotalBoundingSphere(foundRefs);
+                const boundingSphere = getTotalBoundingSphere(foundRefs, {
+                    flip: !vec3.equals(scene.up ?? [0, 1, 0], [0, 0, 1]),
+                });
                 if (boundingSphere) {
                     dispatch(renderActions.setCamera({ type: CameraType.Pinhole, zoomTo: boundingSphere }));
                 }
@@ -203,6 +206,7 @@ export default function Search() {
         getSearchPattern,
         setStatus,
         setAllSelected,
+        scene,
     ]);
 
     const handleSubmit = async (e: FormEvent) => {

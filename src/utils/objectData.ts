@@ -61,10 +61,12 @@ export async function objIdsToTotalBoundingSphere({
     ids,
     abortSignal,
     db,
+    flip,
 }: {
     ids: number[];
     abortSignal: AbortSignal;
     db: ObjectDB;
+    flip?: boolean;
 }) {
     let nodes = [] as HierarcicalObjectReference[];
 
@@ -75,17 +77,20 @@ export async function objIdsToTotalBoundingSphere({
         abortSignal,
     });
 
-    return getTotalBoundingSphere(nodes);
+    return getTotalBoundingSphere(nodes, { flip });
 }
 
-export function getTotalBoundingSphere(nodes: HierarcicalObjectReference[]): BoundingSphere | undefined {
+export function getTotalBoundingSphere(
+    nodes: HierarcicalObjectReference[],
+    options?: { flip?: boolean }
+): BoundingSphere | undefined {
     const spheres: BoundingSphere[] = [];
 
     for (const node of nodes) {
         const sphere = node.bounds?.sphere;
 
         if (sphere) {
-            spheres.push({ ...sphere, center: flip(sphere.center) });
+            spheres.push({ ...sphere, center: options?.flip ? flip(sphere.center) : sphere.center });
         }
     }
 

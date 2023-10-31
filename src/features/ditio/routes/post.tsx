@@ -1,6 +1,7 @@
 import { ArrowBack, LocationOnOutlined } from "@mui/icons-material";
 import { Avatar, Box, Button, ImageList, ImageListItem, Typography, useTheme } from "@mui/material";
 import { format, formatDistance } from "date-fns";
+import { vec3 } from "gl-matrix";
 import { Fragment } from "react";
 import { useHistory, useParams } from "react-router-dom";
 
@@ -20,7 +21,7 @@ export function Post() {
     const postId = useParams<{ id: string }>().id;
     const history = useHistory();
     const {
-        state: { view },
+        state: { view, scene },
     } = useExplorerGlobals(true);
 
     const { tmZone } = useAppSelector(selectProjectSettings);
@@ -33,13 +34,18 @@ export function Post() {
             return;
         }
 
-        const pos = flip(
-            dataApi.latLon2tm(
-                { latitude: post.GeoCoordinate.Latitude, longitude: post.GeoCoordinate.Longitude },
-                tmZone
-            )
-        );
-
+        const isGlSpace = !vec3.equals(scene?.up ?? [0, 1, 0], [0, 0, 1]);
+        const pos = isGlSpace
+            ? flip(
+                  dataApi.latLon2tm(
+                      { latitude: post.GeoCoordinate.Latitude, longitude: post.GeoCoordinate.Longitude },
+                      tmZone
+                  )
+              )
+            : dataApi.latLon2tm(
+                  { latitude: post.GeoCoordinate.Latitude, longitude: post.GeoCoordinate.Longitude },
+                  tmZone
+              );
         dispatch(
             renderActions.setCamera({
                 type: CameraType.Pinhole,

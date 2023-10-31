@@ -3,6 +3,7 @@ import { useEffect, useRef, useState } from "react";
 
 import { dataApi } from "app";
 import { useAppSelector } from "app/store";
+import { useExplorerGlobals } from "contexts/explorerGlobals";
 import { CameraType, selectCameraType, selectProjectSettings } from "features/render";
 import { flip } from "features/render/utils";
 
@@ -27,6 +28,9 @@ const emptyImgs = [] as {
 }[];
 
 export function useDitioMarkers() {
+    const {
+        state: { scene },
+    } = useExplorerGlobals();
     const filters = useAppSelector(selectFilters);
     const projId = useAppSelector(selectDitioProject)?.id ?? "";
     const { tmZone } = useAppSelector(selectProjectSettings);
@@ -59,12 +63,15 @@ export function useDitioMarkers() {
             return;
         }
 
+        const isGlSpace = !vec3.equals(scene?.up ?? [0, 1, 0], [0, 0, 1]);
         let markers = feed
             .filter((post) => post.geoLocation)
             .slice(0, 100)
             .map(({ id, geoLocation }) => ({
                 id,
-                position: flip(dataApi.latLon2tm({ longitude: geoLocation!.lon, latitude: geoLocation!.lat }, tmZone)),
+                position: isGlSpace
+                    ? flip(dataApi.latLon2tm({ longitude: geoLocation!.lon, latitude: geoLocation!.lat }, tmZone))
+                    : dataApi.latLon2tm({ longitude: geoLocation!.lon, latitude: geoLocation!.lat }, tmZone),
             }));
 
         if (hoveredEntity?.kind === "post") {
@@ -77,7 +84,7 @@ export function useDitioMarkers() {
         }
 
         setPostMarkers(markers);
-    }, [feed, disabled, tmZone, hoveredEntity, postMarkers.length, isFetchingPosts]);
+    }, [feed, disabled, tmZone, hoveredEntity, postMarkers.length, isFetchingPosts, scene]);
 
     useEffect(() => {
         if (!post || post.Id !== activePost || disabled) {
