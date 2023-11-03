@@ -1,5 +1,4 @@
-import { View } from "@novorender/api";
-import { OfflineViewState } from "@novorender/api/offline";
+import { OfflineViewState, View } from "@novorender/api";
 import { useCallback, useEffect } from "react";
 
 import { dataApi } from "app";
@@ -75,6 +74,7 @@ export function useHandleOffline() {
                         status: scene.manifest.numFiles === 0 ? "incremental" : "synchronized",
                         lastSync: meta.lastSynced,
                         progress: "",
+                        scanProgress: "",
                         size: scene.manifest.totalByteSize,
                         viewerScenes: meta.viewerScenes,
                     })
@@ -90,7 +90,7 @@ export function useHandleOffline() {
         handleAction();
 
         async function handleAction() {
-            if (!view?.renderState.scene?.config.id || !offlineWorkerState || !action) {
+            if (!view?.offline || !view?.renderState.scene?.config.id || !offlineWorkerState || !action) {
                 return;
             }
 
@@ -117,7 +117,9 @@ export function useHandleOffline() {
                         break;
                     }
 
-                    if ((await scene.readManifest(abortController.current.signal, getSasKey(view))) === undefined) {
+                    if (
+                        (await scene.readManifest(getSceneIndexUrl(view), abortController.current.signal)) === undefined
+                    ) {
                         dispatch(
                             offlineActions.addScene({
                                 id: scene.id,
@@ -125,6 +127,7 @@ export function useHandleOffline() {
                                 status: "invalid format",
                                 lastSync: new Date().toISOString(),
                                 progress: "",
+                                scanProgress: "",
                                 size: 0,
                                 viewerScenes: [],
                             })
@@ -172,6 +175,7 @@ export function useHandleOffline() {
                             status: "incremental",
                             lastSync: toStore.lastSynced,
                             progress: "",
+                            scanProgress: "",
                             size: scene.manifest.totalByteSize,
                             viewerScenes: toStore.viewerScenes,
                         })
@@ -249,11 +253,12 @@ export function useHandleOffline() {
                             status: "incremental",
                             lastSync: toStore.lastSynced,
                             progress: "",
+                            scanProgress: "",
                             size: scene.manifest.totalByteSize,
                             viewerScenes: toStore.viewerScenes,
                         })
                     );
-                    scene.sync(abortController.current.signal, getSasKey(view));
+                    scene.sync(getSceneIndexUrl(view), abortController.current.signal);
                     break;
                 }
             }
@@ -299,14 +304,47 @@ function useCreateLogger() {
                 error: (error) => {
                     console.warn(error);
                 },
-                progress: (done, target) => {
-                    if (done !== undefined && target !== undefined) {
-                        const progress = ((done / target) * 100).toFixed(2);
-                        dispatch(
-                            offlineActions.updateScene({ id: parentSceneId, updates: { progress, size: target } })
-                        );
+                progress: (current, max, operation) => {
+                    if (operation === "download") {
+                        if (current === max) {
+                            dispatch(
+                                offlineActions.updateScene({
+                                    id: parentSceneId,
+                                    updates: { progress: "100%", size: max },
+                                })
+                            );
+                        }
+
+                        if (!max) {
+                            dispatch(offlineActions.updateScene({ id: parentSceneId, updates: { progress: "" } }));
+                        }
+
+                        if (current !== undefined && max !== undefined) {
+                            const progress = ((current / max) * 100).toFixed(2);
+                            dispatch(
+                                offlineActions.updateScene({ id: parentSceneId, updates: { progress, size: max } })
+                            );
+                        }
                     } else {
-                        dispatch(offlineActions.updateScene({ id: parentSceneId, updates: { progress: "" } }));
+                        if (current === max) {
+                            dispatch(
+                                offlineActions.updateScene({ id: parentSceneId, updates: { scanProgress: "100%" } })
+                            );
+                        }
+
+                        if (!max) {
+                            dispatch(
+                                offlineActions.updateScene({
+                                    id: parentSceneId,
+                                    updates: { scanProgress: String(current) },
+                                })
+                            );
+                        }
+
+                        if (current !== undefined && max !== undefined) {
+                            const scanProgress = ((current / max) * 100).toFixed(2);
+                            dispatch(offlineActions.updateScene({ id: parentSceneId, updates: { scanProgress } }));
+                        }
                     }
                 },
             };
@@ -317,12 +355,14 @@ function useCreateLogger() {
     return createLogger;
 }
 
-function getSasKey(view: View): string {
+function getSceneIndexUrl(view: View): URL {
     const url = view.renderState.scene?.url ? new URL(view.renderState.scene.url) : undefined;
 
     if (!url) {
         throw new Error("Unable to parse url for SAS key");
     }
 
-    return url.search.slice(1);
+    url.pathname += "index.json";
+
+    return url;
 }

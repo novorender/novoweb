@@ -83,8 +83,6 @@ export function useCanvasClickHandler() {
             return;
         }
 
-        const measureView = await view.measure;
-
         dispatch(renderActions.setPointerDownState(undefined));
 
         const pickCameraPlane =
@@ -144,7 +142,7 @@ export function useCanvasClickHandler() {
                     let dir = vec3.cross(vec3.create(), up, right);
 
                     if (topDown) {
-                        const midPt = (measureView.draw.toMarkerPoints([p]) ?? [])[0];
+                        const midPt = (view.measure?.draw.toMarkerPoints([p]) ?? [])[0];
                         if (midPt) {
                             const midPick = await view.pick(midPt[0], midPt[1]);
                             if (midPick) {
@@ -274,7 +272,9 @@ export function useCanvasClickHandler() {
                             return;
                         }
 
-                        const metadata = await db.getObjectMetdata(result.objectId);
+                        const metadata = await (view.data
+                            ? view.data.getObjectMetaData(result.objectId)
+                            : db.getObjectMetdata(result.objectId));
 
                         if (showPropertiesStamp) {
                             dispatch(
@@ -411,7 +411,7 @@ export function useCanvasClickHandler() {
                     );
                 } else {
                     dispatch(measureActions.setLoadingBrep(true));
-                    const entity = await measureView.core.pickMeasureEntity(
+                    const entity = await view.measure?.core.pickMeasureEntity(
                         result.objectId,
                         position,
                         measurePickSettings

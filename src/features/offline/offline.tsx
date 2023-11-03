@@ -53,6 +53,9 @@ export default function Offline() {
                             <>
                                 {currentParentScene.status === "incremental" && <Incremental />}
                                 {currentParentScene.status === "synchronized" && <Downloaded />}
+                                {currentParentScene.status === "scanning" && (
+                                    <Scanning progress={currentParentScene.scanProgress} />
+                                )}
                                 {currentParentScene.status === "synchronizing" && (
                                     <Downloading progress={currentParentScene.progress} />
                                 )}
@@ -70,6 +73,29 @@ export default function Offline() {
                 {menuOpen && <WidgetList widgetKey={featuresConfig.offline.key} onSelect={toggleMenu} />}
             </WidgetContainer>
             <LogoSpeedDial open={menuOpen} toggle={toggleMenu} />
+        </>
+    );
+}
+
+function Scanning({ progress }: { progress: string }) {
+    const action = useAppSelector(selectOfflineAction);
+    const dispatch = useAppDispatch();
+    return (
+        <>
+            <Box position="relative" mx={-1} mt={-2} mb={1}>
+                <LinearProgress />
+            </Box>
+            <Box>
+                Scanning scene... {progress ? `${progress} files scanned.` : ""}
+                <Button
+                    sx={{ ml: 2 }}
+                    disabled={action !== undefined}
+                    color="grey"
+                    onClick={() => dispatch(offlineActions.setAction({ action: "pause" }))}
+                >
+                    Pause
+                </Button>
+            </Box>
         </>
     );
 }

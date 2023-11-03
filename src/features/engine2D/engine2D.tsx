@@ -61,7 +61,7 @@ export function Engine2D({
     renderFnRef: MutableRefObject<((moved: boolean, idleFrame: boolean) => void) | undefined>;
 }) {
     const {
-        state: { size, view, measureView },
+        state: { size, view },
     } = useExplorerGlobals();
     const [canvas2D, setCanvas2D] = useState<HTMLCanvasElement | null>(null);
     const [context2D, setContext2D] = useState<CanvasRenderingContext2D | null | undefined>(null);
@@ -130,22 +130,22 @@ export function Engine2D({
             pts3d.push(vec3.scaleAndAdd(vec3.create(), grid.origin, grid.axisY, -i * grid.size2));
             labels.push(`-${yLabel}`);
         }
-        const pts = measureView?.draw.toScreenSpace(pts3d);
+        const pts = view.measure?.draw.toScreenSpace(pts3d);
 
         if (pts) {
             drawTexts(context2D, pts.screenPoints, labels);
         }
-    }, [grid, context2D, measureView, view, cameraType]);
+    }, [grid, context2D, view, cameraType]);
 
     const drawId = useRef(0);
     const render = useCallback(
         async (idleFrame: boolean) => {
-            if (view && context2D && canvas2D && size && measureView) {
+            if (view?.measure && context2D && canvas2D && size) {
                 const { camera } = view.renderState;
                 const cameraDirection = vec3.transformQuat(vec3.create(), vec3.fromValues(0, 0, -1), camera.rotation);
                 const camSettings = { pos: camera.position, dir: cameraDirection };
                 const getDrawMeasureEntity = async (entity?: DrawableEntity, settings?: MeasureSettings) =>
-                    entity && measureView.draw.getDrawEntity(entity, settings);
+                    entity && view.measure?.draw.getDrawEntity(entity, settings);
                 const id = ++drawId.current;
 
                 let centerLine2dPos: undefined | vec2 = undefined;
@@ -154,7 +154,7 @@ export function Engine2D({
                     viewMode === ViewMode.FollowPath && cameraType === CameraType.Orthographic && idleFrame;
                 if (showDeviationLables) {
                     if (centerLinePos) {
-                        const sp = measureView.draw.toMarkerPoints([centerLinePos]);
+                        const sp = view.measure?.draw.toMarkerPoints([centerLinePos]);
                         if (sp && sp.length > 0 && sp[0]) {
                             projection = {
                                 centerPoint2d: sp[0],
@@ -263,7 +263,7 @@ export function Engine2D({
                         const tracePts = GetMeasurePointsFromTracer(x, left, right);
                         if (tracePts) {
                             renderTrace(
-                                measureView.draw.getDrawObjectFromPoints(tracePts, false, false, true, 2),
+                                view.measure?.draw.getDrawObjectFromPoints(tracePts, false, false, true, 2),
                                 "blue"
                             );
                         }
@@ -272,12 +272,12 @@ export function Engine2D({
                         const tracePts = GetMeasurePointsFromTracer(y, down, up);
                         if (tracePts) {
                             renderTrace(
-                                measureView.draw.getDrawObjectFromPoints(tracePts, false, false, true, 2),
+                                view.measure?.draw.getDrawObjectFromPoints(tracePts, false, false, true, 2),
                                 "green"
                             );
                         }
                     }
-                    // const sp = measureView.draw.toMarkerPoints([trace.tracePosition]);
+                    // const sp = view.measure?.draw.toMarkerPoints([trace.tracePosition]);
                     // if (sp && sp.length > 0 && sp[0]) {
                     //     drawPoint(context2D, sp[0], "white");
                     // }
@@ -459,7 +459,7 @@ export function Engine2D({
                 }
 
                 if (manholeCollisionValues && (manholeCollisionValues.outer || manholeCollisionValues.inner)) {
-                    const colVal = measureView.draw.getDrawObjectFromPoints(manholeCollisionValues.lid, false, true);
+                    const colVal = view.measure?.draw.getDrawObjectFromPoints(manholeCollisionValues.lid, false, true);
                     if (colVal) {
                         colVal.objects.forEach((obj) => {
                             obj.parts.forEach((part) => {
@@ -494,7 +494,7 @@ export function Engine2D({
                 }
 
                 if (areaPoints.length) {
-                    const drawProd = measureView.draw.getDrawObjectFromPoints(areaPoints, true, true);
+                    const drawProd = view.measure?.draw.getDrawObjectFromPoints(areaPoints, true, true);
                     if (drawProd) {
                         drawProd.objects.forEach((obj) => {
                             obj.parts.forEach((part) => {
@@ -529,7 +529,7 @@ export function Engine2D({
                     roadCrossSectionData.length > 1
                 ) {
                     const prods = roadCrossSectionData
-                        .map((road) => measureView.draw.getDrawObjectFromPoints(road.points, false, false))
+                        .map((road) => view.measure?.draw.getDrawObjectFromPoints(road.points, false, false))
                         .filter((prod) => prod) as DrawProduct[];
 
                     if (prods.length) {
@@ -539,7 +539,7 @@ export function Engine2D({
                         };
 
                         if (!traceVerical) {
-                            const normal = measureView.draw.get2dNormal(prods[0], line);
+                            const normal = view.measure?.draw.get2dNormal(prods[0], line);
                             if (normal) {
                                 line = {
                                     start: vec2.scaleAndAdd(vec2.create(), normal.position, normal.normal, size.height),
@@ -548,7 +548,7 @@ export function Engine2D({
                             }
                         }
 
-                        const traceDraw = measureView.draw.getTraceDrawOject(prods, line);
+                        const traceDraw = view.measure?.draw.getTraceDrawOject(prods, line);
                         traceDraw.objects.forEach((obj) => {
                             obj.parts.forEach((part) => {
                                 drawPart(
@@ -570,7 +570,7 @@ export function Engine2D({
                 }
 
                 if (pointLinePoints.length && pointLineResult) {
-                    const drawProd = measureView.draw.getDrawObjectFromPoints(pointLinePoints, false, true, true);
+                    const drawProd = view.measure?.draw.getDrawObjectFromPoints(pointLinePoints, false, true, true);
 
                     if (drawProd) {
                         drawProd.objects.forEach((obj) => {
@@ -595,7 +595,7 @@ export function Engine2D({
                 }
 
                 if (crossSection) {
-                    const drawProd = measureView.draw.getDrawObjectFromPoints(crossSection, false, false);
+                    const drawProd = view.measure?.draw.getDrawObjectFromPoints(crossSection, false, false);
                     if (drawProd) {
                         drawProd.objects.forEach((obj) => {
                             obj.parts.forEach((part) => {
@@ -625,7 +625,7 @@ export function Engine2D({
                             const center = vec3.add(vec3.create(), crossSection[0], crossSection[1]);
                             vec3.scale(center, center, 0.5);
                             const offsetP = vec3.scaleAndAdd(vec3.create(), center, cross, -3);
-                            const arrow = measureView.draw.getDrawObjectFromPoints([center, offsetP], false, false);
+                            const arrow = view.measure?.draw.getDrawObjectFromPoints([center, offsetP], false, false);
                             if (arrow) {
                                 arrow.objects.forEach((obj) => {
                                     obj.parts.forEach((part) => {
@@ -671,7 +671,7 @@ export function Engine2D({
                                     colorList.push("brown");
                             }
                         });
-                        const drawProd = measureView.draw.getDrawObjectFromPoints(section.points, false, false);
+                        const drawProd = view.measure?.draw.getDrawObjectFromPoints(section.points, false, false);
                         if (drawProd) {
                             drawProd.objects.forEach((obj) => {
                                 obj.parts.forEach((part) => {
@@ -688,11 +688,11 @@ export function Engine2D({
                                 });
                             });
                         }
-                        const slopeL = measureView.draw.getDrawText(
+                        const slopeL = view.measure?.draw.getDrawText(
                             [section.slopes.left.start, section.slopes.left.end],
                             (section.slopes.left.slope * 100).toFixed(1) + "%"
                         );
-                        const slopeR = measureView.draw.getDrawText(
+                        const slopeR = view.measure?.draw.getDrawText(
                             [section.slopes.right.start, section.slopes.right.end],
                             (section.slopes.right.slope * 100).toFixed(1) + "%"
                         );
@@ -706,7 +706,6 @@ export function Engine2D({
         },
         [
             view,
-            measureView,
             context2D,
             measure.duoMeasurementValues,
             canvas2D,

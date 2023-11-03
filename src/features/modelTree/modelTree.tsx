@@ -46,7 +46,7 @@ export default function ModelTree() {
     const dispatch = useAppDispatch();
 
     const {
-        state: { db },
+        state: { db, view },
     } = useExplorerGlobals(true);
 
     const [menuOpen, toggleMenu] = useToggle();
@@ -77,7 +77,7 @@ export default function ModelTree() {
             setStatus(Status.Loading);
 
             try {
-                const obj = await getObjectData({ db, id: mainObject });
+                const obj = await getObjectData({ db, id: mainObject, view });
 
                 if (!obj) {
                     return setStatus(Status.Ready);
@@ -88,7 +88,7 @@ export default function ModelTree() {
                 setStatus(Status.Ready);
             }
         }
-    }, [mainObject, db, setStatus, setCurrentNode]);
+    }, [mainObject, db, setStatus, setCurrentNode, view]);
 
     useEffect(() => {
         if (!currentNode) {

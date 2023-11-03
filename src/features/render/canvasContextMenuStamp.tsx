@@ -23,7 +23,7 @@ export function CanvasContextMenuStamp() {
     const dispatchHighlighted = useDispatchHighlighted();
     const dispatchSelectionBasket = useDispatchSelectionBasket();
     const {
-        state: { db, measureView },
+        state: { db, view },
     } = useExplorerGlobals(true);
 
     const features = useAppSelector(selectCanvasContextMenuFeatures);
@@ -48,8 +48,8 @@ export function CanvasContextMenuStamp() {
             const objectId = stamp.data.object;
 
             const [obj, ent] = await Promise.all([
-                getObjectData({ db, id: objectId }),
-                measureView.core
+                getObjectData({ db, id: objectId, view }),
+                view.measure?.core
                     .pickMeasureEntity(objectId, stamp.data.position)
                     .then((res) => (["face"].includes(res.entity.drawKind) ? res.entity : undefined))
                     .catch(() => undefined),
@@ -66,7 +66,7 @@ export function CanvasContextMenuStamp() {
                 file: file ? ["path", file] : undefined,
             });
         }
-    }, [stamp, db, measureView, dispatch]);
+    }, [stamp, db, view, dispatch]);
 
     if (stamp?.kind !== StampKind.CanvasContextMenu) {
         return null;

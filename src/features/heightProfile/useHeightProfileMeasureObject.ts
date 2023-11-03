@@ -14,7 +14,7 @@ type ExtendedMeasureEntity = MeasureEntity & {
 
 export function useHeightProfileMeasureObject() {
     const {
-        state: { measureView },
+        state: { view },
     } = useExplorerGlobals();
 
     const point = useAppSelector(selectSelectedPoint);
@@ -50,7 +50,7 @@ export function useHeightProfileMeasureObject() {
             try {
                 dispatch(heightProfileActions.setSelectedEntity({ status: AsyncStatus.Loading }));
 
-                const mObject = await measureView?.core.pickMeasureEntity(point.id, point.pos).then((_mObj) => {
+                const mObject = await view?.measure?.core.pickMeasureEntity(point.id, point.pos).then((_mObj) => {
                     const mObj = _mObj.entity as ExtendedMeasureEntity;
                     mObj.pos = point.pos;
 
@@ -74,7 +74,7 @@ export function useHeightProfileMeasureObject() {
                 setMeasureObjects(undefined);
             }
         }
-    }, [measureView, setMeasureObjects, point, dispatch]);
+    }, [view, setMeasureObjects, point, dispatch]);
 
     return measureObjects;
 }

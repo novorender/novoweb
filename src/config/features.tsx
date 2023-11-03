@@ -198,7 +198,7 @@ export const featuresConfig = {
         Icon: List,
         type: FeatureType.Widget,
         defaultLocked: false,
-        offline: false,
+        offline: true,
     },
     propertyTree: {
         key: "propertyTree",

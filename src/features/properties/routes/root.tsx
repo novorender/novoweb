@@ -83,7 +83,7 @@ export function Root() {
     const stampSettings = useAppSelector(selectPropertiesStampSettings);
     const dispatchHighlighted = useDispatchHighlighted();
     const {
-        state: { db },
+        state: { db, view },
     } = useExplorerGlobals(true);
     const theme = useTheme();
     const dispatch = useAppDispatch();
@@ -133,7 +133,7 @@ export function Root() {
         async function getObjectData(id: number) {
             setStatus(Status.Loading);
 
-            const objectData = await getObjectDataUtil({ db, id });
+            const objectData = await getObjectDataUtil({ db, id, view });
 
             if (!objectData) {
                 setObject(undefined);
@@ -156,11 +156,11 @@ export function Root() {
 
             setStatus(Status.Initial);
         }
-    }, [mainObject, db, object, setObject, setStatus]);
+    }, [mainObject, db, object, setObject, setStatus, view]);
 
     const search = async (searchPatterns: SearchPattern[]) => {
         if (mainObject !== undefined) {
-            const objData = await getObjectDataUtil({ db, id: mainObject });
+            const objData = await getObjectDataUtil({ db, id: mainObject, view });
 
             if (objData?.type === NodeType.Leaf) {
                 dispatchHighlighted(highlightActions.setIds([mainObject]));

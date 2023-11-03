@@ -78,9 +78,10 @@ export default function Manhole() {
         getMeasureValues();
 
         async function getMeasureValues() {
-            const measureView = await view.measure;
             if (collisionTarget?.entity) {
-                setMeasureValues(await measureView.core.measure(collisionTarget.entity, undefined, collisionSettings));
+                setMeasureValues(
+                    await view.measure?.core.measure(collisionTarget.entity, undefined, collisionSettings)
+                );
             } else {
                 setMeasureValues(undefined);
             }

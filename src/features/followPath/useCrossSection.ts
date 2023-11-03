@@ -9,7 +9,7 @@ import { selectDrawRoadIds, selectFollowCylindersFrom, selectProfile, selectSele
 
 export function useCrossSection() {
     const {
-        state: { measureView },
+        state: { view },
     } = useExplorerGlobals();
 
     const followProfile = useAppSelector(selectProfile);
@@ -31,7 +31,7 @@ export function useCrossSection() {
             setObjects({ status: AsyncStatus.Loading });
 
             try {
-                const fp = await measureView?.road.getCrossSections(roadIds, Number(followProfile));
+                const fp = await view?.measure?.road.getCrossSections(roadIds, Number(followProfile));
 
                 if (!fp) {
                     setObjects({ status: AsyncStatus.Error, msg: "Cross section not found." });
@@ -43,7 +43,7 @@ export function useCrossSection() {
                 setObjects({ status: AsyncStatus.Error, msg: "An error occurred." });
             }
         }
-    }, [toFollow, measureView, dispatch, followFrom, roadIds, followProfile]);
+    }, [toFollow, view, dispatch, followFrom, roadIds, followProfile]);
 
     return objects;
 }

@@ -13,7 +13,7 @@ import {
 
 export function useLoadCollisionResult() {
     const {
-        state: { measureView },
+        state: { view },
     } = useExplorerGlobals();
 
     const collisionTarget = useAppSelector(selectManholeCollisionTarget);
@@ -25,7 +25,7 @@ export function useLoadCollisionResult() {
         getMeasureEntity();
 
         async function getMeasureEntity() {
-            if (!measureView || !collisionTarget?.entity) {
+            if (!view?.measure || !collisionTarget?.entity) {
                 dispatch(manholeActions.setCollisionValues(undefined));
                 return;
             }
@@ -35,8 +35,10 @@ export function useLoadCollisionResult() {
             if (entity.drawKind === "face" && manhole) {
                 dispatch(manholeActions.setLoadingBrep(true));
                 const [outerCollision, innerCollision] = await Promise.all([
-                    measureView.collision.collision(entity, manhole.outer.entity, settings),
-                    ...(manhole.inner ? [measureView.collision.collision(entity, manhole.inner.entity, settings)] : []),
+                    view.measure.collision.collision(entity, manhole.outer.entity, settings),
+                    ...(manhole.inner
+                        ? [view.measure.collision.collision(entity, manhole.inner.entity, settings)]
+                        : []),
                 ]).catch((e) => {
                     console.warn(e);
                     return [];
@@ -93,7 +95,7 @@ export function useLoadCollisionResult() {
                 dispatch(manholeActions.setLoadingBrep(false));
             }
         }
-    }, [measureView, dispatch, collisionTarget, manhole, settings]);
+    }, [view, dispatch, collisionTarget, manhole, settings]);
 
     return;
 }

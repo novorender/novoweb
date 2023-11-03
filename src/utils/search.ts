@@ -1,3 +1,4 @@
+import { View } from "@novorender/api";
 import { ObjectDB } from "@novorender/data-js-api";
 import { HierarcicalObjectReference, ObjectData, ObjectId, SearchPattern } from "@novorender/webgl-api";
 
@@ -230,8 +231,16 @@ export async function getDescendants({
     );
 }
 
-export function getObjectData({ db, id }: { db: ObjectDB; id: ObjectId }): Promise<ObjectData | undefined> {
-    return db.getObjectMetdata(id).catch(() => undefined);
+export function getObjectData({
+    db,
+    id,
+    view,
+}: {
+    db: ObjectDB;
+    id: ObjectId;
+    view: View;
+}): Promise<ObjectData | undefined> {
+    return view.data ? (view.data.getObjectMetaData(id) as any) : db.getObjectMetdata(id).catch(() => undefined);
 }
 
 export async function batchedPropertySearch<T = HierarcicalObjectReference>({
