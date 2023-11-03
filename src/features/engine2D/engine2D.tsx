@@ -150,9 +150,9 @@ export function Engine2D({
 
                 let centerLine2dPos: undefined | vec2 = undefined;
                 let projection: undefined | DeviationProjection = undefined;
-                const showDeviationLables =
-                    viewMode === ViewMode.FollowPath && cameraType === CameraType.Orthographic && idleFrame;
-                if (showDeviationLables) {
+                const showFollowPoint = viewMode === ViewMode.FollowPath && idleFrame;
+                const showDeviationLables = showFollowPoint && cameraType === CameraType.Orthographic;
+                if (showFollowPoint) {
                     if (centerLinePos) {
                         const sp = view.measure?.draw.toMarkerPoints([centerLinePos]);
                         if (sp && sp.length > 0 && sp[0]) {

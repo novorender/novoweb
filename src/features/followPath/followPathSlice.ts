@@ -36,7 +36,7 @@ const initialState = {
     }[],
     drawSelectedPositions: true,
     selectedIds: [] as number[],
-    resetPositionOnInit: false,
+    reset: undefined as "initPosition" | "default" | undefined,
     followCylindersFrom: "center" as "center" | "top" | "bottom",
     drawRoadIds: undefined as string[] | undefined,
     roadIds: undefined as string[] | undefined,
@@ -114,8 +114,8 @@ export const followPathSlice = createSlice({
         setSelectedIds: (state, action: PayloadAction<State["selectedIds"]>) => {
             state.selectedIds = action.payload;
         },
-        toggleResetPositionOnInit: (state, action: PayloadAction<State["resetPositionOnInit"] | undefined>) => {
-            state.resetPositionOnInit = action.payload !== undefined ? action.payload : !state.resetPositionOnInit;
+        setReset: (state, action: PayloadAction<State["reset"] | undefined>) => {
+            state.reset = action.payload;
         },
         setFollowFrom: (state, action: PayloadAction<State["followCylindersFrom"]>) => {
             state.followCylindersFrom = action.payload;
@@ -199,7 +199,7 @@ export const selectGoToRouterPath = (state: RootState) => state.followPath.goToR
 export const selectSelectedPositions = (state: RootState) => state.followPath.selectedPositions;
 export const selectDrawSelectedPositions = (state: RootState) => state.followPath.drawSelectedPositions;
 export const selectSelectedIds = (state: RootState) => state.followPath.selectedIds;
-export const selectResetPositionOnInit = (state: RootState) => state.followPath.resetPositionOnInit;
+export const selectReset = (state: RootState) => state.followPath.reset;
 export const selectFollowCylindersFrom = (state: RootState) => state.followPath.followCylindersFrom;
 export const selectSelectedPath = (state: RootState) => state.followPath.selectedPath;
 export const selectDrawRoadIds = (state: RootState) => state.followPath.drawRoadIds;
