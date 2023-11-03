@@ -46,14 +46,10 @@ jobs:
             - name: Install server dependencies
               run: |
                   (cd server && npm ci && mv ./node_modules ../node_modules)
-            - name: create publish profile name
-              run: |
-                  publish_profile=$(echo 'console.log("AZURE_WEBAPP_PUBLISH_PROFILE_${{ github.event.inputs.slot }}".toUpperCase().replace("-","_"))' | node -)
-                  echo "PROFILE=${publish_profile}" >>${GITHUB_ENV}
             - name: "Deploy to Azure WebApp"
               uses: azure/webapps-deploy@v2
               with:
                   app-name: ${{ env.AZURE_WEBAPP_NAME }}
-                  publish-profile: ${{ secrets[env.PROFILE] }}
+                  publish-profile: ${{ secrets.AZURE_WEBAPP_PUBLISH_PROFILE_EXPO }}
                   package: ${{ env.AZURE_WEBAPP_PACKAGE_PATH }}
-                  slot-name: ${{ github.event.inputs.slot }}
+                  slot-name: production
