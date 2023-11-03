@@ -755,7 +755,10 @@ export function Engine2D({
                 const run =
                     moved ||
                     (showTracer && !vec2.exactEquals(prevPointerPos.current, pointerPos.current)) ||
-                    (viewMode === ViewMode.FollowPath && cameraType === CameraType.Orthographic && idleFrame);
+                    (viewMode === ViewMode.FollowPath &&
+                        cameraType === CameraType.Orthographic &&
+                        idleFrame &&
+                        view.renderState.camera.far < 1);
 
                 if (!run) {
                     return;
