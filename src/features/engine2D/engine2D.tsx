@@ -150,9 +150,9 @@ export function Engine2D({
 
                 let centerLine2dPos: undefined | vec2 = undefined;
                 let projection: undefined | DeviationProjection = undefined;
-                const showDeviationLables =
-                    viewMode === ViewMode.FollowPath && cameraType === CameraType.Orthographic && idleFrame;
-                if (showDeviationLables) {
+                const showFollowPoint = viewMode === ViewMode.FollowPath && idleFrame;
+                const showDeviationLables = showFollowPoint && cameraType === CameraType.Orthographic;
+                if (showFollowPoint) {
                     if (centerLinePos) {
                         const sp = view.measure?.draw.toMarkerPoints([centerLinePos]);
                         if (sp && sp.length > 0 && sp[0]) {
@@ -755,7 +755,10 @@ export function Engine2D({
                 const run =
                     moved ||
                     (showTracer && !vec2.exactEquals(prevPointerPos.current, pointerPos.current)) ||
-                    (viewMode === ViewMode.FollowPath && cameraType === CameraType.Orthographic && idleFrame);
+                    (viewMode === ViewMode.FollowPath &&
+                        cameraType === CameraType.Orthographic &&
+                        idleFrame &&
+                        view.renderState.camera.far < 1);
 
                 if (!run) {
                     return;

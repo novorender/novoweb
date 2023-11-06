@@ -11,6 +11,7 @@ import {
     Select,
     useTheme,
 } from "@mui/material";
+import { DuoMeasurementValues } from "@novorender/api";
 import { useEffect } from "react";
 import { useHistory } from "react-router-dom";
 
@@ -143,7 +144,7 @@ export function PathList() {
                         <Button
                             disabled={!canFollowSelected}
                             onClick={() => {
-                                dispatch(followPathActions.toggleResetPositionOnInit(true));
+                                dispatch(followPathActions.setReset("initPosition"));
                                 dispatch(followPathActions.setRoadIds(undefined));
                                 dispatch(followPathActions.setDrawRoadIds(undefined));
 
@@ -201,20 +202,36 @@ export function PathList() {
                                     key={path.id}
                                     onClick={async () => {
                                         dispatch(followPathActions.setSelectedPath(path.id));
-                                        dispatch(followPathActions.toggleResetPositionOnInit(true));
                                         dispatch(followPathActions.setSelectedIds([path.id]));
                                         dispatch(followPathActions.setRoadIds(undefined));
                                         dispatch(followPathActions.setDrawRoadIds(undefined));
                                         dispatch(renderActions.setMainObject(path.id));
                                         dispatchHighlighted(highlightActions.setIds([path.id]));
+                                        let initPos = true;
                                         history.push(`/followIds`);
-                                        const measureView = await view.measure;
-                                        if (measureView) {
-                                            const segment = await measureView.core.pickCurveSegment(path.id);
+                                        if (view.measure) {
+                                            const segment = await view.measure.core.pickCurveSegment(path.id);
                                             if (segment) {
+                                                const measure = await view.measure.core.measure(segment, {
+                                                    drawKind: "vertex",
+                                                    ObjectId: -1,
+                                                    parameter: view.renderState.camera.position,
+                                                });
+                                                if (measure) {
+                                                    const duoMeasure = measure as DuoMeasurementValues;
+                                                    if (duoMeasure.measureInfoB && duoMeasure.measureInfoB.parameter) {
+                                                        dispatch(
+                                                            followPathActions.setProfile(
+                                                                duoMeasure.measureInfoB.parameter.toString()
+                                                            )
+                                                        );
+                                                        initPos = false;
+                                                    }
+                                                }
                                                 dispatch(measureActions.selectEntity({ entity: segment, pin: true }));
                                             }
                                         }
+                                        dispatch(followPathActions.setReset(initPos ? "initPosition" : "default"));
                                     }}
                                     disableGutters
                                     color="primary"
