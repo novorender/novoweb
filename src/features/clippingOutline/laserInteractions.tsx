@@ -5,8 +5,8 @@ import { useAppDispatch, useAppSelector } from "app/store";
 import { useExplorerGlobals } from "contexts/explorerGlobals";
 import { selectCamera, selectClippingPlanes } from "features/render";
 
+import { getOutlineLaser } from "./getOutlineLaser";
 import { clippingOutlineActions, selectOutlineLasers } from "./outlineLaserSlice";
-import { getOutlineLaser } from "./useOutlineLaser";
 
 const markerStyles = ({ theme }: { theme: Theme }) => css`
     cursor: pointer;

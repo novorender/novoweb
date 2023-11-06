@@ -13,7 +13,7 @@ import {
 import { highlightActions, useDispatchHighlighted, useHighlighted } from "contexts/highlighted";
 import { areaActions } from "features/area";
 import { clippingOutlineActions } from "features/clippingOutline";
-import { getOutlineLaser } from "features/clippingOutline/useOutlineLaser";
+import { getOutlineLaser } from "features/clippingOutline";
 import { followPathActions } from "features/followPath";
 import { heightProfileActions } from "features/heightProfile";
 import { manholeActions } from "features/manhole";

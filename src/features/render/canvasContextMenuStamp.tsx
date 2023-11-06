@@ -1,4 +1,4 @@
-import { CropLandscape, Layers, LayersClear, Straighten, VisibilityOff } from "@mui/icons-material";
+import { CropLandscape, Height, Layers, LayersClear, Straighten, VisibilityOff } from "@mui/icons-material";
 import { Box, ListItemIcon, ListItemText, MenuItem } from "@mui/material";
 import { MeasureEntity } from "@novorender/api";
 import { vec3, vec4 } from "gl-matrix";
@@ -11,8 +11,17 @@ import { useExplorerGlobals } from "contexts/explorerGlobals";
 import { hiddenActions, useDispatchHidden } from "contexts/hidden";
 import { highlightActions, useDispatchHighlighted } from "contexts/highlighted";
 import { selectionBasketActions, useDispatchSelectionBasket } from "contexts/selectionBasket";
+import { clippingOutlineActions, getOutlineLaser, OutlineLaser } from "features/clippingOutline";
 import { measureActions } from "features/measure";
-import { ObjectVisibility, renderActions, selectClippingPlanes, selectStamp, StampKind } from "features/render";
+import {
+    CameraType,
+    ObjectVisibility,
+    renderActions,
+    selectCameraType,
+    selectClippingPlanes,
+    selectStamp,
+    StampKind,
+} from "features/render";
 import { selectCanvasContextMenuFeatures } from "slices/explorerSlice";
 import { getFilePathFromObjectPath } from "utils/objectData";
 import { getObjectData, searchDeepByPatterns } from "utils/search";
@@ -28,12 +37,14 @@ export function CanvasContextMenuStamp() {
 
     const features = useAppSelector(selectCanvasContextMenuFeatures);
     const clippingPlanes = useAppSelector(selectClippingPlanes).planes;
+    const cameraType = useAppSelector(selectCameraType);
     const stamp = useAppSelector(selectStamp);
     const [measureEntity, setMeasureEntity] = useState<MeasureEntity>();
     const [properties, setProperties] = useState<{
         layer: [string, string] | undefined;
         file: [string, string] | undefined;
     }>();
+    const [laser, setLaser] = useState<{ laser: OutlineLaser; plane: Vec4 }>();
 
     useEffect(() => {
         loadObjectData();
@@ -65,8 +76,15 @@ export function CanvasContextMenuStamp() {
                 layer,
                 file: file ? ["path", file] : undefined,
             });
+
+            const pos = view.worldPositionFromPixelPosition(stamp.mouseX, stamp.mouseY);
+            const plane = view.renderState.clipping.planes[0]?.normalOffset;
+            if (cameraType === CameraType.Orthographic && pos && plane) {
+                const laser = await getOutlineLaser(pos, view, cameraType, plane);
+                setLaser(laser ? { laser, plane } : undefined);
+            }
         }
-    }, [stamp, db, view, dispatch]);
+    }, [stamp, db, view, cameraType, dispatch]);
 
     if (stamp?.kind !== StampKind.CanvasContextMenu) {
         return null;
@@ -162,6 +180,16 @@ export function CanvasContextMenuStamp() {
         close();
     };
 
+    const addLaser = async () => {
+        if (!laser) {
+            return;
+        }
+
+        dispatch(clippingOutlineActions.setLaserPlane(laser.plane));
+        dispatch(clippingOutlineActions.addLaser(laser.laser));
+        close();
+    };
+
     return (
         <>
             {!properties && <LinearProgress sx={{ mt: -1 }} />}
@@ -207,6 +235,14 @@ export function CanvasContextMenuStamp() {
                             <Straighten fontSize="small" />
                         </ListItemIcon>
                         <ListItemText>{config.measure.name}</ListItemText>
+                    </MenuItem>
+                )}
+                {features.includes(config.laser.key) && cameraType === CameraType.Orthographic && (
+                    <MenuItem onClick={addLaser} disabled={!laser}>
+                        <ListItemIcon>
+                            <Height fontSize="small" />
+                        </ListItemIcon>
+                        <ListItemText>{config.laser.name}</ListItemText>
                     </MenuItem>
                 )}
                 {features.includes(config.clip.key) && (
