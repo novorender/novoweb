@@ -406,6 +406,7 @@ export function NavigationCube() {
                                 ids: highlighted,
                                 abortSignal,
                                 db,
+                                view,
                                 flip: !vec3.equals(scene.up ?? [0, 1, 0], [0, 0, 1]),
                             })
                         )?.center;

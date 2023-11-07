@@ -142,7 +142,9 @@ export function Root() {
             }
 
             const cleanedObjectData = { ...objectData, properties: objectData.properties.slice(0, 100) };
-            const parent = await searchFirstObjectAtPath({ db, path: getParentPath(objectData.path) });
+            const parent = navigator.onLine
+                ? await searchFirstObjectAtPath({ db, path: getParentPath(objectData.path) })
+                : undefined;
 
             if (parent) {
                 const parentPropertiesObject = createPropertiesObject({
@@ -450,15 +452,17 @@ function PropertyItem({ checked, onChange, property, value, resizing, groupName 
                         </Typography>
                     </Tooltip>
                 </Box>
-                <Box ml={0.5} width={20} flexShrink={0}>
-                    <Checkbox
-                        inputRef={checkboxRef}
-                        sx={{ padding: 0 }}
-                        checked={checked}
-                        onChange={onChange}
-                        size={"small"}
-                    />
-                </Box>
+                {navigator.onLine && (
+                    <Box ml={0.5} width={20} flexShrink={0}>
+                        <Checkbox
+                            inputRef={checkboxRef}
+                            sx={{ padding: 0 }}
+                            checked={checked}
+                            onChange={onChange}
+                            size={"small"}
+                        />
+                    </Box>
+                )}
                 <Box sx={{ ml: 1, mr: "2px", "& button": { height: 20, width: 20 } }} flexShrink={0}>
                     <Menu
                         onClick={(e) => e.stopPropagation()}

@@ -1,10 +1,11 @@
+import { View } from "@novorender/api";
 import { ObjectDB } from "@novorender/data-js-api";
-import { BoundingSphere, HierarcicalObjectReference, ObjectId } from "@novorender/webgl-api";
+import { BoundingSphere, HierarcicalObjectReference, ObjectData, ObjectId } from "@novorender/webgl-api";
 import { vec3 } from "gl-matrix";
 
 import { flip } from "features/render/utils";
 
-import { batchedPropertySearch } from "./search";
+import { batchedPropertySearch, getObjectData } from "./search";
 
 export function decodeObjPathName(str: string) {
     try {
@@ -62,20 +63,25 @@ export async function objIdsToTotalBoundingSphere({
     abortSignal,
     db,
     flip,
+    view,
 }: {
     ids: number[];
     abortSignal: AbortSignal;
     db: ObjectDB;
     flip?: boolean;
+    view: View;
 }) {
-    let nodes = [] as HierarcicalObjectReference[];
-
-    nodes = await batchedPropertySearch({
-        db,
-        property: "id",
-        value: ids.map((id) => String(id)),
-        abortSignal,
-    });
+    // let nodes = [] as HierarcicalObjectReference[];
+    const nodes = navigator.onLine
+        ? await batchedPropertySearch({
+              db,
+              property: "id",
+              value: ids.map((id) => String(id)),
+              abortSignal,
+          })
+        : (await Promise.all(ids.slice(-50).map((id) => getObjectData({ db, id, view })))).filter(
+              (obj): obj is ObjectData => obj !== undefined
+          );
 
     return getTotalBoundingSphere(nodes, { flip });
 }
