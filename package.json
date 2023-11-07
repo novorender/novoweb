@@ -5,7 +5,7 @@
     "main": "index.js",
     "scripts": {
         "build": "npm run eslint && npm run typescript && vite build",
-        "dev": "vite",
+        "dev": "npm run dependencies && vite",
         "preview": "vite preview",
         "typescript": "tsc --noEmit",
         "eslint": "eslint src/ --max-warnings=0",
