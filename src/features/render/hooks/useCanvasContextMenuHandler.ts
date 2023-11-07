@@ -6,11 +6,21 @@ import { highlightActions, useDispatchHighlighted } from "contexts/highlighted";
 import { selectCanvasContextMenuFeatures } from "slices/explorerSlice";
 import { isRealVec } from "utils/misc";
 
-import { Picker, renderActions, selectPicker, StampKind } from "../renderSlice";
+import {
+    CameraType,
+    Picker,
+    renderActions,
+    selectCameraType,
+    selectClippingPlanes,
+    selectPicker,
+    StampKind,
+} from "../renderSlice";
 
 export function useCanvasContextMenuHandler() {
     const dispatch = useAppDispatch();
     const dispatchHighlighted = useDispatchHighlighted();
+    const cameraType = useAppSelector(selectCameraType);
+    const clippingPlanes = useAppSelector(selectClippingPlanes);
     const features = useAppSelector(selectCanvasContextMenuFeatures);
     const picker = useAppSelector(selectPicker);
     const {
@@ -25,8 +35,26 @@ export function useCanvasContextMenuHandler() {
         const result = await view.pick(pos[0], pos[1], { sampleDiscRadius: isTouch ? 8 : 4 });
 
         if (!result || result.objectId === -1) {
-            dispatch(renderActions.setStamp(null));
-            return;
+            if (cameraType === CameraType.Orthographic && clippingPlanes.planes.length) {
+                dispatch(
+                    renderActions.setStamp({
+                        kind: StampKind.CanvasContextMenu,
+                        data: {
+                            object: result?.objectId ?? undefined,
+                            position: result?.position ?? undefined,
+                            normal: result?.normal && isRealVec(result.normal) ? [...result.normal] : undefined,
+                        },
+                        pinned: true,
+                        mouseX: pos[0],
+                        mouseY: pos[1],
+                    })
+                );
+
+                return;
+            } else {
+                dispatch(renderActions.setStamp(null));
+                return;
+            }
         }
 
         dispatch(renderActions.setMainObject(result.objectId));

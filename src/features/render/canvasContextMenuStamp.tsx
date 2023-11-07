@@ -58,24 +58,26 @@ export function CanvasContextMenuStamp() {
 
             const objectId = stamp.data.object;
 
-            const [obj, ent] = await Promise.all([
-                getObjectData({ db, id: objectId, view }),
-                view.measure?.core
-                    .pickMeasureEntity(objectId, stamp.data.position)
-                    .then((res) => (["face"].includes(res.entity.drawKind) ? res.entity : undefined))
-                    .catch(() => undefined),
-            ]);
+            if (objectId && stamp.data.position) {
+                const [obj, ent] = await Promise.all([
+                    getObjectData({ db, id: objectId, view }),
+                    view.measure?.core
+                        .pickMeasureEntity(objectId, stamp.data.position)
+                        .then((res) => (["face"].includes(res.entity.drawKind) ? res.entity : undefined))
+                        .catch(() => undefined),
+                ]);
 
-            setMeasureEntity(ent);
+                setMeasureEntity(ent);
 
-            const file = getFilePathFromObjectPath(obj?.path ?? "");
-            const layer = obj?.properties.find(([key]) =>
-                ["ifcClass", "dwg/layer"].map((str) => str.toLowerCase()).includes(key.toLowerCase())
-            );
-            setProperties({
-                layer,
-                file: file ? ["path", file] : undefined,
-            });
+                const file = getFilePathFromObjectPath(obj?.path ?? "");
+                const layer = obj?.properties.find(([key]) =>
+                    ["ifcClass", "dwg/layer"].map((str) => str.toLowerCase()).includes(key.toLowerCase())
+                );
+                setProperties({
+                    layer,
+                    file: file ? ["path", file] : undefined,
+                });
+            }
 
             const pos = view.worldPositionFromPixelPosition(stamp.mouseX, stamp.mouseY);
             const plane = view.renderState.clipping.planes[0]?.normalOffset;
@@ -95,6 +97,10 @@ export function CanvasContextMenuStamp() {
     };
 
     const hide = () => {
+        if (stamp.data.object === undefined) {
+            return;
+        }
+
         dispatch(renderActions.setMainObject(undefined));
         dispatchHighlighted(highlightActions.remove([stamp.data.object]));
         dispatchHidden(hiddenActions.add([stamp.data.object]));
@@ -165,7 +171,7 @@ export function CanvasContextMenuStamp() {
 
     const clip = () => {
         const { position, normal } = stamp.data;
-        if (!normal) {
+        if (!normal || !position) {
             return;
         }
 
@@ -192,14 +198,14 @@ export function CanvasContextMenuStamp() {
 
     return (
         <>
-            {!properties && <LinearProgress sx={{ mt: -1 }} />}
+            {stamp.data.object !== undefined && !properties && <LinearProgress sx={{ mt: -1 }} />}
             <Box
                 sx={{
                     pointerEvents: "auto",
                 }}
             >
                 {features.includes(config.hide.key) && (
-                    <MenuItem onClick={hide}>
+                    <MenuItem onClick={hide} disabled={stamp.data.object === undefined}>
                         <ListItemIcon>
                             <VisibilityOff fontSize="small" />
                         </ListItemIcon>
@@ -246,7 +252,10 @@ export function CanvasContextMenuStamp() {
                     </MenuItem>
                 )}
                 {features.includes(config.clip.key) && (
-                    <MenuItem onClick={clip} disabled={!stamp.data.normal || clippingPlanes.length > 5}>
+                    <MenuItem
+                        onClick={clip}
+                        disabled={!stamp.data.normal || !stamp.data.position || clippingPlanes.length > 5}
+                    >
                         <ListItemIcon>
                             <CropLandscape fontSize="small" />
                         </ListItemIcon>
