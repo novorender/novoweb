@@ -62,6 +62,9 @@ export function useHandleOutlines() {
                 const getFileId = async (fileName: string) => {
                     const iterator = db.search({ parentPath: fileName, descentDepth: 0 }, undefined);
                     const fileId = (await iterator.next()).value;
+                    if (!fileId) {
+                        return [];
+                    }
                     return db.descendants(fileId, undefined);
                 };
 
