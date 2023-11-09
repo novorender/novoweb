@@ -179,7 +179,7 @@ export function Engine2D({
                         measureObjects.map((obj) =>
                             getDrawMeasureEntity(obj, {
                                 ...obj.settings,
-                                segmentLabelInterval: 10,
+                                segmentLabelInterval: idleFrame ? 10 : 0,
                             })
                         )
                     ),
@@ -187,7 +187,7 @@ export function Engine2D({
                         (drawSelectedPaths ? pathMeasureObjectsData ?? [] : []).map((obj) =>
                             getDrawMeasureEntity(obj, {
                                 cylinderMeasure: drawPathSettings,
-                                segmentLabelInterval: 10,
+                                segmentLabelInterval: idleFrame ? 10 : 0,
                             })
                         )
                     ),
