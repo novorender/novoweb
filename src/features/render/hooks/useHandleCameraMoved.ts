@@ -42,7 +42,8 @@ export function useHandleCameraMoved({
     const orthoMovementTimer = useRef<ReturnType<typeof setTimeout>>();
 
     const prevCameraType = useRef(cameraType);
-    const prevCameraZ = useRef<Vec3>(vec3.create());
+    const prevCameraDir = useRef<Vec3>(vec3.create());
+    const prevClippingPlaneW = useRef<number>(0);
 
     useEffect(
         function initCameraMovedTracker() {
@@ -100,9 +101,18 @@ export function useHandleCameraMoved({
 
                     // Move clipping plane
                     const plane = view.renderState.clipping.planes[0];
-                    if (plane && !vec3.exactEquals(z, prevCameraZ.current)) {
-                        prevCameraZ.current = z;
+                    if (plane) {
+                        prevCameraDir.current = z;
                         const w = vec3.dot(z, camera.position);
+
+                        if (
+                            vec3.exactEquals(z, prevCameraDir.current) &&
+                            Math.abs(w - prevClippingPlaneW.current) <= 0.001
+                        ) {
+                            return;
+                        }
+
+                        prevClippingPlaneW.current = w;
                         dispatch(
                             renderActions.setClippingPlanes({
                                 planes: [
