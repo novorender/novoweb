@@ -12,13 +12,13 @@ import {
 } from "contexts/highlightCollections";
 import { highlightActions, useDispatchHighlighted, useHighlighted } from "contexts/highlighted";
 import { areaActions } from "features/area";
-import { clippingOutlineActions } from "features/clippingOutline";
-import { getOutlineLaser } from "features/clippingOutline";
 import { followPathActions } from "features/followPath";
 import { heightProfileActions } from "features/heightProfile";
 import { manholeActions } from "features/manhole";
 import { measureActions, selectMeasure, useMeasurePickSettings } from "features/measure";
 import { orthoCamActions, selectCrossSectionClipping, selectCrossSectionPoint } from "features/orthoCam";
+import { clippingOutlineLaserActions } from "features/outlineLaser";
+import { getOutlineLaser } from "features/outlineLaser";
 import { pointLineActions } from "features/pointLine";
 import { selectShowPropertiesStamp } from "features/properties/slice";
 import {
@@ -111,10 +111,10 @@ export function useCanvasClickHandler() {
                 tracePosition = vec3.scaleAndAdd(vec3.create(), camPos, lineDir, t);
             }
             if (tracePosition) {
-                dispatch(clippingOutlineActions.setLaserPlane(view.renderState.clipping.planes[0].normalOffset));
+                dispatch(clippingOutlineLaserActions.setLaserPlane(view.renderState.clipping.planes[0].normalOffset));
                 const laser = await getOutlineLaser(tracePosition, view, cameraState.type, planes[0].normalOffset);
                 if (laser) {
-                    dispatch(clippingOutlineActions.addLaser(laser));
+                    dispatch(clippingOutlineLaserActions.addLaser(laser));
                 }
             }
 
