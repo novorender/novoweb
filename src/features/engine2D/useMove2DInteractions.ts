@@ -3,7 +3,7 @@ import { useCallback, useEffect } from "react";
 
 import { useAppSelector } from "app/store";
 import { useExplorerGlobals } from "contexts/explorerGlobals";
-import { GetMeasurePointsFromTracer, selectOutlineLasers } from "features/clippingOutline";
+import { GetMeasurePointsFromTracer, selectOutlineLasers } from "features/outlineLaser";
 
 export function useMove2DInteractions(svg: SVGSVGElement | null) {
     const {
@@ -12,7 +12,7 @@ export function useMove2DInteractions(svg: SVGSVGElement | null) {
 
     const outlineLasers = useAppSelector(selectOutlineLasers);
 
-    const moveSvgMarkers = useCallback(() => {
+    const move = useCallback(() => {
         if (!svg || !view?.measure) {
             return;
         }
@@ -73,8 +73,8 @@ export function useMove2DInteractions(svg: SVGSVGElement | null) {
     }, [view, svg, outlineLasers]);
 
     useEffect(() => {
-        moveSvgMarkers();
-    }, [moveSvgMarkers]);
+        move();
+    }, [move]);
 
-    return moveSvgMarkers;
+    return move;
 }

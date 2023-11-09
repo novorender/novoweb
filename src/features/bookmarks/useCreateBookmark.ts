@@ -9,12 +9,6 @@ import { useLazyHighlighted } from "contexts/highlighted";
 import { GroupStatus, isInternalGroup, useLazyObjectGroups } from "contexts/objectGroups";
 import { useLazySelectionBasket } from "contexts/selectionBasket";
 import { selectAreaPoints } from "features/area";
-import {
-    GetMeasurePointsFromTracer,
-    selectOutlineLaserPlane,
-    selectOutlineLasers,
-    TraceMeasurement,
-} from "features/clippingOutline";
 import { selectFollowPath } from "features/followPath";
 import {
     selectManholeCollisionSettings,
@@ -22,6 +16,12 @@ import {
     selectManholeMeasureValues,
 } from "features/manhole";
 import { selectMeasure } from "features/measure";
+import {
+    GetMeasurePointsFromTracer,
+    selectOutlineLaserPlane,
+    selectOutlineLasers,
+    TraceMeasurement,
+} from "features/outlineLaser";
 import { selectPointLinePoints } from "features/pointLine";
 import {
     selectBackground,

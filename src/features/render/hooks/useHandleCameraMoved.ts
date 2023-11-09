@@ -4,11 +4,19 @@ import { MutableRefObject, useEffect, useRef } from "react";
 
 import { useAppDispatch, useAppSelector } from "app/store";
 import { useExplorerGlobals } from "contexts/explorerGlobals";
+import { useMove2DInteractions } from "features/engine2D";
 import { orthoCamActions, selectCurrentTopDownElevation } from "features/orthoCam";
 import { ViewMode } from "types/misc";
 
-import { CameraType, renderActions, selectCameraType, selectSavedCameraPositions, selectViewMode } from "..";
-import { useMove2DInteractions } from "./useMove2DInteractions";
+import {
+    CameraType,
+    DeepMutable,
+    renderActions,
+    RenderState,
+    selectCameraType,
+    selectSavedCameraPositions,
+    selectViewMode,
+} from "..";
 import { useMoveMarkers } from "./useMoveMarkers";
 
 export function useHandleCameraMoved({
@@ -34,6 +42,8 @@ export function useHandleCameraMoved({
     const orthoMovementTimer = useRef<ReturnType<typeof setTimeout>>();
 
     const prevCameraType = useRef(cameraType);
+    const prevCameraDir = useRef<Vec3>(vec3.create());
+    const prevClippingPlaneW = useRef<number>(0);
 
     useEffect(
         function initCameraMovedTracker() {
@@ -88,6 +98,30 @@ export function useHandleCameraMoved({
                     const delta = vec3.dot(z, vec3.sub(vec3.create(), camPos, origin));
                     const newPos = vec3.scaleAndAdd(vec3.create(), origin, z, delta);
                     dispatch(renderActions.setGrid({ origin: newPos }));
+
+                    // Move clipping plane
+                    const plane = view.renderState.clipping.planes[0];
+                    if (plane) {
+                        prevCameraDir.current = z;
+                        const w = vec3.dot(z, camera.position);
+
+                        if (
+                            vec3.exactEquals(z, prevCameraDir.current) &&
+                            Math.abs(w - prevClippingPlaneW.current) <= 0.001
+                        ) {
+                            return;
+                        }
+
+                        prevClippingPlaneW.current = w;
+                        dispatch(
+                            renderActions.setClippingPlanes({
+                                planes: [
+                                    { ...plane, normalOffset: [...z, w] as Vec4, baseW: w },
+                                    ...view.renderState.clipping.planes.slice(1),
+                                ] as DeepMutable<RenderState["clipping"]["planes"]>,
+                            })
+                        );
+                    }
                 }, 100);
 
                 movementTimer.current = setTimeout(() => {

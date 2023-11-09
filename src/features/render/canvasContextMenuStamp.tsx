@@ -11,8 +11,8 @@ import { useExplorerGlobals } from "contexts/explorerGlobals";
 import { hiddenActions, useDispatchHidden } from "contexts/hidden";
 import { highlightActions, useDispatchHighlighted } from "contexts/highlighted";
 import { selectionBasketActions, useDispatchSelectionBasket } from "contexts/selectionBasket";
-import { clippingOutlineActions, getOutlineLaser, OutlineLaser } from "features/clippingOutline";
 import { measureActions } from "features/measure";
+import { clippingOutlineLaserActions, getOutlineLaser, OutlineLaser } from "features/outlineLaser";
 import {
     CameraType,
     ObjectVisibility,
@@ -191,8 +191,8 @@ export function CanvasContextMenuStamp() {
             return;
         }
 
-        dispatch(clippingOutlineActions.setLaserPlane(laser.plane));
-        dispatch(clippingOutlineActions.addLaser(laser.laser));
+        dispatch(clippingOutlineLaserActions.setLaserPlane(laser.plane));
+        dispatch(clippingOutlineLaserActions.addLaser(laser.laser));
         close();
     };
 

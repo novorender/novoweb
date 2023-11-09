@@ -55,7 +55,12 @@ export function OrthoShortcut({ position, ...speedDialProps }: Props) {
                     renderActions.setCamera({
                         type: CameraType.Pinhole,
                         goTo: {
-                            position: vec3.scaleAndAdd(vec3.create(), view.renderState.camera.position, planeDir, 15),
+                            position: vec3.scaleAndAdd(
+                                vec3.create(),
+                                view.renderState.camera.position,
+                                planeDir,
+                                view.renderState.camera.fov
+                            ),
                             rotation: view.renderState.camera.rotation,
                         },
                     })
