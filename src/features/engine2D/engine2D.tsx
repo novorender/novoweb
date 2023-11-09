@@ -179,7 +179,7 @@ export function Engine2D({
                         measureObjects.map((obj) =>
                             getDrawMeasureEntity(obj, {
                                 ...obj.settings,
-                                segmentLabelInterval: cameraType === CameraType.Pinhole ? 10 : 0,
+                                segmentLabelInterval: 10,
                             })
                         )
                     ),
@@ -187,7 +187,7 @@ export function Engine2D({
                         (drawSelectedPaths ? pathMeasureObjectsData ?? [] : []).map((obj) =>
                             getDrawMeasureEntity(obj, {
                                 cylinderMeasure: drawPathSettings,
-                                segmentLabelInterval: cameraType === CameraType.Pinhole ? 10 : 0,
+                                segmentLabelInterval: 10,
                             })
                         )
                     ),
