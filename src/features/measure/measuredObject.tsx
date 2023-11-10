@@ -74,7 +74,7 @@ export function MeasuredObject({ obj, idx }: { obj: ExtendedMeasureEntity; idx: 
     const kind = !measureObject ? "" : measureValues ? getMeasurementValueKind(measureValues) : "point";
 
     const _idx = idx === 0 ? "measureInfoA" : "measureInfoB";
-    const useCylinderMeasureSettings = duoMeasurementValues && duoMeasurementValues[_idx]?.validMeasureSettings;
+    const useCylinderMeasureSettings = duoMeasurementValues && duoMeasurementValues.result[_idx]?.validMeasureSettings;
 
     return (
         <Accordion defaultExpanded={true}>

@@ -22,7 +22,7 @@ const initialState = {
     hover: undefined as WriteableMeasureEntity | undefined,
     snapKind: "all" as SnapKind,
     pinned: undefined as undefined | number,
-    duoMeasurementValues: undefined as undefined | DuoMeasurementValues,
+    duoMeasurementValues: undefined as undefined | { result: DuoMeasurementValues; id: number },
     loadingBrep: false,
 };
 
@@ -60,7 +60,10 @@ export const measureSlice = createSlice({
             state.pinned = undefined;
             state.hover = undefined;
         },
-        setDuoMeasurementValues: (state, action: PayloadAction<State["duoMeasurementValues"]>) => {
+        setDuoMeasurementValues: (
+            state,
+            action: PayloadAction<undefined | { result: DuoMeasurementValues; id: number }>
+        ) => {
             state.duoMeasurementValues = action.payload;
         },
         setSettings: (state, action: PayloadAction<{ idx: number; settings: MeasureSettings }>) => {
