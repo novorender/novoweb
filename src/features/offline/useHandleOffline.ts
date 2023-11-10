@@ -149,6 +149,11 @@ export function useHandleOffline() {
                             .map((group) => dataApi.getGroupIds(viewerSceneId, group.id)),
                     ]);
 
+                    const persisted = await navigator.storage.persisted();
+                    if (!persisted) {
+                        await navigator.storage.persist();
+                    }
+
                     const meta = storage.get(parentSceneId);
                     const viewerScene = {
                         id: viewerSceneId,
@@ -225,6 +230,11 @@ export function useHandleOffline() {
                             .filter((group) => group.id && !group.ids)
                             .map((group) => dataApi.getGroupIds(viewerSceneId, group.id)),
                     ]);
+
+                    const persisted = await navigator.storage.persisted();
+                    if (!persisted) {
+                        await navigator.storage.persist();
+                    }
 
                     const meta = storage.get(parentSceneId);
                     const viewerScene = {
