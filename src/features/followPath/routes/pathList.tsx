@@ -229,7 +229,8 @@ export function PathList() {
                                                         initPos = false;
                                                     }
                                                 }
-                                                dispatch(measureActions.selectEntity({ entity: segment, pin: true }));
+                                                dispatch(measureActions.setSelectedEntities([segment]));
+                                                dispatch(measureActions.pin(0));
                                             }
                                         }
                                         dispatch(followPathActions.setReset(initPos ? "initPosition" : "default"));
