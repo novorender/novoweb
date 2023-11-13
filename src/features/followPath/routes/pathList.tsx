@@ -85,6 +85,7 @@ export function PathList() {
                         )),
                 });
 
+                paths.sort((a, b) => a.name.localeCompare(b.name, "en", { sensitivity: "accent" }));
                 dispatch(followPathActions.setPaths({ status: AsyncStatus.Success, data: paths }));
             } catch (e) {
                 console.warn(e);
