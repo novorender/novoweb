@@ -1,5 +1,5 @@
 import { DuoMeasurementValues } from "@novorender/api";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 import { useAppDispatch, useAppSelector } from "app/store";
 import { useExplorerGlobals } from "contexts/explorerGlobals";
@@ -16,6 +16,7 @@ export function useMeasureObjects() {
     const dispatch = useAppDispatch();
 
     const [measureObjects, setMeasureObjects] = useState([] as ExtendedMeasureEntity[]);
+    const duoId = useRef(0);
 
     useEffect(() => {
         getMeasureObjects();
@@ -51,13 +52,14 @@ export function useMeasureObjects() {
 
             const [obj1, obj2] = mObjects;
 
-            let res: DuoMeasurementValues | undefined;
+            let result: DuoMeasurementValues | undefined;
 
-            res = (await measureView?.core
+            result = (await measureView?.core
                 .measure(obj1, obj2, obj1.settings, obj2.settings)
                 .catch((e) => console.warn(e))) as DuoMeasurementValues | undefined;
 
-            dispatch(measureActions.setDuoMeasurementValues(res));
+            dispatch(measureActions.setDuoMeasurementValues(result ? { result, id: duoId.current } : undefined));
+            duoId.current++;
             setMeasureObjects(mObjects);
             dispatch(measureActions.setLoadingBrep(false));
         }

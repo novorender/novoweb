@@ -120,12 +120,12 @@ export function drawPart(
 function drawTextPart(ctx: CanvasRenderingContext2D, part: DrawPart, camera: CameraSettings) {
     if (part.drawType === "text" && part.text && part.vertices2D) {
         if (Array.isArray(part.text)) {
-            if (part.text.length === 1) {
+            if (part.text.length === 1 && part.indicesOnScreen) {
                 let index = 0;
                 let bestCase = Number.MAX_VALUE;
                 for (; index < part.text[0].length && index < part.vertices2D.length; ++index) {
                     //Binary search could improve performance
-                    const dist = vec3.dist(part.vertices3D[index], camera.pos);
+                    const dist = vec3.dist(part.vertices3D[part.indicesOnScreen[index]], camera.pos);
                     if (dist > bestCase) {
                         break;
                     }

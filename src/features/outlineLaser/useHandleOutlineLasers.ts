@@ -24,6 +24,7 @@ export function useHandleOutlineLasers() {
     const tracesRef = useRef(outlineLasers);
     const tracePlaneRef = useRef(tracePlane);
     const generationRef = useRef(0);
+    const first = useRef(true);
 
     useEffect(() => {
         tracesRef.current = outlineLasers;
@@ -31,13 +32,18 @@ export function useHandleOutlineLasers() {
     }, [tracePlane, outlineLasers]);
 
     useEffect(() => {
-        updateTraces();
+        updateLasers();
 
-        async function updateTraces() {
+        async function updateLasers() {
             if (planes.length === 0) {
                 if (tracesRef.current.length > 0) {
                     dispatch(clippingOutlineLaserActions.clear());
                 }
+                return;
+            }
+            if (first.current) {
+                //Avoid deleting bookmark lasers on init
+                first.current = false;
                 return;
             }
             generationRef.current++;

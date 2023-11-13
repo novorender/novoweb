@@ -44,6 +44,7 @@ export function useHandleCameraMoved({
     const prevCameraType = useRef(cameraType);
     const prevCameraDir = useRef<Vec3>(vec3.create());
     const prevClippingPlaneW = useRef<number>(0);
+    const first = useRef(true);
 
     useEffect(
         function initCameraMovedTracker() {
@@ -111,8 +112,14 @@ export function useHandleCameraMoved({
                         ) {
                             return;
                         }
-
                         prevClippingPlaneW.current = w;
+
+                        if (first.current) {
+                            //Do not move clipping plane on startup
+                            first.current = false;
+                            return;
+                        }
+
                         dispatch(
                             renderActions.setClippingPlanes({
                                 planes: [
