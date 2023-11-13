@@ -150,7 +150,7 @@ function drawTextPart(ctx: CanvasRenderingContext2D, part: DrawPart, camera: Cam
                         }
                     }
                     prevPos = part.vertices2D[i];
-                    drawText(ctx, [part.vertices2D[i]], part.text[0][i]);
+                    drawText(ctx, [part.vertices2D[i]], part.text[0][part.indicesOnScreen[i]]);
                 }
 
                 incrementer = 1;
@@ -166,7 +166,7 @@ function drawTextPart(ctx: CanvasRenderingContext2D, part: DrawPart, camera: Cam
                         }
                     }
                     prevPos = part.vertices2D[i];
-                    drawText(ctx, [part.vertices2D[i]], part.text[0][i]);
+                    drawText(ctx, [part.vertices2D[i]], part.text[0][part.indicesOnScreen[i]]);
                 }
                 return true;
             }
