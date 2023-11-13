@@ -1,4 +1,4 @@
-import { CropLandscape, Layers, LayersClear, Straighten, VisibilityOff } from "@mui/icons-material";
+import { CropLandscape, Height, Layers, LayersClear, Straighten, VisibilityOff } from "@mui/icons-material";
 import { Box, ListItemIcon, ListItemText, MenuItem } from "@mui/material";
 import { MeasureEntity } from "@novorender/api";
 import { vec3, vec4 } from "gl-matrix";
@@ -12,7 +12,16 @@ import { hiddenActions, useDispatchHidden } from "contexts/hidden";
 import { highlightActions, useDispatchHighlighted } from "contexts/highlighted";
 import { selectionBasketActions, useDispatchSelectionBasket } from "contexts/selectionBasket";
 import { measureActions } from "features/measure";
-import { ObjectVisibility, renderActions, selectClippingPlanes, selectStamp, StampKind } from "features/render";
+import { clippingOutlineLaserActions, getOutlineLaser, OutlineLaser } from "features/outlineLaser";
+import {
+    CameraType,
+    ObjectVisibility,
+    renderActions,
+    selectCameraType,
+    selectClippingPlanes,
+    selectStamp,
+    StampKind,
+} from "features/render";
 import { selectCanvasContextMenuFeatures } from "slices/explorerSlice";
 import { getFilePathFromObjectPath } from "utils/objectData";
 import { getObjectData, searchDeepByPatterns } from "utils/search";
@@ -28,12 +37,14 @@ export function CanvasContextMenuStamp() {
 
     const features = useAppSelector(selectCanvasContextMenuFeatures);
     const clippingPlanes = useAppSelector(selectClippingPlanes).planes;
+    const cameraType = useAppSelector(selectCameraType);
     const stamp = useAppSelector(selectStamp);
     const [measureEntity, setMeasureEntity] = useState<MeasureEntity>();
     const [properties, setProperties] = useState<{
         layer: [string, string] | undefined;
         file: [string, string] | undefined;
     }>();
+    const [laser, setLaser] = useState<{ laser: OutlineLaser; plane: Vec4 }>();
 
     useEffect(() => {
         loadObjectData();
@@ -47,26 +58,35 @@ export function CanvasContextMenuStamp() {
 
             const objectId = stamp.data.object;
 
-            const [obj, ent] = await Promise.all([
-                getObjectData({ db, id: objectId, view }),
-                view.measure?.core
-                    .pickMeasureEntity(objectId, stamp.data.position)
-                    .then((res) => (["face"].includes(res.entity.drawKind) ? res.entity : undefined))
-                    .catch(() => undefined),
-            ]);
+            if (objectId && stamp.data.position) {
+                const [obj, ent] = await Promise.all([
+                    getObjectData({ db, id: objectId, view }),
+                    view.measure?.core
+                        .pickMeasureEntity(objectId, stamp.data.position)
+                        .then((res) => (["face"].includes(res.entity.drawKind) ? res.entity : undefined))
+                        .catch(() => undefined),
+                ]);
 
-            setMeasureEntity(ent);
+                setMeasureEntity(ent);
 
-            const file = getFilePathFromObjectPath(obj?.path ?? "");
-            const layer = obj?.properties.find(([key]) =>
-                ["ifcClass", "dwg/layer"].map((str) => str.toLowerCase()).includes(key.toLowerCase())
-            );
-            setProperties({
-                layer,
-                file: file ? ["path", file] : undefined,
-            });
+                const file = getFilePathFromObjectPath(obj?.path ?? "");
+                const layer = obj?.properties.find(([key]) =>
+                    ["ifcClass", "dwg/layer"].map((str) => str.toLowerCase()).includes(key.toLowerCase())
+                );
+                setProperties({
+                    layer,
+                    file: file ? ["path", file] : undefined,
+                });
+            }
+
+            const pos = view.worldPositionFromPixelPosition(stamp.mouseX, stamp.mouseY);
+            const plane = view.renderState.clipping.planes[0]?.normalOffset;
+            if (cameraType === CameraType.Orthographic && pos && plane) {
+                const laser = await getOutlineLaser(pos, view, cameraType, plane);
+                setLaser(laser ? { laser, plane } : undefined);
+            }
         }
-    }, [stamp, db, view, dispatch]);
+    }, [stamp, db, view, cameraType, dispatch]);
 
     if (stamp?.kind !== StampKind.CanvasContextMenu) {
         return null;
@@ -77,6 +97,10 @@ export function CanvasContextMenuStamp() {
     };
 
     const hide = () => {
+        if (stamp.data.object === undefined) {
+            return;
+        }
+
         dispatch(renderActions.setMainObject(undefined));
         dispatchHighlighted(highlightActions.remove([stamp.data.object]));
         dispatchHidden(hiddenActions.add([stamp.data.object]));
@@ -147,7 +171,7 @@ export function CanvasContextMenuStamp() {
 
     const clip = () => {
         const { position, normal } = stamp.data;
-        if (!normal) {
+        if (!normal || !position) {
             return;
         }
 
@@ -162,16 +186,26 @@ export function CanvasContextMenuStamp() {
         close();
     };
 
+    const addLaser = async () => {
+        if (!laser) {
+            return;
+        }
+
+        dispatch(clippingOutlineLaserActions.setLaserPlane(laser.plane));
+        dispatch(clippingOutlineLaserActions.addLaser(laser.laser));
+        close();
+    };
+
     return (
         <>
-            {!properties && <LinearProgress sx={{ mt: -1 }} />}
+            {stamp.data.object !== undefined && !properties && <LinearProgress sx={{ mt: -1 }} />}
             <Box
                 sx={{
                     pointerEvents: "auto",
                 }}
             >
                 {features.includes(config.hide.key) && (
-                    <MenuItem onClick={hide}>
+                    <MenuItem onClick={hide} disabled={stamp.data.object === undefined}>
                         <ListItemIcon>
                             <VisibilityOff fontSize="small" />
                         </ListItemIcon>
@@ -209,8 +243,19 @@ export function CanvasContextMenuStamp() {
                         <ListItemText>{config.measure.name}</ListItemText>
                     </MenuItem>
                 )}
+                {features.includes(config.laser.key) && cameraType === CameraType.Orthographic && (
+                    <MenuItem onClick={addLaser} disabled={!laser}>
+                        <ListItemIcon>
+                            <Height fontSize="small" />
+                        </ListItemIcon>
+                        <ListItemText>{config.laser.name}</ListItemText>
+                    </MenuItem>
+                )}
                 {features.includes(config.clip.key) && (
-                    <MenuItem onClick={clip} disabled={!stamp.data.normal || clippingPlanes.length > 5}>
+                    <MenuItem
+                        onClick={clip}
+                        disabled={!stamp.data.normal || !stamp.data.position || clippingPlanes.length > 5}
+                    >
                         <ListItemIcon>
                             <CropLandscape fontSize="small" />
                         </ListItemIcon>

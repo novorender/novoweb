@@ -37,3 +37,5 @@ export async function getOutlineLaser(
     }
     return undefined;
 }
+
+export type OutlineLaser = NonNullable<Awaited<ReturnType<typeof getOutlineLaser>>>;

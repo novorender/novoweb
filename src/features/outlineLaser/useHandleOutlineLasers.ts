@@ -4,34 +4,27 @@ import { useEffect, useRef } from "react";
 import { useAppDispatch, useAppSelector } from "app/store";
 import { useExplorerGlobals } from "contexts/explorerGlobals";
 import {
-    clippingOutlineActions,
+    clippingOutlineLaserActions,
     OutlineLaser,
-    selectOutlineGroups,
     selectOutlineLaserPlane,
     selectOutlineLasers,
-} from "features/clippingOutline";
-import { ClippedFile } from "features/clippingOutline/clippedObject";
-import { VecRGB } from "utils/color";
-import { getFilePathFromObjectPath } from "utils/objectData";
-import { searchByPatterns } from "utils/search";
+} from "features/outlineLaser";
+import { CameraType, selectCamera, selectClippingPlanes } from "features/render";
 
-import { CameraType, selectCamera, selectClippingPlanes } from "../renderSlice";
-
-export function useHandleOutlines() {
+export function useHandleOutlineLasers() {
     const {
-        state: { view, db },
+        state: { view },
     } = useExplorerGlobals();
     const { planes } = useAppSelector(selectClippingPlanes);
     const outlineLasers = useAppSelector(selectOutlineLasers);
     const tracePlane = useAppSelector(selectOutlineLaserPlane);
-    const outlineGroups = useAppSelector(selectOutlineGroups);
     const dispatch = useAppDispatch();
     const cameraState = useAppSelector(selectCamera);
 
     const tracesRef = useRef(outlineLasers);
     const tracePlaneRef = useRef(tracePlane);
-    const groupRef = useRef(outlineGroups);
     const generationRef = useRef(0);
+    const first = useRef(true);
 
     useEffect(() => {
         tracesRef.current = outlineLasers;
@@ -39,66 +32,18 @@ export function useHandleOutlines() {
     }, [tracePlane, outlineLasers]);
 
     useEffect(() => {
-        groupRef.current = outlineGroups;
-    }, [outlineGroups]);
+        updateLasers();
 
-    useEffect(() => {
-        updateClippedFiles();
-        async function updateClippedFiles() {
-            //This function will not work unless the pick buffer is ready. As this can be called from bookmark a long sleep is required for everything to be set up
-            const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
-            await sleep(1000);
-            if (db && view && groupRef.current.length === 0) {
-                const getFileId = async (fileName: string) => {
-                    const iterator = db.search({ parentPath: fileName, descentDepth: 0 }, undefined);
-                    const fileId = (await iterator.next()).value;
-                    return db.descendants(fileId, undefined);
-                };
-
-                const objIds = await view.getOutlineObjectsOnScreen();
-                if (objIds) {
-                    const filePaths = new Set<string>();
-                    await searchByPatterns({
-                        db,
-                        searchPatterns: [{ property: "id", value: Array.from(objIds).map((v) => String(v)) }],
-                        full: false,
-                        callback: (files) => {
-                            for (const file of files) {
-                                const f = getFilePathFromObjectPath(file.path);
-                                if (f) {
-                                    filePaths.add(f);
-                                }
-                            }
-                        },
-                    });
-                    const files: ClippedFile[] = [];
-
-                    function hsl2rgb(h: number, s: number, l: number) {
-                        let a = s * Math.min(l, 1 - l);
-                        let f = (n: number, k = (n + h / 30) % 12) => l - a * Math.max(Math.min(k - 3, 9 - k, 1), -1);
-                        return [f(0), f(8), f(4)];
-                    }
-                    let i = 0;
-                    const increments = 360 / filePaths.size;
-                    for (const f of filePaths) {
-                        const ids = await getFileId(f);
-                        files.push({ name: f, color: hsl2rgb(increments * i, 1, 0.5) as VecRGB, hidden: false, ids });
-                        ++i;
-                    }
-                    dispatch(clippingOutlineActions.setOutlineGroups(files));
-                }
-            }
-        }
-    }, [db, view, dispatch, planes]);
-
-    useEffect(() => {
-        updateTraces();
-
-        async function updateTraces() {
+        async function updateLasers() {
             if (planes.length === 0) {
                 if (tracesRef.current.length > 0) {
-                    dispatch(clippingOutlineActions.clear());
+                    dispatch(clippingOutlineLaserActions.clear());
                 }
+                return;
+            }
+            if (first.current) {
+                //Avoid deleting bookmark lasers on init
+                first.current = false;
                 return;
             }
             generationRef.current++;
@@ -121,8 +66,8 @@ export function useHandleOutlines() {
                 }
 
                 if (vec3.dot(oldDir, newDir) < 0.9) {
-                    dispatch(clippingOutlineActions.setLaserPlane(undefined));
-                    dispatch(clippingOutlineActions.clear());
+                    dispatch(clippingOutlineLaserActions.setLaserPlane(undefined));
+                    dispatch(clippingOutlineLaserActions.clear());
                     return;
                 }
 
@@ -171,8 +116,8 @@ export function useHandleOutlines() {
                 if (generation < generationRef.current) {
                     return;
                 }
-                dispatch(clippingOutlineActions.setLaserPlane(view.renderState.clipping.planes[0].normalOffset));
-                dispatch(clippingOutlineActions.setLasers(newTraces));
+                dispatch(clippingOutlineLaserActions.setLaserPlane(view.renderState.clipping.planes[0].normalOffset));
+                dispatch(clippingOutlineLaserActions.setLasers(newTraces));
             }
         }
     }, [planes, view, cameraState, dispatch]);

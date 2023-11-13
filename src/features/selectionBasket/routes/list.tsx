@@ -9,7 +9,7 @@ import {
     Typography,
     useTheme,
 } from "@mui/material";
-import { HierarcicalObjectReference } from "@novorender/webgl-api";
+import { HierarcicalObjectReference, ObjectData } from "@novorender/webgl-api";
 import { vec3 } from "gl-matrix";
 import { useEffect, useState } from "react";
 import { useHistory } from "react-router-dom";
@@ -24,6 +24,7 @@ import { flip } from "features/render/utils";
 import { useAbortController } from "hooks/useAbortController";
 import { AsyncState, AsyncStatus, hasFinished } from "types/misc";
 import { getObjectNameFromPath, getTotalBoundingSphere } from "utils/objectData";
+import { getObjectData } from "utils/search";
 
 import { selectFlyOnSelect, selectionBasketSliceActions } from "../selectionBasketSlice";
 
@@ -31,7 +32,7 @@ export function List() {
     const theme = useTheme();
     const history = useHistory();
     const {
-        state: { db, scene },
+        state: { db, scene, view },
     } = useExplorerGlobals(true);
 
     const [abortController, abort] = useAbortController();
@@ -66,22 +67,31 @@ export function List() {
             const abortSignal = abortController.current.signal;
             setObjects({ status: AsyncStatus.Loading });
             try {
-                const iterator = db.search(
-                    {
-                        searchPattern: [{ property: "id", value: basket.slice(0, 100).map(String) }],
-                    },
-                    abortSignal
-                );
+                if (navigator.onLine) {
+                    const iterator = db.search(
+                        {
+                            searchPattern: [{ property: "id", value: basket.slice(0, 100).map(String) }],
+                        },
+                        abortSignal
+                    );
 
-                const data: HierarcicalObjectReference[] = [];
-                for await (const ref of iterator) {
-                    data.push(ref);
+                    const data: HierarcicalObjectReference[] = [];
+                    for await (const ref of iterator) {
+                        data.push(ref);
+                    }
+                    setObjects({
+                        data,
+                        status: AsyncStatus.Success,
+                    });
+                } else {
+                    const data = (
+                        await Promise.all(basket.slice(0, 100).map((id) => getObjectData({ db, id, view })))
+                    ).filter((obj): obj is ObjectData => obj !== undefined);
+                    setObjects({
+                        data,
+                        status: AsyncStatus.Success,
+                    });
                 }
-
-                setObjects({
-                    data,
-                    status: AsyncStatus.Success,
-                });
             } catch (e) {
                 if (abortSignal.aborted) {
                     return;
@@ -91,7 +101,7 @@ export function List() {
                 setObjects({ status: AsyncStatus.Error, msg: "An error occurred while loading object data." });
             }
         }
-    }, [basket, db, abortController, objects]);
+    }, [basket, db, abortController, objects, view]);
 
     return (
         <>

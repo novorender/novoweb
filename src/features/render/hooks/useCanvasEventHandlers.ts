@@ -53,7 +53,7 @@ export function useCanvasEventHandlers({
 
     const clippingPlaneCommitTimer = useRef<ReturnType<typeof setTimeout>>();
     const moveClippingPlanes = (delta: number) => {
-        if (!view) {
+        if (!view || cameraType === CameraType.Orthographic) {
             return;
         }
 

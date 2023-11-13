@@ -27,7 +27,7 @@ export function FlyToSelected({ position, ...speedDialProps }: Props) {
     const { name, Icon } = featuresConfig.flyToSelected;
     const highlighted = useHighlighted().idArr;
     const {
-        state: { db, scene },
+        state: { db, scene, view },
     } = useExplorerGlobals(true);
     const dispatch = useAppDispatch();
 
@@ -61,6 +61,7 @@ export function FlyToSelected({ position, ...speedDialProps }: Props) {
                 ids: highlighted,
                 abortSignal,
                 db,
+                view,
                 flip: !vec3.equals(scene.up ?? [0, 1, 0], [0, 0, 1]),
             });
 

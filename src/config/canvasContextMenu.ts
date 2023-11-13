@@ -15,6 +15,10 @@ export const canvasContextMenuConfig = {
         key: "measure",
         name: "Measure",
     },
+    laser: {
+        key: "laser",
+        name: "Laser",
+    },
     clip: {
         key: "clip",
         name: "Add clipping plane",
@@ -29,5 +33,6 @@ export const defaultCanvasContextMenuFeatures = [
     canvasContextMenuConfig.hideLayer.key,
     canvasContextMenuConfig.addFileToBasket.key,
     canvasContextMenuConfig.measure.key,
+    canvasContextMenuConfig.laser.key,
     canvasContextMenuConfig.clip.key,
 ] as CanvasContextMenuFeatureKey[];

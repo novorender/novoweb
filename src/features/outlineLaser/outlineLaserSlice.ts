@@ -56,8 +56,8 @@ const initialState = {
 
 type State = typeof initialState;
 
-export const clippingOutlineSlice = createSlice({
-    name: "clippingOutline",
+export const outlineLaserSlice = createSlice({
+    name: "outlineLaser",
     initialState: initialState,
     reducers: {
         setOutlineGroups: (state, action: PayloadAction<State["outlineGroups"]>) => {
@@ -163,5 +163,5 @@ export const selectOutlineGroups = (state: RootState) => state.clippingOutline.o
 export const selectOutlineLaserPlane = (state: RootState) => state.clippingOutline.laserPlane;
 export const selectOutlineLasers = (state: RootState) => state.clippingOutline.lasers;
 
-const { actions, reducer } = clippingOutlineSlice;
-export { actions as clippingOutlineActions, reducer as clippingOutlineReducer };
+const { actions, reducer } = outlineLaserSlice;
+export { actions as clippingOutlineLaserActions, reducer as clippingOutlineLaserReducer };

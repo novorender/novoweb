@@ -9,7 +9,7 @@ import { useHighlightCollections } from "contexts/highlightCollections";
 import { useHighlighted } from "contexts/highlighted";
 import { GroupStatus, ObjectGroup, useObjectGroups } from "contexts/objectGroups";
 import { useSelectionBasket } from "contexts/selectionBasket";
-import { selectOutlineGroups } from "features/clippingOutline";
+import { selectOutlineGroups } from "features/outlineLaser";
 import { useSceneId } from "hooks/useSceneId";
 
 import {

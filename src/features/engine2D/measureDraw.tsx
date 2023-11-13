@@ -6,7 +6,6 @@ import { MutableRefObject, useCallback, useEffect, useRef, useState } from "reac
 import { useAppSelector } from "app/store";
 import { useExplorerGlobals } from "contexts/explorerGlobals";
 import { selectArea, selectAreaDrawPoints } from "features/area";
-import { GetMeasurePointsFromTracer, selectOutlineLasers } from "features/clippingOutline";
 import {
     selectDrawSelectedPositions,
     selectFollowCylindersFrom,
@@ -23,6 +22,7 @@ import {
 } from "features/manhole";
 import { selectMeasure, useMeasureObjects } from "features/measure";
 import { selectCrossSectionPoints } from "features/orthoCam";
+import { GetMeasurePointsFromTracer, selectOutlineLasers } from "features/outlineLaser";
 import { selectPointLine } from "features/pointLine";
 import { CameraType, selectCameraType, selectGrid, selectViewMode } from "features/render";
 import { AsyncStatus, ViewMode } from "types/misc";

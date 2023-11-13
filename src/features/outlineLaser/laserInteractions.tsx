@@ -5,8 +5,8 @@ import { useAppDispatch, useAppSelector } from "app/store";
 import { useExplorerGlobals } from "contexts/explorerGlobals";
 import { selectCamera, selectClippingPlanes } from "features/render";
 
-import { clippingOutlineActions, selectOutlineLasers } from "./outlineLaserSlice";
-import { getOutlineLaser } from "./useOutlineLaser";
+import { getOutlineLaser } from "./getOutlineLaser";
+import { clippingOutlineLaserActions, selectOutlineLasers } from "./outlineLaserSlice";
 
 const markerStyles = ({ theme }: { theme: Theme }) => css`
     cursor: pointer;
@@ -115,7 +115,7 @@ export function ClippingTracerInteractions() {
             if (trace.measurementY === undefined) {
                 newTrace.measurementY = undefined;
             }
-            dispatch(clippingOutlineActions.setLaser({ idx, trace: newTrace }));
+            dispatch(clippingOutlineLaserActions.setLaser({ idx, trace: newTrace }));
         }
     };
 
@@ -129,14 +129,14 @@ export function ClippingTracerInteractions() {
                                 id={`leftMarker-${idx}`}
                                 name={`leftMarker-${idx}`}
                                 onClick={() => {
-                                    dispatch(clippingOutlineActions.incrementLaserLeft(idx));
+                                    dispatch(clippingOutlineLaserActions.incrementLaserLeft(idx));
                                 }}
                             />
                             <RightMarker
                                 id={`rightMarker-${idx}`}
                                 name={`rightMarker-${idx}`}
                                 onClick={() => {
-                                    dispatch(clippingOutlineActions.incrementLaserRight(idx));
+                                    dispatch(clippingOutlineLaserActions.incrementLaserRight(idx));
                                 }}
                             />
 
@@ -145,7 +145,7 @@ export function ClippingTracerInteractions() {
                                     id={`removeXTracer-${idx}`}
                                     name={`removeXTracer-${idx}`}
                                     onClick={() => {
-                                        dispatch(clippingOutlineActions.removeMeasurementX(idx));
+                                        dispatch(clippingOutlineLaserActions.removeMeasurementX(idx));
                                     }}
                                 />
                             ) : (
@@ -165,14 +165,14 @@ export function ClippingTracerInteractions() {
                                 id={`downMarker-${idx}`}
                                 name={`downMarker-${idx}`}
                                 onClick={() => {
-                                    dispatch(clippingOutlineActions.incrementLaserDown(idx));
+                                    dispatch(clippingOutlineLaserActions.incrementLaserDown(idx));
                                 }}
                             />
                             <UpMarker
                                 id={`upMarker-${idx}`}
                                 name={`upMarker-${idx}`}
                                 onClick={() => {
-                                    dispatch(clippingOutlineActions.incrementLaserUp(idx));
+                                    dispatch(clippingOutlineLaserActions.incrementLaserUp(idx));
                                 }}
                             />
                             {trace.measurementY.startIdx !== undefined ? (
@@ -180,7 +180,7 @@ export function ClippingTracerInteractions() {
                                     id={`removeYTracer-${idx}`}
                                     name={`removeYTracer-${idx}`}
                                     onClick={() => {
-                                        dispatch(clippingOutlineActions.removeMeasurementY(idx));
+                                        dispatch(clippingOutlineLaserActions.removeMeasurementY(idx));
                                     }}
                                 />
                             ) : (
