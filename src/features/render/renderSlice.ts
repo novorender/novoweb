@@ -130,9 +130,9 @@ type DeviationStamp = {
 type CanvasContextMenuStamp = {
     kind: StampKind.CanvasContextMenu;
     data: {
-        object: number;
-        position: Vec3;
-        normal: Vec3 | undefined;
+        object?: number;
+        position?: Vec3;
+        normal?: Vec3 | undefined;
     };
 };
 

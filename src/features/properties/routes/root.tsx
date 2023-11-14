@@ -83,7 +83,7 @@ export function Root() {
     const stampSettings = useAppSelector(selectPropertiesStampSettings);
     const dispatchHighlighted = useDispatchHighlighted();
     const {
-        state: { db },
+        state: { db, view },
     } = useExplorerGlobals(true);
     const theme = useTheme();
     const dispatch = useAppDispatch();
@@ -133,7 +133,7 @@ export function Root() {
         async function getObjectData(id: number) {
             setStatus(Status.Loading);
 
-            const objectData = await getObjectDataUtil({ db, id });
+            const objectData = await getObjectDataUtil({ db, id, view });
 
             if (!objectData) {
                 setObject(undefined);
@@ -142,7 +142,9 @@ export function Root() {
             }
 
             const cleanedObjectData = { ...objectData, properties: objectData.properties.slice(0, 100) };
-            const parent = await searchFirstObjectAtPath({ db, path: getParentPath(objectData.path) });
+            const parent = navigator.onLine
+                ? await searchFirstObjectAtPath({ db, path: getParentPath(objectData.path) })
+                : undefined;
 
             if (parent) {
                 const parentPropertiesObject = createPropertiesObject({
@@ -156,11 +158,11 @@ export function Root() {
 
             setStatus(Status.Initial);
         }
-    }, [mainObject, db, object, setObject, setStatus]);
+    }, [mainObject, db, object, setObject, setStatus, view]);
 
     const search = async (searchPatterns: SearchPattern[]) => {
         if (mainObject !== undefined) {
-            const objData = await getObjectDataUtil({ db, id: mainObject });
+            const objData = await getObjectDataUtil({ db, id: mainObject, view });
 
             if (objData?.type === NodeType.Leaf) {
                 dispatchHighlighted(highlightActions.setIds([mainObject]));
@@ -450,15 +452,17 @@ function PropertyItem({ checked, onChange, property, value, resizing, groupName 
                         </Typography>
                     </Tooltip>
                 </Box>
-                <Box ml={0.5} width={20} flexShrink={0}>
-                    <Checkbox
-                        inputRef={checkboxRef}
-                        sx={{ padding: 0 }}
-                        checked={checked}
-                        onChange={onChange}
-                        size={"small"}
-                    />
-                </Box>
+                {navigator.onLine && (
+                    <Box ml={0.5} width={20} flexShrink={0}>
+                        <Checkbox
+                            inputRef={checkboxRef}
+                            sx={{ padding: 0 }}
+                            checked={checked}
+                            onChange={onChange}
+                            size={"small"}
+                        />
+                    </Box>
+                )}
                 <Box sx={{ ml: 1, mr: "2px", "& button": { height: 20, width: 20 } }} flexShrink={0}>
                     <Menu
                         onClick={(e) => e.stopPropagation()}

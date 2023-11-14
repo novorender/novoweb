@@ -9,6 +9,7 @@ const initialState = {
             name: string;
             status: string;
             progress: string;
+            scanProgress: string;
             lastSync: string;
             size: number;
             viewerScenes: {

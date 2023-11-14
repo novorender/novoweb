@@ -7,7 +7,7 @@ import { manholeActions, selectIsManholePinned, selectManholeId } from "./manhol
 
 export function useLoadManhole() {
     const {
-        state: { measureView },
+        state: { view },
     } = useExplorerGlobals();
 
     const dispatch = useAppDispatch();
@@ -18,7 +18,7 @@ export function useLoadManhole() {
         loadManholeValues();
 
         async function loadManholeValues() {
-            if (!measureView) {
+            if (!view?.measure) {
                 return;
             }
 
@@ -29,10 +29,10 @@ export function useLoadManhole() {
                 }
 
                 dispatch(manholeActions.setLoadingBrep(true));
-                dispatch(manholeActions.setManholeValues(await measureView.manhole.measure(selectedObj)));
+                dispatch(manholeActions.setManholeValues(await view.measure.manhole.measure(selectedObj)));
                 dispatch(manholeActions.setLoadingBrep(false));
             } else {
             }
         }
-    }, [selectedObj, dispatch, measureView, selectManhole]);
+    }, [selectedObj, dispatch, view, selectManhole]);
 }

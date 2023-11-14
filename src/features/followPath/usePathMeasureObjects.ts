@@ -15,7 +15,7 @@ type ExtendedMeasureObject = {
 
 export function usePathMeasureObjects() {
     const {
-        state: { measureView },
+        state: { view },
     } = useExplorerGlobals();
 
     const selected = useAppSelector(selectSelectedPositions);
@@ -34,7 +34,7 @@ export function usePathMeasureObjects() {
             const mObjects = (
                 await Promise.all(
                     selected.map((obj) =>
-                        measureView?.core
+                        view?.measure?.core
                             .pickMeasureEntity(obj.id, obj.pos)
                             .then((_mObj) => {
                                 const mObj = _mObj.entity as ExtendedMeasureObject;
@@ -45,7 +45,7 @@ export function usePathMeasureObjects() {
                                 if (mObj.drawKind === "vertex") {
                                     return;
                                 }
-                                mObj.fp = await measureView.followPath.followParametricObjectFromPosition(
+                                mObj.fp = await view?.measure?.followPath.followParametricObjectFromPosition(
                                     obj.id,
                                     obj.pos,
                                     {
@@ -62,7 +62,7 @@ export function usePathMeasureObjects() {
 
             setMeasureObjects({ status: AsyncStatus.Success, data: mObjects });
         }
-    }, [measureView, selected, dispatch, followFrom]);
+    }, [view, selected, dispatch, followFrom]);
 
     return measureObjects;
 }

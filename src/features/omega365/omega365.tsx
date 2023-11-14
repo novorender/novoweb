@@ -66,7 +66,7 @@ export default function Omega365() {
     const dispatch = useAppDispatch();
 
     const {
-        state: { db },
+        state: { db, view },
     } = useExplorerGlobals(true);
 
     const [abortController, abort] = useAbortController();
@@ -109,7 +109,7 @@ export default function Omega365() {
             const abortSignal = abortController.current.signal;
 
             setDocuments({ status: AsyncStatus.Loading });
-            const obj = await getObjectData({ db, id: mainObject });
+            const obj = await getObjectData({ db, id: mainObject, view });
 
             if (!obj) {
                 setDocuments({ status: AsyncStatus.Error, msg: "Failed to load object properties." });
@@ -149,7 +149,7 @@ export default function Omega365() {
                 }
             }
         }
-    }, [mainObject, documents, db, abortController, apiKey]);
+    }, [mainObject, documents, db, abortController, apiKey, view]);
 
     return (
         <>

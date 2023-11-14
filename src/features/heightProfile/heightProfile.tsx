@@ -52,7 +52,7 @@ export default function HeightProfile() {
     const minimized = useAppSelector(selectMinimized) === featuresConfig.heightProfile.key;
     const maximized = useAppSelector(selectMaximized).includes(featuresConfig.heightProfile.key);
     const {
-        state: { measureView },
+        state: { view },
     } = useExplorerGlobals(true);
 
     const selectingEntity = useAppSelector(selectPicker) === Picker.HeightProfileEntity;
@@ -95,7 +95,7 @@ export default function HeightProfile() {
             setProfile({ status: AsyncStatus.Loading });
 
             try {
-                const profile = await measureView.profile.viewFromMultiSelect(highlighted, {
+                const profile = await view?.measure?.profile.viewFromMultiSelect(highlighted, {
                     cylinderMeasure: selectCylindersFrom,
                 });
 
@@ -143,7 +143,7 @@ export default function HeightProfile() {
             setProfile({ status: AsyncStatus.Loading });
 
             try {
-                const profile = await measureView.profile.viewFromEntity(selectedEntity.data!, {
+                const profile = await view?.measure?.profile.viewFromEntity(selectedEntity.data!, {
                     cylinderMeasure: selectCylindersFrom,
                 });
 
@@ -159,7 +159,7 @@ export default function HeightProfile() {
                 });
             }
         }
-    }, [highlighted, measureView, selectingEntity, selectedEntity, selectedPoint, selectCylindersFrom]);
+    }, [highlighted, view, selectingEntity, selectedEntity, selectedPoint, selectCylindersFrom]);
 
     // NOTE(OLA):
     // Always show options while waiting for measure api to tell if Profile is of cylinders.

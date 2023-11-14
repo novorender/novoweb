@@ -10,9 +10,7 @@ export async function getOutlineLaser(
     plane: ReadonlyVec4
 ) {
     if (view) {
-        const measureView = await view.measure;
-
-        const sp = measureView.draw.toMarkerPoints([laserPosition]);
+        const sp = view.measure?.draw.toMarkerPoints([laserPosition]);
         if (sp && sp.length > 0 && sp[0]) {
             const outlineValues = await view.outlineLaser(
                 sp[0],
@@ -39,3 +37,5 @@ export async function getOutlineLaser(
     }
     return undefined;
 }
+
+export type OutlineLaser = NonNullable<Awaited<ReturnType<typeof getOutlineLaser>>>;

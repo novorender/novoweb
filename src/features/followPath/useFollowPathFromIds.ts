@@ -23,10 +23,8 @@ export function useFollowPathFromIds() {
 
         async function loadFpObjects() {
             setObjects({ status: AsyncStatus.Loading });
-            const measureView = await view.measure;
-
             try {
-                const fp = await measureView.followPath.followParametricObjects(toFollow, {
+                const fp = await view.measure?.followPath.followParametricObjects(toFollow, {
                     cylinderMeasure: followFrom,
                 });
 

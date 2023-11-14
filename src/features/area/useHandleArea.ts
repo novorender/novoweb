@@ -8,14 +8,14 @@ import { areaActions, selectAreaPoints } from "./areaSlice";
 
 export function useHandleArea() {
     const {
-        state: { measureView },
+        state: { view },
     } = useExplorerGlobals();
     const points = useAppSelector(selectAreaPoints);
 
     const dispatch = useAppDispatch();
 
     useEffect(() => {
-        if (!measureView) {
+        if (!view?.measure) {
             return;
         }
 
@@ -25,12 +25,12 @@ export function useHandleArea() {
             return;
         }
 
-        const area = measureView.core.areaFromPolygon(
+        const area = view.measure.core.areaFromPolygon(
             points.map((pts) => pts[0]),
             points.map((pts) => pts[1])
         );
 
         dispatch(areaActions.setDrawPoints(area.polygon as vec3[]));
         dispatch(areaActions.setArea(area.area ?? 0));
-    }, [points, dispatch, measureView]);
+    }, [points, dispatch, view]);
 }

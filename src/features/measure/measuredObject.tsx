@@ -49,7 +49,7 @@ const NestedAccordionDetails = styled(AccordionDetails)(
 
 export function MeasuredObject({ obj, idx }: { obj: ExtendedMeasureEntity; idx: number }) {
     const {
-        state: { measureView },
+        state: { view },
     } = useExplorerGlobals(true);
 
     const dispatch = useAppDispatch();
@@ -64,17 +64,17 @@ export function MeasuredObject({ obj, idx }: { obj: ExtendedMeasureEntity; idx: 
 
         async function getMeasureValues() {
             if (measureObject) {
-                setMeasureValues(await measureView.core.measure(measureObject, undefined, measureObject.settings));
+                setMeasureValues(await view?.measure?.core.measure(measureObject, undefined, measureObject.settings));
             } else {
                 setMeasureValues(undefined);
             }
         }
-    }, [measureObject, measureView]);
+    }, [measureObject, view]);
 
     const kind = !measureObject ? "" : measureValues ? getMeasurementValueKind(measureValues) : "point";
 
     const _idx = idx === 0 ? "measureInfoA" : "measureInfoB";
-    const useCylinderMeasureSettings = duoMeasurementValues && duoMeasurementValues[_idx]?.validMeasureSettings;
+    const useCylinderMeasureSettings = duoMeasurementValues && duoMeasurementValues.result[_idx]?.validMeasureSettings;
 
     return (
         <Accordion defaultExpanded={true}>

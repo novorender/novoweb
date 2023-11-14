@@ -11,6 +11,7 @@ import {
     Select,
     useTheme,
 } from "@mui/material";
+import { DuoMeasurementValues } from "@novorender/api";
 import { useEffect } from "react";
 import { useHistory } from "react-router-dom";
 
@@ -18,7 +19,7 @@ import { useAppDispatch, useAppSelector } from "app/store";
 import { Divider, IosSwitch, LinearProgress, ScrollBox } from "components";
 import { useExplorerGlobals } from "contexts/explorerGlobals";
 import { highlightActions, useDispatchHighlighted, useHighlighted } from "contexts/highlighted";
-import { singleCylinderOptions } from "features/measure";
+import { measureActions, singleCylinderOptions } from "features/measure";
 import { Picker, renderActions, selectPicker } from "features/render/renderSlice";
 import { AsyncStatus, hasFinished } from "types/misc";
 import { getObjectNameFromPath, getParentPath } from "utils/objectData";
@@ -32,7 +33,7 @@ export function PathList() {
     const theme = useTheme();
     const history = useHistory<{ prevPath?: string }>();
     const {
-        state: { db },
+        state: { db, view },
     } = useExplorerGlobals(true);
     const highlighted = useHighlighted().idArr;
     const dispatchHighlighted = useDispatchHighlighted();
@@ -84,6 +85,7 @@ export function PathList() {
                         )),
                 });
 
+                paths.sort((a, b) => a.name.localeCompare(b.name, "en", { sensitivity: "accent" }));
                 dispatch(followPathActions.setPaths({ status: AsyncStatus.Success, data: paths }));
             } catch (e) {
                 console.warn(e);
@@ -143,7 +145,7 @@ export function PathList() {
                         <Button
                             disabled={!canFollowSelected}
                             onClick={() => {
-                                dispatch(followPathActions.toggleResetPositionOnInit(true));
+                                dispatch(followPathActions.setReset("initPosition"));
                                 dispatch(followPathActions.setRoadIds(undefined));
                                 dispatch(followPathActions.setDrawRoadIds(undefined));
 
@@ -199,15 +201,39 @@ export function PathList() {
                                 <ListItemButton
                                     disabled={selectingPos}
                                     key={path.id}
-                                    onClick={() => {
+                                    onClick={async () => {
                                         dispatch(followPathActions.setSelectedPath(path.id));
-                                        dispatch(followPathActions.toggleResetPositionOnInit(true));
                                         dispatch(followPathActions.setSelectedIds([path.id]));
                                         dispatch(followPathActions.setRoadIds(undefined));
                                         dispatch(followPathActions.setDrawRoadIds(undefined));
                                         dispatch(renderActions.setMainObject(path.id));
                                         dispatchHighlighted(highlightActions.setIds([path.id]));
+                                        let initPos = true;
                                         history.push(`/followIds`);
+                                        if (view.measure) {
+                                            const segment = await view.measure.core.pickCurveSegment(path.id);
+                                            if (segment) {
+                                                const measure = await view.measure.core.measure(segment, {
+                                                    drawKind: "vertex",
+                                                    ObjectId: -1,
+                                                    parameter: view.renderState.camera.position,
+                                                });
+                                                if (measure) {
+                                                    const duoMeasure = measure as DuoMeasurementValues;
+                                                    if (duoMeasure.measureInfoB && duoMeasure.measureInfoB.parameter) {
+                                                        dispatch(
+                                                            followPathActions.setProfile(
+                                                                duoMeasure.measureInfoB.parameter.toString()
+                                                            )
+                                                        );
+                                                        initPos = false;
+                                                    }
+                                                }
+                                                dispatch(measureActions.setSelectedEntities([segment]));
+                                                dispatch(measureActions.pin(0));
+                                            }
+                                        }
+                                        dispatch(followPathActions.setReset(initPos ? "initPosition" : "default"));
                                     }}
                                     disableGutters
                                     color="primary"

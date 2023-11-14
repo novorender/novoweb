@@ -43,7 +43,7 @@ export function useSelectBookmark() {
     const dispatchObjectGroups = useDispatchObjectGroups();
 
     const {
-        state: { measureView },
+        state: { view },
     } = useExplorerGlobals();
 
     const dispatch = useAppDispatch();
@@ -261,6 +261,7 @@ export function useSelectBookmark() {
             if (bookmark.selectedMeasureEntities) {
                 dispatch(measureActions.setSelectedEntities(bookmark.selectedMeasureEntities));
             } else if (bookmark.objectMeasurement) {
+                const measureView = view?.measure;
                 if (!measureView) {
                     return;
                 }
@@ -490,7 +491,7 @@ export function useSelectBookmark() {
             dispatchSelectionBasket,
             objectGroups,
             sceneId,
-            measureView,
+            view,
         ]
     );
 

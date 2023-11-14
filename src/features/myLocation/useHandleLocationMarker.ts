@@ -45,8 +45,10 @@ export function useHandleLocationMarker() {
                     return;
                 }
 
-                // TODO flip dataapi
-                const scenePos = flip(dataApi.latLon2tm(pos.coords, tmZone));
+                const isGlSpace = !vec3.equals(scene?.up ?? [0, 1, 0], [0, 0, 1]);
+                const scenePos = isGlSpace
+                    ? flip(dataApi.latLon2tm(pos.coords, tmZone))
+                    : dataApi.latLon2tm(pos.coords, tmZone);
                 scenePos[2] = pos.coords.altitude ?? view.renderState.camera.position[2];
                 const outOfBounds =
                     vec3.dist(scenePos, scene.boundingSphere.center) >

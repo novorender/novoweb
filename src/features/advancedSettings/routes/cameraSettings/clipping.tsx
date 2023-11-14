@@ -20,7 +20,6 @@ enum SliderKind {
 }
 
 export function Clipping() {
-    console.log("bust");
     const {
         state: { view },
     } = useExplorerGlobals(true);

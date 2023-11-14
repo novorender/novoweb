@@ -1,5 +1,4 @@
 import { computeRotation, DeviceProfile, getDeviceProfile, rotationFromDirection, View } from "@novorender/api";
-import { manageOfflineStorage } from "@novorender/api/offline";
 import { ObjectDB, SceneData, SceneLoadFail } from "@novorender/data-js-api";
 import { Internal } from "@novorender/webgl-api";
 import { getGPUTier } from "detect-gpu";
@@ -16,7 +15,6 @@ import {
 } from "contexts/highlightCollections";
 import { highlightActions, useDispatchHighlighted } from "contexts/highlighted";
 import { GroupStatus, objectGroupsActions, useDispatchObjectGroups } from "contexts/objectGroups";
-import OfflineWorker from "features/offline/worker?worker";
 import { useSceneId } from "hooks/useSceneId";
 import { AsyncStatus } from "types/misc";
 import { CustomProperties } from "types/project";
@@ -66,10 +64,18 @@ export function useHandleInit() {
             const view = await createView(canvas, { deviceProfile });
 
             try {
-                const offlineWorkerState = await manageOfflineStorage(new OfflineWorker());
-                const [{ url, db, ...sceneData }, camera] = await loadScene(sceneId);
-                const octreeSceneConfig = await view.loadSceneFromURL(new URL(url));
-                const measureView = await view.measure;
+                const [{ url: _url, db, ...sceneData }, camera] = await loadScene(sceneId);
+                const url = new URL(_url);
+                const parentSceneId = url.pathname.replaceAll("/", "");
+                url.pathname = "";
+                const octreeSceneConfig = await view.loadScene(
+                    url,
+                    parentSceneId,
+                    "index.json",
+                    new AbortController().signal
+                );
+
+                const offlineWorkerState = await view.manageOfflineStorage();
                 view.run();
 
                 while (!view.renderState.scene) {
@@ -141,7 +147,6 @@ export function useHandleInit() {
                         db: db as ObjectDB,
                         view: view,
                         scene: octreeSceneConfig,
-                        measureView,
                         offlineWorkerState,
                     })
                 );

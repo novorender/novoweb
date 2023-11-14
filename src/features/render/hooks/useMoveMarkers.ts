@@ -12,7 +12,7 @@ import { AsyncStatus } from "types/misc";
 
 export function useMoveMarkers(svg: SVGSVGElement | null) {
     const {
-        state: { measureView, view, size },
+        state: { view, size },
     } = useExplorerGlobals();
 
     const images = useAppSelector(selectImages);
@@ -24,12 +24,12 @@ export function useMoveMarkers(svg: SVGSVGElement | null) {
     const jiraMarkers = useJiraMarkers();
 
     const moveSvgMarkers = useCallback(() => {
-        if (!view || !svg || !size || !measureView) {
+        if (!view?.measure || !svg || !size) {
             return;
         }
 
         if (myLocationPoint !== undefined) {
-            const myLocationPt = (measureView.draw.toMarkerPoints([myLocationPoint]) ?? [])[0];
+            const myLocationPt = (view.measure.draw.toMarkerPoints([myLocationPoint]) ?? [])[0];
             if (myLocationPt) {
                 const marker = svg.children.namedItem("myLocationPoint");
 
@@ -40,7 +40,7 @@ export function useMoveMarkers(svg: SVGSVGElement | null) {
             }
         }
 
-        (measureView.draw.toMarkerPoints(logPoints.map((lpt) => vec3.fromValues(lpt.x, lpt.y, lpt.z))) ?? []).forEach(
+        (view.measure.draw.toMarkerPoints(logPoints.map((lpt) => vec3.fromValues(lpt.x, lpt.y, lpt.z))) ?? []).forEach(
             (pos, idx) => {
                 svg.children
                     .namedItem(`logPoint-${idx}`)
@@ -52,7 +52,7 @@ export function useMoveMarkers(svg: SVGSVGElement | null) {
         );
 
         if (showImageMarkers && images.status === AsyncStatus.Success) {
-            (measureView.draw.toMarkerPoints(images.data.map((image) => image.position)) ?? []).forEach((pos, idx) => {
+            (view.measure.draw.toMarkerPoints(images.data.map((image) => image.position)) ?? []).forEach((pos, idx) => {
                 svg.children
                     .namedItem(`image-${idx}`)
                     ?.setAttribute(
@@ -62,7 +62,7 @@ export function useMoveMarkers(svg: SVGSVGElement | null) {
             });
         }
 
-        (measureView.draw.toMarkerPoints(ditioPostMarkers.map((marker) => marker.position)) ?? []).forEach(
+        (view.measure.draw.toMarkerPoints(ditioPostMarkers.map((marker) => marker.position)) ?? []).forEach(
             (pos, idx) => {
                 svg.children
                     .namedItem(`ditioPostMarker-${ditioPostMarkers[idx].id}`)
@@ -73,7 +73,7 @@ export function useMoveMarkers(svg: SVGSVGElement | null) {
             }
         );
 
-        (measureView.draw.toMarkerPoints(ditioImgMarkers.map((marker) => marker.position)) ?? []).forEach(
+        (view.measure.draw.toMarkerPoints(ditioImgMarkers.map((marker) => marker.position)) ?? []).forEach(
             (pos, idx) => {
                 svg.children
                     .namedItem(`ditioImgMarker-${ditioImgMarkers[idx].id}`)
@@ -84,7 +84,7 @@ export function useMoveMarkers(svg: SVGSVGElement | null) {
             }
         );
 
-        (measureView.draw.toMarkerPoints(machineLocationMarkers.map((marker) => marker.position)) ?? []).forEach(
+        (view.measure.draw.toMarkerPoints(machineLocationMarkers.map((marker) => marker.position)) ?? []).forEach(
             (pos, idx) => {
                 svg.children
                     .namedItem(`machineMarker-${machineLocationMarkers[idx].machineId}`)
@@ -95,14 +95,13 @@ export function useMoveMarkers(svg: SVGSVGElement | null) {
             }
         );
 
-        (measureView.draw.toMarkerPoints(jiraMarkers.map((marker) => marker.position)) ?? []).forEach((pos, idx) => {
+        (view.measure.draw.toMarkerPoints(jiraMarkers.map((marker) => marker.position)) ?? []).forEach((pos, idx) => {
             svg.children
                 .namedItem(`jiraIssueMarker-${jiraMarkers[idx].key}`)
                 ?.setAttribute("transform", pos ? `translate(${pos[0] - 25} ${pos[1] - 25})` : "translate(-100 -100)");
         });
     }, [
         view,
-        measureView,
         svg,
         myLocationPoint,
         size,

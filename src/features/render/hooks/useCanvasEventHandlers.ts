@@ -37,7 +37,7 @@ export function useCanvasEventHandlers({
     renderFnRef: MutableRefObject<((moved: boolean, isIdleFrame: boolean) => void) | undefined>;
 }) {
     const {
-        state: { view, canvas, measureView, size },
+        state: { view, canvas, size },
     } = useExplorerGlobals();
     const handleCanvasContextMenu = useCanvasContextMenuHandler();
     const measureHoverSettings = useMeasureHoverSettings();
@@ -53,7 +53,7 @@ export function useCanvasEventHandlers({
 
     const clippingPlaneCommitTimer = useRef<ReturnType<typeof setTimeout>>();
     const moveClippingPlanes = (delta: number) => {
-        if (!view) {
+        if (!view || cameraType === CameraType.Orthographic) {
             return;
         }
 
@@ -227,11 +227,11 @@ export function useCanvasEventHandlers({
                 prevHoverUpdate.current = now;
 
                 if (picker === Picker.Measurement) {
-                    if (measureView && result) {
+                    if (view.measure && result) {
                         const dist = hoverEnt?.connectionPoint && vec3.dist(result.position, hoverEnt.connectionPoint);
 
                         if (!dist || dist > 0.2) {
-                            hoverEnt = await measureView.core.pickMeasureEntityOnCurrentObject(
+                            hoverEnt = await view.measure.core.pickMeasureEntityOnCurrentObject(
                                 result.objectId,
                                 result.position,
                                 measureHoverSettings

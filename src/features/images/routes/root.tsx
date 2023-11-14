@@ -2,6 +2,7 @@ import { CancelPresentation, FilterAlt } from "@mui/icons-material";
 import { Box, Button, FormControlLabel, Typography, useTheme } from "@mui/material";
 import { ObjectDB } from "@novorender/data-js-api";
 import { SearchPattern } from "@novorender/webgl-api";
+import { vec3 } from "gl-matrix";
 import { useEffect } from "react";
 import { useHistory } from "react-router-dom";
 import AutoSizer from "react-virtualized-auto-sizer";
@@ -33,7 +34,7 @@ export function Root() {
     const theme = useTheme();
     const history = useHistory();
     const {
-        state: { db },
+        state: { db, scene },
     } = useExplorerGlobals(true);
 
     const images = useAppSelector(selectImages);
@@ -44,9 +45,9 @@ export function Root() {
 
     useEffect(() => {
         if (images.status === AsyncStatus.Initial) {
-            loadImages(db, tmZone, filter);
+            loadImages({ db, tmZone, filter, flip: !vec3.equals(scene?.up ?? [0, 1, 0], [0, 0, 1]) });
         }
-    }, [images, db, tmZone, filter]);
+    }, [images, db, tmZone, filter, scene]);
 
     const toggleShowMarkers = () => {
         dispatch(imagesActions.setShowMarkers(!showMarkers));
@@ -150,7 +151,17 @@ function Progress() {
     );
 }
 
-async function loadImages(db: ObjectDB, tmZone: string, filter: ImageFilter) {
+async function loadImages({
+    db,
+    tmZone,
+    filter,
+    ...options
+}: {
+    db: ObjectDB;
+    tmZone: string;
+    filter: ImageFilter;
+    flip: boolean;
+}) {
     try {
         const images: Image[] = [];
         const searchPattern: SearchPattern[] = [{ property: "Image/Preview", value: "", exact: true }];
@@ -198,14 +209,14 @@ async function loadImages(db: ObjectDB, tmZone: string, filter: ImageFilter) {
                     name,
                     guid,
                     preview,
-                    position: flip(JSON.parse(pos[1])),
+                    position: options.flip ? flip(JSON.parse(pos[1])) : JSON.parse(pos[1]),
                 };
 
                 if (gltf) {
                     images.push({
                         ...base,
                         gltf: gltf[1],
-                        rotation: flipGLtoCadQuat(JSON.parse(rot[1])),
+                        rotation: options.flip ? flipGLtoCadQuat(JSON.parse(rot[1])) : JSON.parse(rot[1]),
                     });
                 } else if (src) {
                     images.push({
@@ -215,9 +226,9 @@ async function loadImages(db: ObjectDB, tmZone: string, filter: ImageFilter) {
                 }
             } else if (lat && lon && tmZone) {
                 const elevation = image.properties.find((prop) => prop[0] === "Image/Elevation");
-                const position = flip(
-                    dataApi.latLon2tm({ latitude: Number(lat[1]), longitude: Number(lon[1]) }, tmZone)
-                );
+                const position = options.flip
+                    ? flip(dataApi.latLon2tm({ latitude: Number(lat[1]), longitude: Number(lon[1]) }, tmZone))
+                    : dataApi.latLon2tm({ latitude: Number(lat[1]), longitude: Number(lon[1]) }, tmZone);
 
                 if (elevation) {
                     position[2] = Number(elevation[1]);

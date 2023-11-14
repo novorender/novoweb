@@ -41,7 +41,7 @@ import {
     selectProfile,
     selectProfileRange,
     selectPtHeight,
-    selectResetPositionOnInit,
+    selectReset,
     selectRoadIds,
     selectSelectedPath,
     selectShowGrid,
@@ -69,7 +69,7 @@ export function Follow({ fpObj }: { fpObj: FollowParametricObject }) {
     const step = useAppSelector(selectStep);
     const ptHeight = useAppSelector(selectPtHeight);
     const profileRange = useAppSelector(selectProfileRange);
-    const resetPosition = useAppSelector(selectResetPositionOnInit);
+    const reset = useAppSelector(selectReset);
     const selectedPath = useAppSelector(selectSelectedPath);
     const paths = useAppSelector(selectLandXmlPaths);
     const _clipping = useAppSelector(selectClipping);
@@ -89,11 +89,13 @@ export function Follow({ fpObj }: { fpObj: FollowParametricObject }) {
             showGrid,
             keepOffset,
             p,
+            keepCamera,
         }: {
             p: number;
             view2d: boolean;
             showGrid: boolean;
             keepOffset?: boolean;
+            keepCamera?: boolean;
         }): Promise<void> => {
             const pos = await fpObj.getCameraValues(p);
 
@@ -132,15 +134,17 @@ export function Follow({ fpObj }: { fpObj: FollowParametricObject }) {
             } else {
                 dispatch(renderActions.setGrid({ enabled: false }));
 
-                dispatch(
-                    renderActions.setCamera({
-                        type: CameraType.Pinhole,
-                        goTo: {
-                            position: offsetPt,
-                            rotation: keepOffset ? ([...view.renderState.camera.rotation] as Vec4) : rotation,
-                        },
-                    })
-                );
+                if (!keepCamera) {
+                    dispatch(
+                        renderActions.setCamera({
+                            type: CameraType.Pinhole,
+                            goTo: {
+                                position: offsetPt,
+                                rotation: keepOffset ? ([...view.renderState.camera.rotation] as Vec4) : rotation,
+                            },
+                        })
+                    );
+                }
             }
 
             const w = vec3.dot(dir, pt);
@@ -206,14 +210,17 @@ export function Follow({ fpObj }: { fpObj: FollowParametricObject }) {
     }, [dispatch, paths, db, selectedPath, drawRoadIds, roadIds]);
 
     useEffect(() => {
-        if (!resetPosition || !fpObj) {
+        if (reset === undefined || !fpObj) {
             return;
         }
-
-        dispatch(followPathActions.toggleResetPositionOnInit(false));
-        dispatch(followPathActions.setProfile(fpObj.parameterBounds.start.toFixed(3)));
-        goToProfile({ view2d, showGrid, keepOffset: false, p: fpObj.parameterBounds.start });
-    }, [view2d, showGrid, profile, goToProfile, autoRecenter, resetPosition, dispatch, fpObj, paths, selectedPath]);
+        let t = Number(profile);
+        if (reset === "initPosition") {
+            dispatch(followPathActions.setProfile(fpObj.parameterBounds.start.toFixed(3)));
+            t = fpObj.parameterBounds.start;
+        }
+        dispatch(followPathActions.setReset(undefined));
+        goToProfile({ view2d, showGrid, keepOffset: false, p: t, keepCamera: reset === "default" });
+    }, [view2d, showGrid, profile, goToProfile, autoRecenter, reset, dispatch, fpObj, paths, selectedPath]);
 
     const handle2dChange = () => {
         const newState = !view2d;

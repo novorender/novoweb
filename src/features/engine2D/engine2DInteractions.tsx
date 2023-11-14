@@ -1,4 +1,4 @@
-import { ClippingTracerInteractions } from "features/clippingOutline/laserInteractions";
+import { ClippingTracerInteractions } from "features/outlineLaser/laserInteractions";
 
 export function Engine2DInteractions() {
     return (

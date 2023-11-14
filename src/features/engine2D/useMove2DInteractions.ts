@@ -3,17 +3,17 @@ import { useCallback, useEffect } from "react";
 
 import { useAppSelector } from "app/store";
 import { useExplorerGlobals } from "contexts/explorerGlobals";
-import { GetMeasurePointsFromTracer, selectOutlineLasers } from "features/clippingOutline";
+import { GetMeasurePointsFromTracer, selectOutlineLasers } from "features/outlineLaser";
 
 export function useMove2DInteractions(svg: SVGSVGElement | null) {
     const {
-        state: { measureView },
+        state: { view },
     } = useExplorerGlobals();
 
     const outlineLasers = useAppSelector(selectOutlineLasers);
 
-    const moveSvgMarkers = useCallback(() => {
-        if (!svg || !measureView) {
+    const move = useCallback(() => {
+        if (!svg || !view?.measure) {
             return;
         }
 
@@ -50,7 +50,7 @@ export function useMove2DInteractions(svg: SVGSVGElement | null) {
             if (x) {
                 const tracePts = GetMeasurePointsFromTracer(x, left, right);
                 if (tracePts) {
-                    const [l, r] = measureView.draw.toMarkerPoints(tracePts);
+                    const [l, r] = view.measure.draw.toMarkerPoints(tracePts);
                     translate(`leftMarker-${i}`, l);
                     translate(`rightMarker-${i}`, r);
                     trace.measurementX?.start
@@ -61,7 +61,7 @@ export function useMove2DInteractions(svg: SVGSVGElement | null) {
             if (y) {
                 const tracePts = GetMeasurePointsFromTracer(y, down, up);
                 if (tracePts) {
-                    const [d, u] = measureView.draw.toMarkerPoints(tracePts);
+                    const [d, u] = view.measure.draw.toMarkerPoints(tracePts);
                     translate(`downMarker-${i}`, d);
                     translate(`upMarker-${i}`, u);
                     trace.measurementY?.start
@@ -70,11 +70,11 @@ export function useMove2DInteractions(svg: SVGSVGElement | null) {
                 }
             }
         }
-    }, [measureView, svg, outlineLasers]);
+    }, [view, svg, outlineLasers]);
 
     useEffect(() => {
-        moveSvgMarkers();
-    }, [moveSvgMarkers]);
+        move();
+    }, [move]);
 
-    return moveSvgMarkers;
+    return move;
 }

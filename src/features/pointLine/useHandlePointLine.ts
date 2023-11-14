@@ -7,23 +7,23 @@ import { pointLineActions, selectPointLine } from "./pointLineSlice";
 
 export function useHandlePointLine() {
     const {
-        state: { measureView },
+        state: { view },
     } = useExplorerGlobals();
 
     const { points } = useAppSelector(selectPointLine);
     const dispatch = useAppDispatch();
 
     useEffect(() => {
-        if (!measureView) {
+        if (!view?.measure) {
             return;
         }
 
         if (!points.length) {
             dispatch(pointLineActions.setResult(undefined));
         } else {
-            dispatch(pointLineActions.setResult(measureView.core.measureLineStrip(points)));
+            dispatch(pointLineActions.setResult(view.measure.core.measureLineStrip(points)));
         }
-    }, [points, dispatch, measureView]);
+    }, [points, dispatch, view]);
 
     return;
 }

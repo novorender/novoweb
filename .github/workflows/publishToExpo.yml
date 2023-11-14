@@ -14,15 +14,12 @@ on:
             slot:
                 description: "Deploy Slot"
                 required: true
-                default: "feature-1"
+                default: "expo"
                 type: choice
                 options:
-                    - "feature-1"
-                    - "feature-2"
-                    - "feature-3"
                     - "expo"
 env:
-    AZURE_WEBAPP_NAME: novorender-explorer # set this to your application's name
+    AZURE_WEBAPP_NAME: novorender-expo # set this to your application's name
     AZURE_WEBAPP_PACKAGE_PATH: "." # set this to the path to your web app project, defaults to the repository root
     NODE_VERSION: "18.13.0" # set this to the node version to use
 
@@ -49,14 +46,10 @@ jobs:
             - name: Install server dependencies
               run: |
                   (cd server && npm ci && mv ./node_modules ../node_modules)
-            - name: create publish profile name
-              run: |
-                  publish_profile=$(echo 'console.log("AZURE_WEBAPP_PUBLISH_PROFILE_${{ github.event.inputs.slot }}".toUpperCase().replace("-","_"))' | node -)
-                  echo "PROFILE=${publish_profile}" >>${GITHUB_ENV}
             - name: "Deploy to Azure WebApp"
               uses: azure/webapps-deploy@v2
               with:
                   app-name: ${{ env.AZURE_WEBAPP_NAME }}
-                  publish-profile: ${{ secrets[env.PROFILE] }}
+                  publish-profile: ${{ secrets.AZURE_WEBAPP_PUBLISH_PROFILE_EXPO }}
                   package: ${{ env.AZURE_WEBAPP_PACKAGE_PATH }}
-                  slot-name: ${{ github.event.inputs.slot }}
+                  slot-name: production

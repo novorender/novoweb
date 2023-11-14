@@ -122,7 +122,7 @@ export default function Measure() {
                     {selectedEntities.map((obj, idx) => (
                         <MeasuredObject obj={obj as ExtendedMeasureEntity} idx={idx} key={idx} />
                     ))}
-                    <MeasuredResult duoMeasurementValues={duoMeasurementValues} />
+                    <MeasuredResult duoMeasurementValues={duoMeasurementValues?.result} />
                 </ScrollBox>
                 {menuOpen && <WidgetList widgetKey={featuresConfig.measure.key} onSelect={toggleMenu} />}
             </WidgetContainer>

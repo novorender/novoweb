@@ -38,7 +38,7 @@ import { getFilePathFromObjectPath } from "utils/objectData";
 import { searchByPatterns } from "utils/search";
 
 import { ClippedFile, ClippedObject } from "./clippedObject";
-import { clippingOutlineActions, selectOutlineGroups, selectOutlineLasers } from "./outlineLaserSlice";
+import { clippingOutlineLaserActions, selectOutlineGroups, selectOutlineLasers } from "./outlineLaserSlice";
 
 export default function ClippingOutline() {
     const {
@@ -94,7 +94,7 @@ export default function ClippingOutline() {
                 files.push({ name: f, color: hsl2rgb(increments * i, 1, 0.5) as VecRGB, hidden: false, ids });
                 ++i;
             }
-            dispatch(clippingOutlineActions.setOutlineGroups(files));
+            dispatch(clippingOutlineLaserActions.setOutlineGroups(files));
         }
     }, [view, db, dispatch]);
 
@@ -152,7 +152,7 @@ export default function ClippingOutline() {
                                     label={<Box fontSize={14}>Laser</Box>}
                                 />
                                 <Button
-                                    onClick={() => dispatch(clippingOutlineActions.clear())}
+                                    onClick={() => dispatch(clippingOutlineLaserActions.clear())}
                                     color="grey"
                                     disabled={!outlineLasers.length}
                                 >

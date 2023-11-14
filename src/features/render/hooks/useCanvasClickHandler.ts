@@ -12,13 +12,13 @@ import {
 } from "contexts/highlightCollections";
 import { highlightActions, useDispatchHighlighted, useHighlighted } from "contexts/highlighted";
 import { areaActions } from "features/area";
-import { clippingOutlineActions } from "features/clippingOutline";
-import { getOutlineLaser } from "features/clippingOutline/useOutlineLaser";
 import { followPathActions } from "features/followPath";
 import { heightProfileActions } from "features/heightProfile";
 import { manholeActions } from "features/manhole";
 import { measureActions, selectMeasure, useMeasurePickSettings } from "features/measure";
 import { orthoCamActions, selectCrossSectionClipping, selectCrossSectionPoint } from "features/orthoCam";
+import { clippingOutlineLaserActions } from "features/outlineLaser";
+import { getOutlineLaser } from "features/outlineLaser";
 import { pointLineActions } from "features/pointLine";
 import { selectShowPropertiesStamp } from "features/properties/slice";
 import {
@@ -83,8 +83,6 @@ export function useCanvasClickHandler() {
             return;
         }
 
-        const measureView = await view.measure;
-
         dispatch(renderActions.setPointerDownState(undefined));
 
         const pickCameraPlane =
@@ -113,10 +111,10 @@ export function useCanvasClickHandler() {
                 tracePosition = vec3.scaleAndAdd(vec3.create(), camPos, lineDir, t);
             }
             if (tracePosition) {
-                dispatch(clippingOutlineActions.setLaserPlane(view.renderState.clipping.planes[0].normalOffset));
+                dispatch(clippingOutlineLaserActions.setLaserPlane(view.renderState.clipping.planes[0].normalOffset));
                 const laser = await getOutlineLaser(tracePosition, view, cameraState.type, planes[0].normalOffset);
                 if (laser) {
-                    dispatch(clippingOutlineActions.addLaser(laser));
+                    dispatch(clippingOutlineLaserActions.addLaser(laser));
                 }
             }
 
@@ -144,7 +142,7 @@ export function useCanvasClickHandler() {
                     let dir = vec3.cross(vec3.create(), up, right);
 
                     if (topDown) {
-                        const midPt = (measureView.draw.toMarkerPoints([p]) ?? [])[0];
+                        const midPt = (view.measure?.draw.toMarkerPoints([p]) ?? [])[0];
                         if (midPt) {
                             const midPick = await view.pick(midPt[0], midPt[1]);
                             if (midPick) {
@@ -274,7 +272,9 @@ export function useCanvasClickHandler() {
                             return;
                         }
 
-                        const metadata = await db.getObjectMetdata(result.objectId);
+                        const metadata = await (view.data
+                            ? view.data.getObjectMetaData(result.objectId)
+                            : db.getObjectMetdata(result.objectId));
 
                         if (showPropertiesStamp) {
                             dispatch(
@@ -411,7 +411,7 @@ export function useCanvasClickHandler() {
                     );
                 } else {
                     dispatch(measureActions.setLoadingBrep(true));
-                    const entity = await measureView.core.pickMeasureEntity(
+                    const entity = await view.measure?.core.pickMeasureEntity(
                         result.objectId,
                         position,
                         measurePickSettings
