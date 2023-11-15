@@ -83,7 +83,7 @@ declare module "@novorender/data-js-api" {
                 collisionSettings: MeasureSettings | undefined;
             };
             measure: {
-                entities: ExtendedMeasureEntity[];
+                entities: ExtendedMeasureEntity[] | ExtendedMeasureEntity[][];
             };
         };
         followPath:

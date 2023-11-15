@@ -1,4 +1,4 @@
-import { DeleteSweep } from "@mui/icons-material";
+import { Add, DeleteSweep } from "@mui/icons-material";
 import { Box, Button, FormControlLabel, ListSubheader, MenuItem, OutlinedInput, Select } from "@mui/material";
 import { useEffect, useRef } from "react";
 
@@ -28,6 +28,9 @@ export default function Measure() {
 
     const dispatch = useAppDispatch();
     const { selectedEntities, loadingBrep, snapKind } = useAppSelector(selectMeasure);
+    const currentEntites = selectedEntities[selectedEntities.length - 1];
+    const currentResult =
+        duoMeasurementValues.length > 0 ? duoMeasurementValues[duoMeasurementValues.length - 1] : undefined;
     const selecting = useAppSelector(selectPicker) === Picker.Measurement;
     const isInitial = useRef(true);
     const hasClippingOutline =
@@ -38,13 +41,13 @@ export default function Measure() {
 
     useEffect(() => {
         if (isInitial.current) {
-            if (!selecting && !selectedEntities.length) {
+            if (!selecting && !currentEntites.length) {
                 dispatch(renderActions.setPicker(Picker.Measurement));
             }
 
             isInitial.current = false;
         }
-    }, [dispatch, selecting, selectedEntities]);
+    }, [dispatch, selecting, currentEntites]);
 
     useEffect(() => {
         return () => {
@@ -103,9 +106,17 @@ export default function Measure() {
                                 ))}
                             </Select>
                             <Button
+                                onClick={() => dispatch(measureActions.newMeasurement())}
+                                color="grey"
+                                disabled={!currentEntites.length}
+                            >
+                                <Add sx={{ mr: 1 }} />
+                                New
+                            </Button>
+                            <Button
                                 onClick={() => dispatch(measureActions.clear())}
                                 color="grey"
-                                disabled={!selectedEntities.length}
+                                disabled={!currentEntites.length}
                             >
                                 <DeleteSweep sx={{ mr: 1 }} />
                                 Clear
@@ -119,10 +130,10 @@ export default function Measure() {
                     </Box>
                 ) : null}
                 <ScrollBox display={menuOpen || minimized ? "none" : "block"}>
-                    {selectedEntities.map((obj, idx) => (
+                    {currentEntites.map((obj, idx) => (
                         <MeasuredObject obj={obj as ExtendedMeasureEntity} idx={idx} key={idx} />
                     ))}
-                    <MeasuredResult duoMeasurementValues={duoMeasurementValues?.result} />
+                    <MeasuredResult duoMeasurementValues={currentResult?.result} />
                 </ScrollBox>
                 {menuOpen && <WidgetList widgetKey={featuresConfig.measure.key} onSelect={toggleMenu} />}
             </WidgetContainer>

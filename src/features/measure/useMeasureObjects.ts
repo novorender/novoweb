@@ -15,7 +15,7 @@ export function useMeasureObjects() {
     const selectedEntities = useAppSelector(selectMeasureEntities);
     const dispatch = useAppDispatch();
 
-    const [measureObjects, setMeasureObjects] = useState([] as ExtendedMeasureEntity[]);
+    const [measureObjects, setMeasureObjects] = useState([] as ExtendedMeasureEntity[][]);
     const duoId = useRef(0);
 
     useEffect(() => {
@@ -25,43 +25,48 @@ export function useMeasureObjects() {
             const measureView = await view?.measure;
 
             dispatch(measureActions.setLoadingBrep(true));
-            const mObjects = await Promise.all(
-                selectedEntities.map(async (obj) => {
-                    const ent = obj as ExtendedMeasureEntity;
-                    if (ent.settings?.cylinderMeasure === "top") {
-                        const swappedEnt = await measureView?.core.swapCylinder(ent, "outer");
-                        if (swappedEnt) {
-                            return { ...swappedEnt, settings: ent.settings };
-                        }
-                    } else if (ent.settings?.cylinderMeasure === "bottom") {
-                        const swappedEnt = await measureView?.core.swapCylinder(ent, "inner");
-                        if (swappedEnt) {
-                            return { ...swappedEnt, settings: ent.settings };
-                        }
-                    }
-                    return ent;
-                })
-            );
-
-            if (mObjects.length !== 2) {
-                dispatch(measureActions.setDuoMeasurementValues(undefined));
-                setMeasureObjects(mObjects);
-                dispatch(measureActions.setLoadingBrep(false));
-                return;
+            const mObjects: ExtendedMeasureEntity[][] = [];
+            const results: (undefined | { result: DuoMeasurementValues; id: number })[] = [];
+            for (const measure of selectedEntities) {
+                mObjects.push(
+                    await Promise.all(
+                        measure.map(async (obj) => {
+                            const ent = obj as ExtendedMeasureEntity;
+                            if (ent.settings?.cylinderMeasure === "top") {
+                                const swappedEnt = await measureView?.core.swapCylinder(ent, "outer");
+                                if (swappedEnt) {
+                                    return { ...swappedEnt, settings: ent.settings };
+                                }
+                            } else if (ent.settings?.cylinderMeasure === "bottom") {
+                                const swappedEnt = await measureView?.core.swapCylinder(ent, "inner");
+                                if (swappedEnt) {
+                                    return { ...swappedEnt, settings: ent.settings };
+                                }
+                            }
+                            return ent;
+                        })
+                    )
+                );
             }
 
-            const [obj1, obj2] = mObjects;
+            for (const objs of mObjects) {
+                if (objs.length !== 2) {
+                    results.push(undefined);
+                    continue;
+                }
 
-            let result: DuoMeasurementValues | undefined;
+                const [obj1, obj2] = objs;
+                let result: DuoMeasurementValues | undefined;
+                result = (await measureView?.core
+                    .measure(obj1, obj2, obj1.settings, obj2.settings)
+                    .catch((e) => console.warn(e))) as DuoMeasurementValues | undefined;
 
-            result = (await measureView?.core
-                .measure(obj1, obj2, obj1.settings, obj2.settings)
-                .catch((e) => console.warn(e))) as DuoMeasurementValues | undefined;
-
-            dispatch(measureActions.setDuoMeasurementValues(result ? { result, id: duoId.current } : undefined));
-            duoId.current++;
-            setMeasureObjects(mObjects);
+                results.push(result ? { result, id: duoId.current } : undefined);
+                duoId.current++;
+            }
             dispatch(measureActions.setLoadingBrep(false));
+            dispatch(measureActions.setDuoMeasurementValues(results));
+            setMeasureObjects(mObjects);
         }
     }, [view, setMeasureObjects, selectedEntities, dispatch]);
 

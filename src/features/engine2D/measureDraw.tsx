@@ -235,7 +235,7 @@ export function MeasureDraw({
     const [context2D, setContext2D] = useState<CanvasRenderingContext2D | null | undefined>(null);
 
     const heightProfileMeasureObject = useHeightProfileMeasureObject();
-    const measureObjects = useMeasureObjects();
+    const measureSets = useMeasureObjects();
     const pathMeasureObjects = usePathMeasureObjects();
     const roadCrossSection = useCrossSection();
     const roadCrossSectionData = roadCrossSection.status === AsyncStatus.Success ? roadCrossSection.data : undefined;
@@ -295,47 +295,52 @@ export function MeasureDraw({
             ]);
 
             let hoverHideId: string | undefined;
-            for (let i = 0; i < measureObjects.length; ++i) {
-                const obj = measureObjects[i];
-                if (obj.drawKind === "vertex") {
-                    objectDraw.current.set("-1", { product: await getDrawMeasureEntity(obj), updated: id });
-                    continue;
-                }
-                const objId = toId(obj);
-                const draw = objectDraw.current.get(objId);
-                if (measure.pinned !== i) {
-                    hoverHideId = objId;
-                }
-                if (draw) {
-                    if (draw.product) {
-                        view.measure.draw.updateProuct(draw.product);
-                        if (draw.updated > id) {
-                            return;
-                        }
-                        draw.updated = id;
+            for (let i = 0; i < measureSets.length; ++i) {
+                const measureSet = measureSets[i];
+                for (let j = 0; j < measureSet.length; ++j) {
+                    const obj = measureSet[j];
+                    if (obj.drawKind === "vertex") {
+                        objectDraw.current.set("-1", { product: await getDrawMeasureEntity(obj), updated: id });
+                        continue;
                     }
-                } else {
-                    const drawProd = await getDrawMeasureEntity(obj, {
-                        ...obj.settings,
-                        segmentLabelInterval: 10,
-                    });
-                    objectDraw.current.set(objId, { product: drawProd, updated: id });
+                    const objId = toId(obj);
+                    const draw = objectDraw.current.get(objId);
+                    if (measure.pinned !== j && i === measureSets.length - 1) {
+                        hoverHideId = objId;
+                    }
+                    if (draw) {
+                        if (draw.product) {
+                            view.measure.draw.updateProuct(draw.product);
+                            if (draw.updated > id) {
+                                return;
+                            }
+                            draw.updated = id;
+                        }
+                    } else {
+                        const drawProd = await getDrawMeasureEntity(obj, {
+                            ...obj.settings,
+                            segmentLabelInterval: 10,
+                        });
+                        objectDraw.current.set(objId, { product: drawProd, updated: id });
+                    }
                 }
             }
 
-            if (measure.duoMeasurementValues?.result) {
-                const res = resultDraw.current.get(measure.duoMeasurementValues.id);
-                if (res) {
-                    if (res.product) {
-                        view.measure.draw.updateProuct(res.product);
-                        if (res.updated > id) {
-                            return;
+            for (const duoMeasure of measure.duoMeasurementValues) {
+                if (duoMeasure?.result) {
+                    const res = resultDraw.current.get(duoMeasure.id);
+                    if (res) {
+                        if (res.product) {
+                            view.measure.draw.updateProuct(res.product);
+                            if (res.updated > id) {
+                                return;
+                            }
+                            res.updated = id;
                         }
-                        res.updated = id;
+                    } else {
+                        const resDraw = await getDrawMeasureEntity(duoMeasure?.result);
+                        resultDraw.current.set(duoMeasure.id, { product: resDraw, updated: id });
                     }
-                } else {
-                    const resDraw = await getDrawMeasureEntity(measure.duoMeasurementValues?.result);
-                    resultDraw.current.set(measure.duoMeasurementValues.id, { product: resDraw, updated: id });
                 }
             }
 
@@ -692,7 +697,7 @@ export function MeasureDraw({
         context2D,
         measure.duoMeasurementValues,
         canvas2D,
-        measureObjects,
+        measureSets,
         areaPoints,
         areaValue,
         pointLinePoints,

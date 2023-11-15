@@ -229,7 +229,7 @@ export function PathList() {
                                                         initPos = false;
                                                     }
                                                 }
-                                                dispatch(measureActions.setSelectedEntities([segment]));
+                                                dispatch(measureActions.addMeasureEntites([segment]));
                                                 dispatch(measureActions.pin(0));
                                             }
                                         }
