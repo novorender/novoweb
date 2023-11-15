@@ -149,8 +149,12 @@ type Integrations = {
     ditio?: {
         projectNumber: string;
     };
-    xsiteManage: {
+    xsiteManage?: {
         siteId: string;
+    };
+    bimTrack?: {
+        server: string;
+        project: string;
     };
 };
 

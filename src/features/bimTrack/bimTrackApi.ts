@@ -14,6 +14,7 @@ import {
     Viewpoint,
     Visibility,
 } from "types/bcf";
+import { AsyncStatus } from "types/misc";
 import { generateCodeChallenge } from "utils/auth";
 import { handleImageResponse } from "utils/bcf";
 import { generateRandomString } from "utils/misc";
@@ -30,8 +31,8 @@ const rawBaseQuery = fetchBaseQuery({
     prepareHeaders: (headers, { getState }) => {
         const token = (getState() as RootState).bimTrack.accessToken;
 
-        if (token) {
-            headers.set("authorization", `Bearer ${token}`);
+        if (token.status === AsyncStatus.Success) {
+            headers.set("authorization", `Bearer ${token.data}`);
         }
 
         return headers;
@@ -44,7 +45,8 @@ const dynamicBaseQuery: BaseQueryFn<string | FetchArgs, unknown, FetchBaseQueryE
     extraOptions
 ) => {
     const urlEnd = typeof args === "string" ? args : args.url;
-    const adjustedUrl = `/bimtrack/bcf/2.1/${urlEnd}`;
+    const server = (api.getState() as RootState).bimTrack.config.server;
+    const adjustedUrl = `/bimtrack/bcf/2.1/${urlEnd}${urlEnd.includes("?") ? "&" : "?"}server=${server}`;
     const adjustedArgs = typeof args === "string" ? adjustedUrl : { ...args, url: adjustedUrl };
 
     return rawBaseQuery(adjustedArgs, api, extraOptions);
@@ -52,7 +54,7 @@ const dynamicBaseQuery: BaseQueryFn<string | FetchArgs, unknown, FetchBaseQueryE
 
 export const bimTrackApi = createApi({
     reducerPath: "bimTrackApi",
-    tagTypes: ["Topics"],
+    tagTypes: ["Topics", "Projects"],
     baseQuery: dynamicBaseQuery,
     endpoints: (builder) => ({
         getAuthInfo: builder.mutation<AuthInfo, void>({
@@ -61,8 +63,19 @@ export const bimTrackApi = createApi({
         getCurrentUser: builder.query<User, void>({
             query: () => "current-user",
         }),
-        getProjects: builder.query<Project[], void>({
-            query: () => "projects",
+        getProjects: builder.query<Project[], { server: string; token: string }>({
+            queryFn: ({ server, token }) =>
+                fetch(`/bimtrack/bcf/2.1/projects?server=${server}`, { headers: { authorization: `Bearer ${token}` } })
+                    .then((res) => {
+                        if (res.ok) {
+                            return res.json();
+                        } else {
+                            throw res.status;
+                        }
+                    })
+                    .then((data) => ({ data }))
+                    .catch((error) => ({ error })),
+            providesTags: ["Projects"],
         }),
         getProject: builder.query<Project, { projectId: string }>({
             query: ({ projectId }) => `projects/${projectId}`,
@@ -159,7 +172,7 @@ export const bimTrackApi = createApi({
                 method: "POST",
             }),
         }),
-        getToken: builder.mutation<
+        getToken: builder.query<
             { access_token: string; refresh_token: string },
             { code: string; config: { bimTrackClientId: string; bimTrackClientSecret: string } }
         >({
@@ -173,6 +186,7 @@ export const bimTrackApi = createApi({
                 body.set("code_verifier", getFromStorage(StorageKey.BimTrackCodeVerifier));
 
                 return fetch("/bimtrack/token", {
+                    // return fetch("https://auth.bimtrackapp.co/connect/token", {
                     method: "POST",
                     headers: { "Content-Type": "application/x-www-form-urlencoded" },
                     body,
@@ -182,7 +196,7 @@ export const bimTrackApi = createApi({
                     .catch((error) => ({ error }));
             },
         }),
-        refreshToken: builder.mutation<
+        refreshToken: builder.query<
             { access_token: string; refresh_token: string },
             { refreshToken: string; config: { bimTrackClientId: string; bimTrackClientSecret: string } }
         >({
@@ -194,6 +208,7 @@ export const bimTrackApi = createApi({
                 body.set("grant_type", "refresh_token");
 
                 return fetch("/bimtrack/token", {
+                    // return fetch("https://auth.bimtrackapp.co/connect/token", {
                     body,
                     method: "POST",
                     headers: { "Content-Type": "application/x-www-form-urlencoded" },
@@ -227,21 +242,18 @@ export const {
     useUpdateTopicMutation,
     useCreateViewpointMutation,
     useCreateCommentMutation,
-    useGetTokenMutation,
-    useRefreshTokenMutation,
+    useLazyGetTokenQuery,
+    useLazyRefreshTokenQuery,
+    util: { resetApiState: resetBimTrackApiState, invalidateTags: invalidateBimTrackTags },
 } = bimTrackApi;
 
-export async function getCode(
-    authUrl: string,
-    state: string,
-    config: { bimTrackClientId: string; bimTrackClientSecret: string }
-) {
+export async function getCode(state: string, config: { bimTrackClientId: string; bimTrackClientSecret: string }) {
     const verifier = generateRandomString();
     const challenge = await generateCodeChallenge(verifier);
     saveToStorage(StorageKey.BimTrackCodeVerifier, verifier);
 
     window.location.href =
-        authUrl +
+        "https://auth.bimtrackapp.co/connect/authorize" +
         `?response_type=code` +
         `&client_id=${config.bimTrackClientId}` +
         `&scope=${scope}` +

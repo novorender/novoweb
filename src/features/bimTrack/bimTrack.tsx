@@ -1,204 +1,160 @@
-import { Box } from "@mui/material";
-import { useCallback, useEffect } from "react";
-import { MemoryRouter, Route, Switch } from "react-router-dom";
+import { Logout, SettingsRounded } from "@mui/icons-material";
+import { Box, ListItemIcon, ListItemText, Menu, MenuItem, MenuProps } from "@mui/material";
+import { MemoryRouter, Route, Switch, useHistory, useRouteMatch } from "react-router-dom";
 
 import { useAppDispatch, useAppSelector } from "app/store";
-import { LinearProgress, LogoSpeedDial, WidgetContainer, WidgetHeader } from "components";
+import { LogoSpeedDial, WidgetContainer, WidgetHeader } from "components";
 import { featuresConfig } from "config/features";
 import { StorageKey } from "config/storage";
 import WidgetList from "features/widgetList/widgetList";
 import { useSceneId } from "hooks/useSceneId";
 import { useToggle } from "hooks/useToggle";
-import { selectConfig, selectMaximized, selectMinimized } from "slices/explorerSlice";
-import { AuthInfo } from "types/bcf";
-import { createOAuthStateString } from "utils/auth";
-import { deleteFromStorage, getFromStorage, saveToStorage } from "utils/storage";
+import { selectHasAdminCapabilities, selectMaximized, selectMinimized } from "slices/explorerSlice";
+import { AsyncStatus } from "types/misc";
+import { deleteFromStorage } from "utils/storage";
 
-import {
-    getCode,
-    useGetAuthInfoMutation,
-    useGetCurrentUserQuery,
-    useGetTokenMutation,
-    useRefreshTokenMutation,
-} from "./bimTrackApi";
-import {
-    bimTrackActions,
-    BimTrackStatus,
-    FilterType,
-    selectAccessToken,
-    selectAuthInfo,
-    selectStatus,
-} from "./bimTrackSlice";
+import { resetBimTrackApiState } from "./bimTrackApi";
+import { bimTrackActions, selectAccessToken } from "./bimTrackSlice";
+import { Auth } from "./routes/auth";
 import { CreateComment } from "./routes/createComment";
 import { CreateTopic } from "./routes/createTopic";
 import { EditTopic } from "./routes/editTopic";
 import { Filters } from "./routes/filters";
-import { Project } from "./routes/project";
-import { Projects } from "./routes/projects";
+import { Login } from "./routes/login";
+import { Settings } from "./routes/settings";
 import { Topic } from "./routes/topic";
+import { Topics } from "./routes/topics";
 
 export default function BimTrack() {
     const sceneId = useSceneId();
-    const status = useAppSelector(selectStatus);
-    const authInfo = useAppSelector(selectAuthInfo);
-    const accessToken = useAppSelector(selectAccessToken);
-    const dispatch = useAppDispatch();
-    const config = useAppSelector(selectConfig);
-
     const [menuOpen, toggleMenu] = useToggle();
     const minimized = useAppSelector(selectMinimized) === featuresConfig.bimTrack.key;
     const maximized = useAppSelector(selectMaximized).includes(featuresConfig.bimTrack.key);
 
-    const { data: user } = useGetCurrentUserQuery(undefined, { skip: !accessToken });
-    const [getToken] = useGetTokenMutation();
-    const [refreshToken] = useRefreshTokenMutation();
-    const [fetchAuthInfo] = useGetAuthInfoMutation();
-
-    const authenticate = useCallback(
-        async (authInfo: AuthInfo): Promise<string> => {
-            const storedRefreshToken = getFromStorage(StorageKey.BimTrackRefreshToken);
-            const code = new URLSearchParams(window.location.search).get("code");
-
-            try {
-                if (code) {
-                    window.history.replaceState(null, "", window.location.pathname.replace("Callback", ""));
-
-                    const res = await getToken({ code, config });
-
-                    if (!("data" in res)) {
-                        throw new Error("token request failed");
-                    }
-
-                    if (res.data.refresh_token) {
-                        saveToStorage(StorageKey.BimTrackRefreshToken, res.data.refresh_token);
-                    }
-
-                    return res.data.access_token;
-                } else if (storedRefreshToken) {
-                    const res = await refreshToken({
-                        config,
-                        refreshToken: storedRefreshToken,
-                    });
-
-                    if (!("data" in res)) {
-                        throw new Error("get code");
-                    }
-
-                    if (res.data.refresh_token) {
-                        saveToStorage(StorageKey.BimTrackRefreshToken, res.data.refresh_token);
-                    } else {
-                        deleteFromStorage(StorageKey.BimTrackRefreshToken);
-                    }
-
-                    return res.data.access_token;
-                } else {
-                    throw new Error("get code");
-                }
-            } catch (e) {
-                if (e instanceof Error && e.message === "get code") {
-                    const state = createOAuthStateString({
-                        service: featuresConfig.bimTrack.key,
-                        sceneId,
-                    });
-
-                    await getCode(authInfo.oauth2_auth_url, state, config);
-                }
-
-                return "";
-            }
-        },
-        [getToken, refreshToken, sceneId, config]
+    return (
+        <>
+            <MemoryRouter>
+                <WidgetContainer minimized={minimized} maximized={maximized}>
+                    <WidgetHeader WidgetMenu={WidgetMenu} widget={featuresConfig.bimTrack} disableShadow />
+                    <Box
+                        display={menuOpen || minimized ? "none" : "flex"}
+                        flexGrow={1}
+                        overflow="hidden"
+                        flexDirection="column"
+                    >
+                        <Switch>
+                            <Route path="/" exact>
+                                <Auth />
+                            </Route>
+                            <Route path="/login" exact>
+                                <Login sceneId={sceneId} />
+                            </Route>
+                            <Route path="/settings" exact>
+                                <Settings sceneId={sceneId} />
+                            </Route>
+                            <Route path="/:projectId/topics" exact>
+                                {<Topics />}
+                            </Route>
+                            <Route path="/project/:projectId/topic/:topicId" exact>
+                                <Topic />
+                            </Route>
+                            <Route path="/project/:projectId/filter" exact>
+                                <Filters />
+                            </Route>
+                            <Route path="/project/:projectId/new-topic" exact>
+                                <CreateTopic />
+                            </Route>
+                            <Route path="/project/:projectId/topic/:topicId/new-comment" exact>
+                                <CreateComment />
+                            </Route>
+                            <Route path="/project/:projectId/topic/:topicId/edit" exact>
+                                <EditTopic />
+                            </Route>
+                        </Switch>
+                    </Box>
+                    {menuOpen && <WidgetList widgetKey={featuresConfig.bimTrack.key} onSelect={toggleMenu} />}
+                </WidgetContainer>
+                <LogoSpeedDial open={menuOpen} toggle={toggleMenu} ariaLabel="toggle widget menu" />
+            </MemoryRouter>
+        </>
     );
+}
 
-    useEffect(() => {
-        if (status === BimTrackStatus.Initial) {
-            getAuthInfo();
-        }
+function WidgetMenu(props: MenuProps) {
+    const settingsPaths = ["/*"];
+    const token = useAppSelector(selectAccessToken);
+    const isAdmin = useAppSelector(selectHasAdminCapabilities);
 
-        async function getAuthInfo() {
-            dispatch(bimTrackActions.setStatus(BimTrackStatus.LoadingAuthInfo));
-            const authInfoRes = await fetchAuthInfo();
-
-            if (!("data" in authInfoRes)) {
-                return;
-            }
-
-            dispatch(bimTrackActions.setStatus(BimTrackStatus.Ready));
-            dispatch(bimTrackActions.setAuthInfo(authInfoRes.data));
-        }
-    }, [fetchAuthInfo, dispatch, authInfo, status]);
-
-    useEffect(() => {
-        if (authInfo) {
-            init(authInfo);
-        }
-
-        async function init(authInfo: AuthInfo) {
-            const accessToken = await authenticate(authInfo);
-
-            if (!accessToken) {
-                dispatch(bimTrackActions.logOut());
-                return;
-            }
-
-            dispatch(bimTrackActions.setAccessToken(accessToken));
-        }
-    }, [authInfo, dispatch, authenticate]);
-
-    useEffect(
-        function initFilter() {
-            if (user) {
-                dispatch(bimTrackActions.setFilters({ [FilterType.AssignedTo]: [user.id] }));
-            }
-        },
-        [user, dispatch]
-    );
+    if (token.status !== AsyncStatus.Success) {
+        return null;
+    }
 
     return (
         <>
-            <WidgetContainer minimized={minimized} maximized={maximized}>
-                <WidgetHeader widget={featuresConfig.bimTrack} disableShadow />
-                <Box
-                    display={menuOpen || minimized ? "none" : "flex"}
-                    flexGrow={1}
-                    overflow="hidden"
-                    flexDirection="column"
-                >
-                    {accessToken ? (
-                        <MemoryRouter>
-                            <Switch>
-                                <Route path="/" exact>
-                                    <Projects />
-                                </Route>
-                                <Route path="/project/:projectId" exact>
-                                    {<Project />}
-                                </Route>
-                                <Route path="/project/:projectId/topic/:topicId" exact>
-                                    <Topic />
-                                </Route>
-                                <Route path="/project/:projectId/filter" exact>
-                                    <Filters />
-                                </Route>
-                                <Route path="/project/:projectId/new-topic" exact>
-                                    <CreateTopic />
-                                </Route>
-                                <Route path="/project/:projectId/topic/:topicId/new-comment" exact>
-                                    <CreateComment />
-                                </Route>
-                                <Route path="/project/:projectId/topic/:topicId/edit" exact>
-                                    <EditTopic />
-                                </Route>
-                            </Switch>
-                        </MemoryRouter>
-                    ) : (
-                        <Box position="relative">
-                            <LinearProgress />
-                        </Box>
-                    )}
-                </Box>
-                {menuOpen && <WidgetList widgetKey={featuresConfig.bimTrack.key} onSelect={toggleMenu} />}
-            </WidgetContainer>
-            <LogoSpeedDial open={menuOpen} toggle={toggleMenu} ariaLabel="toggle widget menu" />
+            <Menu {...props}>
+                <LogoutMenuItem onClose={props.onClose} />
+                {isAdmin && (
+                    <Route path={settingsPaths} exact>
+                        <SettingsMenuItem onClose={props.onClose} />
+                    </Route>
+                )}
+            </Menu>
         </>
+    );
+}
+
+function LogoutMenuItem({ onClose }: { onClose: MenuProps["onClose"] }) {
+    const history = useHistory();
+    const dispatch = useAppDispatch();
+
+    return (
+        <div>
+            <MenuItem
+                onClick={() => {
+                    deleteFromStorage(StorageKey.BimTrackRefreshToken);
+                    resetBimTrackApiState();
+                    dispatch(bimTrackActions.logOut());
+                    history.push("/login");
+
+                    if (onClose) {
+                        onClose({}, "backdropClick");
+                    }
+                }}
+            >
+                <>
+                    <ListItemIcon>
+                        <Logout />
+                    </ListItemIcon>
+                    <ListItemText>Log out</ListItemText>
+                </>
+            </MenuItem>
+        </div>
+    );
+}
+
+function SettingsMenuItem({ onClose }: { onClose: MenuProps["onClose"] }) {
+    const history = useHistory();
+    const match = useRouteMatch();
+
+    return (
+        <div>
+            <MenuItem
+                disabled={match.url === "/settings"}
+                onClick={() => {
+                    history.push("/settings");
+
+                    if (onClose) {
+                        onClose({}, "backdropClick");
+                    }
+                }}
+            >
+                <>
+                    <ListItemIcon>
+                        <SettingsRounded />
+                    </ListItemIcon>
+                    <ListItemText>Settings</ListItemText>
+                </>
+            </MenuItem>
+        </div>
     );
 }

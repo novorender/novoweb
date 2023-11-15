@@ -1,7 +1,7 @@
 import { Add, ArrowBack, FilterAlt } from "@mui/icons-material";
 import { Box, Button, ListItem, Typography, useTheme } from "@mui/material";
 import { isAfter, isSameDay, parseISO } from "date-fns";
-import { CSSProperties } from "react";
+import { CSSProperties, useEffect } from "react";
 import { Link, useHistory, useParams } from "react-router-dom";
 import AutoSizer from "react-virtualized-auto-sizer";
 
@@ -10,6 +10,7 @@ import { Divider, FixedSizeVirualizedList, ImgTooltip, LinearProgress, Tooltip }
 import { Topic } from "types/bcf";
 
 import {
+    useGetCurrentUserQuery,
     useGetProjectExtensionsQuery,
     useGetProjectQuery,
     useGetSnapshotQuery,
@@ -22,14 +23,16 @@ import {
     FilterModifiers,
     Filters,
     FilterType,
+    selectBimTrackFilterIsInitialized,
     selectFilterModifiers,
     selectFilters,
 } from "../bimTrackSlice";
 
-export function Project() {
+export function Topics() {
     const theme = useTheme();
     const history = useHistory();
     const filters = useAppSelector(selectFilters);
+    const filterIsInitialized = useAppSelector(selectBimTrackFilterIsInitialized);
     const filterModifiers = useAppSelector(selectFilterModifiers);
     const dispatch = useAppDispatch();
 
@@ -40,9 +43,19 @@ export function Project() {
         { projectId },
         { refetchOnFocus: true }
     );
+    const { data: user } = useGetCurrentUserQuery();
     const filteredTopics = applyFilters(topics, filters, filterModifiers);
 
-    if (!project || loadingTopics) {
+    useEffect(
+        function initFilter() {
+            if (user && !filterIsInitialized) {
+                dispatch(bimTrackActions.setFilters({ [FilterType.AssignedTo]: [user.id] }));
+            }
+        },
+        [user, dispatch, filterIsInitialized]
+    );
+
+    if (!project || loadingTopics || !filterIsInitialized) {
         return (
             <Box position="relative">
                 <LinearProgress />
