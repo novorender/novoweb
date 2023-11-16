@@ -21,10 +21,13 @@ app.use(
 app.use(
     "/bimtrack/bcf/2.1",
     createProxyMiddleware({
-        // target: "https://bcfrestapi.bimtrackapp.co/bcf/2.1/",
-        target: "https://bcfrestapi-bt02.bimtrackapp.co/bcf/2.1/",
+        router: (req) => {
+            const url = new URL(`https://explorer.novorender.com/${req.url}`);
+            const server = url.searchParams.get("server") ?? "";
+            return server;
+        },
         pathRewrite: {
-            "^/bimtrack/bcf/2.1": "", // remove base path
+            "^/bimtrack": "", // remove base path
         },
         changeOrigin: true,
     })
