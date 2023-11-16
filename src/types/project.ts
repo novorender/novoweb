@@ -26,6 +26,8 @@ export type ExplorerProjectState = {
             usePointerLock: boolean;
             topDownElevation: undefined | number;
             topDownSnapToAxis?: "north";
+            touchDeAcceleration?: boolean;
+            touchRotate?: boolean;
         };
     };
     renderSettings: {
