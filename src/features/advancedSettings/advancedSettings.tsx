@@ -7,6 +7,7 @@ import { Link, MemoryRouter, Route, Switch } from "react-router-dom";
 import { dataApi } from "app";
 import { useAppSelector } from "app/store";
 import { Divider, LinearProgress, LogoSpeedDial, ScrollBox, WidgetContainer, WidgetHeader } from "components";
+import { canvasContextMenuConfig } from "config/canvasContextMenu";
 import { featuresConfig, FeatureType } from "config/features";
 import { useExplorerGlobals } from "contexts/explorerGlobals";
 import { HighlightCollection, useHighlightCollections } from "contexts/highlightCollections";
@@ -109,7 +110,9 @@ export default function AdvancedSettings() {
                     contextMenus: {
                         canvas: {
                             primary: {
-                                features: canvasCtxMenu,
+                                features: canvasCtxMenu.filter(
+                                    (feature) => canvasContextMenuConfig[feature] !== undefined
+                                ),
                             },
                         },
                     },

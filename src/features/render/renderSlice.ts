@@ -180,8 +180,6 @@ const initialState = {
               x: number;
               y: number;
           },
-
-    // NEW
     background: {
         environments: { status: AsyncStatus.Initial } as AsyncState<EnvironmentDescription[]>,
         color: [0.75, 0.75, 0.75, 1] as vec4,
