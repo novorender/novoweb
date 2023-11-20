@@ -1,5 +1,5 @@
 import { Box, css, styled } from "@mui/material";
-import { glMatrix } from "gl-matrix";
+import { glMatrix, vec2 } from "gl-matrix";
 import { RefCallback, useCallback, useRef, useState } from "react";
 
 import { useAppSelector } from "app/store";
@@ -84,6 +84,7 @@ export function Render3D() {
     const [svg, setSvg] = useState<null | SVGSVGElement>(null);
 
     const engine2dRenderFn = useRef<((moved: boolean, idleFrame: boolean) => void) | undefined>();
+    const interactionPositions = useRef<vec2[]>([]);
     const pointerPos = useRef([0, 0] as [x: number, y: number]);
     const canvasRef: RefCallback<HTMLCanvasElement> = useCallback(
         (el) => {
@@ -94,7 +95,7 @@ export function Render3D() {
 
     useHandleInit();
     useHandleInitialBookmark();
-    useHandleCameraMoved({ svg, engine2dRenderFn });
+    useHandleCameraMoved({ svg, engine2dRenderFn, interactionPositions });
     useHandleCameraState();
     useHandleCameraSpeed();
     useHandleGrid();
@@ -122,7 +123,12 @@ export function Render3D() {
 
     const cursor = useHandleCanvasCursor();
     const onClick = useCanvasClickHandler();
-    const eventHandlers = useCanvasEventHandlers({ pointerPos, cursor, svg, renderFnRef: engine2dRenderFn });
+    const eventHandlers = useCanvasEventHandlers({
+        pointerPos,
+        cursor,
+        svg,
+        renderFnRef: engine2dRenderFn,
+    });
 
     return (
         <Box position="relative" width="100%" height="100%" sx={{ userSelect: "none" }}>
@@ -137,7 +143,11 @@ export function Render3D() {
             {sceneStatus.status === AsyncStatus.Success && view && canvas && (
                 <>
                     {debugStats.enabled && <PerformanceStats />}
-                    <Engine2D pointerPos={pointerPos} renderFnRef={engine2dRenderFn} />
+                    <Engine2D
+                        pointerPos={pointerPos}
+                        renderFnRef={engine2dRenderFn}
+                        interactionPositions={interactionPositions}
+                    />
                     <Stamp />
                     <Svg width={size.width} height={size.height} ref={setSvg}>
                         <Markers />

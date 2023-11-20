@@ -1,5 +1,5 @@
 import { View } from "@novorender/api";
-import { mat3, quat, vec3 } from "gl-matrix";
+import { mat3, quat, vec2, vec3 } from "gl-matrix";
 import { MutableRefObject, useEffect, useRef } from "react";
 
 import { useAppDispatch, useAppSelector } from "app/store";
@@ -22,9 +22,11 @@ import { useMoveMarkers } from "./useMoveMarkers";
 export function useHandleCameraMoved({
     svg,
     engine2dRenderFn,
+    interactionPositions,
 }: {
     svg: SVGSVGElement | null;
     engine2dRenderFn: MutableRefObject<((moved: boolean, idleframe: boolean) => void) | undefined>;
+    interactionPositions: MutableRefObject<(vec2 | undefined)[]>;
 }) {
     const {
         state: { view },
@@ -36,7 +38,7 @@ export function useHandleCameraMoved({
     const currentTopDownElevation = useAppSelector(selectCurrentTopDownElevation);
 
     const moveSvgMarkers = useMoveMarkers(svg);
-    const moveSvgInteractions = useMove2DInteractions(svg);
+    const moveSvgInteractions = useMove2DInteractions(svg, interactionPositions);
 
     const movementTimer = useRef<ReturnType<typeof setTimeout>>();
     const orthoMovementTimer = useRef<ReturnType<typeof setTimeout>>();

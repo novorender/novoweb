@@ -22,7 +22,10 @@ const initialState = {
     hover: undefined as WriteableMeasureEntity | undefined,
     snapKind: "all" as SnapKind,
     pinned: undefined as undefined | number,
-    duoMeasurementValues: [] as (undefined | { result: DuoMeasurementValues; id: number })[],
+    duoMeasurementValues: [] as (
+        | undefined
+        | { result: DuoMeasurementValues; id: number; activeAxis: { x: boolean; y: boolean; z: boolean } }
+    )[],
     loadingBrep: false,
 };
 
@@ -55,6 +58,13 @@ export const measureSlice = createSlice({
                 .slice(0, state.selectedEntities.length - 1)
                 .concat([currentEntities]);
         },
+        deleteMeasureSet: (state, action: PayloadAction<number>) => {
+            if (state.selectedEntities.length > 1) {
+                state.selectedEntities = state.selectedEntities.splice(action.payload - 1, 1);
+            } else {
+                state.selectedEntities = [[]];
+            }
+        },
         selectHoverObj: (state, action: PayloadAction<MeasureEntity | undefined>) => {
             state.hover = action.payload as WriteableMeasureEntity | undefined;
         },
@@ -77,7 +87,7 @@ export const measureSlice = createSlice({
             state.pinned = undefined;
         },
         clear: (state) => {
-            state.selectedEntities = [];
+            state.selectedEntities = [[]];
             state.pinned = undefined;
             state.hover = undefined;
         },
@@ -85,7 +95,9 @@ export const measureSlice = createSlice({
             state,
             action: PayloadAction<(undefined | { result: DuoMeasurementValues; id: number })[]>
         ) => {
-            state.duoMeasurementValues = action.payload;
+            state.duoMeasurementValues = action.payload.map((m) => {
+                return m ? { ...m, activeAxis: { x: true, y: true, z: true } } : undefined;
+            });
         },
         setSettings: (state, action: PayloadAction<{ idx: number; settings: MeasureSettings }>) => {
             state.selectedEntities = state.selectedEntities.map((obj, idx) =>

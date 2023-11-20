@@ -224,9 +224,11 @@ function drawDuoResults(
 export function MeasureDraw({
     pointerPos,
     renderFnRef,
+    interactionPositions,
 }: {
     pointerPos: MutableRefObject<Vec2>;
     renderFnRef: MutableRefObject<((moved: boolean, idleFrame: boolean) => void) | undefined>;
+    interactionPositions: MutableRefObject<(vec2 | undefined)[]>;
 }) {
     const {
         state: { size, view },
@@ -262,23 +264,26 @@ export function MeasureDraw({
     const prevPointerPos = useRef([0, 0] as Vec2);
     const resultDraw = useRef(new Map<number, { product: DrawProduct | undefined; updated: number }>());
     const objectDraw = useRef(new Map<string, { product: DrawProduct | undefined; updated: number }>());
+    const followPathDrawResult = useRef<(DrawProduct | undefined)[]>([]);
+    const heightProfileDrawResult = useRef<DrawProduct | undefined>(undefined);
+    const manholeDrawResult = useRef<DrawProduct | undefined>(undefined);
+    const manholeCollisionEntityDrawResult = useRef<DrawProduct | undefined>(undefined);
+    const hoverObjectDrawResult = useRef<DrawProduct | undefined>(undefined);
 
-    const drawId = useRef(0);
-    const render = useCallback(async () => {
-        if (view?.measure && context2D && canvas2D && size) {
-            const { camera } = view.renderState;
-            const cameraDirection = vec3.transformQuat(vec3.create(), vec3.fromValues(0, 0, -1), camera.rotation);
-            const camSettings = { pos: camera.position, dir: cameraDirection };
+    const updateId = useRef(0);
+    const hoverHideId = useRef<undefined | string>(undefined);
+    const update = useCallback(async () => {
+        if (view?.measure) {
             const getDrawMeasureEntity = async (entity?: DrawableEntity, settings?: MeasureSettings) =>
                 entity && view.measure?.draw.getDrawEntity(entity, settings);
-            const id = ++drawId.current;
+            const id = ++updateId.current;
 
             const [
-                followPathDrawResult,
-                heightProfileDrawResult,
-                manholeDrawResult,
-                manholeCollisionEntityDrawResult,
-                hoverObjectDrawResult,
+                followPathDrawObject,
+                heightProfileDrawObject,
+                manholeDrawObject,
+                manholeCollisionEntityDrawObject,
+                hoverObjectDrawObject,
             ] = await Promise.all([
                 Promise.all(
                     (drawSelectedPaths ? pathMeasureObjectsData ?? [] : []).map((obj) =>
@@ -293,10 +298,17 @@ export function MeasureDraw({
                 getDrawMeasureEntity(manholeCollisionEntity),
                 getDrawMeasureEntity(measure.hover),
             ]);
+            const removePos: (vec2 | undefined)[] = [];
 
-            let hoverHideId: string | undefined;
+            followPathDrawResult.current = followPathDrawObject;
+            heightProfileDrawResult.current = heightProfileDrawObject;
+            manholeDrawResult.current = manholeDrawObject;
+            manholeCollisionEntityDrawResult.current = manholeCollisionEntityDrawObject;
+            hoverObjectDrawResult.current = hoverObjectDrawObject;
+            //StructruredClone
             for (let i = 0; i < measureSets.length; ++i) {
                 const measureSet = measureSets[i];
+                let objectToSetMarker: undefined | DrawProduct;
                 for (let j = 0; j < measureSet.length; ++j) {
                     const obj = measureSet[j];
                     if (obj.drawKind === "vertex") {
@@ -306,13 +318,16 @@ export function MeasureDraw({
                     const objId = toId(obj);
                     const draw = objectDraw.current.get(objId);
                     if (measure.pinned !== j && i === measureSets.length - 1) {
-                        hoverHideId = objId;
+                        hoverHideId.current = objId;
                     }
                     if (draw) {
                         if (draw.product) {
                             view.measure.draw.updateProuct(draw.product);
                             if (draw.updated > id) {
-                                return;
+                                return false;
+                            }
+                            if (measureSet.length === 1) {
+                                objectToSetMarker = draw.product;
                             }
                             draw.updated = id;
                         }
@@ -321,11 +336,50 @@ export function MeasureDraw({
                             ...obj.settings,
                             segmentLabelInterval: 10,
                         });
+                        if (measureSet.length === 1) {
+                            objectToSetMarker = drawProd;
+                        }
                         objectDraw.current.set(objId, { product: drawProd, updated: id });
                     }
                 }
-            }
+                if (objectToSetMarker) {
+                    for (const obj of objectToSetMarker.objects) {
+                        switch (obj.kind) {
+                            case "plane":
+                                {
+                                    const planeObj = obj.parts[obj.parts.length - 1];
+                                    const sum = vec3.create();
+                                    for (let k = 0; k < planeObj.vertices3D.length - 1; ++k) {
+                                        vec3.add(sum, sum, planeObj.vertices3D[k]);
+                                    }
+                                    const pos3d = vec3.scale(vec3.create(), sum, 1 / (planeObj.vertices3D.length - 1));
+                                    const sp = view.measure?.draw.toMarkerPoints([pos3d]);
+                                    if (sp && sp.length > 0 && sp[0]) {
+                                        removePos[i] = sp[0];
+                                    } else {
+                                        removePos[i] = undefined;
+                                    }
+                                }
 
+                                break;
+                            case "cylinder":
+                            case "curveSegment":
+                            case "edge":
+                                if (obj.parts[0].vertices2D) {
+                                    const start = obj.parts[0].vertices2D[0];
+                                    const end = obj.parts[0].vertices2D[obj.parts[0].vertices2D.length - 1];
+                                    const dist = vec2.dist(start, end);
+                                    if (dist > 100) {
+                                        removePos[i] = vec2.lerp(vec2.create(), start, end, 0.5);
+                                    }
+                                }
+                                break;
+                        }
+                    }
+                } else {
+                    removePos[i] = undefined;
+                }
+            }
             for (const duoMeasure of measure.duoMeasurementValues) {
                 if (duoMeasure?.result) {
                     const res = resultDraw.current.get(duoMeasure.id);
@@ -333,7 +387,7 @@ export function MeasureDraw({
                         if (res.product) {
                             view.measure.draw.updateProuct(res.product);
                             if (res.updated > id) {
-                                return;
+                                return false;
                             }
                             res.updated = id;
                         }
@@ -343,10 +397,35 @@ export function MeasureDraw({
                     }
                 }
             }
-
-            if (id !== drawId.current) {
-                return;
+            if (id !== updateId.current) {
+                return false;
             }
+            interactionPositions.current = removePos;
+            return true;
+        }
+        return false;
+    }, [
+        view,
+        measure.duoMeasurementValues,
+        measureSets,
+        drawSelectedPaths,
+        pathMeasureObjectsData,
+        heightProfileMeasureObject,
+        manhole,
+        manholeCollisionEntity,
+        drawPathSettings,
+        measure.hover,
+        measure.pinned,
+        interactionPositions,
+    ]);
+
+    const draw = useCallback(() => {
+        if (context2D && canvas2D && size && view) {
+            //removePositions.current = [];
+            const { camera } = view.renderState;
+            const cameraDirection = vec3.transformQuat(vec3.create(), vec3.fromValues(0, 0, -1), camera.rotation);
+            const camSettings = { pos: camera.position, dir: cameraDirection };
+
             context2D.clearRect(0, 0, canvas2D.width, canvas2D.height);
 
             for (const trace of outlineLasers) {
@@ -392,10 +471,17 @@ export function MeasureDraw({
                 }
             }
 
-            drawMeasureObjects(objectDraw.current, id, hoverObjectDrawResult, hoverHideId, context2D, camSettings);
-            drawDuoResults(resultDraw.current, id, context2D, camSettings);
+            drawMeasureObjects(
+                objectDraw.current,
+                updateId.current,
+                hoverObjectDrawResult.current,
+                hoverHideId.current,
+                context2D,
+                camSettings
+            );
+            drawDuoResults(resultDraw.current, updateId.current, context2D, camSettings);
 
-            followPathDrawResult.forEach(
+            followPathDrawResult.current.forEach(
                 (prod) =>
                     prod &&
                     drawProduct(
@@ -407,41 +493,41 @@ export function MeasureDraw({
                     )
             );
 
-            if (hoverObjectDrawResult) {
+            if (hoverObjectDrawResult.current) {
                 drawProduct(
                     context2D,
                     camSettings,
-                    hoverObjectDrawResult,
+                    hoverObjectDrawResult.current,
                     { lineColor: hoverLineColor, fillColor: hoverFillColor, pointColor: hoverLineColor },
                     5
                 );
             }
 
-            if (heightProfileDrawResult) {
+            if (heightProfileDrawResult.current) {
                 drawProduct(
                     context2D,
                     camSettings,
-                    heightProfileDrawResult,
+                    heightProfileDrawResult.current,
                     { lineColor: "yellow", fillColor: measurementFillColor },
                     3
                 );
             }
 
-            if (manholeDrawResult) {
+            if (manholeDrawResult.current) {
                 drawProduct(
                     context2D,
                     camSettings,
-                    manholeDrawResult,
+                    manholeDrawResult.current,
                     { lineColor: "yellow", fillColor: measurementFillColor },
                     3
                 );
             }
 
-            if (manholeCollisionEntityDrawResult) {
+            if (manholeCollisionEntityDrawResult.current) {
                 drawProduct(
                     context2D,
                     camSettings,
-                    manholeCollisionEntityDrawResult,
+                    manholeCollisionEntityDrawResult.current,
                     { lineColor: "yellow", fillColor: measurementFillColor },
                     3
                 );
@@ -538,23 +624,25 @@ export function MeasureDraw({
                     }
 
                     const traceDraw = view.measure?.draw.getTraceDrawOject(prods, line);
-                    traceDraw.objects.forEach((obj) => {
-                        obj.parts.forEach((part) => {
-                            drawPart(
-                                context2D,
-                                camSettings,
-                                part,
-                                {
-                                    lineColor: "black",
-                                    displayAllPoints: true,
-                                },
-                                2,
-                                {
-                                    type: "default",
-                                }
-                            );
+                    if (traceDraw) {
+                        traceDraw.objects.forEach((obj) => {
+                            obj.parts.forEach((part) => {
+                                drawPart(
+                                    context2D,
+                                    camSettings,
+                                    part,
+                                    {
+                                        lineColor: "black",
+                                        displayAllPoints: true,
+                                    },
+                                    2,
+                                    {
+                                        type: "default",
+                                    }
+                                );
+                            });
                         });
-                    });
+                    }
                 }
             }
 
@@ -693,38 +781,32 @@ export function MeasureDraw({
             }
         }
     }, [
-        view,
         context2D,
-        measure.duoMeasurementValues,
         canvas2D,
-        measureSets,
+        size,
+        view,
         areaPoints,
         areaValue,
+        crossSection,
+        cameraType,
+        outlineLasers,
+        manholeCollisionValues,
         pointLinePoints,
         pointLineResult,
-        drawSelectedPaths,
-        pathMeasureObjectsData,
-        heightProfileMeasureObject,
-        manhole,
-        manholeCollisionEntity,
-        manholeCollisionValues,
-        drawPathSettings,
-        size,
-        measure.hover,
-        measure.pinned,
-        crossSection,
-        roadCrossSectionData,
-        viewMode,
-        cameraType,
         pointerPos,
+        roadCrossSectionData,
         showTracer,
         traceVerical,
-        outlineLasers,
+        viewMode,
     ]);
 
     useEffect(() => {
-        render();
-    }, [render]);
+        update().then((r) => {
+            if (r) {
+                draw();
+            }
+        });
+    }, [update, draw]);
 
     useEffect(() => {
         setContext2D(canvas2D?.getContext("2d"));
@@ -733,7 +815,7 @@ export function MeasureDraw({
     useEffect(() => {
         renderFnRef.current = animate;
         return () => (renderFnRef.current = undefined);
-        function animate(moved: boolean) {
+        async function animate(moved: boolean) {
             if (view) {
                 const run = moved || (showTracer && !vec2.exactEquals(prevPointerPos.current, pointerPos.current));
                 if (!run) {
@@ -741,10 +823,12 @@ export function MeasureDraw({
                 }
 
                 prevPointerPos.current = [...pointerPos.current];
-                render();
+                if (await update()) {
+                    draw();
+                }
             }
         }
-    }, [view, render, grid, cameraType, pointerPos, renderFnRef, showTracer, viewMode]);
+    }, [view, update, grid, cameraType, pointerPos, renderFnRef, showTracer, viewMode, draw]);
 
     return <Canvas2D id="canvas2D" ref={setCanvas2D} width={size.width} height={size.height} />;
 }
