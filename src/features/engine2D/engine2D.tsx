@@ -1,5 +1,6 @@
-import { vec2 } from "gl-matrix";
 import { MutableRefObject, useEffect, useRef } from "react";
+
+import { MeasureInteractionPositions } from "features/measure/measureInteractions";
 
 import { MeasureDraw } from "./measureDraw";
 import { UtilDraw } from "./utilDraw";
@@ -11,7 +12,7 @@ export function Engine2D({
 }: {
     pointerPos: MutableRefObject<Vec2>;
     renderFnRef: MutableRefObject<((moved: boolean, idleFrame: boolean) => void) | undefined>;
-    interactionPositions: MutableRefObject<(vec2 | undefined)[]>;
+    interactionPositions: MutableRefObject<MeasureInteractionPositions>;
 }) {
     const measureRenderFn = useRef<((moved: boolean, idleFrame: boolean) => void) | undefined>();
     const utilRenderFn = useRef<((moved: boolean, idleFrame: boolean) => void) | undefined>();

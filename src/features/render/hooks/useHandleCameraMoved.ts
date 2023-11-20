@@ -1,10 +1,11 @@
 import { View } from "@novorender/api";
-import { mat3, quat, vec2, vec3 } from "gl-matrix";
+import { mat3, quat, vec3 } from "gl-matrix";
 import { MutableRefObject, useEffect, useRef } from "react";
 
 import { useAppDispatch, useAppSelector } from "app/store";
 import { useExplorerGlobals } from "contexts/explorerGlobals";
 import { useMove2DInteractions } from "features/engine2D";
+import { MeasureInteractionPositions } from "features/measure/measureInteractions";
 import { orthoCamActions, selectCurrentTopDownElevation } from "features/orthoCam";
 import { ViewMode } from "types/misc";
 
@@ -26,7 +27,7 @@ export function useHandleCameraMoved({
 }: {
     svg: SVGSVGElement | null;
     engine2dRenderFn: MutableRefObject<((moved: boolean, idleframe: boolean) => void) | undefined>;
-    interactionPositions: MutableRefObject<(vec2 | undefined)[]>;
+    interactionPositions: MutableRefObject<MeasureInteractionPositions>;
 }) {
     const {
         state: { view },

@@ -24,7 +24,11 @@ const initialState = {
     pinned: undefined as undefined | number,
     duoMeasurementValues: [] as (
         | undefined
-        | { result: DuoMeasurementValues; id: number; activeAxis: { x: boolean; y: boolean; z: boolean } }
+        | {
+              result: DuoMeasurementValues;
+              id: number;
+              activeAxis: { x: boolean; y: boolean; z: boolean; plan: boolean; dist: boolean };
+          }
     )[],
     loadingBrep: false,
 };
@@ -61,8 +65,32 @@ export const measureSlice = createSlice({
         deleteMeasureSet: (state, action: PayloadAction<number>) => {
             if (state.selectedEntities.length > 1) {
                 state.selectedEntities = state.selectedEntities.splice(action.payload - 1, 1);
+                state.duoMeasurementValues = state.duoMeasurementValues.splice(action.payload - 1, 1);
             } else {
                 state.selectedEntities = [[]];
+            }
+        },
+        removeAxis: (state, action: PayloadAction<{ axis: "x" | "y" | "z" | "dist" | "plan"; idx: number }>) => {
+            const res = state.duoMeasurementValues[action.payload.idx];
+            if (res) {
+                switch (action.payload.axis) {
+                    case "x":
+                        res.activeAxis.x = false;
+                        break;
+                    case "y":
+                        res.activeAxis.y = false;
+                        break;
+                    case "z":
+                        res.activeAxis.z = false;
+                        break;
+                    case "dist":
+                        res.activeAxis.dist = false;
+                        break;
+                    case "plan":
+                        res.activeAxis.plan = false;
+                        break;
+                }
+                state.duoMeasurementValues[action.payload.idx] = res;
             }
         },
         selectHoverObj: (state, action: PayloadAction<MeasureEntity | undefined>) => {
@@ -96,7 +124,7 @@ export const measureSlice = createSlice({
             action: PayloadAction<(undefined | { result: DuoMeasurementValues; id: number })[]>
         ) => {
             state.duoMeasurementValues = action.payload.map((m) => {
-                return m ? { ...m, activeAxis: { x: true, y: true, z: true } } : undefined;
+                return m ? { ...m, activeAxis: { x: true, y: true, z: true, plan: true, dist: true } } : undefined;
             });
         },
         setSettings: (state, action: PayloadAction<{ idx: number; settings: MeasureSettings }>) => {

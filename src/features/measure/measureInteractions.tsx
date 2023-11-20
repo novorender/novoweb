@@ -1,4 +1,5 @@
 import { css, styled } from "@mui/material";
+import { vec2 } from "gl-matrix";
 import { Fragment, SVGProps } from "react";
 
 import { useAppDispatch, useAppSelector } from "app/store";
@@ -21,6 +22,17 @@ const RemoveMarker = styled(
     ),
     { shouldForwardProp: (prop) => prop !== "active" && prop !== "hovered" }
 )(basicStyle);
+
+export type MeasureInteractionPositions = {
+    remove: (vec2 | undefined)[];
+    removeAxis: {
+        x?: vec2;
+        y?: vec2;
+        z?: vec2;
+        plan?: vec2;
+        dist?: vec2;
+    }[];
+};
 
 export function MeasureInteractions() {
     const dispatch = useAppDispatch();
@@ -52,21 +64,35 @@ export function MeasureInteractions() {
                                 id={`removeMeasureResultX-${idx}`}
                                 name={`removeMeasureResultX-${idx}`}
                                 onClick={() => {
-                                    dispatch(measureActions.deleteMeasureSet(idx));
+                                    dispatch(measureActions.removeAxis({ axis: "x", idx }));
                                 }}
                             />
                             <RemoveMarker
                                 id={`removeMeasureResultY-${idx}`}
                                 name={`removeMeasureResultY-${idx}`}
                                 onClick={() => {
-                                    dispatch(measureActions.deleteMeasureSet(idx));
+                                    dispatch(measureActions.removeAxis({ axis: "y", idx }));
                                 }}
                             />
                             <RemoveMarker
                                 id={`removeMeasureResultZ-${idx}`}
                                 name={`removeMeasureResultZ-${idx}`}
                                 onClick={() => {
-                                    dispatch(measureActions.deleteMeasureSet(idx));
+                                    dispatch(measureActions.removeAxis({ axis: "z", idx }));
+                                }}
+                            />
+                            <RemoveMarker
+                                id={`removeMeasureResultDist-${idx}`}
+                                name={`removeMeasureResultDist-${idx}`}
+                                onClick={() => {
+                                    dispatch(measureActions.removeAxis({ axis: "dist", idx }));
+                                }}
+                            />
+                            <RemoveMarker
+                                id={`removeMeasureResultPlan-${idx}`}
+                                name={`removeMeasureResultPlan-${idx}`}
+                                onClick={() => {
+                                    dispatch(measureActions.removeAxis({ axis: "plan", idx }));
                                 }}
                             />
                         </>

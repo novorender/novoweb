@@ -21,6 +21,7 @@ import {
     selectManholeMeasureValues,
 } from "features/manhole";
 import { selectMeasure, useMeasureObjects } from "features/measure";
+import { MeasureInteractionPositions } from "features/measure/measureInteractions";
 import { selectCrossSectionPoints } from "features/orthoCam";
 import { GetMeasurePointsFromTracer, selectOutlineLasers } from "features/outlineLaser";
 import { selectPointLine } from "features/pointLine";
@@ -48,6 +49,22 @@ const measurementInactivePointColor = "rgba(0, 191, 255, 0.25)";
 const measurementInactiveLineColor = "rgba(255, 255, 0, 0.4)";
 const hoverFillColor = "rgba(0, 170, 200, 0.3)";
 const hoverLineColor = "rgba(255, 165, 0, 1)";
+
+type ActiveAxis = {
+    x: boolean;
+    y: boolean;
+    z: boolean;
+    plan: boolean;
+    dist: boolean;
+};
+
+type AxisPosition = {
+    x?: Vec2;
+    y?: Vec2;
+    z?: Vec2;
+    plan?: Vec2;
+    dist?: Vec2;
+};
 
 function toId(obj: ParametricEntity) {
     return `${obj.ObjectId}_${obj.instanceIndex}_${obj.pathIndex}`;
@@ -105,7 +122,7 @@ function drawMeasureObjects(
 }
 
 function drawDuoResults(
-    resultDraw: Map<number, { product: DrawProduct | undefined; updated: number }>,
+    resultDraw: Map<number, { product: DrawProduct | undefined; updated: number; activeAxis: ActiveAxis }>,
     drawId: number,
     context2D: CanvasRenderingContext2D,
     camSettings: CameraSettings
@@ -142,20 +159,22 @@ function drawDuoResults(
 
                 switch (part.name) {
                     case "result":
-                        drawPart(
-                            context2D,
-                            camSettings,
-                            part,
-                            {
-                                lineColor: "lightgreen",
-                                pointColor: { start: "green", middle: "white", end: "blue" },
-                                displayAllPoints: true,
-                            },
-                            3,
-                            {
-                                type: "centerOfLine",
-                            }
-                        );
+                        if (draw[1].activeAxis.dist) {
+                            drawPart(
+                                context2D,
+                                camSettings,
+                                part,
+                                {
+                                    lineColor: "lightgreen",
+                                    pointColor: { start: "green", middle: "white", end: "blue" },
+                                    displayAllPoints: true,
+                                },
+                                3,
+                                {
+                                    type: "centerOfLine",
+                                }
+                            );
+                        }
                         break;
                     case "normal":
                         drawPart(
@@ -170,34 +189,46 @@ function drawDuoResults(
                         );
                         break;
                     case "x-axis":
-                        drawPart(context2D, camSettings, part, { lineColor: "red" }, 3, {
-                            type: "centerOfLine",
-                        });
+                        if (draw[1].activeAxis.x) {
+                            drawPart(context2D, camSettings, part, { lineColor: "red" }, 3, {
+                                type: "centerOfLine",
+                            });
+                        }
                         break;
                     case "y-axis":
-                        drawPart(context2D, camSettings, part, { lineColor: "blue" }, 3, {
-                            type: "centerOfLine",
-                        });
+                        if (draw[1].activeAxis.y) {
+                            drawPart(context2D, camSettings, part, { lineColor: "blue" }, 3, {
+                                type: "centerOfLine",
+                            });
+                        }
                         break;
                     case "z-axis":
-                        drawPart(context2D, camSettings, part, { lineColor: "green" }, 3, {
-                            type: "centerOfLine",
-                        });
+                        if (draw[1].activeAxis.z) {
+                            drawPart(context2D, camSettings, part, { lineColor: "green" }, 3, {
+                                type: "centerOfLine",
+                            });
+                        }
                         break;
                     case "xy-plane":
-                        drawPart(context2D, camSettings, part, { lineColor: "purple" }, 3, {
-                            type: "centerOfLine",
-                        });
+                        if (draw[1].activeAxis.plan) {
+                            drawPart(context2D, camSettings, part, { lineColor: "purple" }, 3, {
+                                type: "centerOfLine",
+                            });
+                        }
                         break;
                     case "z-angle":
-                        drawPart(context2D, camSettings, part, { lineColor: "green" }, 2, {
-                            type: "centerOfLine",
-                        });
+                        if (draw[1].activeAxis.z) {
+                            drawPart(context2D, camSettings, part, { lineColor: "green" }, 2, {
+                                type: "centerOfLine",
+                            });
+                        }
                         break;
                     case "xz-angle":
-                        drawPart(context2D, camSettings, part, { lineColor: "purple" }, 2, {
-                            type: "centerOfLine",
-                        });
+                        if (draw[1].activeAxis.x && draw[1].activeAxis.z) {
+                            drawPart(context2D, camSettings, part, { lineColor: "purple" }, 2, {
+                                type: "centerOfLine",
+                            });
+                        }
                         break;
                     case "cylinder-angle":
                         cylinderAngleDrawn = drawPart(context2D, camSettings, part, { lineColor: "blue" }, 2, {
@@ -228,7 +259,7 @@ export function MeasureDraw({
 }: {
     pointerPos: MutableRefObject<Vec2>;
     renderFnRef: MutableRefObject<((moved: boolean, idleFrame: boolean) => void) | undefined>;
-    interactionPositions: MutableRefObject<(vec2 | undefined)[]>;
+    interactionPositions: MutableRefObject<MeasureInteractionPositions>;
 }) {
     const {
         state: { size, view },
@@ -262,7 +293,9 @@ export function MeasureDraw({
     const outlineLasers = useAppSelector(selectOutlineLasers);
 
     const prevPointerPos = useRef([0, 0] as Vec2);
-    const resultDraw = useRef(new Map<number, { product: DrawProduct | undefined; updated: number }>());
+    const resultDraw = useRef(
+        new Map<number, { product: DrawProduct | undefined; updated: number; activeAxis: ActiveAxis }>()
+    );
     const objectDraw = useRef(new Map<string, { product: DrawProduct | undefined; updated: number }>());
     const followPathDrawResult = useRef<(DrawProduct | undefined)[]>([]);
     const heightProfileDrawResult = useRef<DrawProduct | undefined>(undefined);
@@ -380,8 +413,18 @@ export function MeasureDraw({
                     removePos[i] = undefined;
                 }
             }
+
+            const removeAxis: {
+                x?: vec2;
+                y?: vec2;
+                z?: vec2;
+                plan?: vec2;
+                dist?: vec2;
+            }[] = [];
+
             for (const duoMeasure of measure.duoMeasurementValues) {
                 if (duoMeasure?.result) {
+                    let resultToMarker: undefined | DrawProduct;
                     const res = resultDraw.current.get(duoMeasure.id);
                     if (res) {
                         if (res.product) {
@@ -390,17 +433,81 @@ export function MeasureDraw({
                                 return false;
                             }
                             res.updated = id;
+                            resultToMarker = res.product;
                         }
                     } else {
                         const resDraw = await getDrawMeasureEntity(duoMeasure?.result);
-                        resultDraw.current.set(duoMeasure.id, { product: resDraw, updated: id });
+                        resultDraw.current.set(duoMeasure.id, {
+                            product: resDraw,
+                            updated: id,
+                            activeAxis: duoMeasure.activeAxis,
+                        });
+                        resultToMarker = resDraw;
+                    }
+                    if (resultToMarker) {
+                        if (resultToMarker.objects.length > 0) {
+                            const axisPos: AxisPosition = {};
+                            for (const part of resultToMarker.objects[0].parts) {
+                                if (part.vertices2D) {
+                                    const dir = vec2.sub(vec2.create(), part.vertices2D[1], part.vertices2D[0]);
+                                    const dist = vec2.len(dir);
+                                    const offset = (dist / 2 + 50) / dist;
+                                    if (dist > 100) {
+                                        switch (part.name) {
+                                            case "result":
+                                                if (duoMeasure.activeAxis.dist) {
+                                                    axisPos.dist = vec2.scaleAndAdd(
+                                                        vec2.create(),
+                                                        part.vertices2D[0],
+                                                        dir,
+                                                        offset
+                                                    );
+                                                }
+                                                break;
+                                            case "x-axis":
+                                                if (duoMeasure.activeAxis.x) {
+                                                    axisPos.x = vec2.scaleAndAdd(
+                                                        vec2.create(),
+                                                        part.vertices2D[0],
+                                                        dir,
+                                                        offset
+                                                    );
+                                                }
+                                                break;
+                                            case "y-axis":
+                                                if (duoMeasure.activeAxis.y) {
+                                                    axisPos.y = vec2.scaleAndAdd(
+                                                        vec2.create(),
+                                                        part.vertices2D[0],
+                                                        dir,
+                                                        offset
+                                                    );
+                                                }
+                                                break;
+                                            case "z-axis":
+                                                if (duoMeasure.activeAxis.z) {
+                                                    axisPos.z = vec2.scaleAndAdd(
+                                                        vec2.create(),
+                                                        part.vertices2D[0],
+                                                        dir,
+                                                        offset
+                                                    );
+                                                }
+                                                break;
+                                        }
+                                    }
+                                }
+                            }
+                            removeAxis.push(axisPos);
+                        }
                     }
                 }
             }
             if (id !== updateId.current) {
                 return false;
             }
-            interactionPositions.current = removePos;
+            interactionPositions.current.remove = removePos;
+            interactionPositions.current.removeAxis = removeAxis;
             return true;
         }
         return false;

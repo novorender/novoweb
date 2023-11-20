@@ -1,5 +1,5 @@
 import { Box, css, styled } from "@mui/material";
-import { glMatrix, vec2 } from "gl-matrix";
+import { glMatrix } from "gl-matrix";
 import { RefCallback, useCallback, useRef, useState } from "react";
 
 import { useAppSelector } from "app/store";
@@ -14,6 +14,7 @@ import { Engine2DInteractions } from "features/engine2D/engine2DInteractions";
 import { useHandleImages } from "features/images";
 import { useHandleJiraKeepAlive } from "features/jira";
 import { useHandleManhole } from "features/manhole";
+import { MeasureInteractionPositions } from "features/measure/measureInteractions";
 import { useHandleLocationMarker } from "features/myLocation";
 import { useHandleOffline } from "features/offline";
 import { useHandleCrossSection } from "features/orthoCam";
@@ -84,7 +85,7 @@ export function Render3D() {
     const [svg, setSvg] = useState<null | SVGSVGElement>(null);
 
     const engine2dRenderFn = useRef<((moved: boolean, idleFrame: boolean) => void) | undefined>();
-    const interactionPositions = useRef<vec2[]>([]);
+    const interactionPositions = useRef<MeasureInteractionPositions>({ remove: [], removeAxis: [] });
     const pointerPos = useRef([0, 0] as [x: number, y: number]);
     const canvasRef: RefCallback<HTMLCanvasElement> = useCallback(
         (el) => {

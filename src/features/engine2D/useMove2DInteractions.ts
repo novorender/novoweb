@@ -4,18 +4,19 @@ import { MutableRefObject, useCallback, useLayoutEffect } from "react";
 import { useAppSelector } from "app/store";
 import { useExplorerGlobals } from "contexts/explorerGlobals";
 import { selectMeasure } from "features/measure";
+import { MeasureInteractionPositions } from "features/measure/measureInteractions";
 import { GetMeasurePointsFromTracer, selectOutlineLasers } from "features/outlineLaser";
 
 export function useMove2DInteractions(
     svg: SVGSVGElement | null,
-    interactionPositions: MutableRefObject<(vec2 | undefined)[]>
+    interactionPositions: MutableRefObject<MeasureInteractionPositions>
 ) {
     const {
         state: { view },
     } = useExplorerGlobals();
 
     const outlineLasers = useAppSelector(selectOutlineLasers);
-    const { selectedEntities } = useAppSelector(selectMeasure);
+    const { selectedEntities, duoMeasurementValues } = useAppSelector(selectMeasure);
 
     const move = useCallback(() => {
         if (!svg || !view?.measure) {
@@ -75,9 +76,41 @@ export function useMove2DInteractions(
             }
         }
         for (let i = 0; i < selectedEntities.length; ++i) {
-            translate(`removeMeasure-${i}`, interactionPositions.current[i]);
+            translate(`removeMeasure-${i}`, interactionPositions.current.remove[i]);
         }
-    }, [view, svg, outlineLasers, selectedEntities, interactionPositions]);
+        for (let i = 0; i < duoMeasurementValues.length; ++i) {
+            translate(
+                `removeMeasureResultX-${i}`,
+                i < interactionPositions.current.removeAxis.length
+                    ? interactionPositions.current.removeAxis[i].x
+                    : undefined
+            );
+            translate(
+                `removeMeasureResultY-${i}`,
+                i < interactionPositions.current.removeAxis.length
+                    ? interactionPositions.current.removeAxis[i].y
+                    : undefined
+            );
+            translate(
+                `removeMeasureResultZ-${i}`,
+                i < interactionPositions.current.removeAxis.length
+                    ? interactionPositions.current.removeAxis[i].z
+                    : undefined
+            );
+            translate(
+                `removeMeasureResultDist-${i}`,
+                i < interactionPositions.current.removeAxis.length
+                    ? interactionPositions.current.removeAxis[i].dist
+                    : undefined
+            );
+            translate(
+                `removeMeasureResultPlan-${i}`,
+                i < interactionPositions.current.removeAxis.length
+                    ? interactionPositions.current.removeAxis[i].plan
+                    : undefined
+            );
+        }
+    }, [view, svg, outlineLasers, selectedEntities, interactionPositions, duoMeasurementValues]);
 
     useLayoutEffect(() => {
         move();
