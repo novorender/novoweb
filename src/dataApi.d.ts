@@ -1,5 +1,3 @@
-import { ActiveAxis } from "features/measure";
-
 declare module "@novorender/data-js-api" {
     import { vec3 } from "gl-matrix";
 
@@ -86,7 +84,6 @@ declare module "@novorender/data-js-api" {
             };
             measure: {
                 entities: ExtendedMeasureEntity[] | ExtendedMeasureEntity[][];
-                activeAxis?: (ActiveAxis | undefined)[];
             };
         };
         followPath:

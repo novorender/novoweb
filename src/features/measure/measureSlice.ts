@@ -193,9 +193,9 @@ export const measureSlice = createSlice({
                 state.selectedEntities = action.payload.measurements.measure
                     .entities as WriteableExtendedMeasureEntity[][];
             }
-            if (action.payload.measurements.measure.activeAxis) {
-                state.activeAxis = action.payload.measurements.measure.activeAxis;
-            }
+            // if (action.payload.measurements.measure.activeAxis) {
+            //     state.activeAxis = action.payload.measurements.measure.activeAxis;
+            // }
         });
         builder.addCase(resetView, (state) => {
             state.selectedEntities = [];
