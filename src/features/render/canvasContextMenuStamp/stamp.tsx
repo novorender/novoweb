@@ -358,7 +358,7 @@ export function Measure() {
             return;
         }
 
-        if (measurements.at(-1)?.length === 2) {
+        if (measurements.at(-1)?.length === 1) {
             dispatch(measureActions.newMeasurement());
         }
 
