@@ -21,7 +21,7 @@ import { useExplorerGlobals } from "contexts/explorerGlobals";
 import { hiddenActions, useDispatchHidden } from "contexts/hidden";
 import { highlightActions, useDispatchHighlighted } from "contexts/highlighted";
 import { selectionBasketActions, useDispatchSelectionBasket } from "contexts/selectionBasket";
-import { measureActions } from "features/measure";
+import { measureActions, selectMeasureEntities } from "features/measure";
 import { clippingOutlineLaserActions, getOutlineLaser, OutlineLaser } from "features/outlineLaser";
 import {
     CameraType,
@@ -308,6 +308,7 @@ export function Measure() {
     const [measureEntity, setMeasureEntity] = useState<MeasureEntity>();
     const [laser, setLaser] = useState<{ laser: OutlineLaser; plane: Vec4 }>();
     const [centerLine, setCenterLine] = useState<CenterLine>();
+    const measurements = useAppSelector(selectMeasureEntities);
 
     useEffect(() => {
         loadObjectData();
@@ -324,7 +325,8 @@ export function Measure() {
                 setStatus(AsyncStatus.Loading);
                 const ent = await view.measure?.core
                     .pickMeasureEntity(objectId, stamp.data.position)
-                    .then((res) => (["face"].includes(res.entity.drawKind) ? res.entity : undefined))
+                    // .then((res) => (["face"].includes(res.entity.drawKind) ? res.entity : undefined))
+                    .then((res) => res.entity)
                     .catch(() => undefined);
 
                 setMeasureEntity(ent);
@@ -356,9 +358,14 @@ export function Measure() {
             return;
         }
 
+        if (measurements.at(-1)?.length === 2) {
+            dispatch(measureActions.newMeasurement());
+        }
+
         dispatch(
             measureActions.selectEntity({
                 entity: measureEntity,
+                pin: true,
             })
         );
 
