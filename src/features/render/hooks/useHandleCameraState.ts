@@ -105,6 +105,15 @@ export function useHandleCameraState() {
             return;
         }
 
-        view.controllers["ortho"].updateParams({ usePointerLock: defaults.orthographic.usePointerLock });
-    }, [view, defaults.orthographic.usePointerLock]);
+        view.controllers["ortho"].updateParams({
+            usePointerLock: defaults.orthographic.usePointerLock,
+            touchDeAcceleration: defaults.orthographic.touchDeAcceleration,
+            touchRotate: defaults.orthographic.touchRotate,
+        });
+    }, [
+        view,
+        defaults.orthographic.usePointerLock,
+        defaults.orthographic.touchDeAcceleration,
+        defaults.orthographic.touchRotate,
+    ]);
 }

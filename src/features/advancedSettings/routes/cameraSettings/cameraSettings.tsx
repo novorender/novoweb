@@ -27,7 +27,6 @@ import {
     selectCameraDefaults,
     selectCameraSpeedLevels,
     selectCameraType,
-    selectPointerLock,
     selectProportionalCameraSpeed,
     selectViewMode,
 } from "features/render";
@@ -65,21 +64,14 @@ export function CameraSettings({
     const dispatch = useAppDispatch();
     const speedLevels = useAppSelector(selectCameraSpeedLevels);
     const proportionalSpeed = useAppSelector(selectProportionalCameraSpeed);
-    // const { headlightIntensity, headlightDistance } = settings;
     const cameraDefaults = useAppSelector(selectCameraDefaults);
-    const usePointerLock = useAppSelector(selectPointerLock);
+    const {
+        orthographic: { touchRotate, touchDeAcceleration, usePointerLock },
+    } = cameraDefaults;
     const topDownSnapToNearestAxis = useAppSelector(selectTopDownSnapToAxis) === undefined;
     const defaultTopDownElevation = useAppSelector(selectDefaultTopDownElevation);
     const viewMode = useAppSelector(selectViewMode);
     const cameraType = useAppSelector(selectCameraType);
-
-    // const [distance, setDistance] = useState(() => {
-    //     const d = headlightDistance.toString();
-    //     const numZero = Math.max(0, d.length - 2);
-    //     return numZero * 90 + +d.substr(0, d.length - numZero) - 10;
-    // });
-
-    // const [intensity, setIntensity] = useState(headlightIntensity);
 
     const [speeds, setSpeeds] = useState({
         [CameraSpeedLevel.Slow]: String(speedLevels[CameraSpeedLevel.Slow]),
@@ -93,53 +85,6 @@ export function CameraSettings({
     const [defaultTopDownElevationInput, setDefaultTopDownElevationInput] = useState(
         defaultTopDownElevation !== undefined ? String(defaultTopDownElevation) : ""
     );
-
-    // const handleSliderChange =
-    //     (kind: SliderSettings) =>
-    //     (_event: Event, value: number | number[]): void => {
-    //         if (Array.isArray(value)) {
-    //             return;
-    //         }
-
-    //         switch (kind) {
-    //             case AdvancedSetting.HeadlightIntensity:
-    //                 setIntensity(value);
-
-    //                 view.settings.light.camera.brightness = value;
-    //                 view.invalidateCamera();
-    //                 return;
-    //             case AdvancedSetting.HeadlightDistance:
-    //                 setDistance(value);
-
-    //                 view.settings.light.camera.distance = scaleHeadlightDistance(value);
-    //                 view.invalidateCamera();
-    //                 return;
-    //         }
-    //     };
-
-    // const handleSliderCommit =
-    //     (kind: SliderSettings) => (_event: Event | SyntheticEvent<Element, Event>, value: number | number[]) => {
-    //         if (Array.isArray(value)) {
-    //             return;
-    //         }
-
-    //         switch (kind) {
-    //             case AdvancedSetting.HeadlightIntensity:
-    //                 dispatch(
-    //                     renderActions.setAdvancedSettings({
-    //                         [AdvancedSetting.HeadlightIntensity]: value,
-    //                     })
-    //                 );
-    //                 return;
-    //             case AdvancedSetting.HeadlightDistance:
-    //                 dispatch(
-    //                     renderActions.setAdvancedSettings({
-    //                         [AdvancedSetting.HeadlightDistance]: scaleHeadlightDistance(value),
-    //                     })
-    //                 );
-    //                 return;
-    //         }
-    //     };
 
     const handleSpeedChange = (e: ChangeEvent<HTMLInputElement>) => {
         setSpeeds((speed) => ({ ...speed, [e.target.name]: e.target.value.replace(",", ".") }));
@@ -457,6 +402,48 @@ export function CameraSettings({
                                 sx={{ ml: 0, mb: 1 }}
                                 control={
                                     <Switch
+                                        name={"orthoTouchDeAcceleration"}
+                                        checked={touchDeAcceleration}
+                                        onChange={() => {
+                                            dispatch(
+                                                renderActions.setCameraDefaults({
+                                                    orthographic: { touchDeAcceleration: !touchDeAcceleration },
+                                                })
+                                            );
+                                        }}
+                                    />
+                                }
+                                label={
+                                    <Box ml={1} fontSize={16}>
+                                        Gradual deceleration (touch)
+                                    </Box>
+                                }
+                            />
+                            <FormControlLabel
+                                sx={{ ml: 0, mb: 1 }}
+                                control={
+                                    <Switch
+                                        name={"orthoTouchRotate"}
+                                        checked={touchRotate}
+                                        onChange={() => {
+                                            dispatch(
+                                                renderActions.setCameraDefaults({
+                                                    orthographic: { touchRotate: !touchRotate },
+                                                })
+                                            );
+                                        }}
+                                    />
+                                }
+                                label={
+                                    <Box ml={1} fontSize={16}>
+                                        Two-finger rotation (touch)
+                                    </Box>
+                                }
+                            />
+                            <FormControlLabel
+                                sx={{ ml: 0, mb: 1 }}
+                                control={
+                                    <Switch
                                         name={"topDownSnapToAxis"}
                                         checked={!topDownSnapToNearestAxis}
                                         onChange={() => {
@@ -504,6 +491,7 @@ export function CameraSettings({
                 </Accordion>
 
                 <Button
+                    sx={{ ml: 1 }}
                     disabled={saving || viewMode === ViewMode.Panorama}
                     variant="outlined"
                     color="grey"

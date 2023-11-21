@@ -3,7 +3,7 @@ import { existsSync } from "node:fs";
 import basicSsl from "@vitejs/plugin-basic-ssl";
 import react from "@vitejs/plugin-react";
 import { resolve } from "path";
-import { defineConfig, loadEnv } from "vite";
+import { defineConfig, loadEnv, ServerOptions } from "vite";
 import envCompatible from "vite-plugin-env-compatible";
 import { VitePWA, VitePWAOptions } from "vite-plugin-pwa";
 import svgr from "vite-plugin-svgr";
@@ -125,7 +125,7 @@ const pwaOptions: Partial<VitePWAOptions> = {
 };
 
 const ownCerts = existsSync("./localhost.crt") && existsSync("./localhost.key");
-const serverOptions = {
+const serverOptions: ServerOptions = {
     https: ownCerts
         ? {
               cert: "./localhost.crt",
@@ -140,14 +140,14 @@ const serverOptions = {
     },
     proxy: {
         "/bimtrack/token": {
-            target: "https://auth.bimtrackapp.co//connect/token",
+            target: "https://auth.bimtrackapp.co/connect/token",
             rewrite: (path) => path.replace(/^\/bimtrack\/token/, ""),
             changeOrigin: true,
         },
         "/bimtrack/bcf/2.1": {
             // target: "https://bcfrestapi.bimtrackapp.co/bcf/2.1/",
-            target: "https://bcfrestapi-bt02.bimtrackapp.co/bcf/2.1/",
-            rewrite: (path) => path.replace(/^\/bimtrack\/bcf\/2.1/, ""),
+            target: "https://bcfrestapi-bt02.bimtrackapp.co/",
+            rewrite: (path) => path.replace(/^\/bimtrack/, ""),
             changeOrigin: true,
         },
         "/ditio": {

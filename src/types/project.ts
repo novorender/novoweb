@@ -26,6 +26,8 @@ export type ExplorerProjectState = {
             usePointerLock: boolean;
             topDownElevation: undefined | number;
             topDownSnapToAxis?: "north";
+            touchDeAcceleration?: boolean;
+            touchRotate?: boolean;
         };
     };
     renderSettings: {
@@ -149,8 +151,12 @@ type Integrations = {
     ditio?: {
         projectNumber: string;
     };
-    xsiteManage: {
+    xsiteManage?: {
         siteId: string;
+    };
+    bimTrack?: {
+        server: string;
+        project: string;
     };
 };
 

@@ -1,7 +1,8 @@
 import { createSlice, PayloadAction } from "@reduxjs/toolkit";
 
 import { RootState } from "app/store";
-import { AuthInfo, User } from "types/bcf";
+import { initScene } from "features/render";
+import { AsyncState, AsyncStatus } from "types/misc";
 
 export enum FilterType {
     Type = "topic_type",
@@ -25,10 +26,12 @@ export enum BimTrackStatus {
 }
 
 const initialState = {
-    status: BimTrackStatus.Initial,
-    accessToken: "",
-    authInfo: undefined as AuthInfo | undefined,
-    user: undefined as User | undefined,
+    config: {
+        server: "",
+        project: "",
+    },
+    accessToken: { status: AsyncStatus.Initial } as AsyncState<string>,
+    filterIsInitialized: false,
     filters: {
         [FilterType.Type]: [] as string[],
         [FilterType.Label]: [] as string[],
@@ -55,13 +58,14 @@ export const bimTrackSlice = createSlice({
     name: "bimTrack",
     initialState: initialState,
     reducers: {
-        setStatus: (state, action: PayloadAction<State["status"]>) => {
-            state.status = action.payload;
+        setConfig: (state, action: PayloadAction<Partial<State["config"]>>) => {
+            state.config = { ...state.config, ...action.payload };
         },
-        setAccessToken: (state, action: PayloadAction<string>) => {
+        setAccessToken: (state, action: PayloadAction<State["accessToken"]>) => {
             state.accessToken = action.payload;
         },
         setFilters: (state, action: PayloadAction<Partial<Filters>>) => {
+            state.filterIsInitialized = true;
             state.filters = { ...state.filters, ...action.payload };
         },
         setFilterModifiers: (state, action: PayloadAction<FilterModifiers>) => {
@@ -71,24 +75,28 @@ export const bimTrackSlice = createSlice({
             state.filters = initialFilters;
             state.filterModifiers = initialFilterModifiers;
         },
-        setUser: (state, action: PayloadAction<User | undefined>) => {
-            state.user = action.payload;
-        },
-        setAuthInfo: (state, action: PayloadAction<AuthInfo | undefined>) => {
-            state.authInfo = action.payload;
-        },
         logOut: () => {
             return initialState;
         },
+    },
+    extraReducers(builder) {
+        builder.addCase(initScene, (state, action) => {
+            const props = action.payload.sceneData.customProperties;
+
+            if (!props.integrations?.bimTrack) {
+                return;
+            }
+
+            state.config = props.integrations.bimTrack;
+        });
     },
 });
 
 export const selectAccessToken = (state: RootState) => state.bimTrack.accessToken;
 export const selectFilters = (state: RootState) => state.bimTrack.filters;
 export const selectFilterModifiers = (state: RootState) => state.bimTrack.filterModifiers;
-export const selectUser = (state: RootState) => state.bimTrack.user;
-export const selectAuthInfo = (state: RootState) => state.bimTrack.authInfo;
-export const selectStatus = (state: RootState) => state.bimTrack.status;
+export const selectBimTrackConfig = (state: RootState) => state.bimTrack.config;
+export const selectBimTrackFilterIsInitialized = (state: RootState) => state.bimTrack.filterIsInitialized;
 
 const { actions, reducer } = bimTrackSlice;
 export { actions as bimTrackActions, reducer as bimTrackReducer };

@@ -37,9 +37,9 @@ import {
     VisibilityOff,
 } from "@mui/icons-material";
 
-import { ReactComponent as BimTrack } from "media/icons/bimtrack.svg";
 import { ReactComponent as Ditio } from "media/icons/ditio.svg";
 import { ReactComponent as Jira } from "media/icons/jira-software.svg";
+import { ReactComponent as NewformaKonekt } from "media/icons/newforma-konekt.svg";
 import { ReactComponent as Run } from "media/icons/run.svg";
 
 export enum FeatureType {
@@ -162,8 +162,8 @@ export const featuresConfig = {
     },
     bimTrack: {
         key: "bimTrack",
-        name: "BIM Track",
-        Icon: BimTrack,
+        name: "Newforma Konekt",
+        Icon: NewformaKonekt,
         type: FeatureType.Widget,
         defaultLocked: true,
         offline: false,

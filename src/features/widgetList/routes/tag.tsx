@@ -65,7 +65,7 @@ export function Tag({
                                             <IconButton disabled={activeElsewhere || unavailable} size="large">
                                                 <Icon />
                                             </IconButton>
-                                            <Typography>{name}</Typography>
+                                            <Typography textAlign={"center"}>{name}</Typography>
                                         </WidgetMenuButtonWrapper>
                                     </Grid>
                                 );

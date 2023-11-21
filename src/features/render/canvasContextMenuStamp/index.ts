@@ -1,0 +1,1 @@
+export { CanvasContextMenuStamp } from "./stamp";
