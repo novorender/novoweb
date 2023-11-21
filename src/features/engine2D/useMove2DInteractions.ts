@@ -109,6 +109,12 @@ export function useMove2DInteractions(
                     ? interactionPositions.current.removeAxis[i].plan
                     : undefined
             );
+            translate(
+                `removeMeasureResultNormal-${i}`,
+                i < interactionPositions.current.removeAxis.length
+                    ? interactionPositions.current.removeAxis[i].normal
+                    : undefined
+            );
         }
     }, [view, svg, outlineLasers, selectedEntities, interactionPositions, duoMeasurementValues]);
 

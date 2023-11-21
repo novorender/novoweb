@@ -31,6 +31,7 @@ export type MeasureInteractionPositions = {
         z?: vec2;
         plan?: vec2;
         dist?: vec2;
+        normal?: vec2;
     }[];
 };
 
@@ -93,6 +94,13 @@ export function MeasureInteractions() {
                                 name={`removeMeasureResultPlan-${idx}`}
                                 onClick={() => {
                                     dispatch(measureActions.removeAxis({ axis: "plan", idx }));
+                                }}
+                            />
+                            <RemoveMarker
+                                id={`removeMeasureResultNormal-${idx}`}
+                                name={`removeMeasureResultNormal-${idx}`}
+                                onClick={() => {
+                                    dispatch(measureActions.removeAxis({ axis: "normal", idx }));
                                 }}
                             />
                         </>

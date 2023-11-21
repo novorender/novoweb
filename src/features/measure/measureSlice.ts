@@ -17,6 +17,15 @@ export type SelectedMeasureObj = {
 type WriteableMeasureEntity = DeepMutable<MeasureEntity>;
 type WriteableExtendedMeasureEntity = DeepMutable<ExtendedMeasureEntity>;
 
+export type ActiveAxis = {
+    x: boolean;
+    y: boolean;
+    z: boolean;
+    plan: boolean;
+    dist: boolean;
+    normal: boolean;
+};
+
 const initialState = {
     selectedEntities: [[]] as WriteableExtendedMeasureEntity[][],
     hover: undefined as WriteableMeasureEntity | undefined,
@@ -27,9 +36,9 @@ const initialState = {
         | {
               result: DuoMeasurementValues;
               id: number;
-              activeAxis: { x: boolean; y: boolean; z: boolean; plan: boolean; dist: boolean };
           }
     )[],
+    activeAxis: [] as (ActiveAxis | undefined)[],
     loadingBrep: false,
 };
 
@@ -66,31 +75,61 @@ export const measureSlice = createSlice({
             if (state.selectedEntities.length > 1) {
                 state.selectedEntities = state.selectedEntities.splice(action.payload - 1, 1);
                 state.duoMeasurementValues = state.duoMeasurementValues.splice(action.payload - 1, 1);
+                state.activeAxis = state.activeAxis.splice(action.payload - 1, 1);
             } else {
                 state.selectedEntities = [[]];
+                state.activeAxis = [];
+                state.duoMeasurementValues = [];
             }
+            state.pinned = undefined;
         },
-        removeAxis: (state, action: PayloadAction<{ axis: "x" | "y" | "z" | "dist" | "plan"; idx: number }>) => {
-            const res = state.duoMeasurementValues[action.payload.idx];
+        removeAxis: (
+            state,
+            action: PayloadAction<{ axis: "x" | "y" | "z" | "dist" | "plan" | "normal"; idx: number }>
+        ) => {
+            const res = state.activeAxis[action.payload.idx];
             if (res) {
                 switch (action.payload.axis) {
                     case "x":
-                        res.activeAxis.x = false;
+                        res.x = false;
                         break;
                     case "y":
-                        res.activeAxis.y = false;
+                        res.y = false;
                         break;
                     case "z":
-                        res.activeAxis.z = false;
+                        res.z = false;
                         break;
                     case "dist":
-                        res.activeAxis.dist = false;
+                        res.dist = false;
                         break;
                     case "plan":
-                        res.activeAxis.plan = false;
+                        res.plan = false;
+                        break;
+                    case "normal":
+                        res.normal = false;
                         break;
                 }
-                state.duoMeasurementValues[action.payload.idx] = res;
+                if (
+                    (res.x === false &&
+                        res.y === false &&
+                        res.z === false &&
+                        res.dist === false &&
+                        res.plan === false) ||
+                    res.normal === false
+                ) {
+                    if (state.selectedEntities.length > 1) {
+                        state.selectedEntities = state.selectedEntities.splice(action.payload.idx - 1, 1);
+                        state.duoMeasurementValues = state.duoMeasurementValues.splice(action.payload.idx - 1, 1);
+                        state.activeAxis = state.activeAxis.splice(action.payload.idx - 1, 1);
+                    } else {
+                        state.selectedEntities = [[]];
+                        state.activeAxis = [];
+                        state.duoMeasurementValues = [];
+                    }
+                    state.pinned = undefined;
+                } else {
+                    state.activeAxis[action.payload.idx] = res;
+                }
             }
         },
         selectHoverObj: (state, action: PayloadAction<MeasureEntity | undefined>) => {
@@ -123,9 +162,17 @@ export const measureSlice = createSlice({
             state,
             action: PayloadAction<(undefined | { result: DuoMeasurementValues; id: number })[]>
         ) => {
-            state.duoMeasurementValues = action.payload.map((m) => {
-                return m ? { ...m, activeAxis: { x: true, y: true, z: true, plan: true, dist: true } } : undefined;
-            });
+            state.duoMeasurementValues = action.payload;
+            for (let i = state.activeAxis.length; i < state.duoMeasurementValues.length; ++i) {
+                state.activeAxis.push({
+                    x: true,
+                    y: true,
+                    z: true,
+                    plan: true,
+                    dist: true,
+                    normal: true,
+                });
+            }
         },
         setSettings: (state, action: PayloadAction<{ idx: number; settings: MeasureSettings }>) => {
             state.selectedEntities = state.selectedEntities.map((obj, idx) =>
@@ -138,13 +185,16 @@ export const measureSlice = createSlice({
     },
     extraReducers(builder) {
         builder.addCase(selectBookmark, (state, action) => {
-            if (isLegacy(state.selectedEntities)) {
+            if (isLegacy(action.payload.measurements.measure.entities)) {
                 state.selectedEntities.push(
                     action.payload.measurements.measure.entities as WriteableExtendedMeasureEntity[]
                 );
-            } else if (state.selectedEntities.length > 0) {
+            } else if (action.payload.measurements.measure.entities.length > 0) {
                 state.selectedEntities = action.payload.measurements.measure
                     .entities as WriteableExtendedMeasureEntity[][];
+            }
+            if (action.payload.measurements.measure.activeAxis) {
+                state.activeAxis = action.payload.measurements.measure.activeAxis;
             }
         });
         builder.addCase(resetView, (state) => {

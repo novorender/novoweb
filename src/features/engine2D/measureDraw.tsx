@@ -20,7 +20,7 @@ import {
     selectManholeCollisionValues,
     selectManholeMeasureValues,
 } from "features/manhole";
-import { selectMeasure, useMeasureObjects } from "features/measure";
+import { ActiveAxis, selectMeasure, useMeasureObjects } from "features/measure";
 import { MeasureInteractionPositions } from "features/measure/measureInteractions";
 import { selectCrossSectionPoints } from "features/orthoCam";
 import { GetMeasurePointsFromTracer, selectOutlineLasers } from "features/outlineLaser";
@@ -50,20 +50,13 @@ const measurementInactiveLineColor = "rgba(255, 255, 0, 0.4)";
 const hoverFillColor = "rgba(0, 170, 200, 0.3)";
 const hoverLineColor = "rgba(255, 165, 0, 1)";
 
-type ActiveAxis = {
-    x: boolean;
-    y: boolean;
-    z: boolean;
-    plan: boolean;
-    dist: boolean;
-};
-
 type AxisPosition = {
     x?: Vec2;
     y?: Vec2;
     z?: Vec2;
     plan?: Vec2;
     dist?: Vec2;
+    normal?: Vec2;
 };
 
 function toId(obj: ParametricEntity) {
@@ -217,7 +210,7 @@ function drawDuoResults(
                         }
                         break;
                     case "z-angle":
-                        if (draw[1].activeAxis.z) {
+                        if (draw[1].activeAxis.z && draw[1].activeAxis.dist) {
                             drawPart(context2D, camSettings, part, { lineColor: "green" }, 2, {
                                 type: "centerOfLine",
                             });
@@ -422,7 +415,9 @@ export function MeasureDraw({
                 dist?: vec2;
             }[] = [];
 
-            for (const duoMeasure of measure.duoMeasurementValues) {
+            for (let i = 0; i < measure.duoMeasurementValues.length; ++i) {
+                const duoMeasure = measure.duoMeasurementValues[i];
+                const activeAxis = measure.activeAxis[i];
                 if (duoMeasure?.result) {
                     let resultToMarker: undefined | DrawProduct;
                     const res = resultDraw.current.get(duoMeasure.id);
@@ -434,13 +429,14 @@ export function MeasureDraw({
                             }
                             res.updated = id;
                             resultToMarker = res.product;
+                            res.activeAxis = activeAxis!;
                         }
                     } else {
                         const resDraw = await getDrawMeasureEntity(duoMeasure?.result);
                         resultDraw.current.set(duoMeasure.id, {
                             product: resDraw,
                             updated: id,
-                            activeAxis: duoMeasure.activeAxis,
+                            activeAxis: activeAxis!,
                         });
                         resultToMarker = resDraw;
                     }
@@ -455,7 +451,7 @@ export function MeasureDraw({
                                     if (dist > 100) {
                                         switch (part.name) {
                                             case "result":
-                                                if (duoMeasure.activeAxis.dist) {
+                                                if (activeAxis!.dist) {
                                                     axisPos.dist = vec2.scaleAndAdd(
                                                         vec2.create(),
                                                         part.vertices2D[0],
@@ -464,8 +460,18 @@ export function MeasureDraw({
                                                     );
                                                 }
                                                 break;
+                                            case "xy-plane":
+                                                if (activeAxis!.plan) {
+                                                    axisPos.plan = vec2.scaleAndAdd(
+                                                        vec2.create(),
+                                                        part.vertices2D[0],
+                                                        dir,
+                                                        offset
+                                                    );
+                                                }
+                                                break;
                                             case "x-axis":
-                                                if (duoMeasure.activeAxis.x) {
+                                                if (activeAxis!.x) {
                                                     axisPos.x = vec2.scaleAndAdd(
                                                         vec2.create(),
                                                         part.vertices2D[0],
@@ -475,7 +481,7 @@ export function MeasureDraw({
                                                 }
                                                 break;
                                             case "y-axis":
-                                                if (duoMeasure.activeAxis.y) {
+                                                if (activeAxis!.y) {
                                                     axisPos.y = vec2.scaleAndAdd(
                                                         vec2.create(),
                                                         part.vertices2D[0],
@@ -485,7 +491,7 @@ export function MeasureDraw({
                                                 }
                                                 break;
                                             case "z-axis":
-                                                if (duoMeasure.activeAxis.z) {
+                                                if (activeAxis!.z) {
                                                     axisPos.z = vec2.scaleAndAdd(
                                                         vec2.create(),
                                                         part.vertices2D[0],
@@ -494,6 +500,14 @@ export function MeasureDraw({
                                                     );
                                                 }
                                                 break;
+                                            case "normal":
+                                                axisPos.normal = vec2.scaleAndAdd(
+                                                    vec2.create(),
+                                                    part.vertices2D[0],
+                                                    dir,
+                                                    offset
+                                                );
+                                                break;
                                         }
                                     }
                                 }
@@ -501,6 +515,8 @@ export function MeasureDraw({
                             removeAxis.push(axisPos);
                         }
                     }
+                } else {
+                    removeAxis.push({});
                 }
             }
             if (id !== updateId.current) {
@@ -524,6 +540,7 @@ export function MeasureDraw({
         measure.hover,
         measure.pinned,
         interactionPositions,
+        measure.activeAxis,
     ]);
 
     const draw = useCallback(() => {
