@@ -107,13 +107,13 @@ export function useHandleCameraState() {
 
         view.controllers["ortho"].updateParams({
             usePointerLock: defaults.orthographic.usePointerLock,
-            touchDeAcceleration: defaults.orthographic.touchDeAcceleration,
+            deAcceleration: defaults.orthographic.deAcceleration,
             touchRotate: defaults.orthographic.touchRotate,
         });
     }, [
         view,
         defaults.orthographic.usePointerLock,
-        defaults.orthographic.touchDeAcceleration,
+        defaults.orthographic.deAcceleration,
         defaults.orthographic.touchRotate,
     ]);
 }

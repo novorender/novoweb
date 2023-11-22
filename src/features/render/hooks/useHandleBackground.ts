@@ -33,7 +33,7 @@ export function useHandleBackground() {
                 return;
             }
 
-            view.modifyRenderState({ background: { color, url, blur } });
+            view.modifyRenderState({ background: { color: [color[0], color[1], color[2]], url, blur } });
         },
         [view, color, url, blur]
     );
