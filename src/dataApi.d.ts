@@ -84,6 +84,17 @@ declare module "@novorender/data-js-api" {
             };
             measure: {
                 entities: ExtendedMeasureEntity[] | ExtendedMeasureEntity[][];
+                activeAxis?: (
+                    | {
+                          x: boolean;
+                          y: boolean;
+                          z: boolean;
+                          planar: boolean;
+                          result: boolean;
+                          normal: boolean;
+                      }
+                    | undefined
+                )[];
             };
         };
         followPath:

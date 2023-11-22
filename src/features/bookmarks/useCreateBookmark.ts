@@ -145,6 +145,7 @@ export function useCreateBookmark() {
                     },
                     measure: {
                         entities: measurement.selectedEntities,
+                        activeAxis: measurement.activeAxis,
                     },
                     manhole: {
                         id: manhole?.ObjectId,

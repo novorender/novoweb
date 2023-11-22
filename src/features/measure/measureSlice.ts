@@ -21,8 +21,8 @@ export type ActiveAxis = {
     x: boolean;
     y: boolean;
     z: boolean;
-    plan: boolean;
-    dist: boolean;
+    planar: boolean;
+    result: boolean;
     normal: boolean;
 };
 
@@ -100,10 +100,10 @@ export const measureSlice = createSlice({
                         res.z = false;
                         break;
                     case "dist":
-                        res.dist = false;
+                        res.result = false;
                         break;
                     case "plan":
-                        res.plan = false;
+                        res.planar = false;
                         break;
                     case "normal":
                         res.normal = false;
@@ -113,8 +113,8 @@ export const measureSlice = createSlice({
                     (res.x === false &&
                         res.y === false &&
                         res.z === false &&
-                        res.dist === false &&
-                        res.plan === false) ||
+                        res.result === false &&
+                        res.planar === false) ||
                     res.normal === false
                 ) {
                     if (state.selectedEntities.length > 1) {
@@ -168,8 +168,8 @@ export const measureSlice = createSlice({
                     x: true,
                     y: true,
                     z: true,
-                    plan: true,
-                    dist: true,
+                    planar: true,
+                    result: true,
                     normal: true,
                 });
             }
@@ -193,9 +193,9 @@ export const measureSlice = createSlice({
                 state.selectedEntities = action.payload.measurements.measure
                     .entities as WriteableExtendedMeasureEntity[][];
             }
-            // if (action.payload.measurements.measure.activeAxis) {
-            //     state.activeAxis = action.payload.measurements.measure.activeAxis;
-            // }
+            if (action.payload.measurements.measure.activeAxis) {
+                state.activeAxis = action.payload.measurements.measure.activeAxis;
+            }
         });
         builder.addCase(resetView, (state) => {
             state.selectedEntities = [];

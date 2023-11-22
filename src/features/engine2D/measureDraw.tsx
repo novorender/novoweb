@@ -152,7 +152,7 @@ function drawDuoResults(
 
                 switch (part.name) {
                     case "result":
-                        if (draw[1].activeAxis.dist) {
+                        if (draw[1].activeAxis.result) {
                             drawPart(
                                 context2D,
                                 camSettings,
@@ -203,14 +203,14 @@ function drawDuoResults(
                         }
                         break;
                     case "xy-plane":
-                        if (draw[1].activeAxis.plan) {
+                        if (draw[1].activeAxis.planar) {
                             drawPart(context2D, camSettings, part, { lineColor: "purple" }, 3, {
                                 type: "centerOfLine",
                             });
                         }
                         break;
                     case "z-angle":
-                        if (draw[1].activeAxis.z && draw[1].activeAxis.dist) {
+                        if (draw[1].activeAxis.z && draw[1].activeAxis.result) {
                             drawPart(context2D, camSettings, part, { lineColor: "green" }, 2, {
                                 type: "centerOfLine",
                             });
@@ -451,7 +451,7 @@ export function MeasureDraw({
                                     if (dist > 100) {
                                         switch (part.name) {
                                             case "result":
-                                                if (activeAxis!.dist) {
+                                                if (activeAxis!.result) {
                                                     axisPos.dist = vec2.scaleAndAdd(
                                                         vec2.create(),
                                                         part.vertices2D[0],
@@ -461,7 +461,7 @@ export function MeasureDraw({
                                                 }
                                                 break;
                                             case "xy-plane":
-                                                if (activeAxis!.plan) {
+                                                if (activeAxis!.planar) {
                                                     axisPos.plan = vec2.scaleAndAdd(
                                                         vec2.create(),
                                                         part.vertices2D[0],
