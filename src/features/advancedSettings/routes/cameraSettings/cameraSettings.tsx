@@ -66,7 +66,7 @@ export function CameraSettings({
     const proportionalSpeed = useAppSelector(selectProportionalCameraSpeed);
     const cameraDefaults = useAppSelector(selectCameraDefaults);
     const {
-        orthographic: { touchRotate, touchDeAcceleration, usePointerLock },
+        orthographic: { touchRotate, deAcceleration, usePointerLock },
     } = cameraDefaults;
     const topDownSnapToNearestAxis = useAppSelector(selectTopDownSnapToAxis) === undefined;
     const defaultTopDownElevation = useAppSelector(selectDefaultTopDownElevation);
@@ -402,12 +402,12 @@ export function CameraSettings({
                                 sx={{ ml: 0, mb: 1 }}
                                 control={
                                     <Switch
-                                        name={"orthoTouchDeAcceleration"}
-                                        checked={touchDeAcceleration}
+                                        name={"orthoDeAcceleration"}
+                                        checked={deAcceleration}
                                         onChange={() => {
                                             dispatch(
                                                 renderActions.setCameraDefaults({
-                                                    orthographic: { touchDeAcceleration: !touchDeAcceleration },
+                                                    orthographic: { deAcceleration: !deAcceleration },
                                                 })
                                             );
                                         }}
@@ -415,7 +415,7 @@ export function CameraSettings({
                                 }
                                 label={
                                     <Box ml={1} fontSize={16}>
-                                        Gradual deceleration (touch)
+                                        Gradual deceleration
                                     </Box>
                                 }
                             />

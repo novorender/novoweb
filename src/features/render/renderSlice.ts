@@ -261,7 +261,7 @@ const initialState = {
             usePointerLock: false,
             topDownElevation: undefined as undefined | number,
             topDownSnapToAxis: undefined as undefined | "north",
-            touchDeAcceleration: false,
+            deAcceleration: false,
             touchRotate: false,
         },
     },
