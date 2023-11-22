@@ -325,6 +325,7 @@ export function MeasureDraw({
                 getDrawMeasureEntity(measure.hover),
             ]);
             const removePos: (vec2 | undefined)[] = [];
+            const infoPos: (vec2 | undefined)[] = [];
 
             followPathDrawResult.current = followPathDrawObject;
             heightProfileDrawResult.current = heightProfileDrawObject;
@@ -382,6 +383,7 @@ export function MeasureDraw({
                                     const sp = view.measure?.draw.toMarkerPoints([pos3d]);
                                     if (sp && sp.length > 0 && sp[0]) {
                                         removePos[i] = sp[0];
+                                        infoPos[i] = vec2.fromValues(sp[0][0] + 20, sp[0][1]);
                                     } else {
                                         removePos[i] = undefined;
                                     }
@@ -394,9 +396,13 @@ export function MeasureDraw({
                                 if (obj.parts[0].vertices2D) {
                                     const start = obj.parts[0].vertices2D[0];
                                     const end = obj.parts[0].vertices2D[obj.parts[0].vertices2D.length - 1];
-                                    const dist = vec2.dist(start, end);
-                                    if (dist > 100) {
-                                        removePos[i] = vec2.lerp(vec2.create(), start, end, 0.5);
+                                    const dir = vec2.sub(vec2.create(), end, start);
+                                    const dist = vec2.len(dir);
+                                    const removeOffset = (dist / 2 + 50) / dist;
+                                    const infoOffset = (dist / 2 + 70) / dist;
+                                    if (dist > 110) {
+                                        removePos[i] = vec2.scaleAndAdd(vec2.create(), start, dir, removeOffset);
+                                        infoPos[i] = vec2.scaleAndAdd(vec2.create(), start, dir, infoOffset);
                                     }
                                 }
                                 break;
@@ -447,8 +453,9 @@ export function MeasureDraw({
                                 if (part.vertices2D) {
                                     const dir = vec2.sub(vec2.create(), part.vertices2D[1], part.vertices2D[0]);
                                     const dist = vec2.len(dir);
-                                    const offset = (dist / 2 + 50) / dist;
-                                    if (dist > 100) {
+                                    const removeOffset = (dist / 2 + 50) / dist;
+                                    const infoOffset = (dist / 2 + 70) / dist;
+                                    if (dist > 120) {
                                         switch (part.name) {
                                             case "result":
                                                 if (activeAxis!.result) {
@@ -456,9 +463,15 @@ export function MeasureDraw({
                                                         vec2.create(),
                                                         part.vertices2D[0],
                                                         dir,
-                                                        offset
+                                                        removeOffset
                                                     );
                                                 }
+                                                infoPos[i] = vec2.scaleAndAdd(
+                                                    vec2.create(),
+                                                    part.vertices2D[0],
+                                                    dir,
+                                                    infoOffset
+                                                );
                                                 break;
                                             case "xy-plane":
                                                 if (activeAxis!.planar) {
@@ -466,7 +479,7 @@ export function MeasureDraw({
                                                         vec2.create(),
                                                         part.vertices2D[0],
                                                         dir,
-                                                        offset
+                                                        removeOffset
                                                     );
                                                 }
                                                 break;
@@ -476,7 +489,7 @@ export function MeasureDraw({
                                                         vec2.create(),
                                                         part.vertices2D[0],
                                                         dir,
-                                                        offset
+                                                        removeOffset
                                                     );
                                                 }
                                                 break;
@@ -486,7 +499,7 @@ export function MeasureDraw({
                                                         vec2.create(),
                                                         part.vertices2D[0],
                                                         dir,
-                                                        offset
+                                                        removeOffset
                                                     );
                                                 }
                                                 break;
@@ -496,7 +509,7 @@ export function MeasureDraw({
                                                         vec2.create(),
                                                         part.vertices2D[0],
                                                         dir,
-                                                        offset
+                                                        removeOffset
                                                     );
                                                 }
                                                 break;
@@ -505,7 +518,7 @@ export function MeasureDraw({
                                                     vec2.create(),
                                                     part.vertices2D[0],
                                                     dir,
-                                                    offset
+                                                    removeOffset
                                                 );
                                                 break;
                                         }
@@ -523,6 +536,7 @@ export function MeasureDraw({
                 return false;
             }
             interactionPositions.current.remove = removePos;
+            interactionPositions.current.info = infoPos;
             interactionPositions.current.removeAxis = removeAxis;
             return true;
         }

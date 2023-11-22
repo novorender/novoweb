@@ -85,7 +85,7 @@ export function Render3D() {
     const [svg, setSvg] = useState<null | SVGSVGElement>(null);
 
     const engine2dRenderFn = useRef<((moved: boolean, idleFrame: boolean) => void) | undefined>();
-    const interactionPositions = useRef<MeasureInteractionPositions>({ remove: [], removeAxis: [] });
+    const interactionPositions = useRef<MeasureInteractionPositions>({ remove: [], removeAxis: [], info: [] });
     const pointerPos = useRef([0, 0] as [x: number, y: number]);
     const canvasRef: RefCallback<HTMLCanvasElement> = useCallback(
         (el) => {

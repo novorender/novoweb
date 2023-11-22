@@ -27,10 +27,9 @@ export default function Measure() {
     const { duoMeasurementValues } = useAppSelector(selectMeasure);
 
     const dispatch = useAppDispatch();
-    const { selectedEntities, loadingBrep, snapKind } = useAppSelector(selectMeasure);
-    const currentEntites = selectedEntities[selectedEntities.length - 1];
-    const currentResult =
-        duoMeasurementValues.length > 0 ? duoMeasurementValues[duoMeasurementValues.length - 1] : undefined;
+    const { selectedEntities, loadingBrep, snapKind, currentIndex } = useAppSelector(selectMeasure);
+    const currentEntites = selectedEntities[currentIndex];
+    const currentResult = duoMeasurementValues.length > 0 ? duoMeasurementValues[currentIndex] : undefined;
     const selecting = useAppSelector(selectPicker) === Picker.Measurement;
     const isInitial = useRef(true);
     const hasClippingOutline =

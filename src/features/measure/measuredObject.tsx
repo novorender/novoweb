@@ -55,12 +55,12 @@ export function MeasuredObject({ obj, idx }: { obj: ExtendedMeasureEntity; idx: 
     } = useExplorerGlobals(true);
 
     const dispatch = useAppDispatch();
-    const { pinned, duoMeasurementValues } = useAppSelector(selectMeasure);
+    const { pinned, duoMeasurementValues, currentIndex } = useAppSelector(selectMeasure);
     const isPinned = pinned === idx;
 
     const measureObjects = useMeasureObjects();
-    const currentMeasureValues = duoMeasurementValues[duoMeasurementValues.length - 1];
-    const currentMeasureObject = measureObjects.length > 0 ? measureObjects[measureObjects.length - 1][idx] : empty;
+    const currentMeasureValues = duoMeasurementValues[currentIndex];
+    const currentMeasureObject = measureObjects.length > 0 ? measureObjects[currentIndex][idx] : empty;
     const [measureValues, setMeasureValues] = useState<MeasurementValues>();
 
     useEffect(() => {

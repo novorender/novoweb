@@ -77,6 +77,7 @@ export function useMove2DInteractions(
         }
         for (let i = 0; i < selectedEntities.length; ++i) {
             translate(`removeMeasure-${i}`, interactionPositions.current.remove[i]);
+            translate(`infoMeasure-${i}`, interactionPositions.current.info[i]);
         }
         for (let i = 0; i < duoMeasurementValues.length; ++i) {
             translate(

@@ -40,6 +40,7 @@ const initialState = {
     )[],
     activeAxis: [] as (ActiveAxis | undefined)[],
     loadingBrep: false,
+    currentIndex: 0 as number,
 };
 
 type State = typeof initialState;
@@ -55,21 +56,26 @@ export const measureSlice = createSlice({
     initialState: initialState,
     reducers: {
         newMeasurement: (state) => {
-            state.selectedEntities.push([]);
+            const entities = state.selectedEntities.at(-1);
+            if (entities && entities.length > 0) {
+                state.selectedEntities.push([]);
+            }
             state.pinned = undefined;
+            state.currentIndex = state.selectedEntities.length - 1;
         },
         selectEntity: (state, action: PayloadAction<{ entity: ExtendedMeasureEntity; pin?: boolean }>) => {
             const selectIdx = [1, undefined].includes(state.pinned) ? 0 : 1;
 
-            const currentEntities = state.selectedEntities[state.selectedEntities.length - 1];
+            const currentEntities = state.selectedEntities[state.currentIndex];
             currentEntities[selectIdx] = action.payload.entity as WriteableExtendedMeasureEntity;
             if (action.payload.pin) {
                 state.pinned = selectIdx;
             }
 
-            state.selectedEntities = state.selectedEntities
-                .slice(0, state.selectedEntities.length - 1)
-                .concat([currentEntities]);
+            state.selectedEntities[state.currentIndex] = currentEntities;
+        },
+        selectMeasureSet: (state, action: PayloadAction<number>) => {
+            state.currentIndex = action.payload;
         },
         deleteMeasureSet: (state, action: PayloadAction<number>) => {
             if (state.selectedEntities.length > 1) {
