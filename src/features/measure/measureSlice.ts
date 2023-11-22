@@ -67,6 +67,14 @@ export const measureSlice = createSlice({
             const selectIdx = [1, undefined].includes(state.pinned) ? 0 : 1;
 
             const currentEntities = state.selectedEntities[state.currentIndex];
+            state.activeAxis[state.currentIndex] = {
+                x: true,
+                y: true,
+                z: true,
+                planar: true,
+                result: true,
+                normal: true,
+            };
             currentEntities[selectIdx] = action.payload.entity as WriteableExtendedMeasureEntity;
             if (action.payload.pin) {
                 state.pinned = selectIdx;
