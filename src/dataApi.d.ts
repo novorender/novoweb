@@ -68,7 +68,8 @@ declare module "@novorender/data-js-api" {
         };
         measurements: {
             area: {
-                points: [point: [number, number, number], normal: [number, number, number]][];
+                points?: [point: [number, number, number], normal: [number, number, number]][];
+                areas: [point: [number, number, number], normal: [number, number, number]][][];
             };
             pointLine: {
                 points: [number, number, number][];

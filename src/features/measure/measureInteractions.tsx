@@ -3,6 +3,8 @@ import { vec2 } from "gl-matrix";
 import { Fragment, SVGProps } from "react";
 
 import { useAppDispatch, useAppSelector } from "app/store";
+import { areaActions, selectAreas } from "features/area";
+import { Picker, renderActions } from "features/render";
 
 import { measureActions, selectMeasure } from "./measureSlice";
 
@@ -54,6 +56,32 @@ const InfoMarker = styled(
     { shouldForwardProp: (prop) => prop !== "active" && prop !== "hovered" }
 )(markerStyles);
 
+const UndoMarker = styled(
+    (props: SVGProps<SVGGElement>) => (
+        <g {...props}>
+            <rect width="15" height="15" fillOpacity={0} transform={"translate(100 100)"} />
+            <path
+                d="M12.5 8c-2.65 0-5.05.99-6.9 2.6L2 7v9h9l-3.62-3.62c1.39-1.16 3.16-1.88 5.12-1.88 3.54 0 6.55 2.31 7.6 5.5l2.37-.78C21.08 11.03 17.15 8 12.5 8z"
+                transform={"translate(90.4 90.4) scale(0.8)"}
+            ></path>
+        </g>
+    ),
+    { shouldForwardProp: (prop) => prop !== "active" && prop !== "hovered" }
+)(markerStyles);
+
+const FinalizeMarker = styled(
+    (props: SVGProps<SVGGElement>) => (
+        <g {...props}>
+            <rect width="15" height="15" fillOpacity={0} transform={"translate(100 100)"} />
+            <path
+                d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"
+                transform={"translate(90.4 90.4) scale(0.8)"}
+            ></path>
+        </g>
+    ),
+    { shouldForwardProp: (prop) => prop !== "active" && prop !== "hovered" }
+)(markerStyles);
+
 export type MeasureInteractionPositions = {
     remove: (vec2 | undefined)[];
     info: (vec2 | undefined)[];
@@ -65,12 +93,18 @@ export type MeasureInteractionPositions = {
         dist?: vec2;
         normal?: vec2;
     }[];
+    area: {
+        remove: (vec2 | undefined)[];
+        finalize: (vec2 | undefined)[];
+        undo: (vec2 | undefined)[];
+    };
 };
 
 export function MeasureInteractions() {
     const dispatch = useAppDispatch();
     const { selectedEntities } = useAppSelector(selectMeasure);
     const measure = useAppSelector(selectMeasure);
+    const areas = useAppSelector(selectAreas);
 
     return (
         <>
@@ -140,6 +174,37 @@ export function MeasureInteractions() {
                                 name={`removeMeasureResultNormal-${idx}`}
                                 onClick={() => {
                                     dispatch(measureActions.removeAxis({ axis: "normal", idx }));
+                                }}
+                            />
+                        </>
+                    ) : null}
+                </Fragment>
+            ))}
+            {areas.map((area, idx) => (
+                <Fragment key={`area-${idx}`}>
+                    {area.area !== -1 ? (
+                        <>
+                            <RemoveMarker
+                                id={`removeArea-${idx}`}
+                                name={`removeArea-${idx}`}
+                                onClick={() => {
+                                    dispatch(renderActions.stopPicker(Picker.Area));
+                                    dispatch(areaActions.deleteArea(idx));
+                                }}
+                            />
+                            <FinalizeMarker
+                                id={`finalizeArea-${idx}`}
+                                name={`finalizeArea-${idx}`}
+                                onClick={() => {
+                                    dispatch(renderActions.stopPicker(Picker.Area));
+                                    dispatch(areaActions.newArea());
+                                }}
+                            />
+                            <UndoMarker
+                                id={`undoArea-${idx}`}
+                                name={`undoArea-${idx}`}
+                                onClick={() => {
+                                    dispatch(areaActions.undoPoint());
                                 }}
                             />
                         </>

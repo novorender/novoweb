@@ -3,6 +3,7 @@ import { MutableRefObject, useCallback, useLayoutEffect } from "react";
 
 import { useAppSelector } from "app/store";
 import { useExplorerGlobals } from "contexts/explorerGlobals";
+import { selectAreas } from "features/area";
 import { selectMeasure } from "features/measure";
 import { MeasureInteractionPositions } from "features/measure/measureInteractions";
 import { GetMeasurePointsFromTracer, selectOutlineLasers } from "features/outlineLaser";
@@ -17,6 +18,7 @@ export function useMove2DInteractions(
 
     const outlineLasers = useAppSelector(selectOutlineLasers);
     const { selectedEntities, duoMeasurementValues } = useAppSelector(selectMeasure);
+    const areas = useAppSelector(selectAreas);
 
     const move = useCallback(() => {
         if (!svg || !view?.measure) {
@@ -116,8 +118,13 @@ export function useMove2DInteractions(
                     ? interactionPositions.current.removeAxis[i].normal
                     : undefined
             );
+            for (let i = 0; i < areas.length; ++i) {
+                translate(`removeArea-${i}`, interactionPositions.current.area.remove[i]);
+                translate(`finalizeArea-${i}`, interactionPositions.current.area.finalize[i]);
+                translate(`undoArea-${i}`, interactionPositions.current.area.undo[i]);
+            }
         }
-    }, [view, svg, outlineLasers, selectedEntities, interactionPositions, duoMeasurementValues]);
+    }, [view, svg, outlineLasers, selectedEntities, interactionPositions, duoMeasurementValues, areas]);
 
     useLayoutEffect(() => {
         move();

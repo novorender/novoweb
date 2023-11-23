@@ -8,7 +8,7 @@ import { HighlightCollection, useLazyHighlightCollections } from "contexts/highl
 import { useLazyHighlighted } from "contexts/highlighted";
 import { GroupStatus, isInternalGroup, useLazyObjectGroups } from "contexts/objectGroups";
 import { useLazySelectionBasket } from "contexts/selectionBasket";
-import { selectAreaPoints } from "features/area";
+import { selectAreas } from "features/area";
 import { selectFollowPath } from "features/followPath";
 import {
     selectManholeCollisionSettings,
@@ -44,7 +44,7 @@ export function useCreateBookmark() {
     const mainObject = useAppSelector(selectMainObject);
     const selectionBasketMode = useAppSelector(selectSelectionBasketMode);
     const followPath = useAppSelector(selectFollowPath);
-    const areaPts = useAppSelector(selectAreaPoints);
+    const areas = useAppSelector(selectAreas);
     const pointLinePts = useAppSelector(selectPointLinePoints);
     const subtrees = useAppSelector(selectSubtrees);
     const manhole = useAppSelector(selectManholeMeasureValues);
@@ -138,7 +138,7 @@ export function useCreateBookmark() {
                 },
                 measurements: {
                     area: {
-                        points: areaPts,
+                        areas: areas.map((a) => a.points),
                     },
                     pointLine: {
                         points: pointLinePts,

@@ -4,13 +4,14 @@ import { useEffect } from "react";
 import { useAppDispatch, useAppSelector } from "app/store";
 import { useExplorerGlobals } from "contexts/explorerGlobals";
 
-import { areaActions, selectAreaPoints } from "./areaSlice";
+import { areaActions, selectBookmarkPoints, selectCurrentAreaPoints } from "./areaSlice";
 
 export function useHandleArea() {
     const {
         state: { view },
     } = useExplorerGlobals();
-    const points = useAppSelector(selectAreaPoints);
+    const points = useAppSelector(selectCurrentAreaPoints);
+    const bookmarkPoints = useAppSelector(selectBookmarkPoints);
 
     const dispatch = useAppDispatch();
 
@@ -33,4 +34,28 @@ export function useHandleArea() {
         dispatch(areaActions.setDrawPoints(area.polygon as vec3[]));
         dispatch(areaActions.setArea(area.area ?? 0));
     }, [points, dispatch, view]);
+
+    useEffect(() => {
+        if (!view?.measure) {
+            return;
+        }
+        for (let i = 0; i < bookmarkPoints.length; ++i) {
+            dispatch(areaActions.newArea());
+            const bkPts = bookmarkPoints[i];
+            if (!bkPts.length) {
+                dispatch(areaActions.setDrawPoints([]));
+                dispatch(areaActions.setArea(0));
+                continue;
+            }
+
+            const area = view.measure.core.areaFromPolygon(
+                bkPts.map((pts) => pts[0]),
+                bkPts.map((pts) => pts[1])
+            );
+
+            dispatch(areaActions.setPoints(bkPts));
+            dispatch(areaActions.setDrawPoints(area.polygon as vec3[]));
+            dispatch(areaActions.setArea(area.area ?? 0));
+        }
+    }, [bookmarkPoints, dispatch, view]);
 }

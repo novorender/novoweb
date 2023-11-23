@@ -1,4 +1,4 @@
-import { DeleteSweep, Undo } from "@mui/icons-material";
+import { Add, DeleteSweep, Undo } from "@mui/icons-material";
 import { Box, Button, FormControlLabel } from "@mui/material";
 import { useEffect, useRef } from "react";
 
@@ -10,7 +10,7 @@ import WidgetList from "features/widgetList/widgetList";
 import { useToggle } from "hooks/useToggle";
 import { selectMaximized, selectMinimized } from "slices/explorerSlice";
 
-import { areaActions, selectArea, selectAreaPoints } from "./areaSlice";
+import { areaActions, selectCurrentArea, selectCurrentAreaPoints } from "./areaSlice";
 
 export default function Area() {
     const [menuOpen, toggleMenu] = useToggle();
@@ -19,8 +19,8 @@ export default function Area() {
     const maximized = useAppSelector(selectMaximized).includes(featuresConfig.area.key);
 
     const selecting = useAppSelector(selectPicker) === Picker.Area;
-    const points = useAppSelector(selectAreaPoints);
-    const area = useAppSelector(selectArea);
+    const points = useAppSelector(selectCurrentAreaPoints);
+    const area = useAppSelector(selectCurrentArea);
     const dispatch = useAppDispatch();
 
     const isInitial = useRef(true);
@@ -67,6 +67,14 @@ export default function Area() {
                             >
                                 <Undo sx={{ mr: 1 }} />
                                 Undo
+                            </Button>
+                            <Button
+                                onClick={() => dispatch(areaActions.newArea())}
+                                color="grey"
+                                disabled={!points.length}
+                            >
+                                <Add sx={{ mr: 1 }} />
+                                New
                             </Button>
                             <Button
                                 disabled={!points.length}

@@ -191,7 +191,7 @@ function applyFilters(bookmarks: ExtendedBookmark[], filters: Filters): Extended
             const { measurements, clipping, groups } = bm.explorerState;
             if (filters.measurements) {
                 if (
-                    !measurements.area.points.length &&
+                    !measurements.area.areas.length &&
                     !measurements.measure.entities.length &&
                     !measurements.pointLine.points.length &&
                     measurements.manhole.id === undefined

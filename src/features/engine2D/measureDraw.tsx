@@ -5,7 +5,7 @@ import { MutableRefObject, useCallback, useEffect, useRef, useState } from "reac
 
 import { useAppSelector } from "app/store";
 import { useExplorerGlobals } from "contexts/explorerGlobals";
-import { selectArea, selectAreaDrawPoints } from "features/area";
+import { selectAreas, selectCurrentIndex } from "features/area";
 import {
     selectDrawSelectedPositions,
     selectFollowCylindersFrom,
@@ -25,7 +25,7 @@ import { MeasureInteractionPositions } from "features/measure/measureInteraction
 import { selectCrossSectionPoints } from "features/orthoCam";
 import { GetMeasurePointsFromTracer, selectOutlineLasers } from "features/outlineLaser";
 import { selectPointLine } from "features/pointLine";
-import { CameraType, selectCameraType, selectGrid, selectViewMode } from "features/render";
+import { CameraType, Picker, selectCameraType, selectGrid, selectPicker, selectViewMode } from "features/render";
 import { AsyncStatus, ViewMode } from "types/misc";
 
 import { CameraSettings, drawPart, drawProduct } from "./utils";
@@ -267,13 +267,15 @@ export function MeasureDraw({
     const roadCrossSectionData = roadCrossSection.status === AsyncStatus.Success ? roadCrossSection.data : undefined;
     const pathMeasureObjectsData =
         pathMeasureObjects.status === AsyncStatus.Success ? pathMeasureObjects.data : undefined;
-    const areaValue = useAppSelector(selectArea);
     const { points: pointLinePoints, result: pointLineResult } = useAppSelector(selectPointLine);
     const crossSection = useAppSelector(selectCrossSectionPoints);
     const manhole = useAppSelector(selectManholeMeasureValues);
     const manholeCollisionValues = useAppSelector(selectManholeCollisionValues);
     const manholeCollisionEntity = useAppSelector(selectManholeCollisionTarget)?.entity;
-    const areaPoints = useAppSelector(selectAreaDrawPoints);
+    const areas = useAppSelector(selectAreas);
+    const areaCurrent = useAppSelector(selectCurrentIndex);
+
+    const picker = useAppSelector(selectPicker);
     const drawSelectedPaths = useAppSelector(selectDrawSelectedPositions);
     const drawPathSettings = useAppSelector(selectFollowCylindersFrom);
     const measure = useAppSelector(selectMeasure);
@@ -300,6 +302,7 @@ export function MeasureDraw({
     const hoverHideId = useRef<undefined | string>(undefined);
     const update = useCallback(async () => {
         if (view?.measure) {
+            const { camera } = view.renderState;
             const getDrawMeasureEntity = async (entity?: DrawableEntity, settings?: MeasureSettings) =>
                 entity && view.measure?.draw.getDrawEntity(entity, settings);
             const id = ++updateId.current;
@@ -380,12 +383,14 @@ export function MeasureDraw({
                                         vec3.add(sum, sum, planeObj.vertices3D[k]);
                                     }
                                     const pos3d = vec3.scale(vec3.create(), sum, 1 / (planeObj.vertices3D.length - 1));
-                                    const sp = view.measure?.draw.toMarkerPoints([pos3d]);
-                                    if (sp && sp.length > 0 && sp[0]) {
-                                        removePos[i] = sp[0];
-                                        infoPos[i] = vec2.fromValues(sp[0][0] + 20, sp[0][1]);
-                                    } else {
-                                        removePos[i] = undefined;
+                                    if (vec3.dist(pos3d, camera.position) < 100) {
+                                        const sp = view.measure?.draw.toMarkerPoints([pos3d]);
+                                        if (sp && sp.length > 0 && sp[0]) {
+                                            removePos[i] = sp[0];
+                                            infoPos[i] = vec2.fromValues(sp[0][0] + 20, sp[0][1]);
+                                        } else {
+                                            removePos[i] = undefined;
+                                        }
                                     }
                                 }
 
@@ -532,9 +537,44 @@ export function MeasureDraw({
                     removeAxis.push({});
                 }
             }
+
+            const areaRemovePos: (vec2 | undefined)[] = [];
+            const areaFinalizePos: (vec2 | undefined)[] = [];
+            const areaUndoPos: (vec2 | undefined)[] = [];
+            for (let i = 0; i < areas.length; ++i) {
+                const areaPoints = areas[i].points;
+                if (areaPoints.length) {
+                    const sum = vec3.create();
+                    for (let j = 0; j < areaPoints.length; ++j) {
+                        vec3.add(sum, sum, areaPoints[j][0]);
+                    }
+                    const pos3d = vec3.scale(vec3.create(), sum, 1 / areaPoints.length);
+                    if (vec3.dist(pos3d, camera.position) < 100) {
+                        const sp = view.measure?.draw.toMarkerPoints([pos3d]);
+                        if (sp && sp.length > 0 && sp[0]) {
+                            areaRemovePos[i] = vec2.fromValues(sp[0][0], sp[0][1] + 20);
+                        } else {
+                            areaRemovePos[i] = undefined;
+                        }
+                        if (areaPoints.length > 2 && areaCurrent === i && picker === Picker.Area) {
+                            const screenPoints = view.measure?.draw.toMarkerPoints([
+                                areaPoints[0][0],
+                                areaPoints[areaPoints.length - 1][0],
+                            ]);
+                            if (screenPoints && screenPoints.length > 1) {
+                                areaFinalizePos[i] = screenPoints[0];
+                                areaUndoPos[i] = screenPoints[1];
+                            }
+                        }
+                    }
+                }
+            }
             if (id !== updateId.current) {
                 return false;
             }
+            interactionPositions.current.area.remove = areaRemovePos;
+            interactionPositions.current.area.undo = areaUndoPos;
+            interactionPositions.current.area.finalize = areaFinalizePos;
             interactionPositions.current.remove = removePos;
             interactionPositions.current.info = infoPos;
             interactionPositions.current.removeAxis = removeAxis;
@@ -555,6 +595,9 @@ export function MeasureDraw({
         measure.pinned,
         interactionPositions,
         measure.activeAxis,
+        areas,
+        areaCurrent,
+        picker,
     ]);
 
     const draw = useCallback(() => {
@@ -706,30 +749,33 @@ export function MeasureDraw({
                 }
             }
 
-            if (areaPoints.length) {
-                const drawProd = view.measure?.draw.getDrawObjectFromPoints(areaPoints, true, true);
-                if (drawProd) {
-                    drawProd.objects.forEach((obj) => {
-                        obj.parts.forEach((part) => {
-                            drawPart(
-                                context2D,
-                                camSettings,
-                                part,
-                                {
-                                    lineColor: "yellow",
-                                    fillColor: measurementFillColor,
-                                    pointColor: { start: "green", middle: "white", end: "blue" },
-                                    displayAllPoints: true,
-                                },
-                                2,
-                                {
-                                    type: "center",
-                                    unit: "m²",
-                                    customText: [areaValue.toFixed(2)],
-                                }
-                            );
+            for (const area of areas) {
+                const areaPoints = area.drawPoints;
+                if (areaPoints.length) {
+                    const drawProd = view.measure?.draw.getDrawObjectFromPoints(areaPoints, true, true);
+                    if (drawProd) {
+                        drawProd.objects.forEach((obj) => {
+                            obj.parts.forEach((part) => {
+                                drawPart(
+                                    context2D,
+                                    camSettings,
+                                    part,
+                                    {
+                                        lineColor: "yellow",
+                                        fillColor: measurementFillColor,
+                                        pointColor: { start: "green", middle: "white", end: "blue" },
+                                        displayAllPoints: true,
+                                    },
+                                    2,
+                                    {
+                                        type: "center",
+                                        unit: "m²",
+                                        customText: [area.area.toFixed(2)],
+                                    }
+                                );
+                            });
                         });
-                    });
+                    }
                 }
             }
 
@@ -923,8 +969,7 @@ export function MeasureDraw({
         canvas2D,
         size,
         view,
-        areaPoints,
-        areaValue,
+        areas,
         crossSection,
         cameraType,
         outlineLasers,
