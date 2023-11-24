@@ -8,15 +8,7 @@ import { useMove2DInteractions } from "features/engine2D";
 import { orthoCamActions, selectCurrentTopDownElevation } from "features/orthoCam";
 import { ViewMode } from "types/misc";
 
-import {
-    CameraType,
-    DeepMutable,
-    renderActions,
-    RenderState,
-    selectCameraType,
-    selectSavedCameraPositions,
-    selectViewMode,
-} from "..";
+import { CameraType, DeepMutable, renderActions, RenderState, selectCameraType, selectViewMode } from "..";
 import { useMoveMarkers } from "./useMoveMarkers";
 
 export function useHandleCameraMoved({
@@ -32,7 +24,6 @@ export function useHandleCameraMoved({
     const dispatch = useAppDispatch();
     const cameraType = useAppSelector(selectCameraType);
     const viewMode = useAppSelector(selectViewMode);
-    const savedCameraPositions = useAppSelector(selectSavedCameraPositions);
     const currentTopDownElevation = useAppSelector(selectCurrentTopDownElevation);
 
     const moveSvgMarkers = useMoveMarkers(svg);
@@ -137,20 +128,6 @@ export function useHandleCameraMoved({
                     }
 
                     const { position, rotation, fov } = view.renderState.camera;
-                    const kind =
-                        view.renderState.camera.kind === "orthographic" ? CameraType.Orthographic : CameraType.Pinhole;
-                    const lastPos = savedCameraPositions.positions[savedCameraPositions.currentIndex];
-
-                    if (
-                        lastPos &&
-                        vec3.equals(position, lastPos.position) &&
-                        quat.equals(rotation, lastPos.rotation) &&
-                        lastPos.fov &&
-                        lastPos.fov === fov &&
-                        kind === lastPos.kind
-                    ) {
-                        return;
-                    }
 
                     dispatch(
                         renderActions.saveCameraPosition({
@@ -167,7 +144,6 @@ export function useHandleCameraMoved({
             view,
             dispatch,
             currentTopDownElevation,
-            savedCameraPositions,
             cameraType,
             viewMode,
             moveSvgMarkers,

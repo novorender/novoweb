@@ -395,6 +395,19 @@ export const renderSlice = createSlice({
          * Deletes camera positions already saved at higher indexes
          */
         saveCameraPosition: (state, action: PayloadAction<CameraStep>) => {
+            const lastPos = state.savedCameraPositions.positions[state.savedCameraPositions.currentIndex];
+
+            if (
+                lastPos &&
+                vec3.equals(action.payload.position, lastPos.position) &&
+                quat.equals(action.payload.rotation, lastPos.rotation) &&
+                lastPos.fov &&
+                lastPos.fov === action.payload.fov &&
+                action.payload.kind === lastPos.kind
+            ) {
+                return state;
+            }
+
             state.savedCameraPositions.positions = state.savedCameraPositions.positions
                 .slice(0, state.savedCameraPositions.currentIndex + 1)
                 .concat({
