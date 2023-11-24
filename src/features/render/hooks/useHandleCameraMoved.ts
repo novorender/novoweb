@@ -13,10 +13,10 @@ import { useMoveMarkers } from "./useMoveMarkers";
 
 export function useHandleCameraMoved({
     svg,
-    engine2dRenderFn,
+    engine2dRenderFnRef,
 }: {
     svg: SVGSVGElement | null;
-    engine2dRenderFn: MutableRefObject<((moved: boolean, idleframe: boolean) => void) | undefined>;
+    engine2dRenderFnRef: MutableRefObject<((moved: boolean, idleframe: boolean) => void) | undefined>;
 }) {
     const {
         state: { view },
@@ -49,7 +49,7 @@ export function useHandleCameraMoved({
                 const moved = view.activeController.moving || prevCameraType.current !== cameraType;
                 prevCameraType.current = cameraType;
 
-                engine2dRenderFn.current?.(moved, isIdleFrame);
+                engine2dRenderFnRef.current?.(moved, isIdleFrame);
 
                 if (!moved) {
                     return;
@@ -148,7 +148,7 @@ export function useHandleCameraMoved({
             viewMode,
             moveSvgMarkers,
             moveSvgInteractions,
-            engine2dRenderFn,
+            engine2dRenderFnRef,
         ]
     );
 }

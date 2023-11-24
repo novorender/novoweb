@@ -173,13 +173,6 @@ const initialState = {
     viewMode: ViewMode.Default,
     loadingHandles: [] as number[],
     stamp: null as null | Stamp,
-    pointerDownState: undefined as
-        | undefined
-        | {
-              timestamp: number;
-              x: number;
-              y: number;
-          },
     background: {
         environments: { status: AsyncStatus.Initial } as AsyncState<EnvironmentDescription[]>,
         color: [0.75, 0.75, 0.75, 1] as vec4,
@@ -518,9 +511,6 @@ export const renderSlice = createSlice({
         },
         setStamp: (state, action: PayloadAction<State["stamp"]>) => {
             state.stamp = action.payload;
-        },
-        setPointerDownState: (state, action: PayloadAction<State["pointerDownState"]>) => {
-            state.pointerDownState = action.payload;
         },
         setPoints: (state, action: PayloadAction<RecursivePartial<State["points"]>>) => {
             state.points = mergeRecursive(state.points, action.payload);
@@ -878,7 +868,6 @@ export const selectStamp = (state: RootState) => state.render.stamp;
 export const selectPointerLock = (state: RootState) => state.render.cameraDefaults.orthographic.usePointerLock;
 export const selectProportionalCameraSpeed = (state: RootState) =>
     state.render.cameraDefaults.pinhole.proportionalSpeed;
-export const selectPointerDownState = (state: RootState) => state.render.pointerDownState;
 export const selectBackground = (state: RootState) => state.render.background;
 export const selectSceneStatus = (state: RootState) => state.render.sceneStatus;
 export const selectTerrain = (state: RootState) => state.render.terrain;
