@@ -4,14 +4,14 @@ import { useEffect } from "react";
 import { useAppDispatch, useAppSelector } from "app/store";
 import { useExplorerGlobals } from "contexts/explorerGlobals";
 
-import { areaActions, selectBookmarkPoints, selectCurrentAreaPoints } from "./areaSlice";
+import { areaActions, selectAreaBookmarkPoints, selectCurrentArea } from "./areaSlice";
 
 export function useHandleArea() {
     const {
         state: { view },
     } = useExplorerGlobals();
-    const points = useAppSelector(selectCurrentAreaPoints);
-    const bookmarkPoints = useAppSelector(selectBookmarkPoints);
+    const currentArea = useAppSelector(selectCurrentArea);
+    const bookmarkPoints = useAppSelector(selectAreaBookmarkPoints);
 
     const dispatch = useAppDispatch();
 
@@ -19,21 +19,21 @@ export function useHandleArea() {
         if (!view?.measure) {
             return;
         }
+        if (currentArea.points.length === 0 && currentArea.drawPoints.length === 0) {
+            return;
+        }
 
-        if (!points.length) {
+        if (!currentArea.points.length) {
             dispatch(areaActions.setDrawPoints([]));
             dispatch(areaActions.setArea(0));
             return;
         }
 
-        const area = view.measure.core.areaFromPolygon(
-            points.map((pts) => pts[0]),
-            points.map((pts) => pts[1])
-        );
+        const area = view.measure.core.areaFromPolygon(currentArea.points, currentArea.normals);
 
         dispatch(areaActions.setDrawPoints(area.polygon as vec3[]));
         dispatch(areaActions.setArea(area.area ?? 0));
-    }, [points, dispatch, view]);
+    }, [currentArea, dispatch, view]);
 
     useEffect(() => {
         if (!view?.measure) {
@@ -42,18 +42,15 @@ export function useHandleArea() {
         for (let i = 0; i < bookmarkPoints.length; ++i) {
             dispatch(areaActions.newArea());
             const bkPts = bookmarkPoints[i];
-            if (!bkPts.length) {
+            if (!bkPts.points.length) {
                 dispatch(areaActions.setDrawPoints([]));
                 dispatch(areaActions.setArea(0));
                 continue;
             }
 
-            const area = view.measure.core.areaFromPolygon(
-                bkPts.map((pts) => pts[0]),
-                bkPts.map((pts) => pts[1])
-            );
+            const area = view.measure.core.areaFromPolygon(bkPts.points, bkPts.normals);
 
-            dispatch(areaActions.setPoints(bkPts));
+            dispatch(areaActions.setPoints({ points: bkPts.points, normals: bkPts.normals }));
             dispatch(areaActions.setDrawPoints(area.polygon as vec3[]));
             dispatch(areaActions.setArea(area.area ?? 0));
         }

@@ -7,6 +7,7 @@ import { selectAreas } from "features/area";
 import { selectMeasure } from "features/measure";
 import { MeasureInteractionPositions } from "features/measure/measureInteractions";
 import { GetMeasurePointsFromTracer, selectOutlineLasers } from "features/outlineLaser";
+import { selectPointLines } from "features/pointLine";
 
 export function useMove2DInteractions(
     svg: SVGSVGElement | null,
@@ -19,6 +20,7 @@ export function useMove2DInteractions(
     const outlineLasers = useAppSelector(selectOutlineLasers);
     const { selectedEntities, duoMeasurementValues } = useAppSelector(selectMeasure);
     const areas = useAppSelector(selectAreas);
+    const pointLines = useAppSelector(selectPointLines);
 
     const move = useCallback(() => {
         if (!svg || !view?.measure) {
@@ -123,8 +125,13 @@ export function useMove2DInteractions(
                 translate(`finalizeArea-${i}`, interactionPositions.current.area.finalize[i]);
                 translate(`undoArea-${i}`, interactionPositions.current.area.undo[i]);
             }
+            for (let i = 0; i < pointLines.length; ++i) {
+                translate(`removePl-${i}`, interactionPositions.current.pointLine.remove[i]);
+                translate(`finalizePl-${i}`, interactionPositions.current.pointLine.finalize[i]);
+                translate(`undoPl-${i}`, interactionPositions.current.pointLine.undo[i]);
+            }
         }
-    }, [view, svg, outlineLasers, selectedEntities, interactionPositions, duoMeasurementValues, areas]);
+    }, [view, svg, outlineLasers, selectedEntities, interactionPositions, duoMeasurementValues, areas, pointLines]);
 
     useLayoutEffect(() => {
         move();

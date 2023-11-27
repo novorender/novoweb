@@ -24,7 +24,7 @@ import { ActiveAxis, selectMeasure, useMeasureObjects } from "features/measure";
 import { MeasureInteractionPositions } from "features/measure/measureInteractions";
 import { selectCrossSectionPoints } from "features/orthoCam";
 import { GetMeasurePointsFromTracer, selectOutlineLasers } from "features/outlineLaser";
-import { selectPointLine } from "features/pointLine";
+import { selectPointLineCurrent, selectPointLines } from "features/pointLine";
 import { CameraType, Picker, selectCameraType, selectGrid, selectPicker, selectViewMode } from "features/render";
 import { AsyncStatus, ViewMode } from "types/misc";
 
@@ -267,7 +267,8 @@ export function MeasureDraw({
     const roadCrossSectionData = roadCrossSection.status === AsyncStatus.Success ? roadCrossSection.data : undefined;
     const pathMeasureObjectsData =
         pathMeasureObjects.status === AsyncStatus.Success ? pathMeasureObjects.data : undefined;
-    const { points: pointLinePoints, result: pointLineResult } = useAppSelector(selectPointLine);
+    const pointLines = useAppSelector(selectPointLines);
+    const pointLineCurrent = useAppSelector(selectPointLineCurrent);
     const crossSection = useAppSelector(selectCrossSectionPoints);
     const manhole = useAppSelector(selectManholeMeasureValues);
     const manholeCollisionValues = useAppSelector(selectManholeCollisionValues);
@@ -538,43 +539,79 @@ export function MeasureDraw({
                 }
             }
 
-            const areaRemovePos: (vec2 | undefined)[] = [];
-            const areaFinalizePos: (vec2 | undefined)[] = [];
-            const areaUndoPos: (vec2 | undefined)[] = [];
-            for (let i = 0; i < areas.length; ++i) {
-                const areaPoints = areas[i].points;
-                if (areaPoints.length) {
+            const fillMarkerPositions = (
+                removePos: (vec2 | undefined)[],
+                finalizePos: (vec2 | undefined)[],
+                undoPos: (vec2 | undefined)[],
+                points: vec3[],
+                index: number,
+                isCurrent: (index: number) => boolean
+            ) => {
+                if (points.length) {
                     const sum = vec3.create();
-                    for (let j = 0; j < areaPoints.length; ++j) {
-                        vec3.add(sum, sum, areaPoints[j][0]);
+                    for (let j = 0; j < points.length; ++j) {
+                        vec3.add(sum, sum, points[j]);
                     }
-                    const pos3d = vec3.scale(vec3.create(), sum, 1 / areaPoints.length);
+                    const pos3d = vec3.scale(vec3.create(), sum, 1 / points.length);
                     if (vec3.dist(pos3d, camera.position) < 100) {
                         const sp = view.measure?.draw.toMarkerPoints([pos3d]);
                         if (sp && sp.length > 0 && sp[0]) {
-                            areaRemovePos[i] = vec2.fromValues(sp[0][0], sp[0][1] + 20);
+                            removePos[index] = vec2.fromValues(sp[0][0], sp[0][1] + 20);
                         } else {
-                            areaRemovePos[i] = undefined;
+                            removePos[index] = undefined;
                         }
-                        if (areaPoints.length > 2 && areaCurrent === i && picker === Picker.Area) {
+                        if (points.length > 2 && isCurrent(index)) {
                             const screenPoints = view.measure?.draw.toMarkerPoints([
-                                areaPoints[0][0],
-                                areaPoints[areaPoints.length - 1][0],
+                                points[0],
+                                points[points.length - 1],
                             ]);
                             if (screenPoints && screenPoints.length > 1) {
-                                areaFinalizePos[i] = screenPoints[0];
-                                areaUndoPos[i] = screenPoints[1];
+                                finalizePos[index] = screenPoints[0];
+                                undoPos[index] = screenPoints[1];
                             }
                         }
                     }
                 }
+            };
+
+            const areaRemovePos: (vec2 | undefined)[] = [];
+            const areaFinalizePos: (vec2 | undefined)[] = [];
+            const areaUndoPos: (vec2 | undefined)[] = [];
+            const isCurrentArea = (index: number) => {
+                return areaCurrent === index && picker === Picker.Area;
+            };
+            for (let i = 0; i < areas.length; ++i) {
+                const areaPoints = areas[i].points;
+                fillMarkerPositions(areaRemovePos, areaFinalizePos, areaUndoPos, areaPoints, i, isCurrentArea);
             }
+
+            const pointLineRemovePos: (vec2 | undefined)[] = [];
+            const pointLineFinalizePos: (vec2 | undefined)[] = [];
+            const pointLineUndoPos: (vec2 | undefined)[] = [];
+            const isCurrentPointLine = (index: number) => {
+                return pointLineCurrent === index && picker === Picker.PointLine;
+            };
+            for (let i = 0; i < pointLines.length; ++i) {
+                const pointLinePoints = pointLines[i].points;
+                fillMarkerPositions(
+                    pointLineRemovePos,
+                    pointLineFinalizePos,
+                    pointLineUndoPos,
+                    pointLinePoints,
+                    i,
+                    isCurrentPointLine
+                );
+            }
+
             if (id !== updateId.current) {
                 return false;
             }
             interactionPositions.current.area.remove = areaRemovePos;
             interactionPositions.current.area.undo = areaUndoPos;
             interactionPositions.current.area.finalize = areaFinalizePos;
+            interactionPositions.current.pointLine.remove = pointLineRemovePos;
+            interactionPositions.current.pointLine.undo = pointLineUndoPos;
+            interactionPositions.current.pointLine.finalize = pointLineFinalizePos;
             interactionPositions.current.remove = removePos;
             interactionPositions.current.info = infoPos;
             interactionPositions.current.removeAxis = removeAxis;
@@ -596,6 +633,8 @@ export function MeasureDraw({
         interactionPositions,
         measure.activeAxis,
         areas,
+        pointLines,
+        pointLineCurrent,
         areaCurrent,
         picker,
     ]);
@@ -830,28 +869,31 @@ export function MeasureDraw({
                 }
             }
 
-            if (pointLinePoints.length && pointLineResult) {
-                const drawProd = view.measure?.draw.getDrawObjectFromPoints(pointLinePoints, false, true, true);
+            for (const pointLine of pointLines) {
+                const { points, result } = pointLine;
+                if (points.length && result) {
+                    const drawProd = view.measure?.draw.getDrawObjectFromPoints(points, false, true, true);
 
-                if (drawProd) {
-                    drawProd.objects.forEach((obj) => {
-                        obj.parts.forEach((part) => {
-                            drawPart(
-                                context2D,
-                                camSettings,
-                                part,
-                                {
-                                    lineColor: "yellow",
-                                    pointColor: { start: "green", middle: "white", end: "blue" },
-                                    displayAllPoints: true,
-                                },
-                                2,
-                                {
-                                    type: "default",
-                                }
-                            );
+                    if (drawProd) {
+                        drawProd.objects.forEach((obj) => {
+                            obj.parts.forEach((part) => {
+                                drawPart(
+                                    context2D,
+                                    camSettings,
+                                    part,
+                                    {
+                                        lineColor: "yellow",
+                                        pointColor: { start: "green", middle: "white", end: "blue" },
+                                        displayAllPoints: true,
+                                    },
+                                    2,
+                                    {
+                                        type: "default",
+                                    }
+                                );
+                            });
                         });
-                    });
+                    }
                 }
             }
 
@@ -974,8 +1016,7 @@ export function MeasureDraw({
         cameraType,
         outlineLasers,
         manholeCollisionValues,
-        pointLinePoints,
-        pointLineResult,
+        pointLines,
         pointerPos,
         roadCrossSectionData,
         showTracer,

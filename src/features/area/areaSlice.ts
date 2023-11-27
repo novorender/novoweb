@@ -5,7 +5,8 @@ import { RootState } from "app/store";
 import { resetView, selectBookmark } from "features/render";
 
 export type AreaMeasure = {
-    points: [point: vec3, normal: vec3][];
+    points: vec3[];
+    normals: vec3[];
     drawPoints: vec3[];
     area: number;
 };
@@ -14,12 +15,13 @@ const initialState = {
     areaList: [
         {
             points: [],
+            normals: [],
             drawPoints: [],
             area: -1,
         },
     ] as AreaMeasure[],
     currentIndex: 0 as number,
-    bookmarkPoints: [[]] as [point: [number, number, number], normal: [number, number, number]][][],
+    bookmarkPoints: [] as { points: [number, number, number][]; normals: [number, number, number][] }[],
 };
 
 export const areaSlice = createSlice({
@@ -37,6 +39,7 @@ export const areaSlice = createSlice({
                 state.areaList = [
                     {
                         points: [],
+                        normals: [],
                         drawPoints: [],
                         area: -1,
                     },
@@ -46,15 +49,19 @@ export const areaSlice = createSlice({
         setDrawPoints: (state, action: PayloadAction<vec3[]>) => {
             state.areaList[state.currentIndex].drawPoints = action.payload;
         },
-        setPoints: (state, action: PayloadAction<[point: vec3, normal: vec3][]>) => {
-            state.areaList[state.currentIndex].points = action.payload;
+        setPoints: (state, action: PayloadAction<{ points: vec3[]; normals: vec3[] }>) => {
+            state.areaList[state.currentIndex].points = action.payload.points;
+            state.areaList[state.currentIndex].normals = action.payload.normals;
         },
         setArea: (state, action: PayloadAction<number>) => {
             state.areaList[state.currentIndex].area = action.payload;
         },
         addPoint: (state, action: PayloadAction<[vec3, vec3]>) => {
             state.areaList[state.currentIndex].points = state.areaList[state.currentIndex].points.concat([
-                action.payload,
+                action.payload[0],
+            ]);
+            state.areaList[state.currentIndex].normals = state.areaList[state.currentIndex].normals.concat([
+                action.payload[1],
             ]);
         },
         undoPoint: (state) => {
@@ -67,6 +74,7 @@ export const areaSlice = createSlice({
             if (state.areaList[state.areaList.length - 1].points.length) {
                 state.areaList.push({
                     points: [],
+                    normals: [],
                     drawPoints: [],
                     area: -1,
                 });
@@ -80,7 +88,8 @@ export const areaSlice = createSlice({
                 // legacy
                 state.areaList = [
                     {
-                        points: action.payload.measurements.area.points,
+                        points: action.payload.measurements.area.points.map((p) => p[0]),
+                        normals: action.payload.measurements.area.points.map((p) => p[1]),
                         drawPoints: [],
                         area: -1,
                     },
@@ -90,16 +99,24 @@ export const areaSlice = createSlice({
             }
         });
         builder.addCase(resetView, (state) => {
-            state.areaList = [];
+            state.areaList = [
+                {
+                    points: [],
+                    normals: [],
+                    drawPoints: [],
+                    area: -1,
+                },
+            ];
         });
     },
 });
 
 export const selectCurrentAreaPoints = (state: RootState) => state.area.areaList[state.area.currentIndex].points;
-export const selectCurrentArea = (state: RootState) => state.area.areaList[state.area.currentIndex].area;
+export const selectCurrentArea = (state: RootState) => state.area.areaList[state.area.currentIndex];
+export const selectCurrentAreaValue = (state: RootState) => state.area.areaList[state.area.currentIndex].area;
 export const selectCurrentIndex = (state: RootState) => state.area.currentIndex;
 export const selectAreas = (state: RootState) => state.area.areaList;
-export const selectBookmarkPoints = (state: RootState) => state.area.bookmarkPoints;
+export const selectAreaBookmarkPoints = (state: RootState) => state.area.bookmarkPoints;
 
 const { actions, reducer } = areaSlice;
 export { actions as areaActions, reducer as areaReducer };

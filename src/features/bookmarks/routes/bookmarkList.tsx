@@ -193,7 +193,7 @@ function applyFilters(bookmarks: ExtendedBookmark[], filters: Filters): Extended
                 if (
                     !measurements.area.areas.length &&
                     !measurements.measure.entities.length &&
-                    !measurements.pointLine.points.length &&
+                    !measurements.pointLine.pointLines.length &&
                     measurements.manhole.id === undefined
                 ) {
                     return false;

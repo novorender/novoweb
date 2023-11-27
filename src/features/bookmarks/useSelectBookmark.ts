@@ -295,9 +295,12 @@ export function useSelectBookmark() {
             }
 
             if (bookmark.area) {
-                dispatch(areaActions.setPoints(bookmark.area.pts.map(([pt, normal]) => [flip(pt), flip(normal)])));
-            } else {
-                dispatch(areaActions.setPoints([]));
+                dispatch(
+                    areaActions.setPoints({
+                        points: bookmark.area.pts.map((p) => flip(p[0])),
+                        normals: bookmark.area.pts.map((p) => flip(p[1])),
+                    })
+                );
             }
 
             if (bookmark.pointLine) {

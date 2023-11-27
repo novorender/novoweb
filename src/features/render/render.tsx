@@ -90,6 +90,7 @@ export function Render3D() {
         removeAxis: [],
         info: [],
         area: { remove: [], finalize: [], undo: [] },
+        pointLine: { remove: [], finalize: [], undo: [] },
     });
     const pointerPos = useRef([0, 0] as [x: number, y: number]);
     const canvasRef: RefCallback<HTMLCanvasElement> = useCallback(

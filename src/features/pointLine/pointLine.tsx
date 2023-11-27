@@ -1,4 +1,4 @@
-import { DeleteSweep, Undo } from "@mui/icons-material";
+import { Add, DeleteSweep, Undo } from "@mui/icons-material";
 import { Box, Button, Checkbox, FormControlLabel } from "@mui/material";
 import { useEffect, useRef } from "react";
 
@@ -21,7 +21,7 @@ import WidgetList from "features/widgetList/widgetList";
 import { useToggle } from "hooks/useToggle";
 import { selectMaximized, selectMinimized } from "slices/explorerSlice";
 
-import { pointLineActions, selectPointLine } from "./pointLineSlice";
+import { pointLineActions, selectLockElevation, selectPointLine } from "./pointLineSlice";
 
 export default function PointLine() {
     const [menuOpen, toggleMenu] = useToggle();
@@ -30,7 +30,8 @@ export default function PointLine() {
     const maximized = useAppSelector(selectMaximized).includes(featuresConfig.pointLine.key);
 
     const selecting = useAppSelector(selectPicker) === Picker.PointLine;
-    const { points, lockElevation, result } = useAppSelector(selectPointLine);
+    const { points, result } = useAppSelector(selectPointLine);
+    const lockElevation = useAppSelector(selectLockElevation);
     const dispatch = useAppDispatch();
 
     const isInitial = useRef(true);
@@ -80,6 +81,14 @@ export default function PointLine() {
                             >
                                 <Undo sx={{ mr: 1 }} />
                                 Undo
+                            </Button>
+                            <Button
+                                onClick={() => dispatch(pointLineActions.newPointLine())}
+                                color="grey"
+                                disabled={!points.length}
+                            >
+                                <Add sx={{ mr: 1 }} />
+                                New
                             </Button>
                             <Button
                                 disabled={!points.length}

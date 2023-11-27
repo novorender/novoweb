@@ -22,7 +22,7 @@ import {
     selectOutlineLasers,
     TraceMeasurement,
 } from "features/outlineLaser";
-import { selectPointLinePoints } from "features/pointLine";
+import { selectPointLines } from "features/pointLine";
 import {
     selectBackground,
     selectClippingPlanes,
@@ -45,7 +45,7 @@ export function useCreateBookmark() {
     const selectionBasketMode = useAppSelector(selectSelectionBasketMode);
     const followPath = useAppSelector(selectFollowPath);
     const areas = useAppSelector(selectAreas);
-    const pointLinePts = useAppSelector(selectPointLinePoints);
+    const pointLines = useAppSelector(selectPointLines);
     const subtrees = useAppSelector(selectSubtrees);
     const manhole = useAppSelector(selectManholeMeasureValues);
     const manholeCollisionTarget = useAppSelector(selectManholeCollisionTarget);
@@ -138,10 +138,12 @@ export function useCreateBookmark() {
                 },
                 measurements: {
                     area: {
-                        areas: areas.map((a) => a.points),
+                        areas: areas.map((a) => {
+                            return { points: a.points, normals: a.normals };
+                        }),
                     },
                     pointLine: {
-                        points: pointLinePts,
+                        pointLines: pointLines.map((p) => p.points),
                     },
                     measure: {
                         entities: measurement.selectedEntities,

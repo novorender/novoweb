@@ -4,6 +4,7 @@ import { Fragment, SVGProps } from "react";
 
 import { useAppDispatch, useAppSelector } from "app/store";
 import { areaActions, selectAreas } from "features/area";
+import { pointLineActions, selectPointLines } from "features/pointLine";
 import { Picker, renderActions } from "features/render";
 
 import { measureActions, selectMeasure } from "./measureSlice";
@@ -98,6 +99,11 @@ export type MeasureInteractionPositions = {
         finalize: (vec2 | undefined)[];
         undo: (vec2 | undefined)[];
     };
+    pointLine: {
+        remove: (vec2 | undefined)[];
+        finalize: (vec2 | undefined)[];
+        undo: (vec2 | undefined)[];
+    };
 };
 
 export function MeasureInteractions() {
@@ -105,6 +111,7 @@ export function MeasureInteractions() {
     const { selectedEntities } = useAppSelector(selectMeasure);
     const measure = useAppSelector(selectMeasure);
     const areas = useAppSelector(selectAreas);
+    const pointLines = useAppSelector(selectPointLines);
 
     return (
         <>
@@ -205,6 +212,37 @@ export function MeasureInteractions() {
                                 name={`undoArea-${idx}`}
                                 onClick={() => {
                                     dispatch(areaActions.undoPoint());
+                                }}
+                            />
+                        </>
+                    ) : null}
+                </Fragment>
+            ))}
+            {pointLines.map((pointLine, idx) => (
+                <Fragment key={`area-${idx}`}>
+                    {pointLine.points.length ? (
+                        <>
+                            <RemoveMarker
+                                id={`removePl-${idx}`}
+                                name={`removePl-${idx}`}
+                                onClick={() => {
+                                    dispatch(renderActions.stopPicker(Picker.PointLine));
+                                    dispatch(pointLineActions.deletePointline(idx));
+                                }}
+                            />
+                            <FinalizeMarker
+                                id={`finalizePl-${idx}`}
+                                name={`finalizePl-${idx}`}
+                                onClick={() => {
+                                    dispatch(renderActions.stopPicker(Picker.PointLine));
+                                    dispatch(pointLineActions.newPointLine());
+                                }}
+                            />
+                            <UndoMarker
+                                id={`undoPl-${idx}`}
+                                name={`undoPl-${idx}`}
+                                onClick={() => {
+                                    dispatch(pointLineActions.undoPoint());
                                 }}
                             />
                         </>

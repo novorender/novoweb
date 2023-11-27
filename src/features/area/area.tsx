@@ -10,7 +10,7 @@ import WidgetList from "features/widgetList/widgetList";
 import { useToggle } from "hooks/useToggle";
 import { selectMaximized, selectMinimized } from "slices/explorerSlice";
 
-import { areaActions, selectCurrentArea, selectCurrentAreaPoints } from "./areaSlice";
+import { areaActions, selectCurrentAreaPoints, selectCurrentAreaValue } from "./areaSlice";
 
 export default function Area() {
     const [menuOpen, toggleMenu] = useToggle();
@@ -20,7 +20,7 @@ export default function Area() {
 
     const selecting = useAppSelector(selectPicker) === Picker.Area;
     const points = useAppSelector(selectCurrentAreaPoints);
-    const area = useAppSelector(selectCurrentArea);
+    const area = useAppSelector(selectCurrentAreaValue);
     const dispatch = useAppDispatch();
 
     const isInitial = useRef(true);
@@ -78,7 +78,7 @@ export default function Area() {
                             </Button>
                             <Button
                                 disabled={!points.length}
-                                onClick={() => dispatch(areaActions.setPoints([]))}
+                                onClick={() => dispatch(areaActions.setPoints({ points: [], normals: [] }))}
                                 color="grey"
                             >
                                 <DeleteSweep sx={{ mr: 1 }} />
