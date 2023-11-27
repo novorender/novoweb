@@ -83,8 +83,13 @@ export function Render3D() {
 
     const [svg, setSvg] = useState<null | SVGSVGElement>(null);
 
-    const engine2dRenderFn = useRef<((moved: boolean, idleFrame: boolean) => void) | undefined>();
-    const pointerPos = useRef([0, 0] as [x: number, y: number]);
+    const engine2dRenderFnRef = useRef<((moved: boolean, idleFrame: boolean) => void) | undefined>();
+    const pointerPosRef = useRef([0, 0] as [x: number, y: number]);
+    const pointerDownStateRef = useRef<{
+        timestamp: number;
+        x: number;
+        y: number;
+    }>();
     const canvasRef: RefCallback<HTMLCanvasElement> = useCallback(
         (el) => {
             dispatchGlobals(explorerGlobalsActions.update({ canvas: el }));
@@ -94,7 +99,7 @@ export function Render3D() {
 
     useHandleInit();
     useHandleInitialBookmark();
-    useHandleCameraMoved({ svg, engine2dRenderFn });
+    useHandleCameraMoved({ svg, engine2dRenderFnRef });
     useHandleCameraState();
     useHandleCameraSpeed();
     useHandleGrid();
@@ -121,8 +126,14 @@ export function Render3D() {
     useHandleOffline();
 
     const cursor = useHandleCanvasCursor();
-    const onClick = useCanvasClickHandler();
-    const eventHandlers = useCanvasEventHandlers({ pointerPos, cursor, svg, renderFnRef: engine2dRenderFn });
+    const onClick = useCanvasClickHandler({ pointerDownStateRef });
+    const eventHandlers = useCanvasEventHandlers({
+        pointerPosRef,
+        cursor,
+        svg,
+        pointerDownStateRef,
+        engine2dRenderFnRef,
+    });
 
     return (
         <Box position="relative" width="100%" height="100%" sx={{ userSelect: "none" }}>
@@ -137,7 +148,7 @@ export function Render3D() {
             {sceneStatus.status === AsyncStatus.Success && view && canvas && (
                 <>
                     {debugStats.enabled && <PerformanceStats />}
-                    <Engine2D pointerPos={pointerPos} renderFnRef={engine2dRenderFn} />
+                    <Engine2D pointerPos={pointerPosRef} renderFnRef={engine2dRenderFnRef} />
                     <Stamp />
                     <Svg width={size.width} height={size.height} ref={setSvg}>
                         <Markers />

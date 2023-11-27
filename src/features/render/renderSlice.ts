@@ -173,15 +173,6 @@ const initialState = {
     viewMode: ViewMode.Default,
     loadingHandles: [] as number[],
     stamp: null as null | Stamp,
-    pointerDownState: undefined as
-        | undefined
-        | {
-              timestamp: number;
-              x: number;
-              y: number;
-          },
-
-    // NEW
     background: {
         environments: { status: AsyncStatus.Initial } as AsyncState<EnvironmentDescription[]>,
         color: [0.75, 0.75, 0.75, 1] as vec4,
@@ -263,6 +254,8 @@ const initialState = {
             usePointerLock: false,
             topDownElevation: undefined as undefined | number,
             topDownSnapToAxis: undefined as undefined | "north",
+            deAcceleration: false,
+            touchRotate: false,
         },
     },
     advanced: {
@@ -395,6 +388,19 @@ export const renderSlice = createSlice({
          * Deletes camera positions already saved at higher indexes
          */
         saveCameraPosition: (state, action: PayloadAction<CameraStep>) => {
+            const lastPos = state.savedCameraPositions.positions[state.savedCameraPositions.currentIndex];
+
+            if (
+                lastPos &&
+                vec3.equals(action.payload.position, lastPos.position) &&
+                quat.equals(action.payload.rotation, lastPos.rotation) &&
+                lastPos.fov &&
+                lastPos.fov === action.payload.fov &&
+                action.payload.kind === lastPos.kind
+            ) {
+                return state;
+            }
+
             state.savedCameraPositions.positions = state.savedCameraPositions.positions
                 .slice(0, state.savedCameraPositions.currentIndex + 1)
                 .concat({
@@ -505,9 +511,6 @@ export const renderSlice = createSlice({
         },
         setStamp: (state, action: PayloadAction<State["stamp"]>) => {
             state.stamp = action.payload;
-        },
-        setPointerDownState: (state, action: PayloadAction<State["pointerDownState"]>) => {
-            state.pointerDownState = action.payload;
         },
         setPoints: (state, action: PayloadAction<RecursivePartial<State["points"]>>) => {
             state.points = mergeRecursive(state.points, action.payload);
@@ -865,7 +868,6 @@ export const selectStamp = (state: RootState) => state.render.stamp;
 export const selectPointerLock = (state: RootState) => state.render.cameraDefaults.orthographic.usePointerLock;
 export const selectProportionalCameraSpeed = (state: RootState) =>
     state.render.cameraDefaults.pinhole.proportionalSpeed;
-export const selectPointerDownState = (state: RootState) => state.render.pointerDownState;
 export const selectBackground = (state: RootState) => state.render.background;
 export const selectSceneStatus = (state: RootState) => state.render.sceneStatus;
 export const selectTerrain = (state: RootState) => state.render.terrain;

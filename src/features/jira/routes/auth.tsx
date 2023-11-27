@@ -15,7 +15,7 @@ import {
     useGetCurrentUserQuery,
     useGetProjectsQuery,
     useLazyGetTokensQuery,
-    useRefreshTokensMutation,
+    useLazyRefreshTokensQuery,
 } from "../jiraApi";
 import {
     jiraActions,
@@ -46,7 +46,7 @@ export function Auth() {
     const [error, setError] = useState("");
 
     const [getTokens, { data: tokensResponse, error: tokensError }] = useLazyGetTokensQuery();
-    const [refreshTokens] = useRefreshTokensMutation();
+    const [refreshTokens] = useLazyRefreshTokensQuery();
 
     const { data: accessibleResources, error: accessibleResourcesError } = useGetAccessibleResourcesQuery(
         { accessToken: accessTokenStr },
@@ -86,16 +86,16 @@ export function Auth() {
             } else if (refreshToken) {
                 dispatch(jiraActions.setAccessToken({ status: AsyncStatus.Loading }));
 
-                const res = await refreshTokens({ refreshToken, config: explorerConfig });
+                const res = await refreshTokens({ refreshToken, config: explorerConfig })
+                    .unwrap()
+                    .catch((error) => console.warn(error));
 
-                if ("data" in res) {
-                    saveToStorage(StorageKey.JiraRefreshToken, res.data.refresh_token);
-                    dispatch(jiraActions.setAccessToken({ status: AsyncStatus.Success, data: res.data.access_token }));
-                    dispatch(
-                        jiraActions.setRefreshToken({ token: res.data.refresh_token, refreshIn: res.data.expires_in })
-                    );
+                if (res) {
+                    saveToStorage(StorageKey.JiraRefreshToken, res.refresh_token);
+                    dispatch(jiraActions.setAccessToken({ status: AsyncStatus.Success, data: res.access_token }));
+                    dispatch(jiraActions.setRefreshToken({ token: res.refresh_token, refreshIn: res.expires_in }));
                 } else {
-                    console.warn(res.error);
+                    console.warn("An error occurred while refreshing jira token.");
                     deleteFromStorage(StorageKey.JiraRefreshToken);
                     dispatch(jiraActions.setRefreshToken(undefined));
                     history.push("/login");

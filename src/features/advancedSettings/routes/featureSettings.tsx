@@ -23,7 +23,6 @@ import {
     explorerActions,
     selectCanvasContextMenuFeatures,
     selectEnabledWidgets,
-    selectIsAdminScene,
     selectLockedWidgets,
     selectPrimaryMenu,
 } from "slices/explorerSlice";
@@ -33,7 +32,6 @@ export function FeatureSettings({ save, saving }: { save: () => Promise<void>; s
     const theme = useTheme();
 
     const dispatch = useAppDispatch();
-    const isAdminScene = useAppSelector(selectIsAdminScene);
     const enabledWidgets = useAppSelector(selectEnabledWidgets);
     const lockedWidgets = useAppSelector(selectLockedWidgets);
     const primaryMenu = useAppSelector(selectPrimaryMenu);
@@ -120,55 +118,51 @@ export function FeatureSettings({ save, saving }: { save: () => Promise<void>; s
                     />
                     <Divider />
                 </Box>
-                {!isAdminScene && (
-                    <Accordion>
-                        <AccordionSummary>Widgets</AccordionSummary>
-                        <AccordionDetails>
-                            <Grid container p={1}>
-                                {[...viewerWidgets]
-                                    .sort(
-                                        (a, b) =>
-                                            a.name.localeCompare(b.name, "en", { sensitivity: "accent" }) +
-                                            ((lockedWidgets.includes(a.key) && lockedWidgets.includes(b.key)) ||
-                                            (!lockedWidgets.includes(a.key) && !lockedWidgets.includes(b.key))
-                                                ? 0
-                                                : lockedWidgets.includes(a.key)
-                                                ? 100
-                                                : -100)
+                <Accordion>
+                    <AccordionSummary>Widgets</AccordionSummary>
+                    <AccordionDetails>
+                        <Grid container p={1}>
+                            {[...viewerWidgets]
+                                .sort(
+                                    (a, b) =>
+                                        a.name.localeCompare(b.name, "en", { sensitivity: "accent" }) +
+                                        ((lockedWidgets.includes(a.key) && lockedWidgets.includes(b.key)) ||
+                                        (!lockedWidgets.includes(a.key) && !lockedWidgets.includes(b.key))
+                                            ? 0
+                                            : lockedWidgets.includes(a.key)
+                                            ? 100
+                                            : -100)
+                                )
+                                .map((widget) =>
+                                    defaultEnabledWidgets.includes(widget.key) ? null : (
+                                        <Grid item xs={6} key={widget.key}>
+                                            <FormControlLabel
+                                                control={
+                                                    <Checkbox
+                                                        size="small"
+                                                        color="primary"
+                                                        name={widget.key}
+                                                        checked={
+                                                            enabledWidgets.some(
+                                                                (enabled) => enabled.key === widget.key
+                                                            ) && !lockedWidgets.includes(widget.key)
+                                                        }
+                                                        onChange={(_e, checked) => toggleWidget(widget.key, checked)}
+                                                        disabled={lockedWidgets.includes(widget.key)}
+                                                    />
+                                                }
+                                                label={
+                                                    <Box mr={0.5} sx={{ userSelect: "none" }}>
+                                                        {widget.name}
+                                                    </Box>
+                                                }
+                                            />
+                                        </Grid>
                                     )
-                                    .map((widget) =>
-                                        defaultEnabledWidgets.includes(widget.key) ? null : (
-                                            <Grid item xs={6} key={widget.key}>
-                                                <FormControlLabel
-                                                    control={
-                                                        <Checkbox
-                                                            size="small"
-                                                            color="primary"
-                                                            name={widget.key}
-                                                            checked={
-                                                                enabledWidgets.some(
-                                                                    (enabled) => enabled.key === widget.key
-                                                                ) && !lockedWidgets.includes(widget.key)
-                                                            }
-                                                            onChange={(_e, checked) =>
-                                                                toggleWidget(widget.key, checked)
-                                                            }
-                                                            disabled={lockedWidgets.includes(widget.key)}
-                                                        />
-                                                    }
-                                                    label={
-                                                        <Box mr={0.5} sx={{ userSelect: "none" }}>
-                                                            {widget.name}
-                                                        </Box>
-                                                    }
-                                                />
-                                            </Grid>
-                                        )
-                                    )}
-                            </Grid>
-                        </AccordionDetails>
-                    </Accordion>
-                )}
+                                )}
+                        </Grid>
+                    </AccordionDetails>
+                </Accordion>
                 <Accordion>
                     <AccordionSummary>Primary menu</AccordionSummary>
                     <AccordionDetails>

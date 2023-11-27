@@ -1,0 +1,442 @@
+import {
+    CropLandscape,
+    Height,
+    Layers,
+    LayersClear,
+    RouteOutlined,
+    Straighten,
+    VisibilityOff,
+} from "@mui/icons-material";
+import { Box, ListItemIcon, ListItemText, MenuItem, Tab, Tabs, Typography } from "@mui/material";
+import { MeasureEntity, View } from "@novorender/api";
+import { ObjectDB } from "@novorender/data-js-api";
+import { HierarcicalObjectReference } from "@novorender/webgl-api";
+import { vec3, vec4 } from "gl-matrix";
+import { useEffect, useState } from "react";
+
+import { useAppDispatch, useAppSelector } from "app/store";
+import { Divider, LinearProgress } from "components";
+import { canvasContextMenuConfig, canvasContextMenuConfig as config } from "config/canvasContextMenu";
+import { useExplorerGlobals } from "contexts/explorerGlobals";
+import { hiddenActions, useDispatchHidden } from "contexts/hidden";
+import { highlightActions, useDispatchHighlighted } from "contexts/highlighted";
+import { selectionBasketActions, useDispatchSelectionBasket } from "contexts/selectionBasket";
+import { measureActions } from "features/measure";
+import { clippingOutlineLaserActions, getOutlineLaser, OutlineLaser } from "features/outlineLaser";
+import {
+    CameraType,
+    ObjectVisibility,
+    renderActions,
+    selectCameraType,
+    selectClippingPlanes,
+    selectStamp,
+    StampKind,
+} from "features/render";
+import { selectCanvasContextMenuFeatures } from "slices/explorerSlice";
+import { AsyncStatus } from "types/misc";
+import { getFilePathFromObjectPath } from "utils/objectData";
+import { getObjectData, searchDeepByPatterns } from "utils/search";
+
+const selectionFeatures = [
+    canvasContextMenuConfig.addFileToBasket.key,
+    canvasContextMenuConfig.clip.key,
+    canvasContextMenuConfig.hide.key,
+    canvasContextMenuConfig.hideLayer.key,
+];
+const measureFeatures = [canvasContextMenuConfig.measure.key, canvasContextMenuConfig.laser.key];
+
+let currentTab = 0;
+export function CanvasContextMenuStamp() {
+    const features = useAppSelector(selectCanvasContextMenuFeatures);
+    const hasSelectionFeatures = features.some((feature) => selectionFeatures.includes(feature as any));
+    const hasMeasureFeatures = features.some((feature) => measureFeatures.includes(feature as any));
+    currentTab = hasSelectionFeatures && hasMeasureFeatures ? currentTab : hasMeasureFeatures ? 1 : 0;
+    const [tab, setTab] = useState(currentTab);
+
+    return (
+        <>
+            <Box
+                sx={{
+                    pointerEvents: "auto",
+                    minWidth: 270,
+                }}
+            >
+                <Box sx={{ borderBottom: 1, borderColor: "divider", background: "#f9f9f9", mb: 1 }}>
+                    <Tabs
+                        value={tab}
+                        onChange={(_evt, value) => {
+                            currentTab = value;
+                            setTab(value);
+                        }}
+                    >
+                        <Tab label={"Selection"} disabled={!hasSelectionFeatures} />
+                        <Tab label={"Measure"} disabled={!hasMeasureFeatures} />
+                    </Tabs>
+                </Box>
+                <Box visibility={tab === 0 ? "visible" : "hidden"} display={tab === 0 ? "block" : "none"}>
+                    <Selection />
+                </Box>
+                <Box visibility={tab === 1 ? "visible" : "hidden"} display={tab === 1 ? "block" : "none"}>
+                    <Measure />
+                </Box>
+            </Box>
+        </>
+    );
+}
+
+export function Selection() {
+    const dispatch = useAppDispatch();
+    const dispatchHidden = useDispatchHidden();
+    const dispatchHighlighted = useDispatchHighlighted();
+    const dispatchSelectionBasket = useDispatchSelectionBasket();
+    const {
+        state: { db, view },
+    } = useExplorerGlobals(true);
+
+    const features = useAppSelector(selectCanvasContextMenuFeatures);
+    const clippingPlanes = useAppSelector(selectClippingPlanes).planes;
+    const cameraType = useAppSelector(selectCameraType);
+    const stamp = useAppSelector(selectStamp);
+    const [properties, setProperties] = useState<{
+        layer: [string, string] | undefined;
+        file: [string, string] | undefined;
+    }>();
+
+    useEffect(() => {
+        loadObjectData();
+
+        async function loadObjectData() {
+            if (stamp?.kind !== StampKind.CanvasContextMenu) {
+                console.warn("CanvasContextMenuStamp rendered for the wrong stamp kind");
+                dispatch(renderActions.setStamp(null));
+                return;
+            }
+
+            const objectId = stamp.data.object;
+
+            if (objectId && stamp.data.position) {
+                const obj = await getObjectData({ db, id: objectId, view });
+                const file = getFilePathFromObjectPath(obj?.path ?? "");
+                const layer = obj?.properties.find(([key]) =>
+                    ["ifcClass", "dwg/layer"].map((str) => str.toLowerCase()).includes(key.toLowerCase())
+                );
+                setProperties({
+                    layer,
+                    file: file ? ["path", file] : undefined,
+                });
+            }
+        }
+    }, [stamp, db, view, cameraType, dispatch]);
+
+    if (stamp?.kind !== StampKind.CanvasContextMenu) {
+        return null;
+    }
+
+    const close = () => {
+        dispatch(renderActions.setStamp(null));
+    };
+
+    const hide = () => {
+        if (stamp.data.object === undefined) {
+            return;
+        }
+
+        dispatch(renderActions.setMainObject(undefined));
+        dispatchHighlighted(highlightActions.remove([stamp.data.object]));
+        dispatchHidden(hiddenActions.add([stamp.data.object]));
+        dispatchSelectionBasket(selectionBasketActions.remove([stamp.data.object]));
+        close();
+    };
+
+    const hideLayer = async () => {
+        if (!properties?.layer) {
+            return;
+        }
+        const handle = performance.now();
+        dispatch(renderActions.addLoadingHandle(handle));
+
+        close();
+
+        await searchDeepByPatterns({
+            db,
+            searchPatterns: [{ property: properties.layer[0], value: properties.layer[1], exact: true }],
+            callback: (ids) => {
+                dispatch(renderActions.setMainObject(undefined));
+                dispatchHighlighted(highlightActions.remove(ids));
+                dispatchSelectionBasket(selectionBasketActions.remove(ids));
+                dispatchHidden(hiddenActions.add(ids));
+            },
+        });
+
+        dispatch(renderActions.removeLoadingHandle(handle));
+    };
+
+    const addToBasket = async () => {
+        if (!properties?.file) {
+            return;
+        }
+
+        const handle = performance.now();
+        dispatch(renderActions.addLoadingHandle(handle));
+
+        close();
+
+        await searchDeepByPatterns({
+            db,
+            searchPatterns: [{ property: properties.file[0], value: properties.file[1], exact: true }],
+            callback: (ids) => {
+                dispatchHighlighted(highlightActions.remove(ids));
+                dispatchHidden(hiddenActions.remove(ids));
+                dispatchSelectionBasket(selectionBasketActions.add(ids));
+            },
+        });
+
+        dispatch(renderActions.setDefaultVisibility(ObjectVisibility.SemiTransparent));
+        dispatch(renderActions.removeLoadingHandle(handle));
+    };
+
+    const clip = () => {
+        const { position, normal } = stamp.data;
+        if (!normal || !position) {
+            return;
+        }
+
+        const w = vec3.dot(normal, position);
+        dispatch(
+            renderActions.addClippingPlane({
+                normalOffset: vec4.fromValues(normal[0], normal[1], normal[2], w),
+                baseW: w,
+            })
+        );
+
+        close();
+    };
+
+    return (
+        <>
+            {stamp.data.object !== undefined && !properties && <LinearProgress sx={{ mt: -1 }} />}
+            <Box>
+                {features.includes(config.hide.key) && (
+                    <MenuItem onClick={hide} disabled={stamp.data.object === undefined}>
+                        <ListItemIcon>
+                            <VisibilityOff fontSize="small" />
+                        </ListItemIcon>
+                        <ListItemText>{config.hide.name}</ListItemText>
+                    </MenuItem>
+                )}
+                {features.includes(config.hideLayer.key) && (
+                    <MenuItem onClick={hideLayer} disabled={!properties?.layer}>
+                        <ListItemIcon>
+                            <LayersClear fontSize="small" />
+                        </ListItemIcon>
+                        <ListItemText>
+                            {properties?.layer
+                                ? config.hideLayer.name.replace(
+                                      "class / layer",
+                                      (properties.layer ?? [""])[0].toLowerCase() === "ifcclass" ? "class" : "layer"
+                                  )
+                                : config.hideLayer.name}
+                        </ListItemText>
+                    </MenuItem>
+                )}
+                {features.includes(config.addFileToBasket.key) && (
+                    <MenuItem onClick={addToBasket} disabled={!properties?.file}>
+                        <ListItemIcon>
+                            <Layers fontSize="small" />
+                        </ListItemIcon>
+                        <ListItemText>{config.addFileToBasket.name}</ListItemText>
+                    </MenuItem>
+                )}
+
+                {features.includes(config.clip.key) && (
+                    <MenuItem
+                        onClick={clip}
+                        disabled={!stamp.data.normal || !stamp.data.position || clippingPlanes.length > 5}
+                    >
+                        <ListItemIcon>
+                            <CropLandscape fontSize="small" />
+                        </ListItemIcon>
+                        <ListItemText>{config.clip.name}</ListItemText>
+                    </MenuItem>
+                )}
+            </Box>
+        </>
+    );
+}
+
+type CenterLine = Awaited<ReturnType<NonNullable<View["measure"]>["core"]["pickCurveSegment"]>>;
+async function getRoadCenterLine({ db, view, id }: { db: ObjectDB; view: View; id: number }): Promise<CenterLine> {
+    const obj = await getObjectData({ db, view, id });
+
+    if (!obj) {
+        return;
+    }
+
+    if (obj.properties.find(([key]) => key === "Novorender/Path")) {
+        return view.measure?.core.pickCurveSegment(obj.id);
+    }
+
+    const iterator = db.search(
+        {
+            searchPattern: [
+                { property: "path", value: getFilePathFromObjectPath(obj.path) ?? obj.path },
+                { property: "Novorender/Path", value: "" },
+            ],
+        },
+        new AbortController().signal
+    );
+
+    const res = await iterator.next();
+    const multipleResults = res.value && (await iterator.next()).value;
+    if (multipleResults || !res.value) {
+        return;
+    }
+
+    return view.measure?.core.pickCurveSegment((res.value as HierarcicalObjectReference).id);
+}
+
+export function Measure() {
+    const dispatch = useAppDispatch();
+    const {
+        state: { db, view },
+    } = useExplorerGlobals(true);
+
+    const features = useAppSelector(selectCanvasContextMenuFeatures);
+    const cameraType = useAppSelector(selectCameraType);
+    const stamp = useAppSelector(selectStamp);
+    const [status, setStatus] = useState(AsyncStatus.Initial);
+    const [measureEntity, setMeasureEntity] = useState<MeasureEntity>();
+    const [laser, setLaser] = useState<{ laser: OutlineLaser; plane: Vec4 }>();
+    const [centerLine, setCenterLine] = useState<CenterLine>();
+
+    useEffect(() => {
+        loadObjectData();
+
+        async function loadObjectData() {
+            if (stamp?.kind !== StampKind.CanvasContextMenu) {
+                console.warn("CanvasContextMenuStamp rendered for the wrong stamp kind");
+                dispatch(renderActions.setStamp(null));
+                return;
+            }
+
+            const objectId = stamp.data.object;
+            if (objectId && stamp.data.position) {
+                setStatus(AsyncStatus.Loading);
+                const ent = await view.measure?.core
+                    .pickMeasureEntity(objectId, stamp.data.position)
+                    .then((res) => (["face"].includes(res.entity.drawKind) ? res.entity : undefined))
+                    .catch(() => undefined);
+
+                setMeasureEntity(ent);
+
+                setCenterLine(await getRoadCenterLine({ db, view, id: objectId }));
+            }
+
+            const pos = view.worldPositionFromPixelPosition(stamp.mouseX, stamp.mouseY);
+            const plane = view.renderState.clipping.planes[0]?.normalOffset;
+            if (cameraType === CameraType.Orthographic && pos && plane) {
+                const laser = await getOutlineLaser(pos, view, cameraType, plane);
+                setLaser(laser ? { laser, plane } : undefined);
+            }
+
+            setStatus(AsyncStatus.Success);
+        }
+    }, [stamp, db, view, cameraType, dispatch]);
+
+    if (stamp?.kind !== StampKind.CanvasContextMenu) {
+        return null;
+    }
+
+    const close = () => {
+        dispatch(renderActions.setStamp(null));
+    };
+
+    const measure = () => {
+        if (!measureEntity) {
+            return;
+        }
+
+        dispatch(
+            measureActions.selectEntity({
+                entity: measureEntity,
+            })
+        );
+
+        close();
+    };
+
+    const addLaser = async () => {
+        if (!laser) {
+            return;
+        }
+
+        dispatch(clippingOutlineLaserActions.setLaserPlane(laser.plane));
+        dispatch(clippingOutlineLaserActions.addLaser(laser.laser));
+        close();
+    };
+
+    const pickCenterLine = () => {
+        if (!centerLine) {
+            return;
+        }
+
+        dispatch(measureActions.setSelectedEntities([centerLine]));
+        dispatch(measureActions.pin(0));
+        close();
+    };
+
+    return (
+        <>
+            {[AsyncStatus.Initial, AsyncStatus.Loading].includes(status) && <LinearProgress sx={{ mt: -1 }} />}
+            <Box>
+                {features.includes(config.measure.key) && (
+                    <MenuItem onClick={measure} disabled={!measureEntity}>
+                        <ListItemIcon>
+                            <Straighten fontSize="small" />
+                        </ListItemIcon>
+                        <ListItemText>{config.measure.name}</ListItemText>
+                    </MenuItem>
+                )}
+                {features.includes(config.laser.key) && (
+                    <MenuItem onClick={addLaser} disabled={!laser}>
+                        <ListItemIcon>
+                            <Height fontSize="small" />
+                        </ListItemIcon>
+                        <ListItemText>{config.laser.name}</ListItemText>
+                    </MenuItem>
+                )}
+            </Box>
+            {centerLine && (
+                <Box mt={2}>
+                    <Box px={2} display={"flex"} alignItems={"center"}>
+                        <Divider
+                            sx={{
+                                display: "flex",
+                                flexGrow: 1,
+                                borderBottomWidth: 2,
+                                borderColor: (theme) => theme.palette.secondary.main,
+                            }}
+                        />
+                        <Typography px={1} fontWeight={600}>
+                            Road
+                        </Typography>
+                        <Divider
+                            sx={{
+                                display: "flex",
+                                flexGrow: 1,
+                                borderBottomWidth: 2,
+                                borderColor: (theme) => theme.palette.secondary.main,
+                            }}
+                        />
+                    </Box>
+                    <MenuItem onClick={pickCenterLine}>
+                        <ListItemIcon>
+                            <RouteOutlined fontSize="small" />
+                        </ListItemIcon>
+                        <ListItemText>Pick center line</ListItemText>
+                    </MenuItem>
+                </Box>
+            )}
+        </>
+    );
+}
