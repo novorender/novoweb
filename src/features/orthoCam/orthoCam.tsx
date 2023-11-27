@@ -240,6 +240,7 @@ export default function OrthoCam() {
                 anchorEl={colorPickerAnchor}
                 onClose={() => toggleColorPicker()}
                 color={background.color}
+                disableAlpha
                 onChangeComplete={({ rgb }) => {
                     const rgba = rgbToVec(rgb) as VecRGBA;
                     dispatch(
