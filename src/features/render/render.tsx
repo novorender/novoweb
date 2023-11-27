@@ -14,7 +14,6 @@ import { Engine2DInteractions } from "features/engine2D/engine2DInteractions";
 import { useHandleImages } from "features/images";
 import { useHandleJiraKeepAlive } from "features/jira";
 import { useHandleManhole } from "features/manhole";
-import { MeasureInteractionPositions } from "features/measure/measureInteractions";
 import { useHandleLocationMarker } from "features/myLocation";
 import { useHandleOffline } from "features/offline";
 import { useHandleCrossSection } from "features/orthoCam";
@@ -84,14 +83,7 @@ export function Render3D() {
 
     const [svg, setSvg] = useState<null | SVGSVGElement>(null);
 
-    const engine2dRenderFn = useRef<((moved: boolean, idleFrame: boolean) => void) | undefined>();
-    const interactionPositions = useRef<MeasureInteractionPositions>({
-        remove: [],
-        removeAxis: [],
-        info: [],
-        area: { remove: [], finalize: [], undo: [] },
-        pointLine: { remove: [], finalize: [], undo: [] },
-    });
+    const engine2dRenderFnRef = useRef<((moved: boolean, idleFrame: boolean) => void) | undefined>();
     const pointerPos = useRef([0, 0] as [x: number, y: number]);
     const canvasRef: RefCallback<HTMLCanvasElement> = useCallback(
         (el) => {
@@ -102,7 +94,7 @@ export function Render3D() {
 
     useHandleInit();
     useHandleInitialBookmark();
-    useHandleCameraMoved({ svg, engine2dRenderFn, interactionPositions });
+    useHandleCameraMoved({ svg, engine2dRenderFnRef });
     useHandleCameraState();
     useHandleCameraSpeed();
     useHandleGrid();
@@ -134,7 +126,7 @@ export function Render3D() {
         pointerPos,
         cursor,
         svg,
-        renderFnRef: engine2dRenderFn,
+        renderFnRef: engine2dRenderFnRef,
     });
 
     return (
@@ -150,11 +142,7 @@ export function Render3D() {
             {sceneStatus.status === AsyncStatus.Success && view && canvas && (
                 <>
                     {debugStats.enabled && <PerformanceStats />}
-                    <Engine2D
-                        pointerPos={pointerPos}
-                        renderFnRef={engine2dRenderFn}
-                        interactionPositions={interactionPositions}
-                    />
+                    <Engine2D pointerPos={pointerPos} renderFnRef={engine2dRenderFnRef} svg={svg} />
                     <Stamp />
                     <Svg width={size.width} height={size.height} ref={setSvg}>
                         <Markers />

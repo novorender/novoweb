@@ -4,8 +4,6 @@ import { MutableRefObject, useEffect, useRef } from "react";
 
 import { useAppDispatch, useAppSelector } from "app/store";
 import { useExplorerGlobals } from "contexts/explorerGlobals";
-import { useMove2DInteractions } from "features/engine2D";
-import { MeasureInteractionPositions } from "features/measure/measureInteractions";
 import { orthoCamActions, selectCurrentTopDownElevation } from "features/orthoCam";
 import { ViewMode } from "types/misc";
 
@@ -22,12 +20,10 @@ import { useMoveMarkers } from "./useMoveMarkers";
 
 export function useHandleCameraMoved({
     svg,
-    engine2dRenderFn,
-    interactionPositions,
+    engine2dRenderFnRef,
 }: {
     svg: SVGSVGElement | null;
-    engine2dRenderFn: MutableRefObject<((moved: boolean, idleframe: boolean) => void) | undefined>;
-    interactionPositions: MutableRefObject<MeasureInteractionPositions>;
+    engine2dRenderFnRef: MutableRefObject<((moved: boolean, idleframe: boolean) => void) | undefined>;
 }) {
     const {
         state: { view },
@@ -39,7 +35,6 @@ export function useHandleCameraMoved({
     const currentTopDownElevation = useAppSelector(selectCurrentTopDownElevation);
 
     const moveSvgMarkers = useMoveMarkers(svg);
-    const moveSvgInteractions = useMove2DInteractions(svg, interactionPositions);
 
     const movementTimer = useRef<ReturnType<typeof setTimeout>>();
     const orthoMovementTimer = useRef<ReturnType<typeof setTimeout>>();
@@ -61,14 +56,13 @@ export function useHandleCameraMoved({
                 const moved = view.activeController.moving || prevCameraType.current !== cameraType;
                 prevCameraType.current = cameraType;
 
-                engine2dRenderFn.current?.(moved, isIdleFrame);
+                engine2dRenderFnRef.current?.(moved, isIdleFrame);
 
                 if (!moved) {
                     return;
                 }
 
                 moveSvgMarkers();
-                moveSvgInteractions();
                 dispatch(renderActions.setStamp(null));
 
                 if (movementTimer.current) {
@@ -170,12 +164,12 @@ export function useHandleCameraMoved({
             view,
             dispatch,
             currentTopDownElevation,
-            savedCameraPositions,
             cameraType,
             viewMode,
             moveSvgMarkers,
-            moveSvgInteractions,
-            engine2dRenderFn,
+            engine2dRenderFnRef,
+            savedCameraPositions.currentIndex,
+            savedCameraPositions.positions,
         ]
     );
 }

@@ -115,109 +115,108 @@ export function MeasureInteractions() {
 
     return (
         <>
-            {selectedEntities.map((_, idx) => (
-                <Fragment key={`measureSet-${idx}`}>
-                    {
-                        <>
-                            <RemoveMarker
-                                id={`removeMeasure-${idx}`}
-                                name={`removeMeasure-${idx}`}
-                                onClick={() => {
-                                    dispatch(measureActions.deleteMeasureSet(idx));
-                                }}
-                            />
-                            <InfoMarker
-                                id={`infoMeasure-${idx}`}
-                                name={`infoMeasure-${idx}`}
-                                onClick={() => {
-                                    dispatch(measureActions.selectMeasureSet(idx));
-                                }}
-                            />
-                        </>
-                    }
-                </Fragment>
-            ))}
-            {measure.duoMeasurementValues.map((result, idx) => (
-                <Fragment key={`measureResult-${idx}`}>
-                    {result ? (
-                        <>
-                            <RemoveMarker
-                                id={`removeMeasureResultX-${idx}`}
-                                name={`removeMeasureResultX-${idx}`}
-                                onClick={() => {
-                                    dispatch(measureActions.removeAxis({ axis: "x", idx }));
-                                }}
-                            />
-                            <RemoveMarker
-                                id={`removeMeasureResultY-${idx}`}
-                                name={`removeMeasureResultY-${idx}`}
-                                onClick={() => {
-                                    dispatch(measureActions.removeAxis({ axis: "y", idx }));
-                                }}
-                            />
-                            <RemoveMarker
-                                id={`removeMeasureResultZ-${idx}`}
-                                name={`removeMeasureResultZ-${idx}`}
-                                onClick={() => {
-                                    dispatch(measureActions.removeAxis({ axis: "z", idx }));
-                                }}
-                            />
-                            <RemoveMarker
-                                id={`removeMeasureResultDist-${idx}`}
-                                name={`removeMeasureResultDist-${idx}`}
-                                onClick={() => {
-                                    dispatch(measureActions.removeAxis({ axis: "dist", idx }));
-                                }}
-                            />
-                            <RemoveMarker
-                                id={`removeMeasureResultPlan-${idx}`}
-                                name={`removeMeasureResultPlan-${idx}`}
-                                onClick={() => {
-                                    dispatch(measureActions.removeAxis({ axis: "plan", idx }));
-                                }}
-                            />
-                            <RemoveMarker
-                                id={`removeMeasureResultNormal-${idx}`}
-                                name={`removeMeasureResultNormal-${idx}`}
-                                onClick={() => {
-                                    dispatch(measureActions.removeAxis({ axis: "normal", idx }));
-                                }}
-                            />
-                        </>
-                    ) : null}
-                </Fragment>
-            ))}
-            {areas.map((area, idx) => (
-                <Fragment key={`area-${idx}`}>
-                    {area.area !== -1 ? (
-                        <>
-                            <RemoveMarker
-                                id={`removeArea-${idx}`}
-                                name={`removeArea-${idx}`}
-                                onClick={() => {
-                                    dispatch(renderActions.stopPicker(Picker.Area));
-                                    dispatch(areaActions.deleteArea(idx));
-                                }}
-                            />
-                            <FinalizeMarker
-                                id={`finalizeArea-${idx}`}
-                                name={`finalizeArea-${idx}`}
-                                onClick={() => {
-                                    dispatch(renderActions.stopPicker(Picker.Area));
-                                    dispatch(areaActions.newArea());
-                                }}
-                            />
-                            <UndoMarker
-                                id={`undoArea-${idx}`}
-                                name={`undoArea-${idx}`}
-                                onClick={() => {
-                                    dispatch(areaActions.undoPoint());
-                                }}
-                            />
-                        </>
-                    ) : null}
-                </Fragment>
-            ))}
+            {selectedEntities.map((entities, idx) =>
+                entities.length ? (
+                    <Fragment key={`measureSet-${idx}`}>
+                        {
+                            <>
+                                <RemoveMarker
+                                    id={`removeMeasure-${idx}`}
+                                    name={`removeMeasure-${idx}`}
+                                    onClick={() => {
+                                        dispatch(measureActions.deleteMeasureSet(idx));
+                                    }}
+                                />
+                                <InfoMarker
+                                    id={`infoMeasure-${idx}`}
+                                    name={`infoMeasure-${idx}`}
+                                    onClick={() => {
+                                        dispatch(measureActions.selectMeasureSet(idx));
+                                    }}
+                                />
+                            </>
+                        }
+                    </Fragment>
+                ) : null
+            )}
+            {measure.duoMeasurementValues.map((result, idx) =>
+                result ? (
+                    <Fragment key={`measureResult-${idx}`}>
+                        <RemoveMarker
+                            id={`removeMeasureResultX-${idx}`}
+                            name={`removeMeasureResultX-${idx}`}
+                            onClick={() => {
+                                dispatch(measureActions.removeAxis({ axis: "x", idx }));
+                            }}
+                        />
+                        <RemoveMarker
+                            id={`removeMeasureResultY-${idx}`}
+                            name={`removeMeasureResultY-${idx}`}
+                            onClick={() => {
+                                dispatch(measureActions.removeAxis({ axis: "y", idx }));
+                            }}
+                        />
+                        <RemoveMarker
+                            id={`removeMeasureResultZ-${idx}`}
+                            name={`removeMeasureResultZ-${idx}`}
+                            onClick={() => {
+                                dispatch(measureActions.removeAxis({ axis: "z", idx }));
+                            }}
+                        />
+                        <RemoveMarker
+                            id={`removeMeasureResultDist-${idx}`}
+                            name={`removeMeasureResultDist-${idx}`}
+                            onClick={() => {
+                                dispatch(measureActions.removeAxis({ axis: "dist", idx }));
+                            }}
+                        />
+                        <RemoveMarker
+                            id={`removeMeasureResultPlan-${idx}`}
+                            name={`removeMeasureResultPlan-${idx}`}
+                            onClick={() => {
+                                dispatch(measureActions.removeAxis({ axis: "plan", idx }));
+                            }}
+                        />
+                        <RemoveMarker
+                            id={`removeMeasureResultNormal-${idx}`}
+                            name={`removeMeasureResultNormal-${idx}`}
+                            onClick={() => {
+                                dispatch(measureActions.removeAxis({ axis: "normal", idx }));
+                            }}
+                        />
+                    </Fragment>
+                ) : null
+            )}
+            {areas.map((area, idx) =>
+                area.points.length && area.area !== -1 ? (
+                    <Fragment key={`area-${idx}`}>
+                        <RemoveMarker
+                            id={`removeArea-${idx}`}
+                            name={`removeArea-${idx}`}
+                            onClick={() => {
+                                dispatch(renderActions.stopPicker(Picker.Area));
+                                dispatch(areaActions.deleteArea(idx));
+                            }}
+                        />
+                        <FinalizeMarker
+                            id={`finalizeArea-${idx}`}
+                            name={`finalizeArea-${idx}`}
+                            onClick={() => {
+                                dispatch(renderActions.stopPicker(Picker.Area));
+                                dispatch(areaActions.newArea());
+                            }}
+                        />
+                        <UndoMarker
+                            id={`undoArea-${idx}`}
+                            name={`undoArea-${idx}`}
+                            onClick={() => {
+                                dispatch(areaActions.undoPoint());
+                            }}
+                        />
+                    </Fragment>
+                ) : null
+            )}
+
             {pointLines.map((pointLine, idx) => (
                 <Fragment key={`area-${idx}`}>
                     {pointLine.points.length ? (

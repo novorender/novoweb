@@ -28,6 +28,7 @@ import { selectPointLineCurrent, selectPointLines } from "features/pointLine";
 import { CameraType, Picker, selectCameraType, selectGrid, selectPicker, selectViewMode } from "features/render";
 import { AsyncStatus, ViewMode } from "types/misc";
 
+import { useMove2DInteractions } from "./useMove2DInteractions";
 import { CameraSettings, drawPart, drawProduct } from "./utils";
 
 const Canvas2D = styled("canvas")(
@@ -59,200 +60,14 @@ type AxisPosition = {
     normal?: Vec2;
 };
 
-function toId(obj: ParametricEntity) {
-    return `${obj.ObjectId}_${obj.instanceIndex}_${obj.pathIndex}`;
-}
-
-function drawMeasureObjects(
-    objectDraw: Map<string, { product: DrawProduct | undefined; updated: number }>,
-    drawId: number,
-    hoverObjectDrawResult: DrawProduct | undefined,
-    hoverHideId: string | undefined,
-    context2D: CanvasRenderingContext2D,
-    camSettings: CameraSettings
-) {
-    const deleteIds: string[] = [];
-    for (const draw of objectDraw) {
-        if (draw[1].updated < drawId) {
-            deleteIds.push(draw[0]);
-            continue;
-        }
-        const prod = draw[1].product;
-        if (prod) {
-            const inactiveDueToHover = hoverObjectDrawResult !== undefined && draw[0] === hoverHideId;
-            drawProduct(
-                context2D,
-                camSettings,
-                prod,
-                {
-                    lineColor: inactiveDueToHover ? measurementInactiveLineColor : measurementLineColor,
-                    fillColor: inactiveDueToHover ? measurementInactiveFillColor : measurementFillColor,
-                    pointColor: inactiveDueToHover ? measurementInactivePointColor : measurementPointColor,
-                    complexCylinder: true,
-                },
-                3,
-                { type: "default" }
-            );
-            if (draw[0] === "-1") {
-                deleteIds.push(draw[0]);
-            }
-        }
-    }
-
-    for (const id of deleteIds) {
-        objectDraw.delete(id);
-    }
-
-    if (hoverObjectDrawResult) {
-        drawProduct(
-            context2D,
-            camSettings,
-            hoverObjectDrawResult,
-            { lineColor: hoverLineColor, fillColor: hoverFillColor, pointColor: hoverLineColor },
-            5
-        );
-    }
-}
-
-function drawDuoResults(
-    resultDraw: Map<number, { product: DrawProduct | undefined; updated: number; activeAxis: ActiveAxis }>,
-    drawId: number,
-    context2D: CanvasRenderingContext2D,
-    camSettings: CameraSettings
-) {
-    const deleteIds: number[] = [];
-    for (const draw of resultDraw) {
-        if (draw[1].updated < drawId) {
-            deleteIds.push(draw[0]);
-            continue;
-        }
-        const duoDrawResult = draw[1].product;
-        if (duoDrawResult && duoDrawResult.objects.length === 1) {
-            const obj = duoDrawResult.objects[0];
-            const lines: [ReadonlyVec2, ReadonlyVec2][] = [];
-            let cylinderAngleDrawn = false;
-            for (const part of obj.parts) {
-                if (part.vertices2D === undefined) {
-                    continue;
-                }
-                let skip = false;
-                if (part.vertices2D.length === 2) {
-                    for (const l of lines) {
-                        const a = vec2.dist(l[0], part.vertices2D[0]) < 10 && vec2.dist(l[1], part.vertices2D[1]) < 10;
-                        const b = vec2.dist(l[0], part.vertices2D[1]) < 10 && vec2.dist(l[1], part.vertices2D[0]) < 10;
-                        if (a || b) {
-                            skip = true;
-                        }
-                    }
-                    lines.push([part.vertices2D[0], part.vertices2D[1]]);
-                }
-                if (skip) {
-                    continue;
-                }
-
-                switch (part.name) {
-                    case "result":
-                        if (draw[1].activeAxis.result) {
-                            drawPart(
-                                context2D,
-                                camSettings,
-                                part,
-                                {
-                                    lineColor: "lightgreen",
-                                    pointColor: { start: "green", middle: "white", end: "blue" },
-                                    displayAllPoints: true,
-                                },
-                                3,
-                                {
-                                    type: "centerOfLine",
-                                }
-                            );
-                        }
-                        break;
-                    case "normal":
-                        drawPart(
-                            context2D,
-                            camSettings,
-                            part,
-                            { lineColor: "black", pointColor: "black", displayAllPoints: true },
-                            3,
-                            {
-                                type: "centerOfLine",
-                            }
-                        );
-                        break;
-                    case "x-axis":
-                        if (draw[1].activeAxis.x) {
-                            drawPart(context2D, camSettings, part, { lineColor: "red" }, 3, {
-                                type: "centerOfLine",
-                            });
-                        }
-                        break;
-                    case "y-axis":
-                        if (draw[1].activeAxis.y) {
-                            drawPart(context2D, camSettings, part, { lineColor: "blue" }, 3, {
-                                type: "centerOfLine",
-                            });
-                        }
-                        break;
-                    case "z-axis":
-                        if (draw[1].activeAxis.z) {
-                            drawPart(context2D, camSettings, part, { lineColor: "green" }, 3, {
-                                type: "centerOfLine",
-                            });
-                        }
-                        break;
-                    case "xy-plane":
-                        if (draw[1].activeAxis.planar) {
-                            drawPart(context2D, camSettings, part, { lineColor: "purple" }, 3, {
-                                type: "centerOfLine",
-                            });
-                        }
-                        break;
-                    case "z-angle":
-                        if (draw[1].activeAxis.z && draw[1].activeAxis.result) {
-                            drawPart(context2D, camSettings, part, { lineColor: "green" }, 2, {
-                                type: "centerOfLine",
-                            });
-                        }
-                        break;
-                    case "xz-angle":
-                        if (draw[1].activeAxis.x && draw[1].activeAxis.z) {
-                            drawPart(context2D, camSettings, part, { lineColor: "purple" }, 2, {
-                                type: "centerOfLine",
-                            });
-                        }
-                        break;
-                    case "cylinder-angle":
-                        cylinderAngleDrawn = drawPart(context2D, camSettings, part, { lineColor: "blue" }, 2, {
-                            type: "centerOfLine",
-                        });
-                        break;
-                    case "cylinder-angle-line":
-                        if (cylinderAngleDrawn) {
-                            drawPart(context2D, camSettings, part, { lineColor: "blue" }, 2, {
-                                type: "centerOfLine",
-                            });
-                        }
-                        break;
-                }
-            }
-        }
-    }
-
-    for (const id of deleteIds) {
-        resultDraw.delete(id);
-    }
-}
-
 export function MeasureDraw({
     pointerPos,
     renderFnRef,
-    interactionPositions,
+    svg,
 }: {
     pointerPos: MutableRefObject<Vec2>;
     renderFnRef: MutableRefObject<((moved: boolean, idleFrame: boolean) => void) | undefined>;
-    interactionPositions: MutableRefObject<MeasureInteractionPositions>;
+    svg: SVGSVGElement | null;
 }) {
     const {
         state: { size, view },
@@ -275,7 +90,6 @@ export function MeasureDraw({
     const manholeCollisionEntity = useAppSelector(selectManholeCollisionTarget)?.entity;
     const areas = useAppSelector(selectAreas);
     const areaCurrent = useAppSelector(selectCurrentIndex);
-
     const picker = useAppSelector(selectPicker);
     const drawSelectedPaths = useAppSelector(selectDrawSelectedPositions);
     const drawPathSettings = useAppSelector(selectFollowCylindersFrom);
@@ -285,7 +99,6 @@ export function MeasureDraw({
     const viewMode = useAppSelector(selectViewMode);
     const showTracer = useAppSelector(selectShowTracer);
     const traceVerical = useAppSelector(selectVerticalTracer);
-
     const outlineLasers = useAppSelector(selectOutlineLasers);
 
     const prevPointerPos = useRef([0, 0] as Vec2);
@@ -298,6 +111,14 @@ export function MeasureDraw({
     const manholeDrawResult = useRef<DrawProduct | undefined>(undefined);
     const manholeCollisionEntityDrawResult = useRef<DrawProduct | undefined>(undefined);
     const hoverObjectDrawResult = useRef<DrawProduct | undefined>(undefined);
+    const interactionPositions = useRef<MeasureInteractionPositions>({
+        remove: [],
+        removeAxis: [],
+        info: [],
+        area: { remove: [], finalize: [], undo: [] },
+        pointLine: { remove: [], finalize: [], undo: [] },
+    });
+    const moveInteractionMarkers = useMove2DInteractions(svg, interactionPositions);
 
     const updateId = useRef(0);
     const hoverHideId = useRef<undefined | string>(undefined);
@@ -1025,12 +846,13 @@ export function MeasureDraw({
     ]);
 
     useEffect(() => {
-        update().then((r) => {
-            if (r) {
+        update().then((updated) => {
+            if (updated) {
                 draw();
+                moveInteractionMarkers();
             }
         });
-    }, [update, draw]);
+    }, [update, draw, moveInteractionMarkers]);
 
     useEffect(() => {
         setContext2D(canvas2D?.getContext("2d"));
@@ -1039,20 +861,209 @@ export function MeasureDraw({
     useEffect(() => {
         renderFnRef.current = animate;
         return () => (renderFnRef.current = undefined);
-        async function animate(moved: boolean) {
-            if (view) {
-                const run = moved || (showTracer && !vec2.exactEquals(prevPointerPos.current, pointerPos.current));
-                if (!run) {
-                    return;
+        async function animate(moved: boolean): Promise<void> {
+            if (!view) {
+                return;
+            }
+
+            const run = moved || (showTracer && !vec2.exactEquals(prevPointerPos.current, pointerPos.current));
+            if (!run) {
+                return;
+            }
+
+            prevPointerPos.current = [...pointerPos.current];
+            if (await update()) {
+                draw();
+                moveInteractionMarkers();
+            }
+        }
+    }, [view, update, grid, cameraType, pointerPos, renderFnRef, showTracer, viewMode, draw, moveInteractionMarkers]);
+
+    return <Canvas2D id="canvas2D" ref={setCanvas2D} width={size.width} height={size.height} />;
+}
+
+function toId(obj: ParametricEntity) {
+    return `${obj.ObjectId}_${obj.instanceIndex}_${obj.pathIndex}`;
+}
+
+function drawMeasureObjects(
+    objectDraw: Map<string, { product: DrawProduct | undefined; updated: number }>,
+    drawId: number,
+    hoverObjectDrawResult: DrawProduct | undefined,
+    hoverHideId: string | undefined,
+    context2D: CanvasRenderingContext2D,
+    camSettings: CameraSettings
+) {
+    const deleteIds: string[] = [];
+    for (const draw of objectDraw) {
+        if (draw[1].updated < drawId) {
+            deleteIds.push(draw[0]);
+            continue;
+        }
+        const prod = draw[1].product;
+        if (prod) {
+            const inactiveDueToHover = hoverObjectDrawResult !== undefined && draw[0] === hoverHideId;
+            drawProduct(
+                context2D,
+                camSettings,
+                prod,
+                {
+                    lineColor: inactiveDueToHover ? measurementInactiveLineColor : measurementLineColor,
+                    fillColor: inactiveDueToHover ? measurementInactiveFillColor : measurementFillColor,
+                    pointColor: inactiveDueToHover ? measurementInactivePointColor : measurementPointColor,
+                    complexCylinder: true,
+                },
+                3,
+                { type: "default" }
+            );
+            if (draw[0] === "-1") {
+                deleteIds.push(draw[0]);
+            }
+        }
+    }
+
+    for (const id of deleteIds) {
+        objectDraw.delete(id);
+    }
+
+    if (hoverObjectDrawResult) {
+        drawProduct(
+            context2D,
+            camSettings,
+            hoverObjectDrawResult,
+            { lineColor: hoverLineColor, fillColor: hoverFillColor, pointColor: hoverLineColor },
+            5
+        );
+    }
+}
+
+function drawDuoResults(
+    resultDraw: Map<number, { product: DrawProduct | undefined; updated: number; activeAxis: ActiveAxis }>,
+    drawId: number,
+    context2D: CanvasRenderingContext2D,
+    camSettings: CameraSettings
+) {
+    const deleteIds: number[] = [];
+    for (const draw of resultDraw) {
+        if (draw[1].updated < drawId) {
+            deleteIds.push(draw[0]);
+            continue;
+        }
+        const duoDrawResult = draw[1].product;
+        if (duoDrawResult && duoDrawResult.objects.length === 1) {
+            const obj = duoDrawResult.objects[0];
+            const lines: [ReadonlyVec2, ReadonlyVec2][] = [];
+            let cylinderAngleDrawn = false;
+            for (const part of obj.parts) {
+                if (part.vertices2D === undefined) {
+                    continue;
+                }
+                let skip = false;
+                if (part.vertices2D.length === 2) {
+                    for (const l of lines) {
+                        const a = vec2.dist(l[0], part.vertices2D[0]) < 10 && vec2.dist(l[1], part.vertices2D[1]) < 10;
+                        const b = vec2.dist(l[0], part.vertices2D[1]) < 10 && vec2.dist(l[1], part.vertices2D[0]) < 10;
+                        if (a || b) {
+                            skip = true;
+                        }
+                    }
+                    lines.push([part.vertices2D[0], part.vertices2D[1]]);
+                }
+                if (skip) {
+                    continue;
                 }
 
-                prevPointerPos.current = [...pointerPos.current];
-                if (await update()) {
-                    draw();
+                switch (part.name) {
+                    case "result":
+                        if (draw[1].activeAxis.result) {
+                            drawPart(
+                                context2D,
+                                camSettings,
+                                part,
+                                {
+                                    lineColor: "lightgreen",
+                                    pointColor: { start: "green", middle: "white", end: "blue" },
+                                    displayAllPoints: true,
+                                },
+                                3,
+                                {
+                                    type: "centerOfLine",
+                                }
+                            );
+                        }
+                        break;
+                    case "normal":
+                        drawPart(
+                            context2D,
+                            camSettings,
+                            part,
+                            { lineColor: "black", pointColor: "black", displayAllPoints: true },
+                            3,
+                            {
+                                type: "centerOfLine",
+                            }
+                        );
+                        break;
+                    case "x-axis":
+                        if (draw[1].activeAxis.x) {
+                            drawPart(context2D, camSettings, part, { lineColor: "red" }, 3, {
+                                type: "centerOfLine",
+                            });
+                        }
+                        break;
+                    case "y-axis":
+                        if (draw[1].activeAxis.y) {
+                            drawPart(context2D, camSettings, part, { lineColor: "blue" }, 3, {
+                                type: "centerOfLine",
+                            });
+                        }
+                        break;
+                    case "z-axis":
+                        if (draw[1].activeAxis.z) {
+                            drawPart(context2D, camSettings, part, { lineColor: "green" }, 3, {
+                                type: "centerOfLine",
+                            });
+                        }
+                        break;
+                    case "xy-plane":
+                        if (draw[1].activeAxis.planar) {
+                            drawPart(context2D, camSettings, part, { lineColor: "purple" }, 3, {
+                                type: "centerOfLine",
+                            });
+                        }
+                        break;
+                    case "z-angle":
+                        if (draw[1].activeAxis.z && draw[1].activeAxis.result) {
+                            drawPart(context2D, camSettings, part, { lineColor: "green" }, 2, {
+                                type: "centerOfLine",
+                            });
+                        }
+                        break;
+                    case "xz-angle":
+                        if (draw[1].activeAxis.x && draw[1].activeAxis.z) {
+                            drawPart(context2D, camSettings, part, { lineColor: "purple" }, 2, {
+                                type: "centerOfLine",
+                            });
+                        }
+                        break;
+                    case "cylinder-angle":
+                        cylinderAngleDrawn = drawPart(context2D, camSettings, part, { lineColor: "blue" }, 2, {
+                            type: "centerOfLine",
+                        });
+                        break;
+                    case "cylinder-angle-line":
+                        if (cylinderAngleDrawn) {
+                            drawPart(context2D, camSettings, part, { lineColor: "blue" }, 2, {
+                                type: "centerOfLine",
+                            });
+                        }
+                        break;
                 }
             }
         }
-    }, [view, update, grid, cameraType, pointerPos, renderFnRef, showTracer, viewMode, draw]);
+    }
 
-    return <Canvas2D id="canvas2D" ref={setCanvas2D} width={size.width} height={size.height} />;
+    for (const id of deleteIds) {
+        resultDraw.delete(id);
+    }
 }
