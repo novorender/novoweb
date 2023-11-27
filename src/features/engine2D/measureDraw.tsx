@@ -176,7 +176,7 @@ export function MeasureDraw({
                         if (draw.product) {
                             view.measure.draw.updateProuct(draw.product);
                             if (draw.updated > id) {
-                                return false;
+                                return { updated: false, id };
                             }
                             if (measureSet.length === 1) {
                                 objectToSetMarker = draw.product;
@@ -258,7 +258,7 @@ export function MeasureDraw({
                         if (res.product) {
                             view.measure.draw.updateProuct(res.product);
                             if (res.updated > id) {
-                                return false;
+                                return { updated: false, id };
                             }
                             res.updated = id;
                             resultToMarker = res.product;
@@ -425,7 +425,7 @@ export function MeasureDraw({
             }
 
             if (id !== updateId.current) {
-                return false;
+                return { updated: false, id };
             }
             interactionPositions.current.area.remove = areaRemovePos;
             interactionPositions.current.area.undo = areaUndoPos;
@@ -436,9 +436,9 @@ export function MeasureDraw({
             interactionPositions.current.remove = removePos;
             interactionPositions.current.info = infoPos;
             interactionPositions.current.removeAxis = removeAxis;
-            return true;
+            return { updated: true, id };
         }
-        return false;
+        return { updated: false, id: 0 };
     }, [
         view,
         measure.duoMeasurementValues,
@@ -460,298 +460,221 @@ export function MeasureDraw({
         picker,
     ]);
 
-    const draw = useCallback(() => {
-        if (context2D && canvas2D && size && view) {
-            //removePositions.current = [];
-            const { camera } = view.renderState;
-            const cameraDirection = vec3.transformQuat(vec3.create(), vec3.fromValues(0, 0, -1), camera.rotation);
-            const camSettings = { pos: camera.position, dir: cameraDirection };
+    const draw = useCallback(
+        (id: number) => {
+            if (context2D && canvas2D && size && view) {
+                //removePositions.current = [];
+                const { camera } = view.renderState;
+                const cameraDirection = vec3.transformQuat(vec3.create(), vec3.fromValues(0, 0, -1), camera.rotation);
+                const camSettings = { pos: camera.position, dir: cameraDirection };
 
-            context2D.clearRect(0, 0, canvas2D.width, canvas2D.height);
+                console.log(id, updateId.current);
+                if (id !== updateId.current) {
+                    return;
+                }
+                context2D.clearRect(0, 0, canvas2D.width, canvas2D.height);
 
-            for (const trace of outlineLasers) {
-                const renderTrace = (drawProd: DrawProduct | undefined, color: string) => {
-                    if (drawProd) {
-                        drawProd.objects.forEach((obj) => {
-                            obj.parts.forEach((part) => {
-                                drawPart(
-                                    context2D,
-                                    camSettings,
-                                    part,
-                                    {
-                                        lineColor: color,
-                                    },
-                                    2,
-                                    {
-                                        type: "default",
-                                    }
-                                );
+                for (const trace of outlineLasers) {
+                    const renderTrace = (drawProd: DrawProduct | undefined, color: string) => {
+                        if (drawProd) {
+                            drawProd.objects.forEach((obj) => {
+                                obj.parts.forEach((part) => {
+                                    drawPart(
+                                        context2D,
+                                        camSettings,
+                                        part,
+                                        {
+                                            lineColor: color,
+                                        },
+                                        2,
+                                        {
+                                            type: "default",
+                                        }
+                                    );
+                                });
                             });
-                        });
-                    }
-                };
+                        }
+                    };
 
-                const { left, right, up, down, measurementX: x, measurementY: y } = trace;
-                if (x) {
-                    const tracePts = GetMeasurePointsFromTracer(x, left, right);
-                    if (tracePts) {
-                        renderTrace(
-                            view.measure?.draw.getDrawObjectFromPoints(tracePts, false, false, true, 2),
-                            "blue"
-                        );
+                    const { left, right, up, down, measurementX: x, measurementY: y } = trace;
+                    if (x) {
+                        const tracePts = GetMeasurePointsFromTracer(x, left, right);
+                        if (tracePts) {
+                            renderTrace(
+                                view.measure?.draw.getDrawObjectFromPoints(tracePts, false, false, true, 2),
+                                "blue"
+                            );
+                        }
+                    }
+                    if (y) {
+                        const tracePts = GetMeasurePointsFromTracer(y, down, up);
+                        if (tracePts) {
+                            renderTrace(
+                                view.measure?.draw.getDrawObjectFromPoints(tracePts, false, false, true, 2),
+                                "green"
+                            );
+                        }
                     }
                 }
-                if (y) {
-                    const tracePts = GetMeasurePointsFromTracer(y, down, up);
-                    if (tracePts) {
-                        renderTrace(
-                            view.measure?.draw.getDrawObjectFromPoints(tracePts, false, false, true, 2),
-                            "green"
-                        );
-                    }
-                }
-            }
 
-            drawMeasureObjects(
-                objectDraw.current,
-                updateId.current,
-                hoverObjectDrawResult.current,
-                hoverHideId.current,
-                context2D,
-                camSettings
-            );
-            drawDuoResults(resultDraw.current, updateId.current, context2D, camSettings);
+                drawMeasureObjects(
+                    objectDraw.current,
+                    updateId.current,
+                    hoverObjectDrawResult.current,
+                    hoverHideId.current,
+                    context2D,
+                    camSettings
+                );
+                drawDuoResults(resultDraw.current, updateId.current, context2D, camSettings);
 
-            followPathDrawResult.current.forEach(
-                (prod) =>
-                    prod &&
+                followPathDrawResult.current.forEach(
+                    (prod) =>
+                        prod &&
+                        drawProduct(
+                            context2D,
+                            camSettings,
+                            prod,
+                            { lineColor: "yellow", fillColor: measurementFillColor },
+                            3
+                        )
+                );
+
+                if (hoverObjectDrawResult.current) {
                     drawProduct(
                         context2D,
                         camSettings,
-                        prod,
+                        hoverObjectDrawResult.current,
+                        { lineColor: hoverLineColor, fillColor: hoverFillColor, pointColor: hoverLineColor },
+                        5
+                    );
+                }
+
+                if (heightProfileDrawResult.current) {
+                    drawProduct(
+                        context2D,
+                        camSettings,
+                        heightProfileDrawResult.current,
                         { lineColor: "yellow", fillColor: measurementFillColor },
                         3
-                    )
-            );
-
-            if (hoverObjectDrawResult.current) {
-                drawProduct(
-                    context2D,
-                    camSettings,
-                    hoverObjectDrawResult.current,
-                    { lineColor: hoverLineColor, fillColor: hoverFillColor, pointColor: hoverLineColor },
-                    5
-                );
-            }
-
-            if (heightProfileDrawResult.current) {
-                drawProduct(
-                    context2D,
-                    camSettings,
-                    heightProfileDrawResult.current,
-                    { lineColor: "yellow", fillColor: measurementFillColor },
-                    3
-                );
-            }
-
-            if (manholeDrawResult.current) {
-                drawProduct(
-                    context2D,
-                    camSettings,
-                    manholeDrawResult.current,
-                    { lineColor: "yellow", fillColor: measurementFillColor },
-                    3
-                );
-            }
-
-            if (manholeCollisionEntityDrawResult.current) {
-                drawProduct(
-                    context2D,
-                    camSettings,
-                    manholeCollisionEntityDrawResult.current,
-                    { lineColor: "yellow", fillColor: measurementFillColor },
-                    3
-                );
-            }
-
-            if (manholeCollisionValues && (manholeCollisionValues.outer || manholeCollisionValues.inner)) {
-                const colVal = view.measure?.draw.getDrawObjectFromPoints(manholeCollisionValues.lid, false, true);
-                if (colVal) {
-                    colVal.objects.forEach((obj) => {
-                        obj.parts.forEach((part) => {
-                            drawPart(
-                                context2D,
-                                camSettings,
-                                part,
-                                {
-                                    lineColor: "#55802b",
-                                    pointColor: "black",
-                                    displayAllPoints: true,
-                                },
-                                2,
-                                {
-                                    type: "centerOfLine",
-                                    customText: [
-                                        vec3
-                                            .len(
-                                                vec3.sub(
-                                                    vec3.create(),
-                                                    manholeCollisionValues.lid[0],
-                                                    manholeCollisionValues.lid![1]
-                                                )
-                                            )
-                                            .toFixed(2),
-                                    ],
-                                }
-                            );
-                        });
-                    });
+                    );
                 }
-            }
 
-            for (const area of areas) {
-                const areaPoints = area.drawPoints;
-                if (areaPoints.length) {
-                    const drawProd = view.measure?.draw.getDrawObjectFromPoints(areaPoints, true, true);
-                    if (drawProd) {
-                        drawProd.objects.forEach((obj) => {
+                if (manholeDrawResult.current) {
+                    drawProduct(
+                        context2D,
+                        camSettings,
+                        manholeDrawResult.current,
+                        { lineColor: "yellow", fillColor: measurementFillColor },
+                        3
+                    );
+                }
+
+                if (manholeCollisionEntityDrawResult.current) {
+                    drawProduct(
+                        context2D,
+                        camSettings,
+                        manholeCollisionEntityDrawResult.current,
+                        { lineColor: "yellow", fillColor: measurementFillColor },
+                        3
+                    );
+                }
+
+                if (manholeCollisionValues && (manholeCollisionValues.outer || manholeCollisionValues.inner)) {
+                    const colVal = view.measure?.draw.getDrawObjectFromPoints(manholeCollisionValues.lid, false, true);
+                    if (colVal) {
+                        colVal.objects.forEach((obj) => {
                             obj.parts.forEach((part) => {
                                 drawPart(
                                     context2D,
                                     camSettings,
                                     part,
                                     {
-                                        lineColor: "yellow",
-                                        fillColor: measurementFillColor,
-                                        pointColor: { start: "green", middle: "white", end: "blue" },
+                                        lineColor: "#55802b",
+                                        pointColor: "black",
                                         displayAllPoints: true,
                                     },
                                     2,
                                     {
-                                        type: "center",
-                                        unit: "m²",
-                                        customText: [area.area.toFixed(2)],
+                                        type: "centerOfLine",
+                                        customText: [
+                                            vec3
+                                                .len(
+                                                    vec3.sub(
+                                                        vec3.create(),
+                                                        manholeCollisionValues.lid[0],
+                                                        manholeCollisionValues.lid![1]
+                                                    )
+                                                )
+                                                .toFixed(2),
+                                        ],
                                     }
                                 );
                             });
                         });
                     }
                 }
-            }
 
-            //Measure tracer
-            if (
-                showTracer &&
-                cameraType === CameraType.Orthographic &&
-                viewMode === ViewMode.FollowPath &&
-                roadCrossSectionData &&
-                roadCrossSectionData.length > 1
-            ) {
-                const prods = roadCrossSectionData
-                    .map((road) => view.measure?.draw.getDrawObjectFromPoints(road.points, false, false))
-                    .filter((prod) => prod) as DrawProduct[];
-
-                if (prods.length) {
-                    let line = {
-                        start: vec2.fromValues(pointerPos.current[0], size.height),
-                        end: vec2.fromValues(pointerPos.current[0], 0),
-                    };
-
-                    if (!traceVerical) {
-                        const normal = view.measure?.draw.get2dNormal(prods[0], line);
-                        if (normal) {
-                            line = {
-                                start: vec2.scaleAndAdd(vec2.create(), normal.position, normal.normal, size.height),
-                                end: vec2.scaleAndAdd(vec2.create(), normal.position, normal.normal, -size.height),
-                            };
+                for (const area of areas) {
+                    const areaPoints = area.drawPoints;
+                    if (areaPoints.length) {
+                        const drawProd = view.measure?.draw.getDrawObjectFromPoints(areaPoints, true, true);
+                        if (drawProd) {
+                            drawProd.objects.forEach((obj) => {
+                                obj.parts.forEach((part) => {
+                                    drawPart(
+                                        context2D,
+                                        camSettings,
+                                        part,
+                                        {
+                                            lineColor: "yellow",
+                                            fillColor: measurementFillColor,
+                                            pointColor: { start: "green", middle: "white", end: "blue" },
+                                            displayAllPoints: true,
+                                        },
+                                        2,
+                                        {
+                                            type: "center",
+                                            unit: "m²",
+                                            customText: [area.area.toFixed(2)],
+                                        }
+                                    );
+                                });
+                            });
                         }
                     }
-
-                    const traceDraw = view.measure?.draw.getTraceDrawOject(prods, line);
-                    if (traceDraw) {
-                        traceDraw.objects.forEach((obj) => {
-                            obj.parts.forEach((part) => {
-                                drawPart(
-                                    context2D,
-                                    camSettings,
-                                    part,
-                                    {
-                                        lineColor: "black",
-                                        displayAllPoints: true,
-                                    },
-                                    2,
-                                    {
-                                        type: "default",
-                                    }
-                                );
-                            });
-                        });
-                    }
                 }
-            }
 
-            for (const pointLine of pointLines) {
-                const { points, result } = pointLine;
-                if (points.length && result) {
-                    const drawProd = view.measure?.draw.getDrawObjectFromPoints(points, false, true, true);
+                //Measure tracer
+                if (
+                    showTracer &&
+                    cameraType === CameraType.Orthographic &&
+                    viewMode === ViewMode.FollowPath &&
+                    roadCrossSectionData &&
+                    roadCrossSectionData.length > 1
+                ) {
+                    const prods = roadCrossSectionData
+                        .map((road) => view.measure?.draw.getDrawObjectFromPoints(road.points, false, false))
+                        .filter((prod) => prod) as DrawProduct[];
 
-                    if (drawProd) {
-                        drawProd.objects.forEach((obj) => {
-                            obj.parts.forEach((part) => {
-                                drawPart(
-                                    context2D,
-                                    camSettings,
-                                    part,
-                                    {
-                                        lineColor: "yellow",
-                                        pointColor: { start: "green", middle: "white", end: "blue" },
-                                        displayAllPoints: true,
-                                    },
-                                    2,
-                                    {
-                                        type: "default",
-                                    }
-                                );
-                            });
-                        });
-                    }
-                }
-            }
+                    if (prods.length) {
+                        let line = {
+                            start: vec2.fromValues(pointerPos.current[0], size.height),
+                            end: vec2.fromValues(pointerPos.current[0], 0),
+                        };
 
-            if (crossSection) {
-                const drawProd = view.measure?.draw.getDrawObjectFromPoints(crossSection, false, false);
-                if (drawProd) {
-                    drawProd.objects.forEach((obj) => {
-                        obj.parts.forEach((part) => {
-                            drawPart(
-                                context2D,
-                                camSettings,
-                                part,
-                                {
-                                    lineColor: "black",
-                                    pointColor: "black",
-                                    displayAllPoints: true,
-                                },
-                                2
-                            );
-                        });
-                    });
-                }
-                if (crossSection.length > 1) {
-                    const mat = mat3.fromQuat(mat3.create(), camera.rotation);
-                    if (mat[8] === 1) {
-                        // top-down
-                        let up = vec3.fromValues(mat[6], mat[7], mat[8]);
-                        const dir = vec3.sub(vec3.create(), crossSection[1], crossSection[0]);
-                        vec3.normalize(dir, dir);
-                        const cross = vec3.cross(vec3.create(), dir, up);
-                        vec3.normalize(cross, cross);
-                        const center = vec3.add(vec3.create(), crossSection[0], crossSection[1]);
-                        vec3.scale(center, center, 0.5);
-                        const offsetP = vec3.scaleAndAdd(vec3.create(), center, cross, -3);
-                        const arrow = view.measure?.draw.getDrawObjectFromPoints([center, offsetP], false, false);
-                        if (arrow) {
-                            arrow.objects.forEach((obj) => {
+                        if (!traceVerical) {
+                            const normal = view.measure?.draw.get2dNormal(prods[0], line);
+                            if (normal) {
+                                line = {
+                                    start: vec2.scaleAndAdd(vec2.create(), normal.position, normal.normal, size.height),
+                                    end: vec2.scaleAndAdd(vec2.create(), normal.position, normal.normal, -size.height),
+                                };
+                            }
+                        }
+
+                        const traceDraw = view.measure?.draw.getTraceDrawOject(prods, line);
+                        if (traceDraw) {
+                            traceDraw.objects.forEach((obj) => {
                                 obj.parts.forEach((part) => {
                                     drawPart(
                                         context2D,
@@ -759,43 +682,49 @@ export function MeasureDraw({
                                         part,
                                         {
                                             lineColor: "black",
-                                            pointColor: "black",
+                                            displayAllPoints: true,
                                         },
                                         2,
-                                        undefined,
-                                        { end: "arrow" }
+                                        {
+                                            type: "default",
+                                        }
                                     );
                                 });
                             });
                         }
                     }
                 }
-            }
 
-            if (roadCrossSectionData && viewMode === ViewMode.FollowPath) {
-                roadCrossSectionData.forEach((section) => {
-                    const colorList: string[] = [];
-                    section.codes.forEach((c) => {
-                        switch (c) {
-                            case 10:
-                                return;
-                            case 0:
-                                colorList.push("green");
-                                break;
-                            case 1:
-                                colorList.push("#333232");
-                                break;
-                            case 2:
-                                colorList.push("black");
-                                break;
-                            case 3:
-                                colorList.push("blue");
-                                break;
-                            default:
-                                colorList.push("brown");
+                for (const pointLine of pointLines) {
+                    const { points, result } = pointLine;
+                    if (points.length && result) {
+                        const drawProd = view.measure?.draw.getDrawObjectFromPoints(points, false, true, true);
+
+                        if (drawProd) {
+                            drawProd.objects.forEach((obj) => {
+                                obj.parts.forEach((part) => {
+                                    drawPart(
+                                        context2D,
+                                        camSettings,
+                                        part,
+                                        {
+                                            lineColor: "yellow",
+                                            pointColor: { start: "green", middle: "white", end: "blue" },
+                                            displayAllPoints: true,
+                                        },
+                                        2,
+                                        {
+                                            type: "default",
+                                        }
+                                    );
+                                });
+                            });
                         }
-                    });
-                    const drawProd = view.measure?.draw.getDrawObjectFromPoints(section.points, false, false);
+                    }
+                }
+
+                if (crossSection) {
+                    const drawProd = view.measure?.draw.getDrawObjectFromPoints(crossSection, false, false);
                     if (drawProd) {
                         drawProd.objects.forEach((obj) => {
                             obj.parts.forEach((part) => {
@@ -804,51 +733,129 @@ export function MeasureDraw({
                                     camSettings,
                                     part,
                                     {
-                                        lineColor: colorList,
+                                        lineColor: "black",
+                                        pointColor: "black",
+                                        displayAllPoints: true,
                                     },
-                                    2,
-                                    { type: "default" }
+                                    2
                                 );
                             });
                         });
                     }
-                    const slopeL = view.measure?.draw.getDrawText(
-                        [section.slopes.left.start, section.slopes.left.end],
-                        (section.slopes.left.slope * 100).toFixed(1) + "%"
-                    );
-                    const slopeR = view.measure?.draw.getDrawText(
-                        [section.slopes.right.start, section.slopes.right.end],
-                        (section.slopes.right.slope * 100).toFixed(1) + "%"
-                    );
-                    if (slopeL && slopeR) {
-                        drawProduct(context2D, camSettings, slopeL, {}, 3, { type: "default" });
-                        drawProduct(context2D, camSettings, slopeR, {}, 3, { type: "default" });
+                    if (crossSection.length > 1) {
+                        const mat = mat3.fromQuat(mat3.create(), camera.rotation);
+                        if (mat[8] === 1) {
+                            // top-down
+                            let up = vec3.fromValues(mat[6], mat[7], mat[8]);
+                            const dir = vec3.sub(vec3.create(), crossSection[1], crossSection[0]);
+                            vec3.normalize(dir, dir);
+                            const cross = vec3.cross(vec3.create(), dir, up);
+                            vec3.normalize(cross, cross);
+                            const center = vec3.add(vec3.create(), crossSection[0], crossSection[1]);
+                            vec3.scale(center, center, 0.5);
+                            const offsetP = vec3.scaleAndAdd(vec3.create(), center, cross, -3);
+                            const arrow = view.measure?.draw.getDrawObjectFromPoints([center, offsetP], false, false);
+                            if (arrow) {
+                                arrow.objects.forEach((obj) => {
+                                    obj.parts.forEach((part) => {
+                                        drawPart(
+                                            context2D,
+                                            camSettings,
+                                            part,
+                                            {
+                                                lineColor: "black",
+                                                pointColor: "black",
+                                            },
+                                            2,
+                                            undefined,
+                                            { end: "arrow" }
+                                        );
+                                    });
+                                });
+                            }
+                        }
                     }
-                });
+                }
+
+                if (roadCrossSectionData && viewMode === ViewMode.FollowPath) {
+                    roadCrossSectionData.forEach((section) => {
+                        const colorList: string[] = [];
+                        section.codes.forEach((c) => {
+                            switch (c) {
+                                case 10:
+                                    return;
+                                case 0:
+                                    colorList.push("green");
+                                    break;
+                                case 1:
+                                    colorList.push("#333232");
+                                    break;
+                                case 2:
+                                    colorList.push("black");
+                                    break;
+                                case 3:
+                                    colorList.push("blue");
+                                    break;
+                                default:
+                                    colorList.push("brown");
+                            }
+                        });
+                        const drawProd = view.measure?.draw.getDrawObjectFromPoints(section.points, false, false);
+                        if (drawProd) {
+                            drawProd.objects.forEach((obj) => {
+                                obj.parts.forEach((part) => {
+                                    drawPart(
+                                        context2D,
+                                        camSettings,
+                                        part,
+                                        {
+                                            lineColor: colorList,
+                                        },
+                                        2,
+                                        { type: "default" }
+                                    );
+                                });
+                            });
+                        }
+                        const slopeL = view.measure?.draw.getDrawText(
+                            [section.slopes.left.start, section.slopes.left.end],
+                            (section.slopes.left.slope * 100).toFixed(1) + "%"
+                        );
+                        const slopeR = view.measure?.draw.getDrawText(
+                            [section.slopes.right.start, section.slopes.right.end],
+                            (section.slopes.right.slope * 100).toFixed(1) + "%"
+                        );
+                        if (slopeL && slopeR) {
+                            drawProduct(context2D, camSettings, slopeL, {}, 3, { type: "default" });
+                            drawProduct(context2D, camSettings, slopeR, {}, 3, { type: "default" });
+                        }
+                    });
+                }
             }
-        }
-    }, [
-        context2D,
-        canvas2D,
-        size,
-        view,
-        areas,
-        crossSection,
-        cameraType,
-        outlineLasers,
-        manholeCollisionValues,
-        pointLines,
-        pointerPos,
-        roadCrossSectionData,
-        showTracer,
-        traceVerical,
-        viewMode,
-    ]);
+        },
+        [
+            context2D,
+            canvas2D,
+            size,
+            view,
+            areas,
+            crossSection,
+            cameraType,
+            outlineLasers,
+            manholeCollisionValues,
+            pointLines,
+            pointerPos,
+            roadCrossSectionData,
+            showTracer,
+            traceVerical,
+            viewMode,
+        ]
+    );
 
     useEffect(() => {
-        update().then((updated) => {
-            if (updated) {
-                draw();
+        update().then((result) => {
+            if (result.updated) {
+                draw(result.id);
                 moveInteractionMarkers();
             }
         });
@@ -872,8 +879,9 @@ export function MeasureDraw({
             }
 
             prevPointerPos.current = [...pointerPos.current];
-            if (await update()) {
-                draw();
+            const result = await update();
+            if (result.updated) {
+                draw(result.id);
                 moveInteractionMarkers();
             }
         }
