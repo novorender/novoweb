@@ -95,6 +95,7 @@ export const measureSlice = createSlice({
                 state.activeAxis = [];
                 state.duoMeasurementValues = [];
             }
+            state.currentIndex = state.selectedEntities.length - 1;
             state.pinned = undefined;
         },
         removeAxis: (
@@ -141,6 +142,7 @@ export const measureSlice = createSlice({
                         state.duoMeasurementValues = [];
                     }
                     state.pinned = undefined;
+                    state.currentIndex = state.selectedEntities.length - 1;
                 } else {
                     state.activeAxis[action.payload.idx] = res;
                 }
@@ -214,6 +216,7 @@ export const measureSlice = createSlice({
         builder.addCase(resetView, (state) => {
             state.selectedEntities = [];
             state.selectedEntities.push([]);
+            state.currentIndex = 0;
         });
     },
 });

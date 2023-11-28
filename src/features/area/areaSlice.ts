@@ -22,6 +22,7 @@ const initialState = {
     ] as AreaMeasure[],
     currentIndex: 0 as number,
     bookmarkPoints: [] as { points: [number, number, number][]; normals: [number, number, number][] }[],
+    updteIdx: 0 as number,
 };
 
 export const areaSlice = createSlice({
@@ -34,7 +35,7 @@ export const areaSlice = createSlice({
         deleteArea: (state, action: PayloadAction<number>) => {
             state.currentIndex = action.payload;
             if (state.areaList.length > 1) {
-                state.areaList = state.areaList.splice(action.payload - 1, 1);
+                state.areaList.splice(action.payload, 1);
             } else {
                 state.areaList = [
                     {
@@ -45,11 +46,13 @@ export const areaSlice = createSlice({
                     },
                 ];
             }
+            state.currentIndex = state.areaList.length - 1;
         },
         setDrawPoints: (state, action: PayloadAction<vec3[]>) => {
             state.areaList[state.currentIndex].drawPoints = action.payload;
         },
         setPoints: (state, action: PayloadAction<{ points: vec3[]; normals: vec3[] }>) => {
+            state.updteIdx++;
             state.areaList[state.currentIndex].points = action.payload.points;
             state.areaList[state.currentIndex].normals = action.payload.normals;
         },
@@ -57,6 +60,7 @@ export const areaSlice = createSlice({
             state.areaList[state.currentIndex].area = action.payload;
         },
         addPoint: (state, action: PayloadAction<[vec3, vec3]>) => {
+            state.updteIdx++;
             state.areaList[state.currentIndex].points = state.areaList[state.currentIndex].points.concat([
                 action.payload[0],
             ]);
@@ -65,12 +69,18 @@ export const areaSlice = createSlice({
             ]);
         },
         undoPoint: (state) => {
+            state.updteIdx++;
             state.areaList[state.currentIndex].points = state.areaList[state.currentIndex].points.slice(
                 0,
                 state.areaList[state.currentIndex].points.length - 1
             );
+            state.areaList[state.currentIndex].normals = state.areaList[state.currentIndex].normals.slice(
+                0,
+                state.areaList[state.currentIndex].normals.length - 1
+            );
         },
         newArea: (state) => {
+            state.updteIdx++;
             if (state.areaList[state.areaList.length - 1].points.length) {
                 state.areaList.push({
                     points: [],
@@ -107,6 +117,7 @@ export const areaSlice = createSlice({
                     area: -1,
                 },
             ];
+            state.currentIndex = 0;
         });
     },
 });
@@ -117,6 +128,7 @@ export const selectCurrentAreaValue = (state: RootState) => state.area.areaList[
 export const selectCurrentIndex = (state: RootState) => state.area.currentIndex;
 export const selectAreas = (state: RootState) => state.area.areaList;
 export const selectAreaBookmarkPoints = (state: RootState) => state.area.bookmarkPoints;
+export const selectAreaUpdateIdx = (state: RootState) => state.area.updteIdx;
 
 const { actions, reducer } = areaSlice;
 export { actions as areaActions, reducer as areaReducer };

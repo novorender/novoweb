@@ -15,6 +15,14 @@ export const canvasContextMenuConfig = {
         key: "measure",
         name: "Measure",
     },
+    pointLine: {
+        key: "pointLine",
+        name: "Point line",
+    },
+    area: {
+        key: "area",
+        name: "Area",
+    },
     laser: {
         key: "laser",
         name: "Laser",
@@ -33,6 +41,8 @@ export const defaultCanvasContextMenuFeatures = [
     canvasContextMenuConfig.hideLayer.key,
     canvasContextMenuConfig.addFileToBasket.key,
     canvasContextMenuConfig.measure.key,
+    canvasContextMenuConfig.area.key,
+    canvasContextMenuConfig.pointLine.key,
     canvasContextMenuConfig.laser.key,
     canvasContextMenuConfig.clip.key,
 ] as CanvasContextMenuFeatureKey[];

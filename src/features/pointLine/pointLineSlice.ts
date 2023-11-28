@@ -66,7 +66,7 @@ export const pointLineSlice = createSlice({
         deletePointline: (state, action: PayloadAction<number>) => {
             state.currentIndex = action.payload;
             if (state.pointLines.length > 1) {
-                state.pointLines = state.pointLines.splice(action.payload - 1, 1);
+                state.pointLines.splice(action.payload, 1);
             } else {
                 state.pointLines = [
                     {
@@ -75,6 +75,7 @@ export const pointLineSlice = createSlice({
                     },
                 ];
             }
+            state.currentIndex = state.pointLines.length - 1;
         },
     },
     extraReducers(builder) {
@@ -92,6 +93,7 @@ export const pointLineSlice = createSlice({
                     result: undefined,
                 },
             ];
+            state.currentIndex = 0;
         });
     },
 });

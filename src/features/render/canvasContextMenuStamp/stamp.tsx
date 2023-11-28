@@ -21,11 +21,14 @@ import { useExplorerGlobals } from "contexts/explorerGlobals";
 import { hiddenActions, useDispatchHidden } from "contexts/hidden";
 import { highlightActions, useDispatchHighlighted } from "contexts/highlighted";
 import { selectionBasketActions, useDispatchSelectionBasket } from "contexts/selectionBasket";
+import { areaActions } from "features/area";
 import { measureActions, selectMeasureEntities } from "features/measure";
 import { clippingOutlineLaserActions, getOutlineLaser, OutlineLaser } from "features/outlineLaser";
+import { pointLineActions } from "features/pointLine";
 import {
     CameraType,
     ObjectVisibility,
+    Picker,
     renderActions,
     selectCameraType,
     selectClippingPlanes,
@@ -334,11 +337,24 @@ export function Measure() {
                 setCenterLine(await getRoadCenterLine({ db, view, id: objectId }));
             }
 
-            const pos = view.worldPositionFromPixelPosition(stamp.mouseX, stamp.mouseY);
             const plane = view.renderState.clipping.planes[0]?.normalOffset;
-            if (cameraType === CameraType.Orthographic && pos && plane) {
-                const laser = await getOutlineLaser(pos, view, cameraType, plane);
-                setLaser(laser ? { laser, plane } : undefined);
+            if (cameraType === CameraType.Orthographic) {
+                const pos = view.worldPositionFromPixelPosition(stamp.mouseX, stamp.mouseY);
+                if (pos && plane) {
+                    const laser = await getOutlineLaser(pos, view, cameraType, plane);
+                    setLaser(laser ? { laser, plane } : undefined);
+                }
+            } else if (plane && stamp.data.position) {
+                const planeDir = vec3.fromValues(plane[0], plane[1], plane[2]);
+                const rayDir = vec3.sub(vec3.create(), view.renderState.camera.position, stamp.data.position);
+                vec3.normalize(rayDir, rayDir);
+                const d = vec3.dot(planeDir, rayDir);
+                if (d > 0) {
+                    const t = (plane[3] - vec3.dot(planeDir, view.renderState.camera.position)) / d;
+                    const pos = vec3.scaleAndAdd(vec3.create(), view.renderState.camera.position, rayDir, t);
+                    const laser = await getOutlineLaser(pos, view, cameraType, plane);
+                    setLaser(laser ? { laser, plane } : undefined);
+                }
             }
 
             setStatus(AsyncStatus.Success);
@@ -369,6 +385,24 @@ export function Measure() {
             })
         );
 
+        close();
+    };
+
+    const startPointLine = () => {
+        if (!stamp.data.position) {
+            return;
+        }
+        dispatch(pointLineActions.newPointLine());
+        dispatch(renderActions.setPicker(Picker.PointLine));
+        close();
+    };
+
+    const startArea = () => {
+        if (!stamp.data.position) {
+            return;
+        }
+        dispatch(areaActions.newArea());
+        dispatch(renderActions.setPicker(Picker.Area));
         close();
     };
 
@@ -410,6 +444,22 @@ export function Measure() {
                             <Height fontSize="small" />
                         </ListItemIcon>
                         <ListItemText>{config.laser.name}</ListItemText>
+                    </MenuItem>
+                )}
+                {features.includes(config.area.key) && (
+                    <MenuItem onClick={startArea} disabled={!stamp.data.position}>
+                        <ListItemIcon>
+                            <Straighten fontSize="small" />
+                        </ListItemIcon>
+                        <ListItemText>{config.area.name}</ListItemText>
+                    </MenuItem>
+                )}
+                {features.includes(config.pointLine.key) && (
+                    <MenuItem onClick={startPointLine} disabled={!stamp.data.position}>
+                        <ListItemIcon>
+                            <Straighten fontSize="small" />
+                        </ListItemIcon>
+                        <ListItemText>{config.pointLine.name}</ListItemText>
                     </MenuItem>
                 )}
             </Box>

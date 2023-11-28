@@ -1,10 +1,10 @@
 import { vec3 } from "gl-matrix";
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 
 import { useAppDispatch, useAppSelector } from "app/store";
 import { useExplorerGlobals } from "contexts/explorerGlobals";
 
-import { areaActions, selectAreaBookmarkPoints, selectCurrentArea } from "./areaSlice";
+import { areaActions, selectAreaBookmarkPoints, selectAreaUpdateIdx, selectCurrentArea } from "./areaSlice";
 
 export function useHandleArea() {
     const {
@@ -12,16 +12,20 @@ export function useHandleArea() {
     } = useExplorerGlobals();
     const currentArea = useAppSelector(selectCurrentArea);
     const bookmarkPoints = useAppSelector(selectAreaBookmarkPoints);
+    const updateIdx = useAppSelector(selectAreaUpdateIdx);
 
     const dispatch = useAppDispatch();
+    const lastUpdated = useRef(-1);
 
     useEffect(() => {
         if (!view?.measure) {
             return;
         }
-        if (currentArea.points.length === 0 && currentArea.drawPoints.length === 0) {
+
+        if (lastUpdated.current === updateIdx) {
             return;
         }
+        lastUpdated.current = updateIdx;
 
         if (!currentArea.points.length) {
             dispatch(areaActions.setDrawPoints([]));
@@ -33,7 +37,7 @@ export function useHandleArea() {
 
         dispatch(areaActions.setDrawPoints(area.polygon as vec3[]));
         dispatch(areaActions.setArea(area.area ?? 0));
-    }, [currentArea, dispatch, view]);
+    }, [currentArea, dispatch, view, updateIdx]);
 
     useEffect(() => {
         if (!view?.measure) {

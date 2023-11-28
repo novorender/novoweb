@@ -468,7 +468,6 @@ export function MeasureDraw({
                 const cameraDirection = vec3.transformQuat(vec3.create(), vec3.fromValues(0, 0, -1), camera.rotation);
                 const camSettings = { pos: camera.position, dir: cameraDirection };
 
-                console.log(id, updateId.current);
                 if (id !== updateId.current) {
                     return;
                 }
