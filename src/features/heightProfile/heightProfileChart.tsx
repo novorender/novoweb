@@ -41,7 +41,7 @@ export function HeightProfileChart({
         tooltipData,
         tooltipTop = 0,
         tooltipLeft = 0,
-    } = useTooltip<{ x: number; y: number }>();
+    } = useTooltip<{ x: number; y: number; slope: number }>();
     const innerWidth = Math.max(outerWidth - margin.left - margin.right, 0);
     const innerHeight = Math.max(outerHeight - margin.top - margin.bottom, 0);
 
@@ -104,10 +104,13 @@ export function HeightProfileChart({
                 number,
                 number
             ];
+            const rise = getY(pt1) - getY(pt0);
+            const dist = getX(pt1) - getX(pt0);
+
             const y = getY(pt);
 
             showTooltip({
-                tooltipData: { x: x0, y: y },
+                tooltipData: { x: x0, y: y, slope: Math.abs((rise / dist) * 100) },
                 tooltipLeft: xScale(x0),
                 tooltipTop: yScale(y),
             });
@@ -281,6 +284,7 @@ export function HeightProfileChart({
                     >
                         <Typography>Length: {tooltipData.x.toFixed(3)}</Typography>
                         <Typography>Elevation: {tooltipData.y.toFixed(3)} m</Typography>
+                        <Typography>Slope: {tooltipData.slope.toFixed(2) + "%"} m</Typography>
                     </TooltipWithBounds>
                 </div>
             )}
