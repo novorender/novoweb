@@ -1,6 +1,6 @@
 import { AddBoxOutlined, IndeterminateCheckBoxOutlined, LabelOutlined } from "@mui/icons-material";
 import { Box, CircularProgress, IconButton, List, ListItem, Typography, useTheme } from "@mui/material";
-import { Fragment, useCallback, useEffect } from "react";
+import { Fragment, useCallback, useEffect, useState } from "react";
 
 import { useAppSelector } from "app/store";
 import { LinearProgress, LogoSpeedDial, ScrollBox, WidgetContainer, WidgetHeader } from "components";
@@ -9,7 +9,6 @@ import { useExplorerGlobals } from "contexts/explorerGlobals";
 import { highlightActions, useDispatchHighlighted } from "contexts/highlighted";
 import WidgetList from "features/widgetList/widgetList";
 import { useAbortController } from "hooks/useAbortController";
-import { useMountedState } from "hooks/useMountedState";
 import { useToggle } from "hooks/useToggle";
 import { selectMaximized, selectMinimized } from "slices/explorerSlice";
 import { getAssetUrl } from "utils/misc";
@@ -32,8 +31,8 @@ export default function PropertiesTree() {
     const minimized = useAppSelector(selectMinimized) === featuresConfig.propertyTree.key;
     const maximized = useAppSelector(selectMaximized).includes(featuresConfig.propertyTree.key);
 
-    const [root, setRoot] = useMountedState<TreeLevel | undefined>(undefined);
-    const [selected, setSelected] = useMountedState<string>("");
+    const [root, setRoot] = useState<TreeLevel>();
+    const [selected, setSelected] = useState("");
 
     const search = useCallback(
         async (property: string, value: string) => {
@@ -110,7 +109,7 @@ type ValueProps = {
 
 function Value({ prop, value, level, selected, search }: ValueProps) {
     const theme = useTheme();
-    const [selecting, setSelecting] = useMountedState<boolean>(false);
+    const [selecting, setSelecting] = useState(false);
 
     const clickValue = useCallback(async () => {
         setSelecting(true);
@@ -198,7 +197,7 @@ function Node({ prop, level, selected, search }: NodeProps) {
         state: { view },
     } = useExplorerGlobals(true);
 
-    const [expanded, setExpanded] = useMountedState<boolean | undefined>(undefined);
+    const [expanded, setExpanded] = useState<boolean | undefined>(undefined);
 
     const clickProp = useCallback(async () => {
         if (expanded !== undefined) {

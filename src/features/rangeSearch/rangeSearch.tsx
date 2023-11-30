@@ -14,7 +14,6 @@ import { NodeList } from "features/nodeList/nodeList";
 import { CustomParentNode } from "features/search";
 import WidgetList from "features/widgetList/widgetList";
 import { useAbortController } from "hooks/useAbortController";
-import { useMountedState } from "hooks/useMountedState";
 import { useToggle } from "hooks/useToggle";
 import { selectMaximized, selectMinimized } from "slices/explorerSlice";
 import { iterateAsync } from "utils/search";
@@ -38,16 +37,13 @@ export default function RangeSearch() {
     const [property, setProperty] = useState("");
     const [min, setMin] = useState("");
     const [max, setMax] = useState("");
-    const [allSelected, setAllSelected] = useMountedState(false);
-    const [allHidden, setAllHidden] = useMountedState(false);
-    const [status, setStatus] = useMountedState(Status.Initial);
-    const [searchResults, setSearchResults] = useMountedState<
-        | {
-              iterator: AsyncIterableIterator<HierarcicalObjectReference> | undefined;
-              nodes: HierarcicalObjectReference[];
-          }
-        | undefined
-    >(undefined);
+    const [allSelected, setAllSelected] = useState(false);
+    const [allHidden, setAllHidden] = useState(false);
+    const [status, setStatus] = useState(Status.Initial);
+    const [searchResults, setSearchResults] = useState<{
+        iterator: AsyncIterableIterator<HierarcicalObjectReference> | undefined;
+        nodes: HierarcicalObjectReference[];
+    }>();
 
     const [abortController, abort] = useAbortController();
     const listElRef = useRef<HTMLElement | null>(null);

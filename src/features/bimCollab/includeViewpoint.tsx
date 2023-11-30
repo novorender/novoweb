@@ -1,7 +1,7 @@
 import { Box, CircularProgress } from "@mui/material";
 import { ObjectDB } from "@novorender/data-js-api";
 import { HierarcicalObjectReference, ObjectId } from "@novorender/webgl-api";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useStore } from "react-redux";
 
 import { RootState } from "app/store";
@@ -12,7 +12,6 @@ import { GroupStatus, useLazyObjectGroups } from "contexts/objectGroups";
 import { useLazySelectionBasket } from "contexts/selectionBasket";
 import { ObjectVisibility, selectDefaultVisibility } from "features/render/renderSlice";
 import { useAbortController } from "hooks/useAbortController";
-import { useMountedState } from "hooks/useMountedState";
 import { Viewpoint } from "types/bcf";
 import {
     createBcfClippingPlanes,
@@ -49,7 +48,7 @@ export function IncludeViewpoint({
     const store = useStore<RootState>();
 
     const [abortController, abort] = useAbortController();
-    const [loading, setLoading] = useMountedState(false);
+    const [loading, setLoading] = useState(false);
 
     useEffect(() => {
         if (include) {
