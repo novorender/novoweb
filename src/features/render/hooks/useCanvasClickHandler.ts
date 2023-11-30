@@ -153,7 +153,7 @@ export function useCanvasClickHandler({
                     if (topDown) {
                         const midPt = (view.measure?.draw.toMarkerPoints([p]) ?? [])[0];
                         if (midPt) {
-                            const midPick = await view.pick(midPt[0], midPt[1]);
+                            const midPick = await view.pick(midPt[0], midPt[1], { sampleDiscRadius: 100 });
                             if (midPick) {
                                 vec3.copy(p, midPick.position);
                             }
