@@ -32,14 +32,12 @@ const StyledFixedSizeList = withCustomScrollbar(FixedSizeList) as typeof FixedSi
 
 export function Root() {
     const theme = useTheme();
-    const history = useHistory();
     const {
         state: { db, scene },
     } = useExplorerGlobals(true);
 
     const images = useAppSelector(selectImages);
     const filter = useAppSelector(selectImageFilter);
-    const showMarkers = useAppSelector(selectShowImageMarkers);
     const { tmZone } = useAppSelector(selectProjectSettings);
     const dispatch = useAppDispatch();
 
@@ -49,26 +47,9 @@ export function Root() {
         }
     }, [images, db, tmZone, filter, scene]);
 
-    const toggleShowMarkers = () => {
-        dispatch(imagesActions.setShowMarkers(!showMarkers));
-    };
-
     return (
         <>
-            <Box boxShadow={theme.customShadows.widgetHeader} display="flex" justifyContent={"space-between"}>
-                <Button onClick={() => history.push("/filter")} color="grey">
-                    <FilterAlt sx={{ mr: 1 }} />
-                    Filter
-                </Button>
-                <FormControlLabel
-                    control={
-                        <IosSwitch size="medium" color="primary" checked={showMarkers} onChange={toggleShowMarkers} />
-                    }
-                    label={<Box fontSize={14}>Show markers</Box>}
-                />
-                <Cancel />
-            </Box>
-
+            <Header />
             <Progress />
 
             {hasFinished(images) ? (
@@ -151,6 +132,30 @@ function Progress() {
     );
 }
 
+function Header() {
+    const history = useHistory();
+    const showMarkers = useAppSelector(selectShowImageMarkers);
+    const dispatch = useAppDispatch();
+
+    const toggleShowMarkers = () => {
+        dispatch(imagesActions.setShowMarkers(!showMarkers));
+    };
+
+    return (
+        <Box boxShadow={(theme) => theme.customShadows.widgetHeader} display="flex" justifyContent={"space-between"}>
+            <Button onClick={() => history.push("/filter")} color="grey">
+                <FilterAlt sx={{ mr: 1 }} />
+                Filter
+            </Button>
+            <FormControlLabel
+                control={<IosSwitch size="medium" color="primary" checked={showMarkers} onChange={toggleShowMarkers} />}
+                label={<Box fontSize={14}>Show markers</Box>}
+            />
+            <Cancel />
+        </Box>
+    );
+}
+
 async function loadImages({
     db,
     tmZone,
@@ -167,7 +172,7 @@ async function loadImages({
         const searchPattern: SearchPattern[] = [{ property: "Image/Preview", value: "", exact: true }];
 
         if (filter.type === ImageType.Flat) {
-            searchPattern.push({ property: "Image/Image", value: "", exact: true });
+            searchPattern.push({ property: "Image/Gltf", value: "", exact: true, exclude: true });
         } else if (filter.type === ImageType.Panorama) {
             searchPattern.push({ property: "Image/Gltf", value: "", exact: true });
         }
@@ -216,6 +221,7 @@ async function loadImages({
                     images.push({
                         ...base,
                         gltf: gltf[1],
+                        src: src ? src[1] : "",
                         rotation: options.flip ? flipGLtoCadQuat(JSON.parse(rot[1])) : JSON.parse(rot[1]),
                     });
                 } else if (src) {
@@ -245,6 +251,7 @@ async function loadImages({
                     images.push({
                         ...base,
                         gltf: gltf[1],
+                        src: src ? src[1] : "",
                     });
                 } else if (src) {
                     images.push({

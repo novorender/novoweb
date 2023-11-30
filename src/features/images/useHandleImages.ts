@@ -10,8 +10,7 @@ import { handleImageResponse } from "utils/bcf";
 import { getAssetUrl } from "utils/misc";
 import { sleep } from "utils/time";
 
-import { FlatImage, imagesActions, PanoramaImage, selectActiveImage } from "./imagesSlice";
-import { isPanorama } from "./utils";
+import { Image, imagesActions, ImageType, PanoramaImage, selectActiveImage } from "./imagesSlice";
 
 export function useHandleImages() {
     const {
@@ -32,7 +31,9 @@ export function useHandleImages() {
 
             if (
                 activeImage?.status === AsyncStatus.Success ||
-                (activeImage && activeImage.image.guid === currentPanorama.current?.image.guid)
+                (activeImage &&
+                    activeImage.image.guid === currentPanorama.current?.image.guid &&
+                    activeImage.mode === ImageType.Panorama)
             ) {
                 return;
             }
@@ -49,24 +50,37 @@ export function useHandleImages() {
                 return;
             }
 
-            if (isPanorama(activeImage.image)) {
+            if (activeImage.mode === ImageType.Panorama) {
                 loadPanorama(activeImage.image, view);
             } else {
                 loadFlatImage(activeImage.image, view);
             }
 
-            async function loadFlatImage(image: FlatImage, view: View) {
+            async function loadFlatImage(image: Image, view: View) {
+                const signal = abortController.current.signal;
+                const src = await fetch(getAssetUrl(view, image.src).toString(), {
+                    signal,
+                })
+                    .then((res) => handleImageResponse(res))
+                    .catch((e) => {
+                        if (!signal.aborted) {
+                            console.warn(e);
+                        }
+                        return "";
+                    });
+
+                if (!src) {
+                    return;
+                }
+
+                dispatch(renderActions.setViewMode(ViewMode.Default));
                 dispatch(
-                    renderActions.setCamera({
-                        type: CameraType.Pinhole,
-                        goTo: { position: image.position, rotation: view.renderState.camera.rotation },
+                    imagesActions.setActiveImage({
+                        image: { ...image, src },
+                        mode: ImageType.Flat,
+                        status: AsyncStatus.Success,
                     })
                 );
-                const src = await fetch(getAssetUrl(view, image.src).toString()).then((res) =>
-                    handleImageResponse(res)
-                );
-                dispatch(renderActions.setViewMode(ViewMode.Default));
-                dispatch(imagesActions.setActiveImage({ image: { ...image, src }, status: AsyncStatus.Success }));
             }
 
             async function loadPanorama(panorama: PanoramaImage, view: View) {
@@ -110,7 +124,13 @@ export function useHandleImages() {
                         objects: [{ ...obj, instances: [{ position: panorama.position }] }],
                     },
                 });
-                dispatch(imagesActions.setActiveImage({ image: panorama, status: AsyncStatus.Success }));
+                dispatch(
+                    imagesActions.setActiveImage({
+                        image: panorama,
+                        status: AsyncStatus.Success,
+                        mode: ImageType.Panorama,
+                    })
+                );
             }
         },
         [activeImage, view, dispatch, abortController, abort, viewMode]
