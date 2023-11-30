@@ -1,4 +1,4 @@
-import { createSlice, PayloadAction } from "@reduxjs/toolkit";
+import { createSelector, createSlice, PayloadAction } from "@reduxjs/toolkit";
 
 import { RootState } from "app/store";
 import { initScene } from "features/render";
@@ -66,14 +66,15 @@ export const propertiesSlice = createSlice({
 export const selectPropertiesStampSettings = (state: RootState) => state.properties.stampSettings;
 export const selectShowPropertiesStamp = (state: RootState) => state.properties.showStamp;
 export const selectStarredProperties = (state: RootState) => state.properties.starred;
-export const selectPropertiesSettings = (state: RootState) => {
-    return {
+export const selectPropertiesSettings = createSelector(
+    (state: RootState) => state.properties,
+    (properties) => ({
         stamp: {
-            enabled: state.properties.stampSettings.enabled,
+            enabled: properties.stampSettings.enabled,
         },
-        starred: Object.keys(state.properties.starred),
-    };
-};
+        starred: Object.keys(properties.starred),
+    })
+);
 
 const { actions, reducer } = propertiesSlice;
 export { actions as propertiesActions, reducer as propertiesReducer };
