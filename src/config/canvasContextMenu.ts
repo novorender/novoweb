@@ -19,6 +19,10 @@ export const canvasContextMenuConfig = {
         key: "pointLine",
         name: "Point line",
     },
+    outlinePoint: {
+        key: "outlinePoint",
+        name: "Outline point",
+    },
     area: {
         key: "area",
         name: "Area",
@@ -42,6 +46,7 @@ export const defaultCanvasContextMenuFeatures = [
     canvasContextMenuConfig.addFileToBasket.key,
     canvasContextMenuConfig.measure.key,
     canvasContextMenuConfig.area.key,
+    canvasContextMenuConfig.outlinePoint.key,
     canvasContextMenuConfig.pointLine.key,
     canvasContextMenuConfig.laser.key,
     canvasContextMenuConfig.clip.key,

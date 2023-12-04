@@ -310,6 +310,7 @@ export function Measure() {
     const [status, setStatus] = useState(AsyncStatus.Initial);
     const [measureEntity, setMeasureEntity] = useState<MeasureEntity>();
     const [laser, setLaser] = useState<{ laser: OutlineLaser; plane: Vec4 }>();
+    const [outlinePoint, setOutlinePoint] = useState<vec3 | undefined>();
     const [centerLine, setCenterLine] = useState<CenterLine>();
     const measurements = useAppSelector(selectMeasureEntities);
 
@@ -343,16 +344,25 @@ export function Measure() {
                 if (pos && plane) {
                     const laser = await getOutlineLaser(pos, view, cameraType, plane);
                     setLaser(laser ? { laser, plane } : undefined);
+                    setOutlinePoint(view.selectOutlinePoint(pos, 0.2));
                 }
             } else if (plane && stamp.data.position) {
                 const planeDir = vec3.fromValues(plane[0], plane[1], plane[2]);
                 const rayDir = vec3.sub(vec3.create(), view.renderState.camera.position, stamp.data.position);
                 vec3.normalize(rayDir, rayDir);
                 const d = vec3.dot(planeDir, rayDir);
+                // TODO: Same check as replace following lines with lines inside if once we get correct position from outline pick
+                const t = (plane[3] - vec3.dot(planeDir, view.renderState.camera.position)) / d;
+                const pos = vec3.scaleAndAdd(vec3.create(), view.renderState.camera.position, rayDir, t);
+                const laser = await getOutlineLaser(pos, view, cameraType, plane);
+                const outlinePoint = view.selectOutlinePoint(pos, 3);
+                setOutlinePoint(outlinePoint);
                 if (d > 0) {
-                    const t = (plane[3] - vec3.dot(planeDir, view.renderState.camera.position)) / d;
-                    const pos = vec3.scaleAndAdd(vec3.create(), view.renderState.camera.position, rayDir, t);
-                    const laser = await getOutlineLaser(pos, view, cameraType, plane);
+                    // const t = (plane[3] - vec3.dot(planeDir, view.renderState.camera.position)) / d;
+                    // const pos = vec3.scaleAndAdd(vec3.create(), view.renderState.camera.position, rayDir, t);
+                    // const laser = await getOutlineLaser(pos, view, cameraType, plane);
+                    // const outlinePoint = view.selectOutlinePoint(pos, 0.2);
+                    // setOutlinePoint(outlinePoint);
                     setLaser(laser ? { laser, plane } : undefined);
                 }
             }
@@ -381,6 +391,28 @@ export function Measure() {
         dispatch(
             measureActions.selectEntity({
                 entity: measureEntity,
+                pin: true,
+            })
+        );
+
+        close();
+    };
+
+    const selectOutlinePoint = () => {
+        if (!outlinePoint) {
+            return;
+        }
+
+        if (measurements.at(-1)?.length === 2) {
+            dispatch(measureActions.newMeasurement());
+        }
+        dispatch(
+            measureActions.selectEntity({
+                entity: {
+                    ObjectId: -1,
+                    drawKind: "vertex",
+                    parameter: outlinePoint,
+                },
                 pin: true,
             })
         );
@@ -460,6 +492,14 @@ export function Measure() {
                             <Straighten fontSize="small" />
                         </ListItemIcon>
                         <ListItemText>{config.pointLine.name}</ListItemText>
+                    </MenuItem>
+                )}
+                {features.includes(config.outlinePoint.key) && (
+                    <MenuItem onClick={selectOutlinePoint} disabled={!outlinePoint}>
+                        <ListItemIcon>
+                            <Straighten fontSize="small" />
+                        </ListItemIcon>
+                        <ListItemText>{config.outlinePoint.name}</ListItemText>
                     </MenuItem>
                 )}
             </Box>
