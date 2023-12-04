@@ -285,7 +285,7 @@ export const jiraApi = createApi({
                     .catch((error) => ({ error }));
             },
         }),
-        refreshTokens: builder.mutation<
+        refreshTokens: builder.query<
             { access_token: string; refresh_token: string; expires_in: number },
             { refreshToken: string; config: { jiraClientId: string; jiraClientSecret: string } }
         >({
@@ -329,7 +329,7 @@ export const {
     useGetAttachmentContentQuery,
     useGetNovorenderMetaCustomFieldQuery,
     useGetAccessibleResourcesQuery,
-    useRefreshTokensMutation,
+    useLazyRefreshTokensQuery,
     useGetProjectsQuery,
     useGetComponentsQuery,
     useGetIssuesQuery,

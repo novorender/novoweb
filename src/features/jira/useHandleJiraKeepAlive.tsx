@@ -6,14 +6,14 @@ import { selectConfig } from "slices/explorerSlice";
 import { AsyncStatus } from "types/misc";
 import { deleteFromStorage, saveToStorage } from "utils/storage";
 
-import { useRefreshTokensMutation } from "./jiraApi";
+import { useLazyRefreshTokensQuery } from "./jiraApi";
 import { jiraActions, selectJiraRefreshToken } from "./jiraSlice";
 
 export function useHandleJiraKeepAlive() {
     const dispatch = useAppDispatch();
     const refreshToken = useAppSelector(selectJiraRefreshToken);
     const config = useAppSelector(selectConfig);
-    const [refreshTokens] = useRefreshTokensMutation();
+    const [refreshTokens] = useLazyRefreshTokensQuery();
     const timeoutId = useRef<number>();
 
     useEffect(() => {
@@ -31,16 +31,16 @@ export function useHandleJiraKeepAlive() {
         }
 
         timeoutId.current = window.setTimeout(async () => {
-            const res = await refreshTokens({ refreshToken: refreshToken.token, config });
+            const res = await refreshTokens({ refreshToken: refreshToken.token, config })
+                .unwrap()
+                .catch((error) => console.warn(error));
 
-            if ("data" in res) {
-                saveToStorage(StorageKey.JiraRefreshToken, res.data.refresh_token);
-                dispatch(jiraActions.setAccessToken({ status: AsyncStatus.Success, data: res.data.access_token }));
-                dispatch(
-                    jiraActions.setRefreshToken({ token: res.data.refresh_token, refreshIn: res.data.expires_in })
-                );
+            if (res) {
+                saveToStorage(StorageKey.JiraRefreshToken, res.refresh_token);
+                dispatch(jiraActions.setAccessToken({ status: AsyncStatus.Success, data: res.access_token }));
+                dispatch(jiraActions.setRefreshToken({ token: res.refresh_token, refreshIn: res.expires_in }));
             } else {
-                console.warn(res.error);
+                console.warn("An error occurred while refreshing jira token.");
                 deleteFromStorage(StorageKey.JiraRefreshToken);
                 dispatch(jiraActions.setRefreshToken(undefined));
                 dispatch(jiraActions.setAccessToken({ status: AsyncStatus.Initial }));

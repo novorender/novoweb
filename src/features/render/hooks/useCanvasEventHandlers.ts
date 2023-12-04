@@ -26,15 +26,24 @@ import { moveSvgCursor } from "../svgUtils";
 import { useCanvasContextMenuHandler } from "./useCanvasContextMenuHandler";
 
 export function useCanvasEventHandlers({
-    pointerPos,
+    pointerPosRef,
     cursor,
     svg,
-    renderFnRef,
+    engine2dRenderFnRef,
+    pointerDownStateRef,
 }: {
-    pointerPos: MutableRefObject<[x: number, y: number]>;
+    pointerPosRef: MutableRefObject<[x: number, y: number]>;
     cursor: "measure" | "cross" | "standard";
     svg: SVGSVGElement | null;
-    renderFnRef: MutableRefObject<((moved: boolean, isIdleFrame: boolean) => void) | undefined>;
+    engine2dRenderFnRef: MutableRefObject<((moved: boolean, isIdleFrame: boolean) => void) | undefined>;
+    pointerDownStateRef: MutableRefObject<
+        | {
+              timestamp: number;
+              x: number;
+              y: number;
+          }
+        | undefined
+    >;
 }) {
     const {
         state: { view, canvas, size },
@@ -89,13 +98,11 @@ export function useCanvasEventHandlers({
     };
 
     const handleDown = async (x: number, y: number, timestamp: number) => {
-        dispatch(
-            renderActions.setPointerDownState({
-                timestamp,
-                x,
-                y,
-            })
-        );
+        pointerDownStateRef.current = {
+            timestamp,
+            x,
+            y,
+        };
     };
 
     const onWheel = (e: WheelEvent<HTMLCanvasElement>) => {
@@ -202,11 +209,11 @@ export function useCanvasEventHandlers({
     const prevHoverEnt = useRef<Awaited<ReturnType<CoreModule["pickMeasureEntityOnCurrentObject"]>>>();
     const previous2dSnapPos = useRef(vec2.create());
     const onPointerMove = async (e: ReactPointerEvent<HTMLCanvasElement>) => {
-        pointerPos.current = [e.nativeEvent.offsetX, e.nativeEvent.offsetY];
+        pointerPosRef.current = [e.nativeEvent.offsetX, e.nativeEvent.offsetY];
 
         if (roadLayerTracerEnabled) {
             // TODO: dont call renderfn directly from here.
-            renderFnRef.current?.(false, false);
+            engine2dRenderFnRef.current?.(false, false);
         }
 
         if (!view || !canvas || !svg || (!e.movementY && !e.movementX)) {

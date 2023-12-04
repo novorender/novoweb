@@ -2,6 +2,7 @@ import { css, styled, Theme } from "@mui/material";
 import { SVGProps } from "react";
 
 import { useAppDispatch, useAppSelector } from "app/store";
+import { useRedirectWheelEvents } from "hooks/useRedirectWheelEvents";
 
 import { jiraActions, selectJiraActiveIssue, selectJiraHoveredEntity } from "./jiraSlice";
 import { useJiraMarkers } from "./useJiraMarkers";
@@ -85,6 +86,7 @@ export function JiraMarkers() {
     const hoveredEntity = useAppSelector(selectJiraHoveredEntity);
     const activeIssue = useAppSelector(selectJiraActiveIssue);
     const markers = useJiraMarkers();
+    const onWheel = useRedirectWheelEvents();
 
     return (
         <>
@@ -100,6 +102,7 @@ export function JiraMarkers() {
                         dispatch(jiraActions.setClickedMarker(marker.key));
                         dispatch(jiraActions.setActiveIssue(marker.key));
                     }}
+                    onWheel={onWheel}
                 />
             ))}
         </>

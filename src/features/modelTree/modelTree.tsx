@@ -1,7 +1,7 @@
 import { ContentCopy } from "@mui/icons-material";
 import { Box, ListItemIcon, ListItemText, Menu, MenuItem } from "@mui/material";
 import { HierarcicalObjectReference } from "@novorender/webgl-api";
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { ListOnScrollProps } from "react-window";
 
 import { useAppDispatch, useAppSelector } from "app/store";
@@ -13,7 +13,6 @@ import { NodeList } from "features/nodeList/nodeList";
 import { renderActions, selectMainObject } from "features/render";
 import WidgetList from "features/widgetList/widgetList";
 import { useAbortController } from "hooks/useAbortController";
-import { useMountedState } from "hooks/useMountedState";
 import { useToggle } from "hooks/useToggle";
 import { selectMaximized, selectMinimized } from "slices/explorerSlice";
 import { NodeType } from "types/misc";
@@ -52,9 +51,9 @@ export default function ModelTree() {
     const [menuOpen, toggleMenu] = useToggle();
     const minimized = useAppSelector(selectMinimized) === featuresConfig.modelTree.key;
     const maximized = useAppSelector(selectMaximized).includes(featuresConfig.modelTree.key);
-    const [status, setStatus] = useMountedState(Status.Loading);
-    const [currentDepth, setCurrentDepth] = useMountedState<TreeLevel | undefined>(undefined);
-    const [currentNode, setCurrentNode] = useMountedState<HierarcicalObjectReference | RootNode | undefined>(undefined);
+    const [status, setStatus] = useState(Status.Loading);
+    const [currentDepth, setCurrentDepth] = useState<TreeLevel>();
+    const [currentNode, setCurrentNode] = useState<HierarcicalObjectReference | RootNode>();
 
     const [abortController, abort] = useAbortController();
     const isLoadingMore = useRef(false);

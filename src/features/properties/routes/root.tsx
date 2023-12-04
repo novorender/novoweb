@@ -32,7 +32,6 @@ import { useExplorerGlobals } from "contexts/explorerGlobals";
 import { highlightActions, useDispatchHighlighted } from "contexts/highlighted";
 import { selectMainObject } from "features/render/renderSlice";
 import { useAbortController } from "hooks/useAbortController";
-import { useMountedState } from "hooks/useMountedState";
 import { selectHasAdminCapabilities } from "slices/explorerSlice";
 import { NodeType } from "types/misc";
 import {
@@ -89,8 +88,8 @@ export function Root() {
     const dispatch = useAppDispatch();
 
     const [searches, setSearches] = useState<Record<string, SearchPattern>>({});
-    const [status, setStatus] = useMountedState(Status.Initial);
-    const [object, setObject] = useMountedState<PropertiesObject | undefined>(undefined);
+    const [status, setStatus] = useState(Status.Initial);
+    const [object, setObject] = useState<PropertiesObject>();
     const [abortController, abort] = useAbortController();
 
     const parentObject = object?.parent;

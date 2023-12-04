@@ -8,7 +8,6 @@ import { ScrollBox, Switch, TextField } from "components";
 import { useExplorerGlobals } from "contexts/explorerGlobals";
 import { highlightActions, useDispatchHighlighted } from "contexts/highlighted";
 import { useAbortController } from "hooks/useAbortController";
-import { useMountedState } from "hooks/useMountedState";
 import { uniqueArray } from "utils/misc";
 import { searchByPatterns, searchDeepByPatterns } from "utils/search";
 
@@ -43,7 +42,7 @@ export function CreateJsonGroup({
     } = useExplorerGlobals(true);
     const dispatchHighlighted = useDispatchHighlighted();
 
-    const [status, setStatus] = useMountedState(Status.Initial);
+    const [status, setStatus] = useState(Status.Initial);
     const [json, setJson] = useState(JSON.stringify({ searchPattern: savedInputs }, undefined, 2));
 
     const [abortController, abort] = useAbortController();

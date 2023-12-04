@@ -3,6 +3,7 @@ import { SVGProps } from "react";
 
 import { useAppDispatch, useAppSelector } from "app/store";
 import { renderActions, selectStamp, StampKind } from "features/render";
+import { useRedirectWheelEvents } from "hooks/useRedirectWheelEvents";
 
 import { useXsiteManageLogPointMarkers } from "../hooks/useXsiteManageLogPointMarkers";
 
@@ -32,6 +33,7 @@ export function LogPointMarkers() {
     const stamp = useAppSelector(selectStamp);
     const logPoints = useXsiteManageLogPointMarkers();
     const dispatch = useAppDispatch();
+    const onWheel = useRedirectWheelEvents();
 
     return (
         <>
@@ -75,6 +77,7 @@ export function LogPointMarkers() {
 
                         dispatch(renderActions.setStamp(null));
                     }}
+                    onWheel={onWheel}
                 >
                     <LogPointMarker
                         active={stamp?.kind === StampKind.LogPoint && stamp.data.logPoint.sequenceId === pt.sequenceId}

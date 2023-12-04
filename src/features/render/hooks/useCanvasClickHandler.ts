@@ -1,6 +1,6 @@
 import { rotationFromDirection } from "@novorender/api";
 import { mat3, quat, ReadonlyVec3, vec2, vec3, vec4 } from "gl-matrix";
-import { MouseEventHandler, useRef } from "react";
+import { MouseEventHandler, MutableRefObject, useRef } from "react";
 
 import { useAppDispatch, useAppSelector } from "app/store";
 import { useExplorerGlobals } from "contexts/explorerGlobals";
@@ -31,7 +31,6 @@ import {
     selectDeviations,
     selectMainObject,
     selectPicker,
-    selectPointerDownState,
     selectSecondaryHighlightProperty,
     selectSelectMultiple,
     selectViewMode,
@@ -43,7 +42,18 @@ import { isRealVec } from "utils/misc";
 import { extractObjectIds } from "utils/objectData";
 import { searchByPatterns, searchDeepByPatterns } from "utils/search";
 
-export function useCanvasClickHandler() {
+export function useCanvasClickHandler({
+    pointerDownStateRef,
+}: {
+    pointerDownStateRef: MutableRefObject<
+        | {
+              timestamp: number;
+              x: number;
+              y: number;
+          }
+        | undefined
+    >;
+}) {
     const dispatch = useAppDispatch();
     const highlightedObjects = useHighlighted();
     const dispatchHighlighted = useDispatchHighlighted();
@@ -64,7 +74,6 @@ export function useCanvasClickHandler() {
     const crossSectionPoint = useAppSelector(selectCrossSectionPoint);
     const crossSectionClipping = useAppSelector(selectCrossSectionClipping);
     const viewMode = useAppSelector(selectViewMode);
-    const pointerDownState = useAppSelector(selectPointerDownState);
     const showPropertiesStamp = useAppSelector(selectShowPropertiesStamp);
     const { planes } = useAppSelector(selectClippingPlanes);
 
@@ -73,6 +82,7 @@ export function useCanvasClickHandler() {
     const secondaryHighlightProperty = useAppSelector(selectSecondaryHighlightProperty);
 
     const handleCanvasPick: MouseEventHandler<HTMLCanvasElement> = async (evt) => {
+        const pointerDownState = pointerDownStateRef.current;
         const longPress = pointerDownState && evt.timeStamp - pointerDownState.timestamp >= 300;
         const drag =
             pointerDownState &&
@@ -83,8 +93,7 @@ export function useCanvasClickHandler() {
             return;
         }
 
-        dispatch(renderActions.setPointerDownState(undefined));
-
+        pointerDownStateRef.current = undefined;
         const pickCameraPlane =
             cameraState.type === CameraType.Orthographic &&
             (viewMode === ViewMode.CrossSection || viewMode === ViewMode.FollowPath);
@@ -144,7 +153,7 @@ export function useCanvasClickHandler() {
                     if (topDown) {
                         const midPt = (view.measure?.draw.toMarkerPoints([p]) ?? [])[0];
                         if (midPt) {
-                            const midPick = await view.pick(midPt[0], midPt[1]);
+                            const midPick = await view.pick(midPt[0], midPt[1], { sampleDiscRadius: 100 });
                             if (midPick) {
                                 vec3.copy(p, midPick.position);
                             }

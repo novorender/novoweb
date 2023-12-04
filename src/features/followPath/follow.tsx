@@ -16,7 +16,7 @@ import {
 } from "@mui/material";
 import { FollowParametricObject, rotationFromDirection } from "@novorender/api";
 import { HierarcicalObjectReference } from "@novorender/webgl-api";
-import { vec3 } from "gl-matrix";
+import { glMatrix, mat3, quat, vec3 } from "gl-matrix";
 import { FormEvent, MouseEvent, SyntheticEvent, useCallback, useEffect, useState } from "react";
 import { useHistory } from "react-router-dom";
 
@@ -47,6 +47,7 @@ import {
     selectShowGrid,
     selectShowTracer,
     selectStep,
+    selectVerticalClipping,
     selectVerticalTracer,
     selectView2d,
 } from "./followPathSlice";
@@ -64,6 +65,7 @@ export function Follow({ fpObj }: { fpObj: FollowParametricObject }) {
     const view2d = useAppSelector(selectView2d);
     const showGrid = useAppSelector(selectShowGrid);
     const autoRecenter = useAppSelector(selectAutoRecenter);
+    const verticalClipping = useAppSelector(selectVerticalClipping);
     const autoStepSize = useAppSelector(selectAutoStepSize);
     const profile = useAppSelector(selectProfile);
     const step = useAppSelector(selectStep);
@@ -79,9 +81,17 @@ export function Follow({ fpObj }: { fpObj: FollowParametricObject }) {
     const traceVerical = useAppSelector(selectVerticalTracer);
     const deviations = useAppSelector(selectFollowDeviations);
 
+    const [profileInput, setProfileInput] = useState(profile);
     const [clipping, setClipping] = useState(_clipping);
 
     const dispatch = useAppDispatch();
+
+    useEffect(
+        function syncProfileInput() {
+            setProfileInput(profile);
+        },
+        [profile]
+    );
 
     const goToProfile = useCallback(
         async ({
@@ -90,12 +100,14 @@ export function Follow({ fpObj }: { fpObj: FollowParametricObject }) {
             keepOffset,
             p,
             keepCamera,
+            clipVertical,
         }: {
             p: number;
             view2d: boolean;
             showGrid: boolean;
             keepOffset?: boolean;
             keepCamera?: boolean;
+            clipVertical?: boolean;
         }): Promise<void> => {
             const pos = await fpObj.getCameraValues(p);
 
@@ -110,7 +122,30 @@ export function Follow({ fpObj }: { fpObj: FollowParametricObject }) {
                     ? vec3.sub(vec3.create(), currentCenter, view.renderState.camera.position)
                     : vec3.fromValues(0, 0, 0);
             const offsetPt = vec3.sub(vec3.create(), pt, offset);
-            const rotation = rotationFromDirection(dir);
+            let rotation = quat.create();
+            if (clipVertical) {
+                const up = glMatrix.equals(Math.abs(vec3.dot(vec3.fromValues(0, 0, 1), dir)), 1)
+                    ? vec3.fromValues(0, 1, 0)
+                    : vec3.fromValues(0, 0, 1);
+
+                const right = vec3.cross(vec3.create(), up, dir);
+                vec3.normalize(right, right);
+
+                const newDir = vec3.cross(vec3.create(), up, right);
+                vec3.normalize(newDir, newDir);
+                if (vec3.dot(newDir, dir) < 0) {
+                    vec3.negate(dir, newDir);
+                } else {
+                    vec3.copy(dir, newDir);
+                }
+
+                rotation = quat.fromMat3(
+                    quat.create(),
+                    mat3.fromValues(right[0], right[1], right[2], up[0], up[1], up[2], dir[0], dir[1], dir[2])
+                );
+            } else {
+                rotation = rotationFromDirection(dir);
+            }
 
             if (view2d) {
                 dispatch(
@@ -250,6 +285,13 @@ export function Follow({ fpObj }: { fpObj: FollowParametricObject }) {
         dispatch(followPathActions.setAutoRecenter(recenter));
     };
 
+    const handleVerticalClippingChange = () => {
+        const vertical = !verticalClipping;
+
+        goToProfile({ p: Number(profile), view2d, showGrid, keepOffset: !autoRecenter, clipVertical: vertical });
+        dispatch(followPathActions.setVerticalClipping(vertical));
+    };
+
     const handleToggleLine = () => {
         const newShowLine = !deviations.line;
         dispatch(followPathActions.setShowDeviationLine(newShowLine));
@@ -333,8 +375,9 @@ export function Follow({ fpObj }: { fpObj: FollowParametricObject }) {
     const handleProfileSubmit = (e: FormEvent) => {
         e.preventDefault();
 
+        dispatch(followPathActions.setProfile(profileInput));
         goToProfile({
-            p: Number(profile),
+            p: Number(profileInput),
             view2d,
             showGrid,
             keepOffset: !autoRecenter,
@@ -445,11 +488,9 @@ export function Follow({ fpObj }: { fpObj: FollowParametricObject }) {
                         <Grid item xs={6} component="form" onSubmit={handleProfileSubmit}>
                             <Typography sx={{ mb: 0.5 }}>Profile:</Typography>
                             <OutlinedInput
-                                value={profile}
+                                value={profileInput}
                                 inputProps={{ inputMode: "numeric", pattern: "[0-9,.]*" }}
-                                onChange={(e) =>
-                                    dispatch(followPathActions.setProfile(e.target.value.replace(",", ".")))
-                                }
+                                onChange={(e) => setProfileInput(e.target.value.replace(",", "."))}
                                 fullWidth
                                 size="small"
                                 sx={{ fontWeight: 600 }}
@@ -521,7 +562,17 @@ export function Follow({ fpObj }: { fpObj: FollowParametricObject }) {
                             }
                             label={<Box>Automatically recenter</Box>}
                         />
-
+                        <FormControlLabel
+                            control={
+                                <IosSwitch
+                                    size="medium"
+                                    color="primary"
+                                    checked={verticalClipping}
+                                    onChange={handleVerticalClippingChange}
+                                />
+                            }
+                            label={<Box>Vertical clipping</Box>}
+                        />
                         {view2d ? (
                             <>
                                 <FormControlLabel

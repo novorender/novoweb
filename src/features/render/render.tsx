@@ -84,7 +84,12 @@ export function Render3D() {
     const [svg, setSvg] = useState<null | SVGSVGElement>(null);
 
     const engine2dRenderFnRef = useRef<((moved: boolean, idleFrame: boolean) => void) | undefined>();
-    const pointerPos = useRef([0, 0] as [x: number, y: number]);
+    const pointerPosRef = useRef([0, 0] as [x: number, y: number]);
+    const pointerDownStateRef = useRef<{
+        timestamp: number;
+        x: number;
+        y: number;
+    }>();
     const canvasRef: RefCallback<HTMLCanvasElement> = useCallback(
         (el) => {
             dispatchGlobals(explorerGlobalsActions.update({ canvas: el }));
@@ -121,12 +126,13 @@ export function Render3D() {
     useHandleOffline();
 
     const cursor = useHandleCanvasCursor();
-    const onClick = useCanvasClickHandler();
+    const onClick = useCanvasClickHandler({ pointerDownStateRef });
     const eventHandlers = useCanvasEventHandlers({
-        pointerPos,
+        pointerPosRef,
         cursor,
         svg,
-        renderFnRef: engine2dRenderFnRef,
+        pointerDownStateRef,
+        engine2dRenderFnRef,
     });
 
     return (
@@ -142,7 +148,7 @@ export function Render3D() {
             {sceneStatus.status === AsyncStatus.Success && view && canvas && (
                 <>
                     {debugStats.enabled && <PerformanceStats />}
-                    <Engine2D pointerPos={pointerPos} renderFnRef={engine2dRenderFnRef} svg={svg} />
+                    <Engine2D pointerPos={pointerPosRef} renderFnRef={engine2dRenderFnRef} svg={svg} />
                     <Stamp />
                     <Svg width={size.width} height={size.height} ref={setSvg}>
                         <Markers />

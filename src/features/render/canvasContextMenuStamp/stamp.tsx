@@ -37,7 +37,7 @@ import {
 } from "features/render";
 import { selectCanvasContextMenuFeatures } from "slices/explorerSlice";
 import { AsyncStatus } from "types/misc";
-import { getFilePathFromObjectPath } from "utils/objectData";
+import { getFilePathFromObjectPath, getParentPath } from "utils/objectData";
 import { getObjectData, searchDeepByPatterns } from "utils/search";
 
 const selectionFeatures = [
@@ -279,23 +279,44 @@ async function getRoadCenterLine({ db, view, id }: { db: ObjectDB; view: View; i
         return view.measure?.core.pickCurveSegment(obj.id);
     }
 
-    const iterator = db.search(
-        {
-            searchPattern: [
-                { property: "path", value: getFilePathFromObjectPath(obj.path) ?? obj.path },
-                { property: "Novorender/Path", value: "" },
-            ],
-        },
-        new AbortController().signal
-    );
+    const signal = new AbortController().signal;
+    const iterator = db.search({ parentPath: getParentPath(getParentPath(obj.path)), descentDepth: 0 }, signal);
 
-    const res = await iterator.next();
-    const multipleResults = res.value && (await iterator.next()).value;
-    if (multipleResults || !res.value) {
+    const res = (await iterator.next()).value as HierarcicalObjectReference | undefined;
+    const clProperty = (await res?.loadMetaData())?.properties.find(([key]) => key.toLowerCase() === "centerline");
+
+    if (!clProperty) {
         return;
     }
 
-    return view.measure?.core.pickCurveSegment((res.value as HierarcicalObjectReference).id);
+    const clParentIterator = db.search(
+        {
+            searchPattern: [{ property: "name", value: clProperty[1] }],
+        },
+        signal
+    );
+    const clParent = (await clParentIterator.next()).value as HierarcicalObjectReference | undefined;
+
+    if (!clParent) {
+        return;
+    }
+
+    const clIterator = db.search(
+        {
+            searchPattern: [
+                { property: "path", value: clParent.path },
+                { property: "Novorender/Path", value: "" },
+            ],
+        },
+        signal
+    );
+    const cl = (await clIterator.next()).value as HierarcicalObjectReference | undefined;
+
+    if (!cl) {
+        return;
+    }
+
+    return view.measure?.core.pickCurveSegment(cl.id);
 }
 
 export function Measure() {

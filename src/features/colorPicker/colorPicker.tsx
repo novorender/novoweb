@@ -7,9 +7,10 @@ import { VecRGB, VecRGBA, vecToRgb } from "utils/color";
 type Props = Omit<PopoverProps, "color"> & {
     color: VecRGB | VecRGBA;
     onChangeComplete: ColorChangeHandler;
+    disableAlpha?: boolean;
 };
 
-export function ColorPicker({ color, onChangeComplete, ...popoverProps }: Props) {
+export function ColorPicker({ color, onChangeComplete, disableAlpha, ...popoverProps }: Props) {
     const [{ r, g, b, a }, setPickerColor] = useState(vecToRgb(color));
 
     return (
@@ -19,6 +20,7 @@ export function ColorPicker({ color, onChangeComplete, ...popoverProps }: Props)
                     color={{ r, g, b, a }}
                     onChange={({ rgb }) => setPickerColor({ ...rgb, a: rgb.a ?? 1 })}
                     onChangeComplete={onChangeComplete}
+                    disableAlpha={disableAlpha}
                 />
             </Box>
         </Popover>

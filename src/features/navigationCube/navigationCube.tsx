@@ -7,7 +7,6 @@ import { useExplorerGlobals } from "contexts/explorerGlobals";
 import { useHighlighted } from "contexts/highlighted";
 import { renderActions, selectCameraType } from "features/render/renderSlice";
 import { useAbortController } from "hooks/useAbortController";
-import { useMountedState } from "hooks/useMountedState";
 import { objIdsToTotalBoundingSphere } from "utils/objectData";
 
 // prettier-ignore
@@ -367,7 +366,7 @@ export function NavigationCube() {
     const [circlePaths, setCirclePaths] = useState([] as Path[]);
     const [cubePaths, setCubePaths] = useState([] as Path[]);
     const [compassPaths, setCompassPath] = useState([] as Path[]);
-    const [loading, setLoading] = useMountedState(false);
+    const [loading, setLoading] = useState(false);
     const [abortController, abort] = useAbortController();
     const cameraType = useAppSelector(selectCameraType);
     const dispatch = useAppDispatch();

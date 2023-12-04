@@ -1,7 +1,7 @@
 import { Box, CircularProgress, SpeedDialActionProps } from "@mui/material";
 import { BoundingSphere } from "@novorender/webgl-api";
 import { vec3 } from "gl-matrix";
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 
 import { useAppDispatch } from "app/store";
 import { SpeedDialAction } from "components";
@@ -11,7 +11,6 @@ import { useHighlighted } from "contexts/highlighted";
 import { imagesActions } from "features/images";
 import { CameraType, renderActions } from "features/render/renderSlice";
 import { useAbortController } from "hooks/useAbortController";
-import { useMountedState } from "hooks/useMountedState";
 import { objIdsToTotalBoundingSphere } from "utils/objectData";
 
 enum Status {
@@ -31,7 +30,7 @@ export function FlyToSelected({ position, ...speedDialProps }: Props) {
     } = useExplorerGlobals(true);
     const dispatch = useAppDispatch();
 
-    const [status, setStatus] = useMountedState(Status.Initial);
+    const [status, setStatus] = useState(Status.Initial);
 
     const previousBoundingSphere = useRef<BoundingSphere>();
     const [abortController, abort] = useAbortController();

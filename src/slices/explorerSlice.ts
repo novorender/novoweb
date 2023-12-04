@@ -4,7 +4,6 @@ import { createSelector, createSlice, PayloadAction } from "@reduxjs/toolkit";
 import type { RootState } from "app/store";
 import { CanvasContextMenuFeatureKey, defaultCanvasContextMenuFeatures } from "config/canvasContextMenu";
 import {
-    allWidgets,
     ButtonKey,
     defaultEnabledAdminWidgets,
     defaultEnabledWidgets,
@@ -220,7 +219,7 @@ export const explorerSlice = createSlice({
             const { customProperties } = action.payload.sceneData;
 
             state.sceneType = getSceneType(customProperties);
-            state.userRole = state.sceneType === SceneType.Admin ? UserRole.Admin : getUserRole(customProperties);
+            state.userRole = getUserRole(customProperties);
             state.requireConsent = getRequireConsent(customProperties);
 
             state.lockedWidgets = state.lockedWidgets.filter(
@@ -229,9 +228,7 @@ export const explorerSlice = createSlice({
             if (action.payload.deviceProfile.isMobile && !state.lockedWidgets.includes(featuresConfig.images.key)) {
                 state.lockedWidgets.push(featuresConfig.images.key);
             }
-            if (state.sceneType === SceneType.Admin) {
-                state.enabledWidgets = allWidgets;
-            } else if (state.userRole !== UserRole.Viewer) {
+            if (state.userRole !== UserRole.Viewer) {
                 state.enabledWidgets = uniqueArray(
                     (customProperties.explorerProjectState
                         ? (customProperties.explorerProjectState.features.widgets.enabled as WidgetKey[])
@@ -363,8 +360,7 @@ function getUserRole(customProperties: unknown): UserRole {
     const role =
         customProperties && typeof customProperties === "object" && "role" in customProperties
             ? (customProperties as { role: string }).role
-            : UserRole.Viewer;
-
+            : "administrator";
     return role === "owner" ? UserRole.Owner : role === "administrator" ? UserRole.Admin : UserRole.Viewer;
 }
 
