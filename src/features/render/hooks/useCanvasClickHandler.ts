@@ -405,8 +405,7 @@ export function useCanvasClickHandler({
                             pin: evt.shiftKey,
                         })
                     );
-                }
-                if (measure.snapKind === "clippingOutline") {
+                } else if (measure.snapKind === "clippingOutline") {
                     const pointEntity = {
                         drawKind: "vertex",
                         ObjectId: result.objectId,

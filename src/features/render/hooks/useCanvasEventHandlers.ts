@@ -220,10 +220,13 @@ export function useCanvasEventHandlers({
             return;
         }
 
+        const planePicking = cameraType === CameraType.Orthographic && view.renderState.camera.far < 1;
+
         if (e.buttons === 0 && cursor === "measure") {
             const result = await view.pick(e.nativeEvent.offsetX, e.nativeEvent.offsetY, {
                 sampleDiscRadius: 4,
                 async: false,
+                pickCameraPlane: planePicking,
             });
 
             let hoverEnt = prevHoverEnt.current;
@@ -234,21 +237,60 @@ export function useCanvasEventHandlers({
                 prevHoverUpdate.current = now;
 
                 if (picker === Picker.Measurement) {
-                    if (view.measure && result) {
-                        const dist = hoverEnt?.connectionPoint && vec3.dist(result.position, hoverEnt.connectionPoint);
+                    if (result) {
+                        let outlinePoint: vec3 | undefined;
+                        if (view.renderState.clipping.planes.length && measureHoverSettings.point) {
+                            if (planePicking) {
+                                outlinePoint = view.selectOutlinePoint(result.position, measureHoverSettings.point);
+                            } else {
+                                const plane = view.renderState.clipping.planes[0].normalOffset;
+                                const planeDir = vec3.fromValues(plane[0], plane[1], plane[2]);
+                                const rayDir = vec3.sub(
+                                    vec3.create(),
+                                    view.renderState.camera.position,
+                                    result.position
+                                );
+                                vec3.normalize(rayDir, rayDir);
+                                const d = vec3.dot(planeDir, rayDir);
+                                if (d > 0) {
+                                    const t = (plane[3] - vec3.dot(planeDir, view.renderState.camera.position)) / d;
+                                    const pos = vec3.scaleAndAdd(
+                                        vec3.create(),
+                                        view.renderState.camera.position,
+                                        rayDir,
+                                        t
+                                    );
+                                    outlinePoint = view.selectOutlinePoint(pos, measureHoverSettings.point);
+                                }
+                            }
+                        }
+                        if (outlinePoint) {
+                            hoverEnt = {
+                                status: "loaded",
+                                connectionPoint: outlinePoint,
+                                entity: {
+                                    ObjectId: result.objectId,
+                                    drawKind: "vertex",
+                                    parameter: outlinePoint,
+                                },
+                            };
+                        } else if (view.measure && !planePicking) {
+                            const dist =
+                                hoverEnt?.connectionPoint && vec3.dist(result.position, hoverEnt.connectionPoint);
 
-                        if (!dist || dist > 0.2) {
-                            hoverEnt = await view.measure.core.pickMeasureEntityOnCurrentObject(
-                                result.objectId,
-                                result.position,
-                                measureHoverSettings
+                            if (!dist || dist > 0.2) {
+                                hoverEnt = await view.measure.core.pickMeasureEntityOnCurrentObject(
+                                    result.objectId,
+                                    result.position,
+                                    measureHoverSettings
+                                );
+                            }
+                            vec2.copy(
+                                previous2dSnapPos.current,
+                                vec2.fromValues(e.nativeEvent.offsetX, e.nativeEvent.offsetY)
                             );
                         }
-                        vec2.copy(
-                            previous2dSnapPos.current,
-                            vec2.fromValues(e.nativeEvent.offsetX, e.nativeEvent.offsetY)
-                        );
-                    } else if (!result) {
+                    } else {
                         const currentPos = vec2.fromValues(e.nativeEvent.offsetX, e.nativeEvent.offsetY);
                         if (vec2.dist(currentPos, previous2dSnapPos.current) > 25) {
                             hoverEnt = undefined;
