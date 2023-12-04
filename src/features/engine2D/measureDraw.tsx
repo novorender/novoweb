@@ -277,7 +277,7 @@ export function MeasureDraw({
                         if (resultToMarker.objects.length > 0) {
                             const axisPos: AxisPosition = {};
                             for (const part of resultToMarker.objects[0].parts) {
-                                if (part.vertices2D) {
+                                if (part.vertices2D && part.vertices2D.length > 1) {
                                     const dir = vec2.sub(vec2.create(), part.vertices2D[1], part.vertices2D[0]);
                                     const dist = vec2.len(dir);
                                     const removeOffset = (dist / 2 + 50) / dist;
