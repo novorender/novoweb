@@ -2,6 +2,7 @@ import { css, styled, Theme } from "@mui/material";
 import { SVGProps } from "react";
 
 import { useAppDispatch, useAppSelector } from "app/store";
+import { useRedirectWheelEvents } from "hooks/useRedirectWheelEvents";
 
 import { ditioActions, selectActiveImg, selectActivePost, selectHoveredEntity } from "./slice";
 import { useDitioMarkers } from "./useDitioMarkers";
@@ -79,6 +80,7 @@ export function DitioMarkers() {
     const hoveredEntity = useAppSelector(selectHoveredEntity);
     const activePost = useAppSelector(selectActivePost);
     const activeImg = useAppSelector(selectActiveImg);
+    const onWheel = useRedirectWheelEvents();
 
     return (
         <>
@@ -93,6 +95,7 @@ export function DitioMarkers() {
                         dispatch(ditioActions.setClickedMarker(marker.id));
                         dispatch(ditioActions.setActivePost(marker.id));
                     }}
+                    onWheel={onWheel}
                 />
             ))}
 
@@ -106,6 +109,7 @@ export function DitioMarkers() {
                     onClick={() => {
                         dispatch(ditioActions.setActiveImg(marker.src));
                     }}
+                    onWheel={onWheel}
                 />
             ))}
         </>

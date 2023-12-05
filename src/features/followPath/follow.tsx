@@ -79,9 +79,17 @@ export function Follow({ fpObj }: { fpObj: FollowParametricObject }) {
     const traceVerical = useAppSelector(selectVerticalTracer);
     const deviations = useAppSelector(selectFollowDeviations);
 
+    const [profileInput, setProfileInput] = useState(profile);
     const [clipping, setClipping] = useState(_clipping);
 
     const dispatch = useAppDispatch();
+
+    useEffect(
+        function syncProfileInput() {
+            setProfileInput(profile);
+        },
+        [profile]
+    );
 
     const goToProfile = useCallback(
         async ({
@@ -333,8 +341,9 @@ export function Follow({ fpObj }: { fpObj: FollowParametricObject }) {
     const handleProfileSubmit = (e: FormEvent) => {
         e.preventDefault();
 
+        dispatch(followPathActions.setProfile(profileInput));
         goToProfile({
-            p: Number(profile),
+            p: Number(profileInput),
             view2d,
             showGrid,
             keepOffset: !autoRecenter,
@@ -445,11 +454,9 @@ export function Follow({ fpObj }: { fpObj: FollowParametricObject }) {
                         <Grid item xs={6} component="form" onSubmit={handleProfileSubmit}>
                             <Typography sx={{ mb: 0.5 }}>Profile:</Typography>
                             <OutlinedInput
-                                value={profile}
+                                value={profileInput}
                                 inputProps={{ inputMode: "numeric", pattern: "[0-9,.]*" }}
-                                onChange={(e) =>
-                                    dispatch(followPathActions.setProfile(e.target.value.replace(",", ".")))
-                                }
+                                onChange={(e) => setProfileInput(e.target.value.replace(",", "."))}
                                 fullWidth
                                 size="small"
                                 sx={{ fontWeight: 600 }}

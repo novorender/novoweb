@@ -3,6 +3,7 @@ import { Box, Button, List, ListItem, Typography, useTheme } from "@mui/material
 import { ClippingMode } from "@novorender/api";
 import { ObjectDB } from "@novorender/data-js-api";
 import { HierarcicalObjectReference } from "@novorender/webgl-api";
+import { useState } from "react";
 import { Link, useHistory, useParams } from "react-router-dom";
 
 import { useAppDispatch } from "app/store";
@@ -23,7 +24,6 @@ import { highlightActions, useDispatchHighlighted } from "contexts/highlighted";
 import { selectionBasketActions, useDispatchSelectionBasket } from "contexts/selectionBasket";
 import { CameraType, ObjectVisibility, renderActions } from "features/render/renderSlice";
 import { useAbortController } from "hooks/useAbortController";
-import { useMountedState } from "hooks/useMountedState";
 import { useToggle } from "hooks/useToggle";
 import type { Comment } from "types/bcf";
 import { translateBcfClippingPlanes, translateOrthogonalCamera, translatePerspectiveCamera } from "utils/bcf";
@@ -46,7 +46,7 @@ export function Topic() {
     const theme = useTheme();
     const history = useHistory();
 
-    const [loading, setLoading] = useMountedState(false);
+    const [loading, setLoading] = useState(false);
     const { projectId, topicId } = useParams<{ projectId: string; topicId: string }>();
     const [modalOpen, toggleModal] = useToggle();
 

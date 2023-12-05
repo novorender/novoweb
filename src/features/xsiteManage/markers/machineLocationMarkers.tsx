@@ -3,6 +3,7 @@ import { SVGProps } from "react";
 
 import { useAppDispatch, useAppSelector } from "app/store";
 import { CameraType, renderActions, selectCameraType, selectStamp, StampKind } from "features/render/renderSlice";
+import { useRedirectWheelEvents } from "hooks/useRedirectWheelEvents";
 
 import { useXsiteManageMachineMarkers } from "../hooks/useXsiteManageMachineMarkers";
 import {
@@ -54,6 +55,7 @@ export function MachineLocationMarkers() {
     const hoveredMachine = useAppSelector(selectXsiteManageHoveredMachine);
     const locations = useXsiteManageMachineMarkers();
     const dispatch = useAppDispatch();
+    const onWheel = useRedirectWheelEvents();
 
     if (cameraType !== CameraType.Orthographic) {
         return null;
@@ -107,6 +109,7 @@ export function MachineLocationMarkers() {
 
                         dispatch(renderActions.setStamp(null));
                     }}
+                    onWheel={onWheel}
                 />
             ))}
         </>

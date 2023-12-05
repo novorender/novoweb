@@ -5,6 +5,7 @@ import { SVGProps } from "react";
 import { useAppDispatch, useAppSelector } from "app/store";
 import { imagesActions, selectActiveImage, selectImages, selectShowImageMarkers } from "features/images";
 import { selectViewMode } from "features/render";
+import { useRedirectWheelEvents } from "hooks/useRedirectWheelEvents";
 import { AsyncStatus, ViewMode } from "types/misc";
 
 const Marker = styled((props: SVGProps<SVGGElement>) => (
@@ -28,6 +29,7 @@ export function ImageMarkers() {
     const showImageMarkers = useAppSelector(selectShowImageMarkers);
     const viewMode = useAppSelector(selectViewMode);
     const activeImage = useAppSelector(selectActiveImage);
+    const onWheel = useRedirectWheelEvents();
 
     return (
         <>
@@ -47,6 +49,7 @@ export function ImageMarkers() {
                                           })
                                       )
                                   }
+                                  onWheel={onWheel}
                               />
                           );
                       }
@@ -67,6 +70,7 @@ export function ImageMarkers() {
                                           })
                                       )
                                   }
+                                  onWheel={onWheel}
                               />
                           );
                       }

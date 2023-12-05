@@ -26,7 +26,6 @@ import { NodeList } from "features/nodeList/nodeList";
 import { CameraType, ObjectVisibility, renderActions } from "features/render/renderSlice";
 import WidgetList from "features/widgetList/widgetList";
 import { useAbortController } from "hooks/useAbortController";
-import { useMountedState } from "hooks/useMountedState";
 import { useToggle } from "hooks/useToggle";
 import { explorerActions, selectMaximized, selectMinimized, selectUrlSearchQuery } from "slices/explorerSlice";
 import { getTotalBoundingSphere } from "utils/objectData";
@@ -58,10 +57,10 @@ export default function Search() {
         Array.isArray(urlSearchQuery) ? urlSearchQuery : [{ property: "", value: "", exact: true }]
     );
 
-    const [allSelected, setAllSelected] = useMountedState(false);
-    const [allHidden, setAllHidden] = useMountedState(false);
-    const [status, setStatus] = useMountedState(Status.Initial);
-    const [searchResults, setSearchResults] = useMountedState<
+    const [allSelected, setAllSelected] = useState(false);
+    const [allHidden, setAllHidden] = useState(false);
+    const [status, setStatus] = useState(Status.Initial);
+    const [searchResults, setSearchResults] = useState<
         | {
               iterator: AsyncIterableIterator<HierarcicalObjectReference> | undefined;
               nodes: HierarcicalObjectReference[];
