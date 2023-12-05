@@ -265,7 +265,7 @@ export function MeasureDraw({
                             res.activeAxis = activeAxis!;
                         }
                     } else {
-                        const resDraw = await getDrawMeasureEntity(duoMeasure?.result);
+                        const resDraw = await getDrawMeasureEntity(duoMeasure?.result, duoMeasure.settings);
                         resultDraw.current.set(duoMeasure.id, {
                             product: resDraw,
                             updated: id,
@@ -466,7 +466,7 @@ export function MeasureDraw({
                 //removePositions.current = [];
                 const { camera } = view.renderState;
                 const cameraDirection = vec3.transformQuat(vec3.create(), vec3.fromValues(0, 0, -1), camera.rotation);
-                const camSettings = { pos: camera.position, dir: cameraDirection };
+                const camSettings = { pos: camera.position, dir: cameraDirection, type: cameraType };
 
                 if (id !== updateId.current) {
                     return;
@@ -1042,6 +1042,20 @@ function drawDuoResults(
                     case "z-angle":
                         if (draw[1].activeAxis.z && draw[1].activeAxis.result) {
                             drawPart(context2D, camSettings, part, { lineColor: "green" }, 2, {
+                                type: "centerOfLine",
+                            });
+                        }
+                        break;
+                    case "x-angle":
+                        if (draw[1].activeAxis.x && draw[1].activeAxis.result) {
+                            drawPart(context2D, camSettings, part, { lineColor: "red" }, 2, {
+                                type: "centerOfLine",
+                            });
+                        }
+                        break;
+                    case "y-angle":
+                        if (draw[1].activeAxis.y && draw[1].activeAxis.result) {
+                            drawPart(context2D, camSettings, part, { lineColor: "blue" }, 2, {
                                 type: "centerOfLine",
                             });
                         }

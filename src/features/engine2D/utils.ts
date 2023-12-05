@@ -1,6 +1,8 @@
 import { DrawPart, DrawProduct } from "@novorender/api";
 import { ReadonlyVec2, ReadonlyVec3, vec2, vec3 } from "gl-matrix";
 
+import { CameraType } from "features/render";
+
 export interface ColorSettings {
     lineColor?: string | CanvasGradient | string[];
     fillColor?: string;
@@ -19,6 +21,7 @@ export interface TextSettings {
 export interface CameraSettings {
     pos: ReadonlyVec3;
     dir: ReadonlyVec3;
+    type: CameraType;
 }
 
 type CapStyle = "arrow";
@@ -203,7 +206,7 @@ function drawAngle(ctx: CanvasRenderingContext2D, camera: CameraSettings, part: 
         vec3.normalize(dirCamB, dirCamB);
         vec3.normalize(dirCamP, dirCamP);
 
-        if (Math.abs(vec3.dot(dirCamP, norm)) < 0.15) {
+        if (camera.type === CameraType.Pinhole && Math.abs(vec3.dot(dirCamP, norm)) < 0.15) {
             return false;
         }
 

@@ -92,6 +92,7 @@ export function useCanvasClickHandler({
         if (!view || !canvas || longPress || drag) {
             return;
         }
+        const planePicking = cameraType === CameraType.Orthographic && view.renderState.camera.far < 1;
 
         pointerDownStateRef.current = undefined;
         const pickCameraPlane =
@@ -207,7 +208,15 @@ export function useCanvasClickHandler({
         if (!result) {
             if (picker === Picker.Measurement && measure.hover) {
                 dispatch(
-                    measureActions.selectEntity({ entity: measure.hover as ExtendedMeasureEntity, pin: evt.shiftKey })
+                    measureActions.selectEntity({
+                        entity: (planePicking
+                            ? {
+                                  ...measure.hover,
+                                  settings: { planeMeasure: view.renderState.clipping.planes[0]?.normalOffset },
+                              }
+                            : measure.hover) as ExtendedMeasureEntity,
+                        pin: evt.shiftKey,
+                    })
                 );
             } else if (picker === Picker.Object) {
                 dispatch(renderActions.setStamp(null));
@@ -401,7 +410,12 @@ export function useCanvasClickHandler({
                 if (measure.hover) {
                     dispatch(
                         measureActions.selectEntity({
-                            entity: measure.hover as ExtendedMeasureEntity,
+                            entity: (planePicking
+                                ? {
+                                      ...measure.hover,
+                                      settings: { planeMeasure: view.renderState.clipping.planes[0]?.normalOffset },
+                                  }
+                                : measure.hover) as ExtendedMeasureEntity,
                             pin: evt.shiftKey,
                         })
                     );

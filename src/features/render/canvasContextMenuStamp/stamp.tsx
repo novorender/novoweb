@@ -427,6 +427,7 @@ export function Measure() {
                     ObjectId: -1,
                     drawKind: "vertex",
                     parameter: outlinePoint,
+                    settings: { planeMeasure: view.renderState.clipping.planes[0]?.normalOffset },
                 },
                 pin: true,
             })

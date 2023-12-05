@@ -1,4 +1,4 @@
-import { DuoMeasurementValues } from "@novorender/api";
+import { DuoMeasurementValues, MeasureSettings } from "@novorender/api";
 import { useEffect, useRef, useState } from "react";
 
 import { useAppDispatch, useAppSelector } from "app/store";
@@ -26,7 +26,8 @@ export function useMeasureObjects() {
 
             dispatch(measureActions.setLoadingBrep(true));
             const mObjects: ExtendedMeasureEntity[][] = [];
-            const results: (undefined | { result: DuoMeasurementValues; id: number })[] = [];
+            const results: (undefined | { result: DuoMeasurementValues; id: number; settings?: MeasureSettings })[] =
+                [];
             for (const measure of selectedEntities) {
                 mObjects.push(
                     await Promise.all(
@@ -61,7 +62,9 @@ export function useMeasureObjects() {
                     .measure(obj1, obj2, obj1.settings, obj2.settings)
                     .catch((e) => console.warn(e))) as DuoMeasurementValues | undefined;
 
-                results.push(result ? { result, id: duoId.current } : undefined);
+                results.push(
+                    result ? { result, id: duoId.current, settings: obj1.settings ?? obj2.settings } : undefined
+                );
                 duoId.current++;
             }
             dispatch(measureActions.setLoadingBrep(false));

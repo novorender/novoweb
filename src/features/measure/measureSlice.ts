@@ -36,6 +36,7 @@ const initialState = {
         | {
               result: DuoMeasurementValues;
               id: number;
+              settings?: MeasureSettings;
           }
     )[],
     activeAxis: [] as (ActiveAxis | undefined)[],
@@ -67,11 +68,12 @@ export const measureSlice = createSlice({
             const selectIdx = [1, undefined].includes(state.pinned) ? 0 : 1;
 
             const currentEntities = state.selectedEntities[state.currentIndex];
+            const planeMeasure = action.payload.entity?.settings?.planeMeasure;
             state.activeAxis[state.currentIndex] = {
                 x: true,
                 y: true,
-                z: true,
-                planar: true,
+                z: planeMeasure ? false : true,
+                planar: planeMeasure ? false : true,
                 result: true,
                 normal: true,
             };
@@ -177,15 +179,18 @@ export const measureSlice = createSlice({
         },
         setDuoMeasurementValues: (
             state,
-            action: PayloadAction<(undefined | { result: DuoMeasurementValues; id: number })[]>
+            action: PayloadAction<
+                (undefined | { result: DuoMeasurementValues; id: number; settings?: MeasureSettings })[]
+            >
         ) => {
             state.duoMeasurementValues = action.payload;
             for (let i = state.activeAxis.length; i < state.duoMeasurementValues.length; ++i) {
+                const planeMeasure = state.duoMeasurementValues[i]?.settings?.planeMeasure;
                 state.activeAxis.push({
                     x: true,
                     y: true,
-                    z: true,
-                    planar: true,
+                    z: planeMeasure ? false : true,
+                    planar: planeMeasure ? false : true,
                     result: true,
                     normal: true,
                 });
