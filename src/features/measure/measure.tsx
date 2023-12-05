@@ -113,7 +113,10 @@ export default function Measure() {
                                 New
                             </Button>
                             <Button
-                                onClick={() => dispatch(measureActions.clear())}
+                                onClick={() => {
+                                    dispatch(renderActions.setPicker(Picker.Object));
+                                    dispatch(measureActions.clear());
+                                }}
                                 color="grey"
                                 disabled={!currentEntites.length}
                             >

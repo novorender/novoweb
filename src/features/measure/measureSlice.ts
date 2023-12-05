@@ -173,6 +173,7 @@ export const measureSlice = createSlice({
             state.selectedEntities = [[]];
             state.pinned = undefined;
             state.hover = undefined;
+            state.currentIndex = 0;
         },
         setDuoMeasurementValues: (
             state,

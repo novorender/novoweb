@@ -372,18 +372,12 @@ export function Measure() {
                 const rayDir = vec3.sub(vec3.create(), view.renderState.camera.position, stamp.data.position);
                 vec3.normalize(rayDir, rayDir);
                 const d = vec3.dot(planeDir, rayDir);
-                // TODO: Same check as replace following lines with lines inside if once we get correct position from outline pick
-                const t = (plane[3] - vec3.dot(planeDir, view.renderState.camera.position)) / d;
-                const pos = vec3.scaleAndAdd(vec3.create(), view.renderState.camera.position, rayDir, t);
-                const laser = await getOutlineLaser(pos, view, cameraType, plane);
-                const outlinePoint = view.selectOutlinePoint(pos, 3);
-                setOutlinePoint(outlinePoint);
                 if (d > 0) {
-                    // const t = (plane[3] - vec3.dot(planeDir, view.renderState.camera.position)) / d;
-                    // const pos = vec3.scaleAndAdd(vec3.create(), view.renderState.camera.position, rayDir, t);
-                    // const laser = await getOutlineLaser(pos, view, cameraType, plane);
-                    // const outlinePoint = view.selectOutlinePoint(pos, 0.2);
-                    // setOutlinePoint(outlinePoint);
+                    const t = (plane[3] - vec3.dot(planeDir, view.renderState.camera.position)) / d;
+                    const pos = vec3.scaleAndAdd(vec3.create(), view.renderState.camera.position, rayDir, t);
+                    const laser = await getOutlineLaser(pos, view, cameraType, plane);
+                    const outlinePoint = view.selectOutlinePoint(pos, 0.2);
+                    setOutlinePoint(outlinePoint);
                     setLaser(laser ? { laser, plane } : undefined);
                 }
             }
