@@ -11,12 +11,12 @@ export function useHandleDeviations() {
         state: { view },
     } = useExplorerGlobals();
     const deviation = useAppSelector(selectDeviations);
-    const profile = useAppSelector(selectDeviationProfilesData);
+    const profiles = useAppSelector(selectDeviationProfilesData);
     const dispatch = useAppDispatch();
 
     useEffect(
         function handleDeviationChanges() {
-            if (deviation.index > 0 && profile.length < 2) {
+            if (deviation.index > 0 && profiles.length < 2) {
                 dispatch(
                     renderActions.setPoints({
                         deviation: {
@@ -26,7 +26,7 @@ export function useHandleDeviations() {
                 );
             }
         },
-        [profile, deviation, dispatch]
+        [profiles, deviation, dispatch]
     );
 
     useEffect(
