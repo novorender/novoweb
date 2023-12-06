@@ -21,6 +21,7 @@ const initialState = {
     view2d: false,
     showGrid: true,
     autoRecenter: false,
+    verticalClipping: false,
     deviations: {
         line: true,
         lineColor: [0, 0, 0, 1] as VecRGBA,
@@ -80,6 +81,9 @@ export const followPathSlice = createSlice({
         },
         setAutoRecenter: (state, action: PayloadAction<State["autoRecenter"]>) => {
             state.autoRecenter = action.payload;
+        },
+        setVerticalClipping: (state, action: PayloadAction<State["verticalClipping"]>) => {
+            state.verticalClipping = action.payload;
         },
         setShowDeviationLine: (state, action: PayloadAction<State["deviations"]["line"]>) => {
             state.deviations.line = action.payload;
@@ -153,6 +157,7 @@ export const followPathSlice = createSlice({
             state.ptHeight = fp.currentCenter[2];
             state.showGrid = grid.enabled;
             state.view2d = camera.kind === "orthographic";
+            state.verticalClipping = fp.verticalClipping ?? false;
 
             if (state.view2d) {
                 state.clipping = action.payload.camera.far;
@@ -192,6 +197,7 @@ export const selectProfileRange = (state: RootState) => state.followPath.profile
 export const selectClipping = (state: RootState) => state.followPath.clipping;
 export const selectShowGrid = (state: RootState) => state.followPath.showGrid;
 export const selectAutoRecenter = (state: RootState) => state.followPath.autoRecenter;
+export const selectVerticalClipping = (state: RootState) => state.followPath.verticalClipping;
 export const selectFollowDeviations = (state: RootState) => state.followPath.deviations;
 export const selectAutoStepSize = (state: RootState) => state.followPath.autoStepSize;
 export const selectLastViewedRouterPath = (state: RootState) => state.followPath.lastViewedRouterPath;
