@@ -220,10 +220,13 @@ export function PathList() {
                                                 });
                                                 if (measure) {
                                                     const duoMeasure = measure as DuoMeasurementValues;
-                                                    if (duoMeasure.measureInfoB && duoMeasure.measureInfoB.parameter) {
+                                                    if (
+                                                        duoMeasure.measureInfoB &&
+                                                        typeof duoMeasure.measureInfoB.parameter === "number"
+                                                    ) {
                                                         dispatch(
                                                             followPathActions.setProfile(
-                                                                duoMeasure.measureInfoB.parameter.toString()
+                                                                duoMeasure.measureInfoB.parameter.toFixed(3)
                                                             )
                                                         );
                                                         initPos = false;
