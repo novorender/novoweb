@@ -123,7 +123,7 @@ export function Follow({ fpObj }: { fpObj: FollowParametricObject }) {
                     : vec3.fromValues(0, 0, 0);
             const offsetPt = vec3.sub(vec3.create(), pt, offset);
             let rotation = quat.create();
-            if (clipVertical) {
+            if (clipVertical ?? verticalClipping) {
                 const up = glMatrix.equals(Math.abs(vec3.dot(vec3.fromValues(0, 0, 1), dir)), 1)
                     ? vec3.fromValues(0, 1, 0)
                     : vec3.fromValues(0, 0, 1);
@@ -192,7 +192,7 @@ export function Follow({ fpObj }: { fpObj: FollowParametricObject }) {
             dispatch(followPathActions.setCurrentCenter(pt as Vec3));
             dispatch(followPathActions.setPtHeight(pt[2]));
         },
-        [clipping, currentCenter, dispatch, fpObj, view]
+        [clipping, currentCenter, dispatch, fpObj, view, verticalClipping]
     );
 
     useEffect(() => {

@@ -174,6 +174,7 @@ export function useCreateBookmark() {
                                   line: followPath.deviations.line,
                                   lineColor: followPath.deviations.lineColor,
                               },
+                              verticalClipping: followPath.verticalClipping,
                           }
                         : undefined,
 
