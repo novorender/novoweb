@@ -12,7 +12,7 @@ import { loginRequest } from "config/auth";
 import { StorageKey } from "config/storage";
 import { useSceneId } from "hooks/useSceneId";
 import { useToggle } from "hooks/useToggle";
-import { ReactComponent as NovorenderLogo } from "media/img/novorender_logo_RGB_2021.svg";
+import NovorenderLogo from "media/img/novorender_logo_RGB_2021.svg?react";
 import { authActions } from "slices/authSlice";
 import { login } from "utils/auth";
 import { deleteFromStorage, saveToStorage } from "utils/storage";

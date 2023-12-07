@@ -131,7 +131,7 @@ const serverOptions: ServerOptions = {
               cert: "./localhost.crt",
               key: "./localhost.key",
           }
-        : true,
+        : undefined,
     host: true,
     open: true,
     headers: {
@@ -178,6 +178,19 @@ export default defineConfig(({ mode }) => {
     return {
         build: {
             sourcemap: true,
+            rollupOptions: {
+                onLog(level, log, handler) {
+                    if (
+                        log.cause &&
+                        typeof log.cause === "object" &&
+                        "message" in log.cause &&
+                        log.cause.message === `Can't resolve original location of error.`
+                    ) {
+                        return;
+                    }
+                    handler(level, log);
+                },
+            },
         },
         optimizeDeps: {
             exclude: ["@novorender/webgl-api", "@novorender/api"],
