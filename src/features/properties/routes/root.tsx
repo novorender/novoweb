@@ -213,7 +213,7 @@ export function Root() {
                 property,
                 value,
                 deep,
-                exact: true,
+                exact: property !== "Path",
             },
         };
 
@@ -338,7 +338,7 @@ function PropertyList({ object, handleChange, searches, nameWidth, resizing }: P
                                 onChange={handleChange({
                                     property,
                                     value,
-                                    deep: object.type === NodeType.Internal || property === "Path",
+                                    deep: object.type === NodeType.Internal,
                                 })}
                                 resizing={resizing}
                             />
@@ -369,7 +369,7 @@ function PropertyList({ object, handleChange, searches, nameWidth, resizing }: P
                                         onChange={handleChange({
                                             value,
                                             property: `${group.name}/${property}`,
-                                            deep: object.type === NodeType.Internal || property === "Path",
+                                            deep: object.type === NodeType.Internal,
                                         })}
                                         resizing={resizing}
                                     />
