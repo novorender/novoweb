@@ -335,7 +335,11 @@ function PropertyList({ object, handleChange, searches, nameWidth, resizing }: P
                                 property={property}
                                 value={value}
                                 checked={searches[property] !== undefined && searches[property].value === value}
-                                onChange={handleChange({ property, value, deep: object.type === NodeType.Internal })}
+                                onChange={handleChange({
+                                    property,
+                                    value,
+                                    deep: object.type === NodeType.Internal || property === "Path",
+                                })}
                                 resizing={resizing}
                             />
                         ))}
@@ -365,7 +369,7 @@ function PropertyList({ object, handleChange, searches, nameWidth, resizing }: P
                                         onChange={handleChange({
                                             value,
                                             property: `${group.name}/${property}`,
-                                            deep: object.type === NodeType.Internal,
+                                            deep: object.type === NodeType.Internal || property === "Path",
                                         })}
                                         resizing={resizing}
                                     />
