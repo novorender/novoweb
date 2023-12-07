@@ -11,7 +11,7 @@
         "typescript": "tsc --noEmit",
         "eslint": "eslint src/ --max-warnings=0",
         "start": "node server.mjs",
-        "dependencies": "node scripts/dependencies.js"
+        "dependencies": "node scripts/dependencies.cjs"
     },
     "repository": {
         "type": "git",
