@@ -59,7 +59,9 @@ export const measureSlice = createSlice({
         newMeasurement: (state) => {
             const entities = state.selectedEntities.at(-1);
             if (entities && entities.length > 0) {
-                state.selectedEntities.push([]);
+                if (entities.length > 1 || entities[0].drawKind !== "vertex") {
+                    state.selectedEntities.push([]);
+                }
             }
             state.pinned = undefined;
             state.currentIndex = state.selectedEntities.length - 1;
