@@ -220,7 +220,20 @@ export function useCanvasClickHandler({
                 );
             } else if (picker === Picker.Object) {
                 dispatch(renderActions.setStamp(null));
+            } else if (measure.hover && measure.hover.drawKind === "vertex") {
+                if (picker === Picker.Area && planes.length > 0) {
+                    const plane = planes[0].normalOffset;
+                    dispatch(
+                        areaActions.addPoint([
+                            measure.hover.parameter,
+                            vec3.fromValues(-plane[0], -plane[1], -plane[2]),
+                        ])
+                    );
+                } else if (picker === Picker.PointLine) {
+                    dispatch(pointLineActions.addPoint(measure.hover.parameter));
+                }
             }
+
             return;
         }
         const normal =
@@ -463,16 +476,27 @@ export function useCanvasClickHandler({
                 break;
             }
             case Picker.Area: {
-                let useNormal = normal;
-                if (normal === undefined && cameraType === CameraType.Orthographic) {
-                    useNormal = vec3.fromValues(0, 0, 1);
-                    vec3.transformQuat(useNormal, useNormal, view.renderState.camera.rotation);
+                if (measure.hover && measure.hover.drawKind === "vertex" && planes.length > 0) {
+                    const plane = planes[0].normalOffset;
+                    const planeDir = vec3.fromValues(-plane[0], -plane[1], -plane[2]);
+                    dispatch(areaActions.addPoint([measure.hover.parameter, planeDir]));
+                } else {
+                    let useNormal = normal;
+                    if (normal === undefined && cameraType === CameraType.Orthographic) {
+                        useNormal = vec3.fromValues(0, 0, 1);
+                        vec3.transformQuat(useNormal, useNormal, view.renderState.camera.rotation);
+                    }
+                    dispatch(areaActions.addPoint([position, useNormal ?? [0, 0, 0]]));
                 }
-                dispatch(areaActions.addPoint([position, useNormal ?? [0, 0, 0]]));
                 break;
             }
             case Picker.PointLine: {
-                dispatch(pointLineActions.addPoint(position));
+                if (measure.hover && measure.hover.drawKind === "vertex") {
+                    dispatch(pointLineActions.addPoint(measure.hover.parameter));
+                } else {
+                    dispatch(pointLineActions.addPoint(position));
+                }
+
                 break;
             }
             case Picker.HeightProfileEntity: {

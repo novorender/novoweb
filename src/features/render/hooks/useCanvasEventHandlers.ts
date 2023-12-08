@@ -1,4 +1,4 @@
-import { CoreModule } from "@novorender/api";
+import { CoreModule, LoadStatus, MeasureEntity } from "@novorender/api";
 import { vec2, vec3 } from "gl-matrix";
 import { MouseEvent, MutableRefObject, PointerEvent as ReactPointerEvent, TouchEvent, useRef, WheelEvent } from "react";
 
@@ -221,6 +221,35 @@ export function useCanvasEventHandlers({
         }
 
         const planePicking = cameraType === CameraType.Orthographic && view.renderState.camera.far < 1;
+        const hoverOutline = (cursorPosition: vec3) => {
+            if (view.renderState.clipping.planes.length && measureHoverSettings.point) {
+                if (planePicking) {
+                    return view.selectOutlinePoint(cursorPosition, measureHoverSettings.point);
+                } else {
+                    const plane = view.renderState.clipping.planes[0].normalOffset;
+                    const planeDir = vec3.fromValues(plane[0], plane[1], plane[2]);
+                    const rayDir = vec3.sub(vec3.create(), view.renderState.camera.position, cursorPosition);
+                    vec3.normalize(rayDir, rayDir);
+                    const d = vec3.dot(planeDir, rayDir);
+                    if (d > 0) {
+                        const t = (plane[3] - vec3.dot(planeDir, view.renderState.camera.position)) / d;
+                        const pos = vec3.scaleAndAdd(vec3.create(), view.renderState.camera.position, rayDir, t);
+                        return view.selectOutlinePoint(pos, measureHoverSettings.point);
+                    }
+                }
+            }
+        };
+        const pointToHover = (point: vec3, objectId: number) => {
+            return {
+                status: "loaded" as LoadStatus,
+                connectionPoint: point,
+                entity: {
+                    ObjectId: objectId,
+                    drawKind: "vertex",
+                    parameter: point,
+                } as MeasureEntity,
+            };
+        };
 
         if (e.buttons === 0 && cursor === "measure") {
             const result = await view.pick(e.nativeEvent.offsetX, e.nativeEvent.offsetY, {
@@ -240,40 +269,10 @@ export function useCanvasEventHandlers({
                     if (result) {
                         let outlinePoint: vec3 | undefined;
                         if (view.renderState.clipping.planes.length && measureHoverSettings.point) {
-                            if (planePicking) {
-                                outlinePoint = view.selectOutlinePoint(result.position, measureHoverSettings.point);
-                            } else {
-                                const plane = view.renderState.clipping.planes[0].normalOffset;
-                                const planeDir = vec3.fromValues(plane[0], plane[1], plane[2]);
-                                const rayDir = vec3.sub(
-                                    vec3.create(),
-                                    view.renderState.camera.position,
-                                    result.position
-                                );
-                                vec3.normalize(rayDir, rayDir);
-                                const d = vec3.dot(planeDir, rayDir);
-                                if (d > 0) {
-                                    const t = (plane[3] - vec3.dot(planeDir, view.renderState.camera.position)) / d;
-                                    const pos = vec3.scaleAndAdd(
-                                        vec3.create(),
-                                        view.renderState.camera.position,
-                                        rayDir,
-                                        t
-                                    );
-                                    outlinePoint = view.selectOutlinePoint(pos, measureHoverSettings.point);
-                                }
-                            }
+                            outlinePoint = hoverOutline(result.position);
                         }
                         if (outlinePoint) {
-                            hoverEnt = {
-                                status: "loaded",
-                                connectionPoint: outlinePoint,
-                                entity: {
-                                    ObjectId: result.objectId,
-                                    drawKind: "vertex",
-                                    parameter: outlinePoint,
-                                },
-                            };
+                            hoverEnt = pointToHover(outlinePoint, result.objectId);
                         } else if (view.measure && !planePicking) {
                             const dist =
                                 hoverEnt?.connectionPoint && vec3.dist(result.position, hoverEnt.connectionPoint);
@@ -298,6 +297,23 @@ export function useCanvasEventHandlers({
                     }
                     dispatch(measureActions.selectHoverObj(hoverEnt?.entity));
                     prevHoverEnt.current = hoverEnt;
+                } else if (picker === Picker.Area || picker === Picker.PointLine) {
+                    if (result && view.renderState.clipping.planes.length && measureHoverSettings.point) {
+                        const outlinePoint = hoverOutline(result.position);
+                        if (outlinePoint) {
+                            hoverEnt = pointToHover(outlinePoint, result.objectId);
+                            dispatch(measureActions.selectHoverObj(hoverEnt?.entity));
+                            vec2.copy(
+                                previous2dSnapPos.current,
+                                vec2.fromValues(e.nativeEvent.offsetX, e.nativeEvent.offsetY)
+                            );
+                        }
+                    } else {
+                        const currentPos = vec2.fromValues(e.nativeEvent.offsetX, e.nativeEvent.offsetY);
+                        if (vec2.dist(currentPos, previous2dSnapPos.current) > 25) {
+                            hoverEnt = undefined;
+                        }
+                    }
                 } else if (picker === Picker.CrossSection) {
                     const position =
                         result?.position ??
