@@ -15,7 +15,7 @@ import { SyntheticEvent } from "react";
 
 import { useAppDispatch, useAppSelector } from "app/store";
 import { renderActions } from "features/render";
-import { ReactComponent as NovorenderIcon } from "media/icons/novorender-small.svg";
+import NovorenderIcon from "media/icons/novorender-small.svg?react";
 import { selectIsOnline } from "slices/explorerSlice";
 
 export function LogoSpeedDial({

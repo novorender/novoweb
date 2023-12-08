@@ -116,6 +116,7 @@ declare module "@novorender/data-js-api" {
                       line: boolean;
                       lineColor: [number, number, number, number];
                   };
+                  verticalClipping?: boolean;
               }
             | undefined;
         outlineMeasure:
