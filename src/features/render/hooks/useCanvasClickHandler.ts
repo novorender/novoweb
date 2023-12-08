@@ -224,10 +224,10 @@ export function useCanvasClickHandler({
                 if (picker === Picker.Area && planes.length > 0) {
                     const plane = planes[0].normalOffset;
                     dispatch(
-                        areaActions.addPoint([
-                            measure.hover.parameter,
-                            vec3.fromValues(-plane[0], -plane[1], -plane[2]),
-                        ])
+                        areaActions.addPt(
+                            [measure.hover.parameter, vec3.fromValues(-plane[0], -plane[1], -plane[2])],
+                            view
+                        )
                     );
                 } else if (picker === Picker.PointLine) {
                     dispatch(pointLineActions.addPoint(measure.hover.parameter));
@@ -433,14 +433,14 @@ export function useCanvasClickHandler({
                         })
                     );
                 } else if (measure.snapKind === "clippingOutline") {
-                    const pointEntity = {
+                    const pointEntity: ExtendedMeasureEntity = {
                         drawKind: "vertex",
                         ObjectId: result.objectId,
                         parameter: result.position,
                     };
                     dispatch(
                         measureActions.selectEntity({
-                            entity: pointEntity as ExtendedMeasureEntity,
+                            entity: pointEntity,
                             pin: evt.shiftKey,
                         })
                     );
@@ -451,12 +451,14 @@ export function useCanvasClickHandler({
                         position,
                         measurePickSettings
                     );
-                    dispatch(
-                        measureActions.selectEntity({
-                            entity: entity?.entity as ExtendedMeasureEntity,
-                            pin: evt.shiftKey,
-                        })
-                    );
+                    if (entity?.entity) {
+                        dispatch(
+                            measureActions.selectEntity({
+                                entity: entity.entity,
+                                pin: evt.shiftKey,
+                            })
+                        );
+                    }
                     dispatch(measureActions.setLoadingBrep(false));
                 }
                 break;
@@ -479,14 +481,14 @@ export function useCanvasClickHandler({
                 if (measure.hover && measure.hover.drawKind === "vertex" && planes.length > 0) {
                     const plane = planes[0].normalOffset;
                     const planeDir = vec3.fromValues(-plane[0], -plane[1], -plane[2]);
-                    dispatch(areaActions.addPoint([measure.hover.parameter, planeDir]));
+                    dispatch(areaActions.addPt([measure.hover.parameter, planeDir], view));
                 } else {
                     let useNormal = normal;
                     if (normal === undefined && cameraType === CameraType.Orthographic) {
                         useNormal = vec3.fromValues(0, 0, 1);
                         vec3.transformQuat(useNormal, useNormal, view.renderState.camera.rotation);
                     }
-                    dispatch(areaActions.addPoint([position, useNormal ?? [0, 0, 0]]));
+                    dispatch(areaActions.addPt([position, useNormal ?? [0, 0, 0]], view));
                 }
                 break;
             }

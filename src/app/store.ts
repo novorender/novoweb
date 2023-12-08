@@ -66,7 +66,11 @@ export const store = configureStore({
     reducer: rootReducer,
     devTools: import.meta.env.NODE_ENV === "development",
     middleware: (getDefaultMiddleware) =>
-        getDefaultMiddleware()
+        getDefaultMiddleware({
+            serializableCheck: {
+                ignoredActionPaths: ["meta.arg", "meta.baseQueryMeta", "meta.view"],
+            },
+        })
             .concat(bimCollabApi.middleware)
             .concat(bimTrackApi.middleware)
             .concat(ditioApi.middleware)

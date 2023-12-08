@@ -5,7 +5,6 @@ import { RefCallback, useCallback, useRef, useState } from "react";
 import { useAppSelector } from "app/store";
 import { LinearProgress, Loading } from "components";
 import { explorerGlobalsActions, useExplorerGlobals } from "contexts/explorerGlobals";
-import { useHandleArea } from "features/area";
 import { useHandleClipping } from "features/clippingPlanes/useHandleClipping";
 import { useHandleDeviations } from "features/deviations";
 import { useHandleDitioKeepAlive } from "features/ditio";
@@ -110,7 +109,6 @@ export function Render3D() {
     useHandleAdvancedSettings();
     useHandleClipping();
     useHandlePointLine();
-    useHandleArea();
     useHandleManhole();
     useHandleLocationMarker();
     useHandleCrossSection();

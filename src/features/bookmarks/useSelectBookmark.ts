@@ -50,7 +50,10 @@ export function useSelectBookmark() {
 
     const selectExplorerState = useCallback(
         async (bookmark: NonNullable<Bookmark["explorerState"]>) => {
-            dispatch(renderActions.selectBookmark(bookmark));
+            if (!view) {
+                return;
+            }
+            dispatch(renderActions.selectBookmark(bookmark, view));
 
             const { objects, groups } = bookmark;
             dispatchHidden(hiddenActions.setIds(objects.hidden.ids));
@@ -134,11 +137,15 @@ export function useSelectBookmark() {
             dispatchSelectionBasket,
             objectGroups,
             sceneId,
+            view,
         ]
     );
 
     const selectLegacy = useCallback(
         async (bookmark: Bookmark) => {
+            if (!view) {
+                return;
+            }
             dispatch(imagesActions.setActiveImage(undefined));
 
             const bmHiddenGroup = bookmark.objectGroups?.find((group) => !group.id && group.hidden);
@@ -294,13 +301,11 @@ export function useSelectBookmark() {
                 dispatch(measureActions.setSelectedEntities([]));
             }
 
+            dispatch(areaActions.clear());
             if (bookmark.area) {
-                dispatch(
-                    areaActions.setPoints({
-                        points: bookmark.area.pts.map((p) => flip(p[0])),
-                        normals: bookmark.area.pts.map((p) => flip(p[1])),
-                    })
-                );
+                bookmark.area.pts.forEach((pt) => {
+                    dispatch(areaActions.addPt(pt.map((p) => flip(p)) as typeof pt, view));
+                });
             }
 
             if (bookmark.pointLine) {

@@ -5,6 +5,7 @@ import { useEffect, useRef } from "react";
 import { useAppDispatch, useAppSelector } from "app/store";
 import { IosSwitch, LogoSpeedDial, ScrollBox, WidgetContainer, WidgetHeader } from "components";
 import { featuresConfig } from "config/features";
+import { useExplorerGlobals } from "contexts/explorerGlobals";
 import { Picker, renderActions, selectPicker } from "features/render/renderSlice";
 import WidgetList from "features/widgetList/widgetList";
 import { useToggle } from "hooks/useToggle";
@@ -13,6 +14,9 @@ import { selectMaximized, selectMinimized } from "slices/explorerSlice";
 import { areaActions, selectCurrentAreaPoints, selectCurrentAreaValue } from "./areaSlice";
 
 export default function Area() {
+    const {
+        state: { view },
+    } = useExplorerGlobals(true);
     const [menuOpen, toggleMenu] = useToggle();
 
     const minimized = useAppSelector(selectMinimized) === featuresConfig.area.key;
@@ -62,7 +66,7 @@ export default function Area() {
                             />
                             <Button
                                 disabled={!points.length}
-                                onClick={() => dispatch(areaActions.undoPoint())}
+                                onClick={() => dispatch(areaActions.undoPt(view))}
                                 color="grey"
                             >
                                 <Undo sx={{ mr: 1 }} />
@@ -78,7 +82,7 @@ export default function Area() {
                             </Button>
                             <Button
                                 disabled={!points.length}
-                                onClick={() => dispatch(areaActions.setPoints({ points: [], normals: [] }))}
+                                onClick={() => dispatch(areaActions.clearCurrent())}
                                 color="grey"
                             >
                                 <DeleteSweep sx={{ mr: 1 }} />

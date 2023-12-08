@@ -3,6 +3,7 @@ import { vec2 } from "gl-matrix";
 import { Fragment, SVGProps } from "react";
 
 import { useAppDispatch, useAppSelector } from "app/store";
+import { useExplorerGlobals } from "contexts/explorerGlobals";
 import { areaActions, selectAreas } from "features/area";
 import { pointLineActions, selectPointLines } from "features/pointLine";
 import { Picker, renderActions } from "features/render";
@@ -108,6 +109,9 @@ export type MeasureInteractionPositions = {
 };
 
 export function MeasureInteractions() {
+    const {
+        state: { view },
+    } = useExplorerGlobals();
     const dispatch = useAppDispatch();
     const { selectedEntities } = useAppSelector(selectMeasure);
     const measure = useAppSelector(selectMeasure);
@@ -211,7 +215,10 @@ export function MeasureInteractions() {
                             id={`undoArea-${idx}`}
                             name={`undoArea-${idx}`}
                             onClick={() => {
-                                dispatch(areaActions.undoPoint());
+                                if (!view) {
+                                    return;
+                                }
+                                dispatch(areaActions.undoPt(view));
                             }}
                         />
                     </Fragment>
