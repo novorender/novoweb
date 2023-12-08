@@ -60,7 +60,7 @@ export function MeasuredObject({ obj, idx }: { obj: ExtendedMeasureEntity; idx: 
 
     const measureObjects = useMeasureObjects();
     const currentMeasureValues = duoMeasurementValues[currentIndex];
-    const currentMeasureObject = measureObjects.length > 0 ? measureObjects[currentIndex][idx] : empty;
+    const currentMeasureObject = measureObjects.length > currentIndex ? measureObjects[currentIndex][idx] : empty;
     const [measureValues, setMeasureValues] = useState<MeasurementValues>();
 
     useEffect(() => {
