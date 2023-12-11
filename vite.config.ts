@@ -60,7 +60,7 @@ const pwaOptions: Partial<VitePWAOptions> = {
             },
             // Scene groups/bookmarks etc.
             {
-                urlPattern: /^https:\/\/data(-staging)?\.novorender\.com\/api\/scenes\/[\w]{32}\/.+/i,
+                urlPattern: /^https:\/\/data(-staging)?\.novorender\.com\/api\/scenes\/[\w]{32}\/(?!ditio).+/i,
                 handler: "NetworkFirst",
                 options: {
                     cacheableResponse: {
@@ -149,6 +149,12 @@ const serverOptions: ServerOptions = {
             // target: "https://bcfrestapi.bimtrackapp.co/bcf/2.1/",
             target: "https://bcfrestapi-bt02.bimtrackapp.co/",
             rewrite: (path) => path.replace(/^\/bimtrack/, ""),
+            changeOrigin: true,
+        },
+        "/ditio-machines": {
+            target: "https://ditio-report-api.azurewebsites.net/api",
+            // target: "https://ditio-api-test.azurewebsites.net",
+            rewrite: (path) => path.replace(/^\/ditio-machines/, ""),
             changeOrigin: true,
         },
         "/ditio": {

@@ -8,7 +8,7 @@ import { explorerGlobalsActions, useExplorerGlobals } from "contexts/explorerGlo
 import { useHandleArea } from "features/area";
 import { useHandleClipping } from "features/clippingPlanes/useHandleClipping";
 import { useHandleDeviations } from "features/deviations";
-import { useHandleDitioKeepAlive } from "features/ditio";
+import { useHandleDitioAuth } from "features/ditio";
 import { Engine2D } from "features/engine2D";
 import { Engine2DInteractions } from "features/engine2D/engine2DInteractions";
 import { useHandleImages } from "features/images";
@@ -116,14 +116,14 @@ export function Render3D() {
     useHandleCrossSection();
     useHandleDeviations();
     useHandleImages();
+    useHandleOffline();
     useHandleClippingOutlines();
     useHandleOutlineLasers();
 
     useHandleJiraKeepAlive();
     useHandleXsiteManageKeepAlive();
     useHandleXsiteManageMachineLocations();
-    useHandleDitioKeepAlive();
-    useHandleOffline();
+    useHandleDitioAuth();
 
     const cursor = useHandleCanvasCursor();
     const onClick = useCanvasClickHandler({ pointerDownStateRef });

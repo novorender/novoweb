@@ -1,16 +1,14 @@
 import { createApi, fetchBaseQuery } from "@reduxjs/toolkit/query/react";
 
 import { RootState } from "app/store";
-import { StorageKey } from "config/storage";
+import { dataServerBaseUrl } from "config/app";
 import { AsyncStatus } from "types/misc";
-import { getFromStorage } from "utils/storage";
 
 import { FeedFilters } from "./slice";
-import { AuthConfig, Post, Project, RawPost } from "./types";
+import { Dumper, Loader, Post, Project, RawPost } from "./types";
 
 export const identityServer = "https://identity.ditio.no/";
 export const baseUrl = "/ditio";
-const callbackUrl = window.location.origin;
 
 const rawBaseQuery = fetchBaseQuery({
     baseUrl: baseUrl + "/api",
@@ -18,7 +16,7 @@ const rawBaseQuery = fetchBaseQuery({
         const token = (getState() as RootState).ditio.accessToken;
 
         if (token.status === AsyncStatus.Success) {
-            headers.set("authorization", `Bearer ${token.data}`);
+            headers.set("authorization", `Bearer ${token.data.token}`);
         }
 
         return headers;
@@ -39,14 +37,14 @@ export const ditioApi = createApi({
                 author: string;
                 isAlert: boolean;
             }[],
-            { projId: string; filters: FeedFilters }
+            { projects: string[]; filters: FeedFilters }
         >({
-            query: ({ projId, filters }) =>
-                `/v2/feedweb/raw-search/all-posts?limit=100&ExtendedResults=false&IncludeLikesAndComments=false&picturesOnly=true&sortby=newest&projId=${projId}&fromDateTimeStr=${
-                    filters.date_from
-                }&toDateTimeStr=${filters.date_to}&facetFilters={"PostOriginType":${
-                    filters.alerts && filters.posts ? "null" : filters.alerts ? 1 : 0
-                }}`,
+            query: ({ projects, filters }) =>
+                `/v2/feedweb/raw-search/all-posts?limit=100&ExtendedResults=false&IncludeLikesAndComments=false&picturesOnly=true&sortby=newest&projId=${projects.join(
+                    ","
+                )}&fromDateTimeStr=${filters.date_from}&toDateTimeStr=${
+                    filters.date_to
+                }&facetFilters={"PostOriginType":${filters.alerts && filters.posts ? "null" : filters.alerts ? 1 : 0}}`,
             transformResponse: ({ Result }: { Count: number | null; More: boolean; Result: RawPost[] }) =>
                 Result.map((res) => ({
                     id: res.Id,
@@ -69,63 +67,36 @@ export const ditioApi = createApi({
         getProjects: builder.query<Project[], void>({
             query: () => `/v4/integration/projects`,
         }),
-        getAuthConfig: builder.query<AuthConfig, void>({
-            queryFn: () => {
-                return fetch(`${identityServer}/.well-known/openid-configuration`)
+        getLiveMachines: builder.query<
+            {
+                dumperLiveDataList: Omit<Dumper, "kind" | "scenePosition" | "id">[];
+                loaderLiveDataList: Omit<Loader, "kind" | "scenePosition" | "id">[];
+            },
+            undefined
+        >({
+            queryFn: async (_args, api) => {
+                const token = (api.getState() as any).ditio.accessToken;
+
+                if (token.status !== AsyncStatus.Success) {
+                    return { error: { status: "401", data: "Not authorized." } };
+                }
+
+                return fetch(`/ditio-machines/live/company`, {
+                    headers: { authorization: `Bearer ${token.data.token}` },
+                })
                     .then((res) => res.json())
                     .then((data) => ({ data }))
                     .catch((error) => ({ error }));
             },
         }),
-        getTokens: builder.query<
-            { access_token: string; refresh_token: string; expires_in: number },
-            { tokenEndpoint: string; code: string; config: { ditioClientId: string; ditioClientSecret: string } }
-        >({
-            queryFn: ({ code, tokenEndpoint, config }) => {
-                const body = new URLSearchParams();
-                body.set("code", code);
-                body.set("client_id", config.ditioClientId);
-                body.set("client_secret", config.ditioClientSecret);
-                body.set("grant_type", "authorization_code");
-                body.set("redirect_uri", callbackUrl);
-                body.set("code_verifier", getFromStorage(StorageKey.DitioCodeVerifier));
+        getToken: builder.query<{ access_token: string; expires_in: number }, { sceneId: string }>({
+            queryFn: async ({ sceneId }, api) => {
+                const token = (api.getState() as any).auth.accessToken;
 
-                return fetch(tokenEndpoint, {
-                    method: "POST",
-                    headers: { "Content-Type": "application/x-www-form-urlencoded" },
-                    body,
-                })
-                    .then((res) => {
-                        if (res.ok) {
-                            return res.json();
-                        } else {
-                            throw res.status;
-                        }
-                    })
-                    .then((data) => ({ data }))
-                    .catch((error) => ({ error }));
-            },
-        }),
-        refreshTokens: builder.mutation<
-            { access_token: string; refresh_token: string; expires_in: number },
-            {
-                tokenEndpoint: string;
-                refreshToken: string;
-                config: { ditioClientId: string; ditioClientSecret: string };
-            }
-        >({
-            queryFn: ({ refreshToken, tokenEndpoint, config }) => {
-                const body = new URLSearchParams();
-                body.set("refresh_token", refreshToken);
-                body.set("client_id", config.ditioClientId);
-                body.set("client_secret", config.ditioClientSecret);
-                body.set("grant_type", "refresh_token");
-
-                return fetch(tokenEndpoint, {
-                    body,
-                    method: "POST",
-                    headers: { "Content-Type": "application/x-www-form-urlencoded" },
-                })
+                return fetch(
+                    `${dataServerBaseUrl}/scenes/${sceneId}/ditio`,
+                    token ? { headers: { authorization: `Bearer ${token}` } } : undefined
+                )
                     .then((res) => {
                         if (res.ok) {
                             return res.json();
@@ -143,8 +114,7 @@ export const ditioApi = createApi({
 export const {
     useFeedWebRawQuery,
     useGetPostQuery,
-    useRefreshTokensMutation,
-    useLazyGetTokensQuery,
-    useGetAuthConfigQuery,
     useGetProjectsQuery,
+    useLazyGetTokenQuery,
+    useGetLiveMachinesQuery,
 } = ditioApi;

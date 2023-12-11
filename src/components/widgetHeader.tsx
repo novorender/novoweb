@@ -59,7 +59,7 @@ export function WidgetHeader({
                 <Box display="flex" alignItems="center">
                     {WidgetMenu && WidgetMenu({ open: false }) ? (
                         <>
-                            <IconButton size="small" onClick={openMenu}>
+                            <IconButton edge="start" size="small" onClick={openMenu} sx={{ mr: 1 }}>
                                 <MoreVert fontSize="small" />
                             </IconButton>
                             <WidgetMenu anchorEl={menuAnchor} open={Boolean(menuAnchor)} onClose={closeMenu} />
