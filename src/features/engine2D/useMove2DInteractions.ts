@@ -128,6 +128,7 @@ export function useMove2DInteractions(
             for (let i = 0; i < pointLines.length; ++i) {
                 translate(`removePl-${i}`, interactionPositions.current.pointLine.remove[i]);
                 translate(`finalizePl-${i}`, interactionPositions.current.pointLine.finalize[i]);
+                translate(`connectPl-${i}`, interactionPositions.current.pointLine.connect[i]);
                 translate(`undoPl-${i}`, interactionPositions.current.pointLine.undo[i]);
             }
         }

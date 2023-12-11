@@ -116,7 +116,7 @@ export function MeasureDraw({
         removeAxis: [],
         info: [],
         area: { remove: [], finalize: [], undo: [] },
-        pointLine: { remove: [], finalize: [], undo: [] },
+        pointLine: { remove: [], finalize: [], undo: [], connect: [] },
     });
     const moveInteractionMarkers = useMove2DInteractions(svg, interactionPositions);
 
@@ -409,6 +409,7 @@ export function MeasureDraw({
             const pointLineRemovePos: (vec2 | undefined)[] = [];
             const pointLineFinalizePos: (vec2 | undefined)[] = [];
             const pointLineUndoPos: (vec2 | undefined)[] = [];
+            const pointLineConnectPos: (vec2 | undefined)[] = [];
             const isCurrentPointLine = (index: number) => {
                 return pointLineCurrentIdx === index && picker === Picker.PointLine;
             };
@@ -422,6 +423,14 @@ export function MeasureDraw({
                     i,
                     isCurrentPointLine
                 );
+                for (const finalize of pointLineFinalizePos) {
+                    if (finalize) {
+                        finalize[0] = finalize[0] - 10;
+                        pointLineConnectPos.push(vec2.fromValues(finalize[0] + 20, finalize[1]));
+                    } else {
+                        pointLineConnectPos.push(undefined);
+                    }
+                }
             }
 
             if (id !== updateId.current) {
@@ -432,6 +441,7 @@ export function MeasureDraw({
             interactionPositions.current.area.finalize = areaFinalizePos;
             interactionPositions.current.pointLine.remove = pointLineRemovePos;
             interactionPositions.current.pointLine.undo = pointLineUndoPos;
+            interactionPositions.current.pointLine.connect = pointLineConnectPos;
             interactionPositions.current.pointLine.finalize = pointLineFinalizePos;
             interactionPositions.current.remove = removePos;
             interactionPositions.current.info = infoPos;
