@@ -399,7 +399,8 @@ export function Measure() {
             return;
         }
 
-        if (measurements.at(-1)?.length === 1) {
+        const currentMeasure = measurements.at(-1);
+        if (currentMeasure && currentMeasure.length > 0) {
             dispatch(measureActions.newMeasurement());
         }
 
