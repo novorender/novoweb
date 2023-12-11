@@ -94,7 +94,7 @@ export const areaSlice = createSlice({
             const area = action.payload.measurements.area;
             const view = action.meta.view;
 
-            if (area.points) {
+            if ("points" in area) {
                 const _area = {
                     ...areaMeasure(),
                     points: area.points.map((p) => p[0]),
@@ -107,7 +107,7 @@ export const areaSlice = createSlice({
                     },
                 ];
             } else {
-                state.areas = action.payload.measurements.area.areas.map((area) => ({
+                state.areas = area.areas.map((area) => ({
                     ...area,
                     ...computeArea(area, view),
                 }));

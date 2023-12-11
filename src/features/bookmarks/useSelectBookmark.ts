@@ -308,10 +308,11 @@ export function useSelectBookmark() {
                 });
             }
 
+            dispatch(pointLineActions.clear());
             if (bookmark.pointLine) {
-                dispatch(pointLineActions.setPoints(bookmark.pointLine.pts.map((pt) => flip(pt))));
-            } else {
-                dispatch(pointLineActions.setPoints([]));
+                bookmark.pointLine.pts.forEach((pt) => {
+                    dispatch(pointLineActions.addPoint(flip(pt), view));
+                });
             }
 
             dispatch(manholeActions.initFromLegacyBookmark(bookmark.manhole));

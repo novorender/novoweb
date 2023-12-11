@@ -249,7 +249,10 @@ export function MeasureInteractions() {
                                 id={`undoPl-${idx}`}
                                 name={`undoPl-${idx}`}
                                 onClick={() => {
-                                    dispatch(pointLineActions.undoPoint());
+                                    if (!view) {
+                                        return;
+                                    }
+                                    dispatch(pointLineActions.undoPoint(view));
                                 }}
                             />
                         </>

@@ -18,7 +18,6 @@ import { useHandleOffline } from "features/offline";
 import { useHandleCrossSection } from "features/orthoCam";
 import { useHandleOutlineLasers } from "features/outlineLaser";
 import { PerformanceStats } from "features/performanceStats";
-import { useHandlePointLine } from "features/pointLine";
 import { selectDebugStats, selectLoadingHandles, selectSceneStatus } from "features/render/renderSlice";
 import { useHandleXsiteManageKeepAlive, useHandleXsiteManageMachineLocations } from "features/xsiteManage";
 import { AsyncStatus } from "types/misc";
@@ -108,7 +107,6 @@ export function Render3D() {
     useHandleTerrain();
     useHandleAdvancedSettings();
     useHandleClipping();
-    useHandlePointLine();
     useHandleManhole();
     useHandleLocationMarker();
     useHandleCrossSection();
