@@ -21,7 +21,7 @@ export function MachineLocationStamp() {
     const showLogPointsSince = useAppSelector(selectXsiteManageActiveLogPoints);
     const { data: machines } = useGetMachinesQuery(site?.siteId ?? "", { skip: !site });
 
-    if (stamp?.kind !== StampKind.MachineLocation) {
+    if (stamp?.kind !== StampKind.XsiteManageMachineLocation) {
         return null;
     }
 

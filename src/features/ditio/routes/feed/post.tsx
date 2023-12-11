@@ -12,8 +12,8 @@ import { useExplorerGlobals } from "contexts/explorerGlobals";
 import { CameraType, renderActions, selectProjectSettings } from "features/render";
 import { flip } from "features/render/utils";
 
-import { baseUrl, useGetPostQuery } from "../api";
-import { ditioActions } from "../slice";
+import { baseUrl, useGetPostQuery } from "../../api";
+import { ditioActions } from "../../slice";
 import { newLineToHtmlBr } from "./feed";
 
 export function Post() {

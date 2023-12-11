@@ -2,9 +2,10 @@ import { Menu, popoverClasses } from "@mui/material";
 
 import { useAppDispatch, useAppSelector } from "app/store";
 import { DeviationStamp } from "features/deviations";
+import { DitioMachineStamp } from "features/ditio";
 import { PropertiesStamp } from "features/properties";
 import { renderActions, selectStamp, StampKind } from "features/render";
-import { LogPointStamp, MachineLocationStamp } from "features/xsiteManage";
+import { LogPointStamp, MachineLocationStamp as XsiteMachineLocationStamp } from "features/xsiteManage";
 
 import { CanvasContextMenuStamp } from "./canvasContextMenuStamp";
 
@@ -26,11 +27,11 @@ export function Stamp() {
                 },
             }}
             anchorReference="anchorPosition"
-            anchorPosition={{ top: stamp.mouseY, left: stamp.mouseX }}
+            anchorPosition={{ top: stamp.mouseY + 8, left: stamp.mouseX + 24 }}
             transitionDuration={{ exit: 0, enter: 150 }}
         >
-            {stamp.kind === StampKind.MachineLocation ? (
-                <MachineLocationStamp />
+            {stamp.kind === StampKind.XsiteManageMachineLocation ? (
+                <XsiteMachineLocationStamp />
             ) : stamp.kind === StampKind.LogPoint ? (
                 <LogPointStamp />
             ) : stamp.kind === StampKind.Deviation ? (
@@ -39,6 +40,8 @@ export function Stamp() {
                 <CanvasContextMenuStamp />
             ) : stamp.kind === StampKind.Properties ? (
                 <PropertiesStamp />
+            ) : stamp.kind === StampKind.DitioMachine ? (
+                <DitioMachineStamp />
             ) : null}
         </Menu>
     );

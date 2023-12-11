@@ -225,7 +225,7 @@ export function App() {
                     .catch(async () => {
                         if (attempt < 2) {
                             return new Promise((resolve) => {
-                                timeOutId = setTimeout(async () => {
+                                timeOutId = window.setTimeout(async () => {
                                     ++attempt;
                                     resolve(await load());
                                 }, Math.pow(2, attempt) * 1000);

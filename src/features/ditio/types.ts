@@ -180,33 +180,6 @@ export type Post = {
     }[];
 };
 
-export type AuthConfig = {
-    issuer: string;
-    jwks_uri: string;
-    authorization_endpoint: string;
-    token_endpoint: string;
-    userinfo_endpoint: string;
-    end_session_endpoint: string;
-    check_session_iframe: string;
-    revocation_endpoint: string;
-    introspection_endpoint: string;
-    device_authorization_endpoint: string;
-    frontchannel_logout_supported: boolean;
-    frontchannel_logout_session_supported: boolean;
-    backchannel_logout_supported: boolean;
-    backchannel_logout_session_supported: boolean;
-    scopes_supported: string[];
-    claims_supported: string[];
-    grant_types_supported: string[];
-    response_types_supported: string[];
-    response_modes_supported: string[];
-    token_endpoint_auth_methods_supported: string[];
-    id_token_signing_alg_values_supported: string[];
-    subject_types_supported: string[];
-    code_challenge_methods_supported: string[];
-    request_parameter_supported: boolean;
-};
-
 export type Project = {
     active: boolean;
     blockedForRegistration: boolean;
@@ -230,3 +203,62 @@ export type Project = {
     workBreakLunchLength: number;
     workBreakLunchStartTime: string;
 };
+
+export type Dumper = {
+    id: string;
+    kind: "dumper";
+    companyId: string;
+    companyName: string;
+    projectId: string;
+    projectName: string;
+    taskName: string;
+    dumperId: string;
+    dumperDriverId: string;
+    dumperDriverName: string;
+    mobilePhoneNumber: string;
+    lastSeen: string;
+    appVersion: string;
+    deviceNeedsUpdate: false;
+    dumperHasLoad: boolean;
+    massTypeName: string;
+    quantity: number;
+    speed: number;
+    lastKnownLocation: {
+        coordinates: [number, number];
+        accuracy: number;
+        isValidPoint: boolean;
+        type: string;
+    };
+    dumperName: string;
+    dumperAvatarSrc: string;
+    distance: number;
+    eventSource: string;
+    scenePosition: Vec3;
+};
+
+export type Loader = {
+    id: string;
+    kind: "loader";
+    companyId: string;
+    companyName: string;
+    loaderId: string;
+    loaderName: string;
+    loaderAvatarSrc: string;
+    projectId: string;
+    projectName: string;
+    taskName: string;
+    massTypeName: string;
+    loaderDriverId: string;
+    loaderDriverName: string;
+    mobilePhoneNumber: string;
+    lastKnownLocation: {
+        type: string;
+        coordinates: [number, number];
+        accuracy: number;
+        isValidPoint: false;
+    };
+    lastSeen: string;
+    scenePosition: Vec3;
+};
+
+export type Machine = Dumper | Loader;

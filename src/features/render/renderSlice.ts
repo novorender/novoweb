@@ -11,6 +11,7 @@ import { createAction, createSlice, PayloadAction } from "@reduxjs/toolkit";
 import { quat, vec3, vec4 } from "gl-matrix";
 
 import type { RootState } from "app/store";
+import { DitioMachine } from "features/ditio";
 import { LogPoint, MachineLocation } from "features/xsiteManage";
 import { AsyncState, AsyncStatus, ViewMode } from "types/misc";
 import { VecRGB, VecRGBA } from "utils/color";
@@ -100,7 +101,8 @@ type SavedCameraPositions = { currentIndex: number; positions: CameraStep[] };
 
 export enum StampKind {
     LogPoint,
-    MachineLocation,
+    XsiteManageMachineLocation,
+    DitioMachine,
     Deviation,
     CanvasContextMenu,
     Properties,
@@ -113,10 +115,17 @@ type LogPointStamp = {
     };
 };
 
-type MachineLocationStamp = {
-    kind: StampKind.MachineLocation;
+type XsiteManageMachineLocationStamp = {
+    kind: StampKind.XsiteManageMachineLocation;
     data: {
         location: MachineLocation;
+    };
+};
+
+type DitioMachineStamp = {
+    kind: StampKind.DitioMachine;
+    data: {
+        machine: DitioMachine;
     };
 };
 
@@ -143,10 +152,11 @@ type PropertiesStamp = {
 
 type Stamp = { mouseX: number; mouseY: number; pinned: boolean } & (
     | LogPointStamp
-    | MachineLocationStamp
+    | XsiteManageMachineLocationStamp
     | DeviationStamp
     | CanvasContextMenuStamp
     | PropertiesStamp
+    | DitioMachineStamp
 );
 
 const initialState = {

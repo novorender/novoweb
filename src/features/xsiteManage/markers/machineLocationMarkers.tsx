@@ -69,7 +69,7 @@ export function MachineLocationMarkers() {
                     name={`machineMarker-${location.machineId}`}
                     key={location.machineId}
                     active={
-                        (stamp?.kind === StampKind.MachineLocation &&
+                        (stamp?.kind === StampKind.XsiteManageMachineLocation &&
                             stamp.data.location.machineId === location.machineId) ||
                         (currentMachine === location.machineId && activeLogPoints !== LogPointTime.None)
                     }
@@ -79,7 +79,7 @@ export function MachineLocationMarkers() {
                     onClick={(e) => {
                         dispatch(
                             renderActions.setStamp({
-                                kind: StampKind.MachineLocation,
+                                kind: StampKind.XsiteManageMachineLocation,
                                 mouseX: e.clientX,
                                 mouseY: e.clientY,
                                 pinned: true,
@@ -94,7 +94,7 @@ export function MachineLocationMarkers() {
 
                         dispatch(
                             renderActions.setStamp({
-                                kind: StampKind.MachineLocation,
+                                kind: StampKind.XsiteManageMachineLocation,
                                 mouseX: e.clientX,
                                 mouseY: e.clientY,
                                 pinned: false,

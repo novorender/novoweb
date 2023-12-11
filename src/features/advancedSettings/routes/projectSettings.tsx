@@ -50,7 +50,7 @@ export function ProjectSettings({ save, saving }: { save: () => Promise<void>; s
                     clearOnBlur
                     handleHomeEndKeys
                     options={wkZones}
-                    value={settings.tmZone}
+                    value={settings.tmZone || null}
                     onChange={(_event, newValue) => {
                         if (newValue) {
                             dispatch(renderActions.setProject({ tmZone: newValue }));

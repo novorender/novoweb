@@ -6,15 +6,18 @@ import { useAppSelector } from "app/store";
 import { useExplorerGlobals } from "contexts/explorerGlobals";
 import { CameraType, selectCameraType, selectProjectSettings } from "features/render";
 import { flip } from "features/render/utils";
+import { AsyncStatus } from "types/misc";
 
-import { baseUrl, useFeedWebRawQuery, useGetPostQuery } from "./api";
+import { baseUrl, useFeedWebRawQuery, useGetPostQuery } from "../api";
 import {
     selectActivePost,
-    selectDitioProject,
+    selectDitioAccessToken,
+    selectDitioFeedInitialized,
+    selectDitioProjects,
     selectFilters,
     selectHoveredEntity,
-    selectShowDitioMarkers,
-} from "./slice";
+    selectShowDitioFeedMarkers,
+} from "../slice";
 
 const emptyPosts = [] as {
     position: vec3;
@@ -27,16 +30,21 @@ const emptyImgs = [] as {
     src: string;
 }[];
 
-export function useDitioMarkers() {
+export function useDitioFeedMarkers() {
     const {
         state: { scene },
     } = useExplorerGlobals();
     const filters = useAppSelector(selectFilters);
-    const projId = useAppSelector(selectDitioProject)?.id ?? "";
+    const projects = useAppSelector(selectDitioProjects);
     const { tmZone } = useAppSelector(selectProjectSettings);
-    const showMarkers = useAppSelector(selectShowDitioMarkers);
+    const showMarkers = useAppSelector(selectShowDitioFeedMarkers);
     const cameraType = useAppSelector(selectCameraType);
-    const { data: feed, isFetching: isFetchingPosts } = useFeedWebRawQuery({ projId, filters }, { skip: !projId });
+    const token = useAppSelector(selectDitioAccessToken);
+    const isInitialized = useAppSelector(selectDitioFeedInitialized);
+    const { data: feed, isFetching: isFetchingPosts } = useFeedWebRawQuery(
+        { projects, filters },
+        { skip: !projects.length || token.status !== AsyncStatus.Success || !isInitialized }
+    );
     const activePost = useAppSelector(selectActivePost);
     const { data: post } = useGetPostQuery({ postId: activePost }, { skip: !activePost });
     const hoveredEntity = useAppSelector(selectHoveredEntity);

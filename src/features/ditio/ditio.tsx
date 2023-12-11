@@ -1,6 +1,16 @@
-import { Box } from "@mui/material";
+import { SettingsRounded } from "@mui/icons-material";
+import { Box, ListItemIcon, ListItemText, Menu, MenuItem, MenuProps } from "@mui/material";
 import { PropsWithChildren, useEffect, useRef } from "react";
-import { MemoryRouter, Route, Switch, SwitchProps, useHistory, useLocation } from "react-router-dom";
+import {
+    MemoryRouter,
+    Redirect,
+    Route,
+    Switch,
+    SwitchProps,
+    useHistory,
+    useLocation,
+    useRouteMatch,
+} from "react-router-dom";
 
 import { useAppDispatch, useAppSelector } from "app/store";
 import { LogoSpeedDial, WidgetContainer, WidgetHeader } from "components";
@@ -8,15 +18,15 @@ import { featuresConfig } from "config/features";
 import WidgetList from "features/widgetList/widgetList";
 import { useSceneId } from "hooks/useSceneId";
 import { useToggle } from "hooks/useToggle";
-import { selectMaximized, selectMinimized } from "slices/explorerSlice";
+import { selectHasAdminCapabilities, selectMaximized, selectMinimized } from "slices/explorerSlice";
+import { AsyncStatus } from "types/misc";
 
-import { Auth } from "./routes/auth";
-import { Feed } from "./routes/feed";
-import { Filters } from "./routes/filters";
-import { Login } from "./routes/login";
-import { Post } from "./routes/post";
+import { Feed } from "./routes/feed/feed";
+import { Filters } from "./routes/feed/filters";
+import { Post } from "./routes/feed/post";
+import { Protected } from "./routes/protected";
 import { Settings } from "./routes/settings";
-import { ditioActions, selectClickedMarker, selectLastViewedPath } from "./slice";
+import { ditioActions, selectClickedMarker, selectDitioAccessToken, selectLastViewedPath } from "./slice";
 
 export default function Ditio() {
     const sceneId = useSceneId();
@@ -26,42 +36,39 @@ export default function Ditio() {
     const lastViewedPath = useAppSelector(selectLastViewedPath);
 
     return (
-        <>
+        <MemoryRouter initialEntries={["/", lastViewedPath]} initialIndex={1}>
             <WidgetContainer minimized={minimized} maximized={maximized}>
-                <WidgetHeader widget={featuresConfig.ditio} disableShadow />
+                <WidgetHeader WidgetMenu={WidgetMenu} widget={featuresConfig.ditio} disableShadow />
                 <Box
                     display={menuOpen || minimized ? "none" : "flex"}
                     flexGrow={1}
                     overflow="hidden"
                     flexDirection="column"
                 >
-                    <MemoryRouter initialEntries={["/feed", lastViewedPath]} initialIndex={1}>
+                    <Protected sceneId={sceneId}>
                         <CustomSwitch>
                             <Route path="/" exact>
-                                <Auth />
-                            </Route>
-                            <Route path="/login" exact>
-                                <Login sceneId={sceneId} />
+                                <Redirect to="/feed" />
                             </Route>
                             <Route path="/feed" exact>
                                 <Feed />
                             </Route>
-                            <Route path="/post/:id">
+                            <Route path="/feed/post/:id">
                                 <Post />
                             </Route>
-                            <Route path="/filters">
+                            <Route path="/feed/filters">
                                 <Filters />
                             </Route>
                             <Route path="/settings">
                                 <Settings sceneId={sceneId} />
                             </Route>
                         </CustomSwitch>
-                    </MemoryRouter>
+                    </Protected>
                 </Box>
                 {menuOpen && <WidgetList widgetKey={featuresConfig.ditio.key} onSelect={toggleMenu} />}
             </WidgetContainer>
             <LogoSpeedDial open={menuOpen} toggle={toggleMenu} />
-        </>
+        </MemoryRouter>
     );
 }
 
@@ -74,7 +81,7 @@ function CustomSwitch(props: PropsWithChildren<SwitchProps>) {
 
     useEffect(() => {
         if (clickedMarker) {
-            history.push(`/post/${clickedMarker}`);
+            history.push(`/feed/post/${clickedMarker}`);
             dispatch(ditioActions.setClickedMarker(""));
         }
     }, [dispatch, history, clickedMarker]);
@@ -94,4 +101,53 @@ function CustomSwitch(props: PropsWithChildren<SwitchProps>) {
     }, [location, dispatch]);
 
     return <Switch {...props} />;
+}
+
+function WidgetMenu(props: MenuProps) {
+    const settingsPaths = ["/*"];
+    const token = useAppSelector(selectDitioAccessToken);
+    const isAdmin = useAppSelector(selectHasAdminCapabilities);
+
+    if (token.status !== AsyncStatus.Success || !isAdmin) {
+        return null;
+    }
+
+    return (
+        <>
+            <Menu {...props}>
+                {isAdmin && (
+                    <Route path={settingsPaths} exact>
+                        <SettingsMenuItem onClose={props.onClose} />
+                    </Route>
+                )}
+            </Menu>
+        </>
+    );
+}
+
+function SettingsMenuItem({ onClose }: { onClose: MenuProps["onClose"] }) {
+    const history = useHistory();
+    const match = useRouteMatch();
+
+    return (
+        <div>
+            <MenuItem
+                disabled={match.url === "/settings"}
+                onClick={() => {
+                    history.push("/settings");
+
+                    if (onClose) {
+                        onClose({}, "backdropClick");
+                    }
+                }}
+            >
+                <>
+                    <ListItemIcon>
+                        <SettingsRounded />
+                    </ListItemIcon>
+                    <ListItemText>Settings</ListItemText>
+                </>
+            </MenuItem>
+        </div>
+    );
 }
