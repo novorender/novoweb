@@ -48,14 +48,16 @@ export function Feed() {
         if (isAdmin) {
             return <Redirect to="/settings" />;
         } else {
-            <>
-                <Box
-                    boxShadow={(theme) => theme.customShadows.widgetHeader}
-                    sx={{ height: 5, width: 1, mt: "-5px" }}
-                    position="absolute"
-                />
-                <Typography p={1}>{featuresConfig.ditio.name} has not been set up for this project.</Typography>
-            </>;
+            return (
+                <>
+                    <Box
+                        boxShadow={(theme) => theme.customShadows.widgetHeader}
+                        sx={{ height: 5, width: 1, mt: "-5px" }}
+                        position="absolute"
+                    />
+                    <Typography p={1}>{featuresConfig.ditio.name} has not been set up for this project.</Typography>
+                </>
+            );
         }
     }
 
