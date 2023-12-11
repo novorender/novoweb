@@ -55,6 +55,21 @@ export function CanvasContextMenuStamp() {
     const hasMeasureFeatures = features.some((feature) => measureFeatures.includes(feature as any));
     currentTab = hasSelectionFeatures && hasMeasureFeatures ? currentTab : hasMeasureFeatures ? 1 : 0;
     const [tab, setTab] = useState(currentTab);
+    const stamp = useAppSelector(selectStamp);
+    const dispatchHighlighted = useDispatchHighlighted();
+    const dispatch = useAppDispatch();
+
+    useEffect(() => {
+        if (stamp && stamp.kind === StampKind.CanvasContextMenu && stamp.data.object) {
+            if (tab === 1) {
+                dispatch(renderActions.setMainObject(undefined));
+                dispatchHighlighted(highlightActions.remove([stamp.data.object]));
+            } else {
+                dispatch(renderActions.setMainObject(stamp.data.object));
+                dispatchHighlighted(highlightActions.add([stamp.data.object]));
+            }
+        }
+    }, [dispatch, stamp, tab, dispatchHighlighted]);
 
     return (
         <>
@@ -414,7 +429,7 @@ export function Measure() {
         close();
     };
 
-    const selectOutlinePoint = () => {
+    const handleOutlinePoint = (hover: boolean) => {
         if (!outlinePoint) {
             return;
         }
@@ -422,19 +437,38 @@ export function Measure() {
         if (measurements.at(-1)?.length === 2) {
             dispatch(measureActions.newMeasurement());
         }
-        dispatch(
-            measureActions.selectEntity({
-                entity: {
+        if (hover) {
+            dispatch(
+                measureActions.selectHoverObj({
                     ObjectId: -1,
                     drawKind: "vertex",
                     parameter: outlinePoint,
-                    settings: { planeMeasure: view.renderState.clipping.planes[0]?.normalOffset },
-                },
-                pin: true,
-            })
-        );
+                })
+            );
+        } else {
+            dispatch(
+                measureActions.selectEntity({
+                    entity: {
+                        ObjectId: -1,
+                        drawKind: "vertex",
+                        parameter: outlinePoint,
+                        settings: { planeMeasure: view.renderState.clipping.planes[0]?.normalOffset },
+                    },
+                    pin: true,
+                })
+            );
+            close();
+        }
+    };
 
-        close();
+    const handleHoverOutlinePoint = () => {
+        handleOutlinePoint(true);
+    };
+    const handleClickOutlinePoint = () => {
+        handleOutlinePoint(false);
+    };
+    const removeHover = () => {
+        dispatch(measureActions.selectHoverObj(undefined));
     };
 
     const startPointLine = () => {
@@ -512,7 +546,12 @@ export function Measure() {
                     </MenuItem>
                 )}
                 {features.includes(config.outlinePoint.key) && (
-                    <MenuItem onClick={selectOutlinePoint} disabled={!outlinePoint}>
+                    <MenuItem
+                        onClick={handleClickOutlinePoint}
+                        disabled={!outlinePoint}
+                        onMouseEnter={handleHoverOutlinePoint}
+                        onMouseLeave={removeHover}
+                    >
                         <ListItemIcon>
                             <Straighten fontSize="small" />
                         </ListItemIcon>
