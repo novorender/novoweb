@@ -230,7 +230,7 @@ export function useCanvasClickHandler({
                         )
                     );
                 } else if (picker === Picker.PointLine) {
-                    dispatch(pointLineActions.addPoint(measure.hover.parameter));
+                    dispatch(pointLineActions.addPoint(measure.hover.parameter, view));
                 }
             }
 
@@ -494,9 +494,9 @@ export function useCanvasClickHandler({
             }
             case Picker.PointLine: {
                 if (measure.hover && measure.hover.drawKind === "vertex") {
-                    dispatch(pointLineActions.addPoint(measure.hover.parameter));
+                    dispatch(pointLineActions.addPoint(measure.hover.parameter, view));
                 } else {
-                    dispatch(pointLineActions.addPoint(position));
+                    dispatch(pointLineActions.addPoint(position, view));
                 }
 
                 break;

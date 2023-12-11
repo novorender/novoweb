@@ -24,7 +24,7 @@ import { ActiveAxis, selectMeasure, useMeasureObjects } from "features/measure";
 import { MeasureInteractionPositions } from "features/measure/measureInteractions";
 import { selectCrossSectionPoints } from "features/orthoCam";
 import { GetMeasurePointsFromTracer, selectOutlineLasers } from "features/outlineLaser";
-import { selectPointLineCurrent, selectPointLines } from "features/pointLine";
+import { selectPointLineCurrentIdx, selectPointLines } from "features/pointLine";
 import { CameraType, Picker, selectCameraType, selectGrid, selectPicker, selectViewMode } from "features/render";
 import { AsyncStatus, ViewMode } from "types/misc";
 
@@ -83,7 +83,7 @@ export function MeasureDraw({
     const pathMeasureObjectsData =
         pathMeasureObjects.status === AsyncStatus.Success ? pathMeasureObjects.data : undefined;
     const pointLines = useAppSelector(selectPointLines);
-    const pointLineCurrent = useAppSelector(selectPointLineCurrent);
+    const pointLineCurrentIdx = useAppSelector(selectPointLineCurrentIdx);
     const crossSection = useAppSelector(selectCrossSectionPoints);
     const manhole = useAppSelector(selectManholeMeasureValues);
     const manholeCollisionValues = useAppSelector(selectManholeCollisionValues);
@@ -410,7 +410,7 @@ export function MeasureDraw({
             const pointLineFinalizePos: (vec2 | undefined)[] = [];
             const pointLineUndoPos: (vec2 | undefined)[] = [];
             const isCurrentPointLine = (index: number) => {
-                return pointLineCurrent === index && picker === Picker.PointLine;
+                return pointLineCurrentIdx === index && picker === Picker.PointLine;
             };
             for (let i = 0; i < pointLines.length; ++i) {
                 const pointLinePoints = pointLines[i].points;
@@ -455,7 +455,7 @@ export function MeasureDraw({
         measure.activeAxis,
         areas,
         pointLines,
-        pointLineCurrent,
+        pointLineCurrentIdx,
         areaCurrent,
         picker,
     ]);
