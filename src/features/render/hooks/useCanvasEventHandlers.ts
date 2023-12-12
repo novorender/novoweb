@@ -1,6 +1,14 @@
 import { CoreModule, LoadStatus, MeasureEntity } from "@novorender/api";
 import { vec2, vec3 } from "gl-matrix";
-import { MouseEvent, MutableRefObject, PointerEvent as ReactPointerEvent, TouchEvent, useRef, WheelEvent } from "react";
+import {
+    KeyboardEvent,
+    MouseEvent,
+    MutableRefObject,
+    PointerEvent as ReactPointerEvent,
+    TouchEvent,
+    useRef,
+    WheelEvent,
+} from "react";
 
 import { isIpad, isIphone } from "app";
 import { useAppDispatch, useAppSelector } from "app/store";
@@ -59,6 +67,20 @@ export function useCanvasEventHandlers({
     const cameraType = useAppSelector(selectCameraType);
     const roadLayerTracerEnabled = useAppSelector(selectShowTracer);
     const dispatch = useAppDispatch();
+
+    const hideSvgCursor = () =>
+        svg &&
+        view &&
+        moveSvgCursor({
+            svg,
+            view,
+            size,
+            pickResult: undefined,
+            x: -100,
+            y: -100,
+            color: "",
+            overrideKind: undefined,
+        });
 
     const clippingPlaneCommitTimer = useRef<ReturnType<typeof setTimeout>>();
     const moveClippingPlanes = (delta: number) => {
@@ -369,16 +391,7 @@ export function useCanvasEventHandlers({
                 overrideKind: "cross",
             });
         } else {
-            moveSvgCursor({
-                svg,
-                view,
-                size,
-                pickResult: undefined,
-                x: -100,
-                y: -100,
-                color: "",
-                overrideKind: undefined,
-            });
+            hideSvgCursor();
         }
 
         const setDeviationStamp =
@@ -446,17 +459,13 @@ export function useCanvasEventHandlers({
     };
 
     const onPointerOut = () => {
-        if (svg && view) {
-            moveSvgCursor({
-                svg,
-                view,
-                size,
-                pickResult: undefined,
-                x: -100,
-                y: -100,
-                color: "",
-                overrideKind: undefined,
-            });
+        hideSvgCursor();
+    };
+
+    const onKeyUp = (evt: KeyboardEvent<HTMLCanvasElement>) => {
+        if (evt.key === "Escape") {
+            dispatch(renderActions.setPicker(Picker.Object));
+            hideSvgCursor();
         }
     };
 
@@ -472,5 +481,6 @@ export function useCanvasEventHandlers({
         onPointerEnter,
         onPointerMove,
         onPointerOut,
+        onKeyUp,
     };
 }

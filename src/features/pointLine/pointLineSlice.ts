@@ -56,9 +56,6 @@ export const pointLineSlice = createSlice({
         toggleLockElevation: (state) => {
             state.lockElevation = !state.lockElevation;
         },
-        closePointLine: (state) => {
-            state.lockElevation = !state.lockElevation;
-        },
         newPointLine: (state) => {
             if (state.pointLines[state.pointLines.length - 1].points.length) {
                 state.pointLines.push(pointLine());
