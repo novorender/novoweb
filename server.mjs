@@ -12,7 +12,7 @@ app.use(
     createProxyMiddleware({
         target: "https://auth.bimtrackapp.co//connect/token",
         pathRewrite: {
-            "^/bimtrack/token": "", // remove base path
+            "^/bimtrack/token": "",
         },
         changeOrigin: true,
     })
@@ -27,7 +27,7 @@ app.use(
             return server;
         },
         pathRewrite: {
-            "^/bimtrack": "", // remove base path
+            "^/bimtrack": "",
         },
         changeOrigin: true,
     })
@@ -38,7 +38,7 @@ app.use(
     createProxyMiddleware({
         target: "https://api.prod.xsitemanage.com",
         pathRewrite: {
-            "^/xsitemanage/": "", // remove base path
+            "^/xsitemanage/": "",
         },
         changeOrigin: true,
     })
@@ -48,9 +48,18 @@ app.use(
     "/ditio",
     createProxyMiddleware({
         target: "https://ditio-api-v3.azurewebsites.net",
-        // target: "https://ditio-api-test.azurewebsites.net",
         pathRewrite: {
-            "^/ditio": "", // remove base path
+            "^/ditio": "",
+        },
+        changeOrigin: true,
+    })
+);
+app.use(
+    "/ditio-machines",
+    createProxyMiddleware({
+        target: "https://ditio-report-api.azurewebsites.net/api",
+        pathRewrite: {
+            "^/ditio-machines": "",
         },
         changeOrigin: true,
     })
