@@ -164,7 +164,9 @@ export function MeasureDraw({
                 for (let j = 0; j < measureSet.length; ++j) {
                     const obj = measureSet[j];
                     if (obj.drawKind === "vertex") {
-                        objectDraw.current.set("-1", { product: await getDrawMeasureEntity(obj), updated: id });
+                        const vertexDraw = await getDrawMeasureEntity(obj);
+                        objectDraw.current.set("-1", { product: vertexDraw, updated: id });
+                        objectToSetMarker = vertexDraw;
                         continue;
                     }
                     const objId = toId(obj);
@@ -233,6 +235,13 @@ export function MeasureDraw({
                                     }
                                 }
                                 break;
+                            case "vertex":
+                                if (obj.parts[0].vertices2D) {
+                                    removePos[i] = vec2.fromValues(
+                                        obj.parts[0].vertices2D[0][0] + 20,
+                                        obj.parts[0].vertices2D[0][1]
+                                    );
+                                }
                         }
                     }
                 } else {
@@ -366,6 +375,7 @@ export function MeasureDraw({
                 undoPos: (vec2 | undefined)[],
                 points: vec3[],
                 index: number,
+                pointNeededForFinalize: number,
                 isCurrent: (index: number) => boolean
             ) => {
                 if (points.length) {
@@ -381,13 +391,15 @@ export function MeasureDraw({
                         } else {
                             removePos[index] = undefined;
                         }
-                        if (points.length > 2 && isCurrent(index)) {
+                        if (points.length > 1 && isCurrent(index)) {
                             const screenPoints = view.measure?.draw.toMarkerPoints([
                                 points[0],
                                 points[points.length - 1],
                             ]);
                             if (screenPoints && screenPoints.length > 1) {
-                                finalizePos[index] = screenPoints[0];
+                                if (points.length >= pointNeededForFinalize) {
+                                    finalizePos[index] = screenPoints[0];
+                                }
                                 undoPos[index] = screenPoints[1];
                             }
                         }
@@ -403,7 +415,7 @@ export function MeasureDraw({
             };
             for (let i = 0; i < areas.length; ++i) {
                 const areaPoints = areas[i].points;
-                fillMarkerPositions(areaRemovePos, areaFinalizePos, areaUndoPos, areaPoints, i, isCurrentArea);
+                fillMarkerPositions(areaRemovePos, areaFinalizePos, areaUndoPos, areaPoints, i, 3, isCurrentArea);
             }
 
             const pointLineRemovePos: (vec2 | undefined)[] = [];
@@ -421,6 +433,7 @@ export function MeasureDraw({
                     pointLineUndoPos,
                     pointLinePoints,
                     i,
+                    2,
                     isCurrentPointLine
                 );
                 for (const finalize of pointLineFinalizePos) {
