@@ -91,9 +91,9 @@ export const measureSlice = createSlice({
         },
         deleteMeasureSet: (state, action: PayloadAction<number>) => {
             if (state.selectedEntities.length > 1) {
-                state.selectedEntities = state.selectedEntities.splice(action.payload - 1, 1);
-                state.duoMeasurementValues = state.duoMeasurementValues.splice(action.payload - 1, 1);
-                state.activeAxis = state.activeAxis.splice(action.payload - 1, 1);
+                state.selectedEntities.splice(action.payload, 1);
+                state.duoMeasurementValues.splice(action.payload, 1);
+                state.activeAxis.splice(action.payload, 1);
             } else {
                 state.selectedEntities = [[]];
                 state.activeAxis = [];
@@ -137,9 +137,9 @@ export const measureSlice = createSlice({
                     res.normal === false
                 ) {
                     if (state.selectedEntities.length > 1) {
-                        state.selectedEntities = state.selectedEntities.splice(action.payload.idx - 1, 1);
-                        state.duoMeasurementValues = state.duoMeasurementValues.splice(action.payload.idx - 1, 1);
-                        state.activeAxis = state.activeAxis.splice(action.payload.idx - 1, 1);
+                        state.selectedEntities.splice(action.payload.idx, 1);
+                        state.duoMeasurementValues.splice(action.payload.idx, 1);
+                        state.activeAxis.splice(action.payload.idx, 1);
                     } else {
                         state.selectedEntities = [[]];
                         state.activeAxis = [];
