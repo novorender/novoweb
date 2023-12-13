@@ -5,9 +5,13 @@ import { useAppDispatch, useAppSelector } from "app/store";
 import { WidgetErrorBoundary, WidgetSkeleton } from "components";
 import { featuresConfig, WidgetKey } from "config/features";
 import { MenuWidget } from "features/menuWidget";
-import { explorerActions, selectIsOnline, selectMaximized, selectWidgets } from "slices/explorerSlice";
-
-import { useWidgetLayout } from "./useWidgetLayout";
+import {
+    explorerActions,
+    selectIsOnline,
+    selectMaximized,
+    selectWidgetLayout,
+    selectWidgets,
+} from "slices/explorerSlice";
 
 const Properties = lazy(() => import("features/properties/properties"));
 const PropertiesTree = lazy(() => import("features/propertiesTree/propertiesTree"));
@@ -40,10 +44,10 @@ const Offline = lazy(() => import("features/offline/offline"));
 const Omega365 = lazy(() => import("features/omega365/omega365"));
 
 export function Widgets() {
-    const layout = useWidgetLayout();
     const maximized = useAppSelector(selectMaximized);
     const isOnline = useAppSelector(selectIsOnline);
 
+    const layout = useAppSelector(selectWidgetLayout);
     const slots = useAppSelector(selectWidgets);
     const dispatch = useAppDispatch();
 

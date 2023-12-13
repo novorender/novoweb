@@ -3,10 +3,12 @@ import { vec2 } from "gl-matrix";
 import { Fragment, SVGProps } from "react";
 
 import { useAppDispatch, useAppSelector } from "app/store";
+import { featuresConfig } from "config/features";
 import { useExplorerGlobals } from "contexts/explorerGlobals";
 import { areaActions, selectAreas } from "features/area";
 import { pointLineActions, selectPointLines } from "features/pointLine";
 import { Picker, renderActions } from "features/render";
+import { explorerActions, selectEnabledWidgets } from "slices/explorerSlice";
 
 import { measureActions, selectMeasure } from "./measureSlice";
 
@@ -123,6 +125,8 @@ export function MeasureInteractions() {
     const measure = useAppSelector(selectMeasure);
     const areas = useAppSelector(selectAreas);
     const pointLines = useAppSelector(selectPointLines);
+    const widgetIsEnabled =
+        useAppSelector(selectEnabledWidgets).find((widget) => widget.key === featuresConfig.measure.key) !== undefined;
 
     return (
         <>
@@ -138,13 +142,16 @@ export function MeasureInteractions() {
                                         dispatch(measureActions.deleteMeasureSet(idx));
                                     }}
                                 />
-                                <InfoMarker
-                                    id={`infoMeasure-${idx}`}
-                                    name={`infoMeasure-${idx}`}
-                                    onClick={() => {
-                                        dispatch(measureActions.selectMeasureSet(idx));
-                                    }}
-                                />
+                                {widgetIsEnabled && (
+                                    <InfoMarker
+                                        id={`infoMeasure-${idx}`}
+                                        name={`infoMeasure-${idx}`}
+                                        onClick={() => {
+                                            dispatch(measureActions.selectMeasureSet(idx));
+                                            dispatch(explorerActions.forceOpenWidget(featuresConfig.measure.key));
+                                        }}
+                                    />
+                                )}
                             </>
                         }
                     </Fragment>

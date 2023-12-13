@@ -6,11 +6,14 @@ import { PrimaryMenu } from "features/primaryMenu";
 import { selectNavigationCube } from "features/render";
 import { SelectionModifierMenu } from "features/selectionModifierMenu";
 import { Widgets } from "features/widgets";
-import { useWidgetLayout } from "features/widgets/useWidgetLayout";
+import { useHandleWidgetLayout } from "features/widgets/useHandleWidgetLayout";
+import { selectWidgetLayout } from "slices/explorerSlice";
 
 export function Hud() {
     const navigationCube = useAppSelector(selectNavigationCube);
-    const layout = useWidgetLayout();
+
+    useHandleWidgetLayout();
+    const layout = useAppSelector(selectWidgetLayout);
 
     const getGridLayout = () => {
         if (layout.widgets === 4) {

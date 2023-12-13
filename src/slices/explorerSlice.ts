@@ -39,6 +39,10 @@ const initialState = {
     requireConsent: false,
     organization: "",
     widgets: [] as WidgetKey[],
+    widgetLayout: {
+        widgets: 4,
+        sideBySide: true,
+    },
     maximized: [] as WidgetKey[],
     minimized: undefined as undefined | WidgetKey,
     primaryMenu: {
@@ -125,6 +129,29 @@ export const explorerSlice = createSlice({
             if (state.maximized.length !== state.widgets.length) {
                 state.maximized = [];
             }
+        },
+        forceOpenWidget: (state, action: PayloadAction<WidgetKey>) => {
+            const open = state.widgets;
+            const maximized = state.maximized;
+            const layout = state.widgetLayout;
+
+            if (open.includes(action.payload)) {
+                return;
+            }
+
+            if (open.length + maximized.length < layout.widgets) {
+                open.push(action.payload);
+                return;
+            }
+
+            state.maximized = [];
+            if (open.length >= layout.widgets) {
+                open.pop();
+            }
+            open.push(action.payload);
+        },
+        setWidgetLayout: (state, action: PayloadAction<State["widgetLayout"]>) => {
+            state.widgetLayout = action.payload;
         },
         setUrlBookmarkId: (state, action: PayloadAction<State["urlBookmarkId"]>) => {
             state.urlBookmarkId = action.payload;
@@ -273,6 +300,7 @@ export const explorerSlice = createSlice({
 });
 
 export const selectWidgets = (state: RootState) => state.explorer.widgets;
+export const selectWidgetLayout = (state: RootState) => state.explorer.widgetLayout;
 export const selectLockedWidgets = (state: RootState) => state.explorer.lockedWidgets;
 export const selectLocalBookmarkId = (state: RootState) => state.explorer.localBookmarkId;
 export const selectUrlBookmarkId = (state: RootState) => state.explorer.urlBookmarkId;
