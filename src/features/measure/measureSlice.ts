@@ -1,5 +1,5 @@
 import { DuoMeasurementValues, MeasureEntity, MeasureSettings } from "@novorender/api";
-import { createSlice, PayloadAction } from "@reduxjs/toolkit";
+import { createSelector, createSlice, PayloadAction } from "@reduxjs/toolkit";
 import { vec3 } from "gl-matrix";
 
 import { RootState } from "app/store";
@@ -235,6 +235,21 @@ export const selectMeasure = (state: RootState) =>
         hover: ExtendedMeasureEntity | undefined;
     };
 export const selectMeasureEntities = (state: RootState) => state.measure.selectedEntities as ExtendedMeasureEntity[][];
+export const selectMeasureHoverSettings = createSelector(
+    (state: RootState) => state.measure.snapKind,
+    (snapKind) => {
+        switch (snapKind) {
+            case "point":
+                return { point: 0.4 };
+            case "curve":
+                return { edge: 0.35, segment: 0.25 };
+            case "surface":
+                return { face: 0.09 };
+            default:
+                return { edge: 0.06, segment: 0.25, face: 0.07, point: 0.2 };
+        }
+    }
+);
 
 const { actions, reducer } = measureSlice;
 export { actions as measureActions, reducer as measureReducer };

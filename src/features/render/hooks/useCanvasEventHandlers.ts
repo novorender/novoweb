@@ -14,7 +14,7 @@ import { isIpad, isIphone } from "app";
 import { useAppDispatch, useAppSelector } from "app/store";
 import { useExplorerGlobals } from "contexts/explorerGlobals";
 import { selectShowTracer } from "features/followPath";
-import { measureActions, useMeasureHoverSettings } from "features/measure";
+import { measureActions, selectMeasureHoverSettings } from "features/measure";
 import { orthoCamActions, selectCrossSectionPoint } from "features/orthoCam";
 
 import {
@@ -57,7 +57,7 @@ export function useCanvasEventHandlers({
         state: { view, canvas, size },
     } = useExplorerGlobals();
     const handleCanvasContextMenu = useCanvasContextMenuHandler();
-    const measureHoverSettings = useMeasureHoverSettings();
+    const measureHoverSettings = useAppSelector(selectMeasureHoverSettings);
     const clippingPlanes = useAppSelector(selectClippingPlanes);
     const picker = useAppSelector(selectPicker);
     const crossSectionPoint = useAppSelector(selectCrossSectionPoint);
