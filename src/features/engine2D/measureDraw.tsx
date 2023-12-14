@@ -211,7 +211,7 @@ export function MeasureDraw({
                                         const sp = view.measure?.draw.toMarkerPoints([pos3d]);
                                         if (sp && sp.length > 0 && sp[0]) {
                                             removePos[i] = sp[0];
-                                            infoPos[i] = vec2.fromValues(sp[0][0] + 20, sp[0][1]);
+                                            infoPos[i] = vec2.fromValues(sp[0][0] + 25, sp[0][1]);
                                         } else {
                                             removePos[i] = undefined;
                                         }
@@ -414,7 +414,7 @@ export function MeasureDraw({
                 return areaCurrent === index && picker === Picker.Area;
             };
             for (let i = 0; i < areas.length; ++i) {
-                const areaPoints = areas[i].points;
+                const areaPoints = areas[i].drawPoints;
                 fillMarkerPositions(areaRemovePos, areaFinalizePos, areaUndoPos, areaPoints, i, 3, isCurrentArea);
             }
 
@@ -439,7 +439,7 @@ export function MeasureDraw({
                 for (const finalize of pointLineFinalizePos) {
                     if (finalize) {
                         finalize[0] = finalize[0] - 10;
-                        pointLineConnectPos.push(vec2.fromValues(finalize[0] + 20, finalize[1]));
+                        pointLineConnectPos.push(vec2.fromValues(finalize[0] + 25, finalize[1]));
                     } else {
                         pointLineConnectPos.push(undefined);
                     }
