@@ -4,6 +4,7 @@ import { MutableRefObject, useEffect, useRef } from "react";
 
 import { useAppDispatch, useAppSelector } from "app/store";
 import { useExplorerGlobals } from "contexts/explorerGlobals";
+import { measureActions } from "features/measure";
 import { orthoCamActions, selectCurrentTopDownElevation } from "features/orthoCam";
 import { ViewMode } from "types/misc";
 
@@ -55,6 +56,7 @@ export function useHandleCameraMoved({
 
                 moveSvgMarkers();
                 dispatch(renderActions.setStamp(null));
+                dispatch(measureActions.selectHoverObj(undefined));
 
                 if (movementTimer.current) {
                     clearTimeout(movementTimer.current);

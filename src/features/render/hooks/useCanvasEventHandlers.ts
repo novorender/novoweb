@@ -282,7 +282,7 @@ export function useCanvasEventHandlers({
 
             let hoverEnt = prevHoverEnt.current;
             const now = performance.now();
-            const shouldPickHoverEnt = now - prevHoverUpdate.current > 75;
+            const shouldPickHoverEnt = now - prevHoverUpdate.current > 75 && !view.activeController.moving;
 
             if (shouldPickHoverEnt) {
                 prevHoverUpdate.current = now;
