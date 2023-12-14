@@ -67,6 +67,7 @@ export const measureSlice = createSlice({
             state.currentIndex = state.selectedEntities.length - 1;
         },
         selectEntity: (state, action: PayloadAction<{ entity: ExtendedMeasureEntity; pin?: boolean }>) => {
+            state.hover = undefined;
             const selectIdx = [1, undefined].includes(state.pinned) ? 0 : 1;
 
             const currentEntities = state.selectedEntities[state.currentIndex];
