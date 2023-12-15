@@ -21,11 +21,14 @@ import { useExplorerGlobals } from "contexts/explorerGlobals";
 import { hiddenActions, useDispatchHidden } from "contexts/hidden";
 import { highlightActions, useDispatchHighlighted } from "contexts/highlighted";
 import { selectionBasketActions, useDispatchSelectionBasket } from "contexts/selectionBasket";
-import { measureActions } from "features/measure";
+import { areaActions } from "features/area";
+import { measureActions, selectMeasureEntities } from "features/measure";
 import { clippingOutlineLaserActions, getOutlineLaser, OutlineLaser } from "features/outlineLaser";
+import { pointLineActions } from "features/pointLine";
 import {
     CameraType,
     ObjectVisibility,
+    Picker,
     renderActions,
     selectCameraType,
     selectClippingPlanes,
@@ -52,6 +55,21 @@ export function CanvasContextMenuStamp() {
     const hasMeasureFeatures = features.some((feature) => measureFeatures.includes(feature as any));
     currentTab = hasSelectionFeatures && hasMeasureFeatures ? currentTab : hasMeasureFeatures ? 1 : 0;
     const [tab, setTab] = useState(currentTab);
+    const stamp = useAppSelector(selectStamp);
+    const dispatchHighlighted = useDispatchHighlighted();
+    const dispatch = useAppDispatch();
+
+    useEffect(() => {
+        if (stamp && stamp.kind === StampKind.CanvasContextMenu && stamp.data.object) {
+            if (tab === 1) {
+                dispatch(renderActions.setMainObject(undefined));
+                dispatchHighlighted(highlightActions.remove([stamp.data.object]));
+            } else {
+                dispatch(renderActions.setMainObject(stamp.data.object));
+                dispatchHighlighted(highlightActions.add([stamp.data.object]));
+            }
+        }
+    }, [dispatch, stamp, tab, dispatchHighlighted]);
 
     return (
         <>
@@ -328,7 +346,9 @@ export function Measure() {
     const [status, setStatus] = useState(AsyncStatus.Initial);
     const [measureEntity, setMeasureEntity] = useState<MeasureEntity>();
     const [laser, setLaser] = useState<{ laser: OutlineLaser; plane: Vec4 }>();
+    const [outlinePoint, setOutlinePoint] = useState<vec3 | undefined>();
     const [centerLine, setCenterLine] = useState<CenterLine>();
+    const measurements = useAppSelector(selectMeasureEntities);
 
     useEffect(() => {
         loadObjectData();
@@ -345,7 +365,8 @@ export function Measure() {
                 setStatus(AsyncStatus.Loading);
                 const ent = await view.measure?.core
                     .pickMeasureEntity(objectId, stamp.data.position)
-                    .then((res) => (["face"].includes(res.entity.drawKind) ? res.entity : undefined))
+                    // .then((res) => (["face"].includes(res.entity.drawKind) ? res.entity : undefined))
+                    .then((res) => res.entity)
                     .catch(() => undefined);
 
                 setMeasureEntity(ent);
@@ -353,11 +374,27 @@ export function Measure() {
                 setCenterLine(await getRoadCenterLine({ db, view, id: objectId }));
             }
 
-            const pos = view.worldPositionFromPixelPosition(stamp.mouseX, stamp.mouseY);
             const plane = view.renderState.clipping.planes[0]?.normalOffset;
-            if (cameraType === CameraType.Orthographic && pos && plane) {
-                const laser = await getOutlineLaser(pos, view, cameraType, plane);
-                setLaser(laser ? { laser, plane } : undefined);
+            if (cameraType === CameraType.Orthographic) {
+                const pos = view.worldPositionFromPixelPosition(stamp.mouseX, stamp.mouseY);
+                if (pos && plane) {
+                    const laser = await getOutlineLaser(pos, view, cameraType, plane);
+                    setLaser(laser ? { laser, plane } : undefined);
+                    setOutlinePoint(view.selectOutlinePoint(pos, 0.2));
+                }
+            } else if (plane && stamp.data.position) {
+                const planeDir = vec3.fromValues(plane[0], plane[1], plane[2]);
+                const rayDir = vec3.sub(vec3.create(), view.renderState.camera.position, stamp.data.position);
+                vec3.normalize(rayDir, rayDir);
+                const d = vec3.dot(planeDir, rayDir);
+                if (d > 0) {
+                    const t = (plane[3] - vec3.dot(planeDir, view.renderState.camera.position)) / d;
+                    const pos = vec3.scaleAndAdd(vec3.create(), view.renderState.camera.position, rayDir, t);
+                    const laser = await getOutlineLaser(pos, view, cameraType, plane);
+                    const outlinePoint = view.selectOutlinePoint(pos, 0.2);
+                    setOutlinePoint(outlinePoint);
+                    setLaser(laser ? { laser, plane } : undefined);
+                }
             }
 
             setStatus(AsyncStatus.Success);
@@ -377,12 +414,78 @@ export function Measure() {
             return;
         }
 
+        const currentMeasure = measurements.at(-1);
+        if (currentMeasure && currentMeasure.length > 0) {
+            dispatch(measureActions.newMeasurement());
+        }
+
         dispatch(
             measureActions.selectEntity({
                 entity: measureEntity,
+                pin: true,
             })
         );
 
+        close();
+    };
+
+    const handleOutlinePoint = (hover: boolean) => {
+        if (!outlinePoint) {
+            return;
+        }
+
+        if (measurements.at(-1)?.length === 2) {
+            dispatch(measureActions.newMeasurement());
+        }
+        if (hover) {
+            dispatch(
+                measureActions.selectHoverObj({
+                    ObjectId: -1,
+                    drawKind: "vertex",
+                    parameter: outlinePoint,
+                })
+            );
+        } else {
+            dispatch(
+                measureActions.selectEntity({
+                    entity: {
+                        ObjectId: -1,
+                        drawKind: "vertex",
+                        parameter: outlinePoint,
+                        settings: { planeMeasure: view.renderState.clipping.planes[0]?.normalOffset },
+                    },
+                    pin: true,
+                })
+            );
+            close();
+        }
+    };
+
+    const handleHoverOutlinePoint = () => {
+        handleOutlinePoint(true);
+    };
+    const handleClickOutlinePoint = () => {
+        handleOutlinePoint(false);
+    };
+    const removeHover = () => {
+        dispatch(measureActions.selectHoverObj(undefined));
+    };
+
+    const startPointLine = () => {
+        if (!stamp.data.position) {
+            return;
+        }
+        dispatch(pointLineActions.newPointLine());
+        dispatch(renderActions.setPicker(Picker.PointLine));
+        close();
+    };
+
+    const startArea = () => {
+        if (!stamp.data.position) {
+            return;
+        }
+        dispatch(areaActions.newArea());
+        dispatch(renderActions.setPicker(Picker.Area));
         close();
     };
 
@@ -424,6 +527,35 @@ export function Measure() {
                             <Height fontSize="small" />
                         </ListItemIcon>
                         <ListItemText>{config.laser.name}</ListItemText>
+                    </MenuItem>
+                )}
+                {features.includes(config.area.key) && (
+                    <MenuItem onClick={startArea} disabled={!stamp.data.position}>
+                        <ListItemIcon>
+                            <Straighten fontSize="small" />
+                        </ListItemIcon>
+                        <ListItemText>{config.area.name}</ListItemText>
+                    </MenuItem>
+                )}
+                {features.includes(config.pointLine.key) && (
+                    <MenuItem onClick={startPointLine} disabled={!stamp.data.position}>
+                        <ListItemIcon>
+                            <Straighten fontSize="small" />
+                        </ListItemIcon>
+                        <ListItemText>{config.pointLine.name}</ListItemText>
+                    </MenuItem>
+                )}
+                {features.includes(config.outlinePoint.key) && (
+                    <MenuItem
+                        onClick={handleClickOutlinePoint}
+                        disabled={!outlinePoint}
+                        onMouseEnter={handleHoverOutlinePoint}
+                        onMouseLeave={removeHover}
+                    >
+                        <ListItemIcon>
+                            <Straighten fontSize="small" />
+                        </ListItemIcon>
+                        <ListItemText>{config.outlinePoint.name}</ListItemText>
                     </MenuItem>
                 )}
             </Box>

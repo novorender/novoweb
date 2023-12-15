@@ -8,7 +8,7 @@ import { HighlightCollection, useLazyHighlightCollections } from "contexts/highl
 import { useLazyHighlighted } from "contexts/highlighted";
 import { GroupStatus, isInternalGroup, useLazyObjectGroups } from "contexts/objectGroups";
 import { useLazySelectionBasket } from "contexts/selectionBasket";
-import { selectAreaPoints } from "features/area";
+import { selectAreas } from "features/area";
 import { selectFollowPath } from "features/followPath";
 import {
     selectManholeCollisionSettings,
@@ -22,7 +22,7 @@ import {
     selectOutlineLasers,
     TraceMeasurement,
 } from "features/outlineLaser";
-import { selectPointLinePoints } from "features/pointLine";
+import { selectPointLines } from "features/pointLine";
 import {
     selectBackground,
     selectClippingPlanes,
@@ -44,8 +44,8 @@ export function useCreateBookmark() {
     const mainObject = useAppSelector(selectMainObject);
     const selectionBasketMode = useAppSelector(selectSelectionBasketMode);
     const followPath = useAppSelector(selectFollowPath);
-    const areaPts = useAppSelector(selectAreaPoints);
-    const pointLinePts = useAppSelector(selectPointLinePoints);
+    const areas = useAppSelector(selectAreas);
+    const pointLines = useAppSelector(selectPointLines);
     const subtrees = useAppSelector(selectSubtrees);
     const manhole = useAppSelector(selectManholeMeasureValues);
     const manholeCollisionTarget = useAppSelector(selectManholeCollisionTarget);
@@ -138,13 +138,16 @@ export function useCreateBookmark() {
                 },
                 measurements: {
                     area: {
-                        points: areaPts,
+                        areas: areas.map((a) => {
+                            return { points: a.points, normals: a.normals };
+                        }),
                     },
                     pointLine: {
-                        points: pointLinePts,
+                        pointLines: pointLines.map((p) => p.points),
                     },
                     measure: {
                         entities: measurement.selectedEntities,
+                        activeAxis: measurement.activeAxis,
                     },
                     manhole: {
                         id: manhole?.ObjectId,

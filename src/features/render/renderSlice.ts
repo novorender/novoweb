@@ -4,6 +4,7 @@ import {
     RecursivePartial,
     SceneConfig as OctreeSceneConfig,
     TonemappingMode,
+    View,
 } from "@novorender/api";
 import type { Bookmark, ObjectGroup } from "@novorender/data-js-api";
 import type { BoundingSphere, Camera, EnvironmentDescription } from "@novorender/webgl-api";
@@ -278,6 +279,7 @@ const initialState = {
             enabled: true,
             color: [0, 0, 0] as VecRGB,
             onlyOnIdleFrame: true,
+            outlineObjects: false,
         },
         outlines: {
             enabled: false,
@@ -351,7 +353,13 @@ export const resetView = createAction<{
     };
 }>("resetView");
 
-export const selectBookmark = createAction<NonNullable<Bookmark["explorerState"]>>("selectBookmark");
+export const selectBookmark = createAction(
+    "selectBookmark",
+    (payload: NonNullable<Bookmark["explorerState"]>, view: View) => ({
+        payload,
+        meta: { view },
+    })
+);
 
 export const renderSlice = createSlice({
     name: "render",

@@ -15,7 +15,7 @@ import { areaActions } from "features/area";
 import { followPathActions } from "features/followPath";
 import { heightProfileActions } from "features/heightProfile";
 import { manholeActions } from "features/manhole";
-import { measureActions, selectMeasure, useMeasurePickSettings } from "features/measure";
+import { measureActions, selectMeasure, selectMeasurePickSettings } from "features/measure";
 import { orthoCamActions, selectCrossSectionClipping, selectCrossSectionPoint } from "features/orthoCam";
 import { clippingOutlineLaserActions } from "features/outlineLaser";
 import { getOutlineLaser } from "features/outlineLaser";
@@ -70,7 +70,7 @@ export function useCanvasClickHandler({
     const measure = useAppSelector(selectMeasure);
     const deviation = useAppSelector(selectDeviations);
     const picker = useAppSelector(selectPicker);
-    const measurePickSettings = useMeasurePickSettings();
+    const measurePickSettings = useAppSelector(selectMeasurePickSettings);
     const crossSectionPoint = useAppSelector(selectCrossSectionPoint);
     const crossSectionClipping = useAppSelector(selectCrossSectionClipping);
     const viewMode = useAppSelector(selectViewMode);
@@ -92,6 +92,7 @@ export function useCanvasClickHandler({
         if (!view || !canvas || longPress || drag) {
             return;
         }
+        const planePicking = cameraType === CameraType.Orthographic && view.renderState.camera.far < 1;
 
         pointerDownStateRef.current = undefined;
         const pickCameraPlane =
@@ -106,36 +107,56 @@ export function useCanvasClickHandler({
             pickOutline,
         });
 
-        if (picker === Picker.OutlineLaser) {
-            let tracePosition: ReadonlyVec3 | undefined = undefined;
-            if (cameraState.type === CameraType.Orthographic) {
-                tracePosition = view.worldPositionFromPixelPosition(evt.nativeEvent.offsetX, evt.nativeEvent.offsetY);
-            } else if (result && view.renderState.clipping.enabled && view.renderState.clipping.planes.length > 0) {
-                const plane = view.renderState.clipping.planes[0].normalOffset;
-                const planeDir = vec3.fromValues(plane[0], plane[1], plane[2]);
-                const camPos = view.renderState.camera.position;
-                const lineDir = vec3.sub(vec3.create(), result.position, camPos);
-                vec3.normalize(lineDir, lineDir);
-                const t = (plane[3] - vec3.dot(planeDir, camPos)) / vec3.dot(planeDir, lineDir);
-                tracePosition = vec3.scaleAndAdd(vec3.create(), camPos, lineDir, t);
-            }
-            if (tracePosition) {
-                dispatch(clippingOutlineLaserActions.setLaserPlane(view.renderState.clipping.planes[0].normalOffset));
-                const laser = await getOutlineLaser(tracePosition, view, cameraState.type, planes[0].normalOffset);
-                if (laser) {
-                    dispatch(clippingOutlineLaserActions.addLaser(laser));
-                }
-            }
+        if (!result || picker === Picker.CrossSection || picker === Picker.OutlineLaser) {
+            switch (picker) {
+                case Picker.Object:
+                    dispatch(renderActions.setStamp(null));
+                    return;
+                case Picker.Measurement:
+                    if (measure.hover) {
+                        dispatch(
+                            measureActions.selectEntity({
+                                entity: (planePicking
+                                    ? {
+                                          ...measure.hover,
+                                          settings: { planeMeasure: view.renderState.clipping.planes[0]?.normalOffset },
+                                      }
+                                    : measure.hover) as ExtendedMeasureEntity,
+                                pin: evt.shiftKey,
+                            })
+                        );
+                    }
+                    return;
+                case Picker.Area:
+                    if (measure.hover?.drawKind === "vertex" && planes.length) {
+                        const plane = planes[0].normalOffset;
+                        dispatch(
+                            areaActions.addPt(
+                                [measure.hover.parameter, vec3.fromValues(-plane[0], -plane[1], -plane[2])],
+                                view
+                            )
+                        );
+                    }
+                    return;
+                case Picker.PointLine:
+                    if (measure.hover?.drawKind === "vertex") {
+                        dispatch(pointLineActions.addPoint(measure.hover.parameter, view));
+                    }
+                    return;
+                case Picker.CrossSection: {
+                    const position =
+                        result?.position ??
+                        view.worldPositionFromPixelPosition(evt.nativeEvent.offsetX, evt.nativeEvent.offsetY);
 
-            return;
-        }
+                    if (!position) {
+                        return;
+                    }
 
-        if (picker === Picker.CrossSection) {
-            const position =
-                result?.position ??
-                view.worldPositionFromPixelPosition(evt.nativeEvent.offsetX, evt.nativeEvent.offsetY);
-            if (position) {
-                if (crossSectionPoint) {
+                    if (!crossSectionPoint) {
+                        dispatch(orthoCamActions.setCrossSectionPoint(position));
+                        return;
+                    }
+
                     dispatch(renderActions.setViewMode(ViewMode.CrossSection));
                     const mat = mat3.fromQuat(mat3.create(), view.renderState.camera.rotation);
                     let up = vec3.fromValues(0, 0, 1);
@@ -197,23 +218,50 @@ export function useCanvasClickHandler({
                     dispatch(renderActions.setPicker(Picker.Object));
                     dispatch(orthoCamActions.setCrossSectionPoint(undefined));
                     dispatch(orthoCamActions.setCrossSectionHover(undefined));
-                } else {
-                    dispatch(orthoCamActions.setCrossSectionPoint(position as vec3));
+                    return;
                 }
-                return;
+                case Picker.OutlineLaser:
+                    if (!view.renderState.clipping.enabled || !view.renderState.clipping.planes.length) {
+                        return;
+                    }
+
+                    let tracePosition: ReadonlyVec3 | undefined = undefined;
+
+                    if (cameraType === CameraType.Orthographic) {
+                        tracePosition = view.worldPositionFromPixelPosition(
+                            evt.nativeEvent.offsetX,
+                            evt.nativeEvent.offsetY
+                        );
+                    } else if (!result) {
+                        return;
+                    } else {
+                        const plane = view.renderState.clipping.planes[0].normalOffset;
+                        const planeDir = vec3.fromValues(plane[0], plane[1], plane[2]);
+                        const camPos = view.renderState.camera.position;
+                        const lineDir = vec3.sub(vec3.create(), result.position, camPos);
+                        vec3.normalize(lineDir, lineDir);
+                        const t = (plane[3] - vec3.dot(planeDir, camPos)) / vec3.dot(planeDir, lineDir);
+                        tracePosition = vec3.scaleAndAdd(vec3.create(), camPos, lineDir, t);
+                    }
+
+                    if (!tracePosition) {
+                        return;
+                    }
+
+                    dispatch(
+                        clippingOutlineLaserActions.setLaserPlane(view.renderState.clipping.planes[0].normalOffset)
+                    );
+                    const laser = await getOutlineLaser(tracePosition, view, cameraState.type, planes[0].normalOffset);
+                    if (laser) {
+                        dispatch(clippingOutlineLaserActions.addLaser(laser));
+                    }
+
+                    return;
+                default:
+                    return;
             }
         }
 
-        if (!result) {
-            if (picker === Picker.Measurement && measure.hover) {
-                dispatch(
-                    measureActions.selectEntity({ entity: measure.hover as ExtendedMeasureEntity, pin: evt.shiftKey })
-                );
-            } else if (picker === Picker.Object) {
-                dispatch(renderActions.setStamp(null));
-            }
-            return;
-        }
         const normal =
             isRealVec([...result.normal]) && vec3.dot(result.normal, result.normal) !== 0
                 ? vec3.clone(result.normal)
@@ -401,19 +449,24 @@ export function useCanvasClickHandler({
                 if (measure.hover) {
                     dispatch(
                         measureActions.selectEntity({
-                            entity: measure.hover as ExtendedMeasureEntity,
+                            entity: (planePicking
+                                ? {
+                                      ...measure.hover,
+                                      settings: { planeMeasure: view.renderState.clipping.planes[0]?.normalOffset },
+                                  }
+                                : measure.hover) as ExtendedMeasureEntity,
                             pin: evt.shiftKey,
                         })
                     );
                 } else if (measure.snapKind === "clippingOutline") {
-                    const pointEntity = {
+                    const pointEntity: ExtendedMeasureEntity = {
                         drawKind: "vertex",
                         ObjectId: result.objectId,
                         parameter: result.position,
                     };
                     dispatch(
                         measureActions.selectEntity({
-                            entity: pointEntity as ExtendedMeasureEntity,
+                            entity: pointEntity,
                             pin: evt.shiftKey,
                         })
                     );
@@ -424,12 +477,14 @@ export function useCanvasClickHandler({
                         position,
                         measurePickSettings
                     );
-                    dispatch(
-                        measureActions.selectEntity({
-                            entity: entity?.entity as ExtendedMeasureEntity,
-                            pin: evt.shiftKey,
-                        })
-                    );
+                    if (entity?.entity) {
+                        dispatch(
+                            measureActions.selectEntity({
+                                entity: entity.entity,
+                                pin: evt.shiftKey,
+                            })
+                        );
+                    }
                     dispatch(measureActions.setLoadingBrep(false));
                 }
                 break;
@@ -449,16 +504,27 @@ export function useCanvasClickHandler({
                 break;
             }
             case Picker.Area: {
-                let useNormal = normal;
-                if (normal === undefined && cameraType === CameraType.Orthographic) {
-                    useNormal = vec3.fromValues(0, 0, 1);
-                    vec3.transformQuat(useNormal, useNormal, view.renderState.camera.rotation);
+                if (measure.hover && measure.hover.drawKind === "vertex" && planes.length > 0) {
+                    const plane = planes[0].normalOffset;
+                    const planeDir = vec3.fromValues(-plane[0], -plane[1], -plane[2]);
+                    dispatch(areaActions.addPt([measure.hover.parameter, planeDir], view));
+                } else {
+                    let useNormal = normal;
+                    if (normal === undefined && cameraType === CameraType.Orthographic) {
+                        useNormal = vec3.fromValues(0, 0, 1);
+                        vec3.transformQuat(useNormal, useNormal, view.renderState.camera.rotation);
+                    }
+                    dispatch(areaActions.addPt([position, useNormal ?? [0, 0, 0]], view));
                 }
-                dispatch(areaActions.addPoint([position, useNormal ?? [0, 0, 0]]));
                 break;
             }
             case Picker.PointLine: {
-                dispatch(pointLineActions.addPoint(position));
+                if (measure.hover && measure.hover.drawKind === "vertex") {
+                    dispatch(pointLineActions.addPoint(measure.hover.parameter, view));
+                } else {
+                    dispatch(pointLineActions.addPoint(position, view));
+                }
+
                 break;
             }
             case Picker.HeightProfileEntity: {
@@ -467,12 +533,6 @@ export function useCanvasClickHandler({
                 }
 
                 dispatch(heightProfileActions.selectPoint({ id: result.objectId, pos: vec3.clone(position) }));
-                break;
-            }
-            case Picker.ClippingBox: {
-                // Nothing
-                // Handled on down/move/up
-
                 break;
             }
             default:

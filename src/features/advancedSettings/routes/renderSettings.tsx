@@ -106,6 +106,24 @@ export function RenderSettings({ save, saving }: { save: () => Promise<void>; sa
                             </Box>
                         }
                     />
+                    <FormControlLabel
+                        sx={{ ml: 0, mb: 1 }}
+                        control={
+                            <Switch
+                                name="toon-outline"
+                                checked={advanced.toonOutline.enabled && advanced.toonOutline.outlineObjects}
+                                disabled={!advanced.toonOutline.enabled}
+                                onChange={(_evt, checked) =>
+                                    dispatch(renderActions.setAdvanced({ toonOutline: { outlineObjects: checked } }))
+                                }
+                            />
+                        }
+                        label={
+                            <Box ml={1} fontSize={16}>
+                                Toon outline each object
+                            </Box>
+                        }
+                    />
                     {user?.features?.debugInfo?.boundingBoxes ? (
                         <FormControlLabel
                             sx={{ ml: 0, mb: 2 }}

@@ -1,26 +1,30 @@
-import { DeleteSweep, Undo } from "@mui/icons-material";
+import { Add, DeleteSweep, Undo } from "@mui/icons-material";
 import { Box, Button, FormControlLabel } from "@mui/material";
 import { useEffect, useRef } from "react";
 
 import { useAppDispatch, useAppSelector } from "app/store";
 import { IosSwitch, LogoSpeedDial, ScrollBox, WidgetContainer, WidgetHeader } from "components";
 import { featuresConfig } from "config/features";
+import { useExplorerGlobals } from "contexts/explorerGlobals";
 import { Picker, renderActions, selectPicker } from "features/render/renderSlice";
 import WidgetList from "features/widgetList/widgetList";
 import { useToggle } from "hooks/useToggle";
 import { selectMaximized, selectMinimized } from "slices/explorerSlice";
 
-import { areaActions, selectArea, selectAreaPoints } from "./areaSlice";
+import { areaActions, selectCurrentAreaPoints, selectCurrentAreaValue } from "./areaSlice";
 
 export default function Area() {
+    const {
+        state: { view },
+    } = useExplorerGlobals(true);
     const [menuOpen, toggleMenu] = useToggle();
 
     const minimized = useAppSelector(selectMinimized) === featuresConfig.area.key;
     const maximized = useAppSelector(selectMaximized).includes(featuresConfig.area.key);
 
     const selecting = useAppSelector(selectPicker) === Picker.Area;
-    const points = useAppSelector(selectAreaPoints);
-    const area = useAppSelector(selectArea);
+    const points = useAppSelector(selectCurrentAreaPoints);
+    const area = useAppSelector(selectCurrentAreaValue);
     const dispatch = useAppDispatch();
 
     const isInitial = useRef(true);
@@ -62,15 +66,23 @@ export default function Area() {
                             />
                             <Button
                                 disabled={!points.length}
-                                onClick={() => dispatch(areaActions.undoPoint())}
+                                onClick={() => dispatch(areaActions.undoPt(view))}
                                 color="grey"
                             >
                                 <Undo sx={{ mr: 1 }} />
                                 Undo
                             </Button>
                             <Button
+                                onClick={() => dispatch(areaActions.newArea())}
+                                color="grey"
                                 disabled={!points.length}
-                                onClick={() => dispatch(areaActions.setPoints([]))}
+                            >
+                                <Add sx={{ mr: 1 }} />
+                                New
+                            </Button>
+                            <Button
+                                disabled={!points.length}
+                                onClick={() => dispatch(areaActions.clearCurrent())}
                                 color="grey"
                             >
                                 <DeleteSweep sx={{ mr: 1 }} />

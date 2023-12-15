@@ -4,7 +4,7 @@ import { MutableRefObject, useEffect, useRef } from "react";
 
 import { useAppDispatch, useAppSelector } from "app/store";
 import { useExplorerGlobals } from "contexts/explorerGlobals";
-import { useMove2DInteractions } from "features/engine2D";
+import { measureActions } from "features/measure";
 import { orthoCamActions, selectCurrentTopDownElevation } from "features/orthoCam";
 import { ViewMode } from "types/misc";
 
@@ -27,7 +27,6 @@ export function useHandleCameraMoved({
     const currentTopDownElevation = useAppSelector(selectCurrentTopDownElevation);
 
     const moveSvgMarkers = useMoveMarkers(svg);
-    const moveSvgInteractions = useMove2DInteractions(svg);
 
     const movementTimer = useRef<ReturnType<typeof setTimeout>>();
     const orthoMovementTimer = useRef<ReturnType<typeof setTimeout>>();
@@ -56,8 +55,8 @@ export function useHandleCameraMoved({
                 }
 
                 moveSvgMarkers();
-                moveSvgInteractions();
                 dispatch(renderActions.setStamp(null));
+                dispatch(measureActions.selectHoverObj(undefined));
 
                 if (movementTimer.current) {
                     clearTimeout(movementTimer.current);
@@ -140,15 +139,6 @@ export function useHandleCameraMoved({
                 }, 500);
             }
         },
-        [
-            view,
-            dispatch,
-            currentTopDownElevation,
-            cameraType,
-            viewMode,
-            moveSvgMarkers,
-            moveSvgInteractions,
-            engine2dRenderFnRef,
-        ]
+        [view, dispatch, currentTopDownElevation, cameraType, viewMode, moveSvgMarkers, engine2dRenderFnRef]
     );
 }

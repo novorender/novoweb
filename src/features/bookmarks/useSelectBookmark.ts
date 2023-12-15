@@ -50,7 +50,10 @@ export function useSelectBookmark() {
 
     const selectExplorerState = useCallback(
         async (bookmark: NonNullable<Bookmark["explorerState"]>) => {
-            dispatch(renderActions.selectBookmark(bookmark));
+            if (!view) {
+                return;
+            }
+            dispatch(renderActions.selectBookmark(bookmark, view));
 
             const { objects, groups } = bookmark;
             dispatchHidden(hiddenActions.setIds(objects.hidden.ids));
@@ -134,11 +137,15 @@ export function useSelectBookmark() {
             dispatchSelectionBasket,
             objectGroups,
             sceneId,
+            view,
         ]
     );
 
     const selectLegacy = useCallback(
         async (bookmark: Bookmark) => {
+            if (!view) {
+                return;
+            }
             dispatch(imagesActions.setActiveImage(undefined));
 
             const bmHiddenGroup = bookmark.objectGroups?.find((group) => !group.id && group.hidden);
@@ -294,16 +301,18 @@ export function useSelectBookmark() {
                 dispatch(measureActions.setSelectedEntities([]));
             }
 
+            dispatch(areaActions.clear());
             if (bookmark.area) {
-                dispatch(areaActions.setPoints(bookmark.area.pts.map(([pt, normal]) => [flip(pt), flip(normal)])));
-            } else {
-                dispatch(areaActions.setPoints([]));
+                bookmark.area.pts.forEach((pt) => {
+                    dispatch(areaActions.addPt(pt.map((p) => flip(p)) as typeof pt, view));
+                });
             }
 
+            dispatch(pointLineActions.clear());
             if (bookmark.pointLine) {
-                dispatch(pointLineActions.setPoints(bookmark.pointLine.pts.map((pt) => flip(pt))));
-            } else {
-                dispatch(pointLineActions.setPoints([]));
+                bookmark.pointLine.pts.forEach((pt) => {
+                    dispatch(pointLineActions.addPoint(flip(pt), view));
+                });
             }
 
             dispatch(manholeActions.initFromLegacyBookmark(bookmark.manhole));

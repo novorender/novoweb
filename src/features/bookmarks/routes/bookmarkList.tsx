@@ -189,11 +189,20 @@ function applyFilters(bookmarks: ExtendedBookmark[], filters: Filters): Extended
 
         if (bm.explorerState) {
             const { measurements, clipping, groups } = bm.explorerState;
+            const hasArea =
+                "points" in measurements.area
+                    ? measurements.area.points.length > 0
+                    : measurements.area.areas.length > 0;
+            const hasPtLine =
+                "points" in measurements.pointLine
+                    ? measurements.pointLine.points.length > 0
+                    : measurements.pointLine.pointLines.length > 0;
+
             if (filters.measurements) {
                 if (
-                    !measurements.area.points.length &&
+                    !hasArea &&
+                    !hasPtLine &&
                     !measurements.measure.entities.length &&
-                    !measurements.pointLine.points.length &&
                     measurements.manhole.id === undefined
                 ) {
                     return false;
