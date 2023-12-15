@@ -111,7 +111,7 @@ export function RenderSettings({ save, saving }: { save: () => Promise<void>; sa
                         control={
                             <Switch
                                 name="toon-outline"
-                                checked={advanced.toonOutline.outlineObjects}
+                                checked={advanced.toonOutline.enabled && advanced.toonOutline.outlineObjects}
                                 disabled={!advanced.toonOutline.enabled}
                                 onChange={(_evt, checked) =>
                                     dispatch(renderActions.setAdvanced({ toonOutline: { outlineObjects: checked } }))
