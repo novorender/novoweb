@@ -15,7 +15,7 @@ import { areaActions } from "features/area";
 import { followPathActions } from "features/followPath";
 import { heightProfileActions } from "features/heightProfile";
 import { manholeActions } from "features/manhole";
-import { measureActions, selectMeasure, useMeasurePickSettings } from "features/measure";
+import { measureActions, selectMeasure, selectMeasurePickSettings } from "features/measure";
 import { orthoCamActions, selectCrossSectionClipping, selectCrossSectionPoint } from "features/orthoCam";
 import { clippingOutlineLaserActions } from "features/outlineLaser";
 import { getOutlineLaser } from "features/outlineLaser";
@@ -70,7 +70,7 @@ export function useCanvasClickHandler({
     const measure = useAppSelector(selectMeasure);
     const deviation = useAppSelector(selectDeviations);
     const picker = useAppSelector(selectPicker);
-    const measurePickSettings = useMeasurePickSettings();
+    const measurePickSettings = useAppSelector(selectMeasurePickSettings);
     const crossSectionPoint = useAppSelector(selectCrossSectionPoint);
     const crossSectionClipping = useAppSelector(selectCrossSectionClipping);
     const viewMode = useAppSelector(selectViewMode);
