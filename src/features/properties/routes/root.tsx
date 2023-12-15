@@ -213,7 +213,7 @@ export function Root() {
                 property,
                 value,
                 deep,
-                exact: true,
+                exact: property !== "Path",
             },
         };
 
@@ -335,7 +335,11 @@ function PropertyList({ object, handleChange, searches, nameWidth, resizing }: P
                                 property={property}
                                 value={value}
                                 checked={searches[property] !== undefined && searches[property].value === value}
-                                onChange={handleChange({ property, value, deep: object.type === NodeType.Internal })}
+                                onChange={handleChange({
+                                    property,
+                                    value,
+                                    deep: object.type === NodeType.Internal,
+                                })}
                                 resizing={resizing}
                             />
                         ))}

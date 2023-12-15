@@ -1,7 +1,7 @@
 import { Box, Button, Modal, Typography, useTheme } from "@mui/material";
 
 import { useAppDispatch, useAppSelector } from "app/store";
-import { ReactComponent as ConsentIcon } from "media/icons/consent.svg";
+import ConsentIcon from "media/icons/consent.svg?react";
 import { explorerActions, selectOrganization, selectRequireConsent } from "slices/explorerSlice";
 
 export function Consent() {

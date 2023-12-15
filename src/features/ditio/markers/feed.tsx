@@ -4,8 +4,8 @@ import { SVGProps } from "react";
 import { useAppDispatch, useAppSelector } from "app/store";
 import { useRedirectWheelEvents } from "hooks/useRedirectWheelEvents";
 
-import { ditioActions, selectActiveImg, selectActivePost, selectHoveredEntity } from "./slice";
-import { useDitioMarkers } from "./useDitioMarkers";
+import { useDitioFeedMarkers } from "../hooks/useDitioFeedMarkers";
+import { ditioActions, selectActiveImg, selectActivePost, selectHoveredEntity } from "../slice";
 
 const markerStyles = ({ theme, active, hovered }: { theme: Theme; active?: boolean; hovered?: boolean }) => css`
     cursor: pointer;
@@ -74,9 +74,9 @@ const ImgMarker = styled(
     { shouldForwardProp: (prop) => prop !== "active" && prop !== "hovered" }
 )<{ active?: boolean; hovered?: boolean }>(markerStyles);
 
-export function DitioMarkers() {
+export function DitioFeedMarkers() {
     const dispatch = useAppDispatch();
-    const [postMarkers, imgMarkers] = useDitioMarkers();
+    const [postMarkers, imgMarkers] = useDitioFeedMarkers();
     const hoveredEntity = useAppSelector(selectHoveredEntity);
     const activePost = useAppSelector(selectActivePost);
     const activeImg = useAppSelector(selectActiveImg);

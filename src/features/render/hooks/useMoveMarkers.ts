@@ -3,7 +3,7 @@ import { useCallback, useEffect } from "react";
 
 import { useAppSelector } from "app/store";
 import { useExplorerGlobals } from "contexts/explorerGlobals";
-import { useDitioMarkers } from "features/ditio";
+import { useDitioFeedMarkers, useDitioMachineMarkers } from "features/ditio";
 import { selectImages, selectShowImageMarkers } from "features/images";
 import { useJiraMarkers } from "features/jira";
 import { selectCurrentLocation } from "features/myLocation";
@@ -18,9 +18,10 @@ export function useMoveMarkers(svg: SVGSVGElement | null) {
     const images = useAppSelector(selectImages);
     const showImageMarkers = useAppSelector(selectShowImageMarkers);
     const myLocationPoint = useAppSelector(selectCurrentLocation);
-    const [ditioPostMarkers, ditioImgMarkers] = useDitioMarkers();
+    const [ditioPostMarkers, ditioImgMarkers] = useDitioFeedMarkers();
+    const ditioMachineMarkers = useDitioMachineMarkers();
     const logPoints = useXsiteManageLogPointMarkers();
-    const machineLocationMarkers = useXsiteManageMachineMarkers();
+    const xsiteMachineMarkers = useXsiteManageMachineMarkers();
     const jiraMarkers = useJiraMarkers();
 
     const moveSvgMarkers = useCallback(() => {
@@ -84,10 +85,21 @@ export function useMoveMarkers(svg: SVGSVGElement | null) {
             }
         );
 
-        (view.measure.draw.toMarkerPoints(machineLocationMarkers.map((marker) => marker.position)) ?? []).forEach(
+        (view.measure.draw.toMarkerPoints(ditioMachineMarkers.map((marker) => marker.scenePosition)) ?? []).forEach(
             (pos, idx) => {
                 svg.children
-                    .namedItem(`machineMarker-${machineLocationMarkers[idx].machineId}`)
+                    .namedItem(`ditioMachineMarker-${ditioMachineMarkers[idx].id}`)
+                    ?.setAttribute(
+                        "transform",
+                        pos ? `translate(${pos[0] - 25} ${pos[1] - 25})` : "translate(-100 -100)"
+                    );
+            }
+        );
+
+        (view.measure.draw.toMarkerPoints(xsiteMachineMarkers.map((marker) => marker.position)) ?? []).forEach(
+            (pos, idx) => {
+                svg.children
+                    .namedItem(`machineMarker-${xsiteMachineMarkers[idx].machineId}`)
                     ?.setAttribute(
                         "transform",
                         pos ? `translate(${pos[0] - 25} ${pos[1] - 25})` : "translate(-100 -100)"
@@ -108,9 +120,10 @@ export function useMoveMarkers(svg: SVGSVGElement | null) {
         logPoints,
         ditioPostMarkers,
         ditioImgMarkers,
+        ditioMachineMarkers,
         images,
         showImageMarkers,
-        machineLocationMarkers,
+        xsiteMachineMarkers,
         jiraMarkers,
     ]);
 

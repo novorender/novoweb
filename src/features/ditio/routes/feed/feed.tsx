@@ -1,43 +1,65 @@
 import { FilterAlt } from "@mui/icons-material";
 import { Box, Button, FormControlLabel, ListItemButton, Typography, useTheme } from "@mui/material";
 import { Fragment, useEffect, useRef } from "react";
-import { Link, useHistory } from "react-router-dom";
+import { Link, Redirect, useHistory } from "react-router-dom";
 import AutoSizer from "react-virtualized-auto-sizer";
 
 import { useAppDispatch, useAppSelector } from "app/store";
 import { Divider, FixedSizeVirualizedList, ImgTooltip, IosSwitch, LinearProgress, Tooltip } from "components";
+import { featuresConfig } from "config/features";
+import { selectHasAdminCapabilities } from "slices/explorerSlice";
 
-import { baseUrl, useFeedWebRawQuery } from "../api";
+import { baseUrl, useFeedWebRawQuery } from "../../api";
 import {
     ditioActions,
     initialFilters,
-    selectDitioProject,
+    selectDitioProjects,
     selectFeedScrollOffset,
     selectFilters,
-    selectShowDitioMarkers,
-} from "../slice";
+    selectShowDitioFeedMarkers,
+    selectShowDitioMachineMarkers,
+} from "../../slice";
 
 export function Feed() {
     const theme = useTheme();
     const history = useHistory();
 
     const dispatch = useAppDispatch();
-    const showMarkers = useAppSelector(selectShowDitioMarkers);
+    const showFeedMarkers = useAppSelector(selectShowDitioFeedMarkers);
+    const showMachineMarkers = useAppSelector(selectShowDitioMachineMarkers);
     const feedScrollOffset = useAppSelector(selectFeedScrollOffset);
     const filters = useAppSelector(selectFilters);
+    const isAdmin = useAppSelector(selectHasAdminCapabilities);
 
-    const projId = useAppSelector(selectDitioProject)?.id ?? "";
-    const { data: feed, isLoading } = useFeedWebRawQuery({ projId, filters }, { skip: !projId });
+    const projects = useAppSelector(selectDitioProjects);
+    const { data: feed, isLoading } = useFeedWebRawQuery({ projects, filters }, { skip: !projects.length });
 
     const scrollPos = useRef(feedScrollOffset);
 
-    const toggleShowMarkers = () => dispatch(ditioActions.toggleShowMarkers());
-
     useEffect(() => {
+        dispatch(ditioActions.setFeedInitialized(true));
+
         return () => {
             dispatch(ditioActions.setFeedScrollOffset(scrollPos.current));
         };
     }, [dispatch]);
+
+    if (!projects.length) {
+        if (isAdmin) {
+            return <Redirect to="/settings" />;
+        } else {
+            return (
+                <>
+                    <Box
+                        boxShadow={(theme) => theme.customShadows.widgetHeader}
+                        sx={{ height: 5, width: 1, mt: "-5px" }}
+                        position="absolute"
+                    />
+                    <Typography p={1}>{featuresConfig.ditio.name} has not been set up for this project.</Typography>
+                </>
+            );
+        }
+    }
 
     const filtersEnabled = Object.keys(filters).some((_key) => {
         const key = _key as any as keyof typeof filters;
@@ -51,24 +73,38 @@ export function Feed() {
                     <Box px={1}>
                         <Divider />
                     </Box>
-                    <Box display="flex">
-                        <Button component={Link} to={`/filters`} color="grey">
+                    <Box display="flex" justifyContent={"space-between"}>
+                        <Button component={Link} to={`/feed/filters`} color="grey">
                             <FilterAlt sx={{ mr: 1 }} />
                             Filters
                         </Button>
                         <FormControlLabel
-                            sx={{ ml: 4 }}
                             control={
                                 <IosSwitch
                                     size="medium"
                                     color="primary"
-                                    checked={showMarkers}
-                                    onChange={toggleShowMarkers}
+                                    checked={showFeedMarkers}
+                                    onChange={() => dispatch(ditioActions.toggleShowFeedMarkers())}
                                 />
                             }
                             label={
                                 <Box fontSize={14} sx={{ userSelect: "none" }}>
-                                    2D markers
+                                    Feed
+                                </Box>
+                            }
+                        />
+                        <FormControlLabel
+                            control={
+                                <IosSwitch
+                                    size="medium"
+                                    color="primary"
+                                    checked={showMachineMarkers}
+                                    onChange={() => dispatch(ditioActions.toggleShowMachineMarkers())}
+                                />
+                            }
+                            label={
+                                <Box fontSize={14} sx={{ userSelect: "none" }}>
+                                    Machines
                                 </Box>
                             }
                         />
@@ -80,7 +116,7 @@ export function Feed() {
                     <LinearProgress />
                 </Box>
             ) : !feed ? (
-                <Typography>Unable to load feed.</Typography>
+                <Typography p={1}>Unable to load feed.</Typography>
             ) : !feed.length ? (
                 <Box flex={"1 1 100%"}>
                     <Box
@@ -132,7 +168,7 @@ export function Feed() {
                                                 overflow="hidden"
                                                 sx={{ color: "text.primary", textDecoration: "none" }}
                                                 onClick={() => {
-                                                    history.push(`/post/${post.id}`);
+                                                    history.push(`/feed/post/${post.id}`);
                                                     dispatch(ditioActions.setActivePost(post.id));
                                                 }}
                                                 onMouseEnter={() => {

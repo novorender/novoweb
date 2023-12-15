@@ -8,7 +8,7 @@ import { useHistory } from "react-router-dom";
 import { useAppDispatch, useAppSelector } from "app/store";
 import { Divider, ScrollBox, Switch as SwitchInput, TextField } from "components";
 
-import { ditioActions, FilterType, initialFilters, selectFilters } from "../slice";
+import { ditioActions, FilterType, initialFilters, selectFilters } from "../../slice";
 
 export function Filters() {
     const theme = useTheme();

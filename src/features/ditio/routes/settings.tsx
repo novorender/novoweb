@@ -1,77 +1,68 @@
 import { ArrowBack } from "@mui/icons-material";
 import { LoadingButton } from "@mui/lab";
-import { Autocomplete, Box, Button, CircularProgress, Typography, useTheme } from "@mui/material";
+import { Autocomplete, Box, Button, CircularProgress, Typography } from "@mui/material";
+import { mergeRecursive } from "@novorender/api";
 import { FormEventHandler, SyntheticEvent, useState } from "react";
 import { useHistory } from "react-router-dom";
 
 import { dataApi } from "app";
 import { useAppDispatch, useAppSelector } from "app/store";
-import { Divider, ScrollBox, TextField } from "components";
+import { Divider, LinearProgress, ScrollBox, TextField } from "components";
 import { featuresConfig } from "config/features";
 import { useExplorerGlobals } from "contexts/explorerGlobals";
 import { loadScene } from "features/render/hooks/useHandleInit";
 import { selectIsAdminScene } from "slices/explorerSlice";
 import { AsyncState, AsyncStatus } from "types/misc";
-import { mergeRecursive } from "utils/misc";
 
 import { useGetProjectsQuery } from "../api";
-import { ditioActions, selectAccessToken, selectDitioConfig, selectDitioProject } from "../slice";
-import { Project } from "../types";
+import { ditioActions, selectDitioAccessToken, selectDitioProjects } from "../slice";
 
 export function Settings({ sceneId }: { sceneId: string }) {
     const history = useHistory();
-    const theme = useTheme();
     const {
         state: { scene },
     } = useExplorerGlobals(true);
-
     const dispatch = useAppDispatch();
     const isAdminScene = useAppSelector(selectIsAdminScene);
-    const config = useAppSelector(selectDitioConfig);
-    const accessToken = useAppSelector(selectAccessToken);
-    const currentProject = useAppSelector(selectDitioProject);
-
+    const token = useAppSelector(selectDitioAccessToken);
+    // const [projectsInput, setProjectsInput] = useState("");
+    const currentProjects = useAppSelector(selectDitioProjects);
+    const [projects, setProjects] = useState([...currentProjects]);
+    const [saving, setSaving] = useState<AsyncState<true>>({ status: AsyncStatus.Initial });
     const {
-        data: projects,
-        isFetching: isFetchingProjects,
+        data: _allProjects,
+        isLoading: isLoadingProjects,
         isError: projectsError,
     } = useGetProjectsQuery(undefined, {
-        skip: accessToken.status !== AsyncStatus.Success,
+        skip: token.status !== AsyncStatus.Success,
     });
+    const allProjects = _allProjects
+        ? Object.fromEntries(_allProjects.map((project) => [project.id, project]))
+        : undefined;
 
-    const [project, setProject] = useState(
-        currentProject
-            ? currentProject
-            : projects
-            ? projects.find((proj) => proj.projectNumber === config.projectNumber) ?? projects[0]
-            : null
-    );
-    const [saving, setSaving] = useState<AsyncState<true>>({ status: AsyncStatus.Initial });
-
-    const handleProjectChange = (_e: SyntheticEvent, value: Project | null) => {
+    // const handleProjectsChange = (_e: SyntheticEvent, value: any[]) => {
+    const handleProjectsChange = (_e: SyntheticEvent, value: string | null) => {
         if (!value) {
             return;
         }
 
-        setProject(value);
+        setProjects([value]);
+        // setProjects(value);
     };
 
     const handleSubmit: FormEventHandler = async (e) => {
         e.preventDefault();
 
-        if (saving.status === AsyncStatus.Loading || !project) {
+        if (saving.status === AsyncStatus.Loading || !projects.length) {
             return;
         }
 
         setSaving({ status: AsyncStatus.Loading });
 
         const configToSave = {
-            projectNumber: project.projectNumber,
+            projects,
         };
-
         dispatch(ditioActions.setConfig(configToSave));
-        dispatch(ditioActions.setProject(project));
-
         try {
             const [originalScene] = await loadScene(sceneId);
 
@@ -89,52 +80,79 @@ export function Settings({ sceneId }: { sceneId: string }) {
             console.warn(`Failed to save ${featuresConfig.ditio.name} settings.`);
         }
 
-        history.push("/feed");
+        history.push("/");
     };
 
     return (
         <>
-            <Box boxShadow={theme.customShadows.widgetHeader}>
-                <Box px={1}>
-                    <Divider />
-                </Box>
-                <Box display="flex">
-                    <Button onClick={() => history.goBack()} disabled={!currentProject} color="grey">
-                        <ArrowBack sx={{ mr: 1 }} />
-                        Back
-                    </Button>
-                </Box>
+            <Box boxShadow={(theme) => theme.customShadows.widgetHeader}>
+                <>
+                    <Box px={1}>
+                        <Divider />
+                    </Box>
+                    <Box display="flex">
+                        <Button onClick={() => history.goBack()} disabled={!currentProjects.length} color="grey">
+                            <ArrowBack sx={{ mr: 1 }} />
+                            Back
+                        </Button>
+                    </Box>
+                </>
             </Box>
+            {isLoadingProjects && (
+                <Box position={"relative"}>
+                    <LinearProgress />
+                </Box>
+            )}
             <ScrollBox p={1} component="form" onSubmit={handleSubmit}>
                 <Typography fontWeight={600} mb={2}>
                     Settings
                 </Typography>
                 <Autocomplete
                     sx={{ mb: 3 }}
-                    id="ditio-settings_projects"
+                    id="ditio-machines-settings_projects"
                     fullWidth
-                    options={projects ?? []}
-                    getOptionLabel={(opt) => `${opt.name} (${opt.projectNumber})`}
-                    value={project}
-                    isOptionEqualToValue={(opt, val) => opt.id === val.id}
-                    onChange={handleProjectChange}
+                    options={allProjects ? Object.keys(allProjects) : []}
+                    getOptionLabel={(opt) =>
+                        allProjects ? `${allProjects[opt]?.name} (${allProjects[opt]?.projectNumber})` : "Loading..."
+                    }
+                    onChange={handleProjectsChange}
                     size="medium"
-                    includeInputInList
-                    loading={isFetchingProjects}
+                    value={allProjects ? (projects[0] ? projects[0] : null) : null}
+                    // value={allProjects ? projects : null}
+                    // multiple
+                    // disableCloseOnSelect={true}
+                    // inputValue={projectsInput}
+                    // onInputChange={(_evt, value, reason) => {
+                    //     if (reason === "reset") {
+                    //         return;
+                    //     }
+                    //     setProjectsInput(value);
+                    // }}
+                    // renderInput={(params) => (
+                    //     <TextField
+                    //         error={projectsError}
+                    //         helperText={projectsError ? "An error occured while loading projects." : undefined}
+                    //         label="Projects"
+                    //         maxRows={3}
+                    //         {...params}
+                    //     />
+                    // )}
+                    disabled={isLoadingProjects || projectsError}
+                    loading={isLoadingProjects}
                     renderInput={(params) => (
                         <TextField
+                            {...params}
+                            label="Projects"
                             error={projectsError}
                             helperText={projectsError ? "An error occured while loading projects." : undefined}
-                            label="Project"
-                            required
-                            {...params}
+                            maxRows={3}
                         />
                     )}
                 />
 
                 <Box display="flex" justifyContent="space-between">
                     <Button
-                        disabled={!currentProject}
+                        disabled={!currentProjects.length}
                         color="grey"
                         variant="outlined"
                         onClick={() => {
@@ -150,7 +168,7 @@ export function Settings({ sceneId }: { sceneId: string }) {
                         color="primary"
                         size="large"
                         loading={saving.status === AsyncStatus.Loading}
-                        disabled={!project}
+                        disabled={!projects.length || projectsError || isLoadingProjects}
                         loadingIndicator={
                             <Box display="flex" alignItems="center">
                                 Save <CircularProgress sx={{ ml: 1 }} color="inherit" size={16} />

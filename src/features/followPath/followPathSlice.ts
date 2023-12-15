@@ -157,6 +157,7 @@ export const followPathSlice = createSlice({
             state.ptHeight = fp.currentCenter[2];
             state.showGrid = grid.enabled;
             state.view2d = camera.kind === "orthographic";
+            state.verticalClipping = fp.verticalClipping ?? false;
 
             if (state.view2d) {
                 state.clipping = action.payload.camera.far;

@@ -37,10 +37,10 @@ import {
     VisibilityOff,
 } from "@mui/icons-material";
 
-import { ReactComponent as Ditio } from "media/icons/ditio.svg";
-import { ReactComponent as Jira } from "media/icons/jira-software.svg";
-import { ReactComponent as NewformaKonekt } from "media/icons/newforma-konekt.svg";
-import { ReactComponent as Run } from "media/icons/run.svg";
+import Ditio from "media/icons/ditio.svg?react";
+import Jira from "media/icons/jira-software.svg?react";
+import NewformaKonekt from "media/icons/newforma-konekt.svg?react";
+import Run from "media/icons/run.svg?react";
 
 export enum FeatureType {
     Button,

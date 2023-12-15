@@ -60,7 +60,7 @@ const pwaOptions: Partial<VitePWAOptions> = {
             },
             // Scene groups/bookmarks etc.
             {
-                urlPattern: /^https:\/\/data(-staging)?\.novorender\.com\/api\/scenes\/[\w]{32}\/.+/i,
+                urlPattern: /^https:\/\/data(-staging)?\.novorender\.com\/api\/scenes\/[\w]{32}\/(?!ditio).+/i,
                 handler: "NetworkFirst",
                 options: {
                     cacheableResponse: {
@@ -131,12 +131,13 @@ const serverOptions: ServerOptions = {
               cert: "./localhost.crt",
               key: "./localhost.key",
           }
-        : true,
+        : undefined,
     host: true,
     open: true,
     headers: {
         "Cross-Origin-Opener-Policy": "same-origin",
         "Cross-Origin-Embedder-Policy": "require-corp",
+        "Cross-Origin-Resource-Policy": "cross-origin",
     },
     proxy: {
         "/bimtrack/token": {
@@ -148,6 +149,12 @@ const serverOptions: ServerOptions = {
             // target: "https://bcfrestapi.bimtrackapp.co/bcf/2.1/",
             target: "https://bcfrestapi-bt02.bimtrackapp.co/",
             rewrite: (path) => path.replace(/^\/bimtrack/, ""),
+            changeOrigin: true,
+        },
+        "/ditio-machines": {
+            target: "https://ditio-report-api.azurewebsites.net/api",
+            // target: "https://ditio-api-test.azurewebsites.net",
+            rewrite: (path) => path.replace(/^\/ditio-machines/, ""),
             changeOrigin: true,
         },
         "/ditio": {
@@ -177,6 +184,19 @@ export default defineConfig(({ mode }) => {
     return {
         build: {
             sourcemap: true,
+            rollupOptions: {
+                onLog(level, log, handler) {
+                    if (
+                        log.cause &&
+                        typeof log.cause === "object" &&
+                        "message" in log.cause &&
+                        log.cause.message === `Can't resolve original location of error.`
+                    ) {
+                        return;
+                    }
+                    handler(level, log);
+                },
+            },
         },
         optimizeDeps: {
             exclude: ["@novorender/webgl-api", "@novorender/api"],
