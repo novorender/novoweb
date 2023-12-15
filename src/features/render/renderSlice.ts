@@ -269,6 +269,7 @@ const initialState = {
             enabled: true,
             color: [0, 0, 0] as VecRGB,
             onlyOnIdleFrame: true,
+            outlineObjects: false,
         },
         outlines: {
             enabled: false,
