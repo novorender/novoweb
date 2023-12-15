@@ -39,6 +39,7 @@ export type ExplorerProjectState = {
         toonOutline: {
             enabled: boolean;
             color: [number, number, number];
+            outlineObjects?: boolean;
         };
         outlines: {
             enabled: boolean;

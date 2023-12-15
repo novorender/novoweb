@@ -74,8 +74,8 @@ const DownMarker = styled(
 const RemoveMarker = styled(
     (props: SVGProps<SVGGElement>) => (
         <g {...props}>
-            <rect width="24" height="24" fillOpacity={0} transform={"translate(100 100)"} />
-            <circle r="8" fill="red" transform={"translate(100 100)"} />
+            <rect width="24" height="24" fillOpacity={0} transform={"translate(88 88)"} />
+            <circle r="10" fill="red" transform={"translate(100 100)"} />
             <path d="M96,96 L104,104 M104,96 L96,104" stroke="white" strokeWidth={2}></path>
         </g>
     ),

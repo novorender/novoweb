@@ -1,6 +1,8 @@
 import { DrawPart, DrawProduct } from "@novorender/api";
 import { ReadonlyVec2, ReadonlyVec3, vec2, vec3 } from "gl-matrix";
 
+import { CameraType } from "features/render";
+
 export interface ColorSettings {
     lineColor?: string | CanvasGradient | string[];
     fillColor?: string;
@@ -19,6 +21,7 @@ export interface TextSettings {
 export interface CameraSettings {
     pos: ReadonlyVec3;
     dir: ReadonlyVec3;
+    type: CameraType;
 }
 
 type CapStyle = "arrow";
@@ -203,7 +206,7 @@ function drawAngle(ctx: CanvasRenderingContext2D, camera: CameraSettings, part: 
         vec3.normalize(dirCamB, dirCamB);
         vec3.normalize(dirCamP, dirCamP);
 
-        if (Math.abs(vec3.dot(dirCamP, norm)) < 0.15) {
+        if (camera.type === CameraType.Pinhole && Math.abs(vec3.dot(dirCamP, norm)) < 0.15) {
             return false;
         }
 
@@ -369,25 +372,52 @@ function drawLinesOrPolygon(
                 } ${text.unit ? text.unit : "m"}`;
                 drawText(ctx, part.vertices2D, textStr);
             } else if (part.text && Array.isArray(part.text) && part.text.length > 0) {
-                const points = part.vertices2D;
-                for (let i = 0; i < points.length - 1 && i < part.text[0].length; ++i) {
-                    if (part.text[0][i].length === 0) {
-                        continue;
+                // const drawTextsFromPart = (points: ReadonlyVec2[], indicesOnScreen: number[] | undefined, textList: string[]) => {
+                //     const indexer = (i: number) => indicesOnScreen ? indicesOnScreen[i] : i;
+                //     let pointOffset = indicesOnScreen ? -indicesOnScreen[0] : 0;
+                //     for (let i = 0; i < (indicesOnScreen ? indicesOnScreen?.length - 1 : points.length - 1); ++i) {
+                //         const currentIdx = indexer(i);
+                //         const nextIdx = indexer(i + 1);
+                //         if (nextIdx === currentIdx) {
+                //             pointOffset++;
+                //             continue;
+                //         }
+                //         if (nextIdx !== currentIdx + 1) {
+                //             pointOffset -= nextIdx - currentIdx - 1;
+                //             continue;
+                //         }
+                //         if (textList[currentIdx].length === 0) {
+                //             continue;
+                //         }
+                //         const textStr = textList[currentIdx] + `${text.unit ? text.unit : "m"}`;
+                //         drawText(ctx, [points[currentIdx + pointOffset], points[nextIdx + pointOffset]], textStr);
+                //     }
+                // }
+                const drawTextsFromPart = (
+                    points: ReadonlyVec2[],
+                    indicesOnScreen: number[] | undefined,
+                    textList: string[]
+                ) => {
+                    const indexer = (i: number) => (indicesOnScreen ? indicesOnScreen[i] : i);
+                    for (let i = 0; i < points.length - 1; ++i) {
+                        const currentTxtIdx = indexer(i);
+                        const nextTxtIdx = indexer(i + 1);
+                        if (nextTxtIdx === currentTxtIdx) {
+                            continue;
+                        }
+                        if (textList[currentTxtIdx].length === 0) {
+                            continue;
+                        }
+                        const textStr = textList[currentTxtIdx] + `${text.unit ? text.unit : "m"}`;
+                        drawText(ctx, [points[i], points[i + 1]], textStr);
                     }
-                    const textStr = part.text[0][i] + `${text.unit ? text.unit : "m"}`;
-                    drawText(ctx, [points[i], points[i + 1]], textStr);
-                }
+                };
+                drawTextsFromPart(part.vertices2D, part.indicesOnScreen, part.text[0]);
                 if (part.voids) {
                     for (let j = 0; j < part.voids.length && j < part.text.length - 1; ++j) {
                         const voidVerts = part.voids[j].vertices2D;
                         if (voidVerts) {
-                            for (let i = 0; i < voidVerts.length - 1 && i < part.text[j].length; ++i) {
-                                if (part.text[j + 1][i].length === 0) {
-                                    continue;
-                                }
-                                const textStr = part.text[j + 1][i] + `${text.unit ? text.unit : "m"}`;
-                                drawText(ctx, [voidVerts[i], voidVerts[i + 1]], textStr);
-                            }
+                            drawTextsFromPart(voidVerts, part.voids[j].indicesOnScreen, part.text[j + 1]);
                         }
                     }
                 }

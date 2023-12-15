@@ -47,34 +47,40 @@ const NestedAccordionDetails = styled(AccordionDetails)(
     `
 );
 
+const empty = undefined;
+
 export function MeasuredObject({ obj, idx }: { obj: ExtendedMeasureEntity; idx: number }) {
     const {
         state: { view },
     } = useExplorerGlobals(true);
 
     const dispatch = useAppDispatch();
-    const { pinned, duoMeasurementValues } = useAppSelector(selectMeasure);
+    const { pinned, duoMeasurementValues, currentIndex } = useAppSelector(selectMeasure);
     const isPinned = pinned === idx;
 
-    const measureObject = useMeasureObjects()[idx];
+    const measureObjects = useMeasureObjects();
+    const currentMeasureValues = duoMeasurementValues[currentIndex];
+    const currentMeasureObject = measureObjects.length > currentIndex ? measureObjects[currentIndex][idx] : empty;
     const [measureValues, setMeasureValues] = useState<MeasurementValues>();
 
     useEffect(() => {
         getMeasureValues();
 
         async function getMeasureValues() {
-            if (measureObject) {
-                setMeasureValues(await view?.measure?.core.measure(measureObject, undefined, measureObject.settings));
+            if (currentMeasureObject) {
+                setMeasureValues(
+                    await view?.measure?.core.measure(currentMeasureObject, undefined, currentMeasureObject.settings)
+                );
             } else {
                 setMeasureValues(undefined);
             }
         }
-    }, [measureObject, view]);
+    }, [currentMeasureObject, view]);
 
-    const kind = !measureObject ? "" : measureValues ? getMeasurementValueKind(measureValues) : "point";
+    const kind = !currentMeasureObject ? "" : measureValues ? getMeasurementValueKind(measureValues) : "point";
 
     const _idx = idx === 0 ? "measureInfoA" : "measureInfoB";
-    const useCylinderMeasureSettings = duoMeasurementValues && duoMeasurementValues.result[_idx]?.validMeasureSettings;
+    const useCylinderMeasureSettings = currentMeasureValues && currentMeasureValues.result[_idx]?.validMeasureSettings;
 
     return (
         <Accordion defaultExpanded={true}>
@@ -106,7 +112,7 @@ export function MeasuredObject({ obj, idx }: { obj: ExtendedMeasureEntity; idx: 
                 </Box>
             </AccordionSummary>
             <AccordionDetails>
-                {!measureObject ? null : measureValues ? (
+                {!currentMeasureObject ? null : measureValues ? (
                     <MeasurementData
                         measureValues={measureValues}
                         useCylinderRelativeMeasureSettings={useCylinderMeasureSettings}
@@ -122,9 +128,9 @@ export function MeasuredObject({ obj, idx }: { obj: ExtendedMeasureEntity; idx: 
                             );
                         }}
                     />
-                ) : measureObjectIsVertex(measureObject) ? (
+                ) : measureObjectIsVertex(currentMeasureObject) ? (
                     <Box p={2}>
-                        <VertexTable vertices={[measureObject.parameter]} />
+                        <VertexTable vertices={[currentMeasureObject.parameter]} />
                     </Box>
                 ) : null}
             </AccordionDetails>

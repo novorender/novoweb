@@ -5,7 +5,6 @@ import { RefCallback, useCallback, useRef, useState } from "react";
 import { useAppSelector } from "app/store";
 import { LinearProgress, Loading } from "components";
 import { explorerGlobalsActions, useExplorerGlobals } from "contexts/explorerGlobals";
-import { useHandleArea } from "features/area";
 import { useHandleClipping } from "features/clippingPlanes/useHandleClipping";
 import { useHandleDeviations } from "features/deviations";
 import { useHandleDitioAuth } from "features/ditio";
@@ -19,7 +18,6 @@ import { useHandleOffline } from "features/offline";
 import { useHandleCrossSection } from "features/orthoCam";
 import { useHandleOutlineLasers } from "features/outlineLaser";
 import { PerformanceStats } from "features/performanceStats";
-import { useHandlePointLine } from "features/pointLine";
 import { selectDebugStats, selectLoadingHandles, selectSceneStatus } from "features/render/renderSlice";
 import { useHandleXsiteManageKeepAlive, useHandleXsiteManageMachineLocations } from "features/xsiteManage";
 import { AsyncStatus } from "types/misc";
@@ -109,8 +107,6 @@ export function Render3D() {
     useHandleTerrain();
     useHandleAdvancedSettings();
     useHandleClipping();
-    useHandlePointLine();
-    useHandleArea();
     useHandleManhole();
     useHandleLocationMarker();
     useHandleCrossSection();
@@ -148,7 +144,7 @@ export function Render3D() {
             {sceneStatus.status === AsyncStatus.Success && view && canvas && (
                 <>
                     {debugStats.enabled && <PerformanceStats />}
-                    <Engine2D pointerPos={pointerPosRef} renderFnRef={engine2dRenderFnRef} />
+                    <Engine2D pointerPos={pointerPosRef} renderFnRef={engine2dRenderFnRef} svg={svg} />
                     <Stamp />
                     <Svg width={size.width} height={size.height} ref={setSvg}>
                         <Markers />

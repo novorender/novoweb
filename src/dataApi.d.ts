@@ -67,12 +67,22 @@ declare module "@novorender/data-js-api" {
             asBackground: boolean;
         };
         measurements: {
-            area: {
-                points: [point: [number, number, number], normal: [number, number, number]][];
-            };
-            pointLine: {
-                points: [number, number, number][];
-            };
+            area:
+                | {
+                      /** @deprecated  Use only to read legacy bookmarks */
+                      points: [point: [number, number, number], normal: [number, number, number]][];
+                  }
+                | {
+                      areas: { points: [number, number, number][]; normals: [number, number, number][] }[];
+                  };
+            pointLine:
+                | {
+                      /** @deprecated  Use only to read legacy bookmarks */
+                      points: [number, number, number][];
+                  }
+                | {
+                      pointLines: [number, number, number][][];
+                  };
             manhole: {
                 id: number | undefined;
                 collisionTarget:
@@ -83,7 +93,18 @@ declare module "@novorender/data-js-api" {
                 collisionSettings: MeasureSettings | undefined;
             };
             measure: {
-                entities: ExtendedMeasureEntity[];
+                entities: ExtendedMeasureEntity[] | ExtendedMeasureEntity[][];
+                activeAxis?: (
+                    | {
+                          x: boolean;
+                          y: boolean;
+                          z: boolean;
+                          planar: boolean;
+                          result: boolean;
+                          normal: boolean;
+                      }
+                    | undefined
+                )[];
             };
         };
         followPath:
