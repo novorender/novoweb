@@ -150,7 +150,7 @@ type Integrations = {
         };
     };
     ditio?: {
-        projectNumber: string;
+        projects?: string[];
     };
     xsiteManage?: {
         siteId: string;

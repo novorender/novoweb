@@ -26,6 +26,7 @@ export const sorting = [
     featuresConfig.deviations.key,
     featuresConfig.followPath.key,
     featuresConfig.advancedSettings.key,
+    featuresConfig.ditio.key,
 ] as WidgetKey[];
 
 export default function WidgetList({ widgetKey, onSelect }: { widgetKey?: WidgetKey; onSelect: () => void }) {

@@ -16,6 +16,7 @@ import { useExplorerGlobals } from "contexts/explorerGlobals";
 import { selectShowTracer } from "features/followPath";
 import { measureActions, selectMeasureHoverSettings } from "features/measure";
 import { orthoCamActions, selectCrossSectionPoint } from "features/orthoCam";
+import { ViewMode } from "types/misc";
 
 import {
     CameraType,
@@ -27,6 +28,7 @@ import {
     selectPoints,
     selectStamp,
     selectSubtrees,
+    selectViewMode,
     StampKind,
     SubtreeStatus,
 } from "..";
@@ -66,6 +68,7 @@ export function useCanvasEventHandlers({
     const subtrees = useAppSelector(selectSubtrees);
     const cameraType = useAppSelector(selectCameraType);
     const roadLayerTracerEnabled = useAppSelector(selectShowTracer);
+    const viewMode = useAppSelector(selectViewMode);
     const dispatch = useAppDispatch();
 
     const hideSvgCursor = () =>
@@ -398,6 +401,7 @@ export function useCanvasEventHandlers({
             !stamp?.pinned &&
             deviation.mixFactor !== 0 &&
             cameraType === CameraType.Orthographic &&
+            [ViewMode.CrossSection, ViewMode.FollowPath].includes(viewMode) &&
             e.buttons === 0 &&
             subtrees.points === SubtreeStatus.Shown;
         if (setDeviationStamp) {

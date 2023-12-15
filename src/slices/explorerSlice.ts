@@ -61,7 +61,7 @@ const initialState = {
     urlBookmarkId: undefined as undefined | string,
     localBookmarkId: undefined as undefined | string,
     config: {
-        dataServerUrl: (import.meta.env.REACT_APP_DATA_SERVER_URL ?? "https://data.novorender.com/api") as string,
+        // dataServerUrl: (import.meta.env.REACT_APP_DATA_SERVER_URL ?? "https://data.novorender.com/api") as string,
         bimCollabClientSecret: (import.meta.env.REACT_APP_BIMCOLLAB_CLIENT_SECRET ?? "") as string,
         bimCollabClientId: (import.meta.env.REACT_APP_BIMCOLLAB_CLIENT_ID ?? "") as string,
         bimTrackClientSecret: (import.meta.env.REACT_APP_BIMTRACK_CLIENT_SECRET ?? "") as string,
@@ -238,7 +238,7 @@ export const explorerSlice = createSlice({
             state.isOnline = action.payload !== undefined ? action.payload : !state.isOnline;
         },
         setConfig: (state, action: PayloadAction<State["config"]>) => {
-            state.config = action.payload;
+            state.config = { ...state.config, ...action.payload };
         },
     },
     extraReducers(builder) {
