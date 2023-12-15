@@ -166,7 +166,10 @@ export function MeasureDraw({
                     if (obj.drawKind === "vertex") {
                         const vertexDraw = await getDrawMeasureEntity(obj);
                         objectDraw.current.set("-1", { product: vertexDraw, updated: id });
-                        objectToSetMarker = vertexDraw;
+                        if (measureSet.length === 1) {
+                            objectToSetMarker = vertexDraw;
+                        }
+
                         continue;
                     }
                     const objId = toId(obj);
@@ -285,17 +288,32 @@ export function MeasureDraw({
                     if (resultToMarker) {
                         if (resultToMarker.objects.length > 0) {
                             const axisPos: AxisPosition = {};
+                            let smallAxis: AxisPosition | undefined | null;
                             for (const part of resultToMarker.objects[0].parts) {
                                 if (part.vertices2D && part.vertices2D.length > 1) {
                                     const dir = vec2.sub(vec2.create(), part.vertices2D[1], part.vertices2D[0]);
-                                    const dist = vec2.len(dir);
+                                    let dist = vec2.len(dir);
+                                    if (dist === 0) {
+                                        dist = 1;
+                                    }
                                     const removeOffset = (dist / 2 + 55) / dist;
-                                    const infoOffset = (dist / 2 + 80) / dist;
-                                    if (dist > 120) {
+
+                                    if (dist > 120 || smallAxis === undefined) {
+                                        // eslint-disable-next-line no-loop-func
+                                        const updateAxis = () => {
+                                            if (dist > 120) {
+                                                smallAxis = null;
+                                                return axisPos;
+                                            }
+                                            smallAxis = {};
+                                            return smallAxis;
+                                        };
+                                        const infoOffset = (dist / 2 + 80) / dist;
                                         switch (part.name) {
                                             case "result":
                                                 if (activeAxis!.result) {
-                                                    axisPos.dist = vec2.scaleAndAdd(
+                                                    const axis = updateAxis();
+                                                    axis.dist = vec2.scaleAndAdd(
                                                         vec2.create(),
                                                         part.vertices2D[0],
                                                         dir,
@@ -311,7 +329,8 @@ export function MeasureDraw({
                                                 break;
                                             case "xy-plane":
                                                 if (activeAxis!.planar) {
-                                                    axisPos.plan = vec2.scaleAndAdd(
+                                                    const axis = updateAxis();
+                                                    axis.plan = vec2.scaleAndAdd(
                                                         vec2.create(),
                                                         part.vertices2D[0],
                                                         dir,
@@ -321,7 +340,8 @@ export function MeasureDraw({
                                                 break;
                                             case "x-axis":
                                                 if (activeAxis!.x) {
-                                                    axisPos.x = vec2.scaleAndAdd(
+                                                    const axis = updateAxis();
+                                                    axis.x = vec2.scaleAndAdd(
                                                         vec2.create(),
                                                         part.vertices2D[0],
                                                         dir,
@@ -331,7 +351,8 @@ export function MeasureDraw({
                                                 break;
                                             case "y-axis":
                                                 if (activeAxis!.y) {
-                                                    axisPos.y = vec2.scaleAndAdd(
+                                                    const axis = updateAxis();
+                                                    axis.y = vec2.scaleAndAdd(
                                                         vec2.create(),
                                                         part.vertices2D[0],
                                                         dir,
@@ -341,7 +362,8 @@ export function MeasureDraw({
                                                 break;
                                             case "z-axis":
                                                 if (activeAxis!.z) {
-                                                    axisPos.z = vec2.scaleAndAdd(
+                                                    const axis = updateAxis();
+                                                    axis.z = vec2.scaleAndAdd(
                                                         vec2.create(),
                                                         part.vertices2D[0],
                                                         dir,
@@ -350,7 +372,8 @@ export function MeasureDraw({
                                                 }
                                                 break;
                                             case "normal":
-                                                axisPos.normal = vec2.scaleAndAdd(
+                                                const axis = updateAxis();
+                                                axis.normal = vec2.scaleAndAdd(
                                                     vec2.create(),
                                                     part.vertices2D[0],
                                                     dir,
@@ -361,7 +384,11 @@ export function MeasureDraw({
                                     }
                                 }
                             }
-                            removeAxis.push(axisPos);
+                            if (smallAxis) {
+                                removeAxis.push(smallAxis);
+                            } else {
+                                removeAxis.push(axisPos);
+                            }
                         }
                     }
                 } else {
