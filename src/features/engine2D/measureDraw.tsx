@@ -228,7 +228,7 @@ export function MeasureDraw({
                                     const dir = vec2.sub(vec2.create(), end, start);
                                     const dist = vec2.len(dir);
                                     const removeOffset = (dist / 2 + 50) / dist;
-                                    const infoOffset = (dist / 2 + 70) / dist;
+                                    const infoOffset = (dist / 2 + 75) / dist;
                                     if (dist > 110) {
                                         removePos[i] = vec2.scaleAndAdd(vec2.create(), start, dir, removeOffset);
                                         infoPos[i] = vec2.scaleAndAdd(vec2.create(), start, dir, infoOffset);
@@ -238,7 +238,7 @@ export function MeasureDraw({
                             case "vertex":
                                 if (obj.parts[0].vertices2D) {
                                     removePos[i] = vec2.fromValues(
-                                        obj.parts[0].vertices2D[0][0] + 20,
+                                        obj.parts[0].vertices2D[0][0] + 25,
                                         obj.parts[0].vertices2D[0][1]
                                     );
                                 }
@@ -289,8 +289,8 @@ export function MeasureDraw({
                                 if (part.vertices2D && part.vertices2D.length > 1) {
                                     const dir = vec2.sub(vec2.create(), part.vertices2D[1], part.vertices2D[0]);
                                     const dist = vec2.len(dir);
-                                    const removeOffset = (dist / 2 + 50) / dist;
-                                    const infoOffset = (dist / 2 + 70) / dist;
+                                    const removeOffset = (dist / 2 + 55) / dist;
+                                    const infoOffset = (dist / 2 + 80) / dist;
                                     if (dist > 120) {
                                         switch (part.name) {
                                             case "result":
