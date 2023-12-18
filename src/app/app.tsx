@@ -1,21 +1,20 @@
-import { InteractionRequiredAuthError, PublicClientApplication } from "@azure/msal-browser";
+import { InteractionRequiredAuthError } from "@azure/msal-browser";
 import { MsalProvider } from "@azure/msal-react";
 import { LoadingButton } from "@mui/lab";
 import { CircularProgress, CssBaseline, Paper, Snackbar, snackbarContentClasses } from "@mui/material";
 import { StyledEngineProvider, ThemeProvider } from "@mui/material/styles";
 import { LocalizationProvider } from "@mui/x-date-pickers";
 import { AdapterDateFns } from "@mui/x-date-pickers/AdapterDateFns";
-import { createAPI as createDataAPI } from "@novorender/data-js-api";
 import enLocale from "date-fns/locale/en-GB";
 import { useEffect, useRef, useState } from "react";
 import { Route, Switch, useHistory } from "react-router-dom";
 import { useRegisterSW } from "virtual:pwa-register/react";
 
+import { msalInstance } from "app";
 import { useAppDispatch } from "app/store";
 import { theme } from "app/theme";
 import { Loading } from "components";
-import { dataServerBaseUrl } from "config/app";
-import { loginRequest, msalConfig } from "config/auth";
+import { loginRequest } from "config/auth";
 import { StorageKey } from "config/storage";
 import { Explorer } from "pages/explorer";
 import { Login } from "pages/login";
@@ -24,21 +23,12 @@ import { explorerActions } from "slices/explorerSlice";
 import {
     CustomNavigationClient,
     getAccessToken,
-    getAuthHeader,
     getOAuthState,
     getStoredActiveMsalAccount,
     getUser,
     storeActiveAccount,
 } from "utils/auth";
 import { deleteFromStorage, getFromStorage } from "utils/storage";
-
-export const isIpad =
-    /\biPad/.test(navigator.userAgent) ||
-    (/\bMobile\b/.test(navigator.userAgent) && /\bMacintosh\b/.test(navigator.userAgent));
-export const isIphone = /\biPhone/.test(navigator.userAgent);
-
-export const dataApi = createDataAPI({ authHeader: getAuthHeader, serviceUrl: dataServerBaseUrl });
-export const msalInstance = new PublicClientApplication(msalConfig);
 
 enum Status {
     Initial,

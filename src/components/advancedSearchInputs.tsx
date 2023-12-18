@@ -115,7 +115,7 @@ function AdvancedInput({
                               startAdornment: multipleValues ? (
                                   <IconButton
                                       size="small"
-                                      color={Boolean(menuAnchor) ? "primary" : "default"}
+                                      color={menuAnchor ? "primary" : "default"}
                                       aria-haspopup="true"
                                       onClick={openMenu}
                                   >

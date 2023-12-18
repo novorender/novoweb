@@ -2,7 +2,7 @@ import { ContentCopy } from "@mui/icons-material";
 import { Box, ListItemIcon, ListItemText, Menu, MenuItem } from "@mui/material";
 import { HierarcicalObjectReference } from "@novorender/webgl-api";
 import { useEffect, useRef, useState } from "react";
-import { ListOnScrollProps } from "react-window";
+import { FixedSizeList, ListOnScrollProps } from "react-window";
 
 import { useAppDispatch, useAppSelector } from "app/store";
 import { Divider, LinearProgress, LogoSpeedDial, WidgetContainer, WidgetHeader } from "components";
@@ -57,7 +57,7 @@ export default function ModelTree() {
 
     const [abortController, abort] = useAbortController();
     const isLoadingMore = useRef(false);
-    const listRef = useRef<any>(null);
+    const listRef = useRef<FixedSizeList>(null);
     const listElRef = useRef<HTMLElement | null>(null);
 
     useEffect(() => {

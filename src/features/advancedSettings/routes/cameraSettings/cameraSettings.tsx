@@ -39,7 +39,9 @@ const controls = [
     { label: "CAD (right button pan)", value: "cadRightPan" },
     { label: "CAD (middle button pan)", value: "cadMiddlePan" },
     { label: "Special", value: "special" },
-];
+] as const;
+const isValidControllerKind = (val: string): val is (typeof controls)[number]["value"] =>
+    !controls.map((c): string => c.value).includes(val);
 
 export function CameraSettings({
     save,
@@ -347,12 +349,11 @@ export function CameraSettings({
                                     value={cameraDefaults.pinhole.controller}
                                     name="controls"
                                     onChange={({ target: { value } }) => {
-                                        if (!controls.map((c) => c.value).includes(value)) {
+                                        if (!isValidControllerKind(value)) {
                                             return;
                                         }
-                                        dispatch(
-                                            renderActions.setCameraDefaults({ pinhole: { controller: value as any } })
-                                        );
+
+                                        dispatch(renderActions.setCameraDefaults({ pinhole: { controller: value } }));
 
                                         if (cameraType === CameraType.Pinhole) {
                                             // Trigger new controller

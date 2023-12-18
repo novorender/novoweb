@@ -28,7 +28,7 @@ export enum UserRole {
 }
 
 type UrlSearchQuery = undefined | string | SearchPattern[];
-type WritableUrlSearchQuery = DeepMutable<UrlSearchQuery>;
+type MutableUrlSearchQuery = DeepMutable<UrlSearchQuery>;
 
 const initialState = {
     isOnline: navigator.onLine,
@@ -57,7 +57,7 @@ const initialState = {
             features: defaultCanvasContextMenuFeatures,
         },
     },
-    urlSearchQuery: undefined as WritableUrlSearchQuery,
+    urlSearchQuery: undefined as MutableUrlSearchQuery,
     urlBookmarkId: undefined as undefined | string,
     localBookmarkId: undefined as undefined | string,
     config: {
@@ -165,7 +165,7 @@ export const explorerSlice = createSlice({
         ) => {
             const patterns = action.payload?.query;
 
-            state.urlSearchQuery = patterns as WritableUrlSearchQuery;
+            state.urlSearchQuery = patterns as MutableUrlSearchQuery;
 
             if ((Array.isArray(patterns) && patterns.length) || (!Array.isArray(patterns) && patterns)) {
                 state.widgets = [
@@ -250,7 +250,8 @@ export const explorerSlice = createSlice({
             state.requireConsent = getRequireConsent(customProperties);
 
             state.lockedWidgets = state.lockedWidgets.filter(
-                (widget) => !(customProperties?.features ?? ({} as any))[widget]
+                (widget) =>
+                    !customProperties?.features || !(customProperties?.features as Record<string, boolean>)[widget]
             );
             if (action.payload.deviceProfile.isMobile && !state.lockedWidgets.includes(featuresConfig.images.key)) {
                 state.lockedWidgets.push(featuresConfig.images.key);
@@ -345,7 +346,7 @@ function enabledFeaturesToFeatureKeys(enabledFeatures: Record<string, boolean>):
         Object.keys(enabledFeatures)
             .map((key) => ({ key, enabled: enabledFeatures[key] }))
             .filter((feature) => feature.enabled)
-            .map((feature) => (dictionary[feature.key] ? dictionary[feature.key]! : feature.key))
+            .map((feature) => (dictionary[feature.key] ? dictionary[feature.key] : feature.key))
             .concat(defaultEnabledWidgets)
             .flat() as WidgetKey[]
     );

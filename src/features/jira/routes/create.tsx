@@ -46,7 +46,7 @@ import {
     selectJiraSpace,
     selectMetaCustomfieldKey,
 } from "../jiraSlice";
-import { Assignee, CreateIssueMetadata } from "../types";
+import { AdfNode, Assignee, CreateIssueMetadata } from "../types";
 
 export function CreateIssue({ sceneId }: { sceneId: string }) {
     const theme = useTheme();
@@ -62,6 +62,7 @@ export function CreateIssue({ sceneId }: { sceneId: string }) {
     const project = useAppSelector(selectJiraProject);
     const component = useAppSelector(selectJiraComponent);
     const metaCustomfieldKey = useAppSelector(selectMetaCustomfieldKey);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const [formValues, setFormValues] = useState({} as { [key: string]: any });
     const [assigneeOptions, setAssigneeOptions] = useState([] as Assignee[]);
     const [loadingAssignees, setLoadingAssignees] = useState(false);
@@ -159,8 +160,8 @@ export function CreateIssue({ sceneId }: { sceneId: string }) {
                                       type: "paragraph",
                                       content: formValues.description
                                           .split("\n")
-                                          .map((node: string, idx: number, arr: any[]) => {
-                                              let res: any[] = node
+                                          .map((node: string, idx: number, arr: unknown[]): AdfNode[] => {
+                                              let res: AdfNode[] = node
                                                   ? [
                                                         {
                                                             type: "text",

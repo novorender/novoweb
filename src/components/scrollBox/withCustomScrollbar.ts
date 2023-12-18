@@ -1,9 +1,8 @@
-import { Box, styled, Theme } from "@mui/material";
-import { OverridableComponent } from "@mui/material/OverridableComponent";
+import { styled } from "@mui/material";
 import { css } from "@mui/styled-engine";
-import { BoxTypeMap } from "@mui/system";
 
-export const withCustomScrollbar = (component: any): unknown =>
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export const withCustomScrollbar = (component: any): any =>
     styled(component, { shouldForwardProp: (prop) => prop !== "horizontal" })<{ horizontal?: boolean }>(
         ({ theme, horizontal }) => css`
             scrollbar-color: ${theme.palette.grey[400]} transparent;
@@ -26,7 +25,3 @@ export const withCustomScrollbar = (component: any): unknown =>
             }
         `
     );
-
-export const ScrollBox = withCustomScrollbar(Box) as OverridableComponent<
-    BoxTypeMap<{ horizontal?: boolean }, "div", Theme>
->;

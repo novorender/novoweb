@@ -51,8 +51,8 @@ const measureFeatures = [canvasContextMenuConfig.measure.key, canvasContextMenuC
 let currentTab = 0;
 export function CanvasContextMenuStamp() {
     const features = useAppSelector(selectCanvasContextMenuFeatures);
-    const hasSelectionFeatures = features.some((feature) => selectionFeatures.includes(feature as any));
-    const hasMeasureFeatures = features.some((feature) => measureFeatures.includes(feature as any));
+    const hasSelectionFeatures = features.some((feature) => (selectionFeatures as string[]).includes(feature));
+    const hasMeasureFeatures = features.some((feature) => (measureFeatures as string[]).includes(feature));
     currentTab = hasSelectionFeatures && hasMeasureFeatures ? currentTab : hasMeasureFeatures ? 1 : 0;
     const [tab, setTab] = useState(currentTab);
     const stamp = useAppSelector(selectStamp);

@@ -22,7 +22,7 @@ import { VecRGBA } from "utils/color";
 import { sleep } from "utils/time";
 
 import { renderActions } from "..";
-import { Error as SceneError } from "../sceneError";
+import { ErrorKind } from "../sceneError";
 import { flip } from "../utils";
 
 export function useHandleInit() {
@@ -113,6 +113,8 @@ export function useHandleInit() {
                                     : group.hidden
                                     ? GroupStatus.Hidden
                                     : GroupStatus.None,
+                                // NOTE(OLA): Pass IDs as undefined to be loaded when group is activated.
+                                // eslint-disable-next-line @typescript-eslint/no-explicit-any
                                 ids: group.ids ? new Set(group.ids) : (undefined as any),
                             }))
                     )
@@ -160,21 +162,21 @@ export function useHandleInit() {
 
                     if (error === "Not authorized") {
                         dispatch(
-                            renderActions.setSceneStatus({ status: AsyncStatus.Error, msg: SceneError.NOT_AUTHORIZED })
+                            renderActions.setSceneStatus({ status: AsyncStatus.Error, msg: ErrorKind.NOT_AUTHORIZED })
                         );
                     } else if (error === "Scene not found") {
                         dispatch(
-                            renderActions.setSceneStatus({ status: AsyncStatus.Error, msg: SceneError.INVALID_SCENE })
+                            renderActions.setSceneStatus({ status: AsyncStatus.Error, msg: ErrorKind.INVALID_SCENE })
                         );
                     } else if (error === "Scene deleted") {
                         dispatch(
-                            renderActions.setSceneStatus({ status: AsyncStatus.Error, msg: SceneError.DELETED_SCENE })
+                            renderActions.setSceneStatus({ status: AsyncStatus.Error, msg: ErrorKind.DELETED_SCENE })
                         );
                     } else {
                         dispatch(
                             renderActions.setSceneStatus({
                                 status: AsyncStatus.Error,
-                                msg: navigator.onLine ? SceneError.UNKNOWN_ERROR : SceneError.OFFLINE_UNAVAILABLE,
+                                msg: navigator.onLine ? ErrorKind.UNKNOWN_ERROR : ErrorKind.OFFLINE_UNAVAILABLE,
                             })
                         );
                     }
@@ -183,14 +185,14 @@ export function useHandleInit() {
                         dispatch(
                             renderActions.setSceneStatus({
                                 status: AsyncStatus.Error,
-                                msg: SceneError.LEGACY_BINARY_FORMAT,
+                                msg: ErrorKind.LEGACY_BINARY_FORMAT,
                             })
                         );
                     } else {
                         dispatch(
                             renderActions.setSceneStatus({
                                 status: AsyncStatus.Error,
-                                msg: navigator.onLine ? SceneError.UNKNOWN_ERROR : SceneError.OFFLINE_UNAVAILABLE,
+                                msg: navigator.onLine ? ErrorKind.UNKNOWN_ERROR : ErrorKind.OFFLINE_UNAVAILABLE,
                                 stack: e.stack
                                     ? e.stack
                                     : typeof e.cause === "string"
@@ -227,7 +229,7 @@ export async function loadScene(id: string): Promise<[SceneConfig, CadCamera | u
         throw res;
     }
 
-    let { ..._cfg } = res;
+    const { ..._cfg } = res;
     const cfg = _cfg as SceneConfig;
 
     // Legacy scene config format

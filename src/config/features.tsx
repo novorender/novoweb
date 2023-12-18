@@ -113,7 +113,7 @@ export const featuresConfig = {
     },
     heightProfile: {
         key: "heightProfile",
-        name: "Ht. profile",
+        name: "Ht. profile" as string,
         Icon: Timeline,
         type: FeatureType.Widget,
         defaultLocked: false,
@@ -170,7 +170,7 @@ export const featuresConfig = {
     },
     advancedSettings: {
         key: "advancedSettings",
-        name: "Adv. settings",
+        name: "Adv. settings" as string,
         Icon: Settings,
         type: FeatureType.AdminWidget,
         defaultLocked: false,
@@ -178,7 +178,7 @@ export const featuresConfig = {
     },
     selectionBasket: {
         key: "selectionBasket",
-        name: "Sel. basket",
+        name: "Sel. basket" as string,
         Icon: Layers,
         type: FeatureType.Widget,
         defaultLocked: false,

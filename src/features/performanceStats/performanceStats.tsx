@@ -22,7 +22,7 @@ const formatNumber = new Intl.NumberFormat("en-US").format;
 
 export function PerformanceStats() {
     const {
-        state: { view, scene },
+        state: { view },
     } = useExplorerGlobals(true);
     const deviceProfile = useAppSelector(selectDeviceProfile);
     const isOnline = useAppSelector(selectIsOnline);
@@ -42,7 +42,6 @@ export function PerformanceStats() {
     const detailBias = useRef<HTMLSpanElement>(null);
 
     window.view = view;
-    (window as any).scene = scene;
 
     useEffect(() => {
         if (timer.current) {
@@ -50,7 +49,10 @@ export function PerformanceStats() {
         }
 
         timer.current = setInterval(() => {
-            const jsMemory = "memory" in performance ? (performance.memory as any).totalJSHeapSize : 0;
+            const jsMemory =
+                "memory" in window.performance
+                    ? (window.performance.memory as { totalJSHeapSize?: number })?.totalJSHeapSize ?? 0
+                    : 0;
             const stats = view.statistics;
 
             if (
@@ -122,7 +124,10 @@ export function PerformanceStats() {
                 <br />
                 js.memory: <span ref={jsMem}>0</span> MB /{" "}
                 {"memory" in performance
-                    ? ((performance as any).memory.jsHeapSizeLimit / (1024 * 1024)).toFixed(2)
+                    ? (
+                          ((performance.memory as { jsHeapSizeLimit?: number })?.jsHeapSizeLimit ?? 0) /
+                          (1024 * 1024)
+                      ).toFixed(2)
                     : -420}{" "}
                 MB
                 <br />

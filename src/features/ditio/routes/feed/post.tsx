@@ -9,12 +9,12 @@ import { dataApi } from "app";
 import { useAppDispatch, useAppSelector } from "app/store";
 import { Divider, LinearProgress, ScrollBox, Tooltip } from "components";
 import { useExplorerGlobals } from "contexts/explorerGlobals";
+import { FormattedText } from "features/ditio/formattedText";
 import { CameraType, renderActions, selectProjectSettings } from "features/render";
 import { flip } from "features/render/utils";
 
 import { baseUrl, useGetPostQuery } from "../../api";
 import { ditioActions } from "../../slice";
-import { newLineToHtmlBr } from "./feed";
 
 export function Post() {
     const theme = useTheme();
@@ -117,7 +117,9 @@ export function Post() {
                     <Typography variant="h6" my={1} fontWeight={600}>
                         {post.TaskDescription}
                     </Typography>
-                    <Typography sx={{ mb: 2 }}>{newLineToHtmlBr(post.Text ?? "")}</Typography>
+                    <Typography sx={{ mb: 2 }}>
+                        <FormattedText str={post.Text ?? ""} />
+                    </Typography>
                     {post.Images.length ? (
                         <ImageList cols={2} rowHeight={164} variant={"quilted"}>
                             {[...post.Images].reverse().map((image) => (

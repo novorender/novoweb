@@ -57,7 +57,7 @@ export function moveSvgCursor({
     } else {
         const kind = (overrideKind ? overrideKind : pickResult?.sampleType) ?? "corner";
 
-        let normal =
+        const normal =
             kind === "surface" && pickResult?.normalVS && isRealVec(pickResult.normalVS)
                 ? vec3.clone(pickResult.normalVS)
                 : undefined;

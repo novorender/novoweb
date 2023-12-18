@@ -19,8 +19,8 @@ export function getParentPath(path: string): string {
     return path.split("/").slice(0, -1).join("/");
 }
 
-export function extractObjectIds<T extends { id: any } = HierarcicalObjectReference>(
-    objects: { id: any }[]
+export function extractObjectIds<T extends { id: number } = HierarcicalObjectReference>(
+    objects: { id: number }[]
 ): T["id"][] {
     return objects.map((obj) => obj.id);
 }
@@ -28,7 +28,7 @@ export function extractObjectIds<T extends { id: any } = HierarcicalObjectRefere
 export function getObjectNameFromPath(path: string): string {
     const arr = path.split("/");
 
-    return decodeObjPathName(arr.length ? arr.pop()! : path);
+    return decodeObjPathName(arr.at(-1) ?? path);
 }
 
 export function getFilePathFromObjectPath(objectPath: string): string | null {
@@ -107,7 +107,7 @@ export function getTotalBoundingSphere(
     const center = vec3.clone(spheres[0].center);
     let radius = spheres[0].radius;
 
-    for (let sphere of spheres) {
+    for (const sphere of spheres) {
         const delta = vec3.sub(vec3.create(), sphere.center, center);
         const dist = vec3.len(delta) + sphere.radius;
 

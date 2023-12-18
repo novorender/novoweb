@@ -77,12 +77,12 @@ export function flip<T extends number[]>(v: T): T {
 }
 
 export function flipGLtoCadQuat(b: quat) {
-    let ax = 0.7071067811865475,
-        aw = 0.7071067811865475;
-    let bx = b[0],
-        by = b[1],
-        bz = b[2],
-        bw = b[3];
+    const ax = 0.7071067811865475;
+    const aw = 0.7071067811865475;
+    const bx = b[0];
+    const by = b[1];
+    const bz = b[2];
+    const bw = b[3];
 
     // prettier-ignore
     return quat.fromValues(

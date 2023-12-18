@@ -1,11 +1,20 @@
 {
-    "extends": ["react-app"],
+    "root": true,
+    "env": {
+        "browser": true,
+        "es2023": true
+    },
+    "extends": ["eslint:recommended", "plugin:@typescript-eslint/recommended", "plugin:react-hooks/recommended"],
+    "parser": "@typescript-eslint/parser",
+    "plugins": ["react-refresh", "simple-import-sort"],
     "rules": {
         "curly": "warn",
+        "no-inner-declarations": "off",
         "@typescript-eslint/no-unused-vars": [
             1,
             { "vars": "all", "varsIgnorePattern": "^_", "args": "after-used", "argsIgnorePattern": "^_" }
         ],
+        "react-refresh/only-export-components": ["warn", { "allowConstantExport": true }],
         "simple-import-sort/imports": [
             "error",
             {
@@ -27,15 +36,5 @@
                 ]
             }
         ]
-    },
-    "plugins": ["simple-import-sort"],
-    "parserOptions": {
-        "ecmaVersion": 2023,
-        "sourceType": "module"
-    },
-    "settings": {
-        "react": {
-            "version": "detect"
-        }
     }
 }

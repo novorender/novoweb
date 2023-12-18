@@ -461,7 +461,9 @@ export function CustomParentNode({
                 abortSignal,
                 callback,
             });
-        } catch {}
+        } catch {
+            // continue
+        }
 
         setLoading(false);
     };

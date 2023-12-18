@@ -6,6 +6,7 @@ import { useHistory, useParams } from "react-router-dom";
 import { Divider, LinearProgress, ScrollBox, TextField } from "components";
 
 import { useCreateCommentMutation } from "../jiraApi";
+import { AdfNode } from "../types";
 
 export function CreateComment() {
     const theme = useTheme();
@@ -30,8 +31,8 @@ export function CreateComment() {
                             type: "paragraph",
                             content: comment
                                 .split("\n")
-                                .map((node: string, idx: number, arr: any[]) => {
-                                    let res: any[] = node
+                                .map((node: string, idx: number, arr: unknown[]): AdfNode[] => {
+                                    let res: AdfNode[] = node
                                         ? [
                                               {
                                                   type: "text",

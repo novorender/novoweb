@@ -52,6 +52,7 @@ export const bookmarksSlice = createSlice({
             state.filters[action.payload] = !state.filters[action.payload];
         },
         setBookmarks: (state, action: PayloadAction<ExtendedBookmark[]>) => {
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
             state.bookmarks = action.payload as any;
         },
         resetState: () => {

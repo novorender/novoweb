@@ -82,17 +82,17 @@ export function Issue({ sceneId }: { sceneId: string }) {
         try {
             // todo aids
             const bmId = issue?.fields?.description?.content
-                .find(
-                    (c: any) =>
-                        c.type === "heading" &&
-                        c.content.find((hc: any) => hc.type === "text" && hc.text === "Novorender link")
+                ?.find(
+                    (c) =>
+                        c?.type === "heading" &&
+                        c?.content?.find((hc) => hc?.type === "text" && hc?.text === "Novorender link")
                 )
-                ?.content.find((hc: any) => hc.type === "text" && hc.text === "Novorender link")
-                .marks?.find((m: any) => m.attrs.href)
-                ?.attrs.href.match(/bookmarkId=([\w\d-]{36})/)[1];
+                ?.content?.find((hc) => hc?.type === "text" && hc?.text === "Novorender link")
+                ?.marks?.find((m) => m?.attrs?.href)
+                ?.attrs?.href?.match(/bookmarkId=([\w\d-]{36})/);
 
-            if (bmId) {
-                setBookmarkId(bmId);
+            if (bmId && bmId[1]) {
+                setBookmarkId(bmId[1]);
             }
         } catch (e) {
             console.warn(e);
@@ -198,17 +198,15 @@ export function Issue({ sceneId }: { sceneId: string }) {
 
                         <Typography fontWeight={600}>Description:</Typography>
                         <Box mb={2}>
-                            {(issue.fields.description?.content ?? [])?.map((doc: any, idx: number) => {
+                            {(issue.fields.description?.content ?? [])?.map((doc, idx: number) => {
                                 if (doc.type === "paragraph") {
                                     return (
                                         <Typography mb={2} key={idx}>
                                             {(doc.content?.length ? doc.content : [{ type: "hardBreak" }]).map(
-                                                (pc: any, pcIdx: number) => {
+                                                (pc, pcIdx: number) => {
                                                     if (pc.type === "text") {
-                                                        const link = pc.marks?.find(
-                                                            (mark: any) => mark.type === "link"
-                                                        );
-                                                        if (link) {
+                                                        const link = pc.marks?.find((mark) => mark?.type === "link");
+                                                        if (link?.attrs?.href) {
                                                             return (
                                                                 <a key={pcIdx} href={link.attrs.href} target="blank">
                                                                     {pc.text}
@@ -275,19 +273,19 @@ export function Issue({ sceneId }: { sceneId: string }) {
                                                       "dd.MM.yyyy - HH:mm"
                                                   )}
                                               </Typography>
-                                              {(comment.body.content ?? [])?.map((doc: any, idx: number) => {
+                                              {(comment.body.content ?? [])?.map((doc, idx: number) => {
                                                   if (doc.type === "paragraph") {
                                                       return (
                                                           <Typography mb={2} key={idx}>
                                                               {(doc.content?.length
                                                                   ? doc.content
                                                                   : [{ type: "hardBreak" }]
-                                                              ).map((pc: any, pcIdx: number) => {
+                                                              ).map((pc, pcIdx: number) => {
                                                                   if (pc.type === "text") {
                                                                       const link = pc.marks?.find(
-                                                                          (mark: any) => mark.type === "link"
+                                                                          (mark) => mark.type === "link"
                                                                       );
-                                                                      if (link) {
+                                                                      if (link?.attrs?.href) {
                                                                           return (
                                                                               <a
                                                                                   key={pcIdx}

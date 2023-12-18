@@ -187,13 +187,13 @@ export function useCreateBookmark() {
                               laserPlane,
                               lasers: outlineLasers
                                   .map((t) => {
-                                      let measurementX = copyTraceMeasurement(
+                                      const measurementX = copyTraceMeasurement(
                                           t.measurementX,
                                           t.laserPosition,
                                           t.left,
                                           t.right
                                       );
-                                      let measurementY = copyTraceMeasurement(
+                                      const measurementY = copyTraceMeasurement(
                                           t.measurementY,
                                           t.laserPosition,
                                           t.down,

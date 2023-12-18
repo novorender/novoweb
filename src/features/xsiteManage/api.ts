@@ -64,7 +64,7 @@ export const xsiteManageApi = createApi({
         }),
         getAllLogPoints: builder.query<LogPoint[], string>({
             queryFn: async (siteId, _queryApi, _extraOptions, fetchBaseQuery) => {
-                let allLogPoints = [] as LogPoint[];
+                const allLogPoints = [] as LogPoint[];
                 let nextToken: string | undefined = undefined;
 
                 do {

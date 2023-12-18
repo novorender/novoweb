@@ -263,6 +263,9 @@ export function MeasureDraw({
             for (let i = 0; i < measure.duoMeasurementValues.length; ++i) {
                 const duoMeasure = measure.duoMeasurementValues[i];
                 const activeAxis = measure.activeAxis[i];
+                if (!activeAxis) {
+                    return;
+                }
                 if (duoMeasure?.result) {
                     let resultToMarker: undefined | DrawProduct;
                     const res = resultDraw.current.get(duoMeasure.id);
@@ -274,14 +277,14 @@ export function MeasureDraw({
                             }
                             res.updated = id;
                             resultToMarker = res.product;
-                            res.activeAxis = activeAxis!;
+                            res.activeAxis = activeAxis;
                         }
                     } else {
                         const resDraw = await getDrawMeasureEntity(duoMeasure?.result, duoMeasure.settings);
                         resultDraw.current.set(duoMeasure.id, {
                             product: resDraw,
                             updated: id,
-                            activeAxis: activeAxis!,
+                            activeAxis: activeAxis,
                         });
                         resultToMarker = resDraw;
                     }
@@ -310,8 +313,8 @@ export function MeasureDraw({
                                         };
                                         const infoOffset = (dist / 2 + 80) / dist;
                                         switch (part.name) {
-                                            case "result":
-                                                if (activeAxis!.result) {
+                                            case "result": {
+                                                if (activeAxis.result) {
                                                     const axis = updateAxis();
                                                     axis.dist = vec2.scaleAndAdd(
                                                         vec2.create(),
@@ -327,8 +330,9 @@ export function MeasureDraw({
                                                     infoOffset
                                                 );
                                                 break;
-                                            case "xy-plane":
-                                                if (activeAxis!.planar) {
+                                            }
+                                            case "xy-plane": {
+                                                if (activeAxis.planar) {
                                                     const axis = updateAxis();
                                                     axis.plan = vec2.scaleAndAdd(
                                                         vec2.create(),
@@ -338,8 +342,9 @@ export function MeasureDraw({
                                                     );
                                                 }
                                                 break;
-                                            case "x-axis":
-                                                if (activeAxis!.x) {
+                                            }
+                                            case "x-axis": {
+                                                if (activeAxis.x) {
                                                     const axis = updateAxis();
                                                     axis.x = vec2.scaleAndAdd(
                                                         vec2.create(),
@@ -349,8 +354,9 @@ export function MeasureDraw({
                                                     );
                                                 }
                                                 break;
-                                            case "y-axis":
-                                                if (activeAxis!.y) {
+                                            }
+                                            case "y-axis": {
+                                                if (activeAxis.y) {
                                                     const axis = updateAxis();
                                                     axis.y = vec2.scaleAndAdd(
                                                         vec2.create(),
@@ -360,8 +366,9 @@ export function MeasureDraw({
                                                     );
                                                 }
                                                 break;
-                                            case "z-axis":
-                                                if (activeAxis!.z) {
+                                            }
+                                            case "z-axis": {
+                                                if (activeAxis.z) {
                                                     const axis = updateAxis();
                                                     axis.z = vec2.scaleAndAdd(
                                                         vec2.create(),
@@ -371,7 +378,8 @@ export function MeasureDraw({
                                                     );
                                                 }
                                                 break;
-                                            case "normal":
+                                            }
+                                            case "normal": {
                                                 const axis = updateAxis();
                                                 axis.normal = vec2.scaleAndAdd(
                                                     vec2.create(),
@@ -380,6 +388,7 @@ export function MeasureDraw({
                                                     removeOffset
                                                 );
                                                 break;
+                                            }
                                         }
                                     }
                                 }
@@ -651,7 +660,7 @@ export function MeasureDraw({
                                                     vec3.sub(
                                                         vec3.create(),
                                                         manholeCollisionValues.lid[0],
-                                                        manholeCollisionValues.lid![1]
+                                                        manholeCollisionValues.lid[1]
                                                     )
                                                 )
                                                 .toFixed(2),
@@ -795,7 +804,7 @@ export function MeasureDraw({
                         const mat = mat3.fromQuat(mat3.create(), camera.rotation);
                         if (mat[8] === 1) {
                             // top-down
-                            let up = vec3.fromValues(mat[6], mat[7], mat[8]);
+                            const up = vec3.fromValues(mat[6], mat[7], mat[8]);
                             const dir = vec3.sub(vec3.create(), crossSection[1], crossSection[0]);
                             vec3.normalize(dir, dir);
                             const cross = vec3.cross(vec3.create(), dir, up);
@@ -903,7 +912,7 @@ export function MeasureDraw({
 
     useEffect(() => {
         update().then((result) => {
-            if (result.updated) {
+            if (result?.updated) {
                 draw(result.id);
                 moveInteractionMarkers();
             }
@@ -929,7 +938,7 @@ export function MeasureDraw({
 
             prevPointerPos.current = [...pointerPos.current];
             const result = await update();
-            if (result.updated) {
+            if (result?.updated) {
                 draw(result.id);
                 moveInteractionMarkers();
             }

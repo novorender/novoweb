@@ -57,8 +57,7 @@ export function useMeasureObjects() {
                 }
 
                 const [obj1, obj2] = objs;
-                let result: DuoMeasurementValues | undefined;
-                result = (await measureView?.core
+                const result = (await measureView?.core
                     .measure(obj1, obj2, obj1.settings, obj2.settings)
                     .catch((e) => console.warn(e))) as DuoMeasurementValues | undefined;
 

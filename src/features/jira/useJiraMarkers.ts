@@ -56,10 +56,16 @@ export function useJiraMarkers() {
             issues
                 .filter((issue) => issue.fields[metaCustomfieldKey])
                 .map((issue): JiraMarkerData | undefined => {
+                    const field = issue.fields[metaCustomfieldKey];
+
+                    if (!field || typeof field !== "string") {
+                        return;
+                    }
+
                     try {
                         return {
                             key: issue.key,
-                            ...JSON.parse(issue.fields[metaCustomfieldKey]),
+                            ...JSON.parse(field),
                             icon: config.issueTypes[issue.fields.issuetype.id]?.icon ?? "default",
                         };
                     } catch (e) {

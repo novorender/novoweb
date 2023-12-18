@@ -1,15 +1,5 @@
 import { ObjectId } from "@novorender/webgl-api";
-import {
-    createContext,
-    Dispatch,
-    MutableRefObject,
-    ReactNode,
-    useContext,
-    useEffect,
-    useReducer,
-    useRef,
-    useState,
-} from "react";
+import { createContext, Dispatch, MutableRefObject } from "react";
 
 import { VecRGBA } from "utils/color";
 import { toIdArr, toIdObj } from "utils/objectData";
@@ -17,13 +7,13 @@ import { toIdArr, toIdObj } from "utils/objectData";
 // Highlighted/hidden/objectgroups may end up having huge (1M+) collections of objectIds and receive a lot of back-to-back state updates.
 // Keeping this state in the redux store ended up slowing down the app too much so we keep it in React contexts instead for now.
 
-const initialState = {
+export const initialState = {
     ids: {} as Record<ObjectId, true | undefined>,
     idArr: [] as ObjectId[],
     color: [1, 0, 0, 1] as VecRGBA,
 };
 
-type State = typeof initialState;
+export type State = typeof initialState;
 
 enum ActionTypes {
     Add,
@@ -68,17 +58,20 @@ function set(payload: { color: State["color"]; ids: ObjectId[] }) {
     };
 }
 
-const actions = { add, remove, setIds, setColor, set };
+export const actions = { add, remove, setIds, setColor, set };
 
 type Actions = ReturnType<(typeof actions)[keyof typeof actions]>;
-type DispatchHighlighted = Dispatch<Actions>;
-type LazyState = MutableRefObject<State>;
+export type DispatchHighlighted = Dispatch<Actions>;
+export type LazyState = MutableRefObject<State>;
 
-const StateContext = createContext<State>(undefined as any);
-const LazyStateContext = createContext<LazyState>(undefined as any);
-const DispatchContext = createContext<DispatchHighlighted>(undefined as any);
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export const StateContext = createContext<State>(undefined as any);
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export const LazyStateContext = createContext<LazyState>(undefined as any);
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export const DispatchContext = createContext<DispatchHighlighted>(undefined as any);
 
-function reducer(state: State, action: Actions): State {
+export function reducer(state: State, action: Actions): State {
     switch (action.type) {
         case ActionTypes.Add: {
             const ids = { ...state.ids, ...toIdObj(action.ids) };
@@ -126,68 +119,3 @@ function reducer(state: State, action: Actions): State {
         }
     }
 }
-
-function HighlightedProvider({ children }: { children: ReactNode }) {
-    const [state, dispatch] = useReducer(reducer, initialState);
-    const lazyValue = useRef(state);
-    lazyValue.current = state;
-
-    return (
-        <StateContext.Provider value={state}>
-            <LazyStateContext.Provider value={lazyValue}>
-                <DispatchContext.Provider value={dispatch}>{children}</DispatchContext.Provider>
-            </LazyStateContext.Provider>
-        </StateContext.Provider>
-    );
-}
-
-function useHighlighted(): State {
-    const context = useContext(StateContext);
-
-    if (context === undefined) {
-        throw new Error("useHighlighted must be used within a HighlightedProvider");
-    }
-
-    return context;
-}
-
-function useLazyHighlighted(): LazyState {
-    const context = useContext(LazyStateContext);
-
-    if (context === undefined) {
-        throw new Error("useLazyHighlighted must be used within a LazyHighlightedProvider");
-    }
-
-    return context;
-}
-
-function useDispatchHighlighted(): DispatchHighlighted {
-    const context = useContext(DispatchContext);
-
-    if (context === undefined) {
-        throw new Error("useDispatchHighlighted must be used within a HighlightedProvider");
-    }
-
-    return context;
-}
-
-function useIsHighlighted(id: number) {
-    const [isHighlighted, setIsHighlighted] = useState(false);
-    const { ids: highlighted } = useHighlighted();
-
-    useEffect(() => {
-        setIsHighlighted(highlighted[id] === true);
-    }, [id, highlighted]);
-
-    return isHighlighted;
-}
-
-export {
-    HighlightedProvider,
-    useIsHighlighted,
-    useHighlighted,
-    useLazyHighlighted,
-    useDispatchHighlighted,
-    actions as highlightActions,
-};
-export type { DispatchHighlighted };

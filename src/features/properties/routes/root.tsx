@@ -132,17 +132,17 @@ export function Root() {
         async function getObjectData(id: number) {
             setStatus(Status.Loading);
 
-            const objectData = await getObjectDataUtil({ db, id, view });
+            const _objectData = await getObjectDataUtil({ db, id, view });
 
-            if (!objectData) {
+            if (!_objectData) {
                 setObject(undefined);
                 setStatus(Status.Initial);
                 return;
             }
 
-            const cleanedObjectData = { ...objectData, properties: objectData.properties.slice(0, 100) };
+            const cleanedObjectData = { ..._objectData, properties: _objectData.properties.slice(0, 100) };
             const parent = navigator.onLine
-                ? await searchFirstObjectAtPath({ db, path: getParentPath(objectData.path) })
+                ? await searchFirstObjectAtPath({ db, path: getParentPath(_objectData.path) })
                 : undefined;
 
             if (parent) {
@@ -526,7 +526,7 @@ function PropertyItem({ checked, onChange, property, value, resizing, groupName 
                         size="small"
                         onClick={openMenu}
                         aria-controls={id}
-                        color={Boolean(menuAnchor) ? "primary" : "default"}
+                        color={menuAnchor ? "primary" : "default"}
                         aria-haspopup="true"
                     >
                         <MoreVert />

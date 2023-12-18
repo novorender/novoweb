@@ -240,7 +240,9 @@ export function getObjectData({
     id: ObjectId;
     view: View;
 }): Promise<ObjectData | undefined> {
-    return view.data ? (view.data.getObjectMetaData(id) as any) : db.getObjectMetdata(id).catch(() => undefined);
+    return view.data
+        ? (view.data.getObjectMetaData(id) as unknown as Promise<ObjectData>)
+        : db.getObjectMetdata(id).catch(() => undefined);
 }
 
 export async function batchedPropertySearch<T = HierarcicalObjectReference>({
@@ -296,7 +298,9 @@ export async function batchedPropertySearch<T = HierarcicalObjectReference>({
                             exact: true,
                         },
                     ],
-                }).catch(() => {});
+                }).catch(() => {
+                    // continue
+                });
             })
         );
     }

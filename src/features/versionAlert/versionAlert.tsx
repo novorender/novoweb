@@ -6,7 +6,7 @@ import { useToggle } from "hooks/useToggle";
 const minSupportedMajor = 16;
 const minSupportedMinor = 5;
 const storageKey = `ignore_os_warning_${minSupportedMajor}_${minSupportedMinor}`;
-const runCheck = !Boolean(localStorage[storageKey]);
+const runCheck = !localStorage[storageKey];
 
 export function VersionAlert() {
     const theme = useTheme();

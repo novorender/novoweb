@@ -1,12 +1,13 @@
 import { FilterAlt } from "@mui/icons-material";
 import { Box, Button, FormControlLabel, ListItemButton, Typography, useTheme } from "@mui/material";
-import { Fragment, useEffect, useRef } from "react";
+import { useEffect, useRef } from "react";
 import { Link, Redirect, useHistory } from "react-router-dom";
 import AutoSizer from "react-virtualized-auto-sizer";
 
 import { useAppDispatch, useAppSelector } from "app/store";
 import { Divider, FixedSizeVirualizedList, ImgTooltip, IosSwitch, LinearProgress, Tooltip } from "components";
 import { featuresConfig } from "config/features";
+import { FormattedText } from "features/ditio/formattedText";
 import { selectHasAdminCapabilities } from "slices/explorerSlice";
 
 import { baseUrl, useFeedWebRawQuery } from "../../api";
@@ -62,7 +63,7 @@ export function Feed() {
     }
 
     const filtersEnabled = Object.keys(filters).some((_key) => {
-        const key = _key as any as keyof typeof filters;
+        const key = _key as keyof typeof filters;
         return filters[key] !== initialFilters[key];
     });
 
@@ -205,7 +206,7 @@ export function Feed() {
                                                                 ) : null}
                                                                 {post.taskDescription}
                                                             </Typography>
-                                                            {newLineToHtmlBr(post.text)}
+                                                            <FormattedText str={post.text} />
                                                         </>
                                                     }
                                                 >
@@ -235,7 +236,7 @@ export function Feed() {
                                                                 height: 0,
                                                             }}
                                                         >
-                                                            {newLineToHtmlBr(post.text)}
+                                                            <FormattedText str={post.text} />
                                                         </Typography>
                                                     </Box>
                                                 </Tooltip>
@@ -250,13 +251,4 @@ export function Feed() {
             )}
         </>
     );
-}
-
-export function newLineToHtmlBr(str: string): JSX.Element[] {
-    return str
-        .replace(/^[\\n]+/, "")
-        .split("\n")
-        .flatMap((text, idx, arr) =>
-            arr.length === 1 && !text ? [] : [<Fragment key={idx}>{text}</Fragment>, <br key={idx + "linebreak"} />]
-        );
 }

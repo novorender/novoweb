@@ -31,7 +31,6 @@ export function useLoadManhole() {
                 dispatch(manholeActions.setLoadingBrep(true));
                 dispatch(manholeActions.setManholeValues(await view.measure.manhole.measure(selectedObj)));
                 dispatch(manholeActions.setLoadingBrep(false));
-            } else {
             }
         }
     }, [selectedObj, dispatch, view, selectManhole]);

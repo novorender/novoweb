@@ -32,7 +32,7 @@ export async function getAuthHeader(): Promise<AuthenticationHeader> {
                         ? `https://login.microsoftonline.com/${msalAccount.tenantId}`
                         : loginRequest.authority,
                 })
-                .catch((e) => {
+                .catch(async (e) => {
                     if (e instanceof InteractionRequiredAuthError) {
                         return msalInstance
                             .acquireTokenPopup({
@@ -181,7 +181,9 @@ export function getStoredActiveMsalAccount(): AccountInfo | undefined {
         if (storedAccount && "localAccountId" in storedAccount) {
             return storedAccount as AccountInfo;
         }
-    } catch {}
+    } catch {
+        return;
+    }
 }
 
 export async function generateCodeChallenge(verifier: string): Promise<string> {

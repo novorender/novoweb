@@ -127,13 +127,11 @@ let theme = createTheme({
         },
         MuiListItem: {
             defaultProps: {
-                // @ts-ignore
                 component: "li",
             },
         },
         MuiListItemButton: {
             defaultProps: {
-                // @ts-ignore
                 component: "li",
             },
         },

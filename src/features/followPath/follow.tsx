@@ -213,7 +213,7 @@ export function Follow({ fpObj }: { fpObj: FollowParametricObject }) {
                 }
 
                 const pathName = path.name;
-                let roadIds: string[] = [];
+                const roadIds: string[] = [];
                 let references = [] as HierarcicalObjectReference[];
                 await searchByPatterns({
                     db,
@@ -302,7 +302,7 @@ export function Follow({ fpObj }: { fpObj: FollowParametricObject }) {
         setColorPickerAnchor(!colorPickerAnchor && event?.currentTarget ? event.currentTarget : null);
     };
 
-    const handlePrioritizationChanged = (_: any, value: string) => {
+    const handlePrioritizationChanged = (_: unknown, value: string) => {
         dispatch(followPathActions.setDeviationPrioritization(value as "minimum" | "maximum"));
     };
 
