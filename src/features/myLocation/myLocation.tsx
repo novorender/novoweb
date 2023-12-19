@@ -2,13 +2,12 @@ import { MyLocation as MyLocationIcon } from "@mui/icons-material";
 import { Box, Button, FormControlLabel } from "@mui/material";
 import { vec3 } from "gl-matrix";
 
-import { dataApi } from "app";
 import { useAppDispatch, useAppSelector } from "app/store";
 import { IosSwitch, LinearProgress, LogoSpeedDial, ScrollBox, WidgetContainer, WidgetHeader } from "components";
 import { featuresConfig } from "config/features";
 import { useExplorerGlobals } from "contexts/explorerGlobals";
 import { renderActions, selectCameraType, selectProjectSettings } from "features/render";
-import { flip } from "features/render/utils";
+import { latLon2Tm } from "features/render/utils";
 import WidgetList from "features/widgetList/widgetList";
 import { useToggle } from "hooks/useToggle";
 import { selectMaximized, selectMinimized } from "slices/explorerSlice";
@@ -60,10 +59,7 @@ export default function MyLocation() {
         });
 
         function handlePositionSuccess(geoPos: GeolocationPosition) {
-            const isGlSpace = !vec3.equals(scene?.up ?? [0, 1, 0], [0, 0, 1]);
-            const position = isGlSpace
-                ? flip(dataApi.latLon2tm(geoPos.coords, tmZone))
-                : dataApi.latLon2tm(geoPos.coords, tmZone);
+            const position = latLon2Tm({ up: scene.up, coords: geoPos.coords, tmZone });
             position[2] = geoPos.coords.altitude ?? view.renderState.camera.position[2];
             const outOfBounds =
                 vec3.dist(position, scene.boundingSphere.center) >

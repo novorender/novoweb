@@ -1,11 +1,10 @@
 import { vec3 } from "gl-matrix";
 import { useEffect, useState } from "react";
 
-import { dataApi } from "app";
 import { useAppSelector } from "app/store";
 import { useExplorerGlobals } from "contexts/explorerGlobals";
 import { CameraType, selectCameraType, selectProjectSettings } from "features/render";
-import { flip } from "features/render/utils";
+import { latLon2Tm } from "features/render/utils";
 import { AsyncStatus } from "types/misc";
 import { secondsToMs } from "utils/time";
 
@@ -17,7 +16,7 @@ const empty = [] as Machine[];
 
 export function useDitioMachineMarkers() {
     const {
-        state: { view },
+        state: { view, scene },
     } = useExplorerGlobals();
     const { tmZone } = useAppSelector(selectProjectSettings);
     const cameraType = useAppSelector(selectCameraType);
@@ -46,15 +45,14 @@ export function useDitioMachineMarkers() {
         const filteredMachines = [...machines.dumperLiveDataList, ...machines.loaderLiveDataList]
             .filter((machine) => projects.includes(machine.projectId))
             .map((machine) => {
-                const scenePosition = flip(
-                    dataApi.latLon2tm(
-                        {
-                            longitude: machine.lastKnownLocation.coordinates[0],
-                            latitude: machine.lastKnownLocation.coordinates[1],
-                        },
-                        tmZone
-                    )
-                );
+                const scenePosition = latLon2Tm({
+                    up: scene?.up,
+                    coords: {
+                        longitude: machine.lastKnownLocation.coordinates[0],
+                        latitude: machine.lastKnownLocation.coordinates[1],
+                    },
+                    tmZone,
+                });
 
                 if ("dumperId" in machine) {
                     return {
@@ -76,7 +74,7 @@ export function useDitioMachineMarkers() {
             .sort((a, b) => new Date(a.lastSeen).getTime() - new Date(b.lastSeen).getTime());
 
         setMarkers(filteredMachines);
-    }, [machines, tmZone, view, projects]);
+    }, [machines, tmZone, view, projects, scene]);
 
     return skip ? empty : markers;
 }

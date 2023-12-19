@@ -1,6 +1,7 @@
-import { Internal } from "@novorender/webgl-api";
-import { quat } from "gl-matrix";
+import { GeoLocation, Internal } from "@novorender/webgl-api";
+import { quat, vec3 } from "gl-matrix";
 
+import { dataApi } from "app";
 import { RenderState, SubtreeStatus } from "features/render/renderSlice";
 import { CustomProperties } from "types/project";
 
@@ -91,3 +92,13 @@ export function flipGLtoCadQuat(b: quat) {
         aw * bz + ax * by,
         aw * bw - ax * bx);
 }
+
+export const latLon2Tm = ({ up, coords, tmZone }: { up?: Vec3; coords: GeoLocation; tmZone: string }) => {
+    const isGlSpace = !vec3.equals(up ?? [0, 1, 0], [0, 0, 1]);
+
+    if (isGlSpace) {
+        return flip(dataApi.latLon2tm(coords, tmZone));
+    }
+
+    return dataApi.latLon2tm(coords, tmZone);
+};
