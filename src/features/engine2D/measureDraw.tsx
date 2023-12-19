@@ -1,5 +1,5 @@
 import { css, styled } from "@mui/material";
-import { DrawableEntity, DrawProduct, MeasureSettings, ParametricEntity } from "@novorender/api";
+import { DrawableEntity, DrawProduct, MeasureSettings } from "@novorender/api";
 import { mat3, ReadonlyVec2, vec2, vec3 } from "gl-matrix";
 import { MutableRefObject, useCallback, useEffect, useRef, useState } from "react";
 
@@ -26,7 +26,7 @@ import { selectCrossSectionPoints } from "features/orthoCam";
 import { GetMeasurePointsFromTracer, selectOutlineLasers } from "features/outlineLaser";
 import { selectPointLineCurrentIdx, selectPointLines } from "features/pointLine";
 import { CameraType, Picker, selectCameraType, selectGrid, selectPicker, selectViewMode } from "features/render";
-import { AsyncStatus, ViewMode } from "types/misc";
+import { AsyncStatus, ExtendedMeasureEntity, ViewMode } from "types/misc";
 
 import { useMove2DInteractions } from "./useMove2DInteractions";
 import { CameraSettings, drawPart, drawProduct } from "./utils";
@@ -948,8 +948,8 @@ export function MeasureDraw({
     return <Canvas2D id="canvas2D" ref={setCanvas2D} width={size.width} height={size.height} />;
 }
 
-function toId(obj: ParametricEntity) {
-    return `${obj.ObjectId}_${obj.instanceIndex}_${obj.pathIndex}`;
+function toId(obj: ExtendedMeasureEntity) {
+    return `${obj.ObjectId}_${obj.instanceIndex}_${obj.pathIndex}_${obj.settings?.cylinderMeasure}`;
 }
 
 function drawMeasureObjects(
