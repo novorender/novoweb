@@ -286,6 +286,12 @@ export function useCanvasEventHandlers({
             let hoverEnt = prevHoverEnt.current;
             const now = performance.now();
             const shouldPickHoverEnt = now - prevHoverUpdate.current > 75 && !view.activeController.moving;
+            const checkResetHover = () => {
+                const currentPos = vec2.fromValues(e.nativeEvent.offsetX, e.nativeEvent.offsetY);
+                if (vec2.dist(currentPos, previous2dSnapPos.current) > 25) {
+                    hoverEnt = undefined;
+                }
+            };
 
             if (shouldPickHoverEnt) {
                 prevHoverUpdate.current = now;
@@ -315,12 +321,8 @@ export function useCanvasEventHandlers({
                             );
                         }
                     } else {
-                        const currentPos = vec2.fromValues(e.nativeEvent.offsetX, e.nativeEvent.offsetY);
-                        if (vec2.dist(currentPos, previous2dSnapPos.current) > 25) {
-                            hoverEnt = undefined;
-                        }
+                        checkResetHover();
                     }
-                    dispatch(measureActions.selectHoverObj(hoverEnt?.entity));
                     prevHoverEnt.current = hoverEnt;
                 } else if (picker === Picker.Area || picker === Picker.PointLine) {
                     if (result && view.renderState.clipping.planes.length && measureHoverSettings.point) {
@@ -332,12 +334,11 @@ export function useCanvasEventHandlers({
                                 previous2dSnapPos.current,
                                 vec2.fromValues(e.nativeEvent.offsetX, e.nativeEvent.offsetY)
                             );
+                        } else {
+                            checkResetHover();
                         }
                     } else {
-                        const currentPos = vec2.fromValues(e.nativeEvent.offsetX, e.nativeEvent.offsetY);
-                        if (vec2.dist(currentPos, previous2dSnapPos.current) > 25) {
-                            hoverEnt = undefined;
-                        }
+                        checkResetHover();
                     }
                 } else if (picker === Picker.CrossSection) {
                     const position =
@@ -347,6 +348,7 @@ export function useCanvasEventHandlers({
                         dispatch(orthoCamActions.setCrossSectionHover(position as vec3));
                     }
                 }
+                dispatch(measureActions.selectHoverObj(hoverEnt?.entity));
             }
 
             const color =
