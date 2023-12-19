@@ -200,7 +200,7 @@ export const measureSlice = createSlice({
             }
         },
         setSettings: (state, action: PayloadAction<{ idx: number; settings: MeasureSettings }>) => {
-            state.selectedEntities = state.selectedEntities.map((obj, idx) =>
+            state.selectedEntities[state.currentIndex] = state.selectedEntities[state.currentIndex].map((obj, idx) =>
                 idx === action.payload.idx ? { ...obj, settings: action.payload.settings } : obj
             );
         },
