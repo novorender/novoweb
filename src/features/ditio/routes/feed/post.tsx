@@ -1,20 +1,18 @@
 import { ArrowBack, LocationOnOutlined } from "@mui/icons-material";
 import { Avatar, Box, Button, ImageList, ImageListItem, Typography, useTheme } from "@mui/material";
 import { format, formatDistance } from "date-fns";
-import { vec3 } from "gl-matrix";
 import { Fragment } from "react";
 import { useHistory, useParams } from "react-router-dom";
 
-import { dataApi } from "app";
 import { useAppDispatch, useAppSelector } from "app/store";
 import { Divider, LinearProgress, ScrollBox, Tooltip } from "components";
 import { useExplorerGlobals } from "contexts/explorerGlobals";
+import { FormattedText } from "features/ditio/formattedText";
 import { CameraType, renderActions, selectProjectSettings } from "features/render";
-import { flip } from "features/render/utils";
+import { latLon2Tm } from "features/render/utils";
 
 import { baseUrl, useGetPostQuery } from "../../api";
 import { ditioActions } from "../../slice";
-import { newLineToHtmlBr } from "./feed";
 
 export function Post() {
     const theme = useTheme();
@@ -34,18 +32,11 @@ export function Post() {
             return;
         }
 
-        const isGlSpace = !vec3.equals(scene?.up ?? [0, 1, 0], [0, 0, 1]);
-        const pos = isGlSpace
-            ? flip(
-                  dataApi.latLon2tm(
-                      { latitude: post.GeoCoordinate.Latitude, longitude: post.GeoCoordinate.Longitude },
-                      tmZone
-                  )
-              )
-            : dataApi.latLon2tm(
-                  { latitude: post.GeoCoordinate.Latitude, longitude: post.GeoCoordinate.Longitude },
-                  tmZone
-              );
+        const pos = latLon2Tm({
+            up: scene.up,
+            coords: { latitude: post.GeoCoordinate.Latitude, longitude: post.GeoCoordinate.Longitude },
+            tmZone,
+        });
         dispatch(
             renderActions.setCamera({
                 type: CameraType.Pinhole,
@@ -117,7 +108,9 @@ export function Post() {
                     <Typography variant="h6" my={1} fontWeight={600}>
                         {post.TaskDescription}
                     </Typography>
-                    <Typography sx={{ mb: 2 }}>{newLineToHtmlBr(post.Text ?? "")}</Typography>
+                    <Typography sx={{ mb: 2 }}>
+                        <FormattedText str={post.Text ?? ""} />
+                    </Typography>
                     {post.Images.length ? (
                         <ImageList cols={2} rowHeight={164} variant={"quilted"}>
                             {[...post.Images].reverse().map((image) => (

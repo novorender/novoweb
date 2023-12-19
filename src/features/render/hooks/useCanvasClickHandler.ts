@@ -159,7 +159,7 @@ export function useCanvasClickHandler({
 
                     dispatch(renderActions.setViewMode(ViewMode.CrossSection));
                     const mat = mat3.fromQuat(mat3.create(), view.renderState.camera.rotation);
-                    let up = vec3.fromValues(0, 0, 1);
+                    const up = vec3.fromValues(0, 0, 1);
                     const topDown = vec3.equals(vec3.fromValues(mat[6], mat[7], mat[8]), up);
                     const pos = topDown
                         ? vec3.fromValues(position[0], position[1], crossSectionPoint[2])
@@ -220,7 +220,7 @@ export function useCanvasClickHandler({
                     dispatch(orthoCamActions.setCrossSectionHover(undefined));
                     return;
                 }
-                case Picker.OutlineLaser:
+                case Picker.OutlineLaser: {
                     if (!view.renderState.clipping.enabled || !view.renderState.clipping.planes.length) {
                         return;
                     }
@@ -257,6 +257,7 @@ export function useCanvasClickHandler({
                     }
 
                     return;
+                }
                 default:
                     return;
             }
@@ -269,7 +270,7 @@ export function useCanvasClickHandler({
         const position = vec3.clone(result.position);
 
         switch (picker) {
-            case Picker.Object:
+            case Picker.Object: {
                 if (
                     deviation.mixFactor !== 0 &&
                     cameraState.type === CameraType.Orthographic &&
@@ -412,7 +413,8 @@ export function useCanvasClickHandler({
                     }
                 }
                 break;
-            case Picker.ClippingPlane:
+            }
+            case Picker.ClippingPlane: {
                 if (!normal || result.sampleType !== "surface") {
                     return;
                 }
@@ -427,6 +429,7 @@ export function useCanvasClickHandler({
                     })
                 );
                 break;
+            }
             case Picker.OrthoPlane:
                 if (!normal || result.sampleType !== "surface") {
                     return;

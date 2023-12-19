@@ -524,7 +524,7 @@ export function drawText(ctx: CanvasRenderingContext2D, vertices2D: ReadonlyVec2
         ctx.strokeText(text, vertices2D[0][0], vertices2D[0][1]);
         ctx.fillText(text, vertices2D[0][0], vertices2D[0][1]);
     } else if (vertices2D.length === 2) {
-        let dir =
+        const dir =
             vertices2D[0][0] > vertices2D[1][0]
                 ? vec2.sub(vec2.create(), vertices2D[0], vertices2D[1])
                 : vec2.sub(vec2.create(), vertices2D[1], vertices2D[0]);

@@ -7,7 +7,7 @@ import { featuresConfig, FeatureTag, featureTags, FeatureType, Widget, WidgetKey
 import { ShareLink } from "features/shareLink";
 import { selectEnabledWidgets, selectIsOnline, selectLockedWidgets, selectWidgets } from "slices/explorerSlice";
 
-import { sorting } from "../widgetList";
+import { sorting } from "../sorting";
 
 export function Root({
     handleClick,

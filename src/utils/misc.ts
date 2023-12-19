@@ -13,35 +13,34 @@ export function sha256(plain: string): Promise<ArrayBuffer> {
 }
 
 export function generateRandomString(): string {
-    var array = new Uint32Array(56 / 2);
+    const array = new Uint32Array(56 / 2);
     window.crypto.getRandomValues(array);
     return Array.from(array, (num) => ("0" + num.toString(16)).substr(-2)).join("");
 }
 
 export function base64UrlEncode(buffer: ArrayBuffer): string {
-    var str = "";
-    var bytes = new Uint8Array(buffer);
-    var len = bytes.byteLength;
-    for (var i = 0; i < len; i++) {
+    const bytes = new Uint8Array(buffer);
+    const len = bytes.byteLength;
+    let str = "";
+    for (let i = 0; i < len; i++) {
         str += String.fromCharCode(bytes[i]);
     }
     return btoa(str).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
 }
 
 export function base64UrlEncodeImg(arrayBuffer: ArrayBuffer): string {
-    var base64 = "";
-    var encodings = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
+    const encodings = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
+    const bytes = new Uint8Array(arrayBuffer);
+    const byteLength = bytes.byteLength;
+    const byteRemainder = byteLength % 3;
+    const mainLength = byteLength - byteRemainder;
 
-    var bytes = new Uint8Array(arrayBuffer);
-    var byteLength = bytes.byteLength;
-    var byteRemainder = byteLength % 3;
-    var mainLength = byteLength - byteRemainder;
-
-    var a, b, c, d;
-    var chunk;
+    let base64 = "";
+    let a, b, c, d;
+    let chunk;
 
     // Main loop deals with bytes in chunks of 3
-    for (var i = 0; i < mainLength; i = i + 3) {
+    for (let i = 0; i < mainLength; i = i + 3) {
         // Combine the three bytes into a single integer
         chunk = (bytes[i] << 16) | (bytes[i + 1] << 8) | bytes[i + 2];
 
@@ -104,7 +103,7 @@ export async function createCanvasSnapshot(
     const dist = document.createElement("canvas");
     dist.height = height;
     dist.width = width;
-    const ctx = dist.getContext("2d")!;
+    const ctx = dist.getContext("2d");
 
     try {
         {
@@ -114,7 +113,7 @@ export async function createCanvasSnapshot(
                 resizeQuality: "high",
             });
 
-            ctx.drawImage(bitmap, 0, 0);
+            ctx?.drawImage(bitmap, 0, 0);
         }
 
         const canvas2D = document.getElementById("canvas2D") as HTMLCanvasElement | null;
@@ -124,7 +123,7 @@ export async function createCanvasSnapshot(
                 resizeWidth: width,
                 resizeQuality: "high",
             });
-            ctx.drawImage(bitmap, 0, 0);
+            ctx?.drawImage(bitmap, 0, 0);
         }
 
         return dist.toDataURL("image/png");
@@ -174,8 +173,10 @@ export function mergeRecursive<T>(original: T, changes: RecursivePartial<T>): T 
             !ArrayBuffer.isView(changedValue) &&
             !(changedValue instanceof Set)
         ) {
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
             clone[key] = mergeRecursive(originalValue as any, changedValue);
         } else {
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
             clone[key] = changedValue as any;
         }
     }

@@ -123,7 +123,7 @@ export function Group({ group, disabled }: { group: ObjectGroup; disabled: boole
                     </Box>
                     <Box flex="0 0 auto">
                         <IconButton
-                            color={Boolean(menuAnchor) ? "primary" : "default"}
+                            color={menuAnchor ? "primary" : "default"}
                             size="small"
                             sx={{ py: 0 }}
                             aria-haspopup="true"

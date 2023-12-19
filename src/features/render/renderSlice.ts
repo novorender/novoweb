@@ -638,8 +638,14 @@ export const renderSlice = createSlice({
                 state.navigationCube.enabled = !state.debugStats.enabled && Boolean(props.navigationCube);
 
                 // camera
-                state.cameraDefaults.pinhole.clipping.far = Math.max((sceneData.camera as any)?.far ?? 0, 1000);
-                state.cameraDefaults.pinhole.clipping.near = Math.max((sceneData.camera as any)?.near ?? 0, 0.1);
+                state.cameraDefaults.pinhole.clipping.far = Math.max(
+                    (sceneData.camera as { far?: number })?.far ?? 0,
+                    1000
+                );
+                state.cameraDefaults.pinhole.clipping.near = Math.max(
+                    (sceneData.camera as { near?: number })?.near ?? 0,
+                    0.1
+                );
                 state.cameraDefaults.orthographic.topDownElevation = props.defaultTopDownElevation;
                 state.cameraDefaults.orthographic.usePointerLock =
                     props.pointerLock !== undefined
@@ -658,14 +664,15 @@ export const renderSlice = createSlice({
 
                 // background
                 state.background.color = settings.background.color ?? state.background.color;
-                state.background.blur = (settings.background as any).skyBoxBlur ?? state.background.blur;
+                state.background.blur =
+                    (settings.background as { skyBoxBlur?: number }).skyBoxBlur ?? state.background.blur;
                 state.background.url = settings.environment
                     ? `https://api.novorender.com/assets/env/${settings.environment}/`
                     : state.background.url;
 
                 // points
                 state.points.size = mergeRecursive(state.points.size, settings.points.size);
-                state.points.deviation.index = (settings.points.deviation as any)?.index ?? 0;
+                state.points.deviation.index = (settings.points.deviation as { index?: number })?.index ?? 0;
                 state.points.deviation.mixFactor =
                     settings.points.deviation?.mode === "mix" ? 0.5 : settings.points.deviation?.mode === "on" ? 1 : 0;
                 state.points.deviation.colorGradient = {
@@ -719,7 +726,7 @@ export const renderSlice = createSlice({
             state.clipping = initialState.clipping;
 
             const availableSubtrees = Object.keys(state.subtrees).filter(
-                (key: any) => state.subtrees[key as keyof State["subtrees"]] !== SubtreeStatus.Unavailable
+                (key) => state.subtrees[key as keyof State["subtrees"]] !== SubtreeStatus.Unavailable
             );
 
             if (props.explorerProjectState) {

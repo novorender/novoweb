@@ -14,8 +14,8 @@ export type SelectedMeasureObj = {
     settings?: MeasureSettings;
 };
 
-type WriteableMeasureEntity = DeepMutable<MeasureEntity>;
-type WriteableExtendedMeasureEntity = DeepMutable<ExtendedMeasureEntity>;
+type MutableMeasureEntity = DeepMutable<MeasureEntity>;
+type MutableExtendedMeasureEntity = DeepMutable<ExtendedMeasureEntity>;
 
 export type ActiveAxis = {
     x: boolean;
@@ -27,8 +27,8 @@ export type ActiveAxis = {
 };
 
 const initialState = {
-    selectedEntities: [[]] as WriteableExtendedMeasureEntity[][],
-    hover: undefined as WriteableMeasureEntity | undefined,
+    selectedEntities: [[]] as MutableExtendedMeasureEntity[][],
+    hover: undefined as MutableMeasureEntity | undefined,
     snapKind: "all" as SnapKind,
     pinned: undefined as undefined | number,
     duoMeasurementValues: [] as (
@@ -47,8 +47,8 @@ const initialState = {
 type State = typeof initialState;
 
 function isLegacy(
-    measureSet: WriteableExtendedMeasureEntity[] | WriteableExtendedMeasureEntity[][]
-): measureSet is WriteableExtendedMeasureEntity[] {
+    measureSet: MutableExtendedMeasureEntity[] | MutableExtendedMeasureEntity[][]
+): measureSet is MutableExtendedMeasureEntity[] {
     return measureSet.length > 0 && !Array.isArray(measureSet[0]);
 }
 
@@ -80,7 +80,7 @@ export const measureSlice = createSlice({
                 result: true,
                 normal: true,
             };
-            currentEntities[selectIdx] = action.payload.entity as WriteableExtendedMeasureEntity;
+            currentEntities[selectIdx] = action.payload.entity as MutableExtendedMeasureEntity;
             if (action.payload.pin) {
                 state.pinned = selectIdx;
             }
@@ -154,18 +154,18 @@ export const measureSlice = createSlice({
             }
         },
         selectHoverObj: (state, action: PayloadAction<MeasureEntity | undefined>) => {
-            state.hover = action.payload as WriteableMeasureEntity | undefined;
+            state.hover = action.payload as MutableMeasureEntity | undefined;
         },
         selectPickSettings: (state, action: PayloadAction<SnapKind>) => {
             state.snapKind = action.payload;
         },
         //Legacy
         setSelectedEntities: (state, action: PayloadAction<ExtendedMeasureEntity[]>) => {
-            state.selectedEntities = [action.payload as WriteableExtendedMeasureEntity[]];
+            state.selectedEntities = [action.payload as MutableExtendedMeasureEntity[]];
         },
 
         addMeasureEntites: (state, action: PayloadAction<ExtendedMeasureEntity[]>) => {
-            state.selectedEntities.push(action.payload as WriteableExtendedMeasureEntity[]);
+            state.selectedEntities.push(action.payload as MutableExtendedMeasureEntity[]);
         },
 
         pin: (state, action: PayloadAction<State["pinned"]>) => {
@@ -200,7 +200,7 @@ export const measureSlice = createSlice({
             }
         },
         setSettings: (state, action: PayloadAction<{ idx: number; settings: MeasureSettings }>) => {
-            state.selectedEntities = state.selectedEntities.map((obj, idx) =>
+            state.selectedEntities[state.currentIndex] = state.selectedEntities[state.currentIndex].map((obj, idx) =>
                 idx === action.payload.idx ? { ...obj, settings: action.payload.settings } : obj
             );
         },
@@ -212,11 +212,11 @@ export const measureSlice = createSlice({
         builder.addCase(selectBookmark, (state, action) => {
             if (isLegacy(action.payload.measurements.measure.entities)) {
                 state.selectedEntities.push(
-                    action.payload.measurements.measure.entities as WriteableExtendedMeasureEntity[]
+                    action.payload.measurements.measure.entities as MutableExtendedMeasureEntity[]
                 );
             } else if (action.payload.measurements.measure.entities.length > 0) {
                 state.selectedEntities = action.payload.measurements.measure
-                    .entities as WriteableExtendedMeasureEntity[][];
+                    .entities as MutableExtendedMeasureEntity[][];
             }
             if (action.payload.measurements.measure.activeAxis) {
                 state.activeAxis = action.payload.measurements.measure.activeAxis;

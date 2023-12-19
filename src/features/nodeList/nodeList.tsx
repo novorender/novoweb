@@ -3,7 +3,7 @@ import { Box, Checkbox, ListItem, ListItemProps, Typography, useTheme } from "@m
 import { HierarcicalObjectReference } from "@novorender/webgl-api";
 import { ChangeEvent, CSSProperties, forwardRef, MouseEventHandler, MutableRefObject } from "react";
 import AutoSizer from "react-virtualized-auto-sizer";
-import { FixedSizeListProps, ListOnScrollProps } from "react-window";
+import { FixedSizeList, FixedSizeListProps, ListOnScrollProps } from "react-window";
 
 import { useAppDispatch } from "app/store";
 import { FixedSizeVirualizedList, Tooltip } from "components";
@@ -27,7 +27,7 @@ type Props = {
     abortController: MutableRefObject<AbortController>;
 };
 
-export const NodeList = forwardRef<any, Props>(
+export const NodeList = forwardRef<FixedSizeList, Props>(
     ({ nodes, onScroll, outerRef, CustomParent, parentNode, ...nodeProps }, ref) => {
         const theme = useTheme();
 

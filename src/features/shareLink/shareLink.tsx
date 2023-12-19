@@ -43,22 +43,22 @@ export function ShareLink() {
         const blob = new Blob([`${window.location.origin}${window.location.pathname}?bookmarkId=${id}`], {
             type: "text/plain",
         });
-        let saved: boolean = false;
+        let saved = false;
 
         try {
             // Safari treats user activation differently:
             // https://bugs.webkit.org/show_bug.cgi?id=222262.
             await navigator.clipboard.write([
                 new ClipboardItem({
-                    "text/plain": new Promise(async (resolve) => {
+                    "text/plain": (async () => {
                         saved = await dataApi.saveBookmarks(sceneId, [{ ...bm, id, name: id }], { group: id });
 
                         if (!saved) {
                             throw new Error("Failed to save bookmark");
                         }
 
-                        resolve(blob);
-                    }),
+                        return blob;
+                    })(),
                 }),
             ]);
         } catch (e) {

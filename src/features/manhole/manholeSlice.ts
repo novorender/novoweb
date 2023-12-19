@@ -45,6 +45,7 @@ export const manholeSlice = createSlice({
             state.collisionSettings = action.payload.collisionSettings;
         },
         setManholeValues: (state, action: PayloadAction<State["measureValues"]>) => {
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
             state.measureValues = action.payload as any;
         },
         setLoadingBrep: (state, action: PayloadAction<State["loadingBrep"]>) => {
@@ -58,7 +59,7 @@ export const manholeSlice = createSlice({
         },
         setCollisionEntity: (state, action: PayloadAction<MeasureEntity | undefined>) => {
             if (state.collisionTarget) {
-                state.collisionTarget.entity = action.payload as any;
+                state.collisionTarget.entity = action.payload;
             }
         },
         setCollisionSettings: (state, action: PayloadAction<MeasureSettings>) => {

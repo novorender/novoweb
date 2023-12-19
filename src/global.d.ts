@@ -1,4 +1,5 @@
 interface Window {
+    // eslint-disable-next-line
     view?: any;
 }
 

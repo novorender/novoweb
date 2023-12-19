@@ -35,7 +35,7 @@ function SelectionBasket() {
         <>
             <WidgetContainer minimized={minimized} maximized={maximized}>
                 <WidgetHeader
-                    widget={{ ...featuresConfig.selectionBasket, name: "Selection basket" as any }}
+                    widget={{ ...featuresConfig.selectionBasket, name: "Selection basket" }}
                     WidgetMenu={(props) => (
                         <Menu {...props}>
                             <div>

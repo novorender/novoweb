@@ -7,7 +7,7 @@ import { Divider, ScrollBox, WidgetMenuButtonWrapper } from "components";
 import { FeatureTagKey, WidgetKey } from "config/features";
 import { selectEnabledWidgets, selectIsOnline, selectLockedWidgets, selectWidgets } from "slices/explorerSlice";
 
-import { sorting } from "../widgetList";
+import { sorting } from "../sorting";
 
 export function Tag({
     handleClick,

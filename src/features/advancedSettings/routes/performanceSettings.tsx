@@ -58,9 +58,7 @@ export function PerformanceSettings() {
             // https://bugs.webkit.org/show_bug.cgi?id=222262.
             await navigator.clipboard.write([
                 new ClipboardItem({
-                    "text/plain": new Promise(async (resolve) => {
-                        resolve(blob);
-                    }),
+                    "text/plain": Promise.resolve(blob),
                 }),
             ]);
         } catch (e) {

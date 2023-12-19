@@ -7,7 +7,7 @@ import { useToggle } from "hooks/useToggle";
 
 const quirk = "adreno600";
 const storageKey = `ignore_quirk_warning_${quirk}`;
-const runCheck = !Boolean(localStorage[storageKey]);
+const runCheck = !localStorage[storageKey];
 
 export function QuirkAlert() {
     const theme = useTheme();

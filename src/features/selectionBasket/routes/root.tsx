@@ -83,7 +83,7 @@ export function Root() {
         dispatchSelectionBasket(selectionBasketActions.set([]));
     };
 
-    const handleViewTypeChange = (_: any, value: string) => {
+    const handleViewTypeChange = (_: unknown, value: string) => {
         dispatch(renderActions.setDefaultVisibility(value as ObjectVisibility));
     };
 

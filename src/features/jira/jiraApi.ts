@@ -92,7 +92,7 @@ export const jiraApi = createApi({
         getIssue: builder.query<Issue, { key: string }>({
             query: ({ key }) => `issue/${key}`,
         }),
-        createIssue: builder.mutation<{ id: string; key: string; self: string }, { body: any }>({
+        createIssue: builder.mutation<{ id: string; key: string; self: string }, { body: FetchArgs["body"] }>({
             query: ({ body }) => ({
                 url: "issue",
                 method: "POST",
@@ -142,7 +142,7 @@ export const jiraApi = createApi({
                 return res.find((field) => field.name === "NOVORENDER_META")?.key ?? "";
             },
         }),
-        createComment: builder.mutation<any, { body: any; issueKey: string }>({
+        createComment: builder.mutation<unknown, { body: FetchArgs["body"]; issueKey: string }>({
             query: ({ body, issueKey }) => ({
                 url: `issue/${issueKey}/comment`,
                 method: "POST",

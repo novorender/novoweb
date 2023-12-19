@@ -8,7 +8,7 @@ import { renderActions, selectDeviations } from "features/render";
 
 export function CrupdateColorStop() {
     const history = useHistory();
-    let { idx: _idx } = useParams<{ idx?: string }>();
+    const { idx: _idx } = useParams<{ idx?: string }>();
     const idx = _idx ? Number(_idx) : undefined;
     const deviations = useAppSelector(selectDeviations);
     const dispatch = useAppDispatch();

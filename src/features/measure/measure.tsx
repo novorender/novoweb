@@ -28,7 +28,7 @@ export default function Measure() {
 
     const dispatch = useAppDispatch();
     const { selectedEntities, loadingBrep, snapKind, currentIndex } = useAppSelector(selectMeasure);
-    const currentEntites = selectedEntities[currentIndex];
+    const currentEntities = selectedEntities[currentIndex];
     const currentResult = duoMeasurementValues.length > 0 ? duoMeasurementValues[currentIndex] : undefined;
     const selecting = useAppSelector(selectPicker) === Picker.Measurement;
     const isInitial = useRef(true);
@@ -40,13 +40,13 @@ export default function Measure() {
 
     useEffect(() => {
         if (isInitial.current) {
-            if (!selecting && !currentEntites.length) {
+            if (!selecting && !currentEntities.length) {
                 dispatch(renderActions.setPicker(Picker.Measurement));
             }
 
             isInitial.current = false;
         }
-    }, [dispatch, selecting, currentEntites]);
+    }, [dispatch, selecting, currentEntities]);
 
     useEffect(() => {
         return () => {
@@ -107,7 +107,7 @@ export default function Measure() {
                             <Button
                                 onClick={() => dispatch(measureActions.newMeasurement())}
                                 color="grey"
-                                disabled={!currentEntites.length}
+                                disabled={!currentEntities.length}
                             >
                                 <Add sx={{ mr: 1 }} />
                                 New
@@ -118,7 +118,7 @@ export default function Measure() {
                                     dispatch(measureActions.clear());
                                 }}
                                 color="grey"
-                                disabled={!currentEntites.length}
+                                disabled={!currentEntities.length}
                             >
                                 <DeleteSweep sx={{ mr: 1 }} />
                                 Clear
@@ -132,7 +132,7 @@ export default function Measure() {
                     </Box>
                 ) : null}
                 <ScrollBox display={menuOpen || minimized ? "none" : "block"}>
-                    {currentEntites.map((obj, idx) => (
+                    {currentEntities.map((obj, idx) => (
                         <MeasuredObject obj={obj as ExtendedMeasureEntity} idx={idx} key={idx} />
                     ))}
                     <MeasuredResult duoMeasurementValues={currentResult?.result} />

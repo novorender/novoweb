@@ -249,7 +249,7 @@ function ColorStop({ deviation, disabled }: { deviation: { position: number; col
                 >
                     <Edit fontSize="small" />
                 </IconButton>
-                <IconButton size="small" color={Boolean(menuAnchor) ? "primary" : "default"} onClick={openMenu}>
+                <IconButton size="small" color={menuAnchor ? "primary" : "default"} onClick={openMenu}>
                     <MoreVert fontSize="small" />
                 </IconButton>
             </ListItemButton>

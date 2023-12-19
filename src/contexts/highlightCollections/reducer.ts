@@ -1,5 +1,5 @@
 import { ObjectId } from "@novorender/webgl-api";
-import { createContext, Dispatch, MutableRefObject, ReactNode, useContext, useReducer, useRef } from "react";
+import { createContext, Dispatch, MutableRefObject } from "react";
 
 import { VecRGBA } from "utils/color";
 import { toIdArr, toIdObj } from "utils/objectData";
@@ -8,7 +8,7 @@ export enum HighlightCollection {
     SecondaryHighlight = "secondaryHighlight",
 }
 
-const initialState = {
+export const initialState = {
     [HighlightCollection.SecondaryHighlight]: {
         ids: {} as Record<ObjectId, true | undefined>,
         idArr: [] as ObjectId[],
@@ -16,7 +16,7 @@ const initialState = {
     },
 };
 
-type State = typeof initialState;
+export type State = typeof initialState;
 type Key = keyof State;
 
 enum ActionTypes {
@@ -74,17 +74,20 @@ function clearAll() {
     };
 }
 
-const actions = { add, remove, setIds, setColor, set, clearAll };
+export const actions = { add, remove, setIds, setColor, set, clearAll };
 
 type Actions = ReturnType<(typeof actions)[keyof typeof actions]>;
-type DispatchHighlightCollection = Dispatch<Actions>;
-type LazyState = MutableRefObject<State>;
+export type DispatchHighlightCollection = Dispatch<Actions>;
+export type LazyState = MutableRefObject<State>;
 
-const StateContext = createContext<State>(undefined as any);
-const LazyStateContext = createContext<LazyState>(undefined as any);
-const DispatchContext = createContext<DispatchHighlightCollection>(undefined as any);
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export const StateContext = createContext<State>(undefined as any);
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export const LazyStateContext = createContext<LazyState>(undefined as any);
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export const DispatchContext = createContext<DispatchHighlightCollection>(undefined as any);
 
-function reducer(state: State, action: Actions): State {
+export function reducer(state: State, action: Actions): State {
     switch (action.type) {
         case ActionTypes.Add: {
             const collection = state[action.collection];
@@ -161,56 +164,3 @@ function reducer(state: State, action: Actions): State {
         }
     }
 }
-
-function HighlightCollectionsProvider({ children }: { children: ReactNode }) {
-    const [state, dispatch] = useReducer(reducer, initialState);
-    const lazyValue = useRef(state);
-    lazyValue.current = state;
-
-    return (
-        <StateContext.Provider value={state}>
-            <LazyStateContext.Provider value={lazyValue}>
-                <DispatchContext.Provider value={dispatch}>{children}</DispatchContext.Provider>
-            </LazyStateContext.Provider>
-        </StateContext.Provider>
-    );
-}
-
-function useHighlightCollections(): State {
-    const context = useContext(StateContext);
-
-    if (context === undefined) {
-        throw new Error("useHighlightCollection must be used within a HighlightCollectionProvider");
-    }
-
-    return context;
-}
-
-function useLazyHighlightCollections(): LazyState {
-    const context = useContext(LazyStateContext);
-
-    if (context === undefined) {
-        throw new Error("useLazyHighlightCollection must be used within a LazyHighlightCollectionProvider");
-    }
-
-    return context;
-}
-
-function useDispatchHighlightCollections(): DispatchHighlightCollection {
-    const context = useContext(DispatchContext);
-
-    if (context === undefined) {
-        throw new Error("useDispatchHighlightCollection must be used within a HighlightCollectionProvider");
-    }
-
-    return context;
-}
-
-export {
-    HighlightCollectionsProvider,
-    useHighlightCollections,
-    useLazyHighlightCollections,
-    useDispatchHighlightCollections,
-    actions as highlightCollectionsActions,
-};
-export type { DispatchHighlightCollection };

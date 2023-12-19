@@ -105,7 +105,7 @@ export function Settings({ sceneId }: { sceneId: string }) {
         setSpace(value);
     };
 
-    const handleProjectChange = (e: SyntheticEvent, value: any | null) => {
+    const handleProjectChange = (e: SyntheticEvent, value: Project | null) => {
         if (!value) {
             return;
         }

@@ -1,5 +1,5 @@
 import { SearchPattern } from "@novorender/webgl-api";
-import { createContext, Dispatch, MutableRefObject, ReactNode, useContext, useReducer, useRef } from "react";
+import { createContext, Dispatch, MutableRefObject } from "react";
 import { v4 as uuidv4 } from "uuid";
 
 import { VecRGB, VecRGBA } from "utils/color";
@@ -23,9 +23,9 @@ export interface ObjectGroup {
     includeDescendants: boolean;
 }
 
-const initialState = [] as ObjectGroup[];
+export const initialState = [] as ObjectGroup[];
 
-type State = typeof initialState;
+export type State = typeof initialState;
 
 export enum InternalTemporaryGroup {
     BIMcollab = "NOVORENDER_INTERNAL_TMP/BIMcollab temporary",
@@ -89,17 +89,20 @@ function groupSelected() {
     };
 }
 
-const actions = { update, set, add, copy, reset, groupSelected, delete: deleteGroup };
+export const actions = { update, set, add, copy, reset, groupSelected, delete: deleteGroup };
 
 type Actions = ReturnType<(typeof actions)[keyof typeof actions]>;
-type DispatchObjectGroups = Dispatch<Actions>;
-type LazyContextType = MutableRefObject<State>;
+export type DispatchObjectGroups = Dispatch<Actions>;
+export type LazyContextType = MutableRefObject<State>;
 
-const StateContext = createContext<State>(undefined as any);
-const LazyStateContext = createContext<LazyContextType>(undefined as any);
-const DispatchContext = createContext<DispatchObjectGroups>(undefined as any);
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export const StateContext = createContext<State>(undefined as any);
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export const LazyStateContext = createContext<LazyContextType>(undefined as any);
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export const DispatchContext = createContext<DispatchObjectGroups>(undefined as any);
 
-function reducer(state: State, action: Actions): ObjectGroup[] {
+export function reducer(state: State, action: Actions): ObjectGroup[] {
     switch (action.type) {
         case ActionTypes.Delete: {
             return state.filter((group) => group.id !== action.groupId);
@@ -186,65 +189,10 @@ function reducer(state: State, action: Actions): ObjectGroup[] {
     }
 }
 
-function ObjectGroupsProvider({ children }: { children: ReactNode }) {
-    const [state, dispatch] = useReducer(reducer, initialState);
-    const lazyValue = useRef(state);
-    lazyValue.current = state;
-
-    return (
-        <StateContext.Provider value={state}>
-            <LazyStateContext.Provider value={lazyValue}>
-                <DispatchContext.Provider value={dispatch}>{children}</DispatchContext.Provider>
-            </LazyStateContext.Provider>
-        </StateContext.Provider>
-    );
-}
-
-function useObjectGroups(): State {
-    const context = useContext(StateContext);
-
-    if (context === undefined) {
-        throw new Error("useObjectGroups must be used within a ObjectGroupsProvider");
-    }
-
-    return context;
-}
-
-function useLazyObjectGroups(): LazyContextType {
-    const context = useContext(LazyStateContext);
-
-    if (context === undefined) {
-        throw new Error("useLazyObjectGroups must be used within a ObjectGroupsProvider");
-    }
-
-    return context;
-}
-
-function useDispatchObjectGroups(): DispatchObjectGroups {
-    const context = useContext(DispatchContext);
-
-    if (context === undefined) {
-        throw new Error("useDispatchObjectGroups must be used within a ObjectGroupsProvider");
-    }
-
-    return context;
-}
-
 function isInternalTemporaryGroup(group: ObjectGroup): boolean {
     return Boolean(group.grouping?.startsWith("NOVORENDER_INTERNAL_TMP"));
 }
 
-function isInternalGroup(group: ObjectGroup): boolean {
+export function isInternalGroup(group: ObjectGroup): boolean {
     return Boolean(group.grouping?.startsWith("NOVORENDER_INTERNAL"));
 }
-
-export {
-    ObjectGroupsProvider,
-    useObjectGroups,
-    useDispatchObjectGroups,
-    useLazyObjectGroups,
-    actions as objectGroupsActions,
-    isInternalTemporaryGroup,
-    isInternalGroup,
-};
-export type { DispatchObjectGroups };

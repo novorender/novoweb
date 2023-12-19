@@ -75,6 +75,7 @@ export const ditioApi = createApi({
             undefined
         >({
             queryFn: async (_args, api) => {
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
                 const token = (api.getState() as any).ditio.accessToken;
 
                 if (token.status !== AsyncStatus.Success) {
@@ -91,6 +92,7 @@ export const ditioApi = createApi({
         }),
         getToken: builder.query<{ access_token: string; expires_in: number }, { sceneId: string }>({
             queryFn: async ({ sceneId }, api) => {
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
                 const token = (api.getState() as any).auth.accessToken;
 
                 return fetch(

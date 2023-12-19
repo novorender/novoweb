@@ -54,7 +54,9 @@ export default function PropertiesTree() {
                 if (!signal.aborted) {
                     setSelected(`${encodeURIComponent(property)}=${encodeURIComponent(value)}`);
                 }
-            } catch {}
+            } catch {
+                return;
+            }
         },
         [db, dispatchHighlighted, abort, abortController, setSelected]
     );

@@ -7,11 +7,11 @@ import { DeepMutable } from "features/render/renderSlice";
 import { AsyncState, AsyncStatus } from "types/misc";
 
 type SelectedEntity = AsyncState<MeasureEntity | undefined>;
-type WritableSelectedEntity = DeepMutable<SelectedEntity>;
+type MutableSelectedEntity = DeepMutable<SelectedEntity>;
 
 const initialState = {
     selectedPoint: undefined as undefined | { pos: vec3; id: number },
-    selectedEntity: { status: AsyncStatus.Initial } as WritableSelectedEntity,
+    selectedEntity: { status: AsyncStatus.Initial } as MutableSelectedEntity,
     cylindersProfilesFrom: "center" as "center" | "top" | "bottom",
 };
 
@@ -25,7 +25,7 @@ export const heightProfileSlice = createSlice({
             state.selectedPoint = action.payload;
         },
         setSelectedEntity: (state, action: PayloadAction<SelectedEntity>) => {
-            state.selectedEntity = action.payload as WritableSelectedEntity;
+            state.selectedEntity = action.payload as MutableSelectedEntity;
         },
         setCylindersProfilesFrom: (state, action: PayloadAction<State["cylindersProfilesFrom"]>) => {
             state.cylindersProfilesFrom = action.payload;
