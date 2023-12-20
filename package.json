@@ -1,6 +1,6 @@
 {
     "name": "novoweb",
-    "version": "0.83.0",
+    "version": "0.84.0",
     "type": "module",
     "description": "Novorender frontend",
     "main": "index.js",
