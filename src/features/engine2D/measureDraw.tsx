@@ -230,8 +230,10 @@ export function MeasureDraw({
                                     const end = obj.parts[0].vertices2D[obj.parts[0].vertices2D.length - 1];
                                     const dir = vec2.sub(vec2.create(), end, start);
                                     const dist = vec2.len(dir);
-                                    const removeOffset = (dist / 2 + 50) / dist;
-                                    const infoOffset = (dist / 2 + 75) / dist;
+                                    const offset = obj.kind === "cylinder" ? -150 : 50;
+                                    console.log(offset);
+                                    const removeOffset = (dist / 2 + offset) / dist;
+                                    const infoOffset = (dist / 2 + offset + 25) / dist;
                                     if (dist > 110) {
                                         removePos[i] = vec2.scaleAndAdd(vec2.create(), start, dir, removeOffset);
                                         infoPos[i] = vec2.scaleAndAdd(vec2.create(), start, dir, infoOffset);
