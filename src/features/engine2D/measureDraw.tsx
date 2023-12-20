@@ -115,8 +115,8 @@ export function MeasureDraw({
         remove: [],
         removeAxis: [],
         info: [],
-        area: { remove: [], finalize: [], undo: [] },
-        pointLine: { remove: [], finalize: [], undo: [], connect: [] },
+        area: { remove: [], info: [], finalize: [], undo: [] },
+        pointLine: { remove: [], info: [], finalize: [], undo: [], connect: [] },
     });
     const moveInteractionMarkers = useMove2DInteractions(svg, interactionPositions);
 
@@ -409,6 +409,7 @@ export function MeasureDraw({
 
             const fillMarkerPositions = (
                 removePos: (vec2 | undefined)[],
+                infoPos: (vec2 | undefined)[],
                 finalizePos: (vec2 | undefined)[],
                 undoPos: (vec2 | undefined)[],
                 points: vec3[],
@@ -425,9 +426,11 @@ export function MeasureDraw({
                     if (vec3.dist(pos3d, camera.position) < 100) {
                         const sp = view.measure?.draw.toMarkerPoints([pos3d]);
                         if (sp && sp.length > 0 && sp[0]) {
-                            removePos[index] = vec2.fromValues(sp[0][0], sp[0][1] + 20);
+                            removePos[index] = vec2.fromValues(sp[0][0], sp[0][1] + 30);
+                            infoPos[index] = vec2.fromValues(sp[0][0] + 20, sp[0][1] + 30);
                         } else {
                             removePos[index] = undefined;
+                            infoPos[index] = undefined;
                         }
                         if (points.length > 1 && isCurrent(index)) {
                             const screenPoints = view.measure?.draw.toMarkerPoints([
@@ -446,6 +449,7 @@ export function MeasureDraw({
             };
 
             const areaRemovePos: (vec2 | undefined)[] = [];
+            const areaInfoPos: (vec2 | undefined)[] = [];
             const areaFinalizePos: (vec2 | undefined)[] = [];
             const areaUndoPos: (vec2 | undefined)[] = [];
             const isCurrentArea = (index: number) => {
@@ -453,10 +457,20 @@ export function MeasureDraw({
             };
             for (let i = 0; i < areas.length; ++i) {
                 const areaPoints = areas[i].drawPoints;
-                fillMarkerPositions(areaRemovePos, areaFinalizePos, areaUndoPos, areaPoints, i, 3, isCurrentArea);
+                fillMarkerPositions(
+                    areaRemovePos,
+                    areaInfoPos,
+                    areaFinalizePos,
+                    areaUndoPos,
+                    areaPoints,
+                    i,
+                    3,
+                    isCurrentArea
+                );
             }
 
             const pointLineRemovePos: (vec2 | undefined)[] = [];
+            const pointLineInfoPos: (vec2 | undefined)[] = [];
             const pointLineFinalizePos: (vec2 | undefined)[] = [];
             const pointLineUndoPos: (vec2 | undefined)[] = [];
             const pointLineConnectPos: (vec2 | undefined)[] = [];
@@ -467,6 +481,7 @@ export function MeasureDraw({
                 const pointLinePoints = pointLines[i].points;
                 fillMarkerPositions(
                     pointLineRemovePos,
+                    pointLineInfoPos,
                     pointLineFinalizePos,
                     pointLineUndoPos,
                     pointLinePoints,
@@ -488,9 +503,11 @@ export function MeasureDraw({
                 return { updated: false, id };
             }
             interactionPositions.current.area.remove = areaRemovePos;
+            interactionPositions.current.area.info = areaInfoPos;
             interactionPositions.current.area.undo = areaUndoPos;
             interactionPositions.current.area.finalize = areaFinalizePos;
             interactionPositions.current.pointLine.remove = pointLineRemovePos;
+            interactionPositions.current.pointLine.info = pointLineInfoPos;
             interactionPositions.current.pointLine.undo = pointLineUndoPos;
             interactionPositions.current.pointLine.connect = pointLineConnectPos;
             interactionPositions.current.pointLine.finalize = pointLineFinalizePos;
