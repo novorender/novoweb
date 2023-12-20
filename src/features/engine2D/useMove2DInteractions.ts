@@ -122,11 +122,13 @@ export function useMove2DInteractions(
             );
             for (let i = 0; i < areas.length; ++i) {
                 translate(`removeArea-${i}`, interactionPositions.current.area.remove[i]);
+                translate(`infoArea-${i}`, interactionPositions.current.area.info[i]);
                 translate(`finalizeArea-${i}`, interactionPositions.current.area.finalize[i]);
                 translate(`undoArea-${i}`, interactionPositions.current.area.undo[i]);
             }
             for (let i = 0; i < pointLines.length; ++i) {
                 translate(`removePl-${i}`, interactionPositions.current.pointLine.remove[i]);
+                translate(`infoPl-${i}`, interactionPositions.current.pointLine.info[i]);
                 translate(`finalizePl-${i}`, interactionPositions.current.pointLine.finalize[i]);
                 translate(`connectPl-${i}`, interactionPositions.current.pointLine.connect[i]);
                 translate(`undoPl-${i}`, interactionPositions.current.pointLine.undo[i]);

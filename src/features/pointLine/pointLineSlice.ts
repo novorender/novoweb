@@ -50,6 +50,9 @@ export const pointLineSlice = createSlice({
         clearCurrent: (state) => {
             state.pointLines[state.currentIndex] = pointLine();
         },
+        setCurrent: (state, action: PayloadAction<number>) => {
+            state.currentIndex = action.payload;
+        },
         clear: () => {
             return initialState;
         },
@@ -60,6 +63,7 @@ export const pointLineSlice = createSlice({
             if (state.pointLines[state.pointLines.length - 1].points.length) {
                 state.pointLines.push(pointLine());
                 state.currentIndex = state.pointLines.length - 1;
+                state.lockElevation = false;
             }
         },
         deletePointline: (state, action: PayloadAction<number>) => {

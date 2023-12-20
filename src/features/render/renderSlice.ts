@@ -191,6 +191,7 @@ const initialState = {
         blur: 0,
     },
     clipping: {
+        outlines: true,
         enabled: false,
         draw: false,
         mode: ClippingMode.union,
@@ -198,6 +199,9 @@ const initialState = {
             normalOffset: vec4;
             baseW: number;
             color: vec4;
+            outline: {
+                enabled: boolean;
+            };
         }[],
     },
     grid: {
@@ -475,12 +479,25 @@ export const renderSlice = createSlice({
         },
         setClippingPlanes: (state, action: PayloadAction<RecursivePartial<State["clipping"]>>) => {
             state.clipping = mergeRecursive(state.clipping, action.payload);
+            state.clipping.planes = state.clipping.planes.map((plane, idx) => ({
+                ...plane,
+                outline: {
+                    enabled: plane.outline ? plane.outline.enabled : idx === 0,
+                },
+            }));
         },
-        addClippingPlane: (state, action: PayloadAction<Omit<State["clipping"]["planes"][number], "color">>) => {
+        addClippingPlane: (
+            state,
+            action: PayloadAction<Omit<State["clipping"]["planes"][number], "color" | "outline">>
+        ) => {
             state.clipping.enabled = true;
 
             if (state.clipping.planes.length < 6) {
-                state.clipping.planes.push({ ...action.payload, color: [0, 1, 0, 0.2] });
+                state.clipping.planes.push({
+                    ...action.payload,
+                    color: [0, 1, 0, 0.2],
+                    outline: { enabled: !state.clipping.planes.length },
+                });
             }
         },
         setCamera: (state, { payload }: PayloadAction<CameraState>) => {
@@ -814,9 +831,13 @@ export const renderSlice = createSlice({
             state.clipping = {
                 ...clipping,
                 draw: false,
-                planes: clipping.planes.map(({ normalOffset, color }) => ({
+                outlines: clipping.outlines !== undefined ? clipping.outlines : true,
+                planes: clipping.planes.map(({ normalOffset, color, outline }, idx) => ({
                     normalOffset,
                     color,
+                    outline: {
+                        enabled: outline ? outline.enabled : idx === 0,
+                    },
                     baseW: normalOffset[3],
                 })),
             };

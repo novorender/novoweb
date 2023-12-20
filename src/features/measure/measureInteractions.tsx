@@ -105,11 +105,13 @@ export type MeasureInteractionPositions = {
     }[];
     area: {
         remove: (vec2 | undefined)[];
+        info: (vec2 | undefined)[];
         finalize: (vec2 | undefined)[];
         undo: (vec2 | undefined)[];
     };
     pointLine: {
         remove: (vec2 | undefined)[];
+        info: (vec2 | undefined)[];
         finalize: (vec2 | undefined)[];
         undo: (vec2 | undefined)[];
         connect: (vec2 | undefined)[];
@@ -234,6 +236,14 @@ export function MeasureInteractions() {
                                 dispatch(areaActions.undoPt(view));
                             }}
                         />
+                        <InfoMarker
+                            id={`infoArea-${idx}`}
+                            name={`infoArea-${idx}`}
+                            onClick={() => {
+                                dispatch(areaActions.setCurrentArea(idx));
+                                dispatch(explorerActions.forceOpenWidget(featuresConfig.area.key));
+                            }}
+                        />
                     </Fragment>
                 ) : null
             )}
@@ -278,6 +288,14 @@ export function MeasureInteractions() {
                                         return;
                                     }
                                     dispatch(pointLineActions.undoPoint(view));
+                                }}
+                            />
+                            <InfoMarker
+                                id={`infoPl-${idx}`}
+                                name={`infoPl-${idx}`}
+                                onClick={() => {
+                                    dispatch(pointLineActions.setCurrent(idx));
+                                    dispatch(explorerActions.forceOpenWidget(featuresConfig.pointLine.key));
                                 }}
                             />
                         </>

@@ -5,6 +5,6 @@ export function FormattedText({ str }: { str: string }) {
         .replace(/^[\\n]+/, "")
         .split("\n")
         .flatMap((text, idx, arr) =>
-            arr.length === 1 && !text ? [] : [<Fragment key={idx}>{text}</Fragment>, <br key={idx} />]
+            arr.length === 1 && !text ? [] : [<Fragment key={idx}>{text}</Fragment>, <br key={idx + "linebreak"} />]
         );
 }

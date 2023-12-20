@@ -115,8 +115,8 @@ export function MeasureDraw({
         remove: [],
         removeAxis: [],
         info: [],
-        area: { remove: [], finalize: [], undo: [] },
-        pointLine: { remove: [], finalize: [], undo: [], connect: [] },
+        area: { remove: [], info: [], finalize: [], undo: [] },
+        pointLine: { remove: [], info: [], finalize: [], undo: [], connect: [] },
     });
     const moveInteractionMarkers = useMove2DInteractions(svg, interactionPositions);
 
@@ -226,15 +226,26 @@ export function MeasureDraw({
                             case "curveSegment":
                             case "edge":
                                 if (obj.parts[0].vertices2D) {
-                                    const start = obj.parts[0].vertices2D[0];
-                                    const end = obj.parts[0].vertices2D[obj.parts[0].vertices2D.length - 1];
+                                    const vertices2D = obj.parts[0].vertices2D;
+                                    const [start, end] =
+                                        vertices2D[0][0] > vertices2D[vertices2D.length - 1][0]
+                                            ? [vertices2D[0], vertices2D[vertices2D.length - 1], 1, -1]
+                                            : [vertices2D[vertices2D.length - 1], vertices2D[0], 1, 1];
+
                                     const dir = vec2.sub(vec2.create(), end, start);
                                     const dist = vec2.len(dir);
-                                    const removeOffset = (dist / 2 + 50) / dist;
-                                    const infoOffset = (dist / 2 + 75) / dist;
+                                    const offset = vec2.fromValues((dir[1] / dist) * 20, (-dir[0] / dist) * 20);
                                     if (dist > 110) {
-                                        removePos[i] = vec2.scaleAndAdd(vec2.create(), start, dir, removeOffset);
-                                        infoPos[i] = vec2.scaleAndAdd(vec2.create(), start, dir, infoOffset);
+                                        removePos[i] = vec2.add(
+                                            vec2.create(),
+                                            vec2.scaleAndAdd(vec2.create(), start, dir, 0.5),
+                                            offset
+                                        );
+                                        infoPos[i] = vec2.add(
+                                            vec2.create(),
+                                            vec2.scaleAndAdd(vec2.create(), start, dir, (dist / 2 + 25) / dist),
+                                            offset
+                                        );
                                     }
                                 }
                                 break;
@@ -407,6 +418,7 @@ export function MeasureDraw({
 
             const fillMarkerPositions = (
                 removePos: (vec2 | undefined)[],
+                infoPos: (vec2 | undefined)[],
                 finalizePos: (vec2 | undefined)[],
                 undoPos: (vec2 | undefined)[],
                 points: vec3[],
@@ -420,12 +432,14 @@ export function MeasureDraw({
                         vec3.add(sum, sum, points[j]);
                     }
                     const pos3d = vec3.scale(vec3.create(), sum, 1 / points.length);
-                    if (vec3.dist(pos3d, camera.position) < 100) {
+                    if (vec3.dist(pos3d, camera.position) < 150) {
                         const sp = view.measure?.draw.toMarkerPoints([pos3d]);
                         if (sp && sp.length > 0 && sp[0]) {
-                            removePos[index] = vec2.fromValues(sp[0][0], sp[0][1] + 20);
+                            removePos[index] = vec2.fromValues(sp[0][0], sp[0][1] + 30);
+                            infoPos[index] = vec2.fromValues(sp[0][0] + 20, sp[0][1] + 30);
                         } else {
                             removePos[index] = undefined;
+                            infoPos[index] = undefined;
                         }
                         if (points.length > 1 && isCurrent(index)) {
                             const screenPoints = view.measure?.draw.toMarkerPoints([
@@ -444,6 +458,7 @@ export function MeasureDraw({
             };
 
             const areaRemovePos: (vec2 | undefined)[] = [];
+            const areaInfoPos: (vec2 | undefined)[] = [];
             const areaFinalizePos: (vec2 | undefined)[] = [];
             const areaUndoPos: (vec2 | undefined)[] = [];
             const isCurrentArea = (index: number) => {
@@ -451,10 +466,20 @@ export function MeasureDraw({
             };
             for (let i = 0; i < areas.length; ++i) {
                 const areaPoints = areas[i].drawPoints;
-                fillMarkerPositions(areaRemovePos, areaFinalizePos, areaUndoPos, areaPoints, i, 3, isCurrentArea);
+                fillMarkerPositions(
+                    areaRemovePos,
+                    areaInfoPos,
+                    areaFinalizePos,
+                    areaUndoPos,
+                    areaPoints,
+                    i,
+                    3,
+                    isCurrentArea
+                );
             }
 
             const pointLineRemovePos: (vec2 | undefined)[] = [];
+            const pointLineInfoPos: (vec2 | undefined)[] = [];
             const pointLineFinalizePos: (vec2 | undefined)[] = [];
             const pointLineUndoPos: (vec2 | undefined)[] = [];
             const pointLineConnectPos: (vec2 | undefined)[] = [];
@@ -465,6 +490,7 @@ export function MeasureDraw({
                 const pointLinePoints = pointLines[i].points;
                 fillMarkerPositions(
                     pointLineRemovePos,
+                    pointLineInfoPos,
                     pointLineFinalizePos,
                     pointLineUndoPos,
                     pointLinePoints,
@@ -486,9 +512,11 @@ export function MeasureDraw({
                 return { updated: false, id };
             }
             interactionPositions.current.area.remove = areaRemovePos;
+            interactionPositions.current.area.info = areaInfoPos;
             interactionPositions.current.area.undo = areaUndoPos;
             interactionPositions.current.area.finalize = areaFinalizePos;
             interactionPositions.current.pointLine.remove = pointLineRemovePos;
+            interactionPositions.current.pointLine.info = pointLineInfoPos;
             interactionPositions.current.pointLine.undo = pointLineUndoPos;
             interactionPositions.current.pointLine.connect = pointLineConnectPos;
             interactionPositions.current.pointLine.finalize = pointLineFinalizePos;
