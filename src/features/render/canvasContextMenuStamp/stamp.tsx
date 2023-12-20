@@ -24,7 +24,7 @@ import { selectionBasketActions, useDispatchSelectionBasket } from "contexts/sel
 import { areaActions } from "features/area";
 import { measureActions, selectMeasureEntities } from "features/measure";
 import { clippingOutlineLaserActions, getOutlineLaser, OutlineLaser } from "features/outlineLaser";
-import { pointLineActions } from "features/pointLine";
+import { pointLineActions, selectLockElevation } from "features/pointLine";
 import {
     CameraType,
     ObjectVisibility,
@@ -349,6 +349,8 @@ export function Measure() {
     const [pickPoint, setPickPoint] = useState<vec3 | undefined>();
     const [centerLine, setCenterLine] = useState<CenterLine>();
     const measurements = useAppSelector(selectMeasureEntities);
+    const lockElevation = useAppSelector(selectLockElevation);
+
     const isCrossSection = cameraType === CameraType.Orthographic && view.renderState.camera.far < 1;
 
     useEffect(() => {
@@ -372,6 +374,14 @@ export function Measure() {
                         .then((res) => res.entity)
                         .catch(() => undefined);
 
+                    const pickMeasurePoint = await view.measure?.core
+                        .pickMeasureEntity(objectId, stamp.data.position, { point: 0.4 })
+                        // .then((res) => (["face"].includes(res.entity.drawKind) ? res.entity : undefined))
+                        .then((res) => res.entity)
+                        .catch(() => undefined);
+                    if (pickMeasurePoint?.drawKind === "vertex") {
+                        pickPoint = pickMeasurePoint.parameter;
+                    }
                     setMeasureEntity(ent);
                 }
 
@@ -483,6 +493,9 @@ export function Measure() {
             return;
         }
         dispatch(pointLineActions.newPointLine());
+        if (!lockElevation && view.isTopDown()) {
+            dispatch(pointLineActions.toggleLockElevation());
+        }
         dispatch(renderActions.setPicker(Picker.PointLine));
         close();
     };

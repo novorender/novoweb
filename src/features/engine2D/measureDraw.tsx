@@ -423,7 +423,7 @@ export function MeasureDraw({
                         vec3.add(sum, sum, points[j]);
                     }
                     const pos3d = vec3.scale(vec3.create(), sum, 1 / points.length);
-                    if (vec3.dist(pos3d, camera.position) < 100) {
+                    if (vec3.dist(pos3d, camera.position) < 150) {
                         const sp = view.measure?.draw.toMarkerPoints([pos3d]);
                         if (sp && sp.length > 0 && sp[0]) {
                             removePos[index] = vec2.fromValues(sp[0][0], sp[0][1] + 30);
