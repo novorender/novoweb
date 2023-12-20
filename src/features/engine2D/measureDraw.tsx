@@ -230,15 +230,11 @@ export function MeasureDraw({
                                     const [start, end] =
                                         vertices2D[0][0] > vertices2D[vertices2D.length - 1][0]
                                             ? [vertices2D[0], vertices2D[vertices2D.length - 1], 1, -1]
-                                            : [vertices2D[vertices2D.length - 1], vertices2D[0], -1, 1];
-                                    const [invertX, invertY] = start[1] > end[1] ? [1, -1] : [-1, 1];
+                                            : [vertices2D[vertices2D.length - 1], vertices2D[0], 1, 1];
 
                                     const dir = vec2.sub(vec2.create(), end, start);
                                     const dist = vec2.len(dir);
-                                    const offset = vec2.fromValues(
-                                        ((dir[0] * invertX) / dist) * 25 * Math.min(3, Math.abs(dir[0] / dir[1])),
-                                        ((dir[1] * invertY) / dist) * 25 * Math.min(3, Math.abs(dir[1] / dir[0]))
-                                    );
+                                    const offset = vec2.fromValues((dir[1] / dist) * 20, (-dir[0] / dist) * 20);
                                     if (dist > 110) {
                                         removePos[i] = vec2.add(
                                             vec2.create(),
