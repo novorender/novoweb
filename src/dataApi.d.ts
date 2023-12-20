@@ -50,7 +50,14 @@ declare module "@novorender/data-js-api" {
         clipping: {
             enabled: boolean;
             mode: number;
-            planes: { normalOffset: [number, number, number, number]; color: [number, number, number, number] }[];
+            outlines?: boolean;
+            planes: {
+                normalOffset: [number, number, number, number];
+                color: [number, number, number, number];
+                outline?: {
+                    enabled: boolean;
+                };
+            }[];
         };
         grid: {
             enabled: boolean;
