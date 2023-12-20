@@ -226,17 +226,30 @@ export function MeasureDraw({
                             case "curveSegment":
                             case "edge":
                                 if (obj.parts[0].vertices2D) {
-                                    const start = obj.parts[0].vertices2D[0];
-                                    const end = obj.parts[0].vertices2D[obj.parts[0].vertices2D.length - 1];
+                                    const vertices2D = obj.parts[0].vertices2D;
+                                    const [start, end] =
+                                        vertices2D[0][0] > vertices2D[vertices2D.length - 1][0]
+                                            ? [vertices2D[0], vertices2D[vertices2D.length - 1], 1, -1]
+                                            : [vertices2D[vertices2D.length - 1], vertices2D[0], -1, 1];
+                                    const [invertX, invertY] = start[1] > end[1] ? [1, -1] : [-1, 1];
+
                                     const dir = vec2.sub(vec2.create(), end, start);
                                     const dist = vec2.len(dir);
-                                    const offset = obj.kind === "cylinder" ? -150 : 50;
-                                    console.log(offset);
-                                    const removeOffset = (dist / 2 + offset) / dist;
-                                    const infoOffset = (dist / 2 + offset + 25) / dist;
+                                    const offset = vec2.fromValues(
+                                        ((dir[0] * invertX) / dist) * 25 * Math.min(3, Math.abs(dir[0] / dir[1])),
+                                        ((dir[1] * invertY) / dist) * 25 * Math.min(3, Math.abs(dir[1] / dir[0]))
+                                    );
                                     if (dist > 110) {
-                                        removePos[i] = vec2.scaleAndAdd(vec2.create(), start, dir, removeOffset);
-                                        infoPos[i] = vec2.scaleAndAdd(vec2.create(), start, dir, infoOffset);
+                                        removePos[i] = vec2.add(
+                                            vec2.create(),
+                                            vec2.scaleAndAdd(vec2.create(), start, dir, 0.5),
+                                            offset
+                                        );
+                                        infoPos[i] = vec2.add(
+                                            vec2.create(),
+                                            vec2.scaleAndAdd(vec2.create(), start, dir, (dist / 2 + 25) / dist),
+                                            offset
+                                        );
                                     }
                                 }
                                 break;
