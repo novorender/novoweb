@@ -95,7 +95,7 @@ export function useCreateBookmark() {
                 grid,
                 clipping: {
                     ...clipping,
-                    planes: clipping.planes.map((plane) => ({ normalOffset: plane.normalOffset, color: plane.color })),
+                    planes: clipping.planes.map(({ baseW: _baseW, ...plane }) => plane),
                 },
                 camera: view.renderState.camera,
                 options: {
