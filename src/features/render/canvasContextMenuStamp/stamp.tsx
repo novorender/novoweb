@@ -346,9 +346,10 @@ export function Measure() {
     const [status, setStatus] = useState(AsyncStatus.Initial);
     const [measureEntity, setMeasureEntity] = useState<MeasureEntity>();
     const [laser, setLaser] = useState<{ laser: OutlineLaser; plane: Vec4 }>();
-    const [outlinePoint, setOutlinePoint] = useState<vec3 | undefined>();
+    const [pickPoint, setPickPoint] = useState<vec3 | undefined>();
     const [centerLine, setCenterLine] = useState<CenterLine>();
     const measurements = useAppSelector(selectMeasureEntities);
+    const isCrossSection = cameraType === CameraType.Orthographic && view.renderState.camera.far < 1;
 
     useEffect(() => {
         loadObjectData();
@@ -361,15 +362,18 @@ export function Measure() {
             }
 
             const objectId = stamp.data.object;
+            let pickPoint = stamp.data.position;
             if (objectId && stamp.data.position) {
                 setStatus(AsyncStatus.Loading);
-                const ent = await view.measure?.core
-                    .pickMeasureEntity(objectId, stamp.data.position)
-                    // .then((res) => (["face"].includes(res.entity.drawKind) ? res.entity : undefined))
-                    .then((res) => res.entity)
-                    .catch(() => undefined);
+                if (!isCrossSection) {
+                    const ent = await view.measure?.core
+                        .pickMeasureEntity(objectId, stamp.data.position)
+                        // .then((res) => (["face"].includes(res.entity.drawKind) ? res.entity : undefined))
+                        .then((res) => res.entity)
+                        .catch(() => undefined);
 
-                setMeasureEntity(ent);
+                    setMeasureEntity(ent);
+                }
 
                 setCenterLine(await getRoadCenterLine({ db, view, id: objectId }));
             }
@@ -380,7 +384,10 @@ export function Measure() {
                 if (pos && plane) {
                     const laser = await getOutlineLaser(pos, view, cameraType, plane);
                     setLaser(laser ? { laser, plane } : undefined);
-                    setOutlinePoint(view.selectOutlinePoint(pos, 0.2));
+                    const outlinePoint = view.selectOutlinePoint(pos, 0.2);
+                    if (outlinePoint) {
+                        pickPoint = outlinePoint;
+                    }
                 }
             } else if (plane && stamp.data.position) {
                 const planeDir = vec3.fromValues(plane[0], plane[1], plane[2]);
@@ -392,14 +399,14 @@ export function Measure() {
                     const pos = vec3.scaleAndAdd(vec3.create(), view.renderState.camera.position, rayDir, t);
                     const laser = await getOutlineLaser(pos, view, cameraType, plane);
                     const outlinePoint = view.selectOutlinePoint(pos, 0.2);
-                    setOutlinePoint(outlinePoint);
+                    setPickPoint(outlinePoint);
                     setLaser(laser ? { laser, plane } : undefined);
                 }
             }
-
+            setPickPoint(pickPoint);
             setStatus(AsyncStatus.Success);
         }
-    }, [stamp, db, view, cameraType, dispatch]);
+    }, [stamp, db, view, cameraType, dispatch, isCrossSection]);
 
     if (stamp?.kind !== StampKind.CanvasContextMenu) {
         return null;
@@ -430,7 +437,7 @@ export function Measure() {
     };
 
     const handleOutlinePoint = (hover: boolean) => {
-        if (!outlinePoint) {
+        if (!pickPoint) {
             return;
         }
 
@@ -442,7 +449,7 @@ export function Measure() {
                 measureActions.selectHoverObj({
                     ObjectId: -1,
                     drawKind: "vertex",
-                    parameter: outlinePoint,
+                    parameter: pickPoint,
                 })
             );
         } else {
@@ -451,7 +458,7 @@ export function Measure() {
                     entity: {
                         ObjectId: -1,
                         drawKind: "vertex",
-                        parameter: outlinePoint,
+                        parameter: pickPoint,
                         settings: { planeMeasure: view.renderState.clipping.planes[0]?.normalOffset },
                     },
                     pin: true,
@@ -514,7 +521,7 @@ export function Measure() {
             {[AsyncStatus.Initial, AsyncStatus.Loading].includes(status) && <LinearProgress sx={{ mt: -1 }} />}
             <Box>
                 {features.includes(config.measure.key) && (
-                    <MenuItem onClick={measure} disabled={!measureEntity}>
+                    <MenuItem onClick={measure} disabled={!measureEntity || measureEntity.drawKind === "vertex"}>
                         <ListItemIcon>
                             <Straighten fontSize="small" />
                         </ListItemIcon>
@@ -545,17 +552,17 @@ export function Measure() {
                         <ListItemText>{config.pointLine.name}</ListItemText>
                     </MenuItem>
                 )}
-                {features.includes(config.outlinePoint.key) && (
+                {features.includes(config.pickPoint.key) && (
                     <MenuItem
                         onClick={handleClickOutlinePoint}
-                        disabled={!outlinePoint}
+                        disabled={!pickPoint}
                         onMouseEnter={handleHoverOutlinePoint}
                         onMouseLeave={removeHover}
                     >
                         <ListItemIcon>
                             <Straighten fontSize="small" />
                         </ListItemIcon>
-                        <ListItemText>{config.outlinePoint.name}</ListItemText>
+                        <ListItemText>{config.pickPoint.name}</ListItemText>
                     </MenuItem>
                 )}
             </Box>
