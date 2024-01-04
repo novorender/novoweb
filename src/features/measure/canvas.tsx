@@ -80,7 +80,7 @@ export function MeasureCanvas({
                             const cached = drawProductCacheRef.current.get(objId);
 
                             if (cached) {
-                                view.measure?.draw.updateProuct(cached);
+                                view.measure?.draw.updateProduct(cached);
                                 drawProductCache.set(objId, cached);
                                 return cached;
                             } else if (!cached) {
@@ -105,7 +105,7 @@ export function MeasureCanvas({
 
                     const cached = resultsDrawProductCacheRef.current.get(measurement.id);
                     if (cached && cached.product) {
-                        view.measure?.draw.updateProuct(cached.product);
+                        view.measure?.draw.updateProduct(cached.product);
                         cached.activeAxis = activeAxis;
                         resultsDrawProductCache.set(measurement.id, {
                             product: cached.product,
