@@ -30,3 +30,4 @@ export * from "./measurementTable";
 export * from "./reverseSlider";
 export * from "./widgetSkeleton";
 export * from "./widgetErrorBoundary";
+export * from "./canvas2D";

@@ -17,7 +17,7 @@ import {
 } from "features/manhole";
 import { selectMeasure } from "features/measure";
 import {
-    GetMeasurePointsFromTracer,
+    getMeasurePointsFromTracer,
     selectOutlineLaserPlane,
     selectOutlineLasers,
     TraceMeasurement,
@@ -75,7 +75,7 @@ export function useCreateBookmark() {
         endAr: ReadonlyVec3[]
     ) => {
         if (measurement) {
-            const pts = GetMeasurePointsFromTracer(measurement, startAr, endAr);
+            const pts = getMeasurePointsFromTracer(measurement, startAr, endAr);
             if (pts) {
                 return { laserPosition: laserPosition, start: pts[0], end: pts[1] };
             }

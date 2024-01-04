@@ -123,7 +123,7 @@ export const areaSlice = createSlice({
 export const selectCurrentAreaPoints = (state: RootState) => state.area.areas[state.area.currentIndex].points;
 export const selectCurrentArea = (state: RootState) => state.area.areas[state.area.currentIndex];
 export const selectCurrentAreaValue = (state: RootState) => state.area.areas[state.area.currentIndex].area;
-export const selectCurrentIndex = (state: RootState) => state.area.currentIndex;
+export const selectCurrentAreaIndex = (state: RootState) => state.area.currentIndex;
 export const selectAreas = (state: RootState) => state.area.areas;
 
 const { actions, reducer } = areaSlice;

@@ -5,11 +5,11 @@ import { RefCallback, useCallback, useRef, useState } from "react";
 import { useAppSelector } from "app/store";
 import { LinearProgress, Loading } from "components";
 import { explorerGlobalsActions, useExplorerGlobals } from "contexts/explorerGlobals";
-import { useHandleClipping } from "features/clippingPlanes/useHandleClipping";
+import { useHandleClipping } from "features/clippingPlanes";
 import { useHandleDeviations } from "features/deviations";
 import { useHandleDitioAuth } from "features/ditio";
 import { Engine2D } from "features/engine2D";
-import { Engine2DInteractions } from "features/engine2D/engine2DInteractions";
+import { Engine2DInteractions } from "features/engine2D";
 import { useHandleImages } from "features/images";
 import { useHandleJiraKeepAlive } from "features/jira";
 import { useHandleManhole } from "features/manhole";
@@ -18,7 +18,6 @@ import { useHandleOffline } from "features/offline";
 import { useHandleCrossSection } from "features/orthoCam";
 import { useHandleOutlineLasers } from "features/outlineLaser";
 import { PerformanceStats } from "features/performanceStats";
-import { selectDebugStats, selectLoadingHandles, selectSceneStatus } from "features/render/renderSlice";
 import { useHandleXsiteManageKeepAlive, useHandleXsiteManageMachineLocations } from "features/xsiteManage";
 import { AsyncStatus } from "types/misc";
 
@@ -39,6 +38,7 @@ import { useHandleSubtrees } from "./hooks/useHandleSubtrees";
 import { useHandleTerrain } from "./hooks/useHandleTerrain";
 import { Images } from "./images";
 import { Markers } from "./markers";
+import { selectDebugStats, selectLoadingHandles, selectSceneStatus } from "./renderSlice";
 import { SceneError } from "./sceneError";
 import { Stamp } from "./stamp";
 
@@ -81,7 +81,7 @@ export function Render3D() {
 
     const [svg, setSvg] = useState<null | SVGSVGElement>(null);
 
-    const engine2dRenderFnRef = useRef<((moved: boolean, idleFrame: boolean) => void) | undefined>();
+    const engine2dRenderFnRef = useRef<((moved: boolean, idleFrame?: boolean) => void) | undefined>();
     const pointerPosRef = useRef([0, 0] as [x: number, y: number]);
     const pointerDownStateRef = useRef<{
         timestamp: number;
@@ -144,7 +144,7 @@ export function Render3D() {
             {sceneStatus.status === AsyncStatus.Success && view && canvas && (
                 <>
                     {debugStats.enabled && <PerformanceStats />}
-                    <Engine2D pointerPos={pointerPosRef} renderFnRef={engine2dRenderFnRef} svg={svg} />
+                    <Engine2D pointerPosRef={pointerPosRef} renderFnRef={engine2dRenderFnRef} svg={svg} />
                     <Stamp />
                     <Svg width={size.width} height={size.height} ref={setSvg}>
                         <Markers />

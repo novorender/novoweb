@@ -39,7 +39,6 @@ const InfoMarker = styled(
                 fill="#FFFFFF"
                 transform={"translate(89 89)"}
             ></path>
-            ;
         </g>
     ),
     { shouldForwardProp: (prop) => prop !== "active" && prop !== "hovered" }
@@ -103,19 +102,6 @@ export type MeasureInteractionPositions = {
         dist?: vec2;
         normal?: vec2;
     }[];
-    area: {
-        remove: (vec2 | undefined)[];
-        info: (vec2 | undefined)[];
-        finalize: (vec2 | undefined)[];
-        undo: (vec2 | undefined)[];
-    };
-    pointLine: {
-        remove: (vec2 | undefined)[];
-        info: (vec2 | undefined)[];
-        finalize: (vec2 | undefined)[];
-        undo: (vec2 | undefined)[];
-        connect: (vec2 | undefined)[];
-    };
 };
 
 export function MeasureInteractions() {

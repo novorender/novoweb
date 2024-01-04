@@ -1,1 +1,1 @@
-export {};
+export { useHandleClipping } from "./useHandleClipping";

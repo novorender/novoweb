@@ -3,11 +3,9 @@ import { MutableRefObject, useCallback, useLayoutEffect } from "react";
 
 import { useAppSelector } from "app/store";
 import { useExplorerGlobals } from "contexts/explorerGlobals";
-import { selectAreas } from "features/area";
 import { selectMeasure } from "features/measure";
 import { MeasureInteractionPositions } from "features/measure/measureInteractions";
-import { GetMeasurePointsFromTracer, selectOutlineLasers } from "features/outlineLaser";
-import { selectPointLines } from "features/pointLine";
+import { getMeasurePointsFromTracer, selectOutlineLasers } from "features/outlineLaser";
 
 export function useMove2DInteractions(
     svg: SVGSVGElement | null,
@@ -19,8 +17,6 @@ export function useMove2DInteractions(
 
     const outlineLasers = useAppSelector(selectOutlineLasers);
     const { selectedEntities, duoMeasurementValues } = useAppSelector(selectMeasure);
-    const areas = useAppSelector(selectAreas);
-    const pointLines = useAppSelector(selectPointLines);
 
     const move = useCallback(() => {
         if (!svg || !view?.measure) {
@@ -57,7 +53,7 @@ export function useMove2DInteractions(
             const trace = outlineLasers[i];
             const { left, right, up, down, measurementX: x, measurementY: y } = trace;
             if (x) {
-                const tracePts = GetMeasurePointsFromTracer(x, left, right);
+                const tracePts = getMeasurePointsFromTracer(x, left, right);
                 if (tracePts) {
                     const [l, r] = view.measure.draw.toMarkerPoints(tracePts);
                     translate(`leftMarker-${i}`, l);
@@ -68,7 +64,7 @@ export function useMove2DInteractions(
                 }
             }
             if (y) {
-                const tracePts = GetMeasurePointsFromTracer(y, down, up);
+                const tracePts = getMeasurePointsFromTracer(y, down, up);
                 if (tracePts) {
                     const [d, u] = view.measure.draw.toMarkerPoints(tracePts);
                     translate(`downMarker-${i}`, d);
@@ -120,21 +116,8 @@ export function useMove2DInteractions(
                     ? interactionPositions.current.removeAxis[i].normal
                     : undefined
             );
-            for (let i = 0; i < areas.length; ++i) {
-                translate(`removeArea-${i}`, interactionPositions.current.area.remove[i]);
-                translate(`infoArea-${i}`, interactionPositions.current.area.info[i]);
-                translate(`finalizeArea-${i}`, interactionPositions.current.area.finalize[i]);
-                translate(`undoArea-${i}`, interactionPositions.current.area.undo[i]);
-            }
-            for (let i = 0; i < pointLines.length; ++i) {
-                translate(`removePl-${i}`, interactionPositions.current.pointLine.remove[i]);
-                translate(`infoPl-${i}`, interactionPositions.current.pointLine.info[i]);
-                translate(`finalizePl-${i}`, interactionPositions.current.pointLine.finalize[i]);
-                translate(`connectPl-${i}`, interactionPositions.current.pointLine.connect[i]);
-                translate(`undoPl-${i}`, interactionPositions.current.pointLine.undo[i]);
-            }
         }
-    }, [view, svg, outlineLasers, selectedEntities, interactionPositions, duoMeasurementValues, areas, pointLines]);
+    }, [view, svg, outlineLasers, selectedEntities, interactionPositions, duoMeasurementValues]);
 
     useLayoutEffect(() => {
         move();

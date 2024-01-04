@@ -116,15 +116,20 @@ export async function createCanvasSnapshot(
             ctx?.drawImage(bitmap, 0, 0);
         }
 
-        const canvas2D = document.getElementById("canvas2D") as HTMLCanvasElement | null;
-        if (canvas2D) {
-            const bitmap = await createImageBitmap(canvas2D, {
-                resizeHeight: height,
-                resizeWidth: width,
-                resizeQuality: "high",
-            });
-            ctx?.drawImage(bitmap, 0, 0);
-        }
+        await Promise.all(
+            Array.from(document.querySelectorAll("[data-include-snapshot]")).map(async (el) => {
+                if (!(el instanceof HTMLCanvasElement)) {
+                    return;
+                }
+
+                const bitmap = await createImageBitmap(el, {
+                    resizeHeight: height,
+                    resizeWidth: width,
+                    resizeQuality: "high",
+                });
+                ctx?.drawImage(bitmap, 0, 0);
+            })
+        );
 
         return dist.toDataURL("image/png");
     } catch (e) {
