@@ -4,6 +4,7 @@ import { useAppDispatch, useAppSelector } from "app/store";
 import { useExplorerGlobals } from "contexts/explorerGlobals";
 import { clippingOutlineLaserActions, selectOutlineGroups } from "features/outlineLaser";
 import { ClippedFile } from "features/outlineLaser/clippedObject";
+import { selectIsOnline } from "slices/explorerSlice";
 import { VecRGB } from "utils/color";
 import { getFilePathFromObjectPath } from "utils/objectData";
 import { getObjectData, searchByPatterns } from "utils/search";
@@ -17,6 +18,7 @@ export function useHandleClippingOutlines() {
     } = useExplorerGlobals();
     const { planes } = useAppSelector(selectClippingPlanes);
     const outlineGroups = useAppSelector(selectOutlineGroups);
+    const isOnline = useAppSelector(selectIsOnline);
     const dispatch = useAppDispatch();
 
     const groupRef = useRef(outlineGroups);
@@ -35,13 +37,13 @@ export function useHandleClippingOutlines() {
         async function updateClippedFiles() {
             //This function will not work unless the pick buffer is ready. As this can be called from bookmark a long sleep is required for everything to be set up
             const id = ++idsGenerationRef.current;
-            await sleep(1500);
+            await sleep(2000);
 
             if (!db || !view || groupRef.current.length !== 0 || id !== idsGenerationRef.current) {
                 return;
             }
 
-            if (navigator.onLine) {
+            if (isOnline) {
                 const getFileId = async (fileName: string) => {
                     const iterator = db.search({ parentPath: fileName, descentDepth: 0 }, undefined);
                     const fileId = (await iterator.next()).value;
@@ -51,36 +53,40 @@ export function useHandleClippingOutlines() {
                     return db.descendants(fileId, undefined);
                 };
 
-                const objIds = await view.getOutlineObjectsOnScreen();
-                if (objIds) {
-                    const filePaths = new Set<string>();
-                    await searchByPatterns({
-                        db,
-                        searchPatterns: [{ property: "id", value: Array.from(objIds).map((v) => String(v)) }],
-                        full: false,
-                        callback: (files) => {
-                            for (const file of files) {
-                                const f = getFilePathFromObjectPath(file.path);
-                                if (f) {
-                                    filePaths.add(f);
-                                }
-                            }
-                        },
-                    });
-                    const files: ClippedFile[] = [];
-
-                    let i = 0;
-                    const increments = 360 / filePaths.size;
-                    for (const f of filePaths) {
-                        const ids = await getFileId(f);
-                        files.push({ name: f, color: hsl2rgb(increments * i, 1, 0.5) as VecRGB, hidden: false, ids });
-                        ++i;
-                    }
-                    dispatch(clippingOutlineLaserActions.setOutlineGroups(files));
+                const objIds = view.getOutlineObjectsOnScreen();
+                if (!objIds) {
+                    dispatch(clippingOutlineLaserActions.setOutlineGroups([]));
+                    return;
                 }
+
+                const filePaths = new Set<string>();
+                await searchByPatterns({
+                    db,
+                    searchPatterns: [{ property: "id", value: Array.from(objIds).map((v) => String(v)) }],
+                    full: false,
+                    callback: (files) => {
+                        for (const file of files) {
+                            const f = getFilePathFromObjectPath(file.path);
+                            if (f) {
+                                filePaths.add(f);
+                            }
+                        }
+                    },
+                });
+                const files: ClippedFile[] = [];
+
+                let i = 0;
+                const increments = 360 / filePaths.size;
+                for (const f of filePaths) {
+                    const ids = await getFileId(f);
+                    files.push({ name: f, color: hsl2rgb(increments * i, 1, 0.5) as VecRGB, hidden: false, ids });
+                    ++i;
+                }
+                dispatch(clippingOutlineLaserActions.setOutlineGroups(files));
             } else {
                 const objIds = await view.getOutlineObjectsOnScreen();
                 if (!objIds) {
+                    dispatch(clippingOutlineLaserActions.setOutlineGroups([]));
                     return;
                 }
 
@@ -125,7 +131,7 @@ export function useHandleClippingOutlines() {
                 );
             }
         }
-    }, [db, view, dispatch, planes]);
+    }, [db, view, dispatch, planes, isOnline]);
 }
 
 function hsl2rgb(h: number, s: number, l: number): VecRGB {
