@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 
 import { useAppSelector } from "app/store";
 import { useExplorerGlobals } from "contexts/explorerGlobals";
+import { selectIsTopDown } from "features/orthoCam";
 import { CameraType, selectCameraType, selectProjectSettings } from "features/render";
 import { latLon2Tm } from "features/render/utils";
 import { AsyncStatus } from "types/misc";
@@ -23,8 +24,10 @@ export function useDitioMachineMarkers() {
     const showMarkers = useAppSelector(selectShowDitioMachineMarkers);
     const projects = useAppSelector(selectDitioProjects);
     const token = useAppSelector(selectDitioAccessToken);
+    const isTopDown = useAppSelector(selectIsTopDown);
     const skip =
         cameraType !== CameraType.Orthographic ||
+        !isTopDown ||
         token.status !== AsyncStatus.Success ||
         !tmZone ||
         !view ||
