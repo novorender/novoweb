@@ -1,5 +1,5 @@
-import { DrawPart, DrawProduct } from "@novorender/api";
-import { ReadonlyVec2, ReadonlyVec3, vec2, vec3 } from "gl-matrix";
+import { DrawPart, DrawProduct, View } from "@novorender/api";
+import { quat, ReadonlyVec2, ReadonlyVec3, vec2, vec3 } from "gl-matrix";
 
 import { CameraType } from "features/render";
 
@@ -18,7 +18,7 @@ export interface TextSettings {
     customText?: string[];
 }
 
-export interface CameraSettings {
+export interface CameraState {
     pos: ReadonlyVec3;
     dir: ReadonlyVec3;
     type: CameraType;
@@ -33,7 +33,7 @@ export interface LineCap {
 
 export function drawProduct(
     ctx: CanvasRenderingContext2D,
-    camera: CameraSettings,
+    camera: CameraState,
     product: DrawProduct,
     colorSettings: ColorSettings,
     pixelWidth: number,
@@ -97,7 +97,7 @@ export function drawProduct(
 
 export function drawPart(
     ctx: CanvasRenderingContext2D,
-    camera: CameraSettings,
+    camera: CameraState,
     part: DrawPart,
     colorSettings: ColorSettings,
     pixelWidth: number,
@@ -120,7 +120,7 @@ export function drawPart(
     }
     return false;
 }
-function drawTextPart(ctx: CanvasRenderingContext2D, part: DrawPart, camera: CameraSettings) {
+function drawTextPart(ctx: CanvasRenderingContext2D, part: DrawPart, camera: CameraState) {
     if (part.drawType === "text" && part.text && part.vertices2D) {
         if (Array.isArray(part.text)) {
             if (part.text.length === 1 && part.indicesOnScreen) {
@@ -181,7 +181,7 @@ function drawTextPart(ctx: CanvasRenderingContext2D, part: DrawPart, camera: Cam
     return false;
 }
 
-function drawAngle(ctx: CanvasRenderingContext2D, camera: CameraSettings, part: DrawPart) {
+function drawAngle(ctx: CanvasRenderingContext2D, camera: CameraState, part: DrawPart) {
     if (part.vertices2D) {
         ctx.fillStyle = "transparent";
         const anglePoint = part.vertices2D[0];
@@ -405,7 +405,7 @@ function drawLinesOrPolygon(
                         if (nextTxtIdx === currentTxtIdx) {
                             continue;
                         }
-                        if (textList[currentTxtIdx].length === 0) {
+                        if (!textList[currentTxtIdx] || textList[currentTxtIdx].length === 0) {
                             continue;
                         }
                         const textStr = textList[currentTxtIdx] + `${text.unit ? text.unit : "m"}`;
@@ -562,4 +562,83 @@ function drawArrow(ctx: CanvasRenderingContext2D, currentPos: ReadonlyVec2, dir:
     ctx.lineTo(currentPos[0] - scaledDir[1] / 2, currentPos[1] + scaledDir[0] / 2);
     ctx.closePath();
     ctx.fill();
+}
+
+type InteractionPosition = vec2 | undefined;
+export function getInteractionPositions({
+    points,
+    current,
+    view,
+}: {
+    points: { points: vec3[] }[];
+    current: number;
+    view: View;
+}): {
+    remove: InteractionPosition[];
+    info: InteractionPosition[];
+    finalize: InteractionPosition[];
+    undo: InteractionPosition[];
+} {
+    const initial = {
+        remove: Array.from<vec2 | undefined>({ length: points.length }),
+        info: Array.from<vec2 | undefined>({ length: points.length }),
+        finalize: Array.from<vec2 | undefined>({ length: points.length }),
+        undo: Array.from<vec2 | undefined>({ length: points.length }),
+    };
+
+    if (!points.length) {
+        return initial;
+    }
+
+    return points.reduce((interactions, { points }, idx) => {
+        if (!points.length) {
+            return interactions;
+        }
+
+        const sum = vec3Sum(points);
+        const pos3d = vec3.scale(vec3.create(), sum, 1 / points.length);
+        if (vec3.dist(pos3d, view.renderState.camera.position) >= 150) {
+            return interactions;
+        }
+
+        const sp = view.measure?.draw.toMarkerPoints([pos3d]);
+        if (sp && sp[0]) {
+            interactions.remove[idx] = vec2.fromValues(sp[0][0], sp[0][1] + 30);
+            interactions.info[idx] = vec2.fromValues(sp[0][0] + 20, sp[0][1] + 30);
+        }
+
+        if (idx == current) {
+            if (points.length >= 2) {
+                interactions.undo[idx] = view.measure?.draw.toMarkerPoints([points[points.length - 1]])?.at(0);
+            }
+
+            if (points.length >= 3) {
+                interactions.finalize[idx] = view.measure?.draw.toMarkerPoints([points[0]])?.at(0);
+            }
+        }
+
+        return interactions;
+    }, initial);
+}
+
+export function translateInteraction(el: Element | null, pos?: vec2) {
+    el?.setAttribute("transform", pos ? `translate(${pos[0] - 100} ${pos[1] - 98})` : "translate(-1000 -1000)");
+}
+
+export function getCameraState(camera: View["renderState"]["camera"]) {
+    return {
+        pos: camera.position,
+        dir: getCameraDir(camera.rotation),
+        type: camera.kind === "orthographic" ? CameraType.Orthographic : CameraType.Pinhole,
+    };
+}
+
+function getCameraDir(rotation: quat): vec3 {
+    return vec3.transformQuat(vec3.create(), vec3.fromValues(0, 0, -1), rotation);
+}
+
+export function vec3Sum(arr: vec3[]) {
+    return arr.reduce((tot, vec) => {
+        return vec3.add(tot, tot, vec);
+    }, vec3.create());
 }

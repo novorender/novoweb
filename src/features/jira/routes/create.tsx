@@ -427,7 +427,9 @@ export function CreateIssue({ sceneId }: { sceneId: string }) {
                                             fullWidth
                                             options={assigneeOptions}
                                             getOptionLabel={(opt) => opt.displayName}
-                                            isOptionEqualToValue={(option, value) => option.id === value.id}
+                                            isOptionEqualToValue={(option, value) =>
+                                                option.accountId === value.accountId
+                                            }
                                             value={formValues.assignee ?? null}
                                             loading={!assigneeInputValue || loadingAssignees}
                                             loadingText={
@@ -484,6 +486,11 @@ export function CreateIssue({ sceneId }: { sceneId: string }) {
                                                     value={assigneeInputValue}
                                                     {...params}
                                                 />
+                                            )}
+                                            renderOption={(props, option) => (
+                                                <li {...props} key={option.accountId}>
+                                                    {option.displayName}
+                                                </li>
                                             )}
                                         />
                                     </FormControl>

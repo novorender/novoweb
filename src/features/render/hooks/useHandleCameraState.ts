@@ -3,6 +3,7 @@ import { useEffect, useRef } from "react";
 
 import { useAppDispatch, useAppSelector } from "app/store";
 import { useExplorerGlobals } from "contexts/explorerGlobals";
+import { orthoCamActions } from "features/orthoCam";
 import { ViewMode } from "types/misc";
 
 import { CameraType, renderActions, selectCamera, selectCameraDefaults, selectViewMode } from "..";
@@ -62,6 +63,7 @@ export function useHandleCameraState() {
                         : undefined
                 );
 
+                dispatch(orthoCamActions.setIsTopDown(view.isTopDown()));
                 const mat = mat4.fromQuat(mat4.create(), state.goTo?.rotation ?? view.renderState.camera.rotation);
                 const right = vec3.fromValues(mat[0], mat[1], mat[2]);
                 const up = vec3.fromValues(mat[4], mat[5], mat[6]);

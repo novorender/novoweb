@@ -1,5 +1,5 @@
 import { Add, DeleteSweep, Undo } from "@mui/icons-material";
-import { Box, Button, FormControlLabel } from "@mui/material";
+import { Box, Button, Checkbox, Divider, FormControlLabel } from "@mui/material";
 import { useEffect, useRef } from "react";
 
 import { useAppDispatch, useAppSelector } from "app/store";
@@ -11,7 +11,7 @@ import WidgetList from "features/widgetList/widgetList";
 import { useToggle } from "hooks/useToggle";
 import { selectMaximized, selectMinimized } from "slices/explorerSlice";
 
-import { areaActions, selectCurrentAreaPoints, selectCurrentAreaValue } from "./areaSlice";
+import { areaActions, selectCurrentAreaPoints, selectCurrentAreaValue, selectLockAreaElevation } from "./areaSlice";
 
 export default function Area() {
     const {
@@ -25,6 +25,7 @@ export default function Area() {
     const selecting = useAppSelector(selectPicker) === Picker.Area;
     const points = useAppSelector(selectCurrentAreaPoints);
     const area = useAppSelector(selectCurrentAreaValue);
+    const lockElevation = useAppSelector(selectLockAreaElevation);
     const dispatch = useAppDispatch();
 
     const isInitial = useRef(true);
@@ -91,8 +92,28 @@ export default function Area() {
                         </Box>
                     ) : null}
                 </WidgetHeader>
-                <ScrollBox display={menuOpen || minimized ? "none" : "flex"}>
-                    <Box p={1}>{area > 0 ? <>Area: {area.toFixed(3)} &#13217;</> : null}</Box>
+                <ScrollBox flexDirection="column" display={menuOpen || minimized ? "none" : "flex"}>
+                    <Box px={1} pt={1}>
+                        <FormControlLabel
+                            control={
+                                <Checkbox
+                                    name="toggle lock elevation"
+                                    size="medium"
+                                    color="primary"
+                                    checked={lockElevation}
+                                    onChange={() => dispatch(areaActions.toggleLockElevation())}
+                                />
+                            }
+                            label={<Box fontSize={14}>Lock elevation</Box>}
+                        />
+                    </Box>
+
+                    {area > 0 ? (
+                        <>
+                            <Divider sx={{ py: 0 }} />
+                            <Box p={1}>Area: {area.toFixed(3)} &#13217;</Box>
+                        </>
+                    ) : null}
                 </ScrollBox>
                 {menuOpen && <WidgetList widgetKey={featuresConfig.area.key} onSelect={toggleMenu} />}
             </WidgetContainer>

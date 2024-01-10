@@ -3,6 +3,7 @@ import { useEffect, useRef, useState } from "react";
 
 import { useAppSelector } from "app/store";
 import { useExplorerGlobals } from "contexts/explorerGlobals";
+import { selectIsTopDown } from "features/orthoCam";
 import { CameraType, selectCameraType, selectProjectSettings } from "features/render";
 import { latLon2Tm } from "features/render/utils";
 import { AsyncStatus } from "types/misc";
@@ -47,12 +48,13 @@ export function useDitioFeedMarkers() {
     const activePost = useAppSelector(selectActivePost);
     const { data: post } = useGetPostQuery({ postId: activePost }, { skip: !activePost });
     const hoveredEntity = useAppSelector(selectHoveredEntity);
+    const isTopDown = useAppSelector(selectIsTopDown);
 
     const [postMarkers, setPostMarkers] = useState(emptyPosts);
     const [imgMarkers, setImgMarkers] = useState(emptyImgs);
     const currentPost = useRef("");
 
-    const disabled = cameraType !== CameraType.Orthographic || !showMarkers || !tmZone;
+    const disabled = cameraType !== CameraType.Orthographic || !isTopDown || !showMarkers || !tmZone;
 
     useEffect(() => {
         if (!feed) {

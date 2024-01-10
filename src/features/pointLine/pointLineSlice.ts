@@ -104,7 +104,7 @@ export const pointLineSlice = createSlice({
 
 export const selectPointLines = (state: RootState) => state.pointLine.pointLines;
 export const selectCurrentPointLine = (state: RootState) => state.pointLine.pointLines[state.pointLine.currentIndex];
-export const selectLockElevation = (state: RootState) => state.pointLine.lockElevation;
+export const selectLockPointLineElevation = (state: RootState) => state.pointLine.lockElevation;
 export const selectPointLineCurrentIdx = (state: RootState) => state.pointLine.currentIndex;
 
 const { actions, reducer } = pointLineSlice;

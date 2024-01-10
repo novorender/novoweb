@@ -114,12 +114,6 @@ export function useHandleHighlights() {
                                   action: createTransparentHighlight(group.opacity),
                               }))
                             : []),
-                        ...(cameraType === CameraType.Orthographic
-                            ? outlineGroups.map((group) => ({
-                                  objectIds: new Uint32Array(group.ids).sort(),
-                                  outlineColor: group.color,
-                              }))
-                            : []),
                         {
                             objectIds: new Uint32Array(allHidden).sort(),
                             action: "hide",
@@ -138,6 +132,12 @@ export function useHandleHighlights() {
                             ).sort(),
                             action: createColorSetHighlight(group.color),
                         })),
+                        ...(cameraType === CameraType.Orthographic
+                            ? outlineGroups.map((group) => ({
+                                  objectIds: new Uint32Array(group.ids).sort(),
+                                  outlineColor: group.color,
+                              }))
+                            : []),
                         {
                             objectIds: new Uint32Array(
                                 basketMode === SelectionBasketMode.Loose

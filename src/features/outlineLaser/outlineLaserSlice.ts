@@ -29,7 +29,7 @@ export interface OutlineLaser {
     measurementY?: TraceMeasurement;
 }
 
-export function GetMeasurePointsFromTracer(
+export function getMeasurePointsFromTracer(
     measurement: TraceMeasurement,
     startAr: ReadonlyVec3[],
     endAr: ReadonlyVec3[]

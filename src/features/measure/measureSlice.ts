@@ -235,6 +235,7 @@ export const selectMeasure = (state: RootState) =>
         selectedEntities: ExtendedMeasureEntity[][];
         hover: ExtendedMeasureEntity | undefined;
     };
+export const selectHoveredMeasureEntity = (state: RootState) => state.measure.hover;
 export const selectMeasureEntities = (state: RootState) => state.measure.selectedEntities as ExtendedMeasureEntity[][];
 export const selectMeasureHoverSettings = createSelector(
     (state: RootState) => state.measure.snapKind,
