@@ -22,7 +22,7 @@ import WidgetList from "features/widgetList/widgetList";
 import { useToggle } from "hooks/useToggle";
 import { selectMaximized, selectMinimized } from "slices/explorerSlice";
 
-import { pointLineActions, selectCurrentPointLine, selectLockElevation } from "./pointLineSlice";
+import { pointLineActions, selectCurrentPointLine, selectLockPointLineElevation } from "./pointLineSlice";
 
 export default function PointLine() {
     const [menuOpen, toggleMenu] = useToggle();
@@ -35,7 +35,7 @@ export default function PointLine() {
 
     const selecting = useAppSelector(selectPicker) === Picker.PointLine;
     const { points, result } = useAppSelector(selectCurrentPointLine);
-    const lockElevation = useAppSelector(selectLockElevation);
+    const lockElevation = useAppSelector(selectLockPointLineElevation);
     const dispatch = useAppDispatch();
 
     const isInitial = useRef(true);

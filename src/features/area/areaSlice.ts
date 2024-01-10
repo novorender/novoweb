@@ -24,6 +24,7 @@ const areaMeasure = (): AreaMeasure => {
 const initialState = {
     areas: [areaMeasure()],
     currentIndex: 0 as number,
+    lockElevation: false,
 };
 
 export const areaSlice = createSlice({
@@ -39,7 +40,9 @@ export const areaSlice = createSlice({
                 }: PayloadAction<[pt: vec3, normal: vec3], string, { view: View }>
             ) => {
                 const current = state.areas[state.currentIndex];
-                current.points.push(pt);
+                const startPt = current.points.at(-1);
+                const z = state.lockElevation && startPt ? startPt[2] : pt[2];
+                current.points.push([pt[0], pt[1], z]);
                 current.normals.push(normal);
 
                 const area = computeArea(current, view);
@@ -88,6 +91,9 @@ export const areaSlice = createSlice({
                 state.currentIndex = state.areas.length - 1;
             }
         },
+        toggleLockElevation: (state) => {
+            state.lockElevation = !state.lockElevation;
+        },
     },
     extraReducers(builder) {
         builder.addCase(selectBookmark, (state, action) => {
@@ -123,6 +129,7 @@ export const areaSlice = createSlice({
 export const selectCurrentAreaPoints = (state: RootState) => state.area.areas[state.area.currentIndex].points;
 export const selectCurrentArea = (state: RootState) => state.area.areas[state.area.currentIndex];
 export const selectCurrentAreaValue = (state: RootState) => state.area.areas[state.area.currentIndex].area;
+export const selectLockAreaElevation = (state: RootState) => state.area.lockElevation;
 export const selectCurrentAreaIndex = (state: RootState) => state.area.currentIndex;
 export const selectAreas = (state: RootState) => state.area.areas;
 
