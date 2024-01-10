@@ -42,10 +42,10 @@ export function useHandleCameraMoved({
                 return;
             }
 
-            view.render = (isIdleFrame) => cameraMoved(isIdleFrame, view);
+            view.render = ({ isIdleFrame, cameraMoved }) => cameraMovedTrigger(isIdleFrame, cameraMoved, view);
 
-            function cameraMoved(isIdleFrame: boolean, view: View) {
-                const moved = view.activeController.moving || prevCameraType.current !== cameraType;
+            function cameraMovedTrigger(isIdleFrame: boolean, cameraMoved: boolean, view: View) {
+                const moved = cameraMoved || prevCameraType.current !== cameraType;
                 prevCameraType.current = cameraType;
 
                 engine2dRenderFnRef.current?.(moved, isIdleFrame);
