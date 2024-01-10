@@ -8,7 +8,15 @@ import { measureActions } from "features/measure";
 import { orthoCamActions, selectCurrentTopDownElevation } from "features/orthoCam";
 import { ViewMode } from "types/misc";
 
-import { CameraType, DeepMutable, renderActions, RenderState, selectCameraType, selectViewMode } from "..";
+import {
+    CameraType,
+    DeepMutable,
+    renderActions,
+    RenderState,
+    selectCameraType,
+    selectClippingInEdit,
+    selectViewMode,
+} from "..";
 import { useMoveMarkers } from "./useMoveMarkers";
 
 export function useHandleCameraMoved({
@@ -24,6 +32,7 @@ export function useHandleCameraMoved({
     const dispatch = useAppDispatch();
     const cameraType = useAppSelector(selectCameraType);
     const viewMode = useAppSelector(selectViewMode);
+    const editClipping = useAppSelector(selectClippingInEdit);
     const currentTopDownElevation = useAppSelector(selectCurrentTopDownElevation);
 
     const moveSvgMarkers = useMoveMarkers(svg);
@@ -67,7 +76,11 @@ export function useHandleCameraMoved({
                 }
 
                 orthoMovementTimer.current = setTimeout(() => {
-                    if (cameraType !== CameraType.Orthographic || view.renderState.camera.kind !== "orthographic") {
+                    if (
+                        cameraType !== CameraType.Orthographic ||
+                        view.renderState.camera.kind !== "orthographic" ||
+                        editClipping
+                    ) {
                         return;
                     }
 
@@ -139,6 +152,15 @@ export function useHandleCameraMoved({
                 }, 500);
             }
         },
-        [view, dispatch, currentTopDownElevation, cameraType, viewMode, moveSvgMarkers, engine2dRenderFnRef]
+        [
+            view,
+            dispatch,
+            currentTopDownElevation,
+            cameraType,
+            viewMode,
+            moveSvgMarkers,
+            engine2dRenderFnRef,
+            editClipping,
+        ]
     );
 }

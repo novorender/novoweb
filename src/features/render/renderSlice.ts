@@ -331,6 +331,7 @@ const initialState = {
     debugStats: {
         enabled: false,
     },
+    clippingInEdit: false,
 };
 
 type State = typeof initialState;
@@ -580,6 +581,9 @@ export const renderSlice = createSlice({
         },
         setDebugStats: (state, action: PayloadAction<RecursivePartial<State["debugStats"]>>) => {
             state.debugStats = mergeRecursive(state.debugStats, action.payload);
+        },
+        setClippingInEdit: (state, action: PayloadAction<RecursivePartial<State["clippingInEdit"]>>) => {
+            state.clippingInEdit = action.payload;
         },
     },
     extraReducers: (builder) => {
@@ -924,6 +928,7 @@ export const selectPoints = (state: RootState) => state.render.points;
 export const selectDeviations = (state: RootState) => state.render.points.deviation;
 export const selectNavigationCube = (state: RootState) => state.render.navigationCube;
 export const selectDebugStats = (state: RootState) => state.render.debugStats;
+export const selectClippingInEdit = (state: RootState) => state.render.clippingInEdit;
 
 const { reducer } = renderSlice;
 const actions = { ...renderSlice.actions, initScene, resetView, selectBookmark };

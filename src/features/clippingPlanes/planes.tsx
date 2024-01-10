@@ -1,7 +1,7 @@
 import { Cameraswitch } from "@mui/icons-material";
 import { Box, Button, Slider } from "@mui/material";
-import { vec3, vec4 } from "gl-matrix";
-import { SyntheticEvent, useEffect, useState } from "react";
+import { ReadonlyQuat, ReadonlyVec3, vec3, vec4 } from "gl-matrix";
+import { SyntheticEvent, useEffect, useRef, useState } from "react";
 
 import { useAppDispatch, useAppSelector } from "app/store";
 import { useExplorerGlobals } from "contexts/explorerGlobals";
@@ -23,22 +23,27 @@ export default function Planes() {
         }
     }, [planes]);
 
+    const camPos = useRef<ReadonlyVec3 | undefined>(undefined);
+    const camRot = useRef<ReadonlyQuat | undefined>(undefined);
+
     const moveCameraToPlane = (diff: number) => {
-        const pos = vec3.clone(view.renderState.camera.position);
-        const dir = vec3.fromValues(0, 0, 1);
-        vec3.transformQuat(dir, dir, view.renderState.camera.rotation);
-        vec3.scaleAndAdd(pos, pos, dir, diff);
-        dispatch(
-            renderActions.setCamera({
-                type: CameraType.Orthographic,
-                goTo: {
-                    position: pos,
-                    rotation: view.renderState.camera.rotation,
-                    far: view.renderState.camera.far,
-                },
-            })
-        );
-        dispatch(renderActions.setBackground({ color: [0, 0, 0, 1] }));
+        if (camRot.current && camPos.current) {
+            const pos = vec3.clone(camPos.current);
+            const dir = vec3.fromValues(0, 0, 1);
+            vec3.transformQuat(dir, dir, camRot.current);
+            vec3.scaleAndAdd(pos, pos, dir, diff);
+            dispatch(
+                renderActions.setCamera({
+                    type: CameraType.Orthographic,
+                    goTo: {
+                        position: pos,
+                        rotation: view.renderState.camera.rotation,
+                        far: view.renderState.camera.far,
+                    },
+                })
+            );
+            dispatch(renderActions.setBackground({ color: [0, 0, 0, 1] }));
+        }
     };
 
     const handleSliderChange = (idx: number) => (_event: Event, newValue: number | number[]) => {
@@ -48,6 +53,11 @@ export default function Planes() {
             return;
         }
 
+        if (camRot.current === undefined) {
+            camPos.current = view.renderState.camera.position;
+            camRot.current = view.renderState.camera.rotation;
+        }
+
         const newVal = typeof newValue === "number" ? newValue : newValue[0];
         setSliders((_state) => {
             const state = [..._state];
@@ -55,36 +65,48 @@ export default function Planes() {
             return state;
         });
 
-        if (cameraType === CameraType.Orthographic) {
-            return;
-        }
         const plane = vec4.clone(selected.normalOffset);
+        const diff = -newVal - plane[3];
         plane[3] = -newVal;
         view.modifyRenderState({
-            clipping: { planes: planes.map((p, i) => (i === idx ? { ...selected, normalOffset: plane } : p)) },
+            clipping: {
+                planes: planes.map((p, i) =>
+                    i === idx ? { ...selected, outline: { enabled: false }, normalOffset: plane } : p
+                ),
+            },
         });
+        if (cameraType === CameraType.Orthographic) {
+            dispatch(renderActions.setClippingInEdit(true));
+            moveCameraToPlane(diff);
+        }
     };
 
     const handleSliderChangeCommitted =
         (idx: number) => (_event: Event | SyntheticEvent<Element, Event>, newValue: number | number[]) => {
             const selected = planes[idx];
 
+            camRot.current = undefined;
+            camPos.current = undefined;
             if (!selected) {
                 return;
             }
 
             const plane = vec4.clone(selected.normalOffset);
             const newVal = typeof newValue === "number" ? newValue : newValue[0];
-            const diff = -newVal - plane[3];
             plane[3] = -newVal;
-            if (cameraType === CameraType.Orthographic) {
-                moveCameraToPlane(diff);
-            }
+            view.modifyRenderState({
+                outlines: { on: true },
+            });
             dispatch(
                 renderActions.setClippingPlanes({
-                    planes: planes.map((p, i) => (i === idx ? { ...selected, normalOffset: plane } : p)),
+                    planes: planes.map((p, i) =>
+                        i === idx ? { ...selected, outline: { enabled: i === 0 }, normalOffset: plane } : p
+                    ),
                 })
             );
+            if (cameraType === CameraType.Orthographic) {
+                dispatch(renderActions.setClippingInEdit(false));
+            }
         };
 
     const handleSnapToPlane = (idx: number) => {
