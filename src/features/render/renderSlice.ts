@@ -728,9 +728,10 @@ export const renderSlice = createSlice({
                 sceneData: { settings, customProperties: props },
             } = action.payload;
 
-            // Highlight
-            state.defaultVisibility = ObjectVisibility.Neutral;
-            state.mainObject = undefined;
+            state.defaultVisibility = initialState.defaultVisibility;
+            state.mainObject = initialState.mainObject;
+            state.picker = initialState.picker;
+            state.clipping = initialState.clipping;
 
             // Camera
             if (initialCamera) {
@@ -742,9 +743,6 @@ export const renderSlice = createSlice({
                     currentIndex: 0,
                 };
             }
-
-            // clipping
-            state.clipping = initialState.clipping;
 
             const availableSubtrees = Object.keys(state.subtrees).filter(
                 (key) => state.subtrees[key as keyof State["subtrees"]] !== SubtreeStatus.Unavailable
