@@ -19,14 +19,7 @@ const colors = {
     line: "rgba(255, 255, 0, 1)",
 };
 
-type AxisPosition = {
-    x?: Vec2;
-    y?: Vec2;
-    z?: Vec2;
-    plan?: Vec2;
-    dist?: Vec2;
-    normal?: Vec2;
-};
+type RemoveAxisMap = Map<"x" | "y" | "z" | "plan" | "dist" | "normal", vec2>;
 
 export function MeasureCanvas({
     renderFnRef,
@@ -213,76 +206,77 @@ export function MeasureCanvas({
             });
         });
 
-        const removeAxis: {
-            x?: vec2;
-            y?: vec2;
-            z?: vec2;
-            plan?: vec2;
-            dist?: vec2;
-        }[] = [];
-
+        const removeAxis: typeof interactionPositions.current.removeAxis = [];
         updatedResults.forEach((result, i) => {
             if (!result?.activeAxis || !result.product || !result.product.objects[0]) {
                 return;
             }
 
             const activeAxis = result.activeAxis;
-            const axis = result.product.objects[0].parts.reduce((axis, { vertices2D, name }) => {
-                if (!vertices2D || vertices2D.length < 2) {
-                    return axis;
-                }
+            const axes = result.product.objects[0].parts.reduce(
+                (axes, { vertices2D, name }) => {
+                    if (!vertices2D || vertices2D.length < 2) {
+                        return axes;
+                    }
 
-                const dir = vec2.sub(vec2.create(), vertices2D[1], vertices2D[0]);
-                const dist = vec2.len(dir) || 1;
+                    const dir = vec2.sub(vec2.create(), vertices2D[1], vertices2D[0]);
+                    const dist = vec2.len(dir) || 1;
+                    const axis = dist > 120 ? axes.long : !axes.short.size ? axes.short : undefined;
 
-                if (dist < 120) {
-                    return axis;
-                }
+                    if (!axis) {
+                        return axes;
+                    }
 
-                const removeOffset = (dist / 2 + 55) / dist;
-                const infoOffset = (dist / 2 + 80) / dist;
+                    if (axis === axes.short) {
+                        axis.clear();
+                    }
 
-                switch (name) {
-                    case "result": {
-                        if (activeAxis.result) {
-                            axis.dist = vec2.scaleAndAdd(vec2.create(), vertices2D[0], dir, removeOffset);
+                    const removeOffset = (dist / 2 + 55) / dist;
+                    const infoOffset = (dist / 2 + 80) / dist;
+
+                    switch (name) {
+                        case "result": {
+                            if (activeAxis.result) {
+                                axis.set("dist", vec2.scaleAndAdd(vec2.create(), vertices2D[0], dir, removeOffset));
+                            }
+                            infoPos[i] = vec2.scaleAndAdd(vec2.create(), vertices2D[0], dir, infoOffset);
+                            break;
                         }
-                        infoPos[i] = vec2.scaleAndAdd(vec2.create(), vertices2D[0], dir, infoOffset);
-                        break;
-                    }
-                    case "xy-plane": {
-                        if (activeAxis.planar) {
-                            axis.plan = vec2.scaleAndAdd(vec2.create(), vertices2D[0], dir, removeOffset);
+                        case "xy-plane": {
+                            if (activeAxis.planar) {
+                                axis.set("plan", vec2.scaleAndAdd(vec2.create(), vertices2D[0], dir, removeOffset));
+                            }
+                            break;
                         }
-                        break;
-                    }
-                    case "x-axis": {
-                        if (activeAxis.x) {
-                            axis.x = vec2.scaleAndAdd(vec2.create(), vertices2D[0], dir, removeOffset);
+                        case "x-axis": {
+                            if (activeAxis.x) {
+                                axis.set("x", vec2.scaleAndAdd(vec2.create(), vertices2D[0], dir, removeOffset));
+                            }
+                            break;
                         }
-                        break;
-                    }
-                    case "y-axis": {
-                        if (activeAxis.y) {
-                            axis.y = vec2.scaleAndAdd(vec2.create(), vertices2D[0], dir, removeOffset);
+                        case "y-axis": {
+                            if (activeAxis.y) {
+                                axis.set("y", vec2.scaleAndAdd(vec2.create(), vertices2D[0], dir, removeOffset));
+                            }
+                            break;
                         }
-                        break;
-                    }
-                    case "z-axis": {
-                        if (activeAxis.z) {
-                            axis.z = vec2.scaleAndAdd(vec2.create(), vertices2D[0], dir, removeOffset);
+                        case "z-axis": {
+                            if (activeAxis.z) {
+                                axis.set("z", vec2.scaleAndAdd(vec2.create(), vertices2D[0], dir, removeOffset));
+                            }
+                            break;
                         }
-                        break;
+                        case "normal": {
+                            axis.set("normal", vec2.scaleAndAdd(vec2.create(), vertices2D[0], dir, removeOffset));
+                        }
                     }
-                    case "normal": {
-                        axis.normal = vec2.scaleAndAdd(vec2.create(), vertices2D[0], dir, removeOffset);
-                    }
-                }
 
-                return axis;
-            }, {} as AxisPosition);
+                    return axes;
+                },
+                { long: new Map() as RemoveAxisMap, short: new Map() as RemoveAxisMap }
+            );
 
-            removeAxis.push(axis);
+            removeAxis.push(Object.fromEntries(axes.long.size ? axes.long : axes.short));
         });
 
         interactionPositions.current.remove = removePos;
