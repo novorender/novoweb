@@ -223,8 +223,9 @@ export const measureSlice = createSlice({
             }
         });
         builder.addCase(resetView, (state) => {
-            state.selectedEntities = [];
-            state.selectedEntities.push([]);
+            state.selectedEntities = [[]];
+            state.pinned = undefined;
+            state.hover = undefined;
             state.currentIndex = 0;
         });
     },
