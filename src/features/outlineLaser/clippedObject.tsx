@@ -2,11 +2,14 @@ import { Visibility } from "@mui/icons-material";
 import { Box, Checkbox, css, ListItemButton, ListItemButtonProps, styled, Typography } from "@mui/material";
 import { useState } from "react";
 
+import { useAppDispatch } from "app/store";
 import { Tooltip } from "components";
 import { hiddenActions, useDispatchHidden } from "contexts/hidden";
 import { highlightActions, useDispatchHighlighted } from "contexts/highlighted";
 import { ColorPicker } from "features/colorPicker";
-import { VecRGB, vecToRgb } from "utils/color";
+import { vecToRgb } from "utils/color";
+
+import { clippingOutlineLaserActions, OutlineGroup } from "./outlineLaserSlice";
 
 export const StyledListItemButton = styled(ListItemButton)<ListItemButtonProps>(
     ({ theme }) => css`
@@ -21,16 +24,10 @@ export const StyledCheckbox = styled(Checkbox)`
     padding-bottom: 0;
 `;
 
-export interface ClippedFile {
-    name: string;
-    color: VecRGB;
-    hidden: boolean;
-    ids: number[];
-}
-
-export function ClippedObject({ file }: { file: ClippedFile }) {
+export function ClippedObject({ file }: { file: OutlineGroup }) {
     const [colorPickerAnchor, setColorPickerAnchor] = useState<HTMLElement | null>(null);
     const [hidden, setSetHidden] = useState(false);
+    const dispatch = useAppDispatch();
 
     // const toggleColorPicker = (event?: MouseEvent<HTMLElement>) => {
     //     setColorPickerAnchor(!colorPickerAnchor && event?.currentTarget ? event.currentTarget : null);
@@ -44,6 +41,8 @@ export function ClippedObject({ file }: { file: ClippedFile }) {
     const dispatchHidden = useDispatchHidden();
     const dispatchHighlighted = useDispatchHighlighted();
     const toggleHide = async (hidden: boolean) => {
+        dispatch(clippingOutlineLaserActions.toggleHideOutlineGroup({ name: file.name, hide: hidden }));
+
         if (hidden) {
             dispatchHidden(hiddenActions.add(file.ids));
             dispatchHighlighted(highlightActions.remove(file.ids));
