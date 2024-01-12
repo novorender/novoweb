@@ -75,7 +75,10 @@ export function useHandleInit() {
                     new AbortController().signal
                 );
 
-                const offlineWorkerState = await view.manageOfflineStorage();
+                const offlineWorkerState = await view.manageOfflineStorage().catch((e) => {
+                    console.warn("view.manageOfflineStorage():", e);
+                    return undefined;
+                });
                 view.run();
 
                 while (!view.renderState.scene) {
