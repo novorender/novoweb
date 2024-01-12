@@ -37,8 +37,13 @@ import { VecRGB } from "utils/color";
 import { getFilePathFromObjectPath } from "utils/objectData";
 import { searchByPatterns } from "utils/search";
 
-import { ClippedFile, ClippedObject } from "./clippedObject";
-import { clippingOutlineLaserActions, selectOutlineGroups, selectOutlineLasers } from "./outlineLaserSlice";
+import { ClippedObject } from "./clippedObject";
+import {
+    clippingOutlineLaserActions,
+    OutlineGroup,
+    selectOutlineGroups,
+    selectOutlineLasers,
+} from "./outlineLaserSlice";
 
 export default function ClippingOutline() {
     const {
@@ -80,7 +85,7 @@ export default function ClippingOutline() {
                     }
                 },
             });
-            const files: ClippedFile[] = [];
+            const files: OutlineGroup[] = [];
 
             let i = 0;
             const increments = 360 / filePaths.size;

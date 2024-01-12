@@ -2,8 +2,7 @@ import { useEffect, useRef } from "react";
 
 import { useAppDispatch, useAppSelector } from "app/store";
 import { useExplorerGlobals } from "contexts/explorerGlobals";
-import { clippingOutlineLaserActions, selectOutlineGroups } from "features/outlineLaser";
-import { ClippedFile } from "features/outlineLaser/clippedObject";
+import { clippingOutlineLaserActions, OutlineGroup, selectOutlineGroups } from "features/outlineLaser";
 import { selectIsOnline } from "slices/explorerSlice";
 import { VecRGB } from "utils/color";
 import { getFilePathFromObjectPath } from "utils/objectData";
@@ -73,7 +72,7 @@ export function useHandleClippingOutlines() {
                         }
                     },
                 });
-                const files: ClippedFile[] = [];
+                const files: OutlineGroup[] = [];
 
                 let i = 0;
                 const increments = 360 / filePaths.size;
