@@ -732,6 +732,7 @@ export const renderSlice = createSlice({
             state.mainObject = initialState.mainObject;
             state.picker = initialState.picker;
             state.clipping = initialState.clipping;
+            state.selectionBasketMode = initialState.selectionBasketMode;
 
             // Camera
             if (initialCamera) {
@@ -818,9 +819,10 @@ export const renderSlice = createSlice({
 
             state.subtrees = subtreesFromBookmark(state.subtrees, subtrees);
             state.viewMode = viewMode;
-            state.selectionBasketMode = options.addToSelectionBasket
-                ? objects.selectionBasket.mode
-                : state.selectionBasketMode;
+            state.selectionBasketMode =
+                options.addToSelectionBasket || objects.selectionBasket.ids.length
+                    ? objects.selectionBasket.mode
+                    : SelectionBasketMode.Loose;
             state.mainObject = objects.mainObject.id;
             state.defaultVisibility = options.addToSelectionBasket
                 ? ObjectVisibility.Transparent
