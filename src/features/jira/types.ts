@@ -233,7 +233,7 @@ export type Issue = {
         };
         components: Component[];
         timeoriginalestimate: null;
-        description: AdfNode;
+        description: AdfNode | null;
         timetracking: object;
         security: null;
         aggregatetimeestimate: null;
@@ -298,7 +298,7 @@ export type AdfNode = {
     text?: string;
     content?: AdfNode[];
     marks?: { attrs?: { href?: string; level?: number }; type?: string }[];
-    attrs?: { text?: string };
+    attrs?: { text?: string; level?: number };
 };
 
 export type Field = {

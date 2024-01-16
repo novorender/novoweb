@@ -58,6 +58,7 @@ const dynamicBaseQuery: BaseQueryFn<string | FetchArgs, unknown, FetchBaseQueryE
 
 export const jiraApi = createApi({
     reducerPath: "jiraApi",
+    tagTypes: ["Issue"],
     baseQuery: dynamicBaseQuery,
     endpoints: (builder) => ({
         getCurrentUser: builder.query<CurrentUser, void>({
@@ -91,6 +92,7 @@ export const jiraApi = createApi({
         }),
         getIssue: builder.query<Issue, { key: string }>({
             query: ({ key }) => `issue/${key}`,
+            providesTags: (_res, _err, args) => [{ type: "Issue", id: args.key }],
         }),
         createIssue: builder.mutation<{ id: string; key: string; self: string }, { body: FetchArgs["body"] }>({
             query: ({ body }) => ({
@@ -102,6 +104,21 @@ export const jiraApi = createApi({
                 },
                 body,
             }),
+        }),
+        editIssue: builder.mutation<
+            { id: string; key: string; self: string },
+            { key: string; body: FetchArgs["body"] }
+        >({
+            query: ({ key, body }) => ({
+                url: `issue/${key}`,
+                method: "PUT",
+                headers: {
+                    Accept: "application/json",
+                    "Content-Type": "application/json",
+                },
+                body,
+            }),
+            invalidatesTags: (_res, _err, args) => [{ type: "Issue", id: args.key }],
         }),
         addAttachment: builder.mutation<{ id: string; key: string; self: string }, { issueId: string; form: FormData }>(
             {
@@ -323,6 +340,7 @@ export const {
     useGetCurrentUserQuery,
     useLazyGetTokensQuery,
     useCreateIssueMutation,
+    useEditIssueMutation,
     useCreateCommentMutation,
     useAddAttachmentMutation,
     useGetAttachmentThumbnailQuery,

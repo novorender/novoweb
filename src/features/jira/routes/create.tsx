@@ -19,7 +19,6 @@ import { DatePicker } from "@mui/x-date-pickers";
 import { format, isValid } from "date-fns";
 import { useEffect, useRef, useState } from "react";
 import { useHistory } from "react-router-dom";
-import { v4 as uuidv4 } from "uuid";
 
 import { dataApi } from "app";
 import { useAppDispatch, useAppSelector } from "app/store";
@@ -47,6 +46,7 @@ import {
     selectMetaCustomfieldKey,
 } from "../jiraSlice";
 import { AdfNode, Assignee, CreateIssueMetadata } from "../types";
+import { createIssueSnapshotAttachment, createLinkNode } from "../utils";
 
 export function CreateIssue({ sceneId }: { sceneId: string }) {
     const theme = useTheme();
@@ -128,7 +128,7 @@ export function CreateIssue({ sceneId }: { sceneId: string }) {
         }
 
         setSaveStatus(AsyncStatus.Loading);
-        const bmId = uuidv4();
+        const bmId = window.crypto.randomUUID();
         const bm = createBookmark();
         const snapshot = await createCanvasSnapshot(canvas, 5000, 5000);
         const saved = await dataApi.saveBookmarks(sceneId, [{ ...bm, id: bmId, name: bmId }], { group: bmId });
@@ -182,26 +182,7 @@ export function CreateIssue({ sceneId }: { sceneId: string }) {
                                   },
                               ]
                             : []),
-                        {
-                            type: "heading",
-                            attrs: {
-                                level: 3,
-                            },
-                            content: [
-                                {
-                                    type: "text",
-                                    text: "Novorender link",
-                                    marks: [
-                                        {
-                                            type: "link",
-                                            attrs: {
-                                                href: `${window.location.origin}${window.location.pathname}?bookmarkId=${bmId}`,
-                                            },
-                                        },
-                                    ],
-                                },
-                            ],
-                        },
+                        createLinkNode(bmId),
                     ],
                 },
                 ...(formValues.assignee ? { assignee: { id: formValues.assignee.accountId } } : {}),
@@ -220,25 +201,7 @@ export function CreateIssue({ sceneId }: { sceneId: string }) {
             }
 
             if (snapshot) {
-                const formData = new FormData();
-
-                // https://stackoverflow.com/a/61321728
-                function DataURIToBlob(dataURI: string) {
-                    const splitDataURI = dataURI.split(",");
-                    const byteString =
-                        splitDataURI[0].indexOf("base64") >= 0 ? atob(splitDataURI[1]) : decodeURI(splitDataURI[1]);
-                    const mimeString = splitDataURI[0].split(":")[1].split(";")[0];
-
-                    const ia = new Uint8Array(byteString.length);
-                    for (let i = 0; i < byteString.length; i++) {
-                        ia[i] = byteString.charCodeAt(i);
-                    }
-
-                    return new Blob([ia], { type: mimeString });
-                }
-
-                formData.append("file", DataURIToBlob(snapshot), "Novorender model image");
-                await addAttachment({ issueId: res.data.id, form: formData });
+                await addAttachment({ issueId: res.data.id, form: createIssueSnapshotAttachment(snapshot) });
             }
 
             setSaveStatus(AsyncStatus.Success);
