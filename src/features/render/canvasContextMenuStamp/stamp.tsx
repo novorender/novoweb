@@ -392,7 +392,7 @@ export function Measure() {
             if (cameraType === CameraType.Orthographic) {
                 const pos = view.worldPositionFromPixelPosition(stamp.mouseX, stamp.mouseY);
                 if (pos && plane) {
-                    const laser = await getOutlineLaser(pos, view, cameraType, plane);
+                    const laser = await getOutlineLaser(pos, view);
                     setLaser(laser ? { laser, plane } : undefined);
                     const outlinePoint = view.selectOutlinePoint(pos, 0.2);
                     if (outlinePoint) {
@@ -407,7 +407,7 @@ export function Measure() {
                 if (d > 0) {
                     const t = (plane[3] - vec3.dot(planeDir, view.renderState.camera.position)) / d;
                     const pos = vec3.scaleAndAdd(vec3.create(), view.renderState.camera.position, rayDir, t);
-                    const laser = await getOutlineLaser(pos, view, cameraType, plane);
+                    const laser = await getOutlineLaser(pos, view);
                     const outlinePoint = view.selectOutlinePoint(pos, 0.2);
                     setPickPoint(outlinePoint);
                     setLaser(laser ? { laser, plane } : undefined);

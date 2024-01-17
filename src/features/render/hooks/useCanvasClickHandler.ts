@@ -251,7 +251,7 @@ export function useCanvasClickHandler({
                     dispatch(
                         clippingOutlineLaserActions.setLaserPlane(view.renderState.clipping.planes[0].normalOffset)
                     );
-                    const laser = await getOutlineLaser(tracePosition, view, cameraState.type, planes[0].normalOffset);
+                    const laser = await getOutlineLaser(tracePosition, view);
                     if (laser) {
                         dispatch(clippingOutlineLaserActions.addLaser(laser));
                     }
