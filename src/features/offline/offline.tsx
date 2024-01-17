@@ -25,7 +25,7 @@ import { offlineActions, selectOfflineAction, selectOfflineScenes } from "./offl
 
 export default function Offline() {
     const {
-        state: { view },
+        state: { view, offlineWorkerState },
     } = useExplorerGlobals(true);
     const parentSceneId = view.renderState.scene!.config.id;
     const viewerSceneId = useSceneId();
@@ -45,31 +45,35 @@ export default function Offline() {
                         <LinearProgress />
                     </Box>
                 )}
-                {!menuOpen && !minimized && (
-                    <ScrollBox p={1} pt={2}>
-                        {!currentParentScene || (!currentViewerScene && currentParentScene.id !== viewerSceneId) ? (
-                            <Pending />
-                        ) : (
-                            <>
-                                {currentParentScene.status === "incremental" && <Incremental />}
-                                {currentParentScene.status === "synchronized" && <Downloaded />}
-                                {currentParentScene.status === "scanning" && (
-                                    <Scanning progress={currentParentScene.scanProgress} />
-                                )}
-                                {currentParentScene.status === "synchronizing" && (
-                                    <Downloading progress={currentParentScene.progress} />
-                                )}
-                                {currentParentScene.status === "error" && <DownloadError />}
-                                {currentParentScene.status === "aborted" && <Interrupted />}
-                                {currentParentScene.status === "invalid format" && <OlderFormat />}
-                            </>
-                        )}
+                {!menuOpen &&
+                    !minimized &&
+                    (!offlineWorkerState ? (
+                        <Typography p={1}>Offline is not available for this scene or device.</Typography>
+                    ) : (
+                        <ScrollBox p={1} pt={2}>
+                            {!currentParentScene || (!currentViewerScene && currentParentScene.id !== viewerSceneId) ? (
+                                <Pending />
+                            ) : (
+                                <>
+                                    {currentParentScene.status === "incremental" && <Incremental />}
+                                    {currentParentScene.status === "synchronized" && <Downloaded />}
+                                    {currentParentScene.status === "scanning" && (
+                                        <Scanning progress={currentParentScene.scanProgress} />
+                                    )}
+                                    {currentParentScene.status === "synchronizing" && (
+                                        <Downloading progress={currentParentScene.progress} />
+                                    )}
+                                    {currentParentScene.status === "error" && <DownloadError />}
+                                    {currentParentScene.status === "aborted" && <Interrupted />}
+                                    {currentParentScene.status === "invalid format" && <OlderFormat />}
+                                </>
+                            )}
 
-                        <AllDownloadedScenes
-                            synchronizing={currentParentScene && currentParentScene.status === "synchronizing"}
-                        />
-                    </ScrollBox>
-                )}
+                            <AllDownloadedScenes
+                                synchronizing={currentParentScene && currentParentScene.status === "synchronizing"}
+                            />
+                        </ScrollBox>
+                    ))}
                 {menuOpen && <WidgetList widgetKey={featuresConfig.offline.key} onSelect={toggleMenu} />}
             </WidgetContainer>
             <LogoSpeedDial open={menuOpen} toggle={toggleMenu} />

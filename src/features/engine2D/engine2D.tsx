@@ -50,7 +50,7 @@ export function Engine2D({
     return (
         <>
             <MeasureCanvas renderFnRef={measureRenderFn} svg={svg} />
-            <OutlineLaserCanvas renderFnRef={outlineLaserRenderFn} />
+            <OutlineLaserCanvas renderFnRef={outlineLaserRenderFn} svg={svg} />
             <AreaCanvas renderFnRef={areaRenderFn} svg={svg} />
             <PointLineCanvas renderFnRef={plRenderFn} svg={svg} />
             <FollowPathCanvas renderFnRef={followPathRenderFn} pointerPosRef={pointerPosRef} />

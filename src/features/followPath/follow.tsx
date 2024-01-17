@@ -27,6 +27,7 @@ import { ColorPicker } from "features/colorPicker";
 import { CameraType, renderActions } from "features/render/renderSlice";
 import { AsyncStatus, ViewMode } from "types/misc";
 import { rgbToVec, vecToRgb } from "utils/color";
+import { uniqueArray } from "utils/misc";
 import { searchByPatterns } from "utils/search";
 
 import {
@@ -213,7 +214,7 @@ export function Follow({ fpObj }: { fpObj: FollowParametricObject }) {
                 }
 
                 const pathName = path.name;
-                const roadIds: string[] = [];
+                let roadIds: string[] = [];
                 let references = [] as HierarcicalObjectReference[];
                 await searchByPatterns({
                     db,
@@ -236,6 +237,7 @@ export function Follow({ fpObj }: { fpObj: FollowParametricObject }) {
                     })
                 );
 
+                roadIds = uniqueArray(roadIds);
                 dispatch(followPathActions.setRoadIds(roadIds));
                 if (!drawRoadIds) {
                     dispatch(followPathActions.setDrawRoadIds(roadIds));

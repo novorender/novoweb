@@ -41,7 +41,7 @@ const controls = [
     { label: "Special", value: "special" },
 ] as const;
 const isValidControllerKind = (val: string): val is (typeof controls)[number]["value"] =>
-    !controls.map((c): string => c.value).includes(val);
+    controls.map((c): string => c.value).includes(val);
 
 export function CameraSettings({
     save,
