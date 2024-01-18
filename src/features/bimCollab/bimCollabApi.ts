@@ -17,7 +17,6 @@ import {
 } from "types/bcf";
 import { generateCodeChallenge } from "utils/auth";
 import { handleImageResponse } from "utils/bcf";
-import { generateRandomString } from "utils/misc";
 import { getFromStorage, saveToStorage } from "utils/storage";
 import { sleep } from "utils/time";
 
@@ -269,8 +268,7 @@ export const {
 } = bimCollabApi;
 
 export async function getCode(authUrl: string, state: string, config: { bimCollabClientId: string }) {
-    const verifier = generateRandomString();
-    const challenge = await generateCodeChallenge(verifier);
+    const [verifier, challenge] = await generateCodeChallenge();
     saveToStorage(StorageKey.BimCollabCodeVerifier, verifier);
 
     window.location.href =

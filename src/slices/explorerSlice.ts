@@ -66,11 +66,11 @@ const initialState = {
         bimCollabClientId: (import.meta.env.REACT_APP_BIMCOLLAB_CLIENT_ID ?? "") as string,
         bimTrackClientSecret: (import.meta.env.REACT_APP_BIMTRACK_CLIENT_SECRET ?? "") as string,
         bimTrackClientId: (import.meta.env.REACT_APP_BIMTRACK_CLIENT_ID ?? "") as string,
-        ditioClientSecret: (import.meta.env.REACT_APP_DITIO_CLIENT_SECRET ?? "") as string,
-        ditioClientId: (import.meta.env.REACT_APP_DITIO_CLIENT_ID ?? "") as string,
         jiraClientId: (import.meta.env.REACT_APP_JIRA_CLIENT_ID ?? "") as string,
         jiraClientSecret: (import.meta.env.REACT_APP_JIRA_CLIENT_SECRET ?? "") as string,
         xsiteManageClientId: (import.meta.env.REACT_APP_XSITEMANAGE_CLIENT_ID ?? "") as string,
+        novorenderClientId: (import.meta.env.REACT_APP_NOVORENDER_CLIENT_ID ?? "") as string,
+        novorenderClientSecret: (import.meta.env.REACT_APP_NOVORENDER_CLIENT_SECRET ?? "") as string,
     },
 };
 

@@ -17,7 +17,6 @@ import {
 import { AsyncStatus } from "types/misc";
 import { generateCodeChallenge } from "utils/auth";
 import { handleImageResponse } from "utils/bcf";
-import { generateRandomString } from "utils/misc";
 import { getFromStorage, saveToStorage } from "utils/storage";
 import { sleep } from "utils/time";
 
@@ -248,8 +247,7 @@ export const {
 } = bimTrackApi;
 
 export async function getCode(state: string, config: { bimTrackClientId: string; bimTrackClientSecret: string }) {
-    const verifier = generateRandomString();
-    const challenge = await generateCodeChallenge(verifier);
+    const [verifier, challenge] = await generateCodeChallenge();
     saveToStorage(StorageKey.BimTrackCodeVerifier, verifier);
 
     window.location.href =

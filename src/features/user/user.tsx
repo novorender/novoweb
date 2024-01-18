@@ -1,19 +1,24 @@
-import { Box, Button, Grid } from "@mui/material";
+import { LoadingButton } from "@mui/lab";
+import { Box, CircularProgress, Grid } from "@mui/material";
+import { useState } from "react";
 
-import { msalInstance } from "app";
 import { useAppSelector } from "app/store";
-import { LogoSpeedDial, ScrollBox, WidgetContainer, WidgetHeader } from "components";
+import { LinearProgress, LogoSpeedDial, ScrollBox, WidgetContainer, WidgetHeader } from "components";
+import { dataServerBaseUrl } from "config/app";
 import { featuresConfig } from "config/features";
 import { StorageKey } from "config/storage";
+import { useCreateBookmark } from "features/bookmarks";
 import WidgetList from "features/widgetList/widgetList";
 import { useSceneId } from "hooks/useSceneId";
 import { useToggle } from "hooks/useToggle";
-import { selectMsalAccount, selectUser, User as UserType } from "slices/authSlice";
+import { selectUser, User as UserType } from "slices/authSlice";
 import { selectMaximized, selectMinimized, selectUserRole, UserRole } from "slices/explorerSlice";
-import { deleteFromStorage } from "utils/storage";
+import { createOAuthStateString, generateCodeChallenge } from "utils/auth";
+import { deleteFromStorage, saveToStorage } from "utils/storage";
 
 export default function User() {
     const [menuOpen, toggleMenu] = useToggle();
+    const [loading, setLoading] = useState(false);
 
     const minimized = useAppSelector(selectMinimized) === featuresConfig.user.key;
     const maximized = useAppSelector(selectMaximized).includes(featuresConfig.user.key);
@@ -24,8 +29,17 @@ export default function User() {
         <>
             <WidgetContainer minimized={minimized} maximized={maximized}>
                 <WidgetHeader widget={featuresConfig.user} disableShadow={menuOpen} />
+                {loading && (
+                    <Box>
+                        <LinearProgress />
+                    </Box>
+                )}
                 <ScrollBox p={1} mt={2} display={!menuOpen && !minimized ? "flex" : "none"} flexDirection="column">
-                    {user ? <LoggedIn user={user} /> : <LoggedOut />}
+                    {user ? (
+                        <LoggedIn user={user} loading={loading} setLoading={setLoading} />
+                    ) : (
+                        <LoggedOut loading={loading} setLoading={setLoading} />
+                    )}
                 </ScrollBox>
                 {menuOpen && <WidgetList widgetKey={featuresConfig.user.key} onSelect={toggleMenu} />}
             </WidgetContainer>
@@ -34,21 +48,21 @@ export default function User() {
     );
 }
 
-function LoggedIn({ user }: { user: UserType }) {
-    const msalAccount = useAppSelector(selectMsalAccount);
+function LoggedIn({
+    user,
+    loading,
+    setLoading,
+}: {
+    user: UserType;
+    loading: boolean;
+    setLoading: (state: boolean) => void;
+}) {
     const role = useAppSelector(selectUserRole);
 
     const logOut = () => {
-        deleteFromStorage(StorageKey.NovoToken);
-        deleteFromStorage(StorageKey.MsalActiveAccount);
-
-        if (msalAccount) {
-            msalInstance.logoutRedirect({
-                account: msalAccount,
-            });
-        } else {
-            window.location.reload();
-        }
+        setLoading(true);
+        deleteFromStorage(StorageKey.RefreshToken);
+        window.location.href = `https://auth.novorender.com/signout?return_url=${window.location.href}`;
     };
 
     return (
@@ -75,27 +89,86 @@ function LoggedIn({ user }: { user: UserType }) {
                     {user.organization}
                 </Grid>
             </Grid>
-            <Button onClick={logOut} sx={{ mt: 2 }} variant="outlined">
+            <LoadingButton
+                onClick={logOut}
+                sx={{ mt: 4, mb: 2, minWidth: 250 }}
+                variant="outlined"
+                size="large"
+                loading={loading}
+                loadingIndicator={
+                    <Box position={"relative"} display="flex" alignItems="center" minWidth={75}>
+                        Log out
+                        <CircularProgress sx={{ ml: 1 }} color="inherit" size={16} />
+                    </Box>
+                }
+            >
                 Log out
-            </Button>
+            </LoadingButton>
         </>
     );
 }
 
-function LoggedOut() {
+function LoggedOut({ loading, setLoading }: { loading: boolean; setLoading: (state: boolean) => void }) {
     const sceneId = useSceneId();
+    const createBookmark = useCreateBookmark();
+
+    const handleLoginRedirect = async () => {
+        const bookmarkId = window.crypto.randomUUID();
+        const state = createOAuthStateString({
+            sceneId,
+            service: "self",
+            localBookmarkId: bookmarkId,
+        });
+
+        const bm = createBookmark();
+
+        try {
+            sessionStorage.setItem(bookmarkId, JSON.stringify(bm));
+        } catch {
+            // nada
+        }
+
+        setLoading(true);
+        const [verifier, challenge] = await generateCodeChallenge();
+        saveToStorage(StorageKey.CodeVerifier, verifier);
+
+        const tenant = await fetch(`${dataServerBaseUrl}/scenes/${sceneId}`)
+            .then((res) => res.json())
+            .then((res) => ("tenant" in res ? res.tenant : undefined))
+            .catch((_err) => undefined);
+
+        window.location.href =
+            "https://auth.novorender.com" +
+            `/auth` +
+            "?response_type=code" +
+            `&client_id=${"IWOHeLxNRxoqGtVZ3I6guPo2UvZ6mI5n"}` +
+            `&redirect_uri=${window.location.origin}` +
+            `&state=${state}` +
+            `&code_challenge=${challenge}` +
+            `&code_challenge_method=S256` +
+            (tenant ? `&tenant_id=${tenant}` : "");
+    };
 
     return (
-        <Box width={1} display="flex" flexDirection="column" justifyContent="center" alignItems="center">
-            <Button
-                component="a"
-                href={`${window.location.origin}/login/${sceneId}${window.location.search}`}
-                sx={{ mt: 2 }}
-                variant="contained"
-                size="large"
-            >
-                Log in
-            </Button>
-        </Box>
+        <ScrollBox p={1}>
+            <Box display="flex" justifyContent="center">
+                <LoadingButton
+                    onClick={handleLoginRedirect}
+                    sx={{ mt: 4, mb: 2, minWidth: 250 }}
+                    variant="contained"
+                    color="primary"
+                    size="large"
+                    loading={loading}
+                    loadingIndicator={
+                        <Box position={"relative"} display="flex" alignItems="center" minWidth={75}>
+                            Log in
+                            <CircularProgress sx={{ ml: 1 }} color="inherit" size={16} />
+                        </Box>
+                    }
+                >
+                    Log in
+                </LoadingButton>
+            </Box>
+        </ScrollBox>
     );
 }

@@ -7,6 +7,7 @@
     "extends": ["eslint:recommended", "plugin:@typescript-eslint/recommended", "plugin:react-hooks/recommended"],
     "parser": "@typescript-eslint/parser",
     "plugins": ["react-refresh", "simple-import-sort"],
+    "globals": { "process": true },
     "rules": {
         "curly": "warn",
         "no-inner-declarations": "off",

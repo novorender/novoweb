@@ -1,1 +1,0 @@
-export { MsalInteraction } from "./msalInteraction";
