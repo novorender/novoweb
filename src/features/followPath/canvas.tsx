@@ -1,5 +1,5 @@
 import { DrawProduct } from "@novorender/api";
-import { vec2 } from "gl-matrix";
+import { vec2, vec3 } from "gl-matrix";
 import { MutableRefObject, useCallback, useEffect, useRef, useState } from "react";
 
 import { useAppSelector } from "app/store";
@@ -248,15 +248,21 @@ export function FollowPathCanvas({
             translateInteraction(svg.children.namedItem(`followPlus`), vec2.fromValues(pt[0] + 50, pt[1]));
             translateInteraction(svg.children.namedItem(`followMinus`), vec2.fromValues(pt[0] - 50, pt[1]));
             translateInteraction(svg.children.namedItem(`followInfo`), vec2.fromValues(pt[0], pt[1] - 55));
-        } else if (roadCrossSectionData && roadCrossSectionData.length > 0) {
-            const section = roadCrossSectionData[0];
+        } else if (view.renderState.clipping.planes.length > 0) {
+            const plane = view.renderState.clipping.planes[0].normalOffset;
+            const normal = vec3.fromValues(plane[0], plane[1], plane[2]);
+            let up = vec3.fromValues(0, 0, 1);
+            if (Math.abs(vec3.dot(normal, up)) === 1) {
+                up = vec3.fromValues(0, 1, 0);
+            }
+            const right = vec3.cross(vec3.create(), up, normal);
+            vec3.normalize(right, right);
             const pt = view.measure.draw.toMarkerPoints([
                 currentProfileCenter,
-                section.slopes.left.start,
-                section.slopes.right.end,
+                vec3.scaleAndAdd(vec3.create(), currentProfileCenter, right, 10),
             ]);
-            if (pt[0] && pt[1] && pt[2]) {
-                const dir = vec2.sub(vec2.create(), pt[2], pt[1]);
+            if (pt[0] && pt[1]) {
+                const dir = vec2.sub(vec2.create(), pt[1], pt[0]);
                 vec2.normalize(dir, dir);
                 translateInteraction(
                     svg.children.namedItem(`followPlus`),
@@ -281,7 +287,7 @@ export function FollowPathCanvas({
         } else {
             removeMarkers();
         }
-    }, [canvas, currentProfile, currentProfileCenter, profileCtx, view, svg, roadCrossSectionData, fpObj]);
+    }, [canvas, currentProfile, currentProfileCenter, profileCtx, view, svg, fpObj]);
 
     const deviationsDrawId = useRef(0);
     const drawDeviations = useCallback(
