@@ -278,6 +278,8 @@ export function FollowPathCanvas({
                 translateInteraction(svg.children.namedItem(`followPlus`), undefined);
                 translateInteraction(svg.children.namedItem(`followMinus`), undefined);
             }
+        } else {
+            removeMarkers();
         }
     }, [canvas, currentProfile, currentProfileCenter, profileCtx, view, svg, roadCrossSectionData, fpObj]);
 
