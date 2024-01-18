@@ -10,7 +10,6 @@ import { ObjectGroupsProvider } from "contexts/objectGroups";
 import { SelectionBasketProvider } from "contexts/selectionBasket";
 import { Consent } from "features/consent";
 import { Hud } from "features/hud";
-import { MsalInteraction } from "features/msalInteraction";
 import { QuirkAlert } from "features/quirkAlert";
 import { Render3D, selectSceneStatus } from "features/render";
 import { VersionAlert } from "features/versionAlert";
@@ -39,7 +38,7 @@ function ExplorerBase() {
         const oAuthState = getOAuthState();
 
         if (oAuthState) {
-            if (oAuthState.service) {
+            if (oAuthState.service && oAuthState.service !== "self") {
                 dispatch(explorerActions.setWidgets([oAuthState.service]));
             }
 
@@ -67,7 +66,6 @@ function ExplorerBase() {
             <Consent />
             <VersionAlert />
             <QuirkAlert />
-            <MsalInteraction />
         </>
     );
 }

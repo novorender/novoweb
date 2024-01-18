@@ -13,9 +13,9 @@ export function sha256(plain: string): Promise<ArrayBuffer> {
 }
 
 export function generateRandomString(): string {
-    const array = new Uint32Array(56 / 2);
-    window.crypto.getRandomValues(array);
-    return Array.from(array, (num) => ("0" + num.toString(16)).substr(-2)).join("");
+    return Array.from(window.crypto.getRandomValues(new Uint32Array(28)))
+        .map((num) => ("0" + num.toString(16)).slice(-2))
+        .join("");
 }
 
 export function base64UrlEncode(buffer: ArrayBuffer): string {

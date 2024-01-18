@@ -115,11 +115,11 @@ app.get("/config.json", (_req, res) => {
         bimCollabClientId: process.env.BIMCOLLAB_CLIENT_ID ?? "",
         bimTrackClientSecret: process.env.BIMTRACK_CLIENT_SECRET ?? "",
         bimTrackClientId: process.env.BIMTRACK_CLIENT_ID ?? "",
-        ditioClientSecret: process.env.DITIO_CLIENT_SECRET ?? "",
-        ditioClientId: process.env.DITIO_CLIENT_ID ?? "",
         jiraClientId: process.env.JIRA_CLIENT_ID ?? "",
         jiraClientSecret: process.env.JIRA_CLIENT_SECRET ?? "",
         xsiteManageClientId: process.env.XSITEMANAGE_CLIENT_ID ?? "",
+        novorenderClientId: process.env.NOVORENDER_CLIENT_ID ?? "",
+        novorenderClientSecret: process.env.NOVORENDER_CLIENT_SECRET ?? "",
     });
 });
 app.get("/*", function (_req, res) {
