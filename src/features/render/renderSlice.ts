@@ -162,6 +162,7 @@ type Stamp = { mouseX: number; mouseY: number; pinned: boolean } & (
 
 const initialState = {
     sceneStatus: { status: AsyncStatus.Initial } as AsyncState<void>,
+    sceneOrganization: "",
     mainObject: undefined as number | undefined,
     defaultVisibility: ObjectVisibility.Neutral,
     selectMultiple: false,
@@ -589,7 +590,7 @@ export const renderSlice = createSlice({
     extraReducers: (builder) => {
         builder.addCase(initScene, (state, action) => {
             const {
-                sceneData: { customProperties: props, settings, tmZone, ...sceneData },
+                sceneData: { organization, customProperties: props, settings, tmZone, ...sceneData },
                 sceneConfig,
                 initialCamera,
                 deviceProfile,
@@ -601,13 +602,9 @@ export const renderSlice = createSlice({
             state.savedCameraPositions.positions[0] = { ...initialCamera, kind: state.camera.type };
             state.savedCameraPositions.currentIndex = 0;
 
-            // project
+            state.sceneOrganization = organization ?? "";
             state.project.tmZone = tmZone ?? state.project.tmZone;
-
-            // device profile
             state.deviceProfile = mergeRecursive(state.deviceProfile, deviceProfile);
-
-            // Misc
             state.debugStats.enabled = window.location.search.includes("debug=true");
 
             if (props.explorerProjectState) {
@@ -929,6 +926,7 @@ export const selectDeviations = (state: RootState) => state.render.points.deviat
 export const selectNavigationCube = (state: RootState) => state.render.navigationCube;
 export const selectDebugStats = (state: RootState) => state.render.debugStats;
 export const selectClippingInEdit = (state: RootState) => state.render.clippingInEdit;
+export const selectSceneOrganization = (state: RootState) => state.render.sceneOrganization;
 
 const { reducer } = renderSlice;
 const actions = { ...renderSlice.actions, initScene, resetView, selectBookmark };

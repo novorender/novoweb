@@ -8,6 +8,7 @@ import { dataServerBaseUrl } from "config/app";
 import { featuresConfig } from "config/features";
 import { StorageKey } from "config/storage";
 import { useCreateBookmark } from "features/bookmarks";
+import { selectSceneOrganization } from "features/render";
 import WidgetList from "features/widgetList/widgetList";
 import { useSceneId } from "hooks/useSceneId";
 import { useToggle } from "hooks/useToggle";
@@ -58,6 +59,7 @@ function LoggedIn({
     setLoading: (state: boolean) => void;
 }) {
     const role = useAppSelector(selectUserRole);
+    const org = useAppSelector(selectSceneOrganization);
 
     const logOut = () => {
         setLoading(true);
@@ -81,13 +83,16 @@ function LoggedIn({
                 <Grid item xs={7}>
                     {role === UserRole.Admin ? "Admin" : role === UserRole.Owner ? "Owner" : "Viewer"}
                 </Grid>
-
-                <Grid fontWeight={600} item xs={5}>
-                    Organization:
-                </Grid>
-                <Grid item xs={7}>
-                    {user.organization}
-                </Grid>
+                {org && (
+                    <>
+                        <Grid fontWeight={600} item xs={5}>
+                            Organization:
+                        </Grid>
+                        <Grid item xs={7}>
+                            {org}
+                        </Grid>
+                    </>
+                )}
             </Grid>
             <LoadingButton
                 onClick={logOut}
