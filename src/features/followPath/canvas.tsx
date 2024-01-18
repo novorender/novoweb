@@ -259,7 +259,7 @@ export function FollowPathCanvas({
             vec3.normalize(right, right);
             const pt = view.measure.draw.toMarkerPoints([
                 currentProfileCenter,
-                vec3.scaleAndAdd(vec3.create(), currentProfileCenter, right, 10),
+                vec3.scaleAndAdd(vec3.create(), currentProfileCenter, right, 10), //Scale by 10 to avoid jitter
             ]);
             if (pt[0] && pt[1]) {
                 const dir = vec2.sub(vec2.create(), pt[1], pt[0]);
@@ -274,7 +274,12 @@ export function FollowPathCanvas({
                 );
                 translateInteraction(
                     svg.children.namedItem(`followInfo`),
-                    vec2.scaleAndAdd(vec2.create(), pt[0], vec2.fromValues(-dir[1], dir[0]), -45)
+                    vec2.scaleAndAdd(
+                        vec2.create(),
+                        pt[0],
+                        dir[0] > 0 ? vec2.fromValues(-dir[1], dir[0]) : vec2.fromValues(dir[1], -dir[0]),
+                        -45
+                    )
                 );
             } else {
                 removeMarkers();
