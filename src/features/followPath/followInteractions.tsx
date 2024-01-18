@@ -5,7 +5,13 @@ import { useAppDispatch, useAppSelector } from "app/store";
 import { featuresConfig } from "config/features";
 import { explorerActions } from "slices/explorerSlice";
 
-import { followPathActions, selectFollowObject, selectProfile, selectStep } from "./followPathSlice";
+import {
+    followPathActions,
+    selectFollowObject,
+    selectProfile,
+    selectProfileRange,
+    selectStep,
+} from "./followPathSlice";
 import { useGoToProfile } from "./useGoToProfile";
 
 const markerStyles = () => css`
@@ -80,12 +86,26 @@ export function FollowInteractions() {
     const fpObj = useAppSelector(selectFollowObject);
     const step = useAppSelector(selectStep);
     const dispatch = useAppDispatch();
+    const profileRange = useAppSelector(selectProfileRange);
 
     const stepFollow = (dir: number) => {
         if (fpObj) {
-            const p = Number(profile) + dir * Number(step || "1");
-            dispatch(followPathActions.setProfile(p.toFixed(3)));
-            goToProfile({ p, fpObj });
+            if (!profileRange) {
+                return;
+            }
+            const p = Number(profile);
+            let next = p + dir * Number(step || "1");
+            if (Number.isNaN(next)) {
+                next = 1;
+            }
+            if (next > profileRange.max) {
+                next = profileRange.max;
+            } else if (next < profileRange.min) {
+                next = profileRange.min;
+            }
+
+            dispatch(followPathActions.setProfile(next.toFixed(3)));
+            goToProfile({ p: next, fpObj });
         }
     };
 
