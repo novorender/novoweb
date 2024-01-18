@@ -14,17 +14,16 @@ import {
     Typography,
     useTheme,
 } from "@mui/material";
-import { FollowParametricObject, rotationFromDirection } from "@novorender/api";
+import { FollowParametricObject } from "@novorender/api";
 import { HierarcicalObjectReference } from "@novorender/webgl-api";
-import { glMatrix, mat3, quat, vec3 } from "gl-matrix";
-import { FormEvent, MouseEvent, SyntheticEvent, useCallback, useEffect, useState } from "react";
+import { FormEvent, MouseEvent, SyntheticEvent, useEffect, useState } from "react";
 import { useHistory } from "react-router-dom";
 
 import { useAppDispatch, useAppSelector } from "app/store";
 import { Accordion, AccordionDetails, AccordionSummary, Divider, IosSwitch, ScrollBox, Tooltip } from "components";
 import { useExplorerGlobals } from "contexts/explorerGlobals";
 import { ColorPicker } from "features/colorPicker";
-import { CameraType, renderActions } from "features/render/renderSlice";
+import { renderActions } from "features/render/renderSlice";
 import { AsyncStatus, ViewMode } from "types/misc";
 import { rgbToVec, vecToRgb } from "utils/color";
 import { uniqueArray } from "utils/misc";
@@ -35,7 +34,6 @@ import {
     selectAutoRecenter,
     selectAutoStepSize,
     selectClipping,
-    selectCurrentCenter,
     selectDrawRoadIds,
     selectFollowDeviations,
     selectLandXmlPaths,
@@ -52,6 +50,7 @@ import {
     selectVerticalTracer,
     selectView2d,
 } from "./followPathSlice";
+import { useGoToProfile } from "./useGoToProfile";
 
 const profileFractionDigits = 3;
 
@@ -62,7 +61,6 @@ export function Follow({ fpObj }: { fpObj: FollowParametricObject }) {
         state: { view, db },
     } = useExplorerGlobals(true);
 
-    const currentCenter = useAppSelector(selectCurrentCenter);
     const view2d = useAppSelector(selectView2d);
     const showGrid = useAppSelector(selectShowGrid);
     const autoRecenter = useAppSelector(selectAutoRecenter);
@@ -81,6 +79,7 @@ export function Follow({ fpObj }: { fpObj: FollowParametricObject }) {
     const showTracer = useAppSelector(selectShowTracer);
     const traceVerical = useAppSelector(selectVerticalTracer);
     const deviations = useAppSelector(selectFollowDeviations);
+    const goToProfile = useGoToProfile();
 
     const [profileInput, setProfileInput] = useState(profile);
     const [clipping, setClipping] = useState(_clipping);
@@ -92,108 +91,6 @@ export function Follow({ fpObj }: { fpObj: FollowParametricObject }) {
             setProfileInput(profile);
         },
         [profile]
-    );
-
-    const goToProfile = useCallback(
-        async ({
-            view2d,
-            showGrid,
-            keepOffset,
-            p,
-            keepCamera,
-            clipVertical,
-        }: {
-            p: number;
-            view2d: boolean;
-            showGrid: boolean;
-            keepOffset?: boolean;
-            keepCamera?: boolean;
-            clipVertical?: boolean;
-        }): Promise<void> => {
-            const pos = await fpObj.getCameraValues(p);
-
-            if (!pos) {
-                return;
-            }
-
-            const { position: pt, normal: dir } = pos;
-
-            const offset =
-                keepOffset && currentCenter
-                    ? vec3.sub(vec3.create(), currentCenter, view.renderState.camera.position)
-                    : vec3.fromValues(0, 0, 0);
-            const offsetPt = vec3.sub(vec3.create(), pt, offset);
-            let rotation = quat.create();
-            if (clipVertical ?? verticalClipping) {
-                const up = glMatrix.equals(Math.abs(vec3.dot(vec3.fromValues(0, 0, 1), dir)), 1)
-                    ? vec3.fromValues(0, 1, 0)
-                    : vec3.fromValues(0, 0, 1);
-
-                const right = vec3.cross(vec3.create(), up, dir);
-                vec3.normalize(right, right);
-
-                const newDir = vec3.cross(vec3.create(), up, right);
-                vec3.normalize(newDir, newDir);
-                if (vec3.dot(newDir, dir) < 0) {
-                    vec3.negate(dir, newDir);
-                } else {
-                    vec3.copy(dir, newDir);
-                }
-
-                rotation = quat.fromMat3(
-                    quat.create(),
-                    mat3.fromValues(right[0], right[1], right[2], up[0], up[1], up[2], dir[0], dir[1], dir[2])
-                );
-            } else {
-                rotation = rotationFromDirection(dir);
-            }
-
-            if (view2d) {
-                dispatch(
-                    renderActions.setCamera({
-                        type: CameraType.Orthographic,
-                        goTo: {
-                            rotation,
-                            position: offsetPt,
-                            fov: view.renderState.camera.fov,
-                            far: clipping,
-                        },
-                        gridOrigo: pt as vec3,
-                    })
-                );
-
-                dispatch(
-                    renderActions.setGrid({
-                        enabled: showGrid,
-                    })
-                );
-            } else {
-                dispatch(renderActions.setGrid({ enabled: false }));
-
-                if (!keepCamera) {
-                    dispatch(
-                        renderActions.setCamera({
-                            type: CameraType.Pinhole,
-                            goTo: {
-                                position: offsetPt,
-                                rotation: keepOffset ? ([...view.renderState.camera.rotation] as Vec4) : rotation,
-                            },
-                        })
-                    );
-                }
-            }
-
-            const w = vec3.dot(dir, pt);
-            dispatch(
-                renderActions.setClippingPlanes({
-                    enabled: true,
-                    planes: [{ normalOffset: [dir[0], dir[1], dir[2], w], baseW: w, color: [0, 1, 0, 0.2] }],
-                })
-            );
-            dispatch(followPathActions.setCurrentCenter(pt as Vec3));
-            dispatch(followPathActions.setPtHeight(pt[2]));
-        },
-        [clipping, currentCenter, dispatch, fpObj, view, verticalClipping]
     );
 
     useEffect(() => {
@@ -256,14 +153,14 @@ export function Follow({ fpObj }: { fpObj: FollowParametricObject }) {
             t = fpObj.parameterBounds.start;
         }
         dispatch(followPathActions.setReset(undefined));
-        goToProfile({ view2d, showGrid, keepOffset: false, p: t, keepCamera: reset === "default" });
+        goToProfile({ fpObj, keepOffset: false, p: t, keepCamera: reset === "default" });
     }, [view2d, showGrid, profile, goToProfile, autoRecenter, reset, dispatch, fpObj, paths, selectedPath]);
 
     const handle2dChange = () => {
         const newState = !view2d;
 
         dispatch(followPathActions.setView2d(newState));
-        goToProfile({ p: Number(profile), view2d: newState, showGrid });
+        goToProfile({ fpObj, p: Number(profile), newView2d: newState, keepOffset: false });
     };
 
     const handleGridChange = () => {
@@ -281,7 +178,7 @@ export function Follow({ fpObj }: { fpObj: FollowParametricObject }) {
         const recenter = !autoRecenter;
 
         if (recenter) {
-            goToProfile({ p: Number(profile), view2d, showGrid, keepOffset: false });
+            goToProfile({ fpObj, p: Number(profile), keepOffset: false });
         }
 
         dispatch(followPathActions.setAutoRecenter(recenter));
@@ -290,7 +187,7 @@ export function Follow({ fpObj }: { fpObj: FollowParametricObject }) {
     const handleVerticalClippingChange = () => {
         const vertical = !verticalClipping;
 
-        goToProfile({ p: Number(profile), view2d, showGrid, keepOffset: !autoRecenter, clipVertical: vertical });
+        goToProfile({ fpObj, p: Number(profile), keepOffset: !autoRecenter, clipVertical: vertical });
         dispatch(followPathActions.setVerticalClipping(vertical));
     };
 
@@ -335,7 +232,7 @@ export function Follow({ fpObj }: { fpObj: FollowParametricObject }) {
         }
 
         dispatch(followPathActions.setProfile(next.toFixed(profileFractionDigits)));
-        goToProfile({ p: next, view2d, showGrid, keepOffset: !autoRecenter });
+        goToProfile({ fpObj, p: next, keepOffset: !autoRecenter });
     };
 
     const handleNext = () => {
@@ -360,7 +257,7 @@ export function Follow({ fpObj }: { fpObj: FollowParametricObject }) {
         }
 
         dispatch(followPathActions.setProfile(next.toFixed(profileFractionDigits)));
-        goToProfile({ p: next, view2d, showGrid, keepOffset: !autoRecenter });
+        goToProfile({ fpObj, p: next, keepOffset: !autoRecenter });
     };
 
     const handleGoToStart = () => {
@@ -371,7 +268,7 @@ export function Follow({ fpObj }: { fpObj: FollowParametricObject }) {
         const p = profileRange.min.toFixed(profileFractionDigits);
 
         dispatch(followPathActions.setProfile(p));
-        goToProfile({ p: Number(p), view2d, showGrid });
+        goToProfile({ fpObj, p: Number(p) });
     };
 
     const handleProfileSubmit = (e: FormEvent) => {
@@ -379,9 +276,8 @@ export function Follow({ fpObj }: { fpObj: FollowParametricObject }) {
 
         dispatch(followPathActions.setProfile(profileInput));
         goToProfile({
+            fpObj,
             p: Number(profileInput),
-            view2d,
-            showGrid,
             keepOffset: !autoRecenter,
         });
     };

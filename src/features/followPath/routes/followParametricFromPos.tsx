@@ -38,6 +38,7 @@ export function FollowParametricFromPos() {
         const fp = objects.data[0].fp;
         dispatch(renderActions.stopPicker(Picker.FollowPathObject));
         dispatch(followPathActions.toggleDrawSelectedPositions(false));
+        dispatch(followPathActions.setFollowObject(fp));
         setFollowing(fp);
     }, [objects, following, dispatch, history]);
 

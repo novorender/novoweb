@@ -13,6 +13,7 @@ import {
     drawTexts,
     getCameraState,
     measurementFillColor,
+    translateInteraction,
 } from "features/engine2D";
 import { CameraType, selectCameraType, selectViewMode } from "features/render";
 import { AsyncStatus, ViewMode } from "types/misc";
@@ -23,6 +24,7 @@ import {
     selectDrawSelectedPositions,
     selectFollowCylindersFrom,
     selectFollowDeviations,
+    selectFollowObject,
     selectProfile,
     selectShowTracer,
     selectVerticalTracer,
@@ -33,9 +35,11 @@ import { usePathMeasureObjects } from "./usePathMeasureObjects";
 export function FollowPathCanvas({
     renderFnRef,
     pointerPosRef,
+    svg,
 }: {
     pointerPosRef: MutableRefObject<Vec2>;
     renderFnRef: MutableRefObject<((moved: boolean, idleFrame: boolean) => void) | undefined>;
+    svg: SVGSVGElement | null;
 }) {
     const {
         state: { view, size },
@@ -66,6 +70,7 @@ export function FollowPathCanvas({
     const currentProfile = useAppSelector(selectProfile);
 
     const followDeviations = useAppSelector(selectFollowDeviations);
+    const fpObj = useAppSelector(selectFollowObject);
 
     const drawCrossSection = useCallback(() => {
         if (!view?.measure || !ctx || !canvas) {
@@ -215,26 +220,66 @@ export function FollowPathCanvas({
     }, [canvas, followCylindersFrom, selectedEntitiesData, selectedEntityCtx, view]);
 
     const drawProfile = useCallback(async () => {
+        if (!svg) {
+            return;
+        }
+        const removeMarkers = () => {
+            translateInteraction(svg.children.namedItem(`followPlus`), undefined);
+            translateInteraction(svg.children.namedItem(`followMinus`), undefined);
+            translateInteraction(svg.children.namedItem(`followInfo`), undefined);
+        };
         if (!view?.measure || !profileCtx || !canvas || !currentProfileCenter || !currentProfile) {
+            removeMarkers();
             return;
         }
 
         profileCtx.clearRect(0, 0, canvas.width, canvas.height);
-
-        if (view.renderState.camera.far > 1) {
-            return;
-        }
-
         const pt = view.measure.draw.toMarkerPoints([currentProfileCenter])[0];
 
         if (!pt) {
+            removeMarkers();
             return;
         }
 
-        drawPoint(profileCtx, pt, "black");
-        drawTexts(profileCtx, [[pt[0], pt[1] + 20]], [`H: ${currentProfileCenter[2].toFixed(3)}`], 24);
-        drawTexts(profileCtx, [[pt[0], pt[1] - 30]], ["P: " + currentProfile], 24);
-    }, [canvas, currentProfile, currentProfileCenter, profileCtx, view]);
+        if (view.renderState.camera.far < 1) {
+            drawPoint(profileCtx, pt, "black");
+            drawTexts(profileCtx, [[pt[0], pt[1] + 20]], [`H: ${currentProfileCenter[2].toFixed(3)}`], 24);
+            drawTexts(profileCtx, [[pt[0], pt[1] - 40]], ["P: " + currentProfile], 24);
+            translateInteraction(svg.children.namedItem(`followPlus`), vec2.fromValues(pt[0] + 50, pt[1]));
+            translateInteraction(svg.children.namedItem(`followMinus`), vec2.fromValues(pt[0] - 50, pt[1]));
+            translateInteraction(svg.children.namedItem(`followInfo`), vec2.fromValues(pt[0], pt[1] - 55));
+        } else if (roadCrossSectionData && roadCrossSectionData.length > 0) {
+            const section = roadCrossSectionData[0];
+            const pt = view.measure.draw.toMarkerPoints([
+                currentProfileCenter,
+                section.slopes.left.start,
+                section.slopes.right.end,
+            ]);
+            if (pt[0] && pt[1] && pt[2]) {
+                const dir = vec2.sub(vec2.create(), pt[2], pt[1]);
+                vec2.normalize(dir, dir);
+                translateInteraction(
+                    svg.children.namedItem(`followPlus`),
+                    vec2.scaleAndAdd(vec2.create(), pt[0], dir, 40)
+                );
+                translateInteraction(
+                    svg.children.namedItem(`followMinus`),
+                    vec2.scaleAndAdd(vec2.create(), pt[0], dir, -40)
+                );
+                translateInteraction(
+                    svg.children.namedItem(`followInfo`),
+                    vec2.scaleAndAdd(vec2.create(), pt[0], vec2.fromValues(-dir[1], dir[0]), -45)
+                );
+            } else {
+                removeMarkers();
+            }
+            if (!fpObj) {
+                //Special case for old bookmarks, they do not have the possibility to step without opening the windget first
+                translateInteraction(svg.children.namedItem(`followPlus`), undefined);
+                translateInteraction(svg.children.namedItem(`followMinus`), undefined);
+            }
+        }
+    }, [canvas, currentProfile, currentProfileCenter, profileCtx, view, svg, roadCrossSectionData, fpObj]);
 
     const deviationsDrawId = useRef(0);
     const drawDeviations = useCallback(
