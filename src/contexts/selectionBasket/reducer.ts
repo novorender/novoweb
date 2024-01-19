@@ -1,7 +1,7 @@
 import { ObjectId } from "@novorender/webgl-api";
 import { createContext, Dispatch, MutableRefObject } from "react";
 
-import { toIdArr, toIdObj } from "utils/objectData";
+import { toIdArr, toIdObj } from "../utils";
 
 export const initialState = {
     ids: {} as Record<ObjectId, true | undefined>,

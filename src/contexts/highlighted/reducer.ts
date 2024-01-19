@@ -2,7 +2,8 @@ import { ObjectId } from "@novorender/webgl-api";
 import { createContext, Dispatch, MutableRefObject } from "react";
 
 import { VecRGBA } from "utils/color";
-import { toIdArr, toIdObj } from "utils/objectData";
+
+import { toIdArr, toIdObj } from "../utils";
 
 // Highlighted/hidden/objectgroups may end up having huge (1M+) collections of objectIds and receive a lot of back-to-back state updates.
 // Keeping this state in the redux store ended up slowing down the app too much so we keep it in React contexts instead for now.

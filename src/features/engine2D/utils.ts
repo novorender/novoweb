@@ -621,8 +621,15 @@ export function getInteractionPositions({
     }, initial);
 }
 
-export function translateInteraction(el: Element | null, pos?: vec2) {
-    el?.setAttribute("transform", pos ? `translate(${pos[0] - 100} ${pos[1] - 98})` : "translate(-1000 -1000)");
+export function translateInteraction(el: Element | null, pos?: vec2, rot?: number) {
+    el?.setAttribute(
+        "transform",
+        pos
+            ? rot
+                ? `translate(${pos[0] - 100} ${pos[1] - 98}), rotate(${rot}, 100, 100)`
+                : `translate(${pos[0] - 100} ${pos[1] - 98})`
+            : "translate(-1000 -1000)"
+    );
 }
 
 export function getCameraState(camera: View["renderState"]["camera"]) {

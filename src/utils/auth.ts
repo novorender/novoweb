@@ -1,76 +1,15 @@
-import { AccountInfo, InteractionRequiredAuthError, NavigationClient, NavigationOptions } from "@azure/msal-browser";
 import { AuthenticationHeader } from "@novorender/data-js-api";
-import { History } from "history";
 
-import { msalInstance } from "app";
 import { store } from "app/store";
 import { dataServerBaseUrl } from "config/app";
-import { loginRequest } from "config/auth";
 import { WidgetKey } from "config/features";
-import { StorageKey } from "config/storage";
-import { authActions, User } from "slices/authSlice";
-import { base64UrlEncode, sha256 } from "utils/misc";
-
-import { deleteFromStorage, getFromStorage, saveToStorage } from "./storage";
-
-let prevMsalToken = "";
-let nrToken = "";
+import { User } from "slices/authSlice";
+import { base64UrlEncode, generateRandomString, sha256 } from "utils/misc";
 
 export async function getAuthHeader(): Promise<AuthenticationHeader> {
     const {
-        auth: { accessToken, msalAccount },
+        auth: { accessToken },
     } = store.getState();
-
-    if (msalAccount) {
-        // checks expiry and refreshes token if needed
-        try {
-            const response = await msalInstance
-                .acquireTokenSilent({
-                    ...loginRequest,
-                    account: msalAccount,
-                    authority: msalAccount.tenantId
-                        ? `https://login.microsoftonline.com/${msalAccount.tenantId}`
-                        : loginRequest.authority,
-                })
-                .catch(async (e) => {
-                    if (e instanceof InteractionRequiredAuthError) {
-                        return msalInstance
-                            .acquireTokenPopup({
-                                ...loginRequest,
-                                sid: msalAccount.idTokenClaims?.sid,
-                                loginHint: msalAccount.idTokenClaims?.login_hint,
-                                account: msalAccount,
-                                authority: msalAccount.tenantId
-                                    ? `https://login.microsoftonline.com/${msalAccount.tenantId}`
-                                    : loginRequest.authority,
-                            })
-                            .catch(() => {
-                                store.dispatch(authActions.setMsalInteractionRequired(true));
-                                return { accessToken: "" };
-                            });
-                    } else {
-                        throw e;
-                    }
-                });
-
-            if (!response) {
-                throw new Error("failed to acquire access token");
-            }
-
-            if (prevMsalToken !== response.accessToken) {
-                prevMsalToken = response.accessToken;
-                nrToken = await getAccessToken(response.accessToken);
-            }
-
-            return { header: "Authorization", value: `Bearer ${nrToken}` };
-        } catch (e) {
-            console.warn(e);
-            deleteFromStorage(StorageKey.MsalActiveAccount);
-            deleteFromStorage(StorageKey.NovoToken);
-            store.dispatch(authActions.logout());
-            return { header: "", value: "" };
-        }
-    }
 
     if (!accessToken) {
         return { header: "", value: "" };
@@ -137,63 +76,16 @@ export async function getUser(accessToken: string): Promise<User | undefined> {
         .catch(() => undefined);
 }
 
-/**
- * https://github.com/AzureAD/microsoft-authentication-library-for-js/blob/dev/lib/msal-react/docs/performance.md
- */
-export class CustomNavigationClient extends NavigationClient {
-    private history: History;
-
-    constructor(history: History) {
-        super();
-        this.history = history;
-    }
-
-    /**
-     * Navigates to other pages within the same web application
-     * You can use the useHistory hook provided by react-router-dom to take advantage of client-side routing
-     * @param url
-     * @param options
-     */
-    async navigateInternal(url: string, options: NavigationOptions) {
-        const relativePath = url.replace(window.location.origin, "");
-        if (options.noHistory) {
-            this.history.replace(relativePath);
-        } else {
-            this.history.push(relativePath);
-        }
-
-        return false;
-    }
-}
-
-export function storeActiveAccount(account: AccountInfo | null): void {
-    if (account) {
-        saveToStorage(StorageKey.MsalActiveAccount, JSON.stringify(account));
-    }
-}
-
-export function getStoredActiveMsalAccount(): AccountInfo | undefined {
-    try {
-        const storedAccount = getFromStorage(StorageKey.MsalActiveAccount)
-            ? JSON.parse(getFromStorage(StorageKey.MsalActiveAccount))
-            : undefined;
-
-        if (storedAccount && "localAccountId" in storedAccount) {
-            return storedAccount as AccountInfo;
-        }
-    } catch {
-        return;
-    }
-}
-
-export async function generateCodeChallenge(verifier: string): Promise<string> {
+export async function generateCodeChallenge(): Promise<[verifier: string, challenge: string]> {
+    const verifier = generateRandomString();
     const hashed = await sha256(verifier);
-    return base64UrlEncode(hashed);
+    return [verifier, base64UrlEncode(hashed)];
 }
 
 type OAuthState = {
-    service?: WidgetKey;
+    service?: WidgetKey | "self";
     sceneId?: string;
+    query?: string;
     space?: string;
     localBookmarkId?: string;
 };

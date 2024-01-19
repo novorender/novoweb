@@ -1,27 +1,17 @@
 import { View } from "@novorender/api";
-import { ReadonlyVec3, ReadonlyVec4 } from "gl-matrix";
+import { ReadonlyVec3 } from "gl-matrix";
 
-import { CameraType } from "features/render";
-
-export async function getOutlineLaser(
-    laserPosition: ReadonlyVec3,
-    view: View | undefined,
-    cameraType: CameraType,
-    plane: ReadonlyVec4
-) {
+export function getOutlineLaser(laserPosition: ReadonlyVec3, view: View | undefined) {
     if (view) {
         const sp = view.measure?.draw.toMarkerPoints([laserPosition]);
         if (sp && sp.length > 0 && sp[0]) {
-            const outlineValues = await view.outlineLaser(
-                sp[0],
-                cameraType === CameraType.Orthographic ? undefined : { laserPosition3d: laserPosition, plane }
-            );
+            const outlineValues = view.outlineLaser(laserPosition, 0);
             if (outlineValues) {
                 return {
-                    left: outlineValues.left.map((p) => p.position),
-                    right: outlineValues.right.map((p) => p.position),
-                    down: outlineValues.down.map((p) => p.position),
-                    up: outlineValues.up.map((p) => p.position),
+                    left: outlineValues.left,
+                    right: outlineValues.right,
+                    down: outlineValues.down,
+                    up: outlineValues.up,
                     laserPosition: laserPosition,
                     measurementX:
                         outlineValues.left.length > 0 && outlineValues.right.length > 0

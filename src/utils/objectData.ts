@@ -1,6 +1,6 @@
 import { View } from "@novorender/api";
 import { ObjectDB } from "@novorender/data-js-api";
-import { BoundingSphere, HierarcicalObjectReference, ObjectData, ObjectId } from "@novorender/webgl-api";
+import { BoundingSphere, HierarcicalObjectReference, ObjectData } from "@novorender/webgl-api";
 import { vec3 } from "gl-matrix";
 
 import { flip } from "features/render/utils";
@@ -118,14 +118,6 @@ export function getTotalBoundingSphere(
     }
 
     return { center, radius };
-}
-
-export function toIdArr(ids: Record<ObjectId, true | undefined>): ObjectId[] {
-    return Object.keys(ids).map((id) => Number(id));
-}
-
-export function toIdObj(ids: ObjectId[]): Record<ObjectId, true | undefined> {
-    return Object.fromEntries(ids.map((id) => [String(id), true]));
 }
 
 export function getGuids(refs: HierarcicalObjectReference[]): Promise<string[]> {

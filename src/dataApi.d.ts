@@ -132,6 +132,14 @@ declare module "@novorender/data-js-api" {
                       lineColor: [number, number, number, number];
                   };
                   verticalClipping?: boolean;
+                  followObject?: {
+                      type: "edge" | "curve" | "cylinder" | "cylinders";
+                      ids: ObjectId[];
+                      selectedEntity: MeasureEntity | undefined;
+                      parameterBounds: ParameterBounds;
+                      emulatedCurve?: { start: ReadonlyVec3; dir: ReadonlyVec3 } | undefined;
+                      lineStrip?: ReadonlyVec3[];
+                  };
               }
             | undefined;
         outlineMeasure:

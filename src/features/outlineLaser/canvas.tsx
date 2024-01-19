@@ -44,8 +44,13 @@ export function OutlineLaserCanvas({
                 }
 
                 const [l, r] = view.measure?.draw.toMarkerPoints(xPts) ?? [];
-                translateInteraction(svg.children.namedItem(`leftMarker-${i}`), l);
-                translateInteraction(svg.children.namedItem(`rightMarker-${i}`), r);
+                let rot = 0;
+                if (l && r) {
+                    const dir = vec2.sub(vec2.create(), r, l);
+                    rot = Math.atan2(dir[1], dir[0]) * 57.29578;
+                }
+                translateInteraction(svg.children.namedItem(`leftMarker-${i}`), l, rot + 90);
+                translateInteraction(svg.children.namedItem(`rightMarker-${i}`), r, rot - 90);
 
                 laser.measurementX?.start
                     ? translateInteraction(svg.children.namedItem(`updateXTracer-${i}`), getActionPos(l, r))
@@ -59,8 +64,13 @@ export function OutlineLaserCanvas({
                 }
 
                 const [d, u] = view.measure?.draw.toMarkerPoints(yPts) ?? [];
-                translateInteraction(svg.children.namedItem(`downMarker-${i}`), d);
-                translateInteraction(svg.children.namedItem(`upMarker-${i}`), u);
+                let rot = 0;
+                if (d && u) {
+                    const dir = vec2.sub(vec2.create(), u, d);
+                    rot += Math.atan2(dir[1], dir[0]) * 57.29578;
+                }
+                translateInteraction(svg.children.namedItem(`downMarker-${i}`), d, rot + 90);
+                translateInteraction(svg.children.namedItem(`upMarker-${i}`), u, rot - 90);
                 laser.measurementY?.start
                     ? translateInteraction(svg.children.namedItem(`updateYTracer-${i}`), getActionPos(d, u))
                     : translateInteraction(svg.children.namedItem(`removeYTracer-${i}`), getActionPos(d, u));

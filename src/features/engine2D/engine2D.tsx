@@ -53,7 +53,7 @@ export function Engine2D({
             <OutlineLaserCanvas renderFnRef={outlineLaserRenderFn} svg={svg} />
             <AreaCanvas renderFnRef={areaRenderFn} svg={svg} />
             <PointLineCanvas renderFnRef={plRenderFn} svg={svg} />
-            <FollowPathCanvas renderFnRef={followPathRenderFn} pointerPosRef={pointerPosRef} />
+            <FollowPathCanvas renderFnRef={followPathRenderFn} pointerPosRef={pointerPosRef} svg={svg} />
             <ManholeCanvas renderFnRef={manholeRenderFn} />
             <CrossSectionCanvas renderFnRef={crossSectionRenderFn} />
             <HeightProfileCanvas renderFnRef={heightProfileRenferFn} />
