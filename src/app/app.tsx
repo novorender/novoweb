@@ -5,7 +5,7 @@ import { LocalizationProvider } from "@mui/x-date-pickers";
 import { AdapterDateFns } from "@mui/x-date-pickers/AdapterDateFns";
 import enLocale from "date-fns/locale/en-GB";
 import { useEffect, useRef, useState } from "react";
-import { Route, Switch, useHistory } from "react-router-dom";
+import { generatePath, Redirect, Route, Switch, useHistory, useLocation, useParams } from "react-router-dom";
 import { useRegisterSW } from "virtual:pwa-register/react";
 
 import { useAppDispatch, useAppSelector } from "app/store";
@@ -246,6 +246,9 @@ export function App() {
                                     <Route path="/explorer/:id?">
                                         <Explorer />
                                     </Route>
+                                    <Route path="/login/:id?">
+                                        <RedirectLegacyLoginUrl />
+                                    </Route>
                                     <Route path="/:id?">
                                         <Explorer />
                                     </Route>
@@ -302,4 +305,11 @@ function UpdatePrompt({ update }: { update: () => void }) {
             </Paper>
         </Snackbar>
     );
+}
+
+function RedirectLegacyLoginUrl() {
+    const location = useLocation();
+    const params = useParams();
+
+    return <Redirect to={generatePath(location.pathname.replace("/login", ""), params) + location.search} />;
 }
