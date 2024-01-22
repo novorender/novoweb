@@ -178,12 +178,19 @@ export function Issue({ sceneId }: { sceneId: string }) {
             description.content = content;
         }
 
+        const components = issue.fields.components
+            ? issue.fields.components.find((c) => c.id === component.id)
+                ? issue.fields.components.map((c) => ({ id: c.id }))
+                : issue.fields.components.map((c) => ({ id: c.id })).concat({ id: component.id })
+            : [{ id: component.id }];
+
         try {
             const res = await editIssue({
                 key: issue.id,
                 body: {
                     fields: {
                         description,
+                        components,
                         ...(metaCustomfieldKey
                             ? { [metaCustomfieldKey]: JSON.stringify({ position: bm.explorerState?.camera.position }) }
                             : {}),
