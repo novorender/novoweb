@@ -25,32 +25,43 @@ export function SceneError() {
     const [loading, setLoading] = useState(false);
     const redirect = status.status === AsyncStatus.Error && status.msg === ErrorKind.NOT_AUTHORIZED && !user;
 
-    const loginRedirect = useCallback(async () => {
-        const tenant = await fetch(`${dataServerBaseUrl}/scenes/${sceneId}`)
-            .then((res) => res.json())
-            .then((res) => ("tenant" in res ? res.tenant : undefined))
-            .catch((_err) => undefined);
+    const loginRedirect = useCallback(
+        async (forceLogin?: boolean) => {
+            const tenant = await fetch(`${dataServerBaseUrl}/scenes/${sceneId}`)
+                .then((res) => res.json())
+                .then((res) => ("tenant" in res ? res.tenant : undefined))
+                .catch((_err) => undefined);
 
-        const state = createOAuthStateString({
-            sceneId,
-            service: "self",
-            query: window.location.search,
-        });
+            const state = createOAuthStateString({
+                sceneId,
+                service: "self",
+                query: window.location.search,
+            });
 
-        const [verifier, challenge] = await generateCodeChallenge();
-        saveToStorage(StorageKey.CodeVerifier, verifier);
+            const [verifier, challenge] = await generateCodeChallenge();
+            saveToStorage(StorageKey.CodeVerifier, verifier);
 
-        window.location.href =
-            "https://auth.novorender.com" +
-            `/auth` +
-            "?response_type=code" +
-            `&client_id=${"IWOHeLxNRxoqGtVZ3I6guPo2UvZ6mI5n"}` +
-            `&redirect_uri=${window.location.origin}` +
-            `&state=${state}` +
-            `&code_challenge=${challenge}` +
-            `&code_challenge_method=S256` +
-            (tenant ? `&tenant_id=${tenant}` : "");
-    }, [sceneId]);
+            const loginUrl =
+                "https://auth.novorender.com" +
+                `/auth` +
+                "?response_type=code" +
+                `&client_id=${"IWOHeLxNRxoqGtVZ3I6guPo2UvZ6mI5n"}` +
+                `&redirect_uri=${window.location.origin}` +
+                `&state=${state}` +
+                `&code_challenge=${challenge}` +
+                `&code_challenge_method=S256` +
+                (tenant ? `&tenant_id=${tenant}` : "");
+
+            if (forceLogin) {
+                window.location.assign(
+                    `https://auth.novorender.com/signout?return_url=${encodeURIComponent(loginUrl)}`
+                );
+            } else {
+                window.location.assign(loginUrl);
+            }
+        },
+        [sceneId]
+    );
 
     useEffect(
         function handleRedirect() {
@@ -67,7 +78,7 @@ export function SceneError() {
     const switchUser = () => {
         setLoading(true);
         deleteFromStorage(StorageKey.RefreshToken);
-        loginRedirect();
+        loginRedirect(true);
     };
 
     if (status.status !== AsyncStatus.Error) {
