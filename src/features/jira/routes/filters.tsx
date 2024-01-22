@@ -97,6 +97,22 @@ export function Filters() {
                             </Box>
                         }
                     />
+                    <FormControlLabel
+                        sx={{ ml: 0, my: 1 }}
+                        control={
+                            <SwitchInput
+                                checked={filters[JiraFilterType.Linked]}
+                                onChange={(_e, checked) => {
+                                    setFilters((state) => ({ ...state, [JiraFilterType.Linked]: checked }));
+                                }}
+                            />
+                        }
+                        label={
+                            <Box ml={1} fontSize={16}>
+                                Only show unlinked / linked
+                            </Box>
+                        }
+                    />
                 </Box>
 
                 <Box display="flex" justifyContent="space-between" mb={2} mt={1}>
