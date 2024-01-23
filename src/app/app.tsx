@@ -32,6 +32,7 @@ export function App() {
     );
     const config = useAppSelector(selectConfig);
     const dispatch = useAppDispatch();
+    const useTokenFromUrl = window.top !== self && new URLSearchParams(window.location.search).get("accessToken");
 
     const {
         needRefresh: [needRefresh],
@@ -65,7 +66,12 @@ export function App() {
         handleOAuth();
 
         async function handleOAuth() {
-            if (configStatus !== Status.Ready || authStatus !== Status.Initial || authenticating.current) {
+            if (
+                configStatus !== Status.Ready ||
+                authStatus !== Status.Initial ||
+                authenticating.current ||
+                useTokenFromUrl
+            ) {
                 return;
             }
 
@@ -189,7 +195,30 @@ export function App() {
 
             setAuthStatus(Status.Ready);
         }
-    }, [history, dispatch, authStatus, config, configStatus]);
+    }, [history, dispatch, authStatus, config, configStatus, useTokenFromUrl]);
+
+    useEffect(() => {
+        handleIframeAuth();
+
+        async function handleIframeAuth() {
+            if (
+                configStatus !== Status.Ready ||
+                authStatus !== Status.Initial ||
+                authenticating.current ||
+                !useTokenFromUrl
+            ) {
+                return;
+            }
+
+            const accessToken = new URLSearchParams(window.location.search).get("accessToken");
+            const user = accessToken ? await getUser(accessToken) : undefined;
+
+            if (accessToken && user) {
+                dispatch(authActions.login({ accessToken, user }));
+            }
+            setAuthStatus(Status.Ready);
+        }
+    }, [authStatus, configStatus, dispatch, useTokenFromUrl]);
 
     useEffect(() => {
         if (configStatus !== Status.Initial) {
