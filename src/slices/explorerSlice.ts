@@ -161,16 +161,21 @@ export const explorerSlice = createSlice({
         },
         setUrlSearchQuery: (
             state,
-            action: PayloadAction<{ query: UrlSearchQuery; selectionOnly: string } | undefined>
+            action: PayloadAction<
+                { query: UrlSearchQuery; options: { selectionOnly: string; openWidgets: boolean } } | undefined
+            >
         ) => {
             const patterns = action.payload?.query;
 
             state.urlSearchQuery = patterns as MutableUrlSearchQuery;
 
-            if ((Array.isArray(patterns) && patterns.length) || (!Array.isArray(patterns) && patterns)) {
+            if (
+                action.payload?.options.openWidgets &&
+                ((Array.isArray(patterns) && patterns.length) || (!Array.isArray(patterns) && patterns))
+            ) {
                 state.widgets = [
                     featuresConfig.search.key,
-                    action.payload?.selectionOnly === "3"
+                    action.payload?.options.selectionOnly === "3"
                         ? featuresConfig.selectionBasket.key
                         : featuresConfig.properties.key,
                 ];

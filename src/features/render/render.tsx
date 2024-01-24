@@ -18,6 +18,7 @@ import { useHandleOffline } from "features/offline";
 import { useHandleCrossSection } from "features/orthoCam";
 import { useHandleOutlineLasers } from "features/outlineLaser";
 import { PerformanceStats } from "features/performanceStats";
+import { useHandleUrlSearch } from "features/search";
 import { useHandleXsiteManageKeepAlive, useHandleXsiteManageMachineLocations } from "features/xsiteManage";
 import { AsyncStatus } from "types/misc";
 
@@ -97,6 +98,7 @@ export function Render3D() {
 
     useHandleInit();
     useHandleInitialBookmark();
+    useHandleUrlSearch();
     useHandleCameraMoved({ svg, engine2dRenderFnRef });
     useHandleCameraState();
     useHandleCameraSpeed();
