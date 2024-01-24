@@ -12,7 +12,6 @@ import { useAbortController } from "hooks/useAbortController";
 import { explorerActions, selectUrlSearchQuery } from "slices/explorerSlice";
 import { getTotalBoundingSphere } from "utils/objectData";
 import { batchedPropertySearch, searchDeepByPatterns } from "utils/search";
-import { sleep } from "utils/time";
 
 export async function useHandleUrlSearch() {
     const {
@@ -40,7 +39,6 @@ export async function useHandleUrlSearch() {
 
             let foundIds = [] as ObjectId[];
             let foundRefs = [] as HierarcicalObjectReference[];
-            await sleep(5000);
             try {
                 await searchDeepByPatterns({
                     db,
