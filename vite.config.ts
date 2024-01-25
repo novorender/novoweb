@@ -174,6 +174,11 @@ const serverOptions: ServerOptions = {
             rewrite: (path) => path.replace(/^\/omega365/, ""),
             changeOrigin: true,
         },
+        "/export-gltf": {
+            target: "https://download-gltf.azurewebsites.net/api/FilterGLTF",
+            rewrite: (path) => path.replace(/^\/export-gltf/, ""),
+            changeOrigin: true,
+        },
     },
 };
 

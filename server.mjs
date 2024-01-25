@@ -65,6 +65,17 @@ app.use(
     })
 );
 
+app.use(
+    "/export-gltf",
+    createProxyMiddleware({
+        target: "https://download-gltf.azurewebsites.net/api/FilterGLTF",
+        pathRewrite: {
+            "^/export-gltf": "",
+        },
+        changeOrigin: true,
+    })
+);
+
 // NOTE(OLA): Omega sends invalid headers which crashes http-proxy-middleware on nodejs version > 18.16.0
 app.use("/omega365", async (req, res) => {
     try {

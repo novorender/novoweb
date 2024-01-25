@@ -17,6 +17,8 @@ import { explorerActions } from "slices/explorerSlice";
 import { AsyncStatus } from "types/misc";
 import { getOAuthState } from "utils/auth";
 
+import { useHandleInitPermissions } from "./useHandleInitFeatures";
+
 export function Explorer() {
     return (
         <ContextProviders>
@@ -33,6 +35,8 @@ function ExplorerBase() {
         state: { view, scene },
     } = useExplorerGlobals();
     const sceneStatus = useAppSelector(selectSceneStatus);
+
+    useHandleInitPermissions();
 
     useEffect(() => {
         const oAuthState = getOAuthState();

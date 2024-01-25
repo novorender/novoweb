@@ -1,4 +1,4 @@
-import { createSlice, PayloadAction } from "@reduxjs/toolkit";
+import { createAction, createSlice, PayloadAction } from "@reduxjs/toolkit";
 
 import { RootState } from "app/store";
 
@@ -30,9 +30,14 @@ export type User = {
 const initialState = {
     accessToken: "",
     user: undefined as undefined | User,
+    permissions: [] as string[],
 };
 
 type State = typeof initialState;
+
+export const initPermissions = createAction<{
+    permissions: string[];
+}>("initPermissions");
 
 export const authSlice = createSlice({
     name: "auth",
@@ -52,10 +57,16 @@ export const authSlice = createSlice({
             state.user = action.payload;
         },
     },
+    extraReducers: (builder) => {
+        builder.addCase(initPermissions, (state, action) => {
+            state.permissions = action.payload.permissions;
+        });
+    },
 });
 
 export const selectAccessToken = (state: RootState) => state.auth.accessToken;
 export const selectUser = (state: RootState) => state.auth.user;
+export const selectPermissions = (state: RootState) => state.auth.permissions;
 
 const { actions, reducer } = authSlice;
 export { actions as authActions, reducer as authReducer };

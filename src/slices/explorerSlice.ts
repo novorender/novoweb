@@ -5,16 +5,16 @@ import type { RootState } from "app/store";
 import { CanvasContextMenuFeatureKey, defaultCanvasContextMenuFeatures } from "config/canvasContextMenu";
 import {
     ButtonKey,
-    defaultEnabledAdminWidgets,
     defaultEnabledWidgets,
     defaultLockedWidgets,
     featuresConfig,
-    FeatureType,
     Widget,
     WidgetKey,
 } from "config/features";
 import { DeepMutable, initScene } from "features/render";
 import { uniqueArray } from "utils/misc";
+
+import { initPermissions } from "./authSlice";
 
 export enum SceneType {
     Viewer,
@@ -247,6 +247,18 @@ export const explorerSlice = createSlice({
         },
     },
     extraReducers(builder) {
+        builder.addCase(initPermissions, (state, action) => {
+            const { permissions } = action.payload;
+
+            state.enabledWidgets = permissions
+                .filter((permission) => permission.startsWith("widget"))
+                .map((permission) => permission.split(":")[1] as WidgetKey)
+                .concat("user");
+
+            state.contextMenu.canvas.features = permissions
+                .filter((permission) => permission.startsWith("context"))
+                .map((permission) => permission.split(":")[1] as CanvasContextMenuFeatureKey);
+        });
         builder.addCase(initScene, (state, action) => {
             const { customProperties } = action.payload.sceneData;
 
@@ -254,32 +266,32 @@ export const explorerSlice = createSlice({
             state.userRole = getUserRole(customProperties);
             state.requireConsent = getRequireConsent(customProperties);
 
-            state.lockedWidgets = state.lockedWidgets.filter(
-                (widget) =>
-                    !customProperties?.features || !(customProperties?.features as Record<string, boolean>)[widget]
-            );
-            if (action.payload.deviceProfile.isMobile && !state.lockedWidgets.includes(featuresConfig.images.key)) {
-                state.lockedWidgets.push(featuresConfig.images.key);
-            }
-            if (state.userRole !== UserRole.Viewer) {
-                state.enabledWidgets = uniqueArray(
-                    (customProperties.explorerProjectState
-                        ? (customProperties.explorerProjectState.features.widgets.enabled as WidgetKey[])
-                        : getEnabledFeatures(customProperties)
-                    )
-                        .concat(defaultEnabledAdminWidgets)
-                        .concat(defaultEnabledWidgets)
-                );
-            } else {
-                state.enabledWidgets = uniqueArray(
-                    (customProperties.explorerProjectState
-                        ? (customProperties.explorerProjectState.features.widgets.enabled as WidgetKey[]).filter(
-                              (key) => featuresConfig[key] && featuresConfig[key].type !== FeatureType.AdminWidget
-                          )
-                        : getEnabledFeatures(customProperties)
-                    ).concat(defaultEnabledWidgets)
-                );
-            }
+            // state.lockedWidgets = state.lockedWidgets.filter(
+            //     (widget) =>
+            //         !customProperties?.features || !(customProperties?.features as Record<string, boolean>)[widget]
+            // );
+            // if (action.payload.deviceProfile.isMobile && !state.lockedWidgets.includes(featuresConfig.images.key)) {
+            //     state.lockedWidgets.push(featuresConfig.images.key);
+            // }
+            // if (state.userRole !== UserRole.Viewer) {
+            //     state.enabledWidgets = uniqueArray(
+            //         (customProperties.explorerProjectState
+            //             ? (customProperties.explorerProjectState.features.widgets.enabled as WidgetKey[])
+            //             : getEnabledFeatures(customProperties)
+            //         )
+            //             .concat(defaultEnabledAdminWidgets)
+            //             .concat(defaultEnabledWidgets)
+            //     );
+            // } else {
+            //     state.enabledWidgets = uniqueArray(
+            //         (customProperties.explorerProjectState
+            //             ? (customProperties.explorerProjectState.features.widgets.enabled as WidgetKey[]).filter(
+            //                   (key) => featuresConfig[key] && featuresConfig[key].type !== FeatureType.AdminWidget
+            //               )
+            //             : getEnabledFeatures(customProperties)
+            //         ).concat(defaultEnabledWidgets)
+            //     );
+            // }
 
             if (customProperties.explorerProjectState) {
                 const [button1, button2, button3, button4, button5] = customProperties.explorerProjectState.features
@@ -293,13 +305,13 @@ export const explorerSlice = createSlice({
                     button5,
                 };
 
-                const ctxMenuFeatures = customProperties.explorerProjectState.features.contextMenus.canvas.primary
-                    .features as CanvasContextMenuFeatureKey[];
-                state.contextMenu.canvas.features = ctxMenuFeatures;
+                // const ctxMenuFeatures = customProperties.explorerProjectState.features.contextMenus.canvas.primary
+                //     .features as CanvasContextMenuFeatureKey[];
+                // state.contextMenu.canvas.features = ctxMenuFeatures;
             } else {
                 state.primaryMenu = getPrimaryMenu(customProperties) ?? state.primaryMenu;
-                state.contextMenu.canvas.features =
-                    getCanvasContextMenuFeatures(customProperties) ?? state.contextMenu.canvas.features;
+                // state.contextMenu.canvas.features =
+                //     getCanvasContextMenuFeatures(customProperties) ?? state.contextMenu.canvas.features;
             }
         });
     },
@@ -332,39 +344,39 @@ export const selectEnabledWidgets = createSelector(
 const { actions, reducer } = explorerSlice;
 export { actions as explorerActions, reducer as explorerReducer };
 
-function enabledFeaturesToFeatureKeys(enabledFeatures: Record<string, boolean>): WidgetKey[] {
-    const dictionary: Record<string, string | string[] | undefined> = {
-        measurement: [featuresConfig.measure.key, featuresConfig.orthoCam.key],
-        clipping: [
-            // featuresConfig.clippingBox.key,
-            featuresConfig.clippingPlanes.key,
-        ],
-        tree: featuresConfig.modelTree.key,
-        layers: [featuresConfig.selectionBasket.key],
-    };
+// function enabledFeaturesToFeatureKeys(enabledFeatures: Record<string, boolean>): WidgetKey[] {
+//     const dictionary: Record<string, string | string[] | undefined> = {
+//         measurement: [featuresConfig.measure.key, featuresConfig.orthoCam.key],
+//         clipping: [
+//             // featuresConfig.clippingBox.key,
+//             featuresConfig.clippingPlanes.key,
+//         ],
+//         tree: featuresConfig.modelTree.key,
+//         layers: [featuresConfig.selectionBasket.key],
+//     };
 
-    if (enabledFeatures.disableLink === false && enabledFeatures.shareLink !== false) {
-        enabledFeatures.shareLink = true;
-    }
+//     if (enabledFeatures.disableLink === false && enabledFeatures.shareLink !== false) {
+//         enabledFeatures.shareLink = true;
+//     }
 
-    return uniqueArray(
-        Object.keys(enabledFeatures)
-            .map((key) => ({ key, enabled: enabledFeatures[key] }))
-            .filter((feature) => feature.enabled)
-            .map((feature) => (dictionary[feature.key] ? dictionary[feature.key] : feature.key))
-            .concat(defaultEnabledWidgets)
-            .flat() as WidgetKey[]
-    );
-}
+//     return uniqueArray(
+//         Object.keys(enabledFeatures)
+//             .map((key) => ({ key, enabled: enabledFeatures[key] }))
+//             .filter((feature) => feature.enabled)
+//             .map((feature) => (dictionary[feature.key] ? dictionary[feature.key] : feature.key))
+//             .concat(defaultEnabledWidgets)
+//             .flat() as WidgetKey[]
+//     );
+// }
 
-function getEnabledFeatures(customProperties: unknown): WidgetKey[] {
-    const features =
-        customProperties && typeof customProperties === "object" && "enabledFeatures" in customProperties
-            ? (customProperties as { enabledFeatures?: Record<string, boolean> }).enabledFeatures
-            : undefined;
+// function getEnabledFeatures(customProperties: unknown): WidgetKey[] {
+//     const features =
+//         customProperties && typeof customProperties === "object" && "enabledFeatures" in customProperties
+//             ? (customProperties as { enabledFeatures?: Record<string, boolean> }).enabledFeatures
+//             : undefined;
 
-    return features ? enabledFeaturesToFeatureKeys(features) : [];
-}
+//     return features ? enabledFeaturesToFeatureKeys(features) : [];
+// }
 
 function getSceneType(customProperties: unknown): SceneType {
     return customProperties && typeof customProperties === "object" && "isViewer" in customProperties
@@ -404,9 +416,9 @@ function getPrimaryMenu(customProperties: unknown): PrimaryMenuConfigType | unde
         : undefined;
 }
 
-function getCanvasContextMenuFeatures(customProperties: unknown): CanvasContextMenuFeatureKey[] | undefined {
-    return customProperties && typeof customProperties === "object" && "canvasContextMenu" in customProperties
-        ? (customProperties as { canvasContextMenu: { features: CanvasContextMenuFeatureKey[] } }).canvasContextMenu
-              .features
-        : undefined;
-}
+// function getCanvasContextMenuFeatures(customProperties: unknown): CanvasContextMenuFeatureKey[] | undefined {
+//     return customProperties && typeof customProperties === "object" && "canvasContextMenu" in customProperties
+//         ? (customProperties as { canvasContextMenu: { features: CanvasContextMenuFeatureKey[] } }).canvasContextMenu
+//               .features
+//         : undefined;
+// }
