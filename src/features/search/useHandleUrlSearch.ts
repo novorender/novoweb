@@ -6,10 +6,11 @@ import { useAppDispatch, useAppSelector } from "app/store";
 import { useExplorerGlobals } from "contexts/explorerGlobals";
 import { highlightActions, useDispatchHighlighted, useLazyHighlighted } from "contexts/highlighted";
 import { selectionBasketActions, useDispatchSelectionBasket } from "contexts/selectionBasket";
-import { CameraType, ObjectVisibility, renderActions } from "features/render";
+import { CameraType, ObjectVisibility, renderActions, selectSceneStatus } from "features/render";
 import { isGlSpace } from "features/render/utils";
 import { useAbortController } from "hooks/useAbortController";
 import { explorerActions, selectUrlSearchQuery } from "slices/explorerSlice";
+import { AsyncStatus } from "types/misc";
 import { getTotalBoundingSphere } from "utils/objectData";
 import { batchedPropertySearch, searchDeepByPatterns } from "utils/search";
 
@@ -17,18 +18,22 @@ export async function useHandleUrlSearch() {
     const {
         state: { db, scene },
     } = useExplorerGlobals();
+
     const highlighted = useLazyHighlighted();
     const dispatchHighlighted = useDispatchHighlighted();
     const dispatchSelectionBasket = useDispatchSelectionBasket();
+
     const dispatch = useAppDispatch();
     const query = useAppSelector(selectUrlSearchQuery);
+    const sceneStatus = useAppSelector(selectSceneStatus);
+
     const [abortController] = useAbortController();
 
     useEffect(() => {
         search();
 
         async function search() {
-            if (!query || !db || !scene) {
+            if (!query || !db || !scene || sceneStatus.status !== AsyncStatus.Success) {
                 return;
             }
             const abortSignal = abortController.current.signal;
@@ -88,5 +93,15 @@ export async function useHandleUrlSearch() {
             dispatch(renderActions.setMainObject(foundIds[0]));
             dispatch(renderActions.removeLoadingHandle(loadingHandle));
         }
-    }, [query, dispatch, abortController, db, dispatchHighlighted, scene, dispatchSelectionBasket, highlighted]);
+    }, [
+        query,
+        dispatch,
+        abortController,
+        db,
+        dispatchHighlighted,
+        scene,
+        dispatchSelectionBasket,
+        highlighted,
+        sceneStatus,
+    ]);
 }
