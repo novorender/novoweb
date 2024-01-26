@@ -24,7 +24,7 @@ import { NodeList } from "features/nodeList/nodeList";
 import WidgetList from "features/widgetList/widgetList";
 import { useAbortController } from "hooks/useAbortController";
 import { useToggle } from "hooks/useToggle";
-import { selectMaximized, selectMinimized } from "slices/explorerSlice";
+import { selectMaximized, selectMinimized, selectUrlSearchQuery } from "slices/explorerSlice";
 import { iterateAsync, searchDeepByPatterns } from "utils/search";
 
 enum Status {
@@ -38,12 +38,16 @@ export default function Search() {
         state: { db },
     } = useExplorerGlobals(true);
 
-    const [menuOpen, toggleMenu] = useToggle();
     const minimized = useAppSelector(selectMinimized) === featuresConfig.search.key;
     const maximized = useAppSelector(selectMaximized).includes(featuresConfig.search.key);
-    const [advanced, toggleAdvanced] = useToggle(false);
-    const [simpleInput, setSimpleInput] = useState("");
-    const [advancedInputs, setAdvancedInputs] = useState<SearchPattern[]>([{ property: "", value: "", exact: true }]);
+    const urlSearchQuery = useAppSelector(selectUrlSearchQuery);
+
+    const [menuOpen, toggleMenu] = useToggle();
+    const [advanced, toggleAdvanced] = useToggle(urlSearchQuery ? Array.isArray(urlSearchQuery) : false);
+    const [simpleInput, setSimpleInput] = useState(typeof urlSearchQuery === "string" ? urlSearchQuery : "");
+    const [advancedInputs, setAdvancedInputs] = useState(
+        Array.isArray(urlSearchQuery) ? urlSearchQuery : [{ property: "", value: "", exact: true }]
+    );
 
     const [allSelected, setAllSelected] = useState(false);
     const [allHidden, setAllHidden] = useState(false);

@@ -35,7 +35,6 @@ export async function useHandleUrlSearch() {
             const searchPatterns = query;
             const loadingHandle = performance.now();
             dispatch(renderActions.addLoadingHandle(loadingHandle));
-            dispatch(explorerActions.setUrlSearchQuery(undefined));
 
             let foundIds = [] as ObjectId[];
             let foundRefs = [] as HierarcicalObjectReference[];
@@ -85,6 +84,7 @@ export async function useHandleUrlSearch() {
                 dispatch(renderActions.setDefaultVisibility(ObjectVisibility.Neutral));
             }
 
+            dispatch(explorerActions.setUrlSearchQuery(undefined));
             dispatch(renderActions.setMainObject(foundIds[0]));
             dispatch(renderActions.removeLoadingHandle(loadingHandle));
         }
