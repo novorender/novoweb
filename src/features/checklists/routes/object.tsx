@@ -1,29 +1,115 @@
-import { ArrowBack, Circle } from "@mui/icons-material";
-import { Box, Button, List, ListItemButton, ListItemIcon, ListItemText, Typography, useTheme } from "@mui/material";
+import { ArrowBack, Checklist, Circle } from "@mui/icons-material";
+import {
+    Box,
+    Button,
+    LinearProgress,
+    List,
+    ListItemButton,
+    ListItemIcon,
+    ListItemText,
+    Typography,
+    useTheme,
+} from "@mui/material";
+import { skipToken } from "@reduxjs/toolkit/query";
+import { useEffect, useState } from "react";
 import { Redirect, useHistory, useParams } from "react-router-dom";
 
+import { useAppDispatch } from "app/store";
 import { Divider, ScrollBox } from "components";
-import { useAppSelector } from "app/store";
+import { useExplorerGlobals } from "contexts/explorerGlobals";
+import { highlightActions, useDispatchHighlighted, useHighlighted } from "contexts/highlighted";
+import { renderActions } from "features/render";
+import { useAbortController } from "hooks/useAbortController";
+import { useSceneId } from "hooks/useSceneId";
 
-import { selectChecklists, selectInstancesByObjectId } from "../checklistsSlice";
-import { getRequiredItems } from "../utils";
-
-enum Status {
-    Initial,
-    InProgress,
-    Done,
-}
+import { useGetFormsQuery } from "../api";
+import { type FormObjectGuid } from "../types";
+import { idsToObjects } from "../utils";
 
 export function Object() {
-    const { id } = useParams<{ id: string }>();
+    const {
+        state: { db },
+    } = useExplorerGlobals(true);
+    const { id } = useParams<{ id: FormObjectGuid }>();
     const theme = useTheme();
     const history = useHistory();
-    const instances = useAppSelector((state) => selectInstancesByObjectId(state, Number(id)));
-    const checklists = useAppSelector(selectChecklists);
+    const sceneId = useSceneId();
+    const [abortController] = useAbortController();
+    const { idArr: highlighted } = useHighlighted();
+    const dispatch = useAppDispatch();
+    const dispatchHighlighted = useDispatchHighlighted();
 
-    if (instances.length === 1) {
-        return <Redirect push={false} to={`/instance/${instances[0].id}`} />;
+    const [object, setObject] = useState<{
+        id: number;
+        guid: string;
+        name: string;
+    }>();
+
+    const [isLoading, setLoadingObject] = useState(false);
+
+    const abortSignal = abortController.current.signal;
+
+    useEffect(() => {
+        if (!id) {
+            return;
+        }
+
+        const fetchData = async () => {
+            setLoadingObject(true);
+            const objects = await idsToObjects({
+                ids: [+id],
+                db,
+                abortSignal,
+            });
+
+            const object = {
+                id: objects[0]?.id ?? "",
+                guid: objects[0]?.guid ?? "",
+                name: objects[0]?.name ?? "",
+            };
+
+            setObject(object);
+            setLoadingObject(false);
+        };
+
+        fetchData();
+    }, [id, db, abortSignal]);
+
+    useEffect(() => {
+        if (!id || highlighted.includes(+id)) {
+            return;
+        }
+        dispatchHighlighted(highlightActions.setIds([+id]));
+    }, [dispatchHighlighted, id, highlighted]);
+
+    const {
+        data: forms,
+        isLoading: formsLoading,
+        isUninitialized,
+    } = useGetFormsQuery(
+        object?.guid
+            ? {
+                  projectId: sceneId,
+                  objectGuid: object?.guid,
+              }
+            : skipToken
+    );
+
+    if (forms?.length === 1 && object?.guid) {
+        return <Redirect push={false} to={`/form/${object.guid}-${forms[0].id}`} />;
     }
+
+    const handleBackClick = () => {
+        if (id) {
+            dispatchHighlighted(highlightActions.remove([+id]));
+        }
+        dispatch(renderActions.setMainObject(undefined));
+        history.goBack();
+    };
+
+    const handleHomeClick = () => {
+        history.push("/");
+    };
 
     return (
         <>
@@ -32,70 +118,72 @@ export function Object() {
                     <Box px={1}>
                         <Divider />
                     </Box>
-                    <Box display="flex">
-                        <Button color="grey" onClick={() => history.goBack()}>
+                    <Box display="flex" justifyContent="space-between">
+                        <Button color="grey" onClick={handleBackClick}>
                             <ArrowBack sx={{ mr: 1 }} />
                             Back
+                        </Button>
+                        <Button color="grey" onClick={handleHomeClick}>
+                            <Checklist sx={{ mr: 1 }} />
+                            All checklists
                         </Button>
                     </Box>
                 </>
             </Box>
-            <ScrollBox py={2}>
-                {instances.length ? (
-                    <List dense disablePadding>
-                        {instances.map((instance) => {
-                            const checklist = checklists.find((checklist) => instance.checklistId === checklist.id);
-
-                            if (!checklist) {
-                                return null;
-                            }
-
-                            const requiredItems = checklist ? getRequiredItems(checklist) : [];
-                            const completedItems = instance.items.filter((item) => item.value && item.value[0]).length;
-                            const status =
-                                completedItems === 0
-                                    ? Status.Initial
-                                    : completedItems === requiredItems.length
-                                    ? Status.Done
-                                    : Status.InProgress;
-
-                            return (
-                                <ListItemButton
-                                    key={instance.id}
-                                    sx={{ justifyContent: "space-between" }}
-                                    onClick={() => history.push(`/instance/${instance.id}`)}
-                                >
-                                    <ListItemIcon
-                                        sx={{
-                                            minWidth: 24,
-                                            minHeight: 24,
-                                            display: "flex",
-                                            alignItems: "center",
-                                            justifyContent: "center",
-                                            fontSize: 12,
-                                            mr: 1,
+            {isLoading || formsLoading || isUninitialized ? (
+                <Box position="relative">
+                    <LinearProgress />
+                </Box>
+            ) : (
+                <ScrollBox py={2}>
+                    <Typography px={1} fontWeight={600} mb={1}>
+                        {object?.name}
+                    </Typography>
+                    {forms?.length ? (
+                        <List dense disablePadding>
+                            {forms.map((form) => {
+                                return (
+                                    <ListItemButton
+                                        key={form.id}
+                                        sx={{ justifyContent: "space-between" }}
+                                        onClick={() => {
+                                            if (object?.guid) {
+                                                history.push(`/form/${object.guid}-${form.id}`);
+                                            }
                                         }}
                                     >
-                                        <Circle
-                                            htmlColor={
-                                                status === Status.Initial
-                                                    ? "red"
-                                                    : status === Status.Done
-                                                    ? "green"
-                                                    : "orange"
-                                            }
-                                            fontSize="inherit"
-                                        />
-                                    </ListItemIcon>
-                                    <ListItemText>{checklist.title}</ListItemText>
-                                </ListItemButton>
-                            );
-                        })}
-                    </List>
-                ) : (
-                    <Typography p={1}>No checklists attached to the selected object.</Typography>
-                )}
-            </ScrollBox>
+                                        <ListItemIcon
+                                            sx={{
+                                                minWidth: 24,
+                                                minHeight: 24,
+                                                display: "flex",
+                                                alignItems: "center",
+                                                justifyContent: "center",
+                                                fontSize: 12,
+                                                mr: 1,
+                                            }}
+                                        >
+                                            <Circle
+                                                htmlColor={
+                                                    form.state === "new"
+                                                        ? "red"
+                                                        : form.state === "finished"
+                                                        ? "green"
+                                                        : "orange"
+                                                }
+                                                fontSize="inherit"
+                                            />
+                                        </ListItemIcon>
+                                        <ListItemText>{form.title}</ListItemText>
+                                    </ListItemButton>
+                                );
+                            })}
+                        </List>
+                    ) : (
+                        <Typography p={1}>No checklists attached to the selected object.</Typography>
+                    )}
+                </ScrollBox>
+            )}
         </>
     );
 }

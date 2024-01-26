@@ -46,43 +46,43 @@ import { Stamp } from "./stamp";
 glMatrix.setMatrixArrayType(Array);
 
 const Canvas = styled("canvas")(
-  () =>
-    css`
-        outline: 0;
-        touch-action: none;
-        height: 100vh;
-        width: 100vw;
-    `,
+    () =>
+        css`
+            outline: 0;
+            touch-action: none;
+            height: 100vh;
+            width: 100vw;
+        `
 );
 
 const Svg = styled("svg")(
-  () =>
-    css`
-        position: absolute;
-        left: 0;
-        top: 0;
-        width: 100%;
-        height: 100%;
-        overflow: hidden;
-        pointer-events: none;
+    () =>
+        css`
+            position: absolute;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            pointer-events: none;
 
-        g {
-            will-change: transform;
-        }
-    `,
+            g {
+                will-change: transform;
+            }
+        `
 );
 
 export function Render3D() {
-  const {
-    state: { view, canvas, size },
-    dispatch: dispatchGlobals,
-  } = useExplorerGlobals();
+    const {
+        state: { view, canvas, size },
+        dispatch: dispatchGlobals,
+    } = useExplorerGlobals();
 
-  const loadingHandles = useAppSelector(selectLoadingHandles);
-  const sceneStatus = useAppSelector(selectSceneStatus);
-  const debugStats = useAppSelector(selectDebugStats);
+    const loadingHandles = useAppSelector(selectLoadingHandles);
+    const sceneStatus = useAppSelector(selectSceneStatus);
+    const debugStats = useAppSelector(selectDebugStats);
 
-  const [svg, setSvg] = useState<null | SVGSVGElement>(null);
+    const [svg, setSvg] = useState<null | SVGSVGElement>(null);
 
     const engine2dRenderFnRef = useRef<((moved: boolean, idleFrame?: boolean) => void) | undefined>();
     const pointerPosRef = useRef([0, 0] as [x: number, y: number]);
@@ -159,31 +159,5 @@ export function Render3D() {
                 </>
             )}
         </Box>
-      )}
-      {sceneStatus.status === AsyncStatus.Error && <SceneError />}
-      <Canvas
-        id="main-canvas"
-        onClick={onClick}
-        {...eventHandlers}
-        tabIndex={1}
-        ref={canvasRef}
-      />
-      {[AsyncStatus.Initial, AsyncStatus.Loading].includes(
-        sceneStatus.status,
-      ) && <Loading />}
-      {sceneStatus.status === AsyncStatus.Success && view && canvas && (
-        <>
-          {debugStats.enabled && <PerformanceStats />}
-          <Engine2D pointerPos={pointerPos} renderFnRef={engine2dRenderFn} />
-          <Stamp />
-          <Svg width={size.width} height={size.height} ref={setSvg}>
-            <Markers />
-            <Engine2DInteractions />
-            <g id="cursor" />
-          </Svg>
-          <Images />
-        </>
-      )}
-    </Box>
-  );
+    );
 }

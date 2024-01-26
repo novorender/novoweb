@@ -1,93 +1,117 @@
-import { FormEventHandler, useState } from "react";
 import { CancelOutlined } from "@mui/icons-material";
 import { Box, Button, IconButton, List, Typography, useTheme } from "@mui/material";
-import { useHistory, useRouteMatch } from "react-router-dom";
 import { ObjectId, SearchPattern } from "@novorender/webgl-api";
+import { FormEventHandler, useCallback, useMemo, useState } from "react";
+import { useHistory, useRouteMatch } from "react-router-dom";
 
 import { Divider, LinearProgress, ScrollBox, TextField } from "components";
 import { useExplorerGlobals } from "contexts/explorerGlobals";
-import { AsyncState, AsyncStatus } from "types/misc";
 import { useAbortController } from "hooks/useAbortController";
-import { batchedPropertySearch } from "utils/search";
-import { getObjectNameFromPath } from "utils/objectData";
-import { useAppDispatch } from "app/store";
+import { useSceneId } from "hooks/useSceneId";
+import { AsyncState, AsyncStatus } from "types/misc";
 
-import { ChecklistInstance, ChecklistItem } from "../../types";
-import { addChecklist, addChecklistInstances } from "../../utils";
-import { checklistsActions } from "../../checklistsSlice";
-import { ChecklistItemType } from "../../types";
+import { useCreateFormMutation } from "../../api";
+import { ChecklistItem } from "../../types";
+import { getChecklistItemTypeDisplayName, idsToObjects, toFormFields } from "../../utils";
 
 export function CreateChecklist({
     title,
     setTitle,
     items,
     setItems,
-    objects,
+    objects: checklistObjects,
 }: {
     title: string;
-    setTitle: React.Dispatch<React.SetStateAction<string>>;
+    setTitle: (title: string) => void;
     items: ChecklistItem[];
-    setItems: React.Dispatch<React.SetStateAction<ChecklistItem[]>>;
-    objects: { searchPattern: SearchPattern[]; ids: ObjectId[] } | undefined;
+    setItems: (items: ChecklistItem[]) => void;
+    objects?: { searchPattern: string | SearchPattern[]; ids: ObjectId[] };
 }) {
     const theme = useTheme();
     const history = useHistory();
     const match = useRouteMatch();
     const {
-        state: { scene },
+        state: { db },
     } = useExplorerGlobals(true);
-    const dispatch = useAppDispatch();
 
-    const [{ status }, setStatus] = useState<AsyncState<null>>({ status: AsyncStatus.Initial });
+    const sceneId = useSceneId();
+    const [createForm, { isLoading: creatingForm }] = useCreateFormMutation();
+
+    const [{ status }, setStatus] = useState<AsyncState<null>>({
+        status: AsyncStatus.Initial,
+    });
+
     const [abortController] = useAbortController();
 
-    const canSave = title && items.length && objects;
+    const canSave = useMemo(() => title && items.length && checklistObjects?.ids, [title, items, checklistObjects]);
 
-    const handleSubmit: FormEventHandler = async (e) => {
-        e.preventDefault();
+    const handleAddItem = useCallback(() => {
+        history.push(`${match.path}/add-item`);
+    }, [history, match.path]);
 
-        if (!canSave) {
-            return;
-        }
+    const handleTitleChange = useCallback(
+        (e: React.ChangeEvent<HTMLInputElement>) => {
+            setTitle(e.target.value);
+        },
+        [setTitle]
+    );
 
-        setStatus({ status: AsyncStatus.Loading });
+    const handleAddObjects = useCallback(() => {
+        history.push(`${match.path}/add-objects`);
+    }, [history, match.path]);
 
-        try {
-            const abortSignal = abortController.current.signal;
-            const objectDataList = await batchedPropertySearch({
-                scene,
-                abortSignal,
-                property: "id",
-                value: objects.ids.map((id) => String(id)),
-            });
+    const handleRemoveItem = useCallback(
+        (id?: string) => {
+            setItems(items.filter((item) => item.id !== id));
+        },
+        [items, setItems]
+    );
 
-            const [checklist, checklists] = addChecklist({
-                title,
-                items,
-                instances: { searchPattern: objects.searchPattern, count: objects.ids.length, completed: 0 },
-            });
+    const handleSubmit: FormEventHandler = useCallback(
+        async (e) => {
+            e.preventDefault();
 
-            const instances: Omit<ChecklistInstance, "id">[] = objectDataList.map((obj) => ({
-                checklistId: checklist.id,
-                items: checklist.items.map((item) => ({ id: item.id, value: null, relevant: true })),
-                name: getObjectNameFromPath(obj.path),
-                objectId: obj.id,
-                position: obj.bounds?.sphere.center,
-            }));
+            if (!canSave) {
+                return;
+            }
 
-            dispatch(checklistsActions.setChecklists(checklists));
-            dispatch(checklistsActions.setChecklistInstances(addChecklistInstances(instances)));
-            setStatus({ status: AsyncStatus.Success });
-            history.goBack();
-        } catch (e) {
-            setStatus({ status: AsyncStatus.Error, msg: "Checklist creation failed" });
-            return;
-        }
-    };
+            setStatus({ status: AsyncStatus.Loading });
+
+            try {
+                const abortSignal = abortController.current.signal;
+
+                const objects = await idsToObjects({
+                    ids: checklistObjects!.ids,
+                    db,
+                    abortSignal,
+                });
+
+                const fields = toFormFields(items);
+
+                const template = {
+                    title,
+                    fields,
+                    objects,
+                };
+
+                await createForm({ projectId: sceneId, template });
+
+                setStatus({ status: AsyncStatus.Success, data: null });
+                history.goBack();
+            } catch (e) {
+                setStatus({
+                    status: AsyncStatus.Error,
+                    msg: "Checklist creation failed",
+                });
+                return;
+            }
+        },
+        [abortController, canSave, checklistObjects, createForm, db, history, items, sceneId, title]
+    );
 
     return (
         <>
-            {status === AsyncStatus.Loading ? (
+            {status === AsyncStatus.Loading || creatingForm ? (
                 <Box position="relative">
                     <LinearProgress />
                 </Box>
@@ -96,16 +120,16 @@ export function CreateChecklist({
                 <Typography fontWeight={600} mb={1}>
                     Checklist
                 </Typography>
-                <TextField label="Title" value={title} onChange={(e) => setTitle(e.target.value)} fullWidth />
+                <TextField label="Title" value={title} onChange={handleTitleChange} fullWidth />
                 <Divider sx={{ my: 1 }} />
                 <Box display={"flex"} justifyContent="space-between" alignItems="center">
-                    <Typography fontWeight={600}>Objects assigned: {objects?.ids.length}</Typography>
-                    <Button onClick={() => history.push(match.path + "/add-objects")}>Add objects</Button>
+                    <Typography fontWeight={600}>Objects assigned: {checklistObjects?.ids.length}</Typography>
+                    <Button onClick={handleAddObjects}>Add objects</Button>
                 </Box>
                 <Divider />
                 <Box display={"flex"} justifyContent="space-between" alignItems="center">
                     <Typography fontWeight={600}>Items:</Typography>
-                    <Button onClick={() => history.push(match.path + "/add-item")}>Add item</Button>
+                    <Button onClick={handleAddItem}>Add item</Button>
                 </Box>
                 {items.length ? (
                     <List dense disablePadding>
@@ -126,9 +150,7 @@ export function CreateChecklist({
                                         {getChecklistItemTypeDisplayName(item.type)}
                                     </Button>
                                 </Box>
-                                <IconButton
-                                    onClick={() => setItems((state) => state.filter((_item) => _item !== item))}
-                                >
+                                <IconButton onClick={() => handleRemoveItem(item.id)}>
                                     <CancelOutlined fontSize="small" />
                                 </IconButton>
                             </Box>
@@ -136,27 +158,20 @@ export function CreateChecklist({
                     </List>
                 ) : null}
                 <Box display="flex" justifyContent="space-between" mt={2}>
-                    <Button variant="outlined" color="grey" sx={{ mr: 2 }} fullWidth onClick={() => history.goBack()}>
+                    <Button variant="outlined" color="grey" sx={{ mr: 1 }} fullWidth onClick={history.goBack}>
                         Cancel
                     </Button>
-                    <Button variant="contained" color="primary" fullWidth disabled={!canSave} type="submit">
+                    <Button
+                        variant="contained"
+                        color="primary"
+                        fullWidth
+                        disabled={!canSave || status === AsyncStatus.Loading || creatingForm}
+                        type="submit"
+                    >
                         Save checklist
                     </Button>
                 </Box>
             </ScrollBox>
         </>
     );
-}
-
-function getChecklistItemTypeDisplayName(type: ChecklistItemType): string {
-    switch (type) {
-        case ChecklistItemType.YesNo:
-            return "Yes / No";
-        case ChecklistItemType.TrafficLight:
-            return "Traffic light";
-        case ChecklistItemType.Checkbox:
-        case ChecklistItemType.Dropdown:
-        case ChecklistItemType.Text:
-            return type[0].toUpperCase() + type.slice(1);
-    }
 }

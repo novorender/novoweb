@@ -1,2 +1,2 @@
-export { ChecklistsWidget as Checklists } from "./checklistsWidget";
-export * from "./checklistsSlice";
+export { formsApi } from "./api";
+export * from "./slice";

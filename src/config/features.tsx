@@ -1,41 +1,41 @@
 import {
-  AccountTreeRounded,
-  Attachment,
-  Ballot,
-  BlurOn,
-  Cameraswitch,
-  Category,
-  CheckBox,
-  ColorLens,
-  CropLandscape,
-  Domain,
-  DownloadForOffline,
-  FiberSmartRecord,
-  FlightTakeoff,
-  Folder,
-  GpsFixed,
-  Gradient,
-  Height,
-  Home,
-  Image,
-  Layers,
-  LinearScale,
-  List,
-  MyLocation,
-  Person,
-  Redo,
-  RestartAlt,
-  RouteOutlined,
-  Search,
-  Settings,
-  Share,
-  SquareFoot,
-  Star,
-  Straighten,
-  Timeline,
-  Undo,
-  Visibility,
-  VisibilityOff,
+    AccountTreeRounded,
+    Attachment,
+    Ballot,
+    BlurOn,
+    Cameraswitch,
+    Category,
+    CheckBox,
+    ColorLens,
+    CropLandscape,
+    Domain,
+    DownloadForOffline,
+    FiberSmartRecord,
+    FlightTakeoff,
+    Folder,
+    GpsFixed,
+    Gradient,
+    Height,
+    Home,
+    Image,
+    Layers,
+    LinearScale,
+    List,
+    MyLocation,
+    Person,
+    Redo,
+    RestartAlt,
+    RouteOutlined,
+    Search,
+    Settings,
+    Share,
+    SquareFoot,
+    Star,
+    Straighten,
+    Timeline,
+    Undo,
+    Visibility,
+    VisibilityOff,
 } from "@mui/icons-material";
 
 import Ditio from "media/icons/ditio.svg?react";
@@ -44,19 +44,19 @@ import NewformaKonekt from "media/icons/newforma-konekt.svg?react";
 import Run from "media/icons/run.svg?react";
 
 export enum FeatureType {
-  Button,
-  Widget,
-  AdminWidget,
-  Tag,
+    Button,
+    Widget,
+    AdminWidget,
+    Tag,
 }
 
 export const featureTags = {
-  review: {
-    key: "review",
-    name: "Review",
-    Icon: Straighten,
-    type: FeatureType.Tag,
-  },
+    review: {
+        key: "review",
+        name: "Review",
+        Icon: Straighten,
+        type: FeatureType.Tag,
+    },
 } as const;
 
 export const featuresConfig = {
@@ -408,6 +408,14 @@ export const featuresConfig = {
         defaultLocked: false,
         offline: true,
     },
+    checklists: {
+        key: "checklists",
+        name: "Checklists",
+        Icon: Ballot,
+        type: FeatureType.Widget,
+        defaultLocked: false,
+        offline: false,
+    },
     offline: {
         key: "offline",
         name: "Offline",
@@ -416,135 +424,6 @@ export const featuresConfig = {
         defaultLocked: true,
         offline: true,
     },
-  },
-  followPath: {
-    key: "followPath",
-    name: "Follow path",
-    Icon: RouteOutlined,
-    type: FeatureType.Widget,
-    defaultLocked: false,
-    offline: true,
-    tags: [featureTags.review.key],
-  },
-  home: {
-    key: "home",
-    name: "Home",
-    Icon: Home,
-    type: FeatureType.Button,
-    defaultLocked: false,
-    offline: true,
-  },
-  stepBack: {
-    key: "stepBack",
-    name: "Step back",
-    Icon: Undo,
-    type: FeatureType.Button,
-    defaultLocked: false,
-    offline: true,
-  },
-  stepForwards: {
-    key: "stepForwards",
-    name: "Step forwards",
-    Icon: Redo,
-    type: FeatureType.Button,
-    defaultLocked: false,
-    offline: true,
-  },
-  orthoShortcut: {
-    key: "orthoShortcut",
-    name: "2D shortcut",
-    Icon: Cameraswitch,
-    type: FeatureType.Button,
-    defaultLocked: false,
-    offline: true,
-  },
-  cameraSpeed: {
-    key: "cameraSpeed",
-    name: "Camera speed",
-    Icon: Run,
-    type: FeatureType.Button,
-    defaultLocked: false,
-    offline: true,
-  },
-  flyToSelected: {
-    key: "flyToSelected",
-    name: "Fly to selected",
-    Icon: FlightTakeoff,
-    type: FeatureType.Button,
-    defaultLocked: false,
-    offline: false,
-  },
-  multipleSelection: {
-    key: "multipleSelection",
-    name: "Multiple selection",
-    Icon: Layers,
-    type: FeatureType.Button,
-    defaultLocked: false,
-    offline: true,
-  },
-  selectionColor: {
-    key: "selectionColor",
-    name: "Selection color",
-    Icon: ColorLens,
-    type: FeatureType.Button,
-    defaultLocked: false,
-    offline: true,
-  },
-  viewOnlySelected: {
-    key: "viewOnlySelected",
-    name: "View only selected",
-    Icon: Visibility,
-    type: FeatureType.Button,
-    defaultLocked: false,
-    offline: true,
-  },
-  hideSelected: {
-    key: "hideSelected",
-    name: "Hide selected",
-    Icon: VisibilityOff,
-    type: FeatureType.Button,
-    defaultLocked: false,
-    offline: true,
-  },
-  clearView: {
-    key: "clearView",
-    name: "Clear",
-    Icon: RestartAlt,
-    type: FeatureType.Button,
-    defaultLocked: false,
-    offline: true,
-  },
-  clearSelection: {
-    key: "clearSelection",
-    name: "Clear selection",
-    Icon: CheckBox,
-    type: FeatureType.Button,
-    defaultLocked: false,
-    offline: true,
-  },
-  toggleSubtrees: {
-    key: "toggleSubtrees",
-    name: "Toggle render types",
-    Icon: Gradient,
-    type: FeatureType.Button,
-    defaultLocked: false,
-    offline: true,
-  },
-  checklists: {
-    key: "checklists",
-    name: "Checklists",
-    Icon: Ballot,
-    type: FeatureType.Widget,
-    defaultLocked: false,
-  },
-  offline: {
-    key: "offline",
-    name: "Offline",
-    Icon: DownloadForOffline,
-    type: FeatureType.Widget,
-    defaultLocked: true,
-    offline: true,
-  },
 } as const;
 
 type Config = typeof featuresConfig;
@@ -554,37 +433,27 @@ export type FeatureKey = keyof Config;
 export type FeatureTagKey = keyof Tags;
 
 export type WidgetKey = {
-  [K in keyof Config]: Config[K]["type"] extends
-    FeatureType.Widget | FeatureType.AdminWidget ? K : never;
+    [K in keyof Config]: Config[K]["type"] extends FeatureType.Widget | FeatureType.AdminWidget ? K : never;
 }[keyof Config];
 export type ButtonKey = {
-  [K in keyof Config]: Config[K]["type"] extends FeatureType.Button ? K : never;
+    [K in keyof Config]: Config[K]["type"] extends FeatureType.Button ? K : never;
 }[keyof Config];
 
 export type Widget = Config[WidgetKey];
 export type FeatureTag = Tags[FeatureTagKey];
 
-// todo
-export const defaultEnabledWidgets = [
-  featuresConfig.user.key,
-  featuresConfig.checklists.key,
-] as WidgetKey[];
+export const defaultEnabledWidgets = [featuresConfig.user.key] as WidgetKey[];
 export const allWidgets = Object.values(featuresConfig)
-  .filter((widget) =>
-    [FeatureType.AdminWidget, FeatureType.Widget].includes(widget.type)
-  )
-  .map((widget) => widget.key as WidgetKey);
+    .filter((widget) => [FeatureType.AdminWidget, FeatureType.Widget].includes(widget.type))
+    .map((widget) => widget.key as WidgetKey);
 export const defaultEnabledAdminWidgets = Object.values(featuresConfig)
-  .filter((widget) => [FeatureType.AdminWidget].includes(widget.type))
-  .map((widget) => widget.key as WidgetKey)
-  .concat(defaultEnabledWidgets);
+    .filter((widget) => [FeatureType.AdminWidget].includes(widget.type))
+    .map((widget) => widget.key as WidgetKey)
+    .concat(defaultEnabledWidgets);
 export const defaultLockedWidgets = Object.values(featuresConfig)
-  .filter((widget) => widget.defaultLocked)
-  .map((widget) => widget.key as WidgetKey);
+    .filter((widget) => widget.defaultLocked)
+    .map((widget) => widget.key as WidgetKey);
 
-export const viewerWidgets = Object.values(featuresConfig).filter((widget) =>
-  widget.type === FeatureType.Widget
-) as {
-  [K in keyof Config]: Config[K]["type"] extends FeatureType.Widget ? Config[K]
-    : never;
+export const viewerWidgets = Object.values(featuresConfig).filter((widget) => widget.type === FeatureType.Widget) as {
+    [K in keyof Config]: Config[K]["type"] extends FeatureType.Widget ? Config[K] : never;
 }[keyof Config][];

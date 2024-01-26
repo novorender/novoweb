@@ -7,6 +7,9 @@ import { toIdArr, toIdObj } from "../utils";
 
 export enum HighlightCollection {
     SecondaryHighlight = "secondaryHighlight",
+    ChecklistsNew = "checklistsNew",
+    ChecklistOngoing = "checklistOngoing",
+    ChecklistCompleted = "checklistCompleted",
 }
 
 export const initialState = {
@@ -14,6 +17,21 @@ export const initialState = {
         ids: {} as Record<ObjectId, true | undefined>,
         idArr: [] as ObjectId[],
         color: [1, 1, 0, 1] as VecRGBA,
+    },
+    [HighlightCollection.ChecklistsNew]: {
+        ids: {} as Record<ObjectId, true | undefined>,
+        idArr: [] as ObjectId[],
+        color: [0.5, 0, 0, 1] as VecRGBA,
+    },
+    [HighlightCollection.ChecklistOngoing]: {
+        ids: {} as Record<ObjectId, true | undefined>,
+        idArr: [] as ObjectId[],
+        color: [1, 0.75, 0, 1] as VecRGBA,
+    },
+    [HighlightCollection.ChecklistCompleted]: {
+        ids: {} as Record<ObjectId, true | undefined>,
+        idArr: [] as ObjectId[],
+        color: [0, 0.5, 0, 1] as VecRGBA,
     },
 };
 
@@ -155,6 +173,21 @@ export function reducer(state: State, action: Actions): State {
                 ...state,
                 [HighlightCollection.SecondaryHighlight]: {
                     color: state.secondaryHighlight.color,
+                    idArr: [],
+                    ids: {},
+                },
+                [HighlightCollection.ChecklistsNew]: {
+                    color: state.checklistsNew.color,
+                    idArr: [],
+                    ids: {},
+                },
+                [HighlightCollection.ChecklistOngoing]: {
+                    color: state.checklistOngoing.color,
+                    idArr: [],
+                    ids: {},
+                },
+                [HighlightCollection.ChecklistCompleted]: {
+                    color: state.checklistCompleted.color,
                     idArr: [],
                     ids: {},
                 },

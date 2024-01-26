@@ -6,6 +6,7 @@ import { areaReducer } from "features/area";
 import { bimCollabApi, bimCollabReducer } from "features/bimCollab";
 import { bimTrackApi, bimTrackReducer } from "features/bimTrack";
 import { bookmarksReducer } from "features/bookmarks";
+import { formsApi, formsReducer } from "features/checklists";
 import { deviationsReducer } from "features/deviations";
 import { ditioApi } from "features/ditio";
 import { ditioReducer } from "features/ditio";
@@ -28,7 +29,6 @@ import { selectionBasketReducer } from "features/selectionBasket";
 import { xsiteManageApi, xsiteManageReducer } from "features/xsiteManage";
 import { authReducer } from "slices/authSlice";
 import { explorerReducer } from "slices/explorerSlice";
-import { checklistsReducer } from "features/checklists/checklistsSlice";
 
 const rootReducer = combineReducers({
     explorer: explorerReducer,
@@ -38,6 +38,8 @@ const rootReducer = combineReducers({
     bookmarks: bookmarksReducer,
     images: imagesReduces,
     followPath: followPathReducer,
+    forms: formsReducer,
+    formsApi: formsApi.reducer,
     deviations: deviationsReducer,
     measure: measureReducer,
     area: areaReducer,
@@ -52,7 +54,6 @@ const rootReducer = combineReducers({
     properties: propertiesReducer,
     offline: offlineReducer,
     omega365: omega365Reducer,
-    checklists: checklistsReducer,
     [bimCollabApi.reducerPath]: bimCollabApi.reducer,
     bimTrack: bimTrackReducer,
     [bimTrackApi.reducerPath]: bimTrackApi.reducer,
@@ -76,6 +77,7 @@ export const store = configureStore({
             .concat(bimCollabApi.middleware)
             .concat(bimTrackApi.middleware)
             .concat(ditioApi.middleware)
+            .concat(formsApi.middleware)
             .concat(jiraApi.middleware)
             .concat(xsiteManageApi.middleware),
 });
