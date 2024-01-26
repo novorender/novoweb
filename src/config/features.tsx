@@ -73,7 +73,7 @@ export const featuresConfig = {
         name: "Xsite Manage",
         Icon: GpsFixed,
         type: FeatureType.Widget,
-        defaultLocked: true,
+        defaultLocked: false,
         offline: false,
     },
     jira: {
@@ -81,7 +81,7 @@ export const featuresConfig = {
         name: "Jira",
         Icon: Jira,
         type: FeatureType.Widget,
-        defaultLocked: true,
+        defaultLocked: false,
         offline: false,
     },
     area: {
@@ -141,7 +141,7 @@ export const featuresConfig = {
         name: "Ditio",
         Icon: Ditio,
         type: FeatureType.Widget,
-        defaultLocked: true,
+        defaultLocked: false,
         offline: false,
     },
     myLocation: {
@@ -157,7 +157,7 @@ export const featuresConfig = {
         name: "BIMcollab",
         Icon: Domain,
         type: FeatureType.Widget,
-        defaultLocked: true,
+        defaultLocked: false,
         offline: false,
     },
     bimTrack: {
@@ -165,7 +165,7 @@ export const featuresConfig = {
         name: "Newforma Konekt",
         Icon: NewformaKonekt,
         type: FeatureType.Widget,
-        defaultLocked: true,
+        defaultLocked: false,
         offline: false,
     },
     advancedSettings: {
@@ -412,7 +412,7 @@ export const featuresConfig = {
         name: "Offline",
         Icon: DownloadForOffline,
         type: FeatureType.Widget,
-        defaultLocked: true,
+        defaultLocked: false,
         offline: true,
     },
 } as const;
