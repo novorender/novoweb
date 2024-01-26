@@ -269,9 +269,6 @@ export function App() {
                             <>
                                 {needRefresh && <UpdatePrompt update={() => updateServiceWorker(true)} />}
                                 <Switch>
-                                    <Route path="/callback">
-                                        <Loading />
-                                    </Route>
                                     <Route path="/explorer/:id?">
                                         <Explorer />
                                     </Route>

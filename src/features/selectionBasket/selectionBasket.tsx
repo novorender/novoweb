@@ -11,6 +11,7 @@ import { useToggle } from "hooks/useToggle";
 import { selectMaximized, selectMinimized } from "slices/explorerSlice";
 
 import { CsvExport } from "./routes/csvExport";
+import { GltfExport } from "./routes/gltfExport";
 import { List } from "./routes/list";
 import { Root } from "./routes/root";
 
@@ -63,6 +64,30 @@ function SelectionBasket() {
                                         <ListItemText>Export as CSV</ListItemText>
                                     </>
                                 </MenuItem>
+                                <MenuItem
+                                    onClick={() => {
+                                        history.push("/gltfexport");
+
+                                        if (props.onClose) {
+                                            props.onClose({}, "backdropClick");
+                                        }
+                                    }}
+                                    disabled={
+                                        !basket.length ||
+                                        matchPath(location.pathname, {
+                                            path: "/gltfexport",
+                                            exact: false,
+                                            strict: false,
+                                        }) !== null
+                                    }
+                                >
+                                    <>
+                                        <ListItemIcon>
+                                            <FileDownload fontSize="small" />
+                                        </ListItemIcon>
+                                        <ListItemText>Export as glTF</ListItemText>
+                                    </>
+                                </MenuItem>
                             </div>
                         </Menu>
                     )}
@@ -84,6 +109,9 @@ function SelectionBasket() {
                         </Route>
                         <Route path="/csvexport">
                             <CsvExport />
+                        </Route>
+                        <Route path="/gltfexport">
+                            <GltfExport />
                         </Route>
                     </Switch>
                 </Box>
