@@ -1,125 +1,333 @@
-import { v4 as uuidv4 } from "uuid";
+import { type ObjectDB } from "@novorender/data-js-api";
+import { type HierarcicalObjectReference, type ObjectData, type ObjectId } from "@novorender/webgl-api";
 
-import { StorageKey } from "config/storage";
-import { getFromStorage, saveToStorage } from "utils/storage";
-import { Checklist, ChecklistInstance } from "./types";
+import { searchByPatterns } from "utils/search";
+import { sleep } from "utils/time";
 
-let checklists: Checklist[] = parseChecklistsStorage();
-let checklistInstances: ChecklistInstance[] = parseChecklistInstanceStorage();
+import { type ChecklistItem, ChecklistItemType, type FormField, type FormObject, type FormObjectGuid } from "./types";
 
-export function getChecklists() {
-    return checklists;
+function uniqueByGuid(objects: FormObject[]): FormObject[] {
+    const guidSet = new Set();
+    const uniqueObjects = [];
+
+    for (const object of objects) {
+        if (!guidSet.has(object.guid)) {
+            guidSet.add(object.guid);
+            uniqueObjects.push(object);
+        }
+    }
+
+    return uniqueObjects;
 }
 
-export function getChecklistInstances() {
-    return checklistInstances;
+function getFormObject(ref: HierarcicalObjectReference): FormObject {
+    const obj = ref as ObjectData;
+    const guid = obj.properties.find((prop) => prop[0] === "GUID")?.[1] ?? "";
+    const position = obj.bounds?.sphere.center ?? [0, 0, 0];
+    return { id: obj.id, guid, position, name: obj.name };
 }
 
-export function addChecklist(partialList: Omit<Checklist, "id">): [Checklist, Checklist[]] {
-    const checklist = { ...partialList, id: uuidv4() };
+const idsToObjectsCache = new Map<number, FormObject>();
 
-    checklists = checklists.concat(checklist);
-    saveToStorage(StorageKey.Checklists, JSON.stringify(checklists));
-
-    return [checklist, checklists];
-}
-
-export function deleteChecklist(id: string): Checklist[] {
-    checklists = checklists.filter((cl) => cl.id !== id);
-    saveToStorage(StorageKey.Checklists, JSON.stringify(checklists));
-
-    return checklists;
-}
-
-export function updateChecklist(id: string, updates: Partial<Omit<Checklist, "id">>): Checklist[] {
-    checklists = checklists.map((cl) => (id === cl.id ? { ...cl, ...updates } : cl));
-    saveToStorage(StorageKey.Checklists, JSON.stringify(checklists));
-
-    return checklists;
-}
-
-function parseChecklistsStorage(): Checklist[] {
-    try {
-        const str = getFromStorage(StorageKey.Checklists);
-
-        return str ? JSON.parse(str) : [];
-    } catch (e) {
-        console.warn(e);
+export async function idsToObjects({
+    ids,
+    db,
+    abortSignal,
+}: {
+    ids: ObjectId[];
+    db: ObjectDB;
+    abortSignal: AbortSignal;
+}): Promise<FormObject[]> {
+    if (!ids.length) {
         return [];
     }
-}
 
-export function addChecklistInstances(partialInstances: Omit<ChecklistInstance, "id">[]): ChecklistInstance[] {
-    checklistInstances = checklistInstances.concat(partialInstances.map((inst) => ({ ...inst, id: uuidv4() })));
-    saveToStorage(StorageKey.ChecklistInstances, JSON.stringify(checklistInstances));
+    const MAX_CACHE_SIZE = 1000;
+    const useCache = ids.length <= MAX_CACHE_SIZE;
 
-    return checklistInstances;
-}
-
-export function deleteChecklistInstance(id: string): ChecklistInstance[] {
-    checklistInstances = checklistInstances.filter((cl) => cl.id !== id);
-    saveToStorage(StorageKey.ChecklistInstances, JSON.stringify(checklistInstances));
-
-    return checklistInstances;
-}
-
-export function updateChecklistInstance(
-    id: string,
-    updates: Partial<Omit<ChecklistInstance, "id">>
-): ChecklistInstance[] {
-    checklistInstances = checklistInstances.map((cl) => (id === cl.id ? { ...cl, ...updates } : cl));
-    saveToStorage(StorageKey.ChecklistInstances, JSON.stringify(checklistInstances));
-
-    const checklistId = checklistInstances.find((cl) => cl.id === id)?.checklistId;
-
-    if (checklistId) {
-        updateChecklistStatus(checklistId);
+    let objects = [] as FormObject[];
+    const knownIds = [] as ObjectId[];
+    let unknownIds = [] as ObjectId[];
+    if (useCache) {
+        ids.forEach((id) => {
+            if (idsToObjectsCache.has(id)) {
+                knownIds.push(id);
+            } else {
+                unknownIds.push(id);
+            }
+        });
+    } else {
+        unknownIds = ids;
     }
 
-    return checklistInstances;
-}
+    const batchSize = 100;
+    const batches = unknownIds.reduce(
+        (acc, id) => {
+            const lastBatch = acc.slice(-1)[0];
 
-function parseChecklistInstanceStorage(): ChecklistInstance[] {
-    try {
-        const str = getFromStorage(StorageKey.ChecklistInstances);
+            if (lastBatch.length < batchSize) {
+                lastBatch.push(String(id));
+            } else {
+                acc.push([String(id)]);
+            }
 
-        return str ? JSON.parse(str) : [];
-    } catch (e) {
-        console.warn(e);
-        return [];
-    }
-}
-
-function updateChecklistStatus(id: string) {
-    const checklist = checklists.find((cl) => cl.id === id);
-
-    if (!checklist) {
-        return;
-    }
-
-    const instances = checklistInstances.filter((instance) => instance.checklistId === id);
-    const requiredItems = checklist.items.filter((item) => item.required);
-
-    updateChecklist(id, {
-        instances: {
-            ...checklist.instances,
-            count: instances.length,
-            completed: instances.filter(
-                (instance) =>
-                    !requiredItems.some((requiredItem) => {
-                        const instanceItem = instance.items.find((item) => item.id === requiredItem.id);
-
-                        if (!instanceItem) {
-                            throw new Error(`Instance item ${requiredItem.id} not found in instance ${instance.id}`);
-                        }
-
-                        return !Boolean(instanceItem.relevant && (instanceItem.value || [])[0]);
-                    })
-            ).length,
+            return acc;
         },
-    });
+        [[]] as string[][]
+    );
+
+    const concurrentRequests = 5;
+    const callback = async (refs: HierarcicalObjectReference[]) => {
+        objects = objects.concat(refs.map(getFormObject));
+    };
+
+    for (let i = 0; i < batches.length / concurrentRequests; i++) {
+        await Promise.all(
+            batches.slice(i * concurrentRequests, i * concurrentRequests + concurrentRequests).map((batch) => {
+                return searchByPatterns({
+                    db,
+                    abortSignal,
+                    callback,
+                    full: true,
+                    searchPatterns: [{ property: "id", value: batch, exact: true }],
+                }).catch(() => {});
+            })
+        );
+
+        await sleep(1);
+    }
+
+    if (useCache) {
+        if (idsToObjectsCache.size > MAX_CACHE_SIZE) {
+            idsToObjectsCache.clear();
+        }
+
+        if (objects.length === unknownIds.length) {
+            objects.forEach((object, idx) => {
+                idsToObjectsCache.set(unknownIds[idx], object);
+            });
+        }
+
+        knownIds.forEach((id) => {
+            objects.push(idsToObjectsCache.get(id)!);
+        });
+    }
+
+    return uniqueByGuid(objects);
 }
 
-export function getRequiredItems(checklist: Checklist) {
-    return checklist.items.filter((item) => item.required);
+const mapGuidsToIdsCache = new Map<string, ObjectId>();
+
+export async function mapGuidsToIds({
+    guids,
+    db,
+    abortSignal,
+}: {
+    guids: string[];
+    db: ObjectDB;
+    abortSignal: AbortSignal;
+}) {
+    if (!guids.length) {
+        return {};
+    }
+
+    const MAX_CACHE_SIZE = 1000;
+    const useCache = guids.length <= MAX_CACHE_SIZE;
+
+    const map = {} as Record<FormObjectGuid, ObjectId>;
+    const knownGuids = [] as FormObjectGuid[];
+    let unknownGuids = [] as FormObjectGuid[];
+
+    if (useCache) {
+        guids.forEach((guid) => {
+            if (mapGuidsToIdsCache.has(guid)) {
+                knownGuids.push(guid);
+            } else {
+                unknownGuids.push(guid);
+            }
+        });
+    } else {
+        unknownGuids = guids;
+    }
+
+    const batchSize = 100;
+    const batches = unknownGuids.reduce(
+        (acc, guid) => {
+            const lastBatch = acc.slice(-1)[0];
+
+            if (lastBatch.length < batchSize) {
+                lastBatch.push(guid);
+            } else {
+                acc.push([guid]);
+            }
+
+            return acc;
+        },
+        [[]] as string[][]
+    );
+
+    const concurrentRequests = 5;
+    const callback = (objects: HierarcicalObjectReference[]) => {
+        objects.forEach((obj) => {
+            const guid = (obj as ObjectData).properties.find((prop) => prop[0] === "GUID")?.[1];
+            if (guid) {
+                map[guid] = obj.id;
+                if (useCache) {
+                    mapGuidsToIdsCache.set(guid, obj.id);
+                }
+            }
+        });
+    };
+    for (let i = 0; i < batches.length / concurrentRequests; i++) {
+        await Promise.all(
+            batches.slice(i * concurrentRequests, i * concurrentRequests + concurrentRequests).map((batch) => {
+                return searchByPatterns({
+                    db,
+                    callback,
+                    abortSignal,
+                    searchPatterns: [
+                        {
+                            property: "guid",
+                            value: batch,
+                            exact: true,
+                        },
+                    ],
+                    full: true,
+                }).catch(() => {});
+            })
+        );
+
+        await sleep(1);
+    }
+
+    if (useCache) {
+        if (mapGuidsToIdsCache.size > MAX_CACHE_SIZE) {
+            mapGuidsToIdsCache.clear();
+        }
+
+        knownGuids.forEach((guid) => {
+            map[guid] = mapGuidsToIdsCache.get(guid)!;
+        });
+    }
+
+    return map;
+}
+
+function toFormField(item: ChecklistItem): FormField {
+    if (item.type === ChecklistItemType.Text) {
+        return {
+            type: "text",
+            label: item.title,
+            required: item.required,
+            ...(item.id ? { id: item.id } : {}),
+            ...(item.value?.length ? { value: item.value[0] } : item.value === null ? { value: "" } : {}),
+        };
+    }
+    if (item.type === ChecklistItemType.TrafficLight) {
+        return {
+            type: "radioGroup",
+            label: item.title,
+            required: item.required,
+            options: [
+                { label: "Green", value: "green" },
+                { label: "Yellow", value: "yellow" },
+                { label: "Red", value: "red" },
+            ],
+            ...(item.id ? { id: item.id } : {}),
+            ...(item.value?.length ? { value: item.value[0] } : {}),
+        };
+    }
+    if (item.type === ChecklistItemType.YesNo) {
+        return {
+            type: "checkbox",
+            label: item.title,
+            required: item.required,
+            ...(item.id ? { id: item.id } : {}),
+            ...(item.value?.length ? { value: item.value[0].toLowerCase() === "yes" } : {}),
+        };
+    }
+    if (item.type === ChecklistItemType.Dropdown) {
+        return {
+            type: "select",
+            label: item.title,
+            required: item.required,
+            options: item.options.map((option) => ({ label: option, value: option })),
+            ...(item.id ? { id: item.id } : {}),
+            ...(item.value?.length ? { value: item.value } : item.value === null ? { value: [] } : {}),
+        };
+    }
+    if (item.type === ChecklistItemType.Checkbox) {
+        return {
+            type: "select",
+            multiple: true,
+            label: item.title,
+            required: item.required,
+            options: item.options.map((option) => ({ label: option, value: option })),
+            ...(item.id ? { id: item.id } : {}),
+            ...(item.value?.length ? { value: item.value } : { value: [] }),
+        };
+    }
+    throw new Error(`Unknown checklist item type: ${item.type}`);
+}
+
+export function toFormFields(items: ChecklistItem[]): FormField[] {
+    return items.map(toFormField);
+}
+
+function toChecklistItem(field: FormField): ChecklistItem {
+    if (field.type === "text") {
+        return {
+            type: ChecklistItemType.Text,
+            title: field.label ?? "",
+            required: field.required ?? false,
+            ...(field.id ? { id: field.id } : {}),
+            ...(field.value ? { value: [field.value] } : {}),
+        };
+    }
+    if (field.type === "radioGroup") {
+        return {
+            type: ChecklistItemType.TrafficLight,
+            title: field.label ?? "",
+            required: field.required ?? false,
+            ...(field.id ? { id: field.id } : {}),
+            ...(field.value ? { value: [field.value] } : {}),
+        };
+    }
+    if (field.type === "checkbox") {
+        return {
+            type: ChecklistItemType.YesNo,
+            title: field.label ?? "",
+            required: field.required ?? false,
+            ...(field.id ? { id: field.id } : {}),
+            ...(typeof field.value === "boolean" ? { value: [field.value ? "yes" : "no"] } : {}),
+        };
+    }
+    if (field.type === "select") {
+        return {
+            type: field.multiple ? ChecklistItemType.Checkbox : ChecklistItemType.Dropdown,
+            title: field.label ?? "",
+            required: field.required ?? false,
+            options: field.options.map((option) => option.value),
+            ...(field.id ? { id: field.id } : {}),
+            ...(field.value ? { value: field.value } : field.value === null ? { value: [] } : {}),
+        };
+    }
+    throw new Error(`Unknown form field type: ${field.type}`);
+}
+
+export function toChecklistItems(fields: FormField[]): ChecklistItem[] {
+    return fields.map(toChecklistItem);
+}
+
+export function getChecklistItemTypeDisplayName(type: ChecklistItemType): string {
+    switch (type) {
+        case ChecklistItemType.YesNo:
+            return "Yes / No";
+        case ChecklistItemType.TrafficLight:
+            return "Traffic light";
+        case ChecklistItemType.Checkbox:
+        case ChecklistItemType.Dropdown:
+        case ChecklistItemType.Text:
+            return type[0].toUpperCase() + type.slice(1);
+    }
 }

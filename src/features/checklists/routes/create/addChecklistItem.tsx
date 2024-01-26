@@ -1,4 +1,3 @@
-import { FormEventHandler, useState } from "react";
 import {
     Autocomplete,
     Box,
@@ -13,6 +12,7 @@ import {
     RadioGroup,
     Typography,
 } from "@mui/material";
+import { FormEventHandler, useCallback, useMemo, useState } from "react";
 import { useHistory } from "react-router-dom";
 import { v4 as uuidv4 } from "uuid";
 
@@ -28,39 +28,57 @@ export function AddChecklistItem({ onSave }: { onSave: (item: ChecklistItem) => 
     const [relevant, toggleRelevant] = useToggle(true);
     const [options, setOptions] = useState([] as string[]);
 
-    const canSave =
-        title &&
-        ([ChecklistItemType.Text, ChecklistItemType.YesNo, ChecklistItemType.TrafficLight].includes(type) ||
-            options.length);
+    const canSave = useMemo(
+        () =>
+            title &&
+            ([ChecklistItemType.Text, ChecklistItemType.YesNo, ChecklistItemType.TrafficLight].includes(type) ||
+                options.length),
+        [title, type, options]
+    );
 
-    const handleSubmit: FormEventHandler = (e) => {
-        e.preventDefault();
+    const handleSubmit = useCallback<FormEventHandler>(
+        (e) => {
+            e.preventDefault();
 
-        if (!canSave) {
-            return;
-        }
+            if (!canSave) {
+                return;
+            }
 
-        onSave({
-            id: uuidv4(),
-            title,
-            type,
-            required: relevant,
-            ...([ChecklistItemType.Checkbox, ChecklistItemType.Dropdown].includes(type) ? { options } : {}),
-        } as ChecklistItem);
+            const newItem: ChecklistItem = {
+                id: uuidv4(),
+                title,
+                type,
+                required: relevant,
+                ...(type === ChecklistItemType.Checkbox || type === ChecklistItemType.Dropdown ? { options } : {}),
+            } as ChecklistItem;
 
-        history.goBack();
-    };
+            onSave(newItem);
+            history.goBack();
+        },
+        [canSave, title, type, relevant, options, onSave, history]
+    );
+
+    const handleTitleChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => setTitle(e.target.value), []);
+    const handleToggleRelevant = useCallback(
+        (_: React.ChangeEvent<HTMLInputElement>) => toggleRelevant(),
+        [toggleRelevant]
+    );
+    const handleTypeChange = useCallback(
+        (_: React.ChangeEvent<HTMLInputElement>, value: string) => setType(value as ChecklistItemType),
+        []
+    );
+    const handleOptionsChange = useCallback((_: React.SyntheticEvent, value: string[]) => setOptions(value), []);
 
     return (
         <ScrollBox p={1} pt={2} pb={3} component="form" onSubmit={handleSubmit}>
             <Typography fontWeight={600} mb={1}>
                 Checklist item
             </Typography>
-            <TextField label="Title" value={title} onChange={(e) => setTitle(e.target.value)} fullWidth />
+            <TextField label="Title" value={title} onChange={handleTitleChange} fullWidth />
             <Divider sx={{ my: 1 }} />
             <FormGroup>
                 <FormControlLabel
-                    control={<Checkbox size="small" checked={relevant} onChange={() => toggleRelevant()} />}
+                    control={<Checkbox size="small" checked={relevant} onChange={handleToggleRelevant} />}
                     label="Always relevant"
                 />
             </FormGroup>
@@ -71,7 +89,7 @@ export function AddChecklistItem({ onSave }: { onSave: (item: ChecklistItem) => 
                 </FormLabel>
                 <RadioGroup
                     value={type}
-                    onChange={(_e, value) => setType(value as ChecklistItemType)}
+                    onChange={handleTypeChange}
                     row
                     aria-labelledby="checklist-item-type"
                     name="checklist-item-types"
@@ -95,7 +113,7 @@ export function AddChecklistItem({ onSave }: { onSave: (item: ChecklistItem) => 
                     <FormControlLabel value={ChecklistItemType.Text} control={<Radio size="small" />} label="Text" />
                 </RadioGroup>
             </FormControl>
-            {[ChecklistItemType.Checkbox, ChecklistItemType.Dropdown].includes(type) ? (
+            {[ChecklistItemType.Checkbox, ChecklistItemType.Dropdown].includes(type) && (
                 <>
                     <Divider sx={{ mb: 2 }} />
                     <Autocomplete
@@ -104,7 +122,7 @@ export function AddChecklistItem({ onSave }: { onSave: (item: ChecklistItem) => 
                         id="type-options"
                         options={[]}
                         value={options}
-                        onChange={(_e, value) => setOptions(value as string[])}
+                        onChange={handleOptionsChange}
                         freeSolo
                         renderTags={(_value, getTagProps) =>
                             options.map((option: string, index: number) => (
@@ -114,9 +132,9 @@ export function AddChecklistItem({ onSave }: { onSave: (item: ChecklistItem) => 
                         renderInput={(params) => <TextField {...params} label="Options" />}
                     />
                 </>
-            ) : null}
+            )}
             <Box display="flex" justifyContent="space-between" mt={2}>
-                <Button variant="outlined" color="grey" sx={{ mr: 2 }} fullWidth onClick={() => history.goBack()}>
+                <Button variant="outlined" color="grey" sx={{ mr: 2 }} fullWidth onClick={history.goBack}>
                     Cancel
                 </Button>
                 <Button variant="contained" color="primary" fullWidth disabled={!canSave} type="submit">

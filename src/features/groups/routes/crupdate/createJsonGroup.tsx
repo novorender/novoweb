@@ -17,23 +17,7 @@ import { useHistory, useRouteMatch } from "react-router-dom";
 
 import { ScrollBox, Switch, TextField } from "components";
 import { useExplorerGlobals } from "contexts/explorerGlobals";
-// HEAD:src/features/groups/routes/crupdate/createJsonGroup.tsx
 import { highlightActions, useDispatchHighlighted } from "contexts/highlighted";
-//
-import {
-  highlightActions,
-  useDispatchHighlighted,
-  useHighlighted,
-} from "contexts/highlighted";
-import {
-  CustomGroup,
-  customGroupsActions,
-  useCustomGroups,
-  useDispatchCustomGroups,
-} from "contexts/customGroups";
-
-import { useToggle } from "hooks/useToggle";
-//5e22d300 (highlight object on cl hover. go to cl on obj click):src/features/groups/createJsonGroup.tsx
 import { useAbortController } from "hooks/useAbortController";
 import { uniqueArray } from "utils/misc";
 import { searchByPatterns, searchDeepByPatterns } from "utils/search";
@@ -68,23 +52,13 @@ export function CreateJsonGroup({
     state: { db },
   } = useExplorerGlobals(true);
   const dispatchHighlighted = useDispatchHighlighted();
-  // HEAD:src/features/groups/routes/crupdate/createJsonGroup.tsx
-  //
-  const customGroups = useCustomGroups();
-  const dispatchCustomGroups = useDispatchCustomGroups();
-  const groupToEdit = id
-    ? customGroups.find((group) => group.id === id)
-    : undefined;
-  //5e22d300 (highlight object on cl hover. go to cl on obj click):src/features/groups/createJsonGroup.tsx
-  const [status, setStatus] = useMountedState(Status.Initial);
-  const [json, setJson] = useState(
-    JSON.stringify({ searchPattern: savedInputs }, undefined, 2),
-  );
 
   const [status, setStatus] = useState(Status.Initial);
   const [json, setJson] = useState(
     JSON.stringify({ searchPattern: savedInputs }, undefined, 2),
   );
+
+  const [abortController, abort] = useAbortController();
 
   const search = async () => {
     abort();

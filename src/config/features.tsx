@@ -441,6 +441,7 @@ export const featuresConfig = {
     Icon: Ballot,
     type: FeatureType.Widget,
     defaultLocked: false,
+    offline: false,
   },
 } as const;
 
@@ -461,11 +462,7 @@ export type ButtonKey = {
 export type Widget = Config[WidgetKey];
 export type FeatureTag = Tags[FeatureTagKey];
 
-// todo
-export const defaultEnabledWidgets = [
-  featuresConfig.user.key,
-  featuresConfig.checklists.key,
-] as WidgetKey[];
+export const defaultEnabledWidgets = [featuresConfig.user.key] as WidgetKey[];
 export const allWidgets = Object.values(featuresConfig)
   .filter((widget) =>
     [FeatureType.AdminWidget, FeatureType.Widget].includes(widget.type)

@@ -1,168 +1,249 @@
-import { FormEventHandler, useState } from "react";
 import { AddCircle, SearchOutlined } from "@mui/icons-material";
-import { Box, Button, Typography } from "@mui/material";
-import { useHistory } from "react-router-dom";
+import { Box, Button, FormControlLabel, Typography } from "@mui/material";
 import { ObjectId, SearchPattern } from "@novorender/webgl-api";
+import { FormEventHandler, useCallback, useEffect, useState } from "react";
+import { useHistory } from "react-router-dom";
 
-import { AdvancedInput, LinearProgress, ScrollBox } from "components";
-import { highlightActions, useDispatchHighlighted } from "contexts/highlighted";
+import { AdvancedSearchInputs, LinearProgress, ScrollBox, Switch, TextField } from "components";
 import { useExplorerGlobals } from "contexts/explorerGlobals";
-import { AsyncState, AsyncStatus } from "types/misc";
+import { highlightActions, useDispatchHighlighted } from "contexts/highlighted";
 import { useAbortController } from "hooks/useAbortController";
-import { searchDeepByPatterns } from "utils/search";
+import { useToggle } from "hooks/useToggle";
+import { AsyncState, AsyncStatus } from "types/misc";
 import { uniqueArray } from "utils/misc";
-
-// TODO(OLA): copy group or input new
+import { searchDeepByPatterns } from "utils/search";
 
 export function AddObjects({
     onSave,
+    objects,
 }: {
-    onSave: (objects: { searchPattern: SearchPattern[]; ids: ObjectId[] }) => void;
+    onSave: (objects: { searchPattern: string | SearchPattern[]; ids: ObjectId[] }) => void;
+    objects?: { searchPattern: string | SearchPattern[]; ids: ObjectId[] };
 }) {
     const dispatchHighlighted = useDispatchHighlighted();
     const history = useHistory();
     const {
-        state: { scene },
+        state: { db },
     } = useExplorerGlobals(true);
 
-    const [inputs, setInputs] = useState([{ property: "", value: "", exact: true }] as SearchPattern[]);
-    const [savedInputs, setSavedInputs] = useState<SearchPattern[]>([]);
-    const [focusedInputIdx, setFocusedInputIdx] = useState<number>(-1);
+    const [simpleInput, setSimpleInput] = useState(
+        typeof objects?.searchPattern === "string" ? objects.searchPattern : ""
+    );
+    const [advanced, toggleAdvanced] = useToggle(objects?.searchPattern ? Array.isArray(objects.searchPattern) : true);
 
-    const [ids, setIds] = useState([] as ObjectId[]);
-    const [{ status }, setStatus] = useState<AsyncState<null>>({ status: AsyncStatus.Initial });
+    const [advancedInputs, setAdvancedInputs] = useState(
+        objects && Array.isArray(objects.searchPattern)
+            ? objects.searchPattern
+            : [{ property: "", value: "", exact: true }]
+    );
+
+    const [focusedInputIdx, setFocusedInputIdx] = useState<number>(-1);
+    const focusedInput = advancedInputs[focusedInputIdx];
+
+    const [ids, setIds] = useState(objects?.ids ?? []);
+    const [{ status }, setStatus] = useState<AsyncState<null>>({
+        status: AsyncStatus.Initial,
+    });
     const [abortController, abort] = useAbortController();
 
-    const focusedInput = inputs[focusedInputIdx];
-    const validPatterns = inputs.filter(({ property, value }) => property || value);
+    useEffect(() => {
+        if (objects?.ids) {
+            dispatchHighlighted(highlightActions.setIds(objects.ids));
+        }
+    }, [dispatchHighlighted, objects?.ids]);
 
-    const handleSearch = async () => {
-        if (!validPatterns) {
+    const getSearchPattern = useCallback(() => {
+        const searchPattern = advanced
+            ? advancedInputs.filter(({ property, value }) => property || value)
+            : simpleInput;
+
+        if (
+            (Array.isArray(searchPattern) && !searchPattern.length) ||
+            (typeof searchPattern === "string" && searchPattern.length < 3)
+        ) {
             return;
         }
 
+        return searchPattern;
+    }, [advanced, advancedInputs, simpleInput]);
+
+    const handleSearch = async () => {
         const abortSignal = abortController.current.signal;
+
+        const searchPatterns = getSearchPattern();
+
+        if (!searchPatterns) {
+            return;
+        }
 
         setIds([]);
         dispatchHighlighted(highlightActions.setIds([]));
-        setSavedInputs(inputs);
         setStatus({ status: AsyncStatus.Loading });
 
-        await searchDeepByPatterns({
-            abortSignal,
-            scene,
-            searchPatterns: inputs,
-            callback: (result) => {
-                setIds((state) => state.concat(result));
-                dispatchHighlighted(highlightActions.add(result));
-            },
-        }).catch(() => {});
+        try {
+            await searchDeepByPatterns({
+                db,
+                searchPatterns,
+                abortSignal,
+                callback: (ids) => {
+                    setIds((state) => state.concat(ids));
+                    dispatchHighlighted(highlightActions.add(ids));
+                },
+            });
+        } catch {
+            return setStatus({
+                status: AsyncStatus.Error,
+                msg: "An error occurred while searching in the DB.",
+            });
+        }
 
         setIds((ids) => uniqueArray(ids));
-        setStatus({ status: AsyncStatus.Success });
+        setStatus({ status: AsyncStatus.Success, data: null });
     };
 
     const handleSubmit: FormEventHandler = (e) => {
         e.preventDefault();
 
-        if (!savedInputs.length) {
+        const searchPattern = getSearchPattern();
+
+        if (!searchPattern) {
             return;
         }
 
-        onSave({ ids, searchPattern: savedInputs });
+        dispatchHighlighted(highlightActions.setIds([]));
+
+        onSave({ ids, searchPattern });
         history.goBack();
+    };
+
+    const handleAdvancedToggled = () => {
+        setIds([]);
+        dispatchHighlighted(highlightActions.setIds([]));
+        toggleAdvanced();
     };
 
     return (
         <>
-            {status === AsyncStatus.Loading ? (
+            {status === AsyncStatus.Loading && (
                 <Box position="relative">
                     <LinearProgress />
                 </Box>
-            ) : null}
+            )}
             <ScrollBox p={1} pt={2} pb={3}>
                 <Typography fontWeight={600} mb={1}>
                     Assign objects
                 </Typography>
-                <Box component="form" onSubmit={handleSubmit}>
-                    {inputs.map((input, idx, array) => (
-                        <AdvancedInput
-                            key={idx}
-                            input={input}
-                            setInputs={setInputs}
-                            index={idx}
-                            isLast={idx === array.length - 1}
+                <Box component="form" sx={{ mt: 1 }} onSubmit={handleSubmit}>
+                    {advanced ? (
+                        <AdvancedSearchInputs
+                            inputs={advancedInputs}
+                            setInputs={setAdvancedInputs}
                             setFocusedInputIdx={setFocusedInputIdx}
                         />
-                    ))}
-                    <Box my={2}>
-                        <Button
-                            color="grey"
-                            sx={{ padding: 0, mr: 3 }}
-                            onClick={() => setInputs((state) => [...state, { property: "", value: "", exact: true }])}
-                        >
-                            <AddCircle />
-                            <Box ml={0.5}>AND</Box>
-                        </Button>
-                        <Button
-                            color="grey"
-                            sx={{ padding: 0, mr: 3 }}
-                            disabled={
-                                !focusedInput ||
-                                (Array.isArray(focusedInput.value)
-                                    ? !focusedInput.value.slice(-1)[0]
-                                    : !focusedInput.value)
+                    ) : (
+                        <TextField
+                            autoComplete="novorender-simple-search"
+                            autoFocus
+                            id="simple-search-field"
+                            label="Search"
+                            fullWidth
+                            value={simpleInput}
+                            onChange={(e) => setSimpleInput(e.target.value)}
+                            sx={{ mb: 2, pt: 1 }}
+                        />
+                    )}
+
+                    <Box mb={2}>
+                        <FormControlLabel
+                            sx={{ ml: 0, mr: 3, minHeight: 24 }}
+                            control={<Switch name="advanced" checked={advanced} onChange={handleAdvancedToggled} />}
+                            label={
+                                <Box ml={0.5} fontSize={14}>
+                                    Advanced
+                                </Box>
                             }
-                            onClick={() =>
-                                setInputs((state) =>
-                                    state.map((input) =>
-                                        input === focusedInput
-                                            ? {
-                                                  ...input,
-                                                  value: Array.isArray(input.value)
-                                                      ? input.value.concat("")
-                                                      : [input.value ?? "", ""],
-                                              }
-                                            : input
-                                    )
-                                )
-                            }
-                        >
-                            <AddCircle />
-                            <Box ml={0.5}>OR</Box>
-                        </Button>
+                        />
+                        {advanced && (
+                            <>
+                                <Button
+                                    color="grey"
+                                    sx={{ padding: 0, mr: 3 }}
+                                    onClick={() =>
+                                        setAdvancedInputs((inputs) => [
+                                            ...inputs,
+                                            { property: "", value: "", exact: true },
+                                        ])
+                                    }
+                                >
+                                    <AddCircle />
+                                    <Box ml={0.5}>AND</Box>
+                                </Button>
+                                <Button
+                                    color="grey"
+                                    sx={{ padding: 0 }}
+                                    disabled={
+                                        !focusedInput ||
+                                        (Array.isArray(focusedInput.value)
+                                            ? !focusedInput.value.slice(-1)[0]
+                                            : !focusedInput.value)
+                                    }
+                                    onClick={() =>
+                                        setAdvancedInputs((inputs) =>
+                                            inputs.map((input) =>
+                                                input === focusedInput
+                                                    ? {
+                                                          ...input,
+                                                          value: Array.isArray(input.value)
+                                                              ? input.value.concat("")
+                                                              : [input.value ?? "", ""],
+                                                      }
+                                                    : input
+                                            )
+                                        )
+                                    }
+                                >
+                                    <AddCircle />
+                                    <Box ml={0.5}>OR</Box>
+                                </Button>
+                            </>
+                        )}
                         <Button
                             color="grey"
                             sx={{ padding: 0 }}
-                            disabled={!validPatterns.length}
+                            disabled={
+                                status === AsyncStatus.Loading || advanced
+                                    ? !advancedInputs.length
+                                    : !simpleInput.length
+                            }
                             onClick={handleSearch}
                         >
                             <SearchOutlined />
                             <Box ml={0.5}>Search</Box>
                         </Button>
-                        <Box display="flex" justifyContent="space-between" mt={2}>
-                            <Button
-                                variant="outlined"
-                                color="grey"
-                                sx={{ mr: 2 }}
-                                fullWidth
-                                disabled={status !== AsyncStatus.Loading}
-                                onClick={() => {
-                                    abort();
-                                }}
-                            >
-                                Cancel
-                            </Button>
-                            <Button
-                                variant="contained"
-                                color="primary"
-                                fullWidth
-                                disabled={!savedInputs.length || status === AsyncStatus.Loading}
-                                type="submit"
-                            >
-                                Assign ({ids.length})
-                            </Button>
-                        </Box>
+                    </Box>
+                    <Box display="flex" mb={1}>
+                        <Button
+                            variant="outlined"
+                            color="grey"
+                            type="button"
+                            sx={{ mr: 1 }}
+                            fullWidth
+                            disabled={status !== AsyncStatus.Loading}
+                            onClick={() => {
+                                abort();
+                            }}
+                        >
+                            Cancel
+                        </Button>
+                        <Button
+                            variant="contained"
+                            color="primary"
+                            fullWidth
+                            disabled={!ids.length || status !== AsyncStatus.Success}
+                            type="submit"
+                        >
+                            Assign ({ids.length})
+                        </Button>
                     </Box>
                 </Box>
             </ScrollBox>

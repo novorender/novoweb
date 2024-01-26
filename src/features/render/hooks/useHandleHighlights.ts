@@ -33,7 +33,7 @@ export function useHandleHighlights() {
     const sceneId = useSceneId();
     const mainObject = useAppSelector(selectMainObject);
     const highlighted = useHighlighted();
-    const secondaryHighlight = useHighlightCollections()["secondaryHighlight"];
+    const { secondaryHighlight, checklistsNew, checklistOngoing, checklistCompleted } = useHighlightCollections();
     const hidden = useHidden().idArr;
     const groups = useObjectGroups();
     const defaultVisibility = useAppSelector(selectDefaultVisibility);
@@ -183,6 +183,30 @@ export function useHandleHighlights() {
                         {
                             objectIds: new Uint32Array(
                                 basketMode === SelectionBasketMode.Loose
+                                    ? checklistsNew.idArr
+                                    : basket.idArr.filter((id) => checklistsNew.ids[id])
+                            ).sort(),
+                            action: createColorSetHighlight(checklistsNew.color),
+                        },
+                        {
+                            objectIds: new Uint32Array(
+                                basketMode === SelectionBasketMode.Loose
+                                    ? checklistOngoing.idArr
+                                    : basket.idArr.filter((id) => checklistOngoing.ids[id])
+                            ).sort(),
+                            action: createColorSetHighlight(checklistOngoing.color),
+                        },
+                        {
+                            objectIds: new Uint32Array(
+                                basketMode === SelectionBasketMode.Loose
+                                    ? checklistCompleted.idArr
+                                    : basket.idArr.filter((id) => checklistCompleted.ids[id])
+                            ).sort(),
+                            action: createColorSetHighlight(checklistCompleted.color),
+                        },
+                        {
+                            objectIds: new Uint32Array(
+                                basketMode === SelectionBasketMode.Loose
                                     ? mainObject !== undefined
                                         ? highlighted.idArr.concat(mainObject)
                                         : highlighted.idArr
@@ -201,6 +225,9 @@ export function useHandleHighlights() {
         sceneId,
         highlighted,
         secondaryHighlight,
+        checklistsNew,
+        checklistOngoing,
+        checklistCompleted,
         hidden,
         groups,
         propertyTreeGroups,
