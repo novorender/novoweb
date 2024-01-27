@@ -22,8 +22,6 @@ export function Templates() {
     const dispatchHighlightCollections = useDispatchHighlightCollections();
 
     useEffect(() => {
-        dispatchHighlighted(highlightActions.setIds([]));
-        dispatch(renderActions.setMainObject(undefined));
         dispatchHighlightCollections(highlightCollectionsActions.clearAll());
         dispatch(renderActions.setDefaultVisibility(ObjectVisibility.Neutral));
         dispatchHighlighted(highlightActions.resetColor());

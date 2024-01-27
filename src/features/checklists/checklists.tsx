@@ -1,6 +1,6 @@
 import { Box } from "@mui/material";
 import { PropsWithChildren, useEffect, useRef } from "react";
-import { MemoryRouter, Route, Switch, SwitchProps, useHistory, useLocation } from "react-router-dom";
+import { MemoryRouter, Route, Switch, SwitchProps, useHistory } from "react-router-dom";
 
 import { useAppDispatch, useAppSelector } from "app/store";
 import { LogoSpeedDial, WidgetContainer, WidgetHeader } from "components";
@@ -57,7 +57,6 @@ export default function Checklists() {
 
 function CustomSwitch(props: PropsWithChildren<SwitchProps>) {
     const history = useHistory();
-    const location = useLocation();
     const willUnmount = useRef(false);
     const dispatch = useAppDispatch();
     const mainObject = useAppSelector(selectMainObject);
@@ -78,10 +77,10 @@ function CustomSwitch(props: PropsWithChildren<SwitchProps>) {
     useEffect(
         () => () => {
             if (willUnmount.current) {
-                dispatch(formsActions.setLastViewedPath(location.pathname));
+                dispatch(formsActions.setLastViewedPath(history.location.pathname));
             }
         },
-        [dispatch, location.pathname]
+        [dispatch, history.location.pathname]
     );
 
     return <Switch {...props} />;

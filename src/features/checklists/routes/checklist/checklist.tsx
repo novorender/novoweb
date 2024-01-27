@@ -19,6 +19,7 @@ import { useAbortController } from "hooks/useAbortController";
 import { useSceneId } from "hooks/useSceneId";
 
 import { useGetTemplateQuery } from "../../api";
+import { formsActions } from "../../slice";
 import { type FormId, type FormObject, type FormState } from "../../types";
 import { ChecklistItem } from "./checklistItem";
 
@@ -94,15 +95,13 @@ export function Checklist() {
                 dispatchHighlightCollections(highlightCollectionsActions.clearAll());
                 dispatch(renderActions.setDefaultVisibility(ObjectVisibility.Neutral));
                 dispatchHighlighted(highlightActions.resetColor());
+                dispatch(formsActions.setCurrentChecklist(null));
             }
         },
         [history.location.pathname, dispatch, dispatchHighlighted, dispatchHighlightCollections]
     );
 
     useEffect(() => {
-        dispatchHighlighted(highlightActions.setIds([]));
-        dispatchHighlightCollections(highlightCollectionsActions.clearAll());
-
         if (items.length === 0) {
             return;
         }
@@ -122,6 +121,14 @@ export function Checklist() {
         );
     }, [items, dispatch, dispatchHighlighted, dispatchHighlightCollections]);
 
+    useEffect(() => {
+        dispatch(formsActions.setCurrentChecklist(formId));
+    }, [dispatch, formId]);
+
+    const handleBackClick = () => {
+        history.push("/");
+    };
+
     return (
         <>
             <Box boxShadow={theme.customShadows.widgetHeader}>
@@ -130,7 +137,7 @@ export function Checklist() {
                         <Divider />
                     </Box>
                     <Box display="flex">
-                        <Button color="grey" onClick={history.goBack}>
+                        <Button color="grey" onClick={handleBackClick}>
                             <ArrowBack sx={{ mr: 1 }} />
                             Back
                         </Button>
