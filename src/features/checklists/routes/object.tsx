@@ -15,6 +15,7 @@ import { useEffect, useState } from "react";
 import { Redirect, useHistory, useParams } from "react-router-dom";
 
 import { useAppDispatch } from "app/store";
+import { useAppSelector } from "app/store";
 import { Divider, ScrollBox } from "components";
 import { useExplorerGlobals } from "contexts/explorerGlobals";
 import { highlightActions, useDispatchHighlighted, useHighlighted } from "contexts/highlighted";
@@ -23,6 +24,7 @@ import { useAbortController } from "hooks/useAbortController";
 import { useSceneId } from "hooks/useSceneId";
 
 import { useGetFormsQuery } from "../api";
+import { selectCurrentChecklist } from "../slice";
 import { type FormObjectGuid } from "../types";
 import { idsToObjects } from "../utils";
 
@@ -34,6 +36,7 @@ export function Object() {
     const theme = useTheme();
     const history = useHistory();
     const sceneId = useSceneId();
+    const currentChecklist = useAppSelector(selectCurrentChecklist);
     const [abortController] = useAbortController();
     const { idArr: highlighted } = useHighlighted();
     const dispatch = useAppDispatch();
@@ -95,8 +98,16 @@ export function Object() {
             : skipToken
     );
 
-    if (forms?.length === 1 && object?.guid) {
-        return <Redirect push={false} to={`/form/${object.guid}-${forms[0].id}`} />;
+    if (forms && (currentChecklist || forms?.length === 1) && object?.guid) {
+        return (
+            <Redirect
+                push={false}
+                to={{
+                    pathname: `/form/${object.guid}-${currentChecklist || forms[0].id}`,
+                    state: { objectId: object.id },
+                }}
+            />
+        );
     }
 
     const handleBackClick = () => {
@@ -148,7 +159,10 @@ export function Object() {
                                         sx={{ justifyContent: "space-between" }}
                                         onClick={() => {
                                             if (object?.guid) {
-                                                history.push(`/form/${object.guid}-${form.id}`);
+                                                history.push({
+                                                    pathname: `/form/${object.guid}-${form.id}`,
+                                                    state: { objectId: object.id },
+                                                });
                                             }
                                         }}
                                     >

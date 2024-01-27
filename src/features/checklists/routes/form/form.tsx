@@ -4,9 +4,11 @@ import { Fragment, useCallback, useEffect, useRef, useState } from "react";
 import { useHistory, useParams } from "react-router-dom";
 
 import { useAppDispatch } from "app/store";
+import { useAppSelector } from "app/store";
 import { Divider, ScrollBox } from "components";
 import { highlightCollectionsActions, useDispatchHighlightCollections } from "contexts/highlightCollections";
-import { highlightActions, useDispatchHighlighted } from "contexts/highlighted";
+import { highlightActions, useDispatchHighlighted, useHighlighted } from "contexts/highlighted";
+import { selectCurrentChecklist } from "features/checklists/slice";
 import { ObjectVisibility, renderActions } from "features/render";
 import { useSceneId } from "hooks/useSceneId";
 
@@ -20,9 +22,11 @@ export function Form() {
     const theme = useTheme();
     const history = useHistory();
     const sceneId = useSceneId();
+    const currentChecklist = useAppSelector(selectCurrentChecklist);
     const dispatch = useAppDispatch();
     const dispatchHighlighted = useDispatchHighlighted();
     const dispatchHighlightCollections = useDispatchHighlightCollections();
+    const { idArr: highlighted } = useHighlighted();
 
     const willUnmount = useRef(false);
     const [items, setItems] = useState<ChecklistItem[]>([]);
@@ -35,6 +39,14 @@ export function Form() {
     });
 
     const [updateForm, { isLoading: isFormUpdating }] = useUpdateFormMutation();
+
+    useEffect(() => {
+        const id = (history.location?.state as { objectId?: number })?.objectId;
+        if (!id || highlighted.includes(+id)) {
+            return;
+        }
+        dispatchHighlighted(highlightActions.setIds([+id]));
+    }, [dispatchHighlighted, highlighted, history.location.state]);
 
     useEffect(() => {
         if (form?.fields) {
@@ -86,6 +98,16 @@ export function Form() {
         ]
     );
 
+    const handleBackClick = useCallback(() => {
+        dispatchHighlighted(highlightActions.setIds([]));
+        dispatch(renderActions.setMainObject(undefined));
+        if (currentChecklist) {
+            history.push(`/checklist/${currentChecklist}`);
+        } else {
+            history.goBack();
+        }
+    }, [dispatchHighlighted, dispatch, currentChecklist, history]);
+
     const handleClearClick = useCallback(() => {
         setItems((state) => state.map((item) => ({ ...item, value: null })));
         setIsUpdated(true);
@@ -99,7 +121,7 @@ export function Form() {
                         <Divider />
                     </Box>
                     <Box display="flex" justifyContent="space-between">
-                        <Button color="grey" onClick={history.goBack}>
+                        <Button color="grey" onClick={handleBackClick}>
                             <ArrowBack sx={{ mr: 1 }} />
                             Back
                         </Button>
