@@ -1,10 +1,10 @@
-import { ArrowBack } from "@mui/icons-material";
+import { ArrowBack, FilterAlt } from "@mui/icons-material";
 import { Box, Button, List, Typography, useTheme } from "@mui/material";
 import { ObjectId } from "@novorender/api/types/data";
-import { useEffect, useRef, useState } from "react";
+import { MouseEvent, useCallback, useEffect, useRef, useState } from "react";
 import { useHistory, useParams } from "react-router-dom";
 
-import { useAppDispatch } from "app/store";
+import { useAppDispatch, useAppSelector } from "app/store";
 import { Divider, LinearProgress, ScrollBox } from "components";
 import { useExplorerGlobals } from "contexts/explorerGlobals";
 import {
@@ -13,15 +13,18 @@ import {
     useDispatchHighlightCollections,
 } from "contexts/highlightCollections";
 import { highlightActions, useDispatchHighlighted } from "contexts/highlighted";
+import { FilterMenu } from "features/checklists/filterMenu";
 import { mapGuidsToIds } from "features/checklists/utils";
 import { ObjectVisibility, renderActions } from "features/render";
 import { useAbortController } from "hooks/useAbortController";
 import { useSceneId } from "hooks/useSceneId";
 
 import { useGetTemplateQuery } from "../../api";
-import { formsActions } from "../../slice";
+import { formsActions, selectCurrentChecklist, selectFilters } from "../../slice";
 import { type FormId, type FormObject, type FormState } from "../../types";
 import { ChecklistItem } from "./checklistItem";
+
+const FILTER_MENU_ID = "form-filter-menu";
 
 export function Checklist() {
     const { formId } = useParams<{ formId: FormId }>();
@@ -32,7 +35,10 @@ export function Checklist() {
     const sceneId = useSceneId();
     const theme = useTheme();
     const history = useHistory();
+    const filters = useAppSelector(selectFilters);
+    const currentChecklist = useAppSelector(selectCurrentChecklist);
     const willUnmount = useRef(false);
+    const [filterMenuAnchor, setFilterMenuAnchor] = useState<HTMLElement | null>(null);
     const dispatch = useAppDispatch();
     const dispatchHighlighted = useDispatchHighlighted();
 
@@ -102,15 +108,42 @@ export function Checklist() {
     );
 
     useEffect(() => {
-        if (items.length === 0) {
-            return;
+        if (!currentChecklist) {
+            dispatch(formsActions.resetFilters());
+            dispatch(formsActions.setCurrentChecklist(formId));
         }
+    }, [dispatch, formId, currentChecklist]);
+
+    const filterItems = useCallback(
+        (item: FormObject & { formState: FormState }) => {
+            const name = item.name ?? "";
+            const formState = item.formState;
+
+            const activeStateFilters = Object.entries(filters)
+                .filter(([_, value]) => value === true)
+                .map(([filter]) => filter);
+
+            const matches =
+                activeStateFilters.includes(formState) &&
+                (!filters.name || name.trim().toLowerCase().includes(filters.name.trim().toLowerCase()));
+
+            return matches;
+        },
+        [filters]
+    );
+
+    useEffect(() => {
+        const forms = items.filter(filterItems);
 
         dispatch(renderActions.setDefaultVisibility(ObjectVisibility.Transparent));
 
-        const newGroup = items.filter((item) => item.formState === "new").map((item) => item.id) as number[];
-        const ongoingGroup = items.filter((item) => item.formState === "ongoing").map((item) => item.id) as number[];
-        const finishedGroup = items.filter((item) => item.formState === "finished").map((item) => item.id) as number[];
+        const newGroup = filters.new ? forms.filter((form) => form.formState === "new").map((form) => form.id) : [];
+        const ongoingGroup = filters.ongoing
+            ? forms.filter((form) => form.formState === "ongoing").map((form) => form.id)
+            : [];
+        const finishedGroup = filters.finished
+            ? forms.filter((form) => form.formState === "finished").map((form) => form.id)
+            : [];
 
         dispatchHighlightCollections(highlightCollectionsActions.setIds(HighlightCollection.ChecklistsNew, newGroup));
         dispatchHighlightCollections(
@@ -119,14 +152,19 @@ export function Checklist() {
         dispatchHighlightCollections(
             highlightCollectionsActions.setIds(HighlightCollection.ChecklistCompleted, finishedGroup)
         );
-    }, [items, dispatch, dispatchHighlighted, dispatchHighlightCollections]);
-
-    useEffect(() => {
-        dispatch(formsActions.setCurrentChecklist(formId));
-    }, [dispatch, formId]);
+    }, [items, filters, dispatch, dispatchHighlightCollections, filterItems]);
 
     const handleBackClick = () => {
         history.push("/");
+    };
+
+    const openFilters = (e: MouseEvent<HTMLButtonElement>) => {
+        e.stopPropagation();
+        setFilterMenuAnchor(e.currentTarget);
+    };
+
+    const closeFilters = () => {
+        setFilterMenuAnchor(null);
     };
 
     return (
@@ -141,6 +179,16 @@ export function Checklist() {
                             <ArrowBack sx={{ mr: 1 }} />
                             Back
                         </Button>
+                        <Button
+                            color="grey"
+                            onClick={openFilters}
+                            aria-haspopup="true"
+                            aria-controls={FILTER_MENU_ID}
+                            aria-expanded={Boolean(filterMenuAnchor)}
+                        >
+                            <FilterAlt sx={{ mr: 1 }} />
+                            Filters
+                        </Button>
                     </Box>
                 </>
             </Box>
@@ -151,14 +199,20 @@ export function Checklist() {
             )}
             <ScrollBox pt={2} pb={3}>
                 <Typography px={1} fontWeight={600} mb={1}>
-                    {template?.title}
+                    {template?.title ?? ""}
                 </Typography>
                 <List dense disablePadding>
-                    {items?.map((item) => (
+                    {items?.filter(filterItems).map((item) => (
                         <ChecklistItem key={item.guid} item={item} formId={formId} />
                     ))}
                 </List>
             </ScrollBox>
+            <FilterMenu
+                anchorEl={filterMenuAnchor}
+                open={Boolean(filterMenuAnchor)}
+                onClose={closeFilters}
+                id={FILTER_MENU_ID}
+            />
         </>
     );
 }
