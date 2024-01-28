@@ -13,7 +13,7 @@ import { ObjectVisibility, renderActions } from "features/render";
 import { useSceneId } from "hooks/useSceneId";
 
 import { useGetFormQuery, useUpdateFormMutation } from "../../api";
-import { type ChecklistItem, type FormId, type FormObjectGuid } from "../../types";
+import { type ChecklistItem, ChecklistItemType, type FormId, type FormObjectGuid } from "../../types";
 import { toChecklistItems, toFormFields } from "../../utils";
 import { FormItem } from "./formItem";
 
@@ -109,7 +109,12 @@ export function Form() {
     }, [dispatchHighlighted, dispatch, currentChecklist, history]);
 
     const handleClearClick = useCallback(() => {
-        setItems((state) => state.map((item) => ({ ...item, value: null })));
+        setItems((state) =>
+            state.map((item) => ({
+                ...item,
+                value: item.type !== ChecklistItemType.Text ? null : item.value,
+            }))
+        );
         setIsUpdated(true);
     }, []);
 

@@ -214,7 +214,7 @@ export async function mapGuidsToIds({
 }
 
 function toFormField(item: ChecklistItem): FormField {
-    if (item.type === ChecklistItemType.Text) {
+    if (item.type === ChecklistItemType.Input) {
         return {
             type: "text",
             label: item.title,
@@ -267,6 +267,14 @@ function toFormField(item: ChecklistItem): FormField {
             ...(item.value?.length ? { value: item.value } : { value: [] }),
         };
     }
+    if (item.type === ChecklistItemType.Text) {
+        return {
+            type: "label",
+            label: item.title,
+            value: item.value?.length ? item.value[0] : "",
+            ...(item.id ? { id: item.id } : {}),
+        };
+    }
     throw new Error(`Unknown checklist item type: ${item.type}`);
 }
 
@@ -277,7 +285,7 @@ export function toFormFields(items: ChecklistItem[]): FormField[] {
 function toChecklistItem(field: FormField): ChecklistItem {
     if (field.type === "text") {
         return {
-            type: ChecklistItemType.Text,
+            type: ChecklistItemType.Input,
             title: field.label ?? "",
             required: field.required ?? false,
             ...(field.id ? { id: field.id } : {}),
@@ -312,6 +320,15 @@ function toChecklistItem(field: FormField): ChecklistItem {
             ...(field.value ? { value: field.value } : field.value === null ? { value: [] } : {}),
         };
     }
+    if (field.type === "label") {
+        return {
+            type: ChecklistItemType.Text,
+            title: field.label ?? "",
+            value: field.value ? [field.value] : [],
+            required: true,
+            ...(field.id ? { id: field.id } : {}),
+        };
+    }
     throw new Error(`Unknown form field type: ${field.type}`);
 }
 
@@ -327,6 +344,7 @@ export function getChecklistItemTypeDisplayName(type: ChecklistItemType): string
             return "Traffic light";
         case ChecklistItemType.Checkbox:
         case ChecklistItemType.Dropdown:
+        case ChecklistItemType.Input:
         case ChecklistItemType.Text:
             return type[0].toUpperCase() + type.slice(1);
     }
