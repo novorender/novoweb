@@ -48,14 +48,16 @@ function mapLinks(text?: string[] | null) {
             if (stringBeforeMatch) {
                 split(stringBeforeMatch, regexIndex + 1);
             }
-            const href = match[0];
+            const linkText = match[0];
+            const href =
+                linkText.startsWith("http://") || linkText.startsWith("https://") ? linkText : `http://${linkText}`;
             result.push(
                 <Link href={href} target="_blank" rel="noopener noreferrer">
-                    {href}
+                    {linkText}
                     <OpenInNew fontSize="small" style={{ marginLeft: "5px" }} />
                 </Link>
             );
-            currentIndex = match.index + href.length;
+            currentIndex = match.index + linkText.length;
         }
         const stringAfterMatches = text.substring(currentIndex);
         if (stringAfterMatches) {
