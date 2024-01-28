@@ -5,6 +5,7 @@ export enum ChecklistItemType {
     YesNo = "yesNo",
     TrafficLight = "trafficLight",
     Dropdown = "dropdown",
+    Input = "input",
     Text = "text",
 }
 
@@ -39,7 +40,7 @@ export type FormState = "new" | "ongoing" | "finished";
 
 // TODO: Make sure this one is actually matching `FormField` variants on the backend.
 export type FormField =
-    | { type: "label"; id?: string; value: string; forId?: string }
+    | { type: "label"; id?: string; label?: string; value: string; forId?: string }
     | {
           type: "text";
           id?: string;

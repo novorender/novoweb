@@ -1,4 +1,4 @@
-import { NotInterested } from "@mui/icons-material";
+import { NotInterested, OpenInNew } from "@mui/icons-material";
 import {
     Box,
     Checkbox,
@@ -7,6 +7,7 @@ import {
     FormGroup,
     FormLabel,
     IconButton,
+    Link,
     MenuItem,
     OutlinedInput,
     Radio,
@@ -16,12 +17,63 @@ import {
 
 import { type ChecklistItem, ChecklistItemType } from "../../types";
 
-const FormItemHeader = ({ item, toggleRelevant }: { item: ChecklistItem; toggleRelevant: () => void }) => (
+// Based on https://github.com/microsoft/vscode/blob/main/src/vs/workbench/contrib/debug/browser/linkDetector.ts
+function mapLinks(text?: string[] | null) {
+    if (!text) {
+        return null;
+    }
+
+    const CONTROL_CODES = "\\u0000-\\u0020\\u007f-\\u009f";
+    const URL_REGEX = new RegExp(
+        "(?:[a-zA-Z][a-zA-Z0-9+.-]{2,}:\\/\\/|data:|www\\.)[^\\s" +
+            CONTROL_CODES +
+            '"]{2,}[^\\s' +
+            CONTROL_CODES +
+            "\"')}\\],:;.!?]",
+        "ug"
+    );
+
+    const result = [] as (string | JSX.Element)[];
+
+    const split = (text: string, regexIndex: number) => {
+        if (regexIndex >= 1) {
+            result.push(text);
+            return;
+        }
+        let currentIndex = 0;
+        let match;
+        URL_REGEX.lastIndex = 0;
+        while ((match = URL_REGEX.exec(text)) !== null) {
+            const stringBeforeMatch = text.substring(currentIndex, match.index);
+            if (stringBeforeMatch) {
+                split(stringBeforeMatch, regexIndex + 1);
+            }
+            const href = match[0];
+            result.push(
+                <Link href={href} target="_blank" rel="noopener noreferrer">
+                    {href}
+                    <OpenInNew fontSize="small" style={{ marginLeft: "5px" }} />
+                </Link>
+            );
+            currentIndex = match.index + href.length;
+        }
+        const stringAfterMatches = text.substring(currentIndex);
+        if (stringAfterMatches) {
+            split(stringAfterMatches, regexIndex + 1);
+        }
+    };
+
+    split(text[0], 0);
+
+    return result;
+}
+
+const FormItemHeader = ({ item, toggleRelevant }: { item: ChecklistItem; toggleRelevant?: () => void }) => (
     <Box width={1} display="flex" justifyContent="space-between" alignItems="center">
         <FormLabel component="legend" sx={{ fontWeight: 600, color: "text.primary" }}>
             {item.title}
         </FormLabel>
-        {!item.required && (
+        {!item.required && typeof toggleRelevant === "function" && (
             <IconButton size="small" color={item.relevant ? "secondary" : "primary"} onClick={toggleRelevant}>
                 <NotInterested fontSize="small" />
             </IconButton>
@@ -157,7 +209,7 @@ export function FormItem({
                 </FormControl>
             );
 
-        case ChecklistItemType.Text:
+        case ChecklistItemType.Input:
             return (
                 <FormControl
                     disabled={!item.required && !item.relevant && !item.value}
@@ -176,6 +228,19 @@ export function FormItem({
                         sx={{ pr: 0 }}
                         id={item.id}
                     />
+                </FormControl>
+            );
+        case ChecklistItemType.Text:
+            return (
+                <FormControl component="fieldset" fullWidth size="small" sx={{ pb: 1 }}>
+                    <FormItemHeader item={item} />
+                    <Box>
+                        {mapLinks(item.value)?.map((el, idx) => (
+                            <Box display="flex" key={idx} sx={{ pb: 1 }}>
+                                {el}
+                            </Box>
+                        ))}
+                    </Box>
                 </FormControl>
             );
 
