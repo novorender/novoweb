@@ -31,7 +31,7 @@ export function Templates() {
         projectId: sceneId,
     });
 
-    const handleAddChecklistClick = () => {
+    const handleAddFormClick = () => {
         history.push("/create");
     };
 
@@ -43,9 +43,9 @@ export function Templates() {
                         <Divider />
                     </Box>
                     <Box display="flex">
-                        <Button color="grey" onClick={handleAddChecklistClick}>
+                        <Button color="grey" onClick={handleAddFormClick}>
                             <AddCircle sx={{ mr: 1 }} />
-                            Add checklist
+                            Add form
                         </Button>
                     </Box>
                 </>
@@ -63,7 +63,7 @@ export function Templates() {
                             ))}
                         </List>
                     ) : (
-                        <Typography p={1}>No checklists</Typography>
+                        <Typography p={1}>No forms</Typography>
                     )}
                 </ScrollBox>
             )}

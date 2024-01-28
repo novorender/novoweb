@@ -15,7 +15,7 @@ import {
     Select,
 } from "@mui/material";
 
-import { type ChecklistItem, ChecklistItemType } from "../../types";
+import { type FormItem, FormItemType } from "../../types";
 
 // Based on https://github.com/microsoft/vscode/blob/main/src/vs/workbench/contrib/debug/browser/linkDetector.ts
 function mapLinks(text?: string[] | null) {
@@ -68,7 +68,7 @@ function mapLinks(text?: string[] | null) {
     return result;
 }
 
-const FormItemHeader = ({ item, toggleRelevant }: { item: ChecklistItem; toggleRelevant?: () => void }) => (
+const FormItemHeader = ({ item, toggleRelevant }: { item: FormItem; toggleRelevant?: () => void }) => (
     <Box width={1} display="flex" justifyContent="space-between" alignItems="center">
         <FormLabel component="legend" sx={{ fontWeight: 600, color: "text.primary" }}>
             {item.title}
@@ -85,8 +85,8 @@ export function FormItem({
     item,
     setItems,
 }: {
-    item: ChecklistItem;
-    setItems: React.Dispatch<React.SetStateAction<ChecklistItem[]>>;
+    item: FormItem;
+    setItems: React.Dispatch<React.SetStateAction<FormItem[]>>;
 }) {
     const handleChange = (value: string) =>
         setItems((state) =>
@@ -115,7 +115,7 @@ export function FormItem({
     };
 
     switch (item.type) {
-        case ChecklistItemType.Checkbox:
+        case FormItemType.Checkbox:
             return (
                 <FormControl disabled={!item.required && !item.relevant} component="fieldset" fullWidth>
                     <FormItemHeader item={item} toggleRelevant={toggleRelevant} />
@@ -150,7 +150,7 @@ export function FormItem({
                 </FormControl>
             );
 
-        case ChecklistItemType.YesNo:
+        case FormItemType.YesNo:
             return (
                 <FormControl disabled={!item.required && !item.relevant} component="fieldset" fullWidth>
                     <FormItemHeader item={item} toggleRelevant={toggleRelevant} />
@@ -167,7 +167,7 @@ export function FormItem({
                 </FormControl>
             );
 
-        case ChecklistItemType.TrafficLight:
+        case FormItemType.TrafficLight:
             return (
                 <FormControl disabled={!item.required && !item.relevant} component="fieldset" fullWidth>
                     <FormItemHeader item={item} toggleRelevant={toggleRelevant} />
@@ -185,7 +185,7 @@ export function FormItem({
                 </FormControl>
             );
 
-        case ChecklistItemType.Dropdown:
+        case FormItemType.Dropdown:
             return (
                 <FormControl
                     disabled={!item.required && !item.relevant}
@@ -209,7 +209,7 @@ export function FormItem({
                 </FormControl>
             );
 
-        case ChecklistItemType.Input:
+        case FormItemType.Input:
             return (
                 <FormControl
                     disabled={!item.required && !item.relevant && !item.value}
@@ -230,7 +230,7 @@ export function FormItem({
                     />
                 </FormControl>
             );
-        case ChecklistItemType.Text:
+        case FormItemType.Text:
             return (
                 <FormControl component="fieldset" fullWidth size="small" sx={{ pb: 1 }}>
                     <FormItemHeader item={item} />

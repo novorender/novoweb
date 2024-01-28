@@ -24,7 +24,7 @@ import { useAbortController } from "hooks/useAbortController";
 import { useSceneId } from "hooks/useSceneId";
 
 import { useGetFormsQuery } from "../api";
-import { selectCurrentChecklist } from "../slice";
+import { selectCurrentFormsList } from "../slice";
 import { type FormObjectGuid } from "../types";
 import { idsToObjects } from "../utils";
 
@@ -36,7 +36,7 @@ export function Object() {
     const theme = useTheme();
     const history = useHistory();
     const sceneId = useSceneId();
-    const currentChecklist = useAppSelector(selectCurrentChecklist);
+    const currentFormsList = useAppSelector(selectCurrentFormsList);
     const [abortController] = useAbortController();
     const { idArr: highlighted } = useHighlighted();
     const dispatch = useAppDispatch();
@@ -98,12 +98,12 @@ export function Object() {
             : skipToken
     );
 
-    if (forms && (currentChecklist || forms?.length === 1) && object?.guid) {
+    if (forms && (currentFormsList || forms?.length === 1) && object?.guid) {
         return (
             <Redirect
                 push={false}
                 to={{
-                    pathname: `/form/${object.guid}-${currentChecklist || forms[0].id}`,
+                    pathname: `/instance/${object.guid}-${currentFormsList || forms[0].id}`,
                     state: { objectId: object.id },
                 }}
             />
@@ -136,7 +136,7 @@ export function Object() {
                         </Button>
                         <Button color="grey" onClick={handleHomeClick}>
                             <Checklist sx={{ mr: 1 }} />
-                            All checklists
+                            All forms
                         </Button>
                     </Box>
                 </>
@@ -160,7 +160,7 @@ export function Object() {
                                         onClick={() => {
                                             if (object?.guid) {
                                                 history.push({
-                                                    pathname: `/form/${object.guid}-${form.id}`,
+                                                    pathname: `/instance/${object.guid}-${form.id}`,
                                                     state: { objectId: object.id },
                                                 });
                                             }
@@ -194,7 +194,7 @@ export function Object() {
                             })}
                         </List>
                     ) : (
-                        <Typography p={1}>No checklists attached to the selected object.</Typography>
+                        <Typography p={1}>No forms attached to the selected object.</Typography>
                     )}
                 </ScrollBox>
             )}

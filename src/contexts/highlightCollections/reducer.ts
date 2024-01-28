@@ -7,9 +7,9 @@ import { toIdArr, toIdObj } from "../utils";
 
 export enum HighlightCollection {
     SecondaryHighlight = "secondaryHighlight",
-    ChecklistsNew = "checklistsNew",
-    ChecklistOngoing = "checklistOngoing",
-    ChecklistCompleted = "checklistCompleted",
+    FormsNew = "formsNew",
+    FormsOngoing = "formsOngoing",
+    FormsCompleted = "formsCompleted",
 }
 
 export const initialState = {
@@ -18,17 +18,17 @@ export const initialState = {
         idArr: [] as ObjectId[],
         color: [1, 1, 0, 1] as VecRGBA,
     },
-    [HighlightCollection.ChecklistsNew]: {
+    [HighlightCollection.FormsNew]: {
         ids: {} as Record<ObjectId, true | undefined>,
         idArr: [] as ObjectId[],
         color: [0.5, 0, 0, 1] as VecRGBA,
     },
-    [HighlightCollection.ChecklistOngoing]: {
+    [HighlightCollection.FormsOngoing]: {
         ids: {} as Record<ObjectId, true | undefined>,
         idArr: [] as ObjectId[],
         color: [1, 0.75, 0, 1] as VecRGBA,
     },
-    [HighlightCollection.ChecklistCompleted]: {
+    [HighlightCollection.FormsCompleted]: {
         ids: {} as Record<ObjectId, true | undefined>,
         idArr: [] as ObjectId[],
         color: [0, 0.5, 0, 1] as VecRGBA,
@@ -176,18 +176,18 @@ export function reducer(state: State, action: Actions): State {
                     idArr: [],
                     ids: {},
                 },
-                [HighlightCollection.ChecklistsNew]: {
-                    color: state.checklistsNew.color,
+                [HighlightCollection.FormsNew]: {
+                    color: state.formsNew.color,
                     idArr: [],
                     ids: {},
                 },
-                [HighlightCollection.ChecklistOngoing]: {
-                    color: state.checklistOngoing.color,
+                [HighlightCollection.FormsOngoing]: {
+                    color: state.formsOngoing.color,
                     idArr: [],
                     ids: {},
                 },
-                [HighlightCollection.ChecklistCompleted]: {
-                    color: state.checklistCompleted.color,
+                [HighlightCollection.FormsCompleted]: {
+                    color: state.formsCompleted.color,
                     idArr: [],
                     ids: {},
                 },

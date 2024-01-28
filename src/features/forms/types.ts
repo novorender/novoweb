@@ -1,6 +1,6 @@
 import { type vec3 } from "gl-matrix";
 
-export enum ChecklistItemType {
+export enum FormItemType {
     Checkbox = "checkbox",
     YesNo = "yesNo",
     TrafficLight = "trafficLight",
@@ -9,7 +9,7 @@ export enum ChecklistItemType {
     Text = "text",
 }
 
-export type ChecklistItem = SimpleItem | ItemWithOptions;
+export type FormItem = SimpleItem | ItemWithOptions;
 
 type BaseItem = {
     id?: string;
@@ -20,11 +20,11 @@ type BaseItem = {
 };
 
 type SimpleItem = BaseItem & {
-    type: Exclude<ChecklistItemType, ChecklistItemType.Dropdown | ChecklistItemType.Checkbox>;
+    type: Exclude<FormItemType, FormItemType.Dropdown | FormItemType.Checkbox>;
 };
 
 type ItemWithOptions = BaseItem & {
-    type: Exclude<ChecklistItemType, SimpleItem["type"]>;
+    type: Exclude<FormItemType, SimpleItem["type"]>;
     options: string[];
 };
 

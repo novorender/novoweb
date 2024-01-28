@@ -11,20 +11,20 @@ import { useSceneId } from "hooks/useSceneId";
 import { AsyncState, AsyncStatus } from "types/misc";
 
 import { useCreateFormMutation } from "../../api";
-import { ChecklistItem } from "../../types";
-import { getChecklistItemTypeDisplayName, idsToObjects, toFormFields } from "../../utils";
+import { FormItem } from "../../types";
+import { getFormItemTypeDisplayName, idsToObjects, toFormFields } from "../../utils";
 
-export function CreateChecklist({
+export function CreateForm({
     title,
     setTitle,
     items,
     setItems,
-    objects: checklistObjects,
+    objects: formObjects,
 }: {
     title: string;
     setTitle: (title: string) => void;
-    items: ChecklistItem[];
-    setItems: (items: ChecklistItem[]) => void;
+    items: FormItem[];
+    setItems: (items: FormItem[]) => void;
     objects?: { searchPattern: string | SearchPattern[]; ids: ObjectId[] };
 }) {
     const theme = useTheme();
@@ -43,7 +43,7 @@ export function CreateChecklist({
 
     const [abortController] = useAbortController();
 
-    const canSave = useMemo(() => title && items.length && checklistObjects?.ids, [title, items, checklistObjects]);
+    const canSave = useMemo(() => title && items.length && formObjects?.ids, [title, items, formObjects]);
 
     const handleAddItem = useCallback(() => {
         history.push(`${match.path}/add-item`);
@@ -81,7 +81,7 @@ export function CreateChecklist({
                 const abortSignal = abortController.current.signal;
 
                 const objects = await idsToObjects({
-                    ids: checklistObjects!.ids,
+                    ids: formObjects!.ids,
                     db,
                     abortSignal,
                 });
@@ -101,12 +101,12 @@ export function CreateChecklist({
             } catch (e) {
                 setStatus({
                     status: AsyncStatus.Error,
-                    msg: "Checklist creation failed",
+                    msg: "Form creation failed",
                 });
                 return;
             }
         },
-        [abortController, canSave, checklistObjects, createForm, db, history, items, sceneId, title]
+        [abortController, canSave, formObjects, createForm, db, history, items, sceneId, title]
     );
 
     return (
@@ -116,18 +116,18 @@ export function CreateChecklist({
                     <LinearProgress />
                 </Box>
             ) : null}
-            <ScrollBox p={1} pt={2} pb={3} component={"form"} onSubmit={handleSubmit}>
+            <ScrollBox p={1} pt={2} pb={3} component="form" onSubmit={handleSubmit}>
                 <Typography fontWeight={600} mb={1}>
-                    Checklist
+                    Form
                 </Typography>
                 <TextField label="Title" value={title} onChange={handleTitleChange} fullWidth />
                 <Divider sx={{ my: 1 }} />
-                <Box display={"flex"} justifyContent="space-between" alignItems="center">
-                    <Typography fontWeight={600}>Objects assigned: {checklistObjects?.ids.length}</Typography>
+                <Box display="flex" justifyContent="space-between" alignItems="center">
+                    <Typography fontWeight={600}>Objects assigned: {formObjects?.ids.length}</Typography>
                     <Button onClick={handleAddObjects}>Add objects</Button>
                 </Box>
                 <Divider />
-                <Box display={"flex"} justifyContent="space-between" alignItems="center">
+                <Box display="flex" justifyContent="space-between" alignItems="center">
                     <Typography fontWeight={600}>Items:</Typography>
                     <Button onClick={handleAddItem}>Add item</Button>
                 </Box>
@@ -147,7 +147,7 @@ export function CreateChecklist({
                                 >
                                     <Typography>{item.title}</Typography>
                                     <Button color="grey" size="small">
-                                        {getChecklistItemTypeDisplayName(item.type)}
+                                        {getFormItemTypeDisplayName(item.type)}
                                     </Button>
                                 </Box>
                                 <IconButton onClick={() => handleRemoveItem(item.id)}>
@@ -168,7 +168,7 @@ export function CreateChecklist({
                         disabled={!canSave || status === AsyncStatus.Loading || creatingForm}
                         type="submit"
                     >
-                        Save checklist
+                        Save form
                     </Button>
                 </Box>
             </ScrollBox>

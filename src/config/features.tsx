@@ -408,9 +408,9 @@ export const featuresConfig = {
         defaultLocked: false,
         offline: true,
     },
-    checklists: {
-        key: "checklists",
-        name: "Checklists",
+    forms: {
+        key: "forms",
+        name: "Forms",
         Icon: Ballot,
         type: FeatureType.Widget,
         defaultLocked: false,
