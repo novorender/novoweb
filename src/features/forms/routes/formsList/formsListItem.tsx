@@ -10,7 +10,7 @@ import { FormId, FormObject, type FormState } from "../../types";
 
 const HIGHLIGHT_COLOR = [1, 0.4, 0.7, 1] as VecRGBA;
 
-export function ChecklistItem({
+export function FormsListItem({
     item,
     formId,
 }: {
@@ -25,7 +25,7 @@ export function ChecklistItem({
     }
 
     const handleClick = () => {
-        history.push(`/form/${item.guid}-${formId}`);
+        history.push(`/instance/${item.guid}-${formId}`);
     };
 
     const handleMouseEnter = () => {

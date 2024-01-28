@@ -8,28 +8,28 @@ import { useAppSelector } from "app/store";
 import { Divider, ScrollBox } from "components";
 import { highlightCollectionsActions, useDispatchHighlightCollections } from "contexts/highlightCollections";
 import { highlightActions, useDispatchHighlighted, useHighlighted } from "contexts/highlighted";
-import { selectCurrentChecklist } from "features/checklists/slice";
+import { selectCurrentFormsList } from "features/forms/slice";
 import { ObjectVisibility, renderActions } from "features/render";
 import { useSceneId } from "hooks/useSceneId";
 
 import { useGetFormQuery, useUpdateFormMutation } from "../../api";
-import { type ChecklistItem, ChecklistItemType, type FormId, type FormObjectGuid } from "../../types";
-import { toChecklistItems, toFormFields } from "../../utils";
+import { type FormId, type FormItem as FItype, FormItemType, type FormObjectGuid } from "../../types";
+import { toFormFields, toFormItems } from "../../utils";
 import { FormItem } from "./formItem";
 
-export function Form() {
+export function Instance() {
     const { objectGuid, formId } = useParams<{ objectGuid: FormObjectGuid; formId: FormId }>();
     const theme = useTheme();
     const history = useHistory();
     const sceneId = useSceneId();
-    const currentChecklist = useAppSelector(selectCurrentChecklist);
+    const currentFormsList = useAppSelector(selectCurrentFormsList);
     const dispatch = useAppDispatch();
     const dispatchHighlighted = useDispatchHighlighted();
     const dispatchHighlightCollections = useDispatchHighlightCollections();
     const { idArr: highlighted } = useHighlighted();
 
     const willUnmount = useRef(false);
-    const [items, setItems] = useState<ChecklistItem[]>([]);
+    const [items, setItems] = useState<FItype[]>([]);
     const [isUpdated, setIsUpdated] = useState(false);
 
     const { data: form, isLoading: isFormLoading } = useGetFormQuery({
@@ -50,7 +50,7 @@ export function Form() {
 
     useEffect(() => {
         if (form?.fields) {
-            setItems(toChecklistItems(form.fields));
+            setItems(toFormItems(form.fields));
         }
     }, [form]);
 
@@ -74,7 +74,7 @@ export function Form() {
                     });
                 }
                 if (
-                    !history.location.pathname.startsWith("/checklist") &&
+                    !history.location.pathname.startsWith("/forms") &&
                     !history.location.pathname.startsWith("/object")
                 ) {
                     dispatchHighlighted(highlightActions.setIds([]));
@@ -101,18 +101,18 @@ export function Form() {
     const handleBackClick = useCallback(() => {
         dispatchHighlighted(highlightActions.setIds([]));
         dispatch(renderActions.setMainObject(undefined));
-        if (currentChecklist) {
-            history.push(`/checklist/${currentChecklist}`);
+        if (currentFormsList) {
+            history.push(`/forms/${currentFormsList}`);
         } else {
             history.goBack();
         }
-    }, [dispatchHighlighted, dispatch, currentChecklist, history]);
+    }, [dispatchHighlighted, dispatch, currentFormsList, history]);
 
     const handleClearClick = useCallback(() => {
         setItems((state) =>
             state.map((item) => ({
                 ...item,
-                value: item.type !== ChecklistItemType.Text ? null : item.value,
+                value: item.type !== FormItemType.Text ? null : item.value,
             }))
         );
         setIsUpdated(true);

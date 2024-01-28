@@ -4,7 +4,7 @@ import { type HierarcicalObjectReference, type ObjectData, type ObjectId } from 
 import { searchByPatterns } from "utils/search";
 import { sleep } from "utils/time";
 
-import { type ChecklistItem, ChecklistItemType, type FormField, type FormObject, type FormObjectGuid } from "./types";
+import { type FormField, type FormItem, FormItemType, type FormObject, type FormObjectGuid } from "./types";
 
 function uniqueByGuid(objects: FormObject[]): FormObject[] {
     const guidSet = new Set();
@@ -213,8 +213,8 @@ export async function mapGuidsToIds({
     return map;
 }
 
-function toFormField(item: ChecklistItem): FormField {
-    if (item.type === ChecklistItemType.Input) {
+function toFormField(item: FormItem): FormField {
+    if (item.type === FormItemType.Input) {
         return {
             type: "text",
             label: item.title,
@@ -223,7 +223,7 @@ function toFormField(item: ChecklistItem): FormField {
             ...(item.value?.length ? { value: item.value[0] } : item.value === null ? { value: "" } : {}),
         };
     }
-    if (item.type === ChecklistItemType.TrafficLight) {
+    if (item.type === FormItemType.TrafficLight) {
         return {
             type: "radioGroup",
             label: item.title,
@@ -237,7 +237,7 @@ function toFormField(item: ChecklistItem): FormField {
             ...(item.value?.length ? { value: item.value[0] } : {}),
         };
     }
-    if (item.type === ChecklistItemType.YesNo) {
+    if (item.type === FormItemType.YesNo) {
         return {
             type: "checkbox",
             label: item.title,
@@ -246,7 +246,7 @@ function toFormField(item: ChecklistItem): FormField {
             ...(item.value?.length ? { value: item.value[0].toLowerCase() === "yes" } : {}),
         };
     }
-    if (item.type === ChecklistItemType.Dropdown) {
+    if (item.type === FormItemType.Dropdown) {
         return {
             type: "select",
             label: item.title,
@@ -256,7 +256,7 @@ function toFormField(item: ChecklistItem): FormField {
             ...(item.value?.length ? { value: item.value } : item.value === null ? { value: [] } : {}),
         };
     }
-    if (item.type === ChecklistItemType.Checkbox) {
+    if (item.type === FormItemType.Checkbox) {
         return {
             type: "select",
             multiple: true,
@@ -267,7 +267,7 @@ function toFormField(item: ChecklistItem): FormField {
             ...(item.value?.length ? { value: item.value } : { value: [] }),
         };
     }
-    if (item.type === ChecklistItemType.Text) {
+    if (item.type === FormItemType.Text) {
         return {
             type: "label",
             label: item.title,
@@ -275,17 +275,17 @@ function toFormField(item: ChecklistItem): FormField {
             ...(item.id ? { id: item.id } : {}),
         };
     }
-    throw new Error(`Unknown checklist item type: ${item.type}`);
+    throw new Error(`Unknown form item type: ${item.type}`);
 }
 
-export function toFormFields(items: ChecklistItem[]): FormField[] {
+export function toFormFields(items: FormItem[]): FormField[] {
     return items.map(toFormField);
 }
 
-function toChecklistItem(field: FormField): ChecklistItem {
+function toFormItem(field: FormField): FormItem {
     if (field.type === "text") {
         return {
-            type: ChecklistItemType.Input,
+            type: FormItemType.Input,
             title: field.label ?? "",
             required: field.required ?? false,
             ...(field.id ? { id: field.id } : {}),
@@ -294,7 +294,7 @@ function toChecklistItem(field: FormField): ChecklistItem {
     }
     if (field.type === "radioGroup") {
         return {
-            type: ChecklistItemType.TrafficLight,
+            type: FormItemType.TrafficLight,
             title: field.label ?? "",
             required: field.required ?? false,
             ...(field.id ? { id: field.id } : {}),
@@ -303,7 +303,7 @@ function toChecklistItem(field: FormField): ChecklistItem {
     }
     if (field.type === "checkbox") {
         return {
-            type: ChecklistItemType.YesNo,
+            type: FormItemType.YesNo,
             title: field.label ?? "",
             required: field.required ?? false,
             ...(field.id ? { id: field.id } : {}),
@@ -312,7 +312,7 @@ function toChecklistItem(field: FormField): ChecklistItem {
     }
     if (field.type === "select") {
         return {
-            type: field.multiple ? ChecklistItemType.Checkbox : ChecklistItemType.Dropdown,
+            type: field.multiple ? FormItemType.Checkbox : FormItemType.Dropdown,
             title: field.label ?? "",
             required: field.required ?? false,
             options: field.options.map((option) => option.value),
@@ -322,7 +322,7 @@ function toChecklistItem(field: FormField): ChecklistItem {
     }
     if (field.type === "label") {
         return {
-            type: ChecklistItemType.Text,
+            type: FormItemType.Text,
             title: field.label ?? "",
             value: field.value ? [field.value] : [],
             required: true,
@@ -332,20 +332,20 @@ function toChecklistItem(field: FormField): ChecklistItem {
     throw new Error(`Unknown form field type: ${field.type}`);
 }
 
-export function toChecklistItems(fields: FormField[]): ChecklistItem[] {
-    return fields.map(toChecklistItem);
+export function toFormItems(fields: FormField[]): FormItem[] {
+    return fields.map(toFormItem);
 }
 
-export function getChecklistItemTypeDisplayName(type: ChecklistItemType): string {
+export function getFormItemTypeDisplayName(type: FormItemType): string {
     switch (type) {
-        case ChecklistItemType.YesNo:
+        case FormItemType.YesNo:
             return "Yes / No";
-        case ChecklistItemType.TrafficLight:
+        case FormItemType.TrafficLight:
             return "Traffic light";
-        case ChecklistItemType.Checkbox:
-        case ChecklistItemType.Dropdown:
-        case ChecklistItemType.Input:
-        case ChecklistItemType.Text:
+        case FormItemType.Checkbox:
+        case FormItemType.Dropdown:
+        case FormItemType.Input:
+        case FormItemType.Text:
             return type[0].toUpperCase() + type.slice(1);
     }
 }

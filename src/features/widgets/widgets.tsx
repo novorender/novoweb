@@ -52,7 +52,7 @@ const Offline = lazy(() => import("features/offline/offline"));
 const Pims = lazy(() => import("features/pims/pims"));
 const Omega365 = lazy(() => import("features/omega365/omega365"));
 const Arcgis = lazy(() => import("features/arcgis/arcgis"));
-const Checklists = lazy(() => import("features/checklists/checklists"));
+const Forms = lazy(() => import("features/forms/forms"));
 
 export function Widgets() {
   const maximized = useAppSelector(selectMaximized);
@@ -277,8 +277,8 @@ function getWidgetByKey(key: WidgetKey): JSX.Element | string {
     case featuresConfig.arcgis.key:
       Widget = Arcgis;
       break;
-    case featuresConfig.checklists.key:
-      Widget = Checklists;
+    case featuresConfig.forms.key:
+      Widget = Forms;
       break;
     default:
       return key;

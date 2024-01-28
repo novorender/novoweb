@@ -10,8 +10,6 @@ export enum StorageKey {
     DitioCodeVerifier = "ditio_code_verifier",
     JiraRefreshToken = "jira_refresh_token",
     XsiteManageRefreshToken = "xsitemanage_refresh_token",
-    Checklists = "POC_checklists",
-    ChecklistInstances = "POC_checklist_instances",
 }
 
 export const storageConfig = {
@@ -47,11 +45,5 @@ export const storageConfig = {
     },
     [StorageKey.CodeVerifier]: {
         storage: sessionStorage,
-    },
-    [StorageKey.Checklists]: {
-        storage: localStorage,
-    },
-    [StorageKey.ChecklistInstances]: {
-        storage: localStorage,
     },
 };

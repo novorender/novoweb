@@ -13,21 +13,21 @@ import {
     useDispatchHighlightCollections,
 } from "contexts/highlightCollections";
 import { highlightActions, useDispatchHighlighted } from "contexts/highlighted";
-import { FilterMenu } from "features/checklists/filterMenu";
-import { mapGuidsToIds } from "features/checklists/utils";
+import { FilterMenu } from "features/forms/filterMenu";
+import { mapGuidsToIds } from "features/forms/utils";
 import { ObjectVisibility, renderActions } from "features/render";
 import { useAbortController } from "hooks/useAbortController";
 import { useSceneId } from "hooks/useSceneId";
 
 import { useGetTemplateQuery } from "../../api";
-import { formsActions, selectCurrentChecklist, selectFilters } from "../../slice";
+import { formsActions, selectCurrentFormsList, selectFilters } from "../../slice";
 import { type FormId, type FormObject, type FormState } from "../../types";
-import { ChecklistItem } from "./checklistItem";
+import { FormsListItem } from "./formsListItem";
 
 const FILTER_MENU_ID = "form-filter-menu";
 
-export function Checklist() {
-    const { formId } = useParams<{ formId: FormId }>();
+export function FormsList() {
+    const { templateId } = useParams<{ templateId: FormId }>();
     const {
         state: { db },
     } = useExplorerGlobals(true);
@@ -36,7 +36,7 @@ export function Checklist() {
     const theme = useTheme();
     const history = useHistory();
     const filters = useAppSelector(selectFilters);
-    const currentChecklist = useAppSelector(selectCurrentChecklist);
+    const currentFormsList = useAppSelector(selectCurrentFormsList);
     const willUnmount = useRef(false);
     const [filterMenuAnchor, setFilterMenuAnchor] = useState<HTMLElement | null>(null);
     const dispatch = useAppDispatch();
@@ -46,7 +46,7 @@ export function Checklist() {
 
     const { data: template, isLoading: loadingTemplate } = useGetTemplateQuery({
         projectId: sceneId,
-        templateId: formId,
+        templateId,
     });
 
     const [items, setItems] = useState<(FormObject & { id: ObjectId; formState: FormState })[]>([]);
@@ -94,25 +94,25 @@ export function Checklist() {
         () => () => {
             if (
                 willUnmount.current &&
-                !history.location.pathname.startsWith("/form") &&
+                !history.location.pathname.startsWith("/instance") &&
                 !history.location.pathname.startsWith("/object")
             ) {
                 dispatchHighlighted(highlightActions.setIds([]));
                 dispatchHighlightCollections(highlightCollectionsActions.clearAll());
                 dispatch(renderActions.setDefaultVisibility(ObjectVisibility.Neutral));
                 dispatchHighlighted(highlightActions.resetColor());
-                dispatch(formsActions.setCurrentChecklist(null));
+                dispatch(formsActions.setCurrentFormsList(null));
             }
         },
         [history.location.pathname, dispatch, dispatchHighlighted, dispatchHighlightCollections]
     );
 
     useEffect(() => {
-        if (!currentChecklist) {
+        if (!currentFormsList) {
             dispatch(formsActions.resetFilters());
-            dispatch(formsActions.setCurrentChecklist(formId));
+            dispatch(formsActions.setCurrentFormsList(templateId));
         }
-    }, [dispatch, formId, currentChecklist]);
+    }, [dispatch, templateId, currentFormsList]);
 
     const filterItems = useCallback(
         (item: FormObject & { formState: FormState }) => {
@@ -145,12 +145,12 @@ export function Checklist() {
             ? forms.filter((form) => form.formState === "finished").map((form) => form.id)
             : [];
 
-        dispatchHighlightCollections(highlightCollectionsActions.setIds(HighlightCollection.ChecklistsNew, newGroup));
+        dispatchHighlightCollections(highlightCollectionsActions.setIds(HighlightCollection.FormsNew, newGroup));
         dispatchHighlightCollections(
-            highlightCollectionsActions.setIds(HighlightCollection.ChecklistOngoing, ongoingGroup)
+            highlightCollectionsActions.setIds(HighlightCollection.FormsOngoing, ongoingGroup)
         );
         dispatchHighlightCollections(
-            highlightCollectionsActions.setIds(HighlightCollection.ChecklistCompleted, finishedGroup)
+            highlightCollectionsActions.setIds(HighlightCollection.FormsCompleted, finishedGroup)
         );
     }, [items, filters, dispatch, dispatchHighlightCollections, filterItems]);
 
@@ -203,7 +203,7 @@ export function Checklist() {
                 </Typography>
                 <List dense disablePadding>
                     {items?.filter(filterItems).map((item) => (
-                        <ChecklistItem key={item.guid} item={item} formId={formId} />
+                        <FormsListItem key={item.guid} item={item} formId={templateId} />
                     ))}
                 </List>
             </ScrollBox>

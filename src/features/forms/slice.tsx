@@ -3,7 +3,7 @@ import { createSlice, PayloadAction } from "@reduxjs/toolkit";
 import { RootState } from "app/store";
 
 const initialState = {
-    currentChecklist: null,
+    currentFormsList: null,
     lastViewedPath: "/",
     filters: {
         name: "",
@@ -12,7 +12,7 @@ const initialState = {
         finished: true,
     },
 } as {
-    currentChecklist: string | null;
+    currentFormsList: string | null;
     lastViewedPath: string;
     filters: {
         name: string;
@@ -32,8 +32,8 @@ export const formsSlice = createSlice({
         setLastViewedPath: (state, action: PayloadAction<State["lastViewedPath"]>) => {
             state.lastViewedPath = action.payload;
         },
-        setCurrentChecklist: (state, action: PayloadAction<State["currentChecklist"]>) => {
-            state.currentChecklist = action.payload;
+        setCurrentFormsList: (state, action: PayloadAction<State["currentFormsList"]>) => {
+            state.currentFormsList = action.payload;
         },
         setFilters: (state, action: PayloadAction<Partial<State["filters"]>>) => {
             state.filters = {
@@ -52,7 +52,7 @@ export const formsSlice = createSlice({
 
 export const selectLastViewedPath = (state: RootState) => state.forms.lastViewedPath;
 
-export const selectCurrentChecklist = (state: RootState) => state.forms.currentChecklist;
+export const selectCurrentFormsList = (state: RootState) => state.forms.currentFormsList;
 
 export const selectFilters = (state: RootState) => state.forms.filters;
 

@@ -2,7 +2,7 @@ import { ListItemButton, Skeleton, Typography } from "@mui/material";
 import { useCallback, useMemo } from "react";
 import { useHistory } from "react-router-dom";
 
-import { useGetTemplateQuery } from "features/checklists/api";
+import { useGetTemplateQuery } from "features/forms/api";
 import { useSceneId } from "hooks/useSceneId";
 
 import { type TemplateId } from "../../types";
@@ -29,7 +29,7 @@ export function Template({ templateId }: { templateId: TemplateId }) {
         if (!template) {
             return;
         }
-        history.push(`/checklist/${template.id}`);
+        history.push(`/forms/${template.id}`);
     }, [history, template]);
 
     return isLoading ? (

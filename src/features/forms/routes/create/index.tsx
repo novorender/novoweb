@@ -7,10 +7,10 @@ import { Route, Switch, useHistory, useRouteMatch } from "react-router-dom";
 import { Divider } from "components";
 import { highlightActions, useDispatchHighlighted } from "contexts/highlighted";
 
-import { ChecklistItem } from "../../types";
-import { AddChecklistItem } from "./addChecklistItem";
+import { FormItem } from "../../types";
+import { AddFormItem } from "./addFormItem";
 import { AddObjects } from "./addObjects";
-import { CreateChecklist } from "./createChecklist";
+import { CreateForm } from "./createForm";
 
 const ADD_ITEM_ROUTE = "/add-item";
 const ADD_OBJECTS_ROUTE = "/add-objects";
@@ -22,7 +22,7 @@ export function Create() {
     const dispatchHighlighted = useDispatchHighlighted();
 
     const [title, setTitle] = useState("");
-    const [items, setItems] = useState<ChecklistItem[]>([]);
+    const [items, setItems] = useState<FormItem[]>([]);
     const [objects, setObjects] = useState<
         | {
               searchPattern: string | SearchPattern[];
@@ -36,7 +36,7 @@ export function Create() {
         history.goBack();
     }, [history, dispatchHighlighted]);
 
-    const handleAddItem = useCallback((item: ChecklistItem) => {
+    const handleAddItem = useCallback((item: FormItem) => {
         setItems((items) => [...items, item]);
     }, []);
 
@@ -48,7 +48,7 @@ export function Create() {
         setTitle(title);
     }, []);
 
-    const handleSetItems = useCallback((items: ChecklistItem[]) => {
+    const handleSetItems = useCallback((items: FormItem[]) => {
         setItems(items);
     }, []);
 
@@ -72,13 +72,13 @@ export function Create() {
             </Box>
             <Switch>
                 <Route path={addItemRoute}>
-                    <AddChecklistItem onSave={handleAddItem} />
+                    <AddFormItem onSave={handleAddItem} />
                 </Route>
                 <Route path={addObjectsRoute}>
                     <AddObjects onSave={handleSaveObjects} objects={objects} />
                 </Route>
                 <Route path={match.path} exact>
-                    <CreateChecklist
+                    <CreateForm
                         title={title}
                         setTitle={handleSetTitle}
                         items={items}

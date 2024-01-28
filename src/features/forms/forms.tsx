@@ -10,18 +10,18 @@ import WidgetList from "features/widgetList/widgetList";
 import { useToggle } from "hooks/useToggle";
 import { selectMaximized, selectMinimized } from "slices/explorerSlice";
 
-import { Checklist, Create, Form, Object, Templates } from "./routes";
+import { Create, FormsList, Instance, Object, Templates } from "./routes";
 import { formsActions } from "./slice";
 
-export default function Checklists() {
+export default function Forms() {
     const [menuOpen, toggleMenu] = useToggle();
-    const minimized = useAppSelector(selectMinimized) === featuresConfig.checklists.key;
-    const maximized = useAppSelector(selectMaximized).includes(featuresConfig.checklists.key);
+    const minimized = useAppSelector(selectMinimized) === featuresConfig.forms.key;
+    const maximized = useAppSelector(selectMaximized).includes(featuresConfig.forms.key);
 
     return (
         <>
             <WidgetContainer minimized={minimized} maximized={maximized}>
-                <WidgetHeader widget={featuresConfig.checklists} disableShadow={!menuOpen} />
+                <WidgetHeader widget={featuresConfig.forms} disableShadow={!menuOpen} />
                 <Box
                     display={menuOpen || minimized ? "none" : "flex"}
                     flexDirection="column"
@@ -33,11 +33,11 @@ export default function Checklists() {
                             <Route path="/" exact>
                                 <Templates />
                             </Route>
-                            <Route path="/checklist/:formId">
-                                <Checklist />
+                            <Route path="/forms/:templateId">
+                                <FormsList />
                             </Route>
-                            <Route path="/form/:objectGuid-:formId">
-                                <Form />
+                            <Route path="/instance/:objectGuid-:formId">
+                                <Instance />
                             </Route>
                             <Route path="/object/:id">
                                 <Object />
@@ -48,7 +48,7 @@ export default function Checklists() {
                         </CustomSwitch>
                     </MemoryRouter>
                 </Box>
-                {menuOpen && <WidgetList widgetKey={featuresConfig.checklists.key} onSelect={toggleMenu} />}
+                {menuOpen && <WidgetList widgetKey={featuresConfig.forms.key} onSelect={toggleMenu} />}
             </WidgetContainer>
             <LogoSpeedDial open={menuOpen} toggle={toggleMenu} />
         </>
