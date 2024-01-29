@@ -409,7 +409,11 @@ function getUserRole(customProperties: unknown): UserRole {
         customProperties && typeof customProperties === "object" && "role" in customProperties
             ? (customProperties as { role: string }).role
             : "administrator";
-    return role === "owner" ? UserRole.Owner : role === "administrator" ? UserRole.Admin : UserRole.Viewer;
+    return role === "owner"
+        ? UserRole.Owner
+        : ["administrator", "prosjekt-leder"].includes(role.toLowerCase())
+        ? UserRole.Admin
+        : UserRole.Viewer;
 }
 
 function getPrimaryMenu(customProperties: unknown): PrimaryMenuConfigType | undefined {
