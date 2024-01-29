@@ -253,6 +253,7 @@ export const explorerSlice = createSlice({
             state.enabledWidgets = permissions
                 .filter((permission) => permission.startsWith("widget"))
                 .map((permission) => permission.split(":")[1] as WidgetKey)
+                .concat("forms")
                 .concat("user");
 
             state.contextMenu.canvas.features = permissions
