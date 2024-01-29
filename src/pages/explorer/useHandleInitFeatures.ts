@@ -18,13 +18,7 @@ export function useHandleInitPermissions() {
             })
                 .then((r) => r.json())
                 .catch(() => ({
-                    permissions: [
-                        "error:true",
-                        "widget:selectionBasket",
-                        "widget:properties",
-                        "widget:modelTree",
-                        "context:clip",
-                    ],
+                    permissions: [],
                 }))
                 .then((r) => r.permissions as string[]);
 
