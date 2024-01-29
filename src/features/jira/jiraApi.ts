@@ -77,9 +77,11 @@ export const jiraApi = createApi({
             { project: string; component: string; userId: string; filters: typeof initialFilters }
         >({
             query: ({ project, component, userId, filters }) =>
-                `search?jql=${`project = "${project}" AND component = "${component}" ${
-                    filters.unresolved ? `AND resolution = "Unresolved"` : ""
-                } ${
+                `search?jql=${`project = "${project}" ${
+                    filters.linked
+                        ? `AND component = "${component}"`
+                        : `AND NOT (Component = ${component}) OR Component IS EMPTY`
+                } ${filters.unresolved ? `AND resolution = "Unresolved"` : ""} ${
                     userId && (filters.reportedByMe || filters.assignedToMe)
                         ? filters.reportedByMe && filters.assignedToMe
                             ? `AND (assignee = "${userId}" OR reporter = "${userId}")`

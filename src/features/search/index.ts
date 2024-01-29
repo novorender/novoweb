@@ -1,2 +1,2 @@
-import { CustomParentNode } from "./search";
-export { CustomParentNode };
+export { CustomParentNode } from "./search";
+export { useHandleUrlSearch } from "./useHandleUrlSearch";

@@ -93,12 +93,14 @@ export function flipGLtoCadQuat(b: quat) {
         aw * bw - ax * bx);
 }
 
-export const latLon2Tm = ({ up, coords, tmZone }: { up?: Vec3; coords: GeoLocation; tmZone: string }) => {
-    const isGlSpace = !vec3.equals(up ?? [0, 1, 0], [0, 0, 1]);
+export function isGlSpace(up: Vec3 | undefined) {
+    return !vec3.equals(up ?? [0, 1, 0], [0, 0, 1]);
+}
 
-    if (isGlSpace) {
+export function latLon2Tm({ up, coords, tmZone }: { up?: Vec3; coords: GeoLocation; tmZone: string }) {
+    if (isGlSpace(up)) {
         return flip(dataApi.latLon2tm(coords, tmZone));
     }
 
     return dataApi.latLon2tm(coords, tmZone);
-};
+}

@@ -53,7 +53,7 @@ export function useHandleClippingOutlines() {
                 };
 
                 const objIds = view.getOutlineObjectsOnScreen();
-                if (!objIds) {
+                if (!objIds.size) {
                     dispatch(clippingOutlineLaserActions.setOutlineGroups([]));
                     return;
                 }

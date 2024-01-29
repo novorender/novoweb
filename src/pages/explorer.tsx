@@ -55,7 +55,13 @@ function ExplorerBase() {
             }
 
             const selectionOnly = searchParams.get("selectionOnly") ?? "";
-            dispatch(explorerActions.setUrlSearchQuery({ query: getUrlSearchQuery(), selectionOnly }));
+            const closeWidgets = searchParams.get("closeWidgets") ?? "";
+            dispatch(
+                explorerActions.setUrlSearchQuery({
+                    query: getUrlSearchQuery(),
+                    options: { selectionOnly, openWidgets: !closeWidgets },
+                })
+            );
         }
     }, [dispatch]);
 
