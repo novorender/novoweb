@@ -46,28 +46,30 @@ import { Stamp } from "./stamp";
 glMatrix.setMatrixArrayType(Array);
 
 const Canvas = styled("canvas")(
-    () => css`
-        outline: 0;
-        touch-action: none;
-        height: 100vh;
-        width: 100vw;
-    `
+    () =>
+        css`
+            outline: 0;
+            touch-action: none;
+            height: 100vh;
+            width: 100vw;
+        `
 );
 
 const Svg = styled("svg")(
-    () => css`
-        position: absolute;
-        left: 0;
-        top: 0;
-        width: 100%;
-        height: 100%;
-        overflow: hidden;
-        pointer-events: none;
+    () =>
+        css`
+            position: absolute;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            pointer-events: none;
 
-        g {
-            will-change: transform;
-        }
-    `
+            g {
+                will-change: transform;
+            }
+        `
 );
 
 export function Render3D() {

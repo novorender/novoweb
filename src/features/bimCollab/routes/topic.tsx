@@ -73,7 +73,11 @@ export function Topic() {
             projectId,
             topicId: topic?.guid ?? "",
         },
-        { skip: !topic || Boolean(topic.default_viewpoint_guid), refetchOnMountOrArgChange: true, refetchOnFocus: true }
+        {
+            skip: !topic || Boolean(topic.default_viewpoint_guid),
+            refetchOnMountOrArgChange: true,
+            refetchOnFocus: true,
+        }
     );
 
     const defaultViewpointId = topic?.default_viewpoint_guid
@@ -158,7 +162,17 @@ export function Topic() {
                 ) : null}
             </Box>
             <ScrollBox height={1} width={1} horizontal sx={{ mt: 1 }}>
-                <Box p={1} sx={{ "& > img": { width: "100%", maxHeight: 150, objectFit: "cover", cursor: "pointer" } }}>
+                <Box
+                    p={1}
+                    sx={{
+                        "& > img": {
+                            width: "100%",
+                            maxHeight: 150,
+                            objectFit: "cover",
+                            cursor: "pointer",
+                        },
+                    }}
+                >
                     {thumbnail ? <img onClick={() => toggleModal()} src={thumbnail} alt="" /> : null}
                     <Accordion>
                         <AccordionSummary>
@@ -261,11 +275,46 @@ function CommentListItem({
     const [modalOpen, toggleModal] = useToggle();
     const viewpointId = comment.viewpoint_guid || defaultViewpointId || "";
 
-    const { data: thumbnail } = useGetThumbnailQuery({ projectId, topicId, viewpointId }, { skip: !viewpointId });
-    const { data: viewpoint } = useGetViewpointQuery({ projectId, topicId, viewpointId }, { skip: !viewpointId });
-    const { data: coloring } = useGetColoringQuery({ projectId, topicId, viewpointId }, { skip: !viewpointId });
-    const { data: selection } = useGetSelectionQuery({ projectId, topicId, viewpointId }, { skip: !viewpointId });
-    const { data: visibility } = useGetVisibilityQuery({ projectId, topicId, viewpointId }, { skip: !viewpointId });
+    const { data: thumbnail } = useGetThumbnailQuery(
+        {
+            projectId,
+            topicId,
+            viewpointId,
+        },
+        { skip: !viewpointId }
+    );
+    const { data: viewpoint } = useGetViewpointQuery(
+        {
+            projectId,
+            topicId,
+            viewpointId,
+        },
+        { skip: !viewpointId }
+    );
+    const { data: coloring } = useGetColoringQuery(
+        {
+            projectId,
+            topicId,
+            viewpointId,
+        },
+        { skip: !viewpointId }
+    );
+    const { data: selection } = useGetSelectionQuery(
+        {
+            projectId,
+            topicId,
+            viewpointId,
+        },
+        { skip: !viewpointId }
+    );
+    const { data: visibility } = useGetVisibilityQuery(
+        {
+            projectId,
+            topicId,
+            viewpointId,
+        },
+        { skip: !viewpointId }
+    );
     const { data: snapshot } = useGetSnapshotQuery(
         { projectId, topicId, viewpointId },
         { skip: !viewpointId || !modalOpen }
@@ -309,7 +358,11 @@ function CommentListItem({
                           .filter((item) => item.components.length)
                           .map(async (item) => ({
                               color: hexToVec(item.color, item.color.length === 8),
-                              ids: await guidsToIds({ db, abortSignal, guids: item.components as string[] }),
+                              ids: await guidsToIds({
+                                  db,
+                                  abortSignal,
+                                  guids: item.components as string[],
+                              }),
                           }))
                   )
                 : Promise.resolve([]);
@@ -381,7 +434,10 @@ function CommentListItem({
                 renderActions.setClippingPlanes({
                     enabled: true,
                     mode: ClippingMode.union,
-                    planes: planes.map((plane) => ({ normalOffset: plane, baseW: plane[3] })),
+                    planes: planes.map((plane) => ({
+                        normalOffset: plane,
+                        baseW: plane[3],
+                    })),
                 })
             );
         } else {

@@ -42,6 +42,7 @@ const Manhole = lazy(() => import("features/manhole/manhole"));
 const XsiteManage = lazy(() => import("features/xsiteManage/xsiteManage"));
 const Offline = lazy(() => import("features/offline/offline"));
 const Omega365 = lazy(() => import("features/omega365/omega365"));
+const Forms = lazy(() => import("features/forms/forms"));
 
 export function Widgets() {
     const maximized = useAppSelector(selectMaximized);
@@ -245,6 +246,9 @@ function getWidgetByKey(key: WidgetKey): JSX.Element | string {
             break;
         case featuresConfig.omegaPims365.key:
             Widget = Omega365;
+            break;
+        case featuresConfig.forms.key:
+            Widget = Forms;
             break;
         default:
             return key;

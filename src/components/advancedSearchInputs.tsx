@@ -62,7 +62,7 @@ export function AdvancedSearchInputs({
     );
 }
 
-function AdvancedInput({
+export function AdvancedInput({
     input,
     index,
     isLast,
