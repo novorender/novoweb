@@ -24,12 +24,11 @@ import { selectHasAdminCapabilities } from "slices/explorerSlice";
 import { rgbToVec, vecToRgb } from "utils/color";
 
 export const StyledListItemButton = styled(ListItemButton)<ListItemButtonProps>(
-    ({ theme }) =>
-        css`
-            margin: 0;
-            flex-grow: 0;
-            padding: ${theme.spacing(0.5)} ${theme.spacing(4)} ${theme.spacing(0.5)} ${theme.spacing(1)};
-        `
+    ({ theme }) => css`
+        margin: 0;
+        flex-grow: 0;
+        padding: ${theme.spacing(0.5)} ${theme.spacing(4)} ${theme.spacing(0.5)} ${theme.spacing(1)};
+    `
 );
 
 export const StyledCheckbox = styled(Checkbox)`

@@ -52,7 +52,7 @@ function mapLinks(text?: string[] | null) {
             const href =
                 linkText.startsWith("http://") || linkText.startsWith("https://") ? linkText : `http://${linkText}`;
             result.push(
-                <Link href={href} target="_blank" rel="noopener noreferrer">
+                <Link href={href} target="_blank" rel="noopener noreferrer" key={href}>
                     {linkText}
                     <OpenInNew fontSize="small" style={{ marginLeft: "5px" }} />
                 </Link>
@@ -237,9 +237,9 @@ export function FormItem({
                 <FormControl component="fieldset" fullWidth size="small" sx={{ pb: 1 }}>
                     <FormItemHeader item={item} />
                     <Box>
-                        {mapLinks(item.value)?.map((el, idx) => (
-                            <Box display="flex" key={idx} sx={{ pb: 1 }}>
-                                {el}
+                        {item.value?.[0].split("\n").map((line, idx) => (
+                            <Box key={item.id! + idx} sx={{ wordWrap: "break-word", overflowWrap: "anywhere" }}>
+                                {mapLinks([line])}
                             </Box>
                         ))}
                     </Box>

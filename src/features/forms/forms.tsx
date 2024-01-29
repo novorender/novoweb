@@ -67,12 +67,11 @@ function CustomSwitch(props: PropsWithChildren<SwitchProps>) {
         }
     }, [history, mainObject]);
 
-    useEffect(
-        () => () => {
+    useEffect(() => {
+        return () => {
             willUnmount.current = true;
-        },
-        []
-    );
+        };
+    }, []);
 
     useEffect(
         () => () => {
