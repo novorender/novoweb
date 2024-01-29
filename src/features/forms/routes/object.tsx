@@ -119,6 +119,10 @@ export function Object() {
     };
 
     const handleHomeClick = () => {
+        if (id) {
+            dispatchHighlighted(highlightActions.remove([+id]));
+        }
+        dispatch(renderActions.setMainObject(undefined));
         history.push("/");
     };
 

@@ -60,8 +60,8 @@ export function Instance() {
         };
     }, []);
 
-    useEffect(
-        () => () => {
+    useEffect(() => {
+        return () => {
             if (willUnmount.current) {
                 if (isUpdated) {
                     updateForm({
@@ -83,20 +83,19 @@ export function Instance() {
                     dispatchHighlighted(highlightActions.resetColor());
                 }
             }
-        },
-        [
-            history.location.pathname,
-            dispatch,
-            dispatchHighlighted,
-            dispatchHighlightCollections,
-            isUpdated,
-            items,
-            updateForm,
-            sceneId,
-            objectGuid,
-            formId,
-        ]
-    );
+        };
+    }, [
+        history.location.pathname,
+        dispatch,
+        dispatchHighlighted,
+        dispatchHighlightCollections,
+        isUpdated,
+        items,
+        updateForm,
+        sceneId,
+        objectGuid,
+        formId,
+    ]);
 
     const handleBackClick = useCallback(() => {
         dispatchHighlighted(highlightActions.setIds([]));
