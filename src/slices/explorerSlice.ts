@@ -411,7 +411,7 @@ function getUserRole(customProperties: unknown): UserRole {
             : "administrator";
     return role === "owner"
         ? UserRole.Owner
-        : ["administrator", "prosjekt-leder"].includes(role.toLowerCase())
+        : /\badministrator\b|\bprosjekt-leder\b/gi.test(role)
         ? UserRole.Admin
         : UserRole.Viewer;
 }
