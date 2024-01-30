@@ -28,8 +28,8 @@ import { mergeRecursive } from "utils/misc";
 
 import {
     useGetAccessibleResourcesQuery,
+    useGetBaseIssueTypesQuery,
     useGetComponentsQuery,
-    useGetIssueTypesQuery,
     useGetProjectsQuery,
 } from "../jiraApi";
 import {
@@ -86,7 +86,7 @@ export function Settings({ sceneId }: { sceneId: string }) {
         { skip: !space || !accessToken || !project }
     );
 
-    const { data: issueTypes = [], isFetching: isFetchingIssuesTypes } = useGetIssueTypesQuery(
+    const { data: issueTypes = [], isFetching: isFetchingIssuesTypes } = useGetBaseIssueTypesQuery(
         {
             accessToken,
             projectId: project?.id ?? "",
