@@ -57,18 +57,24 @@ export function useHandleLocationMarker() {
                             msg: "Your position is outside the scene's boundaries.",
                         })
                     );
-
-                    return;
+                } else {
+                    dispatch(myLocationActions.setSatus({ status: LocationStatus.Idle }));
                 }
 
                 lastUpdate.current = now;
                 dispatch(myLocationActions.setCurrentLocation(scenePos));
-                dispatch(myLocationActions.setAccuracy(pos.coords.accuracy));
-                dispatch(myLocationActions.setSatus({ status: LocationStatus.Idle }));
+                dispatch(
+                    myLocationActions.setGeolocationPositionCoords({
+                        accuracy: pos.coords.accuracy,
+                        altitude: pos.coords.altitude,
+                        longitude: pos.coords.longitude,
+                        latitude: pos.coords.latitude,
+                    })
+                );
             }
 
             function handlePositionError(error: GeolocationPositionError) {
-                dispatch(myLocationActions.setAccuracy(undefined));
+                dispatch(myLocationActions.setGeolocationPositionCoords(undefined));
                 dispatch(myLocationActions.setSatus({ status: LocationStatus.Error, msg: error.message }));
             }
         } else {
@@ -77,6 +83,8 @@ export function useHandleLocationMarker() {
             }
             lastUpdate.current = 0;
             dispatch(myLocationActions.setCurrentLocation(undefined));
+            dispatch(myLocationActions.setGeolocationPositionCoords(undefined));
+            dispatch(myLocationActions.setSatus({ status: LocationStatus.Idle }));
         }
     }, [showMarker, view, scene, dispatch, tmZone]);
 

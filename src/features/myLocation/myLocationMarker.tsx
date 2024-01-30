@@ -2,15 +2,16 @@ import { useTheme } from "@mui/material";
 
 import { useAppSelector } from "app/store";
 
-import { selectCurrentLocation } from "./myLocationSlice";
+import { LocationStatus, selectCurrentLocation, selectLocationStatus } from "./myLocationSlice";
 
 export function MyLocationMarker() {
     const theme = useTheme();
     const location = useAppSelector(selectCurrentLocation);
+    const { status } = useAppSelector(selectLocationStatus);
 
     return (
         <>
-            {location ? (
+            {location && status !== LocationStatus.Error ? (
                 <path
                     id="myLocationPoint"
                     name="myLocationPoint"
