@@ -96,8 +96,8 @@ export const jiraApi = createApi({
         getIssueSuggestions: builder.query<IssueSuggestions, { project: string; query: string; issueTypes?: string[] }>(
             {
                 query: ({ project, query, issueTypes }) =>
-                    `issue/picker?currentProject=${project}&showSubTasks=false&currentJQL=(text ~ "${query}*" OR key = "${query}")${
-                        issueTypes ? `AND issuetype in (${issueTypes.join(", ")})` : ""
+                    `issue/picker?currentProjectId=${project}&showSubTasks=false&currentJQL=(text ~ "${query}*" OR key = "${query}")${
+                        issueTypes ? ` AND issuetype in (${issueTypes.join(", ")})` : ""
                     }&query=${query}`,
                 keepUnusedDataFor: 15,
             }
