@@ -11,6 +11,7 @@ import {
     CurrentUser,
     Field,
     Issue,
+    IssueSuggestions,
     IssueType,
     Permission,
     Project,
@@ -80,7 +81,7 @@ export const jiraApi = createApi({
                 `search?jql=${`project = "${project}" ${
                     filters.linked
                         ? `AND component = "${component}"`
-                        : `AND NOT (Component = ${component}) OR Component IS EMPTY`
+                        : `AND (NOT (Component = ${component}) OR Component IS EMPTY)`
                 } ${filters.unresolved ? `AND resolution = "Unresolved"` : ""} ${
                     userId && (filters.reportedByMe || filters.assignedToMe)
                         ? filters.reportedByMe && filters.assignedToMe
@@ -91,6 +92,18 @@ export const jiraApi = createApi({
                         : ""
                 }&maxResults=150`}`,
             transformResponse: (res: { issues: Issue[] }) => res.issues,
+        }),
+        getIssueSuggestions: builder.query<IssueSuggestions, { project: string; query: string; issueTypes?: string[] }>(
+            {
+                query: ({ project, query, issueTypes }) =>
+                    `issue/picker?currentProjectId=${project}&showSubTasks=false&currentJQL=(text ~ "${query}*" OR key = "${query}")${
+                        issueTypes ? ` AND issuetype in (${issueTypes.join(", ")})` : ""
+                    }&query=${query}`,
+                keepUnusedDataFor: 15,
+            }
+        ),
+        getParentIssueTypes: builder.query<IssueType[], { project: string }>({
+            query: ({ project }) => `issuetype/project?projectId=${project}&level=1`,
         }),
         getIssue: builder.query<Issue, { key: string }>({
             query: ({ key }) => `issue/${key}`,
@@ -181,7 +194,7 @@ export const jiraApi = createApi({
             transformResponse: (res: { projects: { issuetypes: CreateIssueMetadata[] }[] }) =>
                 res.projects[0]?.issuetypes[0]?.fields,
         }),
-        getIssueTypes: builder.query<IssueType[], { projectId: string; space: string; accessToken: string }>({
+        getBaseIssueTypes: builder.query<IssueType[], { projectId: string; space: string; accessToken: string }>({
             // NOTE(OLA) Marked as experimental.
             // Use commented lines (and pass in project key instead of id) if thist stops working.
             queryFn: async ({ space, accessToken, projectId }) => {
@@ -353,8 +366,10 @@ export const {
     useGetProjectsQuery,
     useGetComponentsQuery,
     useGetIssuesQuery,
+    useLazyGetIssueSuggestionsQuery,
     useGetIssueQuery,
     useGetPermissionsQuery,
-    useGetIssueTypesQuery,
+    useGetBaseIssueTypesQuery,
+    useGetParentIssueTypesQuery,
     useGetCreateIssueMetadataQuery,
 } = jiraApi;

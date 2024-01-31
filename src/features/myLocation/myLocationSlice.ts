@@ -12,7 +12,9 @@ export enum LocationStatus {
 const initialState = {
     showMarker: false,
     currentLocation: undefined as undefined | vec3,
-    accuracy: undefined as undefined | number,
+    geolocationPositionCoords: undefined as
+        | undefined
+        | { accuracy: number; altitude: number | null; longitude: number; latitude: number },
     status: {} as
         | { status: LocationStatus.Idle | LocationStatus.Loading }
         | { status: LocationStatus.Error; msg: string },
@@ -33,8 +35,8 @@ export const myLocationSlice = createSlice({
         setSatus: (state, action: PayloadAction<State["status"]>) => {
             state.status = action.payload;
         },
-        setAccuracy: (state, action: PayloadAction<State["accuracy"]>) => {
-            state.accuracy = action.payload;
+        setGeolocationPositionCoords: (state, action: PayloadAction<State["geolocationPositionCoords"]>) => {
+            state.geolocationPositionCoords = action.payload;
         },
     },
 });
@@ -42,7 +44,7 @@ export const myLocationSlice = createSlice({
 export const selectCurrentLocation = (state: RootState) => state.myLocation.currentLocation;
 export const selectShowLocationMarker = (state: RootState) => state.myLocation.showMarker;
 export const selectLocationStatus = (state: RootState) => state.myLocation.status;
-export const selectLocationAccuracy = (state: RootState) => state.myLocation.accuracy;
+export const selectGeolocationPositionCoords = (state: RootState) => state.myLocation.geolocationPositionCoords;
 
 const { actions, reducer } = myLocationSlice;
 export { actions as myLocationActions, reducer as myLocationReducer };

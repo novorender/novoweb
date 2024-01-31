@@ -32,9 +32,11 @@ import { sleep } from "utils/time";
 import {
     useAddAttachmentMutation,
     useCreateIssueMutation,
+    useGetBaseIssueTypesQuery,
     useGetComponentsQuery,
     useGetCreateIssueMetadataQuery,
-    useGetIssueTypesQuery,
+    useGetParentIssueTypesQuery,
+    useLazyGetIssueSuggestionsQuery,
 } from "../jiraApi";
 import {
     jiraActions,
@@ -45,7 +47,7 @@ import {
     selectJiraSpace,
     selectMetaCustomfieldKey,
 } from "../jiraSlice";
-import { AdfNode, Assignee, CreateIssueMetadata } from "../types";
+import { AdfNode, Assignee, CreateIssueMetadata, IssueSuggestion } from "../types";
 import { createIssueSnapshotAttachment, createLinkNode } from "../utils";
 
 export function CreateIssue({ sceneId }: { sceneId: string }) {
@@ -64,22 +66,33 @@ export function CreateIssue({ sceneId }: { sceneId: string }) {
     const metaCustomfieldKey = useAppSelector(selectMetaCustomfieldKey);
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const [formValues, setFormValues] = useState({} as { [key: string]: any });
+
     const [assigneeOptions, setAssigneeOptions] = useState([] as Assignee[]);
     const [loadingAssignees, setLoadingAssignees] = useState(false);
     const [assigneeInputValue, setAssigneeInputValue] = useState("");
-    const autoCompleteRef = useRef(0);
+    const autoCompleteAssigneeRef = useRef(0);
+
+    const [parentOptions, setParentOptions] = useState([] as IssueSuggestion[]);
+    const [loadingParents, setLoadingParents] = useState(false);
+    const [parentInputValue, setParentInputValue] = useState("");
+    const autoCompleteParentRef = useRef(0);
+
     const [saveStatus, setSaveStatus] = useState(AsyncStatus.Initial);
     const [createIssue] = useCreateIssueMutation();
     const [addAttachment] = useAddAttachmentMutation();
     const createBookmark = useCreateBookmark();
     const today = useRef(new Date());
 
-    const {
-        data: issueTypes = [],
-        isFetching: _isFetchingIssuesTypes,
-        isLoading: _isLoadingIssuesTypes,
-        isError: _isErrorIssuesTypes,
-    } = useGetIssueTypesQuery(
+    const [getIssueSuggestions] = useLazyGetIssueSuggestionsQuery();
+
+    const { data: parentIssueTypes = [] } = useGetParentIssueTypesQuery(
+        {
+            project: project?.id ?? "",
+        },
+        { skip: !project, refetchOnMountOrArgChange: true }
+    );
+
+    const { data: baseIssueTypes = [] } = useGetBaseIssueTypesQuery(
         {
             accessToken,
             projectId: project?.id ?? "",
@@ -92,8 +105,6 @@ export function CreateIssue({ sceneId }: { sceneId: string }) {
         data: createIssueMetadata,
         isFetching: isFetchingCreateIssueMetadata,
         isUninitialized: isUninitializedCreateIssueMetadata,
-        isLoading: _isLoadingCreateIssueMetadata,
-        isError: _isErrorCreateIssueMetadata,
     } = useGetCreateIssueMetadataQuery(
         {
             issueTypeId: issueType?.id ?? "",
@@ -109,17 +120,17 @@ export function CreateIssue({ sceneId }: { sceneId: string }) {
 
     useEffect(
         function initIssueType() {
-            if (issueType || !issueTypes.length) {
+            if (issueType || !baseIssueTypes.length) {
                 return;
             }
 
             dispatch(
                 jiraActions.setIssueType(
-                    issueTypes.find((type) => /model[l]?[\s_-]?task/gi.test(type.name)) ?? issueTypes[0]
+                    baseIssueTypes.find((type) => /model[l]?[\s_-]?task/gi.test(type.name)) ?? baseIssueTypes[0]
                 )
             );
         },
-        [issueType, issueTypes, dispatch]
+        [issueType, baseIssueTypes, dispatch]
     );
 
     const handleCreate = async () => {
@@ -190,6 +201,7 @@ export function CreateIssue({ sceneId }: { sceneId: string }) {
                     ? { components: [component.id, ...formValues.issueComponents].map((id) => ({ id })) }
                     : { components: [{ id: component.id }] }),
                 ...(formValues.duedate ? { duedate: format(new Date(formValues.duedate), "yyyy-MM-dd") } : {}),
+                ...(formValues.parent ? { parent: { key: formValues.parent.key } } : {}),
             },
         };
 
@@ -216,7 +228,7 @@ export function CreateIssue({ sceneId }: { sceneId: string }) {
         return null;
     }
 
-    const { summary, description, components, assignee, duedate } =
+    const { summary, description, components, assignee, duedate, parent } =
         createIssueMetadata ?? ({} as CreateIssueMetadata["fields"]);
 
     const loadingFormMeta = isUninitializedCreateIssueMetadata || isFetchingCreateIssueMetadata;
@@ -294,11 +306,13 @@ export function CreateIssue({ sceneId }: { sceneId: string }) {
                                 }}
                                 onChange={(e) =>
                                     dispatch(
-                                        jiraActions.setIssueType(issueTypes.find((type) => type.id === e.target.value))
+                                        jiraActions.setIssueType(
+                                            baseIssueTypes.find((type) => type.id === e.target.value)
+                                        )
                                     )
                                 }
                             >
-                                {issueTypes.map((option) => (
+                                {baseIssueTypes.map((option) => (
                                     <MenuItem key={option.id} value={option.id}>
                                         {option.name}
                                     </MenuItem>
@@ -403,7 +417,7 @@ export function CreateIssue({ sceneId }: { sceneId: string }) {
                                                 setFormValues((state) => ({ ...state, assignee: value }));
                                             }}
                                             onInputChange={async (_evt, value) => {
-                                                const id = ++autoCompleteRef.current;
+                                                const id = ++autoCompleteAssigneeRef.current;
                                                 setAssigneeInputValue(value);
 
                                                 if (!value) {
@@ -415,7 +429,7 @@ export function CreateIssue({ sceneId }: { sceneId: string }) {
                                                 setLoadingAssignees(true);
                                                 await sleep(250);
 
-                                                if (id !== autoCompleteRef.current) {
+                                                if (id !== autoCompleteAssigneeRef.current) {
                                                     return;
                                                 }
 
@@ -435,7 +449,7 @@ export function CreateIssue({ sceneId }: { sceneId: string }) {
                                                         return [];
                                                     });
 
-                                                if (id !== autoCompleteRef.current) {
+                                                if (id !== autoCompleteAssigneeRef.current) {
                                                     return;
                                                 }
 
@@ -453,6 +467,92 @@ export function CreateIssue({ sceneId }: { sceneId: string }) {
                                             renderOption={(props, option) => (
                                                 <li {...props} key={option.accountId}>
                                                     {option.displayName}
+                                                </li>
+                                            )}
+                                        />
+                                    </FormControl>
+                                )}
+
+                                {parent && (
+                                    <FormControl component="fieldset" fullWidth size="small" sx={{ mb: 2 }}>
+                                        <Box
+                                            width={1}
+                                            display="flex"
+                                            justifyContent="space-between"
+                                            alignItems="center"
+                                        >
+                                            <FormLabel
+                                                sx={{ fontWeight: 600, color: "text.secondary" }}
+                                                htmlFor={"jiraParent"}
+                                            >
+                                                {parent.name}
+                                            </FormLabel>
+                                        </Box>
+                                        <Autocomplete
+                                            id="jiraParent"
+                                            fullWidth
+                                            options={parentOptions}
+                                            getOptionLabel={(opt) => `${opt.key} - ${opt.summaryText}`}
+                                            isOptionEqualToValue={(option, value) => option.id === value.id}
+                                            value={formValues.parent ?? null}
+                                            loading={!parentInputValue || loadingParents}
+                                            loadingText={
+                                                parentInputValue ? "Loading issues..." : "Start typing to load issues."
+                                            }
+                                            size="small"
+                                            onChange={(_e, value) => {
+                                                setFormValues((state) => ({ ...state, parent: value }));
+                                            }}
+                                            onInputChange={async (_evt, value) => {
+                                                const id = ++autoCompleteParentRef.current;
+                                                setParentInputValue(value);
+
+                                                if (!value) {
+                                                    setParentOptions([]);
+                                                    setLoadingParents(false);
+                                                    return;
+                                                }
+
+                                                setLoadingParents(true);
+                                                await sleep(250);
+
+                                                if (id !== autoCompleteParentRef.current) {
+                                                    return;
+                                                }
+
+                                                const res = await getIssueSuggestions(
+                                                    {
+                                                        project: project.id,
+                                                        query: value,
+                                                        issueTypes: parentIssueTypes?.map((type) => type.id),
+                                                    },
+                                                    true
+                                                )
+                                                    .unwrap()
+                                                    .catch((err) => {
+                                                        console.warn(err);
+                                                        return null;
+                                                    });
+
+                                                if (id !== autoCompleteParentRef.current) {
+                                                    return;
+                                                }
+
+                                                const options = res?.sections[1] && res?.sections[1].issues;
+                                                setParentOptions(options ?? []);
+                                                setLoadingParents(false);
+                                            }}
+                                            renderInput={(params) => (
+                                                <TextField
+                                                    required={parent.required && !parent.hasDefaultValue}
+                                                    variant="outlined"
+                                                    value={parentInputValue}
+                                                    {...params}
+                                                />
+                                            )}
+                                            renderOption={(props, option) => (
+                                                <li {...props} key={option.id}>
+                                                    {option.key} - {option.summaryText}
                                                 </li>
                                             )}
                                         />
