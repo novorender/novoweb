@@ -492,6 +492,10 @@ export const renderSlice = createSlice({
             state,
             action: PayloadAction<Omit<State["clipping"]["planes"][number], "color" | "outline">>
         ) => {
+            if (vec3.exactEquals(action.payload.normalOffset.slice(0, 3) as Vec3, [0, 0, 0])) {
+                return state;
+            }
+
             state.clipping.enabled = true;
 
             if (state.clipping.planes.length < 6) {
