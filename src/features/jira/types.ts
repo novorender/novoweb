@@ -312,3 +312,22 @@ export type Field = {
     clauseNames: string[];
     schema: object;
 };
+
+export type IssueSuggestion = {
+    id: number;
+    img: string;
+    key: string;
+    keyHtml: string;
+    summary: string;
+    summaryText: string;
+};
+
+export type IssueSuggestions = {
+    sections: {
+        id: string;
+        issues: IssueSuggestion[];
+        label: string;
+        msg: string;
+        sub: string;
+    }[];
+};
