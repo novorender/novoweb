@@ -1,6 +1,6 @@
 {
     "name": "novoweb",
-    "version": "1.6.0",
+    "version": "1.7.0",
     "type": "module",
     "description": "Novorender frontend",
     "main": "index.js",
@@ -65,7 +65,7 @@
         "@reduxjs/toolkit": "^2.0.1",
         "@use-gesture/react": "^10.2.14",
         "@visx/tooltip": "^2.10.0",
-        "@visx/visx": "^2.16.0",
+        "@visx/visx": "^3.8.0",
         "d3-array": "^3.2.0",
         "date-fns": "^2.27.0",
         "detect-gpu": "^5.0.33",
