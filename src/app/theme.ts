@@ -135,6 +135,36 @@ let theme = createTheme({
                 component: "li",
             },
         },
+        MuiMenu: {
+            defaultProps: {
+                slotProps: {
+                    root: (state) => ({
+                        onContextMenu: (evt) => {
+                            evt.preventDefault();
+
+                            if (state.onClose) {
+                                state.onClose(evt, "backdropClick");
+                            }
+                        },
+                    }),
+                },
+            },
+        },
+        MuiPopover: {
+            defaultProps: {
+                slotProps: {
+                    root: (state) => ({
+                        onContextMenu: (evt) => {
+                            evt.preventDefault();
+
+                            if (state.onClose) {
+                                state.onClose(evt, "backdropClick");
+                            }
+                        },
+                    }),
+                },
+            },
+        },
     },
 });
 

@@ -13,7 +13,7 @@ import {
     useTheme,
 } from "@mui/material";
 import { MeasureError, Profile } from "@novorender/api";
-import { ParentSizeModern } from "@visx/responsive";
+import { ParentSize } from "@visx/responsive";
 import { useEffect, useState } from "react";
 
 import { useAppDispatch, useAppSelector } from "app/store";
@@ -261,7 +261,7 @@ export default function HeightProfile() {
                                 <Typography component="h1" variant="h5" textAlign="center" mb={2}>
                                     Height profile
                                 </Typography>
-                                <ParentSizeModern>
+                                <ParentSize>
                                     {(parent) => (
                                         <HeightProfileChart
                                             pts={profile.data.profilePoints as Vec2[]}
@@ -269,7 +269,7 @@ export default function HeightProfile() {
                                             width={parent.width}
                                         />
                                     )}
-                                </ParentSizeModern>
+                                </ParentSize>
                             </Box>
                         </ScrollBox>
                     </Modal>
