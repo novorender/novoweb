@@ -74,7 +74,7 @@ export default function AdvancedSettings() {
     const advanced = useAppSelector(selectAdvanced);
     const points = useAppSelector(selectPoints);
     const terrain = useAppSelector(selectTerrain);
-    const background = useAppSelector(selectBackground);
+    const { environments: _environments, ...background } = useAppSelector(selectBackground);
     const enabledWidgets = useAppSelector(selectEnabledWidgets);
     const projectSettings = useAppSelector(selectProjectSettings);
     const primaryMenu = useAppSelector(selectPrimaryMenu);
@@ -93,7 +93,13 @@ export default function AdvancedSettings() {
             const [originalScene] = await loadScene(sceneId);
 
             const explorerProjectState: NonNullable<CustomProperties["explorerProjectState"]> = {
-                renderSettings: { ...advanced, points, hide: subtreesToHide(subtrees), terrain, background },
+                renderSettings: {
+                    ...advanced,
+                    points,
+                    terrain,
+                    background,
+                    hide: subtreesToHide(subtrees),
+                },
                 camera: cameraDefaults,
                 features: {
                     widgets: {

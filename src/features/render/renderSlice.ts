@@ -188,8 +188,8 @@ const initialState = {
     background: {
         environments: { status: AsyncStatus.Initial } as AsyncState<EnvironmentDescription[]>,
         color: [0.75, 0.75, 0.75, 1] as vec4,
-        url: "",
-        blur: 0,
+        url: "https://api.novorender.com/assets/env/concrete/",
+        blur: 1,
     },
     clipping: {
         outlines: true,
@@ -623,7 +623,11 @@ export const renderSlice = createSlice({
                     state.cameraDefaults.orthographic,
                     camera.orthographic
                 );
-                state.background = mergeRecursive(state.background, background);
+
+                state.background = mergeRecursive(state.background, {
+                    ...background,
+                    ...(!background.url ? { url: state.background.url, blur: state.background.blur } : {}),
+                });
                 state.points = mergeRecursive(state.points, points);
                 state.subtrees = getSubtrees(hide, sceneConfig.subtrees ?? ["triangles"]);
                 state.terrain = terrain;
