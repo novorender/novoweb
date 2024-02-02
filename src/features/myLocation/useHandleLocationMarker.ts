@@ -44,7 +44,7 @@ export function useHandleLocationMarker() {
                     return;
                 }
 
-                const scenePos = latLon2Tm({ up: scene.up, coords: pos.coords, tmZone });
+                const scenePos = latLon2Tm({ coords: pos.coords, tmZone });
                 scenePos[2] = pos.coords.altitude ?? view.renderState.camera.position[2];
                 const outOfBounds =
                     vec3.dist(scenePos, scene.boundingSphere.center) >
