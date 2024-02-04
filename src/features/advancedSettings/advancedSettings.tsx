@@ -43,6 +43,7 @@ import { CustomProperties } from "types/project";
 import { mergeRecursive } from "utils/misc";
 
 import { CameraSettings } from "./routes/cameraSettings";
+import { ClippingSettings } from "./routes/clipSettings";
 import { FeatureSettings } from "./routes/featureSettings";
 import { ObjectSelectionSettings } from "./routes/objectSelectionSettings";
 import { PerformanceSettings } from "./routes/performanceSettings";
@@ -244,6 +245,9 @@ export default function AdvancedSettings() {
                             <Route path="/objectSelection" exact>
                                 <ObjectSelectionSettings save={save} saving={saving} />
                             </Route>
+                            <Route path="/clipping" exact>
+                                <ClippingSettings save={save} saving={saving} />
+                            </Route>
                             <Route path="/camera" exact>
                                 <CameraSettings save={save} saveCameraPos={saveCameraPos} saving={saving} />
                             </Route>
@@ -302,6 +306,9 @@ function Root({ save, saving }: { save: () => Promise<void>; saving: boolean }) 
                         to="/objectSelection"
                     >
                         Object selection
+                    </ListItemButton>
+                    <ListItemButton sx={{ pl: 1, fontWeight: 600 }} disableGutters component={Link} to="/clipping">
+                        Clipping
                     </ListItemButton>
                     <ListItemButton sx={{ pl: 1, fontWeight: 600 }} disableGutters component={Link} to="/camera">
                         Camera
