@@ -17,7 +17,7 @@ const empty = [] as Machine[];
 
 export function useDitioMachineMarkers() {
     const {
-        state: { view, scene },
+        state: { scene },
     } = useExplorerGlobals();
     const { tmZone } = useAppSelector(selectProjectSettings);
     const cameraType = useAppSelector(selectCameraType);
@@ -30,7 +30,6 @@ export function useDitioMachineMarkers() {
         !isTopDown ||
         token.status !== AsyncStatus.Success ||
         !tmZone ||
-        !view ||
         !projects.length ||
         !showMarkers;
     const { data: machines } = useGetLiveMachinesQuery(undefined, {
@@ -40,16 +39,15 @@ export function useDitioMachineMarkers() {
     const [markers, setMarkers] = useState(empty);
 
     useEffect(() => {
-        const bounds = view?.renderState.scene?.config.boundingSphere;
-        if (!machines || !tmZone || !bounds) {
+        if (!machines || !tmZone || !scene) {
             return;
         }
 
+        const bounds = scene.boundingSphere;
         const filteredMachines = [...machines.dumperLiveDataList, ...machines.loaderLiveDataList]
             .filter((machine) => projects.includes(machine.projectId))
             .map((machine) => {
                 const scenePosition = latLon2Tm({
-                    up: scene?.up,
                     coords: {
                         longitude: machine.lastKnownLocation.coordinates[0],
                         latitude: machine.lastKnownLocation.coordinates[1],
@@ -77,7 +75,7 @@ export function useDitioMachineMarkers() {
             .sort((a, b) => new Date(a.lastSeen).getTime() - new Date(b.lastSeen).getTime());
 
         setMarkers(filteredMachines);
-    }, [machines, tmZone, view, projects, scene]);
+    }, [machines, tmZone, projects, scene]);
 
     return skip ? empty : markers;
 }

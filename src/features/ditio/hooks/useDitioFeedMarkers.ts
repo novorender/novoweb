@@ -2,7 +2,6 @@ import { vec3 } from "gl-matrix";
 import { useEffect, useRef, useState } from "react";
 
 import { useAppSelector } from "app/store";
-import { useExplorerGlobals } from "contexts/explorerGlobals";
 import { selectIsTopDown } from "features/orthoCam";
 import { CameraType, selectCameraType, selectProjectSettings } from "features/render";
 import { latLon2Tm } from "features/render/utils";
@@ -31,9 +30,6 @@ const emptyImgs = [] as {
 }[];
 
 export function useDitioFeedMarkers() {
-    const {
-        state: { scene },
-    } = useExplorerGlobals();
     const filters = useAppSelector(selectFilters);
     const projects = useAppSelector(selectDitioProjects);
     const { tmZone } = useAppSelector(selectProjectSettings);
@@ -78,7 +74,6 @@ export function useDitioFeedMarkers() {
             .map(({ id, geoLocation }) => ({
                 id,
                 position: latLon2Tm({
-                    up: scene?.up,
                     coords: { longitude: geoLocation!.lon, latitude: geoLocation!.lat },
                     tmZone,
                 }),
@@ -94,7 +89,7 @@ export function useDitioFeedMarkers() {
         }
 
         setPostMarkers(markers);
-    }, [feed, disabled, tmZone, hoveredEntity, postMarkers.length, isFetchingPosts, scene]);
+    }, [feed, disabled, tmZone, hoveredEntity, postMarkers.length, isFetchingPosts]);
 
     useEffect(() => {
         if (!post || post.Id !== activePost || disabled) {
@@ -110,7 +105,6 @@ export function useDitioFeedMarkers() {
         let markers = post.Images.map((img) => ({
             id: img.FileReferenceId,
             position: latLon2Tm({
-                up: scene?.up,
                 coords: { longitude: img.Longitude, latitude: img.Latitude },
                 tmZone,
             }),
@@ -129,7 +123,7 @@ export function useDitioFeedMarkers() {
 
         currentPost.current = activePost;
         setImgMarkers(markers);
-    }, [post, disabled, tmZone, hoveredEntity, imgMarkers.length, activePost, scene]);
+    }, [post, disabled, tmZone, hoveredEntity, imgMarkers.length, activePost]);
 
     return [postMarkers, imgMarkers] as const;
 }

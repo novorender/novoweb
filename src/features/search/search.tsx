@@ -1,7 +1,7 @@
-import { AddCircle, Visibility } from "@mui/icons-material";
-import { Box, Button, Checkbox, FormControlLabel, ListItemButton, Typography } from "@mui/material";
-import { HierarcicalObjectReference, ObjectId, SearchPattern } from "@novorender/webgl-api";
-import { ChangeEvent, CSSProperties, FormEvent, useCallback, useRef, useState } from "react";
+import { AddCircle } from "@mui/icons-material";
+import { Box, Button, FormControlLabel } from "@mui/material";
+import { HierarcicalObjectReference, SearchPattern } from "@novorender/webgl-api";
+import { CSSProperties, FormEvent, useCallback, useRef, useState } from "react";
 import { ListOnScrollProps } from "react-window";
 
 import { useAppSelector } from "app/store";
@@ -12,20 +12,19 @@ import {
     ScrollBox,
     Switch,
     TextField,
-    Tooltip,
     WidgetContainer,
     WidgetHeader,
 } from "components";
 import { featuresConfig } from "config/features";
 import { useExplorerGlobals } from "contexts/explorerGlobals";
-import { hiddenActions, useDispatchHidden } from "contexts/hidden";
-import { highlightActions, useDispatchHighlighted } from "contexts/highlighted";
 import { NodeList } from "features/nodeList/nodeList";
 import WidgetList from "features/widgetList/widgetList";
 import { useAbortController } from "hooks/useAbortController";
 import { useToggle } from "hooks/useToggle";
 import { selectMaximized, selectMinimized, selectUrlSearchQuery } from "slices/explorerSlice";
-import { iterateAsync, searchDeepByPatterns } from "utils/search";
+import { iterateAsync } from "utils/search";
+
+import { CustomParentNode } from "./customParentNode";
 
 enum Status {
     Initial,
@@ -312,120 +311,5 @@ export default function Search() {
             </WidgetContainer>
             <LogoSpeedDial open={menuOpen} toggle={toggleMenu} />
         </>
-    );
-}
-
-export function CustomParentNode({
-    style,
-    abortController,
-    searchPatterns,
-    loading,
-    setLoading,
-    allSelected,
-    setAllSelected,
-    allHidden,
-    setAllHidden,
-}: {
-    style: CSSProperties;
-    abortController: React.MutableRefObject<AbortController>;
-    searchPatterns: string | SearchPattern[] | undefined;
-    loading: boolean;
-    setLoading: (loading: boolean) => void;
-    allSelected: boolean;
-    setAllSelected: (state: boolean) => void;
-    allHidden: boolean;
-    setAllHidden: (state: boolean) => void;
-}) {
-    const {
-        state: { db },
-    } = useExplorerGlobals(true);
-    const dispatchHighlighted = useDispatchHighlighted();
-    const dispatchHidden = useDispatchHidden();
-
-    const search = async (callback: (result: ObjectId[]) => void) => {
-        if (!searchPatterns) {
-            return;
-        }
-
-        const abortSignal = abortController.current.signal;
-
-        setLoading(true);
-
-        try {
-            await searchDeepByPatterns({
-                db,
-                searchPatterns,
-                abortSignal,
-                callback,
-            });
-        } catch {
-            // continue
-        }
-
-        setLoading(false);
-    };
-
-    const select = async () => {
-        await search((ids) => dispatchHighlighted(highlightActions.add(ids)));
-        setAllSelected(true);
-    };
-
-    const unSelect = async () => {
-        await search((ids) => dispatchHighlighted(highlightActions.remove(ids)));
-        setAllSelected(false);
-    };
-
-    const hide = async () => {
-        await search((ids) => dispatchHidden(hiddenActions.add(ids)));
-        setAllHidden(true);
-    };
-
-    const show = async () => {
-        await search((ids) => dispatchHidden(hiddenActions.remove(ids)));
-        setAllHidden(false);
-    };
-
-    const handleChange = (type: "select" | "hide") => (e: ChangeEvent<HTMLInputElement>) => {
-        if (loading) {
-            return;
-        }
-
-        if (type === "select") {
-            return e.target.checked ? select() : unSelect();
-        }
-
-        return e.target.checked ? hide() : show();
-    };
-
-    return (
-        <ListItemButton disableGutters style={{ ...style }} sx={{ paddingLeft: 1, paddingRight: 1 }}>
-            <Box display="flex" width={1} alignItems="center">
-                <Box display="flex" alignItems="center" width={0} flex={"1 1 100%"}>
-                    <Tooltip title={"All results"}>
-                        <Typography color={"textSecondary"} noWrap={true}>
-                            All results
-                        </Typography>
-                    </Tooltip>
-                </Box>
-                <Checkbox
-                    name="Toggle highlight of all results"
-                    aria-label="Toggle highlight of all results"
-                    size="small"
-                    onChange={handleChange("select")}
-                    checked={allSelected}
-                    onClick={(e) => e.stopPropagation()}
-                />
-                <Checkbox
-                    name="Toggle visibility of all results"
-                    aria-label="Toggle visibility of all results"
-                    size="small"
-                    icon={<Visibility />}
-                    checkedIcon={<Visibility color="disabled" />}
-                    onChange={handleChange("hide")}
-                    checked={allHidden}
-                    onClick={(e) => e.stopPropagation()}
-                />
-            </Box>
-        </ListItemButton>
     );
 }

@@ -6,6 +6,7 @@ import { useAppDispatch, useAppSelector } from "app/store";
 import { useExplorerGlobals } from "contexts/explorerGlobals";
 import { useHighlighted } from "contexts/highlighted";
 import { renderActions, selectCameraType } from "features/render/renderSlice";
+import { isGlSpace } from "features/render/utils";
 import { useAbortController } from "hooks/useAbortController";
 import { objIdsToTotalBoundingSphere } from "utils/objectData";
 
@@ -402,11 +403,11 @@ export function NavigationCube() {
                         highlightedBoundingSphereCenter.current ??
                         (
                             await objIdsToTotalBoundingSphere({
-                                ids: highlighted,
                                 abortSignal,
                                 db,
                                 view,
-                                flip: !vec3.equals(scene.up ?? [0, 1, 0], [0, 0, 1]),
+                                ids: highlighted,
+                                flip: isGlSpace(scene.up),
                             })
                         )?.center;
 
