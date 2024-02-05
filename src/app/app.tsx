@@ -94,8 +94,8 @@ export function App() {
                           refresh_token: string;
                           refresh_token_expires_in: number;
                           token_type: string;
-                      }
-                    | undefined = await fetch("https://auth.novorender.com/token", {
+                  }
+                  | undefined = await fetch(`${config.authBaseUrl}/token`, {
                     method: "POST",
                     headers: { "Content-Type": "application/x-www-form-urlencoded" },
                     body: new URLSearchParams({
@@ -149,7 +149,7 @@ export function App() {
                 try {
                     const parsedToken = JSON.parse(storedRefreshToken) as { token: string; expires: number };
 
-                    const res = await fetch("https://auth.novorender.com/token", {
+                    const res = await fetch(`${config.authBaseUrl}/token`, {
                         method: "POST",
                         headers: { "Content-Type": "application/x-www-form-urlencoded" },
                         body: new URLSearchParams({

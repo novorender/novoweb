@@ -120,6 +120,7 @@ app.get("/config.json", (_req, res) => {
         xsiteManageClientId: process.env.XSITEMANAGE_CLIENT_ID ?? "",
         novorenderClientId: process.env.NOVORENDER_CLIENT_ID ?? "",
         novorenderClientSecret: process.env.NOVORENDER_CLIENT_SECRET ?? "",
+        authBaseUrl: process.env.AUTH_BASE_URL ?? "",
     });
 });
 app.get("/*", function (_req, res) {

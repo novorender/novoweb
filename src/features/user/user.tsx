@@ -13,6 +13,7 @@ import WidgetList from "features/widgetList/widgetList";
 import { useSceneId } from "hooks/useSceneId";
 import { useToggle } from "hooks/useToggle";
 import { selectUser, User as UserType } from "slices/authSlice";
+import { selectConfig } from "slices/explorerSlice";
 import { selectMaximized, selectMinimized, selectUserRole, UserRole } from "slices/explorerSlice";
 import { createOAuthStateString, generateCodeChallenge } from "utils/auth";
 import { deleteFromStorage, saveToStorage } from "utils/storage";
@@ -60,11 +61,12 @@ function LoggedIn({
 }) {
     const role = useAppSelector(selectUserRole);
     const org = useAppSelector(selectSceneOrganization);
+    const config = useAppSelector(selectConfig);
 
     const logOut = () => {
         setLoading(true);
         deleteFromStorage(StorageKey.RefreshToken);
-        window.location.href = `https://auth.novorender.com/signout?return_url=${window.location.href}`;
+        window.location.href = `${config.authBaseUrl}/signout?return_url=${window.location.href}`;
     };
 
     return (
@@ -116,6 +118,7 @@ function LoggedIn({
 function LoggedOut({ loading, setLoading }: { loading: boolean; setLoading: (state: boolean) => void }) {
     const sceneId = useSceneId();
     const createBookmark = useCreateBookmark();
+    const config = useAppSelector(selectConfig);
 
     const handleLoginRedirect = async () => {
         const bookmarkId = window.crypto.randomUUID();
@@ -143,7 +146,7 @@ function LoggedOut({ loading, setLoading }: { loading: boolean; setLoading: (sta
             .catch((_err) => undefined);
 
         window.location.href =
-            "https://auth.novorender.com" +
+            `${config.authBaseUrl}` +
             `/auth` +
             "?response_type=code" +
             `&client_id=${"IWOHeLxNRxoqGtVZ3I6guPo2UvZ6mI5n"}` +

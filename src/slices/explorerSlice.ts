@@ -71,6 +71,8 @@ const initialState = {
         xsiteManageClientId: (import.meta.env.REACT_APP_XSITEMANAGE_CLIENT_ID ?? "") as string,
         novorenderClientId: (import.meta.env.REACT_APP_NOVORENDER_CLIENT_ID ?? "") as string,
         novorenderClientSecret: (import.meta.env.REACT_APP_NOVORENDER_CLIENT_SECRET ?? "") as string,
+        authBaseUrl: (import.meta.env.REACT_APP_AUTH_BASE_URL ?? "") as string,
+      
     },
 };
 

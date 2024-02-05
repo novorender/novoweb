@@ -11,6 +11,8 @@ resource appInsights 'Microsoft.Insights/components@2020-02-02' existing = {
   name: applicationInsightsName
 }
 
+var authBaseUrl = environment == 'test' ? 'https://test.auth.novorender.com' : 'https://auth.novorender.com'
+
 var appSettings = {
     REACT_APP_DATA_SERVER_URL: 'https://data.novorender.com/api' //todo
     BIMCOLLAB_CLIENT_ID: '@Microsoft.KeyVault(VaultName=${keyVaultName};SecretName=bimcollab-client-id)'
@@ -25,6 +27,7 @@ var appSettings = {
     APPINSIGHTS_INSTRUMENTATIONKEY: appInsights.properties.InstrumentationKey
     APPLICATIONINSIGHTS_CONNECTION_STRING: appInsights.properties.ConnectionString
     ApplicationInsightsAgent_EXTENSION_VERSION: '~3'
+    AUTH_BASE_URL: authBaseUrl
     WEBSITE_NODE_DEFAULT_VERSION: '~18'
     // WEBSITE_RUN_FROM_PACKAGE: 1
 }
