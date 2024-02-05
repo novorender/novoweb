@@ -22,7 +22,7 @@ var appSettings = {
     JIRA_CLIENT_ID: '@Microsoft.KeyVault(VaultName=${keyVaultName};SecretName=jira-client-id)'
     JIRA_CLIENT_SECRET: '@Microsoft.KeyVault(VaultName=${keyVaultName};SecretName=jira-client-secret)'
     XSITEMANAGE_CLIENT_ID: '@Microsoft.KeyVault(VaultName=${keyVaultName};SecretName=xsitemanage-client-id)'
-    NOVORENDER_CLIENT_ID: '@Microsoft.KeyVault(VaultName=${keyVaultName};SecretName=novorender-client-id'
+    NOVORENDER_CLIENT_ID: '@Microsoft.KeyVault(VaultName=${keyVaultName};SecretName=novorender-client-id)'
     NOVORENDER_CLIENT_SECRET: '@Microsoft.KeyVault(VaultName=${keyVaultName};SecretName=novorender-client-secret)'
     APPINSIGHTS_INSTRUMENTATIONKEY: appInsights.properties.InstrumentationKey
     APPLICATIONINSIGHTS_CONNECTION_STRING: appInsights.properties.ConnectionString
