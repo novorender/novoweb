@@ -6,11 +6,10 @@ import { useCallback, useEffect, useState } from "react";
 import { dataApi } from "app";
 import { useAppSelector } from "app/store";
 import { Accordion, AccordionDetails, AccordionSummary } from "components";
-import { dataServerBaseUrl } from "config/app";
+import { authBaseUrl, dataServerBaseUrl } from "config/app";
 import { StorageKey } from "config/storage";
 import { useSceneId } from "hooks/useSceneId";
 import { selectUser } from "slices/authSlice";
-import { selectConfig } from "slices/explorerSlice";
 import { AsyncStatus } from "types/misc";
 import { createOAuthStateString, generateCodeChallenge } from "utils/auth";
 import { deleteFromStorage, saveToStorage } from "utils/storage";
@@ -23,7 +22,6 @@ export function SceneError() {
     const sceneId = useSceneId();
     const status = useAppSelector(selectSceneStatus);
     const user = useAppSelector(selectUser);
-    const config = useAppSelector(selectConfig);
     const [loading, setLoading] = useState(false);
     const redirect = status.status === AsyncStatus.Error && status.msg === ErrorKind.NOT_AUTHORIZED && !user;
 
@@ -44,7 +42,7 @@ export function SceneError() {
             saveToStorage(StorageKey.CodeVerifier, verifier);
 
             const loginUrl =
-                `${config.authBaseUrl}` +
+                `${authBaseUrl}` +
                 `/auth` +
                 "?response_type=code" +
                 `&client_id=${"IWOHeLxNRxoqGtVZ3I6guPo2UvZ6mI5n"}` +
@@ -56,7 +54,7 @@ export function SceneError() {
 
             if (forceLogin) {
                 window.location.assign(
-                    `${config.authBaseUrl}/signout?return_url=${encodeURIComponent(loginUrl)}`
+                    `${authBaseUrl}/signout?return_url=${encodeURIComponent(loginUrl)}`
                 );
             } else {
                 window.location.assign(loginUrl);
