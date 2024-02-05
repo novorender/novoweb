@@ -68,8 +68,8 @@ export function useHandleDeviations() {
                     deviationsActions.setProfiles({
                         status: AsyncStatus.Success,
                         data: [
-                            ...res.pointToTriangle.groups.map((grp) => grp.name),
-                            ...res.pointToPoint.groups.map((grp) => grp.name),
+                            ...(res.pointToTriangle ? res.pointToTriangle.groups.map((grp) => grp.name) : []),
+                            ...(res.pointToPoint ? res.pointToPoint.groups.map((grp) => grp.name) : []),
                         ],
                     })
                 );
