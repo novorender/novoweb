@@ -6,7 +6,7 @@ import { useCallback, useEffect, useState } from "react";
 import { dataApi } from "app";
 import { useAppSelector } from "app/store";
 import { Accordion, AccordionDetails, AccordionSummary } from "components";
-import { dataServerBaseUrl } from "config/app";
+import { authBaseUrl, dataServerBaseUrl } from "config/app";
 import { StorageKey } from "config/storage";
 import { useSceneId } from "hooks/useSceneId";
 import { selectUser } from "slices/authSlice";
@@ -42,7 +42,7 @@ export function SceneError() {
             saveToStorage(StorageKey.CodeVerifier, verifier);
 
             const loginUrl =
-                "https://auth.novorender.com" +
+                `${authBaseUrl}` +
                 `/auth` +
                 "?response_type=code" +
                 `&client_id=${"IWOHeLxNRxoqGtVZ3I6guPo2UvZ6mI5n"}` +
@@ -54,7 +54,7 @@ export function SceneError() {
 
             if (forceLogin) {
                 window.location.assign(
-                    `https://auth.novorender.com/signout?return_url=${encodeURIComponent(loginUrl)}`
+                    `${authBaseUrl}/signout?return_url=${encodeURIComponent(loginUrl)}`
                 );
             } else {
                 window.location.assign(loginUrl);
