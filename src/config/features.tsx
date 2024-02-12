@@ -68,6 +68,14 @@ export const featuresConfig = {
         defaultLocked: true,
         offline: false,
     },
+    omega365new: {
+        key: "omega365new",
+        name: "Omega 365 (new)",
+        Icon: Attachment,
+        type: FeatureType.Widget,
+        defaultLocked: false,
+        offline: false,
+    },
     xsiteManage: {
         key: "xsiteManage",
         name: "Xsite Manage",

@@ -1,5 +1,6 @@
 import { combineReducers, configureStore } from "@reduxjs/toolkit";
 import { setupListeners } from "@reduxjs/toolkit/query";
+import { dataV2Api } from "apis/dataV2/dataV2Api";
 import { TypedUseSelectorHook, useDispatch, useSelector } from "react-redux";
 
 import { areaReducer } from "features/area";
@@ -60,6 +61,7 @@ const rootReducer = combineReducers({
     [jiraApi.reducerPath]: jiraApi.reducer,
     xsiteManage: xsiteManageReducer,
     [xsiteManageApi.reducerPath]: xsiteManageApi.reducer,
+    [dataV2Api.reducerPath]: dataV2Api.reducer,
 });
 
 export const store = configureStore({
@@ -75,7 +77,8 @@ export const store = configureStore({
             .concat(bimTrackApi.middleware)
             .concat(ditioApi.middleware)
             .concat(jiraApi.middleware)
-            .concat(xsiteManageApi.middleware),
+            .concat(xsiteManageApi.middleware)
+            .concat(dataV2Api.middleware),
 });
 
 setupListeners(store.dispatch);

@@ -174,6 +174,11 @@ const serverOptions: ServerOptions = {
             rewrite: (path) => path.replace(/^\/omega365/, ""),
             changeOrigin: true,
         },
+        "/data-v2": {
+            target: "http://127.0.0.1:5000",
+            rewrite: (path) => path.replace(/^\/data-v2/, ""),
+            changeOrigin: true,
+        },
     },
 };
 
@@ -263,6 +268,10 @@ export default defineConfig(({ mode }) => {
                 {
                     find: "hooks",
                     replacement: resolve(__dirname, "src/hooks"),
+                },
+                {
+                    find: "apis",
+                    replacement: resolve(__dirname, "src/apis"),
                 },
             ],
         },
