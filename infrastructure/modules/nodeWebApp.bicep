@@ -65,7 +65,7 @@ resource stagingSlot 'Microsoft.Web/sites/slots@2021-02-01' = {
     serverFarmId: appServicePlan.id
     siteConfig: {
       publicNetworkAccess: 'Enabled'
-      autoSwapSlotName: 'production'
+      autoSwapSlotName: ''
       linuxFxVersion: 'NODE|18-lts'
       alwaysOn: true
       http20Enabled: true
