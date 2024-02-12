@@ -12,8 +12,8 @@ resource appInsights 'Microsoft.Insights/components@2020-02-02' existing = {
 }
 
 var appSettings = {
-    DATA_SERVER_URL: 'https://data.novorender.com/api' //todo
-    AUTH_SERVER_URL: 'https://auth.novorender.com' //todo
+    DATA_SERVER_URL: environment == 'prod' ? 'https://data.novorender.com/api' : 'https://api-old-wa-${environment}.azurewebsites.net/api'
+    AUTH_SERVER_URL: environment == 'prod' ? 'https://auth.novorender.com' : 'https://${environment}.auth.novorender.com'
     BIMCOLLAB_CLIENT_ID: '@Microsoft.KeyVault(VaultName=${keyVaultName};SecretName=bimcollab-client-id)'
     BIMCOLLAB_CLIENT_SECRET: '@Microsoft.KeyVault(VaultName=${keyVaultName};SecretName=bimcollab-client-secret)'
     BIMTRACK_CLIENT_ID: '@Microsoft.KeyVault(VaultName=${keyVaultName};SecretName=bimtrack-client-id)'
@@ -21,7 +21,7 @@ var appSettings = {
     JIRA_CLIENT_ID: '@Microsoft.KeyVault(VaultName=${keyVaultName};SecretName=jira-client-id)'
     JIRA_CLIENT_SECRET: '@Microsoft.KeyVault(VaultName=${keyVaultName};SecretName=jira-client-secret)'
     XSITEMANAGE_CLIENT_ID: '@Microsoft.KeyVault(VaultName=${keyVaultName};SecretName=xsitemanage-client-id)'
-    NOVORENDER_CLIENT_ID: '@Microsoft.KeyVault(VaultName=${keyVaultName};SecretName=novorender-client-id'
+    NOVORENDER_CLIENT_ID: '@Microsoft.KeyVault(VaultName=${keyVaultName};SecretName=novorender-client-id)'
     NOVORENDER_CLIENT_SECRET: '@Microsoft.KeyVault(VaultName=${keyVaultName};SecretName=novorender-client-secret)'
     APPINSIGHTS_INSTRUMENTATIONKEY: appInsights.properties.InstrumentationKey
     APPLICATIONINSIGHTS_CONNECTION_STRING: appInsights.properties.ConnectionString
