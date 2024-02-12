@@ -61,7 +61,7 @@ export const featureTags = {
 export const featuresConfig = {
     omegaPims365: {
         key: "omegaPims365",
-        name: "Omega 365",
+        name: "PIMS",
         Icon: Attachment,
         type: FeatureType.Widget,
         // NOTE(OLA): POC! Enable only for nye veier
@@ -70,7 +70,7 @@ export const featuresConfig = {
     },
     omega365new: {
         key: "omega365new",
-        name: "Omega 365 (new)",
+        name: "Omega 365",
         Icon: Attachment,
         type: FeatureType.Widget,
         defaultLocked: false,
