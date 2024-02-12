@@ -87,6 +87,16 @@ export function useHandleInit() {
                     await sleep(50);
                 }
 
+                if (!camera) {
+                    view.activeController.autoFit(
+                        view.renderState.scene.config.boundingSphere.center,
+                        view.renderState.scene.config.boundingSphere.radius
+                    );
+
+                    // 1sec autofit flight duration
+                    await sleep(1000);
+                }
+
                 dispatch(
                     renderActions.initScene({
                         sceneData,
