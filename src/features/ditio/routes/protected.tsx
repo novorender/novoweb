@@ -2,9 +2,9 @@ import { LoadingButton } from "@mui/lab";
 import { Box, CircularProgress, FormHelperText, Typography } from "@mui/material";
 import { FormEventHandler, PropsWithChildren, useState } from "react";
 
+import { dataApi } from "app";
 import { useAppDispatch, useAppSelector } from "app/store";
 import { LinearProgress, ScrollBox, TextField } from "components";
-import { dataServerBaseUrl } from "config/app";
 import { featuresConfig } from "config/features";
 import { selectAccessToken, selectUser } from "slices/authSlice";
 import { selectHasAdminCapabilities } from "slices/explorerSlice";
@@ -56,7 +56,7 @@ export function Protected({ sceneId, children }: PropsWithChildren<{ sceneId: st
         setStatus(AsyncStatus.Loading);
 
         try {
-            const res: { access_token: string } = await fetch(`${dataServerBaseUrl}/scenes/${sceneId}/ditio`, {
+            const res: { access_token: string } = await fetch(`${dataApi.serviceUrl}/scenes/${sceneId}/ditio`, {
                 method: "POST",
                 body: JSON.stringify({ client_id: clientId, client_secret: clientSecret }),
                 headers: { authorization: `Bearer ${nrToken}`, "content-type": "application/json" },

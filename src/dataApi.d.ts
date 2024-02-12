@@ -3,6 +3,10 @@ declare module "@novorender/data-js-api" {
 
     import { ExtendedMeasureEntity, ViewMode } from "types/misc";
 
+    interface API {
+        serviceUrl: string;
+    }
+
     type ExplorerBookmarkState = {
         camera: {
             kind: "pinhole" | "orthographic";

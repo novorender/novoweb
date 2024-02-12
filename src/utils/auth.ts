@@ -1,7 +1,7 @@
 import { AuthenticationHeader } from "@novorender/data-js-api";
 
+import { dataApi } from "app";
 import { store } from "app/store";
-import { dataServerBaseUrl } from "config/app";
 import { WidgetKey } from "config/features";
 import { User } from "slices/authSlice";
 import { base64UrlEncode, generateRandomString, sha256 } from "utils/misc";
@@ -26,7 +26,7 @@ export async function login(
     username: string,
     password: string
 ): Promise<undefined | (SuccessfulLoginResponse & { user: User })> {
-    const res: LoginResponse = await fetch(dataServerBaseUrl + "/user/login", {
+    const res: LoginResponse = await fetch(dataApi.serviceUrl + "/user/login", {
         method: "post",
         headers: {
             "Content-Type": "application/x-www-form-urlencoded",
@@ -57,7 +57,7 @@ export async function login(
 }
 
 export async function getAccessToken(token: string): Promise<string> {
-    return fetch(dataServerBaseUrl + "/user/token", {
+    return fetch(dataApi.serviceUrl + "/user/token", {
         headers: {
             Authorization: `Bearer ${token}`,
         },
@@ -67,7 +67,7 @@ export async function getAccessToken(token: string): Promise<string> {
 }
 
 export async function getUser(accessToken: string): Promise<User | undefined> {
-    return fetch(dataServerBaseUrl + "/user", {
+    return fetch(dataApi.serviceUrl + "/user", {
         headers: {
             Authorization: `Bearer ${accessToken}`,
         },
