@@ -61,7 +61,8 @@ const initialState = {
     urlBookmarkId: undefined as undefined | string,
     localBookmarkId: undefined as undefined | string,
     config: {
-        // dataServerUrl: (import.meta.env.REACT_APP_DATA_SERVER_URL ?? "https://data.novorender.com/api") as string,
+        dataServerUrl: (import.meta.env.REACT_APP_DATA_SERVER_URL ?? "https://data.novorender.com/api") as string,
+        authServerUrl: (import.meta.env.REACT_APP_AUTH_SERVER_URL ?? "https://auth.novorender.com") as string,
         bimCollabClientSecret: (import.meta.env.REACT_APP_BIMCOLLAB_CLIENT_SECRET ?? "") as string,
         bimCollabClientId: (import.meta.env.REACT_APP_BIMCOLLAB_CLIENT_ID ?? "") as string,
         bimTrackClientSecret: (import.meta.env.REACT_APP_BIMTRACK_CLIENT_SECRET ?? "") as string,

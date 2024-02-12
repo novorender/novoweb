@@ -12,7 +12,8 @@ resource appInsights 'Microsoft.Insights/components@2020-02-02' existing = {
 }
 
 var appSettings = {
-    REACT_APP_DATA_SERVER_URL: 'https://data.novorender.com/api' //todo
+    DATA_SERVER_URL: 'https://data.novorender.com/api' //todo
+    AUTH_SERVER_URL: 'https://auth.novorender.com' //todo
     BIMCOLLAB_CLIENT_ID: '@Microsoft.KeyVault(VaultName=${keyVaultName};SecretName=bimcollab-client-id)'
     BIMCOLLAB_CLIENT_SECRET: '@Microsoft.KeyVault(VaultName=${keyVaultName};SecretName=bimcollab-client-secret)'
     BIMTRACK_CLIENT_ID: '@Microsoft.KeyVault(VaultName=${keyVaultName};SecretName=bimtrack-client-id)'

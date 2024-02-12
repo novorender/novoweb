@@ -1,7 +1,7 @@
 import { createApi, fetchBaseQuery } from "@reduxjs/toolkit/query/react";
 
+import { dataApi } from "app";
 import { RootState } from "app/store";
-import { dataServerBaseUrl } from "config/app";
 import { AsyncStatus } from "types/misc";
 
 import { FeedFilters } from "./slice";
@@ -96,7 +96,7 @@ export const ditioApi = createApi({
                 const token = (api.getState() as any).auth.accessToken;
 
                 return fetch(
-                    `${dataServerBaseUrl}/scenes/${sceneId}/ditio`,
+                    `${dataApi.serviceUrl}/scenes/${sceneId}/ditio`,
                     token ? { headers: { authorization: `Bearer ${token}` } } : undefined
                 )
                     .then((res) => {
