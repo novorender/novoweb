@@ -188,8 +188,8 @@ const initialState = {
     background: {
         environments: { status: AsyncStatus.Initial } as AsyncState<EnvironmentDescription[]>,
         color: [0.75, 0.75, 0.75, 1] as vec4,
-        url: "",
-        blur: 0,
+        url: "https://api.novorender.com/assets/env/concrete/",
+        blur: 1,
     },
     clipping: {
         outlines: true,
@@ -290,6 +290,7 @@ const initialState = {
             enabled: false,
             color: [10, 10, 10] as VecRGB,
             plane: [0, -1, 0, 0] as vec4,
+            breakingPointAngleThreshold: 30 as number,
         },
         tonemapping: {
             exposure: 0.5,
@@ -566,6 +567,9 @@ export const renderSlice = createSlice({
         setSecondaryHighlight: (state, action: PayloadAction<Partial<State["secondaryHighlight"]>>) => {
             state.secondaryHighlight = { ...state.secondaryHighlight, ...action.payload };
         },
+        setBreakingPointAngleThreshold: (state, action: PayloadAction<number>) => {
+            state.advanced.outlines.breakingPointAngleThreshold = action.payload;
+        },
         setSceneStatus: (state, action: PayloadAction<State["sceneStatus"]>) => {
             state.sceneStatus = action.payload;
         },
@@ -623,7 +627,11 @@ export const renderSlice = createSlice({
                     state.cameraDefaults.orthographic,
                     camera.orthographic
                 );
-                state.background = mergeRecursive(state.background, background);
+
+                state.background = mergeRecursive(state.background, {
+                    ...background,
+                    ...(!background.url ? { url: state.background.url, blur: state.background.blur } : {}),
+                });
                 state.points = mergeRecursive(state.points, points);
                 state.subtrees = getSubtrees(hide, sceneConfig.subtrees ?? ["triangles"]);
                 state.terrain = terrain;
@@ -910,6 +918,8 @@ export const selectClippingPlanes = (state: RootState) => state.render.clipping;
 export const selectCamera = (state: RootState) => state.render.camera as CameraState;
 export const selectCameraType = (state: RootState) => state.render.camera.type;
 export const selectSecondaryHighlightProperty = (state: RootState) => state.render.secondaryHighlight.property;
+export const selectBreakingPointAngleThreshold = (state: RootState) =>
+    state.render.advanced.outlines.breakingPointAngleThreshold;
 export const selectProjectSettings = (state: RootState) => state.render.project;
 export const selectGrid = (state: RootState) => state.render.grid;
 export const selectPicker = (state: RootState) => state.render.picker;

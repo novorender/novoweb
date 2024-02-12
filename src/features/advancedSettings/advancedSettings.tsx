@@ -43,6 +43,7 @@ import { CustomProperties } from "types/project";
 import { mergeRecursive } from "utils/misc";
 
 import { CameraSettings } from "./routes/cameraSettings";
+import { ClippingSettings } from "./routes/clipSettings";
 import { FeatureSettings } from "./routes/featureSettings";
 import { ObjectSelectionSettings } from "./routes/objectSelectionSettings";
 import { PerformanceSettings } from "./routes/performanceSettings";
@@ -74,7 +75,7 @@ export default function AdvancedSettings() {
     const advanced = useAppSelector(selectAdvanced);
     const points = useAppSelector(selectPoints);
     const terrain = useAppSelector(selectTerrain);
-    const background = useAppSelector(selectBackground);
+    const { environments: _environments, ...background } = useAppSelector(selectBackground);
     const enabledWidgets = useAppSelector(selectEnabledWidgets);
     const projectSettings = useAppSelector(selectProjectSettings);
     const primaryMenu = useAppSelector(selectPrimaryMenu);
@@ -93,7 +94,13 @@ export default function AdvancedSettings() {
             const [originalScene] = await loadScene(sceneId);
 
             const explorerProjectState: NonNullable<CustomProperties["explorerProjectState"]> = {
-                renderSettings: { ...advanced, points, hide: subtreesToHide(subtrees), terrain, background },
+                renderSettings: {
+                    ...advanced,
+                    points,
+                    terrain,
+                    background,
+                    hide: subtreesToHide(subtrees),
+                },
                 camera: cameraDefaults,
                 features: {
                     widgets: {
@@ -238,6 +245,9 @@ export default function AdvancedSettings() {
                             <Route path="/objectSelection" exact>
                                 <ObjectSelectionSettings save={save} saving={saving} />
                             </Route>
+                            <Route path="/clipping" exact>
+                                <ClippingSettings save={save} saving={saving} />
+                            </Route>
                             <Route path="/camera" exact>
                                 <CameraSettings save={save} saveCameraPos={saveCameraPos} saving={saving} />
                             </Route>
@@ -296,6 +306,9 @@ function Root({ save, saving }: { save: () => Promise<void>; saving: boolean }) 
                         to="/objectSelection"
                     >
                         Object selection
+                    </ListItemButton>
+                    <ListItemButton sx={{ pl: 1, fontWeight: 600 }} disableGutters component={Link} to="/clipping">
+                        Clipping
                     </ListItemButton>
                     <ListItemButton sx={{ pl: 1, fontWeight: 600 }} disableGutters component={Link} to="/camera">
                         Camera

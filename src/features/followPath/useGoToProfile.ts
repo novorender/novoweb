@@ -61,12 +61,17 @@ export function useGoToProfile() {
             const followPlane = view.renderState.clipping.planes.length
                 ? view.renderState.clipping.planes[0].normalOffset
                 : undefined;
-            const offset =
-                useKeepOffset && currentCenter
-                    ? (newView2d ?? view2d) && followPlane
-                        ? vec3.sub(vec3.create(), currentCenter, view.renderState.camera.position)
-                        : vec3.sub(vec3.create(), currentCenter, view.renderState.camera.position)
-                    : vec3.fromValues(0, 0, 0);
+            const offset = vec3.fromValues(0, 0, 0);
+            if (useKeepOffset && currentCenter) {
+                if ((newView2d ?? view2d) && followPlane) {
+                    const pointVector = vec3.subtract(vec3.create(), view.renderState.camera.position, pt);
+                    const d = vec3.dot(pointVector, dir);
+                    const planePos = vec3.scaleAndAdd(vec3.create(), view.renderState.camera.position, dir, -d);
+                    vec3.sub(offset, pt, planePos);
+                } else {
+                    vec3.sub(offset, currentCenter, view.renderState.camera.position);
+                }
+            }
             const offsetPt = vec3.sub(vec3.create(), pt, offset);
             let rotation = quat.create();
             if (clipVertical ?? verticalClipping) {
@@ -101,7 +106,7 @@ export function useGoToProfile() {
                             rotation,
                             position: offsetPt,
                             fov: view.renderState.camera.fov,
-                            far: clipping,
+                            far: clipping + 0.02,
                         },
                         gridOrigo: pt as vec3,
                     })

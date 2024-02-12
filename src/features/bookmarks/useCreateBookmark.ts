@@ -179,6 +179,7 @@ export function useCreateBookmark() {
                               },
                               verticalClipping: followPath.verticalClipping,
                               followObject: followPath.followObject,
+                              profileRange: followPath.profileRange,
                           }
                         : undefined,
 

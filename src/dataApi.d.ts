@@ -140,6 +140,7 @@ declare module "@novorender/data-js-api" {
                       emulatedCurve?: { start: ReadonlyVec3; dir: ReadonlyVec3 } | undefined;
                       lineStrip?: ReadonlyVec3[];
                   };
+                  profileRange?: { min: number; max: number };
               }
             | undefined;
         outlineMeasure:

@@ -19,7 +19,7 @@ export function Post() {
     const postId = useParams<{ id: string }>().id;
     const history = useHistory();
     const {
-        state: { view, scene },
+        state: { view },
     } = useExplorerGlobals(true);
 
     const { tmZone } = useAppSelector(selectProjectSettings);
@@ -33,7 +33,6 @@ export function Post() {
         }
 
         const pos = latLon2Tm({
-            up: scene.up,
             coords: { latitude: post.GeoCoordinate.Latitude, longitude: post.GeoCoordinate.Longitude },
             tmZone,
         });
