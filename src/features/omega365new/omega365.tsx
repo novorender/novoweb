@@ -35,7 +35,7 @@ export default function Omega365New() {
         <>
             <WidgetContainer minimized={minimized} maximized={maximized}>
                 <WidgetHeader widget={featuresConfig.omega365new} />
-                {isFetching ? (
+                {minimized || menuOpen ? null : isFetching ? (
                     <Box>
                         <LinearProgress />
                     </Box>
