@@ -73,7 +73,7 @@ export const featuresConfig = {
         name: "Omega 365",
         Icon: Attachment,
         type: FeatureType.Widget,
-        defaultLocked: false,
+        defaultLocked: true,
         offline: false,
     },
     xsiteManage: {
