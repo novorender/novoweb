@@ -19,9 +19,9 @@ import { manholeReducer } from "features/manhole";
 import { measureReducer } from "features/measure";
 import { myLocationReducer } from "features/myLocation";
 import { offlineReducer } from "features/offline";
-import { omega365Reducer } from "features/omega365";
 import { orthoCamReducer } from "features/orthoCam";
 import { clippingOutlineLaserReducer } from "features/outlineLaser";
+import { pimsReducer } from "features/pims";
 import { pointLineReducer } from "features/pointLine";
 import { propertiesReducer } from "features/properties/slice";
 import { renderReducer } from "features/render/renderSlice";
@@ -51,7 +51,7 @@ const rootReducer = combineReducers({
     selectionBasket: selectionBasketReducer,
     properties: propertiesReducer,
     offline: offlineReducer,
-    omega365: omega365Reducer,
+    pims: pimsReducer,
     [bimCollabApi.reducerPath]: bimCollabApi.reducer,
     bimTrack: bimTrackReducer,
     [bimTrackApi.reducerPath]: bimTrackApi.reducer,

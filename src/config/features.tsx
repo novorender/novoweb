@@ -60,6 +60,8 @@ export const featureTags = {
 
 export const featuresConfig = {
     omegaPims365: {
+        // Previous component was called Omega 365, but then it got renamed to PIMS
+        // and we have another Omega 365 component now
         key: "omegaPims365",
         name: "PIMS",
         Icon: Attachment,
@@ -68,8 +70,8 @@ export const featuresConfig = {
         defaultLocked: true,
         offline: false,
     },
-    omega365new: {
-        key: "omega365new",
+    omega365: {
+        key: "omega365",
         name: "Omega 365",
         Icon: Attachment,
         type: FeatureType.Widget,
