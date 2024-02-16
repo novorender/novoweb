@@ -121,6 +121,7 @@ app.get("/config.json", (_req, res) => {
         novorenderClientId: process.env.NOVORENDER_CLIENT_ID ?? "",
         novorenderClientSecret: process.env.NOVORENDER_CLIENT_SECRET ?? "",
         dataServerUrl: process.env.DATA_SERVER_URL ?? "",
+        dataV2ServerUrl: process.env.DATA_V2_SERVER_URL ?? "",
         authServerUrl: process.env.AUTH_SERVER_URL ?? "",
     });
 });

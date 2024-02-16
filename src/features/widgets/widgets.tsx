@@ -41,6 +41,7 @@ const Jira = lazy(() => import("features/jira/jira"));
 const Manhole = lazy(() => import("features/manhole/manhole"));
 const XsiteManage = lazy(() => import("features/xsiteManage/xsiteManage"));
 const Offline = lazy(() => import("features/offline/offline"));
+const Pims = lazy(() => import("features/pims/pims"));
 const Omega365 = lazy(() => import("features/omega365/omega365"));
 
 export function Widgets() {
@@ -244,6 +245,9 @@ function getWidgetByKey(key: WidgetKey): JSX.Element | string {
             Widget = Offline;
             break;
         case featuresConfig.omegaPims365.key:
+            Widget = Pims;
+            break;
+        case featuresConfig.omega365.key:
             Widget = Omega365;
             break;
         default:

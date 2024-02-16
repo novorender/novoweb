@@ -10,8 +10,8 @@ const initialState = {
 
 type State = typeof initialState;
 
-export const omega365Slice = createSlice({
-    name: "omega365",
+export const pimsSlice = createSlice({
+    name: "pims",
     initialState: initialState,
     reducers: {
         setApiKey: (state, action: PayloadAction<State["apiKey"]>) => {
@@ -26,8 +26,8 @@ export const omega365Slice = createSlice({
     },
 });
 
-export const selectOmega365ApiKey = (state: RootState) => state.omega365.apiKey;
-export const selectOmega365Status = (state: RootState) => state.omega365.status;
+export const selectPimsApiKey = (state: RootState) => state.pims.apiKey;
+export const selectPimsStatus = (state: RootState) => state.pims.status;
 
-const { actions, reducer } = omega365Slice;
-export { actions as omega365Actions, reducer as omega365Reducer };
+const { actions, reducer } = pimsSlice;
+export { actions as pimsActions, reducer as pimsReducer };
