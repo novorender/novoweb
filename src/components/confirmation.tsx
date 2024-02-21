@@ -7,6 +7,7 @@ export function Confirmation({
     onCancel,
     onConfirm,
     loading,
+    confirmBtnDisabled,
     ...boxProps
 }: BoxProps & {
     title: string;
@@ -14,6 +15,7 @@ export function Confirmation({
     onCancel: () => void;
     onConfirm?: () => void;
     loading?: boolean;
+    confirmBtnDisabled?: boolean;
 }) {
     const theme = useTheme();
 
@@ -59,6 +61,7 @@ export function Confirmation({
                         color="primary"
                         onClick={onConfirm}
                         loading={loading}
+                        disabled={confirmBtnDisabled}
                     >
                         {confirmBtnText}
                     </LoadingButton>
