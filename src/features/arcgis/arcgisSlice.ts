@@ -166,9 +166,20 @@ export const arcgisSlice = createSlice({
                 return;
             }
 
-            const fsConfig = state.config.data.featureServers.find((fs) => fs.url === url)!;
             for (const layer of featureServer.layers) {
-                checkLayer(fsConfig, layer, checked);
+                checkLayer(layer, checked);
+            }
+
+            const fsConfig = state.config.data.featureServers.find((fs) => fs.url === url)!;
+            if (checked) {
+                fsConfig.checkedLayerIds = featureServer.layers.map((l) => l.meta.id);
+            } else {
+                fsConfig.checkedLayerIds = [];
+            }
+
+            const selected = state.selectedFeature;
+            if (!checked && selected && selected.url === url) {
+                state.selectedFeature = undefined;
             }
         },
         checkFeatureLayer: (state, action: PayloadAction<{ url: string; layerId: number; checked: boolean }>) => {
@@ -179,8 +190,19 @@ export const arcgisSlice = createSlice({
             const featureServer = state.featureServers.find((fs) => fs.url === url)!;
             const layer = featureServer.layers.find((l) => l.meta.id === layerId)!;
 
+            checkLayer(layer, checked);
+
             const fsConfig = state.config.data.featureServers.find((fs) => fs.url === url)!;
-            checkLayer(fsConfig, layer, checked);
+            if (checked && !(fsConfig.checkedLayerIds || []).includes(layerId)) {
+                fsConfig.checkedLayerIds = [...(fsConfig.checkedLayerIds || []), layerId];
+            } else if (!checked) {
+                fsConfig.checkedLayerIds = (fsConfig.checkedLayerIds || []).filter((id) => id !== layerId);
+            }
+
+            const selected = state.selectedFeature;
+            if (!checked && selected && selected.url === url && selected.layerId === layerId) {
+                state.selectedFeature = undefined;
+            }
         },
         removeFeatureServer: (state, action: PayloadAction<{ url: string }>) => {
             if (state.config.status !== AsyncStatus.Success) {
@@ -193,6 +215,10 @@ export const arcgisSlice = createSlice({
 
             state.config.data.featureServers.splice(index, 1);
             state.featureServers.splice(index, 1);
+
+            if (state.selectedFeature?.url === action.payload.url) {
+                state.selectedFeature = undefined;
+            }
         },
         addFeatureServerConfig: (state, action: PayloadAction<FeatureServerConfig>) => {
             const config = action.payload;
@@ -237,25 +263,12 @@ export const arcgisSlice = createSlice({
     },
 });
 
-function checkLayer(fsConfig: FeatureServerConfig, layer: FeatureLayerState, checked: boolean) {
+function checkLayer(layer: FeatureLayerState, checked: boolean) {
     if (!checked && layer.details.status === AsyncStatus.Loading) {
         layer.details = { status: AsyncStatus.Initial };
     }
 
     layer.checked = checked;
-
-    const idIndex = fsConfig.checkedLayerIds ? fsConfig.checkedLayerIds.indexOf(layer.meta.id) : -1;
-    if (checked && idIndex === -1) {
-        if (!fsConfig.checkedLayerIds) {
-            fsConfig.checkedLayerIds = [];
-        }
-        fsConfig.checkedLayerIds.push(layer.meta.id);
-    } else if (!checked && idIndex !== -1) {
-        if (!fsConfig.checkedLayerIds) {
-            fsConfig.checkedLayerIds = [];
-        }
-        fsConfig.checkedLayerIds.splice(idIndex, 1);
-    }
 }
 
 export const selectArcgisWidgetConfig = (state: RootState) => state.arcgis.config;
