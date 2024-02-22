@@ -23,6 +23,7 @@ export type ArcgisWidgetConfig = {
 export type FeatureServerConfig = {
     url: string;
     name: string;
+    layerWhere?: string;
     checkedLayerIds?: number[];
 };
 
@@ -59,7 +60,8 @@ export type FeatureLayerState = {
     meta: FeatureLayerMeta;
     checked: boolean;
     details: AsyncState<FeatureLayerDetails>;
-    aabb: AABB2 | undefined;
+    where?: string;
+    aabb?: AABB2;
 };
 
 export type FeatureLayerDetailsResp = {
@@ -252,6 +254,13 @@ export const arcgisSlice = createSlice({
                 featureServer.layers = [];
             }
 
+            if (fsConfig.layerWhere != next.layerWhere) {
+                fsConfig.layerWhere = next.layerWhere;
+                for (const layer of featureServer.layers) {
+                    layer.details = { status: AsyncStatus.Initial };
+                }
+            }
+
             fsConfig.name = next.name;
         },
         setSelectedFeature: (state, action: PayloadAction<SelectedFeatureId | undefined>) => {
@@ -259,6 +268,13 @@ export const arcgisSlice = createSlice({
         },
         setSaveStatus: (state, action: PayloadAction<AsyncStatus>) => {
             state.saveStatus = action.payload;
+        },
+        setLayerFilter: (state, action: PayloadAction<{ url: string; layerId: number; where: string }>) => {
+            const { url, layerId, where } = action.payload;
+            const featureServer = state.featureServers.find((fs) => fs.url === url)!;
+            const layer = featureServer.layers.find((l) => l.meta.id === layerId)!;
+            layer.where = where;
+            layer.details = { status: AsyncStatus.Initial };
         },
     },
 });

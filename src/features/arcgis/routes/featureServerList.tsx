@@ -1,4 +1,4 @@
-import { Clear, Edit, Error, FlightTakeoff, MoreVert, OpenInNew } from "@mui/icons-material";
+import { Clear, Edit, Error, FilterList, FlightTakeoff, MoreVert, OpenInNew } from "@mui/icons-material";
 import {
     Box,
     Button,
@@ -43,7 +43,7 @@ import {
     selectArcgisWidgetConfig,
 } from "../arcgisSlice";
 import { useIsCameraSetCorrectly } from "../hooks/useIsCameraSetCorrectly";
-import { aabb2ToBoundingSphere, getTotalAabb2, isSuitableCameraForArcgis } from "../utils";
+import { aabb2ToBoundingSphere, getTotalAabb2, isSuitableCameraForArcgis, makeWhereStatement } from "../utils";
 
 export function FeatureServerList() {
     const theme = useTheme();
@@ -325,10 +325,11 @@ function FeatureServerItem({
                         {layers.map((layer) => (
                             <LayerItem
                                 key={layer.meta.id}
-                                url={featureConfig.url}
+                                fsConfig={featureConfig}
                                 layer={layer}
                                 onCheckLayer={onCheckLayer}
                                 flyToLayer={flyToLayer}
+                                isAdmin={isAdmin}
                             />
                         ))}
                     </List>
@@ -339,24 +340,48 @@ function FeatureServerItem({
 }
 
 function LayerItem({
-    url,
+    fsConfig,
     layer,
     onCheckLayer,
     flyToLayer,
+    isAdmin,
 }: {
-    url: string;
+    fsConfig: FeatureServerConfig;
     layer: FeatureLayerState;
     onCheckLayer: (url: string, layerId: number, checked: boolean) => void;
     flyToLayer: (layer: FeatureLayerState) => void;
+    isAdmin: boolean;
 }) {
+    const { url } = fsConfig;
+    const [menuAnchor, setMenuAnchor] = useState<HTMLElement | null>(null);
+    const history = useHistory();
+
+    const openMenu = (e: React.MouseEvent<HTMLButtonElement>) => {
+        e.stopPropagation();
+        setMenuAnchor(e.currentTarget.parentElement);
+    };
+
+    const closeMenu = () => {
+        setMenuAnchor(null);
+    };
+
     const onChange = () => onCheckLayer(url, layer.meta.id, !layer.checked);
+
+    const fullWhere = makeWhereStatement(fsConfig, layer);
+    const tooltipTitle = (
+        <>
+            {layer.meta.name}
+            {layer.where && <div>Own filter: {layer.where}</div>}
+            {fullWhere && <div>Full filter: {fullWhere}</div>}
+        </>
+    );
 
     return (
         <>
             <StyledListItemButton disableRipple onClick={onChange}>
                 <Box display="flex" width={1} alignItems="center">
                     <Box flex="1 1 auto" overflow="hidden">
-                        <Tooltip title={layer.meta.name}>
+                        <Tooltip title={tooltipTitle}>
                             <Typography noWrap={true}>{layer.meta.name}</Typography>
                         </Tooltip>
                     </Box>
@@ -397,11 +422,36 @@ function LayerItem({
                             onChange={onChange}
                         />
                     </Box>
-                    <Box flex="0 0 auto" visibility={"hidden"}>
-                        <IconButton size="small" sx={{ py: 0 }}>
+                    <Box flex="0 0 auto">
+                        <IconButton
+                            color={menuAnchor ? "primary" : "default"}
+                            size="small"
+                            sx={{ py: 0 }}
+                            aria-haspopup="true"
+                            onClick={openMenu}
+                        >
                             <MoreVert />
                         </IconButton>
                     </Box>
+
+                    <Menu
+                        onClick={(e) => e.stopPropagation()}
+                        anchorEl={menuAnchor}
+                        open={Boolean(menuAnchor)}
+                        onClose={closeMenu}
+                        id={`${url}-${layer.meta.id}-menu`}
+                        MenuListProps={{ sx: { maxWidth: "100%" } }}
+                    >
+                        <MenuItem
+                            onClick={() => history.push("/layerFilter", { url, layerId: layer.meta.id })}
+                            disabled={!isAdmin}
+                        >
+                            <ListItemIcon>
+                                <FilterList fontSize="small" />
+                            </ListItemIcon>
+                            <ListItemText>Filter</ListItemText>
+                        </MenuItem>
+                    </Menu>
                 </Box>
             </StyledListItemButton>
         </>

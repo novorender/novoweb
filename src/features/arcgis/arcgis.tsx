@@ -18,6 +18,7 @@ import { DeleteFeatureServer } from "./routes/deleteFeatureServer";
 import { EditFeatureServer } from "./routes/editFeatureServer";
 import FeatureInfo from "./routes/featureInfo";
 import { FeatureServerList } from "./routes/featureServerList";
+import { LayerFilter } from "./routes/layerFilter";
 import { Save } from "./routes/save";
 
 export default function Arcgis() {
@@ -59,6 +60,9 @@ export default function Arcgis() {
                                 </Route>
                                 <Route path="/featureInfo">
                                     <FeatureInfo />
+                                </Route>
+                                <Route path="/layerFilter">
+                                    <LayerFilter />
                                 </Route>
                                 <Route path="/">
                                     <FeatureServerList />

@@ -19,7 +19,7 @@ export function EditFeatureServer() {
             ? originalConfig.data.featureServers.find((c) => c.url === url)!
             : null;
 
-    const [config, setConfig] = useState(originalFeatureServerConfig ?? { url: "", name: "" });
+    const [config, setConfig] = useState(originalFeatureServerConfig ?? { url: "", name: "", layerWhere: "" });
     const [urlChanged, setUrlChanged] = useState(false);
     const [nameChanged, setNameChanged] = useState(false);
 
@@ -127,6 +127,16 @@ export function EditFeatureServer() {
                     helperText={nameError}
                     label="Name"
                     required
+                />
+                <TextField
+                    sx={{ mb: 3 }}
+                    multiline
+                    fullWidth
+                    minRows={3}
+                    maxRows={20}
+                    value={config.layerWhere}
+                    onChange={(e) => setConfig({ ...config, layerWhere: e.target.value })}
+                    label="Layer filter"
                 />
             </Confirmation>
         </>

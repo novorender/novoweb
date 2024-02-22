@@ -7,7 +7,14 @@ import { useAppDispatch, useAppSelector } from "app/store";
 import { useExplorerGlobals } from "contexts/explorerGlobals";
 import { AsyncState, AsyncStatus } from "types/misc";
 
-import { arcgisActions, FeatureLayerDetailsResp, FeatureServerState, selectArcgisFeatureServers } from "../arcgisSlice";
+import {
+    arcgisActions,
+    FeatureLayerDetailsResp,
+    FeatureServerState,
+    selectArcgisFeatureServers,
+    selectArcgisWidgetConfig,
+} from "../arcgisSlice";
+import { makeWhereStatement } from "../utils";
 
 type LayerAbortController = {
     url: string;
@@ -18,6 +25,7 @@ type LayerAbortController = {
 export function useLoadFeatures() {
     const projectId = useExplorerGlobals(true).state.scene.id;
     const featureServers = useAppSelector(selectArcgisFeatureServers);
+    const config = useAppSelector(selectArcgisWidgetConfig);
     const dispatch = useAppDispatch();
     const abortControllers = useRef([] as LayerAbortController[]);
     const { data: projectInfo } = useGetProjectInfoQuery({ projectId });
@@ -36,7 +44,7 @@ export function useLoadFeatures() {
         loadFeatures();
 
         async function loadFeatures() {
-            if (!epsg) {
+            if (!epsg || config.status !== AsyncStatus.Success) {
                 return;
             }
 
@@ -68,12 +76,14 @@ export function useLoadFeatures() {
                     const abortController = new AbortController();
                     abortControllers.current.push({ url: featureServer.url, layerId: layer.meta.id, abortController });
 
+                    const fsConfig = config.data.featureServers.find((c) => c.url === featureServer.url)!;
+
                     // Using request instead of queryFeatures because queryFeatures doesn't
                     // seem to support signal
                     const details = await request(`${featureServer.url}/${layer.meta.id}/query`, {
                         params: {
                             outSR: epsg,
-                            where: "1=1",
+                            where: makeWhereStatement(fsConfig, layer) || "1=1",
                             outFields: "*",
                         },
                         signal: abortController.signal,
@@ -117,7 +127,7 @@ export function useLoadFeatures() {
                 })
             );
         }
-    }, [featureServers, dispatch, epsg]);
+    }, [config, featureServers, dispatch, epsg]);
 }
 
 // Abort loaders for removed feature servers and unchecked layers
