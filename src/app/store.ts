@@ -3,6 +3,7 @@ import { setupListeners } from "@reduxjs/toolkit/query";
 import { dataV2Api } from "apis/dataV2/dataV2Api";
 import { TypedUseSelectorHook, useDispatch, useSelector } from "react-redux";
 
+import { arcgisSlice } from "features/arcgis";
 import { areaReducer } from "features/area";
 import { bimCollabApi, bimCollabReducer } from "features/bimCollab";
 import { bimTrackApi, bimTrackReducer } from "features/bimTrack";
@@ -62,6 +63,7 @@ const rootReducer = combineReducers({
     xsiteManage: xsiteManageReducer,
     [xsiteManageApi.reducerPath]: xsiteManageApi.reducer,
     [dataV2Api.reducerPath]: dataV2Api.reducer,
+    arcgis: arcgisSlice.reducer,
 });
 
 export const store = configureStore({

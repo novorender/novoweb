@@ -1,9 +1,11 @@
 import { BaseQueryFn, createApi, FetchArgs, fetchBaseQuery, FetchBaseQueryError } from "@reduxjs/toolkit/query/react";
 
 import { RootState } from "app/store";
+import { ArcgisWidgetConfig } from "features/arcgis";
 import { selectConfig } from "slices/explorerSlice";
 
 import { Omega365Document } from "./omega365Types";
+import { ProjectInfo } from "./projectTypes";
 
 const rawBaseQuery = fetchBaseQuery({
     baseUrl: "",
@@ -52,7 +54,42 @@ export const dataV2Api = createApi({
         getOmega365DocumentLinks: builder.query<Omega365Document[], { projectId: string; objectId: number }>({
             query: ({ projectId, objectId }) => `/explorer/${projectId}/omega365/documents/${objectId}`,
         }),
+        getProjectInfo: builder.query<ProjectInfo, { projectId: string }>({
+            // query: ({ projectId }) => `/projects/${projectId}`,
+            queryFn: async () => ({ data: { epsg: "5105" } as object as ProjectInfo }),
+        }),
+        getArcgisWidgetConfig: builder.query<ArcgisWidgetConfig, { projectId: string }>({
+            // query: ({ projectId }) => `/explorer/${projectId}/arcgis/config`,
+            queryFn: async () => {
+                await new Promise((resolve) => setTimeout(resolve, 1000));
+                return {
+                    data: localStorage.getItem("arcgisWidgetConfig")
+                        ? JSON.parse(localStorage.getItem("arcgisWidgetConfig")!)
+                        : {
+                              featureServers: [],
+                          },
+                };
+            },
+        }),
+        putArcgisWidgetConfig: builder.mutation<void, { projectId: string; config: ArcgisWidgetConfig }>({
+            // query: ({ projectId, config }) => ({
+            //     url: `/explorer/${projectId}/arcgis/config`,
+            //     method: 'PUT',
+            //     body: config
+            // }),
+            queryFn: async ({ config }) => {
+                await new Promise((resolve) => setTimeout(resolve, 1000));
+                localStorage.setItem("arcgisWidgetConfig", JSON.stringify(config));
+                return { data: undefined };
+            },
+        }),
     }),
 });
 
-export const { useIsOmega365ConfiguredForProjectQuery, useGetOmega365DocumentLinksQuery } = dataV2Api;
+export const {
+    useIsOmega365ConfiguredForProjectQuery,
+    useGetOmega365DocumentLinksQuery,
+    useGetProjectInfoQuery,
+    useGetArcgisWidgetConfigQuery,
+    usePutArcgisWidgetConfigMutation,
+} = dataV2Api;

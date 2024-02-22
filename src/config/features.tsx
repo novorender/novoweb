@@ -425,6 +425,14 @@ export const featuresConfig = {
         defaultLocked: true,
         offline: true,
     },
+    arcgis: {
+        key: "arcgis",
+        name: "ArcGIS",
+        Icon: Attachment,
+        type: FeatureType.Widget,
+        defaultLocked: false,
+        offline: false,
+    },
 } as const;
 
 type Config = typeof featuresConfig;
