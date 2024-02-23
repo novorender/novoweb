@@ -7,10 +7,10 @@ import { arcgisActions } from "../arcgisSlice";
 
 export function DeleteFeatureServer() {
     const history = useHistory();
-    const { url } = useLocation<{ url: string }>().state;
+    const { id } = useLocation<{ id: string }>().state;
     const dispatch = useAppDispatch();
 
-    if (!url) {
+    if (!id) {
         history.goBack();
         return <></>;
     }
@@ -24,7 +24,7 @@ export function DeleteFeatureServer() {
                     history.goBack();
                 }}
                 onConfirm={() => {
-                    dispatch(arcgisActions.removeFeatureServer({ url: url }));
+                    dispatch(arcgisActions.removeFeatureServer({ id }));
                     history.goBack();
                 }}
             />

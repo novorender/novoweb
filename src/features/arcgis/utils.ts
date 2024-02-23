@@ -245,3 +245,7 @@ export function isSuitableCameraForArcgis(camera: RenderStateCamera | undefined)
 export function makeWhereStatement(fsConfig: FeatureServerConfig, layer: FeatureLayerState) {
     return [fsConfig.layerWhere, layer.where].filter((s) => s).join(" AND ");
 }
+
+export function areArraysEqual<T>(a1: T[] | undefined, a2: T[] | undefined) {
+    return (!a1 && !a2) || a1 === a2 || (a1 && a2 && a1.length === a2.length && a1.every((e, i) => e === a2[i]));
+}

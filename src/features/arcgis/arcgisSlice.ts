@@ -5,7 +5,7 @@ import { createSelector, createSlice, PayloadAction } from "@reduxjs/toolkit";
 import { RootState } from "app/store";
 import { AsyncState, AsyncStatus } from "types/misc";
 
-import { computeFeatureAabb, getTotalAabb2 } from "./utils";
+import { areArraysEqual, computeFeatureAabb, getTotalAabb2 } from "./utils";
 
 const initialState = {
     config: { status: AsyncStatus.Initial } as AsyncState<ArcgisWidgetConfig>,
@@ -21,9 +21,11 @@ export type ArcgisWidgetConfig = {
 };
 
 export type FeatureServerConfig = {
+    id: string;
     url: string;
     name: string;
     layerWhere?: string;
+    enabledLayerIds?: number[];
     checkedLayerIds?: number[];
 };
 
@@ -206,11 +208,12 @@ export const arcgisSlice = createSlice({
                 state.selectedFeature = undefined;
             }
         },
-        removeFeatureServer: (state, action: PayloadAction<{ url: string }>) => {
+        removeFeatureServer: (state, action: PayloadAction<{ id: string }>) => {
             if (state.config.status !== AsyncStatus.Success) {
                 return;
             }
-            const index = state.config.data.featureServers.findIndex((c) => c.url === action.payload.url);
+            const index = state.config.data.featureServers.findIndex((c) => c.id === action.payload.id);
+            const fsConfig = state.config.data.featureServers[index];
             if (index === -1) {
                 return;
             }
@@ -218,7 +221,7 @@ export const arcgisSlice = createSlice({
             state.config.data.featureServers.splice(index, 1);
             state.featureServers.splice(index, 1);
 
-            if (state.selectedFeature?.url === action.payload.url) {
+            if (state.selectedFeature?.url === fsConfig.url) {
                 state.selectedFeature = undefined;
             }
         },
@@ -235,19 +238,17 @@ export const arcgisSlice = createSlice({
                 layers: [],
             });
         },
-        updateFeatureServerConfig: (
-            state,
-            action: PayloadAction<{ from: FeatureServerConfig; to: FeatureServerConfig }>
-        ) => {
-            const { from: prev, to: next } = action.payload;
+        updateFeatureServerConfig: (state, action: PayloadAction<FeatureServerConfig>) => {
+            const next = action.payload;
             if (state.config.status !== AsyncStatus.Success) {
                 return;
             }
 
-            const fsConfig = state.config.data.featureServers.find((c) => c.url === prev.url)!;
-            const featureServer = state.featureServers.find((fs) => fs.url === prev.url)!;
+            const fsConfigIndex = state.config.data.featureServers.findIndex((c) => c.id === next.id);
+            const fsConfig = state.config.data.featureServers[fsConfigIndex];
+            const featureServer = state.featureServers[fsConfigIndex];
 
-            if (fsConfig.url !== next.url) {
+            if (fsConfig.url !== next.url || !areArraysEqual(fsConfig.enabledLayerIds, next.enabledLayerIds)) {
                 fsConfig.url = next.url;
                 featureServer.url = next.url;
                 featureServer.meta = { status: AsyncStatus.Initial };
@@ -261,6 +262,7 @@ export const arcgisSlice = createSlice({
                 }
             }
 
+            fsConfig.enabledLayerIds = next.enabledLayerIds;
             fsConfig.name = next.name;
         },
         setSelectedFeature: (state, action: PayloadAction<SelectedFeatureId | undefined>) => {

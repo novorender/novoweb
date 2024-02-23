@@ -165,13 +165,13 @@ export function FeatureServerList() {
 
                     <ScrollBox display="flex" flexDirection="column" height={1} pt={1} pb={2}>
                         {featureServers.map((featureServer) => {
+                            const fsConfig = config.data.featureServers.find((cfg) => cfg.url === featureServer.url)!;
+
                             return (
                                 <FeatureServerItem
-                                    key={featureServer.url}
+                                    key={fsConfig.id}
                                     defaultExpanded={featureServers.length === 1}
-                                    featureConfig={
-                                        config.data.featureServers.find((cfg) => cfg.url === featureServer.url)!
-                                    }
+                                    featureConfig={fsConfig}
                                     featureServer={featureServer}
                                     onCheckFeature={handleFeatureCheck}
                                     onCheckLayer={handleLayerCheck}
@@ -310,7 +310,7 @@ function FeatureServerItem({
                         </ListItemIcon>
                         <ListItemText>Edit</ListItemText>
                     </MenuItem>
-                    <MenuItem onClick={() => history.push("/remove", { url: featureConfig.url })} disabled={!isAdmin}>
+                    <MenuItem onClick={() => history.push("/remove", { id: featureConfig.id })} disabled={!isAdmin}>
                         <ListItemIcon>
                             <Clear fontSize="small" />
                         </ListItemIcon>

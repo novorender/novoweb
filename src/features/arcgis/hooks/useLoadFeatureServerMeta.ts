@@ -26,6 +26,8 @@ export function useLoadFeatureServerMeta() {
                 featureServers
                     .filter((fs) => fs.meta.status === AsyncStatus.Initial)
                     .map(async (fs) => {
+                        const fsConfig = featureServerConfigs.data.featureServers.find((e) => e.url === fs.url)!;
+
                         dispatch(
                             arcgisActions.setFeatureServerMeta({ url: fs.url, meta: { status: AsyncStatus.Loading } })
                         );
@@ -38,6 +40,10 @@ export function useLoadFeatureServerMeta() {
 
                             // We only handle feature layers at the moment
                             data.layers = data.layers.filter((l) => l.type === "Feature Layer");
+
+                            if (fsConfig.enabledLayerIds?.length) {
+                                data.layers = data.layers.filter((l) => fsConfig.enabledLayerIds?.includes(l.id));
+                            }
 
                             meta = { status: AsyncStatus.Success, data };
                         } catch (ex) {
