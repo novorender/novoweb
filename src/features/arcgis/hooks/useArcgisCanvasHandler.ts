@@ -24,7 +24,12 @@ export function useArcgisCanvasClickHandler() {
 
     // Returns true if something was picked, so the caller could stop downstream handling in this case
     const handleCanvasPick = (evt: MouseEvent) => {
-        if (!view || featureServers.length === 0 || !isSuitableCameraForArcgis(view.renderState.camera)) {
+        if (
+            !view ||
+            featureServers.status !== AsyncStatus.Success ||
+            featureServers.data.length === 0 ||
+            !isSuitableCameraForArcgis(view.renderState.camera)
+        ) {
             return false;
         }
 
@@ -44,12 +49,12 @@ export function useArcgisCanvasClickHandler() {
 
         const sensitivity = pos2d[0] - sensPos[0];
 
-        const selectedFeature = findHitFeature(featureServers, pos2d, sensitivity);
+        const selectedFeature = findHitFeature(featureServers.data, pos2d, sensitivity);
         if (selectedFeature) {
             let payload: SelectedFeatureId | undefined = selectedFeature;
             if (
                 prevSelectedFeature &&
-                prevSelectedFeature.url === selectedFeature.url &&
+                prevSelectedFeature.featureServerId === selectedFeature.featureServerId &&
                 prevSelectedFeature.layerId === selectedFeature.layerId &&
                 prevSelectedFeature.featureIndex === selectedFeature.featureIndex
             ) {
@@ -87,7 +92,7 @@ function findHitFeature(
 
             if (featureIndex !== -1) {
                 return {
-                    url: featureServer.url,
+                    featureServerId: featureServer.config.id,
                     layerId: layer.meta.id,
                     featureIndex,
                 };

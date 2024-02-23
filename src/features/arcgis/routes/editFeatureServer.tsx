@@ -17,19 +17,19 @@ import { useAppDispatch, useAppSelector } from "app/store";
 import { Confirmation, TextField } from "components";
 import { AsyncState, AsyncStatus } from "types/misc";
 
-import { arcgisActions, FeatureServerConfig, selectArcgisWidgetConfig } from "../arcgisSlice";
+import { arcgisActions, FeatureServerConfig, selectArcgisFeatureServers } from "../arcgisSlice";
 import { FeatureServerResp } from "../arcgisTypes";
 
 export function EditFeatureServer() {
     const history = useHistory();
     const dispatch = useAppDispatch();
-    const url = useLocation<{ url?: string }>().state?.url;
-    const isNew = url === undefined;
-    const originalConfig = useAppSelector(selectArcgisWidgetConfig);
+    const featureServerId = useLocation<{ id?: string }>().state?.id;
+    const isNew = featureServerId === undefined;
+    const featureServers = useAppSelector(selectArcgisFeatureServers);
     const originalFeatureServerConfig =
-        originalConfig.status === AsyncStatus.Success
-            ? originalConfig.data.featureServers.find((c) => c.url === url)!
-            : null;
+        featureServers.status === AsyncStatus.Success
+            ? featureServers.data.find((c) => c.config.id === featureServerId)?.config
+            : undefined;
 
     const [config, setConfig] = useState<FeatureServerConfig>(
         originalFeatureServerConfig ?? { id: window.crypto.randomUUID(), url: "", name: "", layerWhere: "" }
@@ -106,28 +106,28 @@ export function EditFeatureServer() {
     }, [urlLayerId]);
 
     const originalNames = useMemo(() => {
-        if (originalConfig.status !== AsyncStatus.Success) {
+        if (featureServers.status !== AsyncStatus.Success) {
             return [];
         }
 
-        const featureServers = url
-            ? originalConfig.data.featureServers.filter((c) => c.url !== url)
-            : originalConfig.data.featureServers;
-        return featureServers.map((c) => c.name);
-    }, [originalConfig, url]);
+        const otherFeatureServers = featureServerId
+            ? featureServers.data.filter((c) => c.config.id !== featureServerId)
+            : featureServers.data;
+        return otherFeatureServers.map((c) => c.config.name);
+    }, [featureServers, featureServerId]);
 
     const handleSave: FormEventHandler = (e) => {
         e.preventDefault();
 
-        if (url) {
-            dispatch(arcgisActions.updateFeatureServerConfig(config));
-        } else {
+        if (isNew) {
             dispatch(arcgisActions.addFeatureServerConfig(config));
+        } else {
+            dispatch(arcgisActions.updateFeatureServerConfig(config));
         }
         history.goBack();
     };
 
-    if (originalConfig.status !== AsyncStatus.Success || !config) {
+    if (featureServers.status !== AsyncStatus.Success || !config) {
         return null;
     }
 

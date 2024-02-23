@@ -5,21 +5,28 @@ import { useAppDispatch, useAppSelector } from "app/store";
 import { useExplorerGlobals } from "contexts/explorerGlobals";
 import { AsyncStatus } from "types/misc";
 
-import { arcgisActions, selectArcgisWidgetConfig } from "../arcgisSlice";
+import { arcgisActions, FeatureServerState, selectArcgisFeatureServersStatus } from "../arcgisSlice";
 
 export function useLoadArcgisWidgetConfig() {
     const dispatch = useAppDispatch();
     const projectId = useExplorerGlobals(true).state.scene.id;
-    const config = useAppSelector(selectArcgisWidgetConfig);
+    const status = useAppSelector(selectArcgisFeatureServersStatus);
 
     const { data, isFetching, error } = useGetArcgisWidgetConfigQuery(
         { projectId },
-        { skip: !projectId || config.status === AsyncStatus.Success }
+        { skip: !projectId || status === AsyncStatus.Success }
     );
 
     useEffect(() => {
         if (data) {
-            dispatch(arcgisActions.setConfig({ status: AsyncStatus.Success, data }));
+            const featureServers = data.featureServers.map((config) => {
+                return {
+                    config,
+                    meta: { status: AsyncStatus.Initial },
+                    layers: [],
+                } as FeatureServerState;
+            });
+            dispatch(arcgisActions.setConfig({ status: AsyncStatus.Success, data: featureServers }));
         }
     }, [dispatch, data]);
 

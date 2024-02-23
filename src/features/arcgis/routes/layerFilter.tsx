@@ -3,24 +3,30 @@ import { useHistory, useLocation } from "react-router-dom";
 
 import { useAppDispatch, useAppSelector } from "app/store";
 import { Confirmation, TextField } from "components";
+import { AsyncStatus } from "types/misc";
 
 import { arcgisActions, selectArcgisFeatureServers } from "../arcgisSlice";
 
 export function LayerFilter() {
     const history = useHistory();
     const dispatch = useAppDispatch();
-    const urlState = useLocation<{ url: string; layerId: string }>().state;
-    const url = urlState.url;
+    const urlState = useLocation<{ featureServerId: string; layerId: string }>().state;
+    const featureServerId = urlState.featureServerId;
     const layerId = Number(urlState.layerId);
     const featureServers = useAppSelector(selectArcgisFeatureServers);
-    const featureServer = featureServers.find((fs) => fs.url === url)!;
+    const featureServer = (
+        featureServers.status === AsyncStatus.Success
+            ? featureServers.data.find((fs) => fs.config.id === featureServerId)
+            : undefined
+    )!;
+
     const layer = featureServer.layers.find((l) => l.meta.id === layerId)!;
 
     const [where, setWhere] = useState(layer.where || "");
 
     const handleSave: FormEventHandler = (e) => {
         e.preventDefault();
-        dispatch(arcgisActions.setLayerFilter({ url, layerId, where }));
+        dispatch(arcgisActions.setLayerFilter({ featureServerId: featureServer.config.id, layerId, where }));
         history.goBack();
     };
 

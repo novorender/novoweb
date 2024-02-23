@@ -28,7 +28,7 @@ export function ArcgisCanvas({
     const isCameraSetCorrectly = useIsCameraSetCorrectly(isSuitableCameraForArcgis);
 
     const draw = useCallback(() => {
-        if (!view?.measure || !ctx || !canvas) {
+        if (!view?.measure || !ctx || !canvas || featureServers.status !== AsyncStatus.Success) {
             return;
         }
 
@@ -38,7 +38,7 @@ export function ArcgisCanvas({
 
         const selectedStrokeColor = "#29B6F6";
 
-        for (const featureServer of featureServers) {
+        for (const featureServer of featureServers.data) {
             for (const layer of featureServer.layers) {
                 if (layer.details.status !== AsyncStatus.Success || !layer.checked) {
                     continue;
@@ -52,7 +52,7 @@ export function ArcgisCanvas({
 
                     const isSelected =
                         selectedFeature &&
-                        selectedFeature.url === featureServer.url &&
+                        selectedFeature.featureServerId === featureServer.config.id &&
                         selectedFeature.layerId === layer.meta.id &&
                         selectedFeature.featureIndex === i;
 
@@ -148,7 +148,10 @@ export function ArcgisCanvas({
     }, [view, renderFnRef, draw]);
 
     const canDraw =
-        featureServers.some((fs) => fs.layers.some((l) => l.checked && l.aabb)) && view && isCameraSetCorrectly;
+        view &&
+        isCameraSetCorrectly &&
+        featureServers.status === AsyncStatus.Success &&
+        featureServers.data.some((fs) => fs.layers.some((l) => l.checked && l.aabb));
 
     return (
         <>

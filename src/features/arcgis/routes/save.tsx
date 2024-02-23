@@ -7,27 +7,33 @@ import { Confirmation } from "components";
 import { useExplorerGlobals } from "contexts/explorerGlobals";
 import { AsyncStatus } from "types/misc";
 
-import { arcgisActions, selectArcgisSaveStatus, selectArcgisWidgetConfig } from "../arcgisSlice";
+import {
+    arcgisActions,
+    ArcgisWidgetConfig,
+    FeatureServerState,
+    selectArcgisFeatureServers,
+    selectArcgisSaveStatus,
+} from "../arcgisSlice";
 
 export function Save() {
     const history = useHistory();
     const dispatch = useAppDispatch();
     const saveStatus = useAppSelector(selectArcgisSaveStatus);
     const projectId = useExplorerGlobals(true).state.scene.id;
-    const config = useAppSelector(selectArcgisWidgetConfig);
+    const featureServers = useAppSelector(selectArcgisFeatureServers);
 
     const [save] = usePutArcgisWidgetConfigMutation();
 
     const handleSave = async (e: FormEvent) => {
         e.preventDefault();
 
-        if (config.status !== AsyncStatus.Success) {
+        if (featureServers.status !== AsyncStatus.Success) {
             return;
         }
 
         dispatch(arcgisActions.setSaveStatus(AsyncStatus.Loading));
 
-        const result = await save({ projectId, config: config.data });
+        const result = await save({ projectId, config: featureServersToConfig(featureServers.data) });
 
         if ("error" in result) {
             console.error(result.error);
@@ -51,4 +57,8 @@ export function Save() {
             />
         </>
     );
+}
+
+function featureServersToConfig(featureServers: FeatureServerState[]): ArcgisWidgetConfig {
+    return { featureServers: featureServers.map((fs) => fs.config) };
 }
