@@ -59,7 +59,7 @@ export function useHandleHighlights() {
                             ? createNeutralHighlight()
                             : defaultVisibility === ObjectVisibility.SemiTransparent
                             ? createTransparentHighlight(0.2)
-                            : "hide",
+                            : "filter",
                 },
             });
 
