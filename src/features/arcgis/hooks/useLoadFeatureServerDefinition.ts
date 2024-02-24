@@ -6,9 +6,9 @@ import { useAbortController } from "hooks/useAbortController";
 import { AsyncState, AsyncStatus } from "types/misc";
 
 import { arcgisActions, selectArcgisFeatureServers } from "../arcgisSlice";
-import { FeatureServerResp } from "../arcgisTypes";
+import { FeatureServerDefinition } from "../arcgisTypes";
 
-export function useLoadFeatureServerMeta() {
+export function useLoadFeatureServerDefinition() {
     const featureServers = useAppSelector(selectArcgisFeatureServers);
     const dispatch = useAppDispatch();
 
@@ -24,20 +24,20 @@ export function useLoadFeatureServerMeta() {
 
             await Promise.all(
                 featureServers.data
-                    .filter((fs) => fs.meta.status === AsyncStatus.Initial)
+                    .filter((fs) => fs.definition.status === AsyncStatus.Initial)
                     .map(async (fs) => {
                         dispatch(
-                            arcgisActions.setFeatureServerMeta({
+                            arcgisActions.setFeatureServerDefinition({
                                 id: fs.id,
-                                meta: { status: AsyncStatus.Loading },
+                                definition: { status: AsyncStatus.Loading },
                             })
                         );
 
-                        let meta: AsyncState<FeatureServerResp>;
+                        let meta: AsyncState<FeatureServerDefinition>;
                         try {
                             const data = (await request(fs.url, {
                                 signal: abortController.current.signal,
-                            })) as FeatureServerResp;
+                            })) as FeatureServerDefinition;
 
                             // We only handle feature layers at the moment
                             data.layers = data.layers.filter((l) => l.type === "Feature Layer");
@@ -48,7 +48,7 @@ export function useLoadFeatureServerMeta() {
                             meta = { status: AsyncStatus.Error, msg: "Error loading feature server metadata" };
                         }
 
-                        dispatch(arcgisActions.setFeatureServerMeta({ id: fs.id, meta: meta }));
+                        dispatch(arcgisActions.setFeatureServerDefinition({ id: fs.id, definition: meta }));
                     })
             );
         }

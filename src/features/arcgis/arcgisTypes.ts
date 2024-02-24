@@ -4,11 +4,12 @@ import { ColorRGBA } from "@novorender/webgl-api";
 // Non exhaustive types for ArcGIS responses
 // Only listing what's used
 
-export type FeatureServerResp = {
-    layers: FeatureServerRespLayer[];
+export type FeatureServerDefinition = {
+    layers: LayerSimpleDefinition[];
 };
 
-export type FeatureServerRespLayer = {
+// The one that comes togethe with server definition
+export type LayerSimpleDefinition = {
     id: number;
     name: string;
     type: string; // Can be more detailed, e.g. 'Feature Layer'

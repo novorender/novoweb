@@ -5,7 +5,7 @@ import { createSelector, createSlice, PayloadAction } from "@reduxjs/toolkit";
 import { RootState } from "app/store";
 import { AsyncState, AsyncStatus } from "types/misc";
 
-import { FeatureServerResp, LayerDrawingInfo } from "./arcgisTypes";
+import { FeatureServerDefinition as FeatureServerDefinition, LayerDrawingInfo } from "./arcgisTypes";
 import { areArraysEqual, computeFeatureAabb, getTotalAabb2 } from "./utils";
 
 const initialState = {
@@ -42,7 +42,7 @@ export type FeatureServer = {
     name: string;
     layerWhere?: string;
     enabledLayerIds?: number[];
-    meta: AsyncState<FeatureServerResp>;
+    definition: AsyncState<FeatureServerDefinition>;
     layers: Layer[];
 };
 
@@ -52,11 +52,11 @@ export type Layer = {
     checked: boolean;
     where?: string;
     aabb?: AABB2;
-    details: AsyncState<LayerDetails>;
+    definition: AsyncState<LayerDefinition>;
     features: AsyncState<LayerFeatures>;
 };
 
-export type LayerDetails = {
+export type LayerDefinition = {
     fields: LayerField[];
     drawingInfo: LayerDrawingInfo;
     objectIdField: string;
@@ -90,18 +90,21 @@ export const arcgisSlice = createSlice({
         setFeatureServers: (state, action: PayloadAction<AsyncState<FeatureServer[]>>) => {
             state.featureServers = action.payload;
         },
-        setFeatureServerMeta: (state, action: PayloadAction<{ id: string; meta: AsyncState<FeatureServerResp> }>) => {
+        setFeatureServerDefinition: (
+            state,
+            action: PayloadAction<{ id: string; definition: AsyncState<FeatureServerDefinition> }>
+        ) => {
             if (state.featureServers.status !== AsyncStatus.Success) {
                 return;
             }
-            const { id, meta } = action.payload;
+            const { id, definition } = action.payload;
             const featureServer = state.featureServers.data.find((fs) => fs.id === id)!;
             const enabledLayerIds = featureServer.enabledLayerIds;
-            featureServer.meta = meta;
+            featureServer.definition = definition;
 
-            switch (meta.status) {
+            switch (definition.status) {
                 case AsyncStatus.Success: {
-                    let layers = meta.data.layers;
+                    let layers = definition.data.layers;
                     if (enabledLayerIds) {
                         layers = layers.filter((l) => !enabledLayerIds.includes(l.id));
                     }
@@ -112,7 +115,7 @@ export const arcgisSlice = createSlice({
                             name: l.name,
                             checked: layerConfig?.checked ?? false,
                             where: layerConfig?.where,
-                            details: { status: AsyncStatus.Initial },
+                            definition: { status: AsyncStatus.Initial },
                             features: { status: AsyncStatus.Initial },
                         } as Layer;
                     });
@@ -130,18 +133,18 @@ export const arcgisSlice = createSlice({
                 {
                     featureServerId: string;
                     layerId: number;
-                    details?: AsyncState<LayerDetails>;
+                    definition?: AsyncState<LayerDefinition>;
                     features?: AsyncState<LayerFeatures>;
                     where?: string;
                 }[]
             >
         ) => {
-            for (const { featureServerId, layerId, details, features } of action.payload) {
+            for (const { featureServerId, layerId, definition, features } of action.payload) {
                 const featureServer = findFeatureServer(state, featureServerId)!;
                 const layer = featureServer.layers.find((l) => l.id === layerId)!;
 
-                if (details) {
-                    layer.details = details;
+                if (definition) {
+                    layer.definition = definition;
                 }
 
                 if (features) {
@@ -214,7 +217,7 @@ export const arcgisSlice = createSlice({
 
             if (fs.url !== next.url || !areArraysEqual(fs.enabledLayerIds, next.enabledLayerIds)) {
                 fs.url = next.url;
-                fs.meta = { status: AsyncStatus.Initial };
+                fs.definition = { status: AsyncStatus.Initial };
                 fs.layers = [];
                 if (isSelected) {
                     state.selectedFeature = undefined;
@@ -224,7 +227,7 @@ export const arcgisSlice = createSlice({
             if (fs.layerWhere != next.layerWhere) {
                 fs.layerWhere = next.layerWhere;
                 for (const layer of fs.layers) {
-                    layer.details = { status: AsyncStatus.Initial };
+                    layer.definition = { status: AsyncStatus.Initial };
                 }
             }
 
@@ -242,15 +245,15 @@ export const arcgisSlice = createSlice({
             const featureServer = findFeatureServer(state, featureServerId)!;
             const layer = featureServer.layers.find((l) => l.id === layerId)!;
             layer.where = where;
-            layer.details = { status: AsyncStatus.Initial };
+            layer.features = { status: AsyncStatus.Initial };
         },
     },
 });
 
 function checkLayer(layer: Layer, checked: boolean) {
     if (!checked) {
-        if (layer.details.status === AsyncStatus.Loading) {
-            layer.details = { status: AsyncStatus.Initial };
+        if (layer.definition.status === AsyncStatus.Loading) {
+            layer.definition = { status: AsyncStatus.Initial };
         }
         if (layer.features.status === AsyncStatus.Loading) {
             layer.features = { status: AsyncStatus.Initial };

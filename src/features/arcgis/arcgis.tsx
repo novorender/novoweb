@@ -12,8 +12,8 @@ import { ArcgisSnackbar } from "./components/arcgisSnackbar";
 import { ViewSwitch } from "./components/viewSwitch";
 import { WidgetMenu } from "./components/widgetMenu";
 import { useLoadArcgisWidgetConfig } from "./hooks/useLoadArcgisWidgetConfig";
-import { useLoadFeatures } from "./hooks/useLoadFeatures";
-import { useLoadFeatureServerMeta } from "./hooks/useLoadFeatureServerMeta";
+import { useLoadFeaturesAndDefinition } from "./hooks/useLoadFeaturesAndDefinition";
+import { useLoadFeatureServerDefinition } from "./hooks/useLoadFeatureServerDefinition";
 import { DeleteFeatureServer } from "./routes/deleteFeatureServer";
 import { EditFeatureServer } from "./routes/editFeatureServer";
 import FeatureInfo from "./routes/featureInfo";
@@ -27,8 +27,8 @@ export default function Arcgis() {
     const maximized = useAppSelector(selectMaximized).includes(featuresConfig.arcgis.key);
 
     useLoadArcgisWidgetConfig();
-    useLoadFeatureServerMeta();
-    useLoadFeatures();
+    useLoadFeatureServerDefinition();
+    useLoadFeaturesAndDefinition();
 
     return (
         <MemoryRouter>

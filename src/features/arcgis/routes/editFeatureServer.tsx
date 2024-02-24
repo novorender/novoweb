@@ -18,7 +18,7 @@ import { Confirmation, TextField } from "components";
 import { AsyncState, AsyncStatus } from "types/misc";
 
 import { arcgisActions, FeatureServer, selectArcgisFeatureServers } from "../arcgisSlice";
-import { FeatureServerResp } from "../arcgisTypes";
+import { FeatureServerDefinition } from "../arcgisTypes";
 
 export function EditFeatureServer() {
     const history = useHistory();
@@ -38,7 +38,7 @@ export function EditFeatureServer() {
             name: "",
             layerWhere: "",
             layers: [],
-            meta: { status: AsyncStatus.Initial },
+            definition: { status: AsyncStatus.Initial },
         }
     );
     const [urlChanged, setUrlChanged] = useState(false);
@@ -47,7 +47,9 @@ export function EditFeatureServer() {
     const [useOnlySelectedLayers, setUseOnlySelectedLayers] = useState(
         (featureServer.enabledLayerIds?.length ?? 0) > 0
     );
-    const [fsMeta, setFsMeta] = useState<AsyncState<FeatureServerResp>>({ status: AsyncStatus.Initial });
+    const [fsDefinition, setFsDefinition] = useState<AsyncState<FeatureServerDefinition>>({
+        status: AsyncStatus.Initial,
+    });
 
     // Remove query params from the entered URL and (maybe) split it into [featureServer, layerId]
     const [fsUrl, urlLayerId] = useMemo(() => {
@@ -65,37 +67,40 @@ export function EditFeatureServer() {
         }
     }, [featureServer.url]);
 
-    const shouldDebounceLoadMeta = useRef(false);
+    const shouldDebounceLoadingDefinition = useRef(false);
     useEffect(() => {
         const abortController = new AbortController();
-        const timeout = setTimeout(loadMeta, shouldDebounceLoadMeta.current ? 1000 : 0);
+        const timeout = setTimeout(loadDefinition, shouldDebounceLoadingDefinition.current ? 1000 : 0);
 
-        async function loadMeta() {
-            shouldDebounceLoadMeta.current = false;
+        async function loadDefinition() {
+            shouldDebounceLoadingDefinition.current = false;
 
             if (!fsUrl) {
                 return;
             }
 
-            setFsMeta({ status: AsyncStatus.Loading });
+            setFsDefinition({ status: AsyncStatus.Loading });
 
             try {
                 const resp = await fetch(`${fsUrl}?f=json`, { signal: abortController.signal });
                 if (!resp.ok) {
-                    setFsMeta({ status: AsyncStatus.Error, msg: "Error loading feature server metadata" });
+                    setFsDefinition({ status: AsyncStatus.Error, msg: "Error loading feature server definition" });
                     return;
                 }
 
                 const respJson = await resp.json();
                 if (!respJson.layers) {
-                    setFsMeta({ status: AsyncStatus.Error, msg: "API response doesn't contain layer information" });
+                    setFsDefinition({
+                        status: AsyncStatus.Error,
+                        msg: "API response doesn't contain layer information",
+                    });
                     return;
                 }
 
-                setFsMeta({ status: AsyncStatus.Success, data: respJson });
+                setFsDefinition({ status: AsyncStatus.Success, data: respJson });
                 setFeatureServer((config) => ({ ...config, url: fsUrl }));
             } catch (e) {
-                setFsMeta({ status: AsyncStatus.Error, msg: "Error loading feature server information" });
+                setFsDefinition({ status: AsyncStatus.Error, msg: "Error loading feature server information" });
             }
         }
 
@@ -181,7 +186,7 @@ export function EditFeatureServer() {
         setUrlChanged(true);
 
         // One character change could mean that the user is typing and we could debounce
-        shouldDebounceLoadMeta.current = Math.abs(prevUrl.length - url.length) === 1;
+        shouldDebounceLoadingDefinition.current = Math.abs(prevUrl.length - url.length) === 1;
 
         setFeatureServer(newConfig);
     };
@@ -196,7 +201,7 @@ export function EditFeatureServer() {
                 }}
                 component="form"
                 onSubmit={handleSave}
-                confirmBtnDisabled={Boolean(urlError || nameError || fsMeta.status !== AsyncStatus.Success)}
+                confirmBtnDisabled={Boolean(urlError || nameError || fsDefinition.status !== AsyncStatus.Success)}
                 justifyContent="start"
                 py={2}
             >
@@ -213,12 +218,12 @@ export function EditFeatureServer() {
                     label="URL"
                     required
                     InputProps={{
-                        endAdornment: fsMeta.status !== AsyncStatus.Initial && (
+                        endAdornment: fsDefinition.status !== AsyncStatus.Initial && (
                             <InputAdornment position="end">
-                                {fsMeta.status === AsyncStatus.Loading && <CircularProgress size="1rem" />}
-                                {fsMeta.status === AsyncStatus.Success && <CheckCircle color="success" />}
-                                {fsMeta.status === AsyncStatus.Error && (
-                                    <Tooltip title={fsMeta.msg}>
+                                {fsDefinition.status === AsyncStatus.Loading && <CircularProgress size="1rem" />}
+                                {fsDefinition.status === AsyncStatus.Success && <CheckCircle color="success" />}
+                                {fsDefinition.status === AsyncStatus.Error && (
+                                    <Tooltip title={fsDefinition.msg}>
                                         <Error color="error" />
                                     </Tooltip>
                                 )}
@@ -264,7 +269,7 @@ export function EditFeatureServer() {
                         label={
                             <Box mr={0.5} display="flex" alignItems="center" gap={1}>
                                 Use only selected layers
-                                {useOnlySelectedLayers && fsMeta.status === AsyncStatus.Loading && (
+                                {useOnlySelectedLayers && fsDefinition.status === AsyncStatus.Loading && (
                                     <Box display="flex">
                                         <CircularProgress size="1rem" />
                                     </Box>
@@ -274,11 +279,13 @@ export function EditFeatureServer() {
                     />
                 </Box>
 
-                {useOnlySelectedLayers && fsMeta.status === AsyncStatus.Error && <Box display="flex">{fsMeta.msg}</Box>}
+                {useOnlySelectedLayers && fsDefinition.status === AsyncStatus.Error && (
+                    <Box display="flex">{fsDefinition.msg}</Box>
+                )}
 
-                {useOnlySelectedLayers && fsMeta.status === AsyncStatus.Success && (
+                {useOnlySelectedLayers && fsDefinition.status === AsyncStatus.Success && (
                     <LayerList
-                        meta={fsMeta.data}
+                        definition={fsDefinition.data}
                         enabledLayerIds={featureServer.enabledLayerIds}
                         onToggle={(layerId) => {
                             if (featureServer.enabledLayerIds?.includes(layerId)) {
@@ -305,11 +312,11 @@ export function EditFeatureServer() {
 }
 
 function LayerList({
-    meta,
+    definition,
     enabledLayerIds,
     onToggle,
 }: {
-    meta: FeatureServerResp;
+    definition: FeatureServerDefinition;
     enabledLayerIds: number[] | undefined;
     onToggle: (layerId: number) => void;
 }) {
@@ -325,7 +332,7 @@ function LayerList({
                 mb: 1,
             }}
         >
-            {meta.layers.map((layer) => {
+            {definition.layers.map((layer) => {
                 const labelId = `layer-checkbox-${layer.id}`;
                 const handleToggle = () => onToggle(layer.id);
 

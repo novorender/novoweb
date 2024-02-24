@@ -11,7 +11,7 @@ import {
     arcgisActions,
     FeatureServer,
     Layer,
-    LayerDetails,
+    LayerDefinition,
     LayerFeatures,
     selectArcgisFeatureServers,
 } from "../arcgisSlice";
@@ -23,7 +23,7 @@ type LayerAbortController = {
     abortController: AbortController;
 };
 
-export function useLoadFeatures() {
+export function useLoadFeaturesAndDefinition() {
     const projectId = useExplorerGlobals(true).state.scene.id;
     const featureServers = useAppSelector(selectArcgisFeatureServers);
     const dispatch = useAppDispatch();
@@ -55,7 +55,7 @@ export function useLoadFeatures() {
                     .filter(
                         (layer) =>
                             layer.checked &&
-                            (layer.details.status === AsyncStatus.Initial ||
+                            (layer.definition.status === AsyncStatus.Initial ||
                                 layer.features.status === AsyncStatus.Initial)
                     )
                     .map((layer) => ({ featureServer, layer }))
@@ -70,8 +70,10 @@ export function useLoadFeatures() {
                     layersToLoad.map(({ featureServer, layer }) => ({
                         featureServerId: featureServer.id,
                         layerId: layer.id,
-                        details:
-                            layer.details.status === AsyncStatus.Initial ? { status: AsyncStatus.Loading } : undefined,
+                        definition:
+                            layer.definition.status === AsyncStatus.Initial
+                                ? { status: AsyncStatus.Loading }
+                                : undefined,
                         features:
                             layer.features.status === AsyncStatus.Initial ? { status: AsyncStatus.Loading } : undefined,
                     }))
@@ -84,8 +86,8 @@ export function useLoadFeatures() {
                     promises.push(loadFeatures(dispatch, abortControllers.current, epsg, featureServer, layer));
                 }
 
-                if (layer.details.status === AsyncStatus.Initial) {
-                    promises.push(loadDetails(dispatch, abortControllers.current, featureServer, layer));
+                if (layer.definition.status === AsyncStatus.Initial) {
+                    promises.push(loadDefinition(dispatch, abortControllers.current, featureServer, layer));
                 }
             }
 
@@ -156,7 +158,7 @@ async function loadFeatures(
     );
 }
 
-async function loadDetails(
+async function loadDefinition(
     dispatch: ReturnType<typeof useAppDispatch>,
     abortControllers: LayerAbortController[],
     featureServer: FeatureServer,
@@ -172,7 +174,7 @@ async function loadDetails(
 
     // Using request instead of queryFeatures because queryFeatures doesn't
     // seem to support signal
-    const details = await request(`${featureServer.url}/${layer.id}`, {
+    const definition = await request(`${featureServer.url}/${layer.id}`, {
         signal: abortController.signal,
     })
         .then((resp) => {
@@ -180,18 +182,18 @@ async function loadDetails(
             return {
                 status: AsyncStatus.Success,
                 data: { fields, drawingInfo },
-            } as AsyncState<LayerDetails>;
+            } as AsyncState<LayerDefinition>;
         })
         .catch((error) => {
             if (error.name === "AbortError") {
-                return { status: AsyncStatus.Initial } as AsyncState<LayerDetails>;
+                return { status: AsyncStatus.Initial } as AsyncState<LayerDefinition>;
             }
 
             console.warn(error);
             return {
                 status: AsyncStatus.Error,
-                msg: "Error loading layer details",
-            } as AsyncState<LayerDetails>;
+                msg: "Error loading layer definition",
+            } as AsyncState<LayerDefinition>;
         })
         .finally(() => {
             const index = abortControllers.indexOf(abortEntry);
@@ -205,7 +207,7 @@ async function loadDetails(
             {
                 featureServerId: featureServer.id,
                 layerId: layer.id,
-                details,
+                definition: definition,
             },
         ])
     );

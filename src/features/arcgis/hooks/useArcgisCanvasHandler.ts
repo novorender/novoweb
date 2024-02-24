@@ -82,7 +82,7 @@ function findHitFeature(
             if (
                 !layer.checked ||
                 layer.features.status !== AsyncStatus.Success ||
-                layer.details.status !== AsyncStatus.Success
+                layer.definition.status !== AsyncStatus.Success
             ) {
                 continue;
             }

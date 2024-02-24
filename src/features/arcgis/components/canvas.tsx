@@ -50,7 +50,7 @@ export function ArcgisCanvas({
         for (const featureServer of featureServers.data) {
             for (const layer of featureServer.layers) {
                 if (
-                    layer.details.status !== AsyncStatus.Success ||
+                    layer.definition.status !== AsyncStatus.Success ||
                     layer.features.status !== AsyncStatus.Success ||
                     !layer.checked
                 ) {
@@ -71,15 +71,15 @@ export function ArcgisCanvas({
                     );
 
                     if ("paths" in geometry) {
-                        drawPolyline(drawCtx, geometry, layer.details.data.drawingInfo, isSelected);
+                        drawPolyline(drawCtx, geometry, layer.definition.data.drawingInfo, isSelected);
                     } else if ("curvePaths" in geometry) {
                         // polyline with curves
                     } else if ("rings" in geometry) {
-                        drawPolygon(drawCtx, geometry, layer.details.data.drawingInfo, isSelected);
+                        drawPolygon(drawCtx, geometry, layer.definition.data.drawingInfo, isSelected);
                     } else if ("curveRings" in geometry) {
                         // polygon with curves
                     } else {
-                        drawPoint(drawCtx, geometry, layer.details.data.drawingInfo, isSelected);
+                        drawPoint(drawCtx, geometry, layer.definition.data.drawingInfo, isSelected);
                     }
                 }
             }

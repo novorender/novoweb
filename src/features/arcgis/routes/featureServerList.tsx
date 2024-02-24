@@ -69,7 +69,7 @@ export function FeatureServerList() {
     const handleFlyToFeatureServer = useCallback(
         (featureServer: FeatureServer) => {
             const aabbs = featureServer.layers
-                .filter((l) => l.checked && l.details.status === AsyncStatus.Success && l.aabb)
+                .filter((l) => l.checked && l.definition.status === AsyncStatus.Success && l.aabb)
                 .map((l) => l.aabb!);
 
             if (aabbs.length === 0) {
@@ -189,7 +189,7 @@ function FeatureServerItem({
 }) {
     const history = useHistory();
     const [menuAnchor, setMenuAnchor] = useState<HTMLElement | null>(null);
-    const { meta, layers } = featureServer;
+    const { definition, layers } = featureServer;
 
     const openMenu = (e: React.MouseEvent<HTMLButtonElement>) => {
         e.stopPropagation();
@@ -200,7 +200,7 @@ function FeatureServerItem({
         setMenuAnchor(null);
     };
 
-    const canFlyTo = layers.some((l) => l.checked && l.details.status === AsyncStatus.Success && l.aabb);
+    const canFlyTo = layers.some((l) => l.checked && l.definition.status === AsyncStatus.Success && l.aabb);
 
     return (
         <Accordion defaultExpanded={defaultExpanded}>
@@ -213,13 +213,13 @@ function FeatureServerItem({
                     </Tooltip>
                 </Box>
 
-                {meta.status === AsyncStatus.Error ? (
+                {definition.status === AsyncStatus.Error ? (
                     <Box flex="0 0 auto" display="flex">
-                        <Tooltip title={meta.msg}>
+                        <Tooltip title={definition.msg}>
                             <StyledError />
                         </Tooltip>
                     </Box>
-                ) : meta.status === AsyncStatus.Loading ? (
+                ) : definition.status === AsyncStatus.Loading ? (
                     <Box flex="0 0 auto" display="flex">
                         <CircularProgress size="1rem" />
                     </Box>
@@ -250,7 +250,7 @@ function FeatureServerItem({
                         checked={layers.length > 0 && layers.every((l) => l.checked)}
                         indeterminate={layers.some((l) => l.checked) && !layers.every((l) => l.checked)}
                         onChange={(e) => onCheckFeature(featureServer.id, e.target.checked)}
-                        disabled={meta.status !== AsyncStatus.Success}
+                        disabled={definition.status !== AsyncStatus.Success}
                     />
                 </Box>
 
@@ -299,7 +299,7 @@ function FeatureServerItem({
                 </Menu>
             </AccordionSummary>
 
-            {meta.status === AsyncStatus.Success && (
+            {definition.status === AsyncStatus.Success && (
                 <AccordionDetails sx={{ pb: 0 }}>
                     <List sx={{ padding: 0 }}>
                         {layers.map((layer) => (
@@ -365,31 +365,41 @@ function LayerItem({
                         </Tooltip>
                     </Box>
 
-                    {layer.details.status === AsyncStatus.Loading ? (
+                    {layer.definition.status === AsyncStatus.Loading ||
+                    layer.features.status === AsyncStatus.Loading ? (
                         <Box flex="0 0 auto" display="flex">
                             <CircularProgress size="1rem" />
                         </Box>
-                    ) : layer.details.status === AsyncStatus.Error ? (
+                    ) : layer.definition.status === AsyncStatus.Error ? (
                         <Box flex="0 0 auto" display="flex">
-                            <Tooltip title={layer.details.msg}>
+                            <Tooltip title={layer.definition.msg}>
+                                <StyledError />
+                            </Tooltip>
+                        </Box>
+                    ) : layer.features.status === AsyncStatus.Error ? (
+                        <Box flex="0 0 auto" display="flex">
+                            <Tooltip title={layer.features.msg}>
                                 <StyledError />
                             </Tooltip>
                         </Box>
                     ) : null}
 
-                    {layer.checked && layer.details.status === AsyncStatus.Success && layer.aabb && (
-                        <Box
-                            flex="0 0 auto"
-                            onClick={(e) => {
-                                e.stopPropagation();
-                                flyToLayer(layer);
-                            }}
-                        >
-                            <IconButton size="small" sx={{ py: 0 }}>
-                                <FlightTakeoff />
-                            </IconButton>
-                        </Box>
-                    )}
+                    {layer.checked &&
+                        layer.features.status === AsyncStatus.Success &&
+                        layer.definition.status === AsyncStatus.Success &&
+                        layer.aabb && (
+                            <Box
+                                flex="0 0 auto"
+                                onClick={(e) => {
+                                    e.stopPropagation();
+                                    flyToLayer(layer);
+                                }}
+                            >
+                                <IconButton size="small" sx={{ py: 0 }}>
+                                    <FlightTakeoff />
+                                </IconButton>
+                            </Box>
+                        )}
 
                     <Box flex="0 0 auto">
                         <StyledCheckbox
@@ -422,7 +432,9 @@ function LayerItem({
                         MenuListProps={{ sx: { maxWidth: "100%" } }}
                     >
                         <MenuItem
-                            onClick={() => history.push("/layerFilter", { id: featureServer.id, layerId: layer.id })}
+                            onClick={() =>
+                                history.push("/layerFilter", { featureServerId: featureServer.id, layerId: layer.id })
+                            }
                             disabled={!isAdmin}
                         >
                             <ListItemIcon>

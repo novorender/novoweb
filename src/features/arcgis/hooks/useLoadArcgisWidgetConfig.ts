@@ -25,7 +25,7 @@ export function useLoadArcgisWidgetConfig() {
                     url: config.url,
                     name: config.name,
                     layerWhere: config.layerWhere,
-                    meta: { status: AsyncStatus.Initial },
+                    definition: { status: AsyncStatus.Initial },
                     layers: [],
                 } as FeatureServer;
             });
