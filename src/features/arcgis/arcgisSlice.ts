@@ -5,6 +5,7 @@ import { createSelector, createSlice, PayloadAction } from "@reduxjs/toolkit";
 import { RootState } from "app/store";
 import { AsyncState, AsyncStatus } from "types/misc";
 
+import { FeatureServerResp, LayerDrawingInfo } from "./arcgisTypes";
 import { areArraysEqual, computeFeatureAabb, getTotalAabb2 } from "./utils";
 
 const initialState = {
@@ -15,6 +16,7 @@ const initialState = {
 
 type State = typeof initialState;
 
+// Stored configuration
 export type ArcgisWidgetConfig = {
     featureServers: FeatureServerConfig[];
 };
@@ -23,15 +25,46 @@ export type FeatureServerConfig = {
     id: string;
     url: string;
     name: string;
+    layers: { [layerId: number]: LayerConfig }; // This info is copied to layers in runtime
     layerWhere?: string;
     enabledLayerIds?: number[];
-    checkedLayerIds?: number[];
 };
 
+export type LayerConfig = {
+    checked?: boolean;
+    where?: string;
+};
+
+// App state
 export type FeatureServerState = {
     config: FeatureServerConfig;
-    meta: AsyncState<FeatureServerMeta>;
-    layers: FeatureLayerState[];
+    meta: AsyncState<FeatureServerResp>;
+    layers: Layer[];
+};
+
+export type Layer = {
+    id: number;
+    name: string;
+    checked: boolean;
+    where?: string;
+    aabb?: AABB2;
+    details: AsyncState<LayerDetails>;
+    features: AsyncState<LayerFeatures>;
+};
+
+export type LayerDetails = {
+    fields: LayerField[];
+    drawingInfo: LayerDrawingInfo;
+    objectIdField: string;
+};
+
+export type LayerField = {
+    name: string;
+};
+
+export type LayerFeatures = {
+    features: IFeature[];
+    featuresAabb: (AABB2 | undefined)[];
 };
 
 export type SelectedFeatureId = {
@@ -43,41 +76,7 @@ export type SelectedFeatureId = {
 export type SelectedFeatureInfo = {
     attributes: object;
     featureServerConfig: FeatureServerConfig;
-    layer: FeatureLayerMeta;
-    layerDetails: FeatureLayerDetails;
-};
-
-export type FeatureServerMeta = {
-    layers: FeatureLayerMeta[];
-};
-
-export type FeatureLayerMeta = {
-    id: number;
-    name: string;
-    type: string; // Can be more detailed, e.g. 'Feature Layer'
-};
-
-export type FeatureLayerState = {
-    meta: FeatureLayerMeta;
-    checked: boolean;
-    details: AsyncState<FeatureLayerDetails>;
-    where?: string;
-    aabb?: AABB2;
-};
-
-export type FeatureLayerDetailsResp = {
-    features: IFeature[];
-    fields: FeatureLayerField[];
-};
-
-export type FeatureLayerDetails = {
-    features: IFeature[];
-    featuresAabb: (AABB2 | undefined)[];
-    fields: FeatureLayerField[];
-};
-
-export type FeatureLayerField = {
-    name: string;
+    layer: Layer;
 };
 
 export const arcgisSlice = createSlice({
@@ -87,7 +86,7 @@ export const arcgisSlice = createSlice({
         setConfig: (state, action: PayloadAction<AsyncState<FeatureServerState[]>>) => {
             state.featureServers = action.payload;
         },
-        setFeatureServerMeta: (state, action: PayloadAction<{ id: string; meta: AsyncState<FeatureServerMeta> }>) => {
+        setFeatureServerMeta: (state, action: PayloadAction<{ id: string; meta: AsyncState<FeatureServerResp> }>) => {
             if (state.featureServers.status !== AsyncStatus.Success) {
                 return;
             }
@@ -97,12 +96,18 @@ export const arcgisSlice = createSlice({
 
             switch (meta.status) {
                 case AsyncStatus.Success: {
-                    featureServer.layers = meta.data.layers.map((l) => ({
-                        meta: l,
-                        details: { status: AsyncStatus.Initial },
-                        checked: featureServer.config.checkedLayerIds?.includes(l.id) ?? false,
-                        aabb: undefined,
-                    }));
+                    featureServer.layers = meta.data.layers.map((l) => {
+                        const layerConfig = featureServer.config.layers && featureServer.config.layers[l.id];
+                        return {
+                            id: l.id,
+                            name: l.name,
+                            checked: layerConfig?.checked ?? false,
+                            where: layerConfig?.where,
+                            details: { status: AsyncStatus.Initial },
+                            features: { status: AsyncStatus.Initial },
+                            aabb: undefined,
+                        } as Layer;
+                    });
                     break;
                 }
                 case AsyncStatus.Error:
@@ -111,32 +116,37 @@ export const arcgisSlice = createSlice({
                     break;
             }
         },
-        setMultipleLayerDetails: (
+        updateMultipleLayers: (
             state,
             action: PayloadAction<
                 {
                     featureServerId: string;
                     layerId: number;
-                    details: AsyncState<FeatureLayerDetailsResp>;
+                    details?: AsyncState<LayerDetails>;
+                    features?: AsyncState<LayerFeatures>;
                 }[]
             >
         ) => {
-            for (const { featureServerId, layerId, details } of action.payload) {
+            for (const { featureServerId, layerId, details, features } of action.payload) {
                 const featureServer = findFeatureServer(state, featureServerId)!;
-                const layer = featureServer.layers.find((l) => l.meta.id === layerId)!;
+                const layer = featureServer.layers.find((l) => l.id === layerId)!;
 
-                if (details.status === AsyncStatus.Success) {
-                    const data: FeatureLayerDetails = {
-                        features: details.data.features,
-                        featuresAabb: details.data.features.map(computeFeatureAabb),
-                        fields: details.data.fields,
-                    };
-                    layer.details = { status: AsyncStatus.Success, data };
-                    const nonEmptyAabbs = data.featuresAabb.filter((e) => e) as AABB2[];
-                    layer.aabb = nonEmptyAabbs.length > 0 ? getTotalAabb2(nonEmptyAabbs) : undefined;
-                } else {
+                if (details) {
                     layer.details = details;
-                    layer.aabb = undefined;
+                }
+
+                if (features) {
+                    if (features.status === AsyncStatus.Success) {
+                        const data: LayerFeatures = {
+                            features: features.data.features,
+                            featuresAabb: features.data.features.map(computeFeatureAabb),
+                        };
+                        layer.features = { status: AsyncStatus.Success, data };
+                        const nonEmptyAabbs = data.featuresAabb.filter((e) => e) as AABB2[];
+                        layer.aabb = nonEmptyAabbs.length > 0 ? getTotalAabb2(nonEmptyAabbs) : undefined;
+                    } else {
+                        layer.features = features;
+                    }
                 }
             }
         },
@@ -151,12 +161,6 @@ export const arcgisSlice = createSlice({
                 checkLayer(layer, checked);
             }
 
-            if (checked) {
-                featureServer.config.checkedLayerIds = featureServer.layers.map((l) => l.meta.id);
-            } else {
-                featureServer.config.checkedLayerIds = [];
-            }
-
             const selected = state.selectedFeature;
             if (!checked && selected && selected.featureServerId === featureServerId) {
                 state.selectedFeature = undefined;
@@ -168,16 +172,9 @@ export const arcgisSlice = createSlice({
         ) => {
             const { featureServerId, layerId, checked } = action.payload;
             const featureServer = findFeatureServer(state, featureServerId)!;
-            const layer = featureServer.layers.find((l) => l.meta.id === layerId)!;
+            const layer = featureServer.layers.find((l) => l.id === layerId)!;
 
             checkLayer(layer, checked);
-
-            const fsConfig = featureServer.config;
-            if (checked && !(fsConfig.checkedLayerIds || []).includes(layerId)) {
-                fsConfig.checkedLayerIds = [...(fsConfig.checkedLayerIds || []), layerId];
-            } else if (!checked) {
-                fsConfig.checkedLayerIds = (fsConfig.checkedLayerIds || []).filter((id) => id !== layerId);
-            }
 
             const selected = state.selectedFeature;
             if (!checked && selected && selected.featureServerId === featureServerId && selected.layerId === layerId) {
@@ -238,16 +235,21 @@ export const arcgisSlice = createSlice({
         setLayerFilter: (state, action: PayloadAction<{ featureServerId: string; layerId: number; where: string }>) => {
             const { featureServerId, layerId, where } = action.payload;
             const featureServer = findFeatureServer(state, featureServerId)!;
-            const layer = featureServer.layers.find((l) => l.meta.id === layerId)!;
+            const layer = featureServer.layers.find((l) => l.id === layerId)!;
             layer.where = where;
             layer.details = { status: AsyncStatus.Initial };
         },
     },
 });
 
-function checkLayer(layer: FeatureLayerState, checked: boolean) {
-    if (!checked && layer.details.status === AsyncStatus.Loading) {
-        layer.details = { status: AsyncStatus.Initial };
+function checkLayer(layer: Layer, checked: boolean) {
+    if (!checked) {
+        if (layer.details.status === AsyncStatus.Loading) {
+            layer.details = { status: AsyncStatus.Initial };
+        }
+        if (layer.features.status === AsyncStatus.Loading) {
+            layer.features = { status: AsyncStatus.Initial };
+        }
     }
 
     layer.checked = checked;
@@ -275,13 +277,12 @@ export const selectArcgisSelectedFeatureInfo = createSelector(
         for (const featureServer of featureServers.data) {
             if (featureServer.config.id === selectedFeature.featureServerId) {
                 for (const layer of featureServer.layers) {
-                    if (layer.details.status === AsyncStatus.Success && layer.meta.id === selectedFeature.layerId) {
-                        const feature = layer.details.data.features[selectedFeature.featureIndex];
+                    if (layer.features.status === AsyncStatus.Success && layer.id === selectedFeature.layerId) {
+                        const feature = layer.features.data.features[selectedFeature.featureIndex];
                         return {
                             attributes: feature.attributes,
                             featureServerConfig: featureServer.config,
-                            layer: layer.meta,
-                            layerDetails: layer.details.data,
+                            layer,
                         } as SelectedFeatureInfo;
                     }
                 }

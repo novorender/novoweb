@@ -7,7 +7,14 @@ import { useAppDispatch, useAppSelector } from "app/store";
 import { useExplorerGlobals } from "contexts/explorerGlobals";
 import { AsyncState, AsyncStatus } from "types/misc";
 
-import { arcgisActions, FeatureLayerDetailsResp, FeatureServerState, selectArcgisFeatureServers } from "../arcgisSlice";
+import {
+    arcgisActions,
+    FeatureServerState,
+    Layer,
+    LayerDetails,
+    LayerFeatures,
+    selectArcgisFeatureServers,
+} from "../arcgisSlice";
 import { makeWhereStatement } from "../utils";
 
 type LayerAbortController = {
@@ -34,18 +41,23 @@ export function useLoadFeatures() {
     }, []);
 
     useEffect(() => {
-        loadFeatures();
+        loadLayer();
 
-        async function loadFeatures() {
+        async function loadLayer() {
             if (!epsg || featureServers.status !== AsyncStatus.Success) {
                 return;
             }
 
-            abortNoLongerRelevantLoaders(dispatch, abortControllers.current, featureServers.data);
+            abortNoLongerRelevantLoaders(abortControllers.current, featureServers.data);
 
             const layersToLoad = featureServers.data.flatMap((featureServer) =>
                 featureServer.layers
-                    .filter((layer) => layer.checked && layer.details.status === AsyncStatus.Initial)
+                    .filter(
+                        (layer) =>
+                            layer.checked &&
+                            (layer.details.status === AsyncStatus.Initial ||
+                                layer.features.status === AsyncStatus.Initial)
+                    )
                     .map((layer) => ({ featureServer, layer }))
             );
 
@@ -54,112 +66,164 @@ export function useLoadFeatures() {
             }
 
             dispatch(
-                arcgisActions.setMultipleLayerDetails(
+                arcgisActions.updateMultipleLayers(
                     layersToLoad.map(({ featureServer, layer }) => ({
                         featureServerId: featureServer.config.id,
-                        layerId: layer.meta.id,
-                        details: { status: AsyncStatus.Loading },
+                        layerId: layer.id,
+                        details:
+                            layer.details.status === AsyncStatus.Initial ? { status: AsyncStatus.Loading } : undefined,
+                        features:
+                            layer.features.status === AsyncStatus.Initial ? { status: AsyncStatus.Loading } : undefined,
                     }))
                 )
             );
 
+            const promises: Promise<unknown>[] = [];
+            for (const { featureServer, layer } of layersToLoad) {
+                if (layer.features.status === AsyncStatus.Initial) {
+                    promises.push(loadFeatures(dispatch, abortControllers.current, epsg, featureServer, layer));
+                }
+
+                if (layer.details.status === AsyncStatus.Initial) {
+                    promises.push(loadDetails(dispatch, abortControllers.current, featureServer, layer));
+                }
+            }
+
             // Actually no need to await, because responses are dispatched for every request as they arrive
-            await Promise.all(
-                layersToLoad.map(async ({ featureServer, layer }) => {
-                    const abortController = new AbortController();
-                    abortControllers.current.push({
-                        featureServerId: featureServer.config.id,
-                        layerId: layer.meta.id,
-                        abortController,
-                    });
-
-                    // Using request instead of queryFeatures because queryFeatures doesn't
-                    // seem to support signal
-                    const details = await request(`${featureServer.config.url}/${layer.meta.id}/query`, {
-                        params: {
-                            outSR: epsg,
-                            where: makeWhereStatement(featureServer.config, layer) || "1=1",
-                            outFields: "*",
-                        },
-                        signal: abortController.signal,
-                    })
-                        .then((resp) => {
-                            const { features, fields } = resp as IQueryFeaturesResponse;
-                            return {
-                                status: AsyncStatus.Success,
-                                data: { features, fields },
-                            } as AsyncState<FeatureLayerDetailsResp>;
-                        })
-                        .catch((error) => {
-                            if (error.name === "AbortError") {
-                                return { status: AsyncStatus.Initial } as AsyncState<FeatureLayerDetailsResp>;
-                            }
-
-                            console.warn(error);
-                            return {
-                                status: AsyncStatus.Error,
-                                msg: "Error loading layer features",
-                            } as AsyncState<FeatureLayerDetailsResp>;
-                        })
-                        .finally(() => {
-                            const index = abortControllers.current.findIndex(
-                                (a) => a.featureServerId === featureServer.config.id && a.layerId === layer.meta.id
-                            );
-                            if (index !== -1) {
-                                abortControllers.current.splice(index, 1);
-                            }
-                        });
-
-                    dispatch(
-                        arcgisActions.setMultipleLayerDetails([
-                            {
-                                featureServerId: featureServer.config.id,
-                                layerId: layer.meta.id,
-                                details,
-                            },
-                        ])
-                    );
-                })
-            );
+            await Promise.all(promises);
         }
     }, [featureServers, dispatch, epsg]);
 }
 
-// Abort loaders for removed feature servers and unchecked layers
-// Loaders for aborted layers are set to AsyncStatus.Initial status
-function abortNoLongerRelevantLoaders(
+async function loadFeatures(
     dispatch: ReturnType<typeof useAppDispatch>,
     abortControllers: LayerAbortController[],
-    featureServers: FeatureServerState[]
+    epsg: string,
+    featureServer: FeatureServerState,
+    layer: Layer
 ) {
-    const layersToSetToInit: {
-        featureServerId: string;
-        layerId: number;
-        details: AsyncState<FeatureLayerDetailsResp>;
-    }[] = [];
+    const abortController = new AbortController();
+    const abortEntry: LayerAbortController = {
+        featureServerId: featureServer.config.id,
+        layerId: layer.id,
+        abortController,
+    };
+    abortControllers.push(abortEntry);
 
+    // Using request instead of queryFeatures because queryFeatures doesn't
+    // seem to support signal
+    const features = await request(`${featureServer.config.url}/${layer.id}/query`, {
+        params: {
+            outSR: epsg,
+            where: makeWhereStatement(featureServer.config, layer) || "1=1",
+            outFields: "*",
+        },
+        signal: abortController.signal,
+    })
+        .then((resp) => {
+            const { features } = resp as IQueryFeaturesResponse;
+            return {
+                status: AsyncStatus.Success,
+                data: { features },
+            } as AsyncState<LayerFeatures>;
+        })
+        .catch((error) => {
+            if (error.name === "AbortError") {
+                return { status: AsyncStatus.Initial } as AsyncState<LayerFeatures>;
+            }
+
+            console.warn(error);
+            return {
+                status: AsyncStatus.Error,
+                msg: "Error loading layer features",
+            } as AsyncState<LayerFeatures>;
+        })
+        .finally(() => {
+            const index = abortControllers.indexOf(abortEntry);
+            if (index !== -1) {
+                abortControllers.splice(index, 1);
+            }
+        });
+
+    dispatch(
+        arcgisActions.updateMultipleLayers([
+            {
+                featureServerId: featureServer.config.id,
+                layerId: layer.id,
+                features,
+            },
+        ])
+    );
+}
+
+async function loadDetails(
+    dispatch: ReturnType<typeof useAppDispatch>,
+    abortControllers: LayerAbortController[],
+    featureServer: FeatureServerState,
+    layer: Layer
+) {
+    const abortController = new AbortController();
+    const abortEntry: LayerAbortController = {
+        featureServerId: featureServer.config.id,
+        layerId: layer.id,
+        abortController,
+    };
+    abortControllers.push(abortEntry);
+
+    // Using request instead of queryFeatures because queryFeatures doesn't
+    // seem to support signal
+    const details = await request(`${featureServer.config.url}/${layer.id}`, {
+        signal: abortController.signal,
+    })
+        .then((resp) => {
+            const { fields, drawingInfo } = resp;
+            return {
+                status: AsyncStatus.Success,
+                data: { fields, drawingInfo },
+            } as AsyncState<LayerDetails>;
+        })
+        .catch((error) => {
+            if (error.name === "AbortError") {
+                return { status: AsyncStatus.Initial } as AsyncState<LayerDetails>;
+            }
+
+            console.warn(error);
+            return {
+                status: AsyncStatus.Error,
+                msg: "Error loading layer details",
+            } as AsyncState<LayerDetails>;
+        })
+        .finally(() => {
+            const index = abortControllers.indexOf(abortEntry);
+            if (index !== -1) {
+                abortControllers.splice(index, 1);
+            }
+        });
+
+    dispatch(
+        arcgisActions.updateMultipleLayers([
+            {
+                featureServerId: featureServer.config.id,
+                layerId: layer.id,
+                details,
+            },
+        ])
+    );
+}
+
+// Abort loaders for removed feature servers and unchecked layers
+// Loaders for aborted layers are set to AsyncStatus.Initial status
+function abortNoLongerRelevantLoaders(abortControllers: LayerAbortController[], featureServers: FeatureServerState[]) {
     abortControllers.forEach(({ featureServerId, layerId, abortController }, index) => {
         const featureServer = featureServers.find((fs) => fs.config.id === featureServerId);
         if (featureServer) {
-            const layer = featureServer.layers.find((l) => l.meta.id === layerId);
-            if (layer) {
-                if (layer.details.status === AsyncStatus.Loading && layer.checked) {
-                    return;
-                }
-
-                layersToSetToInit.push({
-                    featureServerId: featureServer.config.id,
-                    layerId: layer?.meta.id,
-                    details: { status: AsyncStatus.Initial },
-                });
+            const layer = featureServer.layers.find((l) => l.id === layerId);
+            if (layer && layer.checked) {
+                return;
             }
         }
 
         abortController.abort();
         abortControllers.splice(index, 1);
     });
-
-    if (layersToSetToInit.length > 0) {
-        dispatch(arcgisActions.setMultipleLayerDetails(layersToSetToInit));
-    }
 }

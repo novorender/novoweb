@@ -20,7 +20,7 @@ export function LayerFilter() {
             : undefined
     )!;
 
-    const layer = featureServer.layers.find((l) => l.meta.id === layerId)!;
+    const layer = featureServer.layers.find((l) => l.id === layerId)!;
 
     const [where, setWhere] = useState(layer.where || "");
 

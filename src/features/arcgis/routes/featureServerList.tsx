@@ -36,9 +36,9 @@ import { AsyncStatus } from "types/misc";
 
 import {
     arcgisActions,
-    FeatureLayerState,
     FeatureServerConfig,
     FeatureServerState,
+    Layer,
     selectArcgisFeatureServers,
 } from "../arcgisSlice";
 import { useIsCameraSetCorrectly } from "../hooks/useIsCameraSetCorrectly";
@@ -99,7 +99,7 @@ export function FeatureServerList() {
     );
 
     const handleFlyToLayer = useCallback(
-        (layer: FeatureLayerState) => {
+        (layer: Layer) => {
             if (!layer.aabb) {
                 return;
             }
@@ -197,7 +197,7 @@ function FeatureServerItem({
     onCheckFeature: (featureServerId: string, checked: boolean) => void;
     onCheckLayer: (featureServerId: string, layerId: number, checked: boolean) => void;
     flyToFeatureServer: (featureServer: FeatureServerState) => void;
-    flyToLayer: (layer: FeatureLayerState) => void;
+    flyToLayer: (layer: Layer) => void;
     isAdmin: boolean;
 }) {
     const history = useHistory();
@@ -317,7 +317,7 @@ function FeatureServerItem({
                     <List sx={{ padding: 0 }}>
                         {layers.map((layer) => (
                             <LayerItem
-                                key={layer.meta.id}
+                                key={layer.id}
                                 fsConfig={fsConfig}
                                 layer={layer}
                                 onCheckLayer={onCheckLayer}
@@ -340,9 +340,9 @@ function LayerItem({
     isAdmin,
 }: {
     fsConfig: FeatureServerConfig;
-    layer: FeatureLayerState;
+    layer: Layer;
     onCheckLayer: (featureServerId: string, layerId: number, checked: boolean) => void;
-    flyToLayer: (layer: FeatureLayerState) => void;
+    flyToLayer: (layer: Layer) => void;
     isAdmin: boolean;
 }) {
     const { url } = fsConfig;
@@ -358,12 +358,12 @@ function LayerItem({
         setMenuAnchor(null);
     };
 
-    const onChange = () => onCheckLayer(fsConfig.id, layer.meta.id, !layer.checked);
+    const onChange = () => onCheckLayer(fsConfig.id, layer.id, !layer.checked);
 
     const fullWhere = makeWhereStatement(fsConfig, layer);
     const tooltipTitle = (
         <>
-            {layer.meta.name}
+            {layer.name}
             {layer.where && <div>Own filter: {layer.where}</div>}
             {fullWhere && <div>Full filter: {fullWhere}</div>}
         </>
@@ -375,7 +375,7 @@ function LayerItem({
                 <Box display="flex" width={1} alignItems="center">
                     <Box flex="1 1 auto" overflow="hidden">
                         <Tooltip title={tooltipTitle}>
-                            <Typography noWrap={true}>{layer.meta.name}</Typography>
+                            <Typography noWrap={true}>{layer.name}</Typography>
                         </Tooltip>
                     </Box>
 
@@ -432,11 +432,11 @@ function LayerItem({
                         anchorEl={menuAnchor}
                         open={Boolean(menuAnchor)}
                         onClose={closeMenu}
-                        id={`${url}-${layer.meta.id}-menu`}
+                        id={`${fsConfig.id}-${layer.id}-menu`}
                         MenuListProps={{ sx: { maxWidth: "100%" } }}
                     >
                         <MenuItem
-                            onClick={() => history.push("/layerFilter", { url, layerId: layer.meta.id })}
+                            onClick={() => history.push("/layerFilter", { url, layerId: layer.id })}
                             disabled={!isAdmin}
                         >
                             <ListItemIcon>

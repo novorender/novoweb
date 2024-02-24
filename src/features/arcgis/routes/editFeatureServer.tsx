@@ -32,7 +32,7 @@ export function EditFeatureServer() {
             : undefined;
 
     const [config, setConfig] = useState<FeatureServerConfig>(
-        originalFeatureServerConfig ?? { id: window.crypto.randomUUID(), url: "", name: "", layerWhere: "" }
+        originalFeatureServerConfig ?? { id: window.crypto.randomUUID(), url: "", name: "", layerWhere: "", layers: {} }
     );
     const [urlChanged, setUrlChanged] = useState(false);
     const [nameChanged, setNameChanged] = useState(false);
@@ -118,11 +118,15 @@ export function EditFeatureServer() {
 
     const handleSave: FormEventHandler = (e) => {
         e.preventDefault();
+        const configToSave = { ...config };
+        if (!useOnlySelectedLayers) {
+            delete configToSave.enabledLayerIds;
+        }
 
         if (isNew) {
-            dispatch(arcgisActions.addFeatureServerConfig(config));
+            dispatch(arcgisActions.addFeatureServerConfig(configToSave));
         } else {
-            dispatch(arcgisActions.updateFeatureServerConfig(config));
+            dispatch(arcgisActions.updateFeatureServerConfig(configToSave));
         }
         history.goBack();
     };

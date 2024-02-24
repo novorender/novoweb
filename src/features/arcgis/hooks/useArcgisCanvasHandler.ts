@@ -79,21 +79,25 @@ function findHitFeature(
 ): SelectedFeatureId | undefined {
     for (const featureServer of featureServers) {
         for (const layer of featureServer.layers) {
-            if (!layer.checked || layer.details.status !== AsyncStatus.Success) {
+            if (
+                !layer.checked ||
+                layer.features.status !== AsyncStatus.Success ||
+                layer.details.status !== AsyncStatus.Success
+            ) {
                 continue;
             }
 
             const featureIndex = findHitFeatureIndex(
                 pos,
                 sensitivity,
-                layer.details.data.features,
-                layer.details.data.featuresAabb
+                layer.features.data.features,
+                layer.features.data.featuresAabb
             );
 
             if (featureIndex !== -1) {
                 return {
                     featureServerId: featureServer.config.id,
-                    layerId: layer.meta.id,
+                    layerId: layer.id,
                     featureIndex,
                 };
             }

@@ -11,6 +11,7 @@ import {
     arcgisActions,
     ArcgisWidgetConfig,
     FeatureServerState,
+    LayerConfig,
     selectArcgisFeatureServers,
     selectArcgisSaveStatus,
 } from "../arcgisSlice";
@@ -60,5 +61,20 @@ export function Save() {
 }
 
 function featureServersToConfig(featureServers: FeatureServerState[]): ArcgisWidgetConfig {
-    return { featureServers: featureServers.map((fs) => fs.config) };
+    return {
+        featureServers: featureServers.map((fs) => {
+            const layers: { [layerId: number]: LayerConfig } = {};
+
+            for (const layer of fs.layers) {
+                if (layer.checked || layer.where) {
+                    layers[layer.id] = {
+                        checked: layer.checked,
+                        where: layer.where,
+                    };
+                }
+            }
+
+            return { ...fs.config, layers };
+        }),
+    };
 }

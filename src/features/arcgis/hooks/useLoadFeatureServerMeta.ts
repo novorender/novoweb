@@ -5,7 +5,8 @@ import { useAppDispatch, useAppSelector } from "app/store";
 import { useAbortController } from "hooks/useAbortController";
 import { AsyncState, AsyncStatus } from "types/misc";
 
-import { arcgisActions, FeatureServerMeta, selectArcgisFeatureServers } from "../arcgisSlice";
+import { arcgisActions, selectArcgisFeatureServers } from "../arcgisSlice";
+import { FeatureServerResp } from "../arcgisTypes";
 
 export function useLoadFeatureServerMeta() {
     const featureServers = useAppSelector(selectArcgisFeatureServers);
@@ -32,11 +33,11 @@ export function useLoadFeatureServerMeta() {
                             })
                         );
 
-                        let meta: AsyncState<FeatureServerMeta>;
+                        let meta: AsyncState<FeatureServerResp>;
                         try {
                             const data = (await request(fs.config.url, {
                                 signal: abortController.current.signal,
-                            })) as FeatureServerMeta;
+                            })) as FeatureServerResp;
 
                             // We only handle feature layers at the moment
                             data.layers = data.layers.filter((l) => l.type === "Feature Layer");
