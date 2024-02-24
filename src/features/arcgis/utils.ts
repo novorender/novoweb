@@ -175,14 +175,16 @@ function hitsPath(v0: vec2, sqrSensitivity: number, path: Position[]) {
     const v2 = vec2.create();
 
     for (let i = 0; i < path.length - 1; i++) {
-        // Close to first point
         vec2.set(v1, path[i][0], path[i][1]);
-        if (vec2.sqrDist(v0, v1) <= sqrSensitivity) {
+
+        // Close to first point, only check for the first segment
+        if (i === 0 && vec2.sqrDist(v0, v1) <= sqrSensitivity) {
             return true;
         }
 
-        // Close to second point
         vec2.set(v2, path[i + 1][0], path[i + 1][1]);
+
+        // Close to second point
         if (vec2.sqrDist(v0, v2) <= sqrSensitivity) {
             return true;
         }
