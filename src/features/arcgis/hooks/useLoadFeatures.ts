@@ -9,7 +9,7 @@ import { AsyncState, AsyncStatus } from "types/misc";
 
 import {
     arcgisActions,
-    FeatureServerState,
+    FeatureServer,
     Layer,
     LayerDetails,
     LayerFeatures,
@@ -68,7 +68,7 @@ export function useLoadFeatures() {
             dispatch(
                 arcgisActions.updateMultipleLayers(
                     layersToLoad.map(({ featureServer, layer }) => ({
-                        featureServerId: featureServer.config.id,
+                        featureServerId: featureServer.id,
                         layerId: layer.id,
                         details:
                             layer.details.status === AsyncStatus.Initial ? { status: AsyncStatus.Loading } : undefined,
@@ -99,12 +99,12 @@ async function loadFeatures(
     dispatch: ReturnType<typeof useAppDispatch>,
     abortControllers: LayerAbortController[],
     epsg: string,
-    featureServer: FeatureServerState,
+    featureServer: FeatureServer,
     layer: Layer
 ) {
     const abortController = new AbortController();
     const abortEntry: LayerAbortController = {
-        featureServerId: featureServer.config.id,
+        featureServerId: featureServer.id,
         layerId: layer.id,
         abortController,
     };
@@ -112,10 +112,10 @@ async function loadFeatures(
 
     // Using request instead of queryFeatures because queryFeatures doesn't
     // seem to support signal
-    const features = await request(`${featureServer.config.url}/${layer.id}/query`, {
+    const features = await request(`${featureServer.url}/${layer.id}/query`, {
         params: {
             outSR: epsg,
-            where: makeWhereStatement(featureServer.config, layer) || "1=1",
+            where: makeWhereStatement(featureServer, layer) || "1=1",
             outFields: "*",
         },
         signal: abortController.signal,
@@ -148,7 +148,7 @@ async function loadFeatures(
     dispatch(
         arcgisActions.updateMultipleLayers([
             {
-                featureServerId: featureServer.config.id,
+                featureServerId: featureServer.id,
                 layerId: layer.id,
                 features,
             },
@@ -159,12 +159,12 @@ async function loadFeatures(
 async function loadDetails(
     dispatch: ReturnType<typeof useAppDispatch>,
     abortControllers: LayerAbortController[],
-    featureServer: FeatureServerState,
+    featureServer: FeatureServer,
     layer: Layer
 ) {
     const abortController = new AbortController();
     const abortEntry: LayerAbortController = {
-        featureServerId: featureServer.config.id,
+        featureServerId: featureServer.id,
         layerId: layer.id,
         abortController,
     };
@@ -172,7 +172,7 @@ async function loadDetails(
 
     // Using request instead of queryFeatures because queryFeatures doesn't
     // seem to support signal
-    const details = await request(`${featureServer.config.url}/${layer.id}`, {
+    const details = await request(`${featureServer.url}/${layer.id}`, {
         signal: abortController.signal,
     })
         .then((resp) => {
@@ -203,7 +203,7 @@ async function loadDetails(
     dispatch(
         arcgisActions.updateMultipleLayers([
             {
-                featureServerId: featureServer.config.id,
+                featureServerId: featureServer.id,
                 layerId: layer.id,
                 details,
             },
@@ -213,9 +213,9 @@ async function loadDetails(
 
 // Abort loaders for removed feature servers and unchecked layers
 // Loaders for aborted layers are set to AsyncStatus.Initial status
-function abortNoLongerRelevantLoaders(abortControllers: LayerAbortController[], featureServers: FeatureServerState[]) {
+function abortNoLongerRelevantLoaders(abortControllers: LayerAbortController[], featureServers: FeatureServer[]) {
     abortControllers.forEach(({ featureServerId, layerId, abortController }, index) => {
-        const featureServer = featureServers.find((fs) => fs.config.id === featureServerId);
+        const featureServer = featureServers.find((fs) => fs.id === featureServerId);
         if (featureServer) {
             const layer = featureServer.layers.find((l) => l.id === layerId);
             if (layer && layer.checked) {

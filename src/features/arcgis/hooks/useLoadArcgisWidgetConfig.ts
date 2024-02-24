@@ -5,7 +5,7 @@ import { useAppDispatch, useAppSelector } from "app/store";
 import { useExplorerGlobals } from "contexts/explorerGlobals";
 import { AsyncStatus } from "types/misc";
 
-import { arcgisActions, FeatureServerState, selectArcgisFeatureServersStatus } from "../arcgisSlice";
+import { arcgisActions, FeatureServer, selectArcgisFeatureServersStatus } from "../arcgisSlice";
 
 export function useLoadArcgisWidgetConfig() {
     const dispatch = useAppDispatch();
@@ -21,24 +21,32 @@ export function useLoadArcgisWidgetConfig() {
         if (data) {
             const featureServers = data.featureServers.map((config) => {
                 return {
-                    config,
+                    id: config.id,
+                    url: config.url,
+                    name: config.name,
+                    layerWhere: config.layerWhere,
                     meta: { status: AsyncStatus.Initial },
                     layers: [],
-                } as FeatureServerState;
+                } as FeatureServer;
             });
-            dispatch(arcgisActions.setConfig({ status: AsyncStatus.Success, data: featureServers }));
+            dispatch(arcgisActions.setFeatureServers({ status: AsyncStatus.Success, data: featureServers }));
         }
     }, [dispatch, data]);
 
     useEffect(() => {
         if (isFetching) {
-            dispatch(arcgisActions.setConfig({ status: AsyncStatus.Loading }));
+            dispatch(arcgisActions.setFeatureServers({ status: AsyncStatus.Loading }));
         }
     }, [dispatch, isFetching]);
 
     useEffect(() => {
         if (error) {
-            dispatch(arcgisActions.setConfig({ status: AsyncStatus.Error, msg: "Error loading widget configuration" }));
+            dispatch(
+                arcgisActions.setFeatureServers({
+                    status: AsyncStatus.Error,
+                    msg: "Error loading widget configuration",
+                })
+            );
         }
     }, [dispatch, error]);
 }

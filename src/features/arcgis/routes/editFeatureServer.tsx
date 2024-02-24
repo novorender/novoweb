@@ -17,7 +17,7 @@ import { useAppDispatch, useAppSelector } from "app/store";
 import { Confirmation, TextField } from "components";
 import { AsyncState, AsyncStatus } from "types/misc";
 
-import { arcgisActions, FeatureServerConfig, selectArcgisFeatureServers } from "../arcgisSlice";
+import { arcgisActions, FeatureServer, selectArcgisFeatureServers } from "../arcgisSlice";
 import { FeatureServerResp } from "../arcgisTypes";
 
 export function EditFeatureServer() {
@@ -26,35 +26,44 @@ export function EditFeatureServer() {
     const featureServerId = useLocation<{ id?: string }>().state?.id;
     const isNew = featureServerId === undefined;
     const featureServers = useAppSelector(selectArcgisFeatureServers);
-    const originalFeatureServerConfig =
+    const originalFeatureServer =
         featureServers.status === AsyncStatus.Success
-            ? featureServers.data.find((c) => c.config.id === featureServerId)?.config
+            ? featureServers.data.find((c) => c.id === featureServerId)
             : undefined;
 
-    const [config, setConfig] = useState<FeatureServerConfig>(
-        originalFeatureServerConfig ?? { id: window.crypto.randomUUID(), url: "", name: "", layerWhere: "", layers: {} }
+    const [featureServer, setFeatureServer] = useState<FeatureServer>(
+        originalFeatureServer ?? {
+            id: window.crypto.randomUUID(),
+            url: "",
+            name: "",
+            layerWhere: "",
+            layers: [],
+            meta: { status: AsyncStatus.Initial },
+        }
     );
     const [urlChanged, setUrlChanged] = useState(false);
     const [nameChanged, setNameChanged] = useState(false);
 
-    const [useOnlySelectedLayers, setUseOnlySelectedLayers] = useState((config.enabledLayerIds?.length ?? 0) > 0);
+    const [useOnlySelectedLayers, setUseOnlySelectedLayers] = useState(
+        (featureServer.enabledLayerIds?.length ?? 0) > 0
+    );
     const [fsMeta, setFsMeta] = useState<AsyncState<FeatureServerResp>>({ status: AsyncStatus.Initial });
 
     // Remove query params from the entered URL and (maybe) split it into [featureServer, layerId]
     const [fsUrl, urlLayerId] = useMemo(() => {
-        if (!config.url || !config.url.trim()) {
+        if (!featureServer.url || !featureServer.url.trim()) {
             return ["", undefined];
         }
 
         try {
-            const parsedUrl = new URL(config.url);
+            const parsedUrl = new URL(featureServer.url);
             const url = parsedUrl.origin + parsedUrl.pathname;
             const match = url.match(/(.+\/FeatureServer)\/(\d+)\/*$/);
             return match ? [match[1], Number(match[2])] : [url, undefined];
         } catch (ex) {
             return ["", undefined];
         }
-    }, [config.url]);
+    }, [featureServer.url]);
 
     const shouldDebounceLoadMeta = useRef(false);
     useEffect(() => {
@@ -84,7 +93,7 @@ export function EditFeatureServer() {
                 }
 
                 setFsMeta({ status: AsyncStatus.Success, data: respJson });
-                setConfig((config) => ({ ...config, url: fsUrl }));
+                setFeatureServer((config) => ({ ...config, url: fsUrl }));
             } catch (e) {
                 setFsMeta({ status: AsyncStatus.Error, msg: "Error loading feature server information" });
             }
@@ -101,7 +110,7 @@ export function EditFeatureServer() {
     useEffect(() => {
         if (urlLayerId !== undefined) {
             setUseOnlySelectedLayers(true);
-            setConfig((config) => ({ ...config, enabledLayerIds: [urlLayerId] }));
+            setFeatureServer((config) => ({ ...config, enabledLayerIds: [urlLayerId] }));
         }
     }, [urlLayerId]);
 
@@ -111,38 +120,38 @@ export function EditFeatureServer() {
         }
 
         const otherFeatureServers = featureServerId
-            ? featureServers.data.filter((c) => c.config.id !== featureServerId)
+            ? featureServers.data.filter((c) => c.id !== featureServerId)
             : featureServers.data;
-        return otherFeatureServers.map((c) => c.config.name);
+        return otherFeatureServers.map((c) => c.name);
     }, [featureServers, featureServerId]);
 
     const handleSave: FormEventHandler = (e) => {
         e.preventDefault();
-        const configToSave = { ...config };
+        const configToSave = { ...featureServer };
         if (!useOnlySelectedLayers) {
             delete configToSave.enabledLayerIds;
         }
 
         if (isNew) {
-            dispatch(arcgisActions.addFeatureServerConfig(configToSave));
+            dispatch(arcgisActions.addFeatureServer(configToSave));
         } else {
-            dispatch(arcgisActions.updateFeatureServerConfig(configToSave));
+            dispatch(arcgisActions.updateFeatureServer(configToSave));
         }
         history.goBack();
     };
 
-    if (featureServers.status !== AsyncStatus.Success || !config) {
+    if (featureServers.status !== AsyncStatus.Success || !featureServer) {
         return null;
     }
 
     let urlError = "";
     if (urlChanged) {
-        const trimmedUrl = config.url.trim();
+        const trimmedUrl = featureServer.url.trim();
         if (trimmedUrl === "") {
             urlError = "Can't be empty";
         } else {
             try {
-                new URL(config.url);
+                new URL(featureServer.url);
             } catch (ex) {
                 urlError = "Invalid URL";
             }
@@ -151,7 +160,7 @@ export function EditFeatureServer() {
 
     let nameError = "";
     if (nameChanged) {
-        const trimmedName = config.name.trim();
+        const trimmedName = featureServer.name.trim();
         if (trimmedName === "") {
             nameError = "Can't be empty";
         } else if (originalNames.includes(trimmedName)) {
@@ -160,8 +169,8 @@ export function EditFeatureServer() {
     }
 
     const handleUrlChange = (url: string) => {
-        const prevUrl = config.url;
-        const newConfig = { ...config, url };
+        const prevUrl = featureServer.url;
+        const newConfig = { ...featureServer, url };
         if (!newConfig.name) {
             const match = url.match(/services\/(.+)\/FeatureServer/);
             if (match) {
@@ -174,7 +183,7 @@ export function EditFeatureServer() {
         // One character change could mean that the user is typing and we could debounce
         shouldDebounceLoadMeta.current = Math.abs(prevUrl.length - url.length) === 1;
 
-        setConfig(newConfig);
+        setFeatureServer(newConfig);
     };
 
     return (
@@ -197,7 +206,7 @@ export function EditFeatureServer() {
                     fullWidth
                     minRows={3}
                     maxRows={20}
-                    value={config.url}
+                    value={featureServer.url}
                     onChange={(e) => handleUrlChange(e.target.value)}
                     error={urlError !== ""}
                     helperText={urlError}
@@ -220,9 +229,9 @@ export function EditFeatureServer() {
                 <TextField
                     sx={{ mb: 3 }}
                     fullWidth
-                    value={config.name}
+                    value={featureServer.name}
                     onChange={(e) => {
-                        setConfig({ ...config, name: e.target.value });
+                        setFeatureServer({ ...featureServer, name: e.target.value });
                         setNameChanged(true);
                     }}
                     error={nameError !== ""}
@@ -236,8 +245,8 @@ export function EditFeatureServer() {
                     fullWidth
                     minRows={2}
                     maxRows={20}
-                    value={config.layerWhere}
-                    onChange={(e) => setConfig({ ...config, layerWhere: e.target.value })}
+                    value={featureServer.layerWhere}
+                    onChange={(e) => setFeatureServer({ ...featureServer, layerWhere: e.target.value })}
                     label="Layer filter"
                 />
                 <Box sx={{ width: "100%" }}>
@@ -270,17 +279,19 @@ export function EditFeatureServer() {
                 {useOnlySelectedLayers && fsMeta.status === AsyncStatus.Success && (
                     <LayerList
                         meta={fsMeta.data}
-                        enabledLayerIds={config.enabledLayerIds}
+                        enabledLayerIds={featureServer.enabledLayerIds}
                         onToggle={(layerId) => {
-                            if (config.enabledLayerIds?.includes(layerId)) {
-                                setConfig({
-                                    ...config,
-                                    enabledLayerIds: config.enabledLayerIds.filter((id) => id !== layerId),
+                            if (featureServer.enabledLayerIds?.includes(layerId)) {
+                                setFeatureServer({
+                                    ...featureServer,
+                                    enabledLayerIds: featureServer.enabledLayerIds.filter((id) => id !== layerId),
                                 });
                             } else {
-                                setConfig({
-                                    ...config,
-                                    enabledLayerIds: [...(config.enabledLayerIds || []), layerId].sort((a, b) => a - b),
+                                setFeatureServer({
+                                    ...featureServer,
+                                    enabledLayerIds: [...(featureServer.enabledLayerIds || []), layerId].sort(
+                                        (a, b) => a - b
+                                    ),
                                 });
                             }
                         }}

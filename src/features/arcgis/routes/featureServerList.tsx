@@ -34,13 +34,7 @@ import { CameraType, renderActions } from "features/render";
 import { selectHasAdminCapabilities } from "slices/explorerSlice";
 import { AsyncStatus } from "types/misc";
 
-import {
-    arcgisActions,
-    FeatureServerConfig,
-    FeatureServerState,
-    Layer,
-    selectArcgisFeatureServers,
-} from "../arcgisSlice";
+import { arcgisActions, FeatureServer, Layer, selectArcgisFeatureServers } from "../arcgisSlice";
 import { useIsCameraSetCorrectly } from "../hooks/useIsCameraSetCorrectly";
 import { aabb2ToBoundingSphere, getTotalAabb2, isSuitableCameraForArcgis, makeWhereStatement } from "../utils";
 
@@ -57,9 +51,6 @@ export function FeatureServerList() {
         isLoading: isLoadingProjectInfo,
     } = useGetProjectInfoQuery({ projectId });
     const isCameraSetCorrectly = useIsCameraSetCorrectly(isSuitableCameraForArcgis);
-    const {
-        state: { view },
-    } = useExplorerGlobals();
 
     const handleFeatureCheck = useCallback(
         (featureServerId: string, checked: boolean) => {
@@ -76,11 +67,7 @@ export function FeatureServerList() {
     );
 
     const handleFlyToFeatureServer = useCallback(
-        (featureServer: FeatureServerState) => {
-            if (!view) {
-                return;
-            }
-
+        (featureServer: FeatureServer) => {
             const aabbs = featureServer.layers
                 .filter((l) => l.checked && l.details.status === AsyncStatus.Success && l.aabb)
                 .map((l) => l.aabb!);
@@ -95,7 +82,7 @@ export function FeatureServerList() {
 
             setCamera(dispatch, boundingSphere);
         },
-        [dispatch, view]
+        [dispatch]
     );
 
     const handleFlyToLayer = useCallback(
@@ -165,7 +152,7 @@ export function FeatureServerList() {
                         {featureServers.data.map((featureServer) => {
                             return (
                                 <FeatureServerItem
-                                    key={featureServer.config.id}
+                                    key={featureServer.id}
                                     defaultExpanded={featureServers.data.length === 1}
                                     featureServer={featureServer}
                                     onCheckFeature={handleFeatureCheck}
@@ -193,16 +180,16 @@ function FeatureServerItem({
     isAdmin,
 }: {
     defaultExpanded: boolean;
-    featureServer: FeatureServerState;
+    featureServer: FeatureServer;
     onCheckFeature: (featureServerId: string, checked: boolean) => void;
     onCheckLayer: (featureServerId: string, layerId: number, checked: boolean) => void;
-    flyToFeatureServer: (featureServer: FeatureServerState) => void;
+    flyToFeatureServer: (featureServer: FeatureServer) => void;
     flyToLayer: (layer: Layer) => void;
     isAdmin: boolean;
 }) {
     const history = useHistory();
     const [menuAnchor, setMenuAnchor] = useState<HTMLElement | null>(null);
-    const { meta, layers, config: fsConfig } = featureServer;
+    const { meta, layers } = featureServer;
 
     const openMenu = (e: React.MouseEvent<HTMLButtonElement>) => {
         e.stopPropagation();
@@ -219,9 +206,9 @@ function FeatureServerItem({
         <Accordion defaultExpanded={defaultExpanded}>
             <AccordionSummary>
                 <Box width={0} flex="1 1 auto" overflow="hidden">
-                    <Tooltip title={fsConfig.name}>
+                    <Tooltip title={featureServer.name}>
                         <Box fontWeight={600} overflow="hidden" whiteSpace="nowrap" textOverflow="ellipsis">
-                            {fsConfig.name}
+                            {featureServer.name}
                         </Box>
                     </Tooltip>
                 </Box>
@@ -262,7 +249,7 @@ function FeatureServerItem({
                         onFocus={(event) => event.stopPropagation()}
                         checked={layers.length > 0 && layers.every((l) => l.checked)}
                         indeterminate={layers.some((l) => l.checked) && !layers.every((l) => l.checked)}
-                        onChange={(e) => onCheckFeature(fsConfig.id, e.target.checked)}
+                        onChange={(e) => onCheckFeature(featureServer.id, e.target.checked)}
                         disabled={meta.status !== AsyncStatus.Success}
                     />
                 </Box>
@@ -284,26 +271,26 @@ function FeatureServerItem({
                     anchorEl={menuAnchor}
                     open={Boolean(menuAnchor)}
                     onClose={closeMenu}
-                    id={`${fsConfig.id}-menu`}
+                    id={`${featureServer.id}-menu`}
                     MenuListProps={{ sx: { maxWidth: "100%" } }}
                 >
-                    <MenuItem href={fsConfig.url} target="_blank">
+                    <MenuItem href={featureServer.url} target="_blank">
                         <ListItemIcon>
                             <OpenInNew fontSize="small" />
                         </ListItemIcon>
                         <ListItemText>
-                            <Link href={fsConfig.url} target="_blank" underline="none" color="inherit">
+                            <Link href={featureServer.url} target="_blank" underline="none" color="inherit">
                                 Open
                             </Link>
                         </ListItemText>
                     </MenuItem>
-                    <MenuItem onClick={() => history.push("/edit", { id: fsConfig.id })} disabled={!isAdmin}>
+                    <MenuItem onClick={() => history.push("/edit", { id: featureServer.id })} disabled={!isAdmin}>
                         <ListItemIcon>
                             <Edit fontSize="small" />
                         </ListItemIcon>
                         <ListItemText>Edit</ListItemText>
                     </MenuItem>
-                    <MenuItem onClick={() => history.push("/remove", { id: fsConfig.id })} disabled={!isAdmin}>
+                    <MenuItem onClick={() => history.push("/remove", { id: featureServer.id })} disabled={!isAdmin}>
                         <ListItemIcon>
                             <Clear fontSize="small" />
                         </ListItemIcon>
@@ -318,7 +305,7 @@ function FeatureServerItem({
                         {layers.map((layer) => (
                             <LayerItem
                                 key={layer.id}
-                                fsConfig={fsConfig}
+                                featureServer={featureServer}
                                 layer={layer}
                                 onCheckLayer={onCheckLayer}
                                 flyToLayer={flyToLayer}
@@ -333,19 +320,18 @@ function FeatureServerItem({
 }
 
 function LayerItem({
-    fsConfig,
+    featureServer,
     layer,
     onCheckLayer,
     flyToLayer,
     isAdmin,
 }: {
-    fsConfig: FeatureServerConfig;
+    featureServer: FeatureServer;
     layer: Layer;
     onCheckLayer: (featureServerId: string, layerId: number, checked: boolean) => void;
     flyToLayer: (layer: Layer) => void;
     isAdmin: boolean;
 }) {
-    const { url } = fsConfig;
     const [menuAnchor, setMenuAnchor] = useState<HTMLElement | null>(null);
     const history = useHistory();
 
@@ -358,9 +344,9 @@ function LayerItem({
         setMenuAnchor(null);
     };
 
-    const onChange = () => onCheckLayer(fsConfig.id, layer.id, !layer.checked);
+    const onChange = () => onCheckLayer(featureServer.id, layer.id, !layer.checked);
 
-    const fullWhere = makeWhereStatement(fsConfig, layer);
+    const fullWhere = makeWhereStatement(featureServer, layer);
     const tooltipTitle = (
         <>
             {layer.name}
@@ -432,11 +418,11 @@ function LayerItem({
                         anchorEl={menuAnchor}
                         open={Boolean(menuAnchor)}
                         onClose={closeMenu}
-                        id={`${fsConfig.id}-${layer.id}-menu`}
+                        id={`${featureServer.id}-${layer.id}-menu`}
                         MenuListProps={{ sx: { maxWidth: "100%" } }}
                     >
                         <MenuItem
-                            onClick={() => history.push("/layerFilter", { url, layerId: layer.id })}
+                            onClick={() => history.push("/layerFilter", { id: featureServer.id, layerId: layer.id })}
                             disabled={!isAdmin}
                         >
                             <ListItemIcon>

@@ -9,7 +9,7 @@ import { FeatureServerResp, LayerDrawingInfo } from "./arcgisTypes";
 import { areArraysEqual, computeFeatureAabb, getTotalAabb2 } from "./utils";
 
 const initialState = {
-    featureServers: { status: AsyncStatus.Initial } as AsyncState<FeatureServerState[]>,
+    featureServers: { status: AsyncStatus.Initial } as AsyncState<FeatureServer[]>,
     saveStatus: AsyncStatus.Initial,
     selectedFeature: undefined as SelectedFeatureId | undefined,
 };
@@ -36,8 +36,12 @@ export type LayerConfig = {
 };
 
 // App state
-export type FeatureServerState = {
-    config: FeatureServerConfig;
+export type FeatureServer = {
+    id: string;
+    url: string;
+    name: string;
+    layerWhere?: string;
+    enabledLayerIds?: number[];
     meta: AsyncState<FeatureServerResp>;
     layers: Layer[];
 };
@@ -75,7 +79,7 @@ export type SelectedFeatureId = {
 
 export type SelectedFeatureInfo = {
     attributes: object;
-    featureServerConfig: FeatureServerConfig;
+    featureServer: FeatureServer;
     layer: Layer;
 };
 
@@ -83,7 +87,7 @@ export const arcgisSlice = createSlice({
     name: "arcgis",
     initialState: initialState,
     reducers: {
-        setConfig: (state, action: PayloadAction<AsyncState<FeatureServerState[]>>) => {
+        setFeatureServers: (state, action: PayloadAction<AsyncState<FeatureServer[]>>) => {
             state.featureServers = action.payload;
         },
         setFeatureServerMeta: (state, action: PayloadAction<{ id: string; meta: AsyncState<FeatureServerResp> }>) => {
@@ -91,13 +95,18 @@ export const arcgisSlice = createSlice({
                 return;
             }
             const { id, meta } = action.payload;
-            const featureServer = state.featureServers.data.find((fs) => fs.config.id === id)!;
+            const featureServer = state.featureServers.data.find((fs) => fs.id === id)!;
+            const enabledLayerIds = featureServer.enabledLayerIds;
             featureServer.meta = meta;
 
             switch (meta.status) {
                 case AsyncStatus.Success: {
-                    featureServer.layers = meta.data.layers.map((l) => {
-                        const layerConfig = featureServer.config.layers && featureServer.config.layers[l.id];
+                    let layers = meta.data.layers;
+                    if (enabledLayerIds) {
+                        layers = layers.filter((l) => !enabledLayerIds.includes(l.id));
+                    }
+                    featureServer.layers = layers.map((l) => {
+                        const layerConfig = featureServer.layers && featureServer.layers[l.id];
                         return {
                             id: l.id,
                             name: l.name,
@@ -105,7 +114,6 @@ export const arcgisSlice = createSlice({
                             where: layerConfig?.where,
                             details: { status: AsyncStatus.Initial },
                             features: { status: AsyncStatus.Initial },
-                            aabb: undefined,
                         } as Layer;
                     });
                     break;
@@ -124,6 +132,7 @@ export const arcgisSlice = createSlice({
                     layerId: number;
                     details?: AsyncState<LayerDetails>;
                     features?: AsyncState<LayerFeatures>;
+                    where?: string;
                 }[]
             >
         ) => {
@@ -153,16 +162,13 @@ export const arcgisSlice = createSlice({
         checkFeature: (state, action: PayloadAction<{ featureServerId: string; checked: boolean }>) => {
             const { featureServerId, checked } = action.payload;
             const featureServer = findFeatureServer(state, featureServerId)!;
-            if (featureServer.meta.status !== AsyncStatus.Success) {
-                return;
-            }
 
             for (const layer of featureServer.layers) {
                 checkLayer(layer, checked);
             }
 
             const selected = state.selectedFeature;
-            if (!checked && selected && selected.featureServerId === featureServerId) {
+            if (!checked && selected?.featureServerId === featureServerId) {
                 state.selectedFeature = undefined;
             }
         },
@@ -187,44 +193,43 @@ export const arcgisSlice = createSlice({
             }
 
             const { id } = action.payload;
-            state.featureServers.data = state.featureServers.data.filter((e) => e.config.id !== id);
+            state.featureServers.data = state.featureServers.data.filter((e) => e.id !== id);
 
             if (state.selectedFeature?.featureServerId === id) {
                 state.selectedFeature = undefined;
             }
         },
-        addFeatureServerConfig: (state, action: PayloadAction<FeatureServerConfig>) => {
-            const config = action.payload;
+        addFeatureServer: (state, action: PayloadAction<FeatureServer>) => {
             if (state.featureServers.status !== AsyncStatus.Success) {
                 return;
             }
 
-            state.featureServers.data.push({
-                config,
-                meta: { status: AsyncStatus.Initial },
-                layers: [],
-            });
+            state.featureServers.data.push(action.payload);
         },
-        updateFeatureServerConfig: (state, action: PayloadAction<FeatureServerConfig>) => {
+        updateFeatureServer: (state, action: PayloadAction<FeatureServer>) => {
             const next = action.payload;
 
             const fs = findFeatureServer(state, next.id)!;
+            const isSelected = state.selectedFeature?.featureServerId === fs.id;
 
-            if (fs.config.url !== next.url || !areArraysEqual(fs.config.enabledLayerIds, next.enabledLayerIds)) {
-                fs.config.url = next.url;
+            if (fs.url !== next.url || !areArraysEqual(fs.enabledLayerIds, next.enabledLayerIds)) {
+                fs.url = next.url;
                 fs.meta = { status: AsyncStatus.Initial };
                 fs.layers = [];
+                if (isSelected) {
+                    state.selectedFeature = undefined;
+                }
             }
 
-            if (fs.config.layerWhere != next.layerWhere) {
-                fs.config.layerWhere = next.layerWhere;
+            if (fs.layerWhere != next.layerWhere) {
+                fs.layerWhere = next.layerWhere;
                 for (const layer of fs.layers) {
                     layer.details = { status: AsyncStatus.Initial };
                 }
             }
 
-            fs.config.enabledLayerIds = next.enabledLayerIds;
-            fs.config.name = next.name;
+            fs.enabledLayerIds = next.enabledLayerIds;
+            fs.name = next.name;
         },
         setSelectedFeature: (state, action: PayloadAction<SelectedFeatureId | undefined>) => {
             state.selectedFeature = action.payload;
@@ -260,7 +265,7 @@ function findFeatureServer(state: State, id: string) {
         return;
     }
 
-    return state.featureServers.data.find((fs) => fs.config.id === id);
+    return state.featureServers.data.find((fs) => fs.id === id);
 }
 
 export const selectArcgisFeatureServers = (state: RootState) => state.arcgis.featureServers;
@@ -275,13 +280,13 @@ export const selectArcgisSelectedFeatureInfo = createSelector(
         }
 
         for (const featureServer of featureServers.data) {
-            if (featureServer.config.id === selectedFeature.featureServerId) {
+            if (featureServer.id === selectedFeature.featureServerId) {
                 for (const layer of featureServer.layers) {
                     if (layer.features.status === AsyncStatus.Success && layer.id === selectedFeature.layerId) {
                         const feature = layer.features.data.features[selectedFeature.featureIndex];
                         return {
                             attributes: feature.attributes,
-                            featureServerConfig: featureServer.config,
+                            featureServer: featureServer,
                             layer,
                         } as SelectedFeatureInfo;
                     }

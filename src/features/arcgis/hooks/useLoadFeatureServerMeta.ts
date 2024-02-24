@@ -28,23 +28,19 @@ export function useLoadFeatureServerMeta() {
                     .map(async (fs) => {
                         dispatch(
                             arcgisActions.setFeatureServerMeta({
-                                id: fs.config.id,
+                                id: fs.id,
                                 meta: { status: AsyncStatus.Loading },
                             })
                         );
 
                         let meta: AsyncState<FeatureServerResp>;
                         try {
-                            const data = (await request(fs.config.url, {
+                            const data = (await request(fs.url, {
                                 signal: abortController.current.signal,
                             })) as FeatureServerResp;
 
                             // We only handle feature layers at the moment
                             data.layers = data.layers.filter((l) => l.type === "Feature Layer");
-
-                            if (fs.config.enabledLayerIds?.length) {
-                                data.layers = data.layers.filter((l) => fs.config.enabledLayerIds?.includes(l.id));
-                            }
 
                             meta = { status: AsyncStatus.Success, data };
                         } catch (ex) {
@@ -52,7 +48,7 @@ export function useLoadFeatureServerMeta() {
                             meta = { status: AsyncStatus.Error, msg: "Error loading feature server metadata" };
                         }
 
-                        dispatch(arcgisActions.setFeatureServerMeta({ id: fs.config.id, meta: meta }));
+                        dispatch(arcgisActions.setFeatureServerMeta({ id: fs.id, meta: meta }));
                     })
             );
         }

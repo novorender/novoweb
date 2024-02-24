@@ -44,12 +44,12 @@ function AttrList() {
         );
     }
 
-    const url = trimRightSlash(featureInfo.featureServerConfig.url);
+    const url = trimRightSlash(featureInfo.featureServer.url);
 
     return (
         <>
             <Box m={2} display="flex" alignItems="center" gap={1}>
-                {featureInfo.featureServerConfig.name}
+                {featureInfo.featureServer.name}
                 <Link href={url} target="_blank">
                     <OpenInNew />
                 </Link>

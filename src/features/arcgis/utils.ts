@@ -5,7 +5,7 @@ import { vec2 } from "gl-matrix";
 
 import { getCameraState } from "features/engine2D";
 
-import { FeatureServerConfig, Layer } from "./arcgisSlice";
+import { FeatureServer, Layer } from "./arcgisSlice";
 
 export function trimRightSlash(s: string) {
     return s && s.replace(/\/$/, "");
@@ -242,8 +242,8 @@ export function isSuitableCameraForArcgis(camera: RenderStateCamera | undefined)
     return state.dir[2] === -1;
 }
 
-export function makeWhereStatement(fsConfig: FeatureServerConfig, layer: Layer) {
-    return [fsConfig.layerWhere, layer.where].filter((s) => s).join(" AND ");
+export function makeWhereStatement(fs: FeatureServer, layer: Layer) {
+    return [fs.layerWhere, layer.where].filter((s) => s).join(" AND ");
 }
 
 export function areArraysEqual<T>(a1: T[] | undefined, a2: T[] | undefined) {

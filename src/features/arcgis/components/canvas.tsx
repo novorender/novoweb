@@ -65,7 +65,7 @@ export function ArcgisCanvas({
 
                     const isSelected = Boolean(
                         selectedFeature &&
-                            selectedFeature.featureServerId === featureServer.config.id &&
+                            selectedFeature.featureServerId === featureServer.id &&
                             selectedFeature.layerId === layer.id &&
                             selectedFeature.featureIndex === i
                     );

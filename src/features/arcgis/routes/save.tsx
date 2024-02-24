@@ -10,7 +10,8 @@ import { AsyncStatus } from "types/misc";
 import {
     arcgisActions,
     ArcgisWidgetConfig,
-    FeatureServerState,
+    FeatureServer,
+    FeatureServerConfig,
     LayerConfig,
     selectArcgisFeatureServers,
     selectArcgisSaveStatus,
@@ -60,7 +61,7 @@ export function Save() {
     );
 }
 
-function featureServersToConfig(featureServers: FeatureServerState[]): ArcgisWidgetConfig {
+function featureServersToConfig(featureServers: FeatureServer[]): ArcgisWidgetConfig {
     return {
         featureServers: featureServers.map((fs) => {
             const layers: { [layerId: number]: LayerConfig } = {};
@@ -74,7 +75,14 @@ function featureServersToConfig(featureServers: FeatureServerState[]): ArcgisWid
                 }
             }
 
-            return { ...fs.config, layers };
+            return {
+                id: fs.id,
+                url: fs.url,
+                name: fs.name,
+                enabledLayerIds: fs.enabledLayerIds,
+                layerWhere: fs.layerWhere,
+                layers,
+            } as FeatureServerConfig;
         }),
     };
 }

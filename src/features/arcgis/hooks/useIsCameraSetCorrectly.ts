@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 
 import { useExplorerGlobals } from "contexts/explorerGlobals";
 
+// TODO(ND) ask Ola if it's an ok way to do it
 export function useIsCameraSetCorrectly(check: (camera: RenderStateCamera | undefined) => boolean) {
     const {
         state: { view },

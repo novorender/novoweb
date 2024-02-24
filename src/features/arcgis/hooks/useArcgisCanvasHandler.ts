@@ -7,7 +7,7 @@ import { AsyncStatus } from "types/misc";
 
 import {
     arcgisActions,
-    FeatureServerState,
+    FeatureServer,
     selectArcgisFeatureServers,
     selectArcgisSelectedFeature,
     SelectedFeatureId,
@@ -73,7 +73,7 @@ export function useArcgisCanvasClickHandler() {
 }
 
 function findHitFeature(
-    featureServers: FeatureServerState[],
+    featureServers: FeatureServer[],
     pos: vec2,
     sensitivity: number
 ): SelectedFeatureId | undefined {
@@ -96,7 +96,7 @@ function findHitFeature(
 
             if (featureIndex !== -1) {
                 return {
-                    featureServerId: featureServer.config.id,
+                    featureServerId: featureServer.id,
                     layerId: layer.id,
                     featureIndex,
                 };

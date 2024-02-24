@@ -1,4 +1,4 @@
-import { IFeature, SymbolType } from "@esri/arcgis-rest-request";
+import { IFeature } from "@esri/arcgis-rest-request";
 import { ColorRGBA } from "@novorender/webgl-api";
 
 // Non exhaustive types for ArcGIS responses

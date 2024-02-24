@@ -16,7 +16,7 @@ export function LayerFilter() {
     const featureServers = useAppSelector(selectArcgisFeatureServers);
     const featureServer = (
         featureServers.status === AsyncStatus.Success
-            ? featureServers.data.find((fs) => fs.config.id === featureServerId)
+            ? featureServers.data.find((fs) => fs.id === featureServerId)
             : undefined
     )!;
 
@@ -26,7 +26,7 @@ export function LayerFilter() {
 
     const handleSave: FormEventHandler = (e) => {
         e.preventDefault();
-        dispatch(arcgisActions.setLayerFilter({ featureServerId: featureServer.config.id, layerId, where }));
+        dispatch(arcgisActions.setLayerFilter({ featureServerId: featureServer.id, layerId, where }));
         history.goBack();
     };
 
