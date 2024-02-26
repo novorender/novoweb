@@ -8,12 +8,18 @@ export type FeatureServerDefinition = {
     layers: LayerSimpleDefinition[];
 };
 
+export enum LayerGeometryType {
+    esriGeometryPoint = "esriGeometryPoint",
+    esriGeometryPolyline = "esriGeometryPolyline",
+    esriGeometryPolygon = "esriGeometryPolygon",
+}
+
 // The one that comes togethe with server definition
 export type LayerSimpleDefinition = {
     id: number;
     name: string;
     type: string; // Can be more detailed, e.g. 'Feature Layer'
-    geometryType: string;
+    geometryType: LayerGeometryType;
 };
 
 export type LayerQueryParams = {

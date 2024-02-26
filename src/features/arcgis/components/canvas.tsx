@@ -1,5 +1,6 @@
 import { IPoint, IPolygon, IPolyline } from "@esri/arcgis-rest-request";
-import { DrawModule } from "@novorender/api";
+import { DrawModule, DrawProduct, RenderState, RenderStateCamera } from "@novorender/api";
+import { AABB2 } from "@novorender/api/types/measure/worker/brep";
 import { ColorRGBA } from "@novorender/webgl-api";
 import { ReadonlyVec3 } from "gl-matrix";
 import { MutableRefObject, useCallback, useEffect, useRef, useState } from "react";
@@ -11,9 +12,9 @@ import { CameraState, drawPart, getCameraState } from "features/engine2D";
 import { AsyncStatus } from "types/misc";
 
 import { selectArcgisFeatureServers, selectArcgisSelectedFeature } from "../arcgisSlice";
-import { LayerDrawingInfo } from "../arcgisTypes";
+import { LayerDrawingInfo, LayerGeometryType } from "../arcgisTypes";
 import { useIsCameraSetCorrectly } from "../hooks/useIsCameraSetCorrectly";
-import { isSuitableCameraForArcgis } from "../utils";
+import { doAabb2Intersect, getAabb2MaxSize, isSuitableCameraForArcgis } from "../utils";
 
 export function ArcgisCanvas({
     renderFnRef,
@@ -27,10 +28,15 @@ export function ArcgisCanvas({
     const [canvas, setCanvas] = useState<HTMLCanvasElement | null>(null);
     const [ctx, setCtx] = useState<CanvasRenderingContext2D | null>(null);
     const imageMap = useRef(new Map<string, ImageBitmap>());
+    const drawObjectCache = useRef(new WeakMap<object, DrawProduct | undefined>());
 
     const featureServers = useAppSelector(selectArcgisFeatureServers);
     const selectedFeature = useAppSelector(selectArcgisSelectedFeature);
     const isCameraSetCorrectly = useIsCameraSetCorrectly(isSuitableCameraForArcgis);
+
+    useEffect(() => {
+        drawObjectCache.current = new WeakMap<object, DrawProduct | undefined>();
+    }, [view, ctx, canvas, featureServers, selectedFeature]);
 
     const draw = useCallback(() => {
         if (!view?.measure || !ctx || !canvas || featureServers.status !== AsyncStatus.Success) {
@@ -40,6 +46,9 @@ export function ArcgisCanvas({
         ctx.clearRect(0, 0, canvas.width, canvas.height);
 
         const cameraState = getCameraState(view.renderState.camera);
+        const extent = getCameraExtent(view.renderState);
+        const metersPerPixel = view.renderState.camera.fov / view.renderState.output.height;
+        const minRenderableSize = metersPerPixel;
 
         const drawCtx: DrawingContext = {
             draw: view.measure.draw,
@@ -49,6 +58,8 @@ export function ArcgisCanvas({
             imageMap: imageMap.current,
         };
 
+        let featureCount = 0;
+        let renderedFeatureCount = 0;
         for (const featureServer of featureServers.data) {
             for (const layer of featureServer.layers) {
                 if (
@@ -61,9 +72,22 @@ export function ArcgisCanvas({
 
                 for (let i = 0; i < layer.features.data.features.length; i++) {
                     const { geometry, attributes } = layer.features.data.features[i];
-                    if (!geometry) {
+                    const aabb = layer.features.data.featuresAabb[i];
+                    featureCount++;
+
+                    if (!geometry || !aabb || !doAabb2Intersect(aabb, extent)) {
                         continue;
                     }
+
+                    if (
+                        (layer.geometryType === LayerGeometryType.esriGeometryPolygon ||
+                            layer.geometryType === LayerGeometryType.esriGeometryPolyline) &&
+                        getAabb2MaxSize(aabb) < minRenderableSize
+                    ) {
+                        continue;
+                    }
+
+                    renderedFeatureCount++;
 
                     const isSelected = Boolean(
                         selectedFeature &&
@@ -86,6 +110,8 @@ export function ArcgisCanvas({
                 }
             }
         }
+
+        // console.log("metersPerPixel", metersPerPixel, "total", featureCount, "rendered", renderedFeatureCount);
     }, [view, ctx, canvas, featureServers, selectedFeature]);
 
     const buildImages = useCallback(async () => {
@@ -202,6 +228,22 @@ type DrawingContext = {
 
 function colorRgbaToString(color: ColorRGBA) {
     return `rgba(${color[0]}, ${color[1]}, ${color[2]}, ${color[3]})`;
+}
+
+function getCameraExtent(renderState: RenderState): AABB2 {
+    const {
+        camera,
+        output: { width, height },
+    } = renderState;
+    const h = camera.fov;
+    const hh = h / 2;
+    const w = h * (width / height);
+    const hw = w / 2;
+
+    return {
+        min: [camera.position[0] - hw, camera.position[1] - hh],
+        max: [camera.position[0] + hw, camera.position[1] + hh],
+    };
 }
 
 function drawPolyline(

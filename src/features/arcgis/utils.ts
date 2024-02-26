@@ -250,3 +250,11 @@ export function makeWhereStatement(fs: FeatureServer, layer: Layer) {
 export function areArraysEqual<T>(a1: T[] | undefined, a2: T[] | undefined) {
     return (!a1 && !a2) || a1 === a2 || (a1 && a2 && a1.length === a2.length && a1.every((e, i) => e === a2[i]));
 }
+
+export function doAabb2Intersect(a: AABB2, b: AABB2) {
+    return a.min[0] < b.max[0] && b.min[0] < a.max[0] && a.min[1] < b.max[1] && b.min[1] < a.max[1];
+}
+
+export function getAabb2MaxSize(aabb2: AABB2) {
+    return Math.max(aabb2.max[0] - aabb2.min[0], aabb2.max[1] - aabb2.min[1]);
+}

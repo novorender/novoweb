@@ -5,7 +5,7 @@ import { createSelector, createSlice, PayloadAction } from "@reduxjs/toolkit";
 import { RootState } from "app/store";
 import { AsyncState, AsyncStatus } from "types/misc";
 
-import { FeatureServerDefinition as FeatureServerDefinition, LayerDrawingInfo } from "./arcgisTypes";
+import { FeatureServerDefinition, LayerDrawingInfo, LayerGeometryType } from "./arcgisTypes";
 import { areArraysEqual, computeFeatureAabb, getTotalAabb2 } from "./utils";
 
 const initialState = {
@@ -50,6 +50,7 @@ export type FeatureServer = {
 export type Layer = {
     id: number;
     name: string;
+    geometryType: LayerGeometryType;
     checked: boolean;
     where?: string;
     aabb?: AABB2;
@@ -114,6 +115,7 @@ export const arcgisSlice = createSlice({
                         return {
                             id: l.id,
                             name: l.name,
+                            geometryType: l.geometryType,
                             checked: layerConfig?.checked ?? false,
                             where: layerConfig?.where,
                             definition: { status: AsyncStatus.Initial },
