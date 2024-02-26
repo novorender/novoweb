@@ -2,7 +2,7 @@ import { IPoint, IPolygon, IPolyline } from "@esri/arcgis-rest-request";
 import { DrawModule } from "@novorender/api";
 import { ColorRGBA } from "@novorender/webgl-api";
 import { ReadonlyVec3 } from "gl-matrix";
-import { MutableRefObject, useCallback, useEffect, useState } from "react";
+import { MutableRefObject, useCallback, useEffect, useRef, useState } from "react";
 
 import { useAppSelector } from "app/store";
 import { Canvas2D } from "components";
@@ -26,6 +26,7 @@ export function ArcgisCanvas({
     } = useExplorerGlobals();
     const [canvas, setCanvas] = useState<HTMLCanvasElement | null>(null);
     const [ctx, setCtx] = useState<CanvasRenderingContext2D | null>(null);
+    const imageMap = useRef(new Map<string, ImageBitmap>());
 
     const featureServers = useAppSelector(selectArcgisFeatureServers);
     const selectedFeature = useAppSelector(selectArcgisSelectedFeature);
@@ -44,7 +45,8 @@ export function ArcgisCanvas({
             draw: view.measure.draw,
             ctx,
             cameraState,
-            selectedStrokeColor: "#29B6F6",
+            selectedColor: "#29B6F6",
+            imageMap: imageMap.current,
         };
 
         for (const featureServer of featureServers.data) {
@@ -86,9 +88,72 @@ export function ArcgisCanvas({
         }
     }, [view, ctx, canvas, featureServers, selectedFeature]);
 
+    const buildImages = useCallback(async () => {
+        buildImages();
+
+        async function buildImages() {
+            if (featureServers.status !== AsyncStatus.Success) {
+                return;
+            }
+
+            const promises: Promise<unknown>[] = [];
+            const imageDataSet = new Set<string>();
+            for (const fs of featureServers.data) {
+                for (const layer of fs.layers) {
+                    if (layer.definition.status !== AsyncStatus.Success) {
+                        continue;
+                    }
+
+                    const { symbol } = layer.definition.data.drawingInfo.renderer;
+                    if (symbol.type === "esriPMS" && symbol.imageData) {
+                        if (!imageMap.current.has(symbol.imageData) || !imageDataSet.has(symbol.imageData)) {
+                            const promise = createImageBitmap(b64toBlob(symbol.imageData), {
+                                resizeWidth: ptToPx(symbol.width),
+                                resizeHeight: ptToPx(symbol.height),
+                            }).then((image) => imageMap.current.set(symbol.imageData, image));
+                            promises.push(promise);
+                        }
+
+                        imageDataSet.add(symbol.imageData);
+                    }
+                }
+            }
+
+            imageMap.current.forEach((value, key) => {
+                if (!imageDataSet.has(key)) {
+                    value.close();
+                    imageMap.current.delete(key);
+                }
+            });
+
+            await Promise.all(promises);
+        }
+    }, [featureServers]);
+
     useEffect(() => {
-        draw();
-    }, [draw, size]);
+        let aborted = false;
+        go();
+
+        async function go() {
+            await buildImages();
+            if (!aborted) {
+                draw();
+            }
+        }
+
+        return () => {
+            aborted = true;
+        };
+    }, [draw, buildImages, size]);
+
+    useEffect(() => {
+        const { current } = imageMap;
+        return () => {
+            for (const bmp of current.values()) {
+                bmp.close();
+            }
+        };
+    }, []);
 
     useEffect(() => {
         renderFnRef.current = animate;
@@ -131,7 +196,8 @@ type DrawingContext = {
     draw: DrawModule;
     ctx: CanvasRenderingContext2D;
     cameraState: CameraState;
-    selectedStrokeColor: string;
+    selectedColor: string;
+    imageMap: Map<string, ImageBitmap>;
 };
 
 function colorRgbaToString(color: ColorRGBA) {
@@ -154,7 +220,7 @@ function drawPolyline(
 
     if (isSelected) {
         lineWidth = 4;
-        lineColor = drawCtx.selectedStrokeColor;
+        lineColor = drawCtx.selectedColor;
     }
 
     for (const segment of geometry.paths) {
@@ -189,7 +255,7 @@ function drawPolygon(drawCtx: DrawingContext, geometry: IPolygon, drawingInfo: L
     }
 
     if (isSelected) {
-        lineColor = drawCtx.selectedStrokeColor;
+        lineColor = drawCtx.selectedColor;
         lineWidth = 4;
     }
 
@@ -213,28 +279,78 @@ function drawPolygon(drawCtx: DrawingContext, geometry: IPolygon, drawingInfo: L
 }
 
 function drawPoint(drawCtx: DrawingContext, geometry: IPoint, drawingInfo: LayerDrawingInfo, isSelected: boolean) {
-    let pointColor = "red";
     const { symbol } = drawingInfo.renderer;
+
     if (symbol.type === "esriPMS") {
-        // pointColor = colorRgbaToString(symbol.color);
+        const image = drawCtx.imageMap.get(symbol.imageData)!;
+        if (!image) {
+            return;
+        }
+
+        const { ctx } = drawCtx;
+        drawCtx.draw.getDrawObjectFromPoints([[geometry.x, geometry.y, 0]])?.objects.forEach((obj) => {
+            obj.parts.forEach((part) => {
+                const point = part.vertices2D![0];
+                const hw = ptToPx(symbol.width) / 2;
+                const hh = ptToPx(symbol.height) / 2;
+
+                if (isSelected) {
+                    ctx.fillStyle = drawCtx.selectedColor;
+                    ctx.beginPath();
+                    ctx.arc(point[0], point[1], Math.max(hw, hh), 0, 2 * Math.PI);
+                    ctx.fill();
+                }
+
+                const dx = point[0] - hw;
+                const dy = point[1] - hh;
+                ctx.drawImage(image, dx, dy);
+            });
+        });
+    } else {
+        let pointColor = "red";
+
+        if (isSelected) {
+            pointColor = drawCtx.selectedColor;
+        }
+
+        const p = geometry;
+        drawCtx.draw.getDrawObjectFromPoints([[p.x, p.y, 0]])?.objects.forEach((obj) => {
+            obj.parts.forEach((part) =>
+                drawPart(
+                    drawCtx.ctx,
+                    drawCtx.cameraState,
+                    part,
+                    {
+                        pointColor,
+                    },
+                    2
+                )
+            );
+        });
+    }
+}
+
+// From https://stackoverflow.com/a/16245768/915663
+function b64toBlob(b64Data: string, contentType = "", sliceSize = 512) {
+    const byteCharacters = atob(b64Data);
+    const byteArrays = [];
+
+    for (let offset = 0; offset < byteCharacters.length; offset += sliceSize) {
+        const slice = byteCharacters.slice(offset, offset + sliceSize);
+
+        const byteNumbers = new Array(slice.length);
+        for (let i = 0; i < slice.length; i++) {
+            byteNumbers[i] = slice.charCodeAt(i);
+        }
+
+        const byteArray = new Uint8Array(byteNumbers);
+        byteArrays.push(byteArray);
     }
 
-    if (isSelected) {
-        pointColor = drawCtx.selectedStrokeColor;
-    }
+    const blob = new Blob(byteArrays, { type: contentType });
+    return blob;
+}
 
-    const p = geometry;
-    drawCtx.draw.getDrawObjectFromPoints([[p.x, p.y, 0]])?.objects.forEach((obj) => {
-        obj.parts.forEach((part) =>
-            drawPart(
-                drawCtx.ctx,
-                drawCtx.cameraState,
-                part,
-                {
-                    pointColor,
-                },
-                2
-            )
-        );
-    });
+function ptToPx(pt: number) {
+    return pt / 0.75;
 }
