@@ -16,9 +16,6 @@ export const arcgisApi = createApi({
     reducerPath: "arcgisApi",
     baseQuery: arcgisBaseQuery,
     endpoints: (builder) => ({
-        getFeatureServer: builder.query<LayerQueryResp, { url: string }>({
-            query: ({ url }) => ({ url }),
-        }),
         queryLayer: builder.query<
             LayerQueryResp,
             { featureServerUrl: string; layerId: number; params: LayerQueryParams }
