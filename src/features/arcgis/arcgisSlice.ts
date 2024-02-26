@@ -74,7 +74,7 @@ export type LayerFeatures = {
 export type SelectedFeatureId = {
     featureServerId: string;
     layerId: number;
-    featureIndex: number;
+    featureId: number;
 };
 
 export type SelectedFeatureInfo = {
@@ -282,20 +282,33 @@ export const selectArcgisSelectedFeatureInfo = createSelector(
             return;
         }
 
-        for (const featureServer of featureServers.data) {
-            if (featureServer.id === selectedFeature.featureServerId) {
-                for (const layer of featureServer.layers) {
-                    if (layer.features.status === AsyncStatus.Success && layer.id === selectedFeature.layerId) {
-                        const feature = layer.features.data.features[selectedFeature.featureIndex];
-                        return {
-                            attributes: feature.attributes,
-                            featureServer: featureServer,
-                            layer,
-                        } as SelectedFeatureInfo;
-                    }
-                }
-            }
+        const fs = featureServers.data.find((fs) => fs.id === selectedFeature.featureServerId);
+        if (!fs) {
+            return;
         }
+
+        const layer = fs.layers.find((l) => l.id === selectedFeature.layerId);
+        if (
+            !layer ||
+            layer.definition.status !== AsyncStatus.Success ||
+            layer.features.status !== AsyncStatus.Success
+        ) {
+            return;
+        }
+
+        const definition = layer.definition.data;
+        const feature = layer.features.data.features.find(
+            (f) => f.attributes[definition.objectIdField] === selectedFeature.featureId
+        );
+        if (!feature) {
+            return;
+        }
+
+        return {
+            attributes: feature.attributes,
+            featureServer: fs,
+            layer,
+        } as SelectedFeatureInfo;
     }
 );
 

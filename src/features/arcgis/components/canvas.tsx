@@ -58,7 +58,7 @@ export function ArcgisCanvas({
                 }
 
                 for (let i = 0; i < layer.features.data.features.length; i++) {
-                    const geometry = layer.features.data.features[i].geometry;
+                    const { geometry, attributes } = layer.features.data.features[i];
                     if (!geometry) {
                         continue;
                     }
@@ -67,7 +67,7 @@ export function ArcgisCanvas({
                         selectedFeature &&
                             selectedFeature.featureServerId === featureServer.id &&
                             selectedFeature.layerId === layer.id &&
-                            selectedFeature.featureIndex === i
+                            selectedFeature.featureId === attributes[layer.definition.data.objectIdField]
                     );
 
                     if ("paths" in geometry) {

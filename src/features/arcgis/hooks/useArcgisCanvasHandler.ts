@@ -12,7 +12,7 @@ import {
     selectArcgisSelectedFeature,
     SelectedFeatureId,
 } from "../arcgisSlice";
-import { findHitFeatureIndex, isSuitableCameraForArcgis } from "../utils";
+import { findHitFeature, isSuitableCameraForArcgis } from "../utils";
 
 export function useArcgisCanvasClickHandler() {
     const {
@@ -49,14 +49,14 @@ export function useArcgisCanvasClickHandler() {
 
         const sensitivity = pos2d[0] - sensPos[0];
 
-        const selectedFeature = findHitFeature(featureServers.data, pos2d, sensitivity);
+        const selectedFeature = doFindHitFeature(featureServers.data, pos2d, sensitivity);
         if (selectedFeature) {
             let payload: SelectedFeatureId | undefined = selectedFeature;
             if (
                 prevSelectedFeature &&
                 prevSelectedFeature.featureServerId === selectedFeature.featureServerId &&
                 prevSelectedFeature.layerId === selectedFeature.layerId &&
-                prevSelectedFeature.featureIndex === selectedFeature.featureIndex
+                prevSelectedFeature.featureId === selectedFeature.featureId
             ) {
                 // Unselect already selected
                 payload = undefined;
@@ -72,7 +72,7 @@ export function useArcgisCanvasClickHandler() {
     return handleCanvasPick;
 }
 
-function findHitFeature(
+function doFindHitFeature(
     featureServers: FeatureServer[],
     pos: vec2,
     sensitivity: number
@@ -87,18 +87,18 @@ function findHitFeature(
                 continue;
             }
 
-            const featureIndex = findHitFeatureIndex(
+            const feature = findHitFeature(
                 pos,
                 sensitivity,
                 layer.features.data.features,
                 layer.features.data.featuresAabb
             );
 
-            if (featureIndex !== -1) {
+            if (feature) {
                 return {
                     featureServerId: featureServer.id,
                     layerId: layer.id,
-                    featureIndex,
+                    featureId: feature.attributes[layer.definition.data.objectIdField],
                 };
             }
         }

@@ -126,14 +126,15 @@ function isPointInAabb2(aabb: AABB2, p: vec2, sensitivity: number) {
     );
 }
 
-export function findHitFeatureIndex(
+export function findHitFeature(
     pos: vec2,
     sensitivity: number,
     features: IFeature[],
     featuresAabb: (AABB2 | undefined)[]
-): number {
+): IFeature | undefined {
     for (let i = 0; i < features.length; i++) {
-        const geometry = features[i].geometry;
+        const feature = features[i];
+        const { geometry } = feature;
         const aabb = featuresAabb[i];
         if (!aabb || !geometry || !isPointInAabb2(aabb, pos, sensitivity)) {
             continue;
@@ -143,13 +144,13 @@ export function findHitFeatureIndex(
             const sqrSensitivity = sensitivity * sensitivity;
             for (const path of geometry.paths) {
                 if (hitsPath(pos, sqrSensitivity, path)) {
-                    return i;
+                    return feature;
                 }
             }
         } else if ("rings" in geometry) {
             for (const ring of geometry.rings) {
                 if (hitsPolygon(pos[0], pos[1], ring)) {
-                    return i;
+                    return feature;
                 }
             }
         } else if ("curvePaths" in geometry) {
@@ -159,12 +160,10 @@ export function findHitFeatureIndex(
         } else {
             const sqrSensitivity = sensitivity * sensitivity;
             if (vec2.sqrDist(pos, vec2.fromValues(geometry.x, geometry.y)) <= sqrSensitivity) {
-                return i;
+                return feature;
             }
         }
     }
-
-    return -1;
 }
 
 // Based on https://en.wikipedia.org/wiki/Distance_from_a_point_to_a_line

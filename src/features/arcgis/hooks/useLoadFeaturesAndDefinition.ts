@@ -32,9 +32,9 @@ export function useLoadFeaturesAndDefinition() {
     const epsg = projectInfo?.epsg;
 
     useEffect(() => {
+        const { current } = abortControllers;
         return () => {
-            // eslint-disable-next-line react-hooks/exhaustive-deps
-            for (const { abortController } of abortControllers.current) {
+            for (const { abortController } of current) {
                 abortController.abort();
             }
         };
