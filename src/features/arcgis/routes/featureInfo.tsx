@@ -3,6 +3,7 @@ import { LinearProgress, useTheme } from "@mui/material";
 import { Box, Link, Table, TableBody, TableCell, TableRow } from "@mui/material";
 
 import { useAppSelector } from "app/store";
+import { ScrollBox } from "components";
 import { selectArcgisSelectedFeatureInfo } from "features/arcgis/arcgisSlice";
 
 import { useQueryLayerQuery } from "../arcgisApi";
@@ -89,27 +90,30 @@ function AttrList() {
                     <OpenInNew />
                 </Link>
             </Box>
-            <Table>
-                <TableBody>
-                    <TableRow>
-                        <TableCell>Layer</TableCell>
-                        <TableCell>
-                            <Box display="flex" alignItems="center" gap={1}>
-                                {featureInfo.layer.name}
-                                <Link href={`${url}/${featureInfo.layer.id}`} target="_blank">
-                                    <OpenInNew />
-                                </Link>
-                            </Box>
-                        </TableCell>
-                    </TableRow>
-                    {attrList.map(([propName, value]) => (
-                        <TableRow key={propName}>
-                            <TableCell>{propName}</TableCell>
-                            <TableCell>{value}</TableCell>
+
+            <ScrollBox display="flex" flexDirection="column" height={1} pt={1} pb={2}>
+                <Table>
+                    <TableBody>
+                        <TableRow>
+                            <TableCell>Layer</TableCell>
+                            <TableCell>
+                                <Box display="flex" alignItems="center" gap={1}>
+                                    {featureInfo.layer.name}
+                                    <Link href={`${url}/${featureInfo.layer.id}`} target="_blank">
+                                        <OpenInNew />
+                                    </Link>
+                                </Box>
+                            </TableCell>
                         </TableRow>
-                    ))}
-                </TableBody>
-            </Table>
+                        {attrList.map(([propName, value]) => (
+                            <TableRow key={propName}>
+                                <TableCell>{propName}</TableCell>
+                                <TableCell>{value}</TableCell>
+                            </TableRow>
+                        ))}
+                    </TableBody>
+                </Table>
+            </ScrollBox>
         </>
     );
 }
