@@ -1,10 +1,8 @@
 import { IQueryFeaturesResponse } from "@esri/arcgis-rest-feature-service";
 import { request } from "@esri/arcgis-rest-request";
-import { useGetProjectInfoQuery } from "apis/dataV2/dataV2Api";
 import { useEffect, useRef } from "react";
 
 import { useAppDispatch, useAppSelector } from "app/store";
-import { useExplorerGlobals } from "contexts/explorerGlobals";
 import { AsyncState, AsyncStatus } from "types/misc";
 
 import {
@@ -16,6 +14,7 @@ import {
     selectArcgisFeatureServers,
 } from "../arcgisSlice";
 import { makeWhereStatement } from "../utils";
+import { useLoadProjectEpsg } from "./useLoadProjectEpsg";
 
 type LayerAbortController = {
     featureServerId: string;
@@ -24,12 +23,10 @@ type LayerAbortController = {
 };
 
 export function useLoadFeaturesAndDefinition() {
-    const projectId = useExplorerGlobals(true).state.scene.id;
     const featureServers = useAppSelector(selectArcgisFeatureServers);
     const dispatch = useAppDispatch();
     const abortControllers = useRef([] as LayerAbortController[]);
-    const { data: projectInfo } = useGetProjectInfoQuery({ projectId });
-    const epsg = projectInfo?.epsg;
+    const epsg = useLoadProjectEpsg();
 
     useEffect(() => {
         const { current } = abortControllers;
@@ -118,7 +115,7 @@ async function loadFeatures(
         params: {
             outSR: epsg,
             where: makeWhereStatement(featureServer, layer) || "1=1",
-            outFields: "*",
+            outFields: "OBJECTID",
         },
         signal: abortController.signal,
     })
@@ -177,11 +174,10 @@ async function loadDefinition(
     const definition = await request(`${featureServer.url}/${layer.id}`, {
         signal: abortController.signal,
     })
-        .then((resp) => {
-            const { fields, drawingInfo } = resp;
+        .then((data) => {
             return {
                 status: AsyncStatus.Success,
-                data: { fields, drawingInfo },
+                data,
             } as AsyncState<LayerDefinition>;
         })
         .catch((error) => {

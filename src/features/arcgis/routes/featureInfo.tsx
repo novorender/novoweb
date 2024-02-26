@@ -1,10 +1,12 @@
 import { OpenInNew } from "@mui/icons-material";
-import { useTheme } from "@mui/material";
+import { LinearProgress, useTheme } from "@mui/material";
 import { Box, Link, Table, TableBody, TableCell, TableRow } from "@mui/material";
 
 import { useAppSelector } from "app/store";
 import { selectArcgisSelectedFeatureInfo } from "features/arcgis/arcgisSlice";
-import { trimRightSlash } from "features/arcgis/utils";
+
+import { useQueryLayerQuery } from "../arcgisApi";
+import { useLoadProjectEpsg } from "../hooks/useLoadProjectEpsg";
 
 export default function FeatureInfo() {
     const theme = useTheme();
@@ -25,6 +27,21 @@ export default function FeatureInfo() {
 
 function AttrList() {
     const featureInfo = useAppSelector(selectArcgisSelectedFeatureInfo);
+    const epsg = useLoadProjectEpsg();
+    const { data: layerQueryResp, isFetching } = useQueryLayerQuery(
+        {
+            featureServerUrl: featureInfo?.featureServer.url ?? "",
+            layerId: featureInfo?.layer.id ?? 0,
+            params: {
+                where: "1=1",
+                outFields: "*",
+                outSR: epsg,
+                objectIds: featureInfo?.featureId,
+                returnGeometry: false,
+            },
+        },
+        { skip: !featureInfo || !epsg }
+    );
 
     if (!featureInfo) {
         return (
@@ -34,7 +51,25 @@ function AttrList() {
         );
     }
 
-    const attrList = Object.entries(featureInfo.attributes).sort((kv1, kv2) => kv1[0].localeCompare(kv2[0]));
+    if (isFetching) {
+        return (
+            <Box>
+                <LinearProgress />
+            </Box>
+        );
+    }
+
+    const attrs = layerQueryResp?.features[0]?.attributes;
+
+    if (!attrs) {
+        return (
+            <Box textAlign="center" m={2}>
+                Selected feature not found
+            </Box>
+        );
+    }
+
+    const attrList = attrs && Object.entries(attrs).sort((kv1, kv2) => kv1[0].localeCompare(kv2[0]));
 
     if (attrList.length === 0) {
         return (
@@ -44,7 +79,7 @@ function AttrList() {
         );
     }
 
-    const url = trimRightSlash(featureInfo.featureServer.url);
+    const url = featureInfo.featureServer.url;
 
     return (
         <>

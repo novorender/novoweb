@@ -4,6 +4,7 @@ import { dataV2Api } from "apis/dataV2/dataV2Api";
 import { TypedUseSelectorHook, useDispatch, useSelector } from "react-redux";
 
 import { arcgisSlice } from "features/arcgis";
+import { arcgisApi } from "features/arcgis/arcgisApi";
 import { areaReducer } from "features/area";
 import { bimCollabApi, bimCollabReducer } from "features/bimCollab";
 import { bimTrackApi, bimTrackReducer } from "features/bimTrack";
@@ -64,6 +65,7 @@ const rootReducer = combineReducers({
     [xsiteManageApi.reducerPath]: xsiteManageApi.reducer,
     [dataV2Api.reducerPath]: dataV2Api.reducer,
     arcgis: arcgisSlice.reducer,
+    [arcgisApi.reducerPath]: arcgisApi.reducer,
 });
 
 export const store = configureStore({
@@ -80,7 +82,8 @@ export const store = configureStore({
             .concat(ditioApi.middleware)
             .concat(jiraApi.middleware)
             .concat(xsiteManageApi.middleware)
-            .concat(dataV2Api.middleware),
+            .concat(dataV2Api.middleware)
+            .concat(arcgisApi.middleware),
 });
 
 setupListeners(store.dispatch);

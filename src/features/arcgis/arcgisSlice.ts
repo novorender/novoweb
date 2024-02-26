@@ -78,9 +78,9 @@ export type SelectedFeatureId = {
 };
 
 export type SelectedFeatureInfo = {
-    attributes: object;
     featureServer: FeatureServer;
     layer: Layer;
+    featureId: number;
 };
 
 export const arcgisSlice = createSlice({
@@ -305,9 +305,9 @@ export const selectArcgisSelectedFeatureInfo = createSelector(
         }
 
         return {
-            attributes: feature.attributes,
             featureServer: fs,
             layer,
+            featureId: selectedFeature.featureId,
         } as SelectedFeatureInfo;
     }
 );

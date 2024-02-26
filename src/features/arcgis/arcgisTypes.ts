@@ -16,7 +16,17 @@ export type LayerSimpleDefinition = {
     geometryType: string;
 };
 
-export type FeatureLayerDetailsResp = {
+export type LayerQueryParams = {
+    where: string;
+    outFields?: string;
+    objectIds?: number;
+    outSR?: string;
+    returnIdsOnly?: boolean;
+    returnCountOnly?: boolean;
+    returnGeometry?: boolean;
+};
+
+export type LayerQueryResp = {
     features: IFeature[];
     fields: {
         name: string;
