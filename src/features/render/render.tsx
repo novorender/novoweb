@@ -49,8 +49,14 @@ const Canvas = styled("canvas")(
     () => css`
         outline: 0;
         touch-action: none;
-        height: 100vh;
-        width: 100vw;
+        height: 100dvh;
+        width: 100dvw;
+        position: absolute;
+        top: 0;
+        right: 0;
+        bottom: 0;
+        left: 0;
+        z-index: 0;
     `
 );
 
@@ -134,7 +140,7 @@ export function Render3D() {
     });
 
     return (
-        <Box position="relative" width="100%" height="100%" sx={{ userSelect: "none" }}>
+        <Box position="relative" width="100dvw" height="100dvh" sx={{ userSelect: "none" }}>
             {loadingHandles.length !== 0 && (
                 <Box position={"absolute"} top={0} width={1} display={"flex"} justifyContent={"center"}>
                     <LinearProgress />
