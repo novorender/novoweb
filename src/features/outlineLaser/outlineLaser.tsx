@@ -74,7 +74,7 @@ export default function ClippingOutline() {
             const filePaths = new Set<string>();
             await searchByPatterns({
                 db,
-                searchPatterns: [{ property: "id", value: Array.from(objIds).map((v) => String(v)) }],
+                searchPatterns: [{ property: "id", value: Array.from(objIds).map((v) => String(v)), exact: true }],
                 full: false,
                 callback: (files) => {
                     for (const file of files) {
@@ -231,45 +231,6 @@ export default function ClippingOutline() {
                         </AccordionDetails>
                     </Accordion>
                     <Accordion>
-                        {/* <AccordionSummary>Measure</AccordionSummary>
-                        <AccordionDetails>
-                            <Box flex="0 0 auto">
-                                <FormControlLabel
-                                    control={
-                                        <IosSwitch
-                                            name="toggle pick measurement"
-                                            size="medium"
-                                            color="primary"
-                                            disabled={planes.length === 0}
-                                            checked={picker === Picker.Measurement}
-                                            onChange={() => {
-                                                if (picker === Picker.Measurement) {
-                                                    dispatch(measureActions.selectPickSettings("all"));
-                                                    dispatch(renderActions.setPicker(Picker.Object));
-                                                } else {
-                                                    dispatch(measureActions.selectPickSettings("clippingOutline"));
-                                                    dispatch(renderActions.setPicker(Picker.Measurement));
-                                                }
-                                            }}
-                                        />
-                                    }
-                                    label={<Box fontSize={14}>Measure outline</Box>}
-                                />
-                                <Button
-                                    onClick={() => dispatch(measureActions.clear())}
-                                    color="grey"
-                                    disabled={!selectedEntities.length}
-                                >
-                                    <DeleteSweep sx={{ mr: 1 }} />
-                                    Clear
-                                </Button>
-                                {selectedEntities.map((obj, idx) => (
-                                    <MeasuredObject obj={obj as ExtendedMeasureEntity} idx={idx} key={idx} />
-                                ))}
-                                <MeasuredResult duoMeasurementValues={duoMeasurementValues} />
-                            </Box>
-                        </AccordionDetails>
-                    </Accordion> */}
                         <Accordion>
                             <AccordionSummary>Model list</AccordionSummary>
                             <AccordionDetails>
