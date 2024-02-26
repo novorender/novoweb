@@ -43,6 +43,7 @@ export type FeatureServer = {
     layerWhere?: string;
     enabledLayerIds?: number[];
     definition: AsyncState<FeatureServerDefinition>;
+    savedLayers?: { [layerId: number]: LayerConfig }; // Only used when loading data
     layers: Layer[];
 };
 
@@ -109,7 +110,7 @@ export const arcgisSlice = createSlice({
                         layers = layers.filter((l) => !enabledLayerIds.includes(l.id));
                     }
                     featureServer.layers = layers.map((l) => {
-                        const layerConfig = featureServer.layers && featureServer.layers[l.id];
+                        const layerConfig = featureServer.savedLayers && featureServer.savedLayers[l.id];
                         return {
                             id: l.id,
                             name: l.name,
@@ -119,6 +120,9 @@ export const arcgisSlice = createSlice({
                             features: { status: AsyncStatus.Initial },
                         } as Layer;
                     });
+
+                    featureServer.savedLayers = undefined;
+
                     break;
                 }
                 case AsyncStatus.Error:

@@ -19,13 +19,14 @@ export function useLoadArcgisWidgetConfig() {
 
     useEffect(() => {
         if (data) {
-            const featureServers = data.featureServers.map((config) => {
+            const featureServers = data.featureServers.map((fs) => {
                 return {
-                    id: config.id,
-                    url: config.url,
-                    name: config.name,
-                    layerWhere: config.layerWhere,
+                    id: fs.id,
+                    url: fs.url,
+                    name: fs.name,
+                    layerWhere: fs.layerWhere,
                     definition: { status: AsyncStatus.Initial },
+                    savedLayers: fs.layers,
                     layers: [],
                 } as FeatureServer;
             });
