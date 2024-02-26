@@ -21,6 +21,7 @@ export const WidgetContainer = styled(ConnectedPaper, {
         pointer-events: auto;
         border-radius: ${theme.shape.borderRadius}px;
         height: ${minimized ? "auto" : "100%"};
+        min-height: 0px;
         max-height: min(50vh, 400px);
         position: absolute;
         left: ${theme.spacing(1)};
