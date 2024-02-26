@@ -105,7 +105,7 @@ export function ArcgisCanvas({
                     }
 
                     const { symbol } = layer.definition.data.drawingInfo.renderer;
-                    if (symbol.type === "esriPMS" && symbol.imageData) {
+                    if (symbol?.type === "esriPMS" && symbol.imageData) {
                         if (!imageMap.current.has(symbol.imageData) || !imageDataSet.has(symbol.imageData)) {
                             const promise = createImageBitmap(b64toBlob(symbol.imageData), {
                                 resizeWidth: ptToPx(symbol.width),
@@ -213,7 +213,7 @@ function drawPolyline(
     let lineWidth = 1;
     let lineColor = "#83568d";
     const { symbol } = drawingInfo.renderer;
-    if (symbol.type === "esriSLS") {
+    if (symbol?.type === "esriSLS") {
         lineWidth = symbol.width;
         lineColor = colorRgbaToString(symbol.color);
     }
@@ -246,7 +246,7 @@ function drawPolygon(drawCtx: DrawingContext, geometry: IPolygon, drawingInfo: L
     let lineColor = "#83568d";
     let fillColor = "#59769fbb";
     const { symbol } = drawingInfo.renderer;
-    if (symbol.type === "esriSFS") {
+    if (symbol?.type === "esriSFS") {
         fillColor = colorRgbaToString(symbol.color);
         if (symbol.outline.type === "esriSLS") {
             lineWidth = symbol.outline.width;
@@ -281,7 +281,7 @@ function drawPolygon(drawCtx: DrawingContext, geometry: IPolygon, drawingInfo: L
 function drawPoint(drawCtx: DrawingContext, geometry: IPoint, drawingInfo: LayerDrawingInfo, isSelected: boolean) {
     const { symbol } = drawingInfo.renderer;
 
-    if (symbol.type === "esriPMS") {
+    if (symbol?.type === "esriPMS") {
         const image = drawCtx.imageMap.get(symbol.imageData)!;
         if (!image) {
             return;
