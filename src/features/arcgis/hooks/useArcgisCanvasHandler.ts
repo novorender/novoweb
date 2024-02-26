@@ -87,18 +87,13 @@ function doFindHitFeature(
                 continue;
             }
 
-            const feature = findHitFeature(
-                pos,
-                sensitivity,
-                layer.features.data.features,
-                layer.features.data.featuresAabb
-            );
+            const feature = findHitFeature(pos, sensitivity, layer.features.data);
 
             if (feature) {
                 return {
                     featureServerId: featureServer.id,
                     layerId: layer.id,
-                    featureId: feature.attributes[layer.definition.data.objectIdField],
+                    featureId: feature.attributes[layer.definition.data.objectIdField] as number,
                 };
             }
         }

@@ -1,18 +1,11 @@
 import { IQueryFeaturesResponse } from "@esri/arcgis-rest-feature-service";
-import { request } from "@esri/arcgis-rest-request";
+import { IFeature, request } from "@esri/arcgis-rest-request";
 import { useEffect, useRef } from "react";
 
 import { useAppDispatch, useAppSelector } from "app/store";
 import { AsyncState, AsyncStatus } from "types/misc";
 
-import {
-    arcgisActions,
-    FeatureServer,
-    Layer,
-    LayerDefinition,
-    LayerFeatures,
-    selectArcgisFeatureServers,
-} from "../arcgisSlice";
+import { arcgisActions, FeatureServer, Layer, LayerDefinition, selectArcgisFeatureServers } from "../arcgisSlice";
 import { makeWhereStatement } from "../utils";
 import { useLoadProjectEpsg } from "./useLoadProjectEpsg";
 
@@ -123,19 +116,19 @@ async function loadFeatures(
             const { features } = resp as IQueryFeaturesResponse;
             return {
                 status: AsyncStatus.Success,
-                data: { features },
-            } as AsyncState<LayerFeatures>;
+                data: features,
+            } as AsyncState<IFeature[]>;
         })
         .catch((error) => {
             if (error.name === "AbortError") {
-                return { status: AsyncStatus.Initial } as AsyncState<LayerFeatures>;
+                return { status: AsyncStatus.Initial } as AsyncState<IFeature[]>;
             }
 
             console.warn(error);
             return {
                 status: AsyncStatus.Error,
                 msg: "Error loading layer features",
-            } as AsyncState<LayerFeatures>;
+            } as AsyncState<IFeature[]>;
         })
         .finally(() => {
             const index = abortControllers.indexOf(abortEntry);

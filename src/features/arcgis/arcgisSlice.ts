@@ -1,12 +1,13 @@
 import { IFeature } from "@esri/arcgis-rest-request";
 import { AABB2 } from "@novorender/api/types/measure/worker/brep";
 import { createSelector, createSlice, PayloadAction } from "@reduxjs/toolkit";
+import { ReadonlyVec3 } from "gl-matrix";
 
 import { RootState } from "app/store";
 import { AsyncState, AsyncStatus } from "types/misc";
 
 import { FeatureServerDefinition, LayerDrawingInfo, LayerGeometryType } from "./arcgisTypes";
-import { areArraysEqual, computeFeatureAabb, getTotalAabb2 } from "./utils";
+import { areArraysEqual, getTotalAabb2, iFeatureToLayerFeature } from "./utils";
 
 const initialState = {
     featureServers: { status: AsyncStatus.Initial } as AsyncState<FeatureServer[]>,
@@ -55,7 +56,7 @@ export type Layer = {
     where?: string;
     aabb?: AABB2;
     definition: AsyncState<LayerDefinition>;
-    features: AsyncState<LayerFeatures>;
+    features: AsyncState<LayerFeature[]>;
 };
 
 export type LayerDefinition = {
@@ -68,9 +69,17 @@ export type LayerField = {
     name: string;
 };
 
-export type LayerFeatures = {
-    features: IFeature[];
-    featuresAabb: (AABB2 | undefined)[];
+export type FeatureGeometryPoint = { x: number; y: number; z: number };
+export type FeatureGeometryPolyline = { paths: ReadonlyVec3[][] };
+export type FeatureGeometryPolygon = { rings: ReadonlyVec3[][] };
+export type FeatureGeometry = FeatureGeometryPoint | FeatureGeometryPolyline | FeatureGeometryPolygon;
+
+export type LayerFeature = {
+    attributes: {
+        [key: string]: string | number;
+    };
+    geometry?: FeatureGeometry;
+    aabb?: AABB2;
 };
 
 export type SelectedFeatureId = {
@@ -140,7 +149,7 @@ export const arcgisSlice = createSlice({
                     featureServerId: string;
                     layerId: number;
                     definition?: AsyncState<LayerDefinition>;
-                    features?: AsyncState<LayerFeatures>;
+                    features?: AsyncState<IFeature[]>;
                     where?: string;
                 }[]
             >
@@ -155,12 +164,9 @@ export const arcgisSlice = createSlice({
 
                 if (features) {
                     if (features.status === AsyncStatus.Success) {
-                        const data: LayerFeatures = {
-                            features: features.data.features,
-                            featuresAabb: features.data.features.map(computeFeatureAabb),
-                        };
-                        layer.features = { status: AsyncStatus.Success, data };
-                        const nonEmptyAabbs = data.featuresAabb.filter((e) => e) as AABB2[];
+                        const newFeatures = features.data.map(iFeatureToLayerFeature);
+                        layer.features = { status: AsyncStatus.Success, data: newFeatures };
+                        const nonEmptyAabbs = newFeatures.filter((e) => e.aabb).map((e) => e.aabb) as AABB2[];
                         layer.aabb = nonEmptyAabbs.length > 0 ? getTotalAabb2(nonEmptyAabbs) : undefined;
                     } else {
                         layer.features = features;
@@ -303,7 +309,7 @@ export const selectArcgisSelectedFeatureInfo = createSelector(
         }
 
         const definition = layer.definition.data;
-        const feature = layer.features.data.features.find(
+        const feature = layer.features.data.find(
             (f) => f.attributes[definition.objectIdField] === selectedFeature.featureId
         );
         if (!feature) {

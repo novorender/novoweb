@@ -1,11 +1,11 @@
 import { IFeature, Position } from "@esri/arcgis-rest-request";
-import { BoundingSphere, RenderStateCamera } from "@novorender/api";
+import { BoundingSphere, RenderState, RenderStateCamera } from "@novorender/api";
 import { AABB2 } from "@novorender/api/types/measure/worker/brep";
-import { vec2 } from "gl-matrix";
+import { vec2, vec3 } from "gl-matrix";
 
 import { getCameraState } from "features/engine2D";
 
-import { FeatureServer, Layer } from "./arcgisSlice";
+import { FeatureGeometry, FeatureServer, Layer, LayerFeature } from "./arcgisSlice";
 
 export function trimRightSlash(s: string) {
     return s && s.replace(/\/$/, "");
@@ -53,49 +53,66 @@ function aabb2ToRect(aabb: AABB2): Rect {
     };
 }
 
-export function computeFeatureAabb(feature: IFeature): AABB2 | undefined {
-    if (!feature.geometry) {
-        return;
+export function iFeatureToLayerFeature(feature: IFeature): LayerFeature {
+    const { geometry } = feature;
+    let newGeometry: FeatureGeometry | undefined = undefined;
+    let aabb: AABB2 | undefined;
+    const z = 0;
+
+    // We work with ReadonlyVec3 which is compatible with Position,
+    // but Position can also be vector of size=2.
+    // So we ensure that all positions have size >= 3.
+    if (geometry) {
+        if ("paths" in geometry) {
+            let rect: Rect | undefined = undefined;
+            newGeometry = {
+                paths: geometry.paths.map((path) =>
+                    path.map((pos) => {
+                        if (rect) {
+                            extendRect(rect, pos[0], pos[1]);
+                        } else {
+                            rect = { x1: pos[0], y1: pos[1], x2: pos[0], y2: pos[1] };
+                        }
+                        return vec3.fromValues(pos[0], pos[1], z);
+                    })
+                ),
+            };
+            aabb = rect && rectToAabb2(rect);
+        } else if ("curvePaths" in geometry) {
+            // polyline with curves
+        } else if ("rings" in geometry) {
+            let rect: Rect | undefined = undefined;
+            newGeometry = {
+                rings: geometry.rings.map((ring) =>
+                    ring.map((pos) => {
+                        if (rect) {
+                            extendRect(rect, pos[0], pos[1]);
+                        } else {
+                            rect = { x1: pos[0], y1: pos[1], x2: pos[0], y2: pos[1] };
+                        }
+                        return vec3.fromValues(pos[0], pos[1], z);
+                    })
+                ),
+            };
+            aabb = rect && rectToAabb2(rect);
+        } else if ("curveRings" in geometry) {
+            // polygon with curves
+        } else {
+            newGeometry = {
+                x: geometry.x,
+                y: geometry.y,
+                z,
+            };
+            const p = vec2.fromValues(geometry.x, geometry.y);
+            aabb = { min: p, max: p };
+        }
     }
 
-    if ("paths" in feature.geometry) {
-        // polyline
-        let rect: Rect | undefined = undefined;
-        for (const path of feature.geometry.paths) {
-            for (const pos of path) {
-                if (rect) {
-                    extendRect(rect, pos[0], pos[1]);
-                } else {
-                    rect = { x1: pos[0], y1: pos[1], x2: pos[0], y2: pos[1] };
-                }
-            }
-        }
-        return rect && rectToAabb2(rect);
-    } else if ("curvePaths" in feature.geometry) {
-        // polyline with curves
-    } else if ("rings" in feature.geometry) {
-        // polygon
-        let rect: Rect | undefined = undefined;
-        for (const path of feature.geometry.rings) {
-            for (const pos of path) {
-                if (rect) {
-                    extendRect(rect, pos[0], pos[1]);
-                } else {
-                    rect = { x1: pos[0], y1: pos[1], x2: pos[0], y2: pos[1] };
-                }
-            }
-        }
-        return rect && rectToAabb2(rect);
-    } else if ("curveRings" in feature.geometry) {
-        // polygon with curves
-    } else {
-        // point
-        const v = vec2.fromValues(feature.geometry.x, feature.geometry.y);
-        return {
-            min: v,
-            max: v,
-        };
-    }
+    return {
+        attributes: feature.attributes,
+        geometry: newGeometry,
+        aabb,
+    };
 }
 
 export function getTotalAabb2(aabbs: AABB2[]): AABB2 {
@@ -126,16 +143,10 @@ function isPointInAabb2(aabb: AABB2, p: vec2, sensitivity: number) {
     );
 }
 
-export function findHitFeature(
-    pos: vec2,
-    sensitivity: number,
-    features: IFeature[],
-    featuresAabb: (AABB2 | undefined)[]
-): IFeature | undefined {
+export function findHitFeature(pos: vec2, sensitivity: number, features: LayerFeature[]): LayerFeature | undefined {
     for (let i = 0; i < features.length; i++) {
         const feature = features[i];
-        const { geometry } = feature;
-        const aabb = featuresAabb[i];
+        const { geometry, aabb } = feature;
         if (!aabb || !geometry || !isPointInAabb2(aabb, pos, sensitivity)) {
             continue;
         }
@@ -153,10 +164,6 @@ export function findHitFeature(
                     return feature;
                 }
             }
-        } else if ("curvePaths" in geometry) {
-            // not supported
-        } else if ("curveRings" in geometry) {
-            // not supported
         } else {
             const sqrSensitivity = sensitivity * sensitivity;
             if (vec2.sqrDist(pos, vec2.fromValues(geometry.x, geometry.y)) <= sqrSensitivity) {
@@ -257,4 +264,41 @@ export function doAabb2Intersect(a: AABB2, b: AABB2) {
 
 export function getAabb2MaxSize(aabb2: AABB2) {
     return Math.max(aabb2.max[0] - aabb2.min[0], aabb2.max[1] - aabb2.min[1]);
+}
+
+export function getOrthoCameraExtent(renderState: RenderState): AABB2 {
+    const {
+        camera,
+        output: { width, height },
+    } = renderState;
+    const h = camera.fov;
+    const hh = h / 2;
+    const w = h * (width / height);
+    const hw = w / 2;
+
+    return {
+        min: [camera.position[0] - hw, camera.position[1] - hh],
+        max: [camera.position[0] + hw, camera.position[1] + hh],
+    };
+}
+
+// From https://stackoverflow.com/a/16245768/915663
+export function b64toBlob(b64Data: string, contentType = "", sliceSize = 512) {
+    const byteCharacters = atob(b64Data);
+    const byteArrays = [];
+
+    for (let offset = 0; offset < byteCharacters.length; offset += sliceSize) {
+        const slice = byteCharacters.slice(offset, offset + sliceSize);
+
+        const byteNumbers = new Array(slice.length);
+        for (let i = 0; i < slice.length; i++) {
+            byteNumbers[i] = slice.charCodeAt(i);
+        }
+
+        const byteArray = new Uint8Array(byteNumbers);
+        byteArrays.push(byteArray);
+    }
+
+    const blob = new Blob(byteArrays, { type: contentType });
+    return blob;
 }

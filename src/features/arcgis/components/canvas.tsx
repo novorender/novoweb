@@ -1,8 +1,5 @@
-import { IPoint, IPolygon, IPolyline } from "@esri/arcgis-rest-request";
-import { DrawModule, DrawProduct, RenderState, RenderStateCamera } from "@novorender/api";
-import { AABB2 } from "@novorender/api/types/measure/worker/brep";
+import { DrawModule, DrawProduct } from "@novorender/api";
 import { ColorRGBA } from "@novorender/webgl-api";
-import { ReadonlyVec3 } from "gl-matrix";
 import { MutableRefObject, useCallback, useEffect, useRef, useState } from "react";
 
 import { useAppSelector } from "app/store";
@@ -11,10 +8,22 @@ import { useExplorerGlobals } from "contexts/explorerGlobals";
 import { CameraState, drawPart, getCameraState } from "features/engine2D";
 import { AsyncStatus } from "types/misc";
 
-import { selectArcgisFeatureServers, selectArcgisSelectedFeature } from "../arcgisSlice";
+import {
+    FeatureGeometryPoint,
+    FeatureGeometryPolygon,
+    FeatureGeometryPolyline,
+    selectArcgisFeatureServers,
+    selectArcgisSelectedFeature,
+} from "../arcgisSlice";
 import { LayerDrawingInfo, LayerGeometryType } from "../arcgisTypes";
 import { useIsCameraSetCorrectly } from "../hooks/useIsCameraSetCorrectly";
-import { doAabb2Intersect, getAabb2MaxSize, isSuitableCameraForArcgis } from "../utils";
+import {
+    b64toBlob,
+    doAabb2Intersect,
+    getAabb2MaxSize,
+    getOrthoCameraExtent,
+    isSuitableCameraForArcgis,
+} from "../utils";
 
 export function ArcgisCanvas({
     renderFnRef,
@@ -46,7 +55,7 @@ export function ArcgisCanvas({
         ctx.clearRect(0, 0, canvas.width, canvas.height);
 
         const cameraState = getCameraState(view.renderState.camera);
-        const extent = getCameraExtent(view.renderState);
+        const extent = getOrthoCameraExtent(view.renderState);
         const metersPerPixel = view.renderState.camera.fov / view.renderState.output.height;
         const minRenderableSize = metersPerPixel;
 
@@ -58,8 +67,6 @@ export function ArcgisCanvas({
             imageMap: imageMap.current,
         };
 
-        let featureCount = 0;
-        let renderedFeatureCount = 0;
         for (const featureServer of featureServers.data) {
             for (const layer of featureServer.layers) {
                 if (
@@ -70,11 +77,8 @@ export function ArcgisCanvas({
                     continue;
                 }
 
-                for (let i = 0; i < layer.features.data.features.length; i++) {
-                    const { geometry, attributes } = layer.features.data.features[i];
-                    const aabb = layer.features.data.featuresAabb[i];
-                    featureCount++;
-
+                for (let i = 0; i < layer.features.data.length; i++) {
+                    const { geometry, attributes, aabb } = layer.features.data[i];
                     if (!geometry || !aabb || !doAabb2Intersect(aabb, extent)) {
                         continue;
                     }
@@ -87,8 +91,6 @@ export function ArcgisCanvas({
                         continue;
                     }
 
-                    renderedFeatureCount++;
-
                     const isSelected = Boolean(
                         selectedFeature &&
                             selectedFeature.featureServerId === featureServer.id &&
@@ -98,20 +100,14 @@ export function ArcgisCanvas({
 
                     if ("paths" in geometry) {
                         drawPolyline(drawCtx, geometry, layer.definition.data.drawingInfo, isSelected);
-                    } else if ("curvePaths" in geometry) {
-                        // polyline with curves
                     } else if ("rings" in geometry) {
                         drawPolygon(drawCtx, geometry, layer.definition.data.drawingInfo, isSelected);
-                    } else if ("curveRings" in geometry) {
-                        // polygon with curves
                     } else {
                         drawPoint(drawCtx, geometry, layer.definition.data.drawingInfo, isSelected);
                     }
                 }
             }
         }
-
-        // console.log("metersPerPixel", metersPerPixel, "total", featureCount, "rendered", renderedFeatureCount);
     }, [view, ctx, canvas, featureServers, selectedFeature]);
 
     const buildImages = useCallback(async () => {
@@ -230,25 +226,9 @@ function colorRgbaToString(color: ColorRGBA) {
     return `rgba(${color[0]}, ${color[1]}, ${color[2]}, ${color[3]})`;
 }
 
-function getCameraExtent(renderState: RenderState): AABB2 {
-    const {
-        camera,
-        output: { width, height },
-    } = renderState;
-    const h = camera.fov;
-    const hh = h / 2;
-    const w = h * (width / height);
-    const hw = w / 2;
-
-    return {
-        min: [camera.position[0] - hw, camera.position[1] - hh],
-        max: [camera.position[0] + hw, camera.position[1] + hh],
-    };
-}
-
 function drawPolyline(
     drawCtx: DrawingContext,
-    geometry: IPolyline,
+    geometry: FeatureGeometryPolyline,
     drawingInfo: LayerDrawingInfo,
     isSelected: boolean
 ) {
@@ -265,9 +245,8 @@ function drawPolyline(
         lineColor = drawCtx.selectedColor;
     }
 
-    for (const segment of geometry.paths) {
-        const pts = segment.map((points) => [points[0], points[1], 0] as ReadonlyVec3);
-        drawCtx.draw.getDrawObjectFromPoints(pts, false, false, false)?.objects.forEach((obj) => {
+    for (const path of geometry.paths) {
+        drawCtx.draw.getDrawObjectFromPoints(path, false, false, false)?.objects.forEach((obj) => {
             obj.parts.forEach((part) =>
                 drawPart(
                     drawCtx.ctx,
@@ -283,7 +262,12 @@ function drawPolyline(
     }
 }
 
-function drawPolygon(drawCtx: DrawingContext, geometry: IPolygon, drawingInfo: LayerDrawingInfo, isSelected: boolean) {
+function drawPolygon(
+    drawCtx: DrawingContext,
+    geometry: FeatureGeometryPolygon,
+    drawingInfo: LayerDrawingInfo,
+    isSelected: boolean
+) {
     let lineWidth = 1;
     let lineColor = "#83568d";
     let fillColor = "#59769fbb";
@@ -301,9 +285,8 @@ function drawPolygon(drawCtx: DrawingContext, geometry: IPolygon, drawingInfo: L
         lineWidth = 4;
     }
 
-    for (const segment of geometry.rings) {
-        const pts = segment.map((points) => [points[0], points[1], 0] as ReadonlyVec3);
-        drawCtx.draw.getDrawObjectFromPoints(pts, true, false, false)?.objects.forEach((obj) => {
+    for (const ring of geometry.rings) {
+        drawCtx.draw.getDrawObjectFromPoints(ring, true, false, false)?.objects.forEach((obj) => {
             obj.parts.forEach((part) =>
                 drawPart(
                     drawCtx.ctx,
@@ -320,7 +303,12 @@ function drawPolygon(drawCtx: DrawingContext, geometry: IPolygon, drawingInfo: L
     }
 }
 
-function drawPoint(drawCtx: DrawingContext, geometry: IPoint, drawingInfo: LayerDrawingInfo, isSelected: boolean) {
+function drawPoint(
+    drawCtx: DrawingContext,
+    geometry: FeatureGeometryPoint,
+    drawingInfo: LayerDrawingInfo,
+    isSelected: boolean
+) {
     const { symbol } = drawingInfo.renderer;
 
     if (symbol?.type === "esriPMS") {
@@ -330,7 +318,7 @@ function drawPoint(drawCtx: DrawingContext, geometry: IPoint, drawingInfo: Layer
         }
 
         const { ctx } = drawCtx;
-        drawCtx.draw.getDrawObjectFromPoints([[geometry.x, geometry.y, 0]])?.objects.forEach((obj) => {
+        drawCtx.draw.getDrawObjectFromPoints([[geometry.x, geometry.y, geometry.z]])?.objects.forEach((obj) => {
             obj.parts.forEach((part) => {
                 const point = part.vertices2D![0];
                 const hw = ptToPx(symbol.width) / 2;
@@ -355,8 +343,7 @@ function drawPoint(drawCtx: DrawingContext, geometry: IPoint, drawingInfo: Layer
             pointColor = drawCtx.selectedColor;
         }
 
-        const p = geometry;
-        drawCtx.draw.getDrawObjectFromPoints([[p.x, p.y, 0]])?.objects.forEach((obj) => {
+        drawCtx.draw.getDrawObjectFromPoints([[geometry.x, geometry.y, geometry.z]])?.objects.forEach((obj) => {
             obj.parts.forEach((part) =>
                 drawPart(
                     drawCtx.ctx,
@@ -370,27 +357,6 @@ function drawPoint(drawCtx: DrawingContext, geometry: IPoint, drawingInfo: Layer
             );
         });
     }
-}
-
-// From https://stackoverflow.com/a/16245768/915663
-function b64toBlob(b64Data: string, contentType = "", sliceSize = 512) {
-    const byteCharacters = atob(b64Data);
-    const byteArrays = [];
-
-    for (let offset = 0; offset < byteCharacters.length; offset += sliceSize) {
-        const slice = byteCharacters.slice(offset, offset + sliceSize);
-
-        const byteNumbers = new Array(slice.length);
-        for (let i = 0; i < slice.length; i++) {
-            byteNumbers[i] = slice.charCodeAt(i);
-        }
-
-        const byteArray = new Uint8Array(byteNumbers);
-        byteArrays.push(byteArray);
-    }
-
-    const blob = new Blob(byteArrays, { type: contentType });
-    return blob;
 }
 
 function ptToPx(pt: number) {
