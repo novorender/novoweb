@@ -146,8 +146,8 @@ export function Render3D() {
                     <LinearProgress />
                 </Box>
             )}
-            {sceneStatus.status === AsyncStatus.Error && <SceneError />}
             <Canvas id="main-canvas" onClick={onClick} {...eventHandlers} tabIndex={1} ref={canvasRef} />
+            {sceneStatus.status === AsyncStatus.Error && <SceneError />}
             {[AsyncStatus.Initial, AsyncStatus.Loading].includes(sceneStatus.status) && <Loading />}
             {sceneStatus.status === AsyncStatus.Success && view && canvas && (
                 <>
