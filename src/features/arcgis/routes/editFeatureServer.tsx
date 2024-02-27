@@ -1,6 +1,7 @@
 import { CheckCircle, Error } from "@mui/icons-material";
 import {
     Box,
+    Button,
     Checkbox,
     CircularProgress,
     FormControlLabel,
@@ -30,6 +31,7 @@ export function EditFeatureServer() {
         featureServers.status === AsyncStatus.Success
             ? featureServers.data.find((c) => c.id === featureServerId)
             : undefined;
+    const [isEditingLayerList, setIsEditingLayerList] = useState(false);
 
     const [featureServer, setFeatureServer] = useState<FeatureServer>(
         originalFeatureServer ?? {
@@ -205,105 +207,119 @@ export function EditFeatureServer() {
                 justifyContent="start"
                 py={2}
             >
-                <TextField
-                    sx={{ mb: 3 }}
-                    multiline
-                    fullWidth
-                    minRows={3}
-                    maxRows={20}
-                    value={featureServer.url}
-                    onChange={(e) => handleUrlChange(e.target.value)}
-                    error={urlError !== ""}
-                    helperText={urlError}
-                    label="URL"
-                    required
-                    InputProps={{
-                        endAdornment: fsDefinition.status !== AsyncStatus.Initial && (
-                            <InputAdornment position="end">
-                                {fsDefinition.status === AsyncStatus.Loading && <CircularProgress size="1rem" />}
-                                {fsDefinition.status === AsyncStatus.Success && <CheckCircle color="success" />}
-                                {fsDefinition.status === AsyncStatus.Error && (
-                                    <Tooltip title={fsDefinition.msg}>
-                                        <Error color="error" />
-                                    </Tooltip>
-                                )}
-                            </InputAdornment>
-                        ),
-                    }}
-                />
-                <TextField
-                    sx={{ mb: 3 }}
-                    fullWidth
-                    value={featureServer.name}
-                    onChange={(e) => {
-                        setFeatureServer({ ...featureServer, name: e.target.value });
-                        setNameChanged(true);
-                    }}
-                    error={nameError !== ""}
-                    helperText={nameError}
-                    label="Name"
-                    required
-                />
-                <TextField
-                    sx={{ mb: 3 }}
-                    multiline
-                    fullWidth
-                    minRows={2}
-                    maxRows={20}
-                    value={featureServer.layerWhere}
-                    onChange={(e) => setFeatureServer({ ...featureServer, layerWhere: e.target.value })}
-                    label="Layer filter"
-                />
-                <Box sx={{ width: "100%" }}>
-                    <FormControlLabel
-                        control={
-                            <Checkbox
-                                size="small"
-                                color="primary"
-                                checked={useOnlySelectedLayers}
-                                onChange={(e) => {
-                                    setUseOnlySelectedLayers(e.target.checked);
-                                }}
-                            />
-                        }
-                        label={
-                            <Box mr={0.5} display="flex" alignItems="center" gap={1}>
-                                Use only selected layers
-                                {useOnlySelectedLayers && fsDefinition.status === AsyncStatus.Loading && (
-                                    <Box display="flex">
-                                        <CircularProgress size="1rem" />
+                {!isEditingLayerList ? (
+                    <>
+                        <TextField
+                            sx={{ mb: 3 }}
+                            multiline
+                            fullWidth
+                            minRows={3}
+                            maxRows={20}
+                            value={featureServer.url}
+                            onChange={(e) => handleUrlChange(e.target.value)}
+                            error={urlError !== ""}
+                            helperText={urlError}
+                            label="URL"
+                            required
+                            InputProps={{
+                                endAdornment: fsDefinition.status !== AsyncStatus.Initial && (
+                                    <InputAdornment position="end">
+                                        {fsDefinition.status === AsyncStatus.Loading && (
+                                            <CircularProgress size="1rem" />
+                                        )}
+                                        {fsDefinition.status === AsyncStatus.Success && <CheckCircle color="success" />}
+                                        {fsDefinition.status === AsyncStatus.Error && (
+                                            <Tooltip title={fsDefinition.msg}>
+                                                <Error color="error" />
+                                            </Tooltip>
+                                        )}
+                                    </InputAdornment>
+                                ),
+                            }}
+                        />
+                        <TextField
+                            sx={{ mb: 3 }}
+                            fullWidth
+                            value={featureServer.name}
+                            onChange={(e) => {
+                                setFeatureServer({ ...featureServer, name: e.target.value });
+                                setNameChanged(true);
+                            }}
+                            error={nameError !== ""}
+                            helperText={nameError}
+                            label="Name"
+                            required
+                        />
+                        <TextField
+                            sx={{ mb: 3 }}
+                            multiline
+                            fullWidth
+                            minRows={2}
+                            maxRows={20}
+                            value={featureServer.layerWhere}
+                            onChange={(e) => setFeatureServer({ ...featureServer, layerWhere: e.target.value })}
+                            label="Layer filter"
+                        />
+                        <Box sx={{ width: "100%" }}>
+                            <FormControlLabel
+                                control={
+                                    <Checkbox
+                                        size="small"
+                                        color="primary"
+                                        checked={useOnlySelectedLayers}
+                                        onChange={(e) => {
+                                            setUseOnlySelectedLayers(e.target.checked);
+                                            if (e.target.checked) {
+                                                setIsEditingLayerList(true);
+                                            }
+                                        }}
+                                    />
+                                }
+                                label={
+                                    <Box mr={0.5} display="flex" gap={2} alignItems="baseline">
+                                        <Box>Use only selected layers</Box>
+                                        <Button
+                                            variant="text"
+                                            size="small"
+                                            onClick={() => setIsEditingLayerList(true)}
+                                            hidden={!useOnlySelectedLayers}
+                                        >
+                                            Select layers
+                                        </Button>
                                     </Box>
-                                )}
-                            </Box>
-                        }
-                    />
-                </Box>
-
-                {useOnlySelectedLayers && fsDefinition.status === AsyncStatus.Error && (
-                    <Box display="flex">{fsDefinition.msg}</Box>
-                )}
-
-                {useOnlySelectedLayers && fsDefinition.status === AsyncStatus.Success && (
-                    <LayerList
-                        definition={fsDefinition.data}
-                        enabledLayerIds={featureServer.enabledLayerIds}
-                        onToggle={(layerId) => {
-                            if (featureServer.enabledLayerIds?.includes(layerId)) {
-                                setFeatureServer({
-                                    ...featureServer,
-                                    enabledLayerIds: featureServer.enabledLayerIds.filter((id) => id !== layerId),
-                                });
-                            } else {
-                                setFeatureServer({
-                                    ...featureServer,
-                                    enabledLayerIds: [...(featureServer.enabledLayerIds || []), layerId].sort(
-                                        (a, b) => a - b
-                                    ),
-                                });
-                            }
-                        }}
-                    />
-                )}
+                                }
+                            />
+                        </Box>
+                    </>
+                ) : fsDefinition.status === AsyncStatus.Success ? (
+                    <>
+                        <Box mr={0.5} display="flex" justifyContent="space-between" alignItems="baseline" width="100%">
+                            <div>Select layers</div>
+                            <Button variant="text" size="small" onClick={() => setIsEditingLayerList(false)}>
+                                Back
+                            </Button>
+                        </Box>
+                        <LayerList
+                            definition={fsDefinition.data}
+                            enabledLayerIds={featureServer.enabledLayerIds}
+                            onToggle={(layerId) => {
+                                if (featureServer.enabledLayerIds?.includes(layerId)) {
+                                    setFeatureServer({
+                                        ...featureServer,
+                                        enabledLayerIds: featureServer.enabledLayerIds.filter((id) => id !== layerId),
+                                    });
+                                } else {
+                                    setFeatureServer({
+                                        ...featureServer,
+                                        enabledLayerIds: [...(featureServer.enabledLayerIds || []), layerId].sort(
+                                            (a, b) => a - b
+                                        ),
+                                    });
+                                }
+                            }}
+                        />
+                    </>
+                ) : null}
 
                 <Box flex="auto" />
             </Confirmation>
@@ -325,7 +341,6 @@ function LayerList({
             dense
             sx={{
                 width: "100%",
-                maxHeight: 200,
                 bgcolor: "background.paper",
                 position: "relative",
                 overflow: "auto",
