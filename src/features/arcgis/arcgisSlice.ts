@@ -118,7 +118,7 @@ export const arcgisSlice = createSlice({
                 case AsyncStatus.Success: {
                     let layers = definition.data.layers;
                     if (enabledLayerIds) {
-                        layers = layers.filter((l) => !enabledLayerIds.includes(l.id));
+                        layers = layers.filter((l) => enabledLayerIds.includes(l.id));
                     }
                     featureServer.layers = layers.map((l) => {
                         const layerConfig = featureServer.savedLayers && featureServer.savedLayers[l.id];

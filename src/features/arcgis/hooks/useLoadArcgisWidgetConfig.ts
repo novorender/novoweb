@@ -27,6 +27,7 @@ export function useLoadArcgisWidgetConfig() {
                     layerWhere: fs.layerWhere,
                     definition: { status: AsyncStatus.Initial },
                     savedLayers: fs.layers,
+                    enabledLayerIds: fs.enabledLayerIds,
                     layers: [],
                 } as FeatureServer;
             });
