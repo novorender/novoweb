@@ -14,6 +14,7 @@ import { quat, vec3, vec4 } from "gl-matrix";
 import type { RootState } from "app/store";
 import { DitioMachine } from "features/ditio";
 import { LogPoint, MachineLocation } from "features/xsiteManage";
+import { ProjectType } from "slices/explorerSlice";
 import { AsyncState, AsyncStatus, ViewMode } from "types/misc";
 import { VecRGB, VecRGBA } from "utils/color";
 import { mergeRecursive } from "utils/misc";
@@ -290,6 +291,7 @@ const initialState = {
             enabled: false,
             color: [10, 10, 10] as VecRGB,
             plane: [0, -1, 0, 0] as vec4,
+            breakingPointAngleThreshold: 30 as number,
         },
         tonemapping: {
             exposure: 0.5,
@@ -338,6 +340,7 @@ const initialState = {
 type State = typeof initialState;
 
 export const initScene = createAction<{
+    projectType: ProjectType;
     sceneData: Omit<SceneConfig, "db" | "url">;
     sceneConfig: OctreeSceneConfig;
     initialCamera: {
@@ -565,6 +568,9 @@ export const renderSlice = createSlice({
         },
         setSecondaryHighlight: (state, action: PayloadAction<Partial<State["secondaryHighlight"]>>) => {
             state.secondaryHighlight = { ...state.secondaryHighlight, ...action.payload };
+        },
+        setBreakingPointAngleThreshold: (state, action: PayloadAction<number>) => {
+            state.advanced.outlines.breakingPointAngleThreshold = action.payload;
         },
         setSceneStatus: (state, action: PayloadAction<State["sceneStatus"]>) => {
             state.sceneStatus = action.payload;
@@ -914,6 +920,8 @@ export const selectClippingPlanes = (state: RootState) => state.render.clipping;
 export const selectCamera = (state: RootState) => state.render.camera as CameraState;
 export const selectCameraType = (state: RootState) => state.render.camera.type;
 export const selectSecondaryHighlightProperty = (state: RootState) => state.render.secondaryHighlight.property;
+export const selectBreakingPointAngleThreshold = (state: RootState) =>
+    state.render.advanced.outlines.breakingPointAngleThreshold;
 export const selectProjectSettings = (state: RootState) => state.render.project;
 export const selectGrid = (state: RootState) => state.render.grid;
 export const selectPicker = (state: RootState) => state.render.picker;

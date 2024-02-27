@@ -3,6 +3,10 @@ declare module "@novorender/data-js-api" {
 
     import { ExtendedMeasureEntity, ViewMode } from "types/misc";
 
+    interface API {
+        serviceUrl: string;
+    }
+
     type ExplorerBookmarkState = {
         camera: {
             kind: "pinhole" | "orthographic";
@@ -140,6 +144,7 @@ declare module "@novorender/data-js-api" {
                       emulatedCurve?: { start: ReadonlyVec3; dir: ReadonlyVec3 } | undefined;
                       lineStrip?: ReadonlyVec3[];
                   };
+                  profileRange?: { min: number; max: number };
               }
             | undefined;
         outlineMeasure:
@@ -152,6 +157,15 @@ declare module "@novorender/data-js-api" {
                   }[];
               }
             | undefined;
+        propertyTree?: {
+            property: string;
+            groups: {
+                propertyValue: string;
+                ids: number[];
+                color: [number, number, number, number];
+                status: "hidden" | "selected";
+            }[];
+        };
     };
 
     interface Bookmark {

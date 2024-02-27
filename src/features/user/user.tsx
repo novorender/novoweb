@@ -2,9 +2,9 @@ import { LoadingButton } from "@mui/lab";
 import { Box, CircularProgress, Grid } from "@mui/material";
 import { useState } from "react";
 
+import { dataApi } from "app";
 import { useAppSelector } from "app/store";
 import { LinearProgress, LogoSpeedDial, ScrollBox, WidgetContainer, WidgetHeader } from "components";
-import { dataServerBaseUrl } from "config/app";
 import { featuresConfig } from "config/features";
 import { StorageKey } from "config/storage";
 import { useCreateBookmark } from "features/bookmarks";
@@ -13,7 +13,7 @@ import WidgetList from "features/widgetList/widgetList";
 import { useSceneId } from "hooks/useSceneId";
 import { useToggle } from "hooks/useToggle";
 import { selectUser, User as UserType } from "slices/authSlice";
-import { selectMaximized, selectMinimized, selectUserRole, UserRole } from "slices/explorerSlice";
+import { selectConfig, selectMaximized, selectMinimized, selectUserRole, UserRole } from "slices/explorerSlice";
 import { createOAuthStateString, generateCodeChallenge } from "utils/auth";
 import { deleteFromStorage, saveToStorage } from "utils/storage";
 
@@ -60,11 +60,12 @@ function LoggedIn({
 }) {
     const role = useAppSelector(selectUserRole);
     const org = useAppSelector(selectSceneOrganization);
+    const config = useAppSelector(selectConfig);
 
     const logOut = () => {
         setLoading(true);
         deleteFromStorage(StorageKey.RefreshToken);
-        window.location.href = `https://auth.novorender.com/signout?return_url=${window.location.href}`;
+        window.location.href = `${config.authServerUrl}/signout?return_url=${window.location.href}`;
     };
 
     return (
@@ -116,6 +117,7 @@ function LoggedIn({
 function LoggedOut({ loading, setLoading }: { loading: boolean; setLoading: (state: boolean) => void }) {
     const sceneId = useSceneId();
     const createBookmark = useCreateBookmark();
+    const config = useAppSelector(selectConfig);
 
     const handleLoginRedirect = async () => {
         const bookmarkId = window.crypto.randomUUID();
@@ -137,13 +139,13 @@ function LoggedOut({ loading, setLoading }: { loading: boolean; setLoading: (sta
         const [verifier, challenge] = await generateCodeChallenge();
         saveToStorage(StorageKey.CodeVerifier, verifier);
 
-        const tenant = await fetch(`${dataServerBaseUrl}/scenes/${sceneId}`)
+        const tenant = await fetch(`${dataApi.serviceUrl}/scenes/${sceneId}`)
             .then((res) => res.json())
             .then((res) => ("tenant" in res ? res.tenant : undefined))
             .catch((_err) => undefined);
 
         window.location.href =
-            "https://auth.novorender.com" +
+            config.authServerUrl +
             `/auth` +
             "?response_type=code" +
             `&client_id=${"IWOHeLxNRxoqGtVZ3I6guPo2UvZ6mI5n"}` +

@@ -10,7 +10,6 @@ import {
     useTheme,
 } from "@mui/material";
 import { HierarcicalObjectReference, ObjectData } from "@novorender/webgl-api";
-import { vec3 } from "gl-matrix";
 import { useEffect, useState } from "react";
 import { useHistory } from "react-router-dom";
 
@@ -20,7 +19,7 @@ import { useExplorerGlobals } from "contexts/explorerGlobals";
 import { highlightActions, useDispatchHighlighted } from "contexts/highlighted";
 import { useSelectionBasket } from "contexts/selectionBasket";
 import { CameraType, renderActions, selectCameraType, selectMainObject } from "features/render/renderSlice";
-import { flip } from "features/render/utils";
+import { flip, isGlSpace } from "features/render/utils";
 import { useAbortController } from "hooks/useAbortController";
 import { AsyncState, AsyncStatus, hasFinished } from "types/misc";
 import { getObjectNameFromPath, getTotalBoundingSphere } from "utils/objectData";
@@ -147,7 +146,7 @@ export function List() {
                             }
 
                             const sphere = getTotalBoundingSphere(objects.data, {
-                                flip: !vec3.equals(scene.up ?? [0, 1, 0], [0, 0, 1]),
+                                flip: isGlSpace(scene.up),
                             });
                             if (sphere) {
                                 dispatch(renderActions.setCamera({ type: CameraType.Pinhole, zoomTo: sphere }));
@@ -189,12 +188,11 @@ export function List() {
                                             dispatchHighlighted(highlightActions.setIds([obj.id]));
 
                                             if (flyOnSelect && obj.bounds?.sphere) {
-                                                const isGlSpace = !vec3.equals(scene?.up ?? [0, 1, 0], [0, 0, 1]);
                                                 dispatch(
                                                     renderActions.setCamera({
                                                         type: CameraType.Pinhole,
                                                         zoomTo: {
-                                                            center: isGlSpace
+                                                            center: isGlSpace(scene.up)
                                                                 ? flip(obj.bounds.sphere.center)
                                                                 : obj.bounds.sphere.center,
                                                             radius: obj.bounds.sphere.radius,

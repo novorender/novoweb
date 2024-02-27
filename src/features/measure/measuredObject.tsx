@@ -1,10 +1,11 @@
-import { PushPin } from "@mui/icons-material";
+import { InfoOutlined, PushPin } from "@mui/icons-material";
 import {
     Box,
     capitalize,
     Checkbox,
     css,
     Grid,
+    IconButton,
     InputLabel,
     List,
     ListItem,
@@ -18,7 +19,7 @@ import { vec3 } from "gl-matrix";
 import { useEffect, useState } from "react";
 
 import { useAppDispatch, useAppSelector } from "app/store";
-import { Accordion, AccordionDetails, AccordionSummary, MeasurementTable, VertexTable } from "components";
+import { Accordion, AccordionDetails, AccordionSummary, MeasurementTable, Tooltip, VertexTable } from "components";
 import { useExplorerGlobals } from "contexts/explorerGlobals";
 import { ExtendedMeasureEntity } from "types/misc";
 import { getMeasurementValueKind, measureObjectIsVertex } from "utils/misc";
@@ -62,6 +63,7 @@ export function MeasuredObject({ obj, idx }: { obj: ExtendedMeasureEntity; idx: 
     const currentMeasureValues = duoMeasurementValues[currentIndex];
     const currentMeasureObject = measureObjects.length > currentIndex ? measureObjects[currentIndex][idx] : empty;
     const [measureValues, setMeasureValues] = useState<MeasurementValues>();
+    const [isGenerated, setIsGenerated] = useState<null | boolean>(null);
 
     useEffect(() => {
         getMeasureValues();
@@ -76,6 +78,18 @@ export function MeasuredObject({ obj, idx }: { obj: ExtendedMeasureEntity; idx: 
             }
         }
     }, [currentMeasureObject, view]);
+
+    useEffect(() => {
+        checkIsGenerated();
+
+        async function checkIsGenerated() {
+            if (!view) {
+                return;
+            }
+
+            setIsGenerated(Boolean(await view.measure?.core.isParametricDataGenerated(obj.ObjectId)));
+        }
+    }, [view, obj]);
 
     const kind = !currentMeasureObject ? "" : measureValues ? getMeasurementValueKind(measureValues) : "point";
 
@@ -110,6 +124,17 @@ export function MeasuredObject({ obj, idx }: { obj: ExtendedMeasureEntity; idx: 
                         {kind ? (kind === "lineStrip" ? "Line strip" : capitalize(kind)) : "Loading..."}
                     </Box>
                 </Box>
+                {isGenerated && (
+                    <Tooltip title={"This parametric data is generated."} enterDelay={0}>
+                        <IconButton
+                            onClick={(evt) => {
+                                evt.stopPropagation();
+                            }}
+                        >
+                            <InfoOutlined />
+                        </IconButton>
+                    </Tooltip>
+                )}
             </AccordionSummary>
             <AccordionDetails>
                 {!currentMeasureObject ? null : measureValues ? (

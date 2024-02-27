@@ -2,18 +2,16 @@ import { CancelPresentation, FilterAlt } from "@mui/icons-material";
 import { Box, Button, FormControlLabel, Typography, useTheme } from "@mui/material";
 import { ObjectDB } from "@novorender/data-js-api";
 import { SearchPattern } from "@novorender/webgl-api";
-import { vec3 } from "gl-matrix";
 import { useEffect } from "react";
 import { useHistory } from "react-router-dom";
 import AutoSizer from "react-virtualized-auto-sizer";
 import { FixedSizeList } from "react-window";
 
-import { dataApi } from "app";
 import { store, useAppDispatch, useAppSelector } from "app/store";
 import { IosSwitch, LinearProgress, withCustomScrollbar } from "components";
 import { useExplorerGlobals } from "contexts/explorerGlobals";
 import { selectProjectSettings } from "features/render/renderSlice";
-import { flip, flipGLtoCadQuat } from "features/render/utils";
+import { flip, flipGLtoCadQuat, isGlSpace, latLon2Tm } from "features/render/utils";
 import { AsyncStatus, hasFinished } from "types/misc";
 
 import { ImageListItem } from "../imageListItem";
@@ -45,7 +43,7 @@ export function Root() {
 
     useEffect(() => {
         if (images.status === AsyncStatus.Initial) {
-            loadImages({ db, tmZone, filter, flip: !vec3.equals(scene?.up ?? [0, 1, 0], [0, 0, 1]) });
+            loadImages({ db, tmZone, filter, flip: isGlSpace(scene.up) });
         }
     }, [images, db, tmZone, filter, scene]);
 
@@ -226,10 +224,7 @@ async function loadImages({
                 }
             } else if (lat && lon && tmZone) {
                 const elevation = image.properties.find((prop) => prop[0] === "Image/Elevation");
-                const position = options.flip
-                    ? flip(dataApi.latLon2tm({ latitude: Number(lat[1]), longitude: Number(lon[1]) }, tmZone))
-                    : dataApi.latLon2tm({ latitude: Number(lat[1]), longitude: Number(lon[1]) }, tmZone);
-
+                const position = latLon2Tm({ tmZone, coords: { latitude: Number(lat[1]), longitude: Number(lon[1]) } });
                 if (elevation) {
                     position[2] = Number(elevation[1]);
                 }

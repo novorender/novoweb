@@ -164,6 +164,7 @@ export const followPathSlice = createSlice({
             state.view2d = camera.kind === "orthographic";
             state.verticalClipping = fp.verticalClipping ?? false;
             state.followObject = fp.followObject;
+            state.profileRange = fp.profileRange;
 
             if (state.view2d) {
                 state.clipping = action.payload.camera.far;

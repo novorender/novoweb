@@ -67,7 +67,7 @@ export default function MyLocation() {
         });
 
         function handlePositionSuccess(geoPos: GeolocationPosition) {
-            const position = latLon2Tm({ up: scene.up, coords: geoPos.coords, tmZone });
+            const position = latLon2Tm({ coords: geoPos.coords, tmZone });
             position[2] = geoPos.coords.altitude ?? view.renderState.camera.position[2];
             const outOfBounds =
                 vec3.dist(position, scene.boundingSphere.center) >

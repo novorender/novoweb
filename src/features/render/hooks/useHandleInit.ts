@@ -1,6 +1,7 @@
 import { computeRotation, DeviceProfile, getDeviceProfile, rotationFromDirection, View } from "@novorender/api";
 import { ObjectDB, SceneData, SceneLoadFail } from "@novorender/data-js-api";
 import { Internal } from "@novorender/webgl-api";
+import { useLazyGetProjectQuery } from "apis/dataV2/dataV2Api";
 import { getGPUTier } from "detect-gpu";
 import { quat, vec3, vec4 } from "gl-matrix";
 import { useEffect, useRef } from "react";
@@ -16,6 +17,7 @@ import {
 import { highlightActions, useDispatchHighlighted } from "contexts/highlighted";
 import { GroupStatus, objectGroupsActions, useDispatchObjectGroups } from "contexts/objectGroups";
 import { useSceneId } from "hooks/useSceneId";
+import { ProjectType } from "slices/explorerSlice";
 import { AsyncStatus } from "types/misc";
 import { CustomProperties } from "types/project";
 import { VecRGBA } from "utils/color";
@@ -36,6 +38,8 @@ export function useHandleInit() {
     } = useExplorerGlobals();
 
     const dispatch = useAppDispatch();
+
+    const [getProject] = useLazyGetProjectQuery();
 
     const initialized = useRef(false);
 
@@ -74,6 +78,11 @@ export function useHandleInit() {
                     "index.json",
                     new AbortController().signal
                 );
+                const projectIsV2 = Boolean(
+                    await getProject({ projectId: sceneId })
+                        .unwrap()
+                        .catch(() => false)
+                );
 
                 const offlineWorkerState =
                     view.offline &&
@@ -87,8 +96,19 @@ export function useHandleInit() {
                     await sleep(50);
                 }
 
+                if (!camera) {
+                    view.activeController.autoFit(
+                        view.renderState.scene.config.boundingSphere.center,
+                        view.renderState.scene.config.boundingSphere.radius
+                    );
+
+                    // 1sec autofit flight duration
+                    await sleep(1000);
+                }
+
                 dispatch(
                     renderActions.initScene({
+                        projectType: projectIsV2 ? ProjectType.V2 : ProjectType.V1,
                         sceneData,
                         sceneConfig: octreeSceneConfig,
                         initialCamera: {
@@ -217,6 +237,7 @@ export function useHandleInit() {
         dispatchObjectGroups,
         dispatchHighlighted,
         dispatchHighlightCollections,
+        getProject,
     ]);
 }
 

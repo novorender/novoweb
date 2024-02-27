@@ -8,6 +8,7 @@ import { useEffect, useRef, useState } from "react";
 import { generatePath, Redirect, Route, Switch, useHistory, useLocation, useParams } from "react-router-dom";
 import { useRegisterSW } from "virtual:pwa-register/react";
 
+import { dataApi } from "app";
 import { useAppDispatch, useAppSelector } from "app/store";
 import { theme } from "app/theme";
 import { Loading } from "components";
@@ -27,9 +28,7 @@ enum Status {
 export function App() {
     const history = useHistory();
     const [authStatus, setAuthStatus] = useState(Status.Initial);
-    const [configStatus, setConfigStatus] = useState(
-        import.meta.env.MODE === "development" ? Status.Ready : Status.Initial
-    );
+    const [configStatus, setConfigStatus] = useState(Status.Initial);
     const config = useAppSelector(selectConfig);
     const dispatch = useAppDispatch();
     const useTokenFromUrl = window.top !== self && new URLSearchParams(window.location.search).get("accessToken");
@@ -40,6 +39,51 @@ export function App() {
     } = useRegisterSW({
         immediate: false,
     });
+
+    useEffect(() => {
+        initConfig();
+
+        let timeOutId = 0;
+        async function initConfig() {
+            if (configStatus !== Status.Initial) {
+                return;
+            }
+
+            setConfigStatus(Status.Loading);
+
+            let attempt = 0;
+            const load = () =>
+                fetch("/config.json")
+                    .then((res) => res.json())
+                    .catch(async () => {
+                        if (attempt < 2) {
+                            return new Promise((resolve) => {
+                                timeOutId = window.setTimeout(async () => {
+                                    ++attempt;
+                                    resolve(await load());
+                                }, Math.pow(2, attempt) * 1000);
+                            });
+                        }
+                    });
+
+            if (import.meta.env.MODE === "development") {
+                dataApi.serviceUrl = config.dataServerUrl;
+            } else {
+                const cfg = await load();
+                if (cfg) {
+                    dispatch(explorerActions.setConfig(cfg));
+                }
+
+                dataApi.serviceUrl = cfg?.dataServerUrl ?? config.dataServerUrl;
+            }
+
+            setConfigStatus(Status.Ready);
+        }
+
+        return () => {
+            clearTimeout(timeOutId);
+        };
+    }, [dispatch, configStatus, config]);
 
     useEffect(() => {
         const state = getOAuthState();
@@ -82,6 +126,7 @@ export function App() {
 
             const params = new URLSearchParams(window.location.search);
             const code = params.get("code");
+            const tokenUrl = config.authServerUrl + "/token";
 
             if (state?.service === "self" && code) {
                 window.history.replaceState(null, "", `${window.location.pathname}${state.query ?? ""}`);
@@ -95,7 +140,7 @@ export function App() {
                           refresh_token_expires_in: number;
                           token_type: string;
                       }
-                    | undefined = await fetch("https://auth.novorender.com/token", {
+                    | undefined = await fetch(tokenUrl, {
                     method: "POST",
                     headers: { "Content-Type": "application/x-www-form-urlencoded" },
                     body: new URLSearchParams({
@@ -149,7 +194,7 @@ export function App() {
                 try {
                     const parsedToken = JSON.parse(storedRefreshToken) as { token: string; expires: number };
 
-                    const res = await fetch("https://auth.novorender.com/token", {
+                    const res = await fetch(tokenUrl, {
                         method: "POST",
                         headers: { "Content-Type": "application/x-www-form-urlencoded" },
                         body: new URLSearchParams({
@@ -219,43 +264,6 @@ export function App() {
             setAuthStatus(Status.Ready);
         }
     }, [authStatus, configStatus, dispatch, useTokenFromUrl]);
-
-    useEffect(() => {
-        if (configStatus !== Status.Initial) {
-            return;
-        }
-
-        let timeOutId = 0;
-        setConfigStatus(Status.Loading);
-        initConfig();
-
-        async function initConfig() {
-            let attempt = 0;
-            const load = () =>
-                fetch("/config.json")
-                    .then((res) => res.json())
-                    .catch(async () => {
-                        if (attempt < 2) {
-                            return new Promise((resolve) => {
-                                timeOutId = window.setTimeout(async () => {
-                                    ++attempt;
-                                    resolve(await load());
-                                }, Math.pow(2, attempt) * 1000);
-                            });
-                        }
-                    });
-
-            const cfg = await load();
-            if (cfg) {
-                dispatch(explorerActions.setConfig(cfg));
-            }
-            setConfigStatus(Status.Ready);
-        }
-
-        return () => {
-            clearTimeout(timeOutId);
-        };
-    }, [dispatch, configStatus]);
 
     return (
         <>

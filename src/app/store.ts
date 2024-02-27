@@ -1,5 +1,6 @@
 import { combineReducers, configureStore } from "@reduxjs/toolkit";
 import { setupListeners } from "@reduxjs/toolkit/query";
+import { dataV2Api } from "apis/dataV2/dataV2Api";
 import { TypedUseSelectorHook, useDispatch, useSelector } from "react-redux";
 
 import { areaReducer } from "features/area";
@@ -18,11 +19,12 @@ import { manholeReducer } from "features/manhole";
 import { measureReducer } from "features/measure";
 import { myLocationReducer } from "features/myLocation";
 import { offlineReducer } from "features/offline";
-import { omega365Reducer } from "features/omega365";
 import { orthoCamReducer } from "features/orthoCam";
 import { clippingOutlineLaserReducer } from "features/outlineLaser";
+import { pimsReducer } from "features/pims";
 import { pointLineReducer } from "features/pointLine";
 import { propertiesReducer } from "features/properties/slice";
+import { propertyTreeApi, propertyTreeReducer } from "features/propertyTree";
 import { renderReducer } from "features/render/renderSlice";
 import { selectionBasketReducer } from "features/selectionBasket";
 import { xsiteManageApi, xsiteManageReducer } from "features/xsiteManage";
@@ -50,7 +52,9 @@ const rootReducer = combineReducers({
     selectionBasket: selectionBasketReducer,
     properties: propertiesReducer,
     offline: offlineReducer,
-    omega365: omega365Reducer,
+    pims: pimsReducer,
+    propertyTree: propertyTreeReducer,
+    [propertyTreeApi.reducerPath]: propertyTreeApi.reducer,
     [bimCollabApi.reducerPath]: bimCollabApi.reducer,
     bimTrack: bimTrackReducer,
     [bimTrackApi.reducerPath]: bimTrackApi.reducer,
@@ -60,6 +64,7 @@ const rootReducer = combineReducers({
     [jiraApi.reducerPath]: jiraApi.reducer,
     xsiteManage: xsiteManageReducer,
     [xsiteManageApi.reducerPath]: xsiteManageApi.reducer,
+    [dataV2Api.reducerPath]: dataV2Api.reducer,
 });
 
 export const store = configureStore({
@@ -75,7 +80,9 @@ export const store = configureStore({
             .concat(bimTrackApi.middleware)
             .concat(ditioApi.middleware)
             .concat(jiraApi.middleware)
-            .concat(xsiteManageApi.middleware),
+            .concat(xsiteManageApi.middleware)
+            .concat(propertyTreeApi.middleware)
+            .concat(dataV2Api.middleware),
 });
 
 setupListeners(store.dispatch);

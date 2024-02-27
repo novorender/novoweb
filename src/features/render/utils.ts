@@ -97,10 +97,6 @@ export function isGlSpace(up: Vec3 | undefined) {
     return !vec3.equals(up ?? [0, 1, 0], [0, 0, 1]);
 }
 
-export function latLon2Tm({ up, coords, tmZone }: { up?: Vec3; coords: GeoLocation; tmZone: string }) {
-    if (isGlSpace(up)) {
-        return flip(dataApi.latLon2tm(coords, tmZone));
-    }
-
-    return dataApi.latLon2tm(coords, tmZone);
+export function latLon2Tm({ coords, tmZone }: { coords: GeoLocation; tmZone: string }) {
+    return flip(dataApi.latLon2tm(coords, tmZone));
 }

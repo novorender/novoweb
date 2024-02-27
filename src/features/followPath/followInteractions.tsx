@@ -90,18 +90,17 @@ export function FollowInteractions() {
 
     const stepFollow = (dir: number) => {
         if (fpObj) {
-            if (!profileRange) {
-                return;
-            }
             const p = Number(profile);
             let next = p + dir * Number(step || "1");
             if (Number.isNaN(next)) {
                 next = 1;
             }
-            if (next > profileRange.max) {
-                next = profileRange.max;
-            } else if (next < profileRange.min) {
-                next = profileRange.min;
+            if (profileRange) {
+                if (next > profileRange.max) {
+                    next = profileRange.max;
+                } else if (next < profileRange.min) {
+                    next = profileRange.min;
+                }
             }
 
             dispatch(followPathActions.setProfile(next.toFixed(3)));

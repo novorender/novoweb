@@ -90,3 +90,10 @@ jobs:
             app-name: ${{ env.APP }}-wa-${{ env.environment }}
             package: .
             slot-name: staging
+            
+      - name: "Swap slots"
+        run: |
+          az webapp deployment slot swap --resource-group ${{ env.MODULE }}-${{ env.environment }} --name ${{ env.APP }}-wa-${{ env.environment }} --slot staging --target-slot production
+        env:
+          AZURE_WEBAPP_NAME: ${{ env.APP }}-wa-${{ env.environment }}
+          RESOURCE_GROUP: ${{ env.MODULE }}-${{ env.environment }}
