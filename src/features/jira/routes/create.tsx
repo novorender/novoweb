@@ -202,6 +202,9 @@ export function CreateIssue({ sceneId }: { sceneId: string }) {
                     : { components: [{ id: component.id }] }),
                 ...(formValues.duedate ? { duedate: format(new Date(formValues.duedate), "yyyy-MM-dd") } : {}),
                 ...(formValues.parent ? { parent: { key: formValues.parent.key } } : {}),
+                ...(formValues.fixVersions
+                    ? { fixVersions: formValues.fixVersions.map((ver: { id: string }) => ({ id: ver.id })) }
+                    : {}),
             },
         };
 
@@ -228,7 +231,7 @@ export function CreateIssue({ sceneId }: { sceneId: string }) {
         return null;
     }
 
-    const { summary, description, components, assignee, duedate, parent } =
+    const { summary, description, components, assignee, duedate, parent, fixVersions } =
         createIssueMetadata ?? ({} as CreateIssueMetadata["fields"]);
 
     const loadingFormMeta = isUninitializedCreateIssueMetadata || isFetchingCreateIssueMetadata;
@@ -467,6 +470,49 @@ export function CreateIssue({ sceneId }: { sceneId: string }) {
                                             renderOption={(props, option) => (
                                                 <li {...props} key={option.accountId}>
                                                     {option.displayName}
+                                                </li>
+                                            )}
+                                        />
+                                    </FormControl>
+                                )}
+
+                                {fixVersions && (
+                                    <FormControl component="fieldset" fullWidth size="small" sx={{ mb: 2 }}>
+                                        <Box
+                                            width={1}
+                                            display="flex"
+                                            justifyContent="space-between"
+                                            alignItems="center"
+                                        >
+                                            <FormLabel
+                                                sx={{ fontWeight: 600, color: "text.secondary" }}
+                                                htmlFor={"jiraFixVersions"}
+                                            >
+                                                {fixVersions.name}
+                                            </FormLabel>
+                                        </Box>
+                                        <Autocomplete
+                                            id="jiraFixVersions"
+                                            fullWidth
+                                            multiple
+                                            options={fixVersions.allowedValues}
+                                            getOptionLabel={(opt) => `${opt.name}`}
+                                            isOptionEqualToValue={(option, value) => option.id === value.id}
+                                            value={formValues.fixVersions ?? []}
+                                            size="small"
+                                            onChange={(_e, value) => {
+                                                setFormValues((state) => ({ ...state, fixVersions: value }));
+                                            }}
+                                            renderInput={(params) => (
+                                                <TextField
+                                                    required={fixVersions.required && !fixVersions.hasDefaultValue}
+                                                    variant="outlined"
+                                                    {...params}
+                                                />
+                                            )}
+                                            renderOption={(props, option) => (
+                                                <li {...props} key={option.id}>
+                                                    {option.name}
                                                 </li>
                                             )}
                                         />
