@@ -6,8 +6,8 @@ import { useAppDispatch } from "app/store";
 import { Tooltip } from "components";
 import { hiddenActions, useDispatchHidden } from "contexts/hidden";
 import { highlightActions, useDispatchHighlighted } from "contexts/highlighted";
-import { ColorPicker } from "features/colorPicker";
 import { vecToRgb } from "utils/color";
+import { getFileNameFromPath } from "utils/objectData";
 
 import { clippingOutlineLaserActions, OutlineGroup } from "./outlineLaserSlice";
 
@@ -25,13 +25,8 @@ export const StyledCheckbox = styled(Checkbox)`
 `;
 
 export function ClippedObject({ file }: { file: OutlineGroup }) {
-    const [colorPickerAnchor, setColorPickerAnchor] = useState<HTMLElement | null>(null);
     const [hidden, setSetHidden] = useState(false);
     const dispatch = useAppDispatch();
-
-    // const toggleColorPicker = (event?: MouseEvent<HTMLElement>) => {
-    //     setColorPickerAnchor(!colorPickerAnchor && event?.currentTarget ? event.currentTarget : null);
-    // };
 
     const toggleHidden = () => {
         setSetHidden(!hidden);
@@ -59,7 +54,7 @@ export function ClippedObject({ file }: { file: OutlineGroup }) {
                 <Box display="flex" width={1} alignItems="center">
                     <Box flex="1 1 auto" overflow="hidden">
                         <Tooltip title={file.name}>
-                            <Typography noWrap={true}>{file.name}</Typography>
+                            <Typography noWrap={true}>{getFileNameFromPath(file.name)}</Typography>
                         </Tooltip>
                     </Box>
                     <Box flex="0 0 auto">
@@ -74,20 +69,8 @@ export function ClippedObject({ file }: { file: OutlineGroup }) {
                             onChange={toggleHidden}
                         />
                     </Box>
-                    {/* <Box flex="0 0 auto">
-                        <Button sx={{ padding: 0, alignSelf: "start" }} color="grey" onClick={toggleColorPicker}>
-                            <ColorLens sx={{ color: `rgb(${r}, ${g}, ${b})` }} fontSize="small" />
-                        </Button>
-                    </Box> */}
                 </Box>
             </ListItemButton>
-            <ColorPicker
-                open={Boolean(colorPickerAnchor)}
-                anchorEl={colorPickerAnchor}
-                onClose={() => setColorPickerAnchor(null)}
-                color={file.color}
-                onChangeComplete={() => {}}
-            />
         </>
     );
 }

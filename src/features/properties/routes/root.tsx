@@ -278,6 +278,7 @@ export function Root() {
                 </Box>
             ) : null}
             <ScrollBox pb={2} {...bindResizeHandlers()}>
+                {mainObject === undefined && <Box p={1}>Select an object to view properties.</Box>}
                 {mainObject !== undefined && object ? (
                     <>
                         <PropertyList
