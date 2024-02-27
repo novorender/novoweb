@@ -117,17 +117,17 @@ export function iFeatureToLayerFeature(drawingInfo: LayerDrawingInfo, feature: I
     };
 }
 
-const DEFAULT_POLYGON_SYMBOL: FeatureSymbol = {
-    type: "esriSFS",
-    style: "esriSFSDiagonalCross",
-    color: [230, 0, 0, 255],
-    outline: {
-        color: [0, 0, 0, 255],
-        width: 1,
-        type: "esriSLS",
-        style: "esriSLSSolid",
-    },
-};
+// const DEFAULT_POLYGON_SYMBOL: FeatureSymbol = {
+//     type: "esriSFS",
+//     style: "esriSFSDiagonalCross",
+//     color: [230, 0, 0, 255],
+//     outline: {
+//         color: [0, 0, 0, 255],
+//         width: 1,
+//         type: "esriSLS",
+//         style: "esriSLSSolid",
+//     },
+// };
 
 function computeFeatureSymbol(drawingInfo: LayerDrawingInfo, feature: IFeature): FeatureSymbol | undefined {
     if (drawingInfo.renderer.type === "simple") {
