@@ -1,5 +1,5 @@
 import { Box, Popover, PopoverProps } from "@mui/material";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { ChromePicker, ColorChangeHandler } from "react-color";
 
 import { VecRGB, VecRGBA, vecToRgb } from "utils/color";
@@ -12,6 +12,10 @@ type Props = Omit<PopoverProps, "color"> & {
 
 export function ColorPicker({ color, onChangeComplete, disableAlpha, ...popoverProps }: Props) {
     const [{ r, g, b, a }, setPickerColor] = useState(vecToRgb(color));
+
+    useEffect(() => {
+        setPickerColor(vecToRgb(color));
+    }, [color]);
 
     return (
         <Popover {...popoverProps}>
