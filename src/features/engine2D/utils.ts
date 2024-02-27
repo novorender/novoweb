@@ -10,6 +10,7 @@ export interface ColorSettings {
     outlineColor?: string;
     complexCylinder?: boolean;
     displayAllPoints?: boolean;
+    lineDash?: number[];
 }
 
 export interface TextSettings {
@@ -288,6 +289,9 @@ function drawLinesOrPolygon(
             drawArrow(ctx, part.vertices2D[0], dir, 20);
         }
         ctx.beginPath();
+        if (colorSettings.lineDash) {
+            ctx.setLineDash(colorSettings.lineDash);
+        }
         ctx.moveTo(part.vertices2D[0][0], part.vertices2D[0][1]);
 
         for (let i = 1; i < part.vertices2D.length; ++i) {
@@ -308,6 +312,9 @@ function drawLinesOrPolygon(
                 ctx.beginPath();
                 ctx.moveTo(part.vertices2D[i][0], part.vertices2D[i][1]);
             }
+        }
+        if (colorSettings.lineDash) {
+            ctx.setLineDash([]);
         }
 
         if (part.voids) {

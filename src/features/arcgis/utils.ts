@@ -117,6 +117,18 @@ export function iFeatureToLayerFeature(drawingInfo: LayerDrawingInfo, feature: I
     };
 }
 
+const DEFAULT_POLYGON_SYMBOL: FeatureSymbol = {
+    type: "esriSFS",
+    style: "esriSFSDiagonalCross",
+    color: [230, 0, 0, 255],
+    outline: {
+        color: [0, 0, 0, 255],
+        width: 1,
+        type: "esriSLS",
+        style: "esriSLSSolid",
+    },
+};
+
 function computeFeatureSymbol(drawingInfo: LayerDrawingInfo, feature: IFeature): FeatureSymbol | undefined {
     if (drawingInfo.renderer.type === "simple") {
         return drawingInfo.renderer.symbol;
@@ -125,8 +137,14 @@ function computeFeatureSymbol(drawingInfo: LayerDrawingInfo, feature: IFeature):
         const matchingStyle = drawingInfo.renderer.uniqueValueInfos.find((info) => info.value === fieldValue);
         if (matchingStyle) {
             return matchingStyle.symbol;
+        } else if (drawingInfo.renderer.defaultSymbol) {
+            return drawingInfo.renderer.defaultSymbol;
         }
     }
+
+    // if (feature.geometry && "rings" in feature.geometry) {
+    //     return DEFAULT_POLYGON_SYMBOL;
+    // }
 }
 
 export function getTotalAabb2(aabbs: AABB2[]): AABB2 {

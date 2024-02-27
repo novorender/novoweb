@@ -230,51 +230,12 @@ function colorRgbaToString(color: ColorRGBA) {
     return `rgba(${color[0]} ${color[1]} ${color[2]} / ${color[3] / 255})`;
 }
 
-function drawPolyline(
-    drawCtx: DrawingContext,
-    feature: LayerFeature,
-    geometry: FeatureGeometryPolyline,
-    drawingInfo: LayerDrawingInfo,
-    isSelected: boolean
-) {
-    let lineWidth = 1;
-    let lineColor = "#83568d";
-    if (drawingInfo.renderer.type === "simple") {
-        const { symbol } = drawingInfo.renderer;
-        if (symbol?.type === "esriSLS") {
-            lineWidth = symbol.width;
-            lineColor = colorRgbaToString(symbol.color);
-        }
-
-        if (isSelected) {
-            lineWidth = 4;
-            lineColor = drawCtx.selectedColor;
-        }
-    }
-
-    for (const path of geometry.paths) {
-        drawCtx.draw.getDrawObjectFromPoints(path, false, false, false)?.objects.forEach((obj) => {
-            obj.parts.forEach((part) =>
-                drawPart(
-                    drawCtx.ctx,
-                    drawCtx.cameraState,
-                    part,
-                    {
-                        lineColor,
-                    },
-                    lineWidth
-                )
-            );
-        });
-    }
-}
-
 type DrawStyle = {
     colorSettings: ColorSettings;
     pixelWidth?: number;
 };
 
-function drawStyleForSymbol(drawCtx: DrawingContext, symbol: FeatureSymbol): DrawStyle | undefined {
+function getDrawStyleForSymbol(drawCtx: DrawingContext, symbol: FeatureSymbol): DrawStyle | undefined {
     let result = drawCtx.drawStyleCache.get(symbol);
     if (result) {
         return result;
@@ -290,32 +251,93 @@ function drawStyleForSymbol(drawCtx: DrawingContext, symbol: FeatureSymbol): Dra
                 pixelWidth: symbol.outline.width,
             };
         } else if (symbol.style === "esriSFSBackwardDiagonal") {
-            const patternCanvas = document.createElement("canvas");
-            const patternCtx = patternCanvas.getContext("2d")!;
+            const pattern = createPattern(drawCtx.ctx, (patternCanvas, patternCtx) => {
+                patternCanvas.width = 50;
+                patternCanvas.height = 50;
 
-            // Give the pattern a width and height of 50
-            patternCanvas.width = 50;
-            patternCanvas.height = 50;
-
-            // Give the pattern a background color and draw an arc
-            patternCtx.strokeStyle = colorRgbaToString(symbol.color);
-            const offset = 2;
-            for (let i = 1; i <= 5; i++) {
-                patternCtx.moveTo(10 * i + offset, -offset);
-                patternCtx.lineTo(-offset, 10 * i + offset);
-                patternCtx.moveTo(50 + offset, 10 * i - offset);
-                patternCtx.lineTo(10 * i - offset, 50 + offset);
-            }
-            patternCtx.stroke();
-
-            const pattern = drawCtx.ctx.createPattern(patternCanvas, "repeat")!;
-
-            patternCanvas.remove();
+                patternCtx.strokeStyle = colorRgbaToString(symbol.color);
+                patternCtx.lineWidth = symbol.outline?.width ?? 1;
+                const offset = 2;
+                for (let i = 1; i <= 5; i++) {
+                    patternCtx.moveTo(10 * i + offset, -offset);
+                    patternCtx.lineTo(-offset, 10 * i + offset);
+                    patternCtx.moveTo(50 + offset, 10 * i - offset);
+                    patternCtx.lineTo(10 * i - offset, 50 + offset);
+                }
+                patternCtx.stroke();
+            });
 
             result = {
                 colorSettings: {
                     fillColor: pattern,
                 },
+            };
+        } else if (symbol.style === "esriSFSForwardDiagonal") {
+            const pattern = createPattern(drawCtx.ctx, (patternCanvas, patternCtx) => {
+                patternCanvas.width = 50;
+                patternCanvas.height = 50;
+
+                patternCtx.strokeStyle = colorRgbaToString(symbol.color);
+                patternCtx.lineWidth = symbol.outline?.width ?? 1;
+                const offset = 2;
+                for (let i = 1; i <= 5; i++) {
+                    patternCtx.moveTo(10 * i - offset, -offset);
+                    patternCtx.lineTo(50 + offset, 50 - 10 * i + offset);
+                    patternCtx.moveTo(-offset, 10 * i - offset);
+                    patternCtx.lineTo(50 - 10 * i + offset, 50 + offset);
+                }
+                patternCtx.stroke();
+            });
+
+            result = {
+                colorSettings: {
+                    fillColor: pattern,
+                },
+            };
+        } else if (symbol.style === "esriSFSDiagonalCross") {
+            const pattern = createPattern(drawCtx.ctx, (patternCanvas, patternCtx) => {
+                patternCanvas.width = 10;
+                patternCanvas.height = 10;
+
+                patternCtx.strokeStyle = colorRgbaToString(symbol.color);
+                patternCtx.lineWidth = symbol.outline?.width ?? 1;
+                patternCtx.moveTo(-2, -2);
+                patternCtx.lineTo(12, 12);
+                patternCtx.moveTo(12, -2);
+                patternCtx.lineTo(-2, 12);
+                patternCtx.stroke();
+            });
+
+            result = {
+                colorSettings: {
+                    fillColor: pattern,
+                },
+            };
+        }
+    } else if (symbol.type === "esriSLS") {
+        const lineColor = colorRgbaToString(symbol.color);
+        if (symbol.style === "esriSLSSolid") {
+            result = {
+                colorSettings: {
+                    lineColor,
+                },
+                pixelWidth: symbol.width,
+            };
+        } else if (symbol.style === "esriSLSDash") {
+            result = {
+                colorSettings: {
+                    lineColor,
+                    lineDash: [5, 5],
+                },
+                pixelWidth: symbol.width,
+            };
+        } else if (symbol.style === "esriSLSDashDot") {
+            result = {
+                colorSettings: {
+                    lineColor,
+                    lineDash: [5, 5, 2, 5],
+                },
+                pixelWidth: symbol.width,
             };
         }
     }
@@ -326,15 +348,26 @@ function drawStyleForSymbol(drawCtx: DrawingContext, symbol: FeatureSymbol): Dra
     return result;
 }
 
-const DEFAULT_POLYGON_DRAW_STYLE: DrawStyle = {
-    colorSettings: {
-        lineColor: "#83568d",
-        fillColor: "#59769fbb",
-    },
-    pixelWidth: 2,
-};
+function createPattern(
+    baseCtx: CanvasRenderingContext2D,
+    produce: (canvas: HTMLCanvasElement, ctx: CanvasRenderingContext2D) => void
+) {
+    const patternCanvas = document.createElement("canvas");
+    try {
+        const patternCtx = patternCanvas.getContext("2d")!;
+        produce(patternCanvas, patternCtx);
+        return baseCtx.createPattern(patternCanvas, "repeat")!;
+    } finally {
+        patternCanvas.remove();
+    }
+}
 
 const SELECTED_POLYGON_COLOR_SETTINGS: ColorSettings = {
+    lineColor: "#29B6F6",
+    fillColor: "#29B6F677",
+};
+
+const SELECTED_POLYLINE_COLOR_SETTINGS: ColorSettings = {
     lineColor: "#29B6F6",
     fillColor: "#29B6F677",
 };
@@ -350,7 +383,7 @@ function drawPolygon(
         return;
     }
 
-    const drawStyle = drawStyleForSymbol(drawCtx, feature.computedSymbol);
+    const drawStyle = getDrawStyleForSymbol(drawCtx, feature.computedSymbol);
 
     if (!drawStyle) {
         return;
@@ -365,6 +398,38 @@ function drawPolygon(
 
                 if (isSelected) {
                     drawPart(drawCtx.ctx, drawCtx.cameraState, part, SELECTED_POLYGON_COLOR_SETTINGS, 2);
+                }
+            });
+        });
+    }
+}
+
+function drawPolyline(
+    drawCtx: DrawingContext,
+    feature: LayerFeature,
+    geometry: FeatureGeometryPolyline,
+    drawingInfo: LayerDrawingInfo,
+    isSelected: boolean
+) {
+    if (!feature.computedSymbol) {
+        return;
+    }
+
+    const drawStyle = getDrawStyleForSymbol(drawCtx, feature.computedSymbol);
+
+    if (!drawStyle) {
+        return;
+    }
+
+    const { colorSettings, pixelWidth = 2 } = drawStyle;
+
+    for (const path of geometry.paths) {
+        drawCtx.draw.getDrawObjectFromPoints(path, false, false, false)?.objects.forEach((obj) => {
+            obj.parts.forEach((part) => {
+                drawPart(drawCtx.ctx, drawCtx.cameraState, part, colorSettings, pixelWidth);
+
+                if (isSelected) {
+                    drawPart(drawCtx.ctx, drawCtx.cameraState, part, SELECTED_POLYLINE_COLOR_SETTINGS, 2);
                 }
             });
         });

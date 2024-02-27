@@ -50,14 +50,14 @@ export type LayerStyleEsriPMS = {
 
 export type LayerStyleEsriSLS = {
     type: "esriSLS";
-    style: "esriSLSSolid";
+    style: "esriSLSSolid" | "esriSLSDash" | "esriSLSDashDot";
     color: ColorRGBA;
     width: number;
 };
 
 export type LayerStyleEsriSFS = {
     type: "esriSFS";
-    style: "esriSFSSolid" | "esriSFSBackwardDiagonal";
+    style: "esriSFSSolid" | "esriSFSBackwardDiagonal" | "esriSFSForwardDiagonal" | "esriSFSDiagonalCross";
     color: ColorRGBA;
     outline: LayerStyleEsriSLS;
 };
@@ -69,6 +69,7 @@ export type UniqueValueRenderer = {
     field1: string;
     fieldDelimiter: string;
     uniqueValueInfos: UniqueValueInfo[];
+    defaultSymbol: FeatureSymbol;
 };
 
 export type UniqueValueInfo = {
