@@ -65,3 +65,9 @@ export function rgbToHex(color: RGB, argb = false): Hex {
         ? `#${toHex((color.a ?? 1) * 255)}${toHex(color.r)}${toHex(color.g)}${toHex(color.b)}`
         : `#${toHex(color.r)}${toHex(color.g)}${toHex(color.b)}${toHex((color.a ?? 1) * 255)}`;
 }
+
+export function hslToVec(h: number, s: number, l: number): VecRGB {
+    const a = s * Math.min(l, 1 - l);
+    const f = (n: number, k = (n + h / 30) % 12) => l - a * Math.max(Math.min(k - 3, 9 - k, 1), -1);
+    return [f(0), f(8), f(4)];
+}

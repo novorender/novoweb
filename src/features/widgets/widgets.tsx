@@ -14,7 +14,7 @@ import {
 } from "slices/explorerSlice";
 
 const Properties = lazy(() => import("features/properties/properties"));
-const PropertiesTree = lazy(() => import("features/propertiesTree/propertiesTree"));
+const PropertiesTree = lazy(() => import("features/propertyTree/propertyTree"));
 const Bookmarks = lazy(() => import("features/bookmarks/bookmarksWidget"));
 const ModelTree = lazy(() => import("features/modelTree/modelTree"));
 const Search = lazy(() => import("features/search/search"));

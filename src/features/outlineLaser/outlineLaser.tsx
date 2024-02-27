@@ -33,7 +33,7 @@ import {
 import WidgetList from "features/widgetList/widgetList";
 import { useToggle } from "hooks/useToggle";
 import { selectMaximized, selectMinimized } from "slices/explorerSlice";
-import { VecRGB } from "utils/color";
+import { hslToVec } from "utils/color";
 import { getFilePathFromObjectPath } from "utils/objectData";
 import { searchByPatterns } from "utils/search";
 
@@ -91,7 +91,7 @@ export default function ClippingOutline() {
             const increments = 360 / filePaths.size;
             for (const f of filePaths) {
                 const ids = await getFileId(f);
-                files.push({ name: f, color: hsl2rgb(increments * i, 1, 0.5) as VecRGB, hidden: false, ids });
+                files.push({ name: f, color: hslToVec(increments * i, 1, 0.5), hidden: false, ids });
                 ++i;
             }
             dispatch(clippingOutlineLaserActions.setOutlineGroups(files));
@@ -253,10 +253,4 @@ export default function ClippingOutline() {
             <LogoSpeedDial open={menuOpen} toggle={toggleMenu} />
         </>
     );
-}
-
-function hsl2rgb(h: number, s: number, l: number) {
-    const a = s * Math.min(l, 1 - l);
-    const f = (n: number, k = (n + h / 30) % 12) => l - a * Math.max(Math.min(k - 3, 9 - k, 1), -1);
-    return [f(0), f(8), f(4)];
 }

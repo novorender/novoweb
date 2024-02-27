@@ -1,4 +1,5 @@
 import { BaseQueryFn, createApi, FetchArgs, fetchBaseQuery, FetchBaseQueryError } from "@reduxjs/toolkit/query/react";
+import { minutesToSeconds } from "date-fns";
 
 import { RootState } from "app/store";
 import { selectConfig } from "slices/explorerSlice";
@@ -45,6 +46,7 @@ const dynamicBaseQuery: BaseQueryFn<string | FetchArgs, unknown, FetchBaseQueryE
 export const dataV2Api = createApi({
     reducerPath: "dataV2",
     baseQuery: dynamicBaseQuery,
+    tagTypes: ["PropertyTreeFavorites"],
     endpoints: (builder) => ({
         isOmega365ConfiguredForProject: builder.query<{ configured: boolean }, { projectId: string }>({
             query: ({ projectId }) => `/explorer/${projectId}/omega365/configured`,
@@ -52,7 +54,40 @@ export const dataV2Api = createApi({
         getOmega365DocumentLinks: builder.query<Omega365Document[], { projectId: string; objectId: number }>({
             query: ({ projectId, objectId }) => `/explorer/${projectId}/omega365/documents/${objectId}`,
         }),
+        getPropertyTreeFavorites: builder.query<string[], { projectId: string }>({
+            query: ({ projectId }) => `/explorer/${projectId}/propertytree/favorites`,
+            keepUnusedDataFor: minutesToSeconds(10),
+            providesTags: ["PropertyTreeFavorites"],
+            transformResponse: (data: { propertyName: string }[]) => data.map(({ propertyName }) => propertyName),
+        }),
+        setPropertyTreeFavorites: builder.mutation<void, { favorites: string[]; projectId: string }>({
+            query: ({ projectId, favorites }) => ({
+                url: `/explorer/${projectId}/propertytree/favorites`,
+                method: "PUT",
+                body: favorites.map((propertyName) => ({ propertyName })),
+            }),
+            invalidatesTags: ["PropertyTreeFavorites"],
+            async onQueryStarted({ favorites, projectId }, { dispatch, queryFulfilled }) {
+                const patchResult = dispatch(
+                    dataV2Api.util.updateQueryData("getPropertyTreeFavorites", { projectId }, () => favorites)
+                );
+                try {
+                    await queryFulfilled;
+                } catch {
+                    patchResult.undo();
+                }
+            },
+        }),
+        getProject: builder.query<NonNullable<unknown>, { projectId: string }>({
+            query: ({ projectId }) => `/projects/${projectId}`,
+        }),
     }),
 });
 
-export const { useIsOmega365ConfiguredForProjectQuery, useGetOmega365DocumentLinksQuery } = dataV2Api;
+export const {
+    useIsOmega365ConfiguredForProjectQuery,
+    useGetOmega365DocumentLinksQuery,
+    useGetPropertyTreeFavoritesQuery,
+    useSetPropertyTreeFavoritesMutation,
+    useLazyGetProjectQuery,
+} = dataV2Api;

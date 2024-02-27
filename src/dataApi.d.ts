@@ -157,6 +157,15 @@ declare module "@novorender/data-js-api" {
                   }[];
               }
             | undefined;
+        propertyTree?: {
+            property: string;
+            groups: {
+                propertyValue: string;
+                ids: number[];
+                color: [number, number, number, number];
+                status: "hidden" | "selected";
+            }[];
+        };
     };
 
     interface Bookmark {

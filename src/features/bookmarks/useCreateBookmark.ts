@@ -23,6 +23,7 @@ import {
     TraceMeasurement,
 } from "features/outlineLaser";
 import { selectPointLines } from "features/pointLine";
+import { selectPropertyTreeBookmarkState } from "features/propertyTree/slice";
 import {
     selectBackground,
     selectClippingPlanes,
@@ -58,6 +59,7 @@ export function useCreateBookmark() {
     const deviations = useAppSelector(selectPoints).deviation;
     const outlineLasers = useAppSelector(selectOutlineLasers);
     const laserPlane = useAppSelector(selectOutlineLaserPlane);
+    const propertyTree = useAppSelector(selectPropertyTreeBookmarkState);
 
     const {
         state: { view },
@@ -182,7 +184,6 @@ export function useCreateBookmark() {
                               profileRange: followPath.profileRange,
                           }
                         : undefined,
-
                 outlineMeasure:
                     outlineLasers.length > 0 && laserPlane
                         ? {
@@ -213,6 +214,7 @@ export function useCreateBookmark() {
                               }[],
                           }
                         : undefined,
+                ...(propertyTree ? { propertyTree } : {}),
             },
         };
     };
