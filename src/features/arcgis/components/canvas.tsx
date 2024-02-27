@@ -1,4 +1,4 @@
-import { DrawModule, DrawProduct } from "@novorender/api";
+import { DrawModule } from "@novorender/api";
 import { ColorRGBA } from "@novorender/webgl-api";
 import { MutableRefObject, useCallback, useEffect, useRef, useState } from "react";
 
@@ -6,16 +6,18 @@ import { useAppSelector } from "app/store";
 import { Canvas2D } from "components";
 import { useExplorerGlobals } from "contexts/explorerGlobals";
 import { CameraState, drawPart, getCameraState } from "features/engine2D";
+import { ColorSettings } from "features/engine2D/utils";
 import { AsyncStatus } from "types/misc";
 
 import {
     FeatureGeometryPoint,
     FeatureGeometryPolygon,
     FeatureGeometryPolyline,
+    LayerFeature,
     selectArcgisFeatureServers,
     selectArcgisSelectedFeature,
 } from "../arcgisSlice";
-import { LayerDrawingInfo, LayerGeometryType } from "../arcgisTypes";
+import { FeatureSymbol, LayerDrawingInfo, LayerGeometryType } from "../arcgisTypes";
 import { useIsCameraSetCorrectly } from "../hooks/useIsCameraSetCorrectly";
 import {
     b64toBlob,
@@ -37,15 +39,11 @@ export function ArcgisCanvas({
     const [canvas, setCanvas] = useState<HTMLCanvasElement | null>(null);
     const [ctx, setCtx] = useState<CanvasRenderingContext2D | null>(null);
     const imageMap = useRef(new Map<string, ImageBitmap>());
-    const drawObjectCache = useRef(new WeakMap<object, DrawProduct | undefined>());
+    const drawStyleCache = useRef(new WeakMap<FeatureSymbol, DrawStyle>());
 
     const featureServers = useAppSelector(selectArcgisFeatureServers);
     const selectedFeature = useAppSelector(selectArcgisSelectedFeature);
     const isCameraSetCorrectly = useIsCameraSetCorrectly(isSuitableCameraForArcgis);
-
-    useEffect(() => {
-        drawObjectCache.current = new WeakMap<object, DrawProduct | undefined>();
-    }, [view, ctx, canvas, featureServers, selectedFeature]);
 
     const draw = useCallback(() => {
         if (!view?.measure || !ctx || !canvas || featureServers.status !== AsyncStatus.Success) {
@@ -65,6 +63,7 @@ export function ArcgisCanvas({
             cameraState,
             selectedColor: "#29B6F6",
             imageMap: imageMap.current,
+            drawStyleCache: drawStyleCache.current,
         };
 
         for (const featureServer of featureServers.data) {
@@ -77,8 +76,8 @@ export function ArcgisCanvas({
                     continue;
                 }
 
-                for (let i = 0; i < layer.features.data.length; i++) {
-                    const { geometry, attributes, aabb } = layer.features.data[i];
+                for (const feature of layer.features.data) {
+                    const { geometry, attributes, aabb } = feature;
                     if (!geometry || !aabb || !doAabb2Intersect(aabb, extent)) {
                         continue;
                     }
@@ -99,9 +98,9 @@ export function ArcgisCanvas({
                     );
 
                     if ("paths" in geometry) {
-                        drawPolyline(drawCtx, geometry, layer.definition.data.drawingInfo, isSelected);
+                        drawPolyline(drawCtx, feature, geometry, layer.definition.data.drawingInfo, isSelected);
                     } else if ("rings" in geometry) {
-                        drawPolygon(drawCtx, geometry, layer.definition.data.drawingInfo, isSelected);
+                        drawPolygon(drawCtx, feature, geometry, layer.definition.data.drawingInfo, isSelected);
                     } else {
                         drawPoint(drawCtx, geometry, layer.definition.data.drawingInfo, isSelected);
                     }
@@ -126,17 +125,21 @@ export function ArcgisCanvas({
                         continue;
                     }
 
-                    const { symbol } = layer.definition.data.drawingInfo.renderer;
-                    if (symbol?.type === "esriPMS" && symbol.imageData) {
-                        if (!imageMap.current.has(symbol.imageData) || !imageDataSet.has(symbol.imageData)) {
-                            const promise = createImageBitmap(b64toBlob(symbol.imageData), {
-                                resizeWidth: ptToPx(symbol.width),
-                                resizeHeight: ptToPx(symbol.height),
-                            }).then((image) => imageMap.current.set(symbol.imageData, image));
-                            promises.push(promise);
-                        }
+                    const { renderer } = layer.definition.data.drawingInfo;
+                    if (renderer.type === "simple") {
+                        const { symbol } = renderer;
 
-                        imageDataSet.add(symbol.imageData);
+                        if (symbol?.type === "esriPMS" && symbol.imageData) {
+                            if (!imageMap.current.has(symbol.imageData) || !imageDataSet.has(symbol.imageData)) {
+                                const promise = createImageBitmap(b64toBlob(symbol.imageData), {
+                                    resizeWidth: ptToPx(symbol.width),
+                                    resizeHeight: ptToPx(symbol.height),
+                                }).then((image) => imageMap.current.set(symbol.imageData, image));
+                                promises.push(promise);
+                            }
+
+                            imageDataSet.add(symbol.imageData);
+                        }
                     }
                 }
             }
@@ -220,29 +223,33 @@ type DrawingContext = {
     cameraState: CameraState;
     selectedColor: string;
     imageMap: Map<string, ImageBitmap>;
+    drawStyleCache: WeakMap<FeatureSymbol, DrawStyle>;
 };
 
 function colorRgbaToString(color: ColorRGBA) {
-    return `rgba(${color[0]}, ${color[1]}, ${color[2]}, ${color[3]})`;
+    return `rgba(${color[0]} ${color[1]} ${color[2]} / ${color[3] / 255})`;
 }
 
 function drawPolyline(
     drawCtx: DrawingContext,
+    feature: LayerFeature,
     geometry: FeatureGeometryPolyline,
     drawingInfo: LayerDrawingInfo,
     isSelected: boolean
 ) {
     let lineWidth = 1;
     let lineColor = "#83568d";
-    const { symbol } = drawingInfo.renderer;
-    if (symbol?.type === "esriSLS") {
-        lineWidth = symbol.width;
-        lineColor = colorRgbaToString(symbol.color);
-    }
+    if (drawingInfo.renderer.type === "simple") {
+        const { symbol } = drawingInfo.renderer;
+        if (symbol?.type === "esriSLS") {
+            lineWidth = symbol.width;
+            lineColor = colorRgbaToString(symbol.color);
+        }
 
-    if (isSelected) {
-        lineWidth = 4;
-        lineColor = drawCtx.selectedColor;
+        if (isSelected) {
+            lineWidth = 4;
+            lineColor = drawCtx.selectedColor;
+        }
     }
 
     for (const path of geometry.paths) {
@@ -262,43 +269,104 @@ function drawPolyline(
     }
 }
 
+type DrawStyle = {
+    colorSettings: ColorSettings;
+    pixelWidth?: number;
+};
+
+function drawStyleForSymbol(drawCtx: DrawingContext, symbol: FeatureSymbol): DrawStyle | undefined {
+    let result = drawCtx.drawStyleCache.get(symbol);
+    if (result) {
+        return result;
+    }
+
+    if (symbol.type === "esriSFS") {
+        if (symbol.style === "esriSFSSolid") {
+            result = {
+                colorSettings: {
+                    lineColor: colorRgbaToString(symbol.outline.color),
+                    fillColor: colorRgbaToString(symbol.color),
+                },
+                pixelWidth: symbol.outline.width,
+            };
+        } else if (symbol.style === "esriSFSBackwardDiagonal") {
+            const patternCanvas = document.createElement("canvas");
+            const patternCtx = patternCanvas.getContext("2d")!;
+
+            // Give the pattern a width and height of 50
+            patternCanvas.width = 50;
+            patternCanvas.height = 50;
+
+            // Give the pattern a background color and draw an arc
+            patternCtx.strokeStyle = colorRgbaToString(symbol.color);
+            const offset = 2;
+            for (let i = 1; i <= 5; i++) {
+                patternCtx.moveTo(10 * i + offset, -offset);
+                patternCtx.lineTo(-offset, 10 * i + offset);
+                patternCtx.moveTo(50 + offset, 10 * i - offset);
+                patternCtx.lineTo(10 * i - offset, 50 + offset);
+            }
+            patternCtx.stroke();
+
+            const pattern = drawCtx.ctx.createPattern(patternCanvas, "repeat")!;
+
+            patternCanvas.remove();
+
+            result = {
+                colorSettings: {
+                    fillColor: pattern,
+                },
+            };
+        }
+    }
+
+    if (result) {
+        drawCtx.drawStyleCache.set(symbol, result);
+    }
+    return result;
+}
+
+const DEFAULT_POLYGON_DRAW_STYLE: DrawStyle = {
+    colorSettings: {
+        lineColor: "#83568d",
+        fillColor: "#59769fbb",
+    },
+    pixelWidth: 2,
+};
+
+const SELECTED_POLYGON_COLOR_SETTINGS: ColorSettings = {
+    lineColor: "#29B6F6",
+    fillColor: "#29B6F677",
+};
+
 function drawPolygon(
     drawCtx: DrawingContext,
+    feature: LayerFeature,
     geometry: FeatureGeometryPolygon,
     drawingInfo: LayerDrawingInfo,
     isSelected: boolean
 ) {
-    let lineWidth = 1;
-    let lineColor = "#83568d";
-    let fillColor = "#59769fbb";
-    const { symbol } = drawingInfo.renderer;
-    if (symbol?.type === "esriSFS") {
-        fillColor = colorRgbaToString(symbol.color);
-        if (symbol.outline.type === "esriSLS") {
-            lineWidth = symbol.outline.width;
-            lineColor = colorRgbaToString(symbol.outline.color);
-        }
+    if (!feature.computedSymbol) {
+        return;
     }
 
-    if (isSelected) {
-        lineColor = drawCtx.selectedColor;
-        lineWidth = 4;
+    const drawStyle = drawStyleForSymbol(drawCtx, feature.computedSymbol);
+
+    if (!drawStyle) {
+        return;
     }
+
+    const { colorSettings, pixelWidth = 2 } = drawStyle;
 
     for (const ring of geometry.rings) {
         drawCtx.draw.getDrawObjectFromPoints(ring, true, false, false)?.objects.forEach((obj) => {
-            obj.parts.forEach((part) =>
-                drawPart(
-                    drawCtx.ctx,
-                    drawCtx.cameraState,
-                    part,
-                    {
-                        lineColor,
-                        fillColor,
-                    },
-                    lineWidth
-                )
-            );
+            obj.parts.forEach((part) => {
+                drawPart(drawCtx.ctx, drawCtx.cameraState, part, colorSettings, pixelWidth);
+
+                if (isSelected) {
+                    drawPart(drawCtx.ctx, drawCtx.cameraState, part, SELECTED_POLYGON_COLOR_SETTINGS, 2);
+                }
+            });
         });
     }
 }
@@ -309,54 +377,58 @@ function drawPoint(
     drawingInfo: LayerDrawingInfo,
     isSelected: boolean
 ) {
-    const { symbol } = drawingInfo.renderer;
+    if (drawingInfo.renderer.type === "simple") {
+        const { symbol } = drawingInfo.renderer;
 
-    if (symbol?.type === "esriPMS") {
-        const image = drawCtx.imageMap.get(symbol.imageData)!;
-        if (!image) {
+        if (symbol?.type === "esriPMS") {
+            const image = drawCtx.imageMap.get(symbol.imageData)!;
+            if (!image) {
+                return;
+            }
+
+            const { ctx } = drawCtx;
+            drawCtx.draw.getDrawObjectFromPoints([[geometry.x, geometry.y, geometry.z]])?.objects.forEach((obj) => {
+                obj.parts.forEach((part) => {
+                    const point = part.vertices2D![0];
+                    const hw = ptToPx(symbol.width) / 2;
+                    const hh = ptToPx(symbol.height) / 2;
+
+                    if (isSelected) {
+                        ctx.fillStyle = drawCtx.selectedColor;
+                        ctx.beginPath();
+                        ctx.arc(point[0], point[1], Math.max(hw, hh), 0, 2 * Math.PI);
+                        ctx.fill();
+                    }
+
+                    const dx = point[0] - hw;
+                    const dy = point[1] - hh;
+                    ctx.drawImage(image, dx, dy);
+                });
+            });
+
             return;
         }
-
-        const { ctx } = drawCtx;
-        drawCtx.draw.getDrawObjectFromPoints([[geometry.x, geometry.y, geometry.z]])?.objects.forEach((obj) => {
-            obj.parts.forEach((part) => {
-                const point = part.vertices2D![0];
-                const hw = ptToPx(symbol.width) / 2;
-                const hh = ptToPx(symbol.height) / 2;
-
-                if (isSelected) {
-                    ctx.fillStyle = drawCtx.selectedColor;
-                    ctx.beginPath();
-                    ctx.arc(point[0], point[1], Math.max(hw, hh), 0, 2 * Math.PI);
-                    ctx.fill();
-                }
-
-                const dx = point[0] - hw;
-                const dy = point[1] - hh;
-                ctx.drawImage(image, dx, dy);
-            });
-        });
-    } else {
-        let pointColor = "red";
-
-        if (isSelected) {
-            pointColor = drawCtx.selectedColor;
-        }
-
-        drawCtx.draw.getDrawObjectFromPoints([[geometry.x, geometry.y, geometry.z]])?.objects.forEach((obj) => {
-            obj.parts.forEach((part) =>
-                drawPart(
-                    drawCtx.ctx,
-                    drawCtx.cameraState,
-                    part,
-                    {
-                        pointColor,
-                    },
-                    2
-                )
-            );
-        });
     }
+
+    let pointColor = "red";
+
+    if (isSelected) {
+        pointColor = drawCtx.selectedColor;
+    }
+
+    drawCtx.draw.getDrawObjectFromPoints([[geometry.x, geometry.y, geometry.z]])?.objects.forEach((obj) => {
+        obj.parts.forEach((part) =>
+            drawPart(
+                drawCtx.ctx,
+                drawCtx.cameraState,
+                part,
+                {
+                    pointColor,
+                },
+                2
+            )
+        );
+    });
 }
 
 function ptToPx(pt: number) {

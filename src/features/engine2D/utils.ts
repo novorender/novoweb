@@ -5,7 +5,7 @@ import { CameraType } from "features/render";
 
 export interface ColorSettings {
     lineColor?: string | CanvasGradient | string[];
-    fillColor?: string;
+    fillColor?: string | CanvasPattern;
     pointColor?: string | { start: string; middle: string; end: string };
     outlineColor?: string;
     complexCylinder?: boolean;
@@ -503,7 +503,7 @@ export function drawLineStrip(
     ctx.stroke();
 }
 
-export function drawPoint(ctx: CanvasRenderingContext2D, point: ReadonlyVec2, color?: string) {
+export function drawPoint(ctx: CanvasRenderingContext2D, point: ReadonlyVec2, color?: string | CanvasPattern) {
     ctx.fillStyle = color ?? "black";
     ctx.lineWidth = 2;
     ctx.strokeStyle = "black";

@@ -12,7 +12,7 @@ import {
     selectArcgisSelectedFeature,
     SelectedFeatureId,
 } from "../arcgisSlice";
-import { findHitFeature, isSuitableCameraForArcgis } from "../utils";
+import { areSelectedFeatureIdsEqual, findHitFeatures, isSuitableCameraForArcgis } from "../utils";
 
 export function useArcgisCanvasClickHandler() {
     const {
@@ -49,7 +49,7 @@ export function useArcgisCanvasClickHandler() {
 
         const sensitivity = pos2d[0] - sensPos[0];
 
-        const selectedFeature = doFindHitFeature(featureServers.data, pos2d, sensitivity);
+        const selectedFeature = doFindHitFeature(featureServers.data, pos2d, sensitivity, prevSelectedFeature);
         if (selectedFeature) {
             let payload: SelectedFeatureId | undefined = selectedFeature;
             if (
@@ -75,8 +75,11 @@ export function useArcgisCanvasClickHandler() {
 function doFindHitFeature(
     featureServers: FeatureServer[],
     pos: vec2,
-    sensitivity: number
+    sensitivity: number,
+    currentlySelected: SelectedFeatureId | undefined
 ): SelectedFeatureId | undefined {
+    const hits: SelectedFeatureId[] = [];
+
     for (const featureServer of featureServers) {
         for (const layer of featureServer.layers) {
             if (
@@ -87,15 +90,30 @@ function doFindHitFeature(
                 continue;
             }
 
-            const feature = findHitFeature(pos, sensitivity, layer.features.data);
-
-            if (feature) {
-                return {
+            for (const feature of findHitFeatures(pos, sensitivity, layer.features.data)) {
+                hits.push({
                     featureServerId: featureServer.id,
                     layerId: layer.id,
                     featureId: feature.attributes[layer.definition.data.objectIdField] as number,
-                };
+                });
             }
         }
     }
+
+    if (hits.length === 0) {
+        return;
+    }
+
+    if (hits.length === 1) {
+        return hits[0];
+    }
+
+    if (currentlySelected) {
+        const currentHitIndex = hits.findIndex((h) => areSelectedFeatureIdsEqual(h, currentlySelected));
+        if (currentHitIndex !== -1) {
+            return hits[(currentHitIndex + 1) % hits.length];
+        }
+    }
+
+    return hits[0];
 }

@@ -5,7 +5,8 @@ import { vec2, vec3 } from "gl-matrix";
 
 import { getCameraState } from "features/engine2D";
 
-import { FeatureGeometry, FeatureServer, Layer, LayerFeature } from "./arcgisSlice";
+import { FeatureGeometry, FeatureServer, Layer, LayerFeature, SelectedFeatureId } from "./arcgisSlice";
+import { FeatureSymbol, LayerDrawingInfo } from "./arcgisTypes";
 
 export function trimRightSlash(s: string) {
     return s && s.replace(/\/$/, "");
@@ -53,7 +54,7 @@ function aabb2ToRect(aabb: AABB2): Rect {
     };
 }
 
-export function iFeatureToLayerFeature(feature: IFeature): LayerFeature {
+export function iFeatureToLayerFeature(drawingInfo: LayerDrawingInfo, feature: IFeature): LayerFeature {
     const { geometry } = feature;
     let newGeometry: FeatureGeometry | undefined = undefined;
     let aabb: AABB2 | undefined;
@@ -112,7 +113,20 @@ export function iFeatureToLayerFeature(feature: IFeature): LayerFeature {
         attributes: feature.attributes,
         geometry: newGeometry,
         aabb,
+        computedSymbol: computeFeatureSymbol(drawingInfo, feature),
     };
+}
+
+function computeFeatureSymbol(drawingInfo: LayerDrawingInfo, feature: IFeature): FeatureSymbol | undefined {
+    if (drawingInfo.renderer.type === "simple") {
+        return drawingInfo.renderer.symbol;
+    } else if (drawingInfo.renderer.type === "uniqueValue") {
+        const fieldValue = feature.attributes[drawingInfo.renderer.field1];
+        const matchingStyle = drawingInfo.renderer.uniqueValueInfos.find((info) => info.value === fieldValue);
+        if (matchingStyle) {
+            return matchingStyle.symbol;
+        }
+    }
 }
 
 export function getTotalAabb2(aabbs: AABB2[]): AABB2 {
@@ -143,11 +157,13 @@ function isPointInAabb2(aabb: AABB2, p: vec2, sensitivity: number) {
     );
 }
 
-export function findHitFeature(pos: vec2, sensitivity: number, features: LayerFeature[]): LayerFeature | undefined {
+export function findHitFeatures(pos: vec2, sensitivity: number, features: LayerFeature[]): LayerFeature[] {
+    const hits = [];
+
     for (let i = 0; i < features.length; i++) {
         const feature = features[i];
         const { geometry, aabb } = feature;
-        if (!aabb || !geometry || !isPointInAabb2(aabb, pos, sensitivity)) {
+        if (!aabb || !geometry || !feature.computedSymbol || !isPointInAabb2(aabb, pos, sensitivity)) {
             continue;
         }
 
@@ -155,22 +171,24 @@ export function findHitFeature(pos: vec2, sensitivity: number, features: LayerFe
             const sqrSensitivity = sensitivity * sensitivity;
             for (const path of geometry.paths) {
                 if (hitsPath(pos, sqrSensitivity, path)) {
-                    return feature;
+                    hits.push(feature);
                 }
             }
         } else if ("rings" in geometry) {
             for (const ring of geometry.rings) {
                 if (hitsPolygon(pos[0], pos[1], ring)) {
-                    return feature;
+                    hits.push(feature);
                 }
             }
         } else {
             const sqrSensitivity = sensitivity * sensitivity;
             if (vec2.sqrDist(pos, vec2.fromValues(geometry.x, geometry.y)) <= sqrSensitivity) {
-                return feature;
+                hits.push(feature);
             }
         }
     }
+
+    return hits;
 }
 
 // Based on https://en.wikipedia.org/wiki/Distance_from_a_point_to_a_line
@@ -301,4 +319,11 @@ export function b64toBlob(b64Data: string, contentType = "", sliceSize = 512) {
 
     const blob = new Blob(byteArrays, { type: contentType });
     return blob;
+}
+
+export function areSelectedFeatureIdsEqual(a: SelectedFeatureId, b: SelectedFeatureId) {
+    return (
+        (!a && !b) ||
+        (a && b && a.featureServerId === b.featureServerId && a.layerId === b.layerId && a.featureId === b.featureId)
+    );
 }

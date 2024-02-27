@@ -39,11 +39,6 @@ export type LayerQueryResp = {
     }[];
 };
 
-export enum SymbolStyle {
-    esriSLSSolid = "esriSLSSolid", // line
-    esriSFSSolid = "esriSFSSolid", // face
-}
-
 export type LayerStyleEsriPMS = {
     type: "esriPMS";
     url: string;
@@ -55,22 +50,39 @@ export type LayerStyleEsriPMS = {
 
 export type LayerStyleEsriSLS = {
     type: "esriSLS";
-    style: SymbolStyle;
+    style: "esriSLSSolid";
     color: ColorRGBA;
     width: number;
 };
 
 export type LayerStyleEsriSFS = {
     type: "esriSFS";
-    style: SymbolStyle;
+    style: "esriSFSSolid" | "esriSFSBackwardDiagonal";
     color: ColorRGBA;
     outline: LayerStyleEsriSLS;
 };
 
+export type FeatureSymbol = LayerStyleEsriPMS | LayerStyleEsriSLS | LayerStyleEsriSFS;
+
+export type UniqueValueRenderer = {
+    type: "uniqueValue";
+    field1: string;
+    fieldDelimiter: string;
+    uniqueValueInfos: UniqueValueInfo[];
+};
+
+export type UniqueValueInfo = {
+    label: string;
+    value: string;
+    symbol: FeatureSymbol;
+};
+
+export type SimpleRenderer = {
+    type: "simple";
+    symbol: FeatureSymbol;
+};
+
 export type LayerDrawingInfo = {
-    renderer: {
-        type: "simple";
-        symbol: LayerStyleEsriPMS | LayerStyleEsriSLS | LayerStyleEsriSFS;
-    };
+    renderer: SimpleRenderer | UniqueValueRenderer;
     transparency?: number;
 };

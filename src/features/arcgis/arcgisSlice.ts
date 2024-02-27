@@ -6,7 +6,7 @@ import { ReadonlyVec3 } from "gl-matrix";
 import { RootState } from "app/store";
 import { AsyncState, AsyncStatus } from "types/misc";
 
-import { FeatureServerDefinition, LayerDrawingInfo, LayerGeometryType } from "./arcgisTypes";
+import { FeatureServerDefinition, FeatureSymbol, LayerDrawingInfo, LayerGeometryType } from "./arcgisTypes";
 import { areArraysEqual, getTotalAabb2, iFeatureToLayerFeature } from "./utils";
 
 const initialState = {
@@ -80,6 +80,7 @@ export type LayerFeature = {
     };
     geometry?: FeatureGeometry;
     aabb?: AABB2;
+    computedSymbol?: FeatureSymbol;
 };
 
 export type SelectedFeatureId = {
@@ -164,10 +165,13 @@ export const arcgisSlice = createSlice({
 
                 if (features) {
                     if (features.status === AsyncStatus.Success) {
-                        const newFeatures = features.data.map(iFeatureToLayerFeature);
-                        layer.features = { status: AsyncStatus.Success, data: newFeatures };
-                        const nonEmptyAabbs = newFeatures.filter((e) => e.aabb).map((e) => e.aabb) as AABB2[];
-                        layer.aabb = nonEmptyAabbs.length > 0 ? getTotalAabb2(nonEmptyAabbs) : undefined;
+                        if (layer.definition.status === AsyncStatus.Success) {
+                            const drawingInfo = layer.definition.data.drawingInfo;
+                            const newFeatures = features.data.map((f) => iFeatureToLayerFeature(drawingInfo, f));
+                            layer.features = { status: AsyncStatus.Success, data: newFeatures };
+                            const nonEmptyAabbs = newFeatures.filter((e) => e.aabb).map((e) => e.aabb) as AABB2[];
+                            layer.aabb = nonEmptyAabbs.length > 0 ? getTotalAabb2(nonEmptyAabbs) : undefined;
+                        }
                     } else {
                         layer.features = features;
                     }

@@ -65,19 +65,31 @@ export function useLoadFeaturesAndDefinition() {
                                 ? { status: AsyncStatus.Loading }
                                 : undefined,
                         features:
-                            layer.features.status === AsyncStatus.Initial ? { status: AsyncStatus.Loading } : undefined,
+                            layer.definition.status === AsyncStatus.Success &&
+                            layer.features.status === AsyncStatus.Initial
+                                ? { status: AsyncStatus.Loading }
+                                : undefined,
                     }))
                 )
             );
 
             const promises: Promise<unknown>[] = [];
             for (const { featureServer, layer } of layersToLoad) {
-                if (layer.features.status === AsyncStatus.Initial) {
-                    promises.push(loadFeatures(dispatch, abortControllers.current, epsg, featureServer, layer));
-                }
-
                 if (layer.definition.status === AsyncStatus.Initial) {
                     promises.push(loadDefinition(dispatch, abortControllers.current, featureServer, layer));
+                }
+
+                if (layer.definition.status === AsyncStatus.Success && layer.features.status === AsyncStatus.Initial) {
+                    promises.push(
+                        loadFeatures(
+                            dispatch,
+                            abortControllers.current,
+                            layer.definition.data,
+                            epsg,
+                            featureServer,
+                            layer
+                        )
+                    );
                 }
             }
 
@@ -90,6 +102,7 @@ export function useLoadFeaturesAndDefinition() {
 async function loadFeatures(
     dispatch: ReturnType<typeof useAppDispatch>,
     abortControllers: LayerAbortController[],
+    definition: LayerDefinition,
     epsg: string,
     featureServer: FeatureServer,
     layer: Layer
@@ -104,11 +117,16 @@ async function loadFeatures(
 
     // Using request instead of queryFeatures because queryFeatures doesn't
     // seem to support signal
+    const fields = ["OBJECTID"];
+    if (definition.drawingInfo.renderer.type === "uniqueValue") {
+        fields.push(definition.drawingInfo.renderer.field1);
+    }
+
     const features = await request(`${featureServer.url}/${layer.id}/query`, {
         params: {
             outSR: epsg,
             where: makeWhereStatement(featureServer, layer) || "1=1",
-            outFields: "OBJECTID",
+            outFields: fields.join(","),
         },
         signal: abortController.signal,
     })
