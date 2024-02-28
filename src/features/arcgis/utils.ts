@@ -1,9 +1,7 @@
 import { IFeature, Position } from "@esri/arcgis-rest-request";
-import { BoundingSphere, RenderState, RenderStateCamera } from "@novorender/api";
+import { BoundingSphere, RenderState } from "@novorender/api";
 import { AABB2 } from "@novorender/api/types/measure/worker/brep";
 import { vec2, vec3 } from "gl-matrix";
-
-import { getCameraState } from "features/engine2D";
 
 import { FeatureGeometry, FeatureServer, Layer, LayerFeature, SelectedFeatureId } from "./arcgisSlice";
 import { FeatureSymbol, LayerDrawingInfo } from "./arcgisTypes";
