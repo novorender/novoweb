@@ -80,12 +80,8 @@ export const dataV2Api = createApi({
                 }
             },
         }),
-        getProject: builder.query<NonNullable<unknown>, { projectId: string }>({
+        getProject: builder.query<ProjectInfo, { projectId: string }>({
             query: ({ projectId }) => `/projects/${projectId}`,
-        }),
-        getProjectInfo: builder.query<ProjectInfo, { projectId: string }>({
-            // query: ({ projectId }) => `/projects/${projectId}`,
-            queryFn: async () => ({ data: { epsg: "5105" } as object as ProjectInfo }),
         }),
         getArcgisWidgetConfig: builder.query<ArcgisWidgetConfig, { projectId: string }>({
             query: ({ projectId }) => `/explorer/${projectId}/arcgis/config`,
@@ -103,10 +99,10 @@ export const dataV2Api = createApi({
 export const {
     useIsOmega365ConfiguredForProjectQuery,
     useGetOmega365DocumentLinksQuery,
-    useGetProjectInfoQuery,
     useGetArcgisWidgetConfigQuery,
     usePutArcgisWidgetConfigMutation,
     useGetPropertyTreeFavoritesQuery,
     useSetPropertyTreeFavoritesMutation,
     useLazyGetProjectQuery,
+    useGetProjectQuery,
 } = dataV2Api;
