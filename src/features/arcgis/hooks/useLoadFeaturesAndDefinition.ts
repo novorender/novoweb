@@ -7,7 +7,7 @@ import { AsyncState, AsyncStatus } from "types/misc";
 
 import { arcgisActions, FeatureServer, Layer, LayerDefinition, selectArcgisFeatureServers } from "../arcgisSlice";
 import { makeWhereStatement } from "../utils";
-import { useLoadProjectEpsg } from "./useLoadProjectEpsg";
+import { useProjectEpsg } from "./useProjectEpsg";
 
 type LayerAbortController = {
     featureServerId: string;
@@ -19,7 +19,7 @@ export function useLoadFeaturesAndDefinition() {
     const featureServers = useAppSelector(selectArcgisFeatureServers);
     const dispatch = useAppDispatch();
     const abortControllers = useRef([] as LayerAbortController[]);
-    const epsg = useLoadProjectEpsg();
+    const { data: epsg } = useProjectEpsg();
 
     useEffect(() => {
         const { current } = abortControllers;

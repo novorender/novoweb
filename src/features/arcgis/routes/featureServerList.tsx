@@ -22,20 +22,19 @@ import {
 } from "@mui/material";
 import { rotationFromDirection } from "@novorender/api";
 import { BoundingSphere } from "@novorender/webgl-api";
-import { useGetProjectInfoQuery } from "apis/dataV2/dataV2Api";
 import { vec3 } from "gl-matrix";
 import { useCallback, useState } from "react";
 import { useHistory } from "react-router-dom";
 
 import { useAppDispatch, useAppSelector } from "app/store";
 import { Accordion, AccordionDetails, AccordionSummary, ScrollBox } from "components";
-import { useExplorerGlobals } from "contexts/explorerGlobals";
 import { CameraType, renderActions } from "features/render";
 import { selectHasAdminCapabilities } from "slices/explorerSlice";
 import { AsyncStatus } from "types/misc";
 
 import { arcgisActions, FeatureServer, Layer, selectArcgisFeatureServers } from "../arcgisSlice";
 import { useIsCameraSetCorrectly } from "../hooks/useIsCameraSetCorrectly";
+import { useProjectEpsg } from "../hooks/useProjectEpsg";
 import { aabb2ToBoundingSphere, getTotalAabb2, isSuitableCameraForArcgis, makeWhereStatement } from "../utils";
 
 export function FeatureServerList() {
@@ -44,12 +43,7 @@ export function FeatureServerList() {
     const dispatch = useAppDispatch();
     const history = useHistory();
     const isAdmin = useAppSelector(selectHasAdminCapabilities);
-    const projectId = useExplorerGlobals(true).state.scene.id;
-    const {
-        data: projectInfo,
-        error: projectInfoError,
-        isLoading: isLoadingProjectInfo,
-    } = useGetProjectInfoQuery({ projectId });
+    const epsg = useProjectEpsg();
     const isCameraSetCorrectly = useIsCameraSetCorrectly(isSuitableCameraForArcgis);
 
     const handleFeatureCheck = useCallback(
@@ -105,7 +99,7 @@ export function FeatureServerList() {
                 position="absolute"
             />
 
-            {featureServers.status === AsyncStatus.Loading || isLoadingProjectInfo ? (
+            {featureServers.status === AsyncStatus.Loading || epsg.isFetching ? (
                 <Box>
                     <LinearProgress />
                 </Box>
@@ -113,13 +107,13 @@ export function FeatureServerList() {
                 <Box p={1} pt={2}>
                     {featureServers.msg}
                 </Box>
-            ) : projectInfoError ? (
+            ) : epsg.error ? (
                 <Box p={1} pt={2}>
-                    Error loading project info
+                    Error loading TM Zone info
                 </Box>
-            ) : projectInfo && !projectInfo.epsg ? (
+            ) : !epsg.data ? (
                 <Box p={1} pt={2}>
-                    EPSG is not defined for the project
+                    TM Zone is not defined for the project
                 </Box>
             ) : featureServers.status === AsyncStatus.Success && featureServers.data.length === 0 ? (
                 <Box sx={{ m: 4, textAlign: "center" }}>
