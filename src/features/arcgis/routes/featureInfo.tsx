@@ -7,7 +7,6 @@ import { ScrollBox } from "components";
 import { selectArcgisSelectedFeatureInfo } from "features/arcgis/arcgisSlice";
 
 import { useQueryLayerQuery } from "../arcgisApi";
-import { useLoadProjectEpsg } from "../hooks/useLoadProjectEpsg";
 
 export default function FeatureInfo() {
     const theme = useTheme();
@@ -28,7 +27,6 @@ export default function FeatureInfo() {
 
 function AttrList() {
     const featureInfo = useAppSelector(selectArcgisSelectedFeatureInfo);
-    const epsg = useLoadProjectEpsg();
     const { data: layerQueryResp, isFetching } = useQueryLayerQuery(
         {
             featureServerUrl: featureInfo?.featureServer.url ?? "",
@@ -36,12 +34,11 @@ function AttrList() {
             params: {
                 where: "1=1",
                 outFields: "*",
-                outSR: epsg,
                 objectIds: featureInfo?.featureId,
                 returnGeometry: false,
             },
         },
-        { skip: !featureInfo || !epsg }
+        { skip: !featureInfo }
     );
 
     if (!featureInfo) {
