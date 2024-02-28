@@ -356,7 +356,7 @@ function drawLinesOrPolygon(
                 ctx.lineWidth = 2;
                 ctx.strokeStyle = "black";
                 ctx.beginPath();
-                ctx.arc(part.vertices2D[i][0], part.vertices2D[i][1], 5, 0, 2 * Math.PI);
+                ctx.arc(part.vertices2D[i][0], part.vertices2D[i][1], 6, 0, 2 * Math.PI);
                 ctx.fill();
                 ctx.stroke();
             }
@@ -515,7 +515,7 @@ export function drawPoint(ctx: CanvasRenderingContext2D, point: ReadonlyVec2, co
     ctx.lineWidth = 2;
     ctx.strokeStyle = "black";
     ctx.beginPath();
-    ctx.arc(point[0], point[1], 5, 0, 2 * Math.PI);
+    ctx.arc(point[0], point[1], 6, 0, 2 * Math.PI);
     ctx.fill();
     ctx.stroke();
 }

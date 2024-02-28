@@ -24,5 +24,9 @@ export const Accordion = styled(MuiAccordion, { shouldForwardProp: (prop) => pro
             background: ${theme.palette.grey[(100 * (level ?? 1)) as keyof Color]};
             margin: 0;
         }
+
+        &.${accordionClasses.disabled} {
+            background: ${theme.palette.common.white};
+        }
     `
 );

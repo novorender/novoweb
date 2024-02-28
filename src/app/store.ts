@@ -26,6 +26,7 @@ import { clippingOutlineLaserReducer } from "features/outlineLaser";
 import { pimsReducer } from "features/pims";
 import { pointLineReducer } from "features/pointLine";
 import { propertiesReducer } from "features/properties/slice";
+import { propertyTreeApi, propertyTreeReducer } from "features/propertyTree";
 import { renderReducer } from "features/render/renderSlice";
 import { selectionBasketReducer } from "features/selectionBasket";
 import { xsiteManageApi, xsiteManageReducer } from "features/xsiteManage";
@@ -54,6 +55,8 @@ const rootReducer = combineReducers({
     properties: propertiesReducer,
     offline: offlineReducer,
     pims: pimsReducer,
+    propertyTree: propertyTreeReducer,
+    [propertyTreeApi.reducerPath]: propertyTreeApi.reducer,
     [bimCollabApi.reducerPath]: bimCollabApi.reducer,
     bimTrack: bimTrackReducer,
     [bimTrackApi.reducerPath]: bimTrackApi.reducer,
@@ -83,6 +86,7 @@ export const store = configureStore({
             .concat(jiraApi.middleware)
             .concat(xsiteManageApi.middleware)
             .concat(dataV2Api.middleware)
+            .concat(propertyTreeApi.middleware)
             .concat(arcgisApi.middleware),
 });
 

@@ -125,7 +125,7 @@ export function MeasuredObject({ obj, idx }: { obj: ExtendedMeasureEntity; idx: 
                     </Box>
                 </Box>
                 {isGenerated && (
-                    <Tooltip title={"This parameteric data is generated."} enterDelay={0}>
+                    <Tooltip title={"This parametric data is generated."} enterDelay={0}>
                         <IconButton
                             onClick={(evt) => {
                                 evt.stopPropagation();

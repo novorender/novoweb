@@ -27,6 +27,11 @@ export enum UserRole {
     Owner,
 }
 
+export enum ProjectType {
+    V1, // app.novorender.com
+    V2, // projects.novorender.com
+}
+
 type UrlSearchQuery = undefined | string | SearchPattern[];
 type MutableUrlSearchQuery = DeepMutable<UrlSearchQuery>;
 
@@ -36,6 +41,7 @@ const initialState = {
     lockedWidgets: defaultLockedWidgets,
     sceneType: SceneType.Viewer,
     userRole: UserRole.Viewer,
+    projectType: ProjectType.V1,
     requireConsent: false,
     organization: "",
     widgets: [] as WidgetKey[],
@@ -252,6 +258,7 @@ export const explorerSlice = createSlice({
         builder.addCase(initScene, (state, action) => {
             const { customProperties } = action.payload.sceneData;
 
+            state.projectType = action.payload.projectType;
             state.sceneType = getSceneType(customProperties);
             state.userRole = getUserRole(customProperties);
             state.requireConsent = getRequireConsent(customProperties);
@@ -325,6 +332,7 @@ export const selectHasAdminCapabilities = (state: RootState) => state.explorer.u
 export const selectCanvasContextMenuFeatures = (state: RootState) => state.explorer.contextMenu.canvas.features;
 export const selectIsOnline = (state: RootState) => state.explorer.isOnline;
 export const selectConfig = (state: RootState) => state.explorer.config;
+export const selectProjectIsV2 = (state: RootState) => state.explorer.projectType === ProjectType.V2;
 
 export const selectEnabledWidgets = createSelector(
     (state: RootState) => state.explorer.enabledWidgets,

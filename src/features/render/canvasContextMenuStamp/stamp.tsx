@@ -409,8 +409,10 @@ export function Measure() {
                     const pos = vec3.scaleAndAdd(vec3.create(), view.renderState.camera.position, rayDir, t);
                     const laser = await getOutlineLaser(pos, view);
                     const outlinePoint = view.selectOutlinePoint(pos, 0.2);
-                    setPickPoint(outlinePoint);
                     setLaser(laser ? { laser, plane } : undefined);
+                    if (outlinePoint) {
+                        pickPoint = outlinePoint;
+                    }
                 }
             }
             setPickPoint(pickPoint);

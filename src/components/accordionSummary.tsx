@@ -14,9 +14,20 @@ export const AccordionSummary = styled(
 )<AccordionSummaryProps & { level?: number }>(
     ({ theme, level }) => css`
         padding: ${theme.spacing(1)};
-        border-bottom: 1px solid ${theme.palette.grey[(100 * (level ?? 1)) as keyof Color]};
         min-height: 0;
         font-weight: 600;
+        position: relative;
+
+        &::after {
+            content: "";
+            height: 1px;
+            position: absolute;
+            bottom: 0;
+            left: 8px;
+            right: 16px;
+            min-width: 1px;
+            border-bottom: 1px solid ${theme.palette.grey[(100 * (level ?? 1)) as keyof Color]};
+        }
 
         &:hover {
             background: ${theme.palette.grey[(100 * (level ?? 1)) as keyof Color]};
@@ -28,6 +39,13 @@ export const AccordionSummary = styled(
 
             &:hover {
                 background: ${theme.palette.grey[(100 + 100 * (level ?? 1)) as keyof Color]};
+            }
+        }
+
+        &.${accordionSummaryClasses.expanded}, &.${accordionSummaryClasses.disabled} {
+            &::after {
+                border-bottom: 1px solid ${theme.palette.secondary.main};
+                opacity: 0.2;
             }
         }
 

@@ -14,6 +14,7 @@ import { quat, vec3, vec4 } from "gl-matrix";
 import type { RootState } from "app/store";
 import { DitioMachine } from "features/ditio";
 import { LogPoint, MachineLocation } from "features/xsiteManage";
+import { ProjectType } from "slices/explorerSlice";
 import { AsyncState, AsyncStatus, ViewMode } from "types/misc";
 import { VecRGB, VecRGBA } from "utils/color";
 import { mergeRecursive } from "utils/misc";
@@ -339,6 +340,7 @@ const initialState = {
 type State = typeof initialState;
 
 export const initScene = createAction<{
+    projectType: ProjectType;
     sceneData: Omit<SceneConfig, "db" | "url">;
     sceneConfig: OctreeSceneConfig;
     initialCamera: {
