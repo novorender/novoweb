@@ -19,13 +19,7 @@ import {
 } from "../arcgisSlice";
 import { FeatureSymbol, LayerDrawingInfo, LayerGeometryType } from "../arcgisTypes";
 import { useIsCameraSetCorrectly } from "../hooks/useIsCameraSetCorrectly";
-import {
-    b64toBlob,
-    doAabb2Intersect,
-    getAabb2MaxSize,
-    getOrthoCameraExtent,
-    isSuitableCameraForArcgis,
-} from "../utils";
+import { b64toBlob, doAabb2Intersect, getAabb2MaxSize, getOrthoCameraExtent } from "../utils";
 
 export function ArcgisCanvas({
     renderFnRef,
@@ -43,7 +37,7 @@ export function ArcgisCanvas({
 
     const featureServers = useAppSelector(selectArcgisFeatureServers);
     const selectedFeature = useAppSelector(selectArcgisSelectedFeature);
-    const isCameraSetCorrectly = useIsCameraSetCorrectly(isSuitableCameraForArcgis);
+    const isCameraSetCorrectly = useIsCameraSetCorrectly();
 
     const draw = useCallback(() => {
         if (!view?.measure || !ctx || !canvas || featureServers.status !== AsyncStatus.Success) {

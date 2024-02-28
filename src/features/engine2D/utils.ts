@@ -647,7 +647,7 @@ export function getCameraState(camera: View["renderState"]["camera"]) {
     };
 }
 
-function getCameraDir(rotation: quat): vec3 {
+export function getCameraDir(rotation: quat): vec3 {
     return vec3.transformQuat(vec3.create(), vec3.fromValues(0, 0, -1), rotation);
 }
 

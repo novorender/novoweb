@@ -277,15 +277,6 @@ function hitsPolygon(x: number, y: number, polygon: Position[]) {
     return inside;
 }
 
-export function isSuitableCameraForArcgis(camera: RenderStateCamera | undefined) {
-    if (!camera || camera.kind !== "orthographic") {
-        return false;
-    }
-
-    const state = getCameraState(camera);
-    return state.dir[2] === -1;
-}
-
 export function makeWhereStatement(fs: FeatureServer, layer: Layer) {
     return [fs.layerWhere, layer.where].filter((s) => s).join(" AND ");
 }

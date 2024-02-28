@@ -1,37 +1,21 @@
-import { RenderStateCamera } from "@novorender/api";
-import { useEffect, useState } from "react";
+import { useMemo } from "react";
 
-import { useExplorerGlobals } from "contexts/explorerGlobals";
+import { useAppSelector } from "app/store";
+import { getCameraDir } from "features/engine2D/utils";
+import { CameraType, selectCamera } from "features/render";
 
-// TODO(ND) ask Ola if it's an ok way to do it
-export function useIsCameraSetCorrectly(check: (camera: RenderStateCamera | undefined) => boolean) {
-    const {
-        state: { view },
-    } = useExplorerGlobals();
+export function useIsCameraSetCorrectly() {
+    const camera = useAppSelector(selectCamera);
 
-    const [isCameraSetCorrectly, setIsCameraSetCorrectly] = useState(check(view?.renderState.camera));
-
-    useEffect(() => {
-        let mounted = true;
-
-        function step() {
-            if (!mounted) {
-                return;
-            }
-
-            if (view) {
-                setIsCameraSetCorrectly(check(view.renderState.camera));
-            }
-
-            requestAnimationFrame(step);
+    const isCameraSetCorrectly = useMemo(() => {
+        if (camera.type !== CameraType.Orthographic || !camera.goTo) {
+            return false;
         }
 
-        requestAnimationFrame(step);
+        const dir = getCameraDir(camera.goTo.rotation);
 
-        return () => {
-            mounted = false;
-        };
-    });
+        return dir[2] === -1;
+    }, [camera]);
 
     return isCameraSetCorrectly;
 }

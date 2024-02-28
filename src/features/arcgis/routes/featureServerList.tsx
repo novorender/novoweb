@@ -35,7 +35,7 @@ import { AsyncStatus } from "types/misc";
 import { arcgisActions, FeatureServer, Layer, selectArcgisFeatureServers } from "../arcgisSlice";
 import { useIsCameraSetCorrectly } from "../hooks/useIsCameraSetCorrectly";
 import { useProjectEpsg } from "../hooks/useProjectEpsg";
-import { aabb2ToBoundingSphere, getTotalAabb2, isSuitableCameraForArcgis, makeWhereStatement } from "../utils";
+import { aabb2ToBoundingSphere, getTotalAabb2, makeWhereStatement } from "../utils";
 
 export function FeatureServerList() {
     const theme = useTheme();
@@ -44,7 +44,7 @@ export function FeatureServerList() {
     const history = useHistory();
     const isAdmin = useAppSelector(selectHasAdminCapabilities);
     const epsg = useProjectEpsg();
-    const isCameraSetCorrectly = useIsCameraSetCorrectly(isSuitableCameraForArcgis);
+    const isCameraSetCorrectly = useIsCameraSetCorrectly();
 
     const handleFeatureCheck = useCallback(
         (featureServerId: string, checked: boolean) => {

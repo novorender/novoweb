@@ -12,7 +12,8 @@ import {
     selectArcgisSelectedFeature,
     SelectedFeatureId,
 } from "../arcgisSlice";
-import { areSelectedFeatureIdsEqual, findHitFeatures, isSuitableCameraForArcgis } from "../utils";
+import { areSelectedFeatureIdsEqual, findHitFeatures } from "../utils";
+import { useIsCameraSetCorrectly } from "./useIsCameraSetCorrectly";
 
 export function useArcgisCanvasClickHandler() {
     const {
@@ -21,15 +22,15 @@ export function useArcgisCanvasClickHandler() {
     const featureServers = useAppSelector(selectArcgisFeatureServers);
     const prevSelectedFeature = useAppSelector(selectArcgisSelectedFeature);
     const dispatch = useAppDispatch();
+    const isCameraSetCorrectly = useIsCameraSetCorrectly();
+
+    if (!isCameraSetCorrectly) {
+        return;
+    }
 
     // Returns true if something was picked, so the caller could stop downstream handling in this case
     const handleCanvasPick = (evt: MouseEvent) => {
-        if (
-            !view ||
-            featureServers.status !== AsyncStatus.Success ||
-            featureServers.data.length === 0 ||
-            !isSuitableCameraForArcgis(view.renderState.camera)
-        ) {
+        if (!view || featureServers.status !== AsyncStatus.Success || featureServers.data.length === 0) {
             return false;
         }
 
