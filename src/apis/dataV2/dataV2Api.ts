@@ -59,29 +59,14 @@ export const dataV2Api = createApi({
             queryFn: async () => ({ data: { epsg: "5105" } as object as ProjectInfo }),
         }),
         getArcgisWidgetConfig: builder.query<ArcgisWidgetConfig, { projectId: string }>({
-            // query: ({ projectId }) => `/explorer/${projectId}/arcgis/config`,
-            queryFn: async () => {
-                await new Promise((resolve) => setTimeout(resolve, 1000));
-                return {
-                    data: localStorage.getItem("arcgisWidgetConfig")
-                        ? JSON.parse(localStorage.getItem("arcgisWidgetConfig")!)
-                        : {
-                              featureServers: [],
-                          },
-                };
-            },
+            query: ({ projectId }) => `/explorer/${projectId}/arcgis/config`,
         }),
-        putArcgisWidgetConfig: builder.mutation<void, { projectId: string; config: ArcgisWidgetConfig }>({
-            // query: ({ projectId, config }) => ({
-            //     url: `/explorer/${projectId}/arcgis/config`,
-            //     method: 'PUT',
-            //     body: config
-            // }),
-            queryFn: async ({ config }) => {
-                await new Promise((resolve) => setTimeout(resolve, 1000));
-                localStorage.setItem("arcgisWidgetConfig", JSON.stringify(config));
-                return { data: undefined };
-            },
+        putArcgisWidgetConfig: builder.mutation<object, { projectId: string; config: ArcgisWidgetConfig }>({
+            query: ({ projectId, config }) => ({
+                url: `/explorer/${projectId}/arcgis/config`,
+                method: "PUT",
+                body: config,
+            }),
         }),
     }),
 });
