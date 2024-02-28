@@ -239,7 +239,7 @@ function hitsPath(v0: vec2, sqrSensitivity: number, path: Position[]) {
 
         // Is close to line segment
         const distance = pointToLineSegmentDistance(v0[0], v0[1], v1[0], v1[1], v2[0], v2[1]);
-        if (distance <= sqrSensitivity) {
+        if (distance * distance <= sqrSensitivity) {
             return true;
         }
     }

@@ -363,12 +363,12 @@ function createPattern(
 }
 
 const SELECTED_POLYGON_COLOR_SETTINGS: ColorSettings = {
-    lineColor: "#29B6F6",
+    lineColor: "#29B6F6bb",
     fillColor: "#29B6F677",
 };
 
 const SELECTED_POLYLINE_COLOR_SETTINGS: ColorSettings = {
-    lineColor: "#29B6F6",
+    lineColor: "#29B6F6bb",
     fillColor: "#29B6F677",
 };
 
@@ -429,7 +429,7 @@ function drawPolyline(
                 drawPart(drawCtx.ctx, drawCtx.cameraState, part, colorSettings, pixelWidth);
 
                 if (isSelected) {
-                    drawPart(drawCtx.ctx, drawCtx.cameraState, part, SELECTED_POLYLINE_COLOR_SETTINGS, 2);
+                    drawPart(drawCtx.ctx, drawCtx.cameraState, part, SELECTED_POLYLINE_COLOR_SETTINGS, pixelWidth + 2);
                 }
             });
         });
