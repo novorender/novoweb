@@ -95,7 +95,7 @@ export function useCanvasClickHandler({
         if (!view || !canvas || longPress || drag) {
             return;
         }
-        if (arcgisCanvasClickHandler && arcgisCanvasClickHandler(evt)) {
+        if (picker === Picker.Object && arcgisCanvasClickHandler && arcgisCanvasClickHandler(evt)) {
             return;
         }
 
