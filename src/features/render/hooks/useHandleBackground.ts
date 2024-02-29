@@ -1,4 +1,4 @@
-import { EnvironmentDescription, View } from "@novorender/api";
+import { EnvironmentDescription, TextureDescription, View } from "@novorender/api";
 import { useEffect } from "react";
 
 import { useAppDispatch, useAppSelector } from "app/store";
@@ -12,6 +12,7 @@ export function useHandleBackground() {
         state: { view },
     } = useExplorerGlobals();
     const { environments, color, url, blur } = useAppSelector(selectBackground);
+    const shouldLoadTextures = useAppSelector((state) => state.render.textures.status === AsyncStatus.Initial);
     const dispatch = useAppDispatch();
 
     useEffect(() => {
@@ -31,6 +32,21 @@ export function useHandleBackground() {
             );
         }
     }, [view, dispatch, environments]);
+
+    useEffect(() => {
+        loadTextures();
+
+        async function loadTextures() {
+            if (!view || !shouldLoadTextures) {
+                return;
+            }
+
+            const textures = await view.availableTextures(
+                new URL("https://api.novorender.com/assets/textures/index.json")
+            );
+            dispatch(renderActions.setTextures(textures as TextureDescription[]));
+        }
+    }, [view, shouldLoadTextures, dispatch]);
 
     useEffect(
         function handleBackgroundChange() {
