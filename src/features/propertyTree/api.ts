@@ -54,7 +54,7 @@ export const propertyTreeApi = createApi({
         >({
             query: ({ path, assetUrl }) => ({ assetUrl, url: `propcache/${encodePropertyPath(path)}` }),
             transformResponse: (data: { properties: string[] } | { values: string[] }) =>
-                "values" in data ? { values: data.values.slice(0, 100) } : data,
+                "values" in data ? { values: data.values.slice(0, 400) } : data,
         }),
     }),
 });
