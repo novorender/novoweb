@@ -4,4 +4,5 @@ export type Omega365Document = {
     documentType: string;
     fileURL: string;
     profileURL: string;
+    object_ID: number;
 };
