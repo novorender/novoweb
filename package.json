@@ -55,6 +55,8 @@
     "dependencies": {
         "@emotion/react": "^11.11.1",
         "@emotion/styled": "^11.11.0",
+        "@esri/arcgis-rest-feature-service": "^4.0.5",
+        "@esri/arcgis-rest-request": "^4.2.0",
         "@mui/icons-material": "^5.8.0",
         "@mui/lab": "^5.0.0-alpha.58",
         "@mui/material": "^5.15.10",

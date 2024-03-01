@@ -2,9 +2,11 @@ import { BaseQueryFn, createApi, FetchArgs, fetchBaseQuery, FetchBaseQueryError 
 import { minutesToSeconds } from "date-fns";
 
 import { RootState } from "app/store";
+import { ArcgisWidgetConfig } from "features/arcgis";
 import { selectConfig } from "slices/explorerSlice";
 
 import { Omega365Document } from "./omega365Types";
+import { ProjectInfo } from "./projectTypes";
 
 const rawBaseQuery = fetchBaseQuery({
     baseUrl: "",
@@ -78,8 +80,18 @@ export const dataV2Api = createApi({
                 }
             },
         }),
-        getProject: builder.query<NonNullable<unknown>, { projectId: string }>({
+        getProject: builder.query<ProjectInfo, { projectId: string }>({
             query: ({ projectId }) => `/projects/${projectId}`,
+        }),
+        getArcgisWidgetConfig: builder.query<ArcgisWidgetConfig, { projectId: string }>({
+            query: ({ projectId }) => `/explorer/${projectId}/arcgis/config`,
+        }),
+        putArcgisWidgetConfig: builder.mutation<object, { projectId: string; config: ArcgisWidgetConfig }>({
+            query: ({ projectId, config }) => ({
+                url: `/explorer/${projectId}/arcgis/config`,
+                method: "PUT",
+                body: config,
+            }),
         }),
     }),
 });
@@ -87,7 +99,10 @@ export const dataV2Api = createApi({
 export const {
     useIsOmega365ConfiguredForProjectQuery,
     useGetOmega365DocumentLinksQuery,
+    useGetArcgisWidgetConfigQuery,
+    usePutArcgisWidgetConfigMutation,
     useGetPropertyTreeFavoritesQuery,
     useSetPropertyTreeFavoritesMutation,
     useLazyGetProjectQuery,
+    useGetProjectQuery,
 } = dataV2Api;
