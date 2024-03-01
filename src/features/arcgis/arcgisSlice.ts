@@ -243,7 +243,7 @@ export const arcgisSlice = createSlice({
             if (fs.layerWhere != next.layerWhere) {
                 fs.layerWhere = next.layerWhere;
                 for (const layer of fs.layers) {
-                    layer.definition = { status: AsyncStatus.Initial };
+                    layer.features = { status: AsyncStatus.Initial };
                 }
             }
 

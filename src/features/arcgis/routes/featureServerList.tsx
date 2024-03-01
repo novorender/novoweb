@@ -194,7 +194,7 @@ function FeatureServerItem({
         setMenuAnchor(null);
     };
 
-    const canFlyTo = layers.some((l) => l.checked && l.definition.status === AsyncStatus.Success && l.aabb);
+    const canFlyTo = layers.some((l) => l.checked && l.features.status === AsyncStatus.Success && l.aabb);
 
     return (
         <Accordion defaultExpanded={defaultExpanded}>
