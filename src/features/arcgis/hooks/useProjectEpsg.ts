@@ -8,7 +8,7 @@ import { selectProjectSettings } from "features/render";
 // For old API - convert zone name to EPSG
 // For new API just return EPSG
 // New API takes precedence
-export function useProjectEpsg() {
+export function useProjectEpsg({ skip }: { skip?: boolean } = {}) {
     const projectId = useExplorerGlobals(true).state.scene.id;
     const {
         data: projectInfoV2,
@@ -17,6 +17,7 @@ export function useProjectEpsg() {
     } = useGetProjectQuery(
         { projectId },
         {
+            skip,
             selectFromResult: ({ data, error, isFetching }) => ({
                 data: data && { epsg: data.epsg },
                 error,

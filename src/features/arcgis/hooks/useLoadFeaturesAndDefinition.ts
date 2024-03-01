@@ -19,7 +19,7 @@ export function useLoadFeaturesAndDefinition() {
     const featureServers = useAppSelector(selectArcgisFeatureServers);
     const dispatch = useAppDispatch();
     const abortControllers = useRef([] as LayerAbortController[]);
-    const { data: epsg } = useProjectEpsg();
+    const { data: epsg } = useProjectEpsg({ skip: featureServers.status !== AsyncStatus.Success });
 
     useEffect(() => {
         const { current } = abortControllers;

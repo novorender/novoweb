@@ -43,7 +43,7 @@ export function FeatureServerList() {
     const dispatch = useAppDispatch();
     const history = useHistory();
     const isAdmin = useAppSelector(selectHasAdminCapabilities);
-    const epsg = useProjectEpsg();
+    const epsg = useProjectEpsg({ skip: featureServers.status !== AsyncStatus.Success });
     const isCameraSetCorrectly = useIsCameraSetCorrectly();
 
     const handleFeatureCheck = useCallback(
