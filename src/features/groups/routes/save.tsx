@@ -63,18 +63,15 @@ export function Save({ sceneId }: { sceneId: string }) {
                     );
             }
 
-            const textures = [] as TextureDescription[];
             updated.forEach((group) => {
                 const grp = group as { texture?: TextureDescription };
 
                 if (grp.texture) {
-                    textures.push(grp.texture);
+                    localStorage.setItem(`textures-${group.id}`, JSON.stringify(grp.texture));
                 }
 
                 delete grp.texture;
             });
-
-            sessionStorage.saveItem(`textures-${sceneId}`, JSON.stringify(textures));
 
             await dataApi.putScene({
                 ...originalScene,
@@ -83,7 +80,8 @@ export function Save({ sceneId }: { sceneId: string }) {
             });
 
             dispatch(groupsActions.setSaveStatus(AsyncStatus.Success));
-        } catch {
+        } catch (e) {
+            console.warn(e);
             dispatch(groupsActions.setSaveStatus(AsyncStatus.Error));
         }
 

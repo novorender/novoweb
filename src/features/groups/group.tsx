@@ -219,7 +219,7 @@ export function Group({ group, disabled }: { group: ObjectGroup; disabled: boole
                                 </ListItemIcon>
                                 <ListItemText>Hidden transparency</ListItemText>
                             </MenuItem>,
-                            <MenuItem key="texture" onClick={() => togglePickTexture()}>
+                            <MenuItem key="texture" onClick={() => history.replace(match.path + "/texture")}>
                                 <ListItemIcon>
                                     <Texture fontSize="small" />
                                 </ListItemIcon>
@@ -239,6 +239,34 @@ export function Group({ group, disabled }: { group: ObjectGroup; disabled: boole
                                 <ListItemText>{(1 - opacity) * 100}%</ListItemText>
                             </MenuItem>
                         ))}
+                    </Route>
+                    <Route path={match.path + "/texture"} exact>
+                        <MenuItem sx={{ minWidth: 300 }}>
+                            <Autocomplete
+                                options={availableTextures.concat({ name: "none" } as TextureDescription)}
+                                fullWidth
+                                isOptionEqualToValue={(opt, val) => opt.name === val.name}
+                                renderInput={(params) => <TextField required label="Texture" {...params} />}
+                                disableCloseOnSelect={true}
+                                getOptionLabel={(opt) => opt.name}
+                                value={group.texture ?? null}
+                                onChange={(_evt, textureDesc) => {
+                                    if (!textureDesc) {
+                                        return;
+                                    }
+
+                                    if (textureDesc.name === "none") {
+                                        dispatchObjectGroups(
+                                            objectGroupsActions.update(group.id, { texture: undefined })
+                                        );
+                                    } else {
+                                        dispatchObjectGroups(
+                                            objectGroupsActions.update(group.id, { texture: textureDesc })
+                                        );
+                                    }
+                                }}
+                            />
+                        </MenuItem>
                     </Route>
                 </Switch>
             </Menu>

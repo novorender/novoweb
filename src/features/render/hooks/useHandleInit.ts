@@ -1,4 +1,11 @@
-import { computeRotation, DeviceProfile, getDeviceProfile, rotationFromDirection, View } from "@novorender/api";
+import {
+    computeRotation,
+    DeviceProfile,
+    getDeviceProfile,
+    rotationFromDirection,
+    TextureDescription,
+    View,
+} from "@novorender/api";
 import { ObjectDB, SceneData, SceneLoadFail } from "@novorender/data-js-api";
 import { Internal } from "@novorender/webgl-api";
 import { useLazyGetProjectQuery } from "apis/dataV2/dataV2Api";
@@ -125,23 +132,38 @@ export function useHandleInit() {
                     objectGroupsActions.set(
                         sceneData.objectGroups
                             .filter((group) => group.id && group.search)
-                            .map((group) => ({
-                                name: group.name,
-                                id: group.id,
-                                grouping: group.grouping ?? "",
-                                color: group.color ?? ([1, 0, 0, 1] as VecRGBA),
-                                opacity: group.opacity ?? 0,
-                                search: group.search ?? [],
-                                includeDescendants: group.includeDescendants ?? true,
-                                status: group.selected
-                                    ? GroupStatus.Selected
-                                    : group.hidden
-                                    ? GroupStatus.Hidden
-                                    : GroupStatus.None,
-                                // NOTE(OLA): Pass IDs as undefined to be loaded when group is activated.
-                                // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                                ids: group.ids ? new Set(group.ids) : (undefined as any),
-                            }))
+                            .map((group) => {
+                                let texture: TextureDescription | undefined = undefined;
+
+                                try {
+                                    const stored = localStorage.getItem(`textures-${group.id}`);
+
+                                    if (stored) {
+                                        texture = JSON.parse(stored);
+                                    }
+                                } catch {
+                                    localStorage.removeItem(`textures-${group.id}`);
+                                }
+
+                                return {
+                                    name: group.name,
+                                    id: group.id,
+                                    grouping: group.grouping ?? "",
+                                    color: group.color ?? ([1, 0, 0, 1] as VecRGBA),
+                                    opacity: group.opacity ?? 0,
+                                    search: group.search ?? [],
+                                    includeDescendants: group.includeDescendants ?? true,
+                                    status: group.selected
+                                        ? GroupStatus.Selected
+                                        : group.hidden
+                                        ? GroupStatus.Hidden
+                                        : GroupStatus.None,
+                                    // NOTE(OLA): Pass IDs as undefined to be loaded when group is activated.
+                                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                                    ids: group.ids ? new Set(group.ids) : (undefined as any),
+                                    texture,
+                                };
+                            })
                     )
                 );
                 dispatchHighlighted(
