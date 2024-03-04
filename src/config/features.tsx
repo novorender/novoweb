@@ -431,7 +431,7 @@ export const featuresConfig = {
         name: "ArcGIS",
         Icon: Public,
         type: FeatureType.Widget,
-        defaultLocked: false,
+        defaultLocked: true,
         offline: false,
     },
 } as const;
