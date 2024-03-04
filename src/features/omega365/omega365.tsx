@@ -1,5 +1,5 @@
 import { Download, OpenInNew } from "@mui/icons-material";
-import { Box, Button } from "@mui/material";
+import { Box, Button, useTheme } from "@mui/material";
 import { useGetOmega365DocumentLinksQuery, useIsOmega365ConfiguredForProjectQuery } from "apis/dataV2/dataV2Api";
 import { Omega365Document } from "apis/dataV2/omega365Types";
 import { Fragment, useMemo } from "react";
@@ -34,7 +34,7 @@ export default function Omega365() {
     return (
         <>
             <WidgetContainer minimized={minimized} maximized={maximized}>
-                <WidgetHeader widget={featuresConfig.omega365} />
+                <WidgetHeader widget={featuresConfig.omega365} disableShadow />
                 {minimized || menuOpen ? null : isFetching ? (
                     <Box>
                         <LinearProgress />
@@ -66,6 +66,7 @@ function DcoumentLoader({
     menuOpen: boolean;
     minimized: boolean;
 }) {
+    const theme = useTheme();
     const mainObject = useAppSelector(selectMainObject);
     const isObjectSelected = typeof mainObject === "number";
 
@@ -75,8 +76,34 @@ function DcoumentLoader({
         isFetching,
     } = useGetOmega365DocumentLinksQuery({ projectId, objectId: mainObject! }, { skip: !isObjectSelected });
 
+    const objectDetailsHref = useMemo(() => {
+        if (!documents || documents.length === 0) {
+            return;
+        }
+
+        const doc = documents[0];
+        return doc.object_ID && `https://nyeveier.omega365.com/nt/objects/objectdetails?ID=${doc.object_ID}`;
+    }, [documents]);
+
     return (
         <>
+            <Box boxShadow={theme.customShadows.widgetHeader}>
+                <Box px={1}>
+                    <Divider />
+                </Box>
+                <Box display="flex" justifyContent="flex-end" m={0.5}>
+                    {objectDetailsHref && mainObject && !isFetching ? (
+                        <Button color="grey" href={objectDetailsHref} target="_blank">
+                            Object details
+                        </Button>
+                    ) : (
+                        <Button color="grey" disabled>
+                            Object details
+                        </Button>
+                    )}
+                </Box>
+            </Box>
+
             {!isObjectSelected ? (
                 <Box p={1} pt={2}>
                     Select an object to see associated documents.
