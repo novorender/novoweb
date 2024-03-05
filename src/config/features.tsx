@@ -113,6 +113,14 @@ export const featuresConfig = {
         tags: [featureTags.review.key],
         offline: true,
     },
+    assetPlacer: {
+        key: "assetPlacer",
+        name: "Place Asset",
+        Icon: LinearScale,
+        type: FeatureType.Widget,
+        defaultLocked: false,
+        offline: false,
+    },
     manhole: {
         key: "manhole",
         name: "Manhole",

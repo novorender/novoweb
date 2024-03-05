@@ -6,6 +6,7 @@ import { TypedUseSelectorHook, useDispatch, useSelector } from "react-redux";
 import { arcgisSlice } from "features/arcgis";
 import { arcgisApi } from "features/arcgis/arcgisApi";
 import { areaReducer } from "features/area";
+import { assetReducer } from "features/assets/assetSlice";
 import { bimCollabApi, bimCollabReducer } from "features/bimCollab";
 import { bimTrackApi, bimTrackReducer } from "features/bimTrack";
 import { bookmarksReducer } from "features/bookmarks";
@@ -44,6 +45,7 @@ const rootReducer = combineReducers({
     deviations: deviationsReducer,
     measure: measureReducer,
     area: areaReducer,
+    asset: assetReducer,
     orthoCam: orthoCamReducer,
     manhole: manholeReducer,
     pointLine: pointLineReducer,

@@ -1,4 +1,4 @@
-import { rotationFromDirection } from "@novorender/api";
+import { downloadGLTF, rotationFromDirection } from "@novorender/api";
 import { mat3, quat, ReadonlyVec3, vec2, vec3, vec4 } from "gl-matrix";
 import { MouseEventHandler, MutableRefObject, useRef } from "react";
 
@@ -13,6 +13,7 @@ import {
 import { highlightActions, useDispatchHighlighted, useHighlighted } from "contexts/highlighted";
 import { useArcgisCanvasClickHandler } from "features/arcgis/hooks/useArcgisCanvasHandler";
 import { areaActions } from "features/area";
+import { selectAsset } from "features/assets/assetSlice";
 import { followPathActions } from "features/followPath";
 import { heightProfileActions } from "features/heightProfile";
 import { manholeActions } from "features/manhole";
@@ -77,6 +78,7 @@ export function useCanvasClickHandler({
     const viewMode = useAppSelector(selectViewMode);
     const showPropertiesStamp = useAppSelector(selectShowPropertiesStamp);
     const { planes } = useAppSelector(selectClippingPlanes);
+    const asset = useAppSelector(selectAsset);
 
     const [secondaryHighlightAbortController, abortSecondaryHighlight] = useAbortController();
     const currentSecondaryHighlightQuery = useRef("");
@@ -277,6 +279,23 @@ export function useCanvasClickHandler({
         const position = vec3.clone(result.position);
 
         switch (picker) {
+            case Picker.Asset:
+                if (result) {
+                    const url = new URL("https://novorenderblobs.blob.core.windows.net/assets/glbs/");
+                    url.pathname += asset + ".glb";
+                    const newObjects = await downloadGLTF(url);
+                    const posObjects = newObjects.map((obj) => ({
+                        ...obj,
+                        instances: obj.instances.map((inst) => ({
+                            ...inst,
+                            position: result.position,
+                        })),
+                    }));
+                    const objects = [...view.renderState.dynamic.objects];
+                    objects.push(...posObjects);
+                    view.modifyRenderState({ dynamic: { objects } });
+                }
+                return;
             case Picker.Object: {
                 if (
                     deviation.mixFactor !== 0 &&

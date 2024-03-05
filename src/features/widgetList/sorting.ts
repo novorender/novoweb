@@ -16,6 +16,7 @@ export const sorting = [
     featuresConfig.manhole.key,
     featuresConfig.area.key,
     featuresConfig.pointLine.key,
+    featuresConfig.assetPlacer.key,
     featuresConfig.deviations.key,
     featuresConfig.followPath.key,
     featuresConfig.advancedSettings.key,
