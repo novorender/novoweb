@@ -168,7 +168,7 @@ export function useHandleHighlights() {
                         })),
                         ...(cameraType === CameraType.Orthographic
                             ? outlineGroups.map((group) => ({
-                                  objectIds: new Uint32Array(group.ids).sort(),
+                                  objectIds: new Uint32Array(group.ids).sort().filter((f) => !allHidden.has(f)),
                                   outlineColor: group.color,
                               }))
                             : []),
