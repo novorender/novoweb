@@ -172,6 +172,8 @@ export function Deviation() {
                     showRebuildMessage: newProfileData.rebuildRequired,
                 });
 
+                dispatch(deviationsActions.setProfiles({ status: AsyncStatus.Success, data: newProfileData }));
+
                 history.goBack();
 
                 dispatch(deviationsActions.setDeviationForm(undefined));
