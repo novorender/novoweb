@@ -1,7 +1,7 @@
 import { RestartAlt } from "@mui/icons-material";
 import { ListItemIcon, ListItemText, Menu, MenuItem, MenuProps, Typography } from "@mui/material";
 import { Box } from "@mui/system";
-import { useEffect } from "react";
+import { useCalcDeviationsMutation } from "apis/dataV2/dataV2Api";
 import { MemoryRouter, Route, Switch } from "react-router-dom";
 
 import { dataApi } from "app";
@@ -10,17 +10,20 @@ import { LogoSpeedDial, Tooltip, WidgetContainer, WidgetHeader } from "component
 import { featuresConfig } from "config/features";
 import { useExplorerGlobals } from "contexts/explorerGlobals";
 import WidgetList from "features/widgetList/widgetList";
-import { useSceneId } from "hooks/useSceneId";
 import { useToggle } from "hooks/useToggle";
-import { selectIsAdminScene, selectMaximized, selectMinimized } from "slices/explorerSlice";
+import { selectIsAdminScene, selectMaximized, selectMinimized, selectProjectIsV2 } from "slices/explorerSlice";
+import { AsyncStatus } from "types/misc";
 
-import { DeviationCalculationStatus, deviationsActions, selectDeviationCalculationStatus } from "./deviationsSlice";
+import { deviationsActions, selectDeviationCalculationStatus, selectDeviationProfiles } from "./deviationsSlice";
+import { DeviationCalculationStatus } from "./deviationTypes";
+import { useListenCalculationState } from "./hooks/useListenCalculationState";
 import { CrupdateColorStop } from "./routes/crupdateColorStop";
+import { DeleteDeviation } from "./routes/deleteDeviation";
 import { Deviation } from "./routes/deviation";
 import { Root } from "./routes/root";
+import { uiConfigToServerConfig } from "./utils";
 
 export default function Deviations() {
-    const sceneId = useSceneId();
     const [menuOpen, toggleMenu] = useToggle();
     const minimized = useAppSelector(selectMinimized) === featuresConfig.deviations.key;
     const maximized = useAppSelector(selectMaximized).includes(featuresConfig.deviations.key);
@@ -39,13 +42,19 @@ export default function Deviations() {
                         <Route path="/" exact>
                             <Root />
                         </Route>
-                        <Route path="/deviation" exact>
-                            <Deviation sceneId={sceneId} />
+                        <Route path="/deviation/add" exact>
+                            <Deviation />
                         </Route>
-                        <Route path="/deviation/add">
+                        <Route path="/deviation/edit" exact>
+                            <Deviation />
+                        </Route>
+                        <Route path="/deviation/delete" exact>
+                            <DeleteDeviation />
+                        </Route>
+                        <Route path="/deviation/addColorStop" exact>
                             <CrupdateColorStop />
                         </Route>
-                        <Route path="/deviation/edit/:idx">
+                        <Route path="/deviation/editColorStop/:idx">
                             <CrupdateColorStop />
                         </Route>
                     </Switch>
@@ -59,7 +68,9 @@ export default function Deviations() {
 }
 
 function WidgetMenu(props: MenuProps) {
+    const isProjectV2 = useAppSelector(selectProjectIsV2);
     const calculationStatus = useAppSelector(selectDeviationCalculationStatus);
+    const profiles = useAppSelector(selectDeviationProfiles);
     const dispatch = useAppDispatch();
 
     const {
@@ -67,46 +78,42 @@ function WidgetMenu(props: MenuProps) {
     } = useExplorerGlobals(true);
     const isAdminScene = useAppSelector(selectIsAdminScene);
 
-    useEffect(() => {
-        if (isAdminScene && calculationStatus.status === DeviationCalculationStatus.Initial) {
-            getProcesses();
-        }
+    useListenCalculationState();
 
-        async function getProcesses() {
-            dispatch(deviationsActions.setCalculationStatus({ status: DeviationCalculationStatus.Loading }));
-
-            const processes = await dataApi.getProcesses();
-            const activeProcess = processes.filter((p) => p.id === scene.id)[0];
-
-            if (!activeProcess) {
-                dispatch(deviationsActions.setCalculationStatus({ status: DeviationCalculationStatus.Inactive }));
-                return;
-            }
-
-            if (activeProcess.state.toLowerCase() === "active" || activeProcess.state.toLowerCase() === "running") {
-                dispatch(deviationsActions.setCalculationStatus({ status: DeviationCalculationStatus.Running }));
-            } else {
-                dispatch(
-                    deviationsActions.setCalculationStatus({
-                        status: DeviationCalculationStatus.Error,
-                        error: activeProcess.state,
-                    })
-                );
-            }
-        }
-    }, [dispatch, scene, calculationStatus, isAdminScene]);
+    const [calcDeviations] = useCalcDeviationsMutation();
 
     const handleCalculateDeviations = async () => {
-        dispatch(deviationsActions.setCalculationStatus({ status: DeviationCalculationStatus.Running }));
-        const res = await dataApi.fetch(`deviations/${scene.id}`).then((r) => r.json());
+        if (profiles.status !== AsyncStatus.Success) {
+            return;
+        }
 
-        if (res.success) {
-            dispatch(deviationsActions.setCalculationStatus({ status: DeviationCalculationStatus.Running }));
-        } else {
+        dispatch(deviationsActions.setCalculationStatus({ status: DeviationCalculationStatus.Running }));
+
+        try {
+            if (isProjectV2) {
+                await calcDeviations({ projectId: scene.id, config: uiConfigToServerConfig(profiles.data) }).unwrap();
+
+                dispatch(deviationsActions.setCalculationStatus({ status: DeviationCalculationStatus.Running }));
+            } else {
+                const res = await dataApi.fetch(`deviations/${scene.id}`).then((r) => r.json());
+
+                if (res.success) {
+                    dispatch(deviationsActions.setCalculationStatus({ status: DeviationCalculationStatus.Running }));
+                } else {
+                    dispatch(
+                        deviationsActions.setCalculationStatus({
+                            status: DeviationCalculationStatus.Error,
+                            error: res.error ?? "Unknown error calculating deviations",
+                        })
+                    );
+                }
+            }
+        } catch (ex) {
+            console.warn(ex);
             dispatch(
                 deviationsActions.setCalculationStatus({
                     status: DeviationCalculationStatus.Error,
-                    error: res.error ?? "Unknown error calculating deviations",
+                    error: "Unknown error calculating deviations",
                 })
             );
         }

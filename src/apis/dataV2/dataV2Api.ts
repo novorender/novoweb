@@ -5,8 +5,9 @@ import { RootState } from "app/store";
 import { ArcgisWidgetConfig } from "features/arcgis";
 import { selectConfig } from "slices/explorerSlice";
 
+import { DeviationProjectConfig } from "./deviationTypes";
 import { Omega365Document } from "./omega365Types";
-import { ProjectInfo } from "./projectTypes";
+import { BuildProgressResult, ProjectInfo } from "./projectTypes";
 
 const rawBaseQuery = fetchBaseQuery({
     baseUrl: "",
@@ -48,7 +49,7 @@ const dynamicBaseQuery: BaseQueryFn<string | FetchArgs, unknown, FetchBaseQueryE
 export const dataV2Api = createApi({
     reducerPath: "dataV2",
     baseQuery: dynamicBaseQuery,
-    tagTypes: ["PropertyTreeFavorites"],
+    tagTypes: ["PropertyTreeFavorites", "ProjectProgress", "Deviation"],
     endpoints: (builder) => ({
         isOmega365ConfiguredForProject: builder.query<{ configured: boolean }, { projectId: string }>({
             query: ({ projectId }) => `/explorer/${projectId}/omega365/configured`,
@@ -93,6 +94,33 @@ export const dataV2Api = createApi({
                 body: config,
             }),
         }),
+        getDeviationProfiles: builder.query<DeviationProjectConfig, { projectId: string }>({
+            query: ({ projectId }) => `/explorer/${projectId}/deviations`,
+            providesTags: (_result, _error, { projectId }) => [{ type: "Deviation", id: projectId }],
+        }),
+        setDeviationProfiles: builder.mutation<void, { projectId: string; config: DeviationProjectConfig }>({
+            query: ({ projectId, config }) => ({
+                url: `/explorer/${projectId}/deviations`,
+                method: "PUT",
+                body: config,
+            }),
+            invalidatesTags: (_result, _error, { projectId }) => [{ type: "Deviation", id: projectId }],
+        }),
+        calcDeviations: builder.mutation<void, { projectId: string; config: DeviationProjectConfig }>({
+            query: ({ projectId, config }) => ({
+                url: `/projects/${projectId}/calcdeviations`,
+                method: "PATCH",
+                body: config,
+            }),
+            invalidatesTags: (_result, _error, { projectId }) => [{ type: "ProjectProgress", id: projectId }],
+        }),
+        getProjectProgress: builder.query<BuildProgressResult, { projectId: string; position?: number }>({
+            query: ({ projectId, position }) => ({
+                url: `/projects/${projectId}/progress`,
+                params: { position },
+            }),
+            providesTags: (_result, _error, { projectId }) => [{ type: "ProjectProgress", id: projectId }],
+        }),
     }),
 });
 
@@ -105,4 +133,8 @@ export const {
     useSetPropertyTreeFavoritesMutation,
     useLazyGetProjectQuery,
     useGetProjectQuery,
+    useLazyGetDeviationProfilesQuery,
+    useSetDeviationProfilesMutation,
+    useCalcDeviationsMutation,
+    useGetProjectProgressQuery,
 } = dataV2Api;

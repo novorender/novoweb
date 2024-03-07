@@ -1,280 +1,561 @@
-import { Add, ArrowBack, Delete, Edit, MoreVert, Palette, Save } from "@mui/icons-material";
+import { InfoOutlined } from "@mui/icons-material";
 import {
+    Autocomplete,
     Box,
     Button,
+    Checkbox,
+    FormControl,
+    FormControlLabel,
     IconButton,
-    List,
-    ListItemButton,
-    ListItemIcon,
-    ListItemText,
-    Menu,
+    InputLabel,
     MenuItem,
+    Radio,
+    RadioGroup,
     Select,
-    SelectChangeEvent,
+    SxProps,
+    TextField,
+    Theme,
+    Tooltip,
     Typography,
     useTheme,
 } from "@mui/material";
-import { ChangeEvent, MouseEvent, useState } from "react";
-import { ColorResult } from "react-color";
+import { View } from "@novorender/api";
+import { ObjectDB } from "@novorender/data-js-api";
+import { CenterLine } from "apis/dataV2/deviationTypes";
+import { useCallback, useMemo } from "react";
 import { useHistory } from "react-router-dom";
 
-import { dataApi } from "app";
 import { useAppDispatch, useAppSelector } from "app/store";
 import { Divider, LinearProgress, ScrollBox } from "components";
 import { useExplorerGlobals } from "contexts/explorerGlobals";
-import { ColorPicker } from "features/colorPicker";
-import { renderActions, selectDeviations } from "features/render";
-import { loadScene } from "features/render/hooks/useHandleInit";
-import { selectHasAdminCapabilities, selectIsAdminScene } from "slices/explorerSlice";
+import { isInternalGroup, ObjectGroup, useObjectGroups } from "contexts/objectGroups";
+import { areArraysEqual } from "features/arcgis/utils";
+import { selectDeviations } from "features/render";
+import { selectProjectIsV2 } from "slices/explorerSlice";
 import { AsyncStatus } from "types/misc";
-import { rgbToVec, VecRGBA, vecToRgb } from "utils/color";
-import { mergeRecursive } from "utils/misc";
+import { getObjectData } from "utils/search";
 
-import { selectDeviationProfilesData } from "../deviationsSlice";
+import { CenterLineSection } from "../components/centerLineSection";
+import { ColorStopList } from "../components/colorStop";
+import { SectionHeader } from "../components/sectionHeader";
+import { TunnelInfoSection } from "../components/tunnelInfoSection";
+import {
+    deviationsActions,
+    selectDeviationForm,
+    selectDeviationProfileList,
+    selectDeviationProfiles,
+    selectSaveStatus,
+} from "../deviationsSlice";
+import {
+    CenterLineGroup,
+    DeviationForm,
+    DeviationType,
+    TunnelInfoGroup,
+    UiDeviationConfig,
+    UiDeviationProfile,
+} from "../deviationTypes";
+import { useSaveDeviationConfig } from "../hooks/useSaveDeviationConfig";
+import { NEW_DEVIATION_ID, newDeviationForm, profileToDeviationForm } from "../utils";
+import {
+    getActiveErrorText,
+    hasActiveErrors,
+    hasErrors,
+    isActiveError,
+    touchFormField,
+    updateFormField,
+    validateDeviationForm,
+} from "../validation";
 
-export function Deviation({ sceneId }: { sceneId: string }) {
+export function Deviation() {
+    const {
+        state: { view, db },
+    } = useExplorerGlobals();
+    const isProjectV2 = useAppSelector(selectProjectIsV2);
     const theme = useTheme();
     const history = useHistory();
-    const {
-        state: { scene },
-    } = useExplorerGlobals(true);
-    const isAdminScene = useAppSelector(selectIsAdminScene);
-    const deviations = useAppSelector(selectDeviations);
-    const profiles = useAppSelector(selectDeviationProfilesData);
+    const profiles = useAppSelector(selectDeviationProfiles);
+    const profileList = useAppSelector(selectDeviationProfileList);
     const dispatch = useAppDispatch();
-    const isAdmin = useAppSelector(selectHasAdminCapabilities);
-    const [saveStatus, setSaveStatus] = useState(AsyncStatus.Initial);
+    const saveStatus = useAppSelector(selectSaveStatus);
+    const objectGroups = useObjectGroups().filter((grp) => !isInternalGroup(grp));
+    const saveConfig = useSaveDeviationConfig();
+    const deviations = useAppSelector(selectDeviations);
 
-    const handleModeChange = (evt: SelectChangeEvent | ChangeEvent<HTMLInputElement>) => {
-        const mixFactor = evt.target.value === "on" ? 1 : evt.target.value === "mix" ? 0.5 : 0;
+    const deviationForm = useAppSelector(selectDeviationForm) ?? newDeviationForm();
 
-        dispatch(
-            renderActions.setPoints({
-                deviation: {
-                    mixFactor,
-                },
-            })
-        );
-    };
+    const update = useCallback(
+        (upd: Partial<DeviationForm>) => {
+            dispatch(deviationsActions.setDeviationForm({ ...deviationForm, ...upd }));
+        },
+        [dispatch, deviationForm]
+    );
+    const updateCenterLine = useCallback((centerLine: CenterLineGroup) => update({ centerLine }), [update]);
+    const updateTunnelInfo = useCallback((tunnelInfo: TunnelInfoGroup) => update({ tunnelInfo }), [update]);
 
-    const handleSave = async () => {
-        const id = sceneId;
+    const otherNames = useMemo(
+        () => profileList.filter((p) => p.id !== deviationForm.id).map((p) => p.name.toLowerCase()),
+        [profileList, deviationForm.id]
+    );
+    const errors = validateDeviationForm(deviationForm, otherNames);
 
-        setSaveStatus(AsyncStatus.Loading);
+    const formDisabled = !isProjectV2;
 
-        try {
-            const [originalScene] = await loadScene(id);
+    const groups1 = useMemo(
+        () =>
+            deviationForm.groups1.value
+                .map((id) => objectGroups.find((g) => g.id === id))
+                .filter((e) => e) as ObjectGroup[],
+        [deviationForm.groups1.value, objectGroups]
+    );
+    const groups2 = useMemo(
+        () =>
+            deviationForm.groups2.value
+                .map((id) => objectGroups.find((g) => g.id === id))
+                .filter((e) => e) as ObjectGroup[],
+        [deviationForm.groups2.value, objectGroups]
+    );
+    const deviationFavorites = useMemo(
+        () =>
+            (deviationForm.favorites.value || [])
+                .map((id) => objectGroups.find((g) => g.id === id))
+                .filter((e) => e) as ObjectGroup[],
+        [deviationForm.favorites.value, objectGroups]
+    );
 
-            if (originalScene.customProperties.explorerProjectState) {
-                const updated = mergeRecursive(originalScene, {
-                    url: isAdminScene ? scene.id : `${sceneId}:${scene.id}`,
-                    customProperties: {
-                        explorerProjectState: { renderSettings: { points: { deviation: deviations } } },
-                    },
-                });
+    const groups1Options = useMemo(() => objectGroups.filter((g) => !groups2.includes(g)), [objectGroups, groups2]);
+    const groups2Options = useMemo(() => objectGroups.filter((g) => !groups1.includes(g)), [objectGroups, groups1]);
+    const favoriteOptions = objectGroups;
 
-                dataApi.putScene(updated);
-            } else {
-                const settings = originalScene.settings;
-                if (settings) {
-                    await dataApi.putScene({
-                        ...originalScene,
-                        url: `${id}:${scene.id}`,
-                        settings: {
-                            ...settings,
-                            points: {
-                                ...settings.points,
-                                deviation: {
-                                    ...deviations,
-                                    mode:
-                                        deviations.mixFactor === 0 ? "off" : deviations.mixFactor === 1 ? "on" : "mix",
-                                    colors: deviations.colorGradient.knots
-                                        .map((deviation) => ({ deviation: deviation.position, color: deviation.color }))
-                                        .sort((a, b) => a.deviation - b.deviation),
-                                },
-                            },
-                        },
-                    });
-                }
+    const handleSave = () => {
+        save();
+
+        async function save() {
+            if (profiles.status !== AsyncStatus.Success || !db || !view) {
+                return;
             }
 
-            setSaveStatus(AsyncStatus.Initial);
-        } catch {
-            setSaveStatus(AsyncStatus.Error);
+            if (hasErrors(errors)) {
+                update({
+                    name: touchFormField(deviationForm.name),
+                    groups1: touchFormField(deviationForm.groups1),
+                    groups2: touchFormField(deviationForm.groups2),
+                    colorSetup: {
+                        ...deviationForm.colorSetup,
+                        colorStops: touchFormField(deviationForm.colorSetup.colorStops),
+                    },
+                });
+                return;
+            }
+
+            dispatch(deviationsActions.setSaveStatus({ status: AsyncStatus.Loading }));
+            try {
+                const profile = await deviationFormToProfile({
+                    db,
+                    view,
+                    deviationForm: deviationForm,
+                    objectGroups,
+                });
+                const isNew = deviationForm.id === NEW_DEVIATION_ID;
+                if (isNew) {
+                    profile.id = window.crypto.randomUUID();
+                }
+                const newProfileData = mergeDeviationFormIntoProfiles(profiles.data, profile);
+
+                await saveConfig({
+                    uiConfig: newProfileData,
+                    deviations: {
+                        ...deviations,
+                        colorGradient: {
+                            knots: profile.colors.colorStops,
+                        },
+                    },
+                    showRebuildMessage: newProfileData.rebuildRequired,
+                });
+
+                history.goBack();
+
+                dispatch(deviationsActions.setDeviationForm(undefined));
+            } catch (ex) {
+                console.warn(ex);
+                dispatch(
+                    deviationsActions.setSaveStatus({
+                        status: AsyncStatus.Error,
+                        msg: "Failed to save deviation profile",
+                    })
+                );
+            }
         }
     };
 
-    const loading = saveStatus === AsyncStatus.Loading;
+    const loading = saveStatus.status === AsyncStatus.Loading;
+
+    const canSave = saveStatus.status !== AsyncStatus.Loading && !hasActiveErrors(errors);
+
     return (
         <>
-            <Box boxShadow={theme.customShadows.widgetHeader}>
-                <Box px={1}>
-                    <Divider />
-                </Box>
-                <Box display="flex" justifyContent="space-between">
-                    <Button disabled={profiles.length < 2} color="grey" onClick={() => history.goBack()}>
-                        <ArrowBack sx={{ mr: 1 }} /> Back
-                    </Button>
-                    <Select
-                        name="deviations mode"
-                        variant="standard"
-                        label="mode"
-                        size="small"
-                        value={deviations.mixFactor === 1 ? "on" : deviations.mixFactor === 0 ? "off" : "mix"}
-                        sx={{ minWidth: 50, lineHeight: "normal" }}
-                        inputProps={{ sx: { p: 0, fontSize: 14 } }}
-                        onChange={handleModeChange}
-                        disabled={loading}
-                    >
-                        <MenuItem value={"on"}>On</MenuItem>
-                        <MenuItem value={"mix"}>Mix</MenuItem>
-                        <MenuItem value={"off"}>Off</MenuItem>
-                    </Select>
-                    {isAdmin ? (
-                        <Button disabled={loading} color="grey" onClick={handleSave}>
-                            <Save sx={{ mr: 1 }} /> Save
-                        </Button>
-                    ) : (
-                        <Box width={70} />
-                    )}
-                </Box>
-            </Box>
+            <Box
+                boxShadow={theme.customShadows.widgetHeader}
+                sx={{ height: 5, width: 1, mt: "-5px" }}
+                position="absolute"
+            />
+
             {loading ? (
                 <Box position="relative">
                     <LinearProgress />
                 </Box>
             ) : null}
-            <ScrollBox height={1} pb={3}>
-                <List>
-                    {[...deviations.colorGradient.knots]
-                        .sort((a, b) => b.position - a.position)
-                        .map((deviation) => (
-                            <ColorStop key={deviation.position} deviation={deviation} disabled={loading} />
+            <ScrollBox height={1} p={2}>
+                <Typography fontWeight={600} fontSize="1.5rem" mb={2}>
+                    Create deviation profile
+                </Typography>
+                <FormControl fullWidth>
+                    <InputLabel id="select-profile-to-copy-from-label">
+                        Copy from existing profile (optional)
+                    </InputLabel>
+                    <Select
+                        labelId="select-profile-to-copy-from-label"
+                        id="select-profile-to-copy-from"
+                        value={deviationForm.copyFromProfileId.value ?? ""}
+                        label="Copy from existing profile (optional)"
+                        onChange={(e) => {
+                            const source = profileList.find((p) => p.id === e.target.value)!;
+                            const newProfile = copyProfile(profileList, source);
+                            update(newProfile);
+                        }}
+                        disabled={formDisabled}
+                    >
+                        {profileList.map((profile, idx) => (
+                            <MenuItem key={profile.id} value={profile.id}>
+                                {profile.name ?? `Deviation ${idx + 1}`}
+                            </MenuItem>
                         ))}
-                </List>
-                <Box display="flex" justifyContent="flex-end" pr={2}>
-                    <Button size="small" onClick={() => history.push("/deviation/add")}>
-                        <Add sx={{ mr: 1 }} /> Add color stop
-                    </Button>
+                    </Select>
+                </FormControl>
+                <TextField
+                    fullWidth
+                    value={deviationForm.name.value}
+                    onChange={(e) => {
+                        update({ name: updateFormField(e.target.value) });
+                    }}
+                    label="Name of the deviation profile"
+                    error={isActiveError(errors.name)}
+                    helperText={getActiveErrorText(errors.name)}
+                    sx={{ mt: 2 }}
+                    disabled={formDisabled}
+                />
+                <SectionHeader>Select deviation Groups</SectionHeader>
+                <Typography>
+                    Create deviations between items in Groups. For example a point cloud and (many) 3D asset(s).
+                </Typography>
+                <Box display="flex" justifyContent="space-between" alignItems="center" mt={2}>
+                    <FormControl>
+                        <RadioGroup
+                            row
+                            aria-labelledby="select-deviation-type-label"
+                            name="select-deviation-type"
+                            value={deviationForm.deviationType.value}
+                            onChange={(e) => {
+                                update({
+                                    deviationType: updateFormField(Number(e.target.value)),
+                                    groups1: {
+                                        value: deviationForm.groups1.value.filter(
+                                            (id) => !deviationForm.groups2.value.includes(id)
+                                        ),
+                                        edited: deviationForm.groups1.edited,
+                                    },
+                                });
+                            }}
+                        >
+                            <FormControlLabel
+                                value={DeviationType.PointToTriangle}
+                                control={<Radio />}
+                                label="Mesh"
+                                disabled={formDisabled}
+                            />
+                            <FormControlLabel
+                                value={DeviationType.PointToPoint}
+                                control={<Radio />}
+                                label="Point"
+                                disabled={formDisabled}
+                            />
+                        </RadioGroup>
+                    </FormControl>
+                    {!deviationForm.hasFromAndTo && (
+                        <Tooltip
+                            title="Deviation profile was created in the older version, where only one set of groups needed to be specified."
+                            enterDelay={0}
+                        >
+                            <IconButton
+                                onClick={(evt) => {
+                                    evt.stopPropagation();
+                                }}
+                            >
+                                <InfoOutlined />
+                            </IconButton>
+                        </Tooltip>
+                    )}
+                </Box>
+                <GroupAutocomplete
+                    options={groups1Options}
+                    label="Groups to analyse"
+                    onChange={(groups) => {
+                        update({ groups1: updateFormField(groups.map((g) => g.id)) });
+                    }}
+                    selected={groups1}
+                    sx={{ mt: 2 }}
+                    error={isActiveError(errors.groups1)}
+                    helperText={getActiveErrorText(errors.groups1)}
+                    disabled={formDisabled}
+                />
+                <Box display="flex" justifyContent="center" mt={1}>
+                    <Typography fontWeight={600}>vs</Typography>
+                </Box>
+                <GroupAutocomplete
+                    options={groups2Options}
+                    label="Analyse against"
+                    onChange={(groups) => update({ groups2: updateFormField(groups.map((g) => g.id)) })}
+                    selected={groups2}
+                    sx={{ mt: 1 }}
+                    error={isActiveError(errors.groups2)}
+                    helperText={getActiveErrorText(errors.groups2)}
+                    disabled={formDisabled}
+                />
+                <SectionHeader>Select deviation favourites</SectionHeader>
+                <GroupAutocomplete
+                    options={favoriteOptions}
+                    label="Groups"
+                    onChange={(groups) => update({ favorites: updateFormField(groups.map((g) => g.id)) })}
+                    selected={deviationFavorites}
+                    sx={{ mt: 2 }}
+                    disabled={formDisabled}
+                />
+                <SectionHeader>Deviation parameters</SectionHeader>
+                <FormControlLabel
+                    control={
+                        <Checkbox
+                            checked={deviationForm.colorSetup.absoluteValues}
+                            onChange={(e) =>
+                                update({
+                                    colorSetup: { ...deviationForm.colorSetup, absoluteValues: e.target.checked },
+                                })
+                            }
+                            disabled={formDisabled}
+                        />
+                    }
+                    label="Absolute values"
+                />
+                <ColorStopList
+                    colorStops={deviationForm.colorSetup.colorStops.value}
+                    onChange={(colorStops) =>
+                        update({ colorSetup: { ...deviationForm.colorSetup, colorStops: updateFormField(colorStops) } })
+                    }
+                    errors={errors}
+                    disabled={formDisabled}
+                />
+                <CenterLineSection
+                    centerLine={deviationForm.centerLine}
+                    onChange={updateCenterLine}
+                    disabled={formDisabled}
+                />
+                {deviationForm.centerLine.enabled && (
+                    <TunnelInfoSection
+                        tunnelInfo={deviationForm.tunnelInfo}
+                        onChange={updateTunnelInfo}
+                        disabled={formDisabled}
+                    />
+                )}
+                <Box mt={4}>
+                    <Divider />
+                </Box>
+
+                <Box display="flex" justifyContent="flex-end" gap={2} mt={2}>
+                    {formDisabled ? (
+                        <Button
+                            color="grey"
+                            onClick={() => {
+                                history.goBack();
+                                dispatch(deviationsActions.setDeviationForm(undefined));
+                            }}
+                        >
+                            Back
+                        </Button>
+                    ) : (
+                        <>
+                            <Button
+                                color="grey"
+                                onClick={() => {
+                                    history.goBack();
+                                    dispatch(deviationsActions.setDeviationForm(undefined));
+                                }}
+                            >
+                                Cancel
+                            </Button>
+                            <Button color="primary" variant="contained" onClick={handleSave} disabled={!canSave}>
+                                Save
+                            </Button>
+                        </>
+                    )}
                 </Box>
             </ScrollBox>
         </>
     );
 }
 
-function ColorStop({ deviation, disabled }: { deviation: { position: number; color: VecRGBA }; disabled?: boolean }) {
-    const history = useHistory();
-
-    const deviations = useAppSelector(selectDeviations);
-    const dispatch = useAppDispatch();
-    const [colorPickerAnchor, setColorPickerAnchor] = useState<HTMLElement | null>(null);
-    const [menuAnchor, setMenuAnchor] = useState<HTMLElement | null>(null);
-
-    const openMenu = (e: MouseEvent<HTMLButtonElement>) => {
-        e.stopPropagation();
-        setMenuAnchor(e.currentTarget);
-    };
-
-    const closeMenu = () => {
-        setMenuAnchor(null);
-    };
-
-    const toggleColorPicker = (event?: MouseEvent<HTMLElement>) => {
-        setColorPickerAnchor(!colorPickerAnchor && event?.currentTarget ? event.currentTarget : null);
-    };
-
-    const handleColorChange = ({ rgb }: ColorResult) => {
-        dispatch(
-            renderActions.setPoints({
-                deviation: {
-                    colorGradient: {
-                        knots: deviations.colorGradient.knots.map((devi) =>
-                            devi === deviation ? { ...deviation, color: rgbToVec(rgb) as VecRGBA } : devi
-                        ),
-                    },
-                },
-            })
-        );
-    };
-
-    const handleDelete = () => {
-        dispatch(
-            renderActions.setPoints({
-                deviation: {
-                    colorGradient: {
-                        knots: deviations.colorGradient.knots.filter((devi) => devi !== deviation),
-                    },
-                },
-            })
-        );
-    };
-
-    const color = vecToRgb(deviation.color);
+function GroupAutocomplete({
+    options,
+    selected,
+    label,
+    onChange,
+    disabled,
+    error,
+    helperText,
+    sx,
+}: {
+    options: ObjectGroup[];
+    selected: ObjectGroup[];
+    label: string;
+    onChange: (groups: ObjectGroup[]) => void;
+    disabled?: boolean;
+    error?: boolean;
+    helperText?: string;
+    sx?: SxProps<Theme>;
+}) {
     return (
-        <>
-            <ListItemButton
-                disableGutters
-                dense
-                key={deviation.position}
-                sx={{ px: 1, display: "flex" }}
-                onClick={(evt) => {
-                    evt.stopPropagation();
-                    toggleColorPicker();
-                }}
-            >
-                <Typography flex="1 1 auto">
-                    {Math.sign(deviation.position) === 1 ? `+${deviation.position}` : deviation.position}
-                </Typography>
-                <IconButton
-                    size="small"
-                    onClick={(evt) => {
-                        evt.stopPropagation();
-                        toggleColorPicker(evt);
-                    }}
-                >
-                    <Palette
-                        fontSize="small"
-                        sx={{
-                            color: `rgba(${color.r}, ${color.g}, ${color.b}, ${color.a ?? 1})`,
-                        }}
-                    />
-                </IconButton>
-                <IconButton
-                    size="small"
-                    disabled={disabled}
-                    onClick={(evt) => {
-                        evt.stopPropagation();
-                        history.push(`/deviation/edit/${deviations.colorGradient.knots.indexOf(deviation)}`);
-                    }}
-                >
-                    <Edit fontSize="small" />
-                </IconButton>
-                <IconButton size="small" color={menuAnchor ? "primary" : "default"} onClick={openMenu}>
-                    <MoreVert fontSize="small" />
-                </IconButton>
-            </ListItemButton>
-            <ColorPicker
-                open={Boolean(colorPickerAnchor)}
-                anchorEl={colorPickerAnchor}
-                onClose={() => toggleColorPicker()}
-                color={deviation.color}
-                onChangeComplete={handleColorChange}
-            />
-            <Menu
-                onClick={(e) => e.stopPropagation()}
-                anchorEl={menuAnchor}
-                open={Boolean(menuAnchor)}
-                onClose={closeMenu}
-                id={`${deviation.position}-menu`}
-                MenuListProps={{ sx: { maxWidth: "100%" } }}
-            >
-                <MenuItem key="delete" onClick={handleDelete}>
-                    <ListItemIcon>
-                        <Delete fontSize="small" />
-                    </ListItemIcon>
-                    <ListItemText>Delete</ListItemText>
-                </MenuItem>
-            </Menu>
-        </>
+        <Autocomplete
+            multiple
+            options={options}
+            getOptionLabel={(g) => g.name}
+            fullWidth
+            value={selected}
+            onChange={(e, value) => onChange(value)}
+            renderInput={(params) => <TextField {...params} label={label} error={error} helperText={helperText} />}
+            disabled={disabled}
+            sx={sx}
+            disableCloseOnSelect
+            ChipProps={{ color: "primary", variant: "outlined" }}
+        />
     );
+}
+
+function mergeDeviationFormIntoProfiles(config: UiDeviationConfig, profile: UiDeviationProfile) {
+    const list = [...config.profiles];
+    const existingIndex = config.profiles.findIndex((p) => p.id === profile.id);
+
+    let rebuildRequired = config.rebuildRequired;
+    if (existingIndex !== -1) {
+        const existing = list[existingIndex];
+        const typeChanged = existing.deviationType !== profile.deviationType;
+        rebuildRequired = rebuildRequired || checkIfRebuildIsRequired(existing, profile);
+        if (typeChanged) {
+            list.slice(existingIndex, 1);
+            list.push(profile);
+        } else {
+            list[existingIndex] = profile;
+        }
+    } else {
+        list.push(profile);
+    }
+
+    return {
+        ...config,
+        rebuildRequired,
+        profiles: [
+            ...list.filter((p) => p.deviationType === DeviationType.PointToTriangle),
+            ...list.filter((p) => p.deviationType === DeviationType.PointToPoint),
+        ],
+    } as UiDeviationConfig;
+}
+
+function copyProfile(profiles: UiDeviationProfile[], source: UiDeviationProfile): DeviationForm {
+    return {
+        ...profileToDeviationForm(source),
+        id: window.crypto.randomUUID(),
+        copyFromProfileId: updateFormField(source.id),
+        name: updateFormField(nextName(new Set(profiles.map((p) => p.name)), source.name)),
+    };
+}
+
+function nextName(names: Set<string>, suggestion: string) {
+    let i = 1;
+    let result: string;
+    do {
+        result = `${suggestion} ${i++}`;
+    } while (names.has(result));
+    return result;
+}
+
+async function deviationFormToProfile({
+    deviationForm,
+    objectGroups,
+    db,
+    view,
+}: {
+    db: ObjectDB;
+    view: View;
+    deviationForm: DeviationForm;
+    objectGroups: ObjectGroup[];
+}): Promise<UiDeviationProfile> {
+    const getGroups = (groupIds: string[]) => {
+        const groups = objectGroups.filter((g) => groupIds.includes(g.id));
+        const objectIds = new Set<number>();
+        for (const group of groups) {
+            group.ids.forEach((id) => objectIds.add(id));
+        }
+        return {
+            groupIds,
+            objectIds: [...objectIds],
+        };
+    };
+
+    let centerLine: CenterLine | undefined;
+    if (deviationForm.centerLine.enabled && deviationForm.centerLine.id.value) {
+        const metadata = await getObjectData({ db: db!, view: view!, id: deviationForm.centerLine.id.value! });
+        if (metadata) {
+            const brepId = metadata.properties.find((p) => p[0] === "Novorender/PathId")?.[1];
+            if (brepId) {
+                centerLine = {
+                    brepId,
+                    parameterBounds: deviationForm.centerLine.parameterBounds.value,
+                };
+            }
+        }
+    }
+
+    return {
+        id: deviationForm.id,
+        name: deviationForm.name.value,
+        copyFromProfileId: deviationForm.copyFromProfileId.value,
+        colors: {
+            absoluteValues: deviationForm.colorSetup.absoluteValues,
+            colorStops: deviationForm.colorSetup.colorStops.value,
+        },
+        favorites: deviationForm.favorites.value,
+        centerLine,
+        heightToCeiling:
+            centerLine &&
+            deviationForm.tunnelInfo.enabled &&
+            Number.isFinite(deviationForm.tunnelInfo.heightToCeiling.value)
+                ? Number(deviationForm.tunnelInfo.heightToCeiling)
+                : undefined,
+        from: getGroups(deviationForm.groups1.value),
+        to: getGroups(deviationForm.groups2.value),
+        hasFromAndTo: deviationForm.hasFromAndTo,
+        deviationType: deviationForm.deviationType.value,
+        index: deviationForm.index,
+    };
+}
+
+function checkIfRebuildIsRequired(prev: UiDeviationProfile, next: UiDeviationProfile) {
+    return (
+        prev.deviationType !== next.deviationType ||
+        !areGroupsIdsEqual(prev.from.groupIds, next.from.groupIds) ||
+        !areGroupsIdsEqual(prev.to.groupIds, next.to.groupIds) ||
+        prev.centerLine?.brepId !== next.centerLine?.brepId ||
+        !areArraysEqual(prev.centerLine?.parameterBounds || ([] as number[]), next.centerLine?.parameterBounds ?? []) ||
+        prev.heightToCeiling !== next.heightToCeiling
+    );
+}
+
+function areGroupsIdsEqual(a: string[], b: string[]) {
+    return a.every((e) => b.includes(e));
 }
