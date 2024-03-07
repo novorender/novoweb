@@ -10,7 +10,7 @@ import { useLazyHidden } from "contexts/hidden";
 import { useLazyHighlighted } from "contexts/highlighted";
 import { useLazyObjectGroups } from "contexts/objectGroups";
 import { useLazySelectionBasket } from "contexts/selectionBasket";
-import { ObjectVisibility, selectDefaultVisibility } from "features/render/renderSlice";
+import { ObjectVisibility, selectDefaultVisibility } from "features/render";
 import { useAbortController } from "hooks/useAbortController";
 import { Viewpoint } from "types/bcf";
 import {

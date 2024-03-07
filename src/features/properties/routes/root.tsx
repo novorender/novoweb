@@ -30,7 +30,7 @@ import {
 } from "components";
 import { useExplorerGlobals } from "contexts/explorerGlobals";
 import { highlightActions, useDispatchHighlighted } from "contexts/highlighted";
-import { selectMainObject } from "features/render/renderSlice";
+import { selectMainObject } from "features/render";
 import { useAbortController } from "hooks/useAbortController";
 import { selectHasAdminCapabilities } from "slices/explorerSlice";
 import { NodeType } from "types/misc";

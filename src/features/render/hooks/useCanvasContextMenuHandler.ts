@@ -6,15 +6,8 @@ import { highlightActions, useDispatchHighlighted } from "contexts/highlighted";
 import { selectCanvasContextMenuFeatures } from "slices/explorerSlice";
 import { isRealVec } from "utils/misc";
 
-import {
-    CameraType,
-    Picker,
-    renderActions,
-    selectCameraType,
-    selectClippingPlanes,
-    selectPicker,
-    StampKind,
-} from "../renderSlice";
+import { renderActions, selectCameraType, selectClippingPlanes, selectPicker } from "../renderSlice";
+import { CameraType, Picker, StampKind } from "../types";
 
 export function useCanvasContextMenuHandler() {
     const dispatch = useAppDispatch();

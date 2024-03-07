@@ -25,7 +25,7 @@ import {
     selectTerrain,
     selectViewMode,
     SubtreeStatus,
-} from "features/render/renderSlice";
+} from "features/render";
 import { getAsyncStateData, ViewMode } from "types/misc";
 import { rgbToVec, VecRGBA, vecToRgb } from "utils/color";
 

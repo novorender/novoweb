@@ -5,7 +5,7 @@ import { useHistory } from "react-router-dom";
 
 import { useAppDispatch } from "app/store";
 import { LinearProgress } from "components";
-import { Picker, renderActions } from "features/render/renderSlice";
+import { Picker, renderActions } from "features/render";
 import { AsyncStatus } from "types/misc";
 
 import { Follow } from "../follow";

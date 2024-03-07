@@ -9,7 +9,7 @@ import { featuresConfig } from "config/features";
 import { useExplorerGlobals } from "contexts/explorerGlobals";
 import { useHighlighted } from "contexts/highlighted";
 import { imagesActions } from "features/images";
-import { CameraType, renderActions } from "features/render/renderSlice";
+import { CameraType, renderActions } from "features/render";
 import { useAbortController } from "hooks/useAbortController";
 import { objIdsToTotalBoundingSphere } from "utils/objectData";
 

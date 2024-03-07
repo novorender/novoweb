@@ -11,7 +11,7 @@ import {
 } from "contexts/highlightCollections";
 import { highlightActions, useDispatchHighlighted, useHighlighted } from "contexts/highlighted";
 import { selectionBasketActions, useDispatchSelectionBasket } from "contexts/selectionBasket";
-import { renderActions, selectMainObject } from "features/render/renderSlice";
+import { renderActions, selectMainObject } from "features/render";
 
 type Props = SpeedDialActionProps;
 

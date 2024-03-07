@@ -7,7 +7,7 @@ import { dataApi } from "app";
 import { useAppDispatch, useAppSelector } from "app/store";
 import { Divider, LinearProgress, ScrollBox } from "components";
 import { GroupStatus } from "contexts/objectGroups";
-import { selectViewMode } from "features/render/renderSlice";
+import { selectViewMode } from "features/render";
 import { useSceneId } from "hooks/useSceneId";
 import { selectUser } from "slices/authSlice";
 import { ViewMode } from "types/misc";

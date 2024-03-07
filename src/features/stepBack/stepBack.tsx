@@ -3,7 +3,7 @@ import type { SpeedDialActionProps } from "@mui/material";
 import { useAppDispatch, useAppSelector } from "app/store";
 import { SpeedDialAction } from "components";
 import { featuresConfig } from "config/features";
-import { renderActions, selectSavedCameraPositions, selectViewMode } from "features/render/renderSlice";
+import { renderActions, selectSavedCameraPositions, selectViewMode } from "features/render";
 import { ViewMode } from "types/misc";
 
 type Props = SpeedDialActionProps & {

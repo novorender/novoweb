@@ -14,7 +14,7 @@ import { AsyncStatus } from "types/misc";
 import { createOAuthStateString, generateCodeChallenge } from "utils/auth";
 import { deleteFromStorage, saveToStorage } from "utils/storage";
 
-import { selectSceneStatus } from "..";
+import { selectSceneStatus } from "../renderSlice";
 import { ErrorKind } from "./types";
 
 export function SceneError() {

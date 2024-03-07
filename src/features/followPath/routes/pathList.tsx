@@ -20,7 +20,7 @@ import { Divider, IosSwitch, LinearProgress, ScrollBox } from "components";
 import { useExplorerGlobals } from "contexts/explorerGlobals";
 import { highlightActions, useDispatchHighlighted, useHighlighted } from "contexts/highlighted";
 import { measureActions, singleCylinderOptions } from "features/measure";
-import { Picker, renderActions, selectPicker } from "features/render/renderSlice";
+import { Picker, renderActions, selectPicker } from "features/render";
 import { AsyncStatus, hasFinished } from "types/misc";
 import { getObjectNameFromPath, getParentPath } from "utils/objectData";
 import { searchByPatterns } from "utils/search";

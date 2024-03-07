@@ -22,7 +22,7 @@ import { useExplorerGlobals } from "contexts/explorerGlobals";
 import { hiddenActions, useDispatchHidden } from "contexts/hidden";
 import { highlightActions, useDispatchHighlighted } from "contexts/highlighted";
 import { selectionBasketActions, useDispatchSelectionBasket } from "contexts/selectionBasket";
-import { CameraType, ObjectVisibility, renderActions } from "features/render/renderSlice";
+import { CameraType, ObjectVisibility, renderActions } from "features/render";
 import { useAbortController } from "hooks/useAbortController";
 import { useToggle } from "hooks/useToggle";
 import type { Comment } from "types/bcf";

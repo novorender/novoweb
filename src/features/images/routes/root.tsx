@@ -10,7 +10,7 @@ import { FixedSizeList } from "react-window";
 import { store, useAppDispatch, useAppSelector } from "app/store";
 import { IosSwitch, LinearProgress, withCustomScrollbar } from "components";
 import { useExplorerGlobals } from "contexts/explorerGlobals";
-import { selectProjectSettings } from "features/render/renderSlice";
+import { selectProjectSettings } from "features/render";
 import { flip, flipGLtoCadQuat, isGlSpace, latLon2Tm } from "features/render/utils";
 import { AsyncStatus, hasFinished } from "types/misc";
 

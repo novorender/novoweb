@@ -3,7 +3,7 @@ import { useEffect } from "react";
 import { useAppSelector } from "app/store";
 import { useExplorerGlobals } from "contexts/explorerGlobals";
 
-import { selectCameraSpeedLevels, selectCurrentCameraSpeedLevel, selectProportionalCameraSpeed } from "..";
+import { selectCameraSpeedLevels, selectCurrentCameraSpeedLevel, selectProportionalCameraSpeed } from "../renderSlice";
 
 export function useHandleCameraSpeed() {
     const {

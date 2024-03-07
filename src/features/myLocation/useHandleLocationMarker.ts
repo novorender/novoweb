@@ -3,7 +3,7 @@ import { useEffect, useRef } from "react";
 
 import { useAppDispatch, useAppSelector } from "app/store";
 import { useExplorerGlobals } from "contexts/explorerGlobals";
-import { selectProjectSettings } from "features/render/renderSlice";
+import { selectProjectSettings } from "features/render";
 import { latLon2Tm } from "features/render/utils";
 
 import { LocationStatus, myLocationActions, selectShowLocationMarker } from "./myLocationSlice";

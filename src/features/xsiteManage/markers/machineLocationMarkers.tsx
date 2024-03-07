@@ -2,7 +2,7 @@ import { css, styled } from "@mui/material";
 import { SVGProps } from "react";
 
 import { useAppDispatch, useAppSelector } from "app/store";
-import { CameraType, renderActions, selectCameraType, selectStamp, StampKind } from "features/render/renderSlice";
+import { CameraType, renderActions, selectCameraType, selectStamp, StampKind } from "features/render";
 import { useRedirectWheelEvents } from "hooks/useRedirectWheelEvents";
 
 import { useXsiteManageMachineMarkers } from "../hooks/useXsiteManageMachineMarkers";

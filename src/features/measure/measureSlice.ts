@@ -3,7 +3,7 @@ import { createSelector, createSlice, PayloadAction } from "@reduxjs/toolkit";
 import { vec3 } from "gl-matrix";
 
 import { RootState } from "app/store";
-import { DeepMutable, resetView, selectBookmark } from "features/render/renderSlice";
+import { DeepMutable, resetView, selectBookmark } from "features/render";
 import { ExtendedMeasureEntity } from "types/misc";
 
 import { SnapKind } from "./config";

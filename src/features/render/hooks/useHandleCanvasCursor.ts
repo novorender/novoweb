@@ -3,7 +3,8 @@ import { useEffect, useState } from "react";
 import { useAppSelector } from "app/store";
 import { useExplorerGlobals } from "contexts/explorerGlobals";
 
-import { Picker, selectLoadingHandles, selectPicker } from "../renderSlice";
+import { selectLoadingHandles, selectPicker } from "../renderSlice";
+import { Picker } from "../types";
 
 export function useHandleCanvasCursor() {
     const {

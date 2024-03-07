@@ -6,7 +6,7 @@ import { useAppDispatch, useAppSelector } from "app/store";
 import { Divider, LinearProgress, ScrollBox } from "components";
 import { featuresConfig } from "config/features";
 import { useExplorerGlobals } from "contexts/explorerGlobals";
-import { CameraType, renderActions } from "features/render/renderSlice";
+import { CameraType, renderActions } from "features/render";
 
 import { useGetAllLogPointsQuery } from "../api";
 import { selectXsiteManageSite } from "../slice";

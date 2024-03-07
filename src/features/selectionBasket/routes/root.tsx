@@ -17,7 +17,7 @@ import {
     SelectionBasketMode,
     selectSelectionBasketColor,
     selectSelectionBasketMode,
-} from "features/render/renderSlice";
+} from "features/render";
 import { rgbToVec, vecToRgb } from "utils/color";
 
 export function Root() {

@@ -17,7 +17,7 @@ import { dataApi } from "app";
 import { useAppDispatch, useAppSelector } from "app/store";
 import { Divider, IosSwitch, ScrollBox, TextField } from "components";
 import { useExplorerGlobals } from "contexts/explorerGlobals";
-import { loadScene } from "features/render/hooks/useHandleInit";
+import { loadScene } from "features/render/utils";
 import { selectIsAdminScene } from "slices/explorerSlice";
 import { AsyncStatus } from "types/misc";
 import { mergeRecursive } from "utils/misc";

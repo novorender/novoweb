@@ -27,7 +27,7 @@ import {
     Subtree,
     SubtreeStatus,
 } from "features/render";
-import { loadScene } from "features/render/hooks/useHandleInit";
+import { loadScene } from "features/render/utils";
 import WidgetList from "features/widgetList/widgetList";
 import { useSceneId } from "hooks/useSceneId";
 import { useToggle } from "hooks/useToggle";

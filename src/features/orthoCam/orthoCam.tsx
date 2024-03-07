@@ -19,7 +19,7 @@ import {
     selectTerrain,
     selectViewMode,
     SubtreeStatus,
-} from "features/render/renderSlice";
+} from "features/render";
 import WidgetList from "features/widgetList/widgetList";
 import { useToggle } from "hooks/useToggle";
 import { selectMaximized, selectMinimized } from "slices/explorerSlice";

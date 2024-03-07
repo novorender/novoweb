@@ -8,7 +8,7 @@ import { Confirmation } from "components";
 import { useExplorerGlobals } from "contexts/explorerGlobals";
 import { GroupStatus, isInternalGroup, useLazyObjectGroups } from "contexts/objectGroups";
 import { groupsActions, selectSaveStatus } from "features/groups/groupsSlice";
-import { loadScene } from "features/render/hooks/useHandleInit";
+import { loadScene } from "features/render/utils";
 import { useToggle } from "hooks/useToggle";
 import { AsyncStatus } from "types/misc";
 

@@ -19,8 +19,6 @@ import { orthoCamActions, selectCrossSectionPoint } from "features/orthoCam";
 import { ViewMode } from "types/misc";
 
 import {
-    CameraType,
-    Picker,
     renderActions,
     selectCameraType,
     selectClippingPlanes,
@@ -29,10 +27,9 @@ import {
     selectStamp,
     selectSubtrees,
     selectViewMode,
-    StampKind,
-    SubtreeStatus,
-} from "..";
+} from "../renderSlice";
 import { moveSvgCursor } from "../svgUtils";
+import { CameraType, Picker, StampKind, SubtreeStatus } from "../types";
 import { useCanvasContextMenuHandler } from "./useCanvasContextMenuHandler";
 
 export function useCanvasEventHandlers({

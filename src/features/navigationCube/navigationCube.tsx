@@ -5,7 +5,7 @@ import { Fragment, useEffect, useRef, useState } from "react";
 import { useAppDispatch, useAppSelector } from "app/store";
 import { useExplorerGlobals } from "contexts/explorerGlobals";
 import { useHighlighted } from "contexts/highlighted";
-import { renderActions, selectCameraType } from "features/render/renderSlice";
+import { renderActions, selectCameraType } from "features/render";
 import { isGlSpace } from "features/render/utils";
 import { useAbortController } from "hooks/useAbortController";
 import { objIdsToTotalBoundingSphere } from "utils/objectData";

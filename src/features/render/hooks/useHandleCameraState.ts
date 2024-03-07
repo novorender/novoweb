@@ -6,7 +6,8 @@ import { useExplorerGlobals } from "contexts/explorerGlobals";
 import { orthoCamActions } from "features/orthoCam";
 import { ViewMode } from "types/misc";
 
-import { CameraType, renderActions, selectCamera, selectCameraDefaults, selectViewMode } from "..";
+import { renderActions, selectCamera, selectCameraDefaults, selectViewMode } from "../renderSlice";
+import { CameraType } from "../types";
 
 export function useHandleCameraState() {
     const {

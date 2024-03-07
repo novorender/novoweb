@@ -7,7 +7,7 @@ import { highlightActions, useDispatchHighlighted } from "contexts/highlighted";
 import { GroupStatus, objectGroupsActions, useDispatchObjectGroups, useLazyObjectGroups } from "contexts/objectGroups";
 import { selectionBasketActions, useDispatchSelectionBasket } from "contexts/selectionBasket";
 import { renderActions, selectHomeCameraPosition } from "features/render";
-import { loadScene } from "features/render/hooks/useHandleInit";
+import { loadScene } from "features/render/utils";
 import { useSceneId } from "hooks/useSceneId";
 
 export function useResetView() {

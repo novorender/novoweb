@@ -27,7 +27,7 @@ import { pimsReducer } from "features/pims";
 import { pointLineReducer } from "features/pointLine";
 import { propertiesReducer } from "features/properties/slice";
 import { propertyTreeApi, propertyTreeReducer } from "features/propertyTree";
-import { renderReducer } from "features/render/renderSlice";
+import { renderReducer } from "features/render";
 import { selectionBasketReducer } from "features/selectionBasket";
 import { xsiteManageApi, xsiteManageReducer } from "features/xsiteManage";
 import { authReducer } from "slices/authSlice";

@@ -23,7 +23,7 @@ import { useAppDispatch, useAppSelector } from "app/store";
 import { Accordion, AccordionDetails, AccordionSummary, Divider, IosSwitch, ScrollBox, Tooltip } from "components";
 import { useExplorerGlobals } from "contexts/explorerGlobals";
 import { ColorPicker } from "features/colorPicker";
-import { renderActions } from "features/render/renderSlice";
+import { renderActions } from "features/render";
 import { AsyncStatus, ViewMode } from "types/misc";
 import { rgbToVec, vecToRgb } from "utils/color";
 import { uniqueArray } from "utils/misc";

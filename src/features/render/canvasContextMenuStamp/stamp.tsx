@@ -25,20 +25,13 @@ import { areaActions } from "features/area";
 import { measureActions, selectMeasureEntities } from "features/measure";
 import { clippingOutlineLaserActions, getOutlineLaser, OutlineLaser } from "features/outlineLaser";
 import { pointLineActions, selectLockPointLineElevation } from "features/pointLine";
-import {
-    CameraType,
-    ObjectVisibility,
-    Picker,
-    renderActions,
-    selectCameraType,
-    selectClippingPlanes,
-    selectStamp,
-    StampKind,
-} from "features/render";
 import { selectCanvasContextMenuFeatures } from "slices/explorerSlice";
 import { AsyncStatus } from "types/misc";
 import { getFilePathFromObjectPath, getParentPath } from "utils/objectData";
 import { getObjectData, searchDeepByPatterns } from "utils/search";
+
+import { renderActions, selectCameraType, selectClippingPlanes, selectStamp } from "../renderSlice";
+import { CameraType, ObjectVisibility, Picker, StampKind } from "../types";
 
 const selectionFeatures = [
     canvasContextMenuConfig.addFileToBasket.key,
@@ -102,7 +95,7 @@ export function CanvasContextMenuStamp() {
     );
 }
 
-export function Selection() {
+function Selection() {
     const dispatch = useAppDispatch();
     const dispatchHidden = useDispatchHidden();
     const dispatchHighlighted = useDispatchHighlighted();
@@ -334,7 +327,7 @@ async function getRoadCenterLine({ db, view, id }: { db: ObjectDB; view: View; i
     return view.measure?.core.pickCurveSegment(cl.id);
 }
 
-export function Measure() {
+function Measure() {
     const dispatch = useAppDispatch();
     const {
         state: { db, view },

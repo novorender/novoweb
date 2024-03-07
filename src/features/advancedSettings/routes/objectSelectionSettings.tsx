@@ -13,7 +13,7 @@ import {
 } from "contexts/highlightCollections";
 import { highlightActions, useDispatchHighlighted, useHighlighted } from "contexts/highlighted";
 import { ColorPicker } from "features/colorPicker";
-import { renderActions, selectSecondaryHighlightProperty } from "features/render/renderSlice";
+import { renderActions, selectSecondaryHighlightProperty } from "features/render";
 import { rgbToVec, VecRGBA, vecToRgb } from "utils/color";
 
 export function ObjectSelectionSettings({ save, saving }: { save: () => Promise<void>; saving: boolean }) {

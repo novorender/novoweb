@@ -3,7 +3,7 @@ import { useEffect, useRef } from "react";
 
 import { useAppDispatch, useAppSelector } from "app/store";
 import { useExplorerGlobals } from "contexts/explorerGlobals";
-import { CameraType, renderActions, selectViewMode } from "features/render/renderSlice";
+import { CameraType, renderActions, selectViewMode } from "features/render";
 import { useAbortController } from "hooks/useAbortController";
 import { AsyncStatus, ViewMode } from "types/misc";
 import { handleImageResponse } from "utils/bcf";

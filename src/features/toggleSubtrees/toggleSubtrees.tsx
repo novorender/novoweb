@@ -5,7 +5,7 @@ import { MouseEvent, useState } from "react";
 import { useAppDispatch, useAppSelector } from "app/store";
 import { SpeedDialAction, WidgetMenuButtonWrapper } from "components";
 import { featuresConfig } from "config/features";
-import { renderActions, selectSubtrees, selectViewMode, SubtreeStatus } from "features/render/renderSlice";
+import { renderActions, selectSubtrees, selectViewMode, SubtreeStatus } from "features/render";
 import { ViewMode } from "types/misc";
 
 export function ToggleSubtrees(speedDialProps: SpeedDialActionProps) {

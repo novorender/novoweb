@@ -5,7 +5,7 @@ import { useHistory } from "react-router-dom";
 import { dataApi } from "app";
 import { useAppDispatch, useAppSelector } from "app/store";
 import { Divider, LinearProgress, ScrollBox, TextField } from "components";
-import { renderActions, selectProjectSettings } from "features/render/renderSlice";
+import { renderActions, selectProjectSettings } from "features/render";
 
 const filter = createFilterOptions<string>();
 
