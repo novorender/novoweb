@@ -25,7 +25,7 @@ export function Settings({ sceneId }: { sceneId: string }) {
     const dispatch = useAppDispatch();
     const isAdminScene = useAppSelector(selectIsAdminScene);
     const token = useAppSelector(selectDitioAccessToken);
-    // const [projectsInput, setProjectsInput] = useState("");
+    const [projectsInput, setProjectsInput] = useState("");
     const currentProjects = useAppSelector(selectDitioProjects);
     const [projects, setProjects] = useState([...currentProjects]);
     const [saving, setSaving] = useState<AsyncState<true>>({ status: AsyncStatus.Initial });
@@ -40,14 +40,12 @@ export function Settings({ sceneId }: { sceneId: string }) {
         ? Object.fromEntries(_allProjects.map((project) => [project.id, project]))
         : undefined;
 
-    // const handleProjectsChange = (_e: SyntheticEvent, value: any[]) => {
-    const handleProjectsChange = (_e: SyntheticEvent, value: string | null) => {
+    const handleProjectsChange = (_e: SyntheticEvent, value: string[] | null) => {
         if (!value) {
             return;
         }
 
-        setProjects([value]);
-        // setProjects(value);
+        setProjects(value);
     };
 
     const handleSubmit: FormEventHandler = async (e) => {
@@ -117,37 +115,27 @@ export function Settings({ sceneId }: { sceneId: string }) {
                     }
                     onChange={handleProjectsChange}
                     size="medium"
-                    value={allProjects ? (projects[0] ? projects[0] : null) : null}
-                    // value={allProjects ? projects : null}
-                    // multiple
-                    // disableCloseOnSelect={true}
-                    // inputValue={projectsInput}
-                    // onInputChange={(_evt, value, reason) => {
-                    //     if (reason === "reset") {
-                    //         return;
-                    //     }
-                    //     setProjectsInput(value);
-                    // }}
-                    // renderInput={(params) => (
-                    //     <TextField
-                    //         error={projectsError}
-                    //         helperText={projectsError ? "An error occured while loading projects." : undefined}
-                    //         label="Projects"
-                    //         maxRows={3}
-                    //         {...params}
-                    //     />
-                    // )}
-                    disabled={isLoadingProjects || projectsError}
-                    loading={isLoadingProjects}
+                    value={allProjects ? projects : []}
+                    multiple
+                    disableCloseOnSelect={true}
+                    inputValue={projectsInput}
+                    onInputChange={(_evt, value, reason) => {
+                        if (reason === "reset") {
+                            return;
+                        }
+                        setProjectsInput(value);
+                    }}
                     renderInput={(params) => (
                         <TextField
-                            {...params}
-                            label="Projects"
                             error={projectsError}
                             helperText={projectsError ? "An error occured while loading projects." : undefined}
+                            label="Projects"
                             maxRows={3}
+                            {...params}
                         />
                     )}
+                    disabled={isLoadingProjects || projectsError}
+                    loading={isLoadingProjects}
                 />
 
                 <Box display="flex" justifyContent="space-between">

@@ -7,7 +7,7 @@ import { CameraType, selectCameraType, selectProjectSettings } from "features/re
 import { latLon2Tm } from "features/render/utils";
 import { AsyncStatus } from "types/misc";
 
-import { baseUrl, useFeedWebRawQuery, useGetPostQuery } from "../api";
+import { baseUrl, useGetFeedItemsQuery, useGetFeedQuery, useGetPostQuery } from "../api";
 import {
     selectActivePost,
     selectDitioAccessToken,
@@ -37,10 +37,15 @@ export function useDitioFeedMarkers() {
     const cameraType = useAppSelector(selectCameraType);
     const token = useAppSelector(selectDitioAccessToken);
     const isInitialized = useAppSelector(selectDitioFeedInitialized);
-    const { data: feed, isFetching: isFetchingPosts } = useFeedWebRawQuery(
+    const { data: feedItemsMeta } = useGetFeedItemsQuery(
         { projects, filters },
         { skip: !projects.length || token.status !== AsyncStatus.Success || !isInitialized }
     );
+    const { data: feed, isFetching: isFetchingFeedItems } = useGetFeedQuery(
+        { ids: (feedItemsMeta ?? []).map((item) => item.Id) },
+        { skip: !feedItemsMeta?.length }
+    );
+
     const activePost = useAppSelector(selectActivePost);
     const { data: post } = useGetPostQuery({ postId: activePost }, { skip: !activePost });
     const hoveredEntity = useAppSelector(selectHoveredEntity);
@@ -57,7 +62,7 @@ export function useDitioFeedMarkers() {
             return;
         }
 
-        if (isFetchingPosts || disabled) {
+        if (isFetchingFeedItems || disabled) {
             setPostMarkers(emptyPosts);
             setImgMarkers(emptyImgs);
             currentPost.current = "";
@@ -89,7 +94,7 @@ export function useDitioFeedMarkers() {
         }
 
         setPostMarkers(markers);
-    }, [feed, disabled, tmZone, hoveredEntity, postMarkers.length, isFetchingPosts]);
+    }, [feed, disabled, tmZone, hoveredEntity, postMarkers.length, isFetchingFeedItems]);
 
     useEffect(() => {
         if (!post || post.Id !== activePost || disabled) {

@@ -10,7 +10,7 @@ import { featuresConfig } from "config/features";
 import { FormattedText } from "features/ditio/formattedText";
 import { selectHasAdminCapabilities } from "slices/explorerSlice";
 
-import { baseUrl, useFeedWebRawQuery } from "../../api";
+import { baseUrl, useGetFeedItemsQuery, useGetFeedQuery } from "../../api";
 import {
     ditioActions,
     initialFilters,
@@ -33,7 +33,15 @@ export function Feed() {
     const isAdmin = useAppSelector(selectHasAdminCapabilities);
 
     const projects = useAppSelector(selectDitioProjects);
-    const { data: feed, isLoading } = useFeedWebRawQuery({ projects, filters }, { skip: !projects.length });
+    const { data: feedItemsMeta, isLoading: isLoadingFeedItemsMeta } = useGetFeedItemsQuery(
+        { projects, filters },
+        { skip: !projects.length }
+    );
+    const { data: feed, isLoading: isLoadingFeed } = useGetFeedQuery(
+        { ids: (feedItemsMeta ?? []).map((item) => item.Id) },
+        { skip: !feedItemsMeta?.length }
+    );
+    const isLoading = isLoadingFeedItemsMeta || isLoadingFeed;
 
     const scrollPos = useRef(feedScrollOffset);
 
