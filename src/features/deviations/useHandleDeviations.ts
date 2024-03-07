@@ -145,6 +145,8 @@ function configToUi(config: DeviationProjectConfig, defaultColorStops: ColorStop
         absoluteValues: false,
         colorStops: defaultColorStops,
     };
+
+    let profileIndex = 1;
     return {
         version: config.version ?? "1.0",
         rebuildRequired: config.rebuildRequired,
@@ -153,7 +155,7 @@ function configToUi(config: DeviationProjectConfig, defaultColorStops: ColorStop
                 (g) =>
                     ({
                         id: g.id ?? window.crypto.randomUUID(),
-                        name: g.name,
+                        name: g.name ?? `Deviation ${profileIndex++}`,
                         copyFromProfileId: g.copyFromProfileId,
                         deviationType: DeviationType.PointToTriangle,
                         index: -1,
@@ -176,7 +178,7 @@ function configToUi(config: DeviationProjectConfig, defaultColorStops: ColorStop
                 (g) =>
                     ({
                         id: g.id ?? window.crypto.randomUUID(),
-                        name: g.name,
+                        name: g.name ?? `Deviation ${profileIndex++}`,
                         copyFromProfileId: g.copyFromProfileId,
                         deviationType: DeviationType.PointToPoint,
                         index: -1,
@@ -200,12 +202,11 @@ function matchProfileIndexes(current: UiDeviationConfig, calculated: DeviationPr
     ];
     const calculatedHasIds = calcProfiles.some((p) => p.id);
 
-    for (const profile of current.profiles) {
+    current.profiles.forEach((profile, i) => {
         if (calculatedHasIds) {
             profile.index = calcProfiles.findIndex((p) => p.id === profile.id);
         } else {
-            // Best effort - match by name for older versions
-            profile.index = calcProfiles.findIndex((p) => p.name === profile.name);
+            profile.index = i;
         }
-    }
+    });
 }

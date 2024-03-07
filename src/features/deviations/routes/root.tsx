@@ -187,9 +187,9 @@ export function Root() {
                                             dispatch(deviationsActions.setSelectedProfileId(e.target.value));
                                         }}
                                     >
-                                        {profileList.map((profile, idx) => (
+                                        {profileList.map((profile) => (
                                             <MenuItem key={profile.id} value={profile.id}>
-                                                {profile.name ?? `Deviation ${idx + 1}`}
+                                                {profile.name}
                                             </MenuItem>
                                         ))}
                                     </Select>

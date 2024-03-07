@@ -37,7 +37,7 @@ export function CrupdateColorStop() {
               )
             : colorStops.concat({ position: Number(deviationNumber), color: [1, 0, 0, 1] });
 
-        newColorStops.sort((s1, s2) => s1.position - s2.position);
+        newColorStops.sort((s1, s2) => s2.position - s1.position);
 
         if (deviationForm) {
             dispatch(

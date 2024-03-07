@@ -12,7 +12,7 @@ import {
     Typography,
     useTheme,
 } from "@mui/material";
-import { MouseEvent, useState } from "react";
+import { MouseEvent, useMemo, useState } from "react";
 import { ColorResult } from "react-color";
 import { useHistory } from "react-router-dom";
 
@@ -23,7 +23,7 @@ import { ColorStopGroup } from "../deviationTypes";
 import { DeviationFormErrors } from "../validation";
 
 export function ColorStopList({
-    colorStops,
+    colorStops: colorStopsUnsorted,
     onChange,
     errors,
     disabled,
@@ -35,6 +35,10 @@ export function ColorStopList({
 }) {
     const theme = useTheme();
     const history = useHistory();
+    const colorStops = useMemo(
+        () => colorStopsUnsorted.slice().sort((a, b) => b.position - a.position),
+        [colorStopsUnsorted]
+    );
 
     return (
         <>
