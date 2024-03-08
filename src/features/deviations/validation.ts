@@ -24,6 +24,19 @@ export function validateDeviationForm(deviationForm: DeviationForm, otherNames: 
                 deviationForm.colorSetup.colorStops.value.length === 0 ? "Define at least one color stop" : undefined,
             active: deviationForm.colorSetup.colorStops.edited,
         }),
+        heightToCeiling: makeError({
+            error:
+                deviationForm.tunnelInfo.heightToCeiling.value &&
+                Number.isNaN(Number(deviationForm.tunnelInfo.heightToCeiling.value))
+                    ? "Number is invalid"
+                    : Number(deviationForm.tunnelInfo.heightToCeiling.value) < 0
+                    ? "Number can't be negative"
+                    : undefined,
+            active:
+                deviationForm.centerLine.enabled &&
+                deviationForm.tunnelInfo.enabled &&
+                deviationForm.tunnelInfo.heightToCeiling.edited,
+        }),
     };
 }
 

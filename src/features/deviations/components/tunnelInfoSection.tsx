@@ -2,17 +2,19 @@ import { Add, DeleteForever } from "@mui/icons-material";
 import { Box, Button, IconButton, TextField } from "@mui/material";
 
 import { TunnelInfoGroup } from "../deviationTypes";
-import { updateFormField } from "../validation";
+import { DeviationFormErrors, getActiveErrorText, updateFormField } from "../validation";
 import { SectionHeader } from "./sectionHeader";
 
 export function TunnelInfoSection({
     tunnelInfo,
     onChange,
     disabled,
+    errors,
 }: {
     tunnelInfo: TunnelInfoGroup;
     onChange: (value: TunnelInfoGroup) => void;
     disabled?: boolean;
+    errors: DeviationFormErrors;
 }) {
     if (!tunnelInfo.enabled) {
         if (disabled) {
@@ -42,8 +44,10 @@ export function TunnelInfoSection({
                     value={tunnelInfo.heightToCeiling.value}
                     onChange={(e) => onChange({ ...tunnelInfo, heightToCeiling: updateFormField(e.target.value) })}
                     label="Tunnel Height"
-                    inputProps={{ type: "number" }}
                     disabled={disabled}
+                    error={errors.heightToCeiling.active}
+                    helperText={getActiveErrorText(errors.heightToCeiling)}
+                    autoComplete="off"
                 />
 
                 <IconButton onClick={() => onChange({ ...tunnelInfo, enabled: false })} disabled={disabled}>

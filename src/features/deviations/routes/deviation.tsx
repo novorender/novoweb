@@ -364,6 +364,7 @@ export function Deviation() {
                         tunnelInfo={deviationForm.tunnelInfo}
                         onChange={updateTunnelInfo}
                         disabled={formDisabled}
+                        errors={errors}
                     />
                 )}
                 <Box mt={4}>
@@ -534,10 +535,8 @@ async function deviationFormToProfile({
         favorites: deviationForm.favorites.value,
         centerLine,
         heightToCeiling:
-            centerLine &&
-            deviationForm.tunnelInfo.enabled &&
-            Number.isFinite(deviationForm.tunnelInfo.heightToCeiling.value)
-                ? Number(deviationForm.tunnelInfo.heightToCeiling)
+            centerLine && deviationForm.tunnelInfo.enabled && Number(deviationForm.tunnelInfo.heightToCeiling.value)
+                ? Number(deviationForm.tunnelInfo.heightToCeiling.value)
                 : undefined,
         from: getGroups(deviationForm.groups1.value),
         to: getGroups(deviationForm.groups2.value),
