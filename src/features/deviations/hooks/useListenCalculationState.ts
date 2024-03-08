@@ -23,7 +23,7 @@ export function useListenCalculationState() {
     // Project v2
     const {
         data: progress,
-        isFetching,
+        isLoading,
         isError,
     } = useGetProjectProgressQuery(isAdminScene && projectId && isProjectV2 ? { projectId } : skipToken, {
         pollingInterval: 60000,
@@ -37,10 +37,10 @@ export function useListenCalculationState() {
     }, [dispatch, progress]);
 
     useEffect(() => {
-        if (isFetching) {
+        if (isLoading) {
             dispatch(deviationsActions.setCalculationStatus({ status: DeviationCalculationStatus.Loading }));
         }
-    }, [dispatch, isFetching]);
+    }, [dispatch, isLoading]);
 
     useEffect(() => {
         if (isError) {

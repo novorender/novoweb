@@ -53,7 +53,7 @@ export function useHandleDeviations() {
                     isProjectV2
                         ? getDeviationProfiles({ projectId })
                               .unwrap()
-                              .then((data) => configToUi(data, defaultColorStops))
+                              .then((data) => (data ? configToUi(data, defaultColorStops) : getEmptyDeviationConfig()))
                         : undefined,
                 ]);
 
@@ -80,6 +80,8 @@ export function useHandleDeviations() {
                 const selectedProfile = config.profiles.find((p) => p.index === points.deviation.index);
                 if (selectedProfile) {
                     dispatch(deviationsActions.setSelectedProfileId(selectedProfile.id));
+                } else if (config.profiles.length > 0) {
+                    dispatch(deviationsActions.setSelectedProfileId(config.profiles[0].id));
                 }
             } catch (e) {
                 console.warn(e);
@@ -127,7 +129,15 @@ export function useHandleDeviations() {
                 return;
             }
 
-            view.modifyRenderState({ points: { deviation } });
+            let patchedDeviation = deviation;
+            if (deviation.index === -1) {
+                patchedDeviation = {
+                    ...deviation,
+                    index: 0,
+                    mixFactor: 0,
+                };
+            }
+            view.modifyRenderState({ points: { deviation: patchedDeviation } });
         },
         [view, deviation]
     );
@@ -151,6 +161,7 @@ function configToUi(config: DeviationProjectConfig, defaultColorStops: ColorStop
     return {
         version: config.version ?? "1.0",
         rebuildRequired: config.rebuildRequired,
+        runData: config.runData,
         profiles: [
             ...config.pointToTriangle.groups.map(
                 (g) =>

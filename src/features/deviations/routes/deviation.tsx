@@ -221,8 +221,8 @@ export function Deviation() {
                         label="Copy from existing profile (optional)"
                         onChange={(e) => {
                             const source = profileList.find((p) => p.id === e.target.value)!;
-                            const newProfile = copyProfile(profileList, source);
-                            update(newProfile);
+                            const newForm = copyProfile(profileList, source);
+                            update(newForm);
                         }}
                         disabled={formDisabled}
                     >
@@ -456,6 +456,7 @@ function mergeDeviationFormIntoProfiles(config: UiDeviationConfig, profile: UiDe
             list[existingIndex] = profile;
         }
     } else {
+        rebuildRequired = true;
         list.push(profile);
     }
 

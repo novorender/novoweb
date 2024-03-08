@@ -6,6 +6,13 @@ export type DeviationProjectConfig = {
     rebuildRequired: boolean;
     pointToTriangle: { groups: PointToTriangleGroup[] };
     pointToPoint: { groups: PointToPointGroup[] };
+    runData?: DeviationRunData;
+};
+
+export type DeviationRunData = {
+    runTime: string;
+    rebuilt: boolean;
+    version: string;
 };
 
 export type DeviationProfileBase = {

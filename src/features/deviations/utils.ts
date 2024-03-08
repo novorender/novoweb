@@ -80,13 +80,13 @@ export function uiConfigToServerConfig(config: UiDeviationConfig): DeviationProj
             colors: p.colors,
             favorites: p.favorites,
             heightToCeiling: p.heightToCeiling,
-            index: p.index,
         } as PointToPointGroup | PointToTriangleGroup;
     };
 
     return {
         version: config.version,
         rebuildRequired: config.rebuildRequired,
+        runData: config.runData,
         pointToTriangle: {
             groups: config.profiles
                 .filter((p) => p.deviationType === DeviationType.PointToTriangle)

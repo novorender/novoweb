@@ -1,4 +1,4 @@
-import { CenterLine, ColorConfig, ColorStop } from "apis/dataV2/deviationTypes";
+import { CenterLine, ColorConfig, ColorStop, DeviationRunData } from "apis/dataV2/deviationTypes";
 
 export enum DeviationCalculationStatus {
     Initial,
@@ -17,6 +17,7 @@ export type UiDeviationConfig = {
     version: string;
     rebuildRequired: boolean;
     profiles: UiDeviationProfile[];
+    runData?: DeviationRunData;
 };
 
 // Similar to the one defined in dataV2 types, but with some runtime fields

@@ -1,5 +1,6 @@
 import { Add, Delete, InfoOutlined, Save, Settings } from "@mui/icons-material";
 import {
+    Alert,
     Box,
     Button,
     FormControl,
@@ -24,11 +25,13 @@ import { DeviationsSnackbar } from "../components/deviationsSnackbar";
 import { MixFactorInput } from "../components/mixFactorInput";
 import {
     deviationsActions,
+    selectDeviationCalculationStatus,
     selectDeviationProfileList,
     selectDeviationProfiles,
     selectSaveStatus,
     selectSelectedProfile,
 } from "../deviationsSlice";
+import { DeviationCalculationStatus } from "../deviationTypes";
 import { useSaveDeviationConfig } from "../hooks/useSaveDeviationConfig";
 import { MAX_DEVIATION_PROFILE_COUNT, newDeviationForm, profileToDeviationForm } from "../utils";
 
@@ -45,6 +48,7 @@ export function Root() {
     const saveStatus = useAppSelector(selectSaveStatus);
     const isSaving = saveStatus.status === AsyncStatus.Loading;
     const saveConfig = useSaveDeviationConfig();
+    const calculationStatus = useAppSelector(selectDeviationCalculationStatus);
 
     const handleSave = async () => {
         if (profiles.status !== AsyncStatus.Success) {
@@ -175,26 +179,43 @@ export function Root() {
                         {profiles.status === AsyncStatus.Error ? (
                             <Typography>{profiles.msg}</Typography>
                         ) : (
-                            <Box p={2}>
-                                <FormControl fullWidth>
-                                    <InputLabel id="select-profile-label">Select deviation profile</InputLabel>
-                                    <Select
-                                        labelId="select-profile-label"
-                                        id="select-profile"
-                                        value={selectedProfile?.id ?? ""}
-                                        label="Select deviation profile"
-                                        onChange={(e) => {
-                                            dispatch(deviationsActions.setSelectedProfileId(e.target.value));
-                                        }}
-                                    >
-                                        {profileList.map((profile) => (
-                                            <MenuItem key={profile.id} value={profile.id}>
-                                                {profile.name}
-                                            </MenuItem>
-                                        ))}
-                                    </Select>
-                                </FormControl>
-                            </Box>
+                            <>
+                                {calculationStatus.status === DeviationCalculationStatus.Running ? (
+                                    <Box p={2} pb={0}>
+                                        <Alert severity="info">Deviation calculation is in progress.</Alert>
+                                    </Box>
+                                ) : profiles.data.rebuildRequired &&
+                                  calculationStatus.status !== DeviationCalculationStatus.Initial &&
+                                  calculationStatus.status !== DeviationCalculationStatus.Loading ? (
+                                    <Box p={2} pb={0}>
+                                        <Alert severity="warning">
+                                            Deviation configuration changed since the last calculation. Please rerun the
+                                            calculation.
+                                        </Alert>
+                                    </Box>
+                                ) : undefined}
+
+                                <Box p={2}>
+                                    <FormControl fullWidth>
+                                        <InputLabel id="select-profile-label">Select deviation profile</InputLabel>
+                                        <Select
+                                            labelId="select-profile-label"
+                                            id="select-profile"
+                                            value={selectedProfile?.id ?? ""}
+                                            label="Select deviation profile"
+                                            onChange={(e) => {
+                                                dispatch(deviationsActions.setSelectedProfileId(e.target.value));
+                                            }}
+                                        >
+                                            {profileList.map((profile) => (
+                                                <MenuItem key={profile.id} value={profile.id}>
+                                                    {profile.name}
+                                                </MenuItem>
+                                            ))}
+                                        </Select>
+                                    </FormControl>
+                                </Box>
+                            </>
                         )}
 
                         {selectedProfile && (

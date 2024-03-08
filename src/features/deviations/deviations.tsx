@@ -14,7 +14,12 @@ import { useToggle } from "hooks/useToggle";
 import { selectIsAdminScene, selectMaximized, selectMinimized, selectProjectIsV2 } from "slices/explorerSlice";
 import { AsyncStatus } from "types/misc";
 
-import { deviationsActions, selectDeviationCalculationStatus, selectDeviationProfiles } from "./deviationsSlice";
+import {
+    deviationsActions,
+    selectDeviationCalculationStatus,
+    selectDeviationForm,
+    selectDeviationProfiles,
+} from "./deviationsSlice";
 import { DeviationCalculationStatus } from "./deviationTypes";
 import { useListenCalculationState } from "./hooks/useListenCalculationState";
 import { CrupdateColorStop } from "./routes/crupdateColorStop";
@@ -71,6 +76,7 @@ function WidgetMenu(props: MenuProps) {
     const isProjectV2 = useAppSelector(selectProjectIsV2);
     const calculationStatus = useAppSelector(selectDeviationCalculationStatus);
     const profiles = useAppSelector(selectDeviationProfiles);
+    const isDeviationFormSet = useAppSelector((state) => selectDeviationForm(state) !== undefined);
     const dispatch = useAppDispatch();
 
     const {
@@ -90,16 +96,15 @@ function WidgetMenu(props: MenuProps) {
         dispatch(deviationsActions.setCalculationStatus({ status: DeviationCalculationStatus.Running }));
 
         try {
+            let success = false;
             if (isProjectV2) {
                 await calcDeviations({ projectId: scene.id, config: uiConfigToServerConfig(profiles.data) }).unwrap();
 
-                dispatch(deviationsActions.setCalculationStatus({ status: DeviationCalculationStatus.Running }));
+                success = true;
             } else {
                 const res = await dataApi.fetch(`deviations/${scene.id}`).then((r) => r.json());
 
-                if (res.success) {
-                    dispatch(deviationsActions.setCalculationStatus({ status: DeviationCalculationStatus.Running }));
-                } else {
+                if (!res.success) {
                     dispatch(
                         deviationsActions.setCalculationStatus({
                             status: DeviationCalculationStatus.Error,
@@ -107,6 +112,16 @@ function WidgetMenu(props: MenuProps) {
                         })
                     );
                 }
+            }
+
+            if (success) {
+                dispatch(deviationsActions.setCalculationStatus({ status: DeviationCalculationStatus.Running }));
+                dispatch(
+                    deviationsActions.setProfiles({
+                        status: AsyncStatus.Success,
+                        data: { ...profiles.data, rebuildRequired: false },
+                    })
+                );
             }
         } catch (ex) {
             console.warn(ex);
@@ -141,7 +156,8 @@ function WidgetMenu(props: MenuProps) {
                         onClick={handleCalculateDeviations}
                         disabled={
                             calculationStatus.status === DeviationCalculationStatus.Running ||
-                            calculationStatus.status === DeviationCalculationStatus.Loading
+                            calculationStatus.status === DeviationCalculationStatus.Loading ||
+                            isDeviationFormSet
                         }
                     >
                         <>
