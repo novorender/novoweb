@@ -7,7 +7,7 @@ import { AsyncStatus } from "types/misc";
 
 import { selectSaveStatus } from "../deviationsSlice";
 
-export function MaxFactorInput() {
+export function MixFactorInput() {
     const deviations = useAppSelector(selectDeviations);
     const dispatch = useAppDispatch();
     const saveStatus = useAppSelector(selectSaveStatus);

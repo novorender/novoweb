@@ -21,7 +21,7 @@ import { AsyncStatus, hasFinished } from "types/misc";
 
 import { ColorStopList } from "../components/colorStop";
 import { DeviationsSnackbar } from "../components/deviationsSnackbar";
-import { MaxFactorInput } from "../components/mixFactorInput";
+import { MixFactorInput } from "../components/mixFactorInput";
 import {
     deviationsActions,
     selectDeviationProfileList,
@@ -76,7 +76,7 @@ export function Root() {
                             <Divider />
                         </Box>
                         <Box display={"flex"} justifyContent={"flex-end"}>
-                            <MaxFactorInput />
+                            <MixFactorInput />
 
                             <Box flex="auto" />
 
