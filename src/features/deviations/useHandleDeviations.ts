@@ -63,6 +63,7 @@ export function useHandleDeviations() {
                     matchProfileIndexes(configV2, configV1);
                 } else if (configV1) {
                     config = configToUi(configV1, defaultColorStops);
+                    config.profiles.forEach((p, i) => (p.index = i));
                 } else if (configV2) {
                     config = configV2;
                 } else {
