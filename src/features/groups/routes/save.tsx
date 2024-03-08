@@ -31,18 +31,14 @@ export function Save({ sceneId }: { sceneId: string }) {
         try {
             const [{ objectGroups: originalGroups, ...originalScene }] = await loadScene(sceneId);
 
-            let updated = originalGroups
-                .filter((group) => !group.id)
-                .concat(
-                    objectGroups.current
-                        .filter((grp) => !isInternalGroup(grp))
-                        .map(({ status, ...grp }) => ({
-                            ...grp,
-                            selected: status === GroupStatus.Selected,
-                            hidden: [GroupStatus.Hidden, GroupStatus.Frozen].includes(status),
-                            ids: grp.ids ? Array.from(grp.ids) : undefined,
-                        }))
-                );
+            let updated = objectGroups.current
+                .filter((grp) => !isInternalGroup(grp))
+                .map(({ status, ...grp }) => ({
+                    ...grp,
+                    selected: status === GroupStatus.Selected,
+                    hidden: [GroupStatus.Hidden, GroupStatus.Frozen].includes(status),
+                    ids: grp.ids ? Array.from(grp.ids) : undefined,
+                }));
 
             if (!saveState) {
                 updated = updated
@@ -69,7 +65,8 @@ export function Save({ sceneId }: { sceneId: string }) {
             });
 
             dispatch(groupsActions.setSaveStatus(AsyncStatus.Success));
-        } catch {
+        } catch (e) {
+            console.warn(e);
             dispatch(groupsActions.setSaveStatus(AsyncStatus.Error));
         }
 

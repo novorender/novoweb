@@ -99,12 +99,14 @@ export default function PropertyTree() {
         <>
             <WidgetContainer minimized={minimized} maximized={maximized}>
                 <WidgetHeader widget={featuresConfig.propertyTree} disableShadow={menuOpen}>
-                    <Box display={"flex"} justifyContent={"flex-end"}>
-                        <Button disabled={!canClear} onClick={clear} color="grey">
-                            <DeleteSweep sx={{ mr: 1 }} />
-                            Clear
-                        </Button>
-                    </Box>
+                    {!menuOpen && !minimized && (
+                        <Box display={"flex"} justifyContent={"flex-end"}>
+                            <Button disabled={!canClear} onClick={clear} color="grey">
+                                <DeleteSweep sx={{ mr: 1 }} />
+                                Clear
+                            </Button>
+                        </Box>
+                    )}
                 </WidgetHeader>
                 {isLoading && (
                     <Box position="relative">
