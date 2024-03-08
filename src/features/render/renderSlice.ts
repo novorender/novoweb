@@ -13,6 +13,7 @@ import { quat, vec3, vec4 } from "gl-matrix";
 
 import type { RootState } from "app/store";
 import { DitioMachine } from "features/ditio";
+import { Checklist } from "features/ditio/types";
 import { LogPoint, MachineLocation } from "features/xsiteManage";
 import { ProjectType } from "slices/explorerSlice";
 import { AsyncState, AsyncStatus, ViewMode } from "types/misc";
@@ -105,6 +106,7 @@ export enum StampKind {
     LogPoint,
     XsiteManageMachineLocation,
     DitioMachine,
+    DitioChecklist,
     Deviation,
     CanvasContextMenu,
     Properties,
@@ -128,6 +130,13 @@ type DitioMachineStamp = {
     kind: StampKind.DitioMachine;
     data: {
         machine: DitioMachine;
+    };
+};
+
+type DitioChecklistStamp = {
+    kind: StampKind.DitioChecklist;
+    data: {
+        checklist: Checklist;
     };
 };
 
@@ -159,6 +168,7 @@ type Stamp = { mouseX: number; mouseY: number; pinned: boolean } & (
     | CanvasContextMenuStamp
     | PropertiesStamp
     | DitioMachineStamp
+    | DitioChecklistStamp
 );
 
 const initialState = {

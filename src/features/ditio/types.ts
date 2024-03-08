@@ -108,7 +108,7 @@ type FileReference = {
     CompanyIds: string[];
 };
 
-type Image = {
+type FeedItemImage = {
     FileReferenceId: string;
     UrlSm: string;
     UrlM: string;
@@ -212,7 +212,7 @@ export type FeedItem = {
     CompanyIds: string[];
     UserAvatarId: string;
     UserAvatarSrc: string;
-    Images: Image[];
+    Images: FeedItemImage[];
     Likes: Like[];
     Comments: Comment[];
 };
@@ -229,9 +229,78 @@ export enum PostOriginType {
     AlertV2,
 }
 
-export type ChecklistItem = {
+export type ChecklistItemMeta = {
     Coordinate: GeoCoordinate;
     Id: string;
+};
+
+export type Checklist = {
+    id: string;
+    companyId: string;
+    projectId: string;
+    projectName: string;
+    projectNumber: string;
+    templateName: string;
+    templateId: string;
+    templateVersion: number;
+    templateVersionDate: string;
+    hasDeviation: boolean;
+    hasImages: boolean;
+    hasComment: boolean;
+    status: number;
+    createdByUserName: string;
+    createdDateTime: string;
+    submittedByUserName: string;
+    submittedDateTime: string;
+    modifiedByUserName: string;
+    modifiedDateTime: string;
+    approvedByUserName: string;
+    latitude: number;
+    longitude: number;
+    accuracy: number;
+    signatures: unknown[];
+    activityName: string;
+    activityNumber: string;
+    dimensions: Dimension[];
+    sections: Section[];
+    pdfUrl: string;
+    selfUrl: string;
+};
+
+type Dimension = {
+    id: string;
+    sortOrder: number;
+    name: string;
+    type: number;
+    placeholder: string;
+    value: string;
+};
+
+type Section = {
+    id: string;
+    header: string;
+    repeatable: boolean;
+    rowId: unknown | null;
+    questions: Question[];
+    comment: string | null;
+    deviation: unknown | null;
+    images: ChecklistImage[];
+};
+
+type Question = {
+    id: string;
+    header: string;
+    answerType: number;
+    value: string;
+    multiValue: unknown | null;
+    comment: string | null;
+    deviation: unknown | null;
+    images: ChecklistImage[];
+};
+
+type ChecklistImage = {
+    Id: string;
+    Url: string;
 };
 
 export type FeedItemMeta = {
@@ -246,7 +315,7 @@ export type GetDataResponse = {
     Projects: unknown[];
     Tasks: unknown[];
     Machines: unknown[];
-    Checklists: ChecklistItem[];
+    Checklists: ChecklistItemMeta[];
     FeedItems: FeedItemMeta[];
 };
 

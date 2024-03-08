@@ -17,6 +17,7 @@ import {
     selectDitioProjects,
     selectFeedScrollOffset,
     selectFilters,
+    selectShowDitioChecklistMarkers,
     selectShowDitioFeedMarkers,
     selectShowDitioMachineMarkers,
 } from "../../slice";
@@ -28,6 +29,7 @@ export function Feed() {
     const dispatch = useAppDispatch();
     const showFeedMarkers = useAppSelector(selectShowDitioFeedMarkers);
     const showMachineMarkers = useAppSelector(selectShowDitioMachineMarkers);
+    const showChecklistMarkers = useAppSelector(selectShowDitioChecklistMarkers);
     const feedScrollOffset = useAppSelector(selectFeedScrollOffset);
     const filters = useAppSelector(selectFilters);
     const isAdmin = useAppSelector(selectHasAdminCapabilities);
@@ -47,6 +49,7 @@ export function Feed() {
 
     useEffect(() => {
         dispatch(ditioActions.setFeedInitialized(true));
+        dispatch(ditioActions.setChecklistsInitialized(true));
 
         return () => {
             dispatch(ditioActions.setFeedScrollOffset(scrollPos.current));
@@ -99,6 +102,21 @@ export function Feed() {
                             label={
                                 <Box fontSize={14} sx={{ userSelect: "none" }}>
                                     Feed
+                                </Box>
+                            }
+                        />
+                        <FormControlLabel
+                            control={
+                                <IosSwitch
+                                    size="medium"
+                                    color="primary"
+                                    checked={showChecklistMarkers}
+                                    onChange={() => dispatch(ditioActions.toggleShowChecklistMarkers())}
+                                />
+                            }
+                            label={
+                                <Box fontSize={14} sx={{ userSelect: "none" }}>
+                                    Checklists
                                 </Box>
                             }
                         />

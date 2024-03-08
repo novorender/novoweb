@@ -6,6 +6,8 @@ import { AsyncStatus } from "types/misc";
 
 import { FeedFilters, FilterType } from "./slice";
 import {
+    Checklist,
+    ChecklistItemMeta,
     Dumper,
     FeedItem,
     FeedItemMeta,
@@ -42,6 +44,33 @@ export const ditioApi = createApi({
         }),
         getProjects: builder.query<Project[], void>({
             query: () => `/v4/integration/projects`,
+        }),
+        getChecklistItems: builder.query<ChecklistItemMeta[], { projects: string[]; filters: FeedFilters }>({
+            query: ({ projects, filters }) => ({
+                url: `/v4/search/get-data`,
+                method: "POST",
+                body: {
+                    projectIds: projects,
+                    limit: 150,
+                    sortBy: "newest",
+                    includeSearchResultTypes: [SearchResultType.Checklist],
+                    checklistSearchParameters: {
+                        status: 2,
+                    },
+                    ...(filters.date_from ? { fromDateTime: filters.date_from } : {}),
+                    ...(filters.date_to ? { toDateTime: filters.date_to } : {}),
+                },
+            }),
+            transformResponse: async (res: GetDataResponse) => {
+                return res.Checklists;
+            },
+        }),
+        getChecklists: builder.query<Checklist[], { ids: string[] }>({
+            query: ({ ids }) => ({
+                url: "/v4/checklists/checklists/export/json/by-ids",
+                method: "POST",
+                body: ids,
+            }),
         }),
         getFeedItems: builder.query<FeedItemMeta[], { projects: string[]; filters: FeedFilters }>({
             query: ({ projects, filters }) => ({
@@ -95,20 +124,6 @@ export const ditioApi = createApi({
                         feedItem.PostOriginType === PostOriginType.AlertV2,
                 })),
         }),
-        getChecklists: builder.query<void, { projects: string[]; filters: FeedFilters }>({
-            query: ({ projects, filters }) => ({
-                url: `/v4/search/get-data`,
-                method: "POST",
-                body: {
-                    projectIds: projects,
-                    limit: 100,
-                    sortBy: "newest",
-                    includeSearchResultTypes: [SearchResultType.Checklist],
-                    ...(filters.date_from ? { fromDateTime: filters.date_from } : {}),
-                    ...(filters.date_to ? { toDateTime: filters.date_to } : {}),
-                },
-            }),
-        }),
         getLiveMachines: builder.query<
             {
                 dumperLiveDataList: Omit<Dumper, "kind" | "scenePosition" | "id">[];
@@ -159,6 +174,8 @@ export const {
     useGetPostQuery,
     useGetFeedItemsQuery,
     useGetFeedQuery,
+    useGetChecklistItemsQuery,
+    useGetChecklistsQuery,
     useGetProjectsQuery,
     useLazyGetTokenQuery,
     useGetLiveMachinesQuery,

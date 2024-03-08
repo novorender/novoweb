@@ -2,6 +2,7 @@ export * from "./slice";
 export { ditioApi } from "./api";
 export { DitioFeedMarkers } from "./markers/feed";
 export { DitioMachineMarkers } from "./markers/machines";
+export { DitioChecklistMarkers } from "./markers/checklists";
 export { DitioMachineStamp } from "./stamps/machine";
 export { useHandleDitioAuth } from "./hooks/useHandleDitioAuth";
 export { useDitioMachineMarkers } from "./hooks/useDitioMachineMarkers";

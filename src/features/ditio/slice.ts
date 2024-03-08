@@ -22,7 +22,7 @@ const initialState = {
     },
     feed: {
         initialized: false,
-        showMarkers: true,
+        showMarkers: false,
         clickedMarker: "",
         feedScrollOffset: 0,
         filters: {
@@ -34,6 +34,10 @@ const initialState = {
         activePost: "",
         activeImg: "",
         hoveredEntity: undefined as { kind: "post" | "image"; id: string } | undefined,
+    },
+    checklists: {
+        initialized: false,
+        showMarkers: false,
     },
 };
 
@@ -60,12 +64,18 @@ export const ditioSlice = createSlice({
                 state.machines.showMarkers = action.payload;
             }
         },
-
         toggleShowFeedMarkers: (state, action: PayloadAction<boolean | undefined>) => {
             if (action.payload === undefined) {
                 state.feed.showMarkers = !state.feed.showMarkers;
             } else {
                 state.feed.showMarkers = action.payload;
+            }
+        },
+        toggleShowChecklistMarkers: (state, action: PayloadAction<boolean | undefined>) => {
+            if (action.payload === undefined) {
+                state.checklists.showMarkers = !state.checklists.showMarkers;
+            } else {
+                state.checklists.showMarkers = action.payload;
             }
         },
         setLastViewedPath: (state, action: PayloadAction<State["lastViewedPath"]>) => {
@@ -92,6 +102,9 @@ export const ditioSlice = createSlice({
         setFeedInitialized: (state, action: PayloadAction<boolean>) => {
             state.feed.initialized = action.payload;
         },
+        setChecklistsInitialized: (state, action: PayloadAction<boolean>) => {
+            state.checklists.initialized = action.payload;
+        },
         resetFilters: (state) => {
             state.feed.filters = initialFilters;
         },
@@ -112,6 +125,9 @@ export const selectDitioProjects = (state: RootState) => state.ditio.config.proj
 export const selectLastViewedPath = (state: RootState) => state.ditio.lastViewedPath;
 
 export const selectShowDitioMachineMarkers = (state: RootState) => state.ditio.machines.showMarkers;
+
+export const selectShowDitioChecklistMarkers = (state: RootState) => state.ditio.checklists.showMarkers;
+export const selectShowDitioChecklistInitialized = (state: RootState) => state.ditio.checklists.initialized;
 
 export const selectShowDitioFeedMarkers = (state: RootState) => state.ditio.feed.showMarkers;
 export const selectClickedMarker = (state: RootState) => state.ditio.feed.clickedMarker;

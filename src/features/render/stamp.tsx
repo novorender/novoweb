@@ -3,6 +3,7 @@ import { Menu, popoverClasses } from "@mui/material";
 import { useAppDispatch, useAppSelector } from "app/store";
 import { DeviationStamp } from "features/deviations";
 import { DitioMachineStamp } from "features/ditio";
+import { DitioChecklistStamp } from "features/ditio/stamps/checklist";
 import { PropertiesStamp } from "features/properties";
 import { renderActions, selectStamp, StampKind } from "features/render";
 import { LogPointStamp, MachineLocationStamp as XsiteMachineLocationStamp } from "features/xsiteManage";
@@ -42,6 +43,8 @@ export function Stamp() {
                 <PropertiesStamp />
             ) : stamp.kind === StampKind.DitioMachine ? (
                 <DitioMachineStamp />
+            ) : stamp.kind === StampKind.DitioChecklist ? (
+                <DitioChecklistStamp />
             ) : null}
         </Menu>
     );

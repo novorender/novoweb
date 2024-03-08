@@ -4,6 +4,7 @@ import { useCallback, useEffect } from "react";
 import { useAppSelector } from "app/store";
 import { useExplorerGlobals } from "contexts/explorerGlobals";
 import { useDitioFeedMarkers, useDitioMachineMarkers } from "features/ditio";
+import { useDitioChecklistMarkers } from "features/ditio/hooks/useDitioChecklistMarkers";
 import { selectImages, selectShowImageMarkers } from "features/images";
 import { useJiraMarkers } from "features/jira";
 import { selectCurrentLocation } from "features/myLocation";
@@ -20,6 +21,7 @@ export function useMoveMarkers(svg: SVGSVGElement | null) {
     const myLocationPoint = useAppSelector(selectCurrentLocation);
     const [ditioPostMarkers, ditioImgMarkers] = useDitioFeedMarkers();
     const ditioMachineMarkers = useDitioMachineMarkers();
+    const ditioChecklistMarkers = useDitioChecklistMarkers();
     const logPoints = useXsiteManageLogPointMarkers();
     const xsiteMachineMarkers = useXsiteManageMachineMarkers();
     const jiraMarkers = useJiraMarkers();
@@ -96,6 +98,17 @@ export function useMoveMarkers(svg: SVGSVGElement | null) {
             }
         );
 
+        (view.measure.draw.toMarkerPoints(ditioChecklistMarkers.map((marker) => marker.position)) ?? []).forEach(
+            (pos, idx) => {
+                svg.children
+                    .namedItem(`ditio-checklist-marker-${ditioChecklistMarkers[idx].id}`)
+                    ?.setAttribute(
+                        "transform",
+                        pos ? `translate(${pos[0] - 25} ${pos[1] - 25})` : "translate(-100 -100)"
+                    );
+            }
+        );
+
         (view.measure.draw.toMarkerPoints(xsiteMachineMarkers.map((marker) => marker.position)) ?? []).forEach(
             (pos, idx) => {
                 svg.children
@@ -121,6 +134,7 @@ export function useMoveMarkers(svg: SVGSVGElement | null) {
         ditioPostMarkers,
         ditioImgMarkers,
         ditioMachineMarkers,
+        ditioChecklistMarkers,
         images,
         showImageMarkers,
         xsiteMachineMarkers,

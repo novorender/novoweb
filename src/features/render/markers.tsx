@@ -1,4 +1,4 @@
-import { DitioFeedMarkers, DitioMachineMarkers } from "features/ditio";
+import { DitioChecklistMarkers, DitioFeedMarkers, DitioMachineMarkers } from "features/ditio";
 import { ImageMarkers } from "features/images";
 import { JiraMarkers } from "features/jira";
 import { MyLocationMarker } from "features/myLocation";
@@ -10,6 +10,7 @@ export function Markers() {
             <MyLocationMarker />
             <DitioFeedMarkers />
             <DitioMachineMarkers />
+            <DitioChecklistMarkers />
             <ImageMarkers />
             <MachineLocationMarkers />
             <LogPointMarkers />
