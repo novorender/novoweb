@@ -105,23 +105,7 @@ const pwaOptions: Partial<VitePWAOptions> = {
             },
         ],
     },
-    manifest: {
-        id: "novorender-explorer_novoweb",
-        name: "Novorender explorer",
-        short_name: "Novorender explorer",
-        description: "The worlds most powerful Digital Twin & BIM platform",
-        theme_color: "#D61E5C",
-        icons: [
-            {
-                src: "/novorender_logo_192x192.png",
-                type: "image/png",
-            },
-            {
-                src: "/novorender_logo_512x512.png",
-                type: "image/png",
-            },
-        ],
-    },
+    manifest: false,
 };
 
 const ownCerts = existsSync("./localhost.crt") && existsSync("./localhost.key");

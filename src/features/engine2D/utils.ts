@@ -5,11 +5,12 @@ import { CameraType } from "features/render";
 
 export interface ColorSettings {
     lineColor?: string | CanvasGradient | string[];
-    fillColor?: string;
+    fillColor?: string | CanvasPattern;
     pointColor?: string | { start: string; middle: string; end: string };
     outlineColor?: string;
     complexCylinder?: boolean;
     displayAllPoints?: boolean;
+    lineDash?: number[];
 }
 
 export interface TextSettings {
@@ -288,6 +289,9 @@ function drawLinesOrPolygon(
             drawArrow(ctx, part.vertices2D[0], dir, 20);
         }
         ctx.beginPath();
+        if (colorSettings.lineDash) {
+            ctx.setLineDash(colorSettings.lineDash);
+        }
         ctx.moveTo(part.vertices2D[0][0], part.vertices2D[0][1]);
 
         for (let i = 1; i < part.vertices2D.length; ++i) {
@@ -308,6 +312,9 @@ function drawLinesOrPolygon(
                 ctx.beginPath();
                 ctx.moveTo(part.vertices2D[i][0], part.vertices2D[i][1]);
             }
+        }
+        if (colorSettings.lineDash) {
+            ctx.setLineDash([]);
         }
 
         if (part.voids) {
@@ -503,7 +510,7 @@ export function drawLineStrip(
     ctx.stroke();
 }
 
-export function drawPoint(ctx: CanvasRenderingContext2D, point: ReadonlyVec2, color?: string) {
+export function drawPoint(ctx: CanvasRenderingContext2D, point: ReadonlyVec2, color?: string | CanvasPattern) {
     ctx.fillStyle = color ?? "black";
     ctx.lineWidth = 2;
     ctx.strokeStyle = "black";
@@ -640,7 +647,7 @@ export function getCameraState(camera: View["renderState"]["camera"]) {
     };
 }
 
-function getCameraDir(rotation: quat): vec3 {
+export function getCameraDir(rotation: quat): vec3 {
     return vec3.transformQuat(vec3.create(), vec3.fromValues(0, 0, -1), rotation);
 }
 

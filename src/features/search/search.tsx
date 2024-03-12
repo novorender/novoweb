@@ -1,7 +1,7 @@
 import { AddCircle } from "@mui/icons-material";
 import { Box, Button, FormControlLabel } from "@mui/material";
 import { HierarcicalObjectReference, SearchPattern } from "@novorender/webgl-api";
-import { CSSProperties, FormEvent, useCallback, useRef, useState } from "react";
+import { CSSProperties, FormEvent, useCallback, useEffect, useRef, useState } from "react";
 import { ListOnScrollProps } from "react-window";
 
 import { useAppSelector } from "app/store";
@@ -103,6 +103,12 @@ export default function Search() {
             }
         }
     }, [abortController, setSearchResults, db, getSearchPattern]);
+
+    useEffect(() => {
+        if (urlSearchQuery) {
+            search();
+        }
+    }, [urlSearchQuery, search]);
 
     const handleSubmit = async (e: FormEvent) => {
         e.preventDefault();

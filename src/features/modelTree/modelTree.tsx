@@ -137,7 +137,7 @@ export default function ModelTree() {
                     : await searchFirstObjectAtPath({ db, path: parentPath });
 
             try {
-                const iterator = db.search({ parentPath, descentDepth: 1 }, undefined);
+                const iterator = db.search({ parentPath, descentDepth: 1, full: true }, undefined);
                 const [nodes] = await iterateAsync({ iterator, count: 100 });
 
                 setCurrentDepth({
@@ -287,6 +287,7 @@ export default function ModelTree() {
                                         ref={listRef}
                                         outerRef={listElRef}
                                         loading={status === Status.Loading}
+                                        allowDownload
                                         setLoading={(loading: boolean) =>
                                             setStatus(loading ? Status.Loading : Status.Ready)
                                         }

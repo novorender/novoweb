@@ -78,12 +78,24 @@ export function PathList() {
 
                 await searchByPatterns({
                     db,
-                    searchPatterns: [{ property: "Novorender/Path", value: "true", exact: true }],
+                    searchPatterns: [{ property: "Novorender/PathId" }],
                     callback: (refs) =>
                         (paths = paths.concat(
                             refs.map(({ path, id }) => ({ id, name: getObjectNameFromPath(getParentPath(path)) }))
                         )),
                 });
+
+                if (paths.length == 0) {
+                    //Legacy
+                    await searchByPatterns({
+                        db,
+                        searchPatterns: [{ property: "Novorender/Path", value: "true", exact: true }],
+                        callback: (refs) =>
+                            (paths = paths.concat(
+                                refs.map(({ path, id }) => ({ id, name: getObjectNameFromPath(getParentPath(path)) }))
+                            )),
+                    });
+                }
 
                 paths.sort((a, b) => a.name.localeCompare(b.name, "en", { sensitivity: "accent" }));
                 dispatch(followPathActions.setPaths({ status: AsyncStatus.Success, data: paths }));
@@ -232,7 +244,7 @@ export function PathList() {
                                                         initPos = false;
                                                     }
                                                 }
-                                                dispatch(measureActions.addMeasureEntites([segment]));
+                                                dispatch(measureActions.setSelectedEntities([segment]));
                                                 dispatch(measureActions.pin(0));
                                             }
                                         }

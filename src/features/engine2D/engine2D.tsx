@@ -1,5 +1,6 @@
 import { MutableRefObject, useEffect, useRef } from "react";
 
+import { ArcgisCanvas } from "features/arcgis";
 import { AreaCanvas } from "features/area";
 import { FollowPathCanvas } from "features/followPath";
 import { HeightProfileCanvas } from "features/heightProfile";
@@ -29,6 +30,7 @@ export function Engine2D({
     const manholeRenderFn = useRef<RenderFn | undefined>();
     const crossSectionRenderFn = useRef<RenderFn | undefined>();
     const heightProfileRenferFn = useRef<RenderFn | undefined>();
+    const arcgisRenderFn = useRef<RenderFn | undefined>();
 
     useEffect(() => {
         renderFnRef.current = render;
@@ -44,6 +46,7 @@ export function Engine2D({
             outlineLaserRenderFn?.current?.(moved);
             measureRenderFn.current?.(moved);
             hoverRenderFn?.current?.(moved);
+            arcgisRenderFn?.current?.(moved);
         }
     }, [renderFnRef]);
 
@@ -58,6 +61,7 @@ export function Engine2D({
             <CrossSectionCanvas renderFnRef={crossSectionRenderFn} />
             <HeightProfileCanvas renderFnRef={heightProfileRenferFn} />
             <HoverCanvas renderFnRef={hoverRenderFn} />
+            <ArcgisCanvas renderFnRef={arcgisRenderFn} svg={svg} />
         </>
     );
 }

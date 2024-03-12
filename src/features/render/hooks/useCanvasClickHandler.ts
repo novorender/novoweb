@@ -11,6 +11,7 @@ import {
     useHighlightCollections,
 } from "contexts/highlightCollections";
 import { highlightActions, useDispatchHighlighted, useHighlighted } from "contexts/highlighted";
+import { useArcgisCanvasClickHandler } from "features/arcgis/hooks/useArcgisCanvasHandler";
 import { areaActions } from "features/area";
 import { followPathActions } from "features/followPath";
 import { heightProfileActions } from "features/heightProfile";
@@ -81,6 +82,8 @@ export function useCanvasClickHandler({
     const currentSecondaryHighlightQuery = useRef("");
     const secondaryHighlightProperty = useAppSelector(selectSecondaryHighlightProperty);
 
+    const arcgisCanvasClickHandler = useArcgisCanvasClickHandler();
+
     const handleCanvasPick: MouseEventHandler<HTMLCanvasElement> = async (evt) => {
         const pointerDownState = pointerDownStateRef.current;
         const longPress = pointerDownState && evt.timeStamp - pointerDownState.timestamp >= 300;
@@ -92,6 +95,10 @@ export function useCanvasClickHandler({
         if (!view || !canvas || longPress || drag) {
             return;
         }
+        if (picker === Picker.Object && arcgisCanvasClickHandler && arcgisCanvasClickHandler(evt)) {
+            return;
+        }
+
         const planePicking = cameraType === CameraType.Orthographic && view.renderState.camera.far < 1;
 
         pointerDownStateRef.current = undefined;

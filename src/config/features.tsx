@@ -22,6 +22,7 @@ import {
     List,
     MyLocation,
     Person,
+    Public,
     Redo,
     RestartAlt,
     RouteOutlined,
@@ -424,6 +425,14 @@ export const featuresConfig = {
         type: FeatureType.Widget,
         defaultLocked: true,
         offline: true,
+    },
+    arcgis: {
+        key: "arcgis",
+        name: "ArcGIS",
+        Icon: Public,
+        type: FeatureType.Widget,
+        defaultLocked: true,
+        offline: false,
     },
 } as const;
 
