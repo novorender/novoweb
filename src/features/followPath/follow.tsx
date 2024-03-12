@@ -86,6 +86,8 @@ export function Follow({ fpObj }: { fpObj: FollowParametricObject }) {
 
     const dispatch = useAppDispatch();
 
+    useEffect(() => setClipping(_clipping), [_clipping]);
+
     useEffect(
         function syncProfileInput() {
             setProfileInput(profile);

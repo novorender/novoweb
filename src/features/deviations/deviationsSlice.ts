@@ -15,6 +15,9 @@ const initialState = {
     deviationForm: undefined as DeviationForm | undefined,
     selectedProfileId: undefined as string | undefined,
     saveStatus: { status: AsyncStatus.Initial } as AsyncState<string>,
+    // Stores pixel position of the rightmost deviation label
+    // in follow path 2D view, which is used to position the legend
+    rightmost2dDeviationCoordinate: undefined as number | undefined,
 };
 
 type State = typeof initialState;
@@ -71,6 +74,9 @@ export const deviationsSlice = createSlice({
         setSaveStatus: (state, action: PayloadAction<State["saveStatus"]>) => {
             state.saveStatus = action.payload;
         },
+        setRightmost2dDeviationCoordinate: (state, action: PayloadAction<State["rightmost2dDeviationCoordinate"]>) => {
+            state.rightmost2dDeviationCoordinate = action.payload;
+        },
     },
 });
 
@@ -91,6 +97,8 @@ export const selectSelectedProfile = createSelector(
     }
 );
 export const selectSaveStatus = (state: RootState) => state.deviations.saveStatus;
+export const selectRightmost2dDeviationCoordinate = (state: RootState) =>
+    state.deviations.rightmost2dDeviationCoordinate;
 
 const { actions, reducer } = deviationsSlice;
 export { actions as deviationsActions, reducer as deviationsReducer };
