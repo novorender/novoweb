@@ -93,6 +93,21 @@ export const dataV2Api = createApi({
                 body: config,
             }),
         }),
+        getFileDownloadLink: builder.query<
+            string,
+            { relativeUrl: string } | { projectId: string; fileId: string; version: number }
+        >({
+            query: (params) => ({
+                url:
+                    "relativeUrl" in params
+                        ? `/${params.relativeUrl}`
+                        : `/projects/${params.projectId}/files/${params.fileId}/downloadlink/${params.version}`,
+                responseHandler: async (resp) => {
+                    const result = await resp.text();
+                    return result;
+                },
+            }),
+        }),
     }),
 });
 
@@ -105,4 +120,5 @@ export const {
     useSetPropertyTreeFavoritesMutation,
     useLazyGetProjectQuery,
     useGetProjectQuery,
+    useLazyGetFileDownloadLinkQuery,
 } = dataV2Api;
