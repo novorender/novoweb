@@ -1,6 +1,6 @@
 import { DeviationProjectConfig, PointToPointGroup, PointToTriangleGroup } from "apis/dataV2/deviationTypes";
 
-import { DeviationForm, DeviationType, UiDeviationConfig, UiDeviationProfile } from "./deviationTypes";
+import { DeviationForm, DeviationType, SubprofileGroup, UiDeviationConfig, UiDeviationProfile } from "./deviationTypes";
 
 export const MAX_DEVIATION_PROFILE_COUNT = 4;
 export const PARAM_BOUND_PRECISION = 2;
@@ -13,9 +13,23 @@ export function newDeviationForm(): DeviationForm {
         copyFromProfileId: { value: undefined },
         name: { value: "" },
         deviationType: { value: DeviationType.PointToTriangle },
+        subprofiles: [newDeviationSubprofile()],
+        favorites: { value: [] },
+
+        colorSetup: {
+            absoluteValues: false,
+            colorStops: { value: [] },
+        },
+        hasFromAndTo: true,
+        index: -1,
+        subprofileIndex: 0,
+    };
+}
+
+export function newDeviationSubprofile(): SubprofileGroup {
+    return {
         groups1: { value: [] },
         groups2: { value: [] },
-        favorites: { value: [] },
         centerLine: {
             enabled: false,
             id: { value: undefined },
@@ -25,12 +39,6 @@ export function newDeviationForm(): DeviationForm {
             enabled: false,
             heightToCeiling: { value: "" },
         },
-        colorSetup: {
-            absoluteValues: false,
-            colorStops: { value: [] },
-        },
-        hasFromAndTo: true,
-        index: -1,
     };
 }
 
@@ -39,47 +47,52 @@ export function profileToDeviationForm(profile: UiDeviationProfile): DeviationFo
         id: profile.id,
         copyFromProfileId: { value: profile.copyFromProfileId },
         name: { value: profile.name },
-        groups1: { value: profile.from.groupIds },
-        groups2: { value: profile.to.groupIds },
         favorites: { value: profile.favorites },
-        centerLine: profile.centerLine
-            ? {
-                  enabled: true,
-                  id: { value: undefined },
-                  brepId: profile.centerLine.brepId,
-                  parameterBounds: { value: profile.centerLine.parameterBounds },
-              }
-            : {
-                  enabled: false,
-                  id: { value: undefined },
-                  parameterBounds: { value: EMPTY_PARAMETER_BOUNDS },
-              },
+        subprofiles: profile.subprofiles.map((sp) => ({
+            groups1: { value: sp.from.groupIds },
+            groups2: { value: sp.to.groupIds },
+            centerLine: sp.centerLine
+                ? {
+                      enabled: true,
+                      id: { value: undefined },
+                      brepId: sp.centerLine.brepId,
+                      parameterBounds: { value: sp.centerLine.parameterBounds },
+                  }
+                : {
+                      enabled: false,
+                      id: { value: undefined },
+                      parameterBounds: { value: EMPTY_PARAMETER_BOUNDS },
+                  },
+            tunnelInfo: {
+                enabled: sp.heightToCeiling !== undefined,
+                heightToCeiling: { value: `${sp.heightToCeiling ?? 0}` },
+            },
+        })),
         colorSetup: {
             absoluteValues: profile.colors.absoluteValues,
             colorStops: { value: profile.colors.colorStops },
         },
         deviationType: { value: profile.deviationType },
-        tunnelInfo: {
-            enabled: profile.heightToCeiling !== undefined,
-            heightToCeiling: { value: `${profile.heightToCeiling ?? 0}` },
-        },
         hasFromAndTo: profile.hasFromAndTo,
         index: profile.index,
+        subprofileIndex: 0,
     };
 }
 
 export function uiConfigToServerConfig(config: UiDeviationConfig): DeviationProjectConfig {
-    const getSharedProfileAttrs = (p: UiDeviationProfile) => {
+    const getProfileAttrs = (p: UiDeviationProfile) => {
         return {
             id: p.id,
             name: p.name,
             copyFromProfileId: p.copyFromProfileId,
-            from: p.from,
-            to: p.to,
-            centerLine: p.centerLine,
             colors: p.colors,
             favorites: p.favorites,
-            heightToCeiling: p.heightToCeiling,
+            subprofiles: p.subprofiles.map((sp) => ({
+                from: sp.from,
+                to: sp.to,
+                centerLine: sp.centerLine,
+                heightToCeiling: sp.heightToCeiling,
+            })),
         } as PointToPointGroup | PointToTriangleGroup;
     };
 
@@ -90,31 +103,10 @@ export function uiConfigToServerConfig(config: UiDeviationConfig): DeviationProj
         pointToTriangle: {
             groups: config.profiles
                 .filter((p) => p.deviationType === DeviationType.PointToTriangle)
-                .map((p) => {
-                    const groupIds = [...p.from.groupIds, ...p.to.groupIds];
-                    const objectIds: Set<number> = new Set();
-                    for (const id of p.from.objectIds) {
-                        objectIds.add(id);
-                    }
-                    for (const id of p.to.objectIds) {
-                        objectIds.add(id);
-                    }
-
-                    return {
-                        ...getSharedProfileAttrs(p),
-                        groupIds,
-                        objectIds: [...objectIds],
-                    };
-                }),
+                .map(getProfileAttrs),
         },
         pointToPoint: {
-            groups: config.profiles
-                .filter((p) => p.deviationType === DeviationType.PointToPoint)
-                .map((p) => {
-                    return {
-                        ...getSharedProfileAttrs(p),
-                    } as PointToPointGroup;
-                }),
+            groups: config.profiles.filter((p) => p.deviationType === DeviationType.PointToPoint).map(getProfileAttrs),
         },
     };
 }

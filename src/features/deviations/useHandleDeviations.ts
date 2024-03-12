@@ -172,18 +172,20 @@ function configToUi(config: DeviationProjectConfig, defaultColorStops: ColorStop
                         deviationType: DeviationType.PointToTriangle,
                         index: -1,
                         favorites: g.favorites ?? [],
+                        subprofiles: g.subprofiles ?? [
+                            {
+                                from: {
+                                    objectIds: g.objectIds,
+                                    groupIds: g.groupIds,
+                                },
+                                to: {
+                                    objectIds: [],
+                                    groupIds: [],
+                                },
+                            },
+                        ],
                         colors: g.colors ?? defaultColors,
-                        from: g.from ?? {
-                            objectIds: g.objectIds,
-                            groupIds: g.groupIds,
-                        },
-                        to: g.to ?? {
-                            objectIds: [],
-                            groupIds: [],
-                        },
-                        centerLine: g.centerLine,
-                        heightToCeiling: g.heightToCeiling,
-                        hasFromAndTo: g.from !== undefined,
+                        hasFromAndTo: g.subprofiles !== undefined,
                     } as UiDeviationProfile)
             ),
             ...config.pointToPoint.groups.map(
@@ -195,11 +197,13 @@ function configToUi(config: DeviationProjectConfig, defaultColorStops: ColorStop
                         deviationType: DeviationType.PointToPoint,
                         index: -1,
                         favorites: g.favorites ?? [],
+                        subprofiles: g.subprofiles ?? [
+                            {
+                                from: g.from,
+                                to: g.to,
+                            },
+                        ],
                         colors: g.colors ?? defaultColors,
-                        from: g.from,
-                        to: g.to,
-                        centerLine: g.centerLine,
-                        heightToCeiling: g.heightToCeiling,
                         hasFromAndTo: true,
                     } as UiDeviationProfile)
             ),

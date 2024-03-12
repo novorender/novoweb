@@ -2,7 +2,7 @@ import { Add, DeleteForever } from "@mui/icons-material";
 import { Box, Button, IconButton, TextField } from "@mui/material";
 
 import { TunnelInfoGroup } from "../deviationTypes";
-import { DeviationFormErrors, getActiveErrorText, updateFormField } from "../validation";
+import { getActiveErrorText, SubprofileGroupErrors, updateFormField } from "../validation";
 import { SectionHeader } from "./sectionHeader";
 
 export function TunnelInfoSection({
@@ -14,7 +14,7 @@ export function TunnelInfoSection({
     tunnelInfo: TunnelInfoGroup;
     onChange: (value: TunnelInfoGroup) => void;
     disabled?: boolean;
-    errors: DeviationFormErrors;
+    errors: SubprofileGroupErrors;
 }) {
     if (!tunnelInfo.enabled) {
         if (disabled) {

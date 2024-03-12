@@ -1,4 +1,4 @@
-import { InfoOutlined } from "@mui/icons-material";
+import { Add, InfoOutlined } from "@mui/icons-material";
 import {
     Autocomplete,
     Box,
@@ -21,7 +21,6 @@ import {
 } from "@mui/material";
 import { View } from "@novorender/api";
 import { ObjectDB } from "@novorender/data-js-api";
-import { CenterLine } from "apis/dataV2/deviationTypes";
 import { useCallback, useMemo } from "react";
 import { useHistory } from "react-router-dom";
 
@@ -38,6 +37,7 @@ import { getObjectData } from "utils/search";
 import { CenterLineSection } from "../components/centerLineSection";
 import { ColorStopList } from "../components/colorStop";
 import { SectionHeader } from "../components/sectionHeader";
+import { SubprofileList } from "../components/subprofileList";
 import { TunnelInfoSection } from "../components/tunnelInfoSection";
 import {
     deviationsActions,
@@ -50,12 +50,13 @@ import {
     CenterLineGroup,
     DeviationForm,
     DeviationType,
+    SubprofileGroup,
     TunnelInfoGroup,
     UiDeviationConfig,
     UiDeviationProfile,
 } from "../deviationTypes";
 import { useSaveDeviationConfig } from "../hooks/useSaveDeviationConfig";
-import { NEW_DEVIATION_ID, newDeviationForm, profileToDeviationForm } from "../utils";
+import { NEW_DEVIATION_ID, newDeviationForm, newDeviationSubprofile, profileToDeviationForm } from "../utils";
 import {
     getActiveErrorText,
     hasActiveErrors,
@@ -82,6 +83,7 @@ export function Deviation() {
     const deviations = useAppSelector(selectDeviations);
 
     const deviationForm = useAppSelector(selectDeviationForm) ?? newDeviationForm();
+    const subprofile = deviationForm.subprofiles[deviationForm.subprofileIndex];
 
     const update = useCallback(
         (upd: Partial<DeviationForm>) => {
@@ -89,30 +91,45 @@ export function Deviation() {
         },
         [dispatch, deviationForm]
     );
-    const updateCenterLine = useCallback((centerLine: CenterLineGroup) => update({ centerLine }), [update]);
-    const updateTunnelInfo = useCallback((tunnelInfo: TunnelInfoGroup) => update({ tunnelInfo }), [update]);
+    const updateSubprofile = useCallback(
+        (upd: Partial<SubprofileGroup>) => {
+            const subprofiles = deviationForm.subprofiles.slice();
+            subprofiles[deviationForm.subprofileIndex] = { ...subprofiles[deviationForm.subprofileIndex], ...upd };
+            dispatch(deviationsActions.setDeviationForm({ ...deviationForm, subprofiles }));
+        },
+        [dispatch, deviationForm]
+    );
+    const updateCenterLine = useCallback(
+        (centerLine: CenterLineGroup) => updateSubprofile({ centerLine }),
+        [updateSubprofile]
+    );
+    const updateTunnelInfo = useCallback(
+        (tunnelInfo: TunnelInfoGroup) => updateSubprofile({ tunnelInfo }),
+        [updateSubprofile]
+    );
 
     const otherNames = useMemo(
         () => profileList.filter((p) => p.id !== deviationForm.id).map((p) => p.name.toLowerCase()),
         [profileList, deviationForm.id]
     );
     const errors = validateDeviationForm(deviationForm, otherNames);
+    const subprofileErrors = errors.subprofiles[deviationForm.subprofileIndex];
 
     const formDisabled = !isProjectV2;
 
     const groups1 = useMemo(
         () =>
-            deviationForm.groups1.value
+            subprofile.groups1.value
                 .map((id) => objectGroups.find((g) => g.id === id))
                 .filter((e) => e) as ObjectGroup[],
-        [deviationForm.groups1.value, objectGroups]
+        [subprofile.groups1.value, objectGroups]
     );
     const groups2 = useMemo(
         () =>
-            deviationForm.groups2.value
+            subprofile.groups2.value
                 .map((id) => objectGroups.find((g) => g.id === id))
                 .filter((e) => e) as ObjectGroup[],
-        [deviationForm.groups2.value, objectGroups]
+        [subprofile.groups2.value, objectGroups]
     );
     const deviationFavorites = useMemo(
         () =>
@@ -137,12 +154,15 @@ export function Deviation() {
             if (hasErrors(errors)) {
                 update({
                     name: touchFormField(deviationForm.name),
-                    groups1: touchFormField(deviationForm.groups1),
-                    groups2: touchFormField(deviationForm.groups2),
                     colorSetup: {
                         ...deviationForm.colorSetup,
                         colorStops: touchFormField(deviationForm.colorSetup.colorStops),
                     },
+                    subprofiles: errors.subprofiles.map((_sp, i) => ({
+                        ...deviationForm.subprofiles[i],
+                        groups1: touchFormField(subprofile.groups1),
+                        groups2: touchFormField(subprofile.groups2),
+                    })),
                 });
                 return;
             }
@@ -245,6 +265,35 @@ export function Deviation() {
                     sx={{ mt: 2 }}
                     disabled={formDisabled}
                 />
+
+                {deviationForm.subprofiles.length > 1 && (
+                    <>
+                        <SectionHeader>Subprofiles</SectionHeader>
+                        <Box>
+                            <SubprofileList
+                                subprofiles={deviationForm.subprofiles}
+                                errors={errors.subprofiles}
+                                selectedIndex={deviationForm.subprofileIndex}
+                                objectGroups={objectGroups}
+                                onClick={(sp, i) =>
+                                    update({
+                                        subprofileIndex: i,
+                                    })
+                                }
+                                onDelete={(sp, index) => {
+                                    update({
+                                        subprofiles: deviationForm.subprofiles.filter((_, i) => index !== i),
+                                        subprofileIndex:
+                                            deviationForm.subprofileIndex < deviationForm.subprofiles.length - 1
+                                                ? deviationForm.subprofileIndex
+                                                : deviationForm.subprofileIndex - 1,
+                                    });
+                                }}
+                            />
+                        </Box>
+                    </>
+                )}
+
                 <SectionHeader>Select deviation Groups</SectionHeader>
                 <Typography>
                     Create deviations between items in Groups. For example a point cloud and (many) 3D asset(s).
@@ -259,12 +308,6 @@ export function Deviation() {
                             onChange={(e) => {
                                 update({
                                     deviationType: updateFormField(Number(e.target.value)),
-                                    groups1: {
-                                        value: deviationForm.groups1.value.filter(
-                                            (id) => !deviationForm.groups2.value.includes(id)
-                                        ),
-                                        edited: deviationForm.groups1.edited,
-                                    },
                                 });
                             }}
                         >
@@ -300,13 +343,11 @@ export function Deviation() {
                 <GroupAutocomplete
                     options={groups1Options}
                     label="Groups to analyse"
-                    onChange={(groups) => {
-                        update({ groups1: updateFormField(groups.map((g) => g.id)) });
-                    }}
+                    onChange={(groups) => updateSubprofile({ groups1: updateFormField(groups.map((g) => g.id)) })}
                     selected={groups1}
                     sx={{ mt: 2 }}
-                    error={isActiveError(errors.groups1)}
-                    helperText={getActiveErrorText(errors.groups1)}
+                    error={isActiveError(subprofileErrors.groups1)}
+                    helperText={getActiveErrorText(subprofileErrors.groups1)}
                     disabled={formDisabled}
                 />
                 <Box display="flex" justifyContent="center" mt={1}>
@@ -315,11 +356,11 @@ export function Deviation() {
                 <GroupAutocomplete
                     options={groups2Options}
                     label="Analyse against"
-                    onChange={(groups) => update({ groups2: updateFormField(groups.map((g) => g.id)) })}
+                    onChange={(groups) => updateSubprofile({ groups2: updateFormField(groups.map((g) => g.id)) })}
                     selected={groups2}
                     sx={{ mt: 1 }}
-                    error={isActiveError(errors.groups2)}
-                    helperText={getActiveErrorText(errors.groups2)}
+                    error={isActiveError(subprofileErrors.groups2)}
+                    helperText={getActiveErrorText(subprofileErrors.groups2)}
                     disabled={formDisabled}
                 />
                 <SectionHeader>Select deviation favourites</SectionHeader>
@@ -355,18 +396,37 @@ export function Deviation() {
                     disabled={formDisabled}
                 />
                 <CenterLineSection
-                    centerLine={deviationForm.centerLine}
+                    centerLine={subprofile.centerLine}
                     onChange={updateCenterLine}
                     disabled={formDisabled}
                 />
-                {deviationForm.centerLine.enabled && (
+                {subprofile.centerLine.enabled && (
                     <TunnelInfoSection
-                        tunnelInfo={deviationForm.tunnelInfo}
+                        tunnelInfo={subprofile.tunnelInfo}
                         onChange={updateTunnelInfo}
                         disabled={formDisabled}
-                        errors={errors}
+                        errors={subprofileErrors}
                     />
                 )}
+
+                {!formDisabled && (
+                    <Box display="flex" m={2} mt={4} justifyContent="center">
+                        <Button
+                            variant="outlined"
+                            sx={{ fontWeight: 600 }}
+                            size="large"
+                            onClick={() =>
+                                update({
+                                    subprofiles: [...deviationForm.subprofiles, newDeviationSubprofile()],
+                                    subprofileIndex: deviationForm.subprofiles.length,
+                                })
+                            }
+                        >
+                            <Add sx={{ mr: 1 }} /> Add subprofile
+                        </Button>
+                    </Box>
+                )}
+
                 <Box mt={4}>
                     <Divider />
                 </Box>
@@ -511,18 +571,24 @@ async function deviationFormToProfile({
         };
     };
 
-    let centerLine: CenterLine | undefined;
-    if (deviationForm.centerLine.enabled && deviationForm.centerLine.id.value) {
-        const metadata = await getObjectData({ db: db!, view: view!, id: deviationForm.centerLine.id.value! });
-        if (metadata) {
-            const brepId = metadata.properties.find((p) => p[0] === "Novorender/PathId")?.[1];
-            if (brepId) {
-                centerLine = {
-                    brepId,
-                    parameterBounds: deviationForm.centerLine.parameterBounds.value,
-                };
-            }
-        }
+    const uniqueCenterLineIds = new Set(
+        deviationForm.subprofiles
+            .filter((sp) => sp.centerLine.enabled && sp.centerLine.id.value)
+            .map((sp) => sp.centerLine.id.value!)
+    );
+    const brepIds = new Map<number, string>();
+    if (uniqueCenterLineIds.size > 0) {
+        await Promise.all(
+            [...uniqueCenterLineIds].map(async (id) => {
+                const metadata = await getObjectData({ db: db!, view: view!, id });
+                if (metadata) {
+                    const brepId = metadata.properties.find((p) => p[0] === "Novorender/PathId")?.[1];
+                    if (brepId) {
+                        brepIds.set(id, brepId);
+                    }
+                }
+            })
+        );
     }
 
     return {
@@ -534,13 +600,26 @@ async function deviationFormToProfile({
             colorStops: deviationForm.colorSetup.colorStops.value,
         },
         favorites: deviationForm.favorites.value,
-        centerLine,
-        heightToCeiling:
-            centerLine && deviationForm.tunnelInfo.enabled && Number(deviationForm.tunnelInfo.heightToCeiling.value)
-                ? Number(deviationForm.tunnelInfo.heightToCeiling.value)
-                : undefined,
-        from: getGroups(deviationForm.groups1.value),
-        to: getGroups(deviationForm.groups2.value),
+        subprofiles: deviationForm.subprofiles.map((sp) => {
+            const brepId = sp.centerLine.id.value ? brepIds.get(sp.centerLine.id.value) : undefined;
+            const centerLine =
+                sp.centerLine.enabled && brepId
+                    ? {
+                          brepId,
+                          parameterBounds: sp.centerLine.parameterBounds.value,
+                      }
+                    : undefined;
+
+            return {
+                centerLine,
+                heightToCeiling:
+                    centerLine && sp.tunnelInfo.enabled && Number(sp.tunnelInfo.heightToCeiling.value)
+                        ? Number(sp.tunnelInfo.heightToCeiling.value)
+                        : undefined,
+                from: getGroups(sp.groups1.value),
+                to: getGroups(sp.groups2.value),
+            };
+        }),
         hasFromAndTo: deviationForm.hasFromAndTo,
         deviationType: deviationForm.deviationType.value,
         index: deviationForm.index,
@@ -550,11 +629,20 @@ async function deviationFormToProfile({
 function checkIfRebuildIsRequired(prev: UiDeviationProfile, next: UiDeviationProfile) {
     return (
         prev.deviationType !== next.deviationType ||
-        !areGroupsIdsEqual(prev.from.groupIds, next.from.groupIds) ||
-        !areGroupsIdsEqual(prev.to.groupIds, next.to.groupIds) ||
-        prev.centerLine?.brepId !== next.centerLine?.brepId ||
-        !areArraysEqual(prev.centerLine?.parameterBounds || ([] as number[]), next.centerLine?.parameterBounds ?? []) ||
-        prev.heightToCeiling !== next.heightToCeiling
+        prev.subprofiles.length !== next.subprofiles.length ||
+        prev.subprofiles.some((spPrev, i) => {
+            const spNext = next.subprofiles[i];
+            return (
+                !areGroupsIdsEqual(spPrev.from.groupIds, spNext.from.groupIds) ||
+                !areGroupsIdsEqual(spPrev.to.groupIds, spNext.to.groupIds) ||
+                spPrev.centerLine?.brepId !== spNext.centerLine?.brepId ||
+                !areArraysEqual(
+                    spPrev.centerLine?.parameterBounds || ([] as number[]),
+                    spNext.centerLine?.parameterBounds ?? []
+                ) ||
+                spPrev.heightToCeiling !== spNext.heightToCeiling
+            );
+        })
     );
 }
 

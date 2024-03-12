@@ -20,12 +20,11 @@ export type DeviationProfileBase = {
     name: string;
     copyFromProfileId?: string;
     colors?: ColorConfig;
-    centerLine?: CenterLine;
-    heightToCeiling?: number;
     favorites?: string[];
+    subprofiles?: DeviationSubprofile[];
 };
 
-export type PointToPointGroup = DeviationProfileBase & {
+export type DeviationSubprofile = {
     from: {
         groupIds: string[];
         objectIds: number[];
@@ -34,11 +33,11 @@ export type PointToPointGroup = DeviationProfileBase & {
         groupIds: string[];
         objectIds: number[];
     };
+    centerLine?: CenterLine;
+    heightToCeiling?: number;
 };
 
-export type PointToTriangleGroup = DeviationProfileBase & {
-    // from and to are introduced in newer versions
-    // keeping groupIds/objectIds for compat
+export type PointToPointGroup = DeviationProfileBase & {
     from?: {
         groupIds: string[];
         objectIds: number[];
@@ -47,8 +46,11 @@ export type PointToTriangleGroup = DeviationProfileBase & {
         groupIds: string[];
         objectIds: number[];
     };
-    groupIds: string[];
-    objectIds: number[];
+};
+
+export type PointToTriangleGroup = DeviationProfileBase & {
+    groupIds?: string[];
+    objectIds?: number[];
 };
 
 export type ColorConfig = {

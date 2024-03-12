@@ -1,4 +1,4 @@
-import { CenterLine, ColorConfig, ColorStop, DeviationRunData } from "apis/dataV2/deviationTypes";
+import { ColorConfig, ColorStop, DeviationRunData, DeviationSubprofile } from "apis/dataV2/deviationTypes";
 
 export enum DeviationCalculationStatus {
     Initial,
@@ -30,17 +30,8 @@ export type UiDeviationProfile = {
     index: number; // index of deviation for coloring. -1 for none
     copyFromProfileId?: string;
     colors: ColorConfig;
-    centerLine?: CenterLine;
-    heightToCeiling?: number;
     favorites: string[];
-    from: {
-        groupIds: string[];
-        objectIds: number[];
-    };
-    to: {
-        groupIds: string[];
-        objectIds: number[];
-    };
+    subprofiles: DeviationSubprofile[];
 };
 
 // Deviation form
@@ -54,14 +45,19 @@ export type DeviationForm = {
     name: FormField<string>;
     copyFromProfileId: FormField<string | undefined>;
     deviationType: FormField<DeviationType>;
-    groups1: FormField<string[]>;
-    groups2: FormField<string[]>;
     favorites: FormField<string[]>;
-    centerLine: CenterLineGroup;
-    tunnelInfo: TunnelInfoGroup;
     colorSetup: ColorSetupGroup;
     hasFromAndTo: boolean;
     index: number;
+    subprofiles: SubprofileGroup[];
+    subprofileIndex: number;
+};
+
+export type SubprofileGroup = {
+    groups1: FormField<string[]>;
+    groups2: FormField<string[]>;
+    centerLine: CenterLineGroup;
+    tunnelInfo: TunnelInfoGroup;
 };
 
 export type CenterLineGroup = {
