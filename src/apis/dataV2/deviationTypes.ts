@@ -4,6 +4,7 @@ import { VecRGBA } from "utils/color";
 export type DeviationProjectConfig = {
     version?: string;
     rebuildRequired: boolean;
+    brepIds?: string[];
     pointToTriangle: { groups: PointToTriangleGroup[] };
     pointToPoint: { groups: PointToPointGroup[] };
     runData?: DeviationRunData;

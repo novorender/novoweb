@@ -80,6 +80,16 @@ export function profileToDeviationForm(profile: UiDeviationProfile): DeviationFo
 }
 
 export function uiConfigToServerConfig(config: UiDeviationConfig): DeviationProjectConfig {
+    const brepIds = new Set<string>();
+
+    for (const profile of config.profiles) {
+        for (const sp of profile.subprofiles) {
+            if (sp.centerLine?.brepId) {
+                brepIds.add(sp.centerLine.brepId);
+            }
+        }
+    }
+
     const getProfileAttrs = (p: UiDeviationProfile) => {
         return {
             id: p.id,
@@ -99,7 +109,7 @@ export function uiConfigToServerConfig(config: UiDeviationConfig): DeviationProj
     return {
         version: config.version,
         rebuildRequired: config.rebuildRequired,
-        runData: config.runData,
+        brepIds: [...brepIds],
         pointToTriangle: {
             groups: config.profiles
                 .filter((p) => p.deviationType === DeviationType.PointToTriangle)
@@ -108,5 +118,6 @@ export function uiConfigToServerConfig(config: UiDeviationConfig): DeviationProj
         pointToPoint: {
             groups: config.profiles.filter((p) => p.deviationType === DeviationType.PointToPoint).map(getProfileAttrs),
         },
+        runData: config.runData,
     };
 }
