@@ -1,4 +1,4 @@
-import { Add, InfoOutlined } from "@mui/icons-material";
+import { Add, ArrowBack, CheckBox, CheckBoxOutlineBlank, InfoOutlined, Save } from "@mui/icons-material";
 import {
     Autocomplete,
     Box,
@@ -211,15 +211,31 @@ export function Deviation() {
 
     const loading = saveStatus.status === AsyncStatus.Loading;
 
-    const canSave = saveStatus.status !== AsyncStatus.Loading && !hasActiveErrors(errors);
+    const canSave = !formDisabled && saveStatus.status !== AsyncStatus.Loading && !hasActiveErrors(errors);
 
     return (
         <>
-            <Box
-                boxShadow={theme.customShadows.widgetHeader}
-                sx={{ height: 5, width: 1, mt: "-5px" }}
-                position="absolute"
-            />
+            <Box boxShadow={theme.customShadows.widgetHeader}>
+                <Box px={1}>
+                    <Divider />
+                </Box>
+                <Box display="flex" justifyContent="space-between">
+                    <Button
+                        color="grey"
+                        onClick={() => {
+                            history.goBack();
+                            dispatch(deviationsActions.setDeviationForm(undefined));
+                        }}
+                    >
+                        <ArrowBack fontSize="small" sx={{ mr: 1 }} />
+                        Back
+                    </Button>
+                    <Button color="grey" onClick={handleSave} disabled={!canSave}>
+                        <Save fontSize="small" sx={{ mr: 1 }} />
+                        Save
+                    </Button>
+                </Box>
+            </Box>
 
             {loading ? (
                 <Box position="relative">
@@ -426,43 +442,13 @@ export function Deviation() {
                         </Button>
                     </Box>
                 )}
-
-                <Box mt={4}>
-                    <Divider />
-                </Box>
-
-                <Box display="flex" justifyContent="flex-end" gap={2} mt={2}>
-                    {formDisabled ? (
-                        <Button
-                            color="grey"
-                            onClick={() => {
-                                history.goBack();
-                                dispatch(deviationsActions.setDeviationForm(undefined));
-                            }}
-                        >
-                            Back
-                        </Button>
-                    ) : (
-                        <>
-                            <Button
-                                color="grey"
-                                onClick={() => {
-                                    history.goBack();
-                                    dispatch(deviationsActions.setDeviationForm(undefined));
-                                }}
-                            >
-                                Cancel
-                            </Button>
-                            <Button color="primary" variant="contained" onClick={handleSave} disabled={!canSave}>
-                                Save
-                            </Button>
-                        </>
-                    )}
-                </Box>
             </ScrollBox>
         </>
     );
 }
+
+const checkboxIcon = <CheckBoxOutlineBlank fontSize="small" />;
+const checkboxCheckedIcon = <CheckBox fontSize="small" />;
 
 function GroupAutocomplete({
     options,
@@ -492,6 +478,17 @@ function GroupAutocomplete({
             value={selected}
             onChange={(e, value) => onChange(value)}
             renderInput={(params) => <TextField {...params} label={label} error={error} helperText={helperText} />}
+            renderOption={(props, option, { selected }) => (
+                <li {...props}>
+                    <Checkbox
+                        icon={checkboxIcon}
+                        checkedIcon={checkboxCheckedIcon}
+                        style={{ marginRight: 8 }}
+                        checked={selected}
+                    />
+                    {option.name}
+                </li>
+            )}
             disabled={disabled}
             sx={sx}
             disableCloseOnSelect
