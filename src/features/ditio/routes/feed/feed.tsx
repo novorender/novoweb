@@ -1,6 +1,16 @@
-import { FilterAlt } from "@mui/icons-material";
-import { Box, Button, FormControlLabel, ListItemButton, Typography, useTheme } from "@mui/material";
-import { useEffect, useRef } from "react";
+import { FilterAlt, LocationOn } from "@mui/icons-material";
+import {
+    Box,
+    Button,
+    ListItemButton,
+    ListItemIcon,
+    ListItemText,
+    Menu,
+    MenuItem,
+    Typography,
+    useTheme,
+} from "@mui/material";
+import { useEffect, useRef, useState } from "react";
 import { Link, Redirect, useHistory } from "react-router-dom";
 import AutoSizer from "react-virtualized-auto-sizer";
 
@@ -47,6 +57,17 @@ export function Feed() {
 
     const scrollPos = useRef(feedScrollOffset);
 
+    const [menuAnchor, setMenuAnchor] = useState<HTMLElement | null>(null);
+
+    const openMenu = (evt: React.MouseEvent<HTMLButtonElement>) => {
+        evt.stopPropagation();
+        setMenuAnchor(evt.currentTarget);
+    };
+
+    const closeMenu = () => {
+        setMenuAnchor(null);
+    };
+
     useEffect(() => {
         dispatch(ditioActions.setFeedInitialized(true));
         dispatch(ditioActions.setChecklistsInitialized(true));
@@ -90,51 +111,66 @@ export function Feed() {
                             <FilterAlt sx={{ mr: 1 }} />
                             Filters
                         </Button>
-                        <FormControlLabel
-                            control={
-                                <IosSwitch
-                                    size="medium"
-                                    color="primary"
-                                    checked={showFeedMarkers}
-                                    onChange={() => dispatch(ditioActions.toggleShowFeedMarkers())}
-                                />
-                            }
-                            label={
-                                <Box fontSize={14} sx={{ userSelect: "none" }}>
-                                    Feed
-                                </Box>
-                            }
-                        />
-                        <FormControlLabel
-                            control={
-                                <IosSwitch
-                                    size="medium"
-                                    color="primary"
-                                    checked={showChecklistMarkers}
-                                    onChange={() => dispatch(ditioActions.toggleShowChecklistMarkers())}
-                                />
-                            }
-                            label={
-                                <Box fontSize={14} sx={{ userSelect: "none" }}>
-                                    Checklists
-                                </Box>
-                            }
-                        />
-                        <FormControlLabel
-                            control={
-                                <IosSwitch
-                                    size="medium"
-                                    color="primary"
-                                    checked={showMachineMarkers}
-                                    onChange={() => dispatch(ditioActions.toggleShowMachineMarkers())}
-                                />
-                            }
-                            label={
-                                <Box fontSize={14} sx={{ userSelect: "none" }}>
-                                    Machines
-                                </Box>
-                            }
-                        />
+                        <>
+                            <Button onClick={(evt) => openMenu(evt)} color="grey">
+                                <LocationOn sx={{ mr: 1 }} />
+                                Markers
+                            </Button>
+                            <Menu
+                                open={Boolean(menuAnchor)}
+                                onClick={(evt) => evt.stopPropagation()}
+                                anchorEl={menuAnchor}
+                                onClose={closeMenu}
+                                id={`ditio-markers-menu`}
+                                MenuListProps={{ sx: { maxWidth: "100%" } }}
+                            >
+                                <MenuItem
+                                    sx={{ pl: 1 }}
+                                    disableRipple
+                                    onClick={() => dispatch(ditioActions.toggleShowMachineMarkers())}
+                                >
+                                    <ListItemIcon>
+                                        <IosSwitch
+                                            id="toggle-ditio-machine-markers"
+                                            size="medium"
+                                            color="primary"
+                                            checked={showMachineMarkers}
+                                        />
+                                    </ListItemIcon>
+                                    <ListItemText>Machines</ListItemText>
+                                </MenuItem>
+                                <MenuItem
+                                    sx={{ pl: 1 }}
+                                    disableRipple
+                                    onClick={() => dispatch(ditioActions.toggleShowFeedMarkers())}
+                                >
+                                    <ListItemIcon>
+                                        <IosSwitch
+                                            id="toggle-ditio-feed-markers"
+                                            size="medium"
+                                            color="primary"
+                                            checked={showFeedMarkers}
+                                        />
+                                    </ListItemIcon>
+                                    <ListItemText>Feed</ListItemText>
+                                </MenuItem>
+                                <MenuItem
+                                    sx={{ pl: 1 }}
+                                    disableRipple
+                                    onClick={() => dispatch(ditioActions.toggleShowChecklistMarkers())}
+                                >
+                                    <ListItemIcon>
+                                        <IosSwitch
+                                            id="toggle-ditio-checklist-markers"
+                                            size="medium"
+                                            color="primary"
+                                            checked={showChecklistMarkers}
+                                        />
+                                    </ListItemIcon>
+                                    <ListItemText>Checklists</ListItemText>
+                                </MenuItem>
+                            </Menu>
+                        </>
                     </Box>
                 </>
             </Box>
