@@ -56,7 +56,7 @@ jobs:
       - name: Azure login
         uses: azure/login@v1
         with:
-          creds: ${{ secrets.AZURE_CREDENTIALS }}
+          creds: ${{ secrets.AZURE_CREDENTIALS_PROJECTS }}
 
       - name: Infrastructure Deployment
         uses: azure/arm-deploy@v1
@@ -82,7 +82,7 @@ jobs:
       - name: Azure login
         uses: azure/login@v1
         with:
-          creds: ${{ secrets.AZURE_CREDENTIALS }}
+          creds: ${{ secrets.AZURE_CREDENTIALS_PROJECTS }}
 
       - name: "Deploy to Azure WebApp"
         uses: azure/webapps-deploy@v2
