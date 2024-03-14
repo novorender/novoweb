@@ -10,6 +10,7 @@ import WidgetList from "features/widgetList/widgetList";
 import { useToggle } from "hooks/useToggle";
 import { selectMaximized, selectMinimized } from "slices/explorerSlice";
 
+import { useRenderLocationFormAssets } from "./hooks/useRenderLocationFormAssets";
 import { Create, FormsList, Instance, Object, Templates } from "./routes";
 import { formsActions } from "./slice";
 
@@ -17,6 +18,8 @@ export default function Forms() {
     const [menuOpen, toggleMenu] = useToggle();
     const minimized = useAppSelector(selectMinimized) === featuresConfig.forms.key;
     const maximized = useAppSelector(selectMaximized).includes(featuresConfig.forms.key);
+
+    useRenderLocationFormAssets();
 
     return (
         <>

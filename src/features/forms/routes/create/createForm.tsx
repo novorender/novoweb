@@ -1,31 +1,50 @@
 import { CancelOutlined } from "@mui/icons-material";
-import { Box, Button, IconButton, List, Typography, useTheme } from "@mui/material";
+import {
+    Box,
+    Button,
+    FormControl,
+    FormControlLabel,
+    IconButton,
+    List,
+    Radio,
+    RadioGroup,
+    Typography,
+    useTheme,
+} from "@mui/material";
 import { ObjectId, SearchPattern } from "@novorender/webgl-api";
 import { FormEventHandler, useCallback, useMemo, useState } from "react";
 import { useHistory, useRouteMatch } from "react-router-dom";
 
+import { useAppSelector } from "app/store";
 import { Divider, LinearProgress, ScrollBox, TextField } from "components";
 import { useExplorerGlobals } from "contexts/explorerGlobals";
+import { selectAssets } from "features/forms/slice";
 import { useAbortController } from "hooks/useAbortController";
 import { useSceneId } from "hooks/useSceneId";
 import { AsyncState, AsyncStatus } from "types/misc";
 
 import { useCreateFormMutation } from "../../api";
-import { FormItem } from "../../types";
+import { FormItem, FormType } from "../../types";
 import { getFormItemTypeDisplayName, idsToObjects, toFormFields } from "../../utils";
 
 export function CreateForm({
     title,
     setTitle,
+    formType,
+    setFormType,
     items,
     setItems,
     objects: formObjects,
+    symbol,
 }: {
     title: string;
     setTitle: (title: string) => void;
+    formType: FormType;
+    setFormType: (formType: FormType) => void;
     items: FormItem[];
     setItems: (items: FormItem[]) => void;
     objects?: { searchPattern: string | SearchPattern[]; ids: ObjectId[] };
+    symbol: string | undefined;
 }) {
     const theme = useTheme();
     const history = useHistory();
@@ -43,11 +62,19 @@ export function CreateForm({
 
     const [abortController] = useAbortController();
 
-    const canSave = useMemo(() => title && items.length && formObjects?.ids, [title, items, formObjects]);
+    const canSave = useMemo(
+        () => title && items.length && (formType === FormType.LocationBased ? symbol : formObjects?.ids),
+        [title, formType, items, symbol, formObjects]
+    );
 
     const handleAddItem = useCallback(() => {
         history.push(`${match.path}/add-item`);
     }, [history, match.path]);
+
+    const handleFormTypeChange = useCallback(
+        (e: React.ChangeEvent<HTMLInputElement>) => setFormType((e.target as HTMLInputElement).value as FormType),
+        [setFormType]
+    );
 
     const handleTitleChange = useCallback(
         (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -58,6 +85,10 @@ export function CreateForm({
 
     const handleAddObjects = useCallback(() => {
         history.push(`${match.path}/add-objects`);
+    }, [history, match.path]);
+
+    const handleSelectSymbol = useCallback(() => {
+        history.push(`${match.path}/select-symbol`);
     }, [history, match.path]);
 
     const handleRemoveItem = useCallback(
@@ -80,18 +111,23 @@ export function CreateForm({
             try {
                 const abortSignal = abortController.current.signal;
 
-                const objects = await idsToObjects({
-                    ids: formObjects!.ids,
-                    db,
-                    abortSignal,
-                });
+                const objects =
+                    formType === FormType.SearchBased
+                        ? await idsToObjects({
+                              ids: formObjects!.ids,
+                              db,
+                              abortSignal,
+                          })
+                        : [];
 
                 const fields = toFormFields(items);
 
                 const template = {
                     title,
+                    formType,
                     fields,
                     objects,
+                    symbol,
                 };
 
                 await createForm({ projectId: sceneId, template });
@@ -106,7 +142,7 @@ export function CreateForm({
                 return;
             }
         },
-        [abortController, canSave, formObjects, createForm, db, history, items, sceneId, title]
+        [abortController, canSave, formObjects, createForm, db, history, items, sceneId, title, formType, symbol]
     );
 
     return (
@@ -121,11 +157,42 @@ export function CreateForm({
                     Form
                 </Typography>
                 <TextField label="Title" value={title} onChange={handleTitleChange} fullWidth />
-                <Divider sx={{ my: 1 }} />
-                <Box display="flex" justifyContent="space-between" alignItems="center">
-                    <Typography fontWeight={600}>Objects assigned: {formObjects?.ids.length}</Typography>
-                    <Button onClick={handleAddObjects}>Add objects</Button>
-                </Box>
+                <Typography fontWeight={600} mb={1}>
+                    Form type
+                </Typography>
+                <FormControl>
+                    <RadioGroup row value={formType} onChange={handleFormTypeChange}>
+                        <FormControlLabel value={FormType.SearchBased} control={<Radio />} label="Search" />
+                        <FormControlLabel value={FormType.LocationBased} control={<Radio />} label="Location" />
+                    </RadioGroup>
+                </FormControl>
+
+                {formType === FormType.SearchBased && (
+                    <>
+                        <Divider sx={{ my: 1 }} />
+                        <Box display="flex" justifyContent="space-between" alignItems="center">
+                            <Typography fontWeight={600}>Objects assigned: {formObjects?.ids.length}</Typography>
+                            <Button onClick={handleAddObjects}>Add objects</Button>
+                        </Box>
+                    </>
+                )}
+
+                {formType === FormType.LocationBased && (
+                    <>
+                        <Divider sx={{ my: 1 }} />
+                        <Box display="flex" alignItems="center">
+                            <Typography fontWeight={600}>Symbol:</Typography>
+                            <Box flex="auto" />
+                            {symbol && (
+                                <Box mr={1}>
+                                    <SymbolLabel symbol={symbol} />
+                                </Box>
+                            )}
+                            <Button onClick={handleSelectSymbol}>Select symbol</Button>
+                        </Box>
+                    </>
+                )}
+
                 <Divider />
                 <Box display="flex" justifyContent="space-between" alignItems="center">
                     <Typography fontWeight={600}>Items:</Typography>
@@ -174,4 +241,19 @@ export function CreateForm({
             </ScrollBox>
         </>
     );
+}
+
+function SymbolLabel({ symbol }: { symbol: string }) {
+    const assets = useAppSelector(selectAssets);
+
+    if (assets.status !== AsyncStatus.Success) {
+        return null;
+    }
+
+    const asset = assets.data.find((a) => a.name === symbol);
+    if (!asset) {
+        return <>[unknown]</>;
+    }
+
+    return <>{asset.title}</>;
 }

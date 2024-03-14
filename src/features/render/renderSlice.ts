@@ -63,6 +63,7 @@ export enum Picker {
     HeightProfileEntity,
     Manhole,
     OutlineLaser,
+    FormLocation,
 }
 
 export type Subtree = keyof NonNullable<State["subtrees"]>;

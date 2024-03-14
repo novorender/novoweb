@@ -9,6 +9,7 @@ import { HighlightedProvider } from "contexts/highlighted";
 import { ObjectGroupsProvider } from "contexts/objectGroups";
 import { SelectionBasketProvider } from "contexts/selectionBasket";
 import { Consent } from "features/consent";
+import { FormsGlobalsProvider } from "features/forms/formsGlobals";
 import { Hud } from "features/hud";
 import { QuirkAlert } from "features/quirkAlert";
 import { Render3D, selectSceneStatus } from "features/render";
@@ -83,7 +84,9 @@ function ContextProviders({ children }: { children: ReactNode }) {
                 <HighlightCollectionsProvider>
                     <HiddenProvider>
                         <SelectionBasketProvider>
-                            <ObjectGroupsProvider>{children}</ObjectGroupsProvider>
+                            <FormsGlobalsProvider>
+                                <ObjectGroupsProvider>{children}</ObjectGroupsProvider>
+                            </FormsGlobalsProvider>
                         </SelectionBasketProvider>
                     </HiddenProvider>
                 </HighlightCollectionsProvider>

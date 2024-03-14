@@ -9,6 +9,11 @@ export enum FormItemType {
     Text = "text",
 }
 
+export enum FormType {
+    SearchBased = "search",
+    LocationBased = "location",
+}
+
 export type FormItem = SimpleItem | ItemWithOptions;
 
 type BaseItem = {
@@ -111,10 +116,12 @@ export type FormObject = {
 export type Template = {
     id: TemplateId;
     title: string;
+    formType: FormType;
     readonly?: boolean;
     state?: TemplateState;
     fields: FormField[];
     objects: FormObject[];
+    symbol?: string;
     forms: { [key: FormObjectGuid]: FormState };
     created?: OffsetDateTime;
     modified?: OffsetDateTime;
@@ -126,6 +133,13 @@ export type Form = {
     fields: FormField[];
     readonly: boolean;
     state: FormState;
+    location?: vec3;
     created: OffsetDateTime;
     modified: OffsetDateTime;
+};
+
+export type FormGLtfAsset = {
+    name: string;
+    title: string;
+    baseObjectId: number;
 };

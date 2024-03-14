@@ -279,8 +279,12 @@ export function makeWhereStatement(fs: FeatureServer, layer: Layer) {
     return [fs.layerWhere, layer.where].filter((s) => s).join(" AND ");
 }
 
-export function areArraysEqual<T>(a1: T[] | undefined, a2: T[] | undefined) {
-    return (!a1 && !a2) || a1 === a2 || (a1 && a2 && a1.length === a2.length && a1.every((e, i) => e === a2[i]));
+export function areArraysEqual<T>(
+    a1: T[] | undefined,
+    a2: T[] | undefined,
+    equal: (a: T, b: T) => boolean = Object.is
+) {
+    return (!a1 && !a2) || a1 === a2 || (a1 && a2 && a1.length === a2.length && a1.every((e, i) => equal(e, a2[i])));
 }
 
 export function doAabb2Intersect(a: AABB2, b: AABB2) {

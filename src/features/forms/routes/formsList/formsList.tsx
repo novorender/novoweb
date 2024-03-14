@@ -1,11 +1,11 @@
-import { ArrowBack, FilterAlt } from "@mui/icons-material";
-import { Box, Button, List, Typography, useTheme } from "@mui/material";
+import { Add, ArrowBack, FilterAlt } from "@mui/icons-material";
+import { Box, Button, FormControlLabel, List, Typography, useTheme } from "@mui/material";
 import { ObjectId } from "@novorender/api/types/data";
 import { MouseEvent, useCallback, useEffect, useRef, useState } from "react";
 import { useHistory, useParams } from "react-router-dom";
 
 import { useAppDispatch, useAppSelector } from "app/store";
-import { Divider, LinearProgress, ScrollBox } from "components";
+import { Divider, IosSwitch, LinearProgress, ScrollBox } from "components";
 import { useExplorerGlobals } from "contexts/explorerGlobals";
 import {
     HighlightCollection,
@@ -15,13 +15,13 @@ import {
 import { highlightActions, useDispatchHighlighted } from "contexts/highlighted";
 import { FilterMenu } from "features/forms/filterMenu";
 import { mapGuidsToIds } from "features/forms/utils";
-import { ObjectVisibility, renderActions } from "features/render";
+import { ObjectVisibility, Picker, renderActions, selectPicker } from "features/render";
 import { useAbortController } from "hooks/useAbortController";
 import { useSceneId } from "hooks/useSceneId";
 
 import { useGetTemplateQuery } from "../../api";
 import { formsActions, selectCurrentFormsList, selectFilters } from "../../slice";
-import { type FormId, type FormObject, type FormState } from "../../types";
+import { type FormId, type FormObject, type FormState, FormType } from "../../types";
 import { FormsListItem } from "./formsListItem";
 
 const FILTER_MENU_ID = "form-filter-menu";
@@ -41,6 +41,7 @@ export function FormsList() {
     const [filterMenuAnchor, setFilterMenuAnchor] = useState<HTMLElement | null>(null);
     const dispatch = useAppDispatch();
     const dispatchHighlighted = useDispatchHighlighted();
+    const isPickingLocation = useAppSelector(selectPicker) === Picker.FormLocation;
 
     const dispatchHighlightCollections = useDispatchHighlightCollections();
 
@@ -97,18 +98,18 @@ export function FormsList() {
                 !history.location.pathname.startsWith("/instance") &&
                 !history.location.pathname.startsWith("/object")
             ) {
-                dispatchHighlighted(highlightActions.setIds([]));
-                dispatchHighlightCollections(highlightCollectionsActions.clearAll());
-                dispatch(renderActions.setDefaultVisibility(ObjectVisibility.Neutral));
-                dispatchHighlighted(highlightActions.resetColor());
-                dispatch(formsActions.setCurrentFormsList(null));
+                // dispatchHighlighted(highlightActions.setIds([]));
+                // dispatchHighlightCollections(highlightCollectionsActions.clearAll());
+                // dispatch(renderActions.setDefaultVisibility(ObjectVisibility.Neutral));
+                // dispatchHighlighted(highlightActions.resetColor());
+                // dispatch(formsActions.setCurrentFormsList(null));
             }
         },
         [history.location.pathname, dispatch, dispatchHighlighted, dispatchHighlightCollections]
     );
 
     useEffect(() => {
-        if (!currentFormsList) {
+        if (currentFormsList !== templateId) {
             dispatch(formsActions.resetFilters());
             dispatch(formsActions.setCurrentFormsList(templateId));
         }
@@ -135,7 +136,7 @@ export function FormsList() {
     useEffect(() => {
         const forms = items.filter(filterItems);
 
-        dispatch(renderActions.setDefaultVisibility(ObjectVisibility.Transparent));
+        // dispatch(renderActions.setDefaultVisibility(ObjectVisibility.Transparent));
 
         const newGroup = filters.new ? forms.filter((form) => form.formState === "new").map((form) => form.id) : [];
         const ongoingGroup = filters.ongoing
@@ -145,13 +146,13 @@ export function FormsList() {
             ? forms.filter((form) => form.formState === "finished").map((form) => form.id)
             : [];
 
-        dispatchHighlightCollections(highlightCollectionsActions.setIds(HighlightCollection.FormsNew, newGroup));
-        dispatchHighlightCollections(
-            highlightCollectionsActions.setIds(HighlightCollection.FormsOngoing, ongoingGroup)
-        );
-        dispatchHighlightCollections(
-            highlightCollectionsActions.setIds(HighlightCollection.FormsCompleted, finishedGroup)
-        );
+        // dispatchHighlightCollections(highlightCollectionsActions.setIds(HighlightCollection.FormsNew, newGroup));
+        // dispatchHighlightCollections(
+        //     highlightCollectionsActions.setIds(HighlightCollection.FormsOngoing, ongoingGroup)
+        // );
+        // dispatchHighlightCollections(
+        //     highlightCollectionsActions.setIds(HighlightCollection.FormsCompleted, finishedGroup)
+        // );
     }, [items, filters, dispatch, dispatchHighlightCollections, filterItems]);
 
     const handleBackClick = () => {
@@ -165,6 +166,14 @@ export function FormsList() {
 
     const closeFilters = () => {
         setFilterMenuAnchor(null);
+    };
+
+    const addLocationBasedForm = () => {
+        if (isPickingLocation) {
+            dispatch(renderActions.stopPicker(Picker.FormLocation));
+        } else {
+            dispatch(renderActions.setPicker(Picker.FormLocation));
+        }
     };
 
     return (
@@ -189,6 +198,22 @@ export function FormsList() {
                             <FilterAlt sx={{ mr: 1 }} />
                             Filters
                         </Button>
+                        {
+                            /*template?.formType === FormType.LocationBased*/ true && (
+                                <FormControlLabel
+                                    control={
+                                        <IosSwitch
+                                            size="medium"
+                                            color="primary"
+                                            checked={isPickingLocation}
+                                            onChange={addLocationBasedForm}
+                                        />
+                                    }
+                                    label={<Box fontSize={14}>Add</Box>}
+                                    sx={{ ml: 1 }}
+                                />
+                            )
+                        }
                     </Box>
                 </>
             </Box>

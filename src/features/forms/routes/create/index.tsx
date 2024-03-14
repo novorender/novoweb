@@ -7,13 +7,15 @@ import { Route, Switch, useHistory, useRouteMatch } from "react-router-dom";
 import { Divider } from "components";
 import { highlightActions, useDispatchHighlighted } from "contexts/highlighted";
 
-import { FormItem } from "../../types";
+import { FormItem, FormType } from "../../types";
 import { AddFormItem } from "./addFormItem";
 import { AddObjects } from "./addObjects";
 import { CreateForm } from "./createForm";
+import { SelectSymbol } from "./selectSymbol";
 
 const ADD_ITEM_ROUTE = "/add-item";
 const ADD_OBJECTS_ROUTE = "/add-objects";
+const SELECT_SYMBOL_ROUTE = "/select-symbol";
 
 export function Create() {
     const theme = useTheme();
@@ -21,6 +23,7 @@ export function Create() {
     const match = useRouteMatch();
     const dispatchHighlighted = useDispatchHighlighted();
 
+    const [formType, setFormType] = useState(FormType.SearchBased);
     const [title, setTitle] = useState("");
     const [items, setItems] = useState<FormItem[]>([]);
     const [objects, setObjects] = useState<
@@ -30,6 +33,7 @@ export function Create() {
           }
         | undefined
     >();
+    const [symbol, setSymbol] = useState<string>();
 
     const handleBackClick = useCallback(() => {
         dispatchHighlighted(highlightActions.setIds([]));
@@ -52,8 +56,13 @@ export function Create() {
         setItems(items);
     }, []);
 
+    const handleSelectSymbol = useCallback((symbol: string) => {
+        setSymbol(symbol);
+    }, []);
+
     const addItemRoute = useMemo(() => `${match.path}${ADD_ITEM_ROUTE}`, [match.path]);
     const addObjectsRoute = useMemo(() => `${match.path}${ADD_OBJECTS_ROUTE}`, [match.path]);
+    const selectSymbolRoute = useMemo(() => `${match.path}${SELECT_SYMBOL_ROUTE}`, [match.path]);
 
     return (
         <>
@@ -77,13 +86,19 @@ export function Create() {
                 <Route path={addObjectsRoute}>
                     <AddObjects onSave={handleSaveObjects} objects={objects} />
                 </Route>
+                <Route path={selectSymbolRoute}>
+                    <SelectSymbol symbol={symbol} onChange={handleSelectSymbol} />
+                </Route>
                 <Route path={match.path} exact>
                     <CreateForm
+                        formType={formType}
+                        setFormType={setFormType}
                         title={title}
                         setTitle={handleSetTitle}
                         items={items}
                         setItems={handleSetItems}
                         objects={objects}
+                        symbol={symbol}
                     />
                 </Route>
             </Switch>
