@@ -17,13 +17,11 @@ export function DitioChecklistStamp() {
         if (stamp?.kind == StampKind.DitioChecklist && stamp.data.checklist.hasImages) {
             stamp.data.checklist.sections?.forEach((section) => {
                 section.images?.forEach((image) =>
-                    images.push(image.url.replace("https://ditio-api-v3.azurewebsites.net/api/file/", "/ditio-file"))
+                    images.push(image.url.replace("https://ditio-api-v3.azurewebsites.net/api/file", "/ditio-file"))
                 );
                 section.questions?.forEach((question) =>
                     question.images?.forEach((image) =>
-                        images.push(
-                            image.url.replace("https://ditio-api-v3.azurewebsites.net/api/file/", "/ditio-file")
-                        )
+                        images.push(image.url.replace("https://ditio-api-v3.azurewebsites.net/api/file", "/ditio-file"))
                     )
                 );
             });
