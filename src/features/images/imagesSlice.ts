@@ -88,6 +88,11 @@ export const imagesSlice = createSlice({
             }
 
             const images = state.images.data;
+
+            if (images.length < 2) {
+                return;
+            }
+
             const idx = images.findIndex((img) => img.guid === guid);
             if (idx === -1) {
                 return;
@@ -109,6 +114,11 @@ export const imagesSlice = createSlice({
             }
 
             const images = state.images.data;
+
+            if (images.length < 2) {
+                return;
+            }
+
             const idx = images.findIndex((img) => img.guid === guid);
             if (idx === -1) {
                 return;
