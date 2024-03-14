@@ -130,20 +130,22 @@ const serverOptions: ServerOptions = {
             changeOrigin: true,
         },
         "/bimtrack/bcf/2.1": {
-            // target: "https://bcfrestapi.bimtrackapp.co/bcf/2.1/",
             target: "https://bcfrestapi-bt02.bimtrackapp.co/",
             rewrite: (path) => path.replace(/^\/bimtrack/, ""),
             changeOrigin: true,
         },
+        "/ditio-file": {
+            target: "https://ditio-api-v3.azurewebsites.net/api/file/",
+            rewrite: (path) => path.replace(/^\/ditio-file/, ""),
+            changeOrigin: true,
+        },
         "/ditio-machines": {
             target: "https://ditio-report-api.azurewebsites.net/api",
-            // target: "https://ditio-api-test.azurewebsites.net",
             rewrite: (path) => path.replace(/^\/ditio-machines/, ""),
             changeOrigin: true,
         },
         "/ditio": {
             target: "https://ditio-api-v3.azurewebsites.net",
-            // target: "https://ditio-api-test.azurewebsites.net",
             rewrite: (path) => path.replace(/^\/ditio/, ""),
             changeOrigin: true,
         },

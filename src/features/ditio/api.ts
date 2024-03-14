@@ -8,6 +8,7 @@ import { FeedFilters, FilterType } from "./slice";
 import {
     Checklist,
     ChecklistItemMeta,
+    ChecklistStatus,
     Dumper,
     FeedItem,
     FeedItemMeta,
@@ -55,7 +56,7 @@ export const ditioApi = createApi({
                     sortBy: "newest",
                     includeSearchResultTypes: [SearchResultType.Checklist],
                     checklistSearchParameters: {
-                        status: 2,
+                        status: ChecklistStatus.Reported,
                     },
                     ...(filters.date_from ? { fromDateTime: filters.date_from } : {}),
                     ...(filters.date_to ? { toDateTime: filters.date_to } : {}),

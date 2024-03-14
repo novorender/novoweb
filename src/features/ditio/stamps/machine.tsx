@@ -47,33 +47,6 @@ export function DitioMachineStamp() {
                     <Typography mb={0.5}>{value}</Typography>
                 </Fragment>
             ))}
-            {/* <Box mt={1}>
-                <Button
-                    variant="outlined"
-                    color="secondary"
-                    sx={{ minWidth: 170, display: "flex", justifyContent: "center" }}
-                    onClick={() =>
-                        dispatch(
-                            renderActions.setCamera({
-                                type: CameraType.Pinhole,
-                                goTo: {
-                                    position: [
-                                        stamp.data.machine.scenePosition[0],
-                                        stamp.data.machine.scenePosition[1],
-                                        view
-                                            ? view.renderState.camera.position[2]
-                                            : stamp.data.machine.scenePosition[2],
-                                    ],
-                                    rotation: view ? quat.clone(view.renderState.camera.rotation) : [0, 0, 0, 1],
-                                },
-                            })
-                        )
-                    }
-                >
-                    <FlightTakeoff sx={{ mr: 1 }} />
-                    Fly to {machine.kind}
-                </Button>
-            </Box> */}
         </Box>
     );
 }

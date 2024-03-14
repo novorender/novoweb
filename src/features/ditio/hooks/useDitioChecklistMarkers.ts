@@ -30,7 +30,7 @@ export function useDitioChecklistMarkers() {
 
     const { data: checklistItemsMeta } = useGetChecklistItemsQuery(
         { projects, filters },
-        { skip: !projects.length || token.status !== AsyncStatus.Success || !isInitialized }
+        { skip: !projects.length || token.status !== AsyncStatus.Success || !isInitialized || !showMarkers }
     );
     const { data: checklists, isFetching: isFetchingChecklists } = useGetChecklistsQuery(
         { ids: (checklistItemsMeta ?? []).map((item) => item.Id) },

@@ -284,7 +284,7 @@ type Section = {
     questions: Question[];
     comment: string | null;
     deviation: unknown | null;
-    images: ChecklistImage[];
+    images: ChecklistImage[] | null;
 };
 
 type Question = {
@@ -295,12 +295,12 @@ type Question = {
     multiValue: unknown | null;
     comment: string | null;
     deviation: unknown | null;
-    images: ChecklistImage[];
+    images: ChecklistImage[] | null;
 };
 
 type ChecklistImage = {
-    Id: string;
-    Url: string;
+    id: string;
+    url: string;
 };
 
 export type FeedItemMeta = {
@@ -328,3 +328,11 @@ export type FeedItemPreview = {
     author: string;
     isAlert: boolean;
 };
+
+export enum ChecklistStatus {
+    Pending,
+    Submitted,
+    Approved,
+    Rejected,
+    Reported,
+}

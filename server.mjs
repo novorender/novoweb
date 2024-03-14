@@ -45,6 +45,17 @@ app.use(
 );
 
 app.use(
+    "/ditio-files",
+    createProxyMiddleware({
+        target: "https://ditio-api-v3.azurewebsites.net/api/file/",
+        pathRewrite: {
+            "^/ditio-file": "",
+        },
+        changeOrigin: true,
+    })
+);
+
+app.use(
     "/ditio",
     createProxyMiddleware({
         target: "https://ditio-api-v3.azurewebsites.net",
@@ -54,6 +65,7 @@ app.use(
         changeOrigin: true,
     })
 );
+
 app.use(
     "/ditio-machines",
     createProxyMiddleware({
