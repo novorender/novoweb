@@ -2,6 +2,7 @@ import { createSelector, createSlice, PayloadAction } from "@reduxjs/toolkit";
 import { quat, vec3 } from "gl-matrix";
 
 import { RootState } from "app/store";
+import { resetView } from "features/render";
 import { AsyncState, AsyncStatus } from "types/misc";
 
 import { isPanorama } from "./utils";
@@ -143,6 +144,11 @@ export const imagesSlice = createSlice({
         setShowMarkers: (state, action: PayloadAction<State["showMarkers"]>) => {
             state.showMarkers = action.payload;
         },
+    },
+    extraReducers: (builder) => {
+        builder.addCase(resetView, (state) => {
+            state.activeImage = undefined;
+        });
     },
 });
 
