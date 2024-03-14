@@ -50,6 +50,21 @@ export const pointLineSlice = createSlice({
                 return { payload: pt, meta: { view } };
             },
         },
+        connectPoints: {
+            reducer: (state, { meta: { view } }: PayloadAction<void, string, { view: View }>) => {
+                const current = state.pointLines[state.currentIndex];
+
+                if (current.points.length < 2) {
+                    return state;
+                }
+
+                current.points.push([...current.points[0]]);
+                current.result = view.measure?.core.measureLineStrip(current.points);
+            },
+            prepare: (view: View) => {
+                return { payload: undefined, meta: { view } };
+            },
+        },
         undoPoint: {
             reducer: (state, { meta: { view } }: PayloadAction<void, string, { view: View }>) => {
                 const current = state.pointLines[state.currentIndex];
