@@ -1,6 +1,7 @@
-import { Internal } from "@novorender/webgl-api";
-import { quat } from "gl-matrix";
+import { GeoLocation, Internal } from "@novorender/webgl-api";
+import { quat, vec3 } from "gl-matrix";
 
+import { dataApi } from "app";
 import { RenderState, SubtreeStatus } from "features/render/renderSlice";
 import { CustomProperties } from "types/project";
 
@@ -77,12 +78,12 @@ export function flip<T extends number[]>(v: T): T {
 }
 
 export function flipGLtoCadQuat(b: quat) {
-    let ax = 0.7071067811865475,
-        aw = 0.7071067811865475;
-    let bx = b[0],
-        by = b[1],
-        bz = b[2],
-        bw = b[3];
+    const ax = 0.7071067811865475;
+    const aw = 0.7071067811865475;
+    const bx = b[0];
+    const by = b[1];
+    const bz = b[2];
+    const bw = b[3];
 
     // prettier-ignore
     return quat.fromValues(
@@ -90,4 +91,12 @@ export function flipGLtoCadQuat(b: quat) {
         aw * by + - ax * bz,
         aw * bz + ax * by,
         aw * bw - ax * bx);
+}
+
+export function isGlSpace(up: Vec3 | undefined) {
+    return !vec3.equals(up ?? [0, 1, 0], [0, 0, 1]);
+}
+
+export function latLon2Tm({ coords, tmZone }: { coords: GeoLocation; tmZone: string }) {
+    return flip(dataApi.latLon2tm(coords, tmZone));
 }

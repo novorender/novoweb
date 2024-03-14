@@ -1,6 +1,5 @@
 export { useMeasureObjects } from "./useMeasureObjects";
-export { useMeasurePickSettings } from "./useMeasurePickSettings";
-export { useMeasureHoverSettings } from "./useMeasureHoverSettings";
-
+export { HoverCanvas } from "./hoverCanvas";
+export { MeasureCanvas } from "./canvas";
 export * from "./config";
 export * from "./measureSlice";

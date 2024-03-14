@@ -1,3 +1,5 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
+
 declare module "gl-matrix" {
     // prettier-ignore
     export type mat2 =
@@ -83,7 +85,7 @@ declare module "gl-matrix" {
     export type ReadonlyVec3 = [number, number, number];
     export type ReadonlyVec4 = [number, number, number, number];
 
-    export module glMatrix {
+    export namespace glMatrix {
         /**
          * Sets the type of array used when creating new vectors and matrices
          *
@@ -114,7 +116,7 @@ declare module "gl-matrix" {
         export let ARRAY_TYPE: ArrayConstructor | Float32ArrayConstructor;
         export const RANDOM: () => number;
     }
-    export module mat2 {
+    export namespace mat2 {
         /**
          * 2x2 Matrix
          * @module mat2
@@ -344,7 +346,7 @@ declare module "gl-matrix" {
          */
         export function sub(out: mat2, a: ReadonlyMat2, b: ReadonlyMat2): mat2;
     }
-    export module mat2d {
+    export namespace mat2d {
         /**
          * 2x3 Matrix
          * @module mat2d
@@ -589,7 +591,7 @@ declare module "gl-matrix" {
          */
         export function sub(out: mat2d, a: ReadonlyMat2d, b: ReadonlyMat2d): mat2d;
     }
-    export module mat3 {
+    export namespace mat3 {
         /**
          * 3x3 Matrix
          * @module mat3
@@ -906,7 +908,7 @@ declare module "gl-matrix" {
          */
         export function sub(out: mat3, a: ReadonlyMat3, b: ReadonlyMat3): mat3;
     }
-    export module mat4 {
+    export namespace mat4 {
         /**
          * 4x4 Matrix<br>Format: column-major, when typed out it looks like row-major<br>The matrices are being post multiplied.
          * @module mat4
@@ -1547,7 +1549,7 @@ declare module "gl-matrix" {
          */
         export function sub(out: mat4, a: ReadonlyMat4, b: ReadonlyMat4): mat4;
     }
-    export module vec3 {
+    export namespace vec3 {
         /**
          * 3 Dimensional Vector
          * @module vec3
@@ -1968,7 +1970,7 @@ declare module "gl-matrix" {
         export function sqrLen(a: ReadonlyVec3): number;
         export function forEach(a: any, stride: any, offset: any, count: any, fn: any, arg: any): any;
     }
-    export module vec4 {
+    export namespace vec4 {
         /**
          * 4 Dimensional Vector
          * @module vec4
@@ -2309,7 +2311,7 @@ declare module "gl-matrix" {
         export function sqrLen(a: ReadonlyVec4): number;
         export function forEach(a: any, stride: any, offset: any, count: any, fn: any, arg: any): any;
     }
-    export module quat {
+    export namespace quat {
         /**
          * Quaternion
          * @module quat
@@ -2637,7 +2639,7 @@ declare module "gl-matrix" {
         export function sqlerp(out: any, a: any, b: any, c: any, d: any, t: any): any;
         export function setAxes(out: any, view: any, right: any, up: any): vec4;
     }
-    export module quat2 {
+    export namespace quat2 {
         /**
          * Dual Quaternion<br>
          * Format: [real, dual]<br>
@@ -3021,7 +3023,7 @@ declare module "gl-matrix" {
          */
         export const sqrLen: typeof vec4.squaredLength;
     }
-    export module vec2 {
+    export namespace vec2 {
         /**
          * 2 Dimensional Vector
          * @module vec2

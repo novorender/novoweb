@@ -90,7 +90,7 @@ export function useHandleOffline() {
         handleAction();
 
         async function handleAction() {
-            if (!view?.offline || !view?.renderState.scene?.config.id || !offlineWorkerState || !action) {
+            if (!view?.renderState.scene?.config.id || !offlineWorkerState || !action) {
                 return;
             }
 

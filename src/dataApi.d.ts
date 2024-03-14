@@ -3,6 +3,10 @@ declare module "@novorender/data-js-api" {
 
     import { ExtendedMeasureEntity, ViewMode } from "types/misc";
 
+    interface API {
+        serviceUrl: string;
+    }
+
     type ExplorerBookmarkState = {
         camera: {
             kind: "pinhole" | "orthographic";
@@ -50,7 +54,14 @@ declare module "@novorender/data-js-api" {
         clipping: {
             enabled: boolean;
             mode: number;
-            planes: { normalOffset: [number, number, number, number]; color: [number, number, number, number] }[];
+            outlines?: boolean;
+            planes: {
+                normalOffset: [number, number, number, number];
+                color: [number, number, number, number];
+                outline?: {
+                    enabled: boolean;
+                };
+            }[];
         };
         grid: {
             enabled: boolean;
@@ -67,12 +78,22 @@ declare module "@novorender/data-js-api" {
             asBackground: boolean;
         };
         measurements: {
-            area: {
-                points: [point: [number, number, number], normal: [number, number, number]][];
-            };
-            pointLine: {
-                points: [number, number, number][];
-            };
+            area:
+                | {
+                      /** @deprecated  Use only to read legacy bookmarks */
+                      points: [point: [number, number, number], normal: [number, number, number]][];
+                  }
+                | {
+                      areas: { points: [number, number, number][]; normals: [number, number, number][] }[];
+                  };
+            pointLine:
+                | {
+                      /** @deprecated  Use only to read legacy bookmarks */
+                      points: [number, number, number][];
+                  }
+                | {
+                      pointLines: [number, number, number][][];
+                  };
             manhole: {
                 id: number | undefined;
                 collisionTarget:
@@ -83,7 +104,18 @@ declare module "@novorender/data-js-api" {
                 collisionSettings: MeasureSettings | undefined;
             };
             measure: {
-                entities: ExtendedMeasureEntity[];
+                entities: ExtendedMeasureEntity[] | ExtendedMeasureEntity[][];
+                activeAxis?: (
+                    | {
+                          x: boolean;
+                          y: boolean;
+                          z: boolean;
+                          planar: boolean;
+                          result: boolean;
+                          normal: boolean;
+                      }
+                    | undefined
+                )[];
             };
         };
         followPath:
@@ -103,6 +135,16 @@ declare module "@novorender/data-js-api" {
                       line: boolean;
                       lineColor: [number, number, number, number];
                   };
+                  verticalClipping?: boolean;
+                  followObject?: {
+                      type: "edge" | "curve" | "cylinder" | "cylinders";
+                      ids: ObjectId[];
+                      selectedEntity: MeasureEntity | undefined;
+                      parameterBounds: ParameterBounds;
+                      emulatedCurve?: { start: ReadonlyVec3; dir: ReadonlyVec3 } | undefined;
+                      lineStrip?: ReadonlyVec3[];
+                  };
+                  profileRange?: { min: number; max: number };
               }
             | undefined;
         outlineMeasure:
@@ -115,6 +157,15 @@ declare module "@novorender/data-js-api" {
                   }[];
               }
             | undefined;
+        propertyTree?: {
+            property: string;
+            groups: {
+                propertyValue: string;
+                ids: number[];
+                color: [number, number, number, number];
+                status: "hidden" | "selected";
+            }[];
+        };
     };
 
     interface Bookmark {

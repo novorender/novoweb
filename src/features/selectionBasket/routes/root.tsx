@@ -9,6 +9,7 @@ import { highlightActions, useDispatchHighlighted, useHighlighted } from "contex
 import { GroupStatus, objectGroupsActions, useDispatchObjectGroups, useObjectGroups } from "contexts/objectGroups";
 import { selectionBasketActions, useDispatchSelectionBasket, useSelectionBasket } from "contexts/selectionBasket";
 import { ColorPicker } from "features/colorPicker";
+import { propertyTreeActions, selectPropertyTreeBookmarkState } from "features/propertyTree/slice";
 import {
     ObjectVisibility,
     renderActions,
@@ -23,6 +24,8 @@ export function Root() {
     const theme = useTheme();
     const defaultVisibility = useAppSelector(selectDefaultVisibility);
     const mode = useAppSelector(selectSelectionBasketMode);
+    const propertyTreeGroups = useAppSelector(selectPropertyTreeBookmarkState)?.groups ?? [];
+
     const { idArr: highlighted } = useHighlighted();
     const { idArr: visible } = useSelectionBasket();
     const objectGroups = useObjectGroups();
@@ -40,7 +43,9 @@ export function Root() {
         setColorPickerAnchor(!colorPickerAnchor && event?.currentTarget ? event.currentTarget : null);
     };
 
-    const selectedGroups = objectGroups.filter((group) => group.status === GroupStatus.Selected);
+    const selectedGroups = [...objectGroups, ...propertyTreeGroups].filter(
+        (group) => group.status === GroupStatus.Selected
+    );
     const hasHighlighted = highlighted.length || selectedGroups.length;
 
     useEffect(() => {
@@ -62,6 +67,7 @@ export function Root() {
                 }))
             )
         );
+        dispatch(propertyTreeActions.resetAllGroupsStatus());
     };
 
     const handleRemove = () => {
@@ -77,13 +83,14 @@ export function Root() {
                 }))
             )
         );
+        dispatch(propertyTreeActions.resetAllGroupsStatus());
     };
 
     const handleClear = () => {
         dispatchSelectionBasket(selectionBasketActions.set([]));
     };
 
-    const handleViewTypeChange = (_: any, value: string) => {
+    const handleViewTypeChange = (_: unknown, value: string) => {
         dispatch(renderActions.setDefaultVisibility(value as ObjectVisibility));
     };
 

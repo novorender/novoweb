@@ -22,6 +22,7 @@ import {
     List,
     MyLocation,
     Person,
+    Public,
     Redo,
     RestartAlt,
     RouteOutlined,
@@ -37,10 +38,10 @@ import {
     VisibilityOff,
 } from "@mui/icons-material";
 
-import { ReactComponent as Ditio } from "media/icons/ditio.svg";
-import { ReactComponent as Jira } from "media/icons/jira-software.svg";
-import { ReactComponent as NewformaKonekt } from "media/icons/newforma-konekt.svg";
-import { ReactComponent as Run } from "media/icons/run.svg";
+import Ditio from "media/icons/ditio.svg?react";
+import Jira from "media/icons/jira-software.svg?react";
+import NewformaKonekt from "media/icons/newforma-konekt.svg?react";
+import Run from "media/icons/run.svg?react";
 
 export enum FeatureType {
     Button,
@@ -60,11 +61,21 @@ export const featureTags = {
 
 export const featuresConfig = {
     omegaPims365: {
+        // Previous component was called Omega 365, but then it got renamed to PIMS
+        // and we have another Omega 365 component now
         key: "omegaPims365",
-        name: "Omega 365",
+        name: "PIMS",
         Icon: Attachment,
         type: FeatureType.Widget,
         // NOTE(OLA): POC! Enable only for nye veier
+        defaultLocked: true,
+        offline: false,
+    },
+    omega365: {
+        key: "omega365",
+        name: "Omega 365",
+        Icon: Attachment,
+        type: FeatureType.Widget,
         defaultLocked: true,
         offline: false,
     },
@@ -113,7 +124,7 @@ export const featuresConfig = {
     },
     heightProfile: {
         key: "heightProfile",
-        name: "Ht. profile",
+        name: "Ht. profile" as string,
         Icon: Timeline,
         type: FeatureType.Widget,
         defaultLocked: false,
@@ -170,7 +181,7 @@ export const featuresConfig = {
     },
     advancedSettings: {
         key: "advancedSettings",
-        name: "Adv. settings",
+        name: "Adv. settings" as string,
         Icon: Settings,
         type: FeatureType.AdminWidget,
         defaultLocked: false,
@@ -178,7 +189,7 @@ export const featuresConfig = {
     },
     selectionBasket: {
         key: "selectionBasket",
-        name: "Sel. basket",
+        name: "Sel. basket" as string,
         Icon: Layers,
         type: FeatureType.Widget,
         defaultLocked: false,
@@ -414,6 +425,14 @@ export const featuresConfig = {
         type: FeatureType.Widget,
         defaultLocked: true,
         offline: true,
+    },
+    arcgis: {
+        key: "arcgis",
+        name: "ArcGIS",
+        Icon: Public,
+        type: FeatureType.Widget,
+        defaultLocked: true,
+        offline: false,
     },
 } as const;
 

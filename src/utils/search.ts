@@ -1,6 +1,7 @@
 import { View } from "@novorender/api";
 import { ObjectDB } from "@novorender/data-js-api";
 import { HierarcicalObjectReference, ObjectData, ObjectId, SearchPattern } from "@novorender/webgl-api";
+import pMap from "p-map";
 
 import { NodeType } from "types/misc";
 
@@ -17,7 +18,7 @@ export async function iterateAsync<T = HierarcicalObjectReference>({
     count: number;
     abortSignal?: AbortSignal;
 }): Promise<[T[], boolean]> {
-    let values: T[] = [];
+    const values: T[] = [];
     let done = false;
 
     for (let i = 0; i < count; i++) {
@@ -32,7 +33,7 @@ export async function iterateAsync<T = HierarcicalObjectReference>({
             break;
         }
 
-        values = [...values, next.value];
+        values.push(next.value);
     }
 
     return [values, done];
@@ -102,7 +103,9 @@ export async function searchDeepByPatterns({
 
         const [cachedDescendants, unCachedDescendants] = result.reduce(
             (acc, obj) => {
-                if (obj.descendants) {
+                if (obj.type == NodeType.Leaf) {
+                    return acc;
+                } else if (obj.descendants) {
                     acc[0] = acc[0].concat(obj.descendants);
                 } else {
                     acc[1].push(obj);
@@ -115,47 +118,22 @@ export async function searchDeepByPatterns({
 
         callback(cachedDescendants);
 
-        const batchSize = 25;
-        const batches = unCachedDescendants.reduce(
-            (acc, obj) => {
-                if (obj.type === NodeType.Leaf) {
-                    return acc;
-                }
-
-                const lastBatch = acc.slice(-1)[0];
-
-                if (lastBatch.length < batchSize) {
-                    lastBatch.push(obj);
-                } else {
-                    acc.push([obj]);
-                }
-
-                return acc;
-            },
-            [[]] as HierarcicalObjectReference[][]
+        await pMap(
+            unCachedDescendants,
+            (obj) =>
+                getDescendants({ db: db, parentNode: obj, abortSignal })
+                    .then((ids) => callback(ids))
+                    .catch(() =>
+                        searchByParentPath({
+                            db: db,
+                            abortSignal,
+                            callback: (results) => callback(results.map((res) => res.id)),
+                            callbackInterval: callbackInterval,
+                            parentPath: obj.path,
+                        })
+                    ),
+            { concurrency: 10 }
         );
-
-        for (let i = 0; i < batches.length; i++) {
-            const batch = batches[i];
-
-            await Promise.all(
-                batch.map((obj) =>
-                    getDescendants({ db: db, parentNode: obj, abortSignal })
-                        .then((ids) => callback(ids))
-                        .catch(() =>
-                            searchByParentPath({
-                                db: db,
-                                abortSignal,
-                                callback: (results) => callback(results.map((res) => res.id)),
-                                callbackInterval: callbackInterval,
-                                parentPath: obj.path,
-                            })
-                        )
-                )
-            );
-
-            await sleep(1);
-        }
     }
 }
 
@@ -240,7 +218,9 @@ export function getObjectData({
     id: ObjectId;
     view: View;
 }): Promise<ObjectData | undefined> {
-    return view.data ? (view.data.getObjectMetaData(id) as any) : db.getObjectMetdata(id).catch(() => undefined);
+    return view.data
+        ? (view.data.getObjectMetaData(id) as unknown as Promise<ObjectData>)
+        : db.getObjectMetdata(id).catch(() => undefined);
 }
 
 export async function batchedPropertySearch<T = HierarcicalObjectReference>({
@@ -296,7 +276,9 @@ export async function batchedPropertySearch<T = HierarcicalObjectReference>({
                             exact: true,
                         },
                     ],
-                }).catch(() => {});
+                }).catch(() => {
+                    // continue
+                });
             })
         );
     }

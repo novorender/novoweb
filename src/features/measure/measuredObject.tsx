@@ -1,10 +1,11 @@
-import { PushPin } from "@mui/icons-material";
+import { InfoOutlined, PushPin } from "@mui/icons-material";
 import {
     Box,
     capitalize,
     Checkbox,
     css,
     Grid,
+    IconButton,
     InputLabel,
     List,
     ListItem,
@@ -18,7 +19,7 @@ import { vec3 } from "gl-matrix";
 import { useEffect, useState } from "react";
 
 import { useAppDispatch, useAppSelector } from "app/store";
-import { Accordion, AccordionDetails, AccordionSummary, MeasurementTable, VertexTable } from "components";
+import { Accordion, AccordionDetails, AccordionSummary, MeasurementTable, Tooltip, VertexTable } from "components";
 import { useExplorerGlobals } from "contexts/explorerGlobals";
 import { ExtendedMeasureEntity } from "types/misc";
 import { getMeasurementValueKind, measureObjectIsVertex } from "utils/misc";
@@ -47,34 +48,53 @@ const NestedAccordionDetails = styled(AccordionDetails)(
     `
 );
 
+const empty = undefined;
+
 export function MeasuredObject({ obj, idx }: { obj: ExtendedMeasureEntity; idx: number }) {
     const {
         state: { view },
     } = useExplorerGlobals(true);
 
     const dispatch = useAppDispatch();
-    const { pinned, duoMeasurementValues } = useAppSelector(selectMeasure);
+    const { pinned, duoMeasurementValues, currentIndex } = useAppSelector(selectMeasure);
     const isPinned = pinned === idx;
 
-    const measureObject = useMeasureObjects()[idx];
+    const measureObjects = useMeasureObjects();
+    const currentMeasureValues = duoMeasurementValues[currentIndex];
+    const currentMeasureObject = measureObjects.length > currentIndex ? measureObjects[currentIndex][idx] : empty;
     const [measureValues, setMeasureValues] = useState<MeasurementValues>();
+    const [isGenerated, setIsGenerated] = useState<null | boolean>(null);
 
     useEffect(() => {
         getMeasureValues();
 
         async function getMeasureValues() {
-            if (measureObject) {
-                setMeasureValues(await view?.measure?.core.measure(measureObject, undefined, measureObject.settings));
+            if (currentMeasureObject) {
+                setMeasureValues(
+                    await view?.measure?.core.measure(currentMeasureObject, undefined, currentMeasureObject.settings)
+                );
             } else {
                 setMeasureValues(undefined);
             }
         }
-    }, [measureObject, view]);
+    }, [currentMeasureObject, view]);
 
-    const kind = !measureObject ? "" : measureValues ? getMeasurementValueKind(measureValues) : "point";
+    useEffect(() => {
+        checkIsGenerated();
+
+        async function checkIsGenerated() {
+            if (!view) {
+                return;
+            }
+
+            setIsGenerated(Boolean(await view.measure?.core.isParametricDataGenerated(obj.ObjectId)));
+        }
+    }, [view, obj]);
+
+    const kind = !currentMeasureObject ? "" : measureValues ? getMeasurementValueKind(measureValues) : "point";
 
     const _idx = idx === 0 ? "measureInfoA" : "measureInfoB";
-    const useCylinderMeasureSettings = duoMeasurementValues && duoMeasurementValues.result[_idx]?.validMeasureSettings;
+    const useCylinderMeasureSettings = currentMeasureValues && currentMeasureValues.result[_idx]?.validMeasureSettings;
 
     return (
         <Accordion defaultExpanded={true}>
@@ -104,9 +124,20 @@ export function MeasuredObject({ obj, idx }: { obj: ExtendedMeasureEntity; idx: 
                         {kind ? (kind === "lineStrip" ? "Line strip" : capitalize(kind)) : "Loading..."}
                     </Box>
                 </Box>
+                {isGenerated && (
+                    <Tooltip title={"This parametric data is generated."} enterDelay={0}>
+                        <IconButton
+                            onClick={(evt) => {
+                                evt.stopPropagation();
+                            }}
+                        >
+                            <InfoOutlined />
+                        </IconButton>
+                    </Tooltip>
+                )}
             </AccordionSummary>
             <AccordionDetails>
-                {!measureObject ? null : measureValues ? (
+                {!currentMeasureObject ? null : measureValues ? (
                     <MeasurementData
                         measureValues={measureValues}
                         useCylinderRelativeMeasureSettings={useCylinderMeasureSettings}
@@ -122,9 +153,9 @@ export function MeasuredObject({ obj, idx }: { obj: ExtendedMeasureEntity; idx: 
                             );
                         }}
                     />
-                ) : measureObjectIsVertex(measureObject) ? (
+                ) : measureObjectIsVertex(currentMeasureObject) ? (
                     <Box p={2}>
-                        <VertexTable vertices={[measureObject.parameter]} />
+                        <VertexTable vertices={[currentMeasureObject.parameter]} />
                     </Box>
                 ) : null}
             </AccordionDetails>

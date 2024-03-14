@@ -17,7 +17,7 @@ export default function ClippingPlanes() {
     const minimized = useAppSelector(selectMinimized) === featuresConfig.clippingPlanes.key;
     const maximized = useAppSelector(selectMaximized).includes(featuresConfig.clippingPlanes.key);
     const selecting = useAppSelector(selectPicker) === Picker.ClippingPlane;
-    const { planes } = useAppSelector(selectClippingPlanes);
+    const { planes, outlines } = useAppSelector(selectClippingPlanes);
     const dispatch = useAppDispatch();
     const isInitial = useRef(true);
 
@@ -60,8 +60,20 @@ export default function ClippingPlanes() {
                                             }
                                         />
                                     }
-                                    labelPlacement="start"
                                     label={<Box>Select</Box>}
+                                />
+                                <FormControlLabel
+                                    sx={{ marginLeft: 0 }}
+                                    control={
+                                        <IosSwitch
+                                            checked={outlines}
+                                            color="primary"
+                                            onChange={() =>
+                                                dispatch(renderActions.setClippingPlanes({ outlines: !outlines }))
+                                            }
+                                        />
+                                    }
+                                    label={<Box>Outlines</Box>}
                                 />
                                 <Button
                                     onClick={() => {

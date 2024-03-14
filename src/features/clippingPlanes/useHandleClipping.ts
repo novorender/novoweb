@@ -18,9 +18,9 @@ export function useHandleClipping() {
         view.modifyRenderState({
             clipping: {
                 ...clipping,
-                planes: clipping.planes.map(({ baseW: _baseW, ...plane }, i) => ({
+                planes: clipping.planes.map(({ baseW: _baseW, ...plane }) => ({
                     ...plane,
-                    outline: { enabled: i === 0 },
+                    outline: { enabled: clipping.outlines ? plane.outline.enabled : false },
                 })),
             },
         });

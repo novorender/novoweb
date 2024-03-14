@@ -11,6 +11,7 @@ import {
     CurrentUser,
     Field,
     Issue,
+    IssueSuggestions,
     IssueType,
     Permission,
     Project,
@@ -58,6 +59,7 @@ const dynamicBaseQuery: BaseQueryFn<string | FetchArgs, unknown, FetchBaseQueryE
 
 export const jiraApi = createApi({
     reducerPath: "jiraApi",
+    tagTypes: ["Issue"],
     baseQuery: dynamicBaseQuery,
     endpoints: (builder) => ({
         getCurrentUser: builder.query<CurrentUser, void>({
@@ -76,9 +78,11 @@ export const jiraApi = createApi({
             { project: string; component: string; userId: string; filters: typeof initialFilters }
         >({
             query: ({ project, component, userId, filters }) =>
-                `search?jql=${`project = "${project}" AND component = "${component}" ${
-                    filters.unresolved ? `AND resolution = "Unresolved"` : ""
-                } ${
+                `search?jql=${`project = "${project}" ${
+                    filters.linked
+                        ? `AND component = "${component}"`
+                        : `AND (NOT (Component = ${component}) OR Component IS EMPTY)`
+                } ${filters.unresolved ? `AND resolution = "Unresolved"` : ""} ${
                     userId && (filters.reportedByMe || filters.assignedToMe)
                         ? filters.reportedByMe && filters.assignedToMe
                             ? `AND (assignee = "${userId}" OR reporter = "${userId}")`
@@ -89,10 +93,23 @@ export const jiraApi = createApi({
                 }&maxResults=150`}`,
             transformResponse: (res: { issues: Issue[] }) => res.issues,
         }),
+        getIssueSuggestions: builder.query<IssueSuggestions, { project: string; query: string; issueTypes?: string[] }>(
+            {
+                query: ({ project, query, issueTypes }) =>
+                    `issue/picker?currentProjectId=${project}&showSubTasks=false&currentJQL=(text ~ "${query}*" OR key = "${query}")${
+                        issueTypes ? ` AND issuetype in (${issueTypes.join(", ")})` : ""
+                    }&query=${query}`,
+                keepUnusedDataFor: 15,
+            }
+        ),
+        getParentIssueTypes: builder.query<IssueType[], { project: string }>({
+            query: ({ project }) => `issuetype/project?projectId=${project}&level=1`,
+        }),
         getIssue: builder.query<Issue, { key: string }>({
             query: ({ key }) => `issue/${key}`,
+            providesTags: (_res, _err, args) => [{ type: "Issue", id: args.key }],
         }),
-        createIssue: builder.mutation<{ id: string; key: string; self: string }, { body: any }>({
+        createIssue: builder.mutation<{ id: string; key: string; self: string }, { body: FetchArgs["body"] }>({
             query: ({ body }) => ({
                 url: "issue",
                 method: "POST",
@@ -102,6 +119,21 @@ export const jiraApi = createApi({
                 },
                 body,
             }),
+        }),
+        editIssue: builder.mutation<
+            { id: string; key: string; self: string },
+            { key: string; body: FetchArgs["body"] }
+        >({
+            query: ({ key, body }) => ({
+                url: `issue/${key}`,
+                method: "PUT",
+                headers: {
+                    Accept: "application/json",
+                    "Content-Type": "application/json",
+                },
+                body,
+            }),
+            invalidatesTags: (_res, _err, args) => [{ type: "Issue", id: args.key }],
         }),
         addAttachment: builder.mutation<{ id: string; key: string; self: string }, { issueId: string; form: FormData }>(
             {
@@ -142,7 +174,7 @@ export const jiraApi = createApi({
                 return res.find((field) => field.name === "NOVORENDER_META")?.key ?? "";
             },
         }),
-        createComment: builder.mutation<any, { body: any; issueKey: string }>({
+        createComment: builder.mutation<unknown, { body: FetchArgs["body"]; issueKey: string }>({
             query: ({ body, issueKey }) => ({
                 url: `issue/${issueKey}/comment`,
                 method: "POST",
@@ -162,7 +194,7 @@ export const jiraApi = createApi({
             transformResponse: (res: { projects: { issuetypes: CreateIssueMetadata[] }[] }) =>
                 res.projects[0]?.issuetypes[0]?.fields,
         }),
-        getIssueTypes: builder.query<IssueType[], { projectId: string; space: string; accessToken: string }>({
+        getBaseIssueTypes: builder.query<IssueType[], { projectId: string; space: string; accessToken: string }>({
             // NOTE(OLA) Marked as experimental.
             // Use commented lines (and pass in project key instead of id) if thist stops working.
             queryFn: async ({ space, accessToken, projectId }) => {
@@ -323,6 +355,7 @@ export const {
     useGetCurrentUserQuery,
     useLazyGetTokensQuery,
     useCreateIssueMutation,
+    useEditIssueMutation,
     useCreateCommentMutation,
     useAddAttachmentMutation,
     useGetAttachmentThumbnailQuery,
@@ -333,8 +366,10 @@ export const {
     useGetProjectsQuery,
     useGetComponentsQuery,
     useGetIssuesQuery,
+    useLazyGetIssueSuggestionsQuery,
     useGetIssueQuery,
     useGetPermissionsQuery,
-    useGetIssueTypesQuery,
+    useGetBaseIssueTypesQuery,
+    useGetParentIssueTypesQuery,
     useGetCreateIssueMetadataQuery,
 } = jiraApi;

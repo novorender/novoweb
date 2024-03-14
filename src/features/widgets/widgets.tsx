@@ -5,12 +5,16 @@ import { useAppDispatch, useAppSelector } from "app/store";
 import { WidgetErrorBoundary, WidgetSkeleton } from "components";
 import { featuresConfig, WidgetKey } from "config/features";
 import { MenuWidget } from "features/menuWidget";
-import { explorerActions, selectIsOnline, selectMaximized, selectWidgets } from "slices/explorerSlice";
-
-import { useWidgetLayout } from "./useWidgetLayout";
+import {
+    explorerActions,
+    selectIsOnline,
+    selectMaximized,
+    selectWidgetLayout,
+    selectWidgets,
+} from "slices/explorerSlice";
 
 const Properties = lazy(() => import("features/properties/properties"));
-const PropertiesTree = lazy(() => import("features/propertiesTree/propertiesTree"));
+const PropertiesTree = lazy(() => import("features/propertyTree/propertyTree"));
 const Bookmarks = lazy(() => import("features/bookmarks/bookmarksWidget"));
 const ModelTree = lazy(() => import("features/modelTree/modelTree"));
 const Search = lazy(() => import("features/search/search"));
@@ -37,13 +41,15 @@ const Jira = lazy(() => import("features/jira/jira"));
 const Manhole = lazy(() => import("features/manhole/manhole"));
 const XsiteManage = lazy(() => import("features/xsiteManage/xsiteManage"));
 const Offline = lazy(() => import("features/offline/offline"));
+const Pims = lazy(() => import("features/pims/pims"));
 const Omega365 = lazy(() => import("features/omega365/omega365"));
+const Arcgis = lazy(() => import("features/arcgis/arcgis"));
 
 export function Widgets() {
-    const layout = useWidgetLayout();
     const maximized = useAppSelector(selectMaximized);
     const isOnline = useAppSelector(selectIsOnline);
 
+    const layout = useAppSelector(selectWidgetLayout);
     const slots = useAppSelector(selectWidgets);
     const dispatch = useAppDispatch();
 
@@ -240,7 +246,13 @@ function getWidgetByKey(key: WidgetKey): JSX.Element | string {
             Widget = Offline;
             break;
         case featuresConfig.omegaPims365.key:
+            Widget = Pims;
+            break;
+        case featuresConfig.omega365.key:
             Widget = Omega365;
+            break;
+        case featuresConfig.arcgis.key:
+            Widget = Arcgis;
             break;
         default:
             return key;

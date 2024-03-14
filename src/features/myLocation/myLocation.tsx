@@ -2,13 +2,20 @@ import { MyLocation as MyLocationIcon } from "@mui/icons-material";
 import { Box, Button, FormControlLabel } from "@mui/material";
 import { vec3 } from "gl-matrix";
 
-import { dataApi } from "app";
 import { useAppDispatch, useAppSelector } from "app/store";
-import { IosSwitch, LinearProgress, LogoSpeedDial, ScrollBox, WidgetContainer, WidgetHeader } from "components";
+import {
+    Divider,
+    IosSwitch,
+    LinearProgress,
+    LogoSpeedDial,
+    ScrollBox,
+    WidgetContainer,
+    WidgetHeader,
+} from "components";
 import { featuresConfig } from "config/features";
 import { useExplorerGlobals } from "contexts/explorerGlobals";
 import { renderActions, selectCameraType, selectProjectSettings } from "features/render";
-import { flip } from "features/render/utils";
+import { latLon2Tm } from "features/render/utils";
 import WidgetList from "features/widgetList/widgetList";
 import { useToggle } from "hooks/useToggle";
 import { selectMaximized, selectMinimized } from "slices/explorerSlice";
@@ -17,7 +24,7 @@ import {
     LocationStatus,
     myLocationActions,
     selectCurrentLocation,
-    selectLocationAccuracy,
+    selectGeolocationPositionCoords,
     selectLocationStatus,
     selectShowLocationMarker,
 } from "./myLocationSlice";
@@ -33,7 +40,7 @@ export default function MyLocation() {
     const { tmZone } = useAppSelector(selectProjectSettings);
     const currentLocation = useAppSelector(selectCurrentLocation);
     const showMarker = useAppSelector(selectShowLocationMarker);
-    const accuracy = useAppSelector(selectLocationAccuracy);
+    const geoLocationCoords = useAppSelector(selectGeolocationPositionCoords);
     const status = useAppSelector(selectLocationStatus);
     const cameraType = useAppSelector(selectCameraType);
     const dispatch = useAppDispatch();
@@ -60,10 +67,7 @@ export default function MyLocation() {
         });
 
         function handlePositionSuccess(geoPos: GeolocationPosition) {
-            const isGlSpace = !vec3.equals(scene?.up ?? [0, 1, 0], [0, 0, 1]);
-            const position = isGlSpace
-                ? flip(dataApi.latLon2tm(geoPos.coords, tmZone))
-                : dataApi.latLon2tm(geoPos.coords, tmZone);
+            const position = latLon2Tm({ coords: geoPos.coords, tmZone });
             position[2] = geoPos.coords.altitude ?? view.renderState.camera.position[2];
             const outOfBounds =
                 vec3.dist(position, scene.boundingSphere.center) >
@@ -76,26 +80,32 @@ export default function MyLocation() {
                         msg: "Your position is outside the scene's boundaries.",
                     })
                 );
-
-                return;
+            } else {
+                dispatch(
+                    renderActions.setCamera({
+                        type: cameraType,
+                        goTo: {
+                            position,
+                            rotation: view.renderState.camera.rotation,
+                        },
+                    })
+                );
+                dispatch(myLocationActions.setSatus({ status: LocationStatus.Idle }));
             }
 
             dispatch(
-                renderActions.setCamera({
-                    type: cameraType,
-                    goTo: {
-                        position,
-                        rotation: view.renderState.camera.rotation,
-                    },
+                myLocationActions.setGeolocationPositionCoords({
+                    accuracy: geoPos.coords.accuracy,
+                    altitude: geoPos.coords.altitude,
+                    longitude: geoPos.coords.longitude,
+                    latitude: geoPos.coords.latitude,
                 })
             );
-
-            dispatch(myLocationActions.setAccuracy(geoPos.coords.accuracy));
-            dispatch(myLocationActions.setSatus({ status: LocationStatus.Idle }));
+            dispatch(myLocationActions.setCurrentLocation(position));
         }
 
         function handlePositionError(error: GeolocationPositionError) {
-            dispatch(myLocationActions.setAccuracy(undefined));
+            dispatch(myLocationActions.setGeolocationPositionCoords(undefined));
             dispatch(myLocationActions.setSatus({ status: LocationStatus.Error, msg: error.message }));
         }
     };
@@ -141,11 +151,23 @@ export default function MyLocation() {
                 </Box>
                 <ScrollBox display={menuOpen || minimized ? "none" : "flex"} flexDirection="column" p={1}>
                     {!tmZone ? "Missing TM-zone. Admins can set this under Advanced settings -> Project" : null}
-                    {status.status === LocationStatus.Error ? (
-                        <Box>{status.msg}</Box>
-                    ) : accuracy !== undefined ? (
-                        <Box>Accuracy: {accuracy}m</Box>
-                    ) : null}
+                    {status.status === LocationStatus.Error && (
+                        <>
+                            <Box>{status.msg}</Box>
+                            <Divider sx={{ my: 1 }} />
+                        </>
+                    )}
+                    {geoLocationCoords && (
+                        <>
+                            <Box mb={1}>Accuracy: {geoLocationCoords.accuracy}m</Box>
+                            <Box mb={1}>Longitude: {geoLocationCoords.longitude}</Box>
+                            <Box mb={1}>Latitude: {geoLocationCoords.latitude}</Box>
+                            {geoLocationCoords.altitude && <Box mb={1}>Altitude: {geoLocationCoords.altitude}m</Box>}
+                            {currentLocation && (
+                                <Box mb={1}>Position: [{currentLocation.map((n) => Math.round(n)).join(", ")}]</Box>
+                            )}
+                        </>
+                    )}
                 </ScrollBox>
                 {menuOpen && <WidgetList widgetKey={featuresConfig.myLocation.key} onSelect={toggleMenu} />}
             </WidgetContainer>

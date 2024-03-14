@@ -21,6 +21,48 @@ Create production build
 Serve production build  
 `PORT=5000 npm start`
 
+## Local dev
+
+Put file `.env.local` to the root folder. Here's an example file with sensitive data removed:
+
+```sh
+###### OAUTH ######
+
+REACT_APP_BIMCOLLAB_CLIENT_SECRET=
+REACT_APP_BIMCOLLAB_CLIENT_ID=
+
+REACT_APP_BIMTRACK_CLIENT_SECRET=
+REACT_APP_BIMTRACK_CLIENT_ID=
+
+REACT_APP_DITIO_CLIENT_SECRET=
+REACT_APP_DITIO_CLIENT_ID=
+
+REACT_APP_DITIO_RISA_CLIENT_SECRET=
+REACT_APP_DITIO_RISA_CLIENT_ID=
+
+REACT_APP_JIRA_CLIENT_SECRET=
+REACT_APP_JIRA_CLIENT_ID=
+
+REACT_APP_XSITEMANAGE_CLIENT_ID=
+
+REACT_APP_NOVORENDER_CLIENT_ID=
+REACT_APP_NOVORENDER_CLIENT_SECRET=
+
+#####  ENV   ######
+
+#REACT_APP_DATA_SERVER_URL=https://data-staging.novorender.com/api
+REACT_APP_DATA_SERVER_URL=https://data.novorender.com/api
+
+#REACT_APP_DATA_V2_SERVER_URL=/data-v2
+REACT_APP_DATA_V2_SERVER_URL=https://data-v2.novorender.com
+
+##### SCENES ######
+
+REACT_APP_SCENE_ID=3b3caf9359c943f48ce49055e8b3e118
+
+REACT_APP_VERSION=$npm_package_version
+```
+
 ## Add new widget
 
 Add a new property to the features config.

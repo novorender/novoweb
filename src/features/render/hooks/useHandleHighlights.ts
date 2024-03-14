@@ -1,4 +1,9 @@
-import { createColorSetHighlight, createNeutralHighlight, createTransparentHighlight } from "@novorender/api";
+import {
+    createColorSetHighlight,
+    createNeutralHighlight,
+    createTransparentHighlight,
+    RenderStateHighlightGroup,
+} from "@novorender/api";
 import { useEffect, useRef } from "react";
 
 import { dataApi } from "app";
@@ -9,7 +14,8 @@ import { useHighlightCollections } from "contexts/highlightCollections";
 import { useHighlighted } from "contexts/highlighted";
 import { GroupStatus, ObjectGroup, useObjectGroups } from "contexts/objectGroups";
 import { useSelectionBasket } from "contexts/selectionBasket";
-import { selectOutlineGroups } from "features/outlineLaser";
+import { selectVisibleOutlineGroups } from "features/outlineLaser";
+import { selectPropertyTreeGroups } from "features/propertyTree/slice";
 import { useSceneId } from "hooks/useSceneId";
 
 import {
@@ -39,7 +45,8 @@ export function useHandleHighlights() {
     const dispatch = useAppDispatch();
     const basketColor = useAppSelector(selectSelectionBasketColor);
     const basketMode = useAppSelector(selectSelectionBasketMode);
-    const outlineGroups = useAppSelector(selectOutlineGroups);
+    const outlineGroups = useAppSelector(selectVisibleOutlineGroups);
+    const { groups: propertyTreeGroups } = useAppSelector(selectPropertyTreeGroups);
     const cameraType = useAppSelector(selectCameraType);
 
     const id = useRef(0);
@@ -59,7 +66,7 @@ export function useHandleHighlights() {
                             ? createNeutralHighlight()
                             : defaultVisibility === ObjectVisibility.SemiTransparent
                             ? createTransparentHighlight(0.2)
-                            : "hide",
+                            : "filter",
                 },
             });
 
@@ -73,11 +80,24 @@ export function useHandleHighlights() {
                 return;
             }
 
-            const { colored, hiddenGroups, semiTransparent } = groups.reduce(
-                (prev, group) => {
+            const { coloredGroups, hiddenGroups, semiTransparent } = groups.reduce(
+                (prev, group, idx) => {
                     switch (group.status) {
                         case GroupStatus.Selected: {
-                            prev.colored.push(group);
+                            const color = group.color.toString();
+
+                            if (prev.coloredGroups[color]) {
+                                group.ids.forEach((id) => {
+                                    prev.coloredGroups[color].ids.add(id);
+                                    prev.coloredGroups[color].idx = idx;
+                                });
+                            } else {
+                                prev.coloredGroups[color] = {
+                                    idx,
+                                    action: createColorSetHighlight(group.color),
+                                    ids: new Set(group.ids),
+                                };
+                            }
                             break;
                         }
                         case GroupStatus.Hidden: {
@@ -95,10 +115,48 @@ export function useHandleHighlights() {
                     return prev;
                 },
                 {
-                    colored: [] as ObjectGroup[],
-                    frozen: [] as ObjectGroup[],
-                    hiddenGroups: [] as ObjectGroup[],
+                    coloredGroups: {} as {
+                        [color: string]: { ids: Set<number>; action: RenderStateHighlightGroup["action"]; idx: number };
+                    },
+                    frozenGroups: [] as ObjectGroup[],
+                    hiddenGroups: [] as { ids: Set<number> }[],
                     semiTransparent: [] as ObjectGroup[],
+                }
+            );
+
+            const { coloredPropertyTreeGroups } = propertyTreeGroups.reduce(
+                (prev, group) => {
+                    switch (group.status) {
+                        case GroupStatus.Selected: {
+                            const color = group.color.toString();
+
+                            if (prev.coloredPropertyTreeGroups[color]) {
+                                Object.values(group.ids).forEach((id) => {
+                                    prev.coloredPropertyTreeGroups[color].ids.add(id);
+                                });
+                            } else {
+                                prev.coloredPropertyTreeGroups[color] = {
+                                    action: createColorSetHighlight(group.color),
+                                    ids: new Set(Object.values(group.ids)),
+                                };
+                            }
+                            break;
+                        }
+                        case GroupStatus.Hidden: {
+                            prev.hiddenGroups.push({ ids: new Set(Object.values(group.ids)) });
+                            break;
+                        }
+                        default:
+                            break;
+                    }
+
+                    return prev;
+                },
+                {
+                    coloredPropertyTreeGroups: {} as {
+                        [color: string]: { ids: Set<number>; action: RenderStateHighlightGroup["action"] };
+                    },
+                    hiddenGroups: hiddenGroups as { ids: Set<number> }[],
                 }
             );
 
@@ -114,12 +172,6 @@ export function useHandleHighlights() {
                                   action: createTransparentHighlight(group.opacity),
                               }))
                             : []),
-                        ...(cameraType === CameraType.Orthographic
-                            ? outlineGroups.map((group) => ({
-                                  objectIds: new Uint32Array(group.ids).sort(),
-                                  outlineColor: group.color,
-                              }))
-                            : []),
                         {
                             objectIds: new Uint32Array(allHidden).sort(),
                             action: "hide",
@@ -130,14 +182,30 @@ export function useHandleHighlights() {
                                 ? createColorSetHighlight(basketColor.color)
                                 : createNeutralHighlight(),
                         },
-                        ...colored.map((group) => ({
+                        ...Object.values(coloredGroups)
+                            .sort((a, b) => a.idx - b.idx)
+                            .map((group) => ({
+                                objectIds: new Uint32Array(
+                                    basketMode === SelectionBasketMode.Loose
+                                        ? group.ids
+                                        : basket.idArr.filter((id) => group.ids.has(id))
+                                ).sort(),
+                                action: group.action,
+                            })),
+                        ...Object.values(coloredPropertyTreeGroups).map((group) => ({
                             objectIds: new Uint32Array(
                                 basketMode === SelectionBasketMode.Loose
                                     ? group.ids
                                     : basket.idArr.filter((id) => group.ids.has(id))
                             ).sort(),
-                            action: createColorSetHighlight(group.color),
+                            action: group.action,
                         })),
+                        ...(cameraType === CameraType.Orthographic
+                            ? outlineGroups.map((group) => ({
+                                  objectIds: new Uint32Array(group.ids).sort().filter((f) => !allHidden.has(f)),
+                                  outlineColor: group.color,
+                              }))
+                            : []),
                         {
                             objectIds: new Uint32Array(
                                 basketMode === SelectionBasketMode.Loose
@@ -169,6 +237,7 @@ export function useHandleHighlights() {
         secondaryHighlight,
         hidden,
         groups,
+        propertyTreeGroups,
         defaultVisibility,
         basket,
         mainObject,

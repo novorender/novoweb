@@ -25,6 +25,7 @@ export function useHandleAdvancedSettings() {
             tonemapping: settings.tonemapping,
             pick: settings.pick,
             debug: settings.debug,
+            outlines: { breakingPointAngleThreshold: settings.outlines.breakingPointAngleThreshold },
         });
     }, [view, settings]);
 

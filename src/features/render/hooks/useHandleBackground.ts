@@ -1,3 +1,4 @@
+import { EnvironmentDescription, View } from "@novorender/api";
 import { useEffect } from "react";
 
 import { useAppDispatch, useAppSelector } from "app/store";
@@ -22,8 +23,12 @@ export function useHandleBackground() {
             }
 
             dispatch(renderActions.setBackground({ environments: { status: AsyncStatus.Loading } }));
-            const envs = await view.availableEnvironments(new URL("https://api.novorender.com/assets/env/index.json"));
-            dispatch(renderActions.setBackground({ environments: { status: AsyncStatus.Success, data: envs } }));
+            const envs = await View.availableEnvironments(new URL("https://api.novorender.com/assets/env/index.json"));
+            dispatch(
+                renderActions.setBackground({
+                    environments: { status: AsyncStatus.Success, data: envs as EnvironmentDescription[] },
+                })
+            );
         }
     }, [view, dispatch, environments]);
 

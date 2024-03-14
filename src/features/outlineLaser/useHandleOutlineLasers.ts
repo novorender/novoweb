@@ -9,7 +9,7 @@ import {
     selectOutlineLaserPlane,
     selectOutlineLasers,
 } from "features/outlineLaser";
-import { CameraType, selectCamera, selectClippingPlanes } from "features/render";
+import { selectCamera, selectClippingPlanes } from "features/render";
 
 export function useHandleOutlineLasers() {
     const {
@@ -81,12 +81,7 @@ export function useHandleOutlineLasers() {
                     const newTracerPosition = vec3.scaleAndAdd(vec3.create(), trace.laserPosition, oldDir, diff);
                     const sp = measureView.draw.toMarkerPoints([newTracerPosition]);
                     if (sp && sp.length > 0 && sp[0]) {
-                        const outlineValues = await view.outlineLaser(
-                            sp[0],
-                            cameraState.type === CameraType.Orthographic || planes.length === 0
-                                ? undefined
-                                : { laserPosition3d: newTracerPosition, plane: planes[0].normalOffset }
-                        );
+                        const outlineValues = view.outlineLaser(newTracerPosition, 0);
 
                         if (
                             outlineValues &&
@@ -94,10 +89,10 @@ export function useHandleOutlineLasers() {
                                 (outlineValues.left.length > 0 && outlineValues.right.length > 0))
                         ) {
                             newTraces.push({
-                                left: outlineValues.left.map((p) => p.position),
-                                right: outlineValues.right.map((p) => p.position),
-                                down: outlineValues.down.map((p) => p.position),
-                                up: outlineValues.up.map((p) => p.position),
+                                left: outlineValues.left,
+                                right: outlineValues.right,
+                                down: outlineValues.down,
+                                up: outlineValues.up,
                                 laserPosition: newTracerPosition,
                                 measurementX:
                                     trace.measurementX &&

@@ -127,14 +127,42 @@ let theme = createTheme({
         },
         MuiListItem: {
             defaultProps: {
-                // @ts-ignore
                 component: "li",
             },
         },
         MuiListItemButton: {
             defaultProps: {
-                // @ts-ignore
                 component: "li",
+            },
+        },
+        MuiMenu: {
+            defaultProps: {
+                slotProps: {
+                    root: (state) => ({
+                        onContextMenu: (evt) => {
+                            evt.preventDefault();
+
+                            if (state.onClose) {
+                                state.onClose(evt, "backdropClick");
+                            }
+                        },
+                    }),
+                },
+            },
+        },
+        MuiPopover: {
+            defaultProps: {
+                slotProps: {
+                    root: (state) => ({
+                        onContextMenu: (evt) => {
+                            evt.preventDefault();
+
+                            if (state.onClose) {
+                                state.onClose(evt, "backdropClick");
+                            }
+                        },
+                    }),
+                },
             },
         },
     },

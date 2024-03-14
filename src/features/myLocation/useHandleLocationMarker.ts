@@ -1,11 +1,10 @@
 import { vec3 } from "gl-matrix";
 import { useEffect, useRef } from "react";
 
-import { dataApi } from "app";
 import { useAppDispatch, useAppSelector } from "app/store";
 import { useExplorerGlobals } from "contexts/explorerGlobals";
 import { selectProjectSettings } from "features/render/renderSlice";
-import { flip } from "features/render/utils";
+import { latLon2Tm } from "features/render/utils";
 
 import { LocationStatus, myLocationActions, selectShowLocationMarker } from "./myLocationSlice";
 
@@ -45,10 +44,7 @@ export function useHandleLocationMarker() {
                     return;
                 }
 
-                const isGlSpace = !vec3.equals(scene?.up ?? [0, 1, 0], [0, 0, 1]);
-                const scenePos = isGlSpace
-                    ? flip(dataApi.latLon2tm(pos.coords, tmZone))
-                    : dataApi.latLon2tm(pos.coords, tmZone);
+                const scenePos = latLon2Tm({ coords: pos.coords, tmZone });
                 scenePos[2] = pos.coords.altitude ?? view.renderState.camera.position[2];
                 const outOfBounds =
                     vec3.dist(scenePos, scene.boundingSphere.center) >
@@ -61,18 +57,24 @@ export function useHandleLocationMarker() {
                             msg: "Your position is outside the scene's boundaries.",
                         })
                     );
-
-                    return;
+                } else {
+                    dispatch(myLocationActions.setSatus({ status: LocationStatus.Idle }));
                 }
 
                 lastUpdate.current = now;
                 dispatch(myLocationActions.setCurrentLocation(scenePos));
-                dispatch(myLocationActions.setAccuracy(pos.coords.accuracy));
-                dispatch(myLocationActions.setSatus({ status: LocationStatus.Idle }));
+                dispatch(
+                    myLocationActions.setGeolocationPositionCoords({
+                        accuracy: pos.coords.accuracy,
+                        altitude: pos.coords.altitude,
+                        longitude: pos.coords.longitude,
+                        latitude: pos.coords.latitude,
+                    })
+                );
             }
 
             function handlePositionError(error: GeolocationPositionError) {
-                dispatch(myLocationActions.setAccuracy(undefined));
+                dispatch(myLocationActions.setGeolocationPositionCoords(undefined));
                 dispatch(myLocationActions.setSatus({ status: LocationStatus.Error, msg: error.message }));
             }
         } else {
@@ -81,6 +83,8 @@ export function useHandleLocationMarker() {
             }
             lastUpdate.current = 0;
             dispatch(myLocationActions.setCurrentLocation(undefined));
+            dispatch(myLocationActions.setGeolocationPositionCoords(undefined));
+            dispatch(myLocationActions.setSatus({ status: LocationStatus.Idle }));
         }
     }, [showMarker, view, scene, dispatch, tmZone]);
 

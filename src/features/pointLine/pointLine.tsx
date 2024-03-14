@@ -1,4 +1,4 @@
-import { DeleteSweep, Undo } from "@mui/icons-material";
+import { Add, DeleteSweep, Undo } from "@mui/icons-material";
 import { Box, Button, Checkbox, FormControlLabel } from "@mui/material";
 import { useEffect, useRef } from "react";
 
@@ -16,21 +16,32 @@ import {
     WidgetHeader,
 } from "components";
 import { featuresConfig } from "config/features";
+import { useExplorerGlobals } from "contexts/explorerGlobals";
 import { Picker, renderActions, selectPicker } from "features/render/renderSlice";
 import WidgetList from "features/widgetList/widgetList";
 import { useToggle } from "hooks/useToggle";
 import { selectMaximized, selectMinimized } from "slices/explorerSlice";
 
-import { pointLineActions, selectPointLine } from "./pointLineSlice";
+import {
+    pointLineActions,
+    selectCurrentPointLine,
+    selectLockPointLineElevation,
+    selectLockPointLineVertical,
+} from "./pointLineSlice";
 
 export default function PointLine() {
     const [menuOpen, toggleMenu] = useToggle();
+    const {
+        state: { view },
+    } = useExplorerGlobals(true);
 
     const minimized = useAppSelector(selectMinimized) === featuresConfig.pointLine.key;
     const maximized = useAppSelector(selectMaximized).includes(featuresConfig.pointLine.key);
 
     const selecting = useAppSelector(selectPicker) === Picker.PointLine;
-    const { points, lockElevation, result } = useAppSelector(selectPointLine);
+    const { points, result } = useAppSelector(selectCurrentPointLine);
+    const lockElevation = useAppSelector(selectLockPointLineElevation);
+    const lockVertical = useAppSelector(selectLockPointLineVertical);
     const dispatch = useAppDispatch();
 
     const isInitial = useRef(true);
@@ -75,15 +86,23 @@ export default function PointLine() {
                             />
                             <Button
                                 disabled={!points.length}
-                                onClick={() => dispatch(pointLineActions.undoPoint())}
+                                onClick={() => dispatch(pointLineActions.undoPoint(view))}
                                 color="grey"
                             >
                                 <Undo sx={{ mr: 1 }} />
                                 Undo
                             </Button>
                             <Button
+                                onClick={() => dispatch(pointLineActions.newPointLine())}
+                                color="grey"
                                 disabled={!points.length}
-                                onClick={() => dispatch(pointLineActions.setPoints([]))}
+                            >
+                                <Add sx={{ mr: 1 }} />
+                                New
+                            </Button>
+                            <Button
+                                disabled={!points.length}
+                                onClick={() => dispatch(pointLineActions.clearCurrent())}
                                 color="grey"
                             >
                                 <DeleteSweep sx={{ mr: 1 }} />
@@ -93,7 +112,7 @@ export default function PointLine() {
                     ) : null}
                 </WidgetHeader>
                 <ScrollBox flexDirection="column" display={menuOpen || minimized ? "none" : "flex"}>
-                    <Box px={1} pt={1}>
+                    <Box px={1} pt={1} display="flex">
                         <FormControlLabel
                             control={
                                 <Checkbox
@@ -105,6 +124,18 @@ export default function PointLine() {
                                 />
                             }
                             label={<Box fontSize={14}>Lock elevation</Box>}
+                        />
+                        <FormControlLabel
+                            control={
+                                <Checkbox
+                                    name="toggle lock vertical"
+                                    size="medium"
+                                    color="primary"
+                                    checked={lockVertical}
+                                    onChange={() => dispatch(pointLineActions.toggleLockVertical())}
+                                />
+                            }
+                            label={<Box fontSize={14}>Lock vertical</Box>}
                         />
                     </Box>
                     {result && result.totalLength > 0 ? (

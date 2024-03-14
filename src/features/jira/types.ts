@@ -197,7 +197,7 @@ export type Issue = {
         resolutiondate: null;
         workratio: number;
         lastViewed: string;
-        issuerestriction: { issuerestrictions: {}; shouldDisplay: boolean };
+        issuerestriction: { issuerestrictions: object; shouldDisplay: boolean };
         watches: {
             self: string;
             watchCount: number;
@@ -233,8 +233,8 @@ export type Issue = {
         };
         components: Component[];
         timeoriginalestimate: null;
-        description: AtlassianDocumentFormat;
-        timetracking: {};
+        description: AdfNode | null;
+        timetracking: object;
         security: null;
         aggregatetimeestimate: null;
         attachment: {
@@ -245,7 +245,7 @@ export type Issue = {
                 self: string;
                 accountId: string;
                 emailAddress: string;
-                avatarUrls: {};
+                avatarUrls: object;
                 displayName: string;
                 active: true;
                 timeZone: string;
@@ -278,7 +278,7 @@ export type Issue = {
             startAt: number;
         };
         worklog: { startAt: number; maxResults: number; total: number; worklogs: [] };
-        [key: string]: any;
+        [metaCustomfieldKey: string]: unknown;
     };
 };
 
@@ -286,14 +286,20 @@ type Comment = {
     self: string;
     id: string;
     author: Assignee;
-    body: AtlassianDocumentFormat;
+    body: AdfNode;
     updateAuthor: Assignee;
     created: string;
     updated: string;
     jsdPublic: true;
 };
 
-type AtlassianDocumentFormat = any;
+export type AdfNode = {
+    type: string;
+    text?: string;
+    content?: AdfNode[];
+    marks?: { attrs?: { href?: string; level?: number }; type?: string }[];
+    attrs?: { text?: string; level?: number };
+};
 
 export type Field = {
     id: string;
@@ -304,5 +310,24 @@ export type Field = {
     navigable: boolean;
     searchable: boolean;
     clauseNames: string[];
-    schema: {};
+    schema: object;
+};
+
+export type IssueSuggestion = {
+    id: number;
+    img: string;
+    key: string;
+    keyHtml: string;
+    summary: string;
+    summaryText: string;
+};
+
+export type IssueSuggestions = {
+    sections: {
+        id: string;
+        issues: IssueSuggestion[];
+        label: string;
+        msg: string;
+        sub: string;
+    }[];
 };

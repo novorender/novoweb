@@ -1,6 +1,6 @@
 export enum StorageKey {
-    NovoToken = "novoweb_token",
-    MsalActiveAccount = "msal_active_account_a",
+    CodeVerifier = "nw_code_verifier",
+    RefreshToken = "nw_refresh_token",
     BimCollabRefreshToken = "BIMcollab_refresh_token",
     BimCollabCodeVerifier = "BIMcollab_code_verifier",
     BimCollabSuggestedSpace = "BIMcollab_suggested_space",
@@ -40,10 +40,10 @@ export const storageConfig = {
     [StorageKey.DitioCodeVerifier]: {
         storage: sessionStorage,
     },
-    [StorageKey.NovoToken]: {
+    [StorageKey.RefreshToken]: {
         storage: localStorage,
     },
-    [StorageKey.MsalActiveAccount]: {
-        storage: localStorage,
+    [StorageKey.CodeVerifier]: {
+        storage: sessionStorage,
     },
 };

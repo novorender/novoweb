@@ -1,3 +1,4 @@
+import { FollowParametricObject } from "@novorender/api";
 import { createSlice, PayloadAction } from "@reduxjs/toolkit";
 import { vec3 } from "gl-matrix";
 
@@ -44,6 +45,7 @@ const initialState = {
     selectedPath: undefined as undefined | LandXmlPath["id"],
     showTracer: false,
     traceVertical: false,
+    followObject: undefined as undefined | FollowParametricObject,
 };
 
 type State = typeof initialState;
@@ -141,6 +143,9 @@ export const followPathSlice = createSlice({
         setSelectedPath: (state, action: PayloadAction<State["selectedPath"]>) => {
             state.selectedPath = action.payload;
         },
+        setFollowObject: (state, action: PayloadAction<State["followObject"]>) => {
+            state.followObject = action.payload;
+        },
     },
     extraReducers(builder) {
         builder.addCase(selectBookmark, (state, action) => {
@@ -157,6 +162,9 @@ export const followPathSlice = createSlice({
             state.ptHeight = fp.currentCenter[2];
             state.showGrid = grid.enabled;
             state.view2d = camera.kind === "orthographic";
+            state.verticalClipping = fp.verticalClipping ?? false;
+            state.followObject = fp.followObject;
+            state.profileRange = fp.profileRange;
 
             if (state.view2d) {
                 state.clipping = action.payload.camera.far;
@@ -211,6 +219,7 @@ export const selectDrawRoadIds = (state: RootState) => state.followPath.drawRoad
 export const selectRoadIds = (state: RootState) => state.followPath.roadIds;
 export const selectShowTracer = (state: RootState) => state.followPath.showTracer;
 export const selectVerticalTracer = (state: RootState) => state.followPath.traceVertical;
+export const selectFollowObject = (state: RootState) => state.followPath.followObject;
 
 const { actions, reducer } = followPathSlice;
 export { actions as followPathActions, reducer as followPathReducer };

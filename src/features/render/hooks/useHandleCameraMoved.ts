@@ -4,11 +4,19 @@ import { MutableRefObject, useEffect, useRef } from "react";
 
 import { useAppDispatch, useAppSelector } from "app/store";
 import { useExplorerGlobals } from "contexts/explorerGlobals";
-import { useMove2DInteractions } from "features/engine2D";
+import { measureActions } from "features/measure";
 import { orthoCamActions, selectCurrentTopDownElevation } from "features/orthoCam";
 import { ViewMode } from "types/misc";
 
-import { CameraType, DeepMutable, renderActions, RenderState, selectCameraType, selectViewMode } from "..";
+import {
+    CameraType,
+    DeepMutable,
+    renderActions,
+    RenderState,
+    selectCameraType,
+    selectClippingInEdit,
+    selectViewMode,
+} from "..";
 import { useMoveMarkers } from "./useMoveMarkers";
 
 export function useHandleCameraMoved({
@@ -24,10 +32,10 @@ export function useHandleCameraMoved({
     const dispatch = useAppDispatch();
     const cameraType = useAppSelector(selectCameraType);
     const viewMode = useAppSelector(selectViewMode);
+    const editClipping = useAppSelector(selectClippingInEdit);
     const currentTopDownElevation = useAppSelector(selectCurrentTopDownElevation);
 
     const moveSvgMarkers = useMoveMarkers(svg);
-    const moveSvgInteractions = useMove2DInteractions(svg);
 
     const movementTimer = useRef<ReturnType<typeof setTimeout>>();
     const orthoMovementTimer = useRef<ReturnType<typeof setTimeout>>();
@@ -43,10 +51,10 @@ export function useHandleCameraMoved({
                 return;
             }
 
-            view.render = (isIdleFrame) => cameraMoved(isIdleFrame, view);
+            view.render = ({ isIdleFrame, cameraMoved }) => cameraMovedTrigger(isIdleFrame, cameraMoved, view);
 
-            function cameraMoved(isIdleFrame: boolean, view: View) {
-                const moved = view.activeController.moving || prevCameraType.current !== cameraType;
+            function cameraMovedTrigger(isIdleFrame: boolean, cameraMoved: boolean, view: View) {
+                const moved = cameraMoved || prevCameraType.current !== cameraType;
                 prevCameraType.current = cameraType;
 
                 engine2dRenderFnRef.current?.(moved, isIdleFrame);
@@ -56,8 +64,8 @@ export function useHandleCameraMoved({
                 }
 
                 moveSvgMarkers();
-                moveSvgInteractions();
                 dispatch(renderActions.setStamp(null));
+                dispatch(measureActions.selectHoverObj(undefined));
 
                 if (movementTimer.current) {
                     clearTimeout(movementTimer.current);
@@ -68,7 +76,11 @@ export function useHandleCameraMoved({
                 }
 
                 orthoMovementTimer.current = setTimeout(() => {
-                    if (cameraType !== CameraType.Orthographic || view.renderState.camera.kind !== "orthographic") {
+                    if (
+                        cameraType !== CameraType.Orthographic ||
+                        view.renderState.camera.kind !== "orthographic" ||
+                        editClipping
+                    ) {
                         return;
                     }
 
@@ -147,8 +159,8 @@ export function useHandleCameraMoved({
             cameraType,
             viewMode,
             moveSvgMarkers,
-            moveSvgInteractions,
             engine2dRenderFnRef,
+            editClipping,
         ]
     );
 }

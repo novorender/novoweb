@@ -60,7 +60,7 @@ const pwaOptions: Partial<VitePWAOptions> = {
             },
             // Scene groups/bookmarks etc.
             {
-                urlPattern: /^https:\/\/data(-staging)?\.novorender\.com\/api\/scenes\/[\w]{32}\/.+/i,
+                urlPattern: /^https:\/\/data(-staging)?\.novorender\.com\/api\/scenes\/[\w]{32}\/(?!ditio).+/i,
                 handler: "NetworkFirst",
                 options: {
                     cacheableResponse: {
@@ -105,23 +105,7 @@ const pwaOptions: Partial<VitePWAOptions> = {
             },
         ],
     },
-    manifest: {
-        id: "novorender-explorer_novoweb",
-        name: "Novorender explorer",
-        short_name: "Novorender explorer",
-        description: "The worlds most powerful Digital Twin & BIM platform",
-        theme_color: "#D61E5C",
-        icons: [
-            {
-                src: "/novorender_logo_192x192.png",
-                type: "image/png",
-            },
-            {
-                src: "/novorender_logo_512x512.png",
-                type: "image/png",
-            },
-        ],
-    },
+    manifest: false,
 };
 
 const ownCerts = existsSync("./localhost.crt") && existsSync("./localhost.key");
@@ -131,12 +115,13 @@ const serverOptions: ServerOptions = {
               cert: "./localhost.crt",
               key: "./localhost.key",
           }
-        : true,
+        : undefined,
     host: true,
     open: true,
     headers: {
         "Cross-Origin-Opener-Policy": "same-origin",
         "Cross-Origin-Embedder-Policy": "require-corp",
+        "Cross-Origin-Resource-Policy": "cross-origin",
     },
     proxy: {
         "/bimtrack/token": {
@@ -148,6 +133,12 @@ const serverOptions: ServerOptions = {
             // target: "https://bcfrestapi.bimtrackapp.co/bcf/2.1/",
             target: "https://bcfrestapi-bt02.bimtrackapp.co/",
             rewrite: (path) => path.replace(/^\/bimtrack/, ""),
+            changeOrigin: true,
+        },
+        "/ditio-machines": {
+            target: "https://ditio-report-api.azurewebsites.net/api",
+            // target: "https://ditio-api-test.azurewebsites.net",
+            rewrite: (path) => path.replace(/^\/ditio-machines/, ""),
             changeOrigin: true,
         },
         "/ditio": {
@@ -167,6 +158,11 @@ const serverOptions: ServerOptions = {
             rewrite: (path) => path.replace(/^\/omega365/, ""),
             changeOrigin: true,
         },
+        "/data-v2": {
+            target: "http://127.0.0.1:5000",
+            rewrite: (path) => path.replace(/^\/data-v2/, ""),
+            changeOrigin: true,
+        },
     },
 };
 
@@ -177,6 +173,19 @@ export default defineConfig(({ mode }) => {
     return {
         build: {
             sourcemap: true,
+            rollupOptions: {
+                onLog(level, log, handler) {
+                    if (
+                        log.cause &&
+                        typeof log.cause === "object" &&
+                        "message" in log.cause &&
+                        log.cause.message === `Can't resolve original location of error.`
+                    ) {
+                        return;
+                    }
+                    handler(level, log);
+                },
+            },
         },
         optimizeDeps: {
             exclude: ["@novorender/webgl-api", "@novorender/api"],
@@ -243,6 +252,10 @@ export default defineConfig(({ mode }) => {
                 {
                     find: "hooks",
                     replacement: resolve(__dirname, "src/hooks"),
+                },
+                {
+                    find: "apis",
+                    replacement: resolve(__dirname, "src/apis"),
                 },
             ],
         },

@@ -1,44 +1,23 @@
-import { InteractionRequiredAuthError, PublicClientApplication } from "@azure/msal-browser";
-import { MsalProvider } from "@azure/msal-react";
 import { LoadingButton } from "@mui/lab";
 import { CircularProgress, CssBaseline, Paper, Snackbar, snackbarContentClasses } from "@mui/material";
 import { StyledEngineProvider, ThemeProvider } from "@mui/material/styles";
 import { LocalizationProvider } from "@mui/x-date-pickers";
 import { AdapterDateFns } from "@mui/x-date-pickers/AdapterDateFns";
-import { createAPI as createDataAPI } from "@novorender/data-js-api";
 import enLocale from "date-fns/locale/en-GB";
 import { useEffect, useRef, useState } from "react";
-import { Route, Switch, useHistory } from "react-router-dom";
+import { generatePath, Redirect, Route, Switch, useHistory, useLocation, useParams } from "react-router-dom";
 import { useRegisterSW } from "virtual:pwa-register/react";
 
-import { useAppDispatch } from "app/store";
+import { dataApi } from "app";
+import { useAppDispatch, useAppSelector } from "app/store";
 import { theme } from "app/theme";
 import { Loading } from "components";
-import { dataServerBaseUrl } from "config/app";
-import { loginRequest, msalConfig } from "config/auth";
 import { StorageKey } from "config/storage";
 import { Explorer } from "pages/explorer";
-import { Login } from "pages/login";
 import { authActions } from "slices/authSlice";
-import { explorerActions } from "slices/explorerSlice";
-import {
-    CustomNavigationClient,
-    getAccessToken,
-    getAuthHeader,
-    getOAuthState,
-    getStoredActiveMsalAccount,
-    getUser,
-    storeActiveAccount,
-} from "utils/auth";
-import { deleteFromStorage, getFromStorage } from "utils/storage";
-
-export const isIpad =
-    /\biPad/.test(navigator.userAgent) ||
-    (/\bMobile\b/.test(navigator.userAgent) && /\bMacintosh\b/.test(navigator.userAgent));
-export const isIphone = /\biPhone/.test(navigator.userAgent);
-
-export const dataApi = createDataAPI({ authHeader: getAuthHeader, serviceUrl: dataServerBaseUrl });
-export const msalInstance = new PublicClientApplication(msalConfig);
+import { explorerActions, selectConfig } from "slices/explorerSlice";
+import { getOAuthState, getUser } from "utils/auth";
+import { deleteFromStorage, getFromStorage, saveToStorage } from "utils/storage";
 
 enum Status {
     Initial,
@@ -48,12 +27,11 @@ enum Status {
 
 export function App() {
     const history = useHistory();
-    const [msalStatus, setMsalStatus] = useState(Status.Initial);
     const [authStatus, setAuthStatus] = useState(Status.Initial);
-    const [configStatus, setConfigStatus] = useState(
-        import.meta.env.MODE === "development" ? Status.Ready : Status.Initial
-    );
+    const [configStatus, setConfigStatus] = useState(Status.Initial);
+    const config = useAppSelector(selectConfig);
     const dispatch = useAppDispatch();
+    const useTokenFromUrl = window.top !== self && new URLSearchParams(window.location.search).get("accessToken");
 
     const {
         needRefresh: [needRefresh],
@@ -61,6 +39,59 @@ export function App() {
     } = useRegisterSW({
         immediate: false,
     });
+
+    useEffect(() => {
+        initConfig();
+
+        let timeOutId = 0;
+        async function initConfig() {
+            if (configStatus !== Status.Initial) {
+                return;
+            }
+
+            setConfigStatus(Status.Loading);
+
+            let attempt = 0;
+            const load = () =>
+                fetch("/config.json")
+                    .then((res) => res.json())
+                    .catch(async () => {
+                        if (attempt < 2) {
+                            return new Promise((resolve) => {
+                                timeOutId = window.setTimeout(async () => {
+                                    ++attempt;
+                                    resolve(await load());
+                                }, Math.pow(2, attempt) * 1000);
+                            });
+                        }
+                    });
+
+            if (import.meta.env.MODE === "development") {
+                dataApi.serviceUrl = config.dataServerUrl;
+            } else {
+                const cfg = await load();
+                if (cfg) {
+                    dispatch(explorerActions.setConfig(cfg));
+                }
+
+                dataApi.serviceUrl = cfg?.dataServerUrl ?? config.dataServerUrl;
+            }
+
+            setConfigStatus(Status.Ready);
+        }
+
+        return () => {
+            clearTimeout(timeOutId);
+        };
+    }, [dispatch, configStatus, config]);
+
+    useEffect(() => {
+        const state = getOAuthState();
+
+        if (state && state.sceneId) {
+            history.replace(`/${state.sceneId}${window.location.search}`);
+        }
+    }, [history]);
 
     useEffect(() => {
         const handleOnline = () => dispatch(explorerActions.toggleIsOnline(true));
@@ -74,208 +105,195 @@ export function App() {
         };
     }, [dispatch]);
 
-    useEffect(() => {
-        msalInstance.initialize().then(() => setMsalStatus(Status.Ready));
-    }, []);
-
-    useEffect(() => {
-        if (msalStatus === Status.Ready) {
-            msalInstance.setNavigationClient(new CustomNavigationClient(history));
-        }
-    }, [msalStatus, history]);
-
     const authenticating = useRef(false);
     useEffect(() => {
-        if (authStatus !== Status.Initial || authenticating.current || msalStatus !== Status.Ready) {
-            return;
-        }
+        handleOAuth();
 
-        authenticating.current = true;
-        setAuthStatus(Status.Loading);
-        auth();
-
-        async function auth() {
-            if (!(await verifyToken())) {
-                await handleMsalReturn();
-            } else {
-                const query = new URLSearchParams(window.location.search);
-                if (!query.get("force-login")) {
-                    history.replace(history.location.pathname.replace("login/", "") + window.location.search);
-                }
-            }
-            setAuthStatus(Status.Ready);
-        }
-
-        async function handleMsalReturn() {
-            try {
-                const res = await msalInstance.handleRedirectPromise().then((res) => {
-                    if (res) {
-                        return res;
-                    }
-
-                    const account = getStoredActiveMsalAccount();
-
-                    if (!account) {
-                        return;
-                    }
-
-                    return msalInstance
-                        .acquireTokenSilent({
-                            ...loginRequest,
-                            account,
-                            authority: account.tenantId
-                                ? `https://login.microsoftonline.com/${account.tenantId}`
-                                : loginRequest.authority,
-                        })
-                        .catch((e) => {
-                            if (e instanceof InteractionRequiredAuthError) {
-                                return msalInstance
-                                    .acquireTokenPopup({
-                                        ...loginRequest,
-                                        account,
-                                        sid: account.idTokenClaims?.sid,
-                                        loginHint: account.idTokenClaims?.login_hint,
-                                        authority: account.tenantId
-                                            ? `https://login.microsoftonline.com/${account.tenantId}`
-                                            : loginRequest.authority,
-                                    })
-                                    .catch(() => {
-                                        dispatch(authActions.setMsalInteractionRequired(true));
-                                    });
-                            } else {
-                                throw e;
-                            }
-                        });
-                });
-
-                if (res) {
-                    const accessToken = await getAccessToken(res.accessToken);
-                    if (!accessToken) {
-                        throw new Error("Failed to get access token.");
-                    }
-
-                    const user = await getUser(accessToken);
-                    if (!user) {
-                        throw new Error("Failed to get user.");
-                    }
-
-                    msalInstance.setActiveAccount(res.account);
-                    storeActiveAccount(res.account);
-                    dispatch(authActions.login({ accessToken: res.accessToken, msalAccount: res.account, user }));
-                }
-            } catch (e) {
-                deleteFromStorage(StorageKey.MsalActiveAccount);
-                console.warn("msal:", e);
-            }
-        }
-
-        async function verifyToken() {
-            let accessToken = "";
-
-            try {
-                const stored = getFromStorage(StorageKey.NovoToken);
-
-                if (!stored) {
-                    return;
-                }
-                const storedToken = JSON.parse(stored);
-
-                // Force relog if less than 12 hours left to prevent token expiring mid session
-                if (storedToken.expiry - Date.now() >= 1000 * 60 * 60 * 12) {
-                    accessToken = storedToken.token;
-                } else {
-                    throw new Error("Token has expired");
-                }
-            } catch (e) {
-                console.warn(e);
-                deleteFromStorage(StorageKey.NovoToken);
+        async function handleOAuth() {
+            if (
+                configStatus !== Status.Ready ||
+                authStatus !== Status.Initial ||
+                authenticating.current ||
+                useTokenFromUrl
+            ) {
                 return;
             }
 
-            const user = await getUser(accessToken);
-            if (user) {
-                dispatch(authActions.login({ accessToken, user }));
-                return true;
-            }
-        }
-    }, [authStatus, dispatch, history, msalStatus]);
+            const state = getOAuthState();
 
-    useEffect(() => {
-        const state = getOAuthState();
+            setAuthStatus(Status.Loading);
+            authenticating.current = true;
 
-        if (state && state.sceneId) {
-            history.replace(`/${state.sceneId}${window.location.search}`);
-        }
-    }, [history]);
+            const params = new URLSearchParams(window.location.search);
+            const code = params.get("code");
+            const tokenUrl = config.authServerUrl + "/token";
 
-    useEffect(() => {
-        if (configStatus !== Status.Initial) {
-            return;
-        }
+            if (state?.service === "self" && code) {
+                window.history.replaceState(null, "", `${window.location.pathname}${state.query ?? ""}`);
+                dispatch(explorerActions.setLocalBookmarkId(state.localBookmarkId));
 
-        let timeOutId = 0;
-        setConfigStatus(Status.Loading);
-        initConfig();
-
-        async function initConfig() {
-            let attempt = 0;
-            const load = () =>
-                fetch("/config.json")
-                    .then((res) => res.json())
-                    .catch(async () => {
-                        if (attempt < 2) {
-                            return new Promise((resolve) => {
-                                timeOutId = setTimeout(async () => {
-                                    ++attempt;
-                                    resolve(await load());
-                                }, Math.pow(2, attempt) * 1000);
-                            });
+                const res:
+                    | {
+                          access_token: string;
+                          expires_in: number;
+                          refresh_token: string;
+                          refresh_token_expires_in: number;
+                          token_type: string;
+                      }
+                    | undefined = await fetch(tokenUrl, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/x-www-form-urlencoded" },
+                    body: new URLSearchParams({
+                        grant_type: "authorization_code",
+                        client_id: config.novorenderClientId,
+                        client_secret: config.novorenderClientSecret,
+                        code: code,
+                        redirect_uri: window.location.origin,
+                        code_verifier: getFromStorage(StorageKey.CodeVerifier),
+                    }),
+                })
+                    .then((res) => {
+                        if (!res.ok) {
+                            throw res.statusText;
                         }
+                        return res.json();
+                    })
+                    .then((res) => {
+                        if (res.access_token) {
+                            return res;
+                        } else {
+                            throw res;
+                        }
+                    })
+                    .catch((e) => {
+                        console.warn(e);
                     });
 
-            const cfg = await load();
-            if (cfg) {
-                dispatch(explorerActions.setConfig(cfg));
-            }
-            setConfigStatus(Status.Ready);
-        }
+                if (res) {
+                    const user = await getUser(res.access_token);
 
-        return () => {
-            clearTimeout(timeOutId);
-        };
-    }, [dispatch, configStatus]);
+                    if (user) {
+                        saveToStorage(
+                            StorageKey.RefreshToken,
+                            JSON.stringify({
+                                token: res.refresh_token,
+                                expires: Date.now() + res.refresh_token_expires_in * 1000,
+                            })
+                        );
+                        dispatch(authActions.login({ accessToken: res.access_token, user }));
+                    }
+                }
+            } else {
+                const storedRefreshToken = getFromStorage(StorageKey.RefreshToken);
+
+                if (!storedRefreshToken) {
+                    setAuthStatus(Status.Ready);
+                    return;
+                }
+
+                try {
+                    const parsedToken = JSON.parse(storedRefreshToken) as { token: string; expires: number };
+
+                    const res = await fetch(tokenUrl, {
+                        method: "POST",
+                        headers: { "Content-Type": "application/x-www-form-urlencoded" },
+                        body: new URLSearchParams({
+                            grant_type: "refresh_token",
+                            client_id: config.novorenderClientId,
+                            client_secret: config.novorenderClientSecret,
+                            refresh_token: parsedToken.token,
+                        }),
+                    })
+                        .then((res) => {
+                            if (!res.ok) {
+                                throw res.statusText;
+                            }
+                            return res.json();
+                        })
+                        .then((res) => {
+                            if (res.access_token) {
+                                return res;
+                            } else {
+                                throw res;
+                            }
+                        });
+
+                    if (res) {
+                        const user = await getUser(res.access_token);
+
+                        if (user) {
+                            saveToStorage(
+                                StorageKey.RefreshToken,
+                                JSON.stringify({
+                                    token: res.refresh_token,
+                                    expires: parsedToken.expires,
+                                })
+                            );
+
+                            dispatch(authActions.login({ accessToken: res.access_token, user }));
+                        }
+                    }
+                } catch (e) {
+                    deleteFromStorage(StorageKey.RefreshToken);
+                }
+            }
+
+            setAuthStatus(Status.Ready);
+        }
+    }, [history, dispatch, authStatus, config, configStatus, useTokenFromUrl]);
+
+    useEffect(() => {
+        handleIframeAuth();
+
+        async function handleIframeAuth() {
+            if (
+                configStatus !== Status.Ready ||
+                authStatus !== Status.Initial ||
+                authenticating.current ||
+                !useTokenFromUrl
+            ) {
+                return;
+            }
+
+            const accessToken = new URLSearchParams(window.location.search).get("accessToken");
+            const user = accessToken ? await getUser(accessToken) : undefined;
+
+            if (accessToken && user) {
+                dispatch(authActions.login({ accessToken, user }));
+            }
+            setAuthStatus(Status.Ready);
+        }
+    }, [authStatus, configStatus, dispatch, useTokenFromUrl]);
 
     return (
         <>
             <LocalizationProvider dateAdapter={AdapterDateFns} adapterLocale={enLocale}>
-                <MsalProvider instance={msalInstance}>
-                    <StyledEngineProvider injectFirst>
-                        <ThemeProvider theme={theme}>
-                            <CssBaseline />
-                            {authStatus !== Status.Ready || configStatus !== Status.Ready ? (
-                                <Loading />
-                            ) : (
-                                <>
-                                    {needRefresh && <UpdatePrompt update={() => updateServiceWorker(true)} />}
-                                    <Switch>
-                                        <Route path="/login/:id">
-                                            <Login />
-                                        </Route>
-                                        <Route path="/callback">
-                                            <Loading />
-                                        </Route>
-                                        <Route path="/explorer/:id?">
-                                            <Explorer />
-                                        </Route>
-                                        <Route path="/:id?">
-                                            <Explorer />
-                                        </Route>
-                                    </Switch>
-                                </>
-                            )}
-                        </ThemeProvider>
-                    </StyledEngineProvider>
-                </MsalProvider>
+                <StyledEngineProvider injectFirst>
+                    <ThemeProvider theme={theme}>
+                        <CssBaseline />
+                        {authStatus !== Status.Ready || configStatus !== Status.Ready ? (
+                            <Loading />
+                        ) : (
+                            <>
+                                {needRefresh && <UpdatePrompt update={() => updateServiceWorker(true)} />}
+                                <Switch>
+                                    <Route path="/callback">
+                                        <Loading />
+                                    </Route>
+                                    <Route path="/explorer/:id?">
+                                        <Explorer />
+                                    </Route>
+                                    <Route path="/login/:id?">
+                                        <RedirectLegacyLoginUrl />
+                                    </Route>
+                                    <Route path="/:id?">
+                                        <Explorer />
+                                    </Route>
+                                </Switch>
+                            </>
+                        )}
+                    </ThemeProvider>
+                </StyledEngineProvider>
             </LocalizationProvider>
         </>
     );
@@ -324,4 +342,11 @@ function UpdatePrompt({ update }: { update: () => void }) {
             </Paper>
         </Snackbar>
     );
+}
+
+function RedirectLegacyLoginUrl() {
+    const location = useLocation();
+    const params = useParams();
+
+    return <Redirect to={generatePath(location.pathname.replace("/login", ""), params) + location.search} />;
 }

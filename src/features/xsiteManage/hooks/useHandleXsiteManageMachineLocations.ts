@@ -1,20 +1,14 @@
-import { vec3 } from "gl-matrix";
 import { connect, MqttClient } from "precompiled-mqtt";
 import { useEffect, useRef } from "react";
 
-import { dataApi } from "app";
 import { useAppDispatch, useAppSelector } from "app/store";
-import { useExplorerGlobals } from "contexts/explorerGlobals";
 import { selectProjectSettings } from "features/render";
-import { flip } from "features/render/utils";
+import { latLon2Tm } from "features/render/utils";
 
 import { selectXsiteManageAccessToken, selectXsiteManageSite, xsiteManageActions } from "../slice";
 import { MachineLocation } from "../types";
 
 export function useHandleXsiteManageMachineLocations() {
-    const {
-        state: { scene },
-    } = useExplorerGlobals();
     const dispatch = useAppDispatch();
     const accessToken = useAppSelector(selectXsiteManageAccessToken);
     const site = useAppSelector(selectXsiteManageSite);
@@ -48,10 +42,7 @@ export function useHandleXsiteManageMachineLocations() {
             client.on("message", (_topic, msgBuffer) => {
                 try {
                     const message = JSON.parse(msgBuffer.toString()) as Omit<MachineLocation, "position">;
-                    const isGlSpace = !vec3.equals(scene?.up ?? [0, 1, 0], [0, 0, 1]);
-                    const position = isGlSpace
-                        ? flip(dataApi.latLon2tm(message, tmZone))
-                        : dataApi.latLon2tm(message, tmZone);
+                    const position = latLon2Tm({ coords: message, tmZone });
                     dispatch(xsiteManageActions.registerMachineLocation({ ...message, position }));
                 } catch (e) {
                     console.warn(e);
@@ -62,5 +53,5 @@ export function useHandleXsiteManageMachineLocations() {
         }
 
         return disconnect;
-    }, [site, accessToken, tmZone, dispatch, scene]);
+    }, [site, accessToken, tmZone, dispatch]);
 }

@@ -12,7 +12,7 @@ app.use(
     createProxyMiddleware({
         target: "https://auth.bimtrackapp.co//connect/token",
         pathRewrite: {
-            "^/bimtrack/token": "", // remove base path
+            "^/bimtrack/token": "",
         },
         changeOrigin: true,
     })
@@ -27,7 +27,7 @@ app.use(
             return server;
         },
         pathRewrite: {
-            "^/bimtrack": "", // remove base path
+            "^/bimtrack": "",
         },
         changeOrigin: true,
     })
@@ -38,7 +38,7 @@ app.use(
     createProxyMiddleware({
         target: "https://api.prod.xsitemanage.com",
         pathRewrite: {
-            "^/xsitemanage/": "", // remove base path
+            "^/xsitemanage/": "",
         },
         changeOrigin: true,
     })
@@ -48,9 +48,18 @@ app.use(
     "/ditio",
     createProxyMiddleware({
         target: "https://ditio-api-v3.azurewebsites.net",
-        // target: "https://ditio-api-test.azurewebsites.net",
         pathRewrite: {
-            "^/ditio": "", // remove base path
+            "^/ditio": "",
+        },
+        changeOrigin: true,
+    })
+);
+app.use(
+    "/ditio-machines",
+    createProxyMiddleware({
+        target: "https://ditio-report-api.azurewebsites.net/api",
+        pathRewrite: {
+            "^/ditio-machines": "",
         },
         changeOrigin: true,
     })
@@ -87,6 +96,7 @@ app.use("/omega365", async (req, res) => {
 app.use("/*", (_req, res, next) => {
     res.header("Cross-Origin-Opener-Policy", "same-origin");
     res.header("Cross-Origin-Embedder-Policy", "require-corp");
+    res.header("Cross-Origin-Resource-Policy", "cross-origin");
     next();
 });
 
@@ -105,11 +115,14 @@ app.get("/config.json", (_req, res) => {
         bimCollabClientId: process.env.BIMCOLLAB_CLIENT_ID ?? "",
         bimTrackClientSecret: process.env.BIMTRACK_CLIENT_SECRET ?? "",
         bimTrackClientId: process.env.BIMTRACK_CLIENT_ID ?? "",
-        ditioClientSecret: process.env.DITIO_CLIENT_SECRET ?? "",
-        ditioClientId: process.env.DITIO_CLIENT_ID ?? "",
         jiraClientId: process.env.JIRA_CLIENT_ID ?? "",
         jiraClientSecret: process.env.JIRA_CLIENT_SECRET ?? "",
         xsiteManageClientId: process.env.XSITEMANAGE_CLIENT_ID ?? "",
+        novorenderClientId: process.env.NOVORENDER_CLIENT_ID ?? "",
+        novorenderClientSecret: process.env.NOVORENDER_CLIENT_SECRET ?? "",
+        dataServerUrl: process.env.DATA_SERVER_URL ?? "",
+        dataV2ServerUrl: process.env.DATA_V2_SERVER_URL ?? "",
+        authServerUrl: process.env.AUTH_SERVER_URL ?? "",
     });
 });
 app.get("/*", function (_req, res) {

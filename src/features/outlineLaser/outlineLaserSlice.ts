@@ -1,4 +1,4 @@
-import { createSlice, PayloadAction } from "@reduxjs/toolkit";
+import { createSelector, createSlice, PayloadAction } from "@reduxjs/toolkit";
 import { ReadonlyVec3, ReadonlyVec4 } from "gl-matrix";
 
 import { RootState } from "app/store";
@@ -29,7 +29,7 @@ export interface OutlineLaser {
     measurementY?: TraceMeasurement;
 }
 
-export function GetMeasurePointsFromTracer(
+export function getMeasurePointsFromTracer(
     measurement: TraceMeasurement,
     startAr: ReadonlyVec3[],
     endAr: ReadonlyVec3[]
@@ -62,6 +62,13 @@ export const outlineLaserSlice = createSlice({
     reducers: {
         setOutlineGroups: (state, action: PayloadAction<State["outlineGroups"]>) => {
             state.outlineGroups = action.payload;
+        },
+        toggleHideOutlineGroup: (state, action: PayloadAction<{ name: OutlineGroup["name"]; hide?: boolean }>) => {
+            state.outlineGroups = state.outlineGroups.map((group) =>
+                group.name === action.payload.name
+                    ? { ...group, hidden: action.payload.hide === undefined ? !group.hidden : action.payload.hide }
+                    : group
+            );
         },
         setLaserPlane: (state, action: PayloadAction<State["laserPlane"]>) => {
             state.laserPlane = action.payload;
@@ -160,6 +167,9 @@ export const outlineLaserSlice = createSlice({
 });
 
 export const selectOutlineGroups = (state: RootState) => state.clippingOutline.outlineGroups;
+export const selectVisibleOutlineGroups = createSelector(selectOutlineGroups, (groups) =>
+    groups.filter((group) => !group.hidden)
+);
 export const selectOutlineLaserPlane = (state: RootState) => state.clippingOutline.laserPlane;
 export const selectOutlineLasers = (state: RootState) => state.clippingOutline.lasers;
 

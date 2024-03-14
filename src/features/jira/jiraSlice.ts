@@ -10,12 +10,14 @@ export enum JiraFilterType {
     AssignedToMe = "assignedToMe",
     ReportedByMe = "reportedByMe",
     Unresolved = "unresolved",
+    Linked = "linked",
 }
 
 export const initialFilters = {
     [JiraFilterType.AssignedToMe]: true,
     [JiraFilterType.ReportedByMe]: true,
     [JiraFilterType.Unresolved]: true,
+    [JiraFilterType.Linked]: true,
 };
 
 const initialState = {
@@ -112,6 +114,7 @@ export const jiraSlice = createSlice({
                 [JiraFilterType.AssignedToMe]: false,
                 [JiraFilterType.ReportedByMe]: false,
                 [JiraFilterType.Unresolved]: false,
+                [JiraFilterType.Linked]: true,
             };
         },
         logOut: () => {

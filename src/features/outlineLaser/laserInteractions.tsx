@@ -3,7 +3,6 @@ import { Fragment, SVGProps } from "react";
 
 import { useAppDispatch, useAppSelector } from "app/store";
 import { useExplorerGlobals } from "contexts/explorerGlobals";
-import { selectCamera, selectClippingPlanes } from "features/render";
 
 import { getOutlineLaser } from "./getOutlineLaser";
 import { clippingOutlineLaserActions, selectOutlineLasers } from "./outlineLaserSlice";
@@ -31,27 +30,7 @@ const basicStyle = () => css`
     filter: drop-shadow(3px 3px 2px rgba(0, 0, 0, 0.3));
 `;
 
-const LeftMarker = styled(
-    (props: SVGProps<SVGGElement>) => (
-        <g {...props}>
-            <rect width="24" height="24" fillOpacity={0} transform={"translate(100 100)"} />
-            <path d="M110,110 L100,100 L110,90"></path>
-        </g>
-    ),
-    { shouldForwardProp: (prop) => prop !== "active" && prop !== "hovered" }
-)(markerStyles);
-
-const RightMarker = styled(
-    (props: SVGProps<SVGGElement>) => (
-        <g {...props}>
-            <rect width="24" height="24" fillOpacity={0} transform={"translate(100 100)"} />
-            <path d="M90 110 L100 100 L90 90"></path>
-        </g>
-    ),
-    { shouldForwardProp: (prop) => prop !== "active" && prop !== "hovered" }
-)(markerStyles);
-
-const UpMarker = styled(
+const ArrowMarker = styled(
     (props: SVGProps<SVGGElement>) => (
         <g {...props}>
             <rect width="24" height="24" fillOpacity={0} transform={"translate(100 100)"} />
@@ -61,21 +40,11 @@ const UpMarker = styled(
     { shouldForwardProp: (prop) => prop !== "active" && prop !== "hovered" }
 )(markerStyles);
 
-const DownMarker = styled(
-    (props: SVGProps<SVGGElement>) => (
-        <g {...props}>
-            <rect width="24" height="24" fillOpacity={0} transform={"translate(100 100)"} />
-            <path d="M90 110 L100 100 L110 110"></path>
-        </g>
-    ),
-    { shouldForwardProp: (prop) => prop !== "active" && prop !== "hovered" }
-)(markerStyles);
-
 const RemoveMarker = styled(
     (props: SVGProps<SVGGElement>) => (
         <g {...props}>
-            <rect width="24" height="24" fillOpacity={0} transform={"translate(100 100)"} />
-            <circle r="8" fill="red" transform={"translate(100 100)"} />
+            <rect width="24" height="24" fillOpacity={0} transform={"translate(88 88)"} />
+            <circle r="10" fill="red" transform={"translate(100 100)"} />
             <path d="M96,96 L104,104 M104,96 L96,104" stroke="white" strokeWidth={2}></path>
         </g>
     ),
@@ -100,14 +69,12 @@ export function ClippingTracerInteractions() {
     const {
         state: { view },
     } = useExplorerGlobals();
-    const { type } = useAppSelector(selectCamera);
-    const { planes } = useAppSelector(selectClippingPlanes);
 
     const dispatch = useAppDispatch();
     const outlineLaser = useAppSelector(selectOutlineLasers);
     const updateTracer = async (idx: number) => {
         const trace = outlineLaser[idx];
-        const newTrace = await getOutlineLaser(trace.laserPosition, view, type, planes[0].normalOffset);
+        const newTrace = await getOutlineLaser(trace.laserPosition, view);
         if (newTrace) {
             if (trace.measurementX === undefined) {
                 newTrace.measurementX = undefined;
@@ -125,14 +92,14 @@ export function ClippingTracerInteractions() {
                 <Fragment key={`tracer-${idx}`}>
                     {trace.measurementX ? (
                         <>
-                            <LeftMarker
+                            <ArrowMarker
                                 id={`leftMarker-${idx}`}
                                 name={`leftMarker-${idx}`}
                                 onClick={() => {
                                     dispatch(clippingOutlineLaserActions.incrementLaserLeft(idx));
                                 }}
                             />
-                            <RightMarker
+                            <ArrowMarker
                                 id={`rightMarker-${idx}`}
                                 name={`rightMarker-${idx}`}
                                 onClick={() => {
@@ -161,14 +128,14 @@ export function ClippingTracerInteractions() {
                     ) : null}
                     {trace.measurementY ? (
                         <>
-                            <DownMarker
+                            <ArrowMarker
                                 id={`downMarker-${idx}`}
                                 name={`downMarker-${idx}`}
                                 onClick={() => {
                                     dispatch(clippingOutlineLaserActions.incrementLaserDown(idx));
                                 }}
                             />
-                            <UpMarker
+                            <ArrowMarker
                                 id={`upMarker-${idx}`}
                                 name={`upMarker-${idx}`}
                                 onClick={() => {

@@ -236,8 +236,8 @@ export function Crupdate() {
 }
 
 async function createBookmarkImg(canvas: HTMLCanvasElement): Promise<string> {
-    let width = canvas.width;
-    let height = canvas.height;
+    const width = canvas.width;
+    const height = canvas.height;
     let dx = 0;
     let dy = 0;
 

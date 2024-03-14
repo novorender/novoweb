@@ -109,7 +109,7 @@ export function Bookmark({ bookmark }: { bookmark: ExtendedBookmark }) {
                         (bookmark.access === BookmarkAccess.Personal && user) ||
                         bookmark.access === BookmarkAccess.Public ? (
                             <IconButton
-                                color={Boolean(menuAnchor) ? "primary" : "default"}
+                                color={menuAnchor ? "primary" : "default"}
                                 size="small"
                                 sx={{ ml: "auto", py: 0 }}
                                 aria-haspopup="true"

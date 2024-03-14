@@ -1,13 +1,22 @@
-import { CoreModule } from "@novorender/api";
+import { CoreModule, LoadStatus, MeasureEntity } from "@novorender/api";
 import { vec2, vec3 } from "gl-matrix";
-import { MouseEvent, MutableRefObject, PointerEvent as ReactPointerEvent, TouchEvent, useRef, WheelEvent } from "react";
+import {
+    KeyboardEvent,
+    MouseEvent,
+    MutableRefObject,
+    PointerEvent as ReactPointerEvent,
+    TouchEvent,
+    useRef,
+    WheelEvent,
+} from "react";
 
 import { isIpad, isIphone } from "app";
 import { useAppDispatch, useAppSelector } from "app/store";
 import { useExplorerGlobals } from "contexts/explorerGlobals";
 import { selectShowTracer } from "features/followPath";
-import { measureActions, useMeasureHoverSettings } from "features/measure";
+import { measureActions, selectMeasureHoverSettings } from "features/measure";
 import { orthoCamActions, selectCrossSectionPoint } from "features/orthoCam";
+import { ViewMode } from "types/misc";
 
 import {
     CameraType,
@@ -19,6 +28,7 @@ import {
     selectPoints,
     selectStamp,
     selectSubtrees,
+    selectViewMode,
     StampKind,
     SubtreeStatus,
 } from "..";
@@ -49,7 +59,7 @@ export function useCanvasEventHandlers({
         state: { view, canvas, size },
     } = useExplorerGlobals();
     const handleCanvasContextMenu = useCanvasContextMenuHandler();
-    const measureHoverSettings = useMeasureHoverSettings();
+    const measureHoverSettings = useAppSelector(selectMeasureHoverSettings);
     const clippingPlanes = useAppSelector(selectClippingPlanes);
     const picker = useAppSelector(selectPicker);
     const crossSectionPoint = useAppSelector(selectCrossSectionPoint);
@@ -58,7 +68,22 @@ export function useCanvasEventHandlers({
     const subtrees = useAppSelector(selectSubtrees);
     const cameraType = useAppSelector(selectCameraType);
     const roadLayerTracerEnabled = useAppSelector(selectShowTracer);
+    const viewMode = useAppSelector(selectViewMode);
     const dispatch = useAppDispatch();
+
+    const hideSvgCursor = () =>
+        svg &&
+        view &&
+        moveSvgCursor({
+            svg,
+            view,
+            size,
+            pickResult: undefined,
+            x: -100,
+            y: -100,
+            color: "",
+            overrideKind: undefined,
+        });
 
     const clippingPlaneCommitTimer = useRef<ReturnType<typeof setTimeout>>();
     const moveClippingPlanes = (delta: number) => {
@@ -220,42 +245,101 @@ export function useCanvasEventHandlers({
             return;
         }
 
+        const planePicking = cameraType === CameraType.Orthographic && view.renderState.camera.far < 1;
+        const hoverOutline = (cursorPosition: vec3) => {
+            if (view.renderState.clipping.planes.length && measureHoverSettings.point) {
+                if (planePicking) {
+                    return view.selectOutlinePoint(cursorPosition, measureHoverSettings.point);
+                } else {
+                    const plane = view.renderState.clipping.planes[0].normalOffset;
+                    const planeDir = vec3.fromValues(plane[0], plane[1], plane[2]);
+                    const rayDir = vec3.sub(vec3.create(), view.renderState.camera.position, cursorPosition);
+                    vec3.normalize(rayDir, rayDir);
+                    const d = vec3.dot(planeDir, rayDir);
+                    if (d > 0) {
+                        const t = (plane[3] - vec3.dot(planeDir, view.renderState.camera.position)) / d;
+                        const pos = vec3.scaleAndAdd(vec3.create(), view.renderState.camera.position, rayDir, t);
+                        return view.selectOutlinePoint(pos, measureHoverSettings.point);
+                    }
+                }
+            }
+        };
+        const pointToHover = (point: vec3, objectId: number) => {
+            return {
+                status: "loaded" as LoadStatus,
+                connectionPoint: point,
+                entity: {
+                    ObjectId: objectId,
+                    drawKind: "vertex",
+                    parameter: point,
+                } as MeasureEntity,
+            };
+        };
+
         if (e.buttons === 0 && cursor === "measure") {
             const result = await view.pick(e.nativeEvent.offsetX, e.nativeEvent.offsetY, {
                 sampleDiscRadius: 4,
                 async: false,
+                pickCameraPlane: planePicking,
             });
 
             let hoverEnt = prevHoverEnt.current;
             const now = performance.now();
-            const shouldPickHoverEnt = now - prevHoverUpdate.current > 75;
+            const shouldPickHoverEnt = now - prevHoverUpdate.current > 75 && !view.activeController.moving;
+            const checkResetHover = () => {
+                const currentPos = vec2.fromValues(e.nativeEvent.offsetX, e.nativeEvent.offsetY);
+                if (vec2.dist(currentPos, previous2dSnapPos.current) > 25) {
+                    hoverEnt = undefined;
+                }
+            };
 
             if (shouldPickHoverEnt) {
                 prevHoverUpdate.current = now;
 
                 if (picker === Picker.Measurement) {
-                    if (view.measure && result) {
-                        const dist = hoverEnt?.connectionPoint && vec3.dist(result.position, hoverEnt.connectionPoint);
+                    if (result) {
+                        let outlinePoint: vec3 | undefined;
+                        if (view.renderState.clipping.planes.length && measureHoverSettings.point) {
+                            outlinePoint = hoverOutline(result.position);
+                        }
+                        if (outlinePoint) {
+                            hoverEnt = pointToHover(outlinePoint, result.objectId);
+                        } else if (view.measure && !planePicking) {
+                            const dist =
+                                hoverEnt?.connectionPoint && vec3.dist(result.position, hoverEnt.connectionPoint);
 
-                        if (!dist || dist > 0.2) {
-                            hoverEnt = await view.measure.core.pickMeasureEntityOnCurrentObject(
-                                result.objectId,
-                                result.position,
-                                measureHoverSettings
+                            if (!dist || dist > 0.2) {
+                                hoverEnt = await view.measure.core.pickMeasureEntityOnCurrentObject(
+                                    result.objectId,
+                                    result.position,
+                                    measureHoverSettings
+                                );
+                            }
+                            vec2.copy(
+                                previous2dSnapPos.current,
+                                vec2.fromValues(e.nativeEvent.offsetX, e.nativeEvent.offsetY)
                             );
                         }
-                        vec2.copy(
-                            previous2dSnapPos.current,
-                            vec2.fromValues(e.nativeEvent.offsetX, e.nativeEvent.offsetY)
-                        );
-                    } else if (!result) {
-                        const currentPos = vec2.fromValues(e.nativeEvent.offsetX, e.nativeEvent.offsetY);
-                        if (vec2.dist(currentPos, previous2dSnapPos.current) > 25) {
-                            hoverEnt = undefined;
-                        }
+                    } else {
+                        checkResetHover();
                     }
-                    dispatch(measureActions.selectHoverObj(hoverEnt?.entity));
                     prevHoverEnt.current = hoverEnt;
+                } else if (picker === Picker.Area || picker === Picker.PointLine) {
+                    if (result && view.renderState.clipping.planes.length && measureHoverSettings.point) {
+                        const outlinePoint = hoverOutline(result.position);
+                        if (outlinePoint) {
+                            hoverEnt = pointToHover(outlinePoint, result.objectId);
+                            dispatch(measureActions.selectHoverObj(hoverEnt?.entity));
+                            vec2.copy(
+                                previous2dSnapPos.current,
+                                vec2.fromValues(e.nativeEvent.offsetX, e.nativeEvent.offsetY)
+                            );
+                        } else {
+                            checkResetHover();
+                        }
+                    } else {
+                        checkResetHover();
+                    }
                 } else if (picker === Picker.CrossSection) {
                     const position =
                         result?.position ??
@@ -264,6 +348,7 @@ export function useCanvasEventHandlers({
                         dispatch(orthoCamActions.setCrossSectionHover(position as vec3));
                     }
                 }
+                dispatch(measureActions.selectHoverObj(hoverEnt?.entity));
             }
 
             const color =
@@ -311,22 +396,14 @@ export function useCanvasEventHandlers({
                 overrideKind: "cross",
             });
         } else {
-            moveSvgCursor({
-                svg,
-                view,
-                size,
-                pickResult: undefined,
-                x: -100,
-                y: -100,
-                color: "",
-                overrideKind: undefined,
-            });
+            hideSvgCursor();
         }
 
         const setDeviationStamp =
             !stamp?.pinned &&
             deviation.mixFactor !== 0 &&
             cameraType === CameraType.Orthographic &&
+            [ViewMode.CrossSection, ViewMode.FollowPath].includes(viewMode) &&
             e.buttons === 0 &&
             subtrees.points === SubtreeStatus.Shown;
         if (setDeviationStamp) {
@@ -388,17 +465,13 @@ export function useCanvasEventHandlers({
     };
 
     const onPointerOut = () => {
-        if (svg && view) {
-            moveSvgCursor({
-                svg,
-                view,
-                size,
-                pickResult: undefined,
-                x: -100,
-                y: -100,
-                color: "",
-                overrideKind: undefined,
-            });
+        hideSvgCursor();
+    };
+
+    const onKeyUp = (evt: KeyboardEvent<HTMLCanvasElement>) => {
+        if (evt.key === "Escape") {
+            dispatch(renderActions.setPicker(Picker.Object));
+            hideSvgCursor();
         }
     };
 
@@ -414,5 +487,6 @@ export function useCanvasEventHandlers({
         onPointerEnter,
         onPointerMove,
         onPointerOut,
+        onKeyUp,
     };
 }

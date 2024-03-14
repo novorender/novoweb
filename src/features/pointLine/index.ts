@@ -1,2 +1,2 @@
-export { useHandlePointLine } from "./useHandlePointLine";
 export * from "./pointLineSlice";
+export { PointLineCanvas } from "./canvas";

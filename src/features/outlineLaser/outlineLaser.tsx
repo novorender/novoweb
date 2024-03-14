@@ -33,12 +33,17 @@ import {
 import WidgetList from "features/widgetList/widgetList";
 import { useToggle } from "hooks/useToggle";
 import { selectMaximized, selectMinimized } from "slices/explorerSlice";
-import { VecRGB } from "utils/color";
+import { hslToVec } from "utils/color";
 import { getFilePathFromObjectPath } from "utils/objectData";
 import { searchByPatterns } from "utils/search";
 
-import { ClippedFile, ClippedObject } from "./clippedObject";
-import { clippingOutlineLaserActions, selectOutlineGroups, selectOutlineLasers } from "./outlineLaserSlice";
+import { ClippedObject } from "./clippedObject";
+import {
+    clippingOutlineLaserActions,
+    OutlineGroup,
+    selectOutlineGroups,
+    selectOutlineLasers,
+} from "./outlineLaserSlice";
 
 export default function ClippingOutline() {
     const {
@@ -69,7 +74,7 @@ export default function ClippingOutline() {
             const filePaths = new Set<string>();
             await searchByPatterns({
                 db,
-                searchPatterns: [{ property: "id", value: Array.from(objIds).map((v) => String(v)) }],
+                searchPatterns: [{ property: "id", value: Array.from(objIds).map((v) => String(v)), exact: true }],
                 full: false,
                 callback: (files) => {
                     for (const file of files) {
@@ -80,18 +85,13 @@ export default function ClippingOutline() {
                     }
                 },
             });
-            const files: ClippedFile[] = [];
+            const files: OutlineGroup[] = [];
 
-            function hsl2rgb(h: number, s: number, l: number) {
-                let a = s * Math.min(l, 1 - l);
-                let f = (n: number, k = (n + h / 30) % 12) => l - a * Math.max(Math.min(k - 3, 9 - k, 1), -1);
-                return [f(0), f(8), f(4)];
-            }
             let i = 0;
             const increments = 360 / filePaths.size;
             for (const f of filePaths) {
                 const ids = await getFileId(f);
-                files.push({ name: f, color: hsl2rgb(increments * i, 1, 0.5) as VecRGB, hidden: false, ids });
+                files.push({ name: f, color: hslToVec(increments * i, 1, 0.5), hidden: false, ids });
                 ++i;
             }
             dispatch(clippingOutlineLaserActions.setOutlineGroups(files));
@@ -231,45 +231,6 @@ export default function ClippingOutline() {
                         </AccordionDetails>
                     </Accordion>
                     <Accordion>
-                        {/* <AccordionSummary>Measure</AccordionSummary>
-                        <AccordionDetails>
-                            <Box flex="0 0 auto">
-                                <FormControlLabel
-                                    control={
-                                        <IosSwitch
-                                            name="toggle pick measurement"
-                                            size="medium"
-                                            color="primary"
-                                            disabled={planes.length === 0}
-                                            checked={picker === Picker.Measurement}
-                                            onChange={() => {
-                                                if (picker === Picker.Measurement) {
-                                                    dispatch(measureActions.selectPickSettings("all"));
-                                                    dispatch(renderActions.setPicker(Picker.Object));
-                                                } else {
-                                                    dispatch(measureActions.selectPickSettings("clippingOutline"));
-                                                    dispatch(renderActions.setPicker(Picker.Measurement));
-                                                }
-                                            }}
-                                        />
-                                    }
-                                    label={<Box fontSize={14}>Measure outline</Box>}
-                                />
-                                <Button
-                                    onClick={() => dispatch(measureActions.clear())}
-                                    color="grey"
-                                    disabled={!selectedEntities.length}
-                                >
-                                    <DeleteSweep sx={{ mr: 1 }} />
-                                    Clear
-                                </Button>
-                                {selectedEntities.map((obj, idx) => (
-                                    <MeasuredObject obj={obj as ExtendedMeasureEntity} idx={idx} key={idx} />
-                                ))}
-                                <MeasuredResult duoMeasurementValues={duoMeasurementValues} />
-                            </Box>
-                        </AccordionDetails>
-                    </Accordion> */}
                         <Accordion>
                             <AccordionSummary>Model list</AccordionSummary>
                             <AccordionDetails>

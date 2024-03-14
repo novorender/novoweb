@@ -27,8 +27,13 @@ export enum UserRole {
     Owner,
 }
 
+export enum ProjectType {
+    V1, // app.novorender.com
+    V2, // projects.novorender.com
+}
+
 type UrlSearchQuery = undefined | string | SearchPattern[];
-type WritableUrlSearchQuery = DeepMutable<UrlSearchQuery>;
+type MutableUrlSearchQuery = DeepMutable<UrlSearchQuery>;
 
 const initialState = {
     isOnline: navigator.onLine,
@@ -36,9 +41,14 @@ const initialState = {
     lockedWidgets: defaultLockedWidgets,
     sceneType: SceneType.Viewer,
     userRole: UserRole.Viewer,
+    projectType: ProjectType.V1,
     requireConsent: false,
     organization: "",
     widgets: [] as WidgetKey[],
+    widgetLayout: {
+        widgets: 4,
+        sideBySide: true,
+    },
     maximized: [] as WidgetKey[],
     minimized: undefined as undefined | WidgetKey,
     primaryMenu: {
@@ -53,20 +63,22 @@ const initialState = {
             features: defaultCanvasContextMenuFeatures,
         },
     },
-    urlSearchQuery: undefined as WritableUrlSearchQuery,
+    urlSearchQuery: undefined as MutableUrlSearchQuery,
     urlBookmarkId: undefined as undefined | string,
     localBookmarkId: undefined as undefined | string,
     config: {
         dataServerUrl: (import.meta.env.REACT_APP_DATA_SERVER_URL ?? "https://data.novorender.com/api") as string,
+        dataV2ServerUrl: (import.meta.env.REACT_APP_DATA_V2_SERVER_URL ?? "https://data-v2.novorender.com") as string,
+        authServerUrl: (import.meta.env.REACT_APP_AUTH_SERVER_URL ?? "https://auth.novorender.com") as string,
         bimCollabClientSecret: (import.meta.env.REACT_APP_BIMCOLLAB_CLIENT_SECRET ?? "") as string,
         bimCollabClientId: (import.meta.env.REACT_APP_BIMCOLLAB_CLIENT_ID ?? "") as string,
         bimTrackClientSecret: (import.meta.env.REACT_APP_BIMTRACK_CLIENT_SECRET ?? "") as string,
         bimTrackClientId: (import.meta.env.REACT_APP_BIMTRACK_CLIENT_ID ?? "") as string,
-        ditioClientSecret: (import.meta.env.REACT_APP_DITIO_CLIENT_SECRET ?? "") as string,
-        ditioClientId: (import.meta.env.REACT_APP_DITIO_CLIENT_ID ?? "") as string,
         jiraClientId: (import.meta.env.REACT_APP_JIRA_CLIENT_ID ?? "") as string,
         jiraClientSecret: (import.meta.env.REACT_APP_JIRA_CLIENT_SECRET ?? "") as string,
         xsiteManageClientId: (import.meta.env.REACT_APP_XSITEMANAGE_CLIENT_ID ?? "") as string,
+        novorenderClientId: (import.meta.env.REACT_APP_NOVORENDER_CLIENT_ID ?? "") as string,
+        novorenderClientSecret: (import.meta.env.REACT_APP_NOVORENDER_CLIENT_SECRET ?? "") as string,
     },
 };
 
@@ -126,6 +138,29 @@ export const explorerSlice = createSlice({
                 state.maximized = [];
             }
         },
+        forceOpenWidget: (state, action: PayloadAction<WidgetKey>) => {
+            const open = state.widgets;
+            const maximized = state.maximized;
+            const layout = state.widgetLayout;
+
+            if (open.includes(action.payload)) {
+                return;
+            }
+
+            if (open.length + maximized.length < layout.widgets) {
+                open.push(action.payload);
+                return;
+            }
+
+            state.maximized = [];
+            if (open.length >= layout.widgets) {
+                open.pop();
+            }
+            open.push(action.payload);
+        },
+        setWidgetLayout: (state, action: PayloadAction<State["widgetLayout"]>) => {
+            state.widgetLayout = action.payload;
+        },
         setUrlBookmarkId: (state, action: PayloadAction<State["urlBookmarkId"]>) => {
             state.urlBookmarkId = action.payload;
         },
@@ -134,16 +169,21 @@ export const explorerSlice = createSlice({
         },
         setUrlSearchQuery: (
             state,
-            action: PayloadAction<{ query: UrlSearchQuery; selectionOnly: string } | undefined>
+            action: PayloadAction<
+                { query: UrlSearchQuery; options: { selectionOnly: string; openWidgets: boolean } } | undefined
+            >
         ) => {
             const patterns = action.payload?.query;
 
-            state.urlSearchQuery = patterns as WritableUrlSearchQuery;
+            state.urlSearchQuery = patterns as MutableUrlSearchQuery;
 
-            if ((Array.isArray(patterns) && patterns.length) || (!Array.isArray(patterns) && patterns)) {
+            if (
+                action.payload?.options.openWidgets &&
+                ((Array.isArray(patterns) && patterns.length) || (!Array.isArray(patterns) && patterns))
+            ) {
                 state.widgets = [
                     featuresConfig.search.key,
-                    action.payload?.selectionOnly === "3"
+                    action.payload?.options.selectionOnly === "3"
                         ? featuresConfig.selectionBasket.key
                         : featuresConfig.properties.key,
                 ];
@@ -211,19 +251,21 @@ export const explorerSlice = createSlice({
             state.isOnline = action.payload !== undefined ? action.payload : !state.isOnline;
         },
         setConfig: (state, action: PayloadAction<State["config"]>) => {
-            state.config = action.payload;
+            state.config = { ...state.config, ...action.payload };
         },
     },
     extraReducers(builder) {
         builder.addCase(initScene, (state, action) => {
             const { customProperties } = action.payload.sceneData;
 
+            state.projectType = action.payload.projectType;
             state.sceneType = getSceneType(customProperties);
             state.userRole = getUserRole(customProperties);
             state.requireConsent = getRequireConsent(customProperties);
 
             state.lockedWidgets = state.lockedWidgets.filter(
-                (widget) => !(customProperties?.features ?? ({} as any))[widget]
+                (widget) =>
+                    !customProperties?.features || !(customProperties?.features as Record<string, boolean>)[widget]
             );
             if (action.payload.deviceProfile.isMobile && !state.lockedWidgets.includes(featuresConfig.images.key)) {
                 state.lockedWidgets.push(featuresConfig.images.key);
@@ -273,6 +315,7 @@ export const explorerSlice = createSlice({
 });
 
 export const selectWidgets = (state: RootState) => state.explorer.widgets;
+export const selectWidgetLayout = (state: RootState) => state.explorer.widgetLayout;
 export const selectLockedWidgets = (state: RootState) => state.explorer.lockedWidgets;
 export const selectLocalBookmarkId = (state: RootState) => state.explorer.localBookmarkId;
 export const selectUrlBookmarkId = (state: RootState) => state.explorer.urlBookmarkId;
@@ -289,6 +332,7 @@ export const selectHasAdminCapabilities = (state: RootState) => state.explorer.u
 export const selectCanvasContextMenuFeatures = (state: RootState) => state.explorer.contextMenu.canvas.features;
 export const selectIsOnline = (state: RootState) => state.explorer.isOnline;
 export const selectConfig = (state: RootState) => state.explorer.config;
+export const selectProjectIsV2 = (state: RootState) => state.explorer.projectType === ProjectType.V2;
 
 export const selectEnabledWidgets = createSelector(
     (state: RootState) => state.explorer.enabledWidgets,
@@ -317,7 +361,7 @@ function enabledFeaturesToFeatureKeys(enabledFeatures: Record<string, boolean>):
         Object.keys(enabledFeatures)
             .map((key) => ({ key, enabled: enabledFeatures[key] }))
             .filter((feature) => feature.enabled)
-            .map((feature) => (dictionary[feature.key] ? dictionary[feature.key]! : feature.key))
+            .map((feature) => (dictionary[feature.key] ? dictionary[feature.key] : feature.key))
             .concat(defaultEnabledWidgets)
             .flat() as WidgetKey[]
     );

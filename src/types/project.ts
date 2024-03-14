@@ -39,6 +39,7 @@ export type ExplorerProjectState = {
         toonOutline: {
             enabled: boolean;
             color: [number, number, number];
+            outlineObjects?: boolean;
         };
         outlines: {
             enabled: boolean;
@@ -149,7 +150,7 @@ type Integrations = {
         };
     };
     ditio?: {
-        projectNumber: string;
+        projects?: string[];
     };
     xsiteManage?: {
         siteId: string;

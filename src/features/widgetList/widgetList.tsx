@@ -7,27 +7,6 @@ import { explorerActions, selectWidgets } from "slices/explorerSlice";
 import { Root } from "./routes/root";
 import { Tag } from "./routes/tag";
 
-export const sorting = [
-    featuresConfig.properties.key,
-    featuresConfig.modelTree.key,
-    featuresConfig.bookmarks.key,
-    featuresConfig.selectionBasket.key,
-    featuresConfig.groups.key,
-    featuresConfig.search.key,
-    featuresConfig.measure.key,
-    featuresConfig.shareLink.key,
-    featuresConfig.clippingPlanes.key,
-    featuresConfig.orthoCam.key,
-    featuresConfig.images.key,
-    featuresConfig.propertyTree.key,
-    featuresConfig.manhole.key,
-    featuresConfig.area.key,
-    featuresConfig.pointLine.key,
-    featuresConfig.deviations.key,
-    featuresConfig.followPath.key,
-    featuresConfig.advancedSettings.key,
-] as WidgetKey[];
-
 export default function WidgetList({ widgetKey, onSelect }: { widgetKey?: WidgetKey; onSelect: () => void }) {
     const activeWidgets = useAppSelector(selectWidgets);
     const dispatch = useAppDispatch();

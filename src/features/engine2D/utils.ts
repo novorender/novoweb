@@ -1,13 +1,16 @@
-import { DrawPart, DrawProduct } from "@novorender/api";
-import { ReadonlyVec2, ReadonlyVec3, vec2, vec3 } from "gl-matrix";
+import { DrawPart, DrawProduct, View } from "@novorender/api";
+import { quat, ReadonlyVec2, ReadonlyVec3, vec2, vec3 } from "gl-matrix";
+
+import { CameraType } from "features/render";
 
 export interface ColorSettings {
     lineColor?: string | CanvasGradient | string[];
-    fillColor?: string;
+    fillColor?: string | CanvasPattern;
     pointColor?: string | { start: string; middle: string; end: string };
     outlineColor?: string;
     complexCylinder?: boolean;
     displayAllPoints?: boolean;
+    lineDash?: number[];
 }
 
 export interface TextSettings {
@@ -16,9 +19,10 @@ export interface TextSettings {
     customText?: string[];
 }
 
-export interface CameraSettings {
+export interface CameraState {
     pos: ReadonlyVec3;
     dir: ReadonlyVec3;
+    type: CameraType;
 }
 
 type CapStyle = "arrow";
@@ -30,7 +34,7 @@ export interface LineCap {
 
 export function drawProduct(
     ctx: CanvasRenderingContext2D,
-    camera: CameraSettings,
+    camera: CameraState,
     product: DrawProduct,
     colorSettings: ColorSettings,
     pixelWidth: number,
@@ -94,7 +98,7 @@ export function drawProduct(
 
 export function drawPart(
     ctx: CanvasRenderingContext2D,
-    camera: CameraSettings,
+    camera: CameraState,
     part: DrawPart,
     colorSettings: ColorSettings,
     pixelWidth: number,
@@ -117,7 +121,7 @@ export function drawPart(
     }
     return false;
 }
-function drawTextPart(ctx: CanvasRenderingContext2D, part: DrawPart, camera: CameraSettings) {
+function drawTextPart(ctx: CanvasRenderingContext2D, part: DrawPart, camera: CameraState) {
     if (part.drawType === "text" && part.text && part.vertices2D) {
         if (Array.isArray(part.text)) {
             if (part.text.length === 1 && part.indicesOnScreen) {
@@ -178,7 +182,7 @@ function drawTextPart(ctx: CanvasRenderingContext2D, part: DrawPart, camera: Cam
     return false;
 }
 
-function drawAngle(ctx: CanvasRenderingContext2D, camera: CameraSettings, part: DrawPart) {
+function drawAngle(ctx: CanvasRenderingContext2D, camera: CameraState, part: DrawPart) {
     if (part.vertices2D) {
         ctx.fillStyle = "transparent";
         const anglePoint = part.vertices2D[0];
@@ -203,7 +207,7 @@ function drawAngle(ctx: CanvasRenderingContext2D, camera: CameraSettings, part: 
         vec3.normalize(dirCamB, dirCamB);
         vec3.normalize(dirCamP, dirCamP);
 
-        if (Math.abs(vec3.dot(dirCamP, norm)) < 0.15) {
+        if (camera.type === CameraType.Pinhole && Math.abs(vec3.dot(dirCamP, norm)) < 0.15) {
             return false;
         }
 
@@ -285,6 +289,9 @@ function drawLinesOrPolygon(
             drawArrow(ctx, part.vertices2D[0], dir, 20);
         }
         ctx.beginPath();
+        if (colorSettings.lineDash) {
+            ctx.setLineDash(colorSettings.lineDash);
+        }
         ctx.moveTo(part.vertices2D[0][0], part.vertices2D[0][1]);
 
         for (let i = 1; i < part.vertices2D.length; ++i) {
@@ -305,6 +312,9 @@ function drawLinesOrPolygon(
                 ctx.beginPath();
                 ctx.moveTo(part.vertices2D[i][0], part.vertices2D[i][1]);
             }
+        }
+        if (colorSettings.lineDash) {
+            ctx.setLineDash([]);
         }
 
         if (part.voids) {
@@ -346,7 +356,7 @@ function drawLinesOrPolygon(
                 ctx.lineWidth = 2;
                 ctx.strokeStyle = "black";
                 ctx.beginPath();
-                ctx.arc(part.vertices2D[i][0], part.vertices2D[i][1], 5, 0, 2 * Math.PI);
+                ctx.arc(part.vertices2D[i][0], part.vertices2D[i][1], 6, 0, 2 * Math.PI);
                 ctx.fill();
                 ctx.stroke();
             }
@@ -369,25 +379,52 @@ function drawLinesOrPolygon(
                 } ${text.unit ? text.unit : "m"}`;
                 drawText(ctx, part.vertices2D, textStr);
             } else if (part.text && Array.isArray(part.text) && part.text.length > 0) {
-                const points = part.vertices2D;
-                for (let i = 0; i < points.length - 1 && i < part.text[0].length; ++i) {
-                    if (part.text[0][i].length === 0) {
-                        continue;
+                // const drawTextsFromPart = (points: ReadonlyVec2[], indicesOnScreen: number[] | undefined, textList: string[]) => {
+                //     const indexer = (i: number) => indicesOnScreen ? indicesOnScreen[i] : i;
+                //     let pointOffset = indicesOnScreen ? -indicesOnScreen[0] : 0;
+                //     for (let i = 0; i < (indicesOnScreen ? indicesOnScreen?.length - 1 : points.length - 1); ++i) {
+                //         const currentIdx = indexer(i);
+                //         const nextIdx = indexer(i + 1);
+                //         if (nextIdx === currentIdx) {
+                //             pointOffset++;
+                //             continue;
+                //         }
+                //         if (nextIdx !== currentIdx + 1) {
+                //             pointOffset -= nextIdx - currentIdx - 1;
+                //             continue;
+                //         }
+                //         if (textList[currentIdx].length === 0) {
+                //             continue;
+                //         }
+                //         const textStr = textList[currentIdx] + `${text.unit ? text.unit : "m"}`;
+                //         drawText(ctx, [points[currentIdx + pointOffset], points[nextIdx + pointOffset]], textStr);
+                //     }
+                // }
+                const drawTextsFromPart = (
+                    points: ReadonlyVec2[],
+                    indicesOnScreen: number[] | undefined,
+                    textList: string[]
+                ) => {
+                    const indexer = (i: number) => (indicesOnScreen ? indicesOnScreen[i] : i);
+                    for (let i = 0; i < points.length - 1; ++i) {
+                        const currentTxtIdx = indexer(i);
+                        const nextTxtIdx = indexer(i + 1);
+                        if (nextTxtIdx === currentTxtIdx) {
+                            continue;
+                        }
+                        if (!textList[currentTxtIdx] || textList[currentTxtIdx].length === 0) {
+                            continue;
+                        }
+                        const textStr = textList[currentTxtIdx] + `${text.unit ? text.unit : "m"}`;
+                        drawText(ctx, [points[i], points[i + 1]], textStr);
                     }
-                    const textStr = part.text[0][i] + `${text.unit ? text.unit : "m"}`;
-                    drawText(ctx, [points[i], points[i + 1]], textStr);
-                }
+                };
+                drawTextsFromPart(part.vertices2D, part.indicesOnScreen, part.text[0]);
                 if (part.voids) {
                     for (let j = 0; j < part.voids.length && j < part.text.length - 1; ++j) {
                         const voidVerts = part.voids[j].vertices2D;
                         if (voidVerts) {
-                            for (let i = 0; i < voidVerts.length - 1 && i < part.text[j].length; ++i) {
-                                if (part.text[j + 1][i].length === 0) {
-                                    continue;
-                                }
-                                const textStr = part.text[j + 1][i] + `${text.unit ? text.unit : "m"}`;
-                                drawText(ctx, [voidVerts[i], voidVerts[i + 1]], textStr);
-                            }
+                            drawTextsFromPart(voidVerts, part.voids[j].indicesOnScreen, part.text[j + 1]);
                         }
                     }
                 }
@@ -473,12 +510,12 @@ export function drawLineStrip(
     ctx.stroke();
 }
 
-export function drawPoint(ctx: CanvasRenderingContext2D, point: ReadonlyVec2, color?: string) {
+export function drawPoint(ctx: CanvasRenderingContext2D, point: ReadonlyVec2, color?: string | CanvasPattern) {
     ctx.fillStyle = color ?? "black";
     ctx.lineWidth = 2;
     ctx.strokeStyle = "black";
     ctx.beginPath();
-    ctx.arc(point[0], point[1], 5, 0, 2 * Math.PI);
+    ctx.arc(point[0], point[1], 6, 0, 2 * Math.PI);
     ctx.fill();
     ctx.stroke();
 }
@@ -494,7 +531,7 @@ export function drawText(ctx: CanvasRenderingContext2D, vertices2D: ReadonlyVec2
         ctx.strokeText(text, vertices2D[0][0], vertices2D[0][1]);
         ctx.fillText(text, vertices2D[0][0], vertices2D[0][1]);
     } else if (vertices2D.length === 2) {
-        let dir =
+        const dir =
             vertices2D[0][0] > vertices2D[1][0]
                 ? vec2.sub(vec2.create(), vertices2D[0], vertices2D[1])
                 : vec2.sub(vec2.create(), vertices2D[1], vertices2D[0]);
@@ -532,4 +569,90 @@ function drawArrow(ctx: CanvasRenderingContext2D, currentPos: ReadonlyVec2, dir:
     ctx.lineTo(currentPos[0] - scaledDir[1] / 2, currentPos[1] + scaledDir[0] / 2);
     ctx.closePath();
     ctx.fill();
+}
+
+type InteractionPosition = vec2 | undefined;
+export function getInteractionPositions({
+    points,
+    current,
+    view,
+}: {
+    points: { points: vec3[] }[];
+    current: number;
+    view: View;
+}): {
+    remove: InteractionPosition[];
+    info: InteractionPosition[];
+    finalize: InteractionPosition[];
+    undo: InteractionPosition[];
+} {
+    const initial = {
+        remove: Array.from<vec2 | undefined>({ length: points.length }),
+        info: Array.from<vec2 | undefined>({ length: points.length }),
+        finalize: Array.from<vec2 | undefined>({ length: points.length }),
+        undo: Array.from<vec2 | undefined>({ length: points.length }),
+    };
+
+    if (!points.length) {
+        return initial;
+    }
+
+    return points.reduce((interactions, { points }, idx) => {
+        if (!points.length) {
+            return interactions;
+        }
+
+        const sum = vec3Sum(points);
+        const pos3d = vec3.scale(vec3.create(), sum, 1 / points.length);
+        if (vec3.dist(pos3d, view.renderState.camera.position) >= 150) {
+            return interactions;
+        }
+
+        const sp = view.measure?.draw.toMarkerPoints([pos3d]);
+        if (sp && sp[0]) {
+            interactions.remove[idx] = vec2.fromValues(sp[0][0], sp[0][1] + 30);
+            interactions.info[idx] = vec2.fromValues(sp[0][0] + 20, sp[0][1] + 30);
+        }
+
+        if (idx == current) {
+            if (points.length >= 2) {
+                interactions.undo[idx] = view.measure?.draw.toMarkerPoints([points[points.length - 1]])?.at(0);
+            }
+
+            if (points.length >= 3) {
+                interactions.finalize[idx] = view.measure?.draw.toMarkerPoints([points[0]])?.at(0);
+            }
+        }
+
+        return interactions;
+    }, initial);
+}
+
+export function translateInteraction(el: Element | null, pos?: vec2, rot?: number) {
+    el?.setAttribute(
+        "transform",
+        pos
+            ? rot
+                ? `translate(${pos[0] - 100} ${pos[1] - 98}), rotate(${rot}, 100, 100)`
+                : `translate(${pos[0] - 100} ${pos[1] - 98})`
+            : "translate(-1000 -1000)"
+    );
+}
+
+export function getCameraState(camera: View["renderState"]["camera"]) {
+    return {
+        pos: camera.position,
+        dir: getCameraDir(camera.rotation),
+        type: camera.kind === "orthographic" ? CameraType.Orthographic : CameraType.Pinhole,
+    };
+}
+
+export function getCameraDir(rotation: quat): vec3 {
+    return vec3.transformQuat(vec3.create(), vec3.fromValues(0, 0, -1), rotation);
+}
+
+export function vec3Sum(arr: vec3[]) {
+    return arr.reduce((tot, vec) => {
+        return vec3.add(tot, tot, vec);
+    }, vec3.create());
 }

@@ -132,17 +132,17 @@ export function Root() {
         async function getObjectData(id: number) {
             setStatus(Status.Loading);
 
-            const objectData = await getObjectDataUtil({ db, id, view });
+            const _objectData = await getObjectDataUtil({ db, id, view });
 
-            if (!objectData) {
+            if (!_objectData) {
                 setObject(undefined);
                 setStatus(Status.Initial);
                 return;
             }
 
-            const cleanedObjectData = { ...objectData, properties: objectData.properties.slice(0, 100) };
+            const cleanedObjectData = { ..._objectData, properties: _objectData.properties.slice(0, 100) };
             const parent = navigator.onLine
-                ? await searchFirstObjectAtPath({ db, path: getParentPath(objectData.path) })
+                ? await searchFirstObjectAtPath({ db, path: getParentPath(_objectData.path) })
                 : undefined;
 
             if (parent) {
@@ -213,7 +213,7 @@ export function Root() {
                 property,
                 value,
                 deep,
-                exact: true,
+                exact: property !== "Path",
             },
         };
 
@@ -278,6 +278,7 @@ export function Root() {
                 </Box>
             ) : null}
             <ScrollBox pb={2} {...bindResizeHandlers()}>
+                {mainObject === undefined && <Box p={1}>Select an object to view properties.</Box>}
                 {mainObject !== undefined && object ? (
                     <>
                         <PropertyList
@@ -335,7 +336,11 @@ function PropertyList({ object, handleChange, searches, nameWidth, resizing }: P
                                 property={property}
                                 value={value}
                                 checked={searches[property] !== undefined && searches[property].value === value}
-                                onChange={handleChange({ property, value, deep: object.type === NodeType.Internal })}
+                                onChange={handleChange({
+                                    property,
+                                    value,
+                                    deep: object.type === NodeType.Internal,
+                                })}
                                 resizing={resizing}
                             />
                         ))}
@@ -522,7 +527,7 @@ function PropertyItem({ checked, onChange, property, value, resizing, groupName 
                         size="small"
                         onClick={openMenu}
                         aria-controls={id}
-                        color={Boolean(menuAnchor) ? "primary" : "default"}
+                        color={menuAnchor ? "primary" : "default"}
                         aria-haspopup="true"
                     >
                         <MoreVert />

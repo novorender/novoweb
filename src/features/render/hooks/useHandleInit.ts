@@ -1,6 +1,7 @@
 import { computeRotation, DeviceProfile, getDeviceProfile, rotationFromDirection, View } from "@novorender/api";
 import { ObjectDB, SceneData, SceneLoadFail } from "@novorender/data-js-api";
 import { Internal } from "@novorender/webgl-api";
+import { useLazyGetProjectQuery } from "apis/dataV2/dataV2Api";
 import { getGPUTier } from "detect-gpu";
 import { quat, vec3, vec4 } from "gl-matrix";
 import { useEffect, useRef } from "react";
@@ -16,13 +17,14 @@ import {
 import { highlightActions, useDispatchHighlighted } from "contexts/highlighted";
 import { GroupStatus, objectGroupsActions, useDispatchObjectGroups } from "contexts/objectGroups";
 import { useSceneId } from "hooks/useSceneId";
+import { ProjectType } from "slices/explorerSlice";
 import { AsyncStatus } from "types/misc";
 import { CustomProperties } from "types/project";
 import { VecRGBA } from "utils/color";
 import { sleep } from "utils/time";
 
 import { renderActions } from "..";
-import { Error as SceneError } from "../sceneError";
+import { ErrorKind } from "../sceneError";
 import { flip } from "../utils";
 
 export function useHandleInit() {
@@ -36,6 +38,8 @@ export function useHandleInit() {
     } = useExplorerGlobals();
 
     const dispatch = useAppDispatch();
+
+    const [getProject] = useLazyGetProjectQuery();
 
     const initialized = useRef(false);
 
@@ -74,16 +78,37 @@ export function useHandleInit() {
                     "index.json",
                     new AbortController().signal
                 );
+                const projectIsV2 = Boolean(
+                    await getProject({ projectId: sceneId })
+                        .unwrap()
+                        .catch(() => false)
+                );
 
-                const offlineWorkerState = await view.manageOfflineStorage();
+                const offlineWorkerState =
+                    view.offline &&
+                    (await view.manageOfflineStorage().catch((e) => {
+                        console.warn("view.manageOfflineStorage():", e);
+                        return undefined;
+                    }));
                 view.run();
 
                 while (!view.renderState.scene) {
                     await sleep(50);
                 }
 
+                if (!camera) {
+                    view.activeController.autoFit(
+                        view.renderState.scene.config.boundingSphere.center,
+                        view.renderState.scene.config.boundingSphere.radius
+                    );
+
+                    // 1sec autofit flight duration
+                    await sleep(1000);
+                }
+
                 dispatch(
                     renderActions.initScene({
+                        projectType: projectIsV2 ? ProjectType.V2 : ProjectType.V1,
                         sceneData,
                         sceneConfig: octreeSceneConfig,
                         initialCamera: {
@@ -113,6 +138,8 @@ export function useHandleInit() {
                                     : group.hidden
                                     ? GroupStatus.Hidden
                                     : GroupStatus.None,
+                                // NOTE(OLA): Pass IDs as undefined to be loaded when group is activated.
+                                // eslint-disable-next-line @typescript-eslint/no-explicit-any
                                 ids: group.ids ? new Set(group.ids) : (undefined as any),
                             }))
                     )
@@ -160,21 +187,21 @@ export function useHandleInit() {
 
                     if (error === "Not authorized") {
                         dispatch(
-                            renderActions.setSceneStatus({ status: AsyncStatus.Error, msg: SceneError.NOT_AUTHORIZED })
+                            renderActions.setSceneStatus({ status: AsyncStatus.Error, msg: ErrorKind.NOT_AUTHORIZED })
                         );
                     } else if (error === "Scene not found") {
                         dispatch(
-                            renderActions.setSceneStatus({ status: AsyncStatus.Error, msg: SceneError.INVALID_SCENE })
+                            renderActions.setSceneStatus({ status: AsyncStatus.Error, msg: ErrorKind.INVALID_SCENE })
                         );
                     } else if (error === "Scene deleted") {
                         dispatch(
-                            renderActions.setSceneStatus({ status: AsyncStatus.Error, msg: SceneError.DELETED_SCENE })
+                            renderActions.setSceneStatus({ status: AsyncStatus.Error, msg: ErrorKind.DELETED_SCENE })
                         );
                     } else {
                         dispatch(
                             renderActions.setSceneStatus({
                                 status: AsyncStatus.Error,
-                                msg: navigator.onLine ? SceneError.UNKNOWN_ERROR : SceneError.OFFLINE_UNAVAILABLE,
+                                msg: navigator.onLine ? ErrorKind.UNKNOWN_ERROR : ErrorKind.OFFLINE_UNAVAILABLE,
                             })
                         );
                     }
@@ -183,14 +210,14 @@ export function useHandleInit() {
                         dispatch(
                             renderActions.setSceneStatus({
                                 status: AsyncStatus.Error,
-                                msg: SceneError.LEGACY_BINARY_FORMAT,
+                                msg: ErrorKind.LEGACY_BINARY_FORMAT,
                             })
                         );
                     } else {
                         dispatch(
                             renderActions.setSceneStatus({
                                 status: AsyncStatus.Error,
-                                msg: navigator.onLine ? SceneError.UNKNOWN_ERROR : SceneError.OFFLINE_UNAVAILABLE,
+                                msg: navigator.onLine ? ErrorKind.UNKNOWN_ERROR : ErrorKind.OFFLINE_UNAVAILABLE,
                                 stack: e.stack
                                     ? e.stack
                                     : typeof e.cause === "string"
@@ -210,6 +237,7 @@ export function useHandleInit() {
         dispatchObjectGroups,
         dispatchHighlighted,
         dispatchHighlightCollections,
+        getProject,
     ]);
 }
 
@@ -227,7 +255,7 @@ export async function loadScene(id: string): Promise<[SceneConfig, CadCamera | u
         throw res;
     }
 
-    let { ..._cfg } = res;
+    const { ..._cfg } = res;
     const cfg = _cfg as SceneConfig;
 
     // Legacy scene config format
