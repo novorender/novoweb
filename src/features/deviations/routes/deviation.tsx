@@ -173,7 +173,6 @@ export function Deviation() {
                     db,
                     view,
                     deviationForm: deviationForm,
-                    objectGroups,
                 });
                 const isNew = deviationForm.id === NEW_DEVIATION_ID;
                 if (isNew) {
@@ -547,27 +546,13 @@ function nextName(names: Set<string>, suggestion: string) {
 
 async function deviationFormToProfile({
     deviationForm,
-    objectGroups,
     db,
     view,
 }: {
     db: ObjectDB;
     view: View;
     deviationForm: DeviationForm;
-    objectGroups: ObjectGroup[];
 }): Promise<UiDeviationProfile> {
-    const getGroups = (groupIds: string[]) => {
-        const groups = objectGroups.filter((g) => groupIds.includes(g.id));
-        const objectIds = new Set<number>();
-        for (const group of groups) {
-            group.ids.forEach((id) => objectIds.add(id));
-        }
-        return {
-            groupIds,
-            objectIds: [...objectIds],
-        };
-    };
-
     const uniqueCenterLineIds = new Set(
         deviationForm.subprofiles
             .filter((sp) => sp.centerLine.enabled && sp.centerLine.id.value)
@@ -613,8 +598,15 @@ async function deviationFormToProfile({
                     centerLine && sp.tunnelInfo.enabled && Number(sp.tunnelInfo.heightToCeiling.value)
                         ? Number(sp.tunnelInfo.heightToCeiling.value)
                         : undefined,
-                from: getGroups(sp.groups1.value),
-                to: getGroups(sp.groups2.value),
+                from: {
+                    groupIds: sp.groups1.value,
+                    // Object IDs are populated on save
+                    objectIds: [] as number[],
+                },
+                to: {
+                    groupIds: sp.groups2.value,
+                    objectIds: [] as number[],
+                },
             };
         }),
         hasFromAndTo: deviationForm.hasFromAndTo,

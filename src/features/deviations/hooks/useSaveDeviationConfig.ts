@@ -5,6 +5,7 @@ import { useCallback } from "react";
 import { dataApi } from "app";
 import { useAppDispatch, useAppSelector } from "app/store";
 import { useExplorerGlobals } from "contexts/explorerGlobals";
+import { isInternalGroup, ObjectGroup, useObjectGroups } from "contexts/objectGroups";
 import { selectDeviations } from "features/render";
 import { loadScene } from "features/render/hooks/useHandleInit";
 import { useSceneId } from "hooks/useSceneId";
@@ -25,6 +26,7 @@ export function useSaveDeviationConfig() {
     const isAdminScene = useAppSelector(selectIsAdminScene);
     const isProjectV2 = useAppSelector(selectProjectIsV2);
     const [setDeviationProfiles] = useSetDeviationProfilesMutation();
+    const objectGroups = useObjectGroups().filter((grp) => !isInternalGroup(grp));
 
     return useCallback(
         async ({
@@ -46,7 +48,11 @@ export function useSaveDeviationConfig() {
                 });
 
                 if (isProjectV2) {
-                    await setDeviationProfiles({ projectId, config: uiConfigToServerConfig(uiConfig) }).unwrap();
+                    const uiConfigWithObjectIds = updateObjectIds(uiConfig, objectGroups);
+                    await setDeviationProfiles({
+                        projectId,
+                        config: uiConfigToServerConfig(uiConfigWithObjectIds),
+                    }).unwrap();
                 }
 
                 let msg = "Changes successfully saved";
@@ -58,7 +64,7 @@ export function useSaveDeviationConfig() {
                 dispatch(deviationsActions.setSaveStatus({ status: AsyncStatus.Error, msg: "Failed to save changes" }));
             }
         },
-        [dispatch, projectId, scene, sceneId, isAdminScene, isProjectV2, setDeviationProfiles]
+        [dispatch, projectId, scene, sceneId, isAdminScene, isProjectV2, setDeviationProfiles, objectGroups]
     );
 }
 
@@ -108,4 +114,34 @@ async function saveExplorerSettings({
             });
         }
     }
+}
+
+function updateObjectIds(uiConfig: UiDeviationConfig, objectGroups: ObjectGroup[]): UiDeviationConfig {
+    const getGroups = (groupIds: string[]) => {
+        const groups = objectGroups.filter((g) => groupIds.includes(g.id));
+        const objectIds = new Set<number>();
+        for (const group of groups) {
+            group.ids.forEach((id) => objectIds.add(id));
+        }
+        return {
+            groupIds,
+            objectIds: [...objectIds],
+        };
+    };
+
+    return {
+        ...uiConfig,
+        profiles: uiConfig.profiles.map((profile) => {
+            return {
+                ...profile,
+                subprofiles: profile.subprofiles.map((sp) => {
+                    return {
+                        ...sp,
+                        from: getGroups(sp.from.groupIds),
+                        to: getGroups(sp.to.groupIds),
+                    };
+                }),
+            };
+        }),
+    };
 }
