@@ -1,16 +1,23 @@
-import { RenderStateDynamicInstance, RenderStateDynamicMesh, RenderStateDynamicObject, RGBA } from "@novorender/api";
+import {
+    downloadGLTF,
+    RenderStateDynamicInstance,
+    RenderStateDynamicMesh,
+    RenderStateDynamicObject,
+    RGBA,
+} from "@novorender/api";
 import { ReadonlyVec3 } from "gl-matrix";
 import { useEffect, useMemo, useRef } from "react";
 
 import { useAppSelector } from "app/store";
 import { useExplorerGlobals } from "contexts/explorerGlobals";
 import { areArraysEqual } from "features/arcgis/utils";
+import { CameraType, selectCameraType } from "features/render";
 import { useAbortController } from "hooks/useAbortController";
 import { AsyncStatus } from "types/misc";
 
 import { useFormsGlobals } from "../formsGlobals";
 import { selectAssets, selectLocationForms, selectSelectedFormId, selectTemplates } from "../slice";
-import { useLoadAsset } from "./useLoadAsset";
+import { FormGLtfAsset } from "../types";
 
 type RenderedForm = {
     id: string;
@@ -31,41 +38,23 @@ export function useRenderLocationFormAssets() {
     } = useExplorerGlobals();
     const { setState: setFormsGlobals } = useFormsGlobals();
     const templates = useAppSelector(selectTemplates);
-    const currentForms = useAppSelector(selectLocationForms);
+    const locationForms = useAppSelector(selectLocationForms);
     const assetInfoList = useAppSelector(selectAssets);
-    const loadAsset = useLoadAsset();
-    const [abortController] = useAbortController();
+    const [abortController, abort] = useAbortController();
     const selectedFormId = useAppSelector(selectSelectedFormId);
     const selectedMeshCache = useRef(new WeakMap<RenderStateDynamicMesh, RenderStateDynamicMesh>());
-
-    const templateMap = useMemo(() => {
-        if (templates.status === AsyncStatus.Success) {
-            return new Map(templates.data.map((t) => [t.id, t]));
-        }
-    }, [templates]);
-
-    const prevUniqueSymbols = useRef<string[]>();
-    const uniqueSymbols = useMemo(() => {
-        const result =
-            templates.status === AsyncStatus.Success
-                ? [...new Set(templates.data.filter((t) => t.symbol).map((t) => t.symbol!))].sort()
-                : [];
-
-        if (areArraysEqual(result, prevUniqueSymbols.current)) {
-            return prevUniqueSymbols.current!;
-        } else {
-            prevUniqueSymbols.current = result;
-            return result;
-        }
-    }, [templates]);
+    const active = useAppSelector(selectCameraType) === CameraType.Pinhole;
+    const needCleaning = useRef(false);
 
     const prevRenderedForms = useRef<RenderedForm[]>();
     const renderedForms = useMemo(() => {
-        if (!templateMap) {
+        if (!active || templates.status !== AsyncStatus.Success) {
             return [];
         }
 
-        const result = currentForms
+        const templateMap = new Map(templates.data.map((t) => [t.id, t]));
+
+        const result = locationForms
             .filter(({ form }) => form.location)
             .map(({ templateId, form }) => {
                 const template = templateMap.get(templateId)!;
@@ -78,14 +67,68 @@ export function useRenderLocationFormAssets() {
             prevRenderedForms.current = result;
             return result;
         }
-    }, [templateMap, currentForms]);
+    }, [templates, locationForms, active]);
+
+    const willUnmount = useRef(false);
+    useEffect(() => {
+        willUnmount.current = false;
+        return () => {
+            willUnmount.current = true;
+        };
+    }, []);
+
+    useEffect(() => {
+        return () => {
+            abort();
+        };
+    }, [locationForms, abort]);
 
     useEffect(() => {
         updateDynamicObjects();
 
-        async function updateDynamicObjects() {
-            if (!loadAsset || !view || assetInfoList.status !== AsyncStatus.Success) {
+        return () => {
+            if (willUnmount.current && needCleaning.current) {
+                cleanup();
+            }
+        };
+
+        function cleanup() {
+            if (!view || assetInfoList.status !== AsyncStatus.Success) {
                 return;
+            }
+
+            const baseObjectIdSet = new Set<number>(assetInfoList.data.map((a) => a.baseObjectId));
+
+            const objects = view.renderState.dynamic.objects.filter(
+                (obj) =>
+                    !obj.baseObjectId ||
+                    (!baseObjectIdSet.has(obj.baseObjectId) &&
+                        !baseObjectIdSet.has(obj.baseObjectId + SELECTED_OBJECT_ID_OFFSET))
+            );
+
+            needCleaning.current = false;
+
+            view.modifyRenderState({ dynamic: { objects } });
+            setFormsGlobals((s) => ({ ...s, objectIdToFormIdMap: new Map() }));
+        }
+
+        async function updateDynamicObjects() {
+            if (!view || assetInfoList.status !== AsyncStatus.Success) {
+                return;
+            }
+
+            // Clean and exit
+            if (!active) {
+                if (needCleaning.current) {
+                    cleanup();
+                }
+
+                return;
+            }
+
+            const uniqueSymbols = new Set<string>();
+            for (const form of renderedForms) {
+                uniqueSymbols.add(form.symbol);
             }
 
             const assetMap = new Map<
@@ -97,17 +140,18 @@ export function useRenderLocationFormAssets() {
                 }[]
             >();
             await Promise.all(
-                uniqueSymbols.map(async (s) => {
+                [...uniqueSymbols].sort().map(async (name) => {
+                    const assetInfo = assetInfoList.data.find((a) => a.name === name)!;
                     assetMap.set(
-                        s,
-                        (await loadAsset(s)).map((ref) => ({ ref, instances: [], selectedInstances: [] }))
+                        name,
+                        (await loadAsset(name, assetInfo, abortController.current)).map((ref) => ({
+                            ref,
+                            instances: [],
+                            selectedInstances: [],
+                        }))
                     );
                 })
             );
-
-            if (abortController.current.signal.aborted) {
-                return;
-            }
 
             const objectIdToFormIdMap = new Map<number, string>();
 
@@ -136,14 +180,22 @@ export function useRenderLocationFormAssets() {
                 }
             }
 
-            const baseObjectIdSet = new Set<number>(assetInfoList.data.map((a) => a.baseObjectId));
+            let objects = view.renderState.dynamic.objects as RenderStateDynamicObject[];
+            if (needCleaning.current) {
+                const baseObjectIdSet = new Set<number>(assetInfoList.data.map((a) => a.baseObjectId));
 
-            const objects = view.renderState.dynamic.objects.filter(
-                (obj) =>
-                    !obj.baseObjectId ||
-                    (!baseObjectIdSet.has(obj.baseObjectId) &&
-                        !baseObjectIdSet.has(obj.baseObjectId + SELECTED_OBJECT_ID_OFFSET))
-            );
+                objects = view.renderState.dynamic.objects.filter(
+                    (obj) =>
+                        !obj.baseObjectId ||
+                        (!baseObjectIdSet.has(obj.baseObjectId) &&
+                            !baseObjectIdSet.has(obj.baseObjectId + SELECTED_OBJECT_ID_OFFSET))
+                );
+
+                needCleaning.current = false;
+            } else {
+                objects = objects.slice();
+            }
+
             assetMap.forEach((assets) => {
                 for (const { ref, instances, selectedInstances } of assets) {
                     if (instances.length) {
@@ -168,19 +220,11 @@ export function useRenderLocationFormAssets() {
                 }
             });
 
+            needCleaning.current = true;
             view.modifyRenderState({ dynamic: { objects } });
             setFormsGlobals((s) => ({ ...s, objectIdToFormIdMap }));
         }
-    }, [
-        renderedForms,
-        view,
-        assetInfoList,
-        loadAsset,
-        uniqueSymbols,
-        abortController,
-        setFormsGlobals,
-        selectedFormId,
-    ]);
+    }, [renderedForms, view, assetInfoList, abortController, setFormsGlobals, selectedFormId, active]);
 }
 
 const HIGHLIGHT_COLOR: RGBA = [1, 0, 0, 1];
@@ -192,4 +236,42 @@ function createSelectedMesh(mesh: RenderStateDynamicMesh): RenderStateDynamicMes
     }
 
     return mesh;
+}
+
+const ASSET_CACHE = new Map<string, readonly RenderStateDynamicObject[]>();
+const ASSET_CACHE_PROMISES = new Map<string, Promise<readonly RenderStateDynamicObject[]>>();
+
+async function loadAsset2(name: string, asset: FormGLtfAsset, abortController: AbortController) {
+    let loadedGltfList = ASSET_CACHE.get(name);
+    if (!loadedGltfList) {
+        let promise = ASSET_CACHE_PROMISES.get(name);
+        if (!promise) {
+            try {
+                const url = getAssetGlbUrl(asset.name);
+                promise = downloadGLTF(new URL(url), asset.baseObjectId, abortController);
+                ASSET_CACHE_PROMISES.set(name, promise);
+                loadedGltfList = await promise;
+                ASSET_CACHE.set(name, loadedGltfList);
+            } finally {
+                ASSET_CACHE_PROMISES.delete(name);
+            }
+        } else {
+            loadedGltfList = await promise;
+        }
+    }
+    return loadedGltfList;
+}
+
+async function loadAsset(name: string, asset: FormGLtfAsset, abortController: AbortController) {
+    let loadedGltfList = ASSET_CACHE.get(name);
+    if (!loadedGltfList) {
+        const url = getAssetGlbUrl(asset.name);
+        loadedGltfList = await downloadGLTF(new URL(url), asset.baseObjectId, abortController);
+        ASSET_CACHE.set(name, loadedGltfList);
+    }
+    return loadedGltfList;
+}
+
+function getAssetGlbUrl(asset: string) {
+    return `https://novorenderblobs.blob.core.windows.net/assets/glbs/${asset}.glb`;
 }
