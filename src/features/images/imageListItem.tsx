@@ -7,7 +7,7 @@ import { AsyncStatus } from "types/misc";
 import { handleImageResponse } from "utils/bcf";
 import { getAssetUrl } from "utils/misc";
 
-import { Image, imagesActions, selectActiveImage } from "./imagesSlice";
+import { Image, imagesActions, ImageType, selectActiveImage } from "./imagesSlice";
 import { isPanorama } from "./utils";
 
 const Img = styled("img")(
@@ -37,11 +37,7 @@ export function ImageListItem({ image, style }: { image: Image; style: CSSProper
     }, [url]);
 
     const viewImage = () => {
-        if (isCurrent) {
-            return;
-        }
-
-        dispatch(imagesActions.setActiveImage({ image, status: AsyncStatus.Loading }));
+        dispatch(imagesActions.setActiveImage({ image, mode: ImageType.Flat, status: AsyncStatus.Loading }));
     };
 
     return (
