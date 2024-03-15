@@ -379,7 +379,7 @@ export function Deviation() {
                     helperText={getActiveErrorText(subprofileErrors.groups2)}
                     disabled={formDisabled}
                 />
-                <SectionHeader>Select deviation favourites</SectionHeader>
+                <SectionHeader>Select groups to appear in legend</SectionHeader>
                 <GroupAutocomplete
                     options={favoriteOptions}
                     label="Groups"
