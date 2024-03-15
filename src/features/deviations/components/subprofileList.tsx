@@ -1,5 +1,5 @@
 import { Delete, Warning } from "@mui/icons-material";
-import { IconButton, List, ListItemButton, Typography, useTheme } from "@mui/material";
+import { IconButton, List, ListItemButton, Typography } from "@mui/material";
 import { useMemo } from "react";
 
 import { ObjectGroup } from "contexts/objectGroups";
@@ -58,7 +58,6 @@ function Item({
     selected?: boolean;
     errors: SubprofileGroupErrors;
 }) {
-    const theme = useTheme();
     const groups1 = useMemo(
         () =>
             subprofile.groups1.value
