@@ -9,6 +9,7 @@ import { useAppDispatch, useAppSelector } from "app/store";
 import { LogoSpeedDial, Tooltip, WidgetContainer, WidgetHeader } from "components";
 import { featuresConfig } from "config/features";
 import { useExplorerGlobals } from "contexts/explorerGlobals";
+import { isInternalGroup, useObjectGroups } from "contexts/objectGroups";
 import WidgetList from "features/widgetList/widgetList";
 import { useToggle } from "hooks/useToggle";
 import { selectIsAdminScene, selectMaximized, selectMinimized, selectProjectIsV2 } from "slices/explorerSlice";
@@ -22,6 +23,7 @@ import {
 } from "./deviationsSlice";
 import { DeviationCalculationStatus } from "./deviationTypes";
 import { useListenCalculationState } from "./hooks/useListenCalculationState";
+import { updateObjectIds } from "./hooks/useSaveDeviationConfig";
 import { CrupdateColorStop } from "./routes/crupdateColorStop";
 import { DeleteDeviation } from "./routes/deleteDeviation";
 import { Deviation } from "./routes/deviation";
@@ -78,6 +80,7 @@ function WidgetMenu(props: MenuProps) {
     const profiles = useAppSelector(selectDeviationProfiles);
     const isDeviationFormSet = useAppSelector((state) => selectDeviationForm(state) !== undefined);
     const dispatch = useAppDispatch();
+    const objectGroups = useObjectGroups().filter((grp) => !isInternalGroup(grp));
 
     const {
         state: { scene },
@@ -98,7 +101,8 @@ function WidgetMenu(props: MenuProps) {
         try {
             let success = false;
             if (isProjectV2) {
-                await calcDeviations({ projectId: scene.id, config: uiConfigToServerConfig(profiles.data) }).unwrap();
+                const config = uiConfigToServerConfig(updateObjectIds(profiles.data, objectGroups));
+                await calcDeviations({ projectId: scene.id, config }).unwrap();
 
                 success = true;
             } else {

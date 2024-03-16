@@ -116,7 +116,7 @@ async function saveExplorerSettings({
     }
 }
 
-function updateObjectIds(uiConfig: UiDeviationConfig, objectGroups: ObjectGroup[]): UiDeviationConfig {
+export function updateObjectIds(uiConfig: UiDeviationConfig, objectGroups: ObjectGroup[]): UiDeviationConfig {
     const getGroups = (groupIds: string[]) => {
         const groups = objectGroups.filter((g) => groupIds.includes(g.id));
         const objectIds = new Set<number>();
