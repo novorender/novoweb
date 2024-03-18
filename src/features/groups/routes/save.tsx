@@ -1,4 +1,5 @@
 import { Box, Checkbox, FormControlLabel, useTheme } from "@mui/material";
+import { TextureDescription } from "@novorender/api";
 import { FormEvent } from "react";
 import { useHistory } from "react-router-dom";
 
@@ -62,6 +63,16 @@ export function Save({ sceneId }: { sceneId: string }) {
                     );
             }
 
+            updated.forEach((group) => {
+                const grp = group as { texture?: TextureDescription };
+
+                if (grp.texture) {
+                    localStorage.setItem(`textures-${group.id}`, JSON.stringify(grp.texture));
+                }
+
+                delete grp.texture;
+            });
+
             await dataApi.putScene({
                 ...originalScene,
                 url: `${sceneId}:${scene.id}`,
@@ -69,7 +80,8 @@ export function Save({ sceneId }: { sceneId: string }) {
             });
 
             dispatch(groupsActions.setSaveStatus(AsyncStatus.Success));
-        } catch {
+        } catch (e) {
+            console.warn(e);
             dispatch(groupsActions.setSaveStatus(AsyncStatus.Error));
         }
 

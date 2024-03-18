@@ -1,4 +1,9 @@
-import { createColorSetHighlight, createNeutralHighlight, createTransparentHighlight } from "@novorender/api";
+import {
+    createColorSetHighlight,
+    createNeutralHighlight,
+    createTransparentHighlight,
+    RenderStateHighlightGroup,
+} from "@novorender/api";
 import { useEffect, useRef } from "react";
 
 import { dataApi } from "app";
@@ -76,7 +81,7 @@ export function useHandleHighlights() {
                 return;
             }
 
-            const { coloredGroups, hiddenGroups, semiTransparent } = groups.reduce(
+            const { coloredGroups, hiddenGroups, semiTransparent, texturedGroups } = groups.reduce(
                 (prev, group) => {
                     switch (group.status) {
                         case GroupStatus.Selected: {
@@ -92,12 +97,17 @@ export function useHandleHighlights() {
                             break;
                         }
                         default:
+                            if (group.texture) {
+                                const { index } = view.assignTextureSlot(group.texture);
+                                prev.texturedGroups.push({ ...group, textureIndex: index });
+                            }
                             break;
                     }
 
                     return prev;
                 },
                 {
+                    texturedGroups: [] as (ObjectGroup & { textureIndex: number })[],
                     coloredGroups: [] as ObjectGroup[],
                     frozenGroups: [] as ObjectGroup[],
                     hiddenGroups: [] as { ids: Set<number> }[],
@@ -128,12 +138,28 @@ export function useHandleHighlights() {
                 }
             );
 
+            const textureHighlightGroups = texturedGroups.map((group) => {
+                // eslint-disable-next-line
+                const { albedo, scale, metalness } = group.texture as any;
+                return {
+                    action: createColorSetHighlight(albedo),
+                    // action: createNeutralHighlight(),
+                    objectIds: group.ids,
+                    texture: {
+                        index: group.textureIndex,
+                        scale,
+                        metalness,
+                    },
+                } as RenderStateHighlightGroup;
+            });
+
             const allHidden = new Set<number>(hidden);
             hiddenGroups.forEach((group) => group.ids.forEach((id) => allHidden.add(id)));
 
             view.modifyRenderState({
                 highlights: {
                     groups: [
+                        ...(defaultVisibility === ObjectVisibility.Neutral ? textureHighlightGroups : []),
                         ...(defaultVisibility === ObjectVisibility.Neutral
                             ? semiTransparent.map((group) => ({
                                   objectIds: new Uint32Array(group.ids).sort(),

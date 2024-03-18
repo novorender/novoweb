@@ -1,3 +1,4 @@
+import { TextureDescription } from "@novorender/api";
 import { SearchPattern } from "@novorender/webgl-api";
 import { createContext, Dispatch, MutableRefObject } from "react";
 import { v4 as uuidv4 } from "uuid";
@@ -21,6 +22,7 @@ export interface ObjectGroup {
     opacity: number;
     search: SearchPattern[];
     includeDescendants: boolean;
+    texture?: TextureDescription;
 }
 
 export const initialState = [] as ObjectGroup[];

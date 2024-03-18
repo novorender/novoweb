@@ -3,12 +3,13 @@ import {
     DeviceProfile,
     RecursivePartial,
     SceneConfig as OctreeSceneConfig,
+    TextureDescription,
     TonemappingMode,
     View,
 } from "@novorender/api";
 import type { Bookmark, ObjectGroup } from "@novorender/data-js-api";
 import type { BoundingSphere, Camera, EnvironmentDescription } from "@novorender/webgl-api";
-import { createAction, createSlice, PayloadAction } from "@reduxjs/toolkit";
+import { createAction, createSelector, createSlice, PayloadAction } from "@reduxjs/toolkit";
 import { quat, vec3, vec4 } from "gl-matrix";
 
 import type { RootState } from "app/store";
@@ -163,6 +164,7 @@ type Stamp = { mouseX: number; mouseY: number; pinned: boolean } & (
 );
 
 const initialState = {
+    textures: { status: AsyncStatus.Initial } as AsyncState<TextureDescription[]>,
     sceneStatus: { status: AsyncStatus.Initial } as AsyncState<void>,
     sceneOrganization: "",
     mainObject: undefined as number | undefined,
@@ -375,6 +377,12 @@ export const renderSlice = createSlice({
     name: "render",
     initialState: initialState as State,
     reducers: {
+        setTextures: (state, action: PayloadAction<TextureDescription[]>) => {
+            state.textures = {
+                status: AsyncStatus.Success,
+                data: action.payload as DeepMutable<TextureDescription[]>,
+            };
+        },
         setMainObject: (state, action: PayloadAction<number | undefined>) => {
             state.mainObject = action.payload;
         },
@@ -944,6 +952,9 @@ export const selectNavigationCube = (state: RootState) => state.render.navigatio
 export const selectDebugStats = (state: RootState) => state.render.debugStats;
 export const selectClippingInEdit = (state: RootState) => state.render.clippingInEdit;
 export const selectSceneOrganization = (state: RootState) => state.render.sceneOrganization;
+export const selectTextures = createSelector([(state: RootState) => state.render.textures], (textures) =>
+    "data" in textures ? textures.data : ([] as TextureDescription[])
+);
 
 const { reducer } = renderSlice;
 const actions = { ...renderSlice.actions, initScene, resetView, selectBookmark };

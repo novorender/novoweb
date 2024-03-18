@@ -1,6 +1,18 @@
-import { ColorLens, Delete, Edit, LibraryAdd, MoreVert, Opacity, Visibility, VisibilityOff } from "@mui/icons-material";
 import {
+    ColorLens,
+    Delete,
+    Edit,
+    LibraryAdd,
+    MoreVert,
+    Opacity,
+    Texture,
+    Visibility,
+    VisibilityOff,
+} from "@mui/icons-material";
+import {
+    Autocomplete,
     Box,
+    Button,
     Checkbox,
     css,
     IconButton,
@@ -10,16 +22,20 @@ import {
     ListItemText,
     Menu,
     MenuItem,
+    Modal,
     styled,
     Typography,
 } from "@mui/material";
+import { TextureDescription } from "@novorender/api";
 import { MouseEvent, useState } from "react";
 import { Route, Switch, useHistory, useRouteMatch } from "react-router-dom";
 
 import { useAppSelector } from "app/store";
-import { Tooltip } from "components";
+import { TextField, Tooltip } from "components";
 import { GroupStatus, ObjectGroup, objectGroupsActions, useDispatchObjectGroups } from "contexts/objectGroups";
 import { ColorPicker } from "features/colorPicker";
+import { selectTextures } from "features/render";
+import { useToggle } from "hooks/useToggle";
 import { selectHasAdminCapabilities } from "slices/explorerSlice";
 import { rgbToVec, vecToRgb } from "utils/color";
 
@@ -40,7 +56,10 @@ export function Group({ group, disabled }: { group: ObjectGroup; disabled: boole
     const history = useHistory();
     const match = useRouteMatch();
     const isAdmin = useAppSelector(selectHasAdminCapabilities);
+    const availableTextures = useAppSelector(selectTextures);
     const dispatchObjectGroups = useDispatchObjectGroups();
+
+    const [pickTexture, togglePickTexture] = useToggle();
 
     const [menuAnchor, setMenuAnchor] = useState<HTMLElement | null>(null);
     const [colorPickerAnchor, setColorPickerAnchor] = useState<HTMLElement | null>(null);
@@ -199,6 +218,12 @@ export function Group({ group, disabled }: { group: ObjectGroup; disabled: boole
                                     <Opacity fontSize="small" />
                                 </ListItemIcon>
                                 <ListItemText>Hidden transparency</ListItemText>
+                            </MenuItem>,
+                            <MenuItem key="texture" onClick={() => history.replace(match.path + "/texture")}>
+                                <ListItemIcon>
+                                    <Texture fontSize="small" />
+                                </ListItemIcon>
+                                <ListItemText>Texture</ListItemText>
                             </MenuItem>
                         )}
                     </Route>
@@ -215,8 +240,80 @@ export function Group({ group, disabled }: { group: ObjectGroup; disabled: boole
                             </MenuItem>
                         ))}
                     </Route>
+                    <Route path={match.path + "/texture"} exact>
+                        <MenuItem sx={{ minWidth: 300 }}>
+                            <Autocomplete
+                                options={availableTextures.concat({ name: "none" } as TextureDescription)}
+                                fullWidth
+                                isOptionEqualToValue={(opt, val) => opt.name === val.name}
+                                renderInput={(params) => <TextField required label="Texture" {...params} />}
+                                disableCloseOnSelect={true}
+                                getOptionLabel={(opt) => opt.name}
+                                value={group.texture ?? null}
+                                onChange={(_evt, textureDesc) => {
+                                    if (!textureDesc) {
+                                        return;
+                                    }
+
+                                    if (textureDesc.name === "none") {
+                                        dispatchObjectGroups(
+                                            objectGroupsActions.update(group.id, { texture: undefined })
+                                        );
+                                    } else {
+                                        dispatchObjectGroups(
+                                            objectGroupsActions.update(group.id, { texture: textureDesc })
+                                        );
+                                    }
+                                }}
+                            />
+                        </MenuItem>
+                    </Route>
                 </Switch>
             </Menu>
+            {pickTexture && (
+                <Modal open={true} onClose={() => togglePickTexture(false)}>
+                    <Box display="flex" justifyContent="center" alignItems="center" width={1} height={1}>
+                        <Box
+                            minWidth={400}
+                            borderRadius="4px"
+                            bgcolor={(theme) => theme.palette.common.white}
+                            py={8}
+                            px={{ xs: 2, sm: 8 }}
+                            mx="auto"
+                        >
+                            <Typography mb={2} fontSize={24} fontWeight={700} textAlign="center" component="h1">
+                                Select texture
+                            </Typography>
+                            <Autocomplete
+                                sx={{ mb: 2 }}
+                                options={availableTextures.concat({ name: "none" } as TextureDescription)}
+                                fullWidth
+                                isOptionEqualToValue={(opt, val) => opt.name === val.name}
+                                renderInput={(params) => <TextField required label="Texture" {...params} />}
+                                getOptionLabel={(opt) => opt.name}
+                                onChange={(_evt, textureDesc) => {
+                                    if (!textureDesc) {
+                                        return;
+                                    }
+
+                                    if (textureDesc.name === "none") {
+                                        dispatchObjectGroups(
+                                            objectGroupsActions.update(group.id, { texture: undefined })
+                                        );
+                                    } else {
+                                        dispatchObjectGroups(
+                                            objectGroupsActions.update(group.id, { texture: textureDesc })
+                                        );
+                                    }
+                                }}
+                            />
+                            <Button fullWidth variant="contained" onClick={() => togglePickTexture(false)}>
+                                Close
+                            </Button>
+                        </Box>
+                    </Box>
+                </Modal>
+            )}
         </>
     );
 }
