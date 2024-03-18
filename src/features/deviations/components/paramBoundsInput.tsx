@@ -60,7 +60,7 @@ export function ParamBoundsInput({
                     onChange={(e) => setSingleBound(0, e.target.value)}
                     onBlur={() => handleInputBlur(0)}
                     disabled={disabled}
-                    inputProps={{ type: "number" }}
+                    inputProps={{ type: "number", step: 1 }}
                     fullWidth
                 />
             </Box>
@@ -87,7 +87,7 @@ export function ParamBoundsInput({
                     onChange={(e) => setSingleBound(1, e.target.value)}
                     onBlur={() => handleInputBlur(1)}
                     disabled={disabled}
-                    inputProps={{ type: "number" }}
+                    inputProps={{ type: "number", step: 1 }}
                     fullWidth
                 />
             </Box>

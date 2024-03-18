@@ -1,8 +1,8 @@
-import { RestartAlt } from "@mui/icons-material";
-import { ListItemIcon, ListItemText, Menu, MenuItem, MenuProps, Typography } from "@mui/material";
+import { Add, Delete, RestartAlt, Settings } from "@mui/icons-material";
+import { Divider, ListItemIcon, ListItemText, Menu, MenuItem, MenuProps, Typography } from "@mui/material";
 import { Box } from "@mui/system";
 import { useCalcDeviationsMutation } from "apis/dataV2/dataV2Api";
-import { MemoryRouter, Route, Switch } from "react-router-dom";
+import { MemoryRouter, Route, Switch, useHistory } from "react-router-dom";
 
 import { dataApi } from "app";
 import { useAppDispatch, useAppSelector } from "app/store";
@@ -20,6 +20,7 @@ import {
     selectDeviationCalculationStatus,
     selectDeviationForm,
     selectDeviationProfiles,
+    selectSelectedProfile,
 } from "./deviationsSlice";
 import { DeviationCalculationStatus } from "./deviationTypes";
 import { useListenCalculationState } from "./hooks/useListenCalculationState";
@@ -28,7 +29,7 @@ import { CrupdateColorStop } from "./routes/crupdateColorStop";
 import { DeleteDeviation } from "./routes/deleteDeviation";
 import { Deviation } from "./routes/deviation";
 import { Root } from "./routes/root";
-import { uiConfigToServerConfig } from "./utils";
+import { MAX_DEVIATION_PROFILE_COUNT, profileToDeviationForm, uiConfigToServerConfig } from "./utils";
 
 export default function Deviations() {
     const [menuOpen, toggleMenu] = useToggle();
@@ -75,24 +76,31 @@ export default function Deviations() {
 }
 
 function WidgetMenu(props: MenuProps) {
-    const isProjectV2 = useAppSelector(selectProjectIsV2);
-    const calculationStatus = useAppSelector(selectDeviationCalculationStatus);
-    const profiles = useAppSelector(selectDeviationProfiles);
-    const isDeviationFormSet = useAppSelector((state) => selectDeviationForm(state) !== undefined);
-    const dispatch = useAppDispatch();
-    const objectGroups = useObjectGroups().filter((grp) => !isInternalGroup(grp));
-
     const {
         state: { scene },
     } = useExplorerGlobals(true);
     const isAdminScene = useAppSelector(selectIsAdminScene);
+    const history = useHistory();
+    const isProjectV2 = useAppSelector(selectProjectIsV2);
+    const calculationStatus = useAppSelector(selectDeviationCalculationStatus);
+    const config = useAppSelector(selectDeviationProfiles);
+    const selectedProfile = useAppSelector(selectSelectedProfile);
+    const isDeviationFormSet = useAppSelector((state) => selectDeviationForm(state) !== undefined);
+    const dispatch = useAppDispatch();
+    const objectGroups = useObjectGroups().filter((grp) => !isInternalGroup(grp));
 
     useListenCalculationState();
 
     const [calcDeviations] = useCalcDeviationsMutation();
 
+    const closeMenu = () => {
+        if (props.onClose) {
+            props.onClose({}, "backdropClick");
+        }
+    };
+
     const handleCalculateDeviations = async () => {
-        if (profiles.status !== AsyncStatus.Success) {
+        if (config.status !== AsyncStatus.Success) {
             return;
         }
 
@@ -101,8 +109,8 @@ function WidgetMenu(props: MenuProps) {
         try {
             let success = false;
             if (isProjectV2) {
-                const config = uiConfigToServerConfig(updateObjectIds(profiles.data, objectGroups));
-                await calcDeviations({ projectId: scene.id, config }).unwrap();
+                const serverConfig = uiConfigToServerConfig(updateObjectIds(config.data, objectGroups));
+                await calcDeviations({ projectId: scene.id, config: serverConfig }).unwrap();
 
                 success = true;
             } else {
@@ -123,7 +131,7 @@ function WidgetMenu(props: MenuProps) {
                 dispatch(
                     deviationsActions.setProfiles({
                         status: AsyncStatus.Success,
-                        data: { ...profiles.data, rebuildRequired: false },
+                        data: { ...config.data, rebuildRequired: false },
                     })
                 );
             }
@@ -157,6 +165,60 @@ function WidgetMenu(props: MenuProps) {
             >
                 <div>
                     <MenuItem
+                        onClick={() => {
+                            closeMenu();
+                            const deviationForm = profileToDeviationForm(selectedProfile!);
+                            dispatch(deviationsActions.setDeviationForm(deviationForm));
+                            history.push("/deviation/edit");
+                        }}
+                        disabled={!selectedProfile}
+                    >
+                        <ListItemIcon>
+                            <Settings fontSize="small" />
+                        </ListItemIcon>
+                        <ListItemText>Settings</ListItemText>
+                    </MenuItem>
+                    <MenuItem
+                        onClick={() => {
+                            closeMenu();
+                            history.push("/deviation/delete", { id: selectedProfile!.id! });
+                        }}
+                        disabled={!selectedProfile}
+                    >
+                        <ListItemIcon>
+                            <Delete fontSize="small" />
+                        </ListItemIcon>
+                        <ListItemText>Remove</ListItemText>
+                    </MenuItem>
+                    <Tooltip
+                        title={
+                            config.status === AsyncStatus.Success &&
+                            config.data.profiles.length === MAX_DEVIATION_PROFILE_COUNT
+                                ? "Reached maximum supported amount of deviation profiles"
+                                : ""
+                        }
+                    >
+                        <span>
+                            <MenuItem
+                                onClick={() => {
+                                    closeMenu();
+                                    history.push("/deviation/delete", { id: selectedProfile!.id! });
+                                }}
+                                disabled={
+                                    config.status !== AsyncStatus.Success ||
+                                    config.data.profiles.length === MAX_DEVIATION_PROFILE_COUNT ||
+                                    !isProjectV2
+                                }
+                            >
+                                <ListItemIcon>
+                                    <Add fontSize="small" />
+                                </ListItemIcon>
+                                <ListItemText>New</ListItemText>
+                            </MenuItem>
+                        </span>
+                    </Tooltip>
+                    <Divider />
+                    <MenuItem
                         onClick={handleCalculateDeviations}
                         disabled={
                             calculationStatus.status === DeviationCalculationStatus.Running ||
@@ -164,12 +226,10 @@ function WidgetMenu(props: MenuProps) {
                             isDeviationFormSet
                         }
                     >
-                        <>
-                            <ListItemIcon>
-                                <RestartAlt fontSize="small" />
-                            </ListItemIcon>
-                            <ListItemText>Calculate deviations</ListItemText>
-                        </>
+                        <ListItemIcon>
+                            <RestartAlt fontSize="small" />
+                        </ListItemIcon>
+                        <ListItemText>Calculate deviations</ListItemText>
                     </MenuItem>
                 </div>
             </Tooltip>

@@ -1,18 +1,5 @@
-import { Add, Delete, InfoOutlined, Save, Settings } from "@mui/icons-material";
-import {
-    Alert,
-    Box,
-    Button,
-    FormControl,
-    IconButton,
-    InputLabel,
-    MenuItem,
-    Select,
-    Tooltip,
-    Typography,
-    useTheme,
-} from "@mui/material";
-import { useHistory } from "react-router-dom";
+import { Save } from "@mui/icons-material";
+import { Alert, Box, Button, FormControl, InputLabel, MenuItem, Select, Typography, useTheme } from "@mui/material";
 
 import { useAppDispatch, useAppSelector } from "app/store";
 import { Divider, LinearProgress, ScrollBox } from "components";
@@ -33,13 +20,11 @@ import {
 } from "../deviationsSlice";
 import { DeviationCalculationStatus } from "../deviationTypes";
 import { useSaveDeviationConfig } from "../hooks/useSaveDeviationConfig";
-import { MAX_DEVIATION_PROFILE_COUNT, newDeviationForm, profileToDeviationForm } from "../utils";
 
 export function Root() {
-    const history = useHistory();
     const theme = useTheme();
-    const isAdmin = useAppSelector(selectHasAdminCapabilities);
     const isProjectV2 = useAppSelector(selectProjectIsV2);
+    const isAdmin = useAppSelector(selectHasAdminCapabilities);
     const profiles = useAppSelector(selectDeviationProfiles);
     const profileList = useAppSelector(selectDeviationProfileList);
     const selectedProfile = useAppSelector(selectSelectedProfile);
@@ -47,8 +32,9 @@ export function Root() {
     const deviations = useAppSelector(selectDeviations);
     const saveStatus = useAppSelector(selectSaveStatus);
     const isSaving = saveStatus.status === AsyncStatus.Loading;
-    const saveConfig = useSaveDeviationConfig();
     const calculationStatus = useAppSelector(selectDeviationCalculationStatus);
+
+    const saveConfig = useSaveDeviationConfig();
 
     const handleSave = async () => {
         if (profiles.status !== AsyncStatus.Success) {
@@ -79,83 +65,9 @@ export function Root() {
                         <Box px={1}>
                             <Divider />
                         </Box>
-                        <Box display={"flex"} justifyContent={"flex-end"}>
+                        <Box display="flex" justifyContent="space-between">
                             <MixFactorInput />
 
-                            <Box flex="auto" />
-
-                            {!isProjectV2 && (
-                                <Tooltip
-                                    title={
-                                        <>
-                                            <div>
-                                                Deviations widget for older projects supports limited functionality:
-                                            </div>
-                                            <ul>
-                                                <li>Same color stops for all deviation profiles</li>
-                                                <li>Deviation profiles are read only</li>
-                                            </ul>
-                                        </>
-                                    }
-                                    enterDelay={0}
-                                >
-                                    <IconButton
-                                        onClick={(evt) => {
-                                            evt.stopPropagation();
-                                        }}
-                                    >
-                                        <InfoOutlined />
-                                    </IconButton>
-                                </Tooltip>
-                            )}
-
-                            <Button
-                                color="grey"
-                                onClick={() => {
-                                    const deviationForm = profileToDeviationForm(selectedProfile!);
-                                    dispatch(deviationsActions.setDeviationForm(deviationForm));
-                                    history.push("/deviation/edit");
-                                }}
-                                disabled={!selectedProfile}
-                            >
-                                <Settings fontSize="small" sx={{ mr: 1 }} />
-                                Settings
-                            </Button>
-                            {isProjectV2 && (
-                                <Button
-                                    color="grey"
-                                    onClick={() => {
-                                        history.push("/deviation/delete", { id: selectedProfile!.id! });
-                                    }}
-                                    disabled={!selectedProfile}
-                                >
-                                    <Delete fontSize="small" sx={{ mr: 1 }} />
-                                    Remove
-                                </Button>
-                            )}
-                            {isProjectV2 && (
-                                <Tooltip
-                                    title={
-                                        profileList.length === MAX_DEVIATION_PROFILE_COUNT
-                                            ? "Reached maximum supported amount of deviation profiles"
-                                            : ""
-                                    }
-                                >
-                                    <span>
-                                        <Button
-                                            color="grey"
-                                            onClick={() => {
-                                                dispatch(deviationsActions.setDeviationForm(newDeviationForm()));
-                                                history.push("/deviation/add");
-                                            }}
-                                            disabled={profileList.length === MAX_DEVIATION_PROFILE_COUNT}
-                                        >
-                                            <Add fontSize="small" sx={{ mr: 1 }} />
-                                            New
-                                        </Button>
-                                    </span>
-                                </Tooltip>
-                            )}
                             {isAdmin && (
                                 <Button
                                     color="grey"
