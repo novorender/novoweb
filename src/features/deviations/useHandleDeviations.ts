@@ -53,7 +53,7 @@ export function useHandleDeviations() {
                     isProjectV2
                         ? getDeviationProfiles({ projectId })
                               .unwrap()
-                              .then((data) => (data ? configToUi(data, defaultColorStops) : getEmptyDeviationConfig()))
+                              .then((data) => (data ? configToUi(data, defaultColorStops) : undefined))
                         : undefined,
                 ]);
 
