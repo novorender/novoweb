@@ -13,7 +13,7 @@ import WidgetList from "features/widgetList/widgetList";
 import { useSceneId } from "hooks/useSceneId";
 import { useToggle } from "hooks/useToggle";
 import { selectUser, User as UserType } from "slices/authSlice";
-import { selectConfig, selectMaximized, selectMinimized, selectUserRole, UserRole } from "slices/explorerSlice";
+import { selectConfig, selectMaximized, selectMinimized, selectUserRole, UserRole } from "slices/explorer";
 import { createOAuthStateString, generateCodeChallenge } from "utils/auth";
 import { deleteFromStorage, saveToStorage } from "utils/storage";
 

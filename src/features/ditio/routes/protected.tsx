@@ -7,7 +7,7 @@ import { useAppDispatch, useAppSelector } from "app/store";
 import { LinearProgress, ScrollBox, TextField } from "components";
 import { featuresConfig } from "config/features";
 import { selectAccessToken, selectUser } from "slices/authSlice";
-import { selectHasAdminCapabilities } from "slices/explorerSlice";
+import { selectHasAdminCapabilities } from "slices/explorer";
 import { AsyncStatus } from "types/misc";
 
 import { ditioActions, selectDitioAccessToken } from "../slice";

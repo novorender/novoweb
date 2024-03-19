@@ -3,7 +3,7 @@ import { useCallback, useEffect, useRef } from "react";
 import { useAppDispatch, useAppSelector } from "app/store";
 import { featuresConfig } from "config/features";
 import { useSceneId } from "hooks/useSceneId";
-import { selectEnabledWidgets } from "slices/explorerSlice";
+import { selectEnabledWidgets } from "slices/explorer";
 import { AsyncStatus } from "types/misc";
 import { secondsToMs } from "utils/time";
 

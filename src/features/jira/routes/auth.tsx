@@ -5,7 +5,7 @@ import { Redirect, useHistory } from "react-router-dom";
 import { useAppDispatch, useAppSelector } from "app/store";
 import { LinearProgress, ScrollBox } from "components";
 import { StorageKey } from "config/storage";
-import { selectConfig, selectHasAdminCapabilities } from "slices/explorerSlice";
+import { selectConfig, selectHasAdminCapabilities } from "slices/explorer";
 import { AsyncStatus } from "types/misc";
 import { deleteFromStorage, getFromStorage, saveToStorage } from "utils/storage";
 

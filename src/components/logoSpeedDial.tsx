@@ -13,7 +13,7 @@ import {
 import { useAppDispatch, useAppSelector } from "app/store";
 import { renderActions } from "features/render";
 import NovorenderIcon from "media/icons/novorender-small.svg?react";
-import { selectIsOnline } from "slices/explorerSlice";
+import { selectIsOnline } from "slices/explorer";
 
 export function LogoSpeedDial({
     open,

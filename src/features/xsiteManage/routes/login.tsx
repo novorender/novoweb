@@ -6,7 +6,7 @@ import { useAppSelector } from "app/store";
 import { ScrollBox } from "components";
 import { featuresConfig } from "config/features";
 import { useCreateBookmark } from "features/bookmarks/useCreateBookmark";
-import { selectConfig } from "slices/explorerSlice";
+import { selectConfig } from "slices/explorer";
 import { createOAuthStateString } from "utils/auth";
 
 import { xsiteManageAuthServer } from "../api";

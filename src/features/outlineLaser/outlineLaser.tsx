@@ -32,7 +32,7 @@ import {
 } from "features/render";
 import WidgetList from "features/widgetList/widgetList";
 import { useToggle } from "hooks/useToggle";
-import { selectMaximized, selectMinimized } from "slices/explorerSlice";
+import { selectMaximized, selectMinimized } from "slices/explorer";
 import { hslToVec } from "utils/color";
 import { getFilePathFromObjectPath } from "utils/objectData";
 import { searchByPatterns } from "utils/search";

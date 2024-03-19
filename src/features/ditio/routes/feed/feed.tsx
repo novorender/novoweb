@@ -8,7 +8,7 @@ import { useAppDispatch, useAppSelector } from "app/store";
 import { Divider, FixedSizeVirualizedList, ImgTooltip, IosSwitch, LinearProgress, Tooltip } from "components";
 import { featuresConfig } from "config/features";
 import { FormattedText } from "features/ditio/formattedText";
-import { selectHasAdminCapabilities } from "slices/explorerSlice";
+import { selectHasAdminCapabilities } from "slices/explorer";
 
 import { baseUrl, useFeedWebRawQuery } from "../../api";
 import {

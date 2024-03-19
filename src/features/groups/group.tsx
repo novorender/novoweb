@@ -20,7 +20,7 @@ import { useAppSelector } from "app/store";
 import { Tooltip } from "components";
 import { GroupStatus, ObjectGroup, objectGroupsActions, useDispatchObjectGroups } from "contexts/objectGroups";
 import { ColorPicker } from "features/colorPicker";
-import { selectHasAdminCapabilities } from "slices/explorerSlice";
+import { selectHasAdminCapabilities } from "slices/explorer";
 import { rgbToVec, vecToRgb } from "utils/color";
 
 export const StyledListItemButton = styled(ListItemButton)<ListItemButtonProps>(

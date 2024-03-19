@@ -7,7 +7,7 @@ import { useAppDispatch, useAppSelector } from "app/store";
 import { ScrollBox, TextField } from "components";
 import { useExplorerGlobals } from "contexts/explorerGlobals";
 import { useToggle } from "hooks/useToggle";
-import { selectHasAdminCapabilities } from "slices/explorerSlice";
+import { selectHasAdminCapabilities } from "slices/explorer";
 
 import { BookmarkAccess, bookmarksActions, selectBookmarks } from "../bookmarksSlice";
 import { useCreateBookmark } from "../useCreateBookmark";

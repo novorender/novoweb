@@ -6,7 +6,7 @@ import { useHistory } from "react-router-dom";
 import { useAppDispatch, useAppSelector } from "app/store";
 import { Accordion, AccordionDetails, AccordionSummary } from "components";
 import { GroupStatus, objectGroupsActions, useDispatchObjectGroups, useObjectGroups } from "contexts/objectGroups";
-import { selectHasAdminCapabilities } from "slices/explorerSlice";
+import { selectHasAdminCapabilities } from "slices/explorer";
 
 import { Group, StyledCheckbox } from "./group";
 import { groupsActions, selectIsCollectionExpanded } from "./groupsSlice";

@@ -33,7 +33,7 @@ import { singleCylinderOptions } from "features/measure";
 import { Picker, renderActions, selectPicker } from "features/render";
 import WidgetList from "features/widgetList/widgetList";
 import { useToggle } from "hooks/useToggle";
-import { selectMaximized, selectMinimized } from "slices/explorerSlice";
+import { selectMaximized, selectMinimized } from "slices/explorer";
 import { AsyncState, AsyncStatus, hasFinished } from "types/misc";
 
 import { HeightProfileChart } from "./heightProfileChart";

@@ -21,7 +21,7 @@ import { useHistory } from "react-router-dom";
 import { useAppSelector } from "app/store";
 import { Tooltip } from "components";
 import { selectUser } from "slices/authSlice";
-import { selectHasAdminCapabilities } from "slices/explorerSlice";
+import { selectHasAdminCapabilities } from "slices/explorer";
 
 import { BookmarkAccess, ExtendedBookmark } from "./bookmarksSlice";
 import { useSelectBookmark } from "./useSelectBookmark";

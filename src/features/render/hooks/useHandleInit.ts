@@ -15,7 +15,7 @@ import {
 import { highlightActions, useDispatchHighlighted } from "contexts/highlighted";
 import { GroupStatus, objectGroupsActions, useDispatchObjectGroups } from "contexts/objectGroups";
 import { useSceneId } from "hooks/useSceneId";
-import { ProjectType } from "slices/explorerSlice";
+import { ProjectType } from "slices/explorer";
 import { AsyncStatus } from "types/misc";
 import { VecRGBA } from "utils/color";
 import { sleep } from "utils/time";

@@ -31,7 +31,7 @@ import { selectMainObject } from "features/render";
 import WidgetList from "features/widgetList/widgetList";
 import { useAbortController } from "hooks/useAbortController";
 import { useToggle } from "hooks/useToggle";
-import { selectMaximized, selectMinimized } from "slices/explorerSlice";
+import { selectMaximized, selectMinimized } from "slices/explorer";
 import { AsyncState, AsyncStatus, hasFinished } from "types/misc";
 import { getObjectData } from "utils/search";
 

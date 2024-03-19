@@ -3,7 +3,7 @@ import { ListItemIcon, ListItemText, Menu, MenuItem, MenuProps } from "@mui/mate
 import { useHistory } from "react-router-dom";
 
 import { useAppSelector } from "app/store";
-import { selectHasAdminCapabilities } from "slices/explorerSlice";
+import { selectHasAdminCapabilities } from "slices/explorer";
 
 export function WidgetMenu(props: MenuProps) {
     const history = useHistory();

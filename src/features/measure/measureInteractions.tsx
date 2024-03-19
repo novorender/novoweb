@@ -8,7 +8,7 @@ import { useExplorerGlobals } from "contexts/explorerGlobals";
 import { areaActions, selectAreas } from "features/area";
 import { pointLineActions, selectPointLines } from "features/pointLine";
 import { Picker, renderActions } from "features/render";
-import { explorerActions, selectEnabledWidgets } from "slices/explorerSlice";
+import { explorerActions, selectEnabledWidgets } from "slices/explorer";
 
 import { measureActions, selectMeasure } from "./measureSlice";
 

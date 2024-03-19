@@ -10,7 +10,7 @@ import { featuresConfig } from "config/features";
 import { useCreateBookmark } from "features/bookmarks/useCreateBookmark";
 import { selectViewMode } from "features/render";
 import { useSceneId } from "hooks/useSceneId";
-import { selectIsOnline } from "slices/explorerSlice";
+import { selectIsOnline } from "slices/explorer";
 import { ViewMode } from "types/misc";
 
 enum Status {

@@ -25,7 +25,7 @@ import { useExplorerGlobals } from "contexts/explorerGlobals";
 import { ColorPicker } from "features/colorPicker";
 import { renderActions, selectDeviations } from "features/render";
 import { loadScene } from "features/render/utils";
-import { selectHasAdminCapabilities, selectIsAdminScene } from "slices/explorerSlice";
+import { selectHasAdminCapabilities, selectIsAdminScene } from "slices/explorer";
 import { AsyncStatus } from "types/misc";
 import { rgbToVec, VecRGBA, vecToRgb } from "utils/color";
 import { mergeRecursive } from "utils/misc";

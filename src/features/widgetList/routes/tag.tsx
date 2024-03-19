@@ -5,7 +5,7 @@ import { useHistory, useParams } from "react-router-dom";
 import { useAppSelector } from "app/store";
 import { Divider, ScrollBox, WidgetMenuButtonWrapper } from "components";
 import { FeatureTagKey, WidgetKey } from "config/features";
-import { selectEnabledWidgets, selectIsOnline, selectLockedWidgets, selectWidgets } from "slices/explorerSlice";
+import { selectEnabledWidgets, selectIsOnline, selectLockedWidgets, selectWidgets } from "slices/explorer";
 
 import { sorting } from "../sorting";
 

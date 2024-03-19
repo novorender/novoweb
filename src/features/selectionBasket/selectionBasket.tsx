@@ -8,7 +8,7 @@ import { featuresConfig } from "config/features";
 import { useSelectionBasket } from "contexts/selectionBasket";
 import WidgetList from "features/widgetList/widgetList";
 import { useToggle } from "hooks/useToggle";
-import { selectMaximized, selectMinimized } from "slices/explorerSlice";
+import { selectMaximized, selectMinimized } from "slices/explorer";
 
 import { CsvExport } from "./routes/csvExport";
 import { List } from "./routes/list";

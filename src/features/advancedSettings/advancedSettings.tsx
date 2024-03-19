@@ -38,7 +38,7 @@ import {
     selectMaximized,
     selectMinimized,
     selectPrimaryMenu,
-} from "slices/explorerSlice";
+} from "slices/explorer";
 import { CustomProperties } from "types/project";
 import { mergeRecursive } from "utils/misc";
 

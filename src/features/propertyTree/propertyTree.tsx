@@ -19,7 +19,7 @@ import WidgetList from "features/widgetList/widgetList";
 import { useAbortController } from "hooks/useAbortController";
 import { useSceneId } from "hooks/useSceneId";
 import { useToggle } from "hooks/useToggle";
-import { explorerActions, selectMaximized, selectMinimized, selectProjectIsV2 } from "slices/explorerSlice";
+import { explorerActions, selectMaximized, selectMinimized, selectProjectIsV2 } from "slices/explorer";
 import { AsyncStatus } from "types/misc";
 import { secondsToMs } from "utils/time";
 

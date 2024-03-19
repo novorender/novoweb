@@ -18,7 +18,7 @@ import { renderActions, selectCameraType, selectProjectSettings } from "features
 import { latLon2Tm } from "features/render/utils";
 import WidgetList from "features/widgetList/widgetList";
 import { useToggle } from "hooks/useToggle";
-import { selectMaximized, selectMinimized } from "slices/explorerSlice";
+import { selectMaximized, selectMinimized } from "slices/explorer";
 
 import {
     LocationStatus,

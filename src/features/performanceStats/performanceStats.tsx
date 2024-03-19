@@ -5,7 +5,7 @@ import { useEffect, useRef } from "react";
 import { useAppSelector } from "app/store";
 import { useExplorerGlobals } from "contexts/explorerGlobals";
 import { selectDeviceProfile } from "features/render";
-import { selectIsOnline } from "slices/explorerSlice";
+import { selectIsOnline } from "slices/explorer";
 
 const canvas: HTMLCanvasElement = document.createElement("canvas") as HTMLCanvasElement;
 canvas.width = 1;

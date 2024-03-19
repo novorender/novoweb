@@ -3,7 +3,7 @@ import { LogoSpeedDial, WidgetContainer, WidgetHeader } from "components";
 import { featuresConfig, WidgetKey } from "config/features";
 import WidgetList from "features/widgetList/widgetList";
 import { useToggle } from "hooks/useToggle";
-import { selectMaximized, selectMinimized } from "slices/explorerSlice";
+import { selectMaximized, selectMinimized } from "slices/explorer";
 
 import { ScrollBox } from "./scrollBox";
 

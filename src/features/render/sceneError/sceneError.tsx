@@ -9,7 +9,7 @@ import { Accordion, AccordionDetails, AccordionSummary } from "components";
 import { StorageKey } from "config/storage";
 import { useSceneId } from "hooks/useSceneId";
 import { selectUser } from "slices/authSlice";
-import { selectConfig } from "slices/explorerSlice";
+import { selectConfig } from "slices/explorer";
 import { AsyncStatus } from "types/misc";
 import { createOAuthStateString, generateCodeChallenge } from "utils/auth";
 import { deleteFromStorage, saveToStorage } from "utils/storage";

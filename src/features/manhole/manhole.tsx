@@ -23,7 +23,7 @@ import { MeasurementData } from "features/measure/measuredObject";
 import { Picker, renderActions, selectPicker } from "features/render";
 import WidgetList from "features/widgetList/widgetList";
 import { useToggle } from "hooks/useToggle";
-import { selectMaximized, selectMinimized } from "slices/explorerSlice";
+import { selectMaximized, selectMinimized } from "slices/explorer";
 import { getMeasurementValueKind, measureObjectIsVertex } from "utils/misc";
 
 import {

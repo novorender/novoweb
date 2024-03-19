@@ -8,7 +8,7 @@ import { featuresConfig } from "config/features";
 import { Picker, renderActions, selectClippingPlanes, selectPicker } from "features/render";
 import WidgetList from "features/widgetList/widgetList";
 import { useToggle } from "hooks/useToggle";
-import { selectMaximized, selectMinimized } from "slices/explorerSlice";
+import { selectMaximized, selectMinimized } from "slices/explorer";
 
 import Planes from "./planes";
 

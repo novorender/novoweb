@@ -21,7 +21,7 @@ import { useExplorerGlobals } from "contexts/explorerGlobals";
 import { selectMainObject } from "features/render";
 import WidgetList from "features/widgetList/widgetList";
 import { useToggle } from "hooks/useToggle";
-import { selectMaximized, selectMinimized } from "slices/explorerSlice";
+import { selectMaximized, selectMinimized } from "slices/explorer";
 
 export default function Omega365() {
     const [menuOpen, toggleMenu] = useToggle();

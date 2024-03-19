@@ -5,7 +5,7 @@ import { useAppSelector } from "app/store";
 import { ScrollBox, WidgetMenuButtonWrapper } from "components";
 import { featuresConfig, FeatureTag, featureTags, FeatureType, Widget, WidgetKey } from "config/features";
 import { ShareLink } from "features/shareLink";
-import { selectEnabledWidgets, selectIsOnline, selectLockedWidgets, selectWidgets } from "slices/explorerSlice";
+import { selectEnabledWidgets, selectIsOnline, selectLockedWidgets, selectWidgets } from "slices/explorer";
 
 import { sorting } from "../sorting";
 

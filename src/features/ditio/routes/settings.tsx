@@ -11,7 +11,7 @@ import { Divider, LinearProgress, ScrollBox, TextField } from "components";
 import { featuresConfig } from "config/features";
 import { useExplorerGlobals } from "contexts/explorerGlobals";
 import { loadScene } from "features/render/utils";
-import { selectIsAdminScene } from "slices/explorerSlice";
+import { selectIsAdminScene } from "slices/explorer";
 import { AsyncState, AsyncStatus } from "types/misc";
 
 import { useGetProjectsQuery } from "../api";

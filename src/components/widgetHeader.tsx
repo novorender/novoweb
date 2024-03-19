@@ -5,7 +5,7 @@ import { MouseEvent, ReactNode, useEffect, useState } from "react";
 import { useAppDispatch, useAppSelector } from "app/store";
 import { Divider } from "components";
 import { Widget } from "config/features";
-import { explorerActions, selectMaximized, selectMinimized } from "slices/explorerSlice";
+import { explorerActions, selectMaximized, selectMinimized } from "slices/explorer";
 
 export function WidgetHeader({
     widget: { name, Icon, key },

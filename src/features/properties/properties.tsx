@@ -8,7 +8,7 @@ import { featuresConfig } from "config/features";
 import WidgetList from "features/widgetList/widgetList";
 import { useSceneId } from "hooks/useSceneId";
 import { useToggle } from "hooks/useToggle";
-import { selectHasAdminCapabilities, selectMaximized, selectMinimized } from "slices/explorerSlice";
+import { selectHasAdminCapabilities, selectMaximized, selectMinimized } from "slices/explorer";
 
 import { Root } from "./routes/root";
 import { StampSettings } from "./routes/stampSettings";

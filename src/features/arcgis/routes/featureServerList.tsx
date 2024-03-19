@@ -29,7 +29,7 @@ import { useHistory } from "react-router-dom";
 import { useAppDispatch, useAppSelector } from "app/store";
 import { Accordion, AccordionDetails, AccordionSummary, ScrollBox } from "components";
 import { CameraType, renderActions } from "features/render";
-import { selectHasAdminCapabilities } from "slices/explorerSlice";
+import { selectHasAdminCapabilities } from "slices/explorer";
 import { AsyncStatus } from "types/misc";
 
 import { arcgisActions, FeatureServer, Layer, selectArcgisFeatureServers } from "../arcgisSlice";

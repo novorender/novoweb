@@ -20,7 +20,7 @@ import { useExplorerGlobals } from "contexts/explorerGlobals";
 import { Picker, renderActions, selectPicker } from "features/render";
 import WidgetList from "features/widgetList/widgetList";
 import { useToggle } from "hooks/useToggle";
-import { selectMaximized, selectMinimized } from "slices/explorerSlice";
+import { selectMaximized, selectMinimized } from "slices/explorer";
 
 import {
     pointLineActions,

@@ -11,7 +11,7 @@ import WidgetList from "features/widgetList/widgetList";
 import { useSceneId } from "hooks/useSceneId";
 import { useToggle } from "hooks/useToggle";
 import { selectUser } from "slices/authSlice";
-import { selectIsOnline, selectMaximized, selectMinimized } from "slices/explorerSlice";
+import { selectIsOnline, selectMaximized, selectMinimized } from "slices/explorer";
 
 import {
     BookmarkAccess,

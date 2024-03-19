@@ -3,7 +3,7 @@ import { vec2, vec3 } from "gl-matrix";
 import { useAppDispatch, useAppSelector } from "app/store";
 import { useExplorerGlobals } from "contexts/explorerGlobals";
 import { highlightActions, useDispatchHighlighted } from "contexts/highlighted";
-import { selectCanvasContextMenuFeatures } from "slices/explorerSlice";
+import { selectCanvasContextMenuFeatures } from "slices/explorer";
 import { isRealVec } from "utils/misc";
 
 import { renderActions, selectCameraType, selectClippingPlanes, selectPicker } from "../renderSlice";

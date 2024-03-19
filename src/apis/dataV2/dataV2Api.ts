@@ -3,7 +3,7 @@ import { minutesToSeconds } from "date-fns";
 
 import { type RootState } from "app/store";
 import { ArcgisWidgetConfig } from "features/arcgis";
-import { selectConfig } from "slices/explorerSlice";
+import { selectConfig } from "slices/explorer";
 
 import { Omega365Document } from "./omega365Types";
 import { ProjectInfo } from "./projectTypes";

@@ -9,7 +9,7 @@ import { StorageKey } from "config/storage";
 import WidgetList from "features/widgetList/widgetList";
 import { useSceneId } from "hooks/useSceneId";
 import { useToggle } from "hooks/useToggle";
-import { selectConfig, selectMaximized, selectMinimized } from "slices/explorerSlice";
+import { selectConfig, selectMaximized, selectMinimized } from "slices/explorer";
 import { AuthInfo } from "types/bcf";
 import { createOAuthStateString, getOAuthState } from "utils/auth";
 import { deleteFromStorage, getFromStorage, saveToStorage } from "utils/storage";

@@ -3,7 +3,7 @@ import { SVGProps } from "react";
 
 import { useAppDispatch, useAppSelector } from "app/store";
 import { featuresConfig } from "config/features";
-import { explorerActions } from "slices/explorerSlice";
+import { explorerActions } from "slices/explorer";
 
 import {
     followPathActions,

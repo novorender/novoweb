@@ -15,7 +15,7 @@ import { CustomParentNode } from "features/search";
 import WidgetList from "features/widgetList/widgetList";
 import { useAbortController } from "hooks/useAbortController";
 import { useToggle } from "hooks/useToggle";
-import { selectMaximized, selectMinimized } from "slices/explorerSlice";
+import { selectMaximized, selectMinimized } from "slices/explorer";
 import { iterateAsync } from "utils/search";
 
 enum Status {

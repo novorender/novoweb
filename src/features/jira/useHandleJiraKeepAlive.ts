@@ -2,7 +2,7 @@ import { useEffect, useRef } from "react";
 
 import { useAppDispatch, useAppSelector } from "app/store";
 import { StorageKey } from "config/storage";
-import { selectConfig } from "slices/explorerSlice";
+import { selectConfig } from "slices/explorer";
 import { AsyncStatus } from "types/misc";
 import { deleteFromStorage, saveToStorage } from "utils/storage";
 

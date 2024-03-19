@@ -13,7 +13,7 @@ import { Hud } from "features/hud";
 import { QuirkAlert } from "features/quirkAlert";
 import { Render3D, selectSceneStatus } from "features/render";
 import { VersionAlert } from "features/versionAlert";
-import { explorerActions } from "slices/explorerSlice";
+import { explorerActions } from "slices/explorer";
 import { AsyncStatus } from "types/misc";
 import { getOAuthState } from "utils/auth";
 

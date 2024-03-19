@@ -21,7 +21,7 @@ import { renderActions } from "features/render";
 import { StepBack } from "features/stepBack";
 import { StepForwards } from "features/stepForwards";
 import { useToggle } from "hooks/useToggle";
-import { selectPrimaryMenu } from "slices/explorerSlice";
+import { selectPrimaryMenu } from "slices/explorer";
 
 const positions = {
     small: [

@@ -12,7 +12,7 @@ import { useExplorerGlobals } from "contexts/explorerGlobals";
 import WidgetList from "features/widgetList/widgetList";
 import { useSceneId } from "hooks/useSceneId";
 import { useToggle } from "hooks/useToggle";
-import { selectIsAdminScene, selectMaximized, selectMinimized } from "slices/explorerSlice";
+import { selectIsAdminScene, selectMaximized, selectMinimized } from "slices/explorer";
 
 import { DeviationCalculationStatus, deviationsActions, selectDeviationCalculationStatus } from "./deviationsSlice";
 import { CrupdateColorStop } from "./routes/crupdateColorStop";

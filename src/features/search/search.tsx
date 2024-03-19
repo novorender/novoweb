@@ -21,7 +21,7 @@ import { NodeList } from "features/nodeList/nodeList";
 import WidgetList from "features/widgetList/widgetList";
 import { useAbortController } from "hooks/useAbortController";
 import { useToggle } from "hooks/useToggle";
-import { selectMaximized, selectMinimized, selectUrlSearchQuery } from "slices/explorerSlice";
+import { selectMaximized, selectMinimized, selectUrlSearchQuery } from "slices/explorer";
 import { iterateAsync } from "utils/search";
 
 import { CustomParentNode } from "./customParentNode";

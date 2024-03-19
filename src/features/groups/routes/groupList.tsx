@@ -11,7 +11,7 @@ import {
     useDispatchObjectGroups,
     useObjectGroups,
 } from "contexts/objectGroups";
-import { selectHasAdminCapabilities } from "slices/explorerSlice";
+import { selectHasAdminCapabilities } from "slices/explorer";
 import { AsyncStatus } from "types/misc";
 
 import { Collection } from "../collection";

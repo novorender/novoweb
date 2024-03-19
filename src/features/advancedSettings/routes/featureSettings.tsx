@@ -25,7 +25,7 @@ import {
     selectEnabledWidgets,
     selectLockedWidgets,
     selectPrimaryMenu,
-} from "slices/explorerSlice";
+} from "slices/explorer";
 
 export function FeatureSettings({ save, saving }: { save: () => Promise<void>; saving: boolean }) {
     const history = useHistory();

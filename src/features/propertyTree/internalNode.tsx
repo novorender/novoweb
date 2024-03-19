@@ -29,7 +29,7 @@ import { useExplorerGlobals } from "contexts/explorerGlobals";
 import { GroupStatus, ObjectGroup, objectGroupsActions, useDispatchObjectGroups } from "contexts/objectGroups";
 import { useSceneId } from "hooks/useSceneId";
 import { useToggle } from "hooks/useToggle";
-import { selectHasAdminCapabilities, selectProjectIsV2 } from "slices/explorerSlice";
+import { selectHasAdminCapabilities, selectProjectIsV2 } from "slices/explorer";
 import { AsyncStatus } from "types/misc";
 import { hslToVec, VecRGBA } from "utils/color";
 import { getAssetUrl } from "utils/misc";

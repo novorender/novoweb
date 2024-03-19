@@ -9,7 +9,7 @@ import { selectionBasketActions, useDispatchSelectionBasket } from "contexts/sel
 import { CameraType, ObjectVisibility, renderActions, selectSceneStatus } from "features/render";
 import { isGlSpace } from "features/render/utils";
 import { useAbortController } from "hooks/useAbortController";
-import { explorerActions, selectUrlSearchQuery } from "slices/explorerSlice";
+import { explorerActions, selectUrlSearchQuery } from "slices/explorer";
 import { AsyncStatus } from "types/misc";
 import { getTotalBoundingSphere } from "utils/objectData";
 import { batchedPropertySearch, searchDeepByPatterns } from "utils/search";

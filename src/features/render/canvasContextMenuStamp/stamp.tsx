@@ -25,7 +25,7 @@ import { areaActions } from "features/area";
 import { measureActions, selectMeasureEntities } from "features/measure";
 import { clippingOutlineLaserActions, getOutlineLaser, OutlineLaser } from "features/outlineLaser";
 import { pointLineActions, selectLockPointLineElevation } from "features/pointLine";
-import { selectCanvasContextMenuFeatures } from "slices/explorerSlice";
+import { selectCanvasContextMenuFeatures } from "slices/explorer";
 import { AsyncStatus } from "types/misc";
 import { getFilePathFromObjectPath, getParentPath } from "utils/objectData";
 import { getObjectData, searchDeepByPatterns } from "utils/search";

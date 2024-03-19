@@ -7,7 +7,7 @@ import { selectNavigationCube } from "features/render";
 import { SelectionModifierMenu } from "features/selectionModifierMenu";
 import { Widgets } from "features/widgets";
 import { useHandleWidgetLayout } from "features/widgets/useHandleWidgetLayout";
-import { selectWidgetLayout } from "slices/explorerSlice";
+import { selectWidgetLayout } from "slices/explorer";
 
 export function Hud() {
     const navigationCube = useAppSelector(selectNavigationCube);

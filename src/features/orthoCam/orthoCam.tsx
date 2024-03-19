@@ -22,7 +22,7 @@ import {
 } from "features/render";
 import WidgetList from "features/widgetList/widgetList";
 import { useToggle } from "hooks/useToggle";
-import { selectMaximized, selectMinimized } from "slices/explorerSlice";
+import { selectMaximized, selectMinimized } from "slices/explorer";
 import { ViewMode } from "types/misc";
 import { rgbToVec, VecRGBA, vecToRgb } from "utils/color";
 

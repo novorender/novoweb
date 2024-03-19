@@ -3,7 +3,7 @@ import { useEffect } from "react";
 
 import { useAppDispatch, useAppSelector } from "app/store";
 import { useExplorerGlobals } from "contexts/explorerGlobals";
-import { selectProjectIsV2 } from "slices/explorerSlice";
+import { selectProjectIsV2 } from "slices/explorer";
 import { AsyncStatus } from "types/misc";
 
 import { arcgisActions, FeatureServer, selectArcgisFeatureServersStatus } from "../arcgisSlice";
