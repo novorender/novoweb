@@ -1,7 +1,7 @@
-import { Add, ArrowBack, FilterAlt } from "@mui/icons-material";
+import { ArrowBack, FilterAlt } from "@mui/icons-material";
 import { Box, Button, FormControlLabel, List, Typography, useTheme } from "@mui/material";
 import { ObjectId } from "@novorender/api/types/data";
-import { MouseEvent, useCallback, useEffect, useRef, useState } from "react";
+import { type MouseEvent, useCallback, useEffect, useRef, useState } from "react";
 import { useHistory, useParams } from "react-router-dom";
 
 import { useAppDispatch, useAppSelector } from "app/store";
@@ -13,15 +13,15 @@ import {
     useDispatchHighlightCollections,
 } from "contexts/highlightCollections";
 import { highlightActions, useDispatchHighlighted } from "contexts/highlighted";
-import { FilterMenu } from "features/forms/filterMenu";
+import { useGetTemplateQuery } from "features/forms/api";
+import { FormFilterMenu } from "features/forms/formFilterMenu";
+import { formsActions, selectCurrentFormsList, selectFormFilters } from "features/forms/slice";
+import { type FormId, type FormObject, type FormState, TemplateType } from "features/forms/types";
 import { mapGuidsToIds } from "features/forms/utils";
 import { ObjectVisibility, Picker, renderActions, selectPicker } from "features/render";
 import { useAbortController } from "hooks/useAbortController";
 import { useSceneId } from "hooks/useSceneId";
 
-import { useGetTemplateQuery } from "../../api";
-import { formsActions, selectCurrentFormsList, selectFilters } from "../../slice";
-import { type FormId, type FormObject, type FormState, TemplateType } from "../../types";
 import { FormsListItem } from "./formsListItem";
 
 const FILTER_MENU_ID = "form-filter-menu";
@@ -35,7 +35,7 @@ export function FormsList() {
     const sceneId = useSceneId();
     const theme = useTheme();
     const history = useHistory();
-    const filters = useAppSelector(selectFilters);
+    const formFilters = useAppSelector(selectFormFilters);
     const currentFormsList = useAppSelector(selectCurrentFormsList);
     const willUnmount = useRef(false);
     const [filterMenuAnchor, setFilterMenuAnchor] = useState<HTMLElement | null>(null);
@@ -114,7 +114,7 @@ export function FormsList() {
 
     useEffect(() => {
         if (currentFormsList !== templateId) {
-            dispatch(formsActions.resetFilters());
+            dispatch(formsActions.resetFormFilters());
             dispatch(formsActions.setCurrentFormsList(templateId));
         }
     }, [dispatch, templateId, currentFormsList]);
@@ -124,17 +124,17 @@ export function FormsList() {
             const name = item.name ?? "";
             const formState = item.formState;
 
-            const activeStateFilters = Object.entries(filters)
+            const activeStateFilters = Object.entries(formFilters)
                 .filter(([_, value]) => value === true)
                 .map(([filter]) => filter);
 
             const matches =
                 activeStateFilters.includes(formState) &&
-                (!filters.name || name.trim().toLowerCase().includes(filters.name.trim().toLowerCase()));
+                (!formFilters.name || name.trim().toLowerCase().includes(formFilters.name.trim().toLowerCase()));
 
             return matches;
         },
-        [filters]
+        [formFilters]
     );
 
     useEffect(() => {
@@ -146,11 +146,11 @@ export function FormsList() {
 
         dispatch(renderActions.setDefaultVisibility(ObjectVisibility.Transparent));
 
-        const newGroup = filters.new ? forms.filter((form) => form.formState === "new").map((form) => form.id) : [];
-        const ongoingGroup = filters.ongoing
+        const newGroup = formFilters.new ? forms.filter((form) => form.formState === "new").map((form) => form.id) : [];
+        const ongoingGroup = formFilters.ongoing
             ? forms.filter((form) => form.formState === "ongoing").map((form) => form.id)
             : [];
-        const finishedGroup = filters.finished
+        const finishedGroup = formFilters.finished
             ? forms.filter((form) => form.formState === "finished").map((form) => form.id)
             : [];
 
@@ -161,7 +161,7 @@ export function FormsList() {
         dispatchHighlightCollections(
             highlightCollectionsActions.setIds(HighlightCollection.FormsCompleted, finishedGroup)
         );
-    }, [items, filters, dispatch, dispatchHighlightCollections, filterItems, template]);
+    }, [items, formFilters, dispatch, dispatchHighlightCollections, filterItems, template]);
 
     const handleBackClick = () => {
         history.push("/");
@@ -238,7 +238,7 @@ export function FormsList() {
                     ))}
                 </List>
             </ScrollBox>
-            <FilterMenu
+            <FormFilterMenu
                 anchorEl={filterMenuAnchor}
                 open={Boolean(filterMenuAnchor)}
                 onClose={closeFilters}

@@ -79,6 +79,7 @@ function CustomSwitch(props: PropsWithChildren<SwitchProps>) {
     useEffect(
         () => () => {
             if (willUnmount.current) {
+                dispatch(formsActions.resetTemplatesFilters());
                 dispatch(formsActions.setLastViewedPath(history.location.pathname));
             }
         },

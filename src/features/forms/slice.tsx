@@ -9,11 +9,16 @@ const initialState = {
     currentFormsList: null,
     locationForms: [],
     lastViewedPath: "/",
-    filters: {
+    formFilters: {
         name: "",
         new: true,
         ongoing: true,
         finished: true,
+    },
+    templatesFilters: {
+        name: "",
+        search: true,
+        location: true,
     },
     // Templates are loading progressively so status doesn't matter,
     // but just in case we will ever load them all at once I leave it here
@@ -24,11 +29,16 @@ const initialState = {
     currentFormsList: string | null;
     locationForms: { templateId: string; form: Partial<Form> }[];
     lastViewedPath: string;
-    filters: {
+    formFilters: {
         name: string;
         new: boolean;
         ongoing: boolean;
         finished: boolean;
+    };
+    templatesFilters: {
+        name: string;
+        search: boolean;
+        location: boolean;
     };
     templates: AsyncState<Partial<Template>[]>;
     assets: AsyncState<FormGLtfAsset[]>;
@@ -36,7 +46,8 @@ const initialState = {
 };
 
 type State = typeof initialState;
-export type Filters = State["filters"];
+export type FormFilters = State["formFilters"];
+export type TemplatesFilters = State["templatesFilters"];
 
 export const formsSlice = createSlice({
     name: "forms",
@@ -67,17 +78,29 @@ export const formsSlice = createSlice({
         setAssets: (state, action: PayloadAction<State["assets"]>) => {
             state.assets = action.payload;
         },
-        setFilters: (state, action: PayloadAction<Partial<State["filters"]>>) => {
-            state.filters = {
-                ...state.filters,
+        setFormFilters: (state, action: PayloadAction<Partial<State["formFilters"]>>) => {
+            state.formFilters = {
+                ...state.formFilters,
                 ...action.payload,
             };
         },
-        resetFilters: (state) => {
-            state.filters = initialState.filters;
+        resetFormFilters: (state) => {
+            state.formFilters = initialState.formFilters;
         },
-        toggleFilter: (state, action: PayloadAction<Exclude<keyof State["filters"], "name">>) => {
-            state.filters[action.payload] = !state.filters[action.payload];
+        toggleFormFilter: (state, action: PayloadAction<Exclude<keyof State["formFilters"], "name">>) => {
+            state.formFilters[action.payload] = !state.formFilters[action.payload];
+        },
+        setTemplatesFilters: (state, action: PayloadAction<Partial<State["templatesFilters"]>>) => {
+            state.templatesFilters = {
+                ...state.templatesFilters,
+                ...action.payload,
+            };
+        },
+        resetTemplatesFilters: (state) => {
+            state.templatesFilters = initialState.templatesFilters;
+        },
+        toggleTemplatesFilter: (state, action: PayloadAction<Exclude<keyof State["templatesFilters"], "name">>) => {
+            state.templatesFilters[action.payload] = !state.templatesFilters[action.payload];
         },
     },
 });
@@ -92,7 +115,9 @@ export const selectCurrentTemplate = createSelector([selectTemplates, selectCurr
     id && templates.status === AsyncStatus.Success ? templates.data.find((t) => t.id === id) : undefined
 );
 
-export const selectFilters = (state: RootState) => state.forms.filters;
+export const selectFormFilters = (state: RootState) => state.forms.formFilters;
+
+export const selectTemplatesFilters = (state: RootState) => state.forms.templatesFilters;
 
 export const selectLocationForms = (state: RootState) => state.forms.locationForms;
 

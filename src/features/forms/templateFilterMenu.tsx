@@ -4,19 +4,19 @@ import { Checkbox, InputAdornment, Menu, MenuItem, MenuProps, Typography, useThe
 import { AppDispatch, useAppDispatch, useAppSelector } from "app/store";
 import { TextField } from "components";
 
-import { Filters, formsActions, selectFilters } from "./slice";
+import { formsActions, selectTemplatesFilters, type TemplatesFilters } from "./slice";
 
-const FilterMenuItem = ({
+const TemplateFilterMenuItem = ({
     filterKey,
     filterValue,
     dispatch,
 }: {
-    filterKey: Exclude<keyof Filters, "name">;
+    filterKey: Exclude<keyof TemplatesFilters, "name">;
     filterValue: boolean;
     dispatch: AppDispatch;
 }) => (
     <MenuItem
-        onClick={() => dispatch(formsActions.toggleFilter(filterKey))}
+        onClick={() => dispatch(formsActions.toggleTemplatesFilter(filterKey))}
         sx={{ display: "flex", justifyContent: "space-between" }}
     >
         <Typography>{filterKey.charAt(0).toUpperCase() + filterKey.slice(1)}</Typography>
@@ -24,11 +24,11 @@ const FilterMenuItem = ({
     </MenuItem>
 );
 
-export function FilterMenu({ ...MenuProps }: MenuProps) {
+export function TemplateFilterMenu({ ...MenuProps }: MenuProps) {
     const theme = useTheme();
 
-    const filters = useAppSelector(selectFilters);
-    const { name, new: isNew, ongoing, finished } = filters;
+    const templatesFilters = useAppSelector(selectTemplatesFilters);
+    const { name, search, location } = templatesFilters;
     const dispatch = useAppDispatch();
 
     return (
@@ -44,7 +44,7 @@ export function FilterMenu({ ...MenuProps }: MenuProps) {
                     variant="standard"
                     placeholder="Search"
                     value={name}
-                    onChange={(e) => dispatch(formsActions.setFilters({ name: e.target.value }))}
+                    onChange={(e) => dispatch(formsActions.setTemplatesFilters({ name: e.target.value }))}
                     InputProps={{
                         disableUnderline: true,
                         onKeyDown: (e) => e.stopPropagation(),
@@ -56,9 +56,8 @@ export function FilterMenu({ ...MenuProps }: MenuProps) {
                     }}
                 />
             </MenuItem>
-            <FilterMenuItem filterKey="new" filterValue={isNew} dispatch={dispatch} />
-            <FilterMenuItem filterKey="ongoing" filterValue={ongoing} dispatch={dispatch} />
-            <FilterMenuItem filterKey="finished" filterValue={finished} dispatch={dispatch} />
+            <TemplateFilterMenuItem filterKey="search" filterValue={search} dispatch={dispatch} />
+            <TemplateFilterMenuItem filterKey="location" filterValue={location} dispatch={dispatch} />
         </Menu>
     );
 }

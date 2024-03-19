@@ -2,22 +2,30 @@ import { ListItemButton, Skeleton, Typography } from "@mui/material";
 import { useCallback, useEffect, useMemo } from "react";
 import { useHistory } from "react-router-dom";
 
-import { useAppDispatch } from "app/store";
+import { useAppDispatch, useAppSelector } from "app/store";
 import { useGetTemplateQuery } from "features/forms/api";
-import { formsActions } from "features/forms/slice";
+import { formsActions, selectTemplatesFilters } from "features/forms/slice";
+import { type SearchTemplate, type TemplateId, TemplateType } from "features/forms/types";
 import { useSceneId } from "hooks/useSceneId";
-
-import { SearchTemplate, type TemplateId, TemplateType } from "../../types";
 
 export function Template({ templateId }: { templateId: TemplateId }) {
     const history = useHistory();
     const sceneId = useSceneId();
     const dispatch = useAppDispatch();
-
+    const templatesFilters = useAppSelector(selectTemplatesFilters);
     const { data: template, isLoading } = useGetTemplateQuery({
         projectId: sceneId,
         templateId,
     });
+
+    const isFilteredOut = useMemo(
+        () =>
+            !isLoading &&
+            (!template!.title?.toLocaleLowerCase().includes(templatesFilters.name.toLocaleLowerCase()) ||
+                (!templatesFilters.location && template!.type === TemplateType.Location) ||
+                (!templatesFilters.search && template!.type === TemplateType.Search)),
+        [isLoading, template, templatesFilters]
+    );
 
     useEffect(() => {
         if (template) {
@@ -40,6 +48,10 @@ export function Template({ templateId }: { templateId: TemplateId }) {
         }
         history.push(`/forms/${template.id}`);
     }, [history, template]);
+
+    if (isFilteredOut) {
+        return null;
+    }
 
     return isLoading ? (
         <Skeleton variant="rectangular" height="2rem" />
