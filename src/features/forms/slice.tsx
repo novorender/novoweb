@@ -21,11 +21,11 @@ const initialState = {
         data: [
             {
                 id: "63903b3dd2bd41f39bfaaacc9c600c5e",
-                symbol: "pinYM",
+                marker: "pinYM",
             },
             {
                 id: "ae1b5c8a744f4996b1df0b63e4479b9d",
-                symbol: "cone",
+                marker: "cone",
             },
         ],
     },

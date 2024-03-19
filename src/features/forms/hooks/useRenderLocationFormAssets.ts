@@ -17,16 +17,16 @@ import { AsyncStatus } from "types/misc";
 
 import { useFormsGlobals } from "../formsGlobals";
 import { selectAssets, selectLocationForms, selectSelectedFormId, selectTemplates } from "../slice";
-import { FormGLtfAsset } from "../types";
+import { FormGLtfAsset, LocationTemplate } from "../types";
 
 type RenderedForm = {
     id: string;
-    symbol: string;
+    marker: string;
     location: ReadonlyVec3;
 };
 
 function areRenderedFormsEqual(a: RenderedForm, b: RenderedForm) {
-    return a.id === b.id && a.symbol === b.symbol && a.location === b.location;
+    return a.id === b.id && a.marker === b.marker && a.location === b.location;
 }
 
 const MAX_ASSET_COUNT = 100_000;
@@ -57,8 +57,8 @@ export function useRenderLocationFormAssets() {
         const result = locationForms
             .filter(({ form }) => form.location)
             .map(({ templateId, form }) => {
-                const template = templateMap.get(templateId)!;
-                return { id: form.id!, symbol: template.symbol!, location: form.location! };
+                const template = templateMap.get(templateId)! as LocationTemplate;
+                return { id: form.id!, marker: template.marker, location: form.location! };
             });
 
         if (areArraysEqual(result, prevRenderedForms.current, areRenderedFormsEqual)) {
@@ -126,9 +126,9 @@ export function useRenderLocationFormAssets() {
                 return;
             }
 
-            const uniqueSymbols = new Set<string>();
+            const uniqueMarkers = new Set<string>();
             for (const form of renderedForms) {
-                uniqueSymbols.add(form.symbol);
+                uniqueMarkers.add(form.marker);
             }
 
             const assetMap = new Map<
@@ -140,7 +140,7 @@ export function useRenderLocationFormAssets() {
                 }[]
             >();
             await Promise.all(
-                [...uniqueSymbols].sort().map(async (name) => {
+                [...uniqueMarkers].sort().map(async (name) => {
                     const assetInfo = assetInfoList.data.find((a) => a.name === name)!;
                     assetMap.set(
                         name,
@@ -156,7 +156,7 @@ export function useRenderLocationFormAssets() {
             const objectIdToFormIdMap = new Map<number, string>();
 
             for (const form of renderedForms) {
-                const asset = assetMap.get(form.symbol)!;
+                const asset = assetMap.get(form.marker)!;
                 for (const { ref, instances, selectedInstances } of asset) {
                     for (const refInst of ref.instances) {
                         let objectId: number;

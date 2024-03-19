@@ -9,11 +9,6 @@ export enum FormItemType {
     Text = "text",
 }
 
-export enum FormType {
-    SearchBased = "search",
-    LocationBased = "location",
-}
-
 export type FormItem = SimpleItem | ItemWithOptions;
 
 type BaseItem = {
@@ -113,20 +108,43 @@ export type FormObject = {
     name?: string;
 };
 
-export type Template = {
-    id: TemplateId;
-    title: string;
-    formType: FormType;
-    readonly?: boolean;
-    state?: TemplateState;
-    fields: FormField[];
-    objects: FormObject[];
-    symbol?: string;
-    forms: { [key: FormObjectGuid]: FormState };
-    created?: OffsetDateTime;
-    modified?: OffsetDateTime;
+type ChangeStamp = {
+    userId: string;
+    timestamp?: OffsetDateTime;
 };
 
+type BaseTemplateHeader = {
+    title: string;
+    type: TemplateType;
+    readonly: boolean;
+    state: TemplateState;
+    id: TemplateId;
+    createdBy: ChangeStamp;
+    modifiedBy: ChangeStamp[];
+};
+
+type SearchTemplateHeader = BaseTemplateHeader & { type: TemplateType.Search };
+type LocationTemplateHeader = BaseTemplateHeader & { type: TemplateType.Location; marker: string };
+
+type TemplateBase = {
+    fields: FormField[];
+    forms?: { [key: FormObjectGuid]: FormState };
+};
+
+export enum TemplateType {
+    Search = "search",
+    Location = "location",
+}
+
+export type SearchTemplate = TemplateBase & {
+    objects: FormObject[];
+} & SearchTemplateHeader;
+
+export type LocationTemplate = TemplateBase & LocationTemplateHeader;
+
+export type Template = SearchTemplate | LocationTemplate;
+
+// TODO: Update this type.
 export type Form = {
     id: FormId;
     title: string;
@@ -134,8 +152,8 @@ export type Form = {
     readonly: boolean;
     state: FormState;
     location?: vec3;
-    created: OffsetDateTime;
-    modified: OffsetDateTime;
+    createdBy: ChangeStamp;
+    modifiedBy: ChangeStamp[];
 };
 
 export type FormGLtfAsset = {

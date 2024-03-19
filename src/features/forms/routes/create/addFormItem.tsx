@@ -31,7 +31,7 @@ export function AddFormItem({ onSave }: { onSave: (item: FormItem) => void }) {
 
     const canSave = useMemo(
         () =>
-            title &&
+            title.trim() &&
             ([FormItemType.Input, FormItemType.YesNo, FormItemType.TrafficLight].includes(type) ||
                 ([FormItemType.Checkbox, FormItemType.Dropdown].includes(type) && options.length) ||
                 (type === FormItemType.Text && value.trim().length)),

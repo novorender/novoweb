@@ -63,7 +63,7 @@ export function Templates() {
                             ))}
                         </List>
                     ) : (
-                        <Typography p={1}>No forms</Typography>
+                        <Typography px={1}>No forms</Typography>
                     )}
                 </ScrollBox>
             )}

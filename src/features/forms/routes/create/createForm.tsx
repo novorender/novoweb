@@ -21,30 +21,31 @@ import { useExplorerGlobals } from "contexts/explorerGlobals";
 import { selectAssets } from "features/forms/slice";
 import { useAbortController } from "hooks/useAbortController";
 import { useSceneId } from "hooks/useSceneId";
+import { selectUser } from "slices/authSlice";
 import { AsyncState, AsyncStatus } from "types/misc";
 
 import { useCreateFormMutation } from "../../api";
-import { FormItem, FormType } from "../../types";
+import { FormItem, Template, TemplateType } from "../../types";
 import { getFormItemTypeDisplayName, idsToObjects, toFormFields } from "../../utils";
 
 export function CreateForm({
     title,
     setTitle,
-    formType,
-    setFormType,
+    type,
+    setType,
     items,
     setItems,
     objects: formObjects,
-    symbol,
+    marker,
 }: {
     title: string;
     setTitle: (title: string) => void;
-    formType: FormType;
-    setFormType: (formType: FormType) => void;
+    type: TemplateType;
+    setType: (type: TemplateType) => void;
     items: FormItem[];
     setItems: (items: FormItem[]) => void;
     objects?: { searchPattern: string | SearchPattern[]; ids: ObjectId[] };
-    symbol: string | undefined;
+    marker: string | undefined;
 }) {
     const theme = useTheme();
     const history = useHistory();
@@ -56,6 +57,8 @@ export function CreateForm({
     const sceneId = useSceneId();
     const [createForm, { isLoading: creatingForm }] = useCreateFormMutation();
 
+    const user = useAppSelector(selectUser);
+
     const [{ status }, setStatus] = useState<AsyncState<null>>({
         status: AsyncStatus.Initial,
     });
@@ -63,17 +66,17 @@ export function CreateForm({
     const [abortController] = useAbortController();
 
     const canSave = useMemo(
-        () => title && items.length && (formType === FormType.LocationBased ? symbol : formObjects?.ids),
-        [title, formType, items, symbol, formObjects]
+        () => title.trim() && items.length && (type === TemplateType.Location ? marker : formObjects?.ids),
+        [title, type, items, marker, formObjects]
     );
 
     const handleAddItem = useCallback(() => {
         history.push(`${match.path}/add-item`);
     }, [history, match.path]);
 
-    const handleFormTypeChange = useCallback(
-        (e: React.ChangeEvent<HTMLInputElement>) => setFormType((e.target as HTMLInputElement).value as FormType),
-        [setFormType]
+    const handleTypeChange = useCallback(
+        (e: React.ChangeEvent<HTMLInputElement>) => setType((e.target as HTMLInputElement).value as TemplateType),
+        [setType]
     );
 
     const handleTitleChange = useCallback(
@@ -87,8 +90,8 @@ export function CreateForm({
         history.push(`${match.path}/add-objects`);
     }, [history, match.path]);
 
-    const handleSelectSymbol = useCallback(() => {
-        history.push(`${match.path}/select-symbol`);
+    const handleSelectMarker = useCallback(() => {
+        history.push(`${match.path}/select-marker`);
     }, [history, match.path]);
 
     const handleRemoveItem = useCallback(
@@ -111,24 +114,30 @@ export function CreateForm({
             try {
                 const abortSignal = abortController.current.signal;
 
-                const objects =
-                    formType === FormType.SearchBased
-                        ? await idsToObjects({
-                              ids: formObjects!.ids,
-                              db,
-                              abortSignal,
-                          })
-                        : [];
-
                 const fields = toFormFields(items);
 
-                const template = {
-                    title,
-                    formType,
+                const template: Partial<Template> = {
+                    title: title.trim(),
+                    type,
                     fields,
-                    objects,
-                    symbol,
                 };
+
+                if (user) {
+                    template.createdBy = {
+                        userId: user.user,
+                    };
+                }
+
+                if (template.type === TemplateType.Search) {
+                    const objects = await idsToObjects({
+                        ids: formObjects!.ids,
+                        db,
+                        abortSignal,
+                    });
+                    template.objects = objects;
+                } else if (template.type === TemplateType.Location) {
+                    template.marker = marker!;
+                }
 
                 await createForm({ projectId: sceneId, template });
 
@@ -142,7 +151,7 @@ export function CreateForm({
                 return;
             }
         },
-        [abortController, canSave, formObjects, createForm, db, history, items, sceneId, title, formType, symbol]
+        [abortController, canSave, formObjects, createForm, db, history, items, sceneId, title, type, marker, user]
     );
 
     return (
@@ -157,17 +166,17 @@ export function CreateForm({
                     Form
                 </Typography>
                 <TextField label="Title" value={title} onChange={handleTitleChange} fullWidth />
-                <Typography fontWeight={600} mb={1}>
+                <Typography fontWeight={600} mt={1}>
                     Form type
                 </Typography>
                 <FormControl>
-                    <RadioGroup row value={formType} onChange={handleFormTypeChange}>
-                        <FormControlLabel value={FormType.SearchBased} control={<Radio />} label="Search" />
-                        <FormControlLabel value={FormType.LocationBased} control={<Radio />} label="Location" />
+                    <RadioGroup row value={type} onChange={handleTypeChange}>
+                        <FormControlLabel value={TemplateType.Search} control={<Radio />} label="Search" />
+                        <FormControlLabel value={TemplateType.Location} control={<Radio />} label="Location" />
                     </RadioGroup>
                 </FormControl>
 
-                {formType === FormType.SearchBased && (
+                {type === TemplateType.Search && (
                     <>
                         <Divider sx={{ my: 1 }} />
                         <Box display="flex" justifyContent="space-between" alignItems="center">
@@ -177,18 +186,18 @@ export function CreateForm({
                     </>
                 )}
 
-                {formType === FormType.LocationBased && (
+                {type === TemplateType.Location && (
                     <>
                         <Divider sx={{ my: 1 }} />
                         <Box display="flex" alignItems="center">
-                            <Typography fontWeight={600}>Symbol:</Typography>
+                            <Typography fontWeight={600}>Marker:</Typography>
                             <Box flex="auto" />
-                            {symbol && (
+                            {marker && (
                                 <Box mr={1}>
-                                    <SymbolLabel symbol={symbol} />
+                                    <MarkerLabel marker={marker} />
                                 </Box>
                             )}
-                            <Button onClick={handleSelectSymbol}>Select symbol</Button>
+                            <Button onClick={handleSelectMarker}>Select marker</Button>
                         </Box>
                     </>
                 )}
@@ -243,14 +252,14 @@ export function CreateForm({
     );
 }
 
-function SymbolLabel({ symbol }: { symbol: string }) {
+function MarkerLabel({ marker }: { marker: string }) {
     const assets = useAppSelector(selectAssets);
 
     if (assets.status !== AsyncStatus.Success) {
         return null;
     }
 
-    const asset = assets.data.find((a) => a.name === symbol);
+    const asset = assets.data.find((a) => a.name === marker);
     if (!asset) {
         return <>[unknown]</>;
     }

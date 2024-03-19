@@ -1,5 +1,5 @@
 import { Place } from "@mui/icons-material";
-import { Box, IconButton, styled } from "@mui/material";
+import { Box, IconButton } from "@mui/material";
 import { ReadonlyVec2, ReadonlyVec3 } from "gl-matrix";
 import { forwardRef, MouseEvent, useImperativeHandle, useMemo, useRef } from "react";
 
@@ -10,15 +10,16 @@ import { CameraType, selectCameraType } from "features/render";
 import { AsyncStatus } from "types/misc";
 
 import { formsActions, selectLocationForms, selectSelectedFormId, selectTemplates } from "./slice";
+import { LocationTemplate } from "./types";
 
 type RenderedForm = {
     id: string;
-    symbol: string;
+    marker: string;
     location: ReadonlyVec3;
 };
 
 function areRenderedFormsEqual(a: RenderedForm, b: RenderedForm) {
-    return a.id === b.id && a.symbol === b.symbol && a.location === b.location;
+    return a.id === b.id && a.marker === b.marker && a.location === b.location;
 }
 
 export const FormsTopDown = forwardRef(function FormsTopDown(_props, ref) {
@@ -43,8 +44,12 @@ export const FormsTopDown = forwardRef(function FormsTopDown(_props, ref) {
         const result = locationForms
             .filter(({ form }) => form.location)
             .map(({ templateId, form }) => {
-                const template = templateMap.get(templateId)!;
-                return { id: form.id!, symbol: template.symbol!, location: form.location! };
+                const template = templateMap.get(templateId)! as LocationTemplate;
+                return {
+                    id: form.id!,
+                    marker: template.marker,
+                    location: form.location!,
+                };
             });
 
         if (areArraysEqual(result, prevRenderedForms.current, areRenderedFormsEqual)) {

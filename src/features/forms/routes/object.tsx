@@ -198,7 +198,7 @@ export function Object() {
                             })}
                         </List>
                     ) : (
-                        <Typography p={1}>No forms attached to the selected object.</Typography>
+                        <Typography px={1}>No forms attached to the selected object.</Typography>
                     )}
                 </ScrollBox>
             )}

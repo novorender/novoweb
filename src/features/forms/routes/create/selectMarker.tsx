@@ -5,7 +5,7 @@ import { ScrollBox } from "components";
 import { useFetchAssetList } from "features/forms/hooks/useFetchAssetList";
 import { AsyncStatus } from "types/misc";
 
-export function SelectSymbol({ symbol, onChange }: { symbol: string | undefined; onChange: (symbol: string) => void }) {
+export function SelectMarker({ marker, onChange }: { marker: string | undefined; onChange: (marker: string) => void }) {
     const history = useHistory();
     const assetList = useFetchAssetList();
 
@@ -21,7 +21,7 @@ export function SelectSymbol({ symbol, onChange }: { symbol: string | undefined;
     return (
         <ScrollBox p={1} pt={2} pb={3}>
             <Typography fontWeight={600} mb={1}>
-                Select symbol
+                Select marker
             </Typography>
             <List disablePadding>
                 {assetList.data.map((asset) => (
@@ -32,7 +32,7 @@ export function SelectSymbol({ symbol, onChange }: { symbol: string | undefined;
                         disableGutters
                         color="primary"
                         sx={{ px: 1, py: 0.5 }}
-                        selected={asset.name === symbol}
+                        selected={asset.name === marker}
                     >
                         <ListItemText>{asset.title}</ListItemText>
                     </ListItemButton>

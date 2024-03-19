@@ -21,7 +21,7 @@ import { useSceneId } from "hooks/useSceneId";
 
 import { useGetTemplateQuery } from "../../api";
 import { formsActions, selectCurrentFormsList, selectFilters } from "../../slice";
-import { type FormId, type FormObject, type FormState, FormType } from "../../types";
+import { type FormId, type FormObject, type FormState, TemplateType } from "../../types";
 import { FormsListItem } from "./formsListItem";
 
 const FILTER_MENU_ID = "form-filter-menu";
@@ -61,24 +61,27 @@ export function FormsList() {
         }
         const fetchItems = async () => {
             setLoadingItems(true);
-            const map = await mapGuidsToIds({
-                db,
-                abortSignal,
-                guids: Object.keys(template.forms as Record<string, FormState>),
-            });
 
-            const items =
-                template?.objects!.reduce(
-                    (items: (FormObject & { id: ObjectId; formState: FormState })[], object: FormObject) => {
-                        const formState = template.forms![object.guid] as FormState;
-                        const id = map[object.guid];
-                        items.push({ ...object, id, formState });
-                        return items;
-                    },
-                    []
-                ) ?? [];
+            if (template.type === TemplateType.Search) {
+                const map = await mapGuidsToIds({
+                    db,
+                    abortSignal,
+                    guids: Object.keys(template.forms as Record<string, FormState>),
+                });
 
-            setItems(items);
+                const items =
+                    template?.objects!.reduce(
+                        (items: (FormObject & { id: ObjectId; formState: FormState })[], object: FormObject) => {
+                            const formState = template.forms![object.guid] as FormState;
+                            const id = map[object.guid];
+                            items.push({ ...object, id, formState });
+                            return items;
+                        },
+                        []
+                    ) ?? [];
+
+                setItems(items);
+            }
             setLoadingItems(false);
         };
 
@@ -168,7 +171,7 @@ export function FormsList() {
         setFilterMenuAnchor(null);
     };
 
-    const addLocationBasedForm = () => {
+    const addLocationForm = () => {
         if (isPickingLocation) {
             dispatch(renderActions.stopPicker(Picker.FormLocation));
         } else {
@@ -198,22 +201,20 @@ export function FormsList() {
                             <FilterAlt sx={{ mr: 1 }} />
                             Filters
                         </Button>
-                        {
-                            /*template?.formType === FormType.LocationBased*/ true && (
-                                <FormControlLabel
-                                    control={
-                                        <IosSwitch
-                                            size="medium"
-                                            color="primary"
-                                            checked={isPickingLocation}
-                                            onChange={addLocationBasedForm}
-                                        />
-                                    }
-                                    label={<Box fontSize={14}>Add</Box>}
-                                    sx={{ ml: 1 }}
-                                />
-                            )
-                        }
+                        {template?.type === TemplateType.Location && (
+                            <FormControlLabel
+                                control={
+                                    <IosSwitch
+                                        size="medium"
+                                        color="primary"
+                                        checked={isPickingLocation}
+                                        onChange={addLocationForm}
+                                    />
+                                }
+                                label={<Box fontSize={14}>Add</Box>}
+                                sx={{ ml: 1 }}
+                            />
+                        )}
                     </Box>
                 </>
             </Box>
