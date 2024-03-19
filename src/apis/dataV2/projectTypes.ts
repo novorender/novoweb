@@ -9,3 +9,10 @@ export type ProjectInfo = {
     created: string;
     modified: string;
 };
+
+export type BuildProgressResult = {
+    complete: boolean;
+    position: number;
+    text?: number;
+    filesToProcess?: number;
+};
