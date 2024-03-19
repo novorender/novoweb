@@ -124,6 +124,7 @@ export function ViewSwitchSection() {
                             color="primary"
                             checked={isCrossSection}
                             onChange={handleCrossSectionChange}
+                            disabled={!selectedCenterLine}
                         />
                     }
                     label={<Box>Cross section</Box>}

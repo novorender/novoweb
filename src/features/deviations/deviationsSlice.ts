@@ -1,9 +1,19 @@
 import { createSelector, createSlice, PayloadAction } from "@reduxjs/toolkit";
 
 import { RootState } from "app/store";
+import { GroupStatus } from "contexts/objectGroups";
 import { AsyncState, AsyncStatus } from "types/misc";
+import { uniqueArray } from "utils/misc";
 
-import { DeviationCalculationStatus, DeviationForm, UiDeviationConfig, UiDeviationProfile } from "./deviationTypes";
+import {
+    DeviationCalculationStatus,
+    DeviationForm,
+    FavoriteGroupState,
+    UiDeviationConfig,
+    UiDeviationProfile,
+} from "./deviationTypes";
+
+const EMPTY_DEVIATION_GROUP_ARRAY = [] as FavoriteGroupState[];
 
 const initialState = {
     calculationStatus: {
@@ -19,6 +29,7 @@ const initialState = {
     // Stores pixel position of the rightmost deviation label
     // in follow path 2D view, which is used to position the legend
     rightmost2dDeviationCoordinate: undefined as number | undefined,
+    deviationGroups: EMPTY_DEVIATION_GROUP_ARRAY,
 };
 
 type State = typeof initialState;
@@ -73,14 +84,27 @@ export const deviationsSlice = createSlice({
             state.selectedProfileId = action.payload;
             if (state.config.status !== AsyncStatus.Success) {
                 state.selectedCenterLineId = undefined;
+                state.deviationGroups = EMPTY_DEVIATION_GROUP_ARRAY;
                 return;
             }
 
             const profile = state.config.data.profiles.find((p) => p.id === state.selectedProfileId)!;
             state.selectedCenterLineId = profile.subprofiles.find((sp) => sp.centerLine?.brepId)?.centerLine?.brepId;
+            const groups = uniqueArray(
+                [
+                    ...profile.subprofiles.flatMap((sp) => [...sp.from.groupIds, ...sp.to.groupIds]),
+                    ...profile.favorites,
+                ].filter((id) => id)
+            );
+            state.deviationGroups = groups.length
+                ? groups.map((id) => ({ id, status: GroupStatus.None }))
+                : EMPTY_DEVIATION_GROUP_ARRAY;
         },
         setSelectedCenterLineId: (state, action: PayloadAction<string | undefined>) => {
             state.selectedCenterLineId = action.payload;
+        },
+        setDeviationGroups: (state, action: PayloadAction<State["deviationGroups"]>) => {
+            state.deviationGroups = action.payload;
         },
         setSaveStatus: (state, action: PayloadAction<State["saveStatus"]>) => {
             state.saveStatus = action.payload;
@@ -111,6 +135,7 @@ export const selectSelectedCenterLineId = (state: RootState) => state.deviations
 export const selectSaveStatus = (state: RootState) => state.deviations.saveStatus;
 export const selectRightmost2dDeviationCoordinate = (state: RootState) =>
     state.deviations.rightmost2dDeviationCoordinate;
+export const selectDeviationGroups = (state: RootState) => state.deviations.deviationGroups;
 
 const { actions, reducer } = deviationsSlice;
 export { actions as deviationsActions, reducer as deviationsReducer };

@@ -1,5 +1,7 @@
 import { ColorConfig, ColorStop, DeviationRunData, DeviationSubprofile } from "apis/dataV2/deviationTypes";
 
+import { GroupStatus } from "contexts/objectGroups";
+
 export enum DeviationCalculationStatus {
     Initial,
     Inactive,
@@ -97,3 +99,8 @@ export type ColorSetupGroup = {
 };
 
 export type ColorStopGroup = ColorStop;
+
+export type FavoriteGroupState = {
+    id: string;
+    status: GroupStatus;
+};

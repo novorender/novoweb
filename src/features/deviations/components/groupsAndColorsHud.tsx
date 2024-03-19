@@ -1,36 +1,53 @@
 import { Palette, Visibility, VisibilityOff } from "@mui/icons-material";
 import { Box, Checkbox, Typography } from "@mui/material";
 import { ColorStop } from "apis/dataV2/deviationTypes";
-import { memo } from "react";
+import { memo, useMemo } from "react";
 
-import { useAppSelector } from "app/store";
+import { useAppDispatch, useAppSelector } from "app/store";
 import {
     GroupStatus,
     isInternalGroup,
     ObjectGroup,
-    objectGroupsActions,
     useDispatchObjectGroups,
     useObjectGroups,
 } from "contexts/objectGroups";
 import { vecToRgb } from "utils/color";
 
-import { selectSelectedProfile } from "../deviationsSlice";
+import { deviationsActions, selectDeviationGroups, selectSelectedProfile } from "../deviationsSlice";
 
 export const GroupsAndColorsHud = memo(function GroupsAndColorsHud() {
     const profile = useAppSelector(selectSelectedProfile);
+    const deviationGroups = useAppSelector(selectDeviationGroups);
     const objectGroups = useObjectGroups().filter((grp) => !isInternalGroup(grp));
+    const dispatch = useAppDispatch();
+
+    const groups = useMemo(
+        () =>
+            (deviationGroups ?? [])
+                .map((g1) => ({ ...objectGroups.find((g2) => g2.id === g1.id), status: g1.status } as ObjectGroup))
+                .filter((g) => g),
+        [deviationGroups, objectGroups]
+    );
+
+    const handleClick = (group: ObjectGroup) => {
+        const newGroups = deviationGroups.map((g) => {
+            if (g.id === group.id) {
+                return { id: g.id, status: g.status === GroupStatus.Hidden ? GroupStatus.None : GroupStatus.Hidden };
+            }
+            return g;
+        });
+        dispatch(deviationsActions.setDeviationGroups(newGroups));
+    };
 
     if (!profile) {
         return;
     }
 
-    const groups = (profile.favorites ?? []).map((id) => objectGroups.find((g) => g.id === id)!).filter((g) => g);
-
     return (
         <>
             <Box>
                 {groups.map((group) => (
-                    <GroupNode key={group.id} group={group} />
+                    <GroupNode key={group.id} group={group} onClick={handleClick} />
                 ))}
             </Box>
             <Box mt={2}>
@@ -42,10 +59,9 @@ export const GroupsAndColorsHud = memo(function GroupsAndColorsHud() {
     );
 });
 
-function GroupNode({ group }: { group: ObjectGroup }) {
+function GroupNode({ group, onClick }: { group: ObjectGroup; onClick: (group: ObjectGroup) => void }) {
     const { r, g, b, a } = vecToRgb(group.color);
     const hidden = group.status === GroupStatus.Hidden;
-    const dispatchObjectGroups = useDispatchObjectGroups();
 
     return (
         <Box display="flex" alignItems="center" gap={1}>
@@ -57,13 +73,7 @@ function GroupNode({ group }: { group: ObjectGroup }) {
                 checkedIcon={!group.opacity ? <VisibilityOff color="disabled" /> : <Visibility color="disabled" />}
                 checked={hidden}
                 onClick={(event) => event.stopPropagation()}
-                onChange={() =>
-                    dispatchObjectGroups(
-                        objectGroupsActions.update(group.id, {
-                            status: hidden ? GroupStatus.None : GroupStatus.Hidden,
-                        })
-                    )
-                }
+                onChange={() => onClick(group)}
             />
             <Typography>{group.name}</Typography>
         </Box>
