@@ -12,7 +12,7 @@ import { createAction, createSlice, PayloadAction } from "@reduxjs/toolkit";
 import { quat, vec3, vec4 } from "gl-matrix";
 
 import type { RootState } from "app/store";
-import { ProjectType } from "slices/explorerSlice";
+import type { ProjectType } from "slices/explorer";
 import { AsyncState, AsyncStatus, ViewMode } from "types/misc";
 import { VecRGB, VecRGBA } from "utils/color";
 import { mergeRecursive } from "utils/misc";

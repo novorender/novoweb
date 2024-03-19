@@ -31,7 +31,7 @@ import { renderReducer } from "features/render";
 import { selectionBasketReducer } from "features/selectionBasket";
 import { xsiteManageApi, xsiteManageReducer } from "features/xsiteManage";
 import { authReducer } from "slices/authSlice";
-import { explorerReducer } from "slices/explorerSlice";
+import { explorerReducer } from "slices/explorer";
 
 const rootReducer = combineReducers({
     explorer: explorerReducer,
