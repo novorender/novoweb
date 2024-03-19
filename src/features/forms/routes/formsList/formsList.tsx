@@ -99,16 +99,17 @@ export function FormsList() {
             if (
                 willUnmount.current &&
                 !history.location.pathname.startsWith("/instance") &&
-                !history.location.pathname.startsWith("/object")
+                !history.location.pathname.startsWith("/object") &&
+                template?.type === TemplateType.Search
             ) {
-                // dispatchHighlighted(highlightActions.setIds([]));
-                // dispatchHighlightCollections(highlightCollectionsActions.clearAll());
-                // dispatch(renderActions.setDefaultVisibility(ObjectVisibility.Neutral));
-                // dispatchHighlighted(highlightActions.resetColor());
-                // dispatch(formsActions.setCurrentFormsList(null));
+                dispatchHighlighted(highlightActions.setIds([]));
+                dispatchHighlightCollections(highlightCollectionsActions.clearAll());
+                dispatch(renderActions.setDefaultVisibility(ObjectVisibility.Neutral));
+                dispatchHighlighted(highlightActions.resetColor());
+                dispatch(formsActions.setCurrentFormsList(null));
             }
         },
-        [history.location.pathname, dispatch, dispatchHighlighted, dispatchHighlightCollections]
+        [history.location.pathname, dispatch, dispatchHighlighted, dispatchHighlightCollections, template]
     );
 
     useEffect(() => {
@@ -137,9 +138,13 @@ export function FormsList() {
     );
 
     useEffect(() => {
+        if (template?.type !== TemplateType.Search) {
+            return;
+        }
+
         const forms = items.filter(filterItems);
 
-        // dispatch(renderActions.setDefaultVisibility(ObjectVisibility.Transparent));
+        dispatch(renderActions.setDefaultVisibility(ObjectVisibility.Transparent));
 
         const newGroup = filters.new ? forms.filter((form) => form.formState === "new").map((form) => form.id) : [];
         const ongoingGroup = filters.ongoing
@@ -149,14 +154,14 @@ export function FormsList() {
             ? forms.filter((form) => form.formState === "finished").map((form) => form.id)
             : [];
 
-        // dispatchHighlightCollections(highlightCollectionsActions.setIds(HighlightCollection.FormsNew, newGroup));
-        // dispatchHighlightCollections(
-        //     highlightCollectionsActions.setIds(HighlightCollection.FormsOngoing, ongoingGroup)
-        // );
-        // dispatchHighlightCollections(
-        //     highlightCollectionsActions.setIds(HighlightCollection.FormsCompleted, finishedGroup)
-        // );
-    }, [items, filters, dispatch, dispatchHighlightCollections, filterItems]);
+        dispatchHighlightCollections(highlightCollectionsActions.setIds(HighlightCollection.FormsNew, newGroup));
+        dispatchHighlightCollections(
+            highlightCollectionsActions.setIds(HighlightCollection.FormsOngoing, ongoingGroup)
+        );
+        dispatchHighlightCollections(
+            highlightCollectionsActions.setIds(HighlightCollection.FormsCompleted, finishedGroup)
+        );
+    }, [items, filters, dispatch, dispatchHighlightCollections, filterItems, template]);
 
     const handleBackClick = () => {
         history.push("/");

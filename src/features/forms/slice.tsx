@@ -15,20 +15,9 @@ const initialState = {
         ongoing: true,
         finished: true,
     },
-    // templates: { status: AsyncStatus.Initial },
-    templates: {
-        status: AsyncStatus.Success,
-        data: [
-            {
-                id: "63903b3dd2bd41f39bfaaacc9c600c5e",
-                marker: "pinYM",
-            },
-            {
-                id: "ae1b5c8a744f4996b1df0b63e4479b9d",
-                marker: "cone",
-            },
-        ],
-    },
+    // Templates are loading progressively so status doesn't matter,
+    // but just in case we will ever load them all at once I leave it here
+    templates: { status: AsyncStatus.Success, data: [] },
     assets: { status: AsyncStatus.Initial },
     selectedFormId: undefined,
 } as {
@@ -64,6 +53,16 @@ export const formsSlice = createSlice({
         },
         setSelectedFormId: (state, action: PayloadAction<State["selectedFormId"]>) => {
             state.selectedFormId = action.payload;
+        },
+        templateLoaded: (state, action: PayloadAction<Partial<Template>>) => {
+            if (state.templates.status !== AsyncStatus.Success) {
+                return;
+            }
+            const template = action.payload;
+            state.templates = {
+                status: AsyncStatus.Success,
+                data: [...state.templates.data.filter((t) => t.id !== template.id), template],
+            };
         },
         setAssets: (state, action: PayloadAction<State["assets"]>) => {
             state.assets = action.payload;
