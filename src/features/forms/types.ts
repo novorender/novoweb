@@ -138,6 +138,7 @@ export enum TemplateType {
 
 export type SearchTemplate = TemplateBase & {
     objects: FormObject[];
+    searchPattern: string;
 } & SearchTemplateHeader;
 
 export type LocationTemplate = TemplateBase & LocationTemplateHeader;

@@ -128,13 +128,14 @@ export function CreateForm({
                     };
                 }
 
-                if (template.type === TemplateType.Search) {
+                if (template.type === TemplateType.Search && formObjects) {
                     const objects = await idsToObjects({
-                        ids: formObjects!.ids,
+                        ids: formObjects.ids,
                         db,
                         abortSignal,
                     });
                     template.objects = objects;
+                    template.searchPattern = JSON.stringify(formObjects.searchPattern);
                 } else if (template.type === TemplateType.Location) {
                     template.marker = marker!;
                 }
