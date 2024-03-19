@@ -10,6 +10,12 @@ export type PointLine = {
     result: undefined | LineStripMeasureValues;
 };
 
+export enum PointLineMode {
+    Default,
+    Horizontal,
+    Vertical,
+}
+
 const pointLine = (): PointLine => ({
     points: [],
     result: undefined,
@@ -18,7 +24,7 @@ const pointLine = (): PointLine => ({
 const initialState = {
     pointLines: [pointLine()],
     currentIndex: 0 as number,
-    lockElevation: false,
+    mode: PointLineMode.Default,
 };
 
 export const pointLineSlice = createSlice({
@@ -29,12 +35,34 @@ export const pointLineSlice = createSlice({
             reducer: (state, { payload: pt, meta: { view } }: PayloadAction<vec3, string, { view: View }>) => {
                 const current = state.pointLines[state.currentIndex];
                 const prevPt = current.points.at(-1);
-                const z = state.lockElevation && prevPt ? prevPt[2] : pt[2];
-                current.points.push([pt[0], pt[1], z]);
+
+                if (!prevPt || state.mode === PointLineMode.Default) {
+                    current.points.push(pt);
+                } else if (state.mode === PointLineMode.Horizontal) {
+                    current.points.push([pt[0], pt[1], prevPt[2]]);
+                } else {
+                    current.points.push([prevPt[0], prevPt[1], pt[2]]);
+                }
+
                 current.result = view.measure?.core.measureLineStrip(current.points);
             },
             prepare: (pt: vec3, view: View) => {
                 return { payload: pt, meta: { view } };
+            },
+        },
+        connectPoints: {
+            reducer: (state, { meta: { view } }: PayloadAction<void, string, { view: View }>) => {
+                const current = state.pointLines[state.currentIndex];
+
+                if (current.points.length < 2) {
+                    return state;
+                }
+
+                current.points.push([...current.points[0]]);
+                current.result = view.measure?.core.measureLineStrip(current.points);
+            },
+            prepare: (view: View) => {
+                return { payload: undefined, meta: { view } };
             },
         },
         undoPoint: {
@@ -57,13 +85,16 @@ export const pointLineSlice = createSlice({
             return initialState;
         },
         toggleLockElevation: (state) => {
-            state.lockElevation = !state.lockElevation;
+            state.mode = state.mode === PointLineMode.Horizontal ? PointLineMode.Default : PointLineMode.Horizontal;
+        },
+        toggleLockVertical: (state) => {
+            state.mode = state.mode === PointLineMode.Vertical ? PointLineMode.Default : PointLineMode.Vertical;
         },
         newPointLine: (state) => {
             if (state.pointLines[state.pointLines.length - 1].points.length) {
                 state.pointLines.push(pointLine());
                 state.currentIndex = state.pointLines.length - 1;
-                state.lockElevation = false;
+                state.mode = PointLineMode.Default;
             }
         },
         deletePointline: (state, action: PayloadAction<number>) => {
@@ -104,7 +135,8 @@ export const pointLineSlice = createSlice({
 
 export const selectPointLines = (state: RootState) => state.pointLine.pointLines;
 export const selectCurrentPointLine = (state: RootState) => state.pointLine.pointLines[state.pointLine.currentIndex];
-export const selectLockPointLineElevation = (state: RootState) => state.pointLine.lockElevation;
+export const selectLockPointLineElevation = (state: RootState) => state.pointLine.mode === PointLineMode.Horizontal;
+export const selectLockPointLineVertical = (state: RootState) => state.pointLine.mode === PointLineMode.Vertical;
 export const selectPointLineCurrentIdx = (state: RootState) => state.pointLine.currentIndex;
 
 const { actions, reducer } = pointLineSlice;

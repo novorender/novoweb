@@ -107,7 +107,7 @@ export type MeasureInteractionPositions = {
 export function MeasureInteractions() {
     const {
         state: { view },
-    } = useExplorerGlobals();
+    } = useExplorerGlobals(true);
     const dispatch = useAppDispatch();
     const { selectedEntities } = useAppSelector(selectMeasure);
     const measure = useAppSelector(selectMeasure);
@@ -216,9 +216,6 @@ export function MeasureInteractions() {
                             id={`undoArea-${idx}`}
                             name={`undoArea-${idx}`}
                             onClick={() => {
-                                if (!view) {
-                                    return;
-                                }
                                 dispatch(areaActions.undoPt(view));
                             }}
                         />
@@ -258,10 +255,7 @@ export function MeasureInteractions() {
                                 id={`connectPl-${idx}`}
                                 name={`connectPl-${idx}`}
                                 onClick={() => {
-                                    const connectPoint = pointLines.at(-1)?.points.at(0);
-                                    if (connectPoint && view) {
-                                        dispatch(pointLineActions.addPoint(connectPoint, view));
-                                    }
+                                    dispatch(pointLineActions.connectPoints(view));
                                     dispatch(renderActions.stopPicker(Picker.PointLine));
                                     dispatch(pointLineActions.newPointLine());
                                 }}
@@ -270,9 +264,6 @@ export function MeasureInteractions() {
                                 id={`undoPl-${idx}`}
                                 name={`undoPl-${idx}`}
                                 onClick={() => {
-                                    if (!view) {
-                                        return;
-                                    }
                                     dispatch(pointLineActions.undoPoint(view));
                                 }}
                             />

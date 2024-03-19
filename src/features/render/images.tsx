@@ -2,7 +2,8 @@ import { useAppDispatch, useAppSelector } from "app/store";
 import { ImgModal } from "components";
 import { useExplorerGlobals } from "contexts/explorerGlobals";
 import { ditioActions, selectActiveImg } from "features/ditio";
-import { imagesActions, isFlat, selectActiveImage } from "features/images";
+import { imagesActions, ImageType, selectActiveImage } from "features/images";
+import { FlatImageActions } from "features/images/flatImageActions";
 
 export function Images() {
     const {
@@ -12,13 +13,21 @@ export function Images() {
     const activeImage = useAppSelector(selectActiveImage);
     const activeDitioImage = useAppSelector(selectActiveImg);
 
-    if (view && activeImage && isFlat(activeImage.image)) {
+    if (view && activeImage?.mode === ImageType.Flat) {
         return (
             <ImgModal
                 open={true}
                 onClose={() => dispatch(imagesActions.setActiveImage(undefined))}
                 sx={{ display: "flex", justifyContent: "center", alignItems: "center" }}
                 src={activeImage.image.src.startsWith("data:image") ? activeImage.image.src : ""}
+                Actions={FlatImageActions}
+                onKeyUp={(evt) => {
+                    if (evt.key === "ArrowLeft") {
+                        dispatch(imagesActions.prevImage());
+                    } else if (evt.key === "ArrowRight") {
+                        dispatch(imagesActions.nextImage());
+                    }
+                }}
             />
         );
     } else if (activeDitioImage) {

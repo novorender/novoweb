@@ -3,7 +3,7 @@ import { css, styled } from "@mui/material";
 import { SVGProps } from "react";
 
 import { useAppDispatch, useAppSelector } from "app/store";
-import { imagesActions, selectActiveImage, selectImages, selectShowImageMarkers } from "features/images";
+import { imagesActions, ImageType, selectActiveImage, selectImages, selectShowImageMarkers } from "features/images";
 import { selectViewMode } from "features/render";
 import { useRedirectWheelEvents } from "hooks/useRedirectWheelEvents";
 import { AsyncStatus, ViewMode } from "types/misc";
@@ -45,6 +45,7 @@ export function ImageMarkers() {
                                       dispatch(
                                           imagesActions.setActiveImage({
                                               image: image,
+                                              mode: ImageType.Flat,
                                               status: AsyncStatus.Loading,
                                           })
                                       )
@@ -66,6 +67,7 @@ export function ImageMarkers() {
                                       dispatch(
                                           imagesActions.setActiveImage({
                                               image: image,
+                                              mode: ImageType.Flat,
                                               status: AsyncStatus.Loading,
                                           })
                                       )
