@@ -29,7 +29,7 @@ import { CrupdateColorStop } from "./routes/crupdateColorStop";
 import { DeleteDeviation } from "./routes/deleteDeviation";
 import { Deviation } from "./routes/deviation";
 import { Root } from "./routes/root";
-import { MAX_DEVIATION_PROFILE_COUNT, profileToDeviationForm, uiConfigToServerConfig } from "./utils";
+import { MAX_DEVIATION_PROFILE_COUNT, newDeviationForm, profileToDeviationForm, uiConfigToServerConfig } from "./utils";
 
 export default function Deviations() {
     const [menuOpen, toggleMenu] = useToggle();
@@ -171,7 +171,7 @@ function WidgetMenu(props: MenuProps) {
                             dispatch(deviationsActions.setDeviationForm(deviationForm));
                             history.push("/deviation/edit");
                         }}
-                        disabled={!selectedProfile}
+                        disabled={!selectedProfile || isDeviationFormSet}
                     >
                         <ListItemIcon>
                             <Settings fontSize="small" />
@@ -183,7 +183,7 @@ function WidgetMenu(props: MenuProps) {
                             closeMenu();
                             history.push("/deviation/delete", { id: selectedProfile!.id! });
                         }}
-                        disabled={!selectedProfile}
+                        disabled={!selectedProfile || isDeviationFormSet}
                     >
                         <ListItemIcon>
                             <Delete fontSize="small" />
@@ -202,12 +202,14 @@ function WidgetMenu(props: MenuProps) {
                             <MenuItem
                                 onClick={() => {
                                     closeMenu();
-                                    history.push("/deviation/delete", { id: selectedProfile!.id! });
+                                    dispatch(deviationsActions.setDeviationForm(newDeviationForm()));
+                                    history.push("/deviation/add");
                                 }}
                                 disabled={
                                     config.status !== AsyncStatus.Success ||
                                     config.data.profiles.length === MAX_DEVIATION_PROFILE_COUNT ||
-                                    !isProjectV2
+                                    !isProjectV2 ||
+                                    isDeviationFormSet
                                 }
                             >
                                 <ListItemIcon>
