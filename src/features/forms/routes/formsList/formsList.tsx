@@ -1,6 +1,5 @@
 import { ArrowBack, FilterAlt } from "@mui/icons-material";
 import { Box, Button, FormControlLabel, List, Typography, useTheme } from "@mui/material";
-import { ObjectId } from "@novorender/api/types/data";
 import { type MouseEvent, useCallback, useEffect, useRef, useState } from "react";
 import { useHistory, useParams } from "react-router-dom";
 
@@ -16,7 +15,7 @@ import { highlightActions, useDispatchHighlighted } from "contexts/highlighted";
 import { useGetTemplateQuery } from "features/forms/api";
 import { FormFilterMenu } from "features/forms/formFilterMenu";
 import { formsActions, selectCurrentFormsList, selectFormFilters } from "features/forms/slice";
-import { type FormId, type FormObject, type FormState, TemplateType } from "features/forms/types";
+import { type FormId, type FormObject, type FormRecord, type FormState, TemplateType } from "features/forms/types";
 import { mapGuidsToIds } from "features/forms/utils";
 import { ObjectVisibility, Picker, renderActions, selectPicker } from "features/render";
 import { useAbortController } from "hooks/useAbortController";
@@ -50,42 +49,43 @@ export function FormsList() {
         templateId,
     });
 
-    const [items, setItems] = useState<(FormObject & { id: ObjectId; formState: FormState })[]>([]);
+    const [items, setItems] = useState<(FormObject & { formState: FormState })[]>(
+        template?.type === TemplateType.Search
+            ? template.objects!.map((object) => ({
+                  ...object,
+                  id: -1,
+                  formState: template.forms![object.guid].state,
+              }))
+            : []
+    );
     const [loadingItems, setLoadingItems] = useState(false);
 
     const abortSignal = abortController.current.signal;
 
     useEffect(() => {
-        if (!template) {
+        if (!template || template.type !== TemplateType.Search) {
             return;
         }
-        const fetchItems = async () => {
+
+        const fetchIds = async () => {
             setLoadingItems(true);
 
-            if (template.type === TemplateType.Search) {
-                const map = await mapGuidsToIds({
-                    db,
-                    abortSignal,
-                    guids: Object.keys(template.forms as Record<string, FormState>),
-                });
+            const map = await mapGuidsToIds({
+                db,
+                abortSignal,
+                guids: Object.keys(template.forms as Record<string, FormRecord>),
+            });
 
-                const items =
-                    template?.objects!.reduce(
-                        (items: (FormObject & { id: ObjectId; formState: FormState })[], object: FormObject) => {
-                            const formState = template.forms![object.guid] as FormState;
-                            const id = map[object.guid];
-                            items.push({ ...object, id, formState });
-                            return items;
-                        },
-                        []
-                    ) ?? [];
-
-                setItems(items);
-            }
+            setItems((prevItems) =>
+                prevItems.map((item) => {
+                    const id = map[item.guid];
+                    return { ...item, id };
+                })
+            );
             setLoadingItems(false);
         };
 
-        fetchItems();
+        fetchIds();
     }, [db, abortSignal, template]);
 
     useEffect(() => {

@@ -126,9 +126,15 @@ type BaseTemplateHeader = {
 type SearchTemplateHeader = BaseTemplateHeader & { type: TemplateType.Search };
 type LocationTemplateHeader = BaseTemplateHeader & { type: TemplateType.Location; marker: string };
 
+export type FormRecord = {
+    title?: string;
+    state: FormState;
+};
+
+type formInstanceNumber = number;
+
 type TemplateBase = {
     fields: FormField[];
-    forms?: { [key: FormObjectGuid]: FormState };
 };
 
 export enum TemplateType {
@@ -139,9 +145,12 @@ export enum TemplateType {
 export type SearchTemplate = TemplateBase & {
     objects: FormObject[];
     searchPattern: string;
+    forms?: { [key: FormObjectGuid]: FormRecord };
 } & SearchTemplateHeader;
 
-export type LocationTemplate = TemplateBase & LocationTemplateHeader;
+export type LocationTemplate = TemplateBase & {
+    forms?: { [key: formInstanceNumber]: FormRecord };
+} & LocationTemplateHeader;
 
 export type Template = SearchTemplate | LocationTemplate;
 

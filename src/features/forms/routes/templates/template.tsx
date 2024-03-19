@@ -37,7 +37,7 @@ export function Template({ templateId }: { templateId: TemplateId }) {
         if (!template || template.type === TemplateType.Location) {
             return "";
         }
-        const finished = Object.values(template.forms || {}).filter((s) => s === "finished").length;
+        const finished = Object.values(template.forms || {}).filter((s) => s.state === "finished").length;
         const total = (template as SearchTemplate)!.objects.length || 0;
         return `${finished} / ${total}`;
     }, [template]);
