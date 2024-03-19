@@ -25,6 +25,7 @@ import {
 import { DeviationCalculationStatus } from "./deviationTypes";
 import { useListenCalculationState } from "./hooks/useListenCalculationState";
 import { updateObjectIds } from "./hooks/useSaveDeviationConfig";
+import { useSetCenterLineFollowPath } from "./hooks/useSetCenterLineFollowPath";
 import { CrupdateColorStop } from "./routes/crupdateColorStop";
 import { DeleteDeviation } from "./routes/deleteDeviation";
 import { Deviation } from "./routes/deviation";
@@ -35,6 +36,8 @@ export default function Deviations() {
     const [menuOpen, toggleMenu] = useToggle();
     const minimized = useAppSelector(selectMinimized) === featuresConfig.deviations.key;
     const maximized = useAppSelector(selectMaximized).includes(featuresConfig.deviations.key);
+
+    useSetCenterLineFollowPath();
 
     return (
         <MemoryRouter>

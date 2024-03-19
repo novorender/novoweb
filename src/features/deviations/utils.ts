@@ -54,7 +54,7 @@ export function profileToDeviationForm(profile: UiDeviationProfile): DeviationFo
             centerLine: sp.centerLine
                 ? {
                       enabled: true,
-                      id: { value: undefined },
+                      id: { value: sp.centerLine.objectId },
                       brepId: sp.centerLine.brepId,
                       parameterBounds: { value: sp.centerLine.parameterBounds },
                   }

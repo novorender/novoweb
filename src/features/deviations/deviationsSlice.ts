@@ -14,6 +14,7 @@ const initialState = {
     config: { status: AsyncStatus.Initial } as AsyncState<UiDeviationConfig>,
     deviationForm: undefined as DeviationForm | undefined,
     selectedProfileId: undefined as string | undefined,
+    selectedCenterLineId: undefined as string | undefined,
     saveStatus: { status: AsyncStatus.Initial } as AsyncState<string>,
     // Stores pixel position of the rightmost deviation label
     // in follow path 2D view, which is used to position the legend
@@ -70,6 +71,16 @@ export const deviationsSlice = createSlice({
         },
         setSelectedProfileId: (state, action: PayloadAction<string | undefined>) => {
             state.selectedProfileId = action.payload;
+            if (state.config.status !== AsyncStatus.Success) {
+                state.selectedCenterLineId = undefined;
+                return;
+            }
+
+            const profile = state.config.data.profiles.find((p) => p.id === state.selectedProfileId)!;
+            state.selectedCenterLineId = profile.subprofiles.find((sp) => sp.centerLine?.brepId)?.centerLine?.brepId;
+        },
+        setSelectedCenterLineId: (state, action: PayloadAction<string | undefined>) => {
+            state.selectedCenterLineId = action.payload;
         },
         setSaveStatus: (state, action: PayloadAction<State["saveStatus"]>) => {
             state.saveStatus = action.payload;
@@ -96,6 +107,7 @@ export const selectSelectedProfile = createSelector(
         return profileId ? profiles.find((p) => p.id === profileId) : undefined;
     }
 );
+export const selectSelectedCenterLineId = (state: RootState) => state.deviations.selectedCenterLineId;
 export const selectSaveStatus = (state: RootState) => state.deviations.saveStatus;
 export const selectRightmost2dDeviationCoordinate = (state: RootState) =>
     state.deviations.rightmost2dDeviationCoordinate;

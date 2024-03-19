@@ -7,9 +7,11 @@ import { selectDeviations } from "features/render";
 import { selectHasAdminCapabilities, selectProjectIsV2 } from "slices/explorerSlice";
 import { AsyncStatus, hasFinished } from "types/misc";
 
+import { CenterLineSelect } from "../components/centerLineSelect";
 import { ColorStopList } from "../components/colorStop";
 import { DeviationsSnackbar } from "../components/deviationsSnackbar";
 import { MixFactorInput } from "../components/mixFactorInput";
+import { ViewSwitchSection } from "../components/viewSwitchSection";
 import {
     deviationsActions,
     selectDeviationCalculationStatus,
@@ -131,7 +133,7 @@ export function Root() {
                         )}
 
                         {selectedProfile && (
-                            <Box px={2}>
+                            <Box px={2} pb={2}>
                                 <ColorStopList
                                     colorStops={selectedProfile.colors!.colorStops}
                                     onChange={(colorStops) => {
@@ -147,6 +149,10 @@ export function Root() {
                                         );
                                     }}
                                 />
+
+                                <CenterLineSelect />
+
+                                <ViewSwitchSection />
                             </Box>
                         )}
                     </ScrollBox>

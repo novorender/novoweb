@@ -31,7 +31,26 @@ export type UiDeviationProfile = {
     copyFromProfileId?: string;
     colors: ColorConfig;
     favorites: string[];
-    subprofiles: DeviationSubprofile[];
+    subprofiles: UiDeviationSubprofile[];
+};
+
+export type UiDeviationSubprofile = {
+    from: {
+        groupIds: string[];
+        objectIds: number[];
+    };
+    to: {
+        groupIds: string[];
+        objectIds: number[];
+    };
+    centerLine?: UiCenterLine;
+    heightToCeiling?: number;
+};
+
+export type UiCenterLine = {
+    brepId: string;
+    objectId: number;
+    parameterBounds: [number, number];
 };
 
 // Deviation form

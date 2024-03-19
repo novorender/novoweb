@@ -1,11 +1,13 @@
 import { Box, Button, Slider, Typography } from "@mui/material";
-import { forwardRef, memo, SyntheticEvent, useEffect, useImperativeHandle, useRef, useState } from "react";
+import { ReadonlyVec2 } from "gl-matrix";
+import { forwardRef, memo, SyntheticEvent, useEffect, useImperativeHandle, useMemo, useRef, useState } from "react";
 
 import { useAppDispatch, useAppSelector } from "app/store";
 import { useExplorerGlobals } from "contexts/explorerGlobals";
 import { selectRightmost2dDeviationCoordinate } from "features/deviations";
 import { GroupsAndColorsHud } from "features/deviations/components/groupsAndColorsHud";
-import { CameraType, selectCameraType, selectViewMode } from "features/render";
+import { getCameraDir } from "features/engine2D/utils";
+import { CameraType, selectCamera, selectCameraType, selectViewMode } from "features/render";
 import { AsyncStatus, ViewMode } from "types/misc";
 
 import {
@@ -27,6 +29,8 @@ export const FollowHtmlInteractions = forwardRef(function FollowHtmlInteractions
     const viewMode = useAppSelector(selectViewMode);
     const rightmost2dDeviationCoordinate = useAppSelector(selectRightmost2dDeviationCoordinate);
     const cameraType = useAppSelector(selectCameraType);
+    const camera = useAppSelector(selectCamera);
+    const lastPt = useRef<ReadonlyVec2>();
 
     const containerRef = useRef<HTMLDivElement | null>(null);
 
@@ -48,6 +52,15 @@ export const FollowHtmlInteractions = forwardRef(function FollowHtmlInteractions
         [view?.measure, currentProfileCenter]
     );
 
+    const isLookingDown = useMemo(() => {
+        if (!camera.goTo || cameraType !== CameraType.Orthographic) {
+            return false;
+        }
+        const dir = getCameraDir(camera.goTo.rotation);
+        const z = dir[2];
+        return Math.abs(z) >= 0.999;
+    }, [camera, cameraType]);
+
     if (
         !view?.measure ||
         !currentProfileCenter ||
@@ -57,11 +70,13 @@ export const FollowHtmlInteractions = forwardRef(function FollowHtmlInteractions
         return null;
     }
 
-    const pt = view.measure.draw.toMarkerPoints([currentProfileCenter])[0]!;
+    const pt = view.measure.draw.toMarkerPoints([currentProfileCenter])[0]! || lastPt.current;
 
     if (!pt) {
         return null;
     }
+
+    lastPt.current = pt;
 
     let legendOffset = 160;
     if (rightmost2dDeviationCoordinate) {
@@ -77,18 +92,20 @@ export const FollowHtmlInteractions = forwardRef(function FollowHtmlInteractions
             }}
             ref={containerRef}
         >
-            <div
-                style={{
-                    position: "absolute",
-                    transform: `translate(-100px, -180px)`,
-                    display: "flex",
-                    flexDirection: "column",
-                    alignItems: "center",
-                    width: "200px",
-                }}
-            >
-                <FollowPathControls />
-            </div>
+            {!isLookingDown && (
+                <div
+                    style={{
+                        position: "absolute",
+                        transform: `translate(-100px, -180px)`,
+                        display: "flex",
+                        flexDirection: "column",
+                        alignItems: "center",
+                        width: "200px",
+                    }}
+                >
+                    <FollowPathControls />
+                </div>
+            )}
 
             <div
                 style={{

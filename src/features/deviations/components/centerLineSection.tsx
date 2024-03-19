@@ -7,10 +7,7 @@ import { useAppSelector } from "app/store";
 import { useExplorerGlobals } from "contexts/explorerGlobals";
 import { areArraysEqual } from "features/arcgis/utils";
 import { selectLandXmlPaths } from "features/followPath";
-import { useLoadLandXmlPath } from "features/followPath/hooks/useLoadLandXmlPath";
-import { useAbortController } from "hooks/useAbortController";
 import { AsyncState, AsyncStatus } from "types/misc";
-import { searchByPatterns } from "utils/search";
 
 import { CenterLineGroup } from "../deviationTypes";
 import { EMPTY_PARAMETER_BOUNDS } from "../utils";
@@ -29,7 +26,7 @@ export function CenterLineSection({
 }) {
     const theme = useTheme();
     const {
-        state: { view, db },
+        state: { view },
     } = useExplorerGlobals(true);
     const landXmlPaths = useAppSelector(selectLandXmlPaths);
     const followPath =
@@ -38,12 +35,6 @@ export function CenterLineSection({
             : undefined;
     const [paramRange, setParamRange] = useState<AsyncState<ParameterBounds>>({ status: AsyncStatus.Initial });
     const canEditParamBounds = paramRange.status === AsyncStatus.Success;
-    const [centerLineIdFetch, setCenterLineIdFetch] = useState(
-        centerLine.id.value ? AsyncStatus.Success : AsyncStatus.Initial
-    );
-    const [abortController] = useAbortController();
-
-    useLoadLandXmlPath({ skip: !centerLine.enabled });
 
     useEffect(() => {
         loadParamRange();
@@ -88,36 +79,6 @@ export function CenterLineSection({
             }
         }
     }, [view, onChange, followPath, paramRange, centerLine]);
-
-    useEffect(() => {
-        findObjectId();
-
-        async function findObjectId() {
-            if (centerLineIdFetch !== AsyncStatus.Initial || !centerLine.brepId || centerLine.id.value) {
-                return;
-            }
-
-            setCenterLineIdFetch(AsyncStatus.Loading);
-            try {
-                let centerLineId: number | undefined;
-                await searchByPatterns({
-                    db,
-                    searchPatterns: [{ property: "Novorender/PathId", value: centerLine.brepId, exact: true }],
-                    callback: (refs) => {
-                        if (refs.length > 0) {
-                            centerLineId = refs[0].id;
-                        }
-                    },
-                    abortSignal: abortController.current.signal,
-                });
-                setCenterLineIdFetch(AsyncStatus.Success);
-                onChange({ ...centerLine, id: updateFormField(centerLineId) });
-            } catch (ex) {
-                console.warn(ex);
-                setCenterLineIdFetch(AsyncStatus.Error);
-            }
-        }
-    }, [db, centerLine, abortController, onChange, centerLineIdFetch]);
 
     if (!centerLine.enabled) {
         if (disabled) {
