@@ -35,8 +35,6 @@ export default function Ditio() {
     const maximized = useAppSelector(selectMaximized).includes(featuresConfig.ditio.key);
     const lastViewedPath = useAppSelector(selectLastViewedPath);
 
-    console.log("suppp");
-
     return (
         <MemoryRouter initialEntries={["/", lastViewedPath]} initialIndex={1}>
             <WidgetContainer minimized={minimized} maximized={maximized}>
